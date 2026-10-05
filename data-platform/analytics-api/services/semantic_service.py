@@ -7,27 +7,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 CATALOG_PATH = Path(__file__).resolve().parent.parent / "metadata" / "semantic_catalog.json"
 
-# ── City alias map: user input → canonical DB value ──
-CITY_ALIASES: Dict[str, str] = {
-    "hcm": "Hồ Chí Minh", "tphcm": "Hồ Chí Minh", "tp.hcm": "Hồ Chí Minh",
-    "tp hcm": "Hồ Chí Minh", "sai gon": "Hồ Chí Minh", "saigon": "Hồ Chí Minh",
-    "ho chi minh": "Hồ Chí Minh", "hồ chí minh": "Hồ Chí Minh",
-    "ha noi": "Hà Nội", "hà nội": "Hà Nội", "hn": "Hà Nội", "hanoi": "Hà Nội",
-    "da nang": "Đà Nẵng", "đà nẵng": "Đà Nẵng", "dn": "Đà Nẵng", "danang": "Đà Nẵng",
-    "can tho": "Cần Thơ", "cần thơ": "Cần Thơ", "cantho": "Cần Thơ",
-    "hai phong": "Hải Phòng", "hải phòng": "Hải Phòng", "haiphong": "Hải Phòng",
-    "binh duong": "Bình Dương", "bình dương": "Bình Dương",
-    "dong nai": "Đồng Nai", "đồng nai": "Đồng Nai",
-    "khanh hoa": "Khánh Hòa", "khánh hòa": "Khánh Hòa", "nha trang": "Khánh Hòa",
-    "quang ninh": "Quảng Ninh", "quảng ninh": "Quảng Ninh", "ha long": "Quảng Ninh",
-    "hue": "Thừa Thiên - Huế", "huế": "Thừa Thiên - Huế",
-    "vung tau": "Bà Rịa - Vũng Tàu", "vũng tàu": "Bà Rịa - Vũng Tàu",
-    "bac ninh": "Bắc Ninh", "bắc ninh": "Bắc Ninh",
-    "nghe an": "Nghệ An", "nghệ an": "Nghệ An",
-    "thanh hoa": "Thanh Hóa", "thanh hóa": "Thanh Hóa",
-    "lam dong": "Lâm Đồng", "lâm đồng": "Lâm Đồng", "da lat": "Lâm Đồng", "đà lạt": "Lâm Đồng",
-    "kien giang": "Kiên Giang", "kiên giang": "Kiên Giang", "phu quoc": "Kiên Giang", "phú quốc": "Kiên Giang",
-}
+# Legacy hint vocabulary uses the same curated registry as V2 grounding.
+with CATALOG_PATH.open(encoding="utf-8") as _catalog_handle:
+    CITY_ALIASES: Dict[str, str] = json.load(_catalog_handle)["analysis_registry"]["dimensions"]["city"]["value_aliases"]
 
 # ── Location keywords that indicate geographic intent ──
 LOCATION_KEYWORDS = {

@@ -1,4 +1,5 @@
 import os
+import logging
 import re
 import threading
 import time
@@ -11,6 +12,8 @@ import psycopg2.extras
 
 from db import get_db_conn
 
+
+logger = logging.getLogger("ai-metadata")
 
 LOCAL_TTL_SECONDS = int(os.getenv("METADATA_LOCAL_TTL_SECONDS", "600"))
 SOURCE_TTL_SECONDS = int(os.getenv("METADATA_SOURCE_TTL_SECONDS", "2700"))
@@ -29,6 +32,7 @@ PII_EXACT = {
     "dia_chi", "dia_chi_day_du", "dia_chi_giao_hang", "delivery_address",
     "mat_khau", "mat_khau_hash", "password", "password_hash", "auth_pass",
     "access_token", "refresh_token", "token", "secret", "session_id",
+    "staff_name", "staff_username", "ten_nhan_vien", "bien_so_xe",
     "reset_password_code_hash", "ma_tham_chieu", "du_lieu_tho",
 }
 PII_FRAGMENTS = ("password", "token", "secret", "email", "phone", "dien_thoai", "dia_chi")
@@ -116,7 +120,8 @@ def _introspect(connection_factory: Callable[[], Any], schemas: Optional[List[st
                 SELECT n.nspname AS schema_name, c.relname AS object_name,
                        a.attname AS column_name, format_type(a.atttypid, a.atttypmod) AS data_type,
                        NOT a.attnotnull AS nullable, a.attnum AS ordinal_position,
-                       col_description(c.oid, a.attnum) AS comment
+                       col_description(c.oid, a.attnum) AS comment,
+                       ARRAY(SELECT enumlabel FROM pg_enum WHERE enumtypid = a.atttypid ORDER BY enumsortorder) AS enum_values
                 FROM pg_attribute a
                 JOIN pg_class c ON c.oid = a.attrelid
                 JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -218,6 +223,7 @@ def _introspect(connection_factory: Callable[[], Any], schemas: Optional[List[st
                 "foreign_key": None,
                 "sensitive": is_sensitive_column(row["column_name"]),
                 "comment": row.get("comment"),
+                "enum_values": row.get("enum_values") or [],
             })
     for row in key_rows:
         target = by_name.get(f"{row['schema_name']}.{row['object_name']}")
@@ -270,7 +276,7 @@ def _cached(name: str, ttl: int, loader: Callable[[], Dict[str, Any]], force: bo
     except Exception:
         with _lock:
             entry = _cache.get(name)
-            if entry:
+            if entry and not force:
                 return entry["value"]
         raise
     with _lock:
@@ -281,14 +287,6 @@ def _cached(name: str, ttl: int, loader: Callable[[], Dict[str, Any]], force: bo
 def get_local_metadata(force: bool = False) -> Dict[str, Any]:
     meta = _cached("local", LOCAL_TTL_SECONDS, lambda: _introspect(get_db_conn), force)
     table_map = meta.get("table_map", {})
-    # Self-healing: If silver views are missing but source tables exist, initialize views and refresh cache
-    if "silver.don_hang" not in table_map and "orders.don_hang" in table_map:
-        try:
-            from db import init_warehouse_views
-            if init_warehouse_views():
-                meta = _cached("local", LOCAL_TTL_SECONDS, lambda: _introspect(get_db_conn), force=True)
-        except Exception:
-            pass
     return meta
 
 

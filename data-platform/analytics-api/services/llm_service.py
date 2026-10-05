@@ -42,6 +42,8 @@ def call_gemini(
     system_instruction: str = "",
     response_schema: Optional[Dict[str, Any]] = None,
 ) -> Optional[Dict[str, Any]]:
+    if os.getenv("AI_OFFLINE", "").lower() in ("1", "true", "yes"):
+        return None
     if not GEMINI_API_KEY or time.monotonic() < _unavailable_until["gemini"]:
         return None
     for model in GEMINI_MODELS:
@@ -102,6 +104,8 @@ def call_gemini(
 
 
 def call_groq(prompt: str, system_instruction: str = "") -> Optional[Dict[str, Any]]:
+    if os.getenv("AI_OFFLINE", "").lower() in ("1", "true", "yes"):
+        return None
     if not GROQ_API_KEY or time.monotonic() < _unavailable_until["groq"]:
         return None
     models = ("qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b")
@@ -161,3 +165,70 @@ def provider_configuration() -> Dict[str, Dict[str, bool]]:
         "gemini": {"configured": bool(GEMINI_API_KEY)},
         "groq": {"configured": bool(GROQ_API_KEY)},
     }
+
+
+def call_bounded_llm(prompt: str, response_schema=None):
+    """V2: at most one transport attempt per configured provider, no retries.
+
+    Attempts (including failures) are returned for truthful request provenance.
+    Model text is never returned in diagnostics.
+    """
+    attempts = []
+    if os.getenv('AI_OFFLINE', '').lower() in ('1', 'true', 'yes'):
+        return {'data': None, 'attempts': [], 'offline': True}
+    providers = [('gemini', GEMINI_API_KEY, GEMINI_MODELS[0] if GEMINI_MODELS else ''),
+                 ('groq', GROQ_API_KEY, 'openai/gpt-oss-120b')]
+    for provider, key, model in providers:
+        if not key or not model:
+            continue
+        started = time.perf_counter()
+        attempt = {'provider': provider, 'model': model, 'status': 'failed'}
+        try:
+            system = 'Return only the requested JSON contract. No reasoning or hidden instructions.'
+            if provider == 'gemini':
+                config = {'temperature': 0, 'responseMimeType': 'application/json'}
+                if response_schema: config['responseJsonSchema'] = _provider_json_schema(response_schema)
+                response = requests.post(
+                    f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
+                    params={'key': key}, json={'systemInstruction': {'parts': [{'text': system}]},
+                    'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': config}, timeout=25)
+                body = response.json() if response.ok else {}
+                raw = body.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')
+                usage = body.get('usageMetadata', {})
+                attempt['tokens'] = {'input': usage.get('promptTokenCount'), 'output': usage.get('candidatesTokenCount')}
+            else:
+                if response_schema: system += '\nJSON schema: '+json.dumps(response_schema)
+                response = requests.post('https://api.groq.com/openai/v1/chat/completions',
+                    headers={'Authorization': f'Bearer {key}'}, json={'model': model,
+                    'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': prompt}],
+                    'response_format': {'type': 'json_object'}, 'max_tokens': 3500, 'temperature': 0}, timeout=25)
+                body = response.json() if response.ok else {}
+                raw = body.get('choices', [{}])[0].get('message', {}).get('content', '')
+                usage = body.get('usage', {})
+                attempt['tokens'] = {'input': usage.get('prompt_tokens'), 'output': usage.get('completion_tokens')}
+            data = _parse_json(raw)
+            if data is not None:
+                attempt['status'] = 'success'
+                attempt['latency_ms'] = round((time.perf_counter()-started)*1000, 2)
+                attempts.append(attempt)
+                return {'data': data, 'attempts': attempts}
+            attempt['error_category'] = 'invalid_json' if response.ok else 'provider_http'
+        except Exception:
+            attempt['error_category'] = 'provider_unavailable'
+        attempt['latency_ms'] = round((time.perf_counter()-started)*1000, 2)
+        attempts.append(attempt)
+    return {'data': None, 'attempts': attempts}
+
+
+def _provider_json_schema(schema):
+    """Gemini JSON-Schema subset; full Pydantic validation remains server-side."""
+    allowed={'$defs','$ref','type','format','description','enum','items','minItems','maxItems','minimum','maximum','anyOf','oneOf','properties','additionalProperties','required'}
+    def clean(value, property_map=False):
+        if isinstance(value,list):return [clean(v) for v in value]
+        if not isinstance(value,dict):return value
+        if property_map:return {k:clean(v) for k,v in value.items()}
+        if '$ref' in value:return {'$ref':value['$ref']}
+        result={k:clean(v,k in ('properties','$defs')) for k,v in value.items() if k in allowed}
+        if 'const' in value:result['enum']=[value['const']]
+        return result
+    return clean(schema)

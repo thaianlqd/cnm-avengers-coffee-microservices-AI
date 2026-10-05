@@ -54,6 +54,19 @@ class ReportSession:
     current_sql: Dict[str, str] = field(default_factory=dict)  # {main, kpi, trend, breakdown}
     current_results_snapshot: Dict[str, Any] = field(default_factory=dict)
 
+    # V2 authoritative analytical state; SQL is an output, not session meaning.
+    analysis_spec: Dict[str, Any] = field(default_factory=dict)
+    grounded_spec: Dict[str, Any] = field(default_factory=dict)
+    query_plans: List[Dict[str, Any]] = field(default_factory=list)
+    schema_fingerprint: str = ""
+    last_result_contract: Dict[str, Any] = field(default_factory=dict)
+    proposed_prompt: str = ""
+    proposed_request: str = ""
+    analysis_lock: Any = field(default_factory=threading.RLock, repr=False)
+    approved: bool = False
+    diagnostics: Dict[str, Any] = field(default_factory=dict)
+    report_response: Dict[str, Any] = field(default_factory=dict)
+
     # Full conversation history
     conversation_turns: List[ConversationTurn] = field(default_factory=list)
 
@@ -239,6 +252,7 @@ def create_session(
 def get_session(session_id: str) -> Optional[ReportSession]:
     """Retrieve a session by ID, refreshing its TTL."""
     with _lock:
+        _cleanup_expired()
         session = _sessions.get(session_id)
         if session:
             _timestamps[session_id] = time.monotonic()

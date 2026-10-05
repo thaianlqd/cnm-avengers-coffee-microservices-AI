@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "description": "Semantic Knowledge Catalog & Comprehensive Data Dictionary cho Avengers Coffee AI — Toàn bộ CSDL Tầng Silver (19 bảng/view)",
   "silver_tables": {
     "silver.don_hang": {
@@ -87,7 +87,9 @@
           "type": "timestamp without time zone",
           "description": "Thời điểm cập nhật đơn hàng gần nhất"
         }
-      }
+      },
+      "analytical_role": "fact",
+      "source_of_truth": "silver_warehouse"
     },
     "silver.chi_tiet_don_hang": {
       "business_name": "Chi tiết từng món trong đơn",
@@ -150,7 +152,9 @@
           "type": "numeric",
           "description": "Thành tiền của dòng món = so_luong * gia_ban + toppings (VNĐ)"
         }
-      }
+      },
+      "analytical_role": "fact",
+      "source_of_truth": "silver_warehouse"
     },
     "silver.san_pham": {
       "business_name": "Thực đơn món đồ uống và sản phẩm",
@@ -213,7 +217,9 @@
           "type": "boolean",
           "description": "Cờ món mới ra mắt (New Item)"
         }
-      }
+      },
+      "analytical_role": "dimension",
+      "source_of_truth": "silver_warehouse"
     },
     "silver.danh_muc": {
       "business_name": "Danh mục phân loại thực đơn",
@@ -248,7 +254,9 @@
           "type": "integer",
           "description": "Cấp bậc phân cấp (1 = nhóm chính, 2 = nhóm con)"
         }
-      }
+      },
+      "analytical_role": "dimension",
+      "source_of_truth": "silver_warehouse"
     },
     "silver.bien_the_san_pham": {
       "business_name": "Biến thể món (Size & Phụ thu)",
@@ -287,7 +295,9 @@
           "type": "numeric",
           "description": "Số tiền phụ thu thêm cho biến thể (VNĐ)"
         }
-      }
+      },
+      "analytical_role": "fact",
+      "source_of_truth": "silver_warehouse"
     },
     "silver.chi_nhanh": {
       "business_name": "Mạng lưới chi nhánh cửa hàng",
@@ -354,7 +364,9 @@
           "type": "text",
           "description": "Giờ đóng cửa hàng ngày"
         }
-      }
+      },
+      "analytical_role": "dimension",
+      "source_of_truth": "silver_warehouse"
     },
     "silver.khu_vuc": {
       "business_name": "Phân vùng địa lý và khu vực kinh doanh",
@@ -375,7 +387,9 @@
           "type": "text",
           "description": "Mô tả phạm vi quản lý và đặc điểm vùng"
         }
-      }
+      },
+      "analytical_role": "fact",
+      "source_of_truth": "silver_warehouse"
     },
     "silver.khuyen_mai": {
       "business_name": "Chương trình khuyến mãi và Voucher giảm giá",
@@ -434,7 +448,9 @@
           "type": "timestamp with time zone",
           "description": "Thời gian kết thúc chiến dịch"
         }
-      }
+      },
+      "analytical_role": "fact",
+      "source_of_truth": "silver_warehouse"
     },
     "silver.voucher": {
       "business_name": "Voucher ưu đãi (Alias của silver.khuyen_mai)",
@@ -493,7 +509,9 @@
           "type": "timestamp with time zone",
           "description": "Thời gian kết thúc"
         }
-      }
+      },
+      "analytical_role": "fact",
+      "source_of_truth": "silver_warehouse"
     },
     "silver.nguoi_dung": {
       "business_name": "Khách hàng và hội viên thân thiết",
@@ -548,7 +566,9 @@
           "type": "timestamp without time zone",
           "description": "Thời điểm đăng ký tài khoản"
         }
-      }
+      },
+      "analytical_role": "fact",
+      "source_of_truth": "silver_warehouse"
     },
     "silver.giao_dich_thanh_toan": {
       "business_name": "Giao dịch qua cổng thanh toán",
@@ -587,7 +607,9 @@
           "type": "timestamp without time zone",
           "description": "Thời điểm phát sinh giao dịch thanh toán"
         }
-      }
+      },
+      "analytical_role": "fact",
+      "source_of_truth": "silver_warehouse"
     },
     "silver.shipper": {
       "business_name": "Đội ngũ tài xế và hiệu suất giao hàng",
@@ -628,7 +650,9 @@
           "type": "numeric",
           "description": "Điểm sao đánh giá chất lượng giao hàng (1 - 5 sao)"
         }
-      }
+      },
+      "analytical_role": "fact",
+      "source_of_truth": "silver_warehouse"
     },
     "silver.ton_kho_san_pham": {
       "business_name": "Tồn kho sản phẩm tại từng chi nhánh",
@@ -679,7 +703,9 @@
           "type": "timestamp without time zone",
           "description": "Thời điểm kiểm kê cập nhật gần nhất"
         }
-      }
+      },
+      "analytical_role": "fact",
+      "source_of_truth": "silver_warehouse"
     },
     "silver.danh_gia_san_pham": {
       "business_name": "Đánh giá chất lượng sản phẩm từ khách hàng",
@@ -738,7 +764,9 @@
           "type": "text",
           "description": "Phản hồi giải đáp của bộ phận quản lý thực đơn"
         }
-      }
+      },
+      "analytical_role": "fact",
+      "source_of_truth": "silver_warehouse"
     },
     "silver.danh_gia_chi_nhanh": {
       "business_name": "Đánh giá chất lượng dịch vụ chi nhánh",
@@ -785,7 +813,9 @@
           "type": "timestamp without time zone",
           "description": "Thời điểm gửi đánh giá"
         }
-      }
+      },
+      "analytical_role": "fact",
+      "source_of_truth": "silver_warehouse"
     },
     "silver.ca_lam_viec_nhan_vien": {
       "business_name": "Ca làm việc và chấm công nhân sự",
@@ -848,7 +878,9 @@
           "type": "text",
           "description": "Ghi chú giải trình hoặc bàn giao ca"
         }
-      }
+      },
+      "analytical_role": "fact",
+      "source_of_truth": "silver_warehouse"
     },
     "silver.ca_doi_soat": {
       "business_name": "Đối soát kết ca thu ngân và chênh lệch tiền két",
@@ -927,7 +959,9 @@
           "type": "timestamp without time zone",
           "description": "Thời điểm lập biên bản đối soát ca"
         }
-      }
+      },
+      "analytical_role": "fact",
+      "source_of_truth": "silver_warehouse"
     },
     "silver.khao_sat_phan_hoi": {
       "business_name": "Khảo sát ý kiến và phản hồi khách hàng",
@@ -974,7 +1008,9 @@
           "type": "timestamp without time zone",
           "description": "Thời điểm gửi câu trả lời khảo sát"
         }
-      }
+      },
+      "analytical_role": "fact",
+      "source_of_truth": "silver_warehouse"
     },
     "silver.yeu_thich_san_pham": {
       "business_name": "Món uống yêu thích (Wishlist khách hàng)",
@@ -1021,7 +1057,9 @@
           "type": "timestamp without time zone",
           "description": "Thời điểm khách hàng bấm yêu thích món"
         }
-      }
+      },
+      "analytical_role": "fact",
+      "source_of_truth": "silver_warehouse"
     }
   },
   "business_rules": [
@@ -2638,5 +2676,1871 @@
       "MANG_DI",
       "GIAO_TAN_NOI"
     ]
+  },
+  "analysis_registry": {
+    "metrics": {
+      "revenue": {
+        "business_name": "Doanh thu",
+        "aliases": [
+          "doanh thu",
+          "doanh số",
+          "sales",
+          "tiền bán",
+          "revenue",
+          "Doanh thu",
+          "revenue"
+        ],
+        "expression": "SUM(silver.don_hang.tong_tien)",
+        "source": "silver.don_hang",
+        "grain": "order",
+        "time_column": "silver.don_hang.ngay_tao",
+        "unit": "VND",
+        "subjects": [
+          "orders"
+        ],
+        "business_filters": [
+          {
+            "dimension": "order_status",
+            "operator": "in",
+            "value": [
+              "HOAN_THANH",
+              "DANG_GIAO"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "additive": true
+      },
+      "order_count": {
+        "business_name": "Số lượng đơn",
+        "aliases": [
+          "số đơn",
+          "đơn hàng",
+          "order_count",
+          "Số lượng đơn",
+          "order count"
+        ],
+        "expression": "COUNT(*)",
+        "source": "silver.don_hang",
+        "grain": "order",
+        "time_column": "silver.don_hang.ngay_tao",
+        "unit": "đơn",
+        "subjects": [
+          "orders"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true
+      },
+      "aov": {
+        "business_name": "Giá trị đơn trung bình",
+        "aliases": [
+          "aov",
+          "trung bình đơn",
+          "aov",
+          "Giá trị đơn trung bình",
+          "aov"
+        ],
+        "expression": "SUM(silver.don_hang.tong_tien) / NULLIF(COUNT(*), 0)",
+        "source": "silver.don_hang",
+        "grain": "order",
+        "time_column": "silver.don_hang.ngay_tao",
+        "unit": "VND",
+        "subjects": [
+          "orders"
+        ],
+        "business_filters": [
+          {
+            "dimension": "order_status",
+            "operator": "in",
+            "value": [
+              "HOAN_THANH",
+              "DANG_GIAO"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "additive": false
+      },
+      "voucher_revenue": {
+        "business_name": "Doanh thu đơn có khuyến mãi",
+        "aliases": [
+          "doanh thu voucher",
+          "doanh số khuyến mãi",
+          "voucher_revenue",
+          "Doanh thu đơn có khuyến mãi",
+          "voucher revenue"
+        ],
+        "expression": "SUM(silver.don_hang.tong_tien)",
+        "source": "silver.don_hang",
+        "grain": "order",
+        "time_column": "silver.don_hang.ngay_tao",
+        "unit": "VND",
+        "subjects": [
+          "promotions"
+        ],
+        "business_filters": [
+          {
+            "dimension": "order_status",
+            "operator": "in",
+            "value": [
+              "HOAN_THANH",
+              "DANG_GIAO"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "required_non_null": [
+          "silver.don_hang.ma_voucher"
+        ],
+        "additive": true
+      },
+      "discount_amount": {
+        "business_name": "Tổng tiền đã giảm giá",
+        "aliases": [
+          "tiền giảm",
+          "giảm giá",
+          "chiết khấu",
+          "discount_amount",
+          "Tổng tiền đã giảm giá",
+          "discount amount"
+        ],
+        "expression": "SUM(silver.don_hang.so_tien_giam)",
+        "source": "silver.don_hang",
+        "grain": "order",
+        "time_column": "silver.don_hang.ngay_tao",
+        "unit": "VND",
+        "subjects": [
+          "promotions"
+        ],
+        "business_filters": [
+          {
+            "dimension": "order_status",
+            "operator": "in",
+            "value": [
+              "HOAN_THANH",
+              "DANG_GIAO"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "required_non_null": [
+          "silver.don_hang.ma_voucher"
+        ],
+        "additive": true
+      },
+      "voucher_order_count": {
+        "business_name": "Số đơn áp dụng khuyến mãi",
+        "aliases": [
+          "số đơn dùng voucher",
+          "lượt dùng",
+          "voucher_order_count",
+          "Số đơn áp dụng khuyến mãi",
+          "voucher order count"
+        ],
+        "expression": "COUNT(silver.don_hang.ma_don_hang)",
+        "source": "silver.don_hang",
+        "grain": "order",
+        "time_column": "silver.don_hang.ngay_tao",
+        "unit": "đơn",
+        "subjects": [
+          "promotions"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "required_non_null": [
+          "silver.don_hang.ma_voucher"
+        ],
+        "additive": true
+      },
+      "quantity_sold": {
+        "business_name": "Số lượng ly bán",
+        "aliases": [
+          "số lượng",
+          "ly bán",
+          "sản lượng",
+          "quantity_sold",
+          "Số lượng ly bán",
+          "bán chạy nhất",
+          "quantity sold"
+        ],
+        "expression": "SUM(silver.chi_tiet_don_hang.so_luong)",
+        "source": "silver.chi_tiet_don_hang",
+        "grain": "order_line",
+        "time_column": "silver.don_hang.ngay_tao",
+        "unit": "ly",
+        "subjects": [
+          "order_items",
+          "products"
+        ],
+        "business_filters": [
+          {
+            "dimension": "order_status",
+            "operator": "in",
+            "value": [
+              "HOAN_THANH",
+              "DANG_GIAO"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "additive": true
+      },
+      "item_revenue": {
+        "business_name": "Doanh thu món",
+        "aliases": [
+          "doanh thu món",
+          "tiền món",
+          "item_revenue",
+          "Doanh thu món",
+          "item revenue"
+        ],
+        "expression": "SUM(silver.chi_tiet_don_hang.thanh_tien)",
+        "source": "silver.chi_tiet_don_hang",
+        "grain": "order_line",
+        "time_column": "silver.don_hang.ngay_tao",
+        "unit": "VND",
+        "subjects": [
+          "order_items"
+        ],
+        "business_filters": [
+          {
+            "dimension": "order_status",
+            "operator": "in",
+            "value": [
+              "HOAN_THANH",
+              "DANG_GIAO"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "additive": true
+      },
+      "product_revenue": {
+        "business_name": "Doanh thu sản phẩm",
+        "aliases": [
+          "doanh thu món",
+          "product_revenue",
+          "Doanh thu sản phẩm",
+          "product revenue"
+        ],
+        "expression": "SUM(silver.chi_tiet_don_hang.thanh_tien)",
+        "source": "silver.chi_tiet_don_hang",
+        "grain": "order_line",
+        "time_column": "silver.don_hang.ngay_tao",
+        "unit": "VND",
+        "subjects": [
+          "products"
+        ],
+        "business_filters": [
+          {
+            "dimension": "order_status",
+            "operator": "in",
+            "value": [
+              "HOAN_THANH",
+              "DANG_GIAO"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "additive": true
+      },
+      "store_revenue": {
+        "business_name": "Doanh thu chi nhánh",
+        "aliases": [
+          "doanh thu chi nhánh",
+          "store_revenue",
+          "Doanh thu chi nhánh",
+          "store revenue"
+        ],
+        "expression": "SUM(silver.don_hang.tong_tien)",
+        "source": "silver.don_hang",
+        "grain": "order",
+        "time_column": "silver.don_hang.ngay_tao",
+        "unit": "VND",
+        "subjects": [
+          "stores"
+        ],
+        "business_filters": [
+          {
+            "dimension": "order_status",
+            "operator": "in",
+            "value": [
+              "HOAN_THANH",
+              "DANG_GIAO"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "additive": true
+      },
+      "store_order_count": {
+        "business_name": "Số đơn chi nhánh",
+        "aliases": [
+          "số đơn",
+          "store_order_count",
+          "Số đơn chi nhánh",
+          "store order count"
+        ],
+        "expression": "COUNT(silver.don_hang.ma_don_hang)",
+        "source": "silver.don_hang",
+        "grain": "order",
+        "time_column": "silver.don_hang.ngay_tao",
+        "unit": "đơn",
+        "subjects": [
+          "stores"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true
+      },
+      "store_aov": {
+        "business_name": "AOV chi nhánh",
+        "aliases": [
+          "aov chi nhánh",
+          "store_aov",
+          "AOV chi nhánh",
+          "store aov"
+        ],
+        "expression": "AVG(silver.don_hang.tong_tien)",
+        "source": "silver.don_hang",
+        "grain": "order",
+        "time_column": "silver.don_hang.ngay_tao",
+        "unit": "VND",
+        "subjects": [
+          "stores"
+        ],
+        "business_filters": [
+          {
+            "dimension": "order_status",
+            "operator": "in",
+            "value": [
+              "HOAN_THANH",
+              "DANG_GIAO"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "additive": false
+      },
+      "customer_count": {
+        "business_name": "Số khách",
+        "aliases": [
+          "số khách",
+          "hội viên",
+          "customer_count",
+          "Số khách",
+          "customer count"
+        ],
+        "expression": "COUNT(DISTINCT silver.nguoi_dung.ma_nguoi_dung)",
+        "source": "silver.nguoi_dung",
+        "grain": "customer",
+        "time_column": "silver.nguoi_dung.ngay_tao",
+        "unit": "khách",
+        "subjects": [
+          "customers"
+        ],
+        "business_filters": [
+          {
+            "dimension": "customer_role",
+            "operator": "eq",
+            "value": "CUSTOMER"
+          }
+        ],
+        "non_negative": true,
+        "additive": true
+      },
+      "total_spent": {
+        "business_name": "Tổng chi tiêu tích lũy",
+        "aliases": [
+          "tổng chi tiêu",
+          "tiền tích lũy",
+          "total_spent",
+          "Tổng chi tiêu tích lũy",
+          "total spent"
+        ],
+        "expression": "SUM(silver.nguoi_dung.tong_chi_tieu)",
+        "source": "silver.nguoi_dung",
+        "grain": "customer",
+        "time_column": null,
+        "unit": "VND",
+        "subjects": [
+          "customers"
+        ],
+        "business_filters": [
+          {
+            "dimension": "customer_role",
+            "operator": "eq",
+            "value": "CUSTOMER"
+          }
+        ],
+        "non_negative": true,
+        "additive": true
+      },
+      "payment_count": {
+        "business_name": "Số giao dịch",
+        "aliases": [
+          "số giao dịch",
+          "payment_count",
+          "Số giao dịch",
+          "payment count"
+        ],
+        "expression": "COUNT(*)",
+        "source": "silver.giao_dich_thanh_toan",
+        "grain": "payment",
+        "time_column": "silver.giao_dich_thanh_toan.ngay_tao",
+        "unit": "lượt",
+        "subjects": [
+          "payments"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true
+      },
+      "payment_revenue": {
+        "business_name": "Doanh thu thanh toán",
+        "aliases": [
+          "doanh thu",
+          "payment_revenue",
+          "Doanh thu thanh toán",
+          "payment revenue"
+        ],
+        "expression": "SUM(silver.giao_dich_thanh_toan.so_tien)",
+        "source": "silver.giao_dich_thanh_toan",
+        "grain": "payment",
+        "time_column": "silver.giao_dich_thanh_toan.ngay_tao",
+        "unit": "VND",
+        "subjects": [
+          "payments"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true
+      },
+      "total_deliveries": {
+        "business_name": "Tổng chuyến giao",
+        "aliases": [
+          "chuyến giao",
+          "total_deliveries",
+          "Tổng chuyến giao",
+          "total deliveries"
+        ],
+        "expression": "SUM(silver.shipper.tong_chuyen_giao)",
+        "source": "silver.shipper",
+        "grain": "driver_snapshot",
+        "time_column": null,
+        "unit": "lượt",
+        "subjects": [
+          "delivery"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true
+      },
+      "driver_rating": {
+        "business_name": "Điểm đánh giá trung bình",
+        "aliases": [
+          "đánh giá",
+          "sao",
+          "driver_rating",
+          "Điểm đánh giá trung bình",
+          "driver rating"
+        ],
+        "expression": "AVG(silver.shipper.diem_danh_gia)",
+        "source": "silver.shipper",
+        "grain": "driver_snapshot",
+        "time_column": null,
+        "unit": "điểm",
+        "subjects": [
+          "delivery"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": false
+      },
+      "stock_quantity": {
+        "business_name": "Số lượng tồn kho",
+        "aliases": [
+          "tồn kho",
+          "tồn",
+          "stock_quantity",
+          "Số lượng tồn kho",
+          "stock quantity"
+        ],
+        "expression": "SUM(silver.ton_kho_san_pham.so_luong_ton)",
+        "source": "silver.ton_kho_san_pham",
+        "grain": "store_product_snapshot",
+        "time_column": null,
+        "unit": "đơn vị",
+        "subjects": [
+          "inventory"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true
+      },
+      "low_stock_count": {
+        "business_name": "Số món dưới định mức",
+        "aliases": [
+          "sắp hết",
+          "low_stock_count",
+          "Số món dưới định mức",
+          "low stock count"
+        ],
+        "expression": "COUNT(*) FILTER (WHERE silver.ton_kho_san_pham.so_luong_ton <= silver.ton_kho_san_pham.muc_canh_bao)",
+        "source": "silver.ton_kho_san_pham",
+        "grain": "store_product_snapshot",
+        "time_column": null,
+        "unit": "lượt",
+        "subjects": [
+          "inventory"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true
+      },
+      "avg_product_rating": {
+        "business_name": "Điểm đánh giá trung bình",
+        "aliases": [
+          "điểm sao",
+          "đánh giá tb",
+          "avg_product_rating",
+          "Điểm đánh giá trung bình",
+          "avg product rating"
+        ],
+        "expression": "ROUND(AVG(silver.danh_gia_san_pham.so_sao), 2)",
+        "source": "silver.danh_gia_san_pham",
+        "grain": "review",
+        "time_column": "silver.danh_gia_san_pham.ngay_tao",
+        "unit": "điểm",
+        "subjects": [
+          "product_reviews"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": false
+      },
+      "review_count": {
+        "business_name": "Số lượt đánh giá",
+        "aliases": [
+          "lượt review",
+          "số đánh giá",
+          "review_count",
+          "Số lượt đánh giá",
+          "review count"
+        ],
+        "expression": "COUNT(*)",
+        "source": "silver.danh_gia_san_pham",
+        "grain": "review",
+        "time_column": "silver.danh_gia_san_pham.ngay_tao",
+        "unit": "lượt",
+        "subjects": [
+          "product_reviews"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true
+      },
+      "avg_store_rating": {
+        "business_name": "Điểm phục vụ trung bình",
+        "aliases": [
+          "sao chi nhánh",
+          "điểm phục vụ",
+          "avg_store_rating",
+          "Điểm phục vụ trung bình",
+          "avg store rating"
+        ],
+        "expression": "ROUND(AVG(silver.danh_gia_chi_nhanh.so_sao), 2)",
+        "source": "silver.danh_gia_chi_nhanh",
+        "grain": "review",
+        "time_column": "silver.danh_gia_chi_nhanh.ngay_tao",
+        "unit": "điểm",
+        "subjects": [
+          "store_reviews"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": false
+      },
+      "store_review_count": {
+        "business_name": "Số lượt đánh giá quán",
+        "aliases": [
+          "số đánh giá quán",
+          "store_review_count",
+          "Số lượt đánh giá quán",
+          "store review count"
+        ],
+        "expression": "COUNT(*)",
+        "source": "silver.danh_gia_chi_nhanh",
+        "grain": "review",
+        "time_column": "silver.danh_gia_chi_nhanh.ngay_tao",
+        "unit": "lượt",
+        "subjects": [
+          "store_reviews"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true
+      },
+      "shift_count": {
+        "business_name": "Tổng số ca làm",
+        "aliases": [
+          "số ca",
+          "shift_count",
+          "Tổng số ca làm",
+          "shift count"
+        ],
+        "expression": "COUNT(*)",
+        "source": "silver.ca_lam_viec_nhan_vien",
+        "grain": "shift",
+        "time_column": "silver.ca_lam_viec_nhan_vien.ngay_lam_viec",
+        "unit": "lượt",
+        "subjects": [
+          "staff_shifts"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true
+      },
+      "late_count": {
+        "business_name": "Số ca đi trễ",
+        "aliases": [
+          "đi trễ",
+          "late_count",
+          "Số ca đi trễ",
+          "late count"
+        ],
+        "expression": "COUNT(*) FILTER (WHERE silver.ca_lam_viec_nhan_vien.trang_thai_cham_cong = 'DI_TRE')",
+        "source": "silver.ca_lam_viec_nhan_vien",
+        "grain": "shift",
+        "time_column": "silver.ca_lam_viec_nhan_vien.ngay_lam_viec",
+        "unit": "lượt",
+        "subjects": [
+          "staff_shifts"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true
+      },
+      "total_cash_difference": {
+        "business_name": "Tổng tiền chênh lệch",
+        "aliases": [
+          "chênh lệch",
+          "lệch tiền",
+          "total_cash_difference",
+          "Tổng tiền chênh lệch",
+          "total cash difference"
+        ],
+        "expression": "SUM(silver.ca_doi_soat.chenh_lech)",
+        "source": "silver.ca_doi_soat",
+        "grain": "cash_shift",
+        "time_column": "silver.ca_doi_soat.ngay_tao",
+        "unit": "VND",
+        "subjects": [
+          "cashier_reconciliation"
+        ],
+        "business_filters": [],
+        "non_negative": false,
+        "additive": true
+      },
+      "system_cash_revenue": {
+        "business_name": "Doanh thu tiền mặt hệ thống",
+        "aliases": [
+          "tiền mặt",
+          "system_cash_revenue",
+          "Doanh thu tiền mặt hệ thống",
+          "system cash revenue"
+        ],
+        "expression": "SUM(silver.ca_doi_soat.tien_mat_he_thong)",
+        "source": "silver.ca_doi_soat",
+        "grain": "cash_shift",
+        "time_column": "silver.ca_doi_soat.ngay_tao",
+        "unit": "VND",
+        "subjects": [
+          "cashier_reconciliation"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true
+      },
+      "reconciled_shifts": {
+        "business_name": "Số ca đã đối soát",
+        "aliases": [
+          "số ca đối soát",
+          "reconciled_shifts",
+          "Số ca đã đối soát",
+          "reconciled shifts"
+        ],
+        "expression": "COUNT(*)",
+        "source": "silver.ca_doi_soat",
+        "grain": "cash_shift",
+        "time_column": "silver.ca_doi_soat.ngay_tao",
+        "unit": "lượt",
+        "subjects": [
+          "cashier_reconciliation"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true
+      },
+      "survey_response_count": {
+        "business_name": "Số lượt phản hồi khảo sát",
+        "aliases": [
+          "lượt khảo sát",
+          "số phản hồi",
+          "survey_response_count",
+          "Số lượt phản hồi khảo sát",
+          "survey response count"
+        ],
+        "expression": "COUNT(*)",
+        "source": "silver.khao_sat_phan_hoi",
+        "grain": "survey_response",
+        "time_column": "silver.khao_sat_phan_hoi.ngay_tao",
+        "unit": "lượt",
+        "subjects": [
+          "customer_surveys"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true
+      },
+      "favorite_count": {
+        "business_name": "Số lượt thả tim yêu thích",
+        "aliases": [
+          "lượt yêu thích",
+          "lượt thả tim",
+          "favorite_count",
+          "Số lượt thả tim yêu thích",
+          "favorite count"
+        ],
+        "expression": "COUNT(*)",
+        "source": "silver.yeu_thich_san_pham",
+        "grain": "favorite",
+        "time_column": "silver.yeu_thich_san_pham.ngay_tao",
+        "unit": "lượt",
+        "subjects": [
+          "wishlist_favorites"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true
+      },
+      "hourly_orders": {
+        "business_name": "Số đơn theo giờ",
+        "aliases": [
+          "đông nhất",
+          "hourly_orders",
+          "Số đơn theo giờ",
+          "hourly orders"
+        ],
+        "expression": "COUNT(*)",
+        "source": "silver.don_hang",
+        "grain": "order",
+        "time_column": "silver.don_hang.ngay_tao",
+        "unit": "đơn",
+        "subjects": [
+          "hourly"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true
+      }
+    },
+    "dimensions": {
+      "product": {
+        "table": "silver.san_pham",
+        "column": "ten_san_pham",
+        "business_name": "Sản phẩm",
+        "aliases": [
+          "product",
+          "Sản phẩm"
+        ],
+        "role": "dimension",
+        "identity": "product_id"
+      },
+      "product_id": {
+        "table": "silver.san_pham",
+        "column": "ma_san_pham",
+        "business_name": "Mã sản phẩm",
+        "aliases": [
+          "product_id",
+          "Mã sản phẩm"
+        ],
+        "role": "dimension"
+      },
+      "category": {
+        "table": "silver.danh_muc",
+        "column": "ten_danh_muc",
+        "business_name": "Danh mục",
+        "aliases": [
+          "category",
+          "Danh mục"
+        ],
+        "role": "dimension"
+      },
+      "store": {
+        "table": "silver.chi_nhanh",
+        "column": "ten_chi_nhanh",
+        "business_name": "Chi nhánh",
+        "aliases": [
+          "store",
+          "Chi nhánh"
+        ],
+        "role": "dimension",
+        "identity": "store_id"
+      },
+      "store_id": {
+        "table": "silver.chi_nhanh",
+        "column": "ma_chi_nhanh",
+        "business_name": "Mã chi nhánh",
+        "aliases": [
+          "store_id",
+          "Mã chi nhánh"
+        ],
+        "role": "dimension"
+      },
+      "city": {
+        "table": "silver.chi_nhanh",
+        "column": "thanh_pho",
+        "business_name": "Thành phố",
+        "aliases": [
+          "city",
+          "Thành phố"
+        ],
+        "role": "dimension",
+        "value_aliases": {
+          "hcm": "Hồ Chí Minh",
+          "tphcm": "Hồ Chí Minh",
+          "tp.hcm": "Hồ Chí Minh",
+          "tp hcm": "Hồ Chí Minh",
+          "sai gon": "Hồ Chí Minh",
+          "saigon": "Hồ Chí Minh",
+          "ho chi minh": "Hồ Chí Minh",
+          "hồ chí minh": "Hồ Chí Minh",
+          "ha noi": "Hà Nội",
+          "hà nội": "Hà Nội",
+          "hn": "Hà Nội",
+          "hanoi": "Hà Nội",
+          "da nang": "Đà Nẵng",
+          "đà nẵng": "Đà Nẵng",
+          "dn": "Đà Nẵng",
+          "danang": "Đà Nẵng",
+          "can tho": "Cần Thơ",
+          "cần thơ": "Cần Thơ",
+          "cantho": "Cần Thơ",
+          "hai phong": "Hải Phòng",
+          "hải phòng": "Hải Phòng",
+          "haiphong": "Hải Phòng",
+          "binh duong": "Bình Dương",
+          "bình dương": "Bình Dương",
+          "dong nai": "Đồng Nai",
+          "đồng nai": "Đồng Nai",
+          "khanh hoa": "Khánh Hòa",
+          "khánh hòa": "Khánh Hòa",
+          "nha trang": "Khánh Hòa",
+          "quang ninh": "Quảng Ninh",
+          "quảng ninh": "Quảng Ninh",
+          "ha long": "Quảng Ninh",
+          "hue": "Thừa Thiên - Huế",
+          "huế": "Thừa Thiên - Huế",
+          "vung tau": "Bà Rịa - Vũng Tàu",
+          "vũng tàu": "Bà Rịa - Vũng Tàu",
+          "bac ninh": "Bắc Ninh",
+          "bắc ninh": "Bắc Ninh",
+          "nghe an": "Nghệ An",
+          "nghệ an": "Nghệ An",
+          "thanh hoa": "Thanh Hóa",
+          "thanh hóa": "Thanh Hóa",
+          "lam dong": "Lâm Đồng",
+          "lâm đồng": "Lâm Đồng",
+          "da lat": "Lâm Đồng",
+          "đà lạt": "Lâm Đồng",
+          "kien giang": "Kiên Giang",
+          "kiên giang": "Kiên Giang",
+          "phu quoc": "Kiên Giang",
+          "phú quốc": "Kiên Giang"
+        },
+        "enum": [
+          "Hồ Chí Minh",
+          "Hà Nội",
+          "Đà Nẵng",
+          "Cần Thơ",
+          "Hải Phòng",
+          "Nghệ An",
+          "Bắc Ninh",
+          "Lâm Đồng",
+          "Bình Dương",
+          "Đồng Nai",
+          "Khánh Hòa",
+          "Quảng Ninh",
+          "Thừa Thiên - Huế",
+          "Bà Rịa - Vũng Tàu",
+          "Thanh Hóa",
+          "Kiên Giang"
+        ]
+      },
+      "customer_id": {
+        "table": "silver.nguoi_dung",
+        "column": "ma_nguoi_dung",
+        "business_name": "Mã khách hàng",
+        "aliases": [
+          "customer_id",
+          "Mã khách hàng"
+        ],
+        "role": "dimension"
+      },
+      "customer_role": {
+        "table": "silver.nguoi_dung",
+        "column": "vai_tro",
+        "business_name": "Vai trò",
+        "aliases": [
+          "customer_role",
+          "Vai trò"
+        ],
+        "role": "dimension"
+      },
+      "loyalty_points": {
+        "table": "silver.nguoi_dung",
+        "column": "diem_loyalty",
+        "business_name": "Điểm thành viên",
+        "aliases": [
+          "loyalty_points",
+          "Điểm thành viên"
+        ],
+        "role": "dimension"
+      },
+      "lifetime_spend": {
+        "table": "silver.nguoi_dung",
+        "column": "tong_chi_tieu",
+        "business_name": "Chi tiêu tích lũy",
+        "aliases": [
+          "lifetime_spend",
+          "Chi tiêu tích lũy"
+        ],
+        "role": "dimension"
+      },
+      "order_id": {
+        "table": "silver.don_hang",
+        "column": "ma_don_hang",
+        "business_name": "Mã đơn",
+        "aliases": [
+          "order_id",
+          "Mã đơn"
+        ],
+        "role": "dimension"
+      },
+      "order_status": {
+        "table": "silver.don_hang",
+        "column": "trang_thai_don_hang",
+        "business_name": "Trạng thái đơn",
+        "aliases": [
+          "order_status",
+          "Trạng thái đơn"
+        ],
+        "role": "dimension",
+        "enum": [
+          "HOAN_THANH",
+          "DANG_GIAO",
+          "CHO_THANH_TOAN",
+          "DA_XAC_NHAN",
+          "MOI_TAO",
+          "DA_HUY"
+        ],
+        "value_aliases": {
+          "đã hủy": "DA_HUY",
+          "hoàn thành": "HOAN_THANH",
+          "đang giao": "DANG_GIAO",
+          "mới tạo": "MOI_TAO",
+          "chờ thanh toán": "CHO_THANH_TOAN",
+          "đã xác nhận": "DA_XAC_NHAN"
+        }
+      },
+      "payment_method": {
+        "table": "silver.don_hang",
+        "column": "phuong_thuc_thanh_toan",
+        "business_name": "Phương thức thanh toán",
+        "aliases": [
+          "payment_method",
+          "Phương thức thanh toán"
+        ],
+        "role": "dimension",
+        "enum": [
+          "TIEN_MAT",
+          "NGAN_HANG_QR",
+          "THE_NGAN_HANG",
+          "CHUYEN_KHOAN",
+          "THANH_TOAN_KHI_NHAN_HANG",
+          "VI_DIEN_TU",
+          "VNPAY"
+        ]
+      },
+      "payment_status": {
+        "table": "silver.don_hang",
+        "column": "trang_thai_thanh_toan",
+        "business_name": "Trạng thái thanh toán",
+        "aliases": [
+          "payment_status",
+          "Trạng thái thanh toán"
+        ],
+        "role": "dimension"
+      },
+      "order_amount": {
+        "table": "silver.don_hang",
+        "column": "tong_tien",
+        "business_name": "Giá trị đơn",
+        "aliases": [
+          "order_amount",
+          "Giá trị đơn"
+        ],
+        "role": "dimension"
+      },
+      "order_created": {
+        "table": "silver.don_hang",
+        "column": "ngay_tao",
+        "business_name": "Ngày tạo đơn",
+        "aliases": [
+          "order_created",
+          "Ngày tạo đơn"
+        ],
+        "role": "dimension"
+      },
+      "promotion": {
+        "table": "silver.khuyen_mai",
+        "column": "ten_khuyen_mai",
+        "business_name": "Khuyến mãi",
+        "aliases": [
+          "promotion",
+          "Khuyến mãi"
+        ],
+        "role": "dimension"
+      },
+      "promotion_id": {
+        "table": "silver.don_hang",
+        "column": "ma_voucher",
+        "business_name": "Mã khuyến mãi",
+        "aliases": [
+          "promotion_id",
+          "Mã khuyến mãi"
+        ],
+        "role": "dimension"
+      },
+      "payment_gateway": {
+        "table": "silver.giao_dich_thanh_toan",
+        "column": "cong_thanh_toan",
+        "business_name": "Cổng thanh toán",
+        "aliases": [
+          "payment_gateway",
+          "Cổng thanh toán"
+        ],
+        "role": "dimension"
+      },
+      "driver_id": {
+        "table": "silver.shipper",
+        "column": "ma_shipper",
+        "business_name": "Mã người giao",
+        "aliases": [
+          "driver_id",
+          "Mã người giao"
+        ],
+        "role": "dimension"
+      },
+      "shift_name": {
+        "table": "silver.ca_lam_viec_nhan_vien",
+        "column": "ten_ca",
+        "business_name": "Ca làm",
+        "aliases": [
+          "shift_name",
+          "Ca làm"
+        ],
+        "role": "dimension"
+      },
+      "attendance_status": {
+        "table": "silver.ca_lam_viec_nhan_vien",
+        "column": "trang_thai_cham_cong",
+        "business_name": "Trạng thái chấm công",
+        "aliases": [
+          "attendance_status",
+          "Trạng thái chấm công"
+        ],
+        "role": "dimension",
+        "enum": [
+          "DUNG_GIO",
+          "DI_TRE",
+          "VE_SOM",
+          "VANG_MAT",
+          "ASSIGNED"
+        ]
+      },
+      "stock_quantity_detail": {
+        "table": "silver.ton_kho_san_pham",
+        "column": "so_luong_ton",
+        "business_name": "Số lượng tồn",
+        "aliases": [
+          "stock_quantity_detail",
+          "Số lượng tồn"
+        ],
+        "role": "dimension"
+      },
+      "warning_threshold": {
+        "table": "silver.ton_kho_san_pham",
+        "column": "muc_canh_bao",
+        "business_name": "Mức cảnh báo",
+        "aliases": [
+          "warning_threshold",
+          "Mức cảnh báo"
+        ],
+        "role": "dimension"
+      },
+      "hour": {
+        "table": "silver.don_hang",
+        "column": "ngay_tao",
+        "business_name": "Giờ",
+        "aliases": [
+          "giờ",
+          "hour"
+        ],
+        "expression": "EXTRACT(HOUR FROM silver.don_hang.ngay_tao)"
+      },
+      "order_type": {
+        "table": "silver.don_hang",
+        "column": "loai_don_hang",
+        "business_name": "Hình thức nhận hàng",
+        "aliases": [
+          "hình thức nhận hàng",
+          "loại đơn",
+          "order type"
+        ],
+        "enum": [
+          "TAI_CHO",
+          "DUNG_TAI_CHO",
+          "LAY_TAI_QUAN",
+          "MANG_DI",
+          "GIAO_TAN_NOI"
+        ]
+      }
+    },
+    "subjects": {
+      "orders": {
+        "business_name": "Đơn hàng và doanh thu",
+        "aliases": [
+          "đơn hàng",
+          "don hang",
+          "giao dịch",
+          "giao dich",
+          "hóa đơn",
+          "hoa don",
+          "order",
+          "doanh thu",
+          "doanh so",
+          "doanh số",
+          "aov",
+          "tăng trưởng",
+          "buôn bán",
+          "bán hàng",
+          "thu nhập",
+          "orders",
+          "Đơn hàng và doanh thu",
+          "orders"
+        ],
+        "source": "silver.don_hang",
+        "grain": "order",
+        "default_dimension": "store",
+        "metrics": [
+          "revenue",
+          "order_count",
+          "aov"
+        ],
+        "detail_columns": [
+          "order_id",
+          "store_id",
+          "order_status",
+          "payment_method",
+          "order_amount",
+          "order_created"
+        ],
+        "time_column": "silver.don_hang.ngay_tao",
+        "tables": [
+          "silver.don_hang"
+        ],
+        "detail_source": "silver.don_hang",
+        "detail_time_column": "silver.don_hang.ngay_tao",
+        "detail_grain": "order"
+      },
+      "promotions": {
+        "business_name": "Chương trình khuyến mãi và Voucher",
+        "aliases": [
+          "khuyến mãi",
+          "khuyen mai",
+          "chương trình khuyến mãi",
+          "chuong trinh khuyen mai",
+          "voucher",
+          "mã giảm giá",
+          "ma giam gia",
+          "ưu đãi",
+          "uu dai",
+          "coupon",
+          "discount",
+          "quà tặng",
+          "qua tang",
+          "quà thăng hạng",
+          "qua thang hang",
+          "voucher khảo sát",
+          "giảm giá",
+          "giam gia",
+          "tiền giảm",
+          "tien giam",
+          "số tiền giảm",
+          "so tien giam",
+          "chương trình ưu đãi",
+          "áp dụng voucher",
+          "hiệu quả khuyến mãi",
+          "promotions",
+          "Chương trình khuyến mãi và Voucher",
+          "promotions"
+        ],
+        "source": "silver.don_hang",
+        "grain": "order",
+        "default_dimension": "promotion",
+        "metrics": [
+          "voucher_revenue",
+          "discount_amount",
+          "voucher_order_count"
+        ],
+        "detail_columns": [
+          "promotion"
+        ],
+        "time_column": "silver.don_hang.ngay_tao",
+        "tables": [
+          "silver.khuyen_mai",
+          "silver.voucher",
+          "silver.don_hang"
+        ],
+        "detail_source": "silver.khuyen_mai",
+        "detail_time_column": null,
+        "detail_grain": "promotion"
+      },
+      "order_items": {
+        "business_name": "Chi tiết món trong đơn",
+        "aliases": [
+          "chi tiết đơn",
+          "chi tiet don",
+          "món gọi",
+          "mon goi",
+          "ly bán",
+          "ly ban",
+          "món trong đơn",
+          "order item",
+          "topping",
+          "đá",
+          "đường",
+          "size",
+          "kích cỡ",
+          "order_items",
+          "Chi tiết món trong đơn",
+          "order items"
+        ],
+        "source": "silver.chi_tiet_don_hang",
+        "grain": "order_line",
+        "default_dimension": "product",
+        "metrics": [
+          "quantity_sold",
+          "item_revenue"
+        ],
+        "detail_columns": [
+          "product"
+        ],
+        "time_column": "silver.don_hang.ngay_tao",
+        "tables": [
+          "silver.chi_tiet_don_hang",
+          "silver.don_hang"
+        ],
+        "detail_source": "silver.chi_tiet_don_hang",
+        "detail_time_column": "silver.don_hang.ngay_tao",
+        "detail_grain": "order_line"
+      },
+      "products": {
+        "business_name": "Sản phẩm và thực đơn",
+        "aliases": [
+          "món",
+          "mon",
+          "sản phẩm",
+          "san pham",
+          "menu",
+          "thực đơn",
+          "thuc don",
+          "đồ uống",
+          "do uong",
+          "cà phê",
+          "ca phe",
+          "trà",
+          "tra",
+          "bánh",
+          "banh",
+          "bán chạy",
+          "món hot",
+          "danh mục",
+          "danh muc",
+          "ưa chuộng",
+          "chuộng nhất",
+          "biến thể món",
+          "products",
+          "Sản phẩm và thực đơn",
+          "món",
+          "món bán",
+          "products",
+          "product",
+          "items"
+        ],
+        "source": "silver.chi_tiet_don_hang",
+        "grain": "order_line",
+        "default_dimension": "product",
+        "metrics": [
+          "quantity_sold",
+          "product_revenue"
+        ],
+        "detail_columns": [
+          "product"
+        ],
+        "time_column": "silver.don_hang.ngay_tao",
+        "tables": [
+          "silver.san_pham",
+          "silver.danh_muc",
+          "silver.bien_the_san_pham",
+          "silver.chi_tiet_don_hang",
+          "silver.don_hang"
+        ],
+        "detail_source": "silver.san_pham",
+        "detail_time_column": null,
+        "detail_grain": "product"
+      },
+      "stores": {
+        "business_name": "Chi nhánh và điểm bán",
+        "aliases": [
+          "chi nhánh",
+          "chi nhanh",
+          "cửa hàng",
+          "cua hang",
+          "điểm bán",
+          "diem ban",
+          "cơ sở",
+          "co so",
+          "store",
+          "quán",
+          "quan",
+          "thành phố",
+          "thanh pho",
+          "khu vực",
+          "khu vuc",
+          "hiệu suất chi nhánh",
+          "doanh số quán",
+          "stores",
+          "Chi nhánh và điểm bán",
+          "stores",
+          "branch",
+          "branches",
+          "store"
+        ],
+        "source": "silver.don_hang",
+        "grain": "order",
+        "default_dimension": "store",
+        "metrics": [
+          "store_revenue",
+          "store_order_count",
+          "store_aov"
+        ],
+        "detail_columns": [
+          "store"
+        ],
+        "time_column": "silver.don_hang.ngay_tao",
+        "tables": [
+          "silver.chi_nhanh",
+          "silver.khu_vuc",
+          "silver.don_hang"
+        ],
+        "detail_source": "silver.chi_nhanh",
+        "detail_time_column": null,
+        "detail_grain": "store"
+      },
+      "customers": {
+        "business_name": "Khách hàng và hội viên",
+        "aliases": [
+          "khách hàng",
+          "khach hang",
+          "hội viên",
+          "hoi vien",
+          "loyalty",
+          "thành viên",
+          "thanh vien",
+          "beans",
+          "điểm thưởng",
+          "diem thuong",
+          "chi tiêu",
+          "chi tieu",
+          "khách quen",
+          "customer",
+          "hạng thành viên",
+          "customers",
+          "Khách hàng và hội viên",
+          "customers",
+          "customer"
+        ],
+        "source": "silver.nguoi_dung",
+        "grain": "customer",
+        "default_dimension": "customer_id",
+        "metrics": [
+          "customer_count",
+          "total_spent"
+        ],
+        "detail_columns": [
+          "customer_id",
+          "customer_role",
+          "loyalty_points",
+          "lifetime_spend"
+        ],
+        "time_column": "silver.nguoi_dung.ngay_tao",
+        "tables": [
+          "silver.nguoi_dung",
+          "silver.don_hang"
+        ],
+        "detail_source": "silver.nguoi_dung",
+        "detail_time_column": "silver.nguoi_dung.ngay_tao",
+        "detail_grain": "customer"
+      },
+      "payments": {
+        "business_name": "Thanh toán và cổng tiền tệ",
+        "aliases": [
+          "thanh toán",
+          "thanh toan",
+          "momo",
+          "vnpay",
+          "zalopay",
+          "qr",
+          "tiền mặt",
+          "tien mat",
+          "chuyển khoản",
+          "chuyen khoan",
+          "payment",
+          "cổng thanh toán",
+          "payments",
+          "Thanh toán và cổng tiền tệ",
+          "payments"
+        ],
+        "source": "silver.giao_dich_thanh_toan",
+        "grain": "payment",
+        "default_dimension": "payment_gateway",
+        "metrics": [
+          "payment_count",
+          "payment_revenue"
+        ],
+        "detail_columns": [
+          "payment_gateway"
+        ],
+        "time_column": "silver.giao_dich_thanh_toan.ngay_tao",
+        "tables": [
+          "silver.giao_dich_thanh_toan",
+          "silver.don_hang"
+        ],
+        "detail_source": "silver.giao_dich_thanh_toan",
+        "detail_time_column": "silver.giao_dich_thanh_toan.ngay_tao",
+        "detail_grain": "payment"
+      },
+      "delivery": {
+        "business_name": "Giao hàng và tài xế shipper",
+        "aliases": [
+          "giao hàng",
+          "giao hang",
+          "shipper",
+          "tài xế",
+          "tai xe",
+          "chuyến giao",
+          "chuyen giao",
+          "đánh giá tài xế",
+          "tốc độ giao",
+          "delivery",
+          "Giao hàng và tài xế shipper",
+          "delivery"
+        ],
+        "source": "silver.shipper",
+        "grain": "driver_snapshot",
+        "default_dimension": "driver_id",
+        "metrics": [
+          "total_deliveries",
+          "driver_rating"
+        ],
+        "detail_columns": [
+          "driver_id"
+        ],
+        "time_column": null,
+        "tables": [
+          "silver.shipper",
+          "silver.don_hang"
+        ],
+        "detail_source": "silver.shipper",
+        "detail_time_column": null,
+        "detail_grain": "driver_snapshot"
+      },
+      "inventory": {
+        "business_name": "Tồn kho nguyên vật liệu",
+        "aliases": [
+          "tồn kho",
+          "ton kho",
+          "nguyên liệu",
+          "nguyen lieu",
+          "hết hàng",
+          "het hang",
+          "sắp hết",
+          "sap het",
+          "dự trữ",
+          "định mức",
+          "inventory",
+          "inventory",
+          "Tồn kho nguyên vật liệu",
+          "inventory"
+        ],
+        "source": "silver.ton_kho_san_pham",
+        "grain": "store_product_snapshot",
+        "default_dimension": "product",
+        "metrics": [
+          "stock_quantity",
+          "low_stock_count"
+        ],
+        "detail_columns": [
+          "product",
+          "store_id",
+          "stock_quantity_detail",
+          "warning_threshold"
+        ],
+        "time_column": null,
+        "tables": [
+          "silver.ton_kho_san_pham",
+          "silver.san_pham",
+          "silver.chi_nhanh"
+        ],
+        "detail_source": "silver.ton_kho_san_pham",
+        "detail_time_column": null,
+        "detail_grain": "store_product_snapshot"
+      },
+      "product_reviews": {
+        "business_name": "Đánh giá chất lượng sản phẩm",
+        "aliases": [
+          "đánh giá món",
+          "danh gia mon",
+          "đánh giá sản phẩm",
+          "danh gia san pham",
+          "review món",
+          "review mon",
+          "sao món",
+          "chất lượng món",
+          "hài lòng món",
+          "phản hồi món",
+          "product_reviews",
+          "Đánh giá chất lượng sản phẩm",
+          "product reviews"
+        ],
+        "source": "silver.danh_gia_san_pham",
+        "grain": "review",
+        "default_dimension": "product",
+        "metrics": [
+          "avg_product_rating",
+          "review_count"
+        ],
+        "detail_columns": [
+          "product"
+        ],
+        "time_column": "silver.danh_gia_san_pham.ngay_tao",
+        "tables": [
+          "silver.danh_gia_san_pham",
+          "silver.san_pham"
+        ],
+        "detail_source": "silver.danh_gia_san_pham",
+        "detail_time_column": "silver.danh_gia_san_pham.ngay_tao",
+        "detail_grain": "review"
+      },
+      "store_reviews": {
+        "business_name": "Đánh giá dịch vụ và không gian chi nhánh",
+        "aliases": [
+          "đánh giá quán",
+          "danh gia quan",
+          "đánh giá chi nhánh",
+          "danh gia chi nhanh",
+          "review cửa hàng",
+          "chất lượng phục vụ",
+          "không gian quán",
+          "điểm chi nhánh",
+          "đánh giá chất lượng phục vụ",
+          "chất lượng phục vụ của các chi nhánh",
+          "đánh giá phục vụ",
+          "phục vụ của các chi nhánh",
+          "chất lượng dịch vụ",
+          "đánh giá chất lượng dịch vụ",
+          "phục vụ chi nhánh",
+          "store_reviews",
+          "Đánh giá dịch vụ và không gian chi nhánh",
+          "store reviews"
+        ],
+        "source": "silver.danh_gia_chi_nhanh",
+        "grain": "review",
+        "default_dimension": "store",
+        "metrics": [
+          "avg_store_rating",
+          "store_review_count"
+        ],
+        "detail_columns": [
+          "store"
+        ],
+        "time_column": "silver.danh_gia_chi_nhanh.ngay_tao",
+        "tables": [
+          "silver.danh_gia_chi_nhanh",
+          "silver.chi_nhanh"
+        ],
+        "detail_source": "silver.danh_gia_chi_nhanh",
+        "detail_time_column": "silver.danh_gia_chi_nhanh.ngay_tao",
+        "detail_grain": "review"
+      },
+      "staff_shifts": {
+        "business_name": "Ca làm việc và chấm công nhân viên",
+        "aliases": [
+          "ca làm",
+          "ca lam",
+          "nhân viên",
+          "nhan vien",
+          "chấm công",
+          "cham cong",
+          "check-in",
+          "đi trễ",
+          "di tre",
+          "vắng mặt",
+          "lịch làm việc",
+          "ca làm việc",
+          "staff",
+          "staff_shifts",
+          "Ca làm việc và chấm công nhân viên",
+          "staff shifts"
+        ],
+        "source": "silver.ca_lam_viec_nhan_vien",
+        "grain": "shift",
+        "default_dimension": "shift_name",
+        "metrics": [
+          "shift_count",
+          "late_count"
+        ],
+        "detail_columns": [
+          "shift_name"
+        ],
+        "time_column": "silver.ca_lam_viec_nhan_vien.ngay_lam_viec",
+        "tables": [
+          "silver.ca_lam_viec_nhan_vien",
+          "silver.chi_nhanh"
+        ],
+        "detail_source": "silver.ca_lam_viec_nhan_vien",
+        "detail_time_column": "silver.ca_lam_viec_nhan_vien.ngay_lam_viec",
+        "detail_grain": "shift"
+      },
+      "cashier_reconciliation": {
+        "business_name": "Đối soát ca thu ngân và chênh lệch tiền mặt",
+        "aliases": [
+          "đối soát",
+          "doi soat",
+          "kết ca",
+          "ket ca",
+          "thu ngân",
+          "thu ngan",
+          "chênh lệch tiền",
+          "chenh lech",
+          "tiền mặt",
+          "quỹ tiền",
+          "lệch quỹ",
+          "ca đối soát",
+          "cashier_reconciliation",
+          "Đối soát ca thu ngân và chênh lệch tiền mặt",
+          "cashier reconciliation"
+        ],
+        "source": "silver.ca_doi_soat",
+        "grain": "cash_shift",
+        "default_dimension": "store",
+        "metrics": [
+          "total_cash_difference",
+          "system_cash_revenue",
+          "reconciled_shifts"
+        ],
+        "detail_columns": [
+          "store"
+        ],
+        "time_column": "silver.ca_doi_soat.ngay_tao",
+        "tables": [
+          "silver.ca_doi_soat",
+          "silver.chi_nhanh"
+        ],
+        "detail_source": "silver.ca_doi_soat",
+        "detail_time_column": "silver.ca_doi_soat.ngay_tao",
+        "detail_grain": "cash_shift"
+      },
+      "customer_surveys": {
+        "business_name": "Khảo sát ý kiến khách hàng",
+        "aliases": [
+          "khảo sát",
+          "khao sat",
+          "ý kiến khách",
+          "feedback",
+          "phiếu khảo sát",
+          "trải nghiệm khách",
+          "customer_surveys",
+          "Khảo sát ý kiến khách hàng",
+          "customer surveys"
+        ],
+        "source": "silver.khao_sat_phan_hoi",
+        "grain": "survey_response",
+        "default_dimension": "store",
+        "metrics": [
+          "survey_response_count"
+        ],
+        "detail_columns": [
+          "store"
+        ],
+        "time_column": "silver.khao_sat_phan_hoi.ngay_tao",
+        "tables": [
+          "silver.khao_sat_phan_hoi",
+          "silver.chi_nhanh"
+        ],
+        "detail_source": "silver.khao_sat_phan_hoi",
+        "detail_time_column": "silver.khao_sat_phan_hoi.ngay_tao",
+        "detail_grain": "survey_response"
+      },
+      "wishlist_favorites": {
+        "business_name": "Món uống yêu thích của khách hàng",
+        "aliases": [
+          "yêu thích",
+          "yeu thich",
+          "wishlist",
+          "thả tim",
+          "tha tim",
+          "món chuộng",
+          "món yêu thích",
+          "quan tâm",
+          "khách hàng yêu thích",
+          "được khách hàng yêu thích",
+          "món được yêu thích",
+          "yêu thích nhất",
+          "món uống được yêu thích",
+          "món được yêu thích nhất",
+          "wishlist_favorites",
+          "Món uống yêu thích của khách hàng",
+          "wishlist favorites"
+        ],
+        "source": "silver.yeu_thich_san_pham",
+        "grain": "favorite",
+        "default_dimension": "product",
+        "metrics": [
+          "favorite_count"
+        ],
+        "detail_columns": [
+          "product"
+        ],
+        "time_column": "silver.yeu_thich_san_pham.ngay_tao",
+        "tables": [
+          "silver.yeu_thich_san_pham",
+          "silver.san_pham"
+        ],
+        "detail_source": "silver.yeu_thich_san_pham",
+        "detail_time_column": "silver.yeu_thich_san_pham.ngay_tao",
+        "detail_grain": "favorite"
+      },
+      "hourly": {
+        "business_name": "Khung giờ và thời điểm",
+        "aliases": [
+          "khung giờ",
+          "khung gio",
+          "giờ cao điểm",
+          "đông nhất",
+          "theo giờ",
+          "cao điểm",
+          "buổi sáng",
+          "buổi trưa",
+          "buổi tối",
+          "hourly",
+          "Khung giờ và thời điểm",
+          "hourly"
+        ],
+        "source": "silver.don_hang",
+        "grain": "order",
+        "default_dimension": "hour",
+        "metrics": [
+          "hourly_orders"
+        ],
+        "detail_columns": [
+          "hour"
+        ],
+        "time_column": "silver.don_hang.ngay_tao",
+        "tables": [
+          "silver.don_hang"
+        ],
+        "detail_source": "silver.don_hang",
+        "detail_time_column": "silver.don_hang.ngay_tao",
+        "detail_grain": "order"
+      }
+    },
+    "timezone": "Asia/Ho_Chi_Minh",
+    "max_charts": 4,
+    "max_series": 8,
+    "max_categories": 30,
+    "interpretation": {
+      "fast_path_grammar": {
+        "ranking": [
+          "^top\\s+(?P<n>\\d+)\\s+(?P<subject>.+?)\\s+(?:theo\\s+)?(?P<metric>.+?)(?:\\s+(?:tai|o)\\s+(?P<city>.+?))?(?:\\s+(?P<time>thang nay|thang truoc|quy nay|quy truoc|nam nay|nam truoc|tuan nay|tuan truoc|hom nay|hom qua))?$",
+          "^top\\s+(?P<n>\\d+)\\s+(?P<subject>.+?)\\s+(?:by\\s+)?(?P<metric>.+?)(?:\\s+in\\s+(?P<city>.+?))?(?:\\s+(?P<time>this month|last month|this quarter|last quarter|this year|last year|today|yesterday|this week|last week))?$"
+        ]
+      },
+      "time_aliases": {
+        "thang nay": "current_month",
+        "thang truoc": "previous_month",
+        "quy nay": "current_quarter",
+        "quy truoc": "previous_quarter",
+        "nam nay": "current_year",
+        "nam truoc": "previous_year",
+        "tuan nay": "current_week",
+        "tuan truoc": "previous_week",
+        "hom nay": "current_day",
+        "hom qua": "previous_day",
+        "this month": "current_month",
+        "last month": "previous_month",
+        "this quarter": "current_quarter",
+        "last quarter": "previous_quarter",
+        "this year": "current_year",
+        "last year": "previous_year",
+        "this week": "current_week",
+        "last week": "previous_week",
+        "today": "current_day",
+        "yesterday": "previous_day"
+      },
+      "explicit_time_patterns": [
+        {
+          "pattern": "\\bthang\\s+(?P<month>\\d{1,2})(?:\\s+nam)?\\s+(?P<year>\\d{4})\\b",
+          "unit": "month"
+        },
+        {
+          "pattern": "\\bquy\\s+(?P<quarter>[1-4])(?:\\s+nam)?\\s+(?P<year>\\d{4})\\b",
+          "unit": "quarter"
+        },
+        {
+          "pattern": "\\bnam\\s+(?P<year>\\d{4})\\b",
+          "unit": "year"
+        }
+      ],
+      "filter_removal_terms": [
+        "bỏ lọc",
+        "bỏ bộ lọc",
+        "remove filter",
+        "clear filter"
+      ],
+      "rolling_day_patterns": [
+        "\\b(?P<days>\\d+)\\s+ngay\\s+(?:qua|gan nhat)\\b",
+        "\\b(?:last|past)\\s+(?P<days>\\d+)\\s+days\\b"
+      ],
+      "ambiguous_measure_terms": [
+        "tốt nhất",
+        "best",
+        "hiệu quả nhất"
+      ]
+    }
   }
 }

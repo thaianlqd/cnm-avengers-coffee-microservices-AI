@@ -12,16 +12,20 @@ from services.sql_service import SqlSafetyError, validate_ai_query_scope, valida
 class MetadataAndSemanticTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        try:
-            cls.metadata = get_local_metadata(force=True)
-        except Exception:
-            cls.metadata = {"table_map": {}, "tables": [], "table_count": 0}
+        from tests.analysis_fixtures import physical_metadata
+        cls.metadata = physical_metadata()
+
+    def setUp(self):
+        network = patch('requests.sessions.Session.request', side_effect=AssertionError('OFFLINE: network forbidden'))
+        database = patch('psycopg2.connect', side_effect=AssertionError('OFFLINE: database forbidden'))
+        network.start(); database.start()
+        self.addCleanup(network.stop); self.addCleanup(database.stop)
 
     def test_metadata_introspection_normalizes_current_order_item_pk(self):
         if not self.metadata["table_count"]:
             self.skipTest("postgres-analytics is not available")
-        table = self.metadata["table_map"]["orders.chi_tiet_don_hang"]
-        self.assertEqual(table["qualified_name"], "orders.chi_tiet_don_hang")
+        table = self.metadata["table_map"]["silver.chi_tiet_don_hang"]
+        self.assertEqual(table["qualified_name"], "silver.chi_tiet_don_hang")
         self.assertEqual(table["primary_key"], ["id"])
         self.assertTrue(any(column["name"] == "id" and column["primary_key"] for column in table["columns"]))
 
@@ -352,8 +356,9 @@ class RequestAndProviderTests(unittest.TestCase):
         # Value must not contain "Chờ kết quả" or "Xem kết quả"
         self.assertNotEqual(resolved_cards[0]["value"], "Chờ kết quả")
         self.assertNotEqual(resolved_cards[1]["value"], "Xem kết quả")
-        # Should calculate rating 4.85 or average 4.73
-        self.assertTrue(any("4." in str(c["value"]) for c in resolved_cards))
+        # No metric identity/evidence was supplied. Do not infer an average or
+        # relabel the first row as a whole-population KPI.
+        self.assertTrue(all(c["value"] is None for c in resolved_cards))
 
     def test_session_service_lifecycle(self):
         from services.session_service import create_session, get_session, session_stats

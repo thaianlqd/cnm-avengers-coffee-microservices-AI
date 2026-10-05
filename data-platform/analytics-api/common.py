@@ -68,6 +68,7 @@ class AiReportRefineRequest(BaseModel):
 
 
 class AiFeedbackRequest(BaseModel):
+    revision: Optional[int] = None
     session_id: Optional[str] = None
     prompt: str
     rating: Literal["positive", "negative"]

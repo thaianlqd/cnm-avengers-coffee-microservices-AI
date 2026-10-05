@@ -852,9 +852,15 @@ class GuardedToolGateway:
             patch = {'toppings': patch.get('toppings', [])}
         request = next((row for row in self.artifacts.cart_edit_plan
             if row['tool'] == 'update_cart_item' and row['cart_item_id'] == args['cart_item_id']), None)
-        if len(self.artifacts.cart_edit_plan) > 1 and request and request['fields'] and set(patch) - set(request['fields']):
-            return denied('cart_fields_not_requested', requested_fields=request['fields'],
-                message='Dạ, mình chưa sửa món vì tùy chọn đề xuất chưa khớp yêu cầu của bạn. Bạn nhắc lại tùy chọn muốn đổi giúp mình nhé.')
+        if len(self.artifacts.cart_edit_plan) > 1 and request and request['fields']:
+            # A full-line model proposal may repeat the current configuration.
+            # Keep only requested fields and actual changes; repeated values
+            # must not prevent Menu from resolving the requested topping list.
+            patch = {key: value for key, value in patch.items()
+                     if key in request['fields'] or line.get(key) != value}
+            if set(patch) - set(request['fields']):
+                return denied('cart_fields_not_requested', requested_fields=request['fields'],
+                    message='Dạ, mình chưa sửa món vì tùy chọn đề xuất chưa khớp yêu cầu của bạn. Bạn nhắc lại tùy chọn muốn đổi giúp mình nhé.')
         if 'quantity' in patch:
             from src.agents.cart_edit_evidence import edit_quantity
             expected_quantity = edit_quantity(getattr(self, 'active_edit_clause', self.user_message))

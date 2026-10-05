@@ -1,3 +1,4 @@
+import { AnalysisMeaning } from '../components/AnalysisMeaning';
 import React, { useState, useEffect } from 'react';
 import { usePlatformStore } from '../store/usePlatformStore';
 import { 
@@ -91,71 +92,9 @@ export const AnalyticsView: React.FC = () => {
   };
 
   // Helper to sanitize any raw SQL query or expressions leaked into KPI values
-  const sanitizeKpiDisplayValue = (val: any, fallbackRow?: any, card?: any): string => {
-    if (val === null || val === undefined) return '—';
-    if (typeof val === 'object') {
-      if (Array.isArray(val)) {
-        return val.map(v => typeof v === 'object' ? JSON.stringify(v) : String(v)).join(', ');
-      }
-      const parts = Object.entries(val).map(([k, v]) => {
-        const cleanK = k.replace(/_/g, ' ');
-        const cleanV = typeof v === 'number' ? v.toLocaleString('vi-VN') : String(v);
-        return `${cleanK}: ${cleanV}`;
-      });
-      return parts.length > 0 ? parts.join(' • ') : '—';
-    }
-    let s = String(val).trim();
-    if (s === '[object Object]') return '—';
-    if (s.startsWith('(') && s.endsWith(')')) {
-      s = s.slice(1, -1).trim();
-    }
-    const isSql = /^\(?\s*SELECT\b/i.test(s) || s.toUpperCase().includes('FROM SILVER.') || s.length > 55;
-    const placeholderPhrases = [
-      'xem kết quả', 'xem ket qua', 'kết quả', 'ket qua',
-      'chờ kết quả', 'cho ket qua', 'đang tính', 'tự động tính',
-      'chưa có', 'xem chi tiết', 'chờ phân tích', 'placeholder',
-      'chi tiết từng đơn', 'chi tiet tung don', 'từng đơn', 'tung don',
-      'danh sách', 'danh sach', 'chi tiết', 'chi tiet',
-      'tbd', 'undefined', 'n/a', 'none', 'null'
-    ];
-    const sLower = s.toLowerCase();
-    const isPlaceholder = (s.startsWith('<') && s.endsWith('>')) || s.includes('<') || placeholderPhrases.some(p => sLower.includes(p));
-    
-    if (isSql || isPlaceholder) {
-      if (fallbackRow && typeof fallbackRow === 'object') {
-        const entries = Object.entries(fallbackRow);
-        const nameEntry = entries.find(([k]) => /ten|name|san_pham|mon|chi_nhanh/i.test(k));
-        if (nameEntry && nameEntry[1] !== undefined && nameEntry[1] !== null) {
-          const nameVal = String(nameEntry[1]);
-          if (!placeholderPhrases.some(p => nameVal.toLowerCase().includes(p))) {
-            return nameVal;
-          }
-        }
-        // Extract numeric column from row if available
-        const numEntry = entries.find(([k, v]) => typeof v === 'number' && !/id|stt|hang/i.test(k));
-        if (numEntry && typeof numEntry[1] === 'number') {
-          return numEntry[1].toLocaleString('vi-VN');
-        }
-        const firstEntry = entries[0];
-        if (firstEntry && firstEntry[1] !== undefined && firstEntry[1] !== null) {
-          const firstVal = firstEntry[1];
-          if (!placeholderPhrases.some(p => String(firstVal).toLowerCase().includes(p))) {
-            return typeof firstVal === 'number' ? firstVal.toLocaleString('vi-VN') : String(firstVal);
-          }
-        }
-      }
-      const lbl = (card?.label || '').toLowerCase();
-      const u = (card?.unit || '').toLowerCase();
-      if (lbl.includes('đánh giá') || lbl.includes('sao') || lbl.includes('rating') || u.includes('sao')) return '4.8';
-      if (lbl.includes('tỷ lệ') || u.includes('%')) return '98.5%';
-      if (lbl.includes('chi nhánh') || lbl.includes('cửa hàng')) return 'Chi nhánh dẫn đầu';
-      if (lbl.includes('món') || lbl.includes('sản phẩm')) return 'Món bán chạy nhất';
-      return '—';
-    }
-    if (!isNaN(Number(s)) && s !== '') {
-      return Number(s).toLocaleString('vi-VN');
-    }
-    return s;
+  const sanitizeKpiDisplayValue = (val: any, _fallbackRow?: any, _card?: any): string => {
+    if (typeof val === 'number' && Number.isFinite(val)) return val.toLocaleString('vi-VN');
+    return '—';
   };
 
   const aiPromptTemplates = [
@@ -229,11 +168,13 @@ export const AnalyticsView: React.FC = () => {
         setGeneratedReport(data);
         setAiStep(3);
         showToast('Trợ lý cần bạn làm rõ yêu cầu phân tích', 'info');
-      } else {
+      } else if (data.status === 'proposal_ready') {
         const planObj = data.proposal || data;
-        setAiPlan({ ...planObj, prompt: data.prompt || promptToSend });
+        setAiPlan({ ...planObj, prompt: data.prompt || promptToSend, session_id: data.session_id, interpretation: data.interpretation, analysis_spec: data.analysis_spec });
         setAiStep(2);
         showToast('Trợ lý AI đã đề xuất kế hoạch báo cáo. Vui lòng duyệt trước khi thực thi!', 'info');
+      } else {
+        throw new Error(data.message || 'Kế hoạch chưa vượt qua kiểm chứng');
       }
     } catch (err: any) {
       console.error('Lỗi đề xuất kế hoạch:', err);
@@ -261,6 +202,7 @@ export const AnalyticsView: React.FC = () => {
           context: '',
           time_range: { mode: aiTimeRange, start: null, end: null },
           domain: aiDomain,
+          session_id: aiPlan?.prompt === promptToSend ? aiPlan?.session_id : null,
         }),
       });
       if (!response.ok) {
@@ -271,7 +213,7 @@ export const AnalyticsView: React.FC = () => {
       setAiStep(3);
       if (data.status === 'needs_clarification') {
         showToast('Trợ lý cần bạn làm rõ yêu cầu phân tích', 'info');
-      } else {
+      } else if (data.status === 'success') {
         const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
         setChatHistory(prev => [{ prompt: promptToSend, report: data, time: timeStr }, ...prev.filter(p => p.prompt !== promptToSend)].slice(0, 8));
         setReportVersions([
@@ -287,6 +229,8 @@ export const AnalyticsView: React.FC = () => {
           }
         ]);
         showToast('Phân tích dữ liệu thành công! Bản xem trực quan đã sẵn sàng.', 'success');
+      } else {
+        throw new Error(data.message || 'Dữ liệu chưa vượt qua kiểm chứng');
       }
     } catch (err: any) {
       console.error('Lỗi sinh báo cáo AI:', err);
@@ -337,6 +281,7 @@ export const AnalyticsView: React.FC = () => {
         throw new Error('Lỗi khi tinh chỉnh báo cáo từ máy chủ AI');
       }
       const data = await response.json();
+      if (!['success', 'needs_clarification'].includes(data.status)) throw new Error(data.message || 'Bản sửa chưa vượt qua kiểm chứng');
       if (data.status === 'needs_clarification') {
         const replyText = data.assistant_reply || 'Trợ lý cần bạn làm rõ thêm yêu cầu tinh chỉnh.';
         setRefinementChat(prev => [...prev, {
@@ -346,7 +291,7 @@ export const AnalyticsView: React.FC = () => {
           time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
         }]);
         showToast(replyText, 'info');
-      } else {
+      } else if (data.status === 'success') {
         setGeneratedReport(data);
         if (viewingSavedReport) {
           setViewingSavedReport(data);
@@ -398,6 +343,7 @@ export const AnalyticsView: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          revision: currentRep.revision,
           session_id: currentRep.session_id || null,
           prompt: currentRep.prompt || '',
           rating,
@@ -601,6 +547,18 @@ export const AnalyticsView: React.FC = () => {
         ai_summary: Array.isArray(generatedReport.ai_insights) ? generatedReport.ai_insights.join(' | ') : '',
         created_by: 'Trợ lý AI Data Platform',
         module_config: {
+          pipeline_version: generatedReport.pipeline_version,
+          analysis_spec: generatedReport.analysis_spec,
+          interpretation: generatedReport.interpretation,
+          grounded_analysis_spec: generatedReport.grounded_analysis_spec,
+          query_plans: generatedReport.query_plans,
+          schema_fingerprint: generatedReport.schema_fingerprint,
+          result_contracts: generatedReport.result_contracts,
+          result_sets: generatedReport.result_sets,
+          visualization_specs: generatedReport.visualization_specs,
+          diagnostics: generatedReport.diagnostics,
+          session_id: generatedReport.session_id,
+          revision: generatedReport.revision,
           prompt: generatedReport.prompt,
           context: generatedReport.context,
           interpreted_request: generatedReport.interpreted_request,
@@ -943,6 +901,7 @@ export const AnalyticsView: React.FC = () => {
     if (!rep) return null;
     return (
       <div className="space-y-6">
+        <AnalysisMeaning interpretation={rep.interpretation} />
         {/* Report Header Bar - Spacious Responsive Layout */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4">
           {/* Tier 1: Meta, Status & Quick Feedback */}
@@ -1206,7 +1165,7 @@ export const AnalyticsView: React.FC = () => {
                 );
               })}
             </div>
-          ) : rep.kpis && (
+          ) : !rep.analysis_spec && rep.kpis && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs">
                 <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
@@ -1252,7 +1211,7 @@ export const AnalyticsView: React.FC = () => {
                   Tỷ lệ hoàn thành đơn
                 </div>
                 <div className="text-xl sm:text-2xl font-black text-emerald-600 mt-1">
-                  {rep.kpis.completion_rate ? `${Number(rep.kpis.completion_rate)}%` : '98.5%'}
+                  {rep.kpis.completion_rate != null ? `${Number(rep.kpis.completion_rate)}%` : '—'}
                 </div>
                 <div className="text-xs text-emerald-600 font-medium mt-1">
                   Đạt tiêu chuẩn vận hành
@@ -1317,12 +1276,14 @@ export const AnalyticsView: React.FC = () => {
                       {isHeatmap ? (
                         <HeatmapChart
                           data={chart.data || []}
-                          valueSuffix={chart.unit ? ` ${chart.unit}` : ' đơn'}
+                          valueSuffix={chart.unit ? ` ${chart.unit}` : ''}
+                          xLabel={chart.x_field || 'X'} yLabel={chart.series_field || 'Y'}
                         />
                       ) : isMultiLine ? (
                         <MultiLineChart
                           data={chart.data || []}
-                          seriesKeys={chart.series_keys}
+                          seriesKeys={chart.series_keys || chart.series?.map((s: any) => s.key)}
+                          seriesLabels={Object.fromEntries((chart.series || []).map((s: any) => [s.key, s.label]))}
                           valueSuffix={chart.unit ? ` ${chart.unit}` : ''}
                         />
                       ) : chart.chart_type === 'horizontal_bar' ? (
@@ -1349,7 +1310,7 @@ export const AnalyticsView: React.FC = () => {
                       ) : chart.chart_type === 'bar' ? (
                         <BarChart
                           data={(chart.data || []).map((d: any) => ({
-                            label: String(d.label || d.name || '').slice(-14),
+                            label: String(d.label ?? d.name ?? ''),
                             value: Number(d.value || 0),
                           }))}
                           height={280}
@@ -1357,8 +1318,9 @@ export const AnalyticsView: React.FC = () => {
                         />
                       ) : (
                         <SmoothAreaChart
+                          showLegend={false}
                           data={(chart.data || []).map((d: any) => ({
-                            label: String(d.label || d.name || '').slice(-8).replace('/', '-'),
+                            label: String(d.label ?? d.name ?? ''),
                             value: Number(d.value || 0),
                           }))}
                           height={280}
@@ -1373,6 +1335,15 @@ export const AnalyticsView: React.FC = () => {
           ) : null}
         </div>
 
+        {rep.result_sets && Object.entries(rep.result_sets).slice(1).map(([queryId, data]: [string, any]) => (
+          <section key={queryId} className="bg-white rounded-xl border border-slate-200 p-4 overflow-x-auto">
+            <h3 className="font-semibold text-sm mb-3">{rep.query_plans?.find((p: any) => p.id === queryId)?.group || queryId}</h3>
+            <table className="w-full text-left text-xs"><thead><tr>{data.columns.map((column: string) => <th className="p-2" key={column}>{column}</th>)}</tr></thead>
+              <tbody>{data.rows.map((row: any, index: number) => <tr key={index}>{data.columns.map((column: string) => <td className="p-2 border-t border-slate-100" key={column}>{row[column] == null ? '—' : String(row[column])}</td>)}</tr>)}</tbody>
+            </table>
+            {!data.rows.length && <p className="text-slate-500 text-xs">Không có dữ liệu trong phạm vi này.</p>}
+          </section>
+        ))}
         {/* SECTION 2: Các phát hiện chính */}
         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
           <div className="border-b border-slate-100 pb-2">
@@ -1400,7 +1371,7 @@ export const AnalyticsView: React.FC = () => {
                     return (
                       <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
                         <td className="px-4 py-3 font-semibold text-slate-800">
-                          {item.finding || item.name || `Phát hiện ${idx + 1}`}
+                          {typeof item === 'string' ? item : item.finding || item.name || `Phát hiện ${idx + 1}`}
                         </td>
                         <td className="px-4 py-3 font-mono font-bold text-emerald-700 whitespace-nowrap">
                           {displayVal}
@@ -1411,6 +1382,8 @@ export const AnalyticsView: React.FC = () => {
                       </tr>
                     );
                   })
+                ) : rep.analysis_spec ? (
+                  <tr><td colSpan={3} className="px-4 py-3 text-slate-500">Chưa có phát hiện đủ bằng chứng.</td></tr>
                 ) : (
                   <>
                     <tr className="hover:bg-slate-50/60 transition-colors">
@@ -1434,7 +1407,7 @@ export const AnalyticsView: React.FC = () => {
                     <tr className="hover:bg-slate-50/60 transition-colors">
                       <td className="px-4 py-3 font-semibold text-slate-800">Hiệu suất vận hành</td>
                       <td className="px-4 py-3 font-mono font-bold text-emerald-700 whitespace-nowrap">
-                        {rep.kpis?.completion_rate ? `${rep.kpis.completion_rate}%` : '98.5%'}
+                        {rep.kpis?.completion_rate != null ? `${rep.kpis.completion_rate}%` : '—'}
                       </td>
                       <td className="px-4 py-3 text-slate-600 leading-relaxed">
                         Tỷ lệ hoàn thành đơn cao, quy trình pha chế và giao hàng đáp ứng cam kết dịch vụ.
@@ -1507,7 +1480,7 @@ export const AnalyticsView: React.FC = () => {
                   <tr>
                     {(rep.table_data.columns || []).map((col: string, idx: number) => (
                       <th key={idx} className="px-4 py-2.5 whitespace-nowrap">
-                        {col}
+                        {rep.table_data.column_labels?.[col] || col}
                       </th>
                     ))}
                   </tr>
@@ -1597,7 +1570,7 @@ export const AnalyticsView: React.FC = () => {
               5. Kết luận phân tích
             </h3>
             <p className="text-xs text-slate-600 leading-relaxed pt-1">
-              {rep.conclusions || rep.executive_summary || 'Các chỉ số ghi nhận xu hướng ổn định, dữ liệu đồng bộ chính xác giữa tầng Silver Lake và hệ thống vận hành chuỗi.'}
+              {rep.conclusions?.length ? (Array.isArray(rep.conclusions) ? rep.conclusions.join(' ') : rep.conclusions) : rep.executive_summary || 'Chưa có đủ bằng chứng để đưa ra kết luận.'}
             </p>
           </div>
 
@@ -1621,7 +1594,7 @@ export const AnalyticsView: React.FC = () => {
               </ul>
             ) : (
               <p className="text-xs text-slate-500 pt-1">
-                Tiếp tục theo dõi các chỉ số AOV, tỷ lệ hoàn tất đơn và phân bổ doanh thu chi nhánh theo tuần.
+                Chưa có khuyến nghị được hỗ trợ bởi dữ liệu trong báo cáo này.
               </p>
             )}
           </div>
@@ -2812,6 +2785,7 @@ export const AnalyticsView: React.FC = () => {
               )}
 
               {/* Proposal Content Card */}
+              {!isProposingPlan && aiPlan && <AnalysisMeaning interpretation={aiPlan.interpretation} />}
               {!isProposingPlan && aiPlan && (
                 <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-5">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-4">
@@ -2926,7 +2900,7 @@ export const AnalyticsView: React.FC = () => {
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-slate-700">
                       {(aiPlan.report_sections || [
                         '1. Tóm tắt điều hành',
-                        '2. Dashboard tự động sinh (KPI & 5-6 Biểu đồ)',
+                        '2. Biểu đồ phù hợp với dữ liệu đã kiểm chứng',
                         '3. Bảng các phát hiện chính',
                         '4. Bảng phân tích dữ liệu chi tiết',
                         '5. Nhận định chuyên sâu từ AI',
@@ -3003,8 +2977,9 @@ export const AnalyticsView: React.FC = () => {
                     {generatedReport.clarification_question}
                   </p>
                   <p className="text-xs text-slate-600 mt-1">
-                    {generatedReport.interpreted_request}
+                    {typeof generatedReport.interpreted_request === 'string' ? generatedReport.interpreted_request : generatedReport.message}
                   </p>
+                  {generatedReport.options?.length > 0 && <ul className="mt-3 text-xs text-slate-700 list-disc pl-5">{generatedReport.options.map((option: any, index: number) => <li key={index}>{typeof option === 'object' ? `${option.label} (${option.unit})` : option}</li>)}</ul>}
                   <button
                     onClick={() => setAiStep(1)}
                     className="mt-4 px-4 py-2 text-xs font-medium text-amber-900 bg-white border border-amber-300 rounded-xl hover:bg-amber-100 transition-colors cursor-pointer"

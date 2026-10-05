@@ -1,3 +1,4 @@
+import { formatChartValue } from '../utils/aiChartConfig.mjs';
 import React, { useState } from 'react';
 
 // ─── 1. SMOOTH AREA / LINE CHART ───
@@ -279,6 +280,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({
   data,
   centerLabel = 'Tổng doanh thu',
   centerValue = '',
+  valueSuffix = ' đ',
   size = 135,
 }) => {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
@@ -298,12 +300,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({
 
   let currentOffset = 0;
 
-  const formatShortAmount = (val: number) => {
-    if (val >= 1_000_000_000) return `${(val / 1_000_000_000).toFixed(1)}B đ`;
-    if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}M đ`;
-    if (val >= 1_000) return `${(val / 1_000).toFixed(0)}k đ`;
-    return `${val} đ`;
-  };
+  const formatShortAmount = (val: number) => formatChartValue(val, valueSuffix);
 
   const displayCenterValue = centerValue || (
     total >= 1_000_000_000 
@@ -475,20 +472,7 @@ export const BarChart: React.FC<BarChartProps> = ({
     return Math.round(val).toString();
   };
 
-  const formatTooltipValue = (val: number) => {
-    if (valueSuffix === 'Tr' || valueSuffix === 'triệu') {
-      if (val >= 1000) {
-        return `${(val / 1000).toFixed(2)} tỷ VNĐ`;
-      }
-      return `${val.toLocaleString('vi-VN')} triệu VNĐ`;
-    }
-    if (valueSuffix === 'ly' || valueSuffix === 'đơn') {
-      return `${val.toLocaleString('vi-VN')} ${valueSuffix}`;
-    }
-    if (val >= 1_000_000_000) return `${(val / 1_000_000_000).toFixed(2)} tỷ đ`;
-    if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}M đ`;
-    return `${val.toLocaleString('vi-VN')} ${valueSuffix}`.trim();
-  };
+  const formatTooltipValue = (val: number) => formatChartValue(val, valueSuffix);
 
   const slotWidth = chartWidth / data.length;
   const hasSecondary = data.some(d => d.secondaryValue !== undefined);
@@ -764,6 +748,8 @@ interface HeatmapChartProps {
   valuePrefix?: string;
   valueSuffix?: string;
   colorScheme?: 'indigo' | 'emerald' | 'amber' | 'blue';
+  xLabel?: string;
+  yLabel?: string;
 }
 
 const DEFAULT_DAYS = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ Nhật'];
@@ -777,6 +763,8 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
   data = [],
   valuePrefix = '',
   valueSuffix = ' đơn',
+  xLabel = 'Giờ',
+  yLabel = 'Thứ',
 }) => {
   const [hoveredCell, setHoveredCell] = useState<{ x: string; y: string; val: number } | null>(null);
 
@@ -834,13 +822,15 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
   // Determine active rows & cols
   const yCategories = ySet.size > 0
     ? DEFAULT_DAYS.filter(d => ySet.has(d)).concat(Array.from(ySet).filter(d => !DEFAULT_DAYS.includes(d)))
-    : DEFAULT_DAYS;
+    : [];
 
   const xCategories = xSet.size > 0
     ? (Array.from(xSet).some(x => DEFAULT_HOURS.includes(x))
         ? DEFAULT_HOURS.filter(h => xSet.has(h)).concat(Array.from(xSet).filter(h => !DEFAULT_HOURS.includes(h)))
         : Array.from(xSet))
-    : DEFAULT_HOURS;
+    : [];
+
+  if (!xCategories.length || !yCategories.length) return <div className="text-xs text-slate-400 p-4">Chưa có dữ liệu ma trận</div>;
 
   // Compute maximum value for color interpolation
   let maxVal = 1;
@@ -868,7 +858,7 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
         <div className="min-w-[620px]">
           {/* Header row: Hour columns */}
           <div className="flex items-center mb-1 text-[11px] font-medium text-slate-400">
-            <div className="w-16 shrink-0 text-left pl-1">Thứ / Giờ</div>
+            <div className="w-16 shrink-0 text-left pl-1">{yLabel} / {xLabel}</div>
             <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${xCategories.length}, minmax(0, 1fr))` }}>
               {xCategories.map(x => (
                 <div key={x} className="text-center truncate px-0.5" title={x}>
@@ -887,18 +877,19 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
                 </div>
                 <div className="flex-1 grid gap-1" style={{ gridTemplateColumns: `repeat(${xCategories.length}, minmax(0, 1fr))` }}>
                   {xCategories.map(x => {
-                    const val = matrix[y]?.[x] || 0;
+                    const missing = matrix[y]?.[x] === undefined;
+                    const val = matrix[y]?.[x] ?? 0;
                     const isHovered = hoveredCell?.x === x && hoveredCell?.y === y;
                     return (
                       <div
                         key={x}
-                        onMouseEnter={() => setHoveredCell({ x, y, val })}
+                        onMouseEnter={() => setHoveredCell(missing ? null : { x, y, val })}
                         onMouseLeave={() => setHoveredCell(null)}
                         className={`h-7 rounded-md border flex items-center justify-center text-[10px] cursor-pointer transition-all duration-150 ${getCellBg(val)} ${
                           isHovered ? 'ring-2 ring-indigo-500 scale-105 z-10' : ''
                         }`}
                       >
-                        {val > 0 ? (val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val) : '·'}
+                        {missing ? '—' : val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}
                       </div>
                     );
                   })}
@@ -926,7 +917,7 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
 
         {hoveredCell ? (
           <div className="text-[11px] font-medium text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg">
-            <span className="text-indigo-600 font-semibold">{hoveredCell.y} lúc {hoveredCell.x}:</span>{' '}
+            <span className="text-indigo-600 font-semibold">{hoveredCell.y} / {hoveredCell.x}:</span>{' '}
             <span className="font-bold">{valuePrefix}{hoveredCell.val.toLocaleString('vi-VN')}{valueSuffix}</span>
           </div>
         ) : (
@@ -944,6 +935,7 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
 export interface MultiLineChartProps {
   data: Array<Record<string, any>>;
   seriesKeys?: string[];
+  seriesLabels?: Record<string, string>;
   height?: number;
   valuePrefix?: string;
   valueSuffix?: string;
@@ -964,6 +956,7 @@ const MULTI_SERIES_PALETTE = [
 export const MultiLineChart: React.FC<MultiLineChartProps> = ({
   data = [],
   seriesKeys: propSeriesKeys,
+  seriesLabels = {},
   height = 300,
   valuePrefix = '',
   valueSuffix = '',
@@ -1122,7 +1115,7 @@ export const MultiLineChart: React.FC<MultiLineChartProps> = ({
                   className="w-2.5 h-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: isOff ? '#94a3b8' : color }}
                 />
-                <span className="font-semibold">{s}</span>
+                <span className="font-semibold">{seriesLabels[s] || s}</span>
                 <span className="text-[10px] text-slate-400 font-mono">
                   ({total >= 1_000_000 ? `${(total / 1_000_000).toFixed(1)}M` : total.toLocaleString('vi-VN')})
                 </span>
@@ -1175,11 +1168,18 @@ export const MultiLineChart: React.FC<MultiLineChartProps> = ({
           {activeSeries.map(s => {
             const seriesIdx = seriesList.indexOf(s);
             const color = MULTI_SERIES_PALETTE[seriesIdx % MULTI_SERIES_PALETTE.length];
-            const pts = normalizedData.map((d, i) => ({
-              x: getX(i),
-              y: getY(Number(d[s] || 0)),
-            }));
-            const linePath = createSpline(pts);
+            const segments: Array<Array<{ x: number; y: number; index: number }>> = [];
+            let current: Array<{ x: number; y: number; index: number }> = [];
+            normalizedData.forEach((d, i) => {
+              if (typeof d[s] === 'number' && Number.isFinite(d[s])) {
+                current.push({ x: getX(i), y: getY(d[s]), index: i });
+              } else if (current.length) {
+                segments.push(current); current = [];
+              }
+            });
+            if (current.length) segments.push(current);
+            const pts = segments.flat();
+            const linePath = segments.map(createSpline).join(' ');
 
             return (
               <g key={s}>
@@ -1196,7 +1196,7 @@ export const MultiLineChart: React.FC<MultiLineChartProps> = ({
 
                 {/* Data point dots */}
                 {pts.map((pt, pIdx) => {
-                  const isHovered = hoverIndex === pIdx;
+                  const isHovered = hoverIndex === pt.index;
                   return (
                     <circle
                       key={pIdx}
@@ -1287,6 +1287,7 @@ export const MultiLineChart: React.FC<MultiLineChartProps> = ({
 
             <div className="space-y-1 pt-0.5">
               {activeSeries
+                .filter(s => typeof normalizedData[hoverIndex][s] === 'number' && Number.isFinite(normalizedData[hoverIndex][s]))
                 .map(s => ({
                   name: s,
                   val: Number(normalizedData[hoverIndex][s] || 0),
@@ -1297,7 +1298,7 @@ export const MultiLineChart: React.FC<MultiLineChartProps> = ({
                   <div key={item.name} className="flex items-center justify-between gap-3 text-[11px]">
                     <div className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                      <span className="text-slate-300 font-medium truncate max-w-[100px]">{item.name}</span>
+                      <span className="text-slate-300 font-medium truncate max-w-[100px]">{seriesLabels[item.name] || item.name}</span>
                     </div>
                     <span className="font-mono font-bold text-white">
                       {valuePrefix}{item.val.toLocaleString('vi-VN')}{valueSuffix}

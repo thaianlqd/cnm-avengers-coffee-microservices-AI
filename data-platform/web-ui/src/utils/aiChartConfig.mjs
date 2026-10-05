@@ -18,3 +18,9 @@ export function resolveAiChartPresentation(chartMetadata = {}) {
     },
   };
 }
+
+// Units come from the semantic metric registry, never from number magnitude.
+export function formatChartValue(value, suffix = '') {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return '—';
+  return `${value.toLocaleString('vi-VN')}${suffix}`;
+}

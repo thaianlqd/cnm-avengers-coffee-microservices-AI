@@ -1,5 +1,6 @@
 """Reported named cake/coffee edits use fake Menu, cart, provider and transport."""
 from copy import deepcopy
+import json
 import socket
 
 import pytest
@@ -135,6 +136,49 @@ def test_complete_topping_name_applies_both_edits_without_clarification(cart):
     assert [row['result']['status'] for row in result['tool_calls_log']] == ['ok', 'ok']
     assert len(cart.provider.requests) == 1 and len(cart.writes) == 2
     assert cart_manager.get_cart(cart.sid)['items'][0]['toppings'] == ['Hạt Sen', 'Hạt Nổ Yến Mạch']
+
+
+@pytest.mark.parametrize('order', [(0, 1), (1, 0)])
+@pytest.mark.parametrize('explicit_topping', [False, True])
+def test_initial_multi_edit_accepts_unchanged_fields_in_full_line_proposals(cart, order, explicit_topping):
+    operations = [deepcopy(CAKE_EDIT), deepcopy(TOPPING_EDIT)]
+    operations[0][1]['desired_state'].update(size='Nhỏ', toppings=[])
+    operations[1][1]['desired_state'].update(quantity=1, size='Vừa', do_ngot='Ít ngọt')
+    cart.provider.steps = [calls(*(operations[index] for index in order))]
+    message = MESSAGE.replace('hạt nổ nhé', 'hạt nổ yến mạch nhé') if explicit_topping else MESSAGE
+    result = cart.turn(message)
+    if explicit_topping:
+        assert [row['result']['status'] for row in result['tool_calls_log']] == ['ok', 'ok']
+        assert len(cart.provider.requests) == 1 and len(cart.writes) == 2
+        assert cart_manager.get_cart(cart.sid)['items'][0]['toppings'] == ['Hạt Sen', 'Hạt Nổ Yến Mạch']
+        assert cart_manager.get_cart(cart.sid)['items'][1]['quantity'] == 2
+        return
+    assert [row['result']['status'] for row in result['tool_calls_log']] == (
+        ['ok', 'invalid_option'] if order[0] == 0 else ['invalid_option', 'ok'])
+    assert len(cart.provider.requests) == 1 and len(cart.writes) == 1
+    assert cart.writes[0][2] == dict(quantity=2)
+    assert 'một phần yêu cầu' in result['reply']
+    assert 'Hạt Nổ Củ Năng' in result['reply'] and 'Hạt Nổ Yến Mạch' in result['reply']
+    assert cart_manager.get_cart(cart.sid)['items'][0]['toppings'] == []
+
+
+@pytest.mark.parametrize('extra', [dict(quantity=3), dict(size='Nhỏ'), dict(do_ngot='Thêm ngọt')])
+def test_initial_multi_edit_rejects_actual_unrequested_configuration_changes(cart, extra):
+    result = gateway(cart, MESSAGE).dispatch('update_cart_item',
+        dict(cart_item_id='800', desired_state=dict(toppings=['Hạt Sen', 'Hạt Nổ Yến Mạch'], **extra)))
+    assert result['status'] == 'cart_fields_not_requested' and not cart.writes
+
+
+def test_provider_omitting_coffee_edit_cannot_report_complete_success(cart):
+    cart.provider.steps = [calls(CAKE_EDIT), {'content': json.dumps(dict(
+        response_kind='action', reply='Đã cập nhật tất cả món và topping.',
+        mutation_claims=['update_cart_item'], evidence_quotes=[]))}, RuntimeError('provider unavailable')]
+    result = cart.turn(MESSAGE)
+    assert len(cart.writes) == 1
+    assert cart_manager.get_cart(cart.sid)['items'][1]['quantity'] == 2
+    assert cart_manager.get_cart(cart.sid)['items'][0]['toppings'] == []
+    assert 'một phần yêu cầu' in result['reply'] and 'Còn chưa thực hiện' in result['reply']
+    assert 'Bạc Xỉu Nóng' in result['reply'] and 'tất cả món' not in result['reply']
 
 
 def test_model_cannot_move_the_cake_quantity_to_coffee(cart):
