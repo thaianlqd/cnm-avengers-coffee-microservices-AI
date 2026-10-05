@@ -188,7 +188,11 @@ def test_short_product_name_opens_options_for_the_selected_cold_variant(runtime)
 def test_prompt_and_output_budget_do_not_grow(runtime):
     from src.agents.llm_tool_orchestrator import SYSTEM_PROMPT
     from src.agents.tool_capabilities import CAPABILITIES
-    assert len(SYSTEM_PROMPT) <= 9178 and len(CAPABILITIES) == 33
+    assert len(SYSTEM_PROMPT) <= 9178 and len(CAPABILITIES) == 38
+    from src.agents.agent_context import business_state
+    from src.agents.tool_capabilities import capabilities_for_context
+    assert {'cancel_order', 'update_order', 'reorder_order', 'confirm_order_change'}.isdisjoint(
+        capabilities_for_context({'business': business_state(runtime.sid), 'visible': {}}))
     runtime.provider.steps = [calls(('filter_catalog', dict(category='drink', limit=1))), content()]
     runtime.turn('cho tôi xem 1 món cà phê')
     assert all(request['max_tokens'] == 600 for request in runtime.provider.requests)

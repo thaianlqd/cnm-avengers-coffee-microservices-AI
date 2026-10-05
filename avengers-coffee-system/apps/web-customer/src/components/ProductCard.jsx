@@ -1,6 +1,7 @@
 import { HeartIcon as HeartOutlineIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { useTranslation } from 'react-i18next';
+import ProductSalesSummary from './ProductSalesSummary';
 
 export default function ProductCard({ product, onView, onQuickAdd, onToggleFavorite, isFavorite = false }) {
   const { t } = useTranslation();
@@ -26,7 +27,7 @@ export default function ProductCard({ product, onView, onQuickAdd, onToggleFavor
         )}
         <div className="absolute left-2 top-2 flex gap-1.5">
           {hasDiscount ? <span className="rounded-full bg-[#c41230] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">Giảm giá</span> : null}
-          {la_hot ? <span className="rounded-full bg-[#e67a00] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">{t('home.bestSeller')}</span> : null}
+          {la_hot ? <span className="rounded-full bg-[#e67a00] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">Bán chạy tháng này</span> : null}
           {la_moi ? <span className="rounded-full bg-[#1a8b46] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">{t('home.tryNow')}</span> : null}
         </div>
         {onToggleFavorite ? (
@@ -60,6 +61,7 @@ export default function ProductCard({ product, onView, onQuickAdd, onToggleFavor
         >
           {ten_san_pham}
         </h3>
+        <ProductSalesSummary product={product} className="mb-3" />
         
         <div className="mt-auto">
           <div className="mb-3">

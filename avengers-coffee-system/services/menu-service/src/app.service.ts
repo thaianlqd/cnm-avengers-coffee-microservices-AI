@@ -7,6 +7,7 @@ import { SanPham } from './modules/menu/san-pham.entity';
 import { DanhMuc } from './modules/menu/danh-muc.entity';
 import { ThuocTinh } from './modules/menu/thuoc-tinh.entity';
 import { BienTheSanPham } from './modules/menu/bien-the-san-pham.entity';
+import { salesBadges } from './product-sales';
 
 @Injectable()
 export class AppService implements OnApplicationBootstrap {
@@ -244,6 +245,9 @@ export class AppService implements OnApplicationBootstrap {
       is_discounted: hasDiscount,
       la_hot: Boolean(item.la_hot),
       la_moi: Boolean(item.la_moi),
+      sold_count: Number((item as any).sold_count || 0),
+      order_count: Number((item as any).order_count || 0),
+      bestseller_period: (item as any).bestseller_period,
       image: item.hinh_anh_url,
       description: item.mo_ta,
       dang_ban: Boolean(item.trang_thai),
@@ -398,9 +402,11 @@ export class AppService implements OnApplicationBootstrap {
 
     const [items, total] = await queryBuilder.getManyAndCount();
 
+    const all = await this.spRepo.find();
+    const badges = new Map((await salesBadges(this.spRepo.manager, all)).map(item => [item.ma_san_pham, item]));
     return {
       total,
-      items: items.map((item) => this.formatMenuItem(item)),
+      items: items.map(item => this.formatMenuItem({ ...item, ...badges.get(item.ma_san_pham) })),
     };
   }
 

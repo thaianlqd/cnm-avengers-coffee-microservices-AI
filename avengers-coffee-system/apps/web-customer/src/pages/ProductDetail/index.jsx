@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import QuickViewModal from '../../components/QuickViewModal';
+import ProductSalesSummary from '../../components/ProductSalesSummary';
 import { useTranslation } from 'react-i18next';
 import { apiClient } from '../../lib/apiClient';
 import { queryKeys } from '../../lib/queryKeys';
@@ -263,6 +264,7 @@ export default function ProductDetailPage({
                 <span className="text-gray-300">|</span>
                 <span>{t('productDetail.sku')} <strong className="text-gray-800">{sku}</strong></span>
               </div>
+              <ProductSalesSummary product={product} detailed className="mt-3" />
 
               {/* Price */}
               <div className="mt-6">

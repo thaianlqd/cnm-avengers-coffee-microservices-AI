@@ -35,6 +35,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarSolidIcon, CheckBadgeIcon, HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { useCart } from '../context/CartContext';
+import { groupFavouriteOrders, loadFavouriteOrderHistory, favouriteItemDescription } from './favouriteOrders';
 
 
 const DEFAULT_ADDRESS_FORM = {
@@ -172,7 +173,8 @@ export default function ProfilePageContent({
 
   const userId = profileUser?.ma_nguoi_dung || profileUser?.maNguoiDung || null;
   const queryClient = useQueryClient();
-  const { addToCart, setIsCartOpen } = useCart();
+  const { reorderItems, setIsCartOpen } = useCart();
+  const [favouriteMessage, setFavouriteMessage] = useState('');
 
   const {
     data: profile,
@@ -236,74 +238,27 @@ export default function ProfilePageContent({
     staleTime: 30 * 1000,
   });
 
-  const { data: allOrdersData, isLoading: isAllOrdersLoading } = useQuery({
-    queryKey: ['allUserOrders', userId],
-    queryFn: async () => {
-      const response = await apiClient.get(`/customers/${userId}/orders?limit=1000`);
-      return response.data?.orders || [];
-    },
-    enabled: Boolean(userId) && activeTab === 'favourite-orders',
+  const { data: allOrdersData, isLoading: isAllOrdersLoading, isError: isAllOrdersError, error: allOrdersError, refetch: refetchFavouriteOrders } = useQuery({
+    queryKey: [...queryKeys.orderHistoryRoot, 'favourites', userId],
+    queryFn: ({ signal }) => loadFavouriteOrderHistory(apiClient, userId, signal),
+    enabled: Boolean(userId) && ['profile', 'favourite-orders'].includes(activeTab),
     staleTime: 60 * 1000,
   });
+  const favouriteOrders = useMemo(() => groupFavouriteOrders(allOrdersData), [allOrdersData]);
+  const closestFavourite = useMemo(() => groupFavouriteOrders(allOrdersData, 1)[0], [allOrdersData]);
 
-  const favouriteOrders = useMemo(() => {
-    if (!allOrdersData || allOrdersData.length === 0) return [];
-    
-    const combinationCounts = new Map();
-    
-    allOrdersData.forEach(order => {
-      if (!order.chi_tiet || order.chi_tiet.length === 0) return;
-      
-      const items = [...order.chi_tiet].sort((a, b) => String(a.ma_san_pham).localeCompare(String(b.ma_san_pham)));
-      
-      const hash = JSON.stringify(items.map(item => ({
-        id: item.ma_san_pham,
-        size: item.size,
-        qty: item.so_luong,
-        // Normalize tuy_chon to ignore order of options when hashing
-        opts: Array.isArray(item.tuy_chon) ? [...item.tuy_chon].sort().join('|') : String(item.tuy_chon || '')
-      })));
-      
-      if (!combinationCounts.has(hash)) {
-        combinationCounts.set(hash, {
-          hash,
-          count: 0,
-          items: order.chi_tiet,
-          total: order.tong_tien_hang || 0,
-          lastOrderedAt: order.ngay_tao,
-          sampleOrderId: order.ma_don_hang
-        });
-      }
-      
-      const record = combinationCounts.get(hash);
-      record.count += 1;
-      if (new Date(order.ngay_tao) > new Date(record.lastOrderedAt)) {
-        record.lastOrderedAt = order.ngay_tao;
-        // Keep the latest items just in case prices/names changed
-        record.items = order.chi_tiet;
-        record.total = order.tong_tien_hang || 0;
-      }
-    });
-    
-    return Array.from(combinationCounts.values())
-      .filter(record => record.count >= 5) // NGƯỠNG 5 LẦN
-      .sort((a, b) => b.count - a.count);
-  }, [allOrdersData]);
-
-  const handleReorderFavourite = (items) => {
-    items.forEach(item => {
-      addToCart({
-        ma_san_pham: item.ma_san_pham,
-        ten_san_pham: item.ten_san_pham,
-        gia_ban: item.don_gia,
-        hinh_anh_url: item.hinh_anh_url,
-        size: item.size,
-        so_luong: item.so_luong,
-        tuy_chon: item.tuy_chon
-      });
-    });
-    alert('Đã thêm các món trong đơn hàng yêu thích vào giỏ!');
-    setIsCartOpen(true);
+  const favouriteReorderMutation = useMutation({
+    mutationFn: ({ orderId, operationId }) => reorderItems(orderId, operationId),
+    onSuccess: () => {
+      setFavouriteMessage('Đã thêm các món vào giỏ theo giá hiện tại, dùng số lượng và tùy chọn của lần đặt gần nhất.');
+      setIsCartOpen(true);
+    },
+    onError: (error) => setFavouriteMessage(error?.response?.data?.message || error.message || 'Chưa đặt lại được đơn yêu thích.'),
+  });
+  const handleReorderFavourite = (fav) => {
+    if (favouriteReorderMutation.isPending) return;
+    setFavouriteMessage('');
+    favouriteReorderMutation.mutate({ orderId: fav.sampleOrderId, operationId: `web:favourite-reorder:${crypto.randomUUID()}` });
   };
 
   const topUpMutation = useMutation({
@@ -1404,11 +1359,17 @@ export default function ProfilePageContent({
                 </div>
                 <div>
                   <h3 className="text-lg font-black uppercase text-[#2b2b2b] tracking-tight">Đơn đặt hàng yêu thích của tôi</h3>
-                  <p className="text-xs font-semibold text-gray-500">Các tổ hợp món ăn bạn đã đặt từ 5 lần trở lên</p>
+                  <p className="text-xs font-semibold text-gray-500">Cùng danh sách món đã đặt từ 5 lần trở lên, không phân biệt số lượng và tùy chọn; không tính đơn huỷ hoặc thanh toán thất bại.</p>
                 </div>
               </div>
 
-              {isAllOrdersLoading ? (
+              {favouriteMessage && <p role="status" className="mb-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">{favouriteMessage}</p>}
+              {isAllOrdersError ? (
+                <div role="alert" className="text-center py-8 text-gray-600">
+                  <p>{allOrdersError?.response?.data?.message || allOrdersError?.message || 'Chưa tải được đơn yêu thích.'}</p>
+                  <button type="button" onClick={() => refetchFavouriteOrders()} className="mt-3 text-[#b22830] font-bold underline">Thử lại</button>
+                </div>
+              ) : isAllOrdersLoading ? (
                 <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div></div>
               ) : favouriteOrders.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
@@ -1416,7 +1377,15 @@ export default function ProfilePageContent({
                     <ShoppingBagIcon className="w-8 h-8 text-gray-300" />
                   </div>
                   <h4 className="text-gray-900 font-bold mb-2">Chưa có đơn hàng yêu thích nào</h4>
+                  <p className="text-sm text-gray-500 mb-2">Đã kiểm tra {allOrdersData?.length || 0} đơn trong lịch sử; chưa có danh sách món nào đạt 5 lần.</p>
                   <p className="text-sm text-gray-500 max-w-sm mx-auto">Khi bạn đặt cùng một danh sách các món ăn từ 5 lần trở lên, đơn hàng đó sẽ tự động xuất hiện ở đây để bạn dễ dàng đặt lại!</p>
+                  {closestFavourite && (
+                    <div className="mt-4 mx-auto max-w-md rounded-xl border border-red-100 bg-white p-4 text-left">
+                      <p className="text-sm font-bold text-[#b22830]">Danh sách gần đạt yêu thích: {closestFavourite.count}/5 lần</p>
+                      <p className="mt-1 text-sm text-gray-600">{[...new Set(closestFavourite.items.map(item => item.ten_san_pham))].join(', ')}</p>
+                      <p className="mt-2 text-xs text-gray-500">Còn {5 - closestFavourite.count} lần đặt cùng danh sách món để tự xuất hiện trong đơn yêu thích.</p>
+                    </div>
+                  )}
                   <button onClick={() => window.location.href = '/order'} className="mt-6 px-6 py-2.5 bg-[#b22830] text-white rounded-full font-bold text-sm hover:bg-[#8a1f25] transition-colors shadow-md shadow-red-900/20">
                     Bắt đầu đặt món ngay
                   </button>
@@ -1445,7 +1414,7 @@ export default function ProfilePageContent({
                               </div>
                               <div className="flex-1">
                                 <p className="text-sm font-bold text-gray-800 leading-tight mb-0.5">{item.so_luong}x {item.ten_san_pham}</p>
-                                <p className="text-xs text-gray-500">Size: {item.size}{item.tuy_chon ? ` | ${item.tuy_chon}` : ''}</p>
+                                <p className="text-xs text-gray-500">{favouriteItemDescription(item)}</p>
                               </div>
                             </div>
                           ))}
@@ -1454,14 +1423,15 @@ export default function ProfilePageContent({
                       
                       <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
                         <div>
-                          <p className="text-xs text-gray-500 mb-0.5 font-medium">Tổng tiền ước tính</p>
+                          <p className="text-xs text-gray-500 mb-0.5 font-medium">Tiền món lần gần nhất</p>
                           <p className="text-base font-black text-[#b22830]">{Number(fav.total).toLocaleString('vi-VN')}đ</p>
                         </div>
                         <button
-                          onClick={() => handleReorderFavourite(fav.items)}
+                          onClick={() => handleReorderFavourite(fav)}
+                          disabled={favouriteReorderMutation.isPending}
                           className="px-4 py-2 bg-gray-900 text-white text-xs font-bold rounded-full hover:bg-gray-800 transition-colors shadow-sm active:scale-95"
                         >
-                          Đặt lại đơn này
+                          {favouriteReorderMutation.isPending && favouriteReorderMutation.variables?.orderId === fav.sampleOrderId ? 'Đang thêm vào giỏ...' : 'Đặt lại đơn này'}
                         </button>
                       </div>
                     </div>

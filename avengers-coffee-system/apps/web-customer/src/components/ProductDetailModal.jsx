@@ -5,6 +5,7 @@ import { StarIcon } from '@heroicons/react/24/solid';
 import { useCart } from '../context/CartContext'; // BƯỚC 4: Import Hook
 import { apiClient } from '../lib/apiClient';
 import { queryKeys } from '../lib/queryKeys';
+import ProductSalesSummary from './ProductSalesSummary';
 
 export default function ProductDetailModal({ product, isOpen, onClose, user }) {
   const { addToCart } = useCart(); // BƯỚC 4: Lấy hàm thêm vào giỏ
@@ -69,6 +70,7 @@ export default function ProductDetailModal({ product, isOpen, onClose, user }) {
         {/* Phải: Info */}
         <div className="md:w-1/2 p-10 md:p-14 flex flex-col justify-center">
           <h2 className="text-4xl font-black text-gray-800 mb-2">{product.ten_san_pham}</h2>
+          <ProductSalesSummary product={product} detailed className="mb-3" />
           <p className="text-2xl font-black text-tch-orange mb-6">{finalPrice.toLocaleString('vi-VN')} đ</p>
           
           <p className="text-gray-500 text-sm leading-relaxed mb-8 font-medium italic">

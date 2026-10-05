@@ -25,7 +25,19 @@ class MutationOutcomeUnknown(RuntimeError):
 
 
 def denied(code, **details):
-    return {'status': code, 'message': 'Chưa thể thực hiện yêu cầu này an toàn. Bạn kiểm tra lựa chọn hoặc bổ sung thông tin nhé.', **details}
+    default_messages = {
+        'invalid_arguments': 'Thông tin yêu cầu chưa đầy đủ hoặc không hợp lệ. Bạn vui lòng kiểm tra và gửi lại nhé.',
+        'capability_not_available': 'Chức năng này hiện chưa được hỗ trợ hoặc chưa khả dụng trong bối cảnh này. Bạn vui lòng kiểm tra lại thao tác nhé.',
+        'invalid_edit_request': 'Yêu cầu sửa đơn chưa rõ ràng. Bạn có thể nói rõ món hoặc số thứ tự món và tuỳ chọn/món muốn đổi nhé.',
+        'confirmation_operation_locked': 'Thao tác đang chờ xác nhận hoặc huỷ bỏ trước khi thực hiện bước tiếp theo.',
+        'provider_unavailable': 'Hệ thống đang bận hoặc tạm thời gián đoạn kết nối. Bạn thử lại sau ít phút nhé.',
+        'transaction_completed_or_processing': 'Giao dịch đang được xử lý hoặc đã hoàn tất, không thể thực hiện thêm thay đổi.',
+        'authoritative_cart_unavailable': 'Chưa thể tải dữ liệu giỏ hàng. Bạn vui lòng thử lại nhé.',
+        'authentication_or_turn_required': 'Bạn vui lòng đăng nhập để thực hiện thao tác này nhé.',
+        'order_target_mismatch': 'Mã đơn được chọn khác với mã bạn yêu cầu. Bạn gửi lại đúng mã đơn nhé.'
+    }
+    msg = details.pop('message', None) or default_messages.get(code, 'Chưa thể thực hiện yêu cầu này an toàn. Bạn kiểm tra lựa chọn hoặc bổ sung thông tin nhé.')
+    return {'status': code, 'message': msg, **details}
 
 
 class GuardedToolGateway:
@@ -40,6 +52,21 @@ class GuardedToolGateway:
         self.cache, self.provenance = {}, []
         self.business_revision, self.read_cache_hits = 0, 0
         self.write_started = False
+        from src.agents.order_management import management_scope, management_kind, active_edit_focus, recent_order_read, order_reference
+        self.context['order_management'] = management_scope(user_message, context['business'].get('checkout') or {})
+        self.context['order_management_kind'] = management_kind(user_message, context['business'].get('checkout') or {})
+        self.context['recent_order_read'] = recent_order_read(user_message)
+        self.entry_order_reference = order_reference(user_message, artifacts.visible.get('orders'))
+        if self.entry_order_reference and self.entry_order_reference['status'] == 'ok':
+            self.context['order_reference'] = self.entry_order_reference
+        self.entry_order_focus = active_edit_focus(user_message, context['business'].get('checkout') or {})
+        self.entry_order_action = deepcopy((context['business'].get('checkout') or {}).get('order_management_action'))
+        order_language = normalize_text(user_message)
+        explicit_order_id = re.search(r'\b[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\b', user_message.lower())
+        draft_summary = (context['business'].get('checkout') or {}).get('checkout_action_id')
+        past_order_action = re.search(r'\b(?:huy don|sua don|doi don|dat lai|mua lai|don da dat|don vua dat)\b', order_language)
+        self.existing_order_request = bool((explicit_order_id or self.entry_order_action or self.entry_order_focus or (past_order_action and not draft_summary))
+            and not re.search(r'\bgio hang\b', order_language))
         self.entry_action = (context['business'].get('checkout') or {}).get('checkout_action_id')
         self.entry_vouchers = deepcopy(artifacts.visible.get('vouchers') or [])
         self.entry_profile_offer = deepcopy((context['business'].get('checkout') or {}).get('profile_location_offer'))
@@ -69,7 +96,8 @@ class GuardedToolGateway:
             'get_product_options', 'add_to_cart', 'update_cart_item', 'remove_cart_item', 'finish_cart',
             'skip_voucher', 'apply_voucher', 'remove_voucher', 'discard_pending_product', 'set_session_branch', 'set_checkout_choices',
             'resolve_location', 'select_location_candidate', 'request_checkout', 'confirm_checkout',
-            'search_knowledge_base', 'get_product_description', 'get_cart_quote', 'get_payment_options')}
+            'search_knowledge_base', 'get_product_description', 'get_cart_quote', 'get_payment_options',
+            'cancel_order', 'update_order', 'reorder_order', 'confirm_order_change', 'discard_order_change')}
 
     def executors(self):
         return {name: (lambda args, session_id, n=name: self.dispatch(n, args)) for name in self.schemas}
@@ -105,9 +133,47 @@ class GuardedToolGateway:
         capability = CAPABILITIES.get(name)
         if name == 'confirm_checkout' and self.confirmation_recovery is None:
             self.confirmation_recovery = 'confirm_checkout'
+        if name == 'update_order' and isinstance(args, dict):
+            args = dict(args)
+            if 'order_id' in args and args['order_id'] is not None:
+                args['order_id'] = str(args['order_id']).strip()
+            if 'changes' in args and isinstance(args['changes'], list):
+                norm_changes = []
+                for ch in args['changes']:
+                    if isinstance(ch, dict):
+                        c = dict(ch)
+                        if 'order_line_id' in c and c['order_line_id'] is not None:
+                            try:
+                                c['order_line_id'] = int(str(c['order_line_id']).strip())
+                            except (ValueError, TypeError):
+                                pass
+                        if 'quantity' in c and c['quantity'] is not None:
+                            try:
+                                c['quantity'] = int(str(c['quantity']).strip())
+                            except (ValueError, TypeError):
+                                pass
+                        if 'product_id' in c and c['product_id'] is not None:
+                            c['product_id'] = str(c['product_id']).strip()
+                        opts = dict(c.get('options') or {})
+                        for opt_key, mapped_key in (('ice', 'luong_da'), ('sugar', 'do_ngot'), ('size', 'kich_co'), ('kich_co', 'kich_co')):
+                            if opt_key in c:
+                                opts[mapped_key] = c.pop(opt_key)
+                            elif opt_key in opts and mapped_key not in opts:
+                                opts[mapped_key] = opts[opt_key]
+                        if opts:
+                            c['options'] = opts
+                        norm_changes.append(c)
+                    else:
+                        norm_changes.append(ch)
+                args['changes'] = norm_changes
+
         if not capability or name not in self.schemas or not validate_args(args, self.schemas[name]):
             spec = self.schemas.get(name) or {}
+            denied_msg = None
+            if name == 'update_order':
+                denied_msg = "Yêu cầu sửa đơn hàng chưa đầy đủ hoặc không hợp lệ. Bạn có thể nói rõ món hoặc số thứ tự món và tuỳ chọn muốn đổi (ví dụ: 'đổi món 2 sang ít đá' hoặc 'đổi món 2 sang Trà Sữa') nhé."
             result = denied('invalid_arguments',
+                message=denied_msg,
                 required_fields=spec.get('required', []),
                 allowed_fields=list(spec.get('properties', {})))
             if name == 'confirm_checkout':
@@ -185,15 +251,17 @@ class GuardedToolGateway:
                 result = denied('capability_not_available')
             elif capability.access != 'READ' and (not (state['authenticated'] or state.get('guest_session_id')) or not self.client_message_id):
                 result = denied('authentication_or_turn_required')
-            elif capability.access != 'READ' and name not in {'resolve_location', 'select_location_candidate', 'set_checkout_choices'} and not state['cart_verified']:
+            elif capability.access != 'READ' and name not in {'resolve_location', 'select_location_candidate', 'set_checkout_choices', 'cancel_order', 'update_order', 'reorder_order', 'confirm_order_change', 'discard_order_change'} and not state['cart_verified']:
                 result = denied('authoritative_cart_unavailable')
-            elif state['checkout'].get('checkout_submission') and capability.access != 'READ' and name != 'confirm_checkout':
+            elif state['checkout'].get('checkout_submission') and capability.access != 'READ' and name not in {'confirm_checkout', 'cancel_order', 'update_order', 'reorder_order', 'confirm_order_change', 'discard_order_change'}:
                 result = denied('transaction_completed_or_processing')
             else:
                 handler = self.handlers.get(name)
                 try:
                     cart_mutations = {'add_to_cart', 'update_cart_item', 'remove_cart_item'}
-                    if name in cart_mutations and self.denied_cart_operation not in {None, name}:
+                    if name in cart_mutations and self.existing_order_request:
+                        result = denied('existing_order_tools_required', message='Bạn đang thao tác đơn đã đặt; mình cần dùng đúng đơn đó, không đổi giỏ hàng hiện tại ạ.')
+                    elif name in cart_mutations and self.denied_cart_operation not in {None, name}:
                         result = denied('conflicting_cart_operations',
                             active_operation=self.denied_cart_operation, proposed_operation=name)
                     else:
@@ -294,8 +362,71 @@ class GuardedToolGateway:
                     result['payment_options_status'] = 'unavailable'
         return result
 
+    def _cancel_order(self, args):
+        from src.agents.order_management import prepare
+        if self._wrong_order_target(args):
+            return denied('order_target_mismatch', message='Mã đơn được chọn khác mã bạn yêu cầu. Bạn gửi lại đúng mã đơn nhé.')
+        return prepare(self.session_id, 'cancel_order', args, self.client_message_id)
+
+    def _update_order(self, args):
+        if args.get('changes'):
+            args.pop('edit_request', None)
+        elif args.get('edit_request') is not None:
+            if normalize_text(args['edit_request']) == normalize_text(self.user_message):
+                args['edit_request'] = self.user_message
+            if args['edit_request'] != self.user_message or set(args) != {'order_id', 'edit_request'}:
+                return denied('invalid_edit_request', message='Yêu cầu chỉnh sửa đơn hàng cần gửi kèm đúng nội dung yêu cầu của bạn.')
+            from src.agents.order_edit_dialogue import accepts
+            if not accepts(self.user_message, self.entry_order_focus):
+                return denied('invalid_edit_request', message='Yêu cầu sửa đơn chưa rõ ràng. Bạn có thể nói rõ số lượng, tuỳ chọn đá/đường/size hoặc món muốn đổi nhé.')
+        from src.agents.order_management import prepare
+        if self._wrong_order_target(args):
+            return denied('order_target_mismatch', message='Mã đơn được chọn khác mã bạn yêu cầu. Bạn gửi lại đúng mã đơn nhé.')
+        return prepare(self.session_id, 'update_order', args, self.client_message_id)
+
+    def _reorder_order(self, args):
+        from src.agents.order_management import prepare
+        if self._wrong_order_target(args):
+            return denied('order_target_mismatch', message='Mã đơn được chọn khác mã bạn yêu cầu. Bạn gửi lại đúng mã đơn nhé.')
+        return prepare(self.session_id, 'reorder_order', args, self.client_message_id)
+
+    def _wrong_order_target(self, args):
+        if self.entry_order_reference:
+            return (self.entry_order_reference['status'] != 'ok'
+                    or args['order_id'].lower() != self.entry_order_reference['order_id'])
+        targets = re.findall(r'\b[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\b', self.user_message.lower())
+        return bool((targets and (len(set(targets)) != 1 or args['order_id'].lower() != targets[0])) or
+            (not targets and self.entry_order_focus and args['order_id'].lower() != self.entry_order_focus['order_id']))
+
+    def _confirm_order_change(self, args):
+        from src.agents.order_management import confirm
+        self.write_started = True
+        return confirm(self.session_id, self.user_message, self.client_message_id, self.entry_order_action)
+
+    def _discard_order_change(self, args):
+        from src.agents.order_management import discard
+        if not re.search(r'\b(?:khong|ko|k|chua|khoan|bo qua|dung)\b', normalize_text(self.user_message)):
+            return denied('customer_decline_required')
+        return discard(self.session_id)
+
     def _read(self, name, args):
         args = dict(args)
+        if name in {'get_order_details', 'track_order_status'} and self._wrong_order_target(args):
+            return denied('order_target_mismatch', message='Bạn chọn đúng số thứ tự hoặc mã đơn trong danh sách vừa xem nhé.')
+        if name == 'get_order_details':
+            from src.agents.order_management import details
+            res = details(self.session_id, args['order_id'])
+            if res.get('status') == 'ok' and res.get('can_update'):
+                from src.common import cart_manager
+                cart_manager.set_checkout_context(self.session_id, order_management_action=None, order_management_focus={
+                    'kind': 'update_order',
+                    'order_id': res['order_id'],
+                    'expires_at': time.time() + 1800,
+                    'edit_revision': res.get('revision') or (res.get('order') or {}).get('revision'),
+                    'edit_lines': [{'id': r['id'], 'product_id': r.get('ma_san_pham'),
+                                    'name': r.get('ten_san_pham') or r.get('product_name')} for r in ((res.get('order') or {}).get('chi_tiet') or [])]
+                })
+            return res
         if name == 'get_product_insights':
             if self.request_route.get('owner') in {'rag', 'price', 'inventory', 'recommendation'}:
                 return denied('wrong_authority', requested_authority=self.request_route.get('owner'),

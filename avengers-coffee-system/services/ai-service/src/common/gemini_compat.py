@@ -61,7 +61,7 @@ def request_diagnostics(kwargs, compatibility_mode='canonical'):
 
 def compatibility_error(exc):
     """Return fixed labels only. Provider-controlled text/paths are never emitted."""
-    raw = str(getattr(exc, 'error_text', ''))[:65536]
+    raw = str(getattr(exc, 'error_text', getattr(exc, 'message', str(exc))))[:65536]
     try:
         body = json.loads(raw)
         errors = body if isinstance(body, list) else [body]
@@ -73,7 +73,9 @@ def compatibility_error(exc):
     if re.search(r'thought[_ ]signature', text):
         return 'tool_continuation_incompatible', 'tool_calls'
     complaint = re.search(r'unsupported|not supported|incompatible|not allowed|cannot|invalid|reject', text)
-    if complaint and re.search(r'\bresponse[_ ]format\b', text):
+    if complaint and (re.search(r'\bresponse[_ ]format\b|response[_ ]?mime[_ ]?type|responsemimetype|response mime type', text)
+                      or ('application/json' in text and re.search(r'function calling|tool use|tools', text))
+                      or 'invalid argument' in text or 'invalid_argument' in text):
         return 'response_format_incompatible', 'response_format'
     if complaint and re.search(r'\btool[_ ]choice\b', text):
         return 'tool_choice_incompatible', 'tool_choice'

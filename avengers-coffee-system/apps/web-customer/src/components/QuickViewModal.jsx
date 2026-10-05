@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { XMarkIcon, CheckIcon, PlusIcon, MinusIcon } from '@heroicons/react/24/outline';
+import ProductSalesSummary from './ProductSalesSummary';
 
 export default function QuickViewModal({ product, onClose, onAddToCart }) {
   const [quantity, setQuantity] = useState(1);
@@ -134,6 +135,7 @@ export default function QuickViewModal({ product, onClose, onAddToCart }) {
         <div className="md:col-span-6 p-8 flex flex-col h-full max-h-[90vh] overflow-y-auto custom-scrollbar">
           <div>
             <h2 className="text-2xl font-black text-[#222222] pr-8">{product.ten_san_pham}</h2>
+            <ProductSalesSummary product={product} className="mt-2" />
             <p className="text-xs text-gray-500 mt-1">Thương hiệu: <span className="text-[#b22830] font-bold">Highlands Coffee</span></p>
             <div className="mt-4">
               <span className="text-3xl font-black text-[#b22830]">{price.toLocaleString('vi-VN')}đ</span>

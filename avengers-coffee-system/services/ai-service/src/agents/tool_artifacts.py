@@ -57,6 +57,7 @@ def model_tool_result(name, result, artifacts=None):
     value = {key: compact(result[key]) for key in ('status', 'message', 'changed',
         'same_turn_read_reused', 'product_id', 'product_name', 'quantity', 'unit_price',
         'voucher_code', 'voucher_decided', 'discount_amount', 'so_tien_giam', 'final_total',
+        'ranking', 'period', 'period_anchor', 'period_start', 'period_end', 'new_product_basis',
         'quote_status', 'payment_options_status', 'total_cart', 'choices', 'profile_location', 'remaining_cart_edits',
         'order_id', 'order_status', 'payment_method', 'total_price', 'normalized_location') if key in result}
     if isinstance(result.get('cart'), dict):
@@ -103,7 +104,7 @@ def model_tool_result(name, result, artifacts=None):
                 row['display_index'] = original.get('display_index', index)
             if kind == 'products':
                 for key in ('product_id', 'product_name', 'final_price', 'price', 'category',
-                    'rating', 'avg_rating', 'total_reviews', 'sold_count', 'stock', 'stock_quantity', 'in_stock', 'is_active',
+                    'rating', 'avg_rating', 'total_reviews', 'sold_count', 'order_count', 'la_moi', 'stock', 'stock_quantity', 'in_stock', 'is_active',
                     'base_price', 'size_surcharge', 'parent_category', 'branch_id',
                     'availability_status', 'size', 'toppings', 'luong_da', 'do_ngot', 'loai_sua'):
                     if key in original:
@@ -273,6 +274,9 @@ class ToolArtifacts:
 
     def collect(self, name, args, result):
         self.logs.append({'tool': name, 'args': compact(args), 'result': result})
+        if name == 'get_order_history' and result.get('status') != 'ok':
+            self.visible['orders'] = []
+            self.focus.pop('order', None)
         if name in DISCOVERY_TOOLS:
             self.discovery_read_count += 1
             plan = args.get('planned_discovery_reads') if isinstance(args, dict) else None
@@ -304,6 +308,8 @@ class ToolArtifacts:
         product = result.get('canonical_product')
         if product and product.get('product_id') and product.get('product_name'):
             self.focus['product'] = {**product, 'source': name}
+        if name == 'get_order_details' and result.get('order_id'):
+            self.focus['order'] = {'order_id': result['order_id']}
         if name == 'update_cart_item':
             line = next((r for r in (result.get('cart') or {}).get('items', [])
                          if str(r.get('cart_item_id')) == args['cart_item_id']), None)
@@ -441,6 +447,29 @@ class ToolArtifacts:
                      if row['result'].get('message')), 'Mình chưa xác minh được kết quả. Bạn thử lại đúng tin nhắn này nhé.')
 
     def customer_flow_reply(self):
+        from src.agents.order_management import ORDER_TOOLS
+        order_results = [row['result'] for row in self.logs if row['tool'] in ORDER_TOOLS]
+        if order_results and order_results[-1].get('message'):
+            return order_results[-1]['message']
+        order_reads = [row for row in self.logs if row['tool'] in {'get_order_history', 'get_order_details', 'track_order_status'}]
+        if order_reads and order_reads[-1]['tool'] == 'get_order_history':
+            from src.agents.order_management import order_history_reply, history_snapshot
+            row = order_reads[-1]
+            self.used_customer_flow = True
+            self.visible['orders'] = snapshot('orders', history_snapshot(row['result'], row['args'].get('limit', 5)))
+            self.focus.pop('order', None)
+            return order_history_reply(row['result'], row['args'].get('limit', 5))
+        if order_reads and order_reads[-1]['tool'] == 'get_order_details':
+            row = order_reads[-1]
+            self.used_customer_flow = True
+            if row['result'].get('status') == 'ok':
+                from src.agents.order_management import order_details_reply
+                return order_details_reply(row['result'])
+            if row['result'].get('message'):
+                return row['result']['message']
+        if order_reads and order_reads[-1]['tool'] == 'track_order_status' and order_reads[-1]['result'].get('message'):
+            self.used_customer_flow = True
+            return order_reads[-1]['result']['message']
         if self.safety_facet:
             return None
         if self.discovery_batches and not any(row['tool'] in {
@@ -495,6 +524,12 @@ class ToolArtifacts:
                     descriptions.setdefault(str(doc.get('entity_id')), []).append(doc['content'])
         from src.agents.customer_flow_presentation import money
         lines = ['Dạ, mình gửi bạn các món phù hợp nhé:']
+        ranking = next((r['result'] for r in reversed(self.logs) if r['result'].get('ranking') == 'completed_paid_quantity'), None)
+        if ranking:
+            labels = {'day': 'ngày', 'week': 'tuần', 'month': 'tháng', 'year': 'năm', 'all': 'toàn bộ thời gian'}
+            period = labels.get(ranking.get('period'), 'khoảng đã chọn')
+            anchor = ranking.get('period_anchor')
+            lines[0] = f'Dạ, các món có số lượng bán nhiều nhất trong **{period}' + (f' chứa ngày {anchor}' if anchor else ' hiện tại' if period != 'toàn bộ thời gian' else '') + '** (đơn đã hoàn thành và thanh toán):'
         products = self.ui['products']
         scope = self.discovery_scope or {}
         requested = scope.get('requested_count')
@@ -514,6 +549,10 @@ class ToolArtifacts:
             index = product['display_index']
             price = product.get('final_price', product.get('price'))
             line = f"{index}. **{product['product_name']}**" + (f" — **{money(price)}**" if price is not None else '')
+            if product.get('sold_count') is not None:
+                line += f"\nĐã bán **{product['sold_count']}** sản phẩm trong **{product.get('order_count', 0)}** đơn."
+            if product.get('la_moi') and not ranking:
+                line += '\nMón mới trong Menu.'
             if mixed and bucket in PRODUCT_REFERENCE_LABELS:
                 line += f" ({PRODUCT_REFERENCE_LABELS[bucket]} số {product['group_display_index']})"
             # Keep the exact product identity; never use another product's text
@@ -543,7 +582,8 @@ class ToolArtifacts:
         needs_option_choice = bool(edit_plan and unfinished and all(any(
             row['tool'] == request['tool'] and str(row['args'].get('cart_item_id')) == request['cart_item_id']
             and row['result'].get('status') == 'invalid_option' for row in self.logs) for request in unfinished))
-        stop = ((name in {'resolve_location', 'select_location_candidate', 'find_nearest_branch', 'ask_branch'}
+        from src.agents.order_management import ORDER_TOOLS
+        stop = ((name in ORDER_TOOLS and last['result'].get('message')) or (name in {'resolve_location', 'select_location_candidate', 'find_nearest_branch', 'ask_branch'}
                  and (last['result'].get('branches') or last['result'].get('order_summary') or last['result'].get('location_candidates')))
                 or status in {'branch_unavailable_or_unknown', 'customer_branch_selection_required'}
                 or (name == 'request_checkout' and status == 'require_confirmation')
@@ -652,11 +692,20 @@ class ToolArtifacts:
 
     def validate_reply(self, raw):
         """Validate evidence/protocol claims, not natural-language intent."""
+        envelope = None
         try:
             envelope = json.loads(raw)
-            reply = str(envelope.get('reply') or '')
         except (ValueError, TypeError, AttributeError):
+            if isinstance(raw, str):
+                match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', raw, re.DOTALL)
+                if match:
+                    try:
+                        envelope = json.loads(match.group(1))
+                    except (ValueError, TypeError):
+                        pass
+        if not isinstance(envelope, dict):
             return self._fallback('missing_envelope')
+        reply = str(envelope.get('reply') or '')
         claims = envelope.get('mutation_claims') or []
         if not isinstance(claims, list) or any(not isinstance(name, str) for name in claims):
             return self._fallback('mutation_claim_mismatch')
@@ -736,9 +785,9 @@ class ToolArtifacts:
         for pattern, tools in (
             (r'\bda\s+(?:duoc\s+)?(?:dat|tao)\s+don\b', {'confirm_checkout'}),
             (r'\bda\s+(?:duoc\s+)?ap\s+(?:voucher|ma)\b', {'apply_voucher'}),
-            (r'\bda\s+(?:duoc\s+)?them\b', {'add_to_cart'}),
+            (r'\bda\s+(?:duoc\s+)?them\b', {'add_to_cart', 'confirm_order_change'}),
             (r'\bda\s+(?:duoc\s+)?xoa\b', {'remove_cart_item', 'remove_voucher', 'discard_pending_product'}),
-            (r'\bda\s+(?:duoc\s+)?cap nhat\b', {'update_cart_item', 'set_checkout_choices', 'set_session_branch'}),
+            (r'\bda\s+(?:duoc\s+)?cap nhat\b', {'update_cart_item', 'set_checkout_choices', 'set_session_branch', 'confirm_order_change'}),
         ):
             if re.search(pattern, normalized) and not successful.intersection(tools):
                 return self._fallback('confirmation_contract_mismatch' if 'confirm_checkout' in tools else 'mutation_claim_mismatch')

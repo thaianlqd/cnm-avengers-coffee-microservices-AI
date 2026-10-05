@@ -54,7 +54,9 @@ TOOL_FILTER_CATALOG = {
                 "max_price": {"type": "number"},
                 "max_price_inclusive": {"type": "boolean"},
                 "search_text": {"type": "string"},
-                "sort_by": {"type": "string", "enum": ["price_asc", "price_desc"]},
+                "sort_by": {"type": "string", "enum": ["price_asc", "price_desc", "sold_desc", "new"]},
+                "period": {"type": "string", "enum": ["day", "week", "month", "year", "all"]},
+                "period_anchor": {"type": "string", "description": "YYYY-MM-DD within the requested Vietnam calendar period; omit for current period."},
                 "limit": {"type": "integer"},
             },
         },
@@ -67,7 +69,8 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
                            max_price: Optional[float] = None, max_price_inclusive: bool = True,
                            search_text: Optional[str] = None, sort_by: str = "price_asc",
                            limit: int = 16, constraint_type: Optional[str] = None,
-                           approx_price: Optional[int] = None) -> Dict[str, Any]:
+                           approx_price: Optional[int] = None, period: str = "month",
+                           period_anchor: Optional[str] = None) -> Dict[str, Any]:
     import os
     if category not in {"all", "drink", "food"} or sellable_scope not in {"normal", "topping"}:
         return {"status": "error", "message": "Bộ lọc danh mục không hợp lệ."}
@@ -86,15 +89,40 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
     if max_price is not None:
         predicates.append("sp.gia_ban " + ("<=" if max_price_inclusive else "<") + " :max_price")
         params["max_price"] = float(max_price)
+    ranking = sort_by == "sold_desc"
+    if sort_by not in {"price_asc", "price_desc", "sold_desc", "new"}:
+        return {"status": "error", "message": "Tiêu chí sắp xếp không hợp lệ."}
+    sales_cte, sales_join, sales_columns = "", "", ""
+    if ranking:
+        from .sales_period import sales_window
+        try:
+            params["period_start"], params["period_end"] = sales_window(period, period_anchor)
+        except (ValueError, TypeError, OverflowError):
+            return {"status": "error", "message": "Bạn chọn ngày hợp lệ theo dạng YYYY-MM-DD nhé."}
+        order_schema = os.getenv("ORDER_SCHEMA", "orders")
+        sales_cte = f""", sales AS (
+            SELECT ct.ma_san_pham::text AS product_id, SUM(ct.so_luong)::bigint AS sold_count,
+                   COUNT(DISTINCT d.ma_don_hang)::integer AS order_count
+            FROM {order_schema}.chi_tiet_don_hang ct JOIN {order_schema}.don_hang d USING (ma_don_hang)
+            WHERE d.trang_thai_don_hang = 'HOAN_THANH' AND d.trang_thai_thanh_toan = 'DA_THANH_TOAN'
+              AND ct.so_luong > 0 AND (CAST(:period_start AS timestamptz) IS NULL OR d.ngay_tao >= CAST(:period_start AS timestamptz))
+              AND d.ngay_tao < CAST(:period_end AS timestamptz) GROUP BY ct.ma_san_pham)"""
+        sales_join = "JOIN sales ON sales.product_id = sp.ma_san_pham::text"
+        sales_columns = ", sales.sold_count, sales.order_count"
+    if sort_by == "new":
+        predicates.append("sp.la_moi = TRUE")
     terms = _catalog_name_key(search_text).split() if search_text else []
     order = "DESC" if sort_by == "price_desc" else "ASC"
+    sort_sql = ("sales.sold_count DESC, sp.ma_san_pham ASC" if ranking else
+                "sp.ten_san_pham ASC, sp.ma_san_pham ASC" if sort_by == "new" else
+                f"sp.gia_ban {order}, sp.ten_san_pham ASC, sp.ma_san_pham ASC")
     try:
         products = []
         page_size = 256 if terms else params["limit"]
         offset = 0
         with _get_engine().connect() as conn:
             query = text(f"""
-                {_category_hierarchy_cte(menu_schema)}
+                {_category_hierarchy_cte(menu_schema)}{sales_cte}
                 SELECT sp.ma_san_pham::text AS product_id, sp.ten_san_pham AS product_name,
                        sp.hinh_anh_url,
                        sp.gia_ban AS final_price, dm.ten_danh_muc AS category,
@@ -102,12 +130,13 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
                        CASE WHEN LOWER(dm.ten_danh_muc) = 'topping' THEN 'topping'
                             WHEN paths.root_name = ANY(:drink_roots) THEN 'drink'
                             WHEN paths.root_name = ANY(:food_roots) THEN 'food'
-                            ELSE 'unknown' END AS menu_bucket
+                            ELSE 'unknown' END AS menu_bucket {sales_columns}, sp.la_moi
                 FROM {menu_schema}.san_pham sp
                 JOIN {menu_schema}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc
                 JOIN category_paths paths ON paths.leaf_id = dm.ma_danh_muc
+                {sales_join}
                 WHERE {' AND '.join(predicates)}
-                ORDER BY sp.gia_ban {order}, sp.ten_san_pham ASC
+                ORDER BY {sort_sql}
                 LIMIT :page_size OFFSET :page_offset
             """)
             while True:
@@ -125,7 +154,12 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
                 if len(products) >= params["limit"] or len(rows) < page_size:
                     break
                 offset += page_size
-        return {"status": "ok" if products else "not_found", "products": products[:params["limit"]]}
+        return {"status": "ok" if products else "not_found", "products": products[:params["limit"]],
+            **({"ranking": "completed_paid_quantity", "period": period, "period_anchor": period_anchor,
+                "period_start": str(params["period_start"]), "period_end": str(params["period_end"]),
+                "message": "Xếp theo số lượng đã bán trong đơn hoàn thành, đã thanh toán." if products else
+                    "Chưa có món đã bán từ đơn hoàn thành, đã thanh toán trong khoảng này."} if ranking else {}),
+            **({"new_product_basis": "Menu.la_moi", "message": "Các món được Menu đánh dấu mới; chưa có ngày ra mắt để xếp theo thời gian."} if sort_by == "new" else {})}
     except Exception as error:
         logger.warning("catalog filter failed: %s", type(error).__name__)
         return {"status": "error", "message": "Chưa thể tra cứu menu lúc này."}
@@ -594,7 +628,7 @@ TOOL_GET_RECOMMENDATIONS = {
                 },
                 "criteria": {
                     "type": "string",
-                    "enum": ["hot", "rating", "price_desc", "price_asc"],
+                    "enum": ["hot", "rating", "price_desc", "price_asc", "new"],
                     "description": "Tiêu chí lọc. 'hot' cho món bán chạy, 'rating' cho món đánh giá cao nhất (NẾU khách nói 'cao nhất' sau khi vừa nhắc đến đánh giá, PHẢI DÙNG 'rating'). 'price_desc' cho món giá cao nhất, 'price_asc' cho món giá rẻ nhất."
                 },
                 "category": {
@@ -606,6 +640,8 @@ TOOL_GET_RECOMMENDATIONS = {
                     "type": "string",
                     "description": "Nhóm món cụ thể khách yêu cầu, ví dụ 'trà trái cây', 'cold brew', 'bánh ngọt'. Bỏ trống nếu khách chỉ hỏi chung.",
                 },
+                "period": {"type": "string", "enum": ["day", "week", "month", "year", "all"]},
+                "period_anchor": {"type": "string"},
                 "top_k": {
                     "type": "integer",
                     "description": "Số lượng món gợi ý (mặc định 5)."
@@ -615,7 +651,10 @@ TOOL_GET_RECOMMENDATIONS = {
     },
 }
 
-def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "hot", category: str = "all", top_k: int = 5, search_text: Optional[str] = None) -> Dict[str, Any]:
+def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "hot", category: str = "all", top_k: int = 5, search_text: Optional[str] = None, period: str = "month", period_anchor: Optional[str] = None) -> Dict[str, Any]:
+    if criteria in {"hot", "new"}:
+        return execute_filter_catalog(category=category, search_text=search_text, limit=top_k,
+            sort_by="sold_desc" if criteria == "hot" else "new", period=period, period_anchor=period_anchor)
     try:
         engine = _get_engine()
         import os

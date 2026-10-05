@@ -29,6 +29,7 @@ import {
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import QuickViewModal from '../../components/QuickViewModal';
 import ProductCard from '../../components/ProductCard';
+import ProductSalesSummary from '../../components/ProductSalesSummary';
 
 const MENU_ICONS = [
   '/hc-assets/menu_icon_1.png',
@@ -1179,7 +1180,7 @@ export default function OrderPage({
                                   </span>
                                   {product.la_hot && (
                                     <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-orange-500 to-amber-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
-                                      Bán chạy
+                                      Bán chạy tháng này
                                     </span>
                                   )}
                                 </div>
@@ -1193,6 +1194,7 @@ export default function OrderPage({
                                 <h4 className="text-[14px] font-medium text-[#333333] mb-2 leading-snug line-clamp-2">
                                   {product.ten_san_pham || product.name}
                                 </h4>
+                                <ProductSalesSummary product={product} className="mb-3" />
                                 <div className="mt-auto pt-1 flex items-center justify-between">
                                   <div className="flex flex-col">
                                     <span className="text-[15px] font-semibold text-[#b22830] leading-none">
@@ -1360,10 +1362,10 @@ export default function OrderPage({
                                         <div className="absolute top-2 left-2 flex flex-col gap-1 z-10 pointer-events-none">
                                           {p.la_hot && (
                                             <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-orange-500 to-amber-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
-                                              Bán chạy
+                                              Bán chạy tháng này
                                             </span>
                                           )}
-                                          {!p.la_hot && p.la_moi && (
+                                          {p.la_moi && (
                                             <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-emerald-600 to-teal-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
                                               Món mới
                                             </span>
@@ -1379,6 +1381,7 @@ export default function OrderPage({
                                         <h4 className="text-[14px] font-medium text-[#333333] mb-2 leading-snug line-clamp-2">
                                           {p.ten_san_pham || p.name}
                                         </h4>
+                                        <ProductSalesSummary product={p} className="mb-3" />
                                         <div className="mt-auto pt-1 flex items-center justify-between">
                                           <div className="flex flex-col">
                                             <span className="text-[15px] font-semibold text-[#b22830] leading-none">

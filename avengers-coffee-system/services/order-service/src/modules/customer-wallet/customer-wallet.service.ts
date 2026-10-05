@@ -155,16 +155,17 @@ export class CustomerWalletService {
     });
   }
 
-  async deductBalance(customerId: string, amount: number, referenceId: string) {
-    return this.withWalletPayment(customerId, amount, referenceId, async () => true, true);
+  async deductBalance(customerId: string, amount: number, referenceId: string, transactionManager?: EntityManager) {
+    return this.withWalletPayment(customerId, amount, referenceId, async () => true, true, transactionManager);
   }
 
   async withWalletPayment<T>(customerId: string, amount: number, referenceId: string,
-    writeOrder: (manager: EntityManager, balanceAfter: number) => Promise<T>, allowReplay = false): Promise<T> {
+    writeOrder: (manager: EntityManager, balanceAfter: number) => Promise<T>, allowReplay = false,
+    transactionManager?: EntityManager): Promise<T> {
     if (!customerId || !Number.isFinite(amount) || amount < 0 || !referenceId) {
       throw new BadRequestException('Thong tin thanh toan vi khong hop le');
     }
-    return this.walletRepo.manager.transaction(async manager => {
+    const pay = async (manager: EntityManager): Promise<T> => {
       const wallet = await manager.getRepository(CustomerWallet).findOne({
         where: { customer_id: customerId }, lock: { mode: 'pessimistic_write' },
       });
@@ -181,7 +182,7 @@ export class CustomerWalletService {
         throw new BadRequestException('Giao dich vi da duoc xu ly; hay truy van don hang cu');
       }
       if (!wallet || Number(wallet.balance) < amount) {
-        throw new BadRequestException('So du vi dien tu khong du de thanh toan');
+        throw new BadRequestException(`Ví chưa đủ tiền. Bạn cần nạp thêm ${Math.max(0, amount - Number(wallet?.balance || 0)).toLocaleString('vi-VN')}đ rồi xem lại thay đổi trước khi xác nhận.`);
       }
       const balanceAfter = Number(wallet.balance) - amount;
       wallet.balance = balanceAfter;
@@ -190,16 +191,17 @@ export class CustomerWalletService {
         customer_id: customerId, amount, type: 'PAYMENT', status: 'SUCCESS', reference_id: referenceId,
       }));
       return writeOrder(manager, balanceAfter);
-    });
+    };
+    return transactionManager ? pay(transactionManager) : this.walletRepo.manager.transaction(pay);
   }
 
-  async refundBalance(customerId: string, amount: number, referenceId: string) {
+  async refundBalance(customerId: string, amount: number, referenceId: string, transactionManager?: any) {
     // referenceId identifies one refund event. Callers issuing separate
     // partial refunds must give each event a distinct reference.
     if (!customerId || !referenceId || !Number.isFinite(amount) || amount <= 0) {
       throw new BadRequestException('Thong tin hoan tien vi khong hop le');
     }
-    return this.walletRepo.manager.transaction(async manager => {
+    const refund = async (manager: any) => {
       const schema = process.env.DB_SCHEMA || 'orders';
       const inserted = await manager.query(
         `INSERT INTO ${schema}.customer_wallet_transaction
@@ -232,6 +234,7 @@ export class CustomerWalletService {
       wallet.balance = Number(wallet.balance) + amount;
       await manager.save(CustomerWallet, wallet);
       return true;
-    });
+    };
+    return transactionManager ? refund(transactionManager) : this.walletRepo.manager.transaction(refund);
   }
 }

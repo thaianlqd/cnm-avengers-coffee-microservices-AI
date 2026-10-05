@@ -200,8 +200,8 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                         'timeout': max(0.1, min(timeout, provider_deadline-time.monotonic()))}
                     if schemas:
                         kwargs.update(tools=schemas, tool_choice='required' if required else 'auto')
-                    if provider == 'gemini' and mode == 'gemini_without_response_format':
-                        kwargs.pop('response_format')
+                    if provider == 'gemini' and (mode == 'gemini_without_response_format' or schemas):
+                        kwargs.pop('response_format', None)
                     if provider == 'openrouter':
                         kwargs['allow_fallback'] = False  # No hidden unbudgeted requests.
                     shape = request_diagnostics(kwargs, mode)
@@ -254,7 +254,7 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                             incompatible.add((provider, model, request_shape))
                             # Evidence-triggered inference-only downgrade. No schema,
                             # tool choice, history/result, key or business replay change.
-                            if (provider == 'gemini' and category == 'response_format_incompatible'
+                            if (provider == 'gemini' and (category in {'response_format_incompatible', 'unknown_incompatible_request'} or status == 400)
                                     and kwargs.get('response_format') and not compatibility_retried
                                     and attempts < provider_budget and time.monotonic() < provider_deadline):
                                 compatibility_retried = True

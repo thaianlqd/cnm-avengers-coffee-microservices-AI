@@ -105,29 +105,14 @@ export const CartProvider = ({ children }) => {
     setCart([]);
   };
 
-  const reorderItems = async (items) => {
-    // Xóa giỏ hàng hiện tại trước
-    await clearCart();
-    
-    // Đẩy tuần tự từng món vào giỏ
-    for (const item of items) {
-      // Mock product format expected by addToCart
-      const productMock = {
-        ma_san_pham: item.ma_san_pham,
-        ten_san_pham: item.ten_san_pham,
-        gia_ban: item.gia_ban,
-        hinh_anh_url: item.hinh_anh_url,
-      };
-      
-      const options = {
-        loaiSua: '',
-        toppings: [],
-        luongDa: '',
-        doNgot: '',
-      };
-      
-      await addToCart({ ma_nguoi_dung: activeUserId }, productMock, item.so_luong, item.kich_co || 'Nhỏ', options);
-    }
+  const reorderItems = async (orderId, operationId) => {
+    if (!orderId || isGuestSessionId(activeUserId)) throw new Error('Bạn đăng nhập để đặt lại đơn nhé.');
+    const response = await trackCartWrite(apiClient.post(`/cart/${activeUserId}/reorder`, { order_id: orderId }, {
+      ...cartRequestConfig(activeUserId), headers: { ...cartRequestConfig(activeUserId)?.headers,
+        'x-idempotency-key': operationId },
+    }));
+    await refreshCart();
+    return response.data;
   };
 
   const addToCart = async (user, product, quantity = 1, size = '', options = {}) => {
