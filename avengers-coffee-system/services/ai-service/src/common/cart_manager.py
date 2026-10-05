@@ -671,7 +671,7 @@ def reset_conversation_draft(session_id: str) -> Dict[str, Any]:
             "store_location", "location_source",
             "location_candidate_snapshot", "selected_location_candidate",
             "last_resolved_location", "last_branch_discovery_candidates", "last_branch_focus",
-            "summary_amounts", "checkout_action_expires_at",
+            "summary_amounts", "checkout_action_expires_at", "order_management_action", "order_management_focus",
         )
         for key in draft_keys:
             prefs.pop(key, None)

@@ -14,6 +14,7 @@ class Capability:
 
 
 READS = {
+    'compare_branch_reviews': ('reviews', 'scoped_branch_reviews'),
     'filter_catalog': ('menu', 'products'), 'get_recommendations': ('menu', 'products'),
     'get_product_options': ('menu', 'options'), 'check_price_and_stock': ('menu/inventory', 'products'),
     'get_product_insights': ('reviews', 'reviews'), 'search_knowledge_base': ('rag', 'evidence'),
@@ -41,6 +42,11 @@ WRITES = {
     'select_location_candidate': ('geo/order', 'current provider candidate; immutable coordinates/address'),
     'request_checkout': ('order', 'fresh cart; voucher decided; choices/address/branch complete'),
     'confirm_checkout': ('order', 'prior fresh action; current explicit final confirmation; same fingerprint'),
+    'cancel_order': ('order', 'owned existing order; preview cancellation under current service policy'),
+    'update_order': ('order/menu', 'owned editable COD/paid wallet order before preparation; total cannot decrease; preview any wallet difference; preserve other items/options'),
+    'reorder_order': ('order/menu', 'owned past order; preview current sellable items/options/prices; append to cart'),
+    'confirm_order_change': ('order', 'prior-turn server-owned preview; current explicit confirmation; unchanged order/prices'),
+    'discard_order_change': ('order/draft', 'discard only pending preview; no existing order mutation'),
 }
 CAPABILITIES = {name: Capability('READ', owner, 'server-owned session; validated schema', result)
                 for name, (owner, result) in READS.items()}
@@ -48,8 +54,7 @@ CAPABILITIES.update({name: Capability('FINAL_WRITE' if name == 'confirm_checkout
     owner, preconditions, 'business_result') for name, (owner, preconditions) in WRITES.items()})
 # Audit every old executor, including deliberately unexposed capabilities.
 EXCLUDED = {'get_user_preferences': 'long-term preference inference is outside this session BPM',
-            'cancel_order': 'completed-order destructive management is outside ordering migration',
-            'update_order': 'completed-order rewriting is outside ordering migration'}
+}
 TOOL_AUDIT = {name: CAPABILITIES.get(name) or EXCLUDED.get(name, 'not exposed; default deny')
               for name in TOOL_EXECUTORS}
 
@@ -62,9 +67,12 @@ def schema(name, properties=None, required=(), description=None):
 
 
 STRING = {'type': 'string'}
-OPTION_PROPERTIES = {key: STRING for key in ('size', 'luong_da', 'do_ngot', 'loai_sua')}
+OPTION_PROPERTIES = {key: STRING for key in ('size', 'kich_co', 'luong_da', 'ice', 'do_ngot', 'sugar', 'loai_sua', 'milk')}
 OPTION_PROPERTIES['toppings'] = {'type': 'array', 'items': STRING, 'maxItems': 16}
 CUSTOM_SCHEMAS = {
+    'compare_branch_reviews': schema('compare_branch_reviews', {
+        'branch_ids': {'type': 'array', 'minItems': 1, 'maxItems': 5, 'items': STRING}}, ('branch_ids',),
+        'Compare approved ratings and recent comments of exact displayed branch IDs only. Never expand these branches to a global ranking.'),
     'get_product_description': schema('get_product_description', {'product_id': STRING, 'query': STRING}, ('product_id',)),
     'add_to_cart': schema('add_to_cart', {'product_id': STRING,
         'quantity': {'type': 'integer', 'minimum': 1}, **OPTION_PROPERTIES,
@@ -90,16 +98,29 @@ CUSTOM_SCHEMAS = {
     'select_location_candidate': schema('select_location_candidate', {'candidate_id': STRING}, ('candidate_id',)),
     'request_checkout': schema('request_checkout', {'reuse_summary': {'type': 'boolean'}}),
     'confirm_checkout': schema('confirm_checkout'),
+    'cancel_order': schema('cancel_order', {'order_id': STRING, 'reason': STRING}, ('order_id',)),
+    'update_order': schema('update_order', {'order_id': STRING,
+        'edit_request': {**STRING, 'description': 'Exact current customer message for guided item selection. Do not combine with other changes.'},
+        'changes': {'type': 'array', 'maxItems': 32, 'items': {'type': 'object', 'properties': {
+            'order_line_id': {'type': 'integer', 'minimum': 1}, 'quantity': {'type': 'integer', 'minimum': 0, 'maximum': 999},
+            'product_id': STRING, 'product_name': STRING, **OPTION_PROPERTIES, 'note': STRING}, 'required': ['order_line_id'], 'additionalProperties': True}},
+        'add_items': {'type': 'array', 'maxItems': 16, 'items': {'type': 'object', 'properties': {
+            'product_id': STRING, 'quantity': {'type': 'integer', 'minimum': 1, 'maximum': 999},
+            **OPTION_PROPERTIES, 'note': STRING}, 'required': ['product_id', 'quantity'], 'additionalProperties': True}},
+        'delivery_address': STRING, 'delivery_slot': STRING, 'note': STRING}, ('order_id',)),
+    'reorder_order': schema('reorder_order', {'order_id': STRING}, ('order_id',)),
+    'confirm_order_change': schema('confirm_order_change'),
+    'discard_order_change': schema('discard_order_change'),
 }
 
 PURPOSES = {
-    'filter_catalog': 'Discover/rank products. category is only broad drink/food/all. search_text MUST specify a narrower requested family, or empty string for the whole category. Apply only customer-requested price bounds. limit is requested count.',
+    'filter_catalog': 'For sales ranking use sort_by=sold_desc, period=day/week/month/year/all, optional period_anchor=YYYY-MM-DD within requested period (Vietnam calendar, Monday week). Counts are quantities in completed, paid orders only. Default sales period is current month. For new products use sort_by=new (Menu marked new; no launch date). Discover/rank products. category is only broad drink/food/all. search_text MUST specify a narrower requested family, or empty string for the whole category. Apply only customer-requested price bounds. limit is requested count.',
     'get_product_insights': 'Read customer reviews, comments and average ratings for ONE exact concrete canonical product. Never use for category discovery, taste, description, ingredients, price or policy.',
     'get_product_description': 'Read approved RAG evidence for the canonical product description, taste or ingredients. Requires canonical product_id. Does not read customer reviews or price. Optional query preserves the actual knowledge question.',
     'search_knowledge_base': 'Read approved static knowledge: product taste/description/ingredients/FAQ, policies, brand and contacts. Use exact canonical entity_id for product questions. Never prices, stock, live vouchers, payment choices or order status.',
     'check_price_and_stock': 'Read CURRENT authoritative price and stock for a canonical product name and configured options.',
     'get_cart': 'Read the CURRENT authoritative cart, exact ordered line IDs, quantities and options.',
-    'get_recommendations': 'Discover open-ended current product candidates for a family/category when the customer wants suggestions. No cart mutation, ranking guarantee or single-product facts.',
+    'get_recommendations': 'criteria=hot ranks completed paid quantities with period and period_anchor; criteria=new reads Menu marked new. Never use price ordering for sales ranking. Discover open-ended current product candidates for a family/category when the customer wants suggestions. No cart mutation, ranking guarantee or single-product facts.',
     'get_payment_options': 'Read supported current payment options and wallet eligibility.',
     'get_cart_quote': 'Read price totals only. It cannot show/re-render an order confirmation summary or canonical confirmation UI.',
     'request_checkout': 'Prepare or re-render the final order summary and canonical confirmation UI. For a request to show/review the pending order again, call this with reuse_summary=true; get_cart plus get_cart_quote is insufficient. A summary is not an order.',
@@ -110,8 +131,13 @@ PURPOSES = {
     'set_checkout_choices': 'Record only explicitly selected fulfillment/payment. A new fulfillment reads saved profile locations and offers them for customer confirmation on a later turn. Do not resolve the offer immediately; acknowledge both choices when provided together.',
     'update_cart_item': 'Edit one exact current cart line with an absolute patch. For ordinal references include cart_line_ordinal matching its CURRENT cart display_index. Product-list ordinals are a separate namespace. Do not edit another row because the requested row already has that value.',
     'remove_cart_item': 'Remove one exact current cart line. For ordinal references include cart_line_ordinal matching CURRENT cart display_index, not product-list rank.',
-    'get_order_history': 'Read this authenticated customer\'s completed order history. Not the current draft cart or checkout summary.',
-    'get_order_details': 'Read an existing completed order owned by this authenticated customer. Not the current checkout draft.',
+    'get_order_history': 'Read the authenticated customer\'s most recent placed orders, newest first, with current order/payment statuses and dates. Includes pending, cancelled and completed orders. limit is the requested count (default 5, maximum 20). Not the current draft cart or checkout summary.',
+    'get_order_details': 'Read full current existing owned order, status, payment, exact order_line_id, sizes/toppings/options, address and revision. Read before editing; order_line_id is NOT a cart line or product ordinal.',
+    'cancel_order': 'Prepare cancellation preview for an owned order_id, optional literal customer reason. Never cancels immediately. Requires later confirmation. If no exact ID read order history and ask the customer to select; never guess.',
+    'update_order': 'Preview changes to an owned COD or paid Avengers-wallet order while new/confirmed, before preparation. QR/external payment orders cannot be edited. Final total must equal/exceed the old total. Paid wallet charges only the difference on later confirmation; insufficient balance requires top-up. changes patch exact order_line_id; quantity=0 removes. Preserve other lines/options. add_items uses canonical product_id/options. Supports delivery_address, delivery_slot, note. Requires later confirmation.',
+    'reorder_order': 'Preview owned past order for reordering. Preserves options, reads current prices/availability. After later confirmation appends to existing cart, never creates/pays an order or reuses consumed vouchers.',
+    'confirm_order_change': 'Confirm the prior-turn cancellation/edit/reorder preview ONLY after the customer explicitly agrees now. Call with {}. Server binds target, payload and revision. Never prepare another preview first in the confirmation turn.',
+    'discard_order_change': 'Drop pending preview when customer explicitly declines that change. Does not cancel the actual order.',
     'track_order_status': 'Read the current service status of an existing order owned by this customer.',
     'get_user_profile': 'Read saved addresses for this authenticated customer when checkout needs a location. For a saved-address reference, read first and pass the actual full_address to resolve_location. Pickup/dine-in addresses are search origins only; customer chooses a branch later.',
     'get_applicable_vouchers': 'Read currently eligible voucher candidates for the current cart. Does not apply a voucher or mark the cart finished.',
@@ -153,9 +179,28 @@ def capabilities_for_context(context, *, entry_action=None, final_only=False, re
     checkout_started = bool(voucher_decided or checkout.get('checkout_requested')
         or checkout.get('delivery_type') or checkout.get('payment_method'))
 
-    # Secondary profile/completed-order/branch-review capabilities remain in
+    # Secondary profile/completed-order capabilities remain in
     # CAPABILITIES and tool_schemas(), outside the default ordering surface.
     allowed = {'filter_catalog', 'get_recommendations', 'search_knowledge_base', 'get_cart'}
+    if context.get('branch_review_request'):
+        allowed.update({'get_store_reviews', 'get_top_rated_stores'})
+        if visible.get('branches'):
+            allowed.add('compare_branch_reviews')
+        if context.get('displayed_review_selection') is not None:
+            allowed.difference_update({'search_knowledge_base', 'get_top_rated_stores'})
+    if context.get('recent_order_read'):
+        allowed.add('get_order_history')  # Executor asks guests to log in; actor is session-owned.
+    if state.get('authenticated') and context.get('order_management'):
+        kind = context.get('order_management_kind')
+        allowed.update({'get_order_history', 'get_order_details', 'track_order_status'})
+        if not context.get('recent_order_read'):
+            allowed.update({kind} if kind in {'cancel_order', 'update_order', 'reorder_order'} else {'cancel_order', 'update_order', 'reorder_order'})
+        if kind != 'cancel_order':
+            allowed.update({'get_product_options', 'check_price_and_stock'})
+        if checkout.get('order_management_action'):
+            allowed.update({'confirm_order_change', 'discard_order_change'})
+        elif checkout.get('order_management_focus'):
+            allowed.add('discard_order_change')
     if product_context:
         allowed.update({'get_product_options', 'get_product_insights', 'check_price_and_stock'})
         # During cart/checkout consultation, search_knowledge_base already
@@ -270,8 +315,10 @@ def validate_args(value, spec):
     """Small JSON-schema subset used by these capabilities, with default deny."""
     kind = spec.get('type')
     valid = {'object': isinstance(value, dict), 'array': isinstance(value, list),
-        'string': isinstance(value, str), 'integer': type(value) is int,
-        'number': type(value) in (int, float), 'boolean': type(value) is bool}.get(kind, True)
+        'string': isinstance(value, str),
+        'integer': type(value) is int or (isinstance(value, str) and value.isdigit()),
+        'number': type(value) in (int, float) or (isinstance(value, str) and value.replace('.', '', 1).isdigit()),
+        'boolean': type(value) is bool}.get(kind, True)
     if not valid or ('enum' in spec and value not in spec['enum']):
         return False
     if kind == 'object':
@@ -287,5 +334,9 @@ def validate_args(value, spec):
         return len(value) <= 2000
     if kind in {'number', 'integer'}:
         import math
-        return math.isfinite(value) and spec.get('minimum', -float('inf')) <= value <= spec.get('maximum', float('inf'))
+        try:
+            num = int(value) if kind == 'integer' else float(value)
+        except (ValueError, TypeError):
+            return False
+        return math.isfinite(num) and spec.get('minimum', -float('inf')) <= num <= spec.get('maximum', float('inf'))
     return True

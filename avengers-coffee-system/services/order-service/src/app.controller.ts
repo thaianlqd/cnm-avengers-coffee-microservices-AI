@@ -184,6 +184,22 @@ export class AppController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CUSTOMER', 'ADMIN')
+  @Get('customers/:customerId/orders/:orderId')
+  orderManagementDetails(@Param('customerId') customerId: string, @Param('orderId') orderId: string, @CurrentUser() user: AuthUser | null) {
+    assertAccountCheckoutOwner(user, customerId);
+    return this.thanhToanService.layDonHangDeQuanLy(customerId, orderId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('CUSTOMER', 'ADMIN')
+  @Post('customers/:customerId/orders/:orderId/reorder-preview')
+  reorderPreview(@Param('customerId') customerId: string, @Param('orderId') orderId: string, @CurrentUser() user: AuthUser | null) {
+    assertAccountCheckoutOwner(user, customerId);
+    return this.thanhToanService.xemTruocDatLai(customerId, orderId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('CUSTOMER', 'ADMIN')
   @Patch('customers/:customerId/orders/:orderId')
   updateOrder(
     @Param('customerId') customerId: string,
@@ -191,6 +207,9 @@ export class AppController {
     @CurrentUser() currentUser: AuthUser | null,
     @Body()
     payload: {
+      preview_only?: boolean;
+      expected_revision?: string;
+      expected_total?: number;
       dia_chi_giao_hang?: string;
       khung_gio_giao?: string;
       ghi_chu?: string;
@@ -205,7 +224,7 @@ export class AppController {
       }>;
     },
   ) {
-    this.ensureSelfOrAdmin(currentUser, customerId);
+    assertAccountCheckoutOwner(currentUser, customerId);
     return this.thanhToanService.capNhatThongTinDonHang(customerId, orderId, payload);
   }
 
@@ -276,10 +295,10 @@ export class AppController {
     @Param('customerId') customerId: string,
     @Param('orderId') orderId: string,
     @CurrentUser() currentUser: AuthUser | null,
-    @Body() payload: { reason?: string },
+    @Body() payload: { reason?: string; expected_revision?: string },
   ) {
-    this.ensureSelfOrAdmin(currentUser, customerId);
-    return this.thanhToanService.huyDonHang(customerId, orderId, payload.reason);
+    assertAccountCheckoutOwner(currentUser, customerId);
+    return this.thanhToanService.huyDonHang(customerId, orderId, payload.reason, payload.expected_revision);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

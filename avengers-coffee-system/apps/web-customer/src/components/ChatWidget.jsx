@@ -692,7 +692,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
   const [walletTopupBusy, setWalletTopupBusy] = useState(false);
   const walletTopupBusyRef = useRef(false);
   const userName = user?.ho_ten || user?.hoTen || user?.email || 'Khách';
-  
+
   useEffect(() => {
     if (messages.length > 0) {
       saveAISession(messages, effectiveUserId);
@@ -709,18 +709,18 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
       return Array.isArray(d?.items) ? d.items : Array.isArray(d) ? d : [];
     };
     await Promise.allSettled([
-      apiClient.get('/menu/san-pham').then((r) => { cache.current.products = safe(r); }).catch(() => {}),
-      apiClient.get('/users/branches/public').then((r) => { cache.current.branches = safe(r); }).catch(() => {}),
-      uid ? apiClient.get(`/customers/${uid}/orders?limit=8`).then((r) => { cache.current.orders = safe(r); }).catch(() => {}) : Promise.resolve(),
-      apiClient.get('/vouchers?trang_thai=ACTIVE&limit=12').then((r) => { cache.current.vouchers = safe(r); }).catch(() => {}),
+      apiClient.get('/menu/san-pham').then((r) => { cache.current.products = safe(r); }).catch(() => { }),
+      apiClient.get('/users/branches/public').then((r) => { cache.current.branches = safe(r); }).catch(() => { }),
+      uid ? apiClient.get(`/customers/${uid}/orders?limit=8`).then((r) => { cache.current.orders = safe(r); }).catch(() => { }) : Promise.resolve(),
+      apiClient.get('/vouchers?trang_thai=ACTIVE&limit=12').then((r) => { cache.current.vouchers = safe(r); }).catch(() => { }),
     ]);
     return cache.current;
   }, [userId]);
 
   const scrollBottom = useCallback(() => setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 80), []);
 
-  useEffect(() => { 
-    isOpenRef.current = isOpen; 
+  useEffect(() => {
+    isOpenRef.current = isOpen;
     if (isOpen) {
       setTimeout(scrollBottom, 100);
     }
@@ -804,8 +804,10 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
       try {
         const result = await pollWalletTopup(apiClient, pendingWalletTopup, walletUserId);
         if (!active || result.status === 'pending') return;
-        const extras = { _walletTopupResolved: pendingWalletTopup.transactionId, _walletTopupReady: false,
-          _walletTopupOffer: walletTopupOffer };
+        const extras = {
+          _walletTopupResolved: pendingWalletTopup.transactionId, _walletTopupReady: false,
+          _walletTopupOffer: walletTopupOffer
+        };
         if (result.status === 'paid') {
           await queryClient.invalidateQueries({ queryKey: ['userWallet', walletUserId] });
           if (!active) return;
@@ -922,11 +924,11 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
       sessionStorage.removeItem(PENDING_AGENT_TURN_KEY);
 
       const nameStr = user?.ho_ten || user?.hoTen ? ` ${user.ho_ten || user.hoTen}` : '';
-      const msg = buildMsg({ 
-        vai_tro_nguoi_gui: 'AI', 
-        ten_nguoi_gui: 'Trợ lý AI', 
-        noi_dung: `Xin chào${nameStr}! 👋 Mình là Trợ lý AI của Avengers Coffee.\n\nHôm nay mình có thể hỗ trợ gì cho bạn?`, 
-        _quickReplies: QUICK_ACTIONS.slice(0, 4) 
+      const msg = buildMsg({
+        vai_tro_nguoi_gui: 'AI',
+        ten_nguoi_gui: 'Trợ lý AI',
+        noi_dung: `Xin chào${nameStr}! 👋 Mình là Trợ lý AI của Avengers Coffee.\n\nHôm nay mình có thể hỗ trợ gì cho bạn?`,
+        _quickReplies: QUICK_ACTIONS.slice(0, 4)
       });
       // Keep the unpaid order visible while conversation draft state resets.
       const pendingCard = pendingQrPayment ? buildMsg({
@@ -968,7 +970,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
     } catch (error) {
       const code = error?.response?.data?.detail?.code;
       if (previousTurn && previousTurn.id !== turn.id &&
-          (code === 'TURN_IN_PROGRESS' || code === 'TURN_OUTCOME_UNKNOWN')) {
+        (code === 'TURN_IN_PROGRESS' || code === 'TURN_OUTCOME_UNKNOWN')) {
         pendingAgentTurnRef.current = previousTurn;
         sessionStorage.setItem(PENDING_AGENT_TURN_KEY, JSON.stringify(previousTurn));
       }
@@ -1097,7 +1099,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
       const agentData = response.data;
       if (!agentData || typeof agentData.reply !== 'string') throw new Error('Invalid agent response');
       const agentReply = agentData?.reply;
-          const checkoutPayload = agentData?.checkout_payload;
+      const checkoutPayload = agentData?.checkout_payload;
       const agentError = agentData?.error;
       const confirmed = (agentData?.tool_calls_log || []).some((entry) =>
         entry.tool === 'confirm_checkout' && ['success', 'already_processed'].includes(entry.result?.status));
@@ -1332,9 +1334,9 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
       }
     } else {
       // Staff mode
-      if (!conversation) { 
-        setSending(false); 
-        return; 
+      if (!conversation) {
+        setSending(false);
+        return;
       }
       const content = buildContentWithReply(text, replyTo ? { sender: replyTo.ten_nguoi_gui || replyTo.sender, content: replyTo.noi_dung?.slice(0, 200) } : null);
       setReplyTo(null);
@@ -1342,7 +1344,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
         const token = window.localStorage.getItem('token');
         const headers = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
-        
+
         const res = await fetch(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`}/chat/conversations/${conversation.ma_hoi_thoai}/messages`, {
           method: 'POST',
           headers,
@@ -1350,10 +1352,10 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
             sender_user_id: effectiveUserId, sender_name: userName, sender_role: 'CUSTOMER', content,
           }),
         });
-        
+
         if (!res.ok) throw new Error('API Error');
         const data = await res.json();
-        
+
         if (overrideText === undefined) setInputText('');
         if (data?.conversation) setConversation(data.conversation);
         if (data?.message) {
@@ -1574,11 +1576,11 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
                       <button
                         key={a.id}
                         onClick={() => sendMessage(a.text)}
-                        style={{ 
-                          outline: 'none', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 500, 
-                          color: '#4B5563', background: '#FFFFFF', padding: '7px 14px', 
-                          borderRadius: 20, border: '1px solid #E5E7EB', 
-                          display: 'flex', alignItems: 'center', gap: 4 
+                        style={{
+                          outline: 'none', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 500,
+                          color: '#4B5563', background: '#FFFFFF', padding: '7px 14px',
+                          borderRadius: 20, border: '1px solid #E5E7EB',
+                          display: 'flex', alignItems: 'center', gap: 4
                         }}
                       >
                         {a.icon} {a.label}

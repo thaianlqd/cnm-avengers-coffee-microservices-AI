@@ -58,6 +58,15 @@ export class CartController {
     return this.cartService.quote(userId, body?.voucher_code, body?.delivery_mode, body?.delivery_method);
   }
 
+  @Post(':userId/reorder')
+  @HttpCode(200)
+  async reorder(@Param('userId') userId: string, @Req() req: any, @Headers('x-idempotency-key') operationId: string,
+    @Body() body: { order_id: string; expected_revision?: string; expected_cart_version?: number; expected_subtotal?: number }) {
+    this.assertOwner(req.user, userId);
+    if (isGuestCartId(userId)) throw new ForbiddenException('Can dang nhap de dat lai');
+    return this.cartService.datLaiVaoGio(userId, body, operationId);
+  }
+
   @Post('merge-guest')
   @HttpCode(200)
   async mergeGuestCart(

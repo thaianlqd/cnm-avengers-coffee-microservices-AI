@@ -275,6 +275,8 @@ def test_diagnostics_exclude_contents_ids_arguments_and_signatures():
 
 @pytest.mark.parametrize('message,category,field', [
     ('response_format is unsupported', 'response_format_incompatible', 'response_format'),
+    ("Function calling with a response mime type: 'application/json' is unsupported", 'response_format_incompatible', 'response_format'),
+    ('Tool use with responseMimeType application/json is not supported', 'response_format_incompatible', 'response_format'),
     ('tool_choice is invalid', 'tool_choice_incompatible', 'tool_choice'),
     ('Invalid additionalProperties in parameters', 'tool_schema_incompatible', 'parameters'),
     ('Invalid tool_call_id', 'tool_message_incompatible', 'tool_call_id'),
@@ -286,3 +288,15 @@ def test_safe_error_categories(message, category, field):
     assert policy.classify(exc)[0] == 'incompatible_request'
     assert compatibility_error(exc) == (category, field)
     assert message not in str(exc)
+
+
+def test_native_mime_error_retries_format_once_without_replaying_mutations(wire, caplog):
+    browsing(wire)
+    wire.steps.extend([tool('filter_catalog', {'search_text': '', 'limit': 2}),
+        error("Function calling with a response mime type: 'application/json' is unsupported"), envelope(ids=['101', '102'])])
+    result = wire.runtime.turn('Cho xem menu.')
+    assert result['error'] is None and len(wire.runtime.reads) == 1
+    assert wire.sent[1]['messages'] == wire.sent[2]['messages']
+    assert wire.sent[1]['max_tokens'] == wire.sent[2]['max_tokens']
+    assert 'response_format' in wire.sent[1] and 'response_format' not in wire.sent[2]
+    assert wire.slots[-1] == wire.slots[-2] and not wire.runtime.writes

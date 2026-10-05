@@ -12,6 +12,9 @@ import { CartItem } from './cart.entity';
 import { quoteDeliveryFee } from './delivery-pricing';
 import { VoucherService } from '../voucher/voucher.service';
 import { isGuestCartId } from '../../auth/cart-auth.guard';
+import { DonHang } from '../thanh-toan/entities/don-hang.entity';
+import { ChiTietDonHang } from '../thanh-toan/entities/chi-tiet-don-hang.entity';
+import { canonicalOrderLine, orderRevision } from '../thanh-toan/order-amendment';
 
 @Injectable()
 export class CartService {
@@ -455,6 +458,34 @@ export class CartService {
 
   async layGiỏHàng(ma_nguoi_dung: string) {
     return this.cartEnvelope(ma_nguoi_dung);
+  }
+
+  async datLaiVaoGio(userId: string, dto: { order_id: string; expected_revision?: string; expected_cart_version?: number; expected_subtotal?: number }, operationId: string) {
+    if (isGuestCartId(userId) || !operationId) throw new BadRequestException('Can dang nhap va ma thao tac');
+    return this.executeCartMutation(userId, 'REORDER', operationId, dto, async (manager, metadata) => {
+      if (dto.expected_cart_version !== undefined && Number(metadata.cart_version) !== Number(dto.expected_cart_version)) throw new ConflictException('Gio hang da thay doi. Vui long xem lai');
+      const order = await manager.getRepository(DonHang).findOne({ where: { ma_don_hang: dto.order_id, ma_nguoi_dung: userId }, lock: { mode: 'pessimistic_read' } });
+      if (!order) throw new NotFoundException('Khong tim thay don hang cua ban');
+      order.chi_tiet = await manager.getRepository(ChiTietDonHang).find({ where: { ma_don_hang: dto.order_id }, order: { id: 'ASC' } });
+      if (dto.expected_revision && orderRevision(order) !== dto.expected_revision) throw new ConflictException('Don cu da thay doi. Vui long xem lai');
+      if (!order.chi_tiet.length) throw new BadRequestException('Don cu khong co mon');
+      const items = await Promise.all(order.chi_tiet.map(i => canonicalOrderLine(manager, i)));
+      const subtotal = items.reduce((n, i) => n + i.gia_ban * i.so_luong, 0);
+      if (dto.expected_subtotal !== undefined && subtotal !== Number(dto.expected_subtotal)) throw new ConflictException('Gia Menu da thay doi. Vui long xem lai');
+      const repo = manager.getRepository(CartItem);
+      const existing = await repo.find({ where: { ma_nguoi_dung: userId } });
+      for (const item of items) {
+        const { kich_co, ...rest } = item;
+        const desired = { ...rest, size: kich_co || 'Nhỏ', ma_nguoi_dung: userId };
+        const match = existing.find(i => this.sameConfiguration(i, desired));
+        if (match) {
+          match.so_luong += item.so_luong;
+          match.gia_ban = item.gia_ban;
+          await repo.save(match);
+        } else existing.push(await repo.save(repo.create(desired)));
+      }
+      return this.finalizedMutation(manager, userId, null, items.length, metadata);
+    });
   }
 
   async mergeGuestCart(guestId: string, userId: string, operationId: string) {

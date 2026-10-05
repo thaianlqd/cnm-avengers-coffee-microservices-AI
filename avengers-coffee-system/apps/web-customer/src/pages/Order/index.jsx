@@ -1,14 +1,14 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-  MagnifyingGlassIcon, 
-  UserCircleIcon, 
-  ShoppingCartIcon, 
-  PhoneIcon, 
-  ClipboardDocumentListIcon, 
-  ArrowRightOnRectangleIcon, 
-  UserIcon, 
-  ListBulletIcon, 
+import {
+  MagnifyingGlassIcon,
+  UserCircleIcon,
+  ShoppingCartIcon,
+  PhoneIcon,
+  ClipboardDocumentListIcon,
+  ArrowRightOnRectangleIcon,
+  UserIcon,
+  ListBulletIcon,
   Squares2X2Icon,
   TicketIcon,
   SparklesIcon,
@@ -29,6 +29,7 @@ import {
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import QuickViewModal from '../../components/QuickViewModal';
 import ProductCard from '../../components/ProductCard';
+import ProductSalesSummary from '../../components/ProductSalesSummary';
 
 const MENU_ICONS = [
   '/hc-assets/menu_icon_1.png',
@@ -63,11 +64,11 @@ function BannerSlider() {
   return (
     <div className="w-full relative group bg-[#42a853] rounded-2xl overflow-hidden shadow-sm flex items-center justify-center aspect-[16/9]">
       {BANNER_IMAGES.map((img, idx) => (
-        <img 
+        <img
           key={idx}
-          src={img} 
-          alt={`Banner ${idx + 1}`} 
-          className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000 ${idx === currentIndex ? 'opacity-100' : 'opacity-0'}`} 
+          src={img}
+          alt={`Banner ${idx + 1}`}
+          className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000 ${idx === currentIndex ? 'opacity-100' : 'opacity-0'}`}
         />
       ))}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
@@ -133,7 +134,7 @@ export default function OrderPage({
   };
 
   const [activeCategory, setActiveCategory] = useState(selectedCatId || 'all');
-  
+
   useEffect(() => {
     if (selectedCatId) {
       setActiveCategory(selectedCatId);
@@ -148,7 +149,7 @@ export default function OrderPage({
   const [copiedVoucherCode, setCopiedVoucherCode] = useState(null);
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
   const [trackingOrderId, setTrackingOrderId] = useState(null);
-  
+
   // Flash Sale Timer Logic
   const [timeLeft, setTimeLeft] = useState({ hours: 22, minutes: 9, seconds: 47 });
   useEffect(() => {
@@ -219,7 +220,7 @@ export default function OrderPage({
   ];
 
   const [recentProducts, setRecentProducts] = useState([]);
-  
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem('hc_recent_products');
@@ -238,7 +239,7 @@ export default function OrderPage({
       const updated = [product, ...filtered].slice(0, 4);
       try {
         localStorage.setItem('hc_recent_products', JSON.stringify(updated));
-      } catch (e) {}
+      } catch (e) { }
       return updated;
     });
 
@@ -260,7 +261,7 @@ export default function OrderPage({
       if (Array.isArray(saved) && saved.length > 0) {
         setHasRecentLookup(true);
       }
-    } catch {}
+    } catch { }
   }, [isTrackingModalOpen]);
 
   const fullText = t('home.searchPlaceholder');
@@ -270,19 +271,19 @@ export default function OrderPage({
     let i = 0;
     let isDeleting = false;
     let timeoutId;
-    
+
     const typeWriter = () => {
       setPlaceholderText(fullText.substring(0, i) + (isDeleting ? "" : "|"));
-      
+
       let typeSpeed = 100;
-      
+
       if (isDeleting) {
         typeSpeed /= 2;
         i--;
       } else {
         i++;
       }
-      
+
       if (!isDeleting && i === fullText.length) {
         typeSpeed = 2000;
         isDeleting = true;
@@ -290,10 +291,10 @@ export default function OrderPage({
         isDeleting = false;
         typeSpeed = 500;
       }
-      
+
       timeoutId = setTimeout(typeWriter, typeSpeed);
     };
-    
+
     timeoutId = setTimeout(typeWriter, 500);
     return () => clearTimeout(timeoutId);
   }, []);
@@ -321,8 +322,8 @@ export default function OrderPage({
     });
   }, [menuSections]);
 
-  const renderedSections = viewCategory === 'all' 
-    ? sortedMenuSections 
+  const renderedSections = viewCategory === 'all'
+    ? sortedMenuSections
     : sortedMenuSections.filter(s => String(s.id) === String(viewCategory));
 
   const isMenuAlwaysOpen = false;
@@ -409,7 +410,7 @@ export default function OrderPage({
     const isPercent = type.includes('PERCENT');
     const rawVal = Number(voucher.gia_tri || 0);
     let valueText = isPercent ? `${rawVal}%` : (rawVal >= 1000 ? `${Math.round(rawVal / 1000)}K` : `${rawVal || 10}K`);
-    
+
     if (type.includes('FREE_ITEM') || code.includes('TOPPING')) {
       valueText = 'FREE';
     }
@@ -418,7 +419,7 @@ export default function OrderPage({
 
     let TagIconComp = TicketIcon;
     let tagLabel = 'ĐẶC QUYỀN';
-    
+
     if (isPersonal) {
       if (voucher.loai_su_kien === 'LUCKY_WHEEL' || code.startsWith('WHEEL_') || code.startsWith('LW_')) {
         TagIconComp = SparklesIcon;
@@ -441,28 +442,27 @@ export default function OrderPage({
       tagLabel = 'ƯU ĐÃI CHUNG';
     }
 
-    const stubBg = isPersonal 
-      ? 'bg-gradient-to-b from-[#c41230] via-[#ab0c25] to-[#87041a]' 
+    const stubBg = isPersonal
+      ? 'bg-gradient-to-b from-[#c41230] via-[#ab0c25] to-[#87041a]'
       : 'bg-gradient-to-b from-[#0f766e] via-[#0d645c] to-[#094842]';
 
     return (
-      <div 
-        key={code} 
-        className={`relative flex border rounded-xl overflow-hidden bg-white shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 min-w-[245px] max-w-[265px] h-[78px] flex-shrink-0 group cursor-pointer ${
-          isPersonal ? 'border-amber-200/90 hover:border-amber-400' : 'border-gray-200/90 hover:border-teal-300'
-        }`}
+      <div
+        key={code}
+        className={`relative flex border rounded-xl overflow-hidden bg-white shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 min-w-[245px] max-w-[265px] h-[78px] flex-shrink-0 group cursor-pointer ${isPersonal ? 'border-amber-200/90 hover:border-amber-400' : 'border-gray-200/90 hover:border-teal-300'
+          }`}
       >
         {/* Cutout punch holes */}
         <div className="absolute -top-1.5 left-[66px] w-3 h-3 bg-white rounded-full border-b border-gray-200/80 z-20 shadow-2xs"></div>
         <div className="absolute -bottom-1.5 left-[66px] w-3 h-3 bg-white rounded-full border-t border-gray-200/80 z-20 shadow-2xs"></div>
-        
+
         {/* Left Stub */}
         <div className={`${stubBg} text-white flex flex-col justify-center items-center w-[72px] px-1 py-1 flex-shrink-0 relative overflow-hidden select-none`}>
           <span className="inline-flex items-center gap-0.5 text-[7.5px] font-extrabold tracking-wider uppercase bg-white/20 px-1 py-0.25 rounded-full text-white z-10">
             <TagIconComp className="w-2 h-2 text-amber-200" />
             {tagLabel}
           </span>
-          
+
           <div className="my-0.5 text-center z-10">
             <span className="text-[17px] font-black leading-none tracking-tight block drop-shadow-xs font-sans">
               {valueText}
@@ -473,14 +473,13 @@ export default function OrderPage({
 
         {/* Dashed Divider Line */}
         <div className="absolute left-[72px] top-1.5 bottom-1.5 border-l border-dashed border-gray-200/90 z-10"></div>
-        
+
         {/* Right Details */}
         <div className="p-2 pl-3 flex-1 flex flex-col justify-between bg-white min-w-0">
           <div className="flex items-center justify-between gap-1">
             <div className="flex items-center gap-1 min-w-0">
-              <span className={`text-[10.5px] font-mono font-black tracking-wider uppercase truncate px-1.5 py-0.25 rounded ${
-                isPersonal ? 'bg-red-50 text-[#c41230] border border-red-100' : 'bg-gray-100 text-gray-800 border border-gray-200'
-              }`}>
+              <span className={`text-[10.5px] font-mono font-black tracking-wider uppercase truncate px-1.5 py-0.25 rounded ${isPersonal ? 'bg-red-50 text-[#c41230] border border-red-100' : 'bg-gray-100 text-gray-800 border border-gray-200'
+                }`}>
                 {code}
               </span>
             </div>
@@ -494,7 +493,7 @@ export default function OrderPage({
           <p className="text-[10px] text-gray-600 font-semibold truncate my-0.5" title={voucher.ten_khuyen_mai || voucher.mo_ta}>
             {voucher.ten_khuyen_mai || voucher.mo_ta || (isPersonal ? 'Đặc quyền dành riêng cho bạn' : `Giảm ${valueText} toàn hệ thống`)}
           </p>
-          
+
           <div className="flex items-center justify-between gap-1 pt-1 border-t border-gray-100/80">
             <div className="flex items-center gap-0.5 text-[8.5px] text-gray-400 font-medium">
               <ClockIcon className="w-2.5 h-2.5 text-gray-400 shrink-0" />
@@ -503,19 +502,18 @@ export default function OrderPage({
               </span>
             </div>
 
-            <button 
+            <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 handleCopyVoucherCode(code);
               }}
-              className={`text-[8.5px] font-bold px-2 py-0.5 rounded-md transition-all duration-200 flex items-center gap-0.5 cursor-pointer shrink-0 ${
-                isCopied 
-                  ? 'bg-emerald-600 text-white animate-pulse' 
+              className={`text-[8.5px] font-bold px-2 py-0.5 rounded-md transition-all duration-200 flex items-center gap-0.5 cursor-pointer shrink-0 ${isCopied
+                  ? 'bg-emerald-600 text-white animate-pulse'
                   : isPersonal
-                  ? 'bg-[#c41230] hover:bg-[#a00b25] text-white active:scale-95'
-                  : 'bg-gray-900 hover:bg-gray-800 text-white active:scale-95'
-              }`}
+                    ? 'bg-[#c41230] hover:bg-[#a00b25] text-white active:scale-95'
+                    : 'bg-gray-900 hover:bg-gray-800 text-white active:scale-95'
+                }`}
             >
               {isCopied ? (
                 <>
@@ -551,7 +549,7 @@ export default function OrderPage({
     if (onNavigate) onNavigate('order');
     setIsDropdownOpen(false);
     setIsMobileMenuOpen(false);
-    
+
     if (id === 'all') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
@@ -561,7 +559,7 @@ export default function OrderPage({
     setTimeout(() => {
       const parsedId = String(id).replace('group-', '');
       let targetElem = document.getElementById(`category-${parsedId}`) || document.getElementById(`category-${id}`);
-      
+
       // If parent category selected, try to find section for its first child
       if (!targetElem) {
         const childCat = categories.find(c => String(c.ma_danh_muc_cha) === parsedId);
@@ -608,17 +606,16 @@ export default function OrderPage({
             <button
               type="button"
               onClick={() => handleCategorySelect(parent.ma_danh_muc)}
-              className={`w-full flex items-center justify-between px-6 py-3.5 text-left transition-all duration-200 cursor-pointer ${
-                isActive 
-                  ? 'bg-[#b22830] text-white font-extrabold shadow-xs' 
+              className={`w-full flex items-center justify-between px-6 py-3.5 text-left transition-all duration-200 cursor-pointer ${isActive
+                  ? 'bg-[#b22830] text-white font-extrabold shadow-xs'
                   : 'text-gray-800 hover:bg-red-50/60 hover:text-[#b22830] font-semibold bg-white'
-              }`}
+                }`}
             >
               <div className="flex items-center gap-3.5">
-                <img 
-                  src={iconUrl} 
-                  alt={parent.ten_danh_muc} 
-                  className={`w-5 h-5 object-contain transition-transform duration-200 ${isActive ? 'brightness-0 invert scale-110' : ''}`} 
+                <img
+                  src={iconUrl}
+                  alt={parent.ten_danh_muc}
+                  className={`w-5 h-5 object-contain transition-transform duration-200 ${isActive ? 'brightness-0 invert scale-110' : ''}`}
                 />
                 <span className="text-[14px] capitalize tracking-wide">
                   {tCategory(parent.ten_danh_muc).toLowerCase()}
@@ -635,11 +632,11 @@ export default function OrderPage({
     <div className="w-full min-h-screen bg-white flex flex-col">
       {/* ── TOP HEADER (Full Width) ── */}
       <header className={`w-full bg-white flex items-center px-4 lg:px-6 sticky top-0 z-[60] shadow-sm gap-4 border-b border-gray-100 relative transition-all duration-300 ${isScrolled ? 'h-[64px]' : 'h-[84px]'}`}>
-        
+
         {/* Mobile Toggle & Logo */}
         <div className="flex items-center h-full relative" ref={mobileMenuRef}>
           {/* Mobile Menu Button */}
-          <button 
+          <button
             type="button"
             className="w-10 h-10 flex flex-col justify-center gap-1 cursor-pointer mr-2 lg:hidden"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -648,23 +645,23 @@ export default function OrderPage({
             <span className="w-6 h-0.5 bg-gray-800 block"></span>
             <span className="w-6 h-0.5 bg-gray-800 block"></span>
           </button>
-          
+
           <div className="flex-shrink-0 h-full flex items-center lg:ml-6 lg:w-[260px]">
             {!isScrolled ? (
-              <img 
-                src="/hc-assets/logo.png" 
-                alt="Highlands Coffee" 
-                className="h-[60px] w-auto object-contain cursor-pointer transition-transform hover:scale-105" 
+              <img
+                src="/hc-assets/logo.png"
+                alt="Highlands Coffee"
+                className="h-[60px] w-auto object-contain cursor-pointer transition-transform hover:scale-105"
                 onClick={() => {
                   handleCategorySelect('all');
                   if (onNavigate) {
                     onNavigate('order');
                   }
                   window.scrollTo({ top: 0, behavior: 'smooth' });
-                }} 
+                }}
               />
             ) : (
-              <div 
+              <div
                 ref={dropdownRef}
                 className="group flex items-center gap-3 cursor-pointer w-full relative h-full select-none"
                 onClick={() => setIsDropdownOpen((prev) => !prev)}
@@ -678,12 +675,11 @@ export default function OrderPage({
                 <ChevronDownIcon className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
 
                 {/* Dropdown List in Top Header */}
-                <ul 
-                  className={`absolute top-full left-0 w-[280px] bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 transition-all duration-200 z-[100] ${
-                    isDropdownOpen 
-                      ? 'opacity-100 visible translate-y-0' 
+                <ul
+                  className={`absolute top-full left-0 w-[280px] bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 transition-all duration-200 z-[100] ${isDropdownOpen
+                      ? 'opacity-100 visible translate-y-0'
                       : 'opacity-0 invisible -translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0'
-                  }`}
+                    }`}
                   onClick={(e) => e.stopPropagation()}
                 >
                   {categoryMenuItems}
@@ -720,7 +716,7 @@ export default function OrderPage({
 
             {/* Search Backdrop Overlay */}
             {isSearchBoxOpen && (
-              <div 
+              <div
                 className="fixed inset-0 bg-black/40 z-[-1] transition-opacity duration-300"
                 onClick={() => setIsSearchBoxOpen(false)}
               ></div>
@@ -843,22 +839,22 @@ export default function OrderPage({
         {/* Right Actions */}
         <div className="flex items-center gap-6 ml-auto mr-2 lg:mr-8">
           <div className="hidden md:flex items-center gap-2">
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => i18n.changeLanguage('vi')}
               className={`transition-all hover:scale-110 ${i18n.language === 'vi' ? 'ring-2 ring-[#b22830] opacity-100 rounded-[2px]' : 'opacity-40 hover:opacity-100'}`}
             >
               <img src="https://flagcdn.com/w40/vn.png" alt="VN" className="h-[20px] rounded-[2px] shadow-sm w-auto block" />
             </button>
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => i18n.changeLanguage('en')}
               className={`transition-all hover:scale-110 ${i18n.language === 'en' ? 'ring-2 ring-[#b22830] opacity-100 rounded-[2px]' : 'opacity-40 hover:opacity-100'}`}
             >
               <img src="https://flagcdn.com/w40/gb.png" alt="EN" className="h-[20px] rounded-[2px] shadow-sm w-auto block" />
             </button>
           </div>
-          
+
           <div className="hidden lg:flex items-center gap-3">
             <div className="w-[34px] h-[34px] rounded-full border border-[#b22830] flex items-center justify-center text-[#b22830]">
               <PhoneIcon className="w-[18px] h-[18px]" />
@@ -870,7 +866,7 @@ export default function OrderPage({
           </div>
 
           <div className="relative group cursor-pointer">
-            <div 
+            <div
               className="flex items-center gap-3"
               onClick={!userName ? onOpenAccount : onOpenProfile}
             >
@@ -881,7 +877,7 @@ export default function OrderPage({
                 <span className="text-[12px] text-gray-700 font-bold leading-tight">{t('header.account')}</span>
                 <span className="text-[12px] font-normal text-gray-500 leading-tight line-clamp-1">{userName || t('header.login')}</span>
                 {userName && (
-                  <span 
+                  <span
                     onClick={(e) => { e.stopPropagation(); onLogout?.(); }}
                     className="text-[11px] text-[#b22830] hover:text-red-800 font-bold mt-0.5 transition-colors"
                   >
@@ -956,12 +952,12 @@ export default function OrderPage({
             <span className="text-[15px] font-normal text-[#b22830] capitalize">{t('order.productCategories')}</span>
           </div>
 
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={() => {
               if (onNavigate) onNavigate('tra-cuu-don');
               window.scrollTo({ top: 0, behavior: 'smooth' });
-            }} 
+            }}
             className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity bg-transparent border-none p-0 cursor-pointer font-bold"
           >
             <TruckIcon className="w-4 h-4 text-white" />
@@ -985,10 +981,10 @@ export default function OrderPage({
 
       {/* ── MAIN LAYOUT (Full Width) ── */}
       <div className="flex w-full mx-auto max-w-[1440px] px-4 lg:px-8 relative bg-white pb-10 pt-0">
-        
+
         {/* ── MAIN CONTENT (Banner + Products) ── */}
         <main className="flex-1 flex flex-col min-w-0 relative">
-          
+
           {/* Content Area */}
           <div className="w-full bg-white">
             {children ? (
@@ -1020,8 +1016,8 @@ export default function OrderPage({
                     <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
                       <div>
                         <h2 className="text-2xl font-bold flex items-center gap-2 italic">
-                          <span className="text-[#f5a623]">⚡⚡</span> 
-                          FLASH SALE 
+                          <span className="text-[#f5a623]">⚡⚡</span>
+                          FLASH SALE
                           <span className="text-[#f5a623]">⚡⚡</span>
                         </h2>
                         <p className="text-gray-500 text-[13px] mt-1">Sản phẩm sẽ trở về giá gốc khi hết giờ</p>
@@ -1046,8 +1042,8 @@ export default function OrderPage({
 
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-8">
                       {flashSaleProducts.map((item) => (
-                        <div 
-                          key={item.id} 
+                        <div
+                          key={item.id}
                           className="bg-white rounded-xl border border-gray-100 p-4 relative group cursor-pointer hover:shadow-lg transition-all duration-300 flex flex-col"
                           onClick={() => {
                             const dbProduct = products.find(p => p.ten_san_pham === item.name);
@@ -1060,10 +1056,10 @@ export default function OrderPage({
                             {item.tag}
                           </div>
                           <div className="relative aspect-square w-full overflow-hidden flex items-center justify-center mb-4">
-                            <img 
-                              src={item.img} 
-                              alt={item.name} 
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                            <img
+                              src={item.img}
+                              alt={item.name}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             />
                           </div>
                           <div className="flex flex-col flex-1">
@@ -1079,8 +1075,8 @@ export default function OrderPage({
                                 <span className="text-gray-400 text-[12px] line-through leading-none mb-0.5">{item.oldPrice}</span>
                               </div>
                               <div className="w-full bg-[#fce4e4] rounded-full h-[18px] relative overflow-hidden flex items-center justify-center">
-                                <div 
-                                  className="absolute top-0 left-0 h-full bg-[#b22830] rounded-full transition-all duration-1000" 
+                                <div
+                                  className="absolute top-0 left-0 h-full bg-[#b22830] rounded-full transition-all duration-1000"
                                   style={{ width: `${(item.sold / item.total) * 100}%` }}
                                 ></div>
                                 <span className="relative z-10 text-[10px] text-white font-bold whitespace-nowrap">
@@ -1096,35 +1092,35 @@ export default function OrderPage({
                 )}
 
                 {/* Single Compact Unified Voucher Row Section */}
-                {(personalVouchers.length > 0 || publicVouchers.length > 0) && (                  <div className="mb-5 w-full bg-gradient-to-r from-red-50/60 via-amber-50/40 to-white rounded-2xl border border-gray-100 p-3 shadow-2xs">
-                    <div className="flex items-center justify-between mb-2 px-1">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-lg bg-[#b22830]/10 flex items-center justify-center text-[#b22830]">
-                          <TagIcon className="w-3.5 h-3.5 text-[#b22830]" />
-                        </div>
-                        <h3 className="text-sm font-extrabold text-gray-900 tracking-tight">{t('order.voucherAndOffers')}</h3>
-                        <span className="inline-flex items-center gap-1 bg-[#b22830]/10 text-[#b22830] text-[10px] font-bold px-2 py-0.5 rounded-full">
-                          {t('order.offersCount', { count: personalVouchers.length + publicVouchers.length })}
-                        </span>
+                {(personalVouchers.length > 0 || publicVouchers.length > 0) && (<div className="mb-5 w-full bg-gradient-to-r from-red-50/60 via-amber-50/40 to-white rounded-2xl border border-gray-100 p-3 shadow-2xs">
+                  <div className="flex items-center justify-between mb-2 px-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-[#b22830]/10 flex items-center justify-center text-[#b22830]">
+                        <TagIcon className="w-3.5 h-3.5 text-[#b22830]" />
                       </div>
-
-                      {personalVouchers.length === 0 && (
-                        <button 
-                          type="button"
-                          onClick={() => onNavigate?.('lucky-wheel')}
-                          className="text-[11px] font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1 transition-colors cursor-pointer"
-                        >
-                          <SparklesIcon className="w-3 h-3 text-amber-500" /> {t('order.huntMoreVouchers')}
-                        </button>
-                      )}
+                      <h3 className="text-sm font-extrabold text-gray-900 tracking-tight">{t('order.voucherAndOffers')}</h3>
+                      <span className="inline-flex items-center gap-1 bg-[#b22830]/10 text-[#b22830] text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        {t('order.offersCount', { count: personalVouchers.length + publicVouchers.length })}
+                      </span>
                     </div>
 
-                    {/* Single Horizontal Scroll Row (Personal vouchers first, then Public vouchers) */}
-                    <div className="flex overflow-x-auto gap-2.5 pb-1 custom-scrollbar">
-                      {personalVouchers.map((v) => renderVoucherCard(v, true))}
-                      {publicVouchers.map((v) => renderVoucherCard(v, false))}
-                    </div>
+                    {personalVouchers.length === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => onNavigate?.('lucky-wheel')}
+                        className="text-[11px] font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <SparklesIcon className="w-3 h-3 text-amber-500" /> {t('order.huntMoreVouchers')}
+                      </button>
+                    )}
                   </div>
+
+                  {/* Single Horizontal Scroll Row (Personal vouchers first, then Public vouchers) */}
+                  <div className="flex overflow-x-auto gap-2.5 pb-1 custom-scrollbar">
+                    {personalVouchers.map((v) => renderVoucherCard(v, true))}
+                    {publicVouchers.map((v) => renderVoucherCard(v, false))}
+                  </div>
+                </div>
                 )}
 
                 {/* AI TOP 3 RECOMMENDED PRODUCTS UNDER VOUCHER */}
@@ -1145,7 +1141,7 @@ export default function OrderPage({
                             {t('order.aiDesc')}
                           </p>
                         </div>
-                        
+
                         <div className="self-start md:self-center inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-amber-300 bg-amber-50 text-xs font-black text-amber-800 uppercase tracking-wider shadow-2xs shrink-0">
                           <SparklesIcon className="w-4 h-4 text-amber-600" />
                           AI PERSONAL
@@ -1159,19 +1155,19 @@ export default function OrderPage({
                           const categoryName = product?.danhMuc?.ten_danh_muc || 'Highlands Coffee';
 
                           return (
-                            <div 
-                              key={product.ma_san_pham || product.id} 
+                            <div
+                              key={product.ma_san_pham || product.id}
                               className="bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 group relative flex flex-col cursor-pointer"
                               onClick={() => handleProductClick(product)}
                             >
                               {/* Product Image Container */}
                               <div className="relative aspect-[4/3] w-full overflow-hidden flex items-center justify-center bg-[#f5f0e1]">
-                                <img 
-                                  src={product.hinh_anh_url || product.img || '/hc-assets/caphe-1.png'} 
-                                  alt={product.ten_san_pham || product.name} 
-                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 mix-blend-multiply" 
+                                <img
+                                  src={product.hinh_anh_url || product.img || '/hc-assets/caphe-1.png'}
+                                  alt={product.ten_san_pham || product.name}
+                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 mix-blend-multiply"
                                 />
-                                
+
                                 {/* Badges Overlay */}
                                 <div className="absolute top-2 left-2 flex flex-col gap-1 z-10 pointer-events-none">
                                   <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-[#c41230] to-amber-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
@@ -1179,7 +1175,7 @@ export default function OrderPage({
                                   </span>
                                   {product.la_hot && (
                                     <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-orange-500 to-amber-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
-                                      Bán chạy
+                                      Bán chạy tháng này
                                     </span>
                                   )}
                                 </div>
@@ -1193,6 +1189,7 @@ export default function OrderPage({
                                 <h4 className="text-[14px] font-medium text-[#333333] mb-2 leading-snug line-clamp-2">
                                   {product.ten_san_pham || product.name}
                                 </h4>
+                                <ProductSalesSummary product={product} className="mb-3" />
                                 <div className="mt-auto pt-1 flex items-center justify-between">
                                   <div className="flex flex-col">
                                     <span className="text-[15px] font-semibold text-[#b22830] leading-none">
@@ -1205,7 +1202,7 @@ export default function OrderPage({
                                     )}
                                   </div>
                                 </div>
-                                
+
                                 {/* Absolute positioned + button as in Highlands */}
                                 <button
                                   type="button"
@@ -1231,43 +1228,41 @@ export default function OrderPage({
                 {viewCategory === 'all' && (
                   <div className="lg:hidden sticky top-[84px] z-30 bg-white border-b border-gray-100 py-3 shadow-md overflow-x-auto no-scrollbar flex gap-2 px-4 sm:px-6">
                     <button
-                    type="button"
-                    onClick={() => {
-                      setViewCategory('all');
-                      handleCategorySelect('all');
-                    }}
-                    className={`inline-flex items-center justify-center px-4 py-2 rounded-full text-xs font-bold uppercase transition-all flex-shrink-0 cursor-pointer ${
-                      activeCategory === 'all'
-                        ? 'bg-[#b22830] text-white shadow-sm'
-                        : 'bg-[#f5f5f5] text-[#333333] hover:bg-gray-200'
-                    }`}
-                  >
-                    Tất cả
-                  </button>
-                  {parentCats.map((parent, idx) => {
-                    const iconUrl = MENU_ICONS[idx % MENU_ICONS.length];
-                    const isActive = activeCategory === parent.ma_danh_muc;
-                    return (
-                      <button
-                        key={parent.ma_danh_muc}
-                        type="button"
-                        onClick={() => handleCategorySelect(parent.ma_danh_muc)}
-                        className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold uppercase transition-all flex-shrink-0 cursor-pointer ${
-                          isActive
-                            ? 'bg-[#b22830] text-white shadow-sm'
-                            : 'bg-[#f5f5f5] text-[#333333] hover:bg-gray-200'
+                      type="button"
+                      onClick={() => {
+                        setViewCategory('all');
+                        handleCategorySelect('all');
+                      }}
+                      className={`inline-flex items-center justify-center px-4 py-2 rounded-full text-xs font-bold uppercase transition-all flex-shrink-0 cursor-pointer ${activeCategory === 'all'
+                          ? 'bg-[#b22830] text-white shadow-sm'
+                          : 'bg-[#f5f5f5] text-[#333333] hover:bg-gray-200'
                         }`}
-                      >
-                        {parent.ten_danh_muc}
-                      </button>
-                    );
-                  })}
-                </div>
+                    >
+                      Tất cả
+                    </button>
+                    {parentCats.map((parent, idx) => {
+                      const iconUrl = MENU_ICONS[idx % MENU_ICONS.length];
+                      const isActive = activeCategory === parent.ma_danh_muc;
+                      return (
+                        <button
+                          key={parent.ma_danh_muc}
+                          type="button"
+                          onClick={() => handleCategorySelect(parent.ma_danh_muc)}
+                          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold uppercase transition-all flex-shrink-0 cursor-pointer ${isActive
+                              ? 'bg-[#b22830] text-white shadow-sm'
+                              : 'bg-[#f5f5f5] text-[#333333] hover:bg-gray-200'
+                            }`}
+                        >
+                          {parent.ten_danh_muc}
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
 
-{/* Main Layout for Products */}
-            <div ref={productsContainerRef} className="flex flex-col gap-8 px-4 sm:px-6 lg:px-8 mt-6">
-            <div className="flex-1 min-w-0">
+                {/* Main Layout for Products */}
+                <div ref={productsContainerRef} className="flex flex-col gap-8 px-4 sm:px-6 lg:px-8 mt-6">
+                  <div className="flex-1 min-w-0">
 
                     {/* Product Grids - All Category Sections rendered, Smooth Scroll to target */}
                     <div className="space-y-12">
@@ -1300,70 +1295,70 @@ export default function OrderPage({
                           });
                           const displayItems = viewCategory === 'all' ? sortedItems.slice(0, 5) : sortedItems;
                           const hasMore = viewCategory === 'all' && sortedItems.length > 5;
-                          
+
                           const parentCatIndex = parentCats.findIndex(c => String(c.ma_danh_muc) === String(section.id));
                           const sectionIconUrl = parentCatIndex !== -1 ? MENU_ICONS[parentCatIndex % MENU_ICONS.length] : MENU_ICONS[idx % MENU_ICONS.length];
 
                           return (
                             <section key={section.id} id={`category-${section.id}`} className="scroll-mt-[100px]">
-                                {viewCategory !== 'all' ? (
-                                  <div className="mb-6 pt-2">
-                                    <div className="text-[13px] text-gray-500 mb-8 uppercase tracking-wider font-semibold">
-                                      <span className="cursor-pointer hover:text-[#b22830] transition-colors" onClick={() => setViewCategory('all')}>Trang chủ</span> 
-                                      <span className="mx-2">/</span> 
-                                      <span className="text-[#333333] font-bold">{section.label}</span>
-                                    </div>
-                                    <h1 className="text-3xl md:text-[32px] font-normal text-[#333333] uppercase mb-8">
+                              {viewCategory !== 'all' ? (
+                                <div className="mb-6 pt-2">
+                                  <div className="text-[13px] text-gray-500 mb-8 uppercase tracking-wider font-semibold">
+                                    <span className="cursor-pointer hover:text-[#b22830] transition-colors" onClick={() => setViewCategory('all')}>Trang chủ</span>
+                                    <span className="mx-2">/</span>
+                                    <span className="text-[#333333] font-bold">{section.label}</span>
+                                  </div>
+                                  <h1 className="text-3xl md:text-[32px] font-normal text-[#333333] uppercase mb-8">
+                                    {section.label}
+                                  </h1>
+                                  <div className="flex flex-wrap items-center gap-4 md:gap-6 text-[13px] font-semibold text-gray-500 mb-8 pb-4">
+                                    <span className="text-gray-900 font-bold mr-2">Sắp xếp:</span>
+                                    <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'name-asc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('name-asc')}>Tên A → Z</button>
+                                    <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'name-desc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('name-desc')}>Tên Z → A</button>
+                                    <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'price-asc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('price-asc')}>Giá tăng dần</button>
+                                    <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'price-desc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('price-desc')}>Giá giảm dần</button>
+                                    <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'default' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('default')}>Hàng mới</button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-between border-b-2 border-gray-100 pb-3.5 mb-6 pt-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-2.5 h-7 rounded-full bg-[#b22830] shrink-0 shadow-2xs"></div>
+                                    <h3 className="text-xl md:text-2xl font-black text-gray-900 uppercase font-sans tracking-wide">
                                       {section.label}
-                                    </h1>
-                                    <div className="flex flex-wrap items-center gap-4 md:gap-6 text-[13px] font-semibold text-gray-500 mb-8 pb-4">
-                                      <span className="text-gray-900 font-bold mr-2">Sắp xếp:</span>
-                                      <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'name-asc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('name-asc')}>Tên A → Z</button>
-                                      <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'name-desc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('name-desc')}>Tên Z → A</button>
-                                      <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'price-asc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('price-asc')}>Giá tăng dần</button>
-                                      <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'price-desc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('price-desc')}>Giá giảm dần</button>
-                                      <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'default' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('default')}>Hàng mới</button>
-                                    </div>
+                                    </h3>
                                   </div>
-                                ) : (
-                                  <div className="flex items-center justify-between border-b-2 border-gray-100 pb-3.5 mb-6 pt-4">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-2.5 h-7 rounded-full bg-[#b22830] shrink-0 shadow-2xs"></div>
-                                      <h3 className="text-xl md:text-2xl font-black text-gray-900 uppercase font-sans tracking-wide">
-                                        {section.label}
-                                      </h3>
-                                    </div>
-                                    <span className="text-xs font-extrabold text-[#b22830] bg-red-50 px-3.5 py-1 rounded-full border border-red-100 shadow-2xs">
-                                      {sortedItems.length} món
-                                    </span>
-                                  </div>
-                                )}
+                                  <span className="text-xs font-extrabold text-[#b22830] bg-red-50 px-3.5 py-1 rounded-full border border-red-100 shadow-2xs">
+                                    {sortedItems.length} món
+                                  </span>
+                                </div>
+                              )}
 
                               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-8">
                                 {displayItems.map((p) => {
                                   const isFav = isFavoriteProduct ? isFavoriteProduct(p) : false;
                                   return (
-                                    <div 
-                                      key={p.ma_san_pham || p.id} 
+                                    <div
+                                      key={p.ma_san_pham || p.id}
                                       className="bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 group relative flex flex-col cursor-pointer"
                                       onClick={() => handleProductClick(p)}
                                     >
                                       {/* Product Image Container */}
                                       <div className="relative aspect-[4/3] w-full overflow-hidden flex items-center justify-center bg-[#f5f0e1]">
-                                        <img 
-                                          src={p.hinh_anh_url || '/hc-assets/caphe-1.png'} 
-                                          alt={p.ten_san_pham || p.name} 
-                                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 mix-blend-multiply" 
+                                        <img
+                                          src={p.hinh_anh_url || '/hc-assets/caphe-1.png'}
+                                          alt={p.ten_san_pham || p.name}
+                                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 mix-blend-multiply"
                                         />
-                                        
+
                                         {/* Badges Overlay */}
                                         <div className="absolute top-2 left-2 flex flex-col gap-1 z-10 pointer-events-none">
                                           {p.la_hot && (
                                             <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-orange-500 to-amber-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
-                                              Bán chạy
+                                              Bán chạy tháng này
                                             </span>
                                           )}
-                                          {!p.la_hot && p.la_moi && (
+                                          {p.la_moi && (
                                             <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-emerald-600 to-teal-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
                                               Món mới
                                             </span>
@@ -1379,6 +1374,7 @@ export default function OrderPage({
                                         <h4 className="text-[14px] font-medium text-[#333333] mb-2 leading-snug line-clamp-2">
                                           {p.ten_san_pham || p.name}
                                         </h4>
+                                        <ProductSalesSummary product={p} className="mb-3" />
                                         <div className="mt-auto pt-1 flex items-center justify-between">
                                           <div className="flex flex-col">
                                             <span className="text-[15px] font-semibold text-[#b22830] leading-none">
@@ -1391,7 +1387,7 @@ export default function OrderPage({
                                             )}
                                           </div>
                                         </div>
-                                        
+
                                         {/* Absolute positioned + button as in Highlands */}
                                         <button
                                           type="button"
@@ -1425,10 +1421,10 @@ export default function OrderPage({
                                 </div>
                               )}
                             </section>
-                           );
-                         });
-                       })()}
-                     </div>
+                          );
+                        });
+                      })()}
+                    </div>
 
                     {/* RECENTLY VIEWED PRODUCTS */}
                     {viewCategory === 'all' && recentProducts.length > 0 && (
@@ -1438,17 +1434,17 @@ export default function OrderPage({
                         </h2>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-8">
                           {recentProducts.map((p) => (
-                            <div 
-                              key={p.ma_san_pham || p.id} 
+                            <div
+                              key={p.ma_san_pham || p.id}
                               className="bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 group relative flex flex-col cursor-pointer"
                               onClick={() => handleProductClick(p)}
                             >
                               {/* Product Image Container */}
                               <div className="relative aspect-[4/3] w-full overflow-hidden flex items-center justify-center bg-[#f5f0e1]">
-                                <img 
-                                  src={p.hinh_anh_url || p.img || '/hc-assets/caphe-1.png'} 
-                                  alt={p.ten_san_pham || p.name} 
-                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 mix-blend-multiply" 
+                                <img
+                                  src={p.hinh_anh_url || p.img || '/hc-assets/caphe-1.png'}
+                                  alt={p.ten_san_pham || p.name}
+                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 mix-blend-multiply"
                                 />
                               </div>
 
@@ -1472,7 +1468,7 @@ export default function OrderPage({
                                     )}
                                   </div>
                                 </div>
-                                
+
                                 <button
                                   type="button"
                                   onClick={(e) => {
@@ -1490,9 +1486,9 @@ export default function OrderPage({
                         </div>
                       </div>
                     )}
- 
-                   </div>
-                 </div>
+
+                  </div>
+                </div>
               </>
             )}
           </div>
@@ -1512,10 +1508,10 @@ export default function OrderPage({
 
       {/* Quick View Modal */}
       {quickViewProduct && (
-        <QuickViewModal 
-          product={quickViewProduct} 
-          onClose={() => setQuickViewProduct(null)} 
-          onAddToCart={onQuickAdd} 
+        <QuickViewModal
+          product={quickViewProduct}
+          onClose={() => setQuickViewProduct(null)}
+          onAddToCart={onQuickAdd}
         />
       )}
     </div>

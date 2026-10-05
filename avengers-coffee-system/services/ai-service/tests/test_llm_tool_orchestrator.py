@@ -345,5 +345,10 @@ def test_context_is_bounded_and_current_cart_overrides_redis(runtime,monkeypatch
 def test_capability_audit_is_complete_and_unsafe_legacy_tools_not_exposed():
     assert set(TOOL_AUDIT)==set(tools.TOOL_EXECUTORS)
     names={r['function']['name'] for r in tool_schemas()}
-    assert {'cancel_order','update_order','get_user_preferences'}.isdisjoint(names)
+    assert 'get_user_preferences' not in names
+    assert {'cancel_order', 'update_order', 'reorder_order', 'confirm_order_change'} <= names
+    schemas = {r['function']['name']: r['function']['parameters'] for r in tool_schemas()}
+    assert 'is_confirmed' not in schemas['cancel_order']['properties']
+    assert 'new_items' not in schemas['update_order']['properties']
+    assert schemas['confirm_order_change']['properties'] == {}
     assert {'filter_catalog','confirm_checkout','update_cart_item'}<=names

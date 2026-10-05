@@ -90,7 +90,7 @@ TOOL_EXECUTORS = {
     "get_recommendations": lambda args, session_id: execute_get_recommendations(**args),
     "filter_catalog": lambda args, session_id: execute_filter_catalog(**args),
     "track_order_status": lambda args, session_id: execute_track_order_status(session_id=session_id, **args),
-    "get_order_history": lambda args, session_id: execute_get_order_history(session_id=session_id),
+    "get_order_history": lambda args, session_id: execute_get_order_history(session_id=session_id, **args),
     "get_order_details": lambda args, session_id: execute_get_order_details(session_id=session_id, **args),
     "cancel_order": lambda args, session_id: execute_cancel_order(session_id=session_id, **args),
     "update_order": lambda args, session_id: execute_update_order(session_id=session_id, **args),

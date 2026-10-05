@@ -32,6 +32,7 @@ def safe_text(value, maximum=1500):
 
 
 ENTITY_FIELDS = {
+    'orders': ('order_id', 'display_index', 'order_status', 'payment_status', 'created_at', 'total_price'),
     'products': ('product_id', 'product_name', 'category', 'parent_category', 'menu_bucket', 'final_price',
                  'hinh_anh_url', 'display_index', 'group_display_index', 'global_display_index'),
     'vouchers': ('ma_voucher', 'voucher_code', 'ten_voucher', 'mo_ta', 'gia_tri', 'loai_giam_gia',
@@ -61,7 +62,7 @@ def compact(value, depth=0):
 def snapshot(kind, rows):
     # Voucher ordinals must describe every eligible offer shown to the customer.
     # The overall memory/context budget still applies; never silently cap at five.
-    count = len(rows or []) if kind == 'vouchers' else (16 if kind == 'products' else 5)
+    count = len(rows or []) if kind == 'vouchers' else (20 if kind == 'orders' else 16 if kind == 'products' else 5)
     return [{key: compact(row[key]) for key in ENTITY_FIELDS[kind] if key in row}
             for row in (rows or [])[:count] if isinstance(row, dict)]
 
@@ -118,6 +119,7 @@ class ConversationMemory:
         # Focus is an entity hint, never a cart/price/authorization record.
         focus = data.get('focus') or {}
         for kind, fields in {'product': ('product_id', 'product_name', 'source'),
+                             'order': ('order_id',),
                              'cart_line': ('line_id', 'product_id', 'product_name'),
                              'branch': ('branch_id', 'branch_name'),
                              'voucher': ('voucher_code',),

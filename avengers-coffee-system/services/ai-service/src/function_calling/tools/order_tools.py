@@ -74,12 +74,13 @@ TOOL_GET_ORDER_HISTORY = {
         ),
         "parameters": {
             "type": "object",
-            "properties": {}
+            "properties": {"limit": {"type": "integer", "minimum": 1, "maximum": 20,
+                                      "description": "Số đơn gần nhất khách muốn xem; mặc định 5."}}
         },
     },
 }
 
-def execute_get_order_history(session_id: str) -> Dict[str, Any]:
+def execute_get_order_history(session_id: str, limit: int = 5) -> Dict[str, Any]:
     try:
         valid_uid = _require_valid_session(session_id)
         if not valid_uid:
@@ -88,6 +89,8 @@ def execute_get_order_history(session_id: str) -> Dict[str, Any]:
                 "message": "Bạn cần đăng nhập để mình có thể xem lịch sử mua hàng nhé."
             }
 
+        if type(limit) is not int or not 1 <= limit <= 20:
+            return {"status": "invalid_arguments", "message": "Bạn chọn từ 1 đến 20 đơn gần nhất nhé."}
         engine = _get_engine()
         import os
         order_schema = os.getenv("ORDER_SCHEMA", "orders")
@@ -95,13 +98,13 @@ def execute_get_order_history(session_id: str) -> Dict[str, Any]:
         with engine.connect() as conn:
             rows = conn.execute(text(
                 f"""
-                SELECT ma_don_hang, tong_tien, trang_thai_don_hang, ngay_tao
+                SELECT ma_don_hang, tong_tien, trang_thai_don_hang, trang_thai_thanh_toan, ngay_tao
                 FROM {order_schema}.don_hang
                 WHERE ma_nguoi_dung = :session_id
-                ORDER BY ngay_tao DESC
-                LIMIT 5
+                ORDER BY ngay_tao DESC, ma_don_hang DESC
+                LIMIT :limit
                 """
-            ), {"session_id": valid_uid}).mappings().all()
+            ), {"session_id": valid_uid, "limit": limit}).mappings().all()
 
         if not rows:
             return {

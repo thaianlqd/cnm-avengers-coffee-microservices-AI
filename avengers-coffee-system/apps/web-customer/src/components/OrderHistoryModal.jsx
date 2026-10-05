@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { XMarkIcon, ClockIcon, CreditCardIcon } from '@heroicons/react/24/outline';
 import { apiClient } from '../lib/apiClient';
@@ -8,6 +8,7 @@ import BranchReviewModal from './BranchReviewModal';
 import OrderTrackingPage from '../pages/features_thaian/OrderTrackingPage';
 import { useCart } from '../context/CartContext';
 import CartEditModal from './CartEditModal';
+import { orderEditPolicy, orderEditFingerprint, orderEditConfirmation } from './orderEditPolicy';
 
 const ORDER_STATUS_LABEL = {
   MOI_TAO: 'Mới tạo',
@@ -30,9 +31,26 @@ const PAYMENT_STATUS_LABEL = {
 const PAYMENT_METHOD_LABEL = {
   VNPAY: 'VNPAY',
   NGAN_HANG_QR: 'Ngân hàng QR',
-  THANH_TOAN_KHI_NHAN_HANG: 'COD',
-  VI_DIEN_TU: 'Ví điện tử',
+  THANH_TOAN_KHI_NHAN_HANG: 'Tiền mặt COD',
+  VI_DIEN_TU: 'Ví Avengers',
+  VI_AVENGERS: 'Ví Avengers',
+  THE_NGAN_HANG: 'Ngân hàng QR',
+  TIEN_MAT: 'Tiền mặt COD',
 };
+
+function getPaymentMethodDisplay(order) {
+  if (!order) return '';
+  const method = order.phuong_thuc_thanh_toan;
+  const isCod = ['THANH_TOAN_KHI_NHAN_HANG', 'TIEN_MAT', 'CASH'].includes(method) ||
+                order.trang_thai_thanh_toan === 'CHO_THANH_TOAN_KHI_NHAN_HANG';
+  if (isCod) {
+    return order.loai_don_hang === 'GIAO_TAN_NOI' ? 'Tiền mặt COD' : 'Thanh toán tại quầy';
+  }
+  if (method === 'VI_DIEN_TU' || method === 'VI_AVENGERS' || method === 'MOMO') return 'Ví Avengers';
+  if (method === 'NGAN_HANG_QR' || method === 'THE_NGAN_HANG') return 'Ngân hàng QR';
+  if (method === 'VNPAY') return 'VNPAY';
+  return PAYMENT_METHOD_LABEL[method] || method;
+}
 
 const BRANCH_LABEL = {
   MAC_DINH_CHI: 'Chi nhánh hệ thống',
@@ -200,11 +218,11 @@ function resolveOrderType(order) {
 }
 
 function coTheHuyDon(order) {
-  return ['MOI_TAO', 'DA_XAC_NHAN'].includes(order?.trang_thai_don_hang);
+  return ['MOI_TAO', 'DA_XAC_NHAN'].includes(order?.trang_thai_don_hang) && order?.phuong_thuc_thanh_toan === 'VI_DIEN_TU';
 }
 
 function coTheSuaDon(order) {
-  return order?.trang_thai_don_hang === 'MOI_TAO' && order?.phuong_thuc_thanh_toan === 'THANH_TOAN_KHI_NHAN_HANG';
+  return orderEditPolicy(order).allowed;
 }
 
 function coTheDanhGiaDon(order) {
@@ -224,6 +242,8 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
   const [cancelOrderId, setCancelOrderId] = useState(null);
   const [cancelReason, setCancelReason] = useState('');
   const [editOrderId, setEditOrderId] = useState(null);
+  const [editPreview, setEditPreview] = useState(null);
+  const previewRequest = useRef(null);
   const [reviewingProduct, setReviewingProduct] = useState(null);
   const [branchReviewOrder, setBranchReviewOrder] = useState(null);
   const [trackingOrderId, setTrackingOrderId] = useState(null);
@@ -361,15 +381,19 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
       const response = await apiClient.patch(`/customers/${maNguoiDung}/orders/${orderId}`, payload);
       return response.data;
     },
-    onSuccess: () => {
-      setActionMessage('Đã cập nhật đơn hàng thành công.');
+    onSuccess: (data) => {
+      setActionMessage(`Đã cập nhật đơn hàng thành công.${Number(data.wallet_charge) > 0 ? ` Ví đã trừ thêm ${fmtMoney(data.wallet_charge)}.` : ''}`);
+      setEditPreview(null);
       setEditOrderId(null);
       setEditForm({ diaChi: '', khungGio: '', ghiChu: '', items: [] });
       queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
       queryClient.invalidateQueries({ queryKey: queryKeys.notificationsByUser(maNguoiDung) });
+      queryClient.invalidateQueries({ queryKey: ['userWallet', maNguoiDung] });
     },
     onError: (mutationError) => {
+      setEditPreview(null);
       setActionMessage(mutationError?.response?.data?.message || 'Không thể cập nhật đơn hàng lúc này.');
+      queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
     },
   });
 
@@ -387,6 +411,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
   }, [isOpen]);
 
   const batDauSuaDon = (order) => {
+    setEditPreview(null);
     setEditOrderId(order.ma_don_hang);
     setCancelOrderId(null);
     setCancelReason('');
@@ -416,6 +441,26 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
       }),
     });
   };
+
+  const previewOrderMutation = useMutation({
+    mutationFn: async ({ orderId, payload, fingerprint }) => {
+      const response = await apiClient.patch(`/customers/${maNguoiDung}/orders/${orderId}`, { ...payload, preview_only: true });
+      return { ...response.data, payload, fingerprint };
+    },
+    onSuccess: (preview) => {
+      if (previewRequest.current === preview.fingerprint) setEditPreview(preview);
+    },
+    onError: (error, variables) => {
+      if (previewRequest.current !== variables.fingerprint) return;
+      setEditPreview(null);
+      setActionMessage(error?.response?.data?.message || 'Chưa xem trước được thay đổi đơn.');
+    },
+  });
+
+  useEffect(() => {
+    previewRequest.current = null;
+    setEditPreview(null);
+  }, [editForm, editOrderId]);
 
   const capNhatSoLuongSuaDon = (lineId, delta) => {
     setEditForm((prev) => ({
@@ -526,6 +571,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
   const luuSuaDon = () => {
     const normalizedItems = editForm.items
       .map((item) => ({
+        ...(item.id ? { id: Number(item.id) } : {}),
         ma_san_pham: Number(item.maSanPham),
         ten_san_pham: String(item.tenSanPham || '').trim(),
         so_luong: Number(item.soLuong || 0),
@@ -552,42 +598,32 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
       return;
     }
 
-    editOrderMutation.mutate({
-      orderId: editOrderId,
-      payload: {
+    const payload = {
         dia_chi_giao_hang: editForm.diaChi,
         khung_gio_giao: editForm.khungGio,
         ghi_chu: editForm.ghiChu,
         items: normalizedItems,
-      },
-    });
+      };
+    const fingerprint = orderEditFingerprint(editOrderId, payload);
+    const confirmed = orderEditConfirmation(editPreview, fingerprint);
+    if (confirmed) {
+      editOrderMutation.mutate({ orderId: editOrderId, payload: confirmed });
+    } else {
+      setActionMessage('');
+      setEditPreview(null);
+      previewRequest.current = fingerprint;
+      previewOrderMutation.mutate({ orderId: editOrderId, payload, fingerprint });
+    }
   };
 
-  const { reorderItems, activeUserId, refreshCart } = useCart();
+  const { reorderItems } = useCart();
 
   const reorderMutation = useMutation({
-    mutationFn: async (order) => {
-      // 1. Thêm lại món vào giỏ
-      await reorderItems(order.chi_tiet || []);
-
-      // 2. Khởi tạo thanh toán ngay lập tức
-      const payload = {
-        phuong_thuc_thanh_toan: order.phuong_thuc_thanh_toan || 'THANH_TOAN_KHI_NHAN_HANG',
-        dia_chi_giao_hang: order.dia_chi_giao_hang || 'Khách lấy tại quán',
-        khung_gio_giao: order.khung_gio_giao || '',
-        ghi_chu: order.ghi_chu || 'Dat lai tu lich su don hang',
-        delivery_mode: order.loai_don_hang || 'GIAO_TAN_NOI',
-        delivery_method: order.phuong_thuc_giao_hang || 'NOI_BO',
-        branch_code: order.co_so_ma,
-      };
-
-      const response = await apiClient.post(`/customers/${activeUserId}/thanh-toan/khoi-tao`, payload);
-      return response.data;
-    },
+    mutationFn: async ({ order, operationId }) => reorderItems(order.ma_don_hang, operationId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
-      refreshCart();
-      alert('Tạo đơn hàng mới thành công!');
+      onClose();
+      window.location.assign('/?tab=cart');
     },
     onError: (err) => {
       alert('Có lỗi khi tạo lại đơn hàng: ' + (err.response?.data?.message || err.message));
@@ -596,7 +632,8 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
   });
 
   const handleReorder = (order) => {
-    reorderMutation.mutate(order);
+    if (!window.confirm('Thêm lại các món vào giỏ theo giá hiện tại, giữ tùy chọn cũ? Bạn sẽ kiểm tra giỏ trước khi thanh toán.')) return;
+    reorderMutation.mutate({ order, operationId: `web:reorder:${crypto.randomUUID()}` });
   };
 
   if (!isOpen) return null;
@@ -842,7 +879,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                               <p className="text-[11px] font-extrabold uppercase tracking-wider text-gray-400">Thông tin thanh toán</p>
                               <div className="flex items-center justify-between text-xs text-gray-700">
                                 <span className="font-medium text-gray-500">Phương thức:</span>
-                                <span className="font-bold">{PAYMENT_METHOD_LABEL[order.phuong_thuc_thanh_toan] || order.phuong_thuc_thanh_toan}</span>
+                                <span className="font-bold">{getPaymentMethodDisplay(order)}</span>
                               </div>
                               {order.dia_chi_giao_hang && (
                                 <div className="text-xs text-gray-700">
@@ -884,6 +921,9 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                                 </button>
                               )}
 
+                              {['MOI_TAO', 'DA_XAC_NHAN'].includes(order.trang_thai_don_hang) && !coTheSuaDon(order) && (
+                                <p className="text-xs text-gray-500">{orderEditPolicy(order).reason}</p>
+                              )}
                               {coTheSuaDon(order) && (
                                 <button
                                   type="button"
@@ -915,7 +955,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                                 disabled={reorderMutation.isPending}
                                 className="w-full rounded-xl bg-[#b22830] hover:bg-[#8e1c23] py-2 text-xs font-bold uppercase tracking-wider text-white transition-colors cursor-pointer shadow-2xs disabled:opacity-50"
                               >
-                                {reorderMutation.isPending && reorderMutation.variables?.ma_don_hang === order.ma_don_hang
+                                {reorderMutation.isPending && reorderMutation.variables?.order?.ma_don_hang === order.ma_don_hang
                                   ? 'Đang xử lý...'
                                   : 'Đặt lại đơn này'}
                               </button>
@@ -974,6 +1014,8 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
             </div>
 
             <div className="p-6 overflow-y-auto space-y-5">
+              {actionMessage && <p role="alert" className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">{actionMessage}</p>}
+              <p className="text-sm text-gray-600">Chỉ sửa trước khi quán chuẩn bị món. Tổng mới phải bằng hoặc cao hơn tổng cũ. Đơn ví sẽ trừ thêm phần chênh lệch sau khi bạn xác nhận.</p>
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="space-y-1.5 md:col-span-2">
                   <span className="text-xs font-extrabold text-gray-700 uppercase">Địa chỉ giao hàng</span>
@@ -1061,6 +1103,18 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
               </div>
             </div>
 
+            {editPreview && (
+              <div className="px-6 py-4 border-t border-gray-100 text-sm space-y-1" aria-live="polite">
+                <p>Tổng cũ: <strong>{fmtMoney(editPreview.original_total)}</strong></p>
+                <p>Tạm tính: {fmtMoney(editPreview.subtotal)} · Giảm giá: {fmtMoney(editPreview.discount_amount)} · Phí giao: {fmtMoney(editPreview.delivery_fee)}</p>
+                <p>Tổng mới: <strong>{fmtMoney(editPreview.final_total)}</strong></p>
+                {editPreview.payment_method === 'VI_DIEN_TU' ? (
+                  <p>Ví Avengers sẽ trừ thêm <strong>{fmtMoney(editPreview.wallet_charge)}</strong> khi xác nhận.</p>
+                ) : <p>COD: thanh toán tổng mới khi nhận hàng.</p>}
+                {Number(editPreview.wallet_shortfall) > 0 && <p className="text-red-600">Ví chưa đủ tiền. Bạn cần nạp thêm {fmtMoney(editPreview.wallet_shortfall)}, rồi xem lại thay đổi trước khi xác nhận.</p>}
+                <button type="button" onClick={() => setEditPreview(null)} className="text-sky-700 underline">Xem lại / sửa tiếp</button>
+              </div>
+            )}
             <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
               <button
                 type="button"
@@ -1072,10 +1126,10 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
               <button
                 type="button"
                 onClick={luuSuaDon}
-                disabled={editOrderMutation.isPending}
+                disabled={editOrderMutation.isPending || previewOrderMutation.isPending || Number(editPreview?.wallet_shortfall) > 0}
                 className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-sky-700 disabled:opacity-50 cursor-pointer"
               >
-                {editOrderMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
+                {editOrderMutation.isPending ? 'Đang lưu...' : previewOrderMutation.isPending ? 'Đang kiểm tra...' : editPreview ? 'Xác nhận sửa đơn' : 'Xem trước thay đổi'}
               </button>
             </div>
           </div>

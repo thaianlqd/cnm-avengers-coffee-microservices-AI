@@ -14,6 +14,9 @@ def normalize_discovery_args(name, args):
             'max_price': None, 'min_price_inclusive': True, 'max_price_inclusive': True,
             'sort_by': 'price_asc', 'limit': 5, 'search_text': ''}
         value = {**defaults, **value}
+        if value['sort_by'] == 'sold_desc':
+            value.setdefault('period', 'month')
+            value.setdefault('period_anchor', None)
         # Exactly the catalog provider's accent/case/token normalization.
         text = unicodedata.normalize('NFD', value['search_text'].lower())
         text = ''.join(char for char in text if unicodedata.category(char) != 'Mn').replace('đ', 'd')
@@ -24,6 +27,9 @@ def normalize_discovery_args(name, args):
         value['limit'] = max(1, min(16, int(value['limit'])))
     elif name == 'get_recommendations':
         value = {'criteria': 'hot', 'category': 'all', 'top_k': 5, 'search_text': '', **value}
+        if value['criteria'] == 'hot':
+            value.setdefault('period', 'month')
+            value.setdefault('period_anchor', None)
         value['category'] = value['category'].lower()
         # Recommendation SQL uses literal LOWER/LIKE; internal spacing/accents matter.
         value['search_text'] = value['search_text'].strip().lower()

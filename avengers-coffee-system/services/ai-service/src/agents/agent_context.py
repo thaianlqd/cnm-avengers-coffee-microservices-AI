@@ -12,7 +12,7 @@ PREF_FIELDS = ('delivery_type', 'payment_method', 'delivery_address', 'address_c
     'checkout_action_id', 'checkout_action_expires_at', 'summary_fingerprint', 'flow_stage',
     'location_address', 'summary_amounts', 'completed_order_id', 'stock_conflicts', 'checkout_submission',
     'voucher_offer_pending', 'pending_product_reference', 'profile_location_offer', 'profile_location_checked_for',
-    'pending_cart_option_edit')
+    'pending_cart_option_edit', 'order_management_action', 'order_management_focus')
 LINE_FIELDS = ('cart_item_id', 'line_id', 'product_id', 'product_name', 'quantity', 'size',
                'toppings', 'luong_da', 'do_ngot', 'loai_sua', 'unit_price', 'line_total')
 
@@ -75,6 +75,7 @@ def build_context(session_id, memory, history=None, selected_product_id=None, sh
 
 
 MODEL_ENTITY_FIELDS = {
+    'orders': ('order_id', 'display_index', 'order_status', 'payment_status', 'created_at', 'total_price'),
     'products': ('product_id', 'product_name', 'category', 'menu_bucket', 'display_index',
                  'group_display_index', 'global_display_index'),
     'branches': ('branch_id', 'branch_name', 'ma_chi_nhanh', 'ten_chi_nhanh', 'dia_chi',
@@ -119,7 +120,8 @@ def model_projection(context, emergency=False):
         'checkout': {key: compact(checkout[key]) for key in ('flow_stage', 'delivery_type',
             'payment_method', 'delivery_address', 'address_confirmed', 'voucher_code',
             'voucher_decided', 'voucher_revalidation_required', 'checkout_requested',
-            'profile_location_offer', 'profile_location_checked_for', 'pending_cart_option_edit') if key in checkout},
+            'profile_location_offer', 'profile_location_checked_for', 'pending_cart_option_edit', 'order_management_focus') if key in checkout},
+        'order_change_preview': {key: compact(checkout['order_management_action'][key]) for key in ('kind', 'order_id', 'expires_at') if key in checkout['order_management_action']} if checkout.get('order_management_action') else None,
         'summary_fresh': state.get('confirmation_fresh', False),
         'checkout_missing': missing_checkout_fields(state),
         'next_step': checkout_next_step(state),
@@ -131,8 +133,12 @@ def model_projection(context, emergency=False):
                               if key in row} for row in state.get('pending_products') or []]},
         'visible': {kind: model_snapshot(kind, rows) for kind, rows in context.get('visible', {}).items()},
         'focus': compact(context.get('focus') or {}),
+        'order_reference': compact(context.get('order_reference')),
         'selected_product_id': context.get('selected_product_id'),
         'recent': deepcopy(context.get('recent') or [])}
+    from datetime import datetime
+    from src.function_calling.tools.sales_period import VIETNAM
+    model['current_date_vietnam'] = datetime.now(VIETNAM).date().isoformat()
     for row in model['business']['cart']['items']:
         row['display_index'] = (context.get('turn_cart_ordinals') or {}).get(str(row.get('cart_item_id')), row['display_index'])
     hard = limit('AI_AGENT_CONTEXT_CHAR_LIMIT', 12000, 2000, 24000)
@@ -154,6 +160,8 @@ def model_projection(context, emergency=False):
     from src.agents.tool_capabilities import capabilities_for_context
     legal = capabilities_for_context(context, entry_action=checkout.get('checkout_action_id'))
     for tool, kind in (('apply_voucher', 'vouchers'), ('set_session_branch', 'branches'),
+                       ('update_order', 'orders'), ('cancel_order', 'orders'), ('reorder_order', 'orders'),
+                       ('get_order_details', 'orders'), ('track_order_status', 'orders'),
                        ('select_location_candidate', 'location_candidates')):
         if tool in legal:
             active.add(kind)
