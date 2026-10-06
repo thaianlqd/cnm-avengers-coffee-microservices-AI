@@ -113,9 +113,9 @@ After a confirm denial follow only its recovery_tool, or ask its necessary clari
 After a refreshed summary require confirmation on a later turn. Avoid resubmitting unchanged choices.
 Never announce a write succeeded without successful tool evidence. An uncertain outcome is not success.
 Your final content is JSON with response_kind (social, clarification, consultation, or action),
-reply (natural customer-facing text), mutation_claims (successful
-write tool names, or []), evidence_quotes (for RAG: objects with keys document_id and quote;
-quote must be the exact full evidence content).
+reply (natural, friendly, well-formatted customer-facing text using Markdown: bold product names, clear ratings, neat bullet points for reviews or comments, clean spacing; never output raw database prefixes like [Dữ liệu mẫu]),
+mutation_claims (list of successful WRITE tool names that mutated state, or []; NEVER include read/inspection tools like get_product_insights or get_product_description),
+evidence_quotes (for RAG: objects with keys document_id and quote; quote must be the exact full evidence content).
 Include display_product_ids for product discovery: select/reorder only canonical IDs from this
 turn's tool results, respect the requested total count across all reads, and omit unrelated results.
 For compound discovery include display_product_count: the requested TOTAL over every read,
@@ -309,6 +309,8 @@ def run_llm_tool_turn(session_id, user_message, history=None, client_message_id=
     from src.agents.tool_artifacts import public_result
     ui_cart = public_result(cart_manager.get_cart(session_id))
     artifacts.ui['cart'] = ui_cart
+    if artifacts.ui.get('products'):
+        cart_manager.set_checkout_context(session_id, last_product_suggestions=artifacts.ui['products'])
     response = {'reply': reply, 'ui_payload': artifacts.ui, 'checkout_payload': artifacts.checkout,
         'tool_calls_log': artifacts.logs, 'error': result.get('error'),
         'conversation_state': final_state['checkout'].get('flow_stage') or 'SHOPPING'}

@@ -34,7 +34,8 @@ def denied(code, **details):
         'transaction_completed_or_processing': 'Giao dịch đang được xử lý hoặc đã hoàn tất, không thể thực hiện thêm thay đổi.',
         'authoritative_cart_unavailable': 'Chưa thể tải dữ liệu giỏ hàng. Bạn vui lòng thử lại nhé.',
         'authentication_or_turn_required': 'Bạn vui lòng đăng nhập để thực hiện thao tác này nhé.',
-        'order_target_mismatch': 'Mã đơn được chọn khác với mã bạn yêu cầu. Bạn gửi lại đúng mã đơn nhé.'
+        'order_target_mismatch': 'Mã đơn được chọn khác với mã bạn yêu cầu. Bạn gửi lại đúng mã đơn nhé.',
+        'wrong_authority': 'Yêu cầu này không thuộc phạm vi của công cụ vừa gọi. Hãy chọn công cụ phù hợp với dữ liệu cần tra cứu.'
     }
     msg = details.pop('message', None) or default_messages.get(code, 'Chưa thể thực hiện yêu cầu này an toàn. Bạn kiểm tra lựa chọn hoặc bổ sung thông tin nhé.')
     return {'status': code, 'message': msg, **details}
@@ -454,16 +455,27 @@ class GuardedToolGateway:
                 })
             return res
         if name == 'get_product_insights':
-            if self.request_route.get('owner') in {'rag', 'price', 'inventory', 'recommendation'}:
+            from src.rag.authority import BUSINESS_TOPICS
+            has_review_intent = bool(re.search(BUSINESS_TOPICS['review'], normalize_text(self.user_message)))
+            if self.request_route.get('owner') in {'rag', 'price', 'inventory', 'recommendation'} and not has_review_intent:
                 return denied('wrong_authority', requested_authority=self.request_route.get('owner'),
                     allowed_tools=['get_product_description', 'search_knowledge_base']
                     if self.request_route.get('owner') == 'rag' else ['filter_catalog', 'get_recommendations']
                     if self.request_route.get('owner') == 'recommendation' else ['check_price_and_stock'])
-            proposed = normalize_text(args.get('product_name'))
+            raw_pname = str(args.get('product_name') or '').strip()
             known = list(self.artifacts.visible.get('products') or []) + self.context['business']['cart']['items']
             focus = self.artifacts.focus.get('product') or self.context.get('focus', {}).get('product')
             if focus:
                 known.append(focus)
+            ordinal_match = re.match(r'^(?:mon\s+)?(?:so\s+)?(\d+)$', normalize_text(raw_pname))
+            if ordinal_match:
+                idx = int(ordinal_match.group(1))
+                row = next((r for r in known if r.get('display_index') == idx), None)
+                if not row and 1 <= idx <= len(known):
+                    row = known[idx - 1]
+                if row and row.get('product_name'):
+                    args['product_name'] = row['product_name']
+            proposed = normalize_text(args.get('product_name'))
             exact = [row for row in known if normalize_text(row.get('product_name')) == proposed]
             if not exact:
                 resolved = TOOL_EXECUTORS['filter_catalog'](
@@ -508,7 +520,23 @@ class GuardedToolGateway:
         if focus:
             rows.append(focus)
         rows += self.context['business']['cart'].get('items') or []
-        return next((row for row in rows if str(row.get('product_id')) == str(product_id)), None)
+        found = next((row for row in rows if str(row.get('product_id')) == str(product_id)), None)
+        if found:
+            return found
+        ordinal_match = re.match(r'^(?:mon\s+)?(?:so\s+)?(\d+)$', normalize_text(str(product_id or '')))
+        if ordinal_match:
+            idx = int(ordinal_match.group(1))
+            found = next((r for r in rows if r.get('display_index') == idx), None)
+            if not found and 1 <= idx <= len(rows):
+                found = rows[idx - 1]
+            if found:
+                return found
+        pname = normalize_text(str(product_id or ''))
+        if pname:
+            found = next((r for r in rows if normalize_text(r.get('product_name', '')) == pname), None)
+            if found:
+                return found
+        return None
 
     def _get_product_options(self, args):
         # Exact DB identity is safe even when Redis is absent; never resolve by
@@ -1351,23 +1379,29 @@ class GuardedToolGateway:
             self.session_id, action_id=self.entry_action))
 
     def _get_product_description(self, args):
-        if self.request_route.get('owner') in {'price', 'inventory', 'review'}:
+        from src.rag.authority import product_facet
+        has_rag_facet = (product_facet(self.user_message) is not None
+                         or bool(re.search(r'\b(?:huong vi|vi|thanh phan|nguyen lieu|mo ta|thong tin|dac diem|uong nhu nao|an nhu nao)\b', normalize_text(self.user_message))))
+        if self.request_route.get('owner') in {'price', 'inventory', 'review'} and not has_rag_facet:
             return denied('wrong_authority', requested_authority=self.request_route.get('owner'),
                 allowed_tools=['get_product_insights'] if self.request_route.get('owner') == 'review'
                 else ['check_price_and_stock'])
-        product = self._product(args['product_id'])
+        product = self._product(args.get('product_id'))
         if not product:
             return denied('unknown_product_reference')
         return self._search_knowledge_base({'query': args.get('query') or product['product_name'],
-            'domain': 'product_description', 'entity_type': 'product', 'entity_id': args['product_id']})
+            'domain': 'product_description', 'entity_type': 'product', 'entity_id': str(product['product_id'])})
 
     def _search_knowledge_base(self, args):
         if self.context.get('branch_review_request') and not re.search(r'\b(?:thanh phan|di ung|chinh sach|nguyen lieu)\b', normalize_text(self.user_message)):
             return denied('wrong_authority', requested_authority='branch_reviews',
                 allowed_tools=['compare_branch_reviews', 'get_store_reviews', 'get_top_rated_stores'])
         from src.function_calling.tools.knowledge_tools import execute_search_knowledge_base
+        from src.rag.authority import product_facet
         args = dict(args)
-        if self.request_route.get('owner') in {'price', 'inventory', 'review'}:
+        has_rag_facet = (product_facet(self.user_message) is not None
+                         or bool(re.search(r'\b(?:huong vi|vi|thanh phan|nguyen lieu|mo ta|thong tin|dac diem|uong nhu nao|an nhu nao)\b', normalize_text(self.user_message))))
+        if self.request_route.get('owner') in {'price', 'inventory', 'review'} and not has_rag_facet:
             return denied('wrong_authority', requested_authority=self.request_route.get('owner'),
                 allowed_tools=['get_product_insights'] if self.request_route.get('owner') == 'review'
                 else ['check_price_and_stock'])
@@ -1376,18 +1410,19 @@ class GuardedToolGateway:
         if entity_id and not product:
             return denied('unknown_product_reference')
         if product:
+            args['entity_id'] = str(product['product_id'])
             self.artifacts.focus['product'] = {'product_id': str(product['product_id']),
                 'product_name': product['product_name'], 'source': 'canonical_knowledge_reference'}
         reference = {'product': product, 'reference_source': 'canonical_snapshot'} if product else {}
         result = execute_search_knowledge_base(**args, session_id=self.session_id, reference_out=reference)
         from src.rag.authority import knowledge_route
-        facet = knowledge_route(args['query']).get('facet')
+        facet = knowledge_route(args.get('query', '')).get('facet') or product_facet(self.user_message)
         if facet == 'allergen':
             from src.agents.knowledge_consultation import grounded_answer
             result = {**result, 'status': 'not_found', 'results': [], 'message': grounded_answer(args['query'], result)}
         elif facet == 'ingredient':
             from src.function_calling.tools.knowledge_tools import INSUFFICIENT_MESSAGE
-            requested = [term for term in ('sua', 'caffein', 'caffeine') if term in normalize_text(args['query']).split()]
+            requested = [term for term in ('sua', 'caffein', 'caffeine') if term in normalize_text(args.get('query', '')).split()]
             if not all(any(term in normalize_text(d['content']).split() for d in result.get('results', [])) for term in requested):
                 result = {**result, 'status': 'not_found', 'results': [], 'message': INSUFFICIENT_MESSAGE}
         return result

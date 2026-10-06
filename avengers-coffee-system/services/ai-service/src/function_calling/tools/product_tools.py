@@ -588,7 +588,8 @@ def execute_get_product_insights(product_name: str) -> Dict[str, Any]:
 
             avg_rating = float(stats[0])
             total_reviews = stats[1]
-            comments = [r[0] for r in reviews]
+            clean_comments = [re.sub(r"^\[.*?\]\s*(?:[^:]+:\s*)?", "", c).strip() for c in comments]
+            clean_comments = [c for c in clean_comments if c]
 
         if total_reviews == 0:
             return {
@@ -602,8 +603,8 @@ def execute_get_product_insights(product_name: str) -> Dict[str, Any]:
             "product_name": found_name,
             "avg_rating": avg_rating,
             "total_reviews": total_reviews,
-            "recent_comments": comments,
-            "message": f"Món {found_name} được đánh giá trung bình {avg_rating}/5 sao (từ {total_reviews} lượt). Hãy dùng thông tin bình luận để tư vấn thêm."
+            "recent_comments": clean_comments,
+            "message": f"Món {found_name} được đánh giá trung bình {avg_rating}/5 sao (từ {total_reviews} lượt)."
         }
     except Exception as e:
         logger.warning("[AgentTools] get_product_insights error: %s", e)

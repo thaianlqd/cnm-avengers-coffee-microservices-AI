@@ -180,6 +180,8 @@ def build_plans(grounded, catalog):
             limit = rank.top_n if rank and not rank.per_group else 100
             if comp.kind == "aggregate" and not dimensions:
                 limit = 1
+            elif comp.row_limit is not None and not rank:
+                limit = comp.row_limit
             query_id = comp.id + (f"_g{groups.index(group)+1}" if group else "")
             outputs = (
                 (["period"] if comp.kind == "trend" else [])
@@ -206,6 +208,25 @@ def build_plans(grounded, catalog):
                 for d in dimensions
                 if not rank or d not in rank.per_group
             ]
+            if comp.order_by:
+                if rank or comp.kind == "trend":
+                    raise AnalysisError(
+                        "plan", "Ranking and time ordering are authoritative"
+                    )
+                if any(
+                    set(o) != {"field", "direction"}
+                    or o["field"] not in outputs
+                    or o["direction"] not in ("ASC", "DESC")
+                    for o in comp.order_by
+                ):
+                    raise AnalysisError(
+                        "plan", "Ordering requires projected logical fields"
+                    )
+                orders = list(comp.order_by) + [
+                    o
+                    for o in orders
+                    if o["field"] not in {s["field"] for s in comp.order_by}
+                ]
             plans.append(
                 QueryPlan(
                     id=query_id,
@@ -239,6 +260,7 @@ def build_plans(grounded, catalog):
                     row_limit=limit,
                     group=group.name if group else None,
                     schema_fingerprint=grounded.schema_fingerprint,
+                    explicit_limit=comp.row_limit is not None,
                 )
             )
     return plans
@@ -400,13 +422,16 @@ def compile_sql(plan, grounded, catalog):
             query += " ORDER BY " + ", ".join([order] + tie)
     elif plan.kind == "trend":
         query += " ORDER BY period ASC" + (", " + ", ".join(tie) if tie else "")
-    elif tie:
-        query += " ORDER BY " + ", ".join(tie)
+    elif plan.order_by:
+        query += " ORDER BY " + ", ".join(
+            _ident(o["field"]) + " " + o["direction"] + " NULLS LAST"
+            for o in plan.order_by
+        )
     # Fetch one overflow row for non-ranking populations; fail explicitly rather
     # than presenting a truncated cohort as the complete requested population.
     sql_limit = (
         plan.row_limit
-        if plan.ranking and not plan.ranking.per_group
+        if plan.explicit_limit or plan.ranking and not plan.ranking.per_group
         else plan.row_limit + 1
     )
     return query + " LIMIT " + str(sql_limit)
@@ -607,6 +632,24 @@ def validate_results(result, plan, grounded, catalog):
         values = [str(r.get("period")) for r in rows]
         if values != sorted(values):
             errors.append("Time buckets must be ascending")
+    if not plan.ranking and plan.kind != "trend" and plan.order_by:
+        # Numeric ordering is independently observable. Text collation belongs
+        # to PostgreSQL; its exact ORDER clause is already bound by AST equality.
+        for previous, current in zip(rows, rows[1:]):
+            for order in plan.order_by:
+                left, right = previous.get(order["field"]), current.get(order["field"])
+                if left == right:
+                    continue
+                if left is None and right is not None:
+                    errors.append("NULL ordering violates requested ordering")
+                elif (
+                    right is not None
+                    and isinstance(left, (int, float, Decimal))
+                    and isinstance(right, (int, float, Decimal))
+                ):
+                    if left > right if order["direction"] == "ASC" else left < right:
+                        errors.append("Numeric ordering violates requested ordering")
+                break
     # One row per grouping grain. Duplicate group tuples reveal fanout or a
     # malformed fixture/result even when row count is within Top N.
     if plan.kind != "detail":

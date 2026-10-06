@@ -1,3 +1,4 @@
+import { AnalystDashboardSummary, AnalystOptionalNarrative } from '../components/AnalystDashboardSummary';
 import { AnalysisClarification } from '../components/AnalysisClarification';
 import { AnalysisMeaning } from '../components/AnalysisMeaning';
 import React, { useState, useEffect } from 'react';
@@ -8,7 +9,8 @@ import {
   BarChart, 
   HorizontalBarChart,
   HeatmapChart,
-  MultiLineChart 
+  MultiLineChart,
+  AnalystChart
 } from '../components/Charts';
 import { AnalyticsSubTab } from '../types';
 import { resolveAiChartPresentation } from '../utils/aiChartConfig.mjs';
@@ -1099,7 +1101,7 @@ export const AnalyticsView: React.FC = () => {
             Tóm tắt điều hành
           </div>
           <div className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal whitespace-pre-line">
-            {rep.executive_summary || 'Hệ thống đã hoàn tất phân tích toàn diện tập dữ liệu chỉ định trên kho dữ liệu Silver Lake của Avengers Coffee.'}
+            {rep.executive_summary || 'Chưa có tóm tắt được hỗ trợ bởi bằng chứng.'}
           </div>
         </div>
 
@@ -1137,9 +1139,7 @@ export const AnalyticsView: React.FC = () => {
             <h3 className="text-base font-bold text-slate-800 tracking-tight">
               1. Dashboard tự động sinh
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Dashboard được AI Agent tự chọn theo câu hỏi phân tích: KPI tăng trưởng, so sánh danh mục, cơ cấu và vùng insight.
-            </p>
+            <AnalystDashboardSummary report={rep} />
           </div>
 
           {/* KPI Cards Row */}
@@ -1264,7 +1264,7 @@ export const AnalyticsView: React.FC = () => {
                                 ? 'bg-sky-50 text-sky-700 border-sky-200/70'
                                 : 'bg-slate-100 text-slate-600 border-slate-200'
                           }`}>
-                            {chartTypeBadge}
+                            {chart.chart_type_label || chartTypeBadge} · {chart.role === 'supporting' ? 'Hỗ trợ' : 'Theo yêu cầu'}
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-400 mt-0.5">
@@ -1279,60 +1279,7 @@ export const AnalyticsView: React.FC = () => {
                     </div>
 
                     <div className="flex-1 w-full pt-2 flex items-center justify-center">
-                      {isHeatmap ? (
-                        <HeatmapChart
-                          data={chart.data || []}
-                          valueSuffix={chart.unit ? ` ${chart.unit}` : ''}
-                          xLabel={rep.grounded_analysis_spec?.dimensions?.[chart.x_field]?.business_name || 'Chiều phân tích'} yLabel={rep.grounded_analysis_spec?.dimensions?.[chart.series_field]?.business_name || 'Nhóm phân tích'}
-                        />
-                      ) : isMultiLine ? (
-                        <MultiLineChart
-                          data={chart.data || []}
-                          seriesKeys={chart.series_keys || chart.series?.map((s: any) => s.key)}
-                          seriesLabels={Object.fromEntries((chart.series || []).map((s: any) => [s.key, s.label]))}
-                          valueSuffix={chart.unit ? ` ${chart.unit}` : ''}
-                        />
-                      ) : chart.chart_type === 'horizontal_bar' ? (
-                        <HorizontalBarChart
-                          data={(chart.data || []).map((d: any, idx: number) => ({
-                            label: d.label || d.name || 'Mục',
-                            value: Number(d.value || 0),
-                            rank: idx + 1,
-                            color: palette[idx % palette.length],
-                          }))}
-                          valueSuffix={chart.unit ? ` ${chart.unit}` : ''}
-                        />
-                      ) : chart.chart_type === 'donut' ? (
-                        <DonutChart
-                          data={(chart.data || []).map((d: any, idx: number) => ({
-                            label: d.label || d.name || 'Mục',
-                            value: Number(d.value || 0),
-                            color: palette[idx % palette.length],
-                          }))}
-                          centerLabel="Cơ cấu"
-                          valueSuffix={chart.unit ? ` ${chart.unit}` : ''}
-                          size={135}
-                        />
-                      ) : chart.chart_type === 'bar' ? (
-                        <BarChart
-                          data={(chart.data || []).map((d: any) => ({
-                            label: String(d.label ?? d.name ?? ''),
-                            value: Number(d.value || 0),
-                          }))}
-                          height={280}
-                          valueSuffix={chart.unit ? ` ${chart.unit}` : ''}
-                        />
-                      ) : (
-                        <SmoothAreaChart
-                          showLegend={false}
-                          data={(chart.data || []).map((d: any) => ({
-                            label: String(d.label ?? d.name ?? ''),
-                            value: Number(d.value || 0),
-                          }))}
-                          height={280}
-                          valueSuffix={chart.unit ? ` ${chart.unit}` : ''}
-                        />
-                      )}
+                      <AnalystChart chart={chart} />
                     </div>
                   </div>
                 );
@@ -1343,7 +1290,7 @@ export const AnalyticsView: React.FC = () => {
 
         {rep.result_sets && Object.entries(rep.result_sets).slice(1).map(([queryId, data]: [string, any]) => (
           <section key={queryId} className="bg-white rounded-xl border border-slate-200 p-4 overflow-x-auto">
-            <h3 className="font-semibold text-sm mb-3">{rep.query_plans?.find((p: any) => p.id === queryId)?.group || 'Kết quả phân tích bổ sung'}</h3>
+            <h3 className="font-semibold text-sm mb-3">{data.role === 'supporting' ? 'Kết quả hỗ trợ' : 'Kết quả theo yêu cầu'}</h3>
             <table className="w-full text-left text-xs"><thead><tr>{data.columns.map((column: string) => <th className="p-2" key={column}>{data.column_labels?.[column] || 'Trường dữ liệu'}</th>)}</tr></thead>
               <tbody>{data.rows.map((row: any, index: number) => <tr key={index}>{data.columns.map((column: string) => <td className="p-2 border-t border-slate-100" key={column}>{row[column] == null ? '—' : String(row[column])}</td>)}</tr>)}</tbody>
             </table>
@@ -1569,42 +1516,7 @@ export const AnalyticsView: React.FC = () => {
           </div>
         )}
 
-        {/* SECTION 5 & 6: Kết luận tự động & Khuyến nghị */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-2">
-            <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
-              5. Kết luận phân tích
-            </h3>
-            <p className="text-xs text-slate-600 leading-relaxed pt-1">
-              {rep.conclusions?.length ? (Array.isArray(rep.conclusions) ? rep.conclusions.join(' ') : rep.conclusions) : rep.executive_summary || 'Chưa có đủ bằng chứng để đưa ra kết luận.'}
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-2">
-            <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
-              6. Khuyến nghị vận hành
-            </h3>
-            {rep.recommendations?.length > 0 ? (
-              <ul className="text-xs text-slate-600 space-y-2 pt-1">
-                {rep.recommendations.map((rec: any, rIdx: number) => {
-                  const text = typeof rec === 'object' && rec !== null
-                    ? ((rec as any).recommendation || (rec as any).text || Object.values(rec)[0] || '')
-                    : String(rec);
-                  return (
-                    <li key={rIdx} className="leading-relaxed flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 shrink-0"></span>
-                      <span>{text}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <p className="text-xs text-slate-500 pt-1">
-                Chưa có khuyến nghị được hỗ trợ bởi dữ liệu trong báo cáo này.
-              </p>
-            )}
-          </div>
-        </div>
+        <AnalystOptionalNarrative report={rep} />
 
         {/* Góp ý chỉnh sửa báo cáo */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
@@ -2828,10 +2740,10 @@ export const AnalyticsView: React.FC = () => {
                         {(aiPlan.data_sources || []).map((src: any, idx: number) => (
                           <div key={idx} className="p-2.5 rounded-lg bg-white border border-slate-100 text-xs">
                             <div className="font-mono font-medium text-slate-800 text-[11px] truncate">
-                              {src.table}
+                              {src.name || src.table}
                             </div>
                             <div className="text-slate-600 text-[11px] mt-0.5">
-                              {src.description}
+                              {src.reason || src.description}
                             </div>
                             {src.filter && (
                               <div className="text-[10px] text-slate-400 mt-1">
@@ -2867,7 +2779,7 @@ export const AnalyticsView: React.FC = () => {
                       <div className="flex items-center justify-between text-xs font-semibold text-slate-800 mb-2.5">
                         <span>Biểu đồ trực quan</span>
                         <span className="text-[10px] text-sky-700 bg-sky-50 border border-sky-200/60 px-2 py-0.5 rounded-full font-medium">
-                          {(aiPlan.planned_charts || []).length} biểu đồ đa chiều
+                          {(aiPlan.planned_charts || []).length} phần trực quan dự kiến
                         </span>
                       </div>
                       <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
@@ -2890,7 +2802,7 @@ export const AnalyticsView: React.FC = () => {
                               </span>
                             </div>
                             <div className="text-slate-600 text-[11px] mt-0.5">
-                              {ch.purpose}
+                              {ch.reason || ch.purpose}
                             </div>
                           </div>
                         ))}

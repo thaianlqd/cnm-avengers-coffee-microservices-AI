@@ -125,6 +125,8 @@ class Component(Contract):
     dimensions: List[str] = Field(default_factory=list, max_length=4)
     ranking: Optional[Ranking] = None
     detail_columns: List[str] = Field(default_factory=list, max_length=12)
+    order_by: List[Dict[str, str]] = Field(default_factory=list, max_length=6)
+    row_limit: Optional[int] = Field(default=None, ge=1, le=100)
 
 
 class AnalysisSpec(Contract):
@@ -162,7 +164,7 @@ class AnalysisSpec(Contract):
             "heatmap",
             "table",
         ]
-    ] = Field(default_factory=list, max_length=4)
+    ] = Field(default_factory=list, max_length=8)
     detail_level: Literal["aggregate", "detail"] = "aggregate"
     detail_columns: List[str] = Field(default_factory=list, max_length=12)
     used_example_ids: List[str] = Field(default_factory=list, max_length=2)
@@ -243,6 +245,7 @@ class QueryPlan(Contract):
     row_limit: int = Field(ge=1, le=100)
     group: Optional[str] = None
     schema_fingerprint: str
+    explicit_limit: bool = False
 
 
 class ValidationResult(Contract):

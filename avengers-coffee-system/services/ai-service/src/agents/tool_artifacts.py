@@ -432,12 +432,23 @@ class ToolArtifacts:
         lines = [f"- **{r['product_name']}**: **{float(r['final_price']):,.0f}đ**" for r in self.ui['products'] if r.get('final_price') is not None]
         if lines:
             return 'Dạ, mình gửi bạn các món phù hợp nhé:\n\n' + '\n'.join(lines) + '\n\nBạn muốn chọn món nào ạ?'
-        for row in reversed(self.logs):
-            result = row['result']
-            if row['tool'] == 'get_product_insights' and result.get('status') == 'ok':
-                name, rating = result.get('product_name'), result.get('rating')
-                if name and rating is not None:
-                    return f"{name} hiện có điểm đánh giá {rating}/5 từ dữ liệu khách hàng."
+        insights_results = [row['result'] for row in self.logs
+                            if row['tool'] == 'get_product_insights' and row['result'].get('status') == 'ok']
+        if insights_results:
+            blocks = []
+            for res in insights_results:
+                name = res.get('product_name')
+                rating = res.get('rating') or res.get('avg_rating')
+                total = res.get('total_reviews', 0)
+                comments = res.get('recent_comments') or []
+                clean_comments = [re.sub(r"^\[.*?\]\s*(?:[^:]+:\s*)?", "", c).strip() for c in comments]
+                clean_comments = [c for c in clean_comments if c]
+                block = f"⭐ **{name}**\n- Đánh giá trung bình: **{rating}/5** sao ({total} lượt đánh giá)"
+                if clean_comments:
+                    comment_lines = "\n".join(f"  • *\"{c}\"*" for c in clean_comments[:2])
+                    block += f"\n- Nhận xét từ khách hàng:\n{comment_lines}"
+                blocks.append(block)
+            return "Dạ, đây là đánh giá và nhận xét của các món bạn quan tâm nhé:\n\n" + "\n\n".join(blocks)
         for row in reversed(self.logs):
             result = row['result']
             cart = result.get('cart') or {}
@@ -793,7 +804,9 @@ class ToolArtifacts:
         successful = {r['tool'] for r in self.logs
                       if r['result'].get('changed') is not False and r['result'].get('status') in {'ok', 'success', 'already_processed', 'require_confirmation'}}
         changed = {r['tool'] for r in self.logs if r['tool'] in successful and r['result'].get('changed') is not False}
-        if any(name not in changed for name in claims):
+        from src.agents.tool_capabilities import WRITES
+        write_claims = [name for name in claims if name in WRITES]
+        if any(name not in changed for name in write_claims):
             return self._fallback('mutation_claim_mismatch')
         normalized = normalize_text(reply)
         # Output claims require evidence for that specific business operation.
@@ -806,11 +819,14 @@ class ToolArtifacts:
             (r'\bda\s+(?:duoc\s+)?cap nhat\b', {'update_cart_item', 'set_checkout_choices', 'set_session_branch', 'confirm_order_change'}),
         ):
             if re.search(pattern, normalized) and not successful.intersection(tools):
-                return self._fallback('confirmation_contract_mismatch' if 'confirm_checkout' in tools else 'mutation_claim_mismatch')
-        claims_write = bool(re.search(r'\bda\s+(?:them|xoa|cap nhat|ap|dat|tao don)\b', normalize_text(reply)))
-        from src.agents.tool_capabilities import WRITES
+                if not (('get_product_insights' in successful or 'get_product_description' in successful or 'search_knowledge_base' in successful)
+                        and re.search(r'\b(?:danh gia|binh luan|nhan xet|sao|review|luot|lan|vi|huong vi|ngon|uong)\b', normalized)):
+                    return self._fallback('confirmation_contract_mismatch' if 'confirm_checkout' in tools else 'mutation_claim_mismatch')
+        claims_write = bool(re.search(r'\bda\s+(?:them|xoa|cap nhat|ap|dat|tao don)\b', normalized))
         if claims_write and not successful.intersection(WRITES):
-            return self._fallback('mutation_claim_mismatch')
+            if not (('get_product_insights' in successful or 'get_product_description' in successful or 'search_knowledge_base' in successful)
+                    and re.search(r'\b(?:danh gia|binh luan|nhan xet|sao|review|luot|lan|vi|huong vi|ngon|uong)\b', normalized)):
+                return self._fallback('mutation_claim_mismatch')
         if any(name in reply for name in ('checkout_action_id', 'system prompt', 'tool_calls', 'Bearer ')):
             return self._fallback('internal_content')
         from src.agents.tool_capabilities import CAPABILITIES

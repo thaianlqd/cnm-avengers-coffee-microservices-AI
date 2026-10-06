@@ -181,7 +181,7 @@ def capabilities_for_context(context, *, entry_action=None, final_only=False, re
 
     # Secondary profile/completed-order capabilities remain in
     # CAPABILITIES and tool_schemas(), outside the default ordering surface.
-    allowed = {'filter_catalog', 'get_recommendations', 'search_knowledge_base', 'get_cart'}
+    allowed = {'filter_catalog', 'get_recommendations', 'search_knowledge_base', 'get_cart', 'get_product_insights'}
     if context.get('branch_review_request'):
         allowed.update({'get_store_reviews', 'get_top_rated_stores'})
         if visible.get('branches'):

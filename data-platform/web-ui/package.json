@@ -8,7 +8,8 @@
     "build": "vite build",
     "test:ai-charts": "node --test src/utils/aiChartConfig.test.mjs",
     "preview": "vite preview",
-    "test:ai-understanding": "node --test src/utils/analysisClarification.test.mjs"
+    "test:ai-understanding": "node --test src/utils/analysisClarification.test.mjs",
+    "test:ai-agent": "node --test src/utils/analystDashboard.test.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

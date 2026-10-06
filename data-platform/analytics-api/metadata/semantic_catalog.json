@@ -1353,7 +1353,7 @@
       ],
       "metrics": {
         "quantity_sold": {
-          "business_name": "Số lượng ly bán",
+          "business_name": "Số lượng sản phẩm bán",
           "expression": "SUM(so_luong)",
           "synonyms": [
             "số lượng",
@@ -2860,7 +2860,7 @@
         "description": "Số đơn áp dụng khuyến mãi ở mức order; đơn vị đơn."
       },
       "quantity_sold": {
-        "business_name": "Số lượng ly bán",
+        "business_name": "Số lượng sản phẩm bán",
         "aliases": [
           "số lượng",
           "ly bán",
@@ -2880,7 +2880,7 @@
         "source": "silver.chi_tiet_don_hang",
         "grain": "order_line",
         "time_column": "silver.don_hang.ngay_tao",
-        "unit": "ly",
+        "unit": "sản phẩm",
         "subjects": [
           "order_items",
           "products"
@@ -2897,7 +2897,7 @@
         ],
         "non_negative": true,
         "additive": true,
-        "description": "Số lượng ly bán ở mức order_line; đơn vị ly."
+        "description": "Số lượng sản phẩm bán ở mức order_line; đơn vị sản phẩm."
       },
       "item_revenue": {
         "business_name": "Doanh thu món",
@@ -4622,9 +4622,9 @@
       }
     },
     "timezone": "Asia/Ho_Chi_Minh",
-    "max_charts": 4,
-    "max_series": 8,
-    "max_categories": 30,
+    "max_charts": 8,
+    "max_series": 16,
+    "max_categories": 100,
     "interpretation": {
       "fast_path_grammar": {
         "ranking": [

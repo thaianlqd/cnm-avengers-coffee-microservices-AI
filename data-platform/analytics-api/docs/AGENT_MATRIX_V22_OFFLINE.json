@@ -1,0 +1,711 @@
+{
+  "mode": "offline_scripted_native_tools",
+  "note": "Scripts validate architecture/contracts against synthetic metadata/results. They do not measure live language accuracy, warehouse correctness or real token cost.",
+  "passed": 153,
+  "total": 153,
+  "real_provider_calls": 0,
+  "embedding_calls": 0,
+  "live_warehouse_queries": 0,
+  "warehouse_mutations": 0,
+  "records": [
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_adversary_00",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_adversary_01",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_adversary_02",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_adversary_03",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_adversary_04",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_adversary_05",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_adversary_06",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_adversary_07",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_adversary_08",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_adversary_09",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_adversary_10",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_adversary_11",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_adversary_12",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_adversary_13",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_adversary_14",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_cache_equivalence_reordered_fields_filters_and_ids",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_catalog_extension_requires_no_language_route",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_clarification_malformed_nested_field_preserves_valid_meaning",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_clarification_preserves_meaning_catalog_choices",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_compare_views_reference_only_disjoint_validated_scalar_results",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_dashboard_priority_duplicates_and_cap",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_declining_trend_statement_matches_observed_change",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_default_summary_balances_multiple_operations_and_metrics",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_describe_pagination_projects_only_business_fields",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_distribution_and_correlation_observational",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_distribution_defaults_use_bar_for_average_or_many_categories",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_evidence_ids_stable_across_projection_and_combined_report",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_grouped_comparison_uses_extrema_not_row_position",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_invalid_batch_rejected_before_any_execution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_invented_percent_and_stock_action_rejected",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_large_result_projection_is_bounded",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_llm_first_no_catalog_preload_or_prompt_routing",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_malformed_native_tool_name_rejected_before_execution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_cashier_reconciliation_reconciled_shifts_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_cashier_reconciliation_reconciled_shifts_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_cashier_reconciliation_reconciled_shifts_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_cashier_reconciliation_system_cash_revenue_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_cashier_reconciliation_system_cash_revenue_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_cashier_reconciliation_system_cash_revenue_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_cashier_reconciliation_total_cash_difference_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_cashier_reconciliation_total_cash_difference_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_cashier_reconciliation_total_cash_difference_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_customer_surveys_survey_response_count_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_customer_surveys_survey_response_count_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_customer_surveys_survey_response_count_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_customers_customer_count_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_customers_customer_count_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_customers_customer_count_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_customers_total_spent_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_customers_total_spent_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_customers_total_spent_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_delivery_driver_rating_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_delivery_driver_rating_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_delivery_driver_rating_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_delivery_total_deliveries_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_delivery_total_deliveries_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_delivery_total_deliveries_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_hourly_hourly_orders_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_hourly_hourly_orders_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_hourly_hourly_orders_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_inventory_low_stock_count_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_inventory_low_stock_count_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_inventory_low_stock_count_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_inventory_stock_quantity_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_inventory_stock_quantity_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_inventory_stock_quantity_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_order_items_item_revenue_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_order_items_item_revenue_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_order_items_item_revenue_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_order_items_quantity_sold_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_order_items_quantity_sold_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_order_items_quantity_sold_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_orders_aov_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_orders_aov_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_orders_aov_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_orders_order_count_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_orders_order_count_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_orders_order_count_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_orders_revenue_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_orders_revenue_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_orders_revenue_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_payments_payment_count_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_payments_payment_count_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_payments_payment_count_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_payments_payment_revenue_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_payments_payment_revenue_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_payments_payment_revenue_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_product_reviews_avg_product_rating_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_product_reviews_avg_product_rating_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_product_reviews_avg_product_rating_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_product_reviews_review_count_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_product_reviews_review_count_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_product_reviews_review_count_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_products_product_revenue_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_products_product_revenue_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_products_product_revenue_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_promotions_discount_amount_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_promotions_discount_amount_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_promotions_discount_amount_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_promotions_voucher_order_count_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_promotions_voucher_order_count_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_promotions_voucher_order_count_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_promotions_voucher_revenue_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_promotions_voucher_revenue_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_promotions_voucher_revenue_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_staff_shifts_late_count_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_staff_shifts_late_count_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_staff_shifts_late_count_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_staff_shifts_shift_count_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_staff_shifts_shift_count_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_staff_shifts_shift_count_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_store_reviews_avg_store_rating_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_store_reviews_avg_store_rating_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_store_reviews_avg_store_rating_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_store_reviews_store_review_count_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_store_reviews_store_review_count_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_store_reviews_store_review_count_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_stores_store_aov_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_stores_store_aov_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_stores_store_aov_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_stores_store_order_count_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_stores_store_order_count_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_stores_store_order_count_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_stores_store_revenue_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_stores_store_revenue_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_stores_store_revenue_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_wishlist_favorites_favorite_count_aggregate",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_wishlist_favorites_favorite_count_distribution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_matrix_wishlist_favorites_favorite_count_ranking",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_metric_populations_require_separate_operations",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_multimetric_mixed_units_linked_and_same_unit_grouped",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_native_discovery_describe_value_query_finish",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_native_provider_gemini_signature_and_groq_fallback",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_no_sql_repair_on_execution_failure",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_null_distribution_never_establishes_complete_shares",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_numeric_order_and_explicit_detail_limit_reach_sql",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_proposal_no_query_approval_preserves_meaning_and_skips_final_call",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_provider_failure_before_and_after_results",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_ranking_features_exact_math_and_generic_units",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_refine_chart_only_reuses_server_rows_and_ignores_client_facts",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_refine_inherits_scope_for_changed_metric",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_refinement_failure_keeps_prior_validated_results",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_result_rows_never_replayed_in_refinement_context",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_schema_fingerprint_rejects_stale_approval",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_schema_safe_value_changes_invalidate_cache",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_secondary_metric_cannot_inherit_ranking_leader_claim",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_semantic_cache_and_round_budget",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_stacked_complete_dimension_partition_and_scatter",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_supporting_budget_preserves_requested_operation",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_supporting_query_cannot_broaden_time_or_population",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_trend_features_change_peak_volatility_and_zero_baseline",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_ui_scope_rejected_before_execution",
+      "pass": true
+    },
+    {
+      "id": "tests.test_agent_v22.AgentTests.test_unknown_entity_requires_explicit_bounded_lookup",
+      "pass": true
+    }
+  ],
+  "cost_comparison": [
+    {
+      "scenario": "SIMPLE QUESTION",
+      "agent_rounds": 2,
+      "semantic_calls": 1,
+      "analytical_calls": 1,
+      "db_queries": 1,
+      "chart_count": 1,
+      "system_prompt_chars": 1659,
+      "tool_schema_chars_by_round": [
+        1605,
+        7145
+      ],
+      "tool_result_chars_by_round": [
+        295,
+        2265
+      ],
+      "result_projection_chars_by_round": [
+        0,
+        2244
+      ],
+      "provider_tokens": null,
+      "real_provider_calls": 0,
+      "embedding_calls": 0,
+      "live_db_queries": 0
+    },
+    {
+      "scenario": "MULTI-PART QUESTION",
+      "agent_rounds": 2,
+      "semantic_calls": 3,
+      "analytical_calls": 3,
+      "db_queries": 3,
+      "chart_count": 6,
+      "system_prompt_chars": 1659,
+      "tool_schema_chars_by_round": [
+        1605,
+        7145
+      ],
+      "tool_result_chars_by_round": [
+        885,
+        9070
+      ],
+      "result_projection_chars_by_round": [
+        0,
+        9049
+      ],
+      "provider_tokens": null,
+      "real_provider_calls": 0,
+      "embedding_calls": 0,
+      "live_db_queries": 0
+    },
+    {
+      "scenario": "REFINEMENT",
+      "agent_rounds": 1,
+      "semantic_calls": 0,
+      "analytical_calls": 0,
+      "db_queries": 0,
+      "chart_count": 1,
+      "system_prompt_chars": 1659,
+      "tool_schema_chars_by_round": [
+        7145
+      ],
+      "tool_result_chars_by_round": [
+        21
+      ],
+      "result_projection_chars_by_round": [
+        0
+      ],
+      "provider_tokens": null,
+      "real_provider_calls": 0,
+      "embedding_calls": 0,
+      "live_db_queries": 0
+    }
+  ],
+  "budgets": {
+    "rounds": 6,
+    "operations": 8,
+    "db_queries": 12,
+    "charts": 8,
+    "categories": 100,
+    "series": 16,
+    "tool_result_chars": 6000,
+    "preview_rows": 4,
+    "context_chars": 48000,
+    "tools_per_round": 8,
+    "value_lookups": 4
+  }
+}

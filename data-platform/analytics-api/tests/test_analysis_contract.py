@@ -26,6 +26,7 @@ from services.session_service import (
 from services.vector_rag_service import vector_rag_service
 from services.verified_analysis_service import retrieve_verified
 from tests.analysis_fixtures import physical_metadata, ranking_spec, ranked_rows, result
+from tests.agent_fixtures import query_script, ScriptedProvider, call, ranking_query
 
 
 class OfflineTests(unittest.TestCase):
@@ -343,7 +344,7 @@ class OfflineTests(unittest.TestCase):
         visuals = choose_visualizations(self.plan, r, self.ground, self.catalog)
         self.assertEqual(len(visuals), 1)
         self.assertEqual(visuals[0].chart_type, "horizontal_bar")
-        self.assertEqual(visuals[0].unit, "ly")
+        self.assertEqual(visuals[0].unit, "sản phẩm")
         self.assertFalse(
             validate_chart(
                 visuals[0].model_copy(update={"scope_ref": "all_cities"}),
@@ -514,12 +515,12 @@ class OfflineTests(unittest.TestCase):
     def pipeline(self, provider=None, executor=None):
         return AnalysisPipeline(
             metadata_loader=physical_metadata,
-            provider=provider or Mock(return_value={"data": None, "attempts": []}),
+            provider=provider or query_script(),
             executor=executor or Mock(return_value=result(ranked_rows())),
         )
 
     def test_approval_reuses_spec_no_reinterpretation_chart_no_queries(self):
-        provider = Mock(return_value={"data": None, "attempts": []})
+        provider = query_script()
         execute = Mock(return_value=result(ranked_rows()))
         pipeline = self.pipeline(provider, execute)
         req = AiTextToReportRequest(
@@ -532,7 +533,7 @@ class OfflineTests(unittest.TestCase):
         self.assertEqual(report["analysis_spec"], proposal["analysis_spec"])
         execute.assert_called_once()
         self.assertEqual(len(report["charts"]), 1)
-        self.assertEqual(provider.call_count, 1)
+        self.assertEqual(provider.call_count, 2)
         self.assertEqual(report["diagnostics"]["provider_call_count"], 0)
         req.prompt = "different"
         with self.assertRaises(AnalysisError):
@@ -561,39 +562,51 @@ class OfflineTests(unittest.TestCase):
         with self.assertRaises(AnalysisError) as caught:
             pipeline.generate(req)
         self.assertEqual(caught.exception.category, "result_contract")
-        pipeline.provider.assert_not_called()
+        self.assertEqual(pipeline.provider.call_count, 2)
         pipeline = self.pipeline(
-            provider=Mock(
-                return_value={
-                    "data": {
-                        "executive_summary": "Revenue 999999999",
-                        "selected_evidence_ids": ["fake_id"],
-                    },
-                    "attempts": [],
+            provider=query_script(
+                final={
+                    "active_query_ids": ["main"],
+                    "claims": [
+                        {
+                            "evidence_id": "fake_id",
+                            "metric": "quantity_sold",
+                            "scope_ref": "main",
+                            "claim_type": "ranking",
+                            "text": "Revenue 999999999",
+                        }
+                    ],
                 }
             )
         )
         report = pipeline.generate(req)
         self.assertNotIn("999999999", json.dumps(report))
-        self.assertEqual(report["provider"]["synthesis"], "grounded_fallback")
-        self.assertEqual(report["kpi_cards"], [])
+        self.assertEqual(report["provider"]["synthesis"], "validated_evidence")
+        self.assertTrue(report["kpi_cards"])
+        self.assertTrue(report["rejected_narrative"])
 
     def test_refinement_preserves_time_filters_and_reuses_rows_for_chart_patch(self):
         pipeline = self.pipeline()
         report = pipeline.generate(
             AiTextToReportRequest(prompt="Top 5 món bán chạy nhất tại Hà Nội tháng này")
         )
-        pipeline.provider = Mock(
-            side_effect=[
-                {
-                    "data": {
-                        "operations": [
-                            {"path": "/requested_visualizations", "value": ["bar"]}
-                        ]
+        pipeline.provider = ScriptedProvider(
+            [
+                call(
+                    "finish_analysis",
+                    {
+                        "active_query_ids": ["main"],
+                        "visuals": [
+                            {
+                                "query_id": "main",
+                                "chart_type": "bar",
+                                "metrics": ["quantity_sold"],
+                                "x_field": "product",
+                                "purpose": "ranking",
+                            }
+                        ],
                     },
-                    "attempts": [],
-                },
-                {"data": None, "attempts": []},
+                )
             ]
         )
         req = AiReportRefineRequest(
@@ -614,26 +627,18 @@ class OfflineTests(unittest.TestCase):
         with self.assertRaises(AnalysisError):
             pipeline.refine(req)  # stale revision
 
-    def test_repair_bounded_and_revalidated_before_execution(self):
+    def test_execution_failure_never_calls_sql_repair(self):
         from services.sql_service import QueryExecutionError
 
         pipeline = self.pipeline(
-            provider=Mock(
-                return_value={
-                    "data": {"sql": self.sql.replace("LIMIT 5", "LIMIT 10")},
-                    "attempts": [],
-                }
-            ),
-            executor=Mock(side_effect=QueryExecutionError("synthetic", "42601")),
-        )
-        req = AiTextToReportRequest(
-            prompt="Top 5 món bán chạy nhất tại Hà Nội tháng này"
+            executor=Mock(side_effect=QueryExecutionError("synthetic", "42601"))
         )
         with self.assertRaises(AnalysisError) as caught:
-            pipeline.generate(req)
-        self.assertEqual(caught.exception.category, "repair_rejected")
+            pipeline.generate(AiTextToReportRequest(prompt="scripted request"))
+        self.assertEqual(caught.exception.category, "execution")
         pipeline.executor.assert_called_once()
-        pipeline.provider.assert_called_once()
+        self.assertEqual(pipeline.provider.call_count, 2)
+        self.assertNotIn("SELECT ", json.dumps(pipeline.provider.requests))
 
     def test_feedback_only_validated_server_session_and_compatible_schema(self):
         pipeline = self.pipeline()
@@ -760,7 +765,7 @@ class OfflineTests(unittest.TestCase):
         p = build_plans(g, self.catalog)[0]
         rows = [
             {"period": "2026-10-01", "category": f"Category {i}", "quantity_sold": i}
-            for i in range(9)
+            for i in range(self.catalog.registry["max_series"] + 1)
         ]
         self.assertEqual(choose_visualizations(p, result(rows), g, self.catalog), [])
         rows = rows[:2]
@@ -1294,16 +1299,16 @@ class OfflineTests(unittest.TestCase):
         with self.assertRaises(AnalysisError):
             build_plans(self.catalog.ground(s), self.catalog)
 
-    def test_legacy_branch_days_filters_are_not_silently_ignored(self):
+    def test_legacy_branch_days_filters_are_explicit_ui_constraints(self):
         pipeline = self.pipeline()
         request = AiTextToReportRequest(
-            prompt="Top 5 món bán chạy nhất", branch="HN", date_range="7days"
+            prompt="fixture", branch="HN", date_range="7days"
         )
-        spec, info = understand(request.prompt, self.catalog, Mock())
-        updated = pipeline.apply_legacy_scope(spec, request, self.catalog)
-        self.assertEqual(updated.filters[0].value, "Hà Nội")
-        self.assertEqual(updated.time_range.mode, "custom")
-        self.assertEqual((updated.time_range.end - updated.time_range.start).days, 6)
+        context = pipeline.ui_context(request, self.catalog, date(2026, 10, 6))
+        self.assertEqual(context["required_filter"]["value"], "Hà Nội")
+        self.assertEqual(
+            context["required_period"], {"start": "2026-09-30", "end": "2026-10-06"}
+        )
 
     def test_average_rating_is_not_part_to_whole_composition(self):
         spec = AnalysisSpec(

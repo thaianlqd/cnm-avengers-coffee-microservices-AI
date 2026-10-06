@@ -12,9 +12,9 @@ from services.analysis_contract import (
     AnalysisSpec,
     TimeSpec,
     TimeScope,
-    VisualizationSpec,
 )
 from tests.analysis_fixtures import physical_metadata
+from services.analyst_contract import AnalyticalQuery, DashboardVisual
 
 
 def inventory(catalog):
@@ -52,8 +52,8 @@ def inventory(catalog):
             }
             for did, d in r["dimensions"].items()
         ],
-        "analysis_operators": AnalysisSpec.model_json_schema()["properties"][
-            "analysis_kind"
+        "analysis_operators": AnalyticalQuery.model_json_schema()["properties"][
+            "operation"
         ]["enum"],
         "relative_time_modes": TimeScope.model_json_schema()["properties"]["mode"][
             "enum"
@@ -61,23 +61,19 @@ def inventory(catalog):
         "intermediate_time_kinds": TimeSpec.model_json_schema()["properties"]["kind"][
             "enum"
         ],
-        "time_syntax": [
-            {"kind": p["kind"], "unit": p.get("unit")}
-            for p in r["interpretation"]["time_grammar"]
-        ],
         "granularities": AnalysisSpec.model_json_schema()["properties"]["granularity"][
             "enum"
         ],
-        "chart_types": VisualizationSpec.model_json_schema()["properties"][
-            "chart_type"
-        ]["enum"],
+        "chart_types": DashboardVisual.model_json_schema()["properties"]["chart_type"][
+            "enum"
+        ],
     }
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--output", type=Path, default=ROOT / "docs/SEMANTIC_COVERAGE_V21.json"
+        "--output", type=Path, default=ROOT / "docs/SEMANTIC_COVERAGE_V22.json"
     )
     args = parser.parse_args()
     report = inventory(AnalysisCatalog(physical_metadata()))

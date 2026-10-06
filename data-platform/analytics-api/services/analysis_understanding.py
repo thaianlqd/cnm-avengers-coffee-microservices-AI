@@ -1,4 +1,7 @@
-"""Small deterministic hints; complex meaning is one structured model response."""
+"""Legacy V2.1 interpretation fixtures; V2.2 uses only labelled presentation here.
+
+Production meaning/refinement belongs to data_analyst_agent, not hints/fast_spec.
+"""
 
 from __future__ import annotations
 import json

@@ -31,6 +31,7 @@ MAX_SNAPSHOT_ROWS = 15
 @dataclass
 class ConversationTurn:
     """A single turn in the refinement conversation."""
+
     role: str  # "user" | "assistant"
     content: str
     sql_changes: Optional[Dict[str, str]] = None  # SQL that was executed/changed
@@ -45,13 +46,16 @@ class ConversationTurn:
 @dataclass
 class ReportSession:
     """Server-side session state for an AI report generation + refinement flow."""
+
     session_id: str
     original_prompt: str
     domain: str = "auto"
     time_label: str = ""
 
     # Current state
-    current_sql: Dict[str, str] = field(default_factory=dict)  # {main, kpi, trend, breakdown}
+    current_sql: Dict[str, str] = field(
+        default_factory=dict
+    )  # {main, kpi, trend, breakdown}
     current_results_snapshot: Dict[str, Any] = field(default_factory=dict)
 
     # V2 authoritative analytical state; SQL is an output, not session meaning.
@@ -66,6 +70,11 @@ class ReportSession:
     approved: bool = False
     diagnostics: Dict[str, Any] = field(default_factory=dict)
     report_response: Dict[str, Any] = field(default_factory=dict)
+    # Server artifacts exclude provider continuation and private reasoning.
+    agent_artifacts: Dict[str, Any] = field(default_factory=dict, repr=False)
+    agent_reference_date: str = ""
+    dashboard_plan: Dict[str, Any] = field(default_factory=dict)
+    agent_state: Dict[str, Any] = field(default_factory=dict)
 
     # Full conversation history
     conversation_turns: List[ConversationTurn] = field(default_factory=list)
@@ -139,8 +148,10 @@ class ReportSession:
                 row_count = turn.result_snapshot.get("row_count", 0)
                 if kpis:
                     kpi_str = ", ".join(
-                        f"{k}={v}" for k, v in kpis.items()
-                        if v is not None and k not in ("revenue_growth", "orders_growth")
+                        f"{k}={v}"
+                        for k, v in kpis.items()
+                        if v is not None
+                        and k not in ("revenue_growth", "orders_growth")
                     )
                     lines.append(f"   → KPI sau thay đổi: {kpi_str} | {row_count} dòng")
         return "\n".join(lines)
@@ -166,7 +177,9 @@ class ReportSession:
         # Table rows (compact)
         rows = snap.get("table_rows", [])
         if rows:
-            parts.append(f"Bảng dữ liệu ({snap.get('row_count', len(rows))} dòng, hiển thị {len(rows)} dòng đầu):")
+            parts.append(
+                f"Bảng dữ liệu ({snap.get('row_count', len(rows))} dòng, hiển thị {len(rows)} dòng đầu):"
+            )
             # Show column headers + first few rows
             if rows:
                 cols = list(rows[0].keys())
@@ -180,7 +193,9 @@ class ReportSession:
         # Charts summary
         charts = snap.get("charts_summary", [])
         for ch in charts[:3]:
-            parts.append(f"Biểu đồ '{ch.get('title', '')}' ({ch.get('chart_type', '')}): {ch.get('data_count', 0)} điểm dữ liệu")
+            parts.append(
+                f"Biểu đồ '{ch.get('title', '')}' ({ch.get('chart_type', '')}): {ch.get('data_count', 0)} điểm dữ liệu"
+            )
 
         return "\n".join(parts) if parts else "(Không có dữ liệu)"
 
@@ -192,7 +207,9 @@ def _compact_snapshot(normalized_results: Dict[str, Any]) -> Dict[str, Any]:
         "kpis": normalized_results.get("kpis", {}),
         "table_rows": table_rows[:MAX_SNAPSHOT_ROWS],
         "table_columns": normalized_results.get("table_columns", []),
-        "row_count": normalized_results.get("row_counts", {}).get("main", len(table_rows)),
+        "row_count": normalized_results.get("row_counts", {}).get(
+            "main", len(table_rows)
+        ),
         "trend_count": len(normalized_results.get("trend", [])),
         "breakdown_count": len(normalized_results.get("breakdown", [])),
         "charts_summary": [],  # populated externally if needed
@@ -209,10 +226,7 @@ _lock = threading.Lock()
 def _cleanup_expired():
     """Remove sessions older than TTL. Called periodically."""
     now = time.monotonic()
-    expired = [
-        sid for sid, ts in _timestamps.items()
-        if now - ts > SESSION_TTL_SECONDS
-    ]
+    expired = [sid for sid, ts in _timestamps.items() if now - ts > SESSION_TTL_SECONDS]
     for sid in expired:
         _sessions.pop(sid, None)
         _timestamps.pop(sid, None)

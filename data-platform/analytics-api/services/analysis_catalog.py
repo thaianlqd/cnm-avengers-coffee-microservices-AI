@@ -100,6 +100,7 @@ class AnalysisCatalog:
                         c.get("nullable"),
                         bool(c.get("sensitive")),
                         tuple(c.get("enum_values") or []),
+                        tuple(c.get("safe_values") or []),
                     )
                     for c in t["columns"]
                 ),
@@ -610,5 +611,9 @@ class AnalysisCatalog:
             subject=subject,
             relationships=self.edges,
             period=resolve_period(spec.time_range, today),
-            retrieval=self.candidates(spec.subject)["retrieval"],
+            retrieval={
+                "strategy": "validated_catalog_references",
+                "vector_status": "not_requested",
+                "fingerprint": self.fingerprint,
+            },
         )

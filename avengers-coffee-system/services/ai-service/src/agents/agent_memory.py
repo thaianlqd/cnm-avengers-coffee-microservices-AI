@@ -145,7 +145,7 @@ class ConversationMemory:
             bounded = self.bounded(data)
             bounded['version'] += 1
             (self.client or redis_client()).set(self.key(session_id), json.dumps(bounded, ensure_ascii=False),
-                ex=limit('AI_AGENT_MEMORY_TTL', 1800, 1, 86400))
+                ex=limit('AI_AGENT_MEMORY_TTL', 7200, 1, 86400))
             return True
         except Exception as exc:
             self.available = False

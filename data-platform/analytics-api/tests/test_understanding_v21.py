@@ -14,6 +14,7 @@ from services.analysis_pipeline import AnalysisPipeline, safe_failure
 from services.time_resolution_service import resolve_time, parse_time
 from services.value_grounding_service import value_hints, dimension_values
 from tests.analysis_fixtures import physical_metadata, ranking_spec, ranked_rows, result
+from tests.agent_fixtures import query_script, ScriptedProvider, call, ranking_query
 
 
 class UnderstandingV21Tests(unittest.TestCase):
@@ -272,22 +273,21 @@ class UnderstandingV21Tests(unittest.TestCase):
     def test_provider_failure_categories_and_zero_execution(self):
         for provider_return, category in [
             (
-                {"data": None, "attempts": [{"error_category": "invalid_json"}]},
+                {
+                    "calls": None,
+                    "attempts": [{"error_category": "invalid_tool_response"}],
+                },
                 "provider_invalid_json",
             ),
             (
-                {"data": None, "attempts": [{"error_category": "provider_http"}]},
+                {"calls": None, "attempts": [{"error_category": "provider_http"}]},
                 "provider_unavailable",
             ),
             (
-                {"data": None, "attempts": [{"error_category": "provider_schema"}]},
+                {"calls": None, "attempts": [{"error_category": "provider_schema"}]},
                 "provider_schema_invalid",
             ),
-            ({"data": "broken-json", "attempts": []}, "provider_invalid_json"),
-            (
-                {"data": {"subject": "products"}, "attempts": []},
-                "analysis_spec_invalid",
-            ),
+            ({"calls": "broken", "attempts": []}, "provider_invalid_tools"),
         ]:
             pipeline = AnalysisPipeline(
                 metadata_loader=physical_metadata,
@@ -297,14 +297,9 @@ class UnderstandingV21Tests(unittest.TestCase):
             with self.subTest(category=category), self.assertRaises(
                 AnalysisError
             ) as caught:
-                pipeline.generate(
-                    AiTextToReportRequest(
-                        prompt="Top 5 món bán chạy ở HCM và biểu đồ doanh thu tháng 9"
-                    )
-                )
+                pipeline.generate(AiTextToReportRequest(prompt="fixture"))
             self.assertEqual(caught.exception.category, category)
             self.assertEqual(safe_failure(caught.exception)["status"], "error")
-            self.assertNotIn("chỉ số", safe_failure(caught.exception)["message"])
             pipeline.executor.assert_not_called()
 
     def test_structured_missing_year_can_be_resolved_without_losing_known_fields(self):
@@ -331,7 +326,7 @@ class UnderstandingV21Tests(unittest.TestCase):
     def test_reference_date_is_part_of_approved_request(self):
         pipeline = AnalysisPipeline(
             metadata_loader=physical_metadata,
-            provider=Mock(return_value={"data": None, "attempts": []}),
+            provider=query_script(),
             executor=Mock(return_value=result(ranked_rows())),
         )
         request = AiTextToReportRequest(
@@ -578,42 +573,36 @@ class UnderstandingV21Tests(unittest.TestCase):
     def test_relative_refinements_keep_original_request_reference_date(self):
         from common import AiReportRefineRequest
 
-        patches = iter(["previous_quarter", "previous_year"])
-
-        def provider(prompt, response_schema=None):
-            return {
-                "data": (
-                    {
-                        "operations": [
-                            {"path": "/time_range", "value": {"mode": next(patches)}}
-                        ]
-                    }
-                    if "feedback" in json.loads(prompt)
-                    else {"selected_evidence_ids": []}
-                ),
-                "attempts": [],
-            }
-
         pipeline = AnalysisPipeline(
             metadata_loader=physical_metadata,
-            provider=provider,
+            provider=query_script([ranking_query(time={"kind": "month", "month": 9})]),
             executor=Mock(return_value=result(ranked_rows())),
         )
         request = AiTextToReportRequest(
-            prompt="Top 5 món bán chạy ở Hà Nội tháng 9",
-            reference_date=date(2025, 2, 10),
+            prompt="fixture", reference_date=date(2025, 2, 10)
         )
         proposal = pipeline.propose(request)
         request.session_id = proposal["session_id"]
         report = pipeline.generate(request)
-        for feedback, expected in [
-            ("Đổi sang quý trước", "2024-10-01"),
-            ("Đổi sang năm ngoái", "2024-01-01"),
+        for mode, expected in [
+            ("previous_quarter", "2024-10-01"),
+            ("previous_year", "2024-01-01"),
         ]:
+            q = ranking_query(
+                time={"kind": "relative", "mode": mode},
+                replaces="main",
+                changed_fields=["time"],
+            )
+            pipeline.provider = ScriptedProvider(
+                [
+                    call("run_analysis", q, "q"),
+                    call("finish_analysis", {"active_query_ids": ["main"]}, "f"),
+                ]
+            )
             report = pipeline.refine(
                 AiReportRefineRequest(
                     current_report=report,
-                    feedback=feedback,
+                    feedback="fixture",
                     session_id=report["session_id"],
                 )
             )

@@ -1,6 +1,74 @@
 import { formatChartValue } from '../utils/aiChartConfig.mjs';
 import React, { useState } from 'react';
 
+/** Signed grouped/stacked series. Missing observations remain missing. */
+export const SeriesBarChart: React.FC<{ data: any[]; series: any[]; stacked?: boolean; unit?: string }> = ({ data, series, stacked = false, unit = '' }) => {
+  const [hidden, setHidden] = useState<Record<string, boolean>>({});
+  const active = series.filter(s => !hidden[s.key]);
+  if (!data.length) return <p>Không có dữ liệu trong phạm vi này.</p>;
+  const values = data.flatMap(row => active.map(s => row[s.key]).filter(Number.isFinite));
+  const sums = data.map(row => active.reduce((sum, s) => sum + (Number.isFinite(row[s.key]) ? row[s.key] : 0), 0));
+  const low = Math.min(0, ...values), high = Math.max(0, ...(stacked ? sums : values));
+  const span = high - low || 1, y = (value: number) => 245 - (value - low) / span * 215;
+  const slot = 540 / data.length;
+  return <div className="w-full overflow-x-auto">
+    <div className="flex flex-wrap gap-2 text-xs mb-3">{series.map(s => <button key={s.key} onClick={() => setHidden({ ...hidden, [s.key]: !hidden[s.key] })} aria-pressed={!hidden[s.key]} style={{ color: s.color }}>{s.label}</button>)}</div>
+    <svg viewBox="0 0 620 290" role="img" aria-label={stacked ? 'Biểu đồ cột chồng' : 'Biểu đồ cột nhóm'} className="w-full min-w-[480px]">
+      <line x1="55" x2="600" y1={y(0)} y2={y(0)} stroke="#94a3b8" />
+      {[low, (low + high) / 2, high].map((v, i) => <text key={i} x="50" y={y(v)} textAnchor="end" fontSize="10">{formatChartValue(v)}</text>)}
+      {data.map((row, i) => { let offset = 0; return <g key={i}>{active.map((s, j) => {
+        const v = row[s.key]; if (!Number.isFinite(v)) return null;
+        const start = stacked ? offset : 0; if (stacked) offset += v;
+        const width = slot * .8 / (stacked ? 1 : Math.max(active.length, 1));
+        const x = 60 + i * slot + (stacked ? 0 : j * width);
+        return <rect key={s.key} x={x} y={Math.min(y(start), y(start + v))} width={Math.max(1, width - 2)} height={Math.abs(y(start + v) - y(start))} fill={s.color || '#6366f1'}><title>{`${row.label}: ${s.label} — ${formatChartValue(v, unit ? ` ${unit}` : '')}`}</title></rect>;
+      })}<text x={60 + i * slot + slot * .4} y="270" fontSize="10" textAnchor="middle">{String(row.label).slice(0, 20)}</text></g>; })}
+    </svg>
+  </div>;
+};
+
+export const ScatterChart: React.FC<{ data: any[]; xLabel?: string; yLabel?: string; xUnit?: string; yUnit?: string }> = ({ data, xLabel = '', yLabel = '', xUnit = '', yUnit = '' }) => {
+  const rows = data.filter(r => Number.isFinite(r.x) && Number.isFinite(r.y));
+  if (!rows.length) return <p>Không có quan sát ghép cặp.</p>;
+  const xs = rows.map(r => r.x), ys = rows.map(r => r.y);
+  const minX = Math.min(...xs), minY = Math.min(...ys), spanX = Math.max(...xs) - minX || 1, spanY = Math.max(...ys) - minY || 1;
+  return <svg viewBox="0 0 620 290" role="img" aria-label="Biểu đồ phân tán — liên hệ quan sát" className="w-full">
+    <path d="M 55 25 V 245 H 590" fill="none" stroke="#94a3b8" />
+    {rows.map((r, i) => <circle key={i} cx={55 + (r.x - minX) / spanX * 520} cy={245 - (r.y - minY) / spanY * 210} r="5" fill="#6366f1" opacity=".75"><title>{`${r.label}: ${formatChartValue(r.x, ` ${xUnit}`)} / ${formatChartValue(r.y, ` ${yUnit}`)}`}</title></circle>)}
+    <text x="320" y="280" textAnchor="middle" fontSize="12">{xLabel} ({xUnit})</text><text x="55" y="15" fontSize="12">{yLabel} ({yUnit})</text>
+  </svg>;
+};
+
+export const AnalystChart: React.FC<{ chart: any }> = ({ chart }) => {
+  const data = chart.data || [], unit = chart.unit || '';
+  if (['grouped_bar', 'stacked_bar', 'stacked_100'].includes(chart.chart_type)) return <SeriesBarChart data={data} series={chart.series || []} stacked={chart.chart_type !== 'grouped_bar'} unit={unit} />;
+  if (chart.chart_type === 'scatter') return <ScatterChart data={data} xLabel={chart.x_label} yLabel={chart.y_label} xUnit={unit} yUnit={chart.y_unit} />;
+  if (chart.chart_type === 'heatmap') return <HeatmapChart data={data} valueSuffix={unit ? ` ${unit}` : ''} xLabel={chart.x_label || 'Chiều phân tích'} yLabel={chart.series_label || 'Nhóm phân tích'} />;
+  if (chart.chart_type === 'multi_line') return <SeriesLineChart data={data} series={chart.series || []} unit={unit} />;
+  if (chart.chart_type === 'donut') return <DonutChart data={data} centerLabel="Cơ cấu" valueSuffix={unit ? ` ${unit}` : ''} />;
+  if (chart.chart_type === 'horizontal_bar' && data.every((r: any) => r.value >= 0)) return <HorizontalBarChart data={data.map((r: any, i: number) => ({ ...r, rank: i + 1 }))} valueSuffix={unit ? ` ${unit}` : ''} />;
+  if (['line', 'area'].includes(chart.chart_type)) return <SeriesLineChart data={data.map((r: any) => ({ label: r.label, series_1: r.value }))} series={[{ key: 'series_1', label: chart.title, color: '#6366f1' }]} unit={unit} />;
+  return <SeriesBarChart data={data.map((r: any) => ({ label: r.label, series_1: r.value }))} series={[{ key: 'series_1', label: chart.title, color: '#6366f1' }]} unit={unit} />;
+};
+
+export const SeriesLineChart: React.FC<{ data: any[]; series: any[]; unit?: string }> = ({ data, series, unit = '' }) => {
+  const [hidden, setHidden] = useState<Record<string, boolean>>({});
+  const active = series.filter(s => !hidden[s.key]);
+  const values = data.flatMap(row => active.map(s => row[s.key]).filter(Number.isFinite));
+  if (!data.length) return <p>Không có dữ liệu trong phạm vi này.</p>;
+  const low = Math.min(0, ...values), high = Math.max(0, ...values), span = high - low || 1;
+  const x = (i: number) => 60 + i * 530 / Math.max(1, data.length - 1), y = (v: number) => 245 - (v - low) / span * 215;
+  return <div className="w-full"><div className="flex flex-wrap gap-2 text-xs mb-3">{series.map(s => <button key={s.key} aria-pressed={!hidden[s.key]} onClick={() => setHidden({ ...hidden, [s.key]: !hidden[s.key] })} style={{ color: s.color }}>{s.label}</button>)}</div>
+    <svg viewBox="0 0 620 290" role="img" aria-label="Biểu đồ theo thời gian" className="w-full">
+      {[low, (low + high) / 2, high].map((v, i) => <g key={i}><line x1="55" x2="595" y1={y(v)} y2={y(v)} stroke="#e2e8f0" /><text x="50" y={y(v)} textAnchor="end" fontSize="10">{formatChartValue(v)}</text></g>)}
+      {active.map(s => { let connected = false; const path = data.map((r, i) => { if (!Number.isFinite(r[s.key])) { connected = false; return ''; } const point = `${connected ? 'L' : 'M'} ${x(i)} ${y(r[s.key])}`; connected = true; return point; }).join(' ');
+        return <g key={s.key}><path d={path} fill="none" stroke={s.color || '#6366f1'} strokeWidth="2" />{data.map((r, i) => Number.isFinite(r[s.key]) ? <circle key={i} cx={x(i)} cy={y(r[s.key])} r="3" fill={s.color || '#6366f1'}><title>{`${r.label}: ${s.label} — ${formatChartValue(r[s.key], unit ? ` ${unit}` : '')}`}</title></circle> : null)}</g>;
+      })}
+      {data.map((r, i) => i % Math.max(1, Math.ceil(data.length / 6)) === 0 || i === data.length - 1 ? <text key={i} x={x(i)} y="275" fontSize="10" textAnchor="middle">{r.label}</text> : null)}
+    </svg>
+  </div>;
+};
+
 // ─── 1. SMOOTH AREA / LINE CHART ───
 export interface AreaChartDataPoint {
   label: string;
@@ -769,7 +837,7 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
   const [hoveredCell, setHoveredCell] = useState<{ x: string; y: string; val: number } | null>(null);
 
   // Normalize incoming data into 2D map: y -> x -> value
-  const matrix: Record<string, Record<string, number>> = {};
+  const matrix: Record<string, Record<string, number>> = Object.create(null);
   const ySet = new Set<string>();
   const xSet = new Set<string>();
 
@@ -814,7 +882,7 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
     if (xVal && yVal) {
       ySet.add(yVal);
       xSet.add(xVal);
-      if (!matrix[yVal]) matrix[yVal] = {};
+      if (!matrix[yVal]) matrix[yVal] = Object.create(null);
       matrix[yVal][xVal] = (matrix[yVal][xVal] || 0) + numVal;
     }
   });
@@ -1312,5 +1380,3 @@ export const MultiLineChart: React.FC<MultiLineChartProps> = ({
     </div>
   );
 };
-
-
