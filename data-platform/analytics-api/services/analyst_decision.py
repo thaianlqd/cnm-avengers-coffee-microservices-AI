@@ -12,13 +12,18 @@ class DecisionTime(TimeSpec):
     mode: Optional[Literal["current_day", "previous_day", "current_week", "previous_week", "current_month", "previous_month", "current_quarter", "previous_quarter", "current_year", "previous_year", "all_time"]] = None
 
 
+class DecisionFilter(Filter):
+    dimension: str = Field(description="Semantic dimension ID from manifest. Use 'dimension', never 'field'.")
+    operator: Literal["eq", "in", "gt", "gte", "lt", "lte"] = Field(default="eq", description="in requires a list value; every other operator requires a scalar.")
+
+
 class DecisionOperation(Contract):
     id: str = Field(pattern=r"^[a-z][a-z0-9_]{0,39}$")
     subject: Optional[str] = None
     operation: Optional[Operation] = None
     metrics: List[str] = Field(default_factory=list, max_length=6)
     group_by: List[str] = Field(default_factory=list, max_length=4)
-    filters: List[Filter] = Field(default_factory=list, max_length=12)
+    filters: List[DecisionFilter] = Field(default_factory=list, max_length=12)
     time: DecisionTime = Field(default_factory=lambda: DecisionTime(kind="relative", mode="all_time"))
     detail_fields: List[str] = Field(default_factory=list, max_length=12)
     ranking: Optional[ToolRanking] = None
@@ -56,7 +61,7 @@ class AnalystDecision(Contract):
     visuals: List[DashboardVisual] = Field(default_factory=list, max_length=12)
 
 
-def decision_tool(*, refinement=True):
+def decision_tool(*, refinement=True, supporting_limit=7):
     from services.agent_provider import expanded_schema, gemini_tool_schema
 
     operation = gemini_tool_schema({"name": "decision_operation", "parameters": DecisionOperation.model_json_schema()})
@@ -73,7 +78,7 @@ def decision_tool(*, refinement=True):
     operation = omit_null(operation)
     partial_time = operation["properties"]["time"]
     if not refinement:
-        for field in ("replaces", "changed_fields"):
+        for field in ("replaces", "changed_fields", "order_by"):
             operation["properties"].pop(field, None)
     # A flat TimeSpec with only kind required permits incomplete/contradictory
     # objects that cannot resolve to a warehouse scope. Declare complete branches
@@ -98,20 +103,24 @@ def decision_tool(*, refinement=True):
     clarification = expanded_schema(AgentClarification.model_json_schema())
     clarification["properties"]["known_query"] = draft
     clarification = omit_null(clarification)
+    # The executable filter declaration owns the local key/value instructions;
+    # don't repeat them in a partial clarification draft.
+    for field in ("dimension", "operator"):
+        clarification["properties"]["known_query"]["properties"]["filters"]["items"]["properties"][field].pop("description", None)
     requested = {**operation, "properties": {k: v for k, v in operation["properties"].items()
                  if k not in {"parent_id", "purpose", "population_relation"}}}
     support = {**operation, "properties": {k: v for k, v in operation["properties"].items()
-               if k not in {"filters", "time"}}}
+               if k not in {"filters", "time", "purpose"}}}
     support["required"] = ["id", "parent_id"]
     # Supports inherit parent scope; the compatibility parser still validates
     # explicit scope from old decisions. New calls don't repeat those fields.
-    return {"name": "submit_analyst_decision", "description": "Submit one complete decision. Plan all requested and useful supporting operations together, within ui.supporting_limit. Time may be omitted.",
+    return {"name": "submit_analyst_decision", "description": "Return only one structured decision; no prose. Preserve all requested work; supports inherit parent scope and use remaining capacity.",
             "parameters": {"type": "object", "required": ["decision_type"], "properties": {
                 "decision_type": {"type": "string", "enum": ["plan", "clarification", "unsupported"]},
-                "requested_operations": {"type": "array", "items": requested},
-                "supporting_operations": {"type": "array", "items": support},
+                "requested_operations": {"type": "array", "items": requested, "maxItems": 8},
+                "supporting_operations": {"type": "array", "items": support, "maxItems": min(7, max(0, supporting_limit)), "description": f"At most {min(7, max(0, supporting_limit))} optional operations, and at most 8 total including requested work."},
                 "clarification": clarification,
-                "removed_query_ids": {"type": "array", "items": {"type": "string"}},
+                **({"removed_query_ids": {"type": "array", "items": {"type": "string"}}} if refinement else {}),
                 # Legacy stored decisions may still contain visuals. New model
                 # planning is analytical only; structured UI edits own visuals.
             }}}

@@ -103,6 +103,26 @@ def customer_shopping_control(gateway):
             return {'reply': None, 'error': None}
     checkout = business.get('checkout') or {}
     if checkout.get('delivery_type') == 'GIAO_TAN_NOI' and checkout.get('checkout_requested') and not business.get('pending_products'):
+        offer = checkout.get('profile_location_offer')
+        if offer:
+            offered_addresses = offer.get('addresses') or ([{'full_address': offer['address']}] if offer.get('address') else [])
+            from src.agents.order_flow_graph import _profile_address_choice
+            from src.agents.customer_choice_authority import profile_location_decision
+            choice = _profile_address_choice(message, offered_addresses)
+            if choice and choice.get('address'):
+                gateway.dispatch('resolve_location', {'location': choice['address'], 'kind': 'address', 'for_checkout': True})
+                return {'reply': None, 'error': None}
+            if choice and choice.get('other'):
+                from src.common import cart_manager
+                cart_manager.set_checkout_context(gateway.session_id, profile_location_offer=None, suggested_address=None)
+                return envelope('Dạ, bạn cho mình địa chỉ hoặc khu vực cụ thể để tiếp tục nhé.')
+            if len(offered_addresses) == 1 and profile_location_decision(message) == 'YES':
+                gateway.dispatch('resolve_location', {'location': offered_addresses[0]['full_address'], 'kind': 'address', 'for_checkout': True})
+                return {'reply': None, 'error': None}
+            if len(offered_addresses) == 1 and profile_location_decision(message) == 'NO':
+                from src.common import cart_manager
+                cart_manager.set_checkout_context(gateway.session_id, profile_location_offer=None, suggested_address=None)
+                return envelope('Dạ, bạn cho mình địa chỉ hoặc khu vực khác để tiếp tục nhé.')
         from src.agents.location_parser import parse_location
         location = parse_location(message)
         if location.kind in {'address', 'area', 'poi'} and location.value and not re.search(
@@ -198,6 +218,13 @@ def customer_shopping_control(gateway):
             else:
                 staged.append(product)
         if staged:
-            gateway.artifacts.pending_selection_reply = pending_prompt(staged)
+            prompt = pending_prompt(staged)
+            staged_ids = {str(item['product_id']) for item in staged}
+            directly_added = [row for row in selected if str(row['product_id']) not in staged_ids]
+            if directly_added:
+                added_names = ', '.join(f"**{row['product_name']} ×{row.get('quantity', 1)}**" for row in directly_added)
+                prefix = f"Dạ, mình đã thêm {added_names} vào giỏ hàng của bạn rồi ạ.\n\nCòn với các món đang chọn, bạn chọn giúp mình tùy chọn nhé:\n\n"
+                prompt = prefix + prompt
+            gateway.artifacts.pending_selection_reply = prompt
         return {'reply': None, 'error': None}
     return None

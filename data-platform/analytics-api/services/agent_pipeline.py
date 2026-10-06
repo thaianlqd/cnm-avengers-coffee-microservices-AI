@@ -55,7 +55,7 @@ class AnalysisPipeline:
 
     def diagnostics(self, catalog, validation=None):
         return {
-            "pipeline_version": "2.5" if self.planning_mode == "one_shot" else "2.3",
+            "pipeline_version": "2.5.1" if self.planning_mode == "one_shot" else "2.3",
             "schema_fingerprint": catalog.fingerprint,
             **deepcopy(self.semantic_info),
             "provider_call_count": self.semantic_info.get("provider_call_count", len(self.calls)),
@@ -609,7 +609,7 @@ class AnalysisPipeline:
             "completion_status": (
                 "partial" if self.semantic_info.get("limitations") else "complete"
             ),
-            "pipeline_version": "2.5" if self.planning_mode == "one_shot" else "2.3",
+            "pipeline_version": "2.5.1" if self.planning_mode == "one_shot" else "2.3",
             "prompt": session.original_prompt,
             "session_id": session.session_id,
             "revision": session.revision + (1 if session.approved else 0),

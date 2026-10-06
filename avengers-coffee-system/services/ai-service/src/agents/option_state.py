@@ -59,9 +59,30 @@ def uses_global_option_defaults(message: str) -> bool:
     ))
 
 
-def declines_toppings(message: str) -> bool:
+def specific_removed_toppings(message: str, allowed_toppings: List[str]) -> List[str]:
+    """Identify specific toppings the customer wants removed/omitted."""
     text = _norm(message)
-    return bool(re.search(r'\b(?:khong|ko|k|bo)(?:\s+can)?(?:\s+them)?\s+(?:topping|toppig|toping|do kem)\b', text))
+    removed = []
+    for topping in allowed_toppings:
+        folded = _norm(topping)
+        pattern = r'\b(?:bo|xoa|go|khong\s+(?:lay|them|dung|cho)|dung\s+(?:lay|them|cho))\s+(?:topping\s+)?' + re.escape(folded) + r'\b'
+        if re.search(pattern, text):
+            removed.append(topping)
+    return removed
+
+
+def declines_toppings(message: str, allowed_toppings: Optional[List[str]] = None) -> bool:
+    text = _norm(message)
+    if allowed_toppings and specific_removed_toppings(message, allowed_toppings):
+        return False
+    if re.search(r'\b(?:bo\s+(?:het|tat ca)|khong\s+(?:can|lay|dung|them)\s+(?:tat ca\s+)?topping)\b', text):
+        return True
+    m = re.search(r'\b(?:khong|ko|k|bo)(?:\s+can)?(?:\s+them)?\s+(?:topping|toppig|toping|do kem)(?P<tail>.*)$', text)
+    if not m:
+        return False
+    tail = m.group('tail').strip()
+    filler = re.fullmatch(r'(?:di|nhe|nha|a|thoi|ban|b|oi|cho\s+toi|giup\s+toi|cho\s+minh|giup\s+minh|\s)*', tail)
+    return bool(filler)
 
 
 def requests_custom_options(message: str) -> bool:
@@ -213,8 +234,7 @@ def validate_explicit_multi_value_group(
     """
     if not group.get("multiple") or option_field(group.get("name", "")) != "toppings":
         return None
-    if re.search(r"\b(?:không|khong)\s+(?:topping|toppig|toping)|\b(?:bỏ|bo)\s+(?:topping|toppig|toping)\b",
-                 message, flags=re.IGNORECASE):
+    if declines_toppings(message, list(group.get("values") or [])):
         return None
     marker = re.search(r"\b(?:topping|toppig|toping|đồ\s+kèm|do\s+kem)\b", message, flags=re.IGNORECASE)
     allowed_by_key = {_norm(value): value for value in group.get("values") or []}

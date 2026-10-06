@@ -13,7 +13,7 @@ from pydantic import Field
 from services.analysis_contract import Contract
 from services.analysis_catalog import AnalysisError, normalize
 from services.semantic_manifest_service import build_manifest, compact
-from services.value_grounding_service import dimension_values
+from services.value_grounding_service import dimension_values, value_text
 
 QualityDirection = Literal["higher_better", "lower_better", "neutral", "contextual"]
 Baseline = Literal["previous_period", "same_period_previous_year", "peer_average", "peer_median", "between_selected_groups"]
@@ -72,6 +72,9 @@ def validate_profiles(registry):
         if metadata["version"] != 1:
             raise ValueError("Unsupported domain metadata version")
         profiles = {id: DomainProfile.model_validate(p) for id, p in metadata["profiles"].items()}
+        notes = metadata.get("model_caveat_notes", metadata.get("caveat_labels", {}))
+        if set(notes) != set(metadata.get("caveat_labels", {})) or any(not isinstance(v, str) or not 1 <= len(v) <= 160 for v in notes.values()):
+            raise ValueError("Invalid model caveat notes")
         for id, p in profiles.items():
             if not set(p.business_caveats) <= metadata.get("caveat_labels", {}).keys():
                 raise ValueError("Unknown business caveat")
@@ -216,18 +219,20 @@ class DomainIntelligence:
             if not any(id in p["dimension_refs"] for p in profiles.values()):
                 continue
             scope_types.append({"id": id, "label": d["business_name"], "values": dimension_values(self.catalog, id)[:50], "searchable": d.get("value_grounding", {}).get("mode") == "lookup"})
-        return {"status": "ready", "version": "2.5", "fingerprint": self.catalog.fingerprint,
+        return {"status": "ready", "version": "2.5.1", "fingerprint": self.catalog.fingerprint,
                 "domains": [{"id": id, "label": p["business_label"], "historical": any(self.catalog.registry["metrics"][m].get("time_column") for m in p["metric_refs"]), "caveats": [self.catalog.registry["domain_intelligence"]["caveat_labels"][c] for c in p["business_caveats"]]} for id, p in profiles.items()],
                 "analysis_depths": [{"id": "focused", "label": "Tập trung"}, {"id": "deep", "label": "Phân tích sâu"}, {"id": "comprehensive", "label": "Phân tích toàn diện"}],
                 "time_presets": [{"id": id, "label": label} for id, label in TIME_PRESETS.items()],
                 "scope_types": scope_types}
 
     def directory(self, profiles):
-        return [[id, p["business_label"], p["model_aliases"], p["primary_subjects"],
-                 [c for c in p["business_caveats"] if c in {"snapshot_only", "sample_size_required"}]] for id, p in profiles.items()]
+        # Aliases are used locally by retrieval; subjects/caveats live in packs.
+        return [[id, profiles[id]["business_label"]] for id in sorted(profiles)]
 
-    def pack(self, p, references):
-        key = (self.catalog.fingerprint, "pack", p["domain_id"], tuple(sorted(references)))
+    def pack(self, p, references, tier="full"):
+        if tier not in {"full", "compact"}:
+            raise ValueError("Unknown domain pack tier")
+        key = (self.catalog.fingerprint, "pack_v2", tier, p["domain_id"], tuple(sorted(references)))
         with _lock:
             if key in _cache:
                 _cache.move_to_end(key)
@@ -250,7 +255,8 @@ class DomainIntelligence:
                 continue
             group = (s["comparison"], tuple(s["peer_dimensions"]), s["comparable_exposure"], s["minimum_peer_groups"], s["observation_metric"], s["minimum_observations"])
             health.setdefault(group, []).append(s["metric"])
-        packed = {"id": p["domain_id"], "purpose": p["short_business_purpose"],
+        packed = {"id": p["domain_id"], "tier": tier, "subjects": [s for s in p["primary_subjects"] if ("subject", s) in references],
+                "caveats": p["business_caveats"], "purpose": p["short_business_purpose"],
                 "metric_meanings": meanings,
                 "entities": [d for d in p["primary_entities"] if d in dims],
                 "lenses": [[l["id"], l["business_label"], l["metric_refs"], [d for d in l["dimension_refs"] if d in dims],
@@ -259,50 +265,157 @@ class DomainIntelligence:
                 "drilldowns": [path for path in p["drilldown_hierarchies"] if set(path) <= dims],
                 "health": [[ms, baseline, list(ds), exposure, peers, observation, minimum] for (baseline, ds, exposure, peers, observation, minimum), ms in health.items()],
                 "comparisons": p["comparison_semantics"], "related": p["related_domains"]}
+        if tier == "compact":
+            packed = {"id": p["domain_id"], "tier": tier, "subjects": packed["subjects"],
+                "metrics": [m for m in p["metric_refs"] if m in metrics],
+                "dimensions": [d for d in p["dimension_refs"] if d in dims],
+                "lenses": [[l[0], l[1], l[2], l[4]] for l in packed["lenses"]],
+                "caveats": packed["caveats"], "metric_meanings": meanings}
         with _lock:
             _cache[key] = deepcopy(packed)
             while len(_cache) > 64:
                 _cache.popitem(last=False)
         return packed
 
-    def context(self, question, domain, depth, references, previous_subjects=(), max_chars=None):
-        """Generic lexical candidate retrieval; all domains remain in directory."""
+    def candidates(self, question, domain, depth, previous_subjects=()):
+        """Retrieve knowledge only: exact metadata evidence, then checked links.
+
+        Shared aliases do not prove a direct domain mention. Longer matching
+        business labels suppress contained generic entity/metric matches.
+        Neither scores nor candidates authorize a query.
+        """
         profiles = self.available()
         if domain not in {"auto", "multi", *profiles}:
             raise AnalysisError("unsupported_domain", "Selected domain is unavailable")
-        policy = DEPTH_POLICIES[depth]
-        maximum = policy["domain_chars"] if max_chars is None else max_chars
-        question_text = normalize(question)
-        terms = set(re.findall(r"\w+", question_text)) - set(map(normalize, self.catalog.registry["interpretation"].get("retrieval_stopwords", [])))
-        scores = []
+        question_text = value_text(question)
+        stop = set(map(value_text, self.catalog.registry["interpretation"].get("retrieval_stopwords", [])))
+        index = {}
+        r = self.catalog.registry
+        entity_owners = {}
         for id, p in profiles.items():
-            text = " ".join([id, *p["primary_subjects"], p["business_label"], *p["model_aliases"], *[self.catalog.registry["subjects"][s]["business_name"] for s in p["primary_subjects"]]])
-            words = set(re.findall(r"\w+", normalize(text)))
-            aliases = [normalize(a) for a in [id, *p["primary_subjects"], *p["model_aliases"], p["business_label"]]]
-            phrase = max((len(a.split()) for a in aliases if re.search(r"(?<!\w)" + re.escape(a) + r"(?!\w)", question_text)), default=0)
-            score = phrase * 2 + len(terms & words) / max(1, len(words))
-            preferred = id == domain or bool(set(previous_subjects) & set(p["primary_subjects"]))
-            scores.append((preferred, score, id))
-        scores.sort(key=lambda v: (-v[0], -v[1], v[2]))
-        signaled = [id for preferred, score, id in scores if preferred or score > 0]
-        candidates = signaled or [id for _, _, id in scores]
-        anchor = domain if domain not in {"auto", "multi"} else candidates[0] if candidates else None
-        if anchor and depth != "focused":
-            related = profiles[anchor]["related_domains"]
-            candidates = list(dict.fromkeys([anchor, *[id for id in candidates if id in related], *[id for id in candidates if id != anchor], *related]))
-        elif domain not in {"auto", "multi"}:
-            candidates = [domain, *[id for id in candidates if id != domain]]
+            for d in p["dimension_refs"]:
+                for alias in [r["dimensions"][d]["business_name"], *r["dimensions"][d].get("aliases", [])]:
+                    entity_owners.setdefault(value_text(alias), set()).add(id)
+        shared_entities = {phrase for phrase, owners in entity_owners.items() if len(owners) > 1}
+        for id, p in profiles.items():
+            texts = [(p["business_label"], "exact_business_label_match"), (id, "alias_match")]
+            texts += [(a, "alias_match") for a in p["model_aliases"]]
+            domain_names = set(map(value_text, [id, p["business_label"], *p["model_aliases"]]))
+            for s in p["primary_subjects"]:
+                # Legacy subject search aliases may include shared scope words.
+                # Those are not direct domain evidence unless the profile also
+                # explicitly names the word as a business domain alias.
+                texts += [(a, "alias_match") for a in [s, r["subjects"][s]["business_name"], *r["subjects"][s].get("aliases", [])]
+                          if value_text(a) not in shared_entities or value_text(a) in domain_names]
+            # Shared scope entities (for example a geographic dimension) are
+            # not evidence for a single domain merely because that profile
+            # lists the dimension as primary. Count all checked owners.
+            for d in p["dimension_refs"]:
+                texts += [(a, "entity_alias_match") for a in [r["dimensions"][d]["business_name"], *r["dimensions"][d].get("aliases", [])]]
+            for m in p["metric_refs"]:
+                texts += [(a, "metric_alias_match") for a in [r["metrics"][m]["business_name"], *r["metrics"][m].get("aliases", [])]]
+            for text, category in texts:
+                phrase = value_text(text)
+                if len(phrase) >= 3 and phrase not in stop and any(t not in stop and not t.isdigit() for t in phrase.split()):
+                    index.setdefault(phrase, {}).setdefault(category, set()).add(id)
+        categories = ("exact_business_label_match", "alias_match", "entity_alias_match", "metric_alias_match")
+        matches = []
+        for phrase, by_category in index.items():
+            # A direct subject/profile alias takes precedence over a shared
+            # metric/entity alias with the same words.
+            category = next(c for c in categories if c in by_category)
+            owners = by_category[category]
+            if len(owners) != 1:
+                continue
+            id = next(iter(owners))
+            for match in re.finditer(r"(?<!\w)" + re.escape(phrase) + r"(?!\w)", question_text):
+                matches.append((match.start(), match.end(), len(phrase.split()), id, category))
+        direct = {}
+        for start, end, strength, id, category in matches:
+            if any(a <= start and end <= b and n > strength and other != id for a, b, n, other, _ in matches):
+                continue
+            candidate = {"id": id, "priority": 2, "score": strength, "match_category": category, "protected": True}
+            if id not in direct or (strength, -categories.index(category)) > (direct[id]["score"], -categories.index(direct[id]["match_category"])):
+                direct[id] = candidate
+        if domain in profiles:
+            direct[domain] = {"id": domain, "priority": 1, "score": 0, "match_category": "selected_by_ui", "protected": True}
+        candidates = dict(direct)
+        for id, p in profiles.items():
+            if id not in candidates and set(previous_subjects) & set(p["primary_subjects"]):
+                candidates[id] = {"id": id, "priority": 3, "score": 1, "match_category": "previous_subject", "protected": False}
+        order = lambda c: (c["priority"], -c["score"], c["id"])
+        if not candidates and profiles:
+            terms = set(question_text.split()) - stop
+            scores = [(len(terms & set(value_text(p["business_label"]).split())), id) for id, p in profiles.items()]
+            score, id = sorted(scores, key=lambda v: (-v[0], v[1]))[0]
+            candidates[id] = {"id": id, "priority": 3, "score": score, "match_category": "catalog_candidate", "protected": False}
+        if candidates and depth != "focused":
+            anchors = sorted(candidates.values(), key=order)
+            for i, anchor in enumerate(anchors):
+                for id in profiles[anchor["id"]]["related_domains"]:
+                    if id not in candidates:
+                        candidates[id] = {"id": id, "priority": 3 if i == 0 else 4, "score": 0, "match_category": "related_domain", "protected": False}
+        return sorted(candidates.values(), key=order)
+
+    def context(self, question, domain, depth, references, previous_subjects=(), max_chars=None, candidates=None):
+        profiles = self.available()
+        candidates = candidates if candidates is not None else self.candidates(question, domain, depth, previous_subjects)
+        policy = DEPTH_POLICIES[depth]
         packs, omitted = [], []
-        for id in candidates:
-            pack = self.pack(profiles[id], references)
-            if not pack["lenses"] or len(packs) >= policy["packs"] or len(compact([*packs, pack])) > maximum:
-                omitted.append(id)
-            else:
-                packs.append(pack)
-        return {"version": 1, "directory_columns": "id,label,aliases,subjects,caveats", "directory": self.directory(profiles),
+        for c in candidates:
+            pack = self.pack(profiles[c["id"]], references)
+            if c["protected"] and not self.covered(profiles[c["id"]], references):
+                raise AnalysisError("one_shot_context_budget_exceeded", "Explicit domain knowledge cannot fit")
+            if not pack["lenses"] or len(packs) >= policy["packs"] and not c["protected"]:
+                omitted.append(c["id"])
+                continue
+            if len(packs) >= policy["packs"]:
+                pack = self.pack(profiles[c["id"]], references, "compact")
+            packs.append(pack)
+        knowledge = {"version": 2, "directory_columns": "id,label", "directory": self.directory(profiles),
                 "lens_columns": "id,label,metrics,dimensions,capabilities(t=trend,r=ranking,c=comparison,d=distribution)",
+                "compact_lens_columns": "id,label,metrics,capabilities; dimensions in pack and compatibility in manifest",
                 "health_columns": "metrics,baseline,peer_dimensions,comparable_exposure,min_peers,observation_metric,min_observations; directions in manifest",
-                "packs": packs, "omitted_pack_ids": omitted}
+                "caveat_meanings": self.catalog.registry["domain_intelligence"].get("model_caveat_notes", self.catalog.registry["domain_intelligence"]["caveat_labels"]),
+                "packs": packs}
+        # Only pack content is sent; retrieval evidence and omissions stay local.
+        maximum = policy["domain_chars"] if max_chars is None else max_chars
+        while len(compact(packs)) > maximum and self.degrade(knowledge, candidates, omitted, references):
+            pass
+        if max_chars is not None and len(compact(packs)) > maximum:
+            raise AnalysisError("one_shot_context_budget_exceeded", "Explicit domain knowledge cannot fit")
+        knowledge["omitted_pack_ids"] = omitted
+        return knowledge
+
+    @staticmethod
+    def covered(profile, references):
+        return all((kind, id) in references for kind, ids in (("subject", profile["primary_subjects"]), ("metric", profile["metric_refs"]), ("dimension", profile["dimension_refs"])) for id in ids)
+
+    def degrade(self, knowledge, candidates, omitted, references, descriptions_only=False):
+        """Deterministic: descriptions, full→compact, then optional omission.
+
+        Mandatory compact packs are never removed. The caller measures the
+        actual serialized transport again after each local transformation.
+        """
+        priorities = {c["id"]: c for c in candidates}
+        worst_first = sorted(knowledge["packs"], key=lambda p: (priorities[p["id"]]["priority"], -priorities[p["id"]]["score"], p["id"]), reverse=True)
+        for pack in worst_first:
+            if "purpose" in pack:
+                pack.pop("purpose")
+                return True
+        if descriptions_only:
+            return False
+        for pack in worst_first:
+            if pack["tier"] == "full":
+                replacement = self.pack(self.available()[pack["id"]], references, "compact")
+                knowledge["packs"][knowledge["packs"].index(pack)] = replacement
+                return True
+        for pack in worst_first:
+            if not priorities[pack["id"]]["protected"]:
+                knowledge["packs"].remove(pack)
+                omitted.append(pack["id"])
+                return True
+        return False
 
 
 TIME_PRESETS = {"auto": "Tự động", "today": "Hôm nay", "7d": "7 ngày qua", "30d": "30 ngày qua",

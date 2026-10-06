@@ -213,8 +213,8 @@ def parse_selection_reference(
         namespace_pattern = "|".join(pattern for _name, pattern in _NAMESPACE_PATTERNS)
         while True:
             continuation = re.match(
-                r"\s*(?:va|voi|,|&)\s*(?:\d+\s+(?=(?:banh|nuoc|do uong|do an|mon)\s+(?:so|thu)\b))?"
-                r"(?:(?P<label>" + namespace_pattern + r")\s*)?"
+                r"\s*(?:va|voi|,|&|(?:con|roi)\b)\s*(?:\d+\s+(?=(?:banh|nuoc|do uong|do an|mon)\s+(?:so|thu)\b))?"
+                r"(?:(?:con|roi)\s+)?(?:(?P<label>" + namespace_pattern + r")\s*(?:thi\s*)?)?"
                 r"(?:(?:so|thu|#)\s*)?" + _NUMBER + r"\b",
                 text[cursor:],
             )

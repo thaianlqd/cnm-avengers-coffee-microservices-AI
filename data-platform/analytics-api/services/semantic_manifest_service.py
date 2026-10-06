@@ -168,8 +168,26 @@ def provider_manifest(manifest):
     the server catalog and never becomes a model supplied field.
     """
     value = deepcopy(manifest)
-    value["subjects"] = [[s[0], s[1], *s[3:]] for s in manifest["subjects"]]
+    # Domain directory owns business labels; subject/metric membership is kept
+    # here. No execution references are removed by this wire-only projection.
+    value["subjects"] = [[s[0], *s[3:]] for s in manifest["subjects"]]
     value["metrics"] = [[m[0], m[1], m[2], *m[5:]] for m in manifest["metrics"]]
-    value["columns"]["subjects"] = "id,label,metrics,default_dimension,detail_fields,historical_detail"
+    value["columns"]["subjects"] = "id,metrics,default_dimension,detail_fields,historical_detail; labels in domain directory"
     value["columns"]["metrics"] = "id,label,unit,additive,historical,dimension_set,population_group,aggregation,quality_direction"
+    # Lossless, single-level sharing for overlapping compatibility sets. Bases
+    # always refer to an earlier literal list, so no cyclic/recursive grammar.
+    sets = []
+    for dimensions in manifest["dimension_sets"]:
+        best = dimensions
+        for index, base in enumerate(sets):
+            if not isinstance(base, list):
+                continue
+            addition = [d for d in dimensions if d not in base]
+            removal = [d for d in base if d not in dimensions]
+            candidate = {"base": index, **({"add": addition} if addition else {}), **({"remove": removal} if removal else {})}
+            if len(compact(candidate)) < len(compact(best)):
+                best = candidate
+        sets.append(best)
+    value["dimension_sets"] = sets
+    value["columns"]["dimension_sets"] = "List of IDs or base list index + add/remove IDs; exact metric compatibility."
     return value

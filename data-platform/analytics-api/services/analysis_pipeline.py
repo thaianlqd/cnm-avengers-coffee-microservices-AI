@@ -141,7 +141,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
             "agent_round_count": (layer_diagnostics or {}).get("agent_rounds", 0),
             "repair_round_count": (layer_diagnostics or {}).get("contract_repair_count", 0),
             "terminal_error": category,
-            "pipeline_version": (layer_diagnostics or {}).get("pipeline_version", "2.5"),
+            "pipeline_version": (layer_diagnostics or {}).get("pipeline_version", "2.5.1"),
             "error_category": category,
             "missing_fields": (
                 structured.get("missing_fields", []) if structured else []

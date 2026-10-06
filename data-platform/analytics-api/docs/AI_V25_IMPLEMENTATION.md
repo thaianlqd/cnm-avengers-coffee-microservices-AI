@@ -1,3 +1,20 @@
+# V2.5.1 reliability addendum (2026-10-06)
+
+The real V2.5 comprehensive retry succeeded at transport (one call, 6,568 input
+tokens, 931 output tokens) but rejected `filters.field` instead of `dimension`.
+Its body was 23,451/24,000 characters and detailed products/promotions/payments
+packs were omitted despite explicit user requests. V2.5.1 adds a local bounded
+filter-key normalizer, strict conflict rejection and protected full/compact
+metadata packs, preserving the one-call policy and strict semantic/SQL contracts.
+The equivalent offline fixture now reaches `proposal_ready`, retains all five
+domains and uses 21,727 characters with 2,273 headroom. These are fixture sizes,
+not a claim about unexecuted live provider accuracy or token usage.
+
+See [the complete V2.5.1 report](AI_V251_IMPLEMENTATION.md),
+[offline qualification](V251_QUALIFICATION.json), and
+[five manual live retests](MANUAL_EVALUATION_V251.md).
+The original V2.5 report below records its historical qualification.
+
 # Data Platform AI V2.5 — implementation report A–AL
 
 V2.5 bổ sung Domain Intelligence bằng metadata, năm đầu vào đơn giản và ba mức độ sâu, giữ kiến trúc một lượt AI. Kết quả offline chứng minh hợp đồng và orchestration; chưa xác nhận chất lượng hiểu ngôn ngữ hoặc chi phí token live. Số đo compact nằm trong [V25_QUALIFICATION.json](V25_QUALIFICATION.json); ma trận cho người dùng ở [MANUAL_EVALUATION_V25.md](MANUAL_EVALUATION_V25.md).

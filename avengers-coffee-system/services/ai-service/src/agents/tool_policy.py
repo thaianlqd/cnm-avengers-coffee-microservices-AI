@@ -623,7 +623,7 @@ class GuardedToolGateway:
 
     def _configured_product(self, product_id, values, defaults=False, require_all=True, quantity=None):
         from src.agents.option_state import (option_schema_from_result, option_field, resolve_option_default,
-            uses_global_option_defaults, default_option_fields, declines_toppings)
+            uses_global_option_defaults, default_option_fields, declines_toppings, specific_removed_toppings)
         option_message = self.option_message_for(product_id) if require_all else getattr(self, 'active_edit_clause', self.user_message)
         self._configuring_product = True
         try:
@@ -697,8 +697,19 @@ class GuardedToolGateway:
         defaults = defaults or uses_global_option_defaults(option_message)
         scoped_defaults = default_option_fields(option_message)
         by_field = {option_field(g['name']): g for g in groups if option_field(g['name'])}
-        if 'toppings' in by_field and declines_toppings(option_message):
-            values['toppings'] = []
+        if 'toppings' in by_field:
+            topping_values = by_field['toppings'].get('values') or []
+            removed = specific_removed_toppings(option_message, topping_values)
+            if removed:
+                cart_line = self._cart_line_for_product(product_id) if not require_all else None
+                staged = next((row for row in self.context['business'].get('pending_products', [])
+                               if str(row.get('product_id')) == product_id), {}) if require_all else None
+                existing = (cart_line.get('toppings') if cart_line else None) or (staged.get('toppings') if staged else []) or []
+                remaining = [t for t in existing if not any(normalize_text(t) == normalize_text(r) for r in removed)]
+                newly_added = [t for t in values.get('toppings', []) if t not in existing and not any(normalize_text(t) == normalize_text(r) for r in removed)]
+                values['toppings'] = list(dict.fromkeys(remaining + newly_added))
+            elif declines_toppings(option_message, topping_values):
+                values['toppings'] = []
         for field, value in values.items():
             group = by_field.get(field)
             if not group:

@@ -5148,7 +5148,9 @@
         "top",
         "best",
         "total",
-        "count"
+        "count",
+        "đánh giá",
+        "phân tích"
       ]
     },
     "domain_intelligence": {
@@ -7266,6 +7268,14 @@
             "no_causal_interpretation"
           ]
         }
+      },
+      "model_caveat_notes": {
+        "snapshot_only": "Current snapshot; no past-period trend.",
+        "historical_unavailable": "No historical observations for these metrics.",
+        "sample_size_required": "Quality conclusions need observation counts and sufficient samples.",
+        "non_additive": "Do not sum averages or distinct people across groups/periods.",
+        "distinct_populations": "Check each metric's population and clock; no inferred reconciliation/share.",
+        "no_causal_interpretation": "Observed differences/associations do not establish causes."
       },
       "caveat_labels": {
         "snapshot_only": "Chỉ số phản ánh hiện trạng tại thời điểm quan sát; không suy ra diễn biến quá khứ.",

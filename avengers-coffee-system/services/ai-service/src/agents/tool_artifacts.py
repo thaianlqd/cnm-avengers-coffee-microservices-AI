@@ -518,6 +518,14 @@ class ToolArtifacts:
             rows = self.visible.get('menu_categories') or []
             if not rows:
                 return 'Menu hiện chưa có danh mục đang bán.'
+            drinks = [row for row in rows if str(row.get('menu_bucket', '')).lower() == 'drink']
+            foods = [row for row in rows if str(row.get('menu_bucket', '')).lower() == 'food']
+            if drinks and foods:
+                blocks = ['Dạ, menu của quán gồm các danh mục:']
+                blocks.append('**Đồ uống:**\n' + '\n'.join(f"{row['display_index']}. **{row['category_name']}**" for row in drinks))
+                blocks.append('**Bánh & đồ ăn:**\n' + '\n'.join(f"{row['display_index']}. **{row['category_name']}**" for row in foods))
+                blocks.append('Bạn chọn **danh mục số** hoặc tên danh mục để xem các món nhé.')
+                return '\n\n'.join(blocks)
             return 'Dạ, menu của quán gồm các danh mục:\n\n' + '\n'.join(
                 f"{row['display_index']}. **{row['category_name']}**" for row in rows) + '\n\nBạn chọn **danh mục số** hoặc tên danh mục để xem các món nhé.'
         descriptions = self.product_description_reply()
@@ -633,15 +641,13 @@ class ToolArtifacts:
             if mixed and bucket != previous_bucket:
                 lines.append('**' + PRODUCT_GROUP_LABELS[bucket] + ':**')
                 previous_bucket = bucket
-            index = product['display_index']
+            index = product['group_display_index'] if mixed else product['display_index']
             price = product.get('final_price', product.get('price'))
             line = f"{index}. **{product['product_name']}**" + (f" — **{money(price)}**" if price is not None else '')
             if product.get('sold_count') is not None and asks_ranking:
                 line += f"\nĐã bán **{product['sold_count']}** sản phẩm trong **{product.get('order_count', 0)}** đơn."
             if product.get('la_moi') and not ranking:
                 line += '\nMón mới trong Menu.'
-            if mixed and bucket in PRODUCT_REFERENCE_LABELS:
-                line += f" ({PRODUCT_REFERENCE_LABELS[bucket]} số {product['group_display_index']})"
             # Keep the exact product identity; never use another product's text
             # or infer its contents from the display name/category.
             source = list(dict.fromkeys(descriptions.get(str(product['product_id']), [])))

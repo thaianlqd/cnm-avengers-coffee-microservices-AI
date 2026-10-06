@@ -14,6 +14,8 @@ from services.provider_budget import ProviderTurn, validate_single_shot_policy
 from services.value_grounding_service import dimension_values, value_text
 from services.analyst_clarification import clarify_decision, clarify_filter, UnresolvedFilter
 from services.domain_intelligence_service import DomainIntelligence, DEPTH_POLICIES
+from services.decision_boundary_normalizer import normalize_operation
+from services.one_shot_context import pack_context, context_messages, wire_payload
 
 SYSTEM = """Vietnamese business analyst: submit one plan, clarification or unsupported decision. Directory covers all domains; packs are candidate knowledge, not intent. Interpret question using delivered semantic IDs only. No SQL, invented metrics/values, forecasts, causes or prose.
 UI domain/time/scope are authoritative; AUTO permits interpretation. Omitted time=all_time; explicit time requires complete kind, ranges ISO dates. Broad questions need useful catalog lenses, not automatic clarification. Preserve EVERY requested component, including focused; over eight operations requires clarification. OPTIONAL depth: focused 1–3 views, deep 4–6 (5–6 useful), comprehensive 6–8 across relevant domains. Targets are not quotas. Use ui.supporting_limit; no filler. lens_id optional; contextual volume is not best/worst or a composite score.
@@ -35,7 +37,7 @@ class OneShotPlanner:
         self.semantic = SemanticTools(catalog, lookup)
         self.queries = AnalyticalQueries(catalog, self.semantic, reference, executor, diagnostics, proposal, previous)
         self.queries.enforce_discovery = True
-        diagnostics.update(planning_mode="one_shot", pipeline_version="2.5", provider_calls=[],
+        diagnostics.update(planning_mode="one_shot", pipeline_version="2.5.1", provider_calls=[],
             provider_status="not_started", provider_error_category=None, agent_contract_status="not_started",
             agent_contract_error=None, terminal_error=None, db_query_count=0, value_lookup_count=0,
             contract_repair_count=0, contract_rejection_count=0, contract_normalization_count=0,
@@ -95,6 +97,8 @@ class OneShotPlanner:
             f["value"] = grounded if isinstance(f["value"], list) else grounded[0]
 
     def prepare(self, raw, role):
+        raw, rules = normalize_operation(raw)
+        self.record_normalizations(rules)
         operation = DecisionOperation.model_validate(raw)
         data = operation.internal(role, self.queries.previous)
         if role == "supporting" and not operation.replaces:
@@ -108,11 +112,13 @@ class OneShotPlanner:
         prepared = self.queries.prepare(data)
         if prepared.query.id in self.queries.previous and not prepared.query.replaces:
             raise ToolContractError([issue("id", "replacement_reference_required")])
-        if self.queries.normalizations:
-            self.diagnostics["contract_normalization_count"] += 1
-            self.diagnostics["contract_normalizations"] = list(dict.fromkeys([
-                *self.diagnostics["contract_normalizations"], *self.queries.normalizations]))[:8]
+        self.record_normalizations(self.queries.normalizations)
         return prepared
+
+    def record_normalizations(self, rules):
+        self.diagnostics["contract_normalization_count"] += len(rules)
+        self.diagnostics["contract_normalizations"] = list(dict.fromkeys([
+            *self.diagnostics["contract_normalizations"], *rules]))[:8]
 
     def accept_plan(self, decision):
         if decision.clarification or not decision.requested_operations and not (self.queries.previous and (decision.visuals or decision.removed_query_ids)):
@@ -178,7 +184,7 @@ class OneShotPlanner:
                 if q.id in requested or q.id in supporting or q.replaces in replaced:
                     raise ToolContractError([issue("id", "duplicate_field")])
                 signatures = {v.signature for v in [*requested.values(), *supporting.values(), a]} - set(self.queries.cache)
-                if len(requested) + len(supporting) >= self.budget.operations or counts.get(q.parent_id, 0) >= self.budget.supporting_operations or len(signatures) > self.budget.db_queries:
+                if len(requested) + len(supporting) >= self.budget.operations or len(supporting) >= self.budget.supporting_operations or counts.get(q.parent_id, 0) >= self.budget.supporting_operations or len(signatures) > self.budget.db_queries:
                     raise ToolContractError([issue("supporting_operations", "supporting_budget")])
                 supporting[q.id] = a
                 counts[q.parent_id] = counts.get(q.parent_id, 0) + 1
@@ -254,10 +260,12 @@ class OneShotPlanner:
             context["supporting_limit"] = self.budget.supporting_operations
             self.diagnostics.update(analysis_depth=depth, supporting_operation_limit=self.budget.supporting_operations,
                                     target_visual_count=policy["target_views"][-1], target_visual_range=policy["target_views"])
-            manifest, hit = build_manifest(self.catalog)
             intelligence = DomainIntelligence(self.catalog)
+            previous_subjects = [a.query.subject for a in self.queries.previous.values()]
+            candidates = intelligence.candidates(prompt, context.get("domain", "auto"), depth, previous_subjects)
+            manifest, hit = build_manifest(self.catalog, subject_priority=[s for c in candidates for s in intelligence.available()[c["id"]]["primary_subjects"]])
             knowledge = intelligence.context(prompt, context.get("domain", "auto"), depth, manifest_references(manifest),
-                [a.query.subject for a in self.queries.previous.values()])
+                previous_subjects, candidates=candidates)
             state = []
             for id, a in self.queries.previous.items():
                 q = a.query.model_dump(mode="json", exclude_defaults=True)
@@ -269,59 +277,42 @@ class OneShotPlanner:
                 state.append({"query": q, "result_ref": id if a.result is not None else None})
             payload = {"request": prompt, "reference_date": self.reference.isoformat(),
                 "timezone": self.catalog.registry["timezone"], "ui": context, "manifest": provider_manifest(manifest), "domains": knowledge, "state": state}
-            messages = [{"role": "user", "content": compact(payload)}]
-            tools = [decision_tool(refinement=bool(self.queries.previous))]
-            from services.agent_provider import gemini_tool_schema, NativeAgentProvider
+            refinement = bool(self.queries.previous)
+            system = SYSTEM if refinement else SYSTEM.split("\nRefinement:")[0]
+            tools = [decision_tool(refinement=refinement, supporting_limit=support_limit)]
+            from services.agent_provider import gemini_tool_schema
             wire_tools = [{**t, "parameters": gemini_tool_schema(t)} for t in tools]
             # Include provider wrappers and JSON escaping. Both supported Gemini
             # styles fit before the allowance is consumed; no adapter state is mutated.
             maximum = min(policy["body_chars"], char_limit("DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS", 24000, 48000))
-            # Rich server state gets room by pruning the global metadata index,
-            # never by removing approved query scope or reading the question.
-            # This is local serialization/cache work, not another provider call.
-            for _ in range(20):
-                preview = NativeAgentProvider()
-                native_body = preview._gemini_body(SYSTEM, messages, tools)
-                compat_body = preview._gemini_compat_body(SYSTEM, messages, tools, "configured_model")
-                chars = max(len(compact(native_body)), len(compact(compat_body)))
-                allowance = len(compact(manifest)) - max(0, chars - maximum) - 200
-                if chars <= maximum or allowance < 1000:
-                    break
-                if len(knowledge["packs"]) > 1:
-                    omitted = knowledge["packs"].pop()
-                    knowledge["omitted_pack_ids"].append(omitted["id"])
-                    messages[0]["content"] = compact(payload)
-                    continue
-                try:
-                    candidate, candidate_hit = build_manifest(self.catalog, max_chars=allowance,
-                        subject_priority=[s for p in knowledge["packs"] for s in intelligence.available()[p["id"]]["primary_subjects"]])
-                except AnalysisError as error:
-                    if error.category != "semantic_manifest_budget_exceeded":
-                        raise
-                    break
-                manifest, hit = candidate, candidate_hit
-                payload["manifest"] = provider_manifest(manifest)
-                # Reproject packs after local manifest pruning. Undelivered
-                # semantic references must never be authorized via stale packs.
-                knowledge["packs"] = [intelligence.pack(intelligence.available()[p["id"]], manifest_references(manifest)) for p in knowledge["packs"]]
-                messages[0]["content"] = compact(payload)
-            preview = NativeAgentProvider()
-            chars = max(len(compact(preview._gemini_body(SYSTEM, messages, tools))),
-                        len(compact(preview._gemini_compat_body(SYSTEM, messages, tools, "configured_model"))))
+            manifest, packing_hit, sizes, omitted = pack_context(self.catalog, intelligence, candidates, manifest,
+                payload, tools, system, maximum, 21000 if depth == "comprehensive" and not refinement else maximum)
+            hit = hit or packing_hit
+            messages = context_messages(payload)
+            delivered_knowledge = wire_payload(payload)["domains"]
+            chars = max(sizes.values())
             self.diagnostics.update(semantic_manifest_chars=len(compact(payload["manifest"])), manifest_cache_hit=hit,
                 semantic_manifest_complete=manifest["complete"], decision_schema_chars=len(compact(wire_tools)),
                 total_context_chars=chars, context_char_budget=maximum)
             self.diagnostics.update(domain_context_mode=depth, global_domain_count=len(knowledge["directory"]),
                 global_domain_directory_chars=len(compact(knowledge["directory"])),
-                detailed_domain_ids=[p["id"] for p in knowledge["packs"]], domain_packs_omitted=knowledge["omitted_pack_ids"],
-                detailed_domain_pack_chars={p["id"]: len(compact(p)) for p in knowledge["packs"]},
-                domain_context_chars=len(compact(knowledge)), system_chars=len(SYSTEM), session_state_chars=len(compact(state)),
+                detailed_domain_ids=[p["id"] for p in knowledge["packs"]], domain_packs_omitted=omitted,
+                detailed_domain_pack_chars={p["id"]: len(compact(p)) for p in delivered_knowledge["packs"]},
+                domain_context_chars=len(compact(delivered_knowledge)), system_chars=len(system), session_state_chars=len(compact(state)),
                 question_ui_chars=len(compact({"request": prompt, "ui": context})))
+            pack_ids = {p["id"] for p in knowledge["packs"]}
+            self.diagnostics.update(
+                strong_domain_candidates=[{k: c[k] for k in ("id", "match_category", "priority")} for c in candidates if c["protected"]],
+                full_domain_pack_ids=[p["id"] for p in knowledge["packs"] if p["tier"] == "full"],
+                compact_domain_pack_ids=[p["id"] for p in knowledge["packs"] if p["tier"] == "compact"],
+                directory_only_domain_ids=[d[0] for d in knowledge["directory"] if d[0] not in pack_ids],
+                pruned_optional_domain_ids=omitted, provider_body_chars=sizes,
+                provider_body_headroom_chars=maximum - chars)
             if chars > maximum:
                 raise AnalysisError("one_shot_context_budget_exceeded", "Planning context exceeds allowance")
             self.semantic.discovered.update(manifest_references(manifest))
             try:
-                response = self.turn.invoke(system=SYSTEM, messages=messages, tools=tools) or {}
+                response = self.turn.invoke(system=system, messages=messages, tools=tools) or {}
             except AnalysisError:
                 raise
             except Exception:
@@ -360,6 +351,10 @@ class OneShotPlanner:
                     if decision.decision_type == "unsupported" and decision.clarification.reason not in {"unsupported_metric", "unsupported_dimension", "forecast_unsupported"}:
                         raise ToolContractError([issue("clarification.reason", "invalid_enum")])
                     self.diagnostics.update(agent_contract_status="valid", semantic_status=decision.decision_type)
+                    if decision.clarification.known_query is not None:
+                        draft, rules = normalize_operation(decision.clarification.known_query)
+                        self.record_normalizations(rules)
+                        decision.clarification.known_query = draft
                     clarify_decision(self, decision.clarification.model_dump(mode="json"))
             except (ValueError, TypeError, KeyError) as error:
                 if getattr(error, "clarification", None) or getattr(error, "category", None) == "requested_scope_too_large":

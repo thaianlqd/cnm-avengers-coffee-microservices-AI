@@ -198,8 +198,13 @@ def _address_matches(query: str, candidate: dict, place: dict) -> bool:
                 provider_houses.append(match.group(1))
         normalize_house = lambda value: re.sub(r"[^0-9a-z/.-]", "", _fold_location(value))
         requested_number = normalize_house(requested_house.group(1))
-        if not provider_houses or requested_number not in {normalize_house(value) for value in provider_houses}:
+        provider_norm = {normalize_house(value) for value in provider_houses}
+        if not provider_houses:
             return False
+        if requested_number not in provider_norm:
+            requested_base = requested_number.split('/')[0] if '/' in requested_number else None
+            if not requested_base or requested_base not in provider_norm:
+                return False
     admin_values = [value for values in _admin_fields(place).values() for value in values]
     for component in parts[1:]:
         if not any(_name_equivalent(component, canonical) for canonical in admin_values):

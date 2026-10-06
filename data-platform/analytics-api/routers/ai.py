@@ -64,7 +64,7 @@ def ai_status():
     metadata = cache_status()
     return {
         "status": "ready" if metadata["local_ready"] else "unavailable",
-        "pipeline_version": "2.5",
+        "pipeline_version": "2.5.1",
         "planning_mode": "one_shot",
         "provider_call_budget": 1,
         "providers": providers,

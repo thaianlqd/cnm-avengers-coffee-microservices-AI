@@ -17,7 +17,11 @@ def clarify_filter(planner, error, raw):
     # Validate the full structural contract before classifying this as a
     # semantic clarification. A refinement retains its approved scope/Top N.
     from services.analyst_decision import DecisionOperation
+    from services.decision_boundary_normalizer import normalize_operation
     try:
+        # prepare already records compatibility rules; revalidation must use the
+        # same idempotent boundary without counting them a second time.
+        raw, _ = normalize_operation(raw)
         operation = DecisionOperation.model_validate(raw)
         query, _ = canonicalize(operation.internal("requested", planner.queries.previous), planner.queries.previous, planner.queries.parent_replacements)
         known = query.model_dump(mode="json")
