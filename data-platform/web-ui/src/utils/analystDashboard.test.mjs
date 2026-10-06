@@ -18,7 +18,7 @@ function compile(relative) {
   } finally { rmSync(directory, { recursive: true, force: true }); }
 }
 const { AnalystChart, SeriesLineChart, HeatmapChart } = compile('../components/Charts.tsx');
-const { AnalystDashboardSummary, AnalystOptionalNarrative, AnalystReportReady } = compile('../components/AnalystDashboardSummary.tsx');
+const { AnalystDashboardSummary, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence } = compile('../components/AnalystDashboardSummary.tsx');
 const { AnalysisMeaning } = compile('../components/AnalysisMeaning.tsx');
 const render = (component, props) => renderToStaticMarkup(React.createElement(component, props));
 
@@ -68,4 +68,20 @@ test('AnalyticsView wires actual dashboard components and no static scope claim'
   const source = readFileSync(new URL('../views/AnalyticsView.tsx', import.meta.url), 'utf8');
   assert.ok(source.includes('<AnalystChart chart={chart} />')); assert.ok(source.includes('<AnalystOptionalNarrative report={rep} />'));
   assert.ok(!source.includes('KPI tăng trưởng, so sánh danh mục, cơ cấu'));
+});
+
+
+test('analysis evidence exposes scope, sources and calculation references safely', () => {
+  const html = render(AnalystEvidence, { report: {
+    analysis_explanation: [{ query_id: 'main', subject: 'Doanh thu', objective: 'Đối chiếu quy mô', role: 'requested', data_sources: ['Đơn hàng'], metrics: [{ label: 'Doanh thu', unit: 'VND', business_filters: [] }], dimensions: ['Thành phố'], filters: [{ label: 'Thành phố', value: ['Hà Nội', 'Hồ Chí Minh'] }], period: { start: '2026-07-01', end: '2026-09-30', timezone: 'Asia/Ho_Chi_Minh' }, rows_returned: 2, selection: 'complete', evidence_refs: ['main:gap'], visuals: [{ id: 'v1', reason: 'So sánh các nhóm cùng đơn vị' }] }],
+    evidence: [{ id: 'main:gap', statement: 'Chênh lệch quan sát', scope_ref: 'main', unit: 'VND', values: { gap: 20 } }]
+  } });
+  for (const value of ['Đơn hàng', 'Hà Nội', 'Hồ Chí Minh', '2026-07-01', '2 dòng', 'Bằng chứng 1', 'So sánh các nhóm cùng đơn vị', 'main%3Agap', '20']) assert.ok(html.includes(value), value);
+  assert.equal(render(AnalystEvidence, { report: {} }), '');
+  const proposal = render(AnalystEvidence, { report: { analysis_explanation: [{ query_id: 'x', subject: '<script>', objective: 'Kiểm tra', metrics: [], period: {}, rows_returned: null }] } });
+  assert.ok(proposal.includes('Kế hoạch chưa chạy truy vấn')); assert.ok(!proposal.includes('<script>'));
+});
+test('large bar axes use readable scales while exact values stay in tooltips', () => {
+  const html = render(AnalystChart, { chart: { chart_type: 'bar', unit: 'VND', title: 'Doanh thu', data: [{ label: 'A', value: 1554792000 }, { label: 'B', value: 916533000 }] } });
+  assert.ok(html.includes('tỷ')); assert.ok(html.includes('1.554.792.000')); assert.ok(html.includes('916.533.000'));
 });

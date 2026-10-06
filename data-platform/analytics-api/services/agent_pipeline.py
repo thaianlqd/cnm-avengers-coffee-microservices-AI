@@ -13,6 +13,7 @@ from services.session_service import create_session, get_session
 from services.insight_service import analytical_features, grounded_narrative
 from services.dashboard_planner_service import build_dashboard
 from services.verified_analysis_service import record_verified
+from services.explanation_service import explain_analysis
 from services.analyst_contract import DashboardPlan, AgentState
 
 
@@ -299,6 +300,7 @@ class AnalysisPipeline:
                 "Nhận định từ bằng chứng",
             ],
             "analysis_spec": session.analysis_spec,
+            "analysis_explanation": explain_analysis(artifacts, catalog),
             "session_id": session.session_id,
         }
         return {
@@ -440,6 +442,9 @@ class AnalysisPipeline:
             **narrative,
             "kpis": {},
             "evidence": evidence,
+            "analysis_explanation": explain_analysis(
+                artifacts, catalog, dashboard["charts"], evidence
+            ),
             "result_sets": results,
             "result_contracts": {id: a.contract for id, a in artifacts.items()},
             "table_data": {

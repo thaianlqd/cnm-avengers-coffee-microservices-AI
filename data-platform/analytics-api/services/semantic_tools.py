@@ -13,6 +13,73 @@ class SemanticTools:
         self.discovered = set()
         self.lookup_count = 0
 
+    def cohort_compatible(self, parent_subject, subject, parent_metrics, metrics):
+        """Related facts share scope only through a checked child-to-parent path.
+
+        Metric-owned time and population predicates must agree; different grains
+        remain different measurements, never an assumed revenue reconciliation.
+        """
+        r = self.catalog.registry
+        try:
+            if subject != parent_subject and not metrics:
+                return False
+            self.catalog.path(
+                r["subjects"][subject]["source"],
+                r["subjects"][parent_subject]["source"],
+            )
+            definitions = [r["metrics"][m] for m in [*parent_metrics, *metrics]]
+            import json
+
+            scopes = {
+                json.dumps(
+                    [
+                        m.get("time_column"),
+                        m.get("business_filters", []),
+                        m.get("required_non_null", []),
+                    ],
+                    sort_keys=True,
+                )
+                for m in definitions
+            }
+            return bool(definitions) and len(scopes) == 1
+        except (AnalysisError, KeyError):
+            return False
+
+    def related_subjects(self, subject):
+        r = self.catalog.registry
+        parent = r["subjects"][subject]
+        related = []
+        for id, candidate in r["subjects"].items():
+            if id == subject or candidate["source"] not in self.catalog.tables:
+                continue
+            metrics = [
+                m
+                for m in candidate["metrics"]
+                if any(
+                    self.cohort_compatible(subject, id, [p], [m])
+                    for p in parent["metrics"]
+                )
+            ]
+            if metrics:
+                available = []
+                for metric in metrics:
+                    try:
+                        self.describe("metric", metric, record=False)
+                        available.append(metric)
+                    except AnalysisError:
+                        continue
+                if not available:
+                    continue
+                related.append(
+                    {
+                        "id": id,
+                        "label": candidate["business_name"],
+                        "grain": candidate["grain"],
+                        "metrics": available[:4],
+                    }
+                )
+        return related
+
     def describe(self, kind, id, offset=0, limit=12, record=True):
         r = self.catalog.registry
         value = r[kind + "s"].get(id)
@@ -28,6 +95,7 @@ class SemanticTools:
                 default_dimension=value["default_dimension"],
                 project=value.get("detail_columns", []),
                 historical=bool(value.get("detail_time_column")),
+                related_subjects=self.related_subjects(id),
             )
         elif kind == "metric":
             self.catalog.check_expression(value["expression"])
@@ -54,7 +122,13 @@ class SemanticTools:
                     canonical_values=values[:8], values_complete=len(values) <= 8
                 )
         pages = {}
-        for field in ("metrics", "project", "subjects", "dimensions"):
+        for field in (
+            "metrics",
+            "project",
+            "subjects",
+            "dimensions",
+            "related_subjects",
+        ):
             if field in output:
                 values = output[field]
                 output[field] = values[offset : offset + limit]

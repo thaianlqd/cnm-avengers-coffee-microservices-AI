@@ -588,6 +588,125 @@ class AgentTests(unittest.TestCase):
             p.generate(AiTextToReportRequest(prompt="fixture"))
         p.executor.assert_not_called()
 
+    def test_related_subjects_are_grounded_and_population_contracts_must_match(self):
+        semantic = SemanticTools(self.catalog, None)
+        related = semantic.describe("subject", "orders")["related_subjects"]
+        self.assertIn("products", [s["id"] for s in related])
+        self.assertIn("stores", [s["id"] for s in related])
+        self.assertTrue(
+            semantic.cohort_compatible(
+                "orders", "products", ["revenue"], ["quantity_sold"]
+            )
+        )
+        self.assertFalse(
+            semantic.cohort_compatible(
+                "products", "orders", ["quantity_sold"], ["revenue"]
+            )
+        )
+        changed = deepcopy(self.catalog)
+        changed.registry["metrics"]["quantity_sold"]["business_filters"] = []
+        self.assertFalse(
+            SemanticTools(changed, None).cohort_compatible(
+                "orders", "products", ["revenue"], ["quantity_sold"]
+            )
+        )
+        self.assertNotIn("silver.", json.dumps(related))
+
+    def test_multi_subject_investigation_has_distinct_views_and_evidence(self):
+        queries = [
+            query("orders", "revenue", group_by=["city"]),
+            query(
+                "stores",
+                "store_revenue",
+                "ranking",
+                id="branches",
+                group_by=["store"],
+                ranking={"metric": "store_revenue", "top_n": 5},
+                role="supporting",
+                parent_id="main",
+            ),
+            query(
+                "products",
+                "quantity_sold",
+                "ranking",
+                id="items",
+                group_by=["product"],
+                ranking={"metric": "quantity_sold", "top_n": 5},
+                role="supporting",
+                parent_id="main",
+            ),
+            query(
+                "orders",
+                "revenue",
+                "trend",
+                id="history",
+                group_by=["city"],
+                role="supporting",
+                parent_id="main",
+            ),
+            query(
+                "orders",
+                "revenue",
+                "distribution",
+                id="composition",
+                group_by=["order_type"],
+                role="supporting",
+                parent_id="main",
+            ),
+        ]
+        rows_by_sql = {}
+        for q in queries:
+            a, _ = fixture_artifact({**q, "role": "requested", "parent_id": None})
+            rows_by_sql[a.sql] = a.result
+        executor = Mock(side_effect=lambda sql, **kw: rows_by_sql[sql])
+        provider = query_script(queries)
+        p = self.pipeline(provider, executor=executor)
+        response = p.generate(
+            AiTextToReportRequest(
+                prompt="unseen analytical question", reference_date=REFERENCE
+            )
+        )
+        self.assertEqual(response["status"], "success")
+        self.assertEqual(executor.call_count, 5)
+        self.assertEqual(provider.call_count, 2)
+        kinds = {c["chart_type"] for c in response["charts"]}
+        self.assertTrue({"bar", "horizontal_bar", "multi_line", "donut"} <= kinds)
+        self.assertEqual(response["dashboard_plan"]["supporting_chart_count"], 4)
+        self.assertEqual(len(response["analysis_explanation"]), 5)
+        evidence_ids = {e["id"] for e in response["evidence"]}
+        for op in response["analysis_explanation"]:
+            self.assertTrue(op["data_sources"])
+            self.assertTrue(op["objective"])
+            self.assertTrue(op["visuals"])
+            self.assertTrue(set(op["evidence_refs"]) <= evidence_ids)
+        self.assertNotIn("SELECT ", json.dumps(response["analysis_explanation"]))
+        for finding in response["key_findings"]:
+            self.assertNotEqual(finding["finding"], finding["comment"])
+
+    def test_related_support_cannot_change_population_or_time(self):
+        parent = query(
+            "orders", "revenue", filters=[{"dimension": "city", "value": "Hà Nội"}]
+        )
+        for updates in (
+            {"filters": []},
+            {"time": {"kind": "relative", "mode": "current_month"}},
+        ):
+            support = query(
+                "products",
+                "quantity_sold",
+                id="items",
+                filters=parent["filters"],
+                role="supporting",
+                parent_id="main",
+            )
+            support.update(updates)
+            p = self.pipeline(query_script([parent, support]))
+            with self.assertRaises(AnalysisError):
+                p.propose(
+                    AiTextToReportRequest(prompt="fixture", reference_date=REFERENCE)
+                )
+            p.executor.assert_not_called()
+
     def test_ranking_features_exact_math_and_generic_units(self):
         a, _ = fixture_artifact(ranking_query())
         a.result = result(ranked_rows())

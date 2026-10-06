@@ -1,4 +1,4 @@
-import { AnalystDashboardSummary, AnalystOptionalNarrative, AnalystReportReady } from '../components/AnalystDashboardSummary';
+import { AnalystDashboardSummary, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence } from '../components/AnalystDashboardSummary';
 import { AnalysisClarification } from '../components/AnalysisClarification';
 import { AnalysisMeaning } from '../components/AnalysisMeaning';
 import React, { useState, useEffect } from 'react';
@@ -1298,6 +1298,8 @@ export const AnalyticsView: React.FC = () => {
             {!data.rows.length && <p className="text-slate-500 text-xs">Không có dữ liệu trong phạm vi này.</p>}
           </section>
         ))}
+        <AnalystEvidence report={rep} />
+
         {/* SECTION 2: Các phát hiện chính */}
         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
           <div className="border-b border-slate-100 pb-2">
@@ -1472,19 +1474,19 @@ export const AnalyticsView: React.FC = () => {
         )}
 
         {/* SECTION 4: Insight được AI Agent suy luận */}
-        {rep.ai_insights && Array.isArray(rep.ai_insights) && rep.ai_insights.length > 0 && (
+        {rep.ai_insights && Array.isArray(rep.ai_insights) && rep.ai_insights.some((insight: any) => typeof insight !== 'string' || !(rep.key_findings || []).some((f: any) => f.finding === insight)) && (
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
             <div className="border-b border-slate-100 pb-2">
               <h3 className="text-base font-bold text-slate-800 tracking-tight">
-                4. Insight được AI Agent suy luận
+                4. Nhận định bổ sung
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Đánh giá sâu về nguyên nhân cốt lõi, tương quan dữ liệu và hàm ý kinh doanh cho chuỗi Avengers Coffee.
+                Các nhận định bổ sung gắn với kết quả kiểm chứng; cần phân tích thêm để kết luận nguyên nhân.
               </p>
             </div>
 
             <div className="space-y-3.5">
-              {rep.ai_insights.map((insight: any, idx: number) => {
+              {rep.ai_insights.filter((insight: any) => typeof insight !== 'string' || !(rep.key_findings || []).some((f: any) => f.finding === insight)).map((insight: any, idx: number) => {
                 const numStr = String(idx + 1).padStart(2, '0');
                 let title = `Nhận định chiến lược ${numStr}`;
                 let content = typeof insight === 'object' && insight !== null
@@ -2708,6 +2710,8 @@ export const AnalyticsView: React.FC = () => {
                       {aiPlan.summary_intent}
                     </p>
                   </div>
+
+                  <AnalystEvidence report={{ analysis_explanation: aiPlan.analysis_explanation || [] }} />
 
                   {/* 3 Pillars Grid: Data Sources, KPIs, Visual Charts */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">

@@ -451,8 +451,21 @@ def grounded_narrative(plan, evidence):
         "key_findings": [
             {
                 "finding": e["statement"],
-                "comment": e["statement"],
-                "value": e["values"],
+                "comment": f"Căn cứ phần phân tích {e['scope_ref']}; phạm vi {e['scope']['selection']}. Xem bằng chứng và phép tính kèm theo.",
+                "value": e["values"].get(
+                    {
+                        "population_gap": "gap",
+                        "group_comparison": "gap",
+                        "leader": "value",
+                        "top_gap": "gap",
+                        "change": "change",
+                        "concentration": "largest_share_pct",
+                        "scalar": "value",
+                        "selected_total": "total",
+                        "pearson": "r",
+                    }.get(e["feature"], "")
+                ),
+                "value_details": e["values"],
                 "evidence_id": e["id"],
             }
             for e in selected

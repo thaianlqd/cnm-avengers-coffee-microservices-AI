@@ -193,7 +193,9 @@ class AnalyticalQueries:
                     "query_scope", "Supporting operation requires requested parent"
                 )
             if (
-                parent.query.subject != q.subject
+                not self.semantic.cohort_compatible(
+                    parent.query.subject, q.subject, parent.query.metrics, q.metrics
+                )
                 or parent.grounded.period != period
                 or sorted((f.model_dump_json() for f in parent.query.filters))
                 != sorted((f.model_dump_json() for f in q.filters))

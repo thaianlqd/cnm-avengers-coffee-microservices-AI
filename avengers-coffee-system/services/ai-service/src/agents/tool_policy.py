@@ -739,9 +739,9 @@ class GuardedToolGateway:
         option_reply = (uses_global_option_defaults(self.user_message)
                         or requests_custom_options(self.user_message)
                         or bool(re.search(r'\b(?:size|topping|da|ngot|sua)\b', text))
-                        or text in {'oke', 'ok', 'dong y', 'duoc', 'oke ban'})
+                        or bool(re.search(r'\b(?:oke|ok|dong y|duoc|dung roi|chinh xac|chuan roi|dung vay|oke ban|chuan|dung do)\b', text)))
         option_reply = option_reply and '?' not in self.user_message and not re.search(r'\b(?:bao nhieu|la gi|the nao|tham khao|xem truoc)\b', text)
-        if option_reply and not pending and self.entry_focus and self.entry_focus.get('source') in {None, 'customer_selected_options'}:
+        if option_reply and not pending and self.entry_focus and self.entry_focus.get('source') in {None, 'customer_selected_options', 'canonical_option_provider'}:
             if str(self.entry_focus.get('product_id')) == product_id:
                 return None
         if pending and option_reply:
@@ -764,11 +764,12 @@ class GuardedToolGateway:
             ordinal_invalid=reference.namespace not in {None, 'PRODUCT'} and not (
                 reference.namespace == 'MIXED' and all(label in PRODUCT_REFERENCE_CATEGORIES for label in reference.ordinal_labels)),
             focus=self.entry_focus)
-        if (interpreted.act == 'PRODUCT_INFO' and option_reply
+        if (interpreted.act in {'PRODUCT_INFO', 'UNKNOWN', 'ADD_ITEM', 'AMBIGUOUS'} and option_reply
                 and not re.search(r'\b(?:gia|review|danh gia|thanh phan|ngon)\b', text)
-                and re.search(r'\b(?:mua|lay|them|dat)\b', text)):
-            if any(str(row.get('product_id')) == product_id and normalize_shopping(row.get('product_name')) in text
-                   for row in interpreted.targets):
+                and (re.search(r'\b(?:mua|lay|them|dat|chon)\b', text) or self.entry_focus)):
+            options_info = self.options.get(product_id) or product_tools.execute_get_product_options(product_id=product_id)
+            target_name = normalize_shopping(options_info.get('product_name') or '')
+            if (target_name and target_name in text) or any(str(row.get('product_id')) == product_id for row in interpreted.targets):
                 return None
         if interpreted.act == 'ADD_ITEM' and any(str(row.get('product_id')) == product_id for row in interpreted.targets):
             return None

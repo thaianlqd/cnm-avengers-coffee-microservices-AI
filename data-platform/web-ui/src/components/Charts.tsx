@@ -1,6 +1,12 @@
 import { formatChartValue } from '../utils/aiChartConfig.mjs';
 import React, { useState } from 'react';
 
+const axisValue = (value: number) => {
+  const magnitude = Math.abs(value);
+  const scale = magnitude >= 1e9 ? [1e9, 'tỷ'] : magnitude >= 1e6 ? [1e6, 'triệu'] : magnitude >= 1e3 ? [1e3, 'nghìn'] : [1, ''];
+  return `${(value / Number(scale[0])).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} ${scale[1]}`.trim();
+};
+
 /** Signed grouped/stacked series. Missing observations remain missing. */
 export const SeriesBarChart: React.FC<{ data: any[]; series: any[]; stacked?: boolean; unit?: string }> = ({ data, series, stacked = false, unit = '' }) => {
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
@@ -15,7 +21,7 @@ export const SeriesBarChart: React.FC<{ data: any[]; series: any[]; stacked?: bo
     <div className="flex flex-wrap gap-2 text-xs mb-3">{series.map(s => <button key={s.key} onClick={() => setHidden({ ...hidden, [s.key]: !hidden[s.key] })} aria-pressed={!hidden[s.key]} style={{ color: s.color }}>{s.label}</button>)}</div>
     <svg viewBox="0 0 620 290" role="img" aria-label={stacked ? 'Biểu đồ cột chồng' : 'Biểu đồ cột nhóm'} className="w-full min-w-[480px]">
       <line x1="55" x2="600" y1={y(0)} y2={y(0)} stroke="#94a3b8" />
-      {[low, (low + high) / 2, high].map((v, i) => <text key={i} x="50" y={y(v)} textAnchor="end" fontSize="10">{formatChartValue(v)}</text>)}
+      {[low, (low + high) / 2, high].map((v, i) => <text key={i} x="50" y={y(v)} textAnchor="end" fontSize="10">{axisValue(v)}</text>)}
       {data.map((row, i) => { let offset = 0; return <g key={i}>{active.map((s, j) => {
         const v = row[s.key]; if (!Number.isFinite(v)) return null;
         const start = stacked ? offset : 0; if (stacked) offset += v;
@@ -60,7 +66,7 @@ export const SeriesLineChart: React.FC<{ data: any[]; series: any[]; unit?: stri
   const x = (i: number) => 60 + i * 530 / Math.max(1, data.length - 1), y = (v: number) => 245 - (v - low) / span * 215;
   return <div className="w-full"><div className="flex flex-wrap gap-2 text-xs mb-3">{series.map(s => <button key={s.key} aria-pressed={!hidden[s.key]} onClick={() => setHidden({ ...hidden, [s.key]: !hidden[s.key] })} style={{ color: s.color }}>{s.label}</button>)}</div>
     <svg viewBox="0 0 620 290" role="img" aria-label="Biểu đồ theo thời gian" className="w-full">
-      {[low, (low + high) / 2, high].map((v, i) => <g key={i}><line x1="55" x2="595" y1={y(v)} y2={y(v)} stroke="#e2e8f0" /><text x="50" y={y(v)} textAnchor="end" fontSize="10">{formatChartValue(v)}</text></g>)}
+      {[low, (low + high) / 2, high].map((v, i) => <g key={i}><line x1="55" x2="595" y1={y(v)} y2={y(v)} stroke="#e2e8f0" /><text x="50" y={y(v)} textAnchor="end" fontSize="10">{axisValue(v)}</text></g>)}
       {active.map(s => { let connected = false; const path = data.map((r, i) => { if (!Number.isFinite(r[s.key])) { connected = false; return ''; } const point = `${connected ? 'L' : 'M'} ${x(i)} ${y(r[s.key])}`; connected = true; return point; }).join(' ');
         return <g key={s.key}><path d={path} fill="none" stroke={s.color || '#6366f1'} strokeWidth="2" />{data.map((r, i) => Number.isFinite(r[s.key]) ? <circle key={i} cx={x(i)} cy={y(r[s.key])} r="3" fill={s.color || '#6366f1'}><title>{`${r.label}: ${s.label} — ${formatChartValue(r[s.key], unit ? ` ${unit}` : '')}`}</title></circle> : null)}</g>;
       })}

@@ -32,3 +32,32 @@ export const AnalystOptionalNarrative: React.FC<{ report: any }> = ({ report }) 
     {recommendations.length > 0 && <section className="bg-white rounded-2xl border border-slate-200 p-6"><h3 className="text-sm font-semibold">Khuyến nghị từ bằng chứng</h3><ul className="text-xs text-slate-600 mt-2 space-y-2">{recommendations.map((r: any, i: number) => <li key={i}>{typeof r === 'string' ? r : r.text || r.recommendation}</li>)}</ul></section>}
   </div>;
 };
+
+
+export const AnalystEvidence: React.FC<{ report: any }> = ({ report }) => {
+  const operations = report.analysis_explanation || [];
+  if (!operations.length) return null;
+  return <section className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+    <h3 className="text-sm font-semibold">Cơ sở phân tích và dữ liệu sử dụng</h3>
+    <p className="text-xs text-slate-500">Đối chiếu phạm vi, chỉ số, nguồn và bằng chứng của từng phần phân tích.</p>
+    {operations.map((op: any, index: number) => <details key={op.query_id} open={index === 0} className="border border-slate-200 rounded-xl p-3">
+      <summary className="text-sm font-semibold cursor-pointer">{op.subject} · {op.objective} · {op.role === 'supporting' ? 'Hỗ trợ' : 'Theo yêu cầu'}</summary>
+      <div className="text-xs text-slate-600 mt-3 space-y-2">
+        <p>Nguồn: {(op.data_sources || []).join(' · ')}</p>
+        <p>Chỉ số: {(op.metrics || []).map((m: any) => `${m.label} (${m.unit})`).join(' · ') || 'Các trường chi tiết'}</p>
+        <p>Phân nhóm: {(op.dimensions || []).join(' · ') || 'Toàn phạm vi đã chọn'}</p>
+        <p>Bộ lọc: {(op.filters || []).map((f: any) => `${f.label}: ${Array.isArray(f.value) ? f.value.join(', ') : String(f.value)}`).join(' · ') || 'Không có bộ lọc bổ sung'}</p>
+        <p>Thời gian: {op.period?.start ? `${op.period.start} → ${op.period.end}` : 'Toàn bộ dữ liệu hiện có'} · {op.period?.timezone}</p>
+        {op.metrics?.some((m: any) => m.business_filters?.length) && <p>Điều kiện chỉ số: {op.metrics.map((m: any) => (m.business_filters || []).map((f: any) => `${m.label}: ${f.dimension} ${f.operator} ${Array.isArray(f.value) ? f.value.join(', ') : String(f.value)}`).join('; ')).filter(Boolean).join(' · ')}</p>}
+        <p>{op.rows_returned == null ? 'Kế hoạch chưa chạy truy vấn.' : `${op.rows_returned} dòng kết quả đã kiểm chứng.`} {op.selection === 'Top N' ? 'Tập Top N không đại diện toàn bộ cơ cấu.' : op.selection === 'limited' ? 'Kết quả có giới hạn số dòng.' : ''}</p>
+        {(op.visuals || []).map((v: any) => <p key={v.id}>Lý do chọn biểu đồ: {v.reason}</p>)}
+        {!!op.evidence_refs?.length && <div className="flex flex-wrap gap-2">{op.evidence_refs.map((id: string, i: number) => <a key={id} className="text-blue-700 underline" href={`#evidence-${encodeURIComponent(id)}`}>Bằng chứng {i + 1}</a>)}</div>}
+      </div>
+    </details>)}
+    {!!report.evidence?.length && <details className="border-t pt-3"><summary className="text-xs font-semibold cursor-pointer">Các phép tính và bằng chứng kiểm chứng</summary><div className="mt-3 space-y-3">{report.evidence.map((e: any) => <div key={e.id} id={`evidence-${encodeURIComponent(e.id)}`} className="text-xs text-slate-600 scroll-mt-24">
+      <p className="font-semibold">{e.statement}</p>
+      <p>Phạm vi kết quả: {e.scope_ref} · Đơn vị: {e.unit || 'Bản ghi'}</p>
+      <pre className="whitespace-pre-wrap break-words bg-slate-50 rounded p-2 mt-1">{JSON.stringify(e.values, null, 2)}</pre>
+    </div>)}</div></details>}
+  </section>;
+};
