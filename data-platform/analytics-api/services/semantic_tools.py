@@ -80,6 +80,36 @@ class SemanticTools:
                 )
         return related
 
+    def record_projection(self, output):
+        """Authorize only IDs in the projection actually delivered to the model."""
+        self.discovered.add((output["kind"], output["id"]))
+        for field, kind in (("metrics", "metric"), ("subjects", "subject"), ("dimensions", "dimension"), ("project", "dimension")):
+            self.discovered.update((kind, id) for id in output.get(field, []))
+        if output.get("default_dimension"):
+            self.discovered.add(("dimension", output["default_dimension"]))
+        for related in output.get("related_subjects", []):
+            self.discovered.add(("subject", related["id"]))
+            self.discovered.update(("metric", id) for id in related["metrics"])
+
+    def require_query(self, q):
+        from services.analytical_tool_contract import ToolContractError, issue
+
+        refs = [("subject", q.subject, "subject")]
+        refs += [("metric", m, "metrics") for m in q.metrics]
+        refs += [("dimension", d, "group_by") for d in q.group_by]
+        refs += [("dimension", d, "project") for d in q.project]
+        refs += [("dimension", f.dimension, "filters.dimension") for f in q.filters]
+        if q.ranking:
+            refs += [("metric", q.ranking.metric, "ranking.metric")]
+            refs += [("dimension", d, "ranking.per_group") for d in q.ranking.per_group]
+        for sort in q.order_by:
+            if sort.field not in ("period", "rank_position"):
+                kind = "metric" if sort.field in self.catalog.registry["metrics"] else "dimension"
+                refs.append((kind, sort.field, "order_by.field"))
+        missing = [issue(path, "concept_not_discovered") for kind, id, path in refs if (kind, id) not in self.discovered]
+        if missing:
+            raise ToolContractError(list({v["path"]: v for v in missing}.values()))
+
     def describe(self, kind, id, offset=0, limit=12, record=True):
         r = self.catalog.registry
         value = r[kind + "s"].get(id)
@@ -97,6 +127,15 @@ class SemanticTools:
                 historical=bool(value.get("detail_time_column")),
                 related_subjects=self.related_subjects(id),
             )
+            available_metrics = []
+            for metric in output["metrics"]:
+                try:
+                    self.describe("metric", metric, record=False)
+                    available_metrics.append(metric)
+                except AnalysisError:
+                    continue
+            output["metrics"] = available_metrics
+            output["dimensions"] = sorted({d for m in available_metrics for d in self.catalog.compatible_dimensions(m)})
         elif kind == "metric":
             self.catalog.check_expression(value["expression"])
             if value.get("time_column"):
@@ -140,8 +179,23 @@ class SemanticTools:
                 }
         if pages:
             output["pages"] = pages
+        if kind in ("subject", "metric"):
+            # Inline only safe canonical enums on the delivered dimension page.
+            # Lookup references still require the bounded resolution tool.
+            enums = {}
+            for dimension in dict.fromkeys([*output.get("dimensions", []), *([output["default_dimension"]] if output.get("default_dimension") else [])]):
+                detail = self.describe("dimension", dimension, record=False)
+                if "canonical_values" in detail:
+                    enums[dimension] = {"values": detail["canonical_values"], "complete": detail["values_complete"]}
+            if enums:
+                output["canonical_enums"] = enums
+        if kind == "subject":
+            output["measures"] = [
+                {"id": m, "label": r["metrics"][m]["business_name"], "unit": r["metrics"][m]["unit"], "grain": r["metrics"][m]["grain"], "historical": bool(r["metrics"][m].get("time_column")), "additive": bool(r["metrics"][m].get("additive"))}
+                for m in output["metrics"]
+            ]
         if record:
-            self.discovered.add((kind, id))
+            self.record_projection(output)
         return output
 
     def search(self, arguments):
@@ -166,19 +220,26 @@ class SemanticTools:
                 results.append((score, kind, id, desc))
         results.sort(key=lambda v: (-v[0], v[1], v[2]))
         page = results[arg.offset : arg.offset + arg.limit]
-        self.discovered.update((kind, id) for _, kind, id, _ in page)
         matches = []
         for _, kind, id, value in page:
             # Reuse a physically checked, bounded business projection. A model
             # can choose subject/metric/dimensions without rediscovering each ID.
             detail = self.describe(kind, id, limit=6, record=False)
             matches.append(detail)
+        # Fit the existing result budget by returning fewer matches with a real
+        # next_offset, never by hiding a full result behind a projection error.
+        import json
+        while len(matches) > 1 and len(json.dumps(matches, ensure_ascii=False, separators=(",", ":"))) > 5200:
+            matches.pop()
+        for detail in matches:
+            self.record_projection(detail)
+        returned = len(matches)
         return {
             "matches": matches,
             "total": len(results),
             "next_offset": (
-                arg.offset + arg.limit
-                if arg.offset + arg.limit < len(results)
+                arg.offset + returned
+                if arg.offset + returned < len(results)
                 else None
             ),
         }
@@ -215,6 +276,7 @@ class SemanticTools:
                 canonical = exact[0]
         if canonical is not None:
             self.resolved.setdefault(arg.dimension, set()).add(canonical)
+        self.discovered.add(("dimension", arg.dimension))
         return {
             "dimension": arg.dimension,
             "value": canonical,

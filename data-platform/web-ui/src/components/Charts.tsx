@@ -8,13 +8,13 @@ const axisValue = (value: number) => {
 };
 
 /** Signed grouped/stacked series. Missing observations remain missing. */
-export const SeriesBarChart: React.FC<{ data: any[]; series: any[]; stacked?: boolean; unit?: string }> = ({ data, series, stacked = false, unit = '' }) => {
+export const SeriesBarChart: React.FC<{ data: any[]; series: any[]; stacked?: boolean; percentage?: boolean; unit?: string }> = ({ data, series, stacked = false, percentage = false, unit = '' }) => {
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const active = series.filter(s => !hidden[s.key]);
   if (!data.length) return <p>Không có dữ liệu trong phạm vi này.</p>;
   const values = data.flatMap(row => active.map(s => row[s.key]).filter(Number.isFinite));
   const sums = data.map(row => active.reduce((sum, s) => sum + (Number.isFinite(row[s.key]) ? row[s.key] : 0), 0));
-  const low = Math.min(0, ...values), high = Math.max(0, ...(stacked ? sums : values));
+  const low = Math.min(0, ...values), high = percentage ? 100 : Math.max(0, ...(stacked ? sums : values));
   const span = high - low || 1, y = (value: number) => 245 - (value - low) / span * 215;
   const slot = 540 / data.length;
   return <div className="w-full overflow-x-auto">
@@ -47,17 +47,17 @@ export const ScatterChart: React.FC<{ data: any[]; xLabel?: string; yLabel?: str
 
 export const AnalystChart: React.FC<{ chart: any }> = ({ chart }) => {
   const data = chart.data || [], unit = chart.unit || '';
-  if (['grouped_bar', 'stacked_bar', 'stacked_100'].includes(chart.chart_type)) return <SeriesBarChart data={data} series={chart.series || []} stacked={chart.chart_type !== 'grouped_bar'} unit={unit} />;
+  if (['grouped_bar', 'stacked_bar', 'stacked_100'].includes(chart.chart_type)) return <SeriesBarChart data={data} series={chart.series || []} stacked={chart.chart_type !== 'grouped_bar'} percentage={chart.chart_type === 'stacked_100'} unit={unit} />;
   if (chart.chart_type === 'scatter') return <ScatterChart data={data} xLabel={chart.x_label} yLabel={chart.y_label} xUnit={unit} yUnit={chart.y_unit} />;
   if (chart.chart_type === 'heatmap') return <HeatmapChart data={data} valueSuffix={unit ? ` ${unit}` : ''} xLabel={chart.x_label || 'Chiều phân tích'} yLabel={chart.series_label || 'Nhóm phân tích'} />;
   if (chart.chart_type === 'multi_line') return <SeriesLineChart data={data} series={chart.series || []} unit={unit} />;
   if (chart.chart_type === 'donut') return <DonutChart data={data} centerLabel="Cơ cấu" valueSuffix={unit ? ` ${unit}` : ''} />;
   if (chart.chart_type === 'horizontal_bar' && data.every((r: any) => r.value >= 0)) return <HorizontalBarChart data={data.map((r: any, i: number) => ({ ...r, rank: i + 1 }))} valueSuffix={unit ? ` ${unit}` : ''} />;
-  if (['line', 'area'].includes(chart.chart_type)) return <SeriesLineChart data={data.map((r: any) => ({ label: r.label, series_1: r.value }))} series={[{ key: 'series_1', label: chart.title, color: '#6366f1' }]} unit={unit} />;
+  if (['line', 'area'].includes(chart.chart_type)) return <SeriesLineChart data={data.map((r: any) => ({ label: r.label, series_1: r.value }))} series={[{ key: 'series_1', label: chart.title, color: '#6366f1' }]} unit={unit} area={chart.chart_type === 'area'} />;
   return <SeriesBarChart data={data.map((r: any) => ({ label: r.label, series_1: r.value }))} series={[{ key: 'series_1', label: chart.title, color: '#6366f1' }]} unit={unit} />;
 };
 
-export const SeriesLineChart: React.FC<{ data: any[]; series: any[]; unit?: string }> = ({ data, series, unit = '' }) => {
+export const SeriesLineChart: React.FC<{ data: any[]; series: any[]; unit?: string; area?: boolean }> = ({ data, series, unit = '', area = false }) => {
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const active = series.filter(s => !hidden[s.key]);
   const values = data.flatMap(row => active.map(s => row[s.key]).filter(Number.isFinite));
@@ -68,7 +68,10 @@ export const SeriesLineChart: React.FC<{ data: any[]; series: any[]; unit?: stri
     <svg viewBox="0 0 620 290" role="img" aria-label="Biểu đồ theo thời gian" className="w-full">
       {[low, (low + high) / 2, high].map((v, i) => <g key={i}><line x1="55" x2="595" y1={y(v)} y2={y(v)} stroke="#e2e8f0" /><text x="50" y={y(v)} textAnchor="end" fontSize="10">{axisValue(v)}</text></g>)}
       {active.map(s => { let connected = false; const path = data.map((r, i) => { if (!Number.isFinite(r[s.key])) { connected = false; return ''; } const point = `${connected ? 'L' : 'M'} ${x(i)} ${y(r[s.key])}`; connected = true; return point; }).join(' ');
-        return <g key={s.key}><path d={path} fill="none" stroke={s.color || '#6366f1'} strokeWidth="2" />{data.map((r, i) => Number.isFinite(r[s.key]) ? <circle key={i} cx={x(i)} cy={y(r[s.key])} r="3" fill={s.color || '#6366f1'}><title>{`${r.label}: ${s.label} — ${formatChartValue(r[s.key], unit ? ` ${unit}` : '')}`}</title></circle> : null)}</g>;
+        const segments: number[][] = []; let segment: number[] = [];
+        data.forEach((r, i) => { if (Number.isFinite(r[s.key])) segment.push(i); else if (segment.length) { segments.push(segment); segment = []; } });
+        if (segment.length) segments.push(segment);
+        return <g key={s.key}>{area && segments.map((indices, i) => <path key={i} d={`M ${x(indices[0])} ${y(0)} ${indices.map(index => `L ${x(index)} ${y(data[index][s.key])}`).join(' ')} L ${x(indices[indices.length - 1])} ${y(0)} Z`} fill={s.color || '#6366f1'} opacity=".12" />)}<path d={path} fill="none" stroke={s.color || '#6366f1'} strokeWidth="2" />{data.map((r, i) => Number.isFinite(r[s.key]) ? <circle key={i} cx={x(i)} cy={y(r[s.key])} r="3" fill={s.color || '#6366f1'}><title>{`${r.label}: ${s.label} — ${formatChartValue(r[s.key], unit ? ` ${unit}` : '')}`}</title></circle> : null)}</g>;
       })}
       {data.map((r, i) => i % Math.max(1, Math.ceil(data.length / 6)) === 0 || i === data.length - 1 ? <text key={i} x={x(i)} y="275" fontSize="10" textAnchor="middle">{r.label}</text> : null)}
     </svg>

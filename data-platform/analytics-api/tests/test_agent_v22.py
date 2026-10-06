@@ -36,6 +36,8 @@ REFERENCE = date(2026, 10, 6)
 
 def query(subject, metric, operation="aggregate", **updates):
     q = {"id": "main", "subject": subject, "operation": operation, "metrics": [metric]}
+    if operation == "trend":
+        q["granularity"] = "day"
     q.update(updates)
     return q
 
@@ -59,15 +61,19 @@ def fixture_artifact(q):
         if a.plan.ranking
         else 1 if not a.plan.dimensions and a.plan.kind != "trend" else 3
     )
+    for f in a.plan.filters:
+        if f.dimension in a.plan.dimensions and f.operator == "in":
+            n = min(n, len(f.value))
     for i in range(n):
         row = {}
         for d in a.plan.dimensions:
             f = next(
-                (f for f in a.plan.filters if f.dimension == d and f.operator == "eq"),
+                (f for f in a.plan.filters if f.dimension == d and f.operator in ("eq", "in")),
                 None,
             )
             row[d] = (
-                f.value if f else str(i + 1) if d.endswith("_id") else f"Nhóm {i+1}"
+                (f.value[i % len(f.value)] if f.operator == "in" else f.value)
+                if f else str(i + 1) if d.endswith("_id") else f"Nhóm {i+1}"
             )
         if a.plan.kind == "trend":
             from datetime import timedelta
@@ -660,7 +666,7 @@ class AgentTests(unittest.TestCase):
             rows_by_sql[a.sql] = a.result
         executor = Mock(side_effect=lambda sql, **kw: rows_by_sql[sql])
         provider = query_script(queries)
-        p = self.pipeline(provider, executor=executor)
+        p = self.pipeline(provider, executor=executor, budget=AgentBudget(supporting_operations=4))
         response = p.generate(
             AiTextToReportRequest(
                 prompt="unseen analytical question", reference_date=REFERENCE
@@ -973,7 +979,9 @@ class AgentTests(unittest.TestCase):
         for row in d["charts"][0]["data"]:
             self.assertAlmostEqual(sum(v for k, v in row.items() if k != "label"), 100)
         a.plan.explicit_limit = True
-        self.assertFalse(build_dashboard({"main": a}, [], plan)["charts"])
+        safe = build_dashboard({"main": a}, [], plan)
+        self.assertTrue(all(c["chart_type"] != "stacked_100" for c in safe["charts"]))
+        self.assertIn("invalid_part_to_whole", [o["reason"] for o in safe["dashboard_plan"]["omitted_visuals"]])
 
     def test_result_rows_never_replayed_in_refinement_context(self):
         p = self.pipeline()
@@ -1830,7 +1838,9 @@ class AgentTests(unittest.TestCase):
         )
         with self.assertRaises(AnalysisError) as caught:
             p.generate(AiTextToReportRequest(prompt="fixture"))
-        self.assertEqual(caught.exception.category, "metric_scope")
+        self.assertEqual(caught.exception.category, "provider_unavailable")
+        self.assertEqual(p.semantic_info["last_contract_rejection"]["issues"][0]["code"], "incompatible_metric_population")
+        self.assertEqual(p.semantic_info["agent_contract_status"], "invalid")
         p.executor.assert_not_called()
 
     def test_evidence_ids_stable_across_projection_and_combined_report(self):

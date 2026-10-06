@@ -56,6 +56,9 @@ def build_context(session_id, memory, history=None, selected_product_id=None, sh
     fallbacks = {'products': prefs.get('last_product_suggestions'), 'branches': prefs.get('branch_candidates'),
         'vouchers': prefs.get('voucher_candidates'),
         'location_candidates': (prefs.get('location_candidate_snapshot') or {}).get('candidates')}
+    from src.agents.tool_artifacts import candidate_id
+    fallbacks['location_candidates'] = [{**row, 'candidate_id': row.get('candidate_id') or candidate_id(row)}
+        for row in fallbacks.get('location_candidates') or []]
     for kind, rows in fallbacks.items():
         if not visible.get(kind):
             visible[kind] = snapshot(kind, rows)
@@ -85,6 +88,10 @@ MODEL_ENTITY_FIELDS = {
                  'loai_giam_gia', 'dieu_kien_ap_dung', 'so_tien_giam_du_kien', 'display_index'),
     'payment_options': ('code', 'value', 'label', 'enabled', 'reason', 'display_index'),
 }
+
+MODEL_ENTITY_FIELDS["drink_products"] = MODEL_ENTITY_FIELDS["products"]
+MODEL_ENTITY_FIELDS["food_products"] = MODEL_ENTITY_FIELDS["products"]
+MODEL_ENTITY_FIELDS["menu_categories"] = ("category_id", "category_name", "menu_bucket", "display_index")
 
 
 def model_snapshot(kind, rows):
@@ -154,7 +161,7 @@ def model_projection(context, emergency=False):
     active_kind = {'select_voucher': 'vouchers', 'select_branch': 'branches',
               'select_location_candidate': 'location_candidates', 'fill_options': 'products',
               'select_payment': 'payment_options'}.get(owner)
-    active = {active_kind, 'products'}
+    active = {active_kind, 'products', 'drink_products', 'food_products', 'menu_categories'}
     # Keep every candidate namespace needed by an exposed legal selection,
     # including selection after a read-only interruption without a new pending owner.
     from src.agents.tool_capabilities import capabilities_for_context

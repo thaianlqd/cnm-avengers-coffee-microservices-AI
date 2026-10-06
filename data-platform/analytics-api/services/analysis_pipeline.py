@@ -3,7 +3,7 @@
 from services.agent_pipeline import AnalysisPipeline
 
 
-def safe_failure(error, provider_calls=None):
+def safe_failure(error, provider_calls=None, layer_diagnostics=None):
     category = getattr(error, "category", "internal")
     structured = getattr(error, "clarification", None)
     clarification_categories = {
@@ -26,6 +26,14 @@ def safe_failure(error, provider_calls=None):
         "forecast_unsupported",
     }
     messages = {
+        "approval_required": "Vui lòng lập và xác nhận kế hoạch phân tích trước khi thực thi.",
+        "invalid_analysis_contract": "AI đã trả lời nhưng kế hoạch phân tích chưa hợp lệ. Vui lòng thử lập lại kế hoạch.",
+        "duplicate_invalid_tool_call": "AI lặp lại một kế hoạch chưa hợp lệ; hệ thống đã dừng lượt sửa. Vui lòng lập lại kế hoạch.",
+        "analysis_spec_invalid": "Kế hoạch phân tích chưa hợp lệ. Vui lòng lập lại kế hoạch.",
+        "execution": "Truy vấn phân tích chưa thực thi thành công. Vui lòng thử lại sau.",
+        "result_contract": "Kết quả dữ liệu chưa vượt qua kiểm chứng nên chưa thể tạo báo cáo.",
+        "unsupported_metric": "Chỉ số yêu cầu chưa có định nghĩa trong danh mục dữ liệu hiện tại.",
+        "unsupported_dimension": "Chiều phân tích yêu cầu chưa được danh mục dữ liệu hỗ trợ.",
         "agent_budget": "Trợ lý chưa hoàn tất kế hoạch trong số lượt xử lý cho phép. Vui lòng thử lại.",
         "provider_unavailable": "Dịch vụ AI hiện chưa khả dụng nên chưa thể lập kế hoạch phân tích. Vui lòng thử lại sau.",
         "provider_offline": "Dịch vụ AI đang ở chế độ offline nên chưa thể lập kế hoạch phân tích.",
@@ -104,7 +112,19 @@ def safe_failure(error, provider_calls=None):
             structured.get("known_interpretation") if structured else None
         ),
         "diagnostics": {
-            "pipeline_version": "2.2",
+            "provider_status": "failed" if category.startswith("provider_") else "success" if any(a.get("status") == "success" for a in provider_calls or []) else "not_started",
+            "provider_error_category": category if category.startswith("provider_") else None,
+            "agent_contract_status": "invalid" if category in {"invalid_analysis_contract", "duplicate_invalid_tool_call", "analysis_spec_invalid"} else "valid",
+            "agent_contract_error": category if category in {"invalid_analysis_contract", "duplicate_invalid_tool_call", "analysis_spec_invalid"} else None,
+            "semantic_status": "unsupported" if category.startswith("unsupported") else "clarification" if category in clarification_categories else "not_started",
+            "execution_status": "failed" if category == "execution" else "passed" if category == "result_contract" else "not_started",
+            "result_status": "failed" if category == "result_contract" else "not_started",
+            **(layer_diagnostics or {}),
+            "provider_attempt_count": len(provider_calls or []),
+            "agent_round_count": (layer_diagnostics or {}).get("agent_rounds", 0),
+            "repair_round_count": (layer_diagnostics or {}).get("contract_repair_count", 0),
+            "terminal_error": category,
+            "pipeline_version": "2.3",
             "error_category": category,
             "missing_fields": (
                 structured.get("missing_fields", []) if structured else []

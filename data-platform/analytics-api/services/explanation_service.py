@@ -36,6 +36,8 @@ def explain_analysis(artifacts, catalog, charts=(), evidence=()):
             "query_id": id,
             "role": a.query.role,
             "parent_id": a.query.parent_id,
+            "purpose": a.query.purpose,
+            "supporting_reason": objectives[a.query.operation] if a.query.role == "supporting" else None,
             "subject": r["subjects"][a.query.subject]["business_name"],
             "objective": objectives[a.query.operation],
             "data_sources": [
@@ -68,6 +70,8 @@ def explain_analysis(artifacts, catalog, charts=(), evidence=()):
                 for f in a.query.filters
             ],
             "period": a.grounded.period,
+            "granularity": a.query.granularity if a.query.operation == "trend" else None,
+            "ranking": {"top_n": a.query.ranking.top_n, "direction": a.query.ranking.direction, "metric": r["metrics"][a.query.ranking.metric]["business_name"]} if a.query.ranking else None,
             "selection": (
                 "Top N"
                 if a.plan.ranking

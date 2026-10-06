@@ -101,8 +101,6 @@ def options_prompt(result):
     lines = [f'Dạ, bạn chọn giúp mình các tùy chọn cho **{name}** nhé:']
     for group in groups:
         field = option_field(group['name'])
-        if missing and field not in missing:
-            continue
         suffix = (' (tùy chọn, có thể chọn nhiều; bỏ qua thì không thêm)' if field == 'toppings' and not group['required']
                   else ' (bắt buộc)' if group['required'] and not group.get('fixed') else ' (mặc định)' if group.get('fixed') else ' (tùy chọn)')
         lines.append(f"- **{group['name']}**{suffix}: " + ', '.join(group['values']))
@@ -246,6 +244,8 @@ def customer_flow_reply(logs, state, discovery_reply=None):
         return location_choices(result)
     if result.get('status') in {'branch_unavailable_or_unknown', 'customer_branch_selection_required'}:
         return result.get('message')
+    if name in {'resolve_location', 'select_location_candidate'} and result.get('message'):
+        return result['message']
     if name in {'request_checkout', 'confirm_checkout'}:
         return None
     if name in {'add_to_cart', 'get_product_options'} and result.get('status') == 'needs_options':
@@ -272,6 +272,10 @@ def customer_flow_reply(logs, state, discovery_reply=None):
         lead = {'add_to_cart': 'Dạ, mình đã thêm món vào giỏ của bạn ạ.',
                 'update_cart_item': 'Dạ, mình đã cập nhật món theo yêu cầu của bạn ạ.',
                 'remove_cart_item': 'Dạ, mình đã xóa món bạn chọn khỏi giỏ ạ.'}[name]
+        if result.get('remaining_quantity') is not None:
+            lead = f"Dạ, mình đã bớt **{result['removed_quantity']}** sản phẩm ở dòng bạn chọn; còn **{result['remaining_quantity']}** trong giỏ ạ."
+        if name == 'add_to_cart' and result.get('changed') is False and result.get('message'):
+            lead = result['message']
         if result.get('previous_cart_products'):
             lead += '\n\nGiỏ của bạn đã có các món lưu từ trước: **' + ', '.join(result['previous_cart_products']) + '**.'
         return lead + '\n\n' + cart_review(result) + ('\n\n' + discovery_reply if discovery_reply else

@@ -1,4 +1,4 @@
-"""Production V2.2 orchestration. Meaning belongs to the native tool agent."""
+"""Production V2.3 orchestration. Meaning belongs to the native tool agent."""
 
 import json
 import time
@@ -50,11 +50,16 @@ class AnalysisPipeline:
 
     def diagnostics(self, catalog, validation=None):
         return {
-            "pipeline_version": "2.2",
+            "pipeline_version": "2.3",
             "schema_fingerprint": catalog.fingerprint,
             **deepcopy(self.semantic_info),
             "provider_call_count": len(self.calls),
+            "provider_attempt_count": len(self.calls),
+            "provider_model": self.calls[-1].get("model") if self.calls else None,
+            "provider_api_style": self.calls[-1].get("api_style") if self.calls else None,
             "llm_stage_count": self.semantic_info.get("agent_rounds", 0),
+            "agent_round_count": self.semantic_info.get("agent_rounds", 0),
+            "repair_round_count": self.semantic_info.get("contract_repair_count", 0),
             "planner": "logical_algebra_catalog_compiler",
             "embedding_call_count": 0,
             "retrieval": {
@@ -96,7 +101,7 @@ class AnalysisPipeline:
         # Structured UI scope only; never scan the natural-language request.
         context = {
             "user_context": (request.context or "")[:1500],
-            "domain_hint": request.domain,
+            "required_subject": request.domain if request.domain and request.domain != "auto" else None,
         }
         ui = request.time_range
         period = None
@@ -150,8 +155,8 @@ class AnalysisPipeline:
             }
         return context
 
-    def agent(self, catalog, reference, proposal=False, previous=None):
-        return DataAnalystAgent(
+    def agent(self, catalog, reference, proposal=False, previous=None, known_concepts=None):
+        agent = DataAnalystAgent(
             catalog,
             self.provider,
             self.executor,
@@ -162,6 +167,13 @@ class AnalysisPipeline:
             proposal,
             previous,
         )
+        # References come only from fingerprint-checked server sessions.
+        for ref in known_concepts or []:
+            kind, _, id = ref.partition(":")
+            if kind in ("subject", "metric", "dimension") and id in catalog.registry[kind + "s"]:
+                agent.semantic.discovered.add((kind, id))
+        self._last_agent = agent
+        return agent
 
     @staticmethod
     def enforce_ui(artifacts, context):
@@ -195,11 +207,16 @@ class AnalysisPipeline:
                 ranking=a.query.ranking.model_dump() if a.query.ranking else None,
             )
             value = labelled_interpretation(self._active_catalog, data)
+            for metric in value["metrics"]:
+                metric["grain"] = next(a.grounded.metrics[m]["grain"] for m in a.plan.metrics if a.grounded.metrics[m]["business_name"] == metric["label"])
             value["time_range"] = a.grounded.period
             value.update(
                 id=f"Phần {index+1}",
                 query_id=a.query.id,
                 role=a.query.role,
+                parent_id=a.query.parent_id,
+                purpose=a.query.purpose,
+                granularity=a.query.granularity if a.query.operation == "trend" else None,
                 kind=value["analysis_kind"],
             )
             value["components"] = []
@@ -238,6 +255,8 @@ class AnalysisPipeline:
         session.agent_state = AgentState(
             goal=session.original_prompt[:8000],
             resolved_concepts=sorted(
+                {f"{kind}:{id}" for kind, id in self._last_agent.semantic.discovered}
+                |
                 {f"subject:{a.query.subject}" for a in artifacts.values()}
                 | {f"metric:{m}" for a in artifacts.values() for m in a.query.metrics}
                 | {
@@ -303,7 +322,7 @@ class AnalysisPipeline:
             "analysis_explanation": explain_analysis(artifacts, catalog),
             "session_id": session.session_id,
         }
-        return {
+        response = {
             "status": "proposal_ready",
             "prompt": request.prompt,
             "proposal": proposal,
@@ -312,6 +331,8 @@ class AnalysisPipeline:
             "interpretation": meaning,
             "diagnostics": self.diagnostics(catalog, {"proposal": "passed"}),
         }
+        session.diagnostics = deepcopy(response["diagnostics"])
+        return response
 
     def generate(self, request):
         catalog = self.catalog()
@@ -325,17 +346,28 @@ class AnalysisPipeline:
                 if session.schema_fingerprint != catalog.fingerprint:
                     raise AnalysisError("schema_changed", "Refresh proposal")
                 reference = date.fromisoformat(session.agent_reference_date)
-                agent = self.agent(catalog, reference, previous=session.agent_artifacts)
-                for id, old in session.agent_artifacts.items():
-                    args = old.query.model_dump(mode="json")
-                    args.update(replaces=None, changed_fields=[])
-                    agent.queries.run(agent.queries.prepare(args))
-                if len(agent.queries.artifacts) == 1:
-                    artifacts = agent.queries.artifacts
-                    plan = DashboardPlan.model_validate(session.dashboard_plan)
-                else:
-                    agent.queries.previous = agent.queries.artifacts.copy()
-                    artifacts, plan = agent.run(request.prompt, final_only=True)
+                agent = self.agent(catalog, reference, previous=session.agent_artifacts,
+                    known_concepts=session.agent_state.get("resolved_concepts", []))
+                self.semantic_info["proposal_diagnostics"] = {
+                    key: deepcopy(session.diagnostics.get(key)) for key in (
+                        "agent_rounds", "semantic_tool_calls", "contract_repair_count",
+                        "contract_rejection_count", "contract_normalization_count", "cost_rounds")
+                }
+                try:
+                    for id, old in session.agent_artifacts.items():
+                        args = old.query.model_dump(mode="json")
+                        args.update(replaces=None, changed_fields=[])
+                        agent.queries.run(agent.queries.prepare(args))
+                except AnalysisError as exc:
+                    self.semantic_info.update(terminal_error=exc.category)
+                    if exc.category in ("execution", "result_contract"):
+                        self.semantic_info.update(
+                            execution_status="failed" if exc.category == "execution" else "passed",
+                            result_status="failed" if exc.category == "result_contract" else "not_started")
+                    raise
+                artifacts = agent.queries.artifacts
+                plan = DashboardPlan.model_validate(session.dashboard_plan)
+                self.semantic_info.update(semantic_status="grounded", execution_status="passed", result_status="passed")
                 return self.report(artifacts, plan, catalog, session, reference)
         reference = self.reference(request, catalog)
         context = self.ui_context(request, catalog, reference)
@@ -358,7 +390,8 @@ class AnalysisPipeline:
                 raise AnalysisError("schema_changed", "Stored schema changed")
             reference = date.fromisoformat(session.agent_reference_date)
             artifacts, plan = self.agent(
-                catalog, reference, previous=session.agent_artifacts
+                catalog, reference, previous=session.agent_artifacts,
+                known_concepts=session.agent_state.get("resolved_concepts", [])
             ).run(request.feedback, {"revision": session.revision})
             return self.report(
                 artifacts, plan, catalog, session, reference, refined=True
@@ -406,13 +439,22 @@ class AnalysisPipeline:
             ],
             result_reuse=any(a.reused for a in artifacts.values()),
             synthesis_source="validated_features_and_claims",
+            semantic_status="grounded",
+            execution_status="failed" if self.semantic_info.get("execution_status") == "failed" else "passed",
+            result_status="failed" if self.semantic_info.get("result_status") == "failed" else "passed",
+            query_plan_count=len(artifacts),
+            result_row_count=sum(len(a.result["rows"]) for a in artifacts.values()),
+            evidence_count=len(evidence),
+            omitted_chart_count=len(dashboard["dashboard_plan"]["omitted_visuals"]),
+            registered_requested_operations=sum(a.query.role == "requested" for a in artifacts.values()),
+            registered_supporting_operations=sum(a.query.role == "supporting" for a in artifacts.values()),
         )
         response = {
             "status": "success",
             "completion_status": (
                 "partial" if self.semantic_info.get("limitations") else "complete"
             ),
-            "pipeline_version": "2.2",
+            "pipeline_version": "2.3",
             "prompt": session.original_prompt,
             "session_id": session.session_id,
             "revision": session.revision + (1 if session.approved else 0),

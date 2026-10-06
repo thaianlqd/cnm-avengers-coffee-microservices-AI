@@ -235,7 +235,7 @@ def run_case(case, live=False):
                 )
             )
     except Exception as error:
-        report = safe_failure(error)
+        report = safe_failure(error, pipeline.calls, pipeline.semantic_info)
     expected = case["expected_status"]
     actual = report["status"]
     diag = report.get("diagnostics", {})

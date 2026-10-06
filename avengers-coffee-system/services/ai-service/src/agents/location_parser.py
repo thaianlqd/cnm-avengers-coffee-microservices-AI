@@ -222,7 +222,8 @@ _NAMED_STORE_AT_AREA = re.compile(
     r"^(?:[A-ZĐ][\wÀ-ỹ-]+(?:\s+[A-ZĐ][\wÀ-ỹ-]+){0,3})\s+ở\s+(?P<area>.+)$"
 )
 _PRODUCT_TOPIC = re.compile(r"\b(?:bánh|nước|trà|cà\s+phê|món|topping|size)\b", re.IGNORECASE)
-_HOUSE = re.compile(r"^\d{1,5}[A-Za-z]?(?:[/.-]\d{1,5}[A-Za-z]?)?\s+\S+", re.UNICODE)
+_HOUSE_NUMBER = r"(?:[A-Za-z]{1,3}\d{1,5}|\d{1,5}[A-Za-z]?)(?:[/.-]\d{1,5}[A-Za-z]?)?"
+_HOUSE = re.compile(r"^" + _HOUSE_NUMBER + r"\s+\S+", re.UNICODE)
 _ADMIN = (
     (r"\bphuong\b|\bp\s*\.", "phường"),
     (r"\bxa\b", "xã"),
@@ -258,6 +259,8 @@ def _reference_kind(message: str) -> str | None:
 
 
 def _admin_component(component: str) -> str:
+    if normalize(component).replace(".", "").replace(" ", "") in {"tphcm", "hcm", "hochiminh"}:
+        return "Thành phố Hồ Chí Minh"
     # Expand only at a comma-delimited component start, never inside a street.
     match = re.match(r"^(P|Q|TP|H)(?:\.\s*|\s+)(?=\S)", component, re.IGNORECASE)
     return ({"p": "Phường", "q": "Quận", "tp": "Thành phố", "h": "Huyện"}[match.group(1).lower()] + " " + component[match.end():]) if match else component
@@ -313,7 +316,7 @@ def parse_location(message: str) -> Location:
         return Location("none")
     # A new numbered street address wins even if the customer first rejects
     # or mentions the old address in the same sentence.
-    explicit_address = re.search(r"(?<!\w)\d{1,5}[A-Za-z]?(?:[/.-]\d{1,5}[A-Za-z]?)?\s+\S+", raw)
+    explicit_address = re.search(r"(?<!\w)" + _HOUSE_NUMBER + r"\s+\S+", raw)
     if explicit_address:
         candidate = raw[explicit_address.start():]
         if _HOUSE.match(candidate) and not set(normalize(candidate.split(",", 1)[0]).split()[1:]) <= {
@@ -348,7 +351,7 @@ def parse_location(message: str) -> Location:
     value = canonical_address(", ".join(parts))
     parts = value.split(", ") if value else []
     if _HOUSE.match(parts[0]) if parts else False:
-        street_tail = normalize(re.sub(r"^\d{1,5}[A-Za-z]?(?:[/.-]\d{1,5}[A-Za-z]?)?\s+", "", parts[0]))
+        street_tail = normalize(re.sub(r"^" + _HOUSE_NUMBER + r"\s+", "", parts[0]))
         if not street_tail or set(street_tail.split()) <= {"di", "nhe", "nha", "giup", "toi", "minh", "chon", "lay", "so", "thu"}:
             return Location("none")
         return Location("address", value, _missing_delivery(parts), _explicit_admin_hints(value))

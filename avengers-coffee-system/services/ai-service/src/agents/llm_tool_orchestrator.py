@@ -61,6 +61,12 @@ Use canonical visible snapshots, pending products, and authoritative cart line I
 If ambiguous, explain what is missing and ask one clarification; never guess a destructive target.
 For top-k/ranking/price constraints use filter_catalog with limit/sort/bounds. Compound comparisons
 may use multiple reads. Generic category recommendations use catalog, not product-description RAG.
+A generic menu request uses get_menu_categories; show categories before products.
+For another/different item, exclude products already in the cart or just suggested.
+For multiple selections show EACH product and its complete options, then complete them in order.
+New products use fresh choices only; never reuse an earlier product's ice/sugar/toppings.
+Removing a specified unit count subtracts that quantity; delete the line only for all units.
+A short map-candidate number selects the CURRENT location_candidates snapshot.
 For requests covering both nước and bánh, discover both together; do not add a suggested item.
 For independent discovery arms, issue reads together. Without an explicit quantity,
 use limit=1 for ONE representative per arm. Honor explicit total/per-group counts and all-ties requests.
@@ -235,22 +241,27 @@ def run_llm_tool_turn(session_id, user_message, history=None, client_message_id=
             result = {'reply': None, 'error': None}
             metrics['direct_order_control'] = order_control[0]
         else:
-            result = groq_service.groq_agent_chat(messages=messages, tools=schemas,
-                tool_executors=executors, session_id=session_id,
-                max_tool_rounds=1 if shadow else limit('AI_AGENT_MAX_TOOL_ROUNDS', 6, 1, 10),
-                max_tokens=limit('AI_AGENT_MAX_OUTPUT_TOKENS', 600, 100, 1500),
-                guarded=True, tool_result_projector=gateway.model_result, metrics=metrics,
-                final_response_validator=artifacts.response_issue,
-                context_char_limit=limit('AI_AGENT_LOOP_CHAR_LIMIT', 24000, 4000, 64000),
-                agent_provider=os.getenv('AI_AGENT_PROVIDER', 'auto'),
-                agent_model=os.getenv('AI_AGENT_MODEL') or None,
-                tool_surface_provider=lambda final_only, repair_tool: gateway.tool_surface(final_only, repair_tool),
-                model_context_provider=system_message, context_compactor=compact_messages,
-                discovery_completion_provider=artifacts.discovery_complete,
-                final_response_repair_allowed=artifacts.final_repair_allowed,
-                final_response_repair_context_provider=artifacts.final_repair_messages,
-                customer_step_response_provider=artifacts.completed_customer_step,
-                model_tier_provider=lambda round_index, repairs, mutated: select_tier(context, round_index, repairs, mutated))
+            from src.agents.shopping_turn_control import customer_shopping_control
+            result = customer_shopping_control(gateway) if not selected_product_id else None
+            if result is not None:
+                metrics['direct_customer_selection'] = True
+            else:
+                result = groq_service.groq_agent_chat(messages=messages, tools=schemas,
+                    tool_executors=executors, session_id=session_id,
+                    max_tool_rounds=1 if shadow else limit('AI_AGENT_MAX_TOOL_ROUNDS', 6, 1, 10),
+                    max_tokens=limit('AI_AGENT_MAX_OUTPUT_TOKENS', 600, 100, 1500),
+                    guarded=True, tool_result_projector=gateway.model_result, metrics=metrics,
+                    final_response_validator=artifacts.response_issue,
+                    context_char_limit=limit('AI_AGENT_LOOP_CHAR_LIMIT', 24000, 4000, 64000),
+                    agent_provider=os.getenv('AI_AGENT_PROVIDER', 'auto'),
+                    agent_model=os.getenv('AI_AGENT_MODEL') or None,
+                    tool_surface_provider=lambda final_only, repair_tool: gateway.tool_surface(final_only, repair_tool),
+                    model_context_provider=system_message, context_compactor=compact_messages,
+                    discovery_completion_provider=artifacts.discovery_complete,
+                    final_response_repair_allowed=artifacts.final_repair_allowed,
+                    final_response_repair_context_provider=artifacts.final_repair_messages,
+                    customer_step_response_provider=artifacts.completed_customer_step,
+                    model_tier_provider=lambda round_index, repairs, mutated: select_tier(context, round_index, repairs, mutated))
     catalog_recovered = False
     if (not shadow and not selected_product_id and not artifacts.logs and result.get('error')
             and not artifacts.safety_facet

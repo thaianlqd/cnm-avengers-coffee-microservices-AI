@@ -27,6 +27,7 @@ PRODUCT_REFERENCE_CATEGORIES = {
 }
 _CART_LINE_PATTERN = r"dong|ly|(?:mon|san\s+pham)\s+trong\s+gio(?:\s+hang)?"
 _NAMESPACE_PATTERNS = (
+    ("MENU_CATEGORY", r"danh\s+muc|nhom\s+menu"),
     ("PAYMENT", r"phuong\s+thuc\s+thanh\s+toan|cach\s+thanh\s+toan|thanh\s+toan"),
     ("FULFILLMENT", r"hinh\s+thuc\s+nhan\s+hang|cach\s+nhan\s+hang"),
     ("LOCATION_CANDIDATE", r"dia\s+diem|dia\s+chi|vi\s+tri"),
@@ -38,7 +39,7 @@ _NAMESPACE_PATTERNS = (
 )
 _TAIL_FILLERS = {
     "", "a", "ah", "nha", "nhe", "di", "do", "voi", "giup", "giup toi",
-    "ban", "b", "ban oi", "oi", "nha ban", "nhe ban",
+    "ban", "b", "ban oi", "oi", "nha ban", "nhe ban", "cho toi", "cho minh", "cho toi di", "cho minh di",
 }
 
 
@@ -182,6 +183,12 @@ def parse_selection_reference(
             values.append(_ordinal(raw) if raw else 1)
             spans.append(bare.span())
 
+    if not values and active_namespace == 'LOCATION_CANDIDATE':
+        bare = re.fullmatch(r'(?:so\s+)?' + _NUMBER + r'(?:\s+(?:di|nhe|nha|a|voi|giup|toi|minh))*', text)
+        if bare:
+            values.append(_ordinal(bare.group('number')))
+            spans.append(bare.span())
+
     if not values and active_namespace and operation_semantics == "SELECT_REFERENCE":
         # A positive verb can introduce an unlabelled number in an active UI
         # namespace. Require the number immediately after that verb/personal object.
@@ -206,7 +213,8 @@ def parse_selection_reference(
         namespace_pattern = "|".join(pattern for _name, pattern in _NAMESPACE_PATTERNS)
         while True:
             continuation = re.match(
-                r"\s*(?:va|voi|,|&)\s*(?:(?P<label>" + namespace_pattern + r")\s*)?"
+                r"\s*(?:va|voi|,|&)\s*(?:\d+\s+(?=(?:banh|nuoc|do uong|do an|mon)\s+(?:so|thu)\b))?"
+                r"(?:(?P<label>" + namespace_pattern + r")\s*)?"
                 r"(?:(?:so|thu|#)\s*)?" + _NUMBER + r"\b",
                 text[cursor:],
             )

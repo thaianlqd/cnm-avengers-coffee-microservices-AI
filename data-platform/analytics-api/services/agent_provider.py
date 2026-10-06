@@ -200,6 +200,29 @@ def gemini_tool_schema(tool):
     Execution still validates the original contracts and catalog on the server.
     """
     schema = expanded_schema(tool["parameters"])
+    if tool["name"] == "run_analysis":
+        # Inference instructions and server omission handling have distinct roles.
+        # Request complete meaning even though the boundary can safely recover
+        # redundant fields or merge a partial refinement on the server.
+        schema["required"] = ["id", "subject", "operation", "metrics", "group_by", "filters", "time", "role"]
+        descriptions = {
+            "operation": "Choose explicitly. ranking requires ranking; trend requires granularity.",
+            "subject": "Discovered business subject ID. Refinement may inherit unchanged fields with replaces.",
+            "metrics": "Discovered metric IDs; required for aggregation, empty for detail.",
+            "group_by": "Discovered dimensions; explicit grouping for ranking/distribution/cross_tab/relationship; [] for scalar.",
+            "filters": "Grounded dimension constraints; [] when none. Preserve UI and parent scope.",
+            "time": "Structured calendar meaning; use relative/all_time when no period was requested.",
+            "role": "requested or supporting; supporting requires parent_id and a distinct purpose.",
+            "ranking": "Required for ranking. Select metric and top_n (1–100); DESC is the default.",
+            "granularity": "Required for trend. Select day/week/month/quarter/year explicitly.",
+            "changed_fields": "Refinement: only explicitly changed fields; each must be supplied. Others inherit replaces.",
+        }
+        for field, description in descriptions.items():
+            schema["properties"][field]["description"] = description
+        for field in ("subject", "operation"):
+            shape = schema["properties"][field]
+            if "anyOf" in shape:
+                schema["properties"][field] = {**next(s for s in shape["anyOf"] if s.get("type") != "null"), "description": shape["description"]}
     if tool["name"] == "ask_clarification":
         from services.analyst_contract import AnalyticalQuery
 

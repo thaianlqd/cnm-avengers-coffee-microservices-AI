@@ -14,6 +14,7 @@ class Capability:
 
 
 READS = {
+    'get_menu_categories': ('menu', 'menu_categories'),
     'compare_branch_reviews': ('reviews', 'scoped_branch_reviews'),
     'filter_catalog': ('menu', 'products'), 'get_recommendations': ('menu', 'products'),
     'get_product_options': ('menu', 'options'), 'check_price_and_stock': ('menu/inventory', 'products'),
@@ -70,6 +71,7 @@ STRING = {'type': 'string'}
 OPTION_PROPERTIES = {key: STRING for key in ('size', 'kich_co', 'luong_da', 'ice', 'do_ngot', 'sugar', 'loai_sua', 'milk')}
 OPTION_PROPERTIES['toppings'] = {'type': 'array', 'items': STRING, 'maxItems': 16}
 CUSTOM_SCHEMAS = {
+    'get_menu_categories': schema('get_menu_categories', description='Read menu categories before showing products for a generic menu request.'),
     'compare_branch_reviews': schema('compare_branch_reviews', {
         'branch_ids': {'type': 'array', 'minItems': 1, 'maxItems': 5, 'items': STRING}}, ('branch_ids',),
         'Compare approved ratings and recent comments of exact displayed branch IDs only. Never expand these branches to a global ranking.'),
@@ -181,7 +183,7 @@ def capabilities_for_context(context, *, entry_action=None, final_only=False, re
 
     # Secondary profile/completed-order capabilities remain in
     # CAPABILITIES and tool_schemas(), outside the default ordering surface.
-    allowed = {'filter_catalog', 'get_recommendations', 'search_knowledge_base', 'get_cart', 'get_product_insights'}
+    allowed = {'get_menu_categories', 'filter_catalog', 'get_recommendations', 'search_knowledge_base', 'get_cart', 'get_product_insights'}
     if context.get('branch_review_request'):
         allowed.update({'get_store_reviews', 'get_top_rated_stores'})
         if visible.get('branches'):

@@ -49,6 +49,7 @@ TOOL_FILTER_CATALOG = {
             "type": "object",
             "properties": {
                 "category": {"type": "string", "enum": ["all", "drink", "food"]},
+                "category_id": {"type": "string"},
                 "sellable_scope": {"type": "string", "enum": ["normal", "topping"]},
                 "min_price": {"type": "number"},
                 "min_price_inclusive": {"type": "boolean"},
@@ -71,7 +72,7 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
                            search_text: Optional[str] = None, sort_by: str = "price_asc",
                            limit: int = 16, constraint_type: Optional[str] = None,
                            approx_price: Optional[int] = None, period: str = "month",
-                           period_anchor: Optional[str] = None) -> Dict[str, Any]:
+                           period_anchor: Optional[str] = None, category_id: Optional[str] = None) -> Dict[str, Any]:
     import os
     if category not in {"all", "drink", "food"} or sellable_scope not in {"normal", "topping"}:
         return {"status": "error", "message": "Bộ lọc danh mục không hợp lệ."}
@@ -84,6 +85,9 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
         predicates.append("LOWER(dm.ten_danh_muc) = 'topping'")
     else:
         predicates.append("paths.root_name = ANY(:roots)")
+    if category_id:
+        predicates.append("dm.ma_danh_muc::text = :category_id")
+        params["category_id"] = category_id
     if min_price is not None:
         predicates.append("sp.gia_ban " + (">=" if min_price_inclusive else ">") + " :min_price")
         params["min_price"] = float(min_price)
@@ -170,6 +174,31 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
     except Exception as error:
         logger.warning("catalog filter failed: %s", type(error).__name__)
         return {"status": "error", "message": "Chưa thể tra cứu menu lúc này."}
+
+def execute_get_menu_categories() -> Dict[str, Any]:
+    """Only leaf categories with active sellable products, from Menu authority."""
+    import os
+    menu_schema = os.getenv("MENU_SCHEMA", "menu")
+    try:
+        with _get_engine().connect() as conn:
+            rows = conn.execute(text(f"""
+                {_category_hierarchy_cte(menu_schema)}
+                SELECT DISTINCT dm.ma_danh_muc::text AS category_id,
+                    dm.ten_danh_muc AS category_name,
+                    CASE WHEN paths.root_name = ANY(:drink_roots) THEN 'drink'
+                         ELSE 'food' END AS menu_bucket
+                FROM {menu_schema}.danh_muc dm
+                JOIN category_paths paths ON paths.leaf_id = dm.ma_danh_muc
+                JOIN {menu_schema}.san_pham sp ON sp.ma_danh_muc = dm.ma_danh_muc
+                WHERE sp.trang_thai = TRUE AND paths.root_name = ANY(:roots)
+                ORDER BY menu_bucket, category_name
+            """), {"drink_roots": list(_DRINK_ROOTS),
+                    "roots": list(_DRINK_ROOTS + _FOOD_ROOTS)}).mappings().all()
+        return {"status": "ok", "menu_categories": [_clean_dict(dict(row)) for row in rows]}
+    except Exception as error:
+        logger.warning("menu categories failed: %s", type(error).__name__)
+        return {"status": "error", "message": "Mình chưa đọc được danh mục menu. Bạn thử lại nhé."}
+
 
 TOOL_GET_PRODUCT_OPTIONS = {
     "type": "function",

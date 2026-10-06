@@ -1,5 +1,6 @@
 import React from 'react';
 import { AnalysisMeaning } from './AnalysisMeaning';
+import { analysisFailureTitle } from '../utils/analysisPresentation.mjs';
 
 /** Normal users see business labels; internal IDs stay in API diagnostics. */
 export const AnalysisClarification: React.FC<{
@@ -14,7 +15,7 @@ export const AnalysisClarification: React.FC<{
   const failed = response?.status === 'error';
   return (
     <section role={failed ? 'alert' : 'status'} className="rounded-2xl border border-amber-200 bg-amber-50 p-6 space-y-3">
-      <h3 className="text-sm font-semibold text-slate-800">{failed ? 'Chưa thể hoàn tất phân tích' : 'Cần làm rõ một phần yêu cầu'}</h3>
+      <h3 className="text-sm font-semibold text-slate-800">{analysisFailureTitle(response)}</h3>
       <p className="text-sm text-slate-700">{clarification?.user_message || response?.message || 'Hệ thống chưa thể diễn giải yêu cầu lúc này. Vui lòng thử lại.'}</p>
       {clarification?.known_interpretation && <AnalysisMeaning interpretation={clarification.known_interpretation} />}
       {choices.length > 0 && <div className="flex flex-wrap gap-2">{choices.map((choice: any, index: number) => (

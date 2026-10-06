@@ -12,6 +12,7 @@ from services.analysis_pipeline import AnalysisPipeline, safe_failure
 from services.llm_service import provider_configuration
 from services.metadata_service import cache_status, sanitize_result_rows
 from services.session_service import session_stats
+from services.analysis_catalog import AnalysisError
 
 # Temporary backward-compatible private imports for existing regression tests.
 from services.legacy_analysis_compat import (
@@ -33,9 +34,11 @@ def _invoke(action, payload):
         )
     pipeline = AnalysisPipeline()
     try:
+        if action == "generate" and not payload.session_id:
+            raise AnalysisError("approval_required", "Approve a server proposal before execution")
         return getattr(pipeline, action)(payload)
     except Exception as error:
-        failure = safe_failure(error, pipeline.calls)
+        failure = safe_failure(error, pipeline.calls, pipeline.semantic_info)
         logger.warning(
             "Analysis rejected action=%s category=%s",
             action,
@@ -49,9 +52,6 @@ def _invoke(action, payload):
                 "embedding_call_count": pipeline.embedding_calls,
             }
         )
-        category = failure["diagnostics"]["error_category"]
-        if category in ("analysis_spec_invalid", "provider_invalid_json", "provider_schema_invalid"):
-            failure["diagnostics"].update(provider_status="invalid", provider_error_category=category)
         failure["clarification_question"] = failure["question"]
         failure["interpreted_request"] = failure["message"]
         return failure
@@ -63,7 +63,7 @@ def ai_status():
     metadata = cache_status()
     return {
         "status": "ready" if metadata["local_ready"] else "unavailable",
-        "pipeline_version": "2.2",
+        "pipeline_version": "2.3",
         "providers": providers,
         "metadata": metadata,
         "sessions": session_stats(),

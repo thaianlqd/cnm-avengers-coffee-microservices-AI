@@ -9,7 +9,7 @@ from src.agents.discovery_contract import (DISCOVERY_TOOLS, DISCOVERY_RESPONSE_C
 from src.rag.documents import normalize_text
 from src.agents.product_display import numbered_products, PRODUCT_GROUP_LABELS, PRODUCT_REFERENCE_LABELS
 
-SUCCESS = {'success', 'ok', 'require_confirmation', 'already_processed', 'need_branch_selection', 'ambiguous'}
+SUCCESS = {'success', 'ok', 'require_confirmation', 'already_processed', 'need_branch_selection', 'ambiguous', 'rejected'}
 RAG_TOOLS = {'search_knowledge_base', 'get_product_description'}
 
 
@@ -195,7 +195,12 @@ class ToolArtifacts:
         canonical = {**self.product_candidates,
             **{str(row['product_id']): row for row in self.ui['products']}}
         self.ui['products'] = numbered_products([canonical[key] for key in ids])
+        self.visible['menu_categories'] = []
         self.visible['products'] = snapshot('products', self.ui['products'])
+        for bucket in ('drink', 'food'):
+            rows = [row for row in self.ui['products'] if row.get('menu_bucket') == bucket]
+            if rows:
+                self.visible[bucket + '_products'] = snapshot('products', rows)
         self.display_selection_source = source
         self.validated_display_product_count = len(ids)
         focus = self.focus.get('product') or {}
@@ -306,6 +311,13 @@ class ToolArtifacts:
                     name == 'set_session_branch' and result.get('status') in {
                         'branch_unavailable_or_unknown', 'customer_branch_selection_required'}))):
             return
+        if name == 'get_menu_categories':
+            rows = [{**row, 'display_index': index} for index, row in enumerate(result.get('menu_categories') or [], 1)]
+            self.ui['menu_categories'] = rows
+            self.visible['menu_categories'] = snapshot('menu_categories', rows)
+            self.visible['products'] = []
+            self.ui['products'] = []
+            self.focus.pop('product', None)
         product = result.get('canonical_product')
         if product and product.get('product_id') and product.get('product_name'):
             self.focus['product'] = {**product, 'source': name}
@@ -460,7 +472,53 @@ class ToolArtifacts:
         return next((safe_text(row['result'].get('message')) for row in reversed(self.logs)
                      if row['result'].get('message')), 'Mình chưa xác minh được kết quả. Bạn thử lại đúng tin nhắn này nhé.')
 
+    def product_description_reply(self):
+        docs = {}
+        for entry in self.logs:
+            if entry['tool'] not in RAG_TOOLS or entry['result'].get('status') != 'ok':
+                continue
+            for doc in entry['result'].get('results') or []:
+                if doc.get('domain') == 'product_description' and doc.get('entity_type') == 'product':
+                    docs.setdefault(str(doc.get('entity_id')), []).append(doc['content'])
+        if not docs or self.safety_facet in {'ingredient', 'allergen'}:
+            return None
+        rows = list(self.visible.get('products') or [])
+        for kind in ('drink_products', 'food_products'):
+            rows += self.visible.get(kind) or []
+        canonical = {str(row['product_id']): row for row in reversed(rows)}
+        lines = ['Dạ, theo mô tả hiện có của quán:']
+        for position, (identity, content) in enumerate(docs.items(), 1):
+            product = canonical.get(identity) or self.product_candidates.get(identity)
+            if not product:
+                continue
+            from src.agents.customer_flow_presentation import money
+            index = product.get('display_index') or position
+            price = product.get('final_price', product.get('price'))
+            title = f"{index}. **{product['product_name']}**" + (f" — **{money(price)}**" if price is not None else '')
+            lines.append(title + '\n' + '\n\n'.join(dict.fromkeys(content)))
+        if len(lines) == 1:
+            return None
+        lines.append('Bạn có thể chọn món theo tên hoặc số trong danh sách này nhé.')
+        return '\n\n'.join(lines)
+
     def customer_flow_reply(self):
+        if getattr(self, 'pending_selection_reply', None):
+            self.used_customer_flow = True
+            return self.pending_selection_reply
+        menu = [row['result'] for row in self.logs if row['tool'] == 'get_menu_categories']
+        if menu:
+            self.used_customer_flow = True
+            if menu[-1].get('status') != 'ok':
+                return menu[-1].get('message') or 'Mình chưa đọc được menu. Bạn thử lại nhé.'
+            rows = self.visible.get('menu_categories') or []
+            if not rows:
+                return 'Menu hiện chưa có danh mục đang bán.'
+            return 'Dạ, menu của quán gồm các danh mục:\n\n' + '\n'.join(
+                f"{row['display_index']}. **{row['category_name']}**" for row in rows) + '\n\nBạn chọn **danh mục số** hoặc tên danh mục để xem các món nhé.'
+        descriptions = self.product_description_reply()
+        if descriptions and not self.discovery_batches and all(row['tool'] in RAG_TOOLS for row in self.logs):
+            self.used_customer_flow = True
+            return descriptions
         comparisons = [r['result'] for r in self.logs if r['tool'] == 'compare_branch_reviews']
         if comparisons:
             from src.agents.branch_reviews import review_reply
@@ -798,7 +856,7 @@ class ToolArtifacts:
                         or self.safety_facet in {'ingredient', 'allergen'}):
                     # Product descriptions keep complete Menu evidence; mere word
                     # overlap does not justify an invented flavour/ingredient claim.
-                    reply = 'Dạ, theo mô tả hiện có của quán:\n\n' + '\n\n'.join(quotes) if any(
+                    reply = (self.product_description_reply() or 'Dạ, theo mô tả hiện có của quán:\n\n' + '\n\n'.join(quotes)) if any(
                         doc.get('domain') == 'product_description' for doc in docs.values()) else 'Theo tài liệu hiện có:\n' + '\n'.join(quotes)
                 # A compound consultation may also request current price. Preserve
                 # the approved knowledge qualifiers and append only provider facts.

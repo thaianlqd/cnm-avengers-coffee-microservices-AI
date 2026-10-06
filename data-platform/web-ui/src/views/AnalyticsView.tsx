@@ -1,6 +1,7 @@
-import { AnalystDashboardSummary, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence } from '../components/AnalystDashboardSummary';
+import { AnalystDashboardSummary, AnalystViews, AnalystResultTable, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence } from '../components/AnalystDashboardSummary';
 import { AnalysisClarification } from '../components/AnalysisClarification';
 import { AnalysisMeaning } from '../components/AnalysisMeaning';
+import { analysisPlanLabel } from '../utils/analysisPresentation.mjs';
 import React, { useState, useEffect } from 'react';
 import { usePlatformStore } from '../store/usePlatformStore';
 import { 
@@ -10,7 +11,6 @@ import {
   HorizontalBarChart,
   HeatmapChart,
   MultiLineChart,
-  AnalystChart
 } from '../components/Charts';
 import { AnalyticsSubTab } from '../types';
 import { resolveAiChartPresentation } from '../utils/aiChartConfig.mjs';
@@ -558,6 +558,11 @@ export const AnalyticsView: React.FC = () => {
           pipeline_version: generatedReport.pipeline_version,
           analysis_spec: generatedReport.analysis_spec,
           interpretation: generatedReport.interpretation,
+          analytical_queries: generatedReport.analytical_queries,
+          analysis_explanation: generatedReport.analysis_explanation,
+          dashboard_plan: generatedReport.dashboard_plan,
+          dashboard_description: generatedReport.dashboard_description,
+          completion_status: generatedReport.completion_status,
           grounded_analysis_spec: generatedReport.grounded_analysis_spec,
           query_plans: generatedReport.query_plans,
           schema_fingerprint: generatedReport.schema_fingerprint,
@@ -935,7 +940,7 @@ export const AnalyticsView: React.FC = () => {
               ) : (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Báo cáo hoàn tất
+                  {rep.completion_status === 'partial' ? 'Kết quả đã kiểm chứng · chưa đủ toàn bộ kế hoạch' : 'Báo cáo hoàn tất'}
                 </span>
               )}
               <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
@@ -1227,76 +1232,11 @@ export const AnalyticsView: React.FC = () => {
             </div>
           )}
 
-          {/* Dynamic Visual Charts Grid */}
-          {rep.charts && rep.charts.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-              {rep.charts.map((chart: any, cIdx: number) => {
-                const totalCharts = rep.charts.length;
-                const isHeatmap = chart.chart_type === 'heatmap';
-                const isMultiLine = chart.chart_type === 'multi_line' || chart.chart_type === 'multiline';
-                const spanClass = (chart.col_span === 12 || isHeatmap || isMultiLine || totalCharts === 1 || (totalCharts === 3 && cIdx === 0) || (totalCharts === 5 && cIdx === 2))
-                  ? 'col-span-1 lg:col-span-2'
-                  : 'col-span-1';
-
-                const chartTypeBadge = isHeatmap
-                  ? 'Heatmap 2D'
-                  : isMultiLine
-                    ? 'Đa đường (Theo loại)'
-                    : chart.chart_type === 'donut'
-                      ? 'Cơ cấu'
-                      : chart.chart_type === 'horizontal_bar'
-                        ? 'Xếp hạng'
-                        : chart.chart_type === 'bar'
-                          ? 'Cột'
-                          : 'Xu hướng';
-
-                return (
-                  <div key={chart.id || cIdx} className={`${spanClass} bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between min-h-[380px]`}>
-                    <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-semibold text-slate-900">
-                            {chart.title}
-                          </h4>
-                          <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full border ${
-                            isHeatmap
-                              ? 'bg-amber-50 text-amber-700 border-amber-200/70'
-                              : isMultiLine
-                                ? 'bg-sky-50 text-sky-700 border-sky-200/70'
-                                : 'bg-slate-100 text-slate-600 border-slate-200'
-                          }`}>
-                            {chart.chart_type_label || chartTypeBadge} · {chart.role === 'supporting' ? 'Hỗ trợ' : 'Theo yêu cầu'}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-400 mt-0.5">
-                          {chart.purpose || 'Trực quan hóa dữ liệu'}
-                        </p>
-                      </div>
-                      {chart.unit && (
-                        <span className="text-[11px] font-mono text-slate-400">
-                          Đơn vị: {chart.unit}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex-1 w-full pt-2 flex items-center justify-center">
-                      <AnalystChart chart={chart} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : null}
+          <AnalystViews charts={rep.charts || []} />
         </div>
 
         {rep.result_sets && Object.entries(rep.result_sets).slice(1).map(([queryId, data]: [string, any]) => (
-          <section key={queryId} className="bg-white rounded-xl border border-slate-200 p-4 overflow-x-auto">
-            <h3 className="font-semibold text-sm mb-3">{data.role === 'supporting' ? 'Kết quả hỗ trợ' : 'Kết quả theo yêu cầu'}</h3>
-            <table className="w-full text-left text-xs"><thead><tr>{data.columns.map((column: string) => <th className="p-2" key={column}>{data.column_labels?.[column] || 'Trường dữ liệu'}</th>)}</tr></thead>
-              <tbody>{data.rows.map((row: any, index: number) => <tr key={index}>{data.columns.map((column: string) => <td className="p-2 border-t border-slate-100" key={column}>{row[column] == null ? '—' : String(row[column])}</td>)}</tr>)}</tbody>
-            </table>
-            {!data.rows.length && <p className="text-slate-500 text-xs">Không có dữ liệu trong phạm vi này.</p>}
-          </section>
+          <AnalystResultTable key={queryId} result={data} title={rep.analysis_explanation?.find((op: any) => op.query_id === queryId)?.subject} />
         ))}
         <AnalystEvidence report={rep} />
 
@@ -2585,13 +2525,6 @@ export const AnalyticsView: React.FC = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => handleExecuteAiReport()}
-                        disabled={isGeneratingAi || isProposingPlan || !aiPrompt.trim()}
-                        className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-700 rounded-xl text-xs font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
-                      >
-                        Phân tích ngay
-                      </button>
-                      <button
                         onClick={() => handleProposePlan()}
                         disabled={isProposingPlan || isGeneratingAi || !aiPrompt.trim()}
                         className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-medium shadow-xs transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
@@ -2772,21 +2705,11 @@ export const AnalyticsView: React.FC = () => {
                             <div className="flex items-center justify-between">
                               <span className="font-medium text-slate-800 text-[11px]">{ch.title}</span>
                               <span className="text-[10px] font-medium text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded">
-                                {ch.chart_type === 'horizontal_bar'
-                                  ? 'Cột ngang'
-                                  : ch.chart_type === 'donut'
-                                    ? 'Cơ cấu tròn'
-                                    : ch.chart_type === 'bar'
-                                      ? 'Cột dọc'
-                                      : ch.chart_type === 'heatmap'
-                                        ? 'Heatmap 2D'
-                                        : ch.chart_type === 'multi_line' || ch.chart_type === 'multiline'
-                                          ? 'Đa đường'
-                                          : 'Miền / Xu hướng'}
+                                {analysisPlanLabel(ch)}
                               </span>
                             </div>
                             <div className="text-slate-600 text-[11px] mt-0.5">
-                              {ch.reason || ch.purpose}
+                              {ch.role === 'supporting' ? 'Hỗ trợ · ' : 'Theo yêu cầu · '}{ch.reason || ch.purpose}
                             </div>
                           </div>
                         ))}

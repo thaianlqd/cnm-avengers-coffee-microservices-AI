@@ -47,17 +47,16 @@ def select_tier(context, round_index=0, repair_count=0, after_mutation=False):
 def models_for(provider, tier, explicit_model=None, preferred='auto'):
     # Explicit model is scoped to its chosen provider, never silently substituted.
     requested = explicit_model if explicit_model and (provider == preferred or preferred in {'', 'auto'}) else None
-    defaults = {'gemini': 'gemini-3.6-flash', 'openai': 'gpt-4o-mini',
+    defaults = {'gemini': 'gemini-3.5-flash-lite', 'openai': 'gpt-4o-mini',
         'groq': 'llama-3.3-70b-versatile', 'cerebras': 'llama3.1-8b',
         'openrouter': 'openai/gpt-4o-mini'}
     default = os.getenv('AI_AGENT_'+provider.upper()+'_MODEL', defaults.get(provider, ''))
     if requested:
         pool = [requested]
     elif provider == 'gemini' and enabled():
-        # Empty Lite/Strong pools intentionally use the known LAN21 candidate.
-        # UI display labels are not evidence of compatible API model IDs.
+        # Ordered text/tool models; the same pool can serve every tier.
         pool = csv(os.getenv('AI_AGENT_GEMINI_'+tier.upper()+'_MODELS', ''))
-        standard = csv(os.getenv('AI_AGENT_GEMINI_STANDARD_MODELS', '')) or [default]
+        standard = csv(os.getenv('AI_AGENT_GEMINI_STANDARD_MODELS', '')) or list(dict.fromkeys([default, 'gemini-3.1-flash-lite']))
         if not pool and tier != 'standard':
             pool = standard
         pool = pool or [default]
@@ -164,13 +163,19 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
         # consume the entire round before the emergency provider can run.
         remaining = max(0, deadline-time.monotonic())
         provider_deadline = deadline - (min(timeout, remaining/3) if reserve and budget > 1 else 0)
-        for model in models_for(provider, tier, explicit_model, preferred):
+        models = models_for(provider, tier, explicit_model, preferred)
+        for model_index, model in enumerate(models):
+            # Keep one of the existing attempts for a later configured model.
+            model_budget = max(1, provider_budget - int(model_index < len(models) - 1))
             if (provider, model) in missing:
                 continue
+            model_remaining = max(0, provider_deadline - time.monotonic())
+            model_deadline = provider_deadline - (min(timeout, model_remaining / 3)
+                if model_index < len(models) - 1 and provider_budget > 1 else 0)
             mode_key = (provider, model, bool(schemas))
             mode = compatibility_modes.get(mode_key, 'gemini_signature_preserved' if provider == 'gemini' else 'canonical')
             for slot in slots:
-                if attempts >= provider_budget or time.monotonic() >= provider_deadline:
+                if attempts >= model_budget or time.monotonic() >= model_deadline:
                     break
                 fingerprint = hashlib.sha256(keys[slot].encode()).hexdigest()
                 health_key = (provider, fingerprint, model)
@@ -194,10 +199,10 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                     client = Groq(api_key=keys[slot], max_retries=0)
                 else:
                     client = wrappers.OpenAIClient(keys[slot], base_url='https://api.cerebras.ai/v1')
-                while attempts < provider_budget and time.monotonic() < provider_deadline:
+                while attempts < model_budget and time.monotonic() < model_deadline:
                     kwargs = {'model': model, 'messages': inference_messages(messages, provider), 'max_tokens': max_tokens,
                         'temperature': 0.35, 'response_format': {'type': 'json_object'},
-                        'timeout': max(0.1, min(timeout, provider_deadline-time.monotonic()))}
+                        'timeout': max(0.1, min(timeout, model_deadline-time.monotonic()))}
                     if schemas:
                         kwargs.update(tools=schemas, tool_choice='required' if required else 'auto')
                     if provider == 'gemini' and (mode == 'gemini_without_response_format' or schemas):
@@ -256,7 +261,7 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                             # tool choice, history/result, key or business replay change.
                             if (provider == 'gemini' and (category in {'response_format_incompatible', 'unknown_incompatible_request'} or status == 400)
                                     and kwargs.get('response_format') and not compatibility_retried
-                                    and attempts < provider_budget and time.monotonic() < provider_deadline):
+                                    and attempts < provider_budget and time.monotonic() < model_deadline):
                                 compatibility_retried = True
                                 mode = 'gemini_without_response_format'
                                 compatibility_modes[mode_key] = mode

@@ -50,6 +50,24 @@ def query_script(queries=None, final=None):
         )
         for i, q in enumerate(queries)
     ]
+    # Model scripts must explicitly discover selected dimensions outside the
+    # subject's first page; production never authorizes undisplayed references.
+    from services.analysis_catalog import AnalysisCatalog
+    from services.semantic_tools import SemanticTools
+    from tests.analysis_fixtures import physical_metadata
+
+    semantic = SemanticTools(AnalysisCatalog(physical_metadata()), None)
+    for q in queries:
+        if q["subject"] in semantic.catalog.registry["subjects"]:
+            semantic.describe("subject", q["subject"])
+    dimensions = {d for q in queries for d in [
+        *q.get("group_by", []), *q.get("project", []),
+        *[f["dimension"] for f in q.get("filters", [])],
+        *((q.get("ranking") or {}).get("per_group", [])),
+    ]}
+    for dimension in sorted(dimensions):
+        if ("dimension", dimension) not in semantic.discovered and dimension in semantic.catalog.registry["dimensions"]:
+            discovery.append(call("describe_semantic_concept", {"kind": "dimension", "id": dimension}, f"dimension_{dimension}"))
     analyses = [call("run_analysis", q, f"q_{i}") for i, q in enumerate(queries)]
     analyses.append(
         call(

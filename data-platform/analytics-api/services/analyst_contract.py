@@ -1,7 +1,8 @@
-"""V2.2 model boundary: logical operators and references, never SQL."""
+"""Logical contracts: omission-preserving tool input and strict server queries."""
 
 from typing import List, Literal, Optional
 from pydantic import Field, model_validator
+from pydantic_core import PydanticCustomError
 from services.analysis_contract import Contract, Filter, Ranking, TimeSpec
 
 SemanticId = str
@@ -12,18 +13,12 @@ class SortField(Contract):
     direction: Literal["ASC", "DESC"] = "ASC"
 
 
-class AnalyticalQuery(Contract):
+Operation = Literal["aggregate", "ranking", "trend", "distribution", "detail", "cross_tab", "relationship"]
+Granularity = Literal["day", "week", "month", "quarter", "year"]
+
+
+class AnalyticalFields(Contract):
     id: str = Field(pattern=r"^[a-z][a-z0-9_]{0,39}$")
-    subject: str = Field(pattern=r"^[a-z][a-z0-9_]{0,63}$")
-    operation: Literal[
-        "aggregate",
-        "ranking",
-        "trend",
-        "distribution",
-        "detail",
-        "cross_tab",
-        "relationship",
-    ] = "aggregate"
     metrics: List[str] = Field(default_factory=list, max_length=6)
     group_by: List[str] = Field(default_factory=list, max_length=4)
     filters: List[Filter] = Field(default_factory=list, max_length=12)
@@ -31,8 +26,6 @@ class AnalyticalQuery(Contract):
     time: TimeSpec = Field(
         default_factory=lambda: TimeSpec(kind="relative", mode="all_time")
     )
-    granularity: Literal["day", "week", "month", "quarter", "year"] = "day"
-    ranking: Optional[Ranking] = None
     order_by: List[SortField] = Field(default_factory=list, max_length=6)
     limit: int = Field(default=100, ge=1, le=100)
     role: Literal["requested", "supporting"] = "requested"
@@ -54,37 +47,75 @@ class AnalyticalQuery(Contract):
             "subject",
             "operation",
         ]
-    ] = Field(default_factory=list, max_length=11)
+    ] = Field(default_factory=list, max_length=12)
+
+
+class ToolRanking(Ranking):
+    metric: Optional[str] = None
+
+
+class AnalyticalToolInput(AnalyticalFields):
+    """Validate field types, retaining omitted fields for normalization/patching.
+
+    Wire-required fields are declared separately by the provider adapter. A
+    partial refinement need not repeat unchanged business meaning.
+    """
+
+    subject: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z0-9_]{0,63}$")
+    operation: Optional[Operation] = None
+    ranking: Optional[ToolRanking] = None
+    granularity: Optional[Granularity] = None
+
+
+class AnalyticalQuery(AnalyticalFields):
+    """Canonical query: no default operation and no incomplete ranking."""
+
+    subject: str = Field(pattern=r"^[a-z][a-z0-9_]{0,63}$")
+    operation: Operation
+    ranking: Optional[Ranking] = None
+    granularity: Granularity = "day"
 
     @model_validator(mode="after")
     def logical(self):
         import re
 
-        ids = [
-            *self.metrics,
-            *self.group_by,
-            *self.project,
-            *[f.dimension for f in self.filters],
-        ]
+        def fail(code, path):
+            raise PydanticCustomError(code, code, {"path": path})
+
+        ids = [(v, path) for path in ("metrics", "group_by", "project") for v in getattr(self, path)]
+        ids += [(f.dimension, "filters.dimension") for f in self.filters]
         if self.ranking:
-            ids += [self.ranking.metric, *self.ranking.per_group]
-        if any(not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", v) for v in ids):
-            raise ValueError("only logical catalog identifiers are accepted")
-        for values in (self.metrics, self.group_by, self.project):
+            ids += [(self.ranking.metric, "ranking.metric"), *[(v, "ranking.per_group") for v in self.ranking.per_group]]
+        ids += [(v, path) for v, path in ((self.parent_id, "parent_id"), (self.replaces, "replaces")) if v is not None]
+        for value, path in ids:
+            if not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", value):
+                fail("invalid_identifier", path)
+        for path in ("metrics", "group_by", "project", "changed_fields"):
+            values = getattr(self, path)
             if len(values) != len(set(values)):
-                raise ValueError("duplicate field")
+                fail("duplicate_field", path)
         if self.operation == "ranking" and not self.ranking:
-            raise ValueError("ranking requires ordering and Top N")
+            fail("ranking_definition_required", "ranking")
         if self.ranking and self.operation != "ranking":
-            raise ValueError("ranking belongs to a ranking operation")
+            fail("ranking_operation_required", "operation")
         if self.operation == "detail" and (self.metrics or self.group_by):
-            raise ValueError("detail only projects catalog fields")
-        if self.operation != "detail" and (not self.metrics or self.project):
-            raise ValueError("aggregation requires catalog metrics")
+            fail("detail_cannot_aggregate", "metrics")
+        if self.operation == "detail" and not self.project:
+            fail("projection_required", "project")
+        if self.operation != "detail" and not self.metrics:
+            fail("metric_required", "metrics")
+        if self.operation != "detail" and self.project:
+            fail("aggregate_cannot_project", "project")
+        if self.operation in ("ranking", "distribution", "cross_tab", "relationship") and not self.group_by:
+            fail("grouping_required", "group_by")
+        if self.operation == "cross_tab" and len(self.group_by) != 2:
+            fail("two_dimensions_required", "group_by")
+        if self.operation == "relationship" and len(self.metrics) != 2:
+            fail("paired_metrics_required", "metrics")
         if self.role == "supporting" and not self.parent_id:
-            raise ValueError("supporting operation requires a requested parent")
+            fail("supporting_parent_required", "parent_id")
         if self.changed_fields and not self.replaces:
-            raise ValueError("changes require a server operation reference")
+            fail("replacement_reference_required", "replaces")
         return self
 
 

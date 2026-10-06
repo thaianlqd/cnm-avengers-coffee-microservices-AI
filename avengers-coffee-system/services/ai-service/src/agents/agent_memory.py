@@ -44,6 +44,10 @@ ENTITY_FIELDS = {
     'payment_options': ('code', 'value', 'label', 'enabled', 'reason', 'display_index'),
 }
 
+ENTITY_FIELDS["drink_products"] = ENTITY_FIELDS["products"]
+ENTITY_FIELDS["food_products"] = ENTITY_FIELDS["products"]
+ENTITY_FIELDS["menu_categories"] = ("category_id", "category_name", "menu_bucket", "display_index")
+
 
 def compact(value, depth=0):
     """Bound untrusted values and drop credential fields recursively."""
@@ -62,7 +66,7 @@ def compact(value, depth=0):
 def snapshot(kind, rows):
     # Voucher ordinals must describe every eligible offer shown to the customer.
     # The overall memory/context budget still applies; never silently cap at five.
-    count = len(rows or []) if kind == 'vouchers' else (20 if kind == 'orders' else 16 if kind == 'products' else 5)
+    count = len(rows or []) if kind in {'vouchers', 'menu_categories'} else (20 if kind == 'orders' else 16 if kind in {'products', 'drink_products', 'food_products', 'menu_categories'} else 5)
     return [{key: compact(row[key]) for key in ENTITY_FIELDS[kind] if key in row}
             for row in (rows or [])[:count] if isinstance(row, dict)]
 

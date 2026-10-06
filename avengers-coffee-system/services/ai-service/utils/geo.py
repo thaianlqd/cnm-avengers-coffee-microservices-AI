@@ -21,7 +21,7 @@ def _fold_location(value: str) -> str:
 
 def _locality_parts(address: str) -> list[str]:
     parts = [part.strip() for part in address.split(',') if part.strip()]
-    if parts and re.match(r'^\d+[a-z]?(?:[/.-]\d+[a-z]?)?\s', _fold_location(parts[0])):
+    if parts and re.match(r'^(?:[a-z]{1,3}\d+|\d+[a-z]?)(?:[/.-]\d+[a-z]?)?\s', _fold_location(parts[0])):
         parts = parts[1:]
     result = []
     for part in parts:
@@ -179,7 +179,7 @@ def _address_matches(query: str, candidate: dict, place: dict) -> bool:
     parts = [part.strip() for part in str(query or "").split(",") if part.strip()]
     if not parts:
         return False
-    house_pattern = re.compile(r"^(\d{1,5}[A-Za-z]?(?:[/.-]\d{1,5}[A-Za-z]?)?)\s+", re.IGNORECASE)
+    house_pattern = re.compile(r"^((?:[A-Za-z]{1,3}\d{1,5}|\d{1,5}[A-Za-z]?)(?:[/.-]\d{1,5}[A-Za-z]?)?)\s+", re.IGNORECASE)
     requested_house = house_pattern.match(parts[0])
     street = house_pattern.sub("", parts[0]).strip()
     street_folded = _fold_location(street)
@@ -263,7 +263,7 @@ def _bounded_candidates(rows: list[dict], limit: int = 5) -> Tuple[dict, ...]:
 def _address_core_matches(query: str, candidate: dict, place: dict) -> bool:
     """Recognize a relevant address preview without weakening full validation."""
     first = next((part.strip() for part in str(query or "").split(",") if part.strip()), "")
-    house_pattern = re.compile(r"^(\d{1,5}[A-Za-z]?(?:[/.-]\d{1,5}[A-Za-z]?)?)\s+", re.IGNORECASE)
+    house_pattern = re.compile(r"^((?:[A-Za-z]{1,3}\d{1,5}|\d{1,5}[A-Za-z]?)(?:[/.-]\d{1,5}[A-Za-z]?)?)\s+", re.IGNORECASE)
     street = house_pattern.sub("", first).strip()
     if not street:
         return False
@@ -419,7 +419,7 @@ def nearby_address_origin(query: str, resolution: LocationResolution) -> Optiona
     if not constraints.get("city") or not (constraints.get("ward") or constraints.get("district")):
         return None
     parts = [part.strip() for part in query.split(',') if part.strip()]
-    street = re.sub(r"^\d{1,5}[A-Za-z]?(?:[/.-]\d{1,5}[A-Za-z]?)?\s+", "", parts[0])
+    street = re.sub(r"^(?:[A-Za-z]{1,3}\d{1,5}|\d{1,5}[A-Za-z]?)(?:[/.-]\d{1,5}[A-Za-z]?)?\s+", "", parts[0])
     street_key = re.sub(r"^duong\s+", "", _fold_location(street))
     if not street_key:
         return None

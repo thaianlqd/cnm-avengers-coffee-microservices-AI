@@ -20,6 +20,18 @@ def defaults(artifacts):
     visuals = []
     for id, a in artifacts.items():
         visible = [d for d in a.plan.dimensions if not d.endswith("_id")]
+        if a.query.operation == "relationship" and len(a.plan.metrics) == 2:
+            candidate = DashboardVisual(query_id=id, chart_type="scatter", metrics=a.plan.metrics, x_field=a.plan.metrics[0], role=a.query.role, priority=80, purpose="relationship")
+            if chart_reason(candidate, a, 100, 16) is None:
+                visuals.append(candidate)
+            continue
+        same_unit = len(a.plan.metrics) > 1 and len({a.grounded.metrics[m]["unit"] for m in a.plan.metrics}) == 1
+        if same_unit and len(visible) == 1 and not a.plan.ranking and a.plan.kind != "trend":
+            visuals.append(DashboardVisual(query_id=id, chart_type="grouped_bar", metrics=a.plan.metrics, x_field=visible[0], role=a.query.role, priority=80, purpose="comparison"))
+            continue
+        if same_unit and a.plan.kind == "trend" and not visible:
+            visuals.append(DashboardVisual(query_id=id, chart_type="multi_line", metrics=a.plan.metrics, x_field="period", role=a.query.role, priority=80, purpose="trend"))
+            continue
         for metric in a.plan.metrics:
             composition = (
                 a.plan.kind == "distribution"
@@ -200,6 +212,7 @@ def chart_reason(v, a, max_categories, max_series):
             or len(v.metrics) != 2
             or v.x_field != v.metrics[0]
             or len(rows) < 3
+            or not p.dimensions
         ):
             return "requires_paired_observations"
         if any(len({r[m] for r in rows}) < 2 for m in v.metrics):
@@ -226,6 +239,7 @@ def chart_reason(v, a, max_categories, max_series):
     if (
         v.chart_type != "grouped_bar"
         and v.chart_type != "scatter"
+        and not (v.chart_type == "multi_line" and not visible and not v.series_field)
         and len(v.metrics) != 1
     ):
         return "requires_single_metric"
@@ -293,7 +307,14 @@ def render(v, a, index):
     output["series_label"] = a.grounded.dimensions.get(v.series_field, {}).get(
         "business_name", ""
     )
+    if a.plan.ranking:
+        output["title"] = f"Top {a.plan.ranking.top_n} — " + output["title"]
+        if metric != a.plan.ranking.metric:
+            output["title"] += " trong tập xếp hạng theo " + a.grounded.metrics[a.plan.ranking.metric]["business_name"]
+    elif a.plan.kind == "trend":
+        output["title"] += " theo " + {"day": "ngày", "week": "tuần", "month": "tháng", "quarter": "quý", "year": "năm"}[a.plan.granularity]
     output["title"] += " — " + population_label(a)
+    output.update(selection="Top N" if a.plan.ranking else "limited" if a.plan.explicit_limit else "complete", layout="wide" if v.chart_type in ("line", "area", "multi_line", "heatmap", "scatter") else "standard")
     if v.chart_type == "scatter":
         output.update(
             data=[
@@ -373,7 +394,13 @@ def build_dashboard(
 ):
     proposals = list(plan.visuals) if plan and plan.visuals else defaults(artifacts)
     if plan and plan.visuals:
-        represented = {(v.query_id, m) for v in proposals for m in v.metrics}
+        represented = {
+            (v.query_id, m) for v in proposals for m in v.metrics
+            if v.query_id in artifacts and (
+                comparison_reason(v, artifacts) if v.compare_query_ids
+                else chart_reason(v, artifacts[v.query_id], max_categories, max_series)
+            ) is None
+        }
         table_only = {v.query_id for v in proposals if v.chart_type == "table"}
         proposals += [
             v
@@ -395,6 +422,9 @@ def build_dashboard(
                 for id in [v.query_id, *v.compare_query_ids]
                 if id in artifacts
             ),
+            {"ranking": 0, "aggregate": 1, "trend": 2, "distribution": 3,
+             "cross_tab": 3, "relationship": 4, "detail": 5}.get(
+                artifacts[v.query_id].query.operation if v.query_id in artifacts else "", 6),
             -v.priority,
         ),
     )
@@ -530,6 +560,13 @@ def build_dashboard(
             ],
             "requested_chart_count": sum(c["role"] == "requested" for c in charts),
             "supporting_chart_count": sum(c["role"] == "supporting" for c in charts),
+            "quality": {
+                "distinct_operations": len({ref for c in charts for ref in c.get("scope_refs", [c.get("query_id")]) if ref}),
+                "distinct_purposes": len({c["purpose"] for c in charts}),
+                "chart_families": list(dict.fromkeys(c["chart_type"] for c in charts)),
+                "metrics_visualized": len(covered),
+                "duplicates_omitted": sum(v["reason"] == "duplicate_semantic_view" for v in omitted),
+            },
         },
         "dashboard_description": f"{len(charts)} biểu đồ, {min(len(cards),12)} chỉ số tóm tắt và bảng kết quả cho {len(artifacts)} phần phân tích đã kiểm chứng.",
     }

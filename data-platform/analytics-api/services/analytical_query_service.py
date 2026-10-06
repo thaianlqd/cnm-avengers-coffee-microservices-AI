@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from services.analysis_catalog import AnalysisError
 from services.analysis_contract import AnalysisSpec, Component, Filter
 from services.analyst_contract import AnalyticalQuery
+from services.analytical_tool_contract import canonicalize, ToolContractError, issue
 from services.analysis_query import (
     build_plans,
     compile_sql,
@@ -80,35 +81,22 @@ class AnalyticalQueries:
             for f in artifact.query.filters:
                 values = f.value if isinstance(f.value, list) else [f.value]
                 self.semantic.resolved.setdefault(f.dimension, set()).update(values)
+            q = artifact.query
+            self.semantic.discovered.add(("subject", q.subject))
+            self.semantic.discovered.update(("metric", m) for m in q.metrics)
+            self.semantic.discovered.update(("dimension", d) for d in [*q.group_by, *q.project, *[f.dimension for f in q.filters], *(q.ranking.per_group if q.ranking else [])])
+        self.enforce_discovery = False
         self.pending = {}
         self.ui_context = {}
         self.cache = {
             a.signature: a for a in self.previous.values() if a.result is not None
         }
+        self.normalizations = []
 
     def prepare(self, arguments):
-        q = AnalyticalQuery.model_validate(arguments)
-        if q.replaces:
-            old = self.previous.get(q.replaces)
-            if not old:
-                raise AnalysisError("patch", "Unknown server operation reference")
-            data = q.model_dump(mode="json")
-            for field in (
-                "subject",
-                "operation",
-                "metrics",
-                "group_by",
-                "filters",
-                "project",
-                "time",
-                "granularity",
-                "ranking",
-                "order_by",
-                "limit",
-            ):
-                if field not in q.changed_fields:
-                    data[field] = old.query.model_dump(mode="json")[field]
-            q = AnalyticalQuery.model_validate(data)
+        q, self.normalizations = canonicalize(arguments, self.previous)
+        if self.enforce_discovery:
+            self.semantic.require_query(q)
         if q.id in self.artifacts:
             old = self.artifacts[q.id]
             if old.query != q:
@@ -165,9 +153,15 @@ class AnalyticalQueries:
                     "filter_value_unknown",
                     "Resolve the chosen dimension reference before querying",
                 )
-        scope, assumptions, period = resolve_time(
-            q.time.model_dump(mode="json"), self.reference, r["timezone"]
-        )
+        try:
+            scope, assumptions, period = resolve_time(
+                q.time.model_dump(mode="json"), self.reference, r["timezone"]
+            )
+        except (ValueError, TypeError, OverflowError):
+            raise ToolContractError([issue("time", "invalid_time_shape")]) from None
+        required_subject = self.ui_context.get("required_subject")
+        if required_subject and q.role == "requested" and q.subject != required_subject:
+            raise ToolContractError([issue("subject", "scope_conflict")])
         required_period = self.ui_context.get("required_period")
         if required_period and any(
             period[k] != required_period[k] for k in ("start", "end")

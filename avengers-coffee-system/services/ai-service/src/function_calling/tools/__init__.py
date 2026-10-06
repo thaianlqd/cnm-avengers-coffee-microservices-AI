@@ -12,7 +12,7 @@ from .product_tools import (
     TOOL_CHECK_PRICE_AND_STOCK, execute_check_price_and_stock,
     TOOL_GET_PRODUCT_INSIGHTS, execute_get_product_insights,
     TOOL_GET_RECOMMENDATIONS, execute_get_recommendations,
-    TOOL_FILTER_CATALOG, execute_filter_catalog,
+    TOOL_FILTER_CATALOG, execute_filter_catalog, execute_get_menu_categories,
 )
 from .cart_tools import (
     TOOL_ADD_TO_CART, execute_add_to_cart,
@@ -88,6 +88,7 @@ TOOL_EXECUTORS = {
     "confirm_checkout": lambda args, session_id: execute_confirm_checkout(session_id=session_id, **args),
     "search_knowledge_base": lambda args, session_id: execute_search_knowledge_base(session_id=session_id, **args),
     "get_recommendations": lambda args, session_id: execute_get_recommendations(**args),
+    "get_menu_categories": lambda args, session_id: execute_get_menu_categories(),
     "filter_catalog": lambda args, session_id: execute_filter_catalog(**args),
     "track_order_status": lambda args, session_id: execute_track_order_status(session_id=session_id, **args),
     "get_order_history": lambda args, session_id: execute_get_order_history(session_id=session_id, **args),

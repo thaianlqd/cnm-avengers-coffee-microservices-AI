@@ -470,7 +470,16 @@ def grounded_narrative(plan, evidence):
             }
             for e in selected
         ],
-        "conclusions": [e["statement"] for e in selected[:3]],
+        "conclusions": list(dict.fromkeys(
+            {
+                "ranking": "Kết luận xếp hạng áp dụng cho tập Top N đã chọn; cần tập đầy đủ để đánh giá tỷ trọng toàn bộ.",
+                "trend": "Diễn biến chỉ mô tả các kỳ quan sát trong phạm vi; chưa có bằng chứng dự báo hoặc nguyên nhân biến động.",
+                "distribution": "Tỷ trọng chỉ áp dụng cho tập đầy đủ đã kiểm chứng và cùng định nghĩa chỉ số.",
+                "relationship": "Mối liên hệ quan sát chưa chứng minh quan hệ nhân quả; cần kiểm tra thêm yếu tố gây nhiễu.",
+                "comparison": "Chênh lệch được đọc cùng bộ lọc và kỳ đo của từng nhóm; dữ liệu tổng hợp chưa xác định nguyên nhân.",
+            }[e["claim_type"]]
+            for e in selected if e["claim_type"] in {"ranking", "trend", "distribution", "relationship", "comparison"}
+        ))[:3],
         "recommendations": recommendations,
         "rejected_narrative": rejected,
     }

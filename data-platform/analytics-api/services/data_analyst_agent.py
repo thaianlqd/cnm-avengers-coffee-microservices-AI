@@ -10,7 +10,7 @@ from services.analyst_contract import (
     SemanticSearch,
     ConceptReference,
     ValueReference,
-    AnalyticalQuery,
+    AnalyticalToolInput,
     AgentClarification,
     DashboardPlan,
     AgentState,
@@ -18,6 +18,7 @@ from services.analyst_contract import (
 from services.semantic_tools import SemanticTools
 from services.analytical_query_service import AnalyticalQueries
 from services.insight_service import analytical_features
+from services.analytical_tool_contract import rejection_issues, invalid_signature
 
 logger = logging.getLogger("ai-analyst-tools")
 
@@ -39,6 +40,8 @@ class AgentBudget:
     context_chars: int = 48000
     tools_per_round: int = 8
     value_lookups: int = 4
+    contract_repairs: int = 2
+    supporting_operations: int = 3
 
     @classmethod
     def from_env(cls):
@@ -54,6 +57,8 @@ class AgentBudget:
             "context_chars": (8000, 96000),
             "tools_per_round": (1, 12),
             "value_lookups": (0, 8),
+            "contract_repairs": (0, 2),
+            "supporting_operations": (0, 7),
         }
         values = {}
         for key, (low, high) in bounds.items():
@@ -63,7 +68,7 @@ class AgentBudget:
         return cls(**values)
 
 
-SYSTEM = """You are a Vietnamese database-aware Data Analyst. Decide meaning from the user's request, then discover current semantic catalog concepts with tools. No catalog is preloaded. Never invent concepts, SQL, physical names, formulas, joins, values, causality or forecasts. Catalog metrics own their aggregation and business filters. Use returned canonical values directly; resolve other dimension references before filtering. Ask a narrow clarification when business meaning is undefined. Preserve all requested parts, limits, population, time and metrics. Interpret dates as structured TimeSpec; the server normalizes dates after your decision using reference_date and timezone. Missing time means all_time. UI constraints are explicit user scope: conflicting scopes require clarification. Queries use logical operators only. Requested analyses take priority over supporting work. Supporting queries must reuse their requested parent's population and time. For open-ended comparisons or explanations, plan a bounded investigation, not just one total: select relevant breakdowns, historical trends and composition from discovered dimensions and related_subjects. Use supporting operations linked to the requested parent; preserve cohort and time. Choose only views that answer a distinct question, within the operation budget. Never infer causes from an aggregate gap. If the user requests only a single number or table, respect that narrow scope. Proposal mode registers validated queries without executing analytical queries. Finish with active operation references and optional DashboardPlan; every visual, KPI, insight and recommendation must reference validated results/evidence. Different units use separate linked views. A Top N subset cannot establish whole-population composition. Recommendations are cautious evidence-based checks, never invented stock/profit/future demand. For refinement use server references, replaces and changed_fields; unchanged fields inherit server scope. Keep prior operations unless explicitly replaced or removed. No chain-of-thought or reasoning text; use the tools to express decisions."""
+SYSTEM = """You are a Vietnamese database-aware Data Analyst. Decide meaning from the user's request, then discover current semantic catalog concepts with tools. No catalog is preloaded. Never invent concepts, SQL, physical names, formulas, joins, values, causality or forecasts. Catalog metrics own their aggregation and business filters. Use returned canonical values directly; resolve other dimension references before filtering. Ask a narrow clarification when business meaning is undefined. Preserve all requested parts, limits, population, time and metrics. Interpret dates as structured TimeSpec; the server normalizes dates after your decision using reference_date and timezone. Missing time means all_time. UI constraints are explicit user scope: conflicting scopes require clarification. Queries use logical operators only. Requested analyses take priority over supporting work. Supporting queries must reuse their requested parent's population and time. For analytical rankings, comparisons or explanations, plan a bounded investigation: select relevant breakdowns, historical trends and composition from discovered dimensions and related_subjects. Use supporting operations linked to the requested parent; preserve cohort and time. Choose only views that answer a distinct question, within the operation budget. Never infer causes from an aggregate gap. If the user requests only a single number or table, respect that narrow scope. Proposal mode registers validated queries without executing analytical queries. Finish with active operation references and optional DashboardPlan; every visual, KPI, insight and recommendation must reference validated results/evidence. Different units use separate linked views. A Top N subset cannot establish whole-population composition. Recommendations are cautious evidence-based checks, never invented stock/profit/future demand. Repair only named contract issues without rediscovery. For refinement use server references, replaces and changed_fields; unchanged fields inherit server scope. Keep prior operations unless explicitly replaced or removed. No chain-of-thought or reasoning text; use the tools to express decisions."""
 
 SYSTEM += " Search returns grounded concept summaries; do not describe them again if sufficient. Returned canonical enum values may be used directly; otherwise resolve the reference. Batch independent discoveries/resolutions into one round. Leave a round to run_analysis and finish_analysis; finish may follow registered queries in the same batch."
 
@@ -81,7 +86,7 @@ TOOL_MODELS = {
         "Resolve a specific value reference for a chosen safe dimension; bounded read-only lookup.",
     ),
     "run_analysis": (
-        AnalyticalQuery,
+        AnalyticalToolInput,
         "Validate/register logical analytical operators; execute only outside proposal mode. Returns compact result references and features.",
     ),
     "ask_clarification": (
@@ -123,7 +128,10 @@ class DataAnalystAgent:
         self.queries = AnalyticalQueries(
             catalog, self.semantic, reference, executor, diagnostics, proposal, previous
         )
+        self.queries.enforce_discovery = True
         self.cache = {}
+        self.invalid_calls = set()
+        self.repair_pending = False
         self.plan = None
         self.proposal = proposal
         self.omitted_support = set()
@@ -137,14 +145,35 @@ class DataAnalystAgent:
             value_lookup_count=0,
             cost_rounds=[],
             provider_calls=[],
+            provider_status="not_started",
+            provider_error_category=None,
             tool_trace=[],
             limitations=[],
             understanding_source="llm_first_native_tools",
             embedding_call_count=0,
+            contract_repair_count=0,
+            contract_rejection_count=0,
+            contract_normalization_count=0,
+            contract_normalizations=[],
+            agent_contract_status="valid",
+            agent_contract_error=None,
+            semantic_status="not_started",
+            execution_status="not_started",
+            result_status="not_started",
+            current_round_error=None,
+            last_contract_rejection=None,
+            terminal_error=None,
+            provider_failure=None,
+            budget_exhaustion=None,
+            semantic_round_count=0,
+            analytical_round_count=0,
+            duplicate_invalid_call_count=0,
+            rounds_to_first_valid_query=None,
+            rounds_to_finish=None,
         )
 
     def tools(self, final_only=False):
-        from services.agent_provider import expanded_schema
+        from services.agent_provider import expanded_schema, gemini_tool_schema
 
         names = [
             "search_semantic_catalog",
@@ -156,12 +185,15 @@ class DataAnalystAgent:
         if final_only:
             names = ["finish_analysis"]
         return [
+            {**tool, "parameters": gemini_tool_schema(tool)}
+            for tool in [
             {
                 "name": n,
                 "description": TOOL_MODELS[n][1],
                 "parameters": expanded_schema(TOOL_MODELS[n][0].model_json_schema()),
             }
             for n in names
+            ]
         ]
 
     def record_tool(self, name, result, round_index, cache_hit=False):
@@ -189,6 +221,9 @@ class DataAnalystAgent:
             "cache_hit": cache_hit,
             "registered_queries": len(self.queries.artifacts),
         }
+        if result.get("issues"):
+            event["issues"] = result["issues"][:8]
+            event["repair_attempt"] = self.diagnostics["contract_repair_count"]
         self.diagnostics["tool_trace"].append(event)
         logger.info(
             "Analyst tool round=%s name=%s status=%s cache_hit=%s registered_queries=%s",
@@ -380,9 +415,48 @@ class DataAnalystAgent:
                 "Finish omitted a requested or unchanged operation",
             )
         self.plan = plan
+        self.contract_valid()
         return {"status": "finished"}
 
+    @staticmethod
+    def rejection_result(error):
+        return {"status": "rejected", "error_category": "invalid_analysis_contract", "issues": rejection_issues(error)}
+
+    def reject(self, call, error):
+        category = getattr(error, "category", "")
+        if category == "agent_budget":
+            self.diagnostics["current_round_error"] = category
+            return error, True
+        issues = rejection_issues(error)
+        self.diagnostics["contract_rejection_count"] += 1
+        self.diagnostics.update(agent_contract_status="invalid", agent_contract_error="invalid_analysis_contract", last_contract_rejection={"issues": issues})
+        signature = invalid_signature(call["name"], call["arguments"])
+        duplicate = signature in self.invalid_calls
+        self.diagnostics["duplicate_invalid_call_count"] += int(duplicate)
+        self.invalid_calls.add(signature)
+        exhausted = self.diagnostics["contract_repair_count"] >= self.budget.contract_repairs
+        category = "duplicate_invalid_tool_call" if duplicate else "invalid_analysis_contract"
+        self.diagnostics.update(current_round_error=category, agent_contract_error=category)
+        self.repair_pending = not (duplicate or exhausted)
+        return AnalysisError(category, "Analytical tool contract rejected"), duplicate or exhausted
+
+    def contract_valid(self):
+        repaired = self.diagnostics["contract_rejection_count"] or self.diagnostics["contract_normalization_count"]
+        self.diagnostics.update(agent_contract_status="repaired" if repaired else "valid", agent_contract_error=None)
+
     def run(self, prompt, context=None, final_only=False):
+        try:
+            return self._run(prompt, context, final_only)
+        except AnalysisError as error:
+            self.diagnostics["terminal_error"] = error.category
+            raise
+        finally:
+            self.diagnostics["value_lookup_count"] = self.semantic.lookup_count
+            for role in ("requested", "supporting"):
+                self.diagnostics["registered_" + role + "_operations"] = sum(
+                    a.query.role == role for a in self.queries.artifacts.values())
+
+    def _run(self, prompt, context=None, final_only=False):
         self.state = AgentState(goal=prompt[:8000])
         self.queries.ui_context = context or {}
         messages = [
@@ -404,6 +478,8 @@ class DataAnalystAgent:
                             "tools_per_round": self.budget.tools_per_round,
                             "operations": self.budget.operations,
                             "charts": self.budget.charts,
+                            "contract_repairs": self.budget.contract_repairs,
+                            "supporting_per_parent": self.budget.supporting_operations,
                         },
                     }
                 ),
@@ -423,327 +499,277 @@ class DataAnalystAgent:
                         }
                         for id, a in self.queries.previous.items()
                     ],
+                    "known_concepts": [f"{kind}:{id}" for kind, id in sorted(self.semantic.discovered)],
                     "context": context or {},
                     "mode": "dashboard" if final_only else "refinement",
                 }
             )
         rounds = 1 if final_only else self.budget.rounds
-        last_error = None
+        terminal_error = None
+        current_round_error = None
         for round_index in range(rounds):
+            current_round_error = None
+            self.diagnostics["current_round_error"] = None
             tools = self.tools(final_only)
             allowed = {t["name"] for t in tools}
             chars = len(compact(messages))
             if chars > self.budget.context_chars:
-                last_error = AnalysisError(
-                    "agent_budget", "Agent context budget reached"
-                )
+                terminal_error = AnalysisError("agent_budget", "Agent context budget reached")
                 break
+            if self.repair_pending:
+                self.diagnostics["contract_repair_count"] += 1
+                self.repair_pending = False
             cost = {
                 "round": round_index + 1,
                 "system_chars": len(SYSTEM),
                 "tool_schema_chars": len(compact(tools)),
                 "history_chars": chars,
                 "semantic_context_chars": sum(
-                    len(compact(m["result"]))
-                    for m in messages
-                    if m["role"] == "tool"
-                    and m["name"] in TOOL_MODELS
-                    and m["name"] not in ("run_analysis", "finish_analysis")
+                    len(compact(m["result"])) for m in messages
+                    if m["role"] == "tool" and m["name"] not in ("run_analysis", "finish_analysis")
                 ),
                 "tool_result_chars": 0,
                 "result_projection_chars": 0,
             }
             started = time.perf_counter()
             try:
-                response = (
-                    self.provider(system=SYSTEM, messages=messages, tools=tools) or {}
-                )
+                response = self.provider(system=SYSTEM, messages=messages, tools=tools) or {}
             except Exception:
                 response = {"calls": None, "attempts": []}
             self.diagnostics["agent_rounds"] += 1
             self.diagnostics["provider_calls"] += [
                 {**a, "round": round_index + 1} for a in response.get("attempts", [])
             ]
-            self.diagnostics["provider_status"] = (
-                "success" if response.get("calls") else "failed"
-            )
             cost["latency_ms"] = round((time.perf_counter() - started) * 1000, 2)
             self.diagnostics["cost_rounds"].append(cost)
             calls = response.get("calls")
             if not calls:
-                categories = [
-                    a.get("error_category") for a in response.get("attempts", [])
-                ]
-                category = (
-                    "provider_schema_invalid"
-                    if "provider_schema" in categories
-                    else (
-                        "provider_invalid_json"
-                        if any(
-                            v in categories
-                            for v in ("invalid_json", "invalid_tool_response")
-                        )
-                        else "provider_unavailable"
-                    )
-                )
+                categories = [a.get("error_category") for a in response.get("attempts", [])]
+                category = "provider_unavailable"
+                if "provider_schema" in categories:
+                    category = "provider_schema_invalid"
+                elif any(v in categories for v in ("invalid_json", "invalid_tool_response")):
+                    category = "provider_invalid_json"
+                elif categories and categories[-1] in {
+                    "provider_bad_request", "provider_auth", "provider_access_denied",
+                    "provider_model_not_found", "provider_rate_limited", "provider_daily_quota",
+                    "provider_timeout", "provider_connection",
+                }:
+                    category = categories[-1]
                 if response.get("offline"):
                     category = "provider_offline"
                 elif response.get("configuration_missing"):
                     category = "provider_configuration_missing"
-                elif categories and categories[-1] in {
-                    "provider_bad_request",
-                    "provider_auth",
-                    "provider_access_denied",
-                    "provider_model_not_found",
-                    "provider_rate_limited",
-                    "provider_daily_quota",
-                    "provider_timeout",
-                    "provider_connection",
-                }:
-                    category = categories[-1]
-                last_error = last_error or AnalysisError(
-                    category, "Native provider did not return valid tool calls"
-                )
+                self.diagnostics.update(provider_status="failed", provider_failure=category, provider_error_category=category)
+                terminal_error = AnalysisError(category, "Native provider did not return valid tool calls")
                 break
             if (
-                not isinstance(calls, list)
-                or len(calls) > self.budget.tools_per_round
+                not isinstance(calls, list) or len(calls) > self.budget.tools_per_round
                 or any(
-                    not isinstance(c, dict)
-                    or set(c) != {"id", "name", "arguments"}
-                    or not isinstance(c["arguments"], dict)
-                    or not isinstance(c["id"], str)
-                    or not isinstance(c["name"], str)
-                    for c in calls
+                    not isinstance(c, dict) or set(c) != {"id", "name", "arguments"}
+                    or not isinstance(c["arguments"], dict) or not isinstance(c["id"], str)
+                    or not isinstance(c["name"], str) for c in calls
                 )
                 or len({c["id"] for c in calls}) != len(calls)
             ):
-                last_error = AnalysisError(
-                    "provider_invalid_tools", "Invalid or oversized native tool batch"
-                )
+                terminal_error = AnalysisError("provider_invalid_tools", "Invalid or oversized native tool batch")
+                self.diagnostics.update(provider_status="failed", provider_failure=terminal_error.category, provider_error_category=terminal_error.category)
                 break
-            # Validate every query in a batch before any query executes.
-            prepared = {}
-            try:
-                self.queries.pending = {}
-                for c in sorted(
-                    calls, key=lambda c: c["arguments"].get("role") == "supporting"
-                ):
+            self.diagnostics.update(provider_status="success", provider_error_category=None, provider_failure=None)
+            self.diagnostics["semantic_round_count"] += int(any(
+                c["name"] in ("search_semantic_catalog", "describe_semantic_concept", "resolve_dimension_value") for c in calls))
+            self.diagnostics["analytical_round_count"] += int(any(c["name"] == "run_analysis" for c in calls))
+            messages.append({"role": "assistant", "calls": calls})
+
+            def deliver(c, result, cache_hit=False):
+                result = {**result, "agent_progress": {
+                    "rounds_remaining": rounds - round_index - 1,
+                    "registered_queries": len(self.queries.artifacts),
+                }}
+                messages.append({"role": "tool", "id": c["id"], "name": c["name"], "result": result})
+                self.record_tool(c["name"], result, round_index, cache_hit)
+                cost["tool_result_chars"] += len(compact(result))
+
+            # Semantic/value tools run before analytical batch preparation. This
+            # permits resolve + run + finish in one round without executing any
+            # analytical SQL before every analytical contract has been checked.
+            preflight_failed = False
+            for c in calls:
+                if c["name"] in ("run_analysis", "finish_analysis", "ask_clarification"):
+                    continue
+                try:
                     if c["name"] not in allowed:
                         raise AnalysisError("tool", "Tool unavailable in this state")
-                    if c["name"] == "run_analysis":
-                        prepared[c["id"]] = self.queries.prepare(c["arguments"])
-                requested = sorted(
-                    prepared.values(), key=lambda a: a.query.role == "supporting"
-                )
-                replaced_ids = {a.query.replaces for a in requested if a.query.replaces}
-                accepted_ids = (
-                    set(self.queries.artifacts) | set(self.queries.previous)
-                ) - replaced_ids
-                accepted_signatures = set(self.queries.cache)
-                new_queries = 0
-                for artifact in requested:
-                    extra = artifact.signature not in accepted_signatures
-                    over = (
-                        len(accepted_ids | {artifact.query.id}) > self.budget.operations
-                        or self.diagnostics["db_query_count"] + new_queries + extra
-                        > self.budget.db_queries
-                    )
-                    if over and artifact.query.role == "requested":
-                        raise AnalysisError(
-                            "agent_budget",
-                            "Requested analytical operations exceed the configured budget",
-                        )
-                    if over:
-                        self.omitted_support.add(artifact.query.id)
-                        self.diagnostics["limitations"].append(
-                            {
-                                "reason": "supporting_budget",
-                                "message": "Một phần phân tích hỗ trợ được bỏ qua do giới hạn truy vấn.",
-                            }
-                        )
+                    self.diagnostics["semantic_tool_calls"] += 1
+                    key = compact([c["name"], c["arguments"]])
+                    cache_hit = key in self.cache
+                    if cache_hit:
+                        self.diagnostics["semantic_cache_hits"] += 1
+                        result = self.cache[key]
                     else:
-                        accepted_ids.add(artifact.query.id)
-                        accepted_signatures.add(artifact.signature)
+                        if c["name"] == "resolve_dimension_value":
+                            dimension = ValueReference.model_validate(c["arguments"]).dimension
+                            if ("dimension", dimension) not in self.semantic.discovered:
+                                from services.analytical_tool_contract import ToolContractError, issue
+                                raise ToolContractError([issue("dimension", "concept_not_discovered")])
+                        if c["name"] == "resolve_dimension_value" and self.semantic.lookup_count >= self.budget.value_lookups:
+                            raise AnalysisError("agent_budget", "Value lookup budget reached")
+                        before = set(self.semantic.discovered)
+                        result = self.semantic.invoke(c["name"], c["arguments"])
+                        if len(compact(result)) > self.budget.tool_result_chars - 120:
+                            # Do not authorize concepts from an undelivered page.
+                            self.semantic.discovered = before
+                            result = {"status": "projection_budget", "hint": "Request fewer results or a narrower concept"}
+                        self.cache[key] = result
+                    deliver(c, result, cache_hit)
+                except (ValueError, TypeError, KeyError) as exc:
+                    current_round_error, stop = self.reject(c, exc)
+                    deliver(c, self.rejection_result(exc))
+                    preflight_failed = True
+                    if stop or getattr(exc, "category", "") == "agent_budget":
+                        terminal_error = current_round_error
+            prepared = {}
+            failed_call = None
+            try:
+                if preflight_failed:
+                    raise current_round_error
+                self.queries.pending = {}
+                analytical_calls = [c for c in calls if c["name"] == "run_analysis"]
+                self.diagnostics["analytical_tool_calls"] += len(analytical_calls)
+                for c in sorted(analytical_calls, key=lambda c: c["arguments"].get("role") == "supporting"):
+                    failed_call = c
+                    if c["name"] not in allowed:
+                        raise AnalysisError("tool", "Tool unavailable in this state")
+                    prepared[c["id"]] = self.queries.prepare(c["arguments"])
+                    rules = self.queries.normalizations
+                    if rules:
+                        self.diagnostics["contract_normalization_count"] += 1
+                        self.diagnostics["contract_normalizations"] = list(dict.fromkeys([*self.diagnostics["contract_normalizations"], *rules]))[:8]
+                # IDs must be unique across a batch unless the canonical meaning
+                # is identical. pending must never silently overwrite a parent.
+                by_id = {}
+                for a in prepared.values():
+                    if a.query.id in by_id and by_id[a.query.id].query != a.query:
+                        raise AnalysisError("query", "Conflicting operation IDs")
+                    by_id[a.query.id] = a
+                accepted_ids = (set(self.queries.artifacts) | set(self.queries.previous)) - {
+                    a.query.replaces for a in prepared.values() if a.query.replaces
+                }
+                accepted_signatures = set(self.queries.cache)
+                support_counts = {}
+                for a in self.queries.artifacts.values():
+                    if a.query.role == "supporting":
+                        support_counts[a.query.parent_id] = support_counts.get(a.query.parent_id, 0) + 1
+                new_queries = 0
+                for c in sorted(analytical_calls, key=lambda c: prepared[c["id"]].query.role == "supporting"):
+                    failed_call = c
+                    a = prepared[c["id"]]
+                    extra = a.signature not in accepted_signatures
+                    support = a.query.role == "supporting"
+                    over = (
+                        len(accepted_ids | {a.query.id}) > self.budget.operations
+                        or (not self.proposal and self.diagnostics["db_query_count"] + new_queries + extra > self.budget.db_queries)
+                        or support and a.query.id not in accepted_ids and support_counts.get(a.query.parent_id, 0) >= self.budget.supporting_operations
+                    )
+                    if over and not support:
+                        raise AnalysisError("agent_budget", "Requested operations exceed the configured budget")
+                    if over:
+                        self.omitted_support.add(a.query.id)
+                        self.diagnostics["limitations"].append({"reason": "supporting_budget", "message": "Một phần phân tích hỗ trợ được bỏ qua do giới hạn truy vấn."})
+                    else:
+                        self.omitted_support.discard(a.query.id)
+                        if support and a.query.id not in accepted_ids:
+                            support_counts[a.query.parent_id] = support_counts.get(a.query.parent_id, 0) + 1
+                        accepted_ids.add(a.query.id)
+                        accepted_signatures.add(a.signature)
                         new_queries += extra
-            except (ValueError, AnalysisError) as exc:
-                last_error = (
-                    exc
-                    if isinstance(exc, AnalysisError)
-                    else AnalysisError(
-                        "analysis_spec_invalid", "Invalid tool arguments"
-                    )
-                )
-                messages.append({"role": "assistant", "calls": calls})
+            except (ValueError, TypeError, KeyError) as exc:
+                if not preflight_failed:
+                    current_round_error, stop = self.reject(failed_call or calls[0], exc)
+                    if stop or getattr(exc, "category", "") == "agent_budget":
+                        terminal_error = current_round_error
                 for c in calls:
-                    result = {
-                        "status": "rejected_batch",
-                        "error_category": getattr(
-                            last_error, "category", "analysis_spec_invalid"
-                        ),
-                    }
-                    messages.append(
-                        {
-                            "role": "tool",
-                            "id": c["id"],
-                            "name": c["name"],
-                            "result": result,
+                    if c["name"] in ("run_analysis", "finish_analysis", "ask_clarification"):
+                        result = self.rejection_result(exc) if c is failed_call else {
+                            "status": "rejected_batch", "error_category": "invalid_analysis_contract",
+                            "issues": [{"path": "batch", "code": "batch_aborted"}],
                         }
-                    )
-                    self.record_tool(c["name"], result, round_index)
-                    cost["tool_result_chars"] += len(compact(result))
+                        deliver(c, result)
+                if terminal_error:
+                    break
                 continue
-            messages.append({"role": "assistant", "calls": calls})
-            for c in sorted(
-                calls,
-                key=lambda c: (
-                    c["name"] == "finish_analysis",
-                    c["arguments"].get("role") == "supporting",
-                ),
-            ):
+            for c in sorted(calls, key=lambda c: (c["name"] == "finish_analysis", c["arguments"].get("role") == "supporting")):
+                name = c["name"]
+                if name not in ("run_analysis", "finish_analysis", "ask_clarification"):
+                    continue
                 try:
-                    cache_hit = False
-                    name = c["name"]
-                    args = c["arguments"]
+                    if name not in allowed:
+                        raise AnalysisError("tool", "Tool unavailable in this state")
                     if name == "run_analysis":
-                        self.diagnostics["analytical_tool_calls"] += 1
-                        if prepared[c["id"]].query.id in self.omitted_support:
-                            result = {
-                                "status": "omitted_supporting",
-                                "reason": "analytical_budget",
-                            }
+                        a = prepared[c["id"]]
+                        if a.query.id in self.omitted_support:
+                            result = {"status": "omitted_supporting", "reason": "analytical_budget"}
                         else:
-                            a = self.queries.run(prepared[c["id"]])
+                            a = self.queries.run(a)
                             result = self.projection(a)
+                            self.contract_valid()
+                            if self.diagnostics["rounds_to_first_valid_query"] is None:
+                                self.diagnostics["rounds_to_first_valid_query"] = round_index + 1
+                            self.diagnostics["semantic_status"] = "grounded"
+                            if not self.proposal:
+                                self.diagnostics.update(execution_status="passed", result_status="passed")
                         cost["result_projection_chars"] += len(compact(result))
                     elif name == "ask_clarification":
-                        self.clarify(args)
-                    elif name == "finish_analysis":
-                        result = self.finish(args)
+                        self.clarify(c["arguments"])
                     else:
-                        self.diagnostics["semantic_tool_calls"] += 1
-                        cachekey = compact([name, args])
-                        if cachekey in self.cache:
-                            cache_hit = True
-                            self.diagnostics["semantic_cache_hits"] += 1
-                            result = self.cache[cachekey]
-                        else:
-                            if (
-                                name == "resolve_dimension_value"
-                                and self.semantic.lookup_count
-                                >= self.budget.value_lookups
-                            ):
-                                raise AnalysisError(
-                                    "agent_budget", "Value lookup budget reached"
-                                )
-                            result = self.semantic.invoke(name, args)
-                            self.cache[cachekey] = result
-                    result = {
-                        **result,
-                        "agent_progress": {
-                            "rounds_remaining": rounds - round_index - 1,
-                            "registered_queries": len(self.queries.artifacts),
-                        },
-                    }
-                    if len(compact(result)) > self.budget.tool_result_chars:
-                        result = {
-                            "status": "projection_budget",
-                            "reference": args.get("id"),
-                            "hint": "Request a narrower concept or fewer results",
-                        }
-                    messages.append(
-                        {"role": "tool", "id": c["id"], "name": name, "result": result}
-                    )
-                    self.record_tool(name, result, round_index, cache_hit)
-                    cost["tool_result_chars"] += len(compact(result))
-                    if self.plan:
-                        break
-                except AnalysisError as exc:
-                    self.record_tool(
-                        c["name"],
-                        {
-                            "status": (
-                                "needs_clarification"
-                                if exc.clarification
-                                else "rejected"
-                            )
-                        },
-                        round_index,
-                    )
-                    if exc.clarification:
+                        result = self.finish(c["arguments"])
+                        self.diagnostics["rounds_to_finish"] = round_index + 1
+                    deliver(c, result, name == "run_analysis" and a.reused)
+                except (ValueError, TypeError, KeyError) as exc:
+                    if getattr(exc, "clarification", None):
+                        self.diagnostics["semantic_status"] = "unsupported" if exc.category.startswith("unsupported") else "clarification"
+                        self.record_tool(name, {"status": "needs_clarification"}, round_index)
                         raise
-                    last_error = exc
-                    if exc.category in ("execution", "result_contract"):
-                        if not any(
-                            a.result is not None
-                            for a in self.queries.artifacts.values()
-                        ):
-                            raise
+                    category = getattr(exc, "category", "")
+                    if category in ("execution", "result_contract"):
+                        terminal_error = exc
+                        self.diagnostics.update(
+                            execution_status="failed" if category == "execution" else "passed",
+                            result_status="failed" if category == "result_contract" else "not_started",
+                        )
+                        deliver(c, {"status": "rejected", "error_category": category})
                         break
-                    result = {"status": "rejected", "error_category": exc.category}
-                    messages.append(
-                        {
-                            "role": "tool",
-                            "id": c["id"],
-                            "name": c["name"],
-                            "result": result,
-                        }
-                    )
-                    cost["tool_result_chars"] += len(compact(result))
-                except (ValueError, TypeError, KeyError):
-                    last_error = AnalysisError(
-                        "analysis_spec_invalid", "Invalid tool arguments"
-                    )
-                    self.record_tool(c["name"], {"status": "rejected"}, round_index)
-                    messages.append(
-                        {
-                            "role": "tool",
-                            "id": c["id"],
-                            "name": c["name"],
-                            "result": {
-                                "status": "rejected",
-                                "error_category": "analysis_spec_invalid",
-                            },
-                        }
-                    )
-            if self.plan:
-                break
-            if last_error and last_error.category in ("execution", "result_contract"):
+                    current_round_error, stop = self.reject(c, exc)
+                    deliver(c, self.rejection_result(exc))
+                    if stop or category == "agent_budget":
+                        terminal_error = current_round_error
+                        break
+            if self.plan or terminal_error:
                 break
         self.diagnostics["value_lookup_count"] = self.semantic.lookup_count
         if not self.plan:
+            terminal_error = terminal_error or current_round_error or AnalysisError("agent_budget", "No finished plan before budget exhausted")
+            self.diagnostics["terminal_error"] = terminal_error.category
+            if terminal_error.category == "agent_budget":
+                self.diagnostics["budget_exhaustion"] = "context_or_rounds_or_operations"
             if self.proposal:
-                raise last_error or AnalysisError(
-                    "agent_budget", "Proposal agent did not finish a valid plan"
-                )
+                raise terminal_error
             replaced_ids = {
-                a.query.replaces
-                for a in self.queries.artifacts.values()
+                a.query.replaces for a in self.queries.artifacts.values()
                 if a.query.replaces and a.result is not None
             }
-            artifacts = {
-                id: a
-                for id, a in self.queries.previous.items()
-                if id not in replaced_ids
-            }
-            artifacts.update(self.queries.artifacts)
-            if artifacts and (
-                self.proposal or any(a.result is not None for a in artifacts.values())
-            ):
-                self.diagnostics["limitations"].append(
-                    {
-                        "reason": getattr(last_error, "category", "agent_budget"),
-                        "message": "Báo cáo dùng các kết quả đã kiểm chứng; agent chưa hoàn tất toàn bộ kế hoạch.",
-                    }
-                )
+            artifacts = {id: a for id, a in self.queries.previous.items() if id not in replaced_ids}
+            artifacts.update({id: a for id, a in self.queries.artifacts.items() if a.result is not None})
+            if artifacts:
+                self.diagnostics["limitations"].append({
+                    "reason": terminal_error.category,
+                    "message": "Báo cáo dùng các kết quả đã kiểm chứng; agent chưa hoàn tất toàn bộ kế hoạch.",
+                })
                 self.plan = DashboardPlan(active_query_ids=list(artifacts))
                 for id in artifacts:
                     self.queries.restore(id)
             else:
-                raise last_error or AnalysisError(
-                    "agent_budget",
-                    "No valid analytical operation before budget exhausted",
-                )
+                raise terminal_error
         active = {id: self.queries.artifacts[id] for id in self.plan.active_query_ids}
         if not self.proposal:
             active = {id: a for id, a in active.items() if a.result is not None}
