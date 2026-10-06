@@ -38,8 +38,11 @@ def build_plans(grounded, catalog):
     ]
     plans = []
     for comp in components:
+        component_subject = catalog.registry["subjects"][comp.subject or spec.subject]
         metrics = comp.metrics or (spec.metrics if comp.kind != "detail" else [])
-        if comp.kind == "detail" and (comp.metrics or spec.metrics):
+        if comp.kind == "detail" and (
+            comp.metrics or (not spec.components and spec.metrics)
+        ):
             raise AnalysisError("plan", "Detail requests cannot aggregate metrics")
         if comp.kind != "detail" and not metrics:
             raise AnalysisError(
@@ -48,7 +51,7 @@ def build_plans(grounded, catalog):
                 grounded.subject["metrics"],
             )
         source = (
-            grounded.subject.get("detail_source", grounded.subject["source"])
+            component_subject.get("detail_source", component_subject["source"])
             if comp.kind == "detail"
             else grounded.metrics[metrics[0]]["source"]
         )
@@ -58,12 +61,12 @@ def build_plans(grounded, catalog):
                 "Metrics at different fact grains require separate components",
             )
         dimensions = (
-            list(comp.detail_columns or grounded.subject["detail_columns"])
+            list(comp.detail_columns or component_subject["detail_columns"])
             if comp.kind == "detail"
             else list(comp.dimensions)
         )
         if not dimensions and comp.kind in ("ranking", "distribution"):
-            dimensions = [grounded.subject["default_dimension"]]
+            dimensions = [component_subject["default_dimension"]]
         # Labels are not unique entity keys. Add authoritative identities when
         # needed so equal display names do not collapse distinct entities.
         for name in list(dimensions):
@@ -79,14 +82,22 @@ def build_plans(grounded, catalog):
             for d in ranking.per_group:
                 if d not in dimensions:
                     dimensions.append(d)
-        groups = spec.comparison_groups or [None]
+        groups = (
+            comp.comparison_groups
+            if comp.comparison_groups is not None
+            else spec.comparison_groups
+        ) or [None]
         for group in groups:
             rank = (
                 ranking.model_copy(update={"top_n": group.top_n})
                 if group and group.top_n and ranking
                 else ranking
             )
-            filters = list(spec.filters) + (list(group.filters) if group else [])
+            filters = (
+                list(spec.filters)
+                + list(comp.filters)
+                + (list(group.filters) if group else [])
+            )
             for m in metrics:
                 for raw in grounded.metrics[m].get("business_filters", []):
                     f = Filter.model_validate(raw)
@@ -115,6 +126,14 @@ def build_plans(grounded, catalog):
                         "Conflicting population filters: " + f.dimension,
                     )
             refs = []
+            for m in metrics:
+                if not set(dimensions + [f.dimension for f in filters]) <= set(
+                    grounded.metrics[m]["allowed_dimensions"]
+                ):
+                    raise AnalysisError(
+                        "unsupported_dimension",
+                        "Dimensions are incompatible with the selected metric",
+                    )
             for d in dimensions + [f.dimension for f in filters]:
                 desc = grounded.dimensions.get(d) or catalog.registry["dimensions"].get(
                     d
@@ -131,8 +150,8 @@ def build_plans(grounded, catalog):
             time_column = (
                 next(iter(time_columns))
                 if metrics
-                else grounded.subject.get(
-                    "detail_time_column", grounded.subject.get("time_column")
+                else component_subject.get(
+                    "detail_time_column", component_subject.get("time_column")
                 )
             )
             needs_time = grounded.period["start"] or comp.kind == "trend"
@@ -191,7 +210,7 @@ def build_plans(grounded, catalog):
                 QueryPlan(
                     id=query_id,
                     kind=comp.kind,
-                    subject=spec.subject,
+                    subject=comp.subject or spec.subject,
                     source=source,
                     metrics=metrics,
                     dimensions=dimensions,

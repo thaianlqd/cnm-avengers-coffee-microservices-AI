@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "description": "Semantic Knowledge Catalog & Comprehensive Data Dictionary cho Avengers Coffee AI — Toàn bộ CSDL Tầng Silver (19 bảng/view)",
   "silver_tables": {
     "silver.don_hang": {
@@ -2709,7 +2709,8 @@
           }
         ],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Doanh thu ở mức order; đơn vị VND."
       },
       "order_count": {
         "business_name": "Số lượng đơn",
@@ -2730,7 +2731,8 @@
         ],
         "business_filters": [],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Số lượng đơn ở mức order; đơn vị đơn."
       },
       "aov": {
         "business_name": "Giá trị đơn trung bình",
@@ -2760,7 +2762,8 @@
           }
         ],
         "non_negative": true,
-        "additive": false
+        "additive": false,
+        "description": "Giá trị đơn trung bình ở mức order; đơn vị VND."
       },
       "voucher_revenue": {
         "business_name": "Doanh thu đơn có khuyến mãi",
@@ -2793,7 +2796,8 @@
         "required_non_null": [
           "silver.don_hang.ma_voucher"
         ],
-        "additive": true
+        "additive": true,
+        "description": "Doanh thu đơn có khuyến mãi ở mức order; đơn vị VND."
       },
       "discount_amount": {
         "business_name": "Tổng tiền đã giảm giá",
@@ -2827,7 +2831,8 @@
         "required_non_null": [
           "silver.don_hang.ma_voucher"
         ],
-        "additive": true
+        "additive": true,
+        "description": "Tổng tiền đã giảm giá ở mức order; đơn vị VND."
       },
       "voucher_order_count": {
         "business_name": "Số đơn áp dụng khuyến mãi",
@@ -2851,7 +2856,8 @@
         "required_non_null": [
           "silver.don_hang.ma_voucher"
         ],
-        "additive": true
+        "additive": true,
+        "description": "Số đơn áp dụng khuyến mãi ở mức order; đơn vị đơn."
       },
       "quantity_sold": {
         "business_name": "Số lượng ly bán",
@@ -2862,7 +2868,13 @@
           "quantity_sold",
           "Số lượng ly bán",
           "bán chạy nhất",
-          "quantity sold"
+          "quantity sold",
+          "bán chạy",
+          "được mua nhiều",
+          "sản lượng cao",
+          "best selling",
+          "selling quantity",
+          "selling"
         ],
         "expression": "SUM(silver.chi_tiet_don_hang.so_luong)",
         "source": "silver.chi_tiet_don_hang",
@@ -2884,7 +2896,8 @@
           }
         ],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Số lượng ly bán ở mức order_line; đơn vị ly."
       },
       "item_revenue": {
         "business_name": "Doanh thu món",
@@ -2914,7 +2927,8 @@
           }
         ],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Doanh thu món ở mức order_line; đơn vị VND."
       },
       "product_revenue": {
         "business_name": "Doanh thu sản phẩm",
@@ -2943,7 +2957,8 @@
           }
         ],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Doanh thu sản phẩm ở mức order_line; đơn vị VND."
       },
       "store_revenue": {
         "business_name": "Doanh thu chi nhánh",
@@ -2972,7 +2987,8 @@
           }
         ],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Doanh thu chi nhánh ở mức order; đơn vị VND."
       },
       "store_order_count": {
         "business_name": "Số đơn chi nhánh",
@@ -2992,7 +3008,8 @@
         ],
         "business_filters": [],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Số đơn chi nhánh ở mức order; đơn vị đơn."
       },
       "store_aov": {
         "business_name": "AOV chi nhánh",
@@ -3021,7 +3038,8 @@
           }
         ],
         "non_negative": true,
-        "additive": false
+        "additive": false,
+        "description": "AOV chi nhánh ở mức order; đơn vị VND."
       },
       "customer_count": {
         "business_name": "Số khách",
@@ -3048,7 +3066,8 @@
           }
         ],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Số khách ở mức customer; đơn vị khách."
       },
       "total_spent": {
         "business_name": "Tổng chi tiêu tích lũy",
@@ -3075,7 +3094,8 @@
           }
         ],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Tổng chi tiêu tích lũy ở mức customer; đơn vị VND."
       },
       "payment_count": {
         "business_name": "Số giao dịch",
@@ -3095,7 +3115,8 @@
         ],
         "business_filters": [],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Số giao dịch ở mức payment; đơn vị lượt."
       },
       "payment_revenue": {
         "business_name": "Doanh thu thanh toán",
@@ -3115,7 +3136,8 @@
         ],
         "business_filters": [],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Doanh thu thanh toán ở mức payment; đơn vị VND."
       },
       "total_deliveries": {
         "business_name": "Tổng chuyến giao",
@@ -3135,7 +3157,8 @@
         ],
         "business_filters": [],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Tổng chuyến giao ở mức driver_snapshot; đơn vị lượt."
       },
       "driver_rating": {
         "business_name": "Điểm đánh giá trung bình",
@@ -3156,7 +3179,8 @@
         ],
         "business_filters": [],
         "non_negative": true,
-        "additive": false
+        "additive": false,
+        "description": "Điểm đánh giá trung bình ở mức driver_snapshot; đơn vị điểm."
       },
       "stock_quantity": {
         "business_name": "Số lượng tồn kho",
@@ -3177,7 +3201,8 @@
         ],
         "business_filters": [],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Số lượng tồn kho ở mức store_product_snapshot; đơn vị đơn vị."
       },
       "low_stock_count": {
         "business_name": "Số món dưới định mức",
@@ -3197,7 +3222,8 @@
         ],
         "business_filters": [],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Số món dưới định mức ở mức store_product_snapshot; đơn vị lượt."
       },
       "avg_product_rating": {
         "business_name": "Điểm đánh giá trung bình",
@@ -3218,7 +3244,8 @@
         ],
         "business_filters": [],
         "non_negative": true,
-        "additive": false
+        "additive": false,
+        "description": "Điểm đánh giá trung bình ở mức review; đơn vị điểm."
       },
       "review_count": {
         "business_name": "Số lượt đánh giá",
@@ -3239,7 +3266,8 @@
         ],
         "business_filters": [],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Số lượt đánh giá ở mức review; đơn vị lượt."
       },
       "avg_store_rating": {
         "business_name": "Điểm phục vụ trung bình",
@@ -3260,7 +3288,8 @@
         ],
         "business_filters": [],
         "non_negative": true,
-        "additive": false
+        "additive": false,
+        "description": "Điểm phục vụ trung bình ở mức review; đơn vị điểm."
       },
       "store_review_count": {
         "business_name": "Số lượt đánh giá quán",
@@ -3280,7 +3309,8 @@
         ],
         "business_filters": [],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Số lượt đánh giá quán ở mức review; đơn vị lượt."
       },
       "shift_count": {
         "business_name": "Tổng số ca làm",
@@ -3300,7 +3330,8 @@
         ],
         "business_filters": [],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Tổng số ca làm ở mức shift; đơn vị lượt."
       },
       "late_count": {
         "business_name": "Số ca đi trễ",
@@ -3320,7 +3351,8 @@
         ],
         "business_filters": [],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Số ca đi trễ ở mức shift; đơn vị lượt."
       },
       "total_cash_difference": {
         "business_name": "Tổng tiền chênh lệch",
@@ -3341,7 +3373,8 @@
         ],
         "business_filters": [],
         "non_negative": false,
-        "additive": true
+        "additive": true,
+        "description": "Tổng tiền chênh lệch ở mức cash_shift; đơn vị VND."
       },
       "system_cash_revenue": {
         "business_name": "Doanh thu tiền mặt hệ thống",
@@ -3361,7 +3394,8 @@
         ],
         "business_filters": [],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Doanh thu tiền mặt hệ thống ở mức cash_shift; đơn vị VND."
       },
       "reconciled_shifts": {
         "business_name": "Số ca đã đối soát",
@@ -3381,7 +3415,8 @@
         ],
         "business_filters": [],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Số ca đã đối soát ở mức cash_shift; đơn vị lượt."
       },
       "survey_response_count": {
         "business_name": "Số lượt phản hồi khảo sát",
@@ -3402,7 +3437,8 @@
         ],
         "business_filters": [],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Số lượt phản hồi khảo sát ở mức survey_response; đơn vị lượt."
       },
       "favorite_count": {
         "business_name": "Số lượt thả tim yêu thích",
@@ -3423,7 +3459,8 @@
         ],
         "business_filters": [],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Số lượt thả tim yêu thích ở mức favorite; đơn vị lượt."
       },
       "hourly_orders": {
         "business_name": "Số đơn theo giờ",
@@ -3443,7 +3480,8 @@
         ],
         "business_filters": [],
         "non_negative": true,
-        "additive": true
+        "additive": true,
+        "description": "Số đơn theo giờ ở mức order; đơn vị đơn."
       }
     },
     "dimensions": {
@@ -3456,7 +3494,11 @@
           "Sản phẩm"
         ],
         "role": "dimension",
-        "identity": "product_id"
+        "identity": "product_id",
+        "value_grounding": {
+          "mode": "lookup",
+          "max_candidates": 8
+        }
       },
       "product_id": {
         "table": "silver.san_pham",
@@ -3466,7 +3508,11 @@
           "product_id",
           "Mã sản phẩm"
         ],
-        "role": "dimension"
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "lookup",
+          "max_candidates": 8
+        }
       },
       "category": {
         "table": "silver.danh_muc",
@@ -3476,7 +3522,11 @@
           "category",
           "Danh mục"
         ],
-        "role": "dimension"
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "lookup",
+          "max_candidates": 8
+        }
       },
       "store": {
         "table": "silver.chi_nhanh",
@@ -3487,7 +3537,11 @@
           "Chi nhánh"
         ],
         "role": "dimension",
-        "identity": "store_id"
+        "identity": "store_id",
+        "value_grounding": {
+          "mode": "lookup",
+          "max_candidates": 8
+        }
       },
       "store_id": {
         "table": "silver.chi_nhanh",
@@ -3497,7 +3551,11 @@
           "store_id",
           "Mã chi nhánh"
         ],
-        "role": "dimension"
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "lookup",
+          "max_candidates": 8
+        }
       },
       "city": {
         "table": "silver.chi_nhanh",
@@ -3577,7 +3635,11 @@
           "Bà Rịa - Vũng Tàu",
           "Thanh Hóa",
           "Kiên Giang"
-        ]
+        ],
+        "value_grounding": {
+          "mode": "enum",
+          "max_candidates": 32
+        }
       },
       "customer_id": {
         "table": "silver.nguoi_dung",
@@ -3587,7 +3649,11 @@
           "customer_id",
           "Mã khách hàng"
         ],
-        "role": "dimension"
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "lookup",
+          "max_candidates": 8
+        }
       },
       "customer_role": {
         "table": "silver.nguoi_dung",
@@ -3597,7 +3663,11 @@
           "customer_role",
           "Vai trò"
         ],
-        "role": "dimension"
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "lookup",
+          "max_candidates": 8
+        }
       },
       "loyalty_points": {
         "table": "silver.nguoi_dung",
@@ -3607,7 +3677,11 @@
           "loyalty_points",
           "Điểm thành viên"
         ],
-        "role": "dimension"
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "literal",
+          "max_candidates": 8
+        }
       },
       "lifetime_spend": {
         "table": "silver.nguoi_dung",
@@ -3617,7 +3691,11 @@
           "lifetime_spend",
           "Chi tiêu tích lũy"
         ],
-        "role": "dimension"
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "literal",
+          "max_candidates": 8
+        }
       },
       "order_id": {
         "table": "silver.don_hang",
@@ -3627,7 +3705,11 @@
           "order_id",
           "Mã đơn"
         ],
-        "role": "dimension"
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "lookup",
+          "max_candidates": 8
+        }
       },
       "order_status": {
         "table": "silver.don_hang",
@@ -3653,6 +3735,10 @@
           "mới tạo": "MOI_TAO",
           "chờ thanh toán": "CHO_THANH_TOAN",
           "đã xác nhận": "DA_XAC_NHAN"
+        },
+        "value_grounding": {
+          "mode": "enum",
+          "max_candidates": 32
         }
       },
       "payment_method": {
@@ -3672,7 +3758,11 @@
           "THANH_TOAN_KHI_NHAN_HANG",
           "VI_DIEN_TU",
           "VNPAY"
-        ]
+        ],
+        "value_grounding": {
+          "mode": "enum",
+          "max_candidates": 32
+        }
       },
       "payment_status": {
         "table": "silver.don_hang",
@@ -3682,7 +3772,11 @@
           "payment_status",
           "Trạng thái thanh toán"
         ],
-        "role": "dimension"
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "lookup",
+          "max_candidates": 8
+        }
       },
       "order_amount": {
         "table": "silver.don_hang",
@@ -3692,7 +3786,11 @@
           "order_amount",
           "Giá trị đơn"
         ],
-        "role": "dimension"
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "literal",
+          "max_candidates": 8
+        }
       },
       "order_created": {
         "table": "silver.don_hang",
@@ -3702,7 +3800,11 @@
           "order_created",
           "Ngày tạo đơn"
         ],
-        "role": "dimension"
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "lookup",
+          "max_candidates": 8
+        }
       },
       "promotion": {
         "table": "silver.khuyen_mai",
@@ -3712,7 +3814,11 @@
           "promotion",
           "Khuyến mãi"
         ],
-        "role": "dimension"
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "lookup",
+          "max_candidates": 8
+        }
       },
       "promotion_id": {
         "table": "silver.don_hang",
@@ -3722,7 +3828,11 @@
           "promotion_id",
           "Mã khuyến mãi"
         ],
-        "role": "dimension"
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "lookup",
+          "max_candidates": 8
+        }
       },
       "payment_gateway": {
         "table": "silver.giao_dich_thanh_toan",
@@ -3732,7 +3842,11 @@
           "payment_gateway",
           "Cổng thanh toán"
         ],
-        "role": "dimension"
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "lookup",
+          "max_candidates": 8
+        }
       },
       "driver_id": {
         "table": "silver.shipper",
@@ -3742,7 +3856,11 @@
           "driver_id",
           "Mã người giao"
         ],
-        "role": "dimension"
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "lookup",
+          "max_candidates": 8
+        }
       },
       "shift_name": {
         "table": "silver.ca_lam_viec_nhan_vien",
@@ -3752,7 +3870,11 @@
           "shift_name",
           "Ca làm"
         ],
-        "role": "dimension"
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "lookup",
+          "max_candidates": 8
+        }
       },
       "attendance_status": {
         "table": "silver.ca_lam_viec_nhan_vien",
@@ -3769,7 +3891,11 @@
           "VE_SOM",
           "VANG_MAT",
           "ASSIGNED"
-        ]
+        ],
+        "value_grounding": {
+          "mode": "enum",
+          "max_candidates": 32
+        }
       },
       "stock_quantity_detail": {
         "table": "silver.ton_kho_san_pham",
@@ -3779,7 +3905,11 @@
           "stock_quantity_detail",
           "Số lượng tồn"
         ],
-        "role": "dimension"
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "literal",
+          "max_candidates": 8
+        }
       },
       "warning_threshold": {
         "table": "silver.ton_kho_san_pham",
@@ -3789,7 +3919,11 @@
           "warning_threshold",
           "Mức cảnh báo"
         ],
-        "role": "dimension"
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "literal",
+          "max_candidates": 8
+        }
       },
       "hour": {
         "table": "silver.don_hang",
@@ -3799,7 +3933,11 @@
           "giờ",
           "hour"
         ],
-        "expression": "EXTRACT(HOUR FROM silver.don_hang.ngay_tao)"
+        "expression": "EXTRACT(HOUR FROM silver.don_hang.ngay_tao)",
+        "value_grounding": {
+          "mode": "lookup",
+          "max_candidates": 8
+        }
       },
       "order_type": {
         "table": "silver.don_hang",
@@ -3816,7 +3954,11 @@
           "LAY_TAI_QUAN",
           "MANG_DI",
           "GIAO_TAN_NOI"
-        ]
+        ],
+        "value_grounding": {
+          "mode": "enum",
+          "max_candidates": 32
+        }
       }
     },
     "subjects": {
@@ -4510,7 +4652,8 @@
         "this week": "current_week",
         "last week": "previous_week",
         "today": "current_day",
-        "yesterday": "previous_day"
+        "yesterday": "previous_day",
+        "nam ngoai": "previous_year"
       },
       "explicit_time_patterns": [
         {
@@ -4540,6 +4683,99 @@
         "tốt nhất",
         "best",
         "hiệu quả nhất"
+      ],
+      "time_grammar": [
+        {
+          "kind": "day",
+          "pattern": "\\b(?P<year>\\d{4})-(?P<month>\\d{1,2})-(?P<day>\\d{1,2})\\b"
+        },
+        {
+          "kind": "day",
+          "pattern": "\\b(?:ngay\\s+)?(?P<day>\\d{1,2})/(?P<month>\\d{1,2})(?:/(?P<year>\\d{4}))?\\b"
+        },
+        {
+          "kind": "rolling",
+          "unit": "day",
+          "pattern": "\\b(?P<amount>\\d+)\\s+ngay\\s+(?:gan\\s+(?:nhat|day)|vua\\s+qua|qua)\\b"
+        },
+        {
+          "kind": "rolling",
+          "unit": "month",
+          "pattern": "\\b(?P<amount>\\d+)\\s+thang\\s+(?:gan\\s+(?:nhat|day)|vua\\s+qua|qua)\\b"
+        },
+        {
+          "kind": "rolling",
+          "unit": "day",
+          "pattern": "\\b(?:last|past)\\s+(?P<amount>\\d+)\\s+days\\b"
+        },
+        {
+          "kind": "rolling",
+          "unit": "month",
+          "pattern": "\\b(?:last|past)\\s+(?P<amount>\\d+)\\s+months\\b"
+        },
+        {
+          "kind": "month",
+          "pattern": "\\b(?:thang|month)\\s+(?P<month>\\d{1,2})(?:(?:\\s+nam)?\\s+(?P<year>\\d{4}))?\\b"
+        },
+        {
+          "kind": "quarter",
+          "pattern": "\\b(?:quy|quarter|q)\\s*(?P<quarter>\\d)(?:(?:\\s+nam)?\\s+(?P<year>\\d{4}))?\\b"
+        },
+        {
+          "kind": "year",
+          "pattern": "\\b(?:nam|year)\\s+(?P<year>\\d{4})\\b"
+        }
+      ],
+      "granularity_aliases": {
+        "theo ngay": "day",
+        "theo tuan": "week",
+        "theo thang": "month",
+        "theo quy": "quarter",
+        "theo nam": "year",
+        "daily": "day",
+        "weekly": "week",
+        "monthly": "month",
+        "quarterly": "quarter",
+        "yearly": "year",
+        "by day": "day",
+        "by week": "week",
+        "by month": "month",
+        "by quarter": "quarter"
+      },
+      "forecast_terms": [
+        "dự báo",
+        "forecast",
+        "prediction"
+      ],
+      "top_n_patterns": [
+        "\\b(?:top|best)\\s+(?P<n>\\d+)\\b",
+        "^\\s*(?P<n>\\d+)\\s+(?!ngay\\b|thang\\b|nam\\b|days\\b|months\\b).*(?:nhat|highest|lowest|selling)\\b"
+      ],
+      "retrieval_stopwords": [
+        "theo",
+        "tại",
+        "nhất",
+        "số",
+        "tổng",
+        "trong",
+        "của",
+        "cho",
+        "tôi",
+        "và",
+        "với",
+        "tháng",
+        "quý",
+        "ngày",
+        "năm",
+        "the",
+        "by",
+        "in",
+        "of",
+        "and",
+        "top",
+        "best",
+        "total",
+        "count"
       ]
     }
   }

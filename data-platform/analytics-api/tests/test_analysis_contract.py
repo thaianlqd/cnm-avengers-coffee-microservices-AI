@@ -163,12 +163,11 @@ class OfflineTests(unittest.TestCase):
             "ambiguities": ["best metric undefined"],
             "confidence": 0.5,
         }
-        s, info = understand(
-            "Cho tôi chi nhánh tốt nhất", self.catalog, Mock(return_value=raw)
-        )
         with self.assertRaises(AnalysisError) as caught:
-            self.catalog.ground(s)
-        self.assertEqual(caught.exception.category, "clarification")
+            understand(
+                "Cho tôi chi nhánh tốt nhất", self.catalog, Mock(return_value=raw)
+            )
+        self.assertEqual(caught.exception.category, "metric_ambiguous")
         self.assertIn("store_revenue", [m["id"] for m in caught.exception.choices])
 
     def test_unknown_metric_column_enum_and_missing_join_rejected(self):
@@ -1225,12 +1224,18 @@ class OfflineTests(unittest.TestCase):
             "primary_key": ["key_a", "key_b"],
             "relationships": [],
         }
-        catalog = AnalysisCatalog(physical)
-        path = catalog.path("silver.fact_pair", "silver.dim_pair")
-        self.assertEqual(len(path), 1)
-        self.assertIn("key_a", path[0]["on"])
-        self.assertIn("key_b", path[0]["on"])
-        self.assertIn("AND", path[0]["on"])
+        for constraint_key in ("constraint_name", "constraint"):
+            for relationship in physical["table_map"]["silver.fact_pair"][
+                "relationships"
+            ]:
+                relationship.pop("constraint_name", None)
+                relationship[constraint_key] = "pair_fk"
+            catalog = AnalysisCatalog(physical)
+            path = catalog.path("silver.fact_pair", "silver.dim_pair")
+            self.assertEqual(len(path), 1)
+            self.assertIn("key_a", path[0]["on"])
+            self.assertIn("key_b", path[0]["on"])
+            self.assertIn("AND", path[0]["on"])
 
     def test_ambiguous_best_metric_guess_rejected_even_high_model_confidence(self):
         guessed = {
@@ -1244,7 +1249,7 @@ class OfflineTests(unittest.TestCase):
             understand(
                 "Cho tôi chi nhánh tốt nhất", self.catalog, Mock(return_value=guessed)
             )
-        self.assertEqual(caught.exception.category, "clarification")
+        self.assertEqual(caught.exception.category, "metric_ambiguous")
 
     def test_verified_example_kind_and_schema_selection_enforced(self):
         raw = ranking_spec()

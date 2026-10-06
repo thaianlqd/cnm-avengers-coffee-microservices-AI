@@ -43,11 +43,15 @@ def _invoke(action, payload):
         )
         failure["diagnostics"].update(
             {
+                **pipeline.semantic_info,
                 "provider_calls": pipeline.calls,
                 "provider_call_count": len(pipeline.calls),
                 "embedding_call_count": pipeline.embedding_calls,
             }
         )
+        category = failure["diagnostics"]["error_category"]
+        if category in ("analysis_spec_invalid", "provider_invalid_json", "provider_schema_invalid"):
+            failure["diagnostics"].update(provider_status="invalid", provider_error_category=category)
         failure["clarification_question"] = failure["question"]
         failure["interpreted_request"] = failure["message"]
         return failure

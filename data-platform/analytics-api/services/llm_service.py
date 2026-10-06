@@ -212,7 +212,11 @@ def call_bounded_llm(prompt: str, response_schema=None):
                 attempt['latency_ms'] = round((time.perf_counter()-started)*1000, 2)
                 attempts.append(attempt)
                 return {'data': data, 'attempts': attempts}
-            attempt['error_category'] = 'invalid_json' if response.ok else 'provider_http'
+            attempt['error_category'] = 'invalid_json' if response.ok else 'provider_schema' if response.status_code == 400 and response_schema else 'provider_http'
+        except (ValueError, IndexError, KeyError, TypeError):
+            attempt['error_category'] = 'invalid_json'
+        except requests.exceptions.Timeout:
+            attempt['error_category'] = 'provider_timeout'
         except Exception:
             attempt['error_category'] = 'provider_unavailable'
         attempt['latency_ms'] = round((time.perf_counter()-started)*1000, 2)

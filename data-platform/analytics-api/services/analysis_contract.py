@@ -10,6 +10,42 @@ class Contract(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class TimeSpec(Contract):
+    """Intermediate calendar meaning; never passed to the SQL compiler."""
+
+    kind: Literal["relative", "month", "quarter", "year", "day", "range", "rolling"]
+    mode: Optional[str] = None
+    year: Optional[int] = Field(default=None, ge=1, le=9998)
+    month: Optional[int] = Field(default=None, ge=1, le=12)
+    quarter: Optional[int] = Field(default=None, ge=1, le=4)
+    day: Optional[int] = Field(default=None, ge=1, le=31)
+    start: Optional[date] = None
+    end: Optional[date] = None
+    amount: Optional[int] = Field(default=None, ge=1, le=3660)
+    unit: Optional[Literal["day", "month"]] = None
+
+
+class ClarificationChoice(Contract):
+    id: Optional[str] = None
+    label: str
+    unit: str = ""
+    description: str = ""
+    followup: str = ""
+
+
+class ClarificationRequest(Contract):
+    reason: str
+    known_interpretation: Dict[str, Any] = Field(default_factory=dict)
+    missing_fields: List[str] = Field(default_factory=list, max_length=12)
+    ambiguous_fields: List[str] = Field(default_factory=list, max_length=12)
+    choices: List[ClarificationChoice] = Field(default_factory=list, max_length=8)
+    user_message: str = ""
+
+
+class ClarificationResponse(Contract):
+    clarification: ClarificationRequest
+
+
 class TimeScope(Contract):
     mode: Literal[
         "current_day",
@@ -79,6 +115,12 @@ class ComparisonGroup(Contract):
 class Component(Contract):
     id: str = Field(pattern=r"^[a-z][a-z0-9_]{0,39}$")
     kind: Literal["ranking", "aggregate", "trend", "distribution", "detail", "heatmap"]
+    subject: Optional[str] = None
+    filters: List[Filter] = Field(default_factory=list, max_length=12)
+    # None inherits the shared groups; [] explicitly requests one component scope.
+    comparison_groups: Optional[List[ComparisonGroup]] = Field(
+        default=None, max_length=6
+    )
     metrics: List[str] = Field(default_factory=list, max_length=6)
     dimensions: List[str] = Field(default_factory=list, max_length=4)
     ranking: Optional[Ranking] = None

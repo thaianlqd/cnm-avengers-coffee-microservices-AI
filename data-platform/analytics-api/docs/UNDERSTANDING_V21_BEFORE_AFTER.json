@@ -1,0 +1,85 @@
+{
+  "reference_date": "2026-10-06",
+  "before": {
+    "explicit_time": [],
+    "fast_spec": null,
+    "candidate_counts": {
+      "subjects": 5,
+      "metrics": 9,
+      "dimensions": 26
+    },
+    "candidate_subjects": [
+      "products",
+      "stores",
+      "order_items",
+      "customers",
+      "wishlist_favorites"
+    ]
+  },
+  "after": {
+    "canonical_time": {
+      "mode": "custom",
+      "start": "2026-09-01",
+      "end": "2026-09-30",
+      "timezone": "Asia/Ho_Chi_Minh"
+    },
+    "fast_spec": {
+      "version": 2,
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "operator": "eq",
+          "value": "Hồ Chí Minh"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30",
+        "timezone": "Asia/Ho_Chi_Minh"
+      },
+      "granularity": "day",
+      "ranking": {
+        "metric": "quantity_sold",
+        "direction": "DESC",
+        "top_n": 5,
+        "per_group": []
+      },
+      "comparison_groups": [],
+      "components": [],
+      "requested_output": [
+        "table",
+        "chart",
+        "report"
+      ],
+      "requested_visualizations": [],
+      "detail_level": "aggregate",
+      "detail_columns": [],
+      "used_example_ids": [],
+      "assumptions": [
+        "Thời gian: Tháng 9 được hiểu là kỳ gần nhất đã xảy ra (2026)."
+      ],
+      "ambiguities": [],
+      "confidence": 1.0
+    },
+    "candidate_counts": {
+      "subjects": 3,
+      "metrics": 6,
+      "dimensions": 20
+    },
+    "candidate_subjects": [
+      "products",
+      "stores",
+      "order_items"
+    ],
+    "compact_candidate_characters": 9296
+  }
+}

@@ -23,6 +23,30 @@ from services.analysis_pipeline import AnalysisPipeline, safe_failure
 from tests.analysis_fixtures import physical_metadata, result
 
 
+MEANING_FIELDS = (
+    "version",
+    "analysis_kind",
+    "subject",
+    "metrics",
+    "dimensions",
+    "filters",
+    "time_range",
+    "granularity",
+    "ranking",
+    "comparison_groups",
+    "components",
+    "requested_output",
+    "requested_visualizations",
+    "detail_level",
+    "detail_columns",
+)
+
+
+def meaning(value):
+    spec = AnalysisSpec.model_validate(value).model_dump(mode="json")
+    return {key: spec[key] for key in MEANING_FIELDS}
+
+
 def run_case(case, live=False):
     provider_calls = []
     executed = []
@@ -39,6 +63,8 @@ def run_case(case, live=False):
             if "request" in payload
             else "patch" if "feedback" in payload else "synthesis"
         )
+        if "request" in payload and "provider_response" in case:
+            return case["provider_response"]
         return {
             "data": (
                 case["expected_spec"]
@@ -62,14 +88,37 @@ def run_case(case, live=False):
             return {**result([]), "columns": columns}
         return result(rows)
 
+    def metadata():
+        physical = physical_metadata()
+        from services.analysis_catalog import AnalysisCatalog
+
+        catalog = AnalysisCatalog(physical)
+        for dimension, values in case.get("fixture_values", {}).items():
+            desc = catalog.registry["dimensions"][dimension]
+            for column in physical["table_map"][desc["table"]]["columns"]:
+                if column["name"] == desc["column"]:
+                    column[
+                        (
+                            "enum_values"
+                            if desc.get("value_grounding", {}).get("mode") == "enum"
+                            else "safe_values"
+                        )
+                    ] = values
+        return physical
+
     pipeline = (
         AnalysisPipeline()
         if live
         else AnalysisPipeline(
-            metadata_loader=physical_metadata, provider=provider, executor=execute
+            metadata_loader=metadata,
+            provider=provider,
+            executor=execute,
+            value_lookup=lambda *a, **k: [],
         )
     )
-    req = AiTextToReportRequest(prompt=case["prompt"])
+    req = AiTextToReportRequest(
+        prompt=case["prompt"], reference_date=case.get("reference_date", "2026-10-06")
+    )
     started = time.perf_counter()
     proposal = {}
     report = {}
@@ -92,18 +141,32 @@ def run_case(case, live=False):
     diag = report.get("diagnostics", {})
     calls = diag.get("provider_calls", pipeline.calls)
     passed = actual == expected
+    checks = {"status": passed}
+    if case.get("expected_category"):
+        checks["category"] = diag.get("error_category") == case["expected_category"]
+        passed = passed and checks["category"]
+    if proposal.get("analysis_spec"):
+        checks["initial_meaning"] = meaning(proposal["analysis_spec"]) == meaning(
+            case["expected_spec"]
+        )
+        passed = passed and checks["initial_meaning"]
+    if expected in ("needs_clarification", "error"):
+        checks["execution_count"] = len(executed) == case.get(
+            "expected_execution_count", 0
+        )
+        passed = passed and checks["execution_count"]
     if actual == "success":
         passed = (
             passed
             and all(v["valid"] for v in report["result_contracts"].values())
-            and report["analysis_spec"]
-            == (
+            and meaning(report["analysis_spec"])
+            == meaning(
                 merge_patch(
-                    AnalysisSpec.model_validate(proposal["analysis_spec"]),
+                    AnalysisSpec.model_validate(case["expected_spec"]),
                     SpecPatch.model_validate(refinement["patch"]),
                 ).model_dump(mode="json")
                 if refinement
-                else proposal["analysis_spec"]
+                else case["expected_spec"]
             )
         )
     return {
@@ -116,6 +179,9 @@ def run_case(case, live=False):
         "expected_status": expected,
         "actual_status": actual,
         "pass": passed,
+        "structure_checks": checks,
+        "database_execution_count": len(executed),
+        "clarification": report.get("clarification"),
         "analysis_spec": report.get("analysis_spec", proposal.get("analysis_spec")),
         "grounded_spec": report.get("grounded_analysis_spec"),
         "query_plans": report.get("query_plans", []),
@@ -161,7 +227,7 @@ def main():
         "--cases", type=Path, default=ROOT / "tests/fixtures/manual_analysis_cases.json"
     )
     parser.add_argument(
-        "--output", type=Path, default=ROOT / "docs/MANUAL_MATRIX_OFFLINE.json"
+        "--output", type=Path, default=ROOT / "docs/MANUAL_MATRIX_V21_OFFLINE.json"
     )
     parser.add_argument(
         "--case", action="append", help="Run only the named case (repeatable)"

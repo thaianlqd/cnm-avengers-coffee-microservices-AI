@@ -339,3 +339,25 @@ def cache_status() -> Dict[str, Any]:
         "tables": local["value"].get("table_count", 0) if local else 0,
         "source_configured": _source_configured(),
     }
+
+
+def lookup_dimension_values(table, column, search, limit=8):
+    """Explicit entity lookup only: safe identifiers, bounded rows/time, read-only."""
+    from psycopg2 import sql
+    if not re.fullmatch(r"silver\.[a-z][a-z0-9_]*", table) or not re.fullmatch(r"[a-z][a-z0-9_]*", column) or is_sensitive_column(column):
+        raise ValueError("Unsafe dimension lookup")
+    if not isinstance(search, str) or not 2 <= len(search.strip()) <= 80:
+        return []
+    needle = search.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    conn = get_db_conn()
+    try:
+        conn.set_session(readonly=True, autocommit=False)
+        with conn.cursor() as cur:
+            cur.execute("SET LOCAL statement_timeout = 1500")
+            cur.execute(sql.SQL("SELECT DISTINCT {column} AS value FROM {table} WHERE {column}::text ILIKE %s ORDER BY {column} LIMIT %s").format(
+                column=sql.Identifier(column), table=sql.Identifier(*table.split("."))),
+                ("%" + needle + "%", min(max(int(limit), 1), 8)))
+            return [row["value"] for row in cur.fetchall() if row["value"] is not None]
+    finally:
+        conn.rollback()
+        conn.close()

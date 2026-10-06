@@ -141,7 +141,7 @@ class VectorRagService:
                 "columns": [
                     {"name": c["name"], "data_type": c.get("data_type")}
                     for c in catalog.tables[n]["columns"]
-                    if not is_sensitive_column(c["name"])
+                    if not is_sensitive_column(c["name"]) and not c.get("sensitive")
                 ],
                 **({"vector_similarity": scores[n]} if n in scores else {}),
             }

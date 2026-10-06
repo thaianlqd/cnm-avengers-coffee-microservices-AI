@@ -245,7 +245,7 @@ def create_session(
         )
         _sessions[session_id] = session
         _timestamps[session_id] = time.monotonic()
-        logger.info("🆕 [SESSION] Created session %s for prompt: '%s'", session_id[:8], original_prompt[:60])
+        logger.info("🆕 [SESSION] Created session %s", session_id[:8])
         return session
 
 

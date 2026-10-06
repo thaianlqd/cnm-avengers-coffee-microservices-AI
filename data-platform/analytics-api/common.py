@@ -42,6 +42,7 @@ class AiTimeRange(BaseModel):
 
 class AiTextToReportRequest(BaseModel):
     prompt: str
+    reference_date: Optional[date] = None
     context: Optional[str] = ""
     time_range: Optional[AiTimeRange] = None
     domain: Optional[Literal["auto", "orders", "stores", "products", "customers", "payments", "delivery"]] = "auto"

@@ -6,7 +6,7 @@ import logging
 import os
 import time
 from copy import deepcopy
-from datetime import datetime
+from datetime import date, datetime
 from services.analysis_contract import AnalysisSpec
 from services.analysis_catalog import AnalysisCatalog, AnalysisError
 from services.analysis_understanding import understand, refine_spec
@@ -34,12 +34,17 @@ logger = logging.getLogger("ai-contract")
 
 
 class AnalysisPipeline:
-    def __init__(self, metadata_loader=None, provider=None, executor=None):
+    def __init__(
+        self, metadata_loader=None, provider=None, executor=None, value_lookup=None
+    ):
         self.metadata_loader = metadata_loader or (
             lambda: get_local_metadata(force=True)
         )
         self.provider = provider or call_bounded_llm
         self.executor = executor or execute_read_only
+        from services.metadata_service import lookup_dimension_values
+
+        self.value_lookup = value_lookup or lookup_dimension_values
         self.calls = []
         self.timings = {}
         self.embedding_calls = 0
@@ -59,6 +64,7 @@ class AnalysisPipeline:
                 "metadata",
                 "Current warehouse metadata is unavailable; no query was executed",
             ) from exc
+        self._active_catalog = catalog
         self.timings["metadata_ms"] = round((time.perf_counter() - start) * 1000, 2)
         return catalog
 
@@ -84,6 +90,30 @@ class AnalysisPipeline:
         for attempt in attempts:
             self.calls.append({"stage": stage, **attempt})
         self.timings[stage + "_ms"] = round((time.perf_counter() - start) * 1000, 2)
+        if stage in ("understanding", "patch"):
+            data = result.get("data")
+            error_categories = [a.get("error_category") for a in attempts]
+            category = (
+                "provider_invalid_json"
+                if "invalid_json" in error_categories
+                else (
+                    "provider_schema_invalid"
+                    if "provider_schema" in error_categories
+                    else "provider_unavailable"
+                )
+            )
+            self.semantic_info.update(
+                understanding_source=stage,
+                provider=attempts[-1].get("provider") if attempts else None,
+                model=attempts[-1].get("model") if attempts else None,
+                provider_status="success" if data is not None else "failed",
+                provider_error_category=None if data is not None else category,
+            )
+            if data is None:
+                raise AnalysisError(
+                    category,
+                    "Hệ thống chưa thể diễn giải yêu cầu lúc này. Vui lòng thử lại.",
+                )
         return result.get("data")
 
     def execute(self, sql, row_limit):
@@ -118,23 +148,13 @@ class AnalysisPipeline:
         }
 
     def interpreted(self, grounded):
-        spec = grounded.analysis_spec
-        c = grounded
-        return {
-            "analysis_kind": spec.analysis_kind,
-            "subject": c.subject["business_name"],
-            "metrics": [
-                {"id": m, "label": v["business_name"], "unit": v["unit"]}
-                for m, v in c.metrics.items()
-            ],
-            "dimensions": spec.dimensions,
-            "filters": [f.model_dump() for f in spec.filters],
-            "time_range": c.period,
-            "ranking": spec.ranking.model_dump() if spec.ranking else None,
-            "comparison_groups": [g.model_dump() for g in spec.comparison_groups],
-            "components": [v.model_dump() for v in spec.components],
-            "assumptions": spec.assumptions,
-        }
+        from services.analysis_understanding import labelled_interpretation
+
+        interpretation = labelled_interpretation(
+            self._active_catalog, grounded.analysis_spec.model_dump(mode="json")
+        )
+        interpretation["time_range"] = grounded.period
+        return interpretation
 
     def _meaning(self, request, catalog):
         from services.vector_rag_service import vector_rag_service
@@ -164,6 +184,11 @@ class AnalysisPipeline:
         examples = retrieve_verified(
             request.prompt, catalog.fingerprint, catalog=catalog
         )
+        examples = [
+            e
+            for e in examples
+            if e["analysis_spec"]["subject"] in retrieval["candidates"]["subjects"]
+        ]
         # Examples illustrate structure only. They never add user filters or
         # override current physical metadata/business definitions.
         original_call = self.call
@@ -171,7 +196,17 @@ class AnalysisPipeline:
         def with_examples(stage, prompt, schema):
             payload = json.loads(prompt)
             payload["verified_structure_examples"] = examples
-            payload["candidates"] = retrieval["candidates"]
+            candidate = retrieval["candidates"]
+            hint = payload.get("hints", {})
+            self.semantic_info.update(
+                candidate_subject_count=len(candidate["subjects"]),
+                candidate_metric_count=len(candidate["metrics"]),
+                candidate_dimension_count=len(candidate["dimensions"]),
+                recognized_filter_count=len(hint.get("recognized_values", [])),
+                recognized_time_parts=hint.get("recognized_time_parts", []),
+                server_confidence=None,
+                understanding_prompt_chars=len(prompt),
+            )
             payload["ui_domain_hint"] = request.domain
             return original_call(stage, json.dumps(payload, ensure_ascii=False), schema)
 
@@ -183,9 +218,21 @@ class AnalysisPipeline:
             request.context or "",
             candidates=retrieval["candidates"],
             examples=examples,
+            reference_date=request.reference_date,
+            lookup=self.value_lookup,
         )
         spec = self.apply_legacy_scope(spec, request, catalog)
-        grounded = catalog.ground(spec)
+        grounded = catalog.ground(spec, request.reference_date)
+        self.semantic_info.update(
+            {k: v for k, v in info.items() if k not in ("hints", "source")}
+        )
+        if info["source"] == "deterministic_complete_grammar":
+            self.semantic_info.update(
+                provider=None,
+                model=None,
+                provider_status="not_requested",
+                provider_error_category=None,
+            )
         plans = build_plans(grounded, catalog)
         self.semantic_info.update(
             {
@@ -239,7 +286,9 @@ class AnalysisPipeline:
                     )
                 from services.analysis_understanding import catalog_today
 
-                today = catalog_today(spec.time_range.timezone)
+                today = request.reference_date or catalog_today(
+                    spec.time_range.timezone
+                )
                 ui = AiTimeRange(
                     mode="custom", start=today - timedelta(days=days - 1), end=today
                 )
@@ -247,8 +296,10 @@ class AnalysisPipeline:
                 ui = AiTimeRange(mode="today")
             elif value == "all":
                 if (
-                    hints(request.prompt, catalog)["time_terms"]
-                    or hints(request.prompt, catalog)["explicit_time"]
+                    hints(request.prompt, catalog, request.reference_date)["time_terms"]
+                    or hints(request.prompt, catalog, request.reference_date)[
+                        "explicit_time"
+                    ]
                 ):
                     raise AnalysisError(
                         "clarification",
@@ -264,9 +315,12 @@ class AnalysisPipeline:
                     "clarification",
                     "Use the structured time_range field for this legacy period",
                 )
-            hint = hints(request.prompt, catalog)
+            hint = hints(request.prompt, catalog, request.reference_date)
             spec = apply_ui_time(
-                spec, ui, bool(hint["time_terms"] or hint["explicit_time"])
+                spec,
+                ui,
+                bool(hint["time_terms"] or hint["explicit_time"]),
+                request.reference_date,
             )
         return spec
 
@@ -295,7 +349,12 @@ class AnalysisPipeline:
             "title": grounded.subject["business_name"],
             "summary_intent": "Phạm vi được diễn giải bên dưới sẽ được dùng khi tạo báo cáo.",
             "data_sources": [
-                {"name": t, "reason": "Đã đối chiếu metadata hiện tại"}
+                {
+                    "name": catalog.overlay.get("silver_tables", {})
+                    .get(t, {})
+                    .get("business_name", "Nguồn dữ liệu đã kiểm chứng"),
+                    "reason": "Đã đối chiếu metadata hiện tại",
+                }
                 for t in sorted(
                     {p.source for p in plans}
                     | {j["to_table"] for p in plans for j in p.joins}
@@ -307,7 +366,8 @@ class AnalysisPipeline:
             ],
             "planned_charts": [
                 {
-                    "title": p.id,
+                    "title": grounded.metrics[p.metrics[0]]["business_name"]
+                    + (f" — {p.group}" if p.group else ""),
                     "chart_type": p.kind,
                     "reason": "Chọn theo dữ liệu thực tế; không ép số lượng biểu đồ.",
                 }
@@ -339,6 +399,11 @@ class AnalysisPipeline:
         return json.dumps(
             {
                 "prompt": request.prompt,
+                "reference_date": (
+                    request.reference_date.isoformat()
+                    if request.reference_date
+                    else None
+                ),
                 "context": request.context or "",
                 "time_range": (
                     request.time_range.model_dump(mode="json")
@@ -406,8 +471,19 @@ class AnalysisPipeline:
                     "Schema changed; generate a refreshed report before refinement",
                 )
             old = AnalysisSpec.model_validate(session.analysis_spec)
-            spec, patch = refine_spec(old, request.feedback, catalog, self.call)
-            grounded = catalog.ground(spec)
+            reference = session.diagnostics.get("reference_date")
+            reference = date.fromisoformat(reference) if reference else None
+            if reference:
+                self.semantic_info["reference_date"] = reference.isoformat()
+            spec, patch = refine_spec(
+                old,
+                request.feedback,
+                catalog,
+                self.call,
+                reference_date=reference,
+                lookup=self.value_lookup,
+            )
+            grounded = catalog.ground(spec, reference)
             if old.time_range == spec.time_range:
                 grounded.period = deepcopy(session.grounded_spec["period"])
             plans = build_plans(grounded, catalog)
@@ -637,6 +713,10 @@ class AnalysisPipeline:
             {key: value["business_name"] for key, value in grounded.metrics.items()}
         )
         labels.update(period="Thời gian", rank_position="Xếp hạng")
+        for data in results.values():
+            data["column_labels"] = {
+                key: labels.get(key, "Trường dữ liệu") for key in data["columns"]
+            }
         response = {
             "status": "success",
             "pipeline_version": 2,
@@ -774,24 +854,72 @@ class AnalysisPipeline:
 
 def safe_failure(error):
     category = getattr(error, "category", "internal")
-    clarification = category in (
+    structured = getattr(error, "clarification", None)
+    clarification_categories = {
         "clarification",
         "unsupported",
         "session",
         "schema_changed",
         "patch",
-    )
+        "time_year_missing",
+        "time_range_ambiguous",
+        "time_range_invalid",
+        "granularity_ambiguous",
+        "metric_ambiguous",
+        "subject_ambiguous",
+        "filter_value_ambiguous",
+        "filter_value_unknown",
+        "ranking_scope_ambiguous",
+        "unsupported_metric",
+        "unsupported_dimension",
+        "forecast_unsupported",
+    }
+    messages = {
+        "privacy": "Yêu cầu có trường dữ liệu nhạy cảm; hệ thống không thể cung cấp trường này.",
+        "metadata": "Danh mục dữ liệu hiện chưa sẵn sàng. Vui lòng thử lại sau.",
+        "session": "Phiên phân tích đã hết hạn hoặc phiên bản đã thay đổi. Vui lòng đề xuất lại yêu cầu.",
+        "schema_changed": "Cấu trúc dữ liệu đã thay đổi. Vui lòng duyệt lại phạm vi phân tích.",
+        "unsupported": "Yêu cầu này chưa thể phân tích bằng các chỉ số và quan hệ dữ liệu hiện có.",
+        "clarification": "Có một phần phạm vi phân tích cần xác nhận. Vui lòng làm rõ yêu cầu.",
+    }
     message = (
-        str(error)
-        if isinstance(error, AnalysisError)
-        else "Analysis could not be validated; no report was published"
+        structured["user_message"]
+        if structured
+        else messages.get(
+            category,
+            "Hệ thống chưa thể diễn giải hoặc kiểm chứng yêu cầu lúc này. Vui lòng thử lại.",
+        )
+    )
+    options = (
+        structured.get("choices", [])
+        if structured
+        else [
+            v
+            for v in getattr(error, "choices", [])
+            if isinstance(v, dict) and v.get("label")
+        ]
     )
     return {
-        "status": "needs_clarification" if clarification else "error",
+        "status": (
+            "needs_clarification" if category in clarification_categories else "error"
+        ),
         "question": message,
         "message": message,
         "assistant_reply": message,
-        "options": getattr(error, "choices", []),
-        "diagnostics": {"pipeline_version": 2, "error_category": category},
+        "options": options,
+        "clarification": structured,
+        "interpretation": (
+            structured.get("known_interpretation") if structured else None
+        ),
+        "diagnostics": {
+            "pipeline_version": 2,
+            "error_category": category,
+            "missing_fields": (
+                structured.get("missing_fields", []) if structured else []
+            ),
+            "ambiguity_count": (
+                len(structured.get("ambiguous_fields", [])) if structured else 0
+            ),
+        },
         "charts": [],
     }

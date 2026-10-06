@@ -1,3 +1,4 @@
+import { AnalysisClarification } from '../components/AnalysisClarification';
 import { AnalysisMeaning } from '../components/AnalysisMeaning';
 import React, { useState, useEffect } from 'react';
 import { usePlatformStore } from '../store/usePlatformStore';
@@ -58,6 +59,7 @@ export const AnalyticsView: React.FC = () => {
   const [aiStatus, setAiStatus] = useState<any | null>(null);
 
   // Step 1: Pre-analysis proposal state
+  const [pendingClarification, setPendingClarification] = useState<any | null>(null);
   const [aiPlan, setAiPlan] = useState<any | null>(null);
   const [isProposingPlan, setIsProposingPlan] = useState(false);
 
@@ -126,6 +128,7 @@ export const AnalyticsView: React.FC = () => {
 
   // Helper to reset and start a fresh question
   const handleResetToNewPrompt = () => {
+    setPendingClarification(null);
     setAiPrompt('');
     setAiPlan(null);
     setGeneratedReport(null);
@@ -164,10 +167,10 @@ export const AnalyticsView: React.FC = () => {
         throw new Error('Lỗi phản hồi từ máy chủ AI khi đề xuất kế hoạch');
       }
       const data = await response.json();
-      if (data.status === 'needs_clarification') {
+      if (['needs_clarification', 'error'].includes(data.status)) {
         setGeneratedReport(data);
         setAiStep(3);
-        showToast('Trợ lý cần bạn làm rõ yêu cầu phân tích', 'info');
+        showToast(data.message || 'Yêu cầu cần được xem lại', data.status === 'error' ? 'error' : 'info');
       } else if (data.status === 'proposal_ready') {
         const planObj = data.proposal || data;
         setAiPlan({ ...planObj, prompt: data.prompt || promptToSend, session_id: data.session_id, interpretation: data.interpretation, analysis_spec: data.analysis_spec });
@@ -211,8 +214,8 @@ export const AnalyticsView: React.FC = () => {
       const data = await response.json();
       setGeneratedReport(data);
       setAiStep(3);
-      if (data.status === 'needs_clarification') {
-        showToast('Trợ lý cần bạn làm rõ yêu cầu phân tích', 'info');
+      if (['needs_clarification', 'error'].includes(data.status)) {
+        showToast(data.message || 'Yêu cầu cần được xem lại', data.status === 'error' ? 'error' : 'info');
       } else if (data.status === 'success') {
         const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
         setChatHistory(prev => [{ prompt: promptToSend, report: data, time: timeStr }, ...prev.filter(p => p.prompt !== promptToSend)].slice(0, 8));
@@ -281,8 +284,9 @@ export const AnalyticsView: React.FC = () => {
         throw new Error('Lỗi khi tinh chỉnh báo cáo từ máy chủ AI');
       }
       const data = await response.json();
-      if (!['success', 'needs_clarification'].includes(data.status)) throw new Error(data.message || 'Bản sửa chưa vượt qua kiểm chứng');
-      if (data.status === 'needs_clarification') {
+      if (!['success', 'needs_clarification', 'error'].includes(data.status)) throw new Error(data.message || 'Bản sửa chưa vượt qua kiểm chứng');
+      if (['needs_clarification', 'error'].includes(data.status)) {
+        setPendingClarification({ ...data, feedback: text });
         const replyText = data.assistant_reply || 'Trợ lý cần bạn làm rõ thêm yêu cầu tinh chỉnh.';
         setRefinementChat(prev => [...prev, {
           id: `ai-${Date.now()}`,
@@ -292,6 +296,7 @@ export const AnalyticsView: React.FC = () => {
         }]);
         showToast(replyText, 'info');
       } else if (data.status === 'success') {
+        setPendingClarification(null);
         setGeneratedReport(data);
         if (viewingSavedReport) {
           setViewingSavedReport(data);
@@ -322,7 +327,7 @@ export const AnalyticsView: React.FC = () => {
       setRefinementChat(prev => [...prev, {
         id: `ai-err-${Date.now()}`,
         sender: 'assistant',
-        text: `⚠️ Gặp sự cố khi tinh chỉnh: ${err.message || 'Lỗi không xác định'}. Vui lòng thử lại với yêu cầu ngắn gọn hơn.`,
+        text: `⚠️ Gặp sự cố khi tinh chỉnh: ${err.message || 'Lỗi không xác định'}. Vui lòng thử lại.`,
         time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
       }]);
     } finally {
@@ -901,6 +906,7 @@ export const AnalyticsView: React.FC = () => {
     if (!rep) return null;
     return (
       <div className="space-y-6">
+        {pendingClarification && <AnalysisClarification response={pendingClarification} onChoice={(answer) => handleFollowUpRefine(`${pendingClarification.feedback}. ${answer}`, rep)} onEdit={() => { setFollowUpPrompt(pendingClarification.feedback || ''); setPendingClarification(null); }} />}
         <AnalysisMeaning interpretation={rep.interpretation} />
         {/* Report Header Bar - Spacious Responsive Layout */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4">
@@ -1277,7 +1283,7 @@ export const AnalyticsView: React.FC = () => {
                         <HeatmapChart
                           data={chart.data || []}
                           valueSuffix={chart.unit ? ` ${chart.unit}` : ''}
-                          xLabel={chart.x_field || 'X'} yLabel={chart.series_field || 'Y'}
+                          xLabel={rep.grounded_analysis_spec?.dimensions?.[chart.x_field]?.business_name || 'Chiều phân tích'} yLabel={rep.grounded_analysis_spec?.dimensions?.[chart.series_field]?.business_name || 'Nhóm phân tích'}
                         />
                       ) : isMultiLine ? (
                         <MultiLineChart
@@ -1337,8 +1343,8 @@ export const AnalyticsView: React.FC = () => {
 
         {rep.result_sets && Object.entries(rep.result_sets).slice(1).map(([queryId, data]: [string, any]) => (
           <section key={queryId} className="bg-white rounded-xl border border-slate-200 p-4 overflow-x-auto">
-            <h3 className="font-semibold text-sm mb-3">{rep.query_plans?.find((p: any) => p.id === queryId)?.group || queryId}</h3>
-            <table className="w-full text-left text-xs"><thead><tr>{data.columns.map((column: string) => <th className="p-2" key={column}>{column}</th>)}</tr></thead>
+            <h3 className="font-semibold text-sm mb-3">{rep.query_plans?.find((p: any) => p.id === queryId)?.group || 'Kết quả phân tích bổ sung'}</h3>
+            <table className="w-full text-left text-xs"><thead><tr>{data.columns.map((column: string) => <th className="p-2" key={column}>{data.column_labels?.[column] || 'Trường dữ liệu'}</th>)}</tr></thead>
               <tbody>{data.rows.map((row: any, index: number) => <tr key={index}>{data.columns.map((column: string) => <td className="p-2 border-t border-slate-100" key={column}>{row[column] == null ? '—' : String(row[column])}</td>)}</tr>)}</tbody>
             </table>
             {!data.rows.length && <p className="text-slate-500 text-xs">Không có dữ liệu trong phạm vi này.</p>}
@@ -2968,25 +2974,10 @@ export const AnalyticsView: React.FC = () => {
                 </div>
               )}
 
-              {!isGeneratingAi && generatedReport?.status === 'needs_clarification' && (
-                <div className="bg-amber-50 rounded-2xl border border-amber-200 p-6 shadow-sm">
-                  <div className="text-xs font-bold text-amber-800 uppercase tracking-wider">
-                    Cần làm rõ yêu cầu
-                  </div>
-                  <p className="text-sm font-semibold text-slate-800 mt-2">
-                    {generatedReport.clarification_question}
-                  </p>
-                  <p className="text-xs text-slate-600 mt-1">
-                    {typeof generatedReport.interpreted_request === 'string' ? generatedReport.interpreted_request : generatedReport.message}
-                  </p>
-                  {generatedReport.options?.length > 0 && <ul className="mt-3 text-xs text-slate-700 list-disc pl-5">{generatedReport.options.map((option: any, index: number) => <li key={index}>{typeof option === 'object' ? `${option.label} (${option.unit})` : option}</li>)}</ul>}
-                  <button
-                    onClick={() => setAiStep(1)}
-                    className="mt-4 px-4 py-2 text-xs font-medium text-amber-900 bg-white border border-amber-300 rounded-xl hover:bg-amber-100 transition-colors cursor-pointer"
-                  >
-                    Quay lại chỉnh sửa câu hỏi
-                  </button>
-                </div>
+              {!isGeneratingAi && ['needs_clarification', 'error'].includes(generatedReport?.status) && (
+                <AnalysisClarification response={generatedReport}
+                  onChoice={(answer) => handleProposePlan(`${aiPrompt}. ${answer}`)}
+                  onEdit={() => setAiStep(1)} />
               )}
 
               {/* Empty state if user jumped to step 3 with no report */}

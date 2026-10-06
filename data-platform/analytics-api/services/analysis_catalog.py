@@ -22,9 +22,10 @@ CATALOG_PATH = (
 
 
 class AnalysisError(ValueError):
-    def __init__(self, category: str, message: str, choices=None):
+    def __init__(self, category: str, message: str, choices=None, clarification=None):
         super().__init__(message)
         self.category, self.choices = category, choices or []
+        self.clarification = clarification
 
 
 def normalize(text: str) -> str:
@@ -192,7 +193,9 @@ class AnalysisCatalog:
                     continue
                 key = (
                     relation["to_table"],
-                    relation.get("constraint_name") or relation["from_column"],
+                    relation.get("constraint_name")
+                    or relation.get("constraint")
+                    or relation["from_column"],
                 )
                 groups.setdefault(key, []).append(relation)
             for (target, _), relations in groups.items():
@@ -322,75 +325,128 @@ class AnalysisCatalog:
             "relationships": [e for e in self.edges if e["from_table"] == name],
         }
 
+    def compatible_dimensions(self, metric):
+        cache = getattr(self, "_dimension_compatibility", None)
+        if cache is None:
+            cache = self._dimension_compatibility = {}
+        if metric in cache:
+            return cache[metric]
+        definition = self.registry["metrics"][metric]
+        allowed = []
+        for name, dimension in self.registry["dimensions"].items():
+            if (
+                definition.get("compatible_dimensions") is not None
+                and name not in definition["compatible_dimensions"]
+            ):
+                continue
+            try:
+                self.check_column(dimension["table"], dimension["column"])
+                self.path(definition["source"], dimension["table"])
+                allowed.append(name)
+            except AnalysisError:
+                pass
+        cache[metric] = sorted(allowed)
+        return cache[metric]
+
     def candidates(
-        self, prompt, top_k=8, vector_scores=None, vector_status="not_requested"
+        self,
+        prompt,
+        top_k=4,
+        vector_scores=None,
+        vector_status="not_requested",
+        preferred_subjects=None,
     ):
-        tokens = set(normalize(prompt).split())
+        from services.value_grounding_service import value_text
+
+        text = value_text(prompt)
+        stop = {
+            value_text(v)
+            for v in self.registry["interpretation"].get("retrieval_stopwords", [])
+        }
+
+        def relevance(aliases):
+            hits = []
+            for alias in set(value_text(a) for a in aliases):
+                if len(alias) < 3 or not re.search(
+                    r"(?<!\w)" + re.escape(alias) + r"(?!\w)", text
+                ):
+                    continue
+                informative = [
+                    word
+                    for word in alias.split()
+                    if word not in stop and not word.isdigit()
+                ]
+                if informative:
+                    hits.append(len(informative))
+            return max(hits, default=0) + min(len(hits), 3) * 0.05
+
         scores = []
-        for sid, s in self.registry["subjects"].items():
-            text = normalize(" ".join(s["aliases"] + [s["business_name"]]))
-            lexical = len(tokens & set(text.split()))
-            metric_hits = sum(
-                len(
-                    tokens
-                    & set(
-                        normalize(
-                            " ".join(self.registry["metrics"][m]["aliases"])
-                        ).split()
-                    )
-                )
-                for m in s["metrics"]
+        for sid, subject in self.registry["subjects"].items():
+            if subject["source"] not in self.tables:
+                continue
+            direct = relevance(subject.get("aliases", []) + [subject["business_name"]])
+            metric = max(
+                (
+                    relevance(self.registry["metrics"][m].get("aliases", []))
+                    for m in subject["metrics"]
+                ),
+                default=0,
             )
-            column_hits = sum(
-                normalize(d["business_name"]) in normalize(prompt)
-                for d in self.registry["dimensions"].values()
-                if d["table"] == s["source"]
-            )
-            family = [s["source"]] + s.get("tables", [])
+            family = [subject["source"]] + subject.get("tables", [])
             vector = max(
                 ((vector_scores or {}).get(table, 0) for table in family), default=0
             )
-            relationship_hits = sum(
-                1
-                for table in family
-                if table in self.tables
-                and (
-                    table == s["source"]
-                    or any(
-                        e["from_table"] == s["source"] and e["to_table"] == table
-                        for e in self.edges
-                    )
-                )
-            )
-            scores.append(
-                (
-                    lexical * 3
-                    + metric_hits
-                    + column_hits
-                    + vector
-                    + min(relationship_hits, 3) * 0.1,
-                    sid,
-                )
-            )
-        scores.sort(key=lambda v: (-v[0], v[1]))
+            score = direct * 4 + metric * 3 + vector
+            if preferred_subjects and sid in preferred_subjects:
+                score += 8  # authoritative current session context for refinement
+            scores.append((score, sid))
+        scores.sort(key=lambda pair: (-pair[0], pair[1]))
+        strongest = scores[0][0] if scores else 0
+        selected = [
+            (score, sid)
+            for score, sid in scores
+            if score > 0 and score >= strongest * 0.35
+        ][: min(top_k, 4)]
         subjects = {
-            sid: self.registry["subjects"][sid]
-            for score, sid in scores[:top_k]
-            if self.registry["subjects"][sid]["source"] in self.tables
+            sid: deepcopy(self.registry["subjects"][sid]) for score, sid in selected
         }
-        mids = {m for s in subjects.values() for m in s["metrics"]}
-        metrics = {
-            m: {
+        mids = {m for subject in subjects.values() for m in subject["metrics"]}
+        metrics = {}
+        for mid in sorted(mids):
+            metric = self.registry["metrics"][mid]
+            try:
+                self.check_expression(metric["expression"])
+                if metric.get("time_column"):
+                    self.check_expression(metric["time_column"])
+            except (AnalysisError, sqlglot.errors.ParseError):
+                continue
+            metrics[mid] = {
                 k: v
-                for k, v in self.registry["metrics"][m].items()
-                if k not in ("expression", "business_filters")
+                for k, v in metric.items()
+                if k not in ("expression", "business_filters", "required_non_null")
             }
-            for m in sorted(mids)
-        }
+            metrics[mid]["allowed_dimensions"] = self.compatible_dimensions(mid)
+        dims = {d for metric in metrics.values() for d in metric["allowed_dimensions"]}
+        for subject in subjects.values():
+            for d in subject.get("detail_columns", []):
+                desc = self.registry["dimensions"].get(d)
+                if desc:
+                    try:
+                        self.check_column(desc["table"], desc["column"])
+                        self.path(
+                            subject.get("detail_source", subject["source"]),
+                            desc["table"],
+                        )
+                        dims.add(d)
+                    except AnalysisError:
+                        pass
         dimensions = {
-            d: {k: v for k, v in value.items() if k not in ("table", "column")}
-            for d, value in self.registry["dimensions"].items()
-            if value["table"] in self.tables
+            d: {
+                k: v
+                for k, v in self.registry["dimensions"][d].items()
+                if k not in ("table", "column", "expression")
+            }
+            for d in sorted(dims)
         }
         names = list(
             dict.fromkeys(
@@ -405,8 +461,31 @@ class AnalysisCatalog:
             "subjects": subjects,
             "metrics": metrics,
             "dimensions": dimensions,
+            "valid_time_dimensions": {
+                m: {"has_time": bool(v.get("time_column")), "grain": v["grain"]}
+                for m, v in metrics.items()
+            },
+            "join_paths": {
+                m: {
+                    d: [
+                        {"from_table": e["from_table"], "to_table": e["to_table"]}
+                        for e in self.path(
+                            v["source"], self.registry["dimensions"][d]["table"]
+                        )
+                    ]
+                    for d in v["allowed_dimensions"]
+                }
+                for m, v in metrics.items()
+            },
+            "evidence": {
+                "subject_scores": {sid: round(score, 3) for score, sid in selected},
+                "metric_scores": {
+                    mid: round(relevance(v.get("aliases", [])), 3)
+                    for mid, v in metrics.items()
+                },
+            },
             "retrieval": {
-                "strategy": "lexical_business_column_relationship",
+                "strategy": "staged_subject_metric_dimension_relationship",
                 "vector_status": vector_status,
                 "fingerprint": self.fingerprint,
             },
@@ -414,7 +493,7 @@ class AnalysisCatalog:
 
     def ground(self, spec: AnalysisSpec, today=None):
         r = self.registry
-        if spec.ambiguities or spec.confidence < 0.8:
+        if spec.ambiguities:
             choices = (
                 r["subjects"].get(spec.subject, {}).get("metrics", list(r["metrics"]))
             )
@@ -438,10 +517,13 @@ class AnalysisCatalog:
         for c in spec.components:
             mids.update(c.metrics)
             dims.update(c.dimensions + c.detail_columns)
+            component_subject = r["subjects"].get(c.subject or spec.subject)
+            if not component_subject:
+                raise AnalysisError("unsupported", "Unknown component subject")
             if c.kind in ("ranking", "distribution") and not c.dimensions:
-                dims.add(subject["default_dimension"])
+                dims.add(component_subject["default_dimension"])
             if c.kind == "detail" and not c.detail_columns:
-                dims.update(subject["detail_columns"])
+                dims.update(component_subject["detail_columns"])
             if c.ranking:
                 mids.add(c.ranking.metric)
                 dims.update(c.ranking.per_group)
@@ -450,6 +532,13 @@ class AnalysisCatalog:
             dims.update(spec.ranking.per_group)
         filters = list(spec.filters) + [
             f for g in spec.comparison_groups for f in g.filters
+        ]
+        filters += [f for c in spec.components for f in c.filters]
+        filters += [
+            f
+            for c in spec.components
+            for g in c.comparison_groups or []
+            for f in g.filters
         ]
         dims.update(f.dimension for f in filters)
         if (
@@ -465,22 +554,19 @@ class AnalysisCatalog:
             if mid not in r["metrics"]:
                 raise AnalysisError("unsupported", f"Unknown metric: {mid}")
             metric = deepcopy(r["metrics"][mid])
-            if spec.subject not in metric["subjects"]:
+            contexts = {
+                c.subject or spec.subject
+                for c in spec.components
+                if c.kind != "detail" and mid in (c.metrics or spec.metrics)
+            } or {spec.subject}
+            if not contexts <= set(metric["subjects"]):
                 raise AnalysisError(
                     "clarification",
                     f"Metric {mid} is not defined for subject {spec.subject}",
                     subject["metrics"],
                 )
             metric["sensitivity"] = "safe"
-            allowed = []
-            for name, dimension in r["dimensions"].items():
-                try:
-                    self.check_column(dimension["table"], dimension["column"])
-                    self.path(metric["source"], dimension["table"])
-                    allowed.append(name)
-                except AnalysisError:
-                    pass
-            metric["allowed_dimensions"] = sorted(allowed)
+            metric["allowed_dimensions"] = self.compatible_dimensions(mid)
             self.check_expression(metric["expression"])
             if metric.get("time_column"):
                 self.check_expression(metric["time_column"])

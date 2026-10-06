@@ -39,6 +39,13 @@ def record_verified(session, rating, fingerprint):
     filters = list(spec["filters"]) + [
         f for g in spec["comparison_groups"] for f in g["filters"]
     ]
+    filters += [f for c in spec["components"] for f in c.get("filters", [])]
+    filters += [
+        f
+        for c in spec["components"]
+        for g in c.get("comparison_groups") or []
+        for f in g["filters"]
+    ]
     if any(
         is_sensitive_column(f["dimension"]) or f["dimension"].endswith("_id")
         for f in filters
@@ -47,7 +54,10 @@ def record_verified(session, rating, fingerprint):
     for f in filters:
         if f["dimension"] != "city":
             f["value"] = "<redacted>" if f["operator"] != "in" else ["<redacted>"]
-    for index, group in enumerate(spec["comparison_groups"]):
+    groups = list(spec["comparison_groups"]) + [
+        g for c in spec["components"] for g in c.get("comparison_groups") or []
+    ]
+    for index, group in enumerate(groups):
         group["name"] = "group_" + str(index + 1)
     example_id = hashlib.sha256(
         json.dumps(
