@@ -35,7 +35,7 @@ def _invoke(action, payload):
     try:
         return getattr(pipeline, action)(payload)
     except Exception as error:
-        failure = safe_failure(error)
+        failure = safe_failure(error, pipeline.calls)
         logger.warning(
             "Analysis rejected action=%s category=%s",
             action,

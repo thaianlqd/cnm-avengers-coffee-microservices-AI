@@ -63,8 +63,8 @@ _FAMILIES = (
     ("tea", "drink", "trà", "Trà", ("tra", "tea")),
     ("pizza", "food", "Pizza", "Pizza & Pasta", ("pizza",)),
     ("pasta", "food", "Pizza", "Pizza & Pasta", ("pasta",)),
-    ("food", "food", None, "Menu bánh và đồ ăn", ("banh", "do an", "thuc an", "mon an")),
-    ("drink", "drink", None, "Menu nước", ("nuoc", "do uong", "thuc uong")),
+    ("food", "food", None, "Menu bánh và đồ ăn", ("banh", "do an", "thuc an", "mon an", "an")),
+    ("drink", "drink", None, "Menu nước", ("nuoc", "do uong", "thuc uong", "uong", "giai nhiet", "giai khat")),
 )
 _FAMILY_PHRASES = frozenset(phrase for row in _FAMILIES for phrase in row[4])
 _DISCOURSE_FRAME_WORDS = frozenset(
@@ -123,7 +123,7 @@ def _family(text: str) -> Optional[tuple[str, str, Optional[str], str]]:
     _, _, family, category, search, label = max(hits, key=lambda row: (row[0], -row[1]))
     if family == "matcha" and re.search(r"\bbanh\b", text):
         return "matcha", "food", "matcha", "Bánh Matcha"
-    if family == "matcha" and re.search(r"\b(?:nuoc|do uong|tra)\b", text):
+    if family == "matcha" and re.search(r"\b(?:nuoc|do uong|tra|uong)\b", text):
         return "matcha", "drink", "matcha", "Matcha"
     return family, category, search, label
 
@@ -138,7 +138,7 @@ def requested_discovery_family(message: str) -> Optional[dict]:
     """Keep an explicit matcha cake scope; mixed or alternative requests stay separate."""
     text = normalize_shopping(message)
     if (not re.search(r'\bmatcha\b', text) or not re.search(r'\b(?:banh|do an)\b', text)
-            or re.search(r'\b(?:nuoc|do uong|thuc uong|ca phe|tra|ly)\b', text)
+            or re.search(r'\b(?:nuoc|do uong|thuc uong|ca phe|tra|ly|uong)\b', text)
             or re.search(r'\b(?:khong|chua|dung)\s+(?:(?:muon|lay|mua|vi)\s+)*matcha\b', text)
             or re.search(r'\b(?:hoac|hay|banh khac|loai khac)\b', text)
             or re.search(r'\bmatcha\s+(?:va|voi)\s+(?!toi\b|minh\b|ban\b|xem\b)\w+', text)):

@@ -9,14 +9,23 @@ from unittest.mock import Mock, patch
 from common import AiTextToReportRequest, AiReportRefineRequest
 from services.analysis_pipeline import AnalysisPipeline, safe_failure
 from services.analysis_catalog import AnalysisCatalog, AnalysisError
-from services.data_analyst_agent import DataAnalystAgent, AgentBudget, SYSTEM
+from services.data_analyst_agent import (
+    DataAnalystAgent,
+    AgentBudget,
+    SYSTEM,
+    TOOL_MODELS,
+)
 from services.semantic_tools import SemanticTools
 from services.analytical_query_service import AnalyticalQueries, signature
 from services.analyst_contract import AnalyticalQuery, DashboardPlan
 from services.analysis_query import validate_sql, validate_results
 from services.insight_service import analytical_features, grounded_narrative
 from services.dashboard_planner_service import build_dashboard, chart_reason
-from services.agent_provider import NativeAgentProvider
+from services.agent_provider import (
+    NativeAgentProvider,
+    gemini_tool_schema,
+    http_failure,
+)
 from services.session_service import get_session
 from tests.analysis_fixtures import physical_metadata, ranked_rows, result
 from tests.agent_fixtures import ScriptedProvider, call, query_script, ranking_query
@@ -94,6 +103,11 @@ def fixture_artifact(q):
 
 class AgentTests(unittest.TestCase):
     def setUp(self):
+        config = patch.dict(
+            os.environ, {"GEMINI_API_STYLE": "native", "AI_AGENT_GROQ_FALLBACK": "1"}
+        )
+        config.start()
+        self.addCleanup(config.stop)
         for name in ("requests.sessions.Session.request", "psycopg2.connect"):
             guard = patch(
                 name, side_effect=AssertionError("OFFLINE: external calls forbidden")
@@ -228,10 +242,103 @@ class AgentTests(unittest.TestCase):
     def test_semantic_cache_and_round_budget(self):
         c = call("describe_semantic_concept", {"kind": "subject", "id": "products"})
         p = self.pipeline(ScriptedProvider([c], [c], [c]), budget=AgentBudget(rounds=3))
-        with self.assertRaises(AnalysisError):
+        with self.assertRaises(AnalysisError) as caught:
             p.propose(AiTextToReportRequest(prompt="fixture"))
         self.assertEqual(p.semantic_info["semantic_cache_hits"], 2)
+        self.assertEqual(caught.exception.category, "agent_budget")
+        self.assertIn("số lượt", safe_failure(caught.exception)["message"])
+        self.assertEqual(
+            [e["cache_hit"] for e in p.semantic_info["tool_trace"]],
+            [False, True, True],
+        )
+        self.assertNotIn("products", json.dumps(p.semantic_info["tool_trace"]))
         p.executor.assert_not_called()
+
+    def test_search_projects_grounded_semantics_with_bounded_enum_values(self):
+        lookup = Mock(side_effect=AssertionError("No row lookup during discovery"))
+        semantic = SemanticTools(self.catalog, lookup)
+        found = semantic.search({"query": "doanh thu", "kind": "metric"})
+        revenue = next(m for m in found["matches"] if m["id"] == "revenue")
+        self.assertEqual(revenue["subjects"], ["orders"])
+        self.assertEqual(revenue["grain"], "order")
+        self.assertEqual(revenue["unit"], "VND")
+        self.assertIn("city", revenue["dimensions"])
+        self.assertEqual(
+            revenue["business_filters"],
+            self.catalog.registry["metrics"]["revenue"]["business_filters"],
+        )
+        self.assertLessEqual(len(revenue["dimensions"]), 6)
+        self.assertEqual(revenue["pages"]["dimensions"]["next_offset"], 6)
+        self.assertNotIn("expression", revenue)
+        self.assertNotIn("silver.", json.dumps(found))
+        broad = semantic.search({"query": "a", "limit": 12})
+        self.assertEqual(len(broad["matches"]), 12)
+        self.assertEqual(broad["next_offset"], 12)
+        for page in (found, broad):
+            self.assertLess(
+                len(json.dumps(page, ensure_ascii=False, separators=(",", ":"))),
+                AgentBudget().tool_result_chars - 100,
+            )
+        city = semantic.describe("dimension", "city")
+        self.assertIn("Hà Nội", city["canonical_values"])
+        self.assertIn("Hồ Chí Minh", city["canonical_values"])
+        self.assertEqual(len(city["canonical_values"]), 8)
+        self.assertFalse(city["values_complete"])
+        store = semantic.describe("dimension", "store")
+        self.assertEqual(store["value_mode"], "lookup")
+        self.assertNotIn("canonical_values", store)
+        lookup.assert_not_called()
+
+    def test_city_comparison_proposal_finishes_in_three_rounds_without_sql(self):
+        provider = ScriptedProvider(
+            [call("search_semantic_catalog", {"query": "doanh thu", "kind": "metric"})],
+            [call("describe_semantic_concept", {"kind": "dimension", "id": "city"})],
+            [
+                call(
+                    "run_analysis",
+                    query(
+                        "orders",
+                        "revenue",
+                        group_by=["city"],
+                        filters=[
+                            {
+                                "dimension": "city",
+                                "operator": "in",
+                                "value": ["Hà Nội", "Hồ Chí Minh"],
+                            }
+                        ],
+                    ),
+                    "q",
+                ),
+                call("finish_analysis", {"active_query_ids": ["main"]}, "f"),
+            ],
+        )
+        p = self.pipeline(provider, budget=AgentBudget(rounds=3))
+        p.value_lookup = Mock(side_effect=AssertionError("No row lookup"))
+        response = p.propose(
+            AiTextToReportRequest(prompt="fixture", reference_date=REFERENCE)
+        )
+        self.assertEqual(response["status"], "proposal_ready")
+        self.assertEqual(response["diagnostics"]["agent_rounds"], 3)
+        self.assertEqual(response["diagnostics"]["analytical_tool_calls"], 1)
+        self.assertEqual(response["diagnostics"]["db_query_count"], 0)
+        p.executor.assert_not_called()
+        p.value_lookup.assert_not_called()
+        for i, remaining in ((1, 2), (2, 1)):
+            tool_result = [
+                m["result"]
+                for m in provider.requests[i]["messages"]
+                if m["role"] == "tool"
+            ][-1]
+            self.assertEqual(
+                tool_result["agent_progress"]["rounds_remaining"], remaining
+            )
+            self.assertEqual(tool_result["agent_progress"]["registered_queries"], 0)
+        trace = response["diagnostics"]["tool_trace"]
+        self.assertEqual(len(trace), 4)
+        self.assertEqual(trace[-1]["status"], "finished")
+        self.assertEqual(trace[-1]["registered_queries"], 1)
+        self.assertNotIn("Hà Nội", json.dumps(trace, ensure_ascii=False))
 
     def test_invalid_batch_rejected_before_any_execution(self):
         bad = ranking_query(id="bad", limit=100000)
@@ -766,6 +873,597 @@ class AgentTests(unittest.TestCase):
         self.assertNotIn("FORBIDDEN_REPLAY", context)
         self.assertNotIn("SELECT ", context)
 
+    def test_provider_http_failure_is_specific_and_logs_no_response_or_key(self):
+        cases = {
+            400: "provider_bad_request",
+            401: "provider_auth",
+            403: "provider_access_denied",
+            404: "provider_model_not_found",
+            429: "provider_rate_limited",
+            503: "provider_unavailable",
+        }
+        for status, category in cases.items():
+            with self.subTest(status=status):
+                response = Mock(
+                    ok=False, status_code=status, text="PRIVATE_PROVIDER_BODY"
+                )
+                provider = NativeAgentProvider()
+                with patch.dict(os.environ, {"AI_OFFLINE": "0"}), patch(
+                    "services.llm_service.GEMINI_API_KEY", "PRIVATE_API_KEY"
+                ), patch("services.llm_service.GROQ_API_KEY", ""), patch(
+                    "services.agent_provider.requests.post", return_value=response
+                ), self.assertLogs(
+                    "ai-native-provider", level="WARNING"
+                ) as logs:
+                    p = self.pipeline(provider=provider)
+                    with self.assertRaises(AnalysisError) as caught:
+                        p.propose(AiTextToReportRequest(prompt="fixture"))
+                self.assertEqual(caught.exception.category, category)
+                failure = safe_failure(caught.exception)
+                self.assertEqual(failure["status"], "error")
+                self.assertNotIn("diễn giải", failure["message"])
+                self.assertEqual(p.calls[0]["http_status"], status)
+                self.assertIn(f"http_status={status}", " ".join(logs.output))
+                self.assertNotIn("PRIVATE_API_KEY", " ".join(logs.output))
+                self.assertNotIn("PRIVATE_PROVIDER_BODY", json.dumps(p.calls))
+                response.json.assert_called()
+                p.executor.assert_not_called()
+
+    def test_daily_quota_is_specific_bounded_and_private(self):
+        response = Mock(ok=False, status_code=429, headers={})
+        response.json.return_value = [
+            {
+                "error": {
+                    "status": "RESOURCE_EXHAUSTED",
+                    "message": "PRIVATE_PROVIDER_BODY",
+                    "details": [
+                        {
+                            "violations": [
+                                {
+                                    "quotaId": "GenerateRequestsPerModelPerDay-FreeTier",
+                                    "quotaMetric": "generate_requests",
+                                    "quotaValue": "20",
+                                    "quotaDimensions": {"project": "PRIVATE_PROJECT"},
+                                }
+                            ]
+                        },
+                        {"retryDelay": "61603s"},
+                    ],
+                }
+            }
+        ]
+        failure = http_failure(response)
+        self.assertEqual(failure["error_category"], "provider_daily_quota")
+        self.assertEqual(
+            failure["quota_scopes"],
+            [{"unit": "requests", "window": "day", "limit": 20}],
+        )
+        self.assertEqual(failure["retry_after_seconds"], 61603)
+        with patch.dict(
+            os.environ, {"AI_OFFLINE": "0", "AI_AGENT_GROQ_FALLBACK": "0"}
+        ), patch("services.llm_service.GEMINI_API_KEY", "fixture"), patch(
+            "services.llm_service.GEMINI_MODELS", ("first", "second", "third")
+        ), patch(
+            "services.agent_provider.requests.post", return_value=response
+        ) as post, self.assertLogs(
+            "ai-native-provider", level="WARNING"
+        ) as logs:
+            p = self.pipeline(NativeAgentProvider())
+            with self.assertRaises(AnalysisError) as caught:
+                p.propose(AiTextToReportRequest(prompt="fixture"))
+        self.assertEqual(post.call_count, 3)
+        self.assertEqual(caught.exception.category, "provider_daily_quota")
+        answer = safe_failure(caught.exception, p.calls)
+        self.assertIn("20 yêu cầu/ngày", answer["message"])
+        self.assertIn("17 giờ 7 phút", answer["message"])
+        self.assertEqual(answer["question"], answer["message"])
+        p.executor.assert_not_called()
+        for marker in ("PRIVATE_PROJECT", "PRIVATE_PROVIDER_BODY"):
+            self.assertNotIn(
+                marker, json.dumps(p.calls) + json.dumps(answer) + str(logs.output)
+            )
+
+    def test_minute_quota_and_malformed_details_are_not_daily(self):
+        response = Mock(status_code=429, headers={"Retry-After": "999999"})
+        response.json.return_value = {
+            "error": {
+                "details": [
+                    {
+                        "retryDelay": "NaNs",
+                        "violations": [
+                            {
+                                "quotaId": "InputTokensPerMinute",
+                                "quotaMetric": "token",
+                                "quotaValue": "6000",
+                            },
+                            {"quotaId": {}, "quotaMetric": "PRIVATE"},
+                            "PRIVATE",
+                        ],
+                    },
+                    {"violations": {"PRIVATE": "value"}},
+                    "PRIVATE",
+                    {"retryDelay": []},
+                ]
+            }
+        }
+        failure = http_failure(response)
+        self.assertEqual(failure["error_category"], "provider_rate_limited")
+        self.assertEqual(failure["retry_after_seconds"], 86400)
+        self.assertEqual(
+            failure["quota_scopes"],
+            [{"unit": "tokens", "window": "minute", "limit": 6000}],
+        )
+        self.assertNotIn("PRIVATE", json.dumps(failure))
+
+    def test_gemini_tool_schemas_declare_objects_and_filter_values(self):
+        def walk(schema):
+            if isinstance(schema, list):
+                for child in schema:
+                    walk(child)
+            elif isinstance(schema, dict):
+                if schema.get("type") == "object":
+                    self.assertTrue(schema.get("properties"))
+                    if {"dimension", "operator", "value"} <= schema[
+                        "properties"
+                    ].keys():
+                        value = schema["properties"]["value"]
+                        self.assertEqual(
+                            {s["type"] for s in value["anyOf"]},
+                            {"string", "number", "boolean", "array"},
+                        )
+                for child in schema.values():
+                    walk(child)
+
+        for name, (model, description) in TOOL_MODELS.items():
+            with self.subTest(tool=name):
+                schema = gemini_tool_schema(
+                    {
+                        "name": name,
+                        "description": description,
+                        "parameters": model.model_json_schema(),
+                    }
+                )
+                walk(schema)
+                if name == "ask_clarification":
+                    draft = schema["properties"]["known_query"]["anyOf"][0]
+                    self.assertNotIn("required", draft)
+                    self.assertEqual(
+                        set(draft["properties"]),
+                        {
+                            "subject",
+                            "operation",
+                            "metrics",
+                            "group_by",
+                            "filters",
+                            "ranking",
+                            "time",
+                        },
+                    )
+                    self.assertNotIn("id", draft["properties"])
+
+    def test_gemini_wire_omits_validation_dialect_but_server_keeps_bounds(self):
+        allowed = {
+            "type",
+            "properties",
+            "required",
+            "enum",
+            "items",
+            "anyOf",
+            "nullable",
+            "description",
+        }
+
+        def walk(schema):
+            self.assertFalse(set(schema) - allowed)
+            for child in schema.get("properties", {}).values():
+                walk(child)
+            if "items" in schema:
+                walk(schema["items"])
+            for child in schema.get("anyOf", []):
+                walk(child)
+
+        for name, (model, description) in TOOL_MODELS.items():
+            source = model.model_json_schema()
+            before = deepcopy(source)
+            walk(gemini_tool_schema({"name": name, "parameters": source}))
+            self.assertEqual(source, before)
+        search = TOOL_MODELS["search_semantic_catalog"][0]
+        with self.assertRaises(ValueError):
+            search.model_validate({"query": "x" * 121})
+        with self.assertRaises(ValueError):
+            search.model_validate({"query": "ok", "limit": 99})
+        with self.assertRaises(ValueError):
+            search.model_validate({"query": "ok", "sql": "SELECT 1"})
+
+    def test_gemini_only_preserves_400_instead_of_masking_with_groq_quota(self):
+        response = Mock(ok=False, status_code=400)
+        response.json.return_value = {
+            "error": {
+                "status": "INVALID_ARGUMENT",
+                "message": "functionDeclarations parametersJsonSchema known_query properties should be non-empty PRIVATE_SECRET",
+            }
+        }
+        with patch.dict(
+            os.environ, {"AI_OFFLINE": "0", "AI_AGENT_GROQ_FALLBACK": "0"}
+        ), patch("services.llm_service.GEMINI_API_KEY", "PRIVATE_API_KEY"), patch(
+            "services.llm_service.GROQ_API_KEY", "fixture-groq"
+        ), patch(
+            "services.agent_provider.requests.post", return_value=response
+        ) as post, self.assertLogs(
+            "ai-native-provider", level="WARNING"
+        ) as logs:
+            provider = NativeAgentProvider()
+            p = self.pipeline(provider=provider)
+            with self.assertRaises(AnalysisError) as caught:
+                p.propose(AiTextToReportRequest(prompt="fixture"))
+        self.assertEqual(post.call_count, 1)
+        self.assertEqual(caught.exception.category, "provider_schema_invalid")
+        self.assertEqual(p.calls[0]["provider"], "gemini")
+        self.assertEqual(p.calls[0]["error_reason"], "tool_object_properties")
+        self.assertEqual(p.calls[0]["provider_error_status"], "INVALID_ARGUMENT")
+        self.assertIn("known_query", p.calls[0]["schema_keywords"])
+        self.assertNotIn("PRIVATE_SECRET", json.dumps(p.calls) + str(logs.output))
+        self.assertNotIn("PRIVATE_API_KEY", json.dumps(p.calls) + str(logs.output))
+        p.executor.assert_not_called()
+
+    def test_gemini_400_api_key_error_is_authentication_not_schema(self):
+        response = Mock(status_code=400)
+        response.json.return_value = {
+            "error": {
+                "status": "INVALID_ARGUMENT",
+                "message": "PRIVATE_MESSAGE",
+                "details": [
+                    {"reason": "API_KEY_INVALID", "metadata": {"secret": "PRIVATE_KEY"}}
+                ],
+            }
+        }
+        failure = http_failure(response)
+        self.assertEqual(failure["error_category"], "provider_auth")
+        self.assertEqual(failure["error_reason"], "api_key_invalid")
+        self.assertNotIn("PRIVATE", json.dumps(failure))
+
+    def test_gemini_compat_array_error_preserves_category_without_prose(self):
+        response = Mock(status_code=400)
+        response.json.return_value = [
+            {
+                "error": {
+                    "status": "INVALID_ARGUMENT",
+                    "message": "PRIVATE_PROVIDER_TEXT",
+                    "details": [{"reason": "API_KEY_INVALID"}],
+                }
+            }
+        ]
+        failure = http_failure(response)
+        self.assertEqual(failure["error_category"], "provider_auth")
+        self.assertEqual(failure["provider_error_status"], "INVALID_ARGUMENT")
+        self.assertNotIn("PRIVATE_PROVIDER_TEXT", json.dumps(failure))
+
+    def test_provider_error_body_with_unexpected_types_stays_private(self):
+        response = Mock(status_code=400)
+        response.json.return_value = {
+            "error": {
+                "status": {"secret": "PRIVATE"},
+                "message": ["PRIVATE"],
+                "details": [{"reason": ["PRIVATE"]}, "PRIVATE"],
+            }
+        }
+        self.assertEqual(
+            http_failure(response),
+            {
+                "http_status": 400,
+                "error_category": "provider_bad_request",
+            },
+        )
+
+    def test_configured_gemini_order_daily_quota_recovery_and_pinning(self):
+        quota = Mock(ok=False, status_code=429)
+        quota.json.return_value = {
+            "error": {
+                "details": [
+                    {
+                        "violations": [
+                            {
+                                "quotaId": "RequestsPerModelPerDay",
+                                "quotaMetric": "requests",
+                                "quotaValue": "20",
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+        missing = Mock(ok=False, status_code=404)
+        working = Mock(ok=True)
+        working.json.return_value = {
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [
+                            {
+                                "functionCall": {
+                                    "name": "search_semantic_catalog",
+                                    "args": {"query": "orders"},
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+        models = (
+            "gemini-3.5-flash-lite",
+            "gemini-3.1-flash-lite",
+            "gemini-3.8-flash",
+            "never",
+        )
+        with patch.dict(
+            os.environ, {"AI_OFFLINE": "0", "AI_AGENT_GROQ_FALLBACK": "0"}
+        ), patch("services.llm_service.GEMINI_API_KEY", "fixture"), patch(
+            "services.llm_service.GEMINI_MODELS", models
+        ), patch(
+            "services.agent_provider.requests.post",
+            side_effect=[quota, missing, working, quota],
+        ) as post:
+            provider = NativeAgentProvider()
+            kwargs = {
+                "system": SYSTEM,
+                "messages": [{"role": "user", "content": "fixture"}],
+                "tools": [],
+            }
+            first = provider(**kwargs)
+            second = provider(**kwargs)
+        self.assertEqual([a["model"] for a in first["attempts"]], list(models[:3]))
+        self.assertEqual(first["attempts"][-1]["status"], "success")
+        self.assertEqual(provider.gemini_model, models[2])
+        self.assertEqual([a["model"] for a in second["attempts"]], [models[2]])
+        self.assertIsNone(second["calls"])
+        self.assertEqual(post.call_count, 4)
+
+    def test_gemini_missing_model_tries_one_configured_alternative_and_pins_it(self):
+        missing = Mock(ok=False, status_code=404)
+        working = Mock(ok=True)
+        working.json.return_value = {
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [
+                            {
+                                "functionCall": {
+                                    "name": "search_semantic_catalog",
+                                    "args": {"query": "orders"},
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+        provider = NativeAgentProvider()
+        kwargs = {
+            "system": SYSTEM,
+            "messages": [{"role": "user", "content": "fixture"}],
+            "tools": [],
+        }
+        with patch.dict(os.environ, {"AI_OFFLINE": "0"}), patch(
+            "services.llm_service.GEMINI_API_KEY", "fixture"
+        ), patch("services.llm_service.GROQ_API_KEY", "fixture"), patch(
+            "services.llm_service.GEMINI_MODELS",
+            ("missing-model", "available-model", "never-model"),
+        ), patch(
+            "services.agent_provider.requests.post",
+            side_effect=[missing, working, working],
+        ) as post:
+            first = provider(**kwargs)
+            second = provider(**kwargs)
+        self.assertEqual(
+            [a["model"] for a in first["attempts"]],
+            ["missing-model", "available-model"],
+        )
+        self.assertEqual([a["model"] for a in second["attempts"]], ["available-model"])
+        self.assertEqual(post.call_count, 3)
+        self.assertEqual(provider.gemini_model, "available-model")
+        self.assertFalse(provider.primary_failed)
+
+    def test_gemini_compat_endpoint_auth_and_exact_signed_continuation(self):
+        original = {
+            "id": "compat1",
+            "type": "function",
+            "function": {
+                "name": "search_semantic_catalog",
+                "arguments": '{ "query": "orders" }',
+            },
+            "extra_content": {
+                "google": {
+                    "thought_signature": "OPAQUE_PRIVATE",
+                    "thought": "PRIVATE_THOUGHT",
+                },
+                "secret": "PRIVATE_EXTRA",
+            },
+        }
+        response = Mock(ok=True)
+        response.json.return_value = {
+            "choices": [
+                {"message": {"tool_calls": [original], "reasoning": "PRIVATE_THOUGHT"}}
+            ],
+            "usage": {"prompt_tokens": 12, "completion_tokens": 3},
+        }
+        tools = [
+            {
+                "name": "search_semantic_catalog",
+                "description": "Search",
+                "parameters": TOOL_MODELS["search_semantic_catalog"][
+                    0
+                ].model_json_schema(),
+            }
+        ]
+        messages = [{"role": "user", "content": "fixture"}]
+        with patch.dict(
+            os.environ,
+            {
+                "AI_OFFLINE": "0",
+                "GEMINI_API_STYLE": "openai",
+                "AI_AGENT_GROQ_FALLBACK": "0",
+            },
+        ), patch("services.llm_service.GEMINI_API_KEY", " fixture-key "), patch(
+            "services.llm_service.GEMINI_MODELS", ("gemini-3.6-flash",)
+        ), patch(
+            "services.agent_provider.requests.post", return_value=response
+        ) as post:
+            provider = NativeAgentProvider()
+            first = provider(system=SYSTEM, messages=messages, tools=tools)
+            messages += [
+                {"role": "assistant", "calls": first["calls"]},
+                {
+                    "role": "tool",
+                    "id": "compat1",
+                    "name": "search_semantic_catalog",
+                    "result": {"matches": []},
+                },
+            ]
+            provider(system=SYSTEM, messages=messages, tools=tools)
+        url, kwargs = post.call_args.args[0], post.call_args.kwargs
+        self.assertEqual(
+            url,
+            "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+        )
+        self.assertEqual(kwargs["headers"]["Authorization"], "Bearer fixture-key")
+        self.assertNotIn("params", kwargs)
+        body = kwargs["json"]
+        self.assertEqual(body["model"], "gemini-3.6-flash")
+        self.assertEqual(body["tool_choice"], "required")
+        self.assertNotIn("response_format", body)
+        self.assertEqual(body["messages"][0]["role"], "system")
+        saved = body["messages"][2]["tool_calls"][0]
+        self.assertEqual(saved["function"], original["function"])
+        self.assertEqual(
+            saved["extra_content"], {"google": {"thought_signature": "OPAQUE_PRIVATE"}}
+        )
+        self.assertEqual(body["messages"][3]["tool_call_id"], saved["id"])
+        self.assertNotIn("PRIVATE_THOUGHT", json.dumps(body))
+        self.assertNotIn("PRIVATE_EXTRA", json.dumps(body))
+        self.assertNotIn("OPAQUE_PRIVATE", json.dumps(first))
+        self.assertNotIn(
+            "OPAQUE_PRIVATE", json.dumps(provider._groq_messages(SYSTEM, messages))
+        )
+        self.assertEqual(first["attempts"][0]["tokens"], {"input": 12, "output": 3})
+        self.assertEqual(first["attempts"][0]["api_style"], "openai")
+        provider.reset()
+        self.assertFalse(provider.gemini_compat_calls)
+
+    def test_gemini_compat_failure_has_one_attempt_when_groq_disabled(self):
+        bad = Mock(ok=False, status_code=400)
+        bad.json.return_value = {
+            "error": {
+                "status": "INVALID_ARGUMENT",
+                "message": "private arbitrary provider error",
+            }
+        }
+        with patch.dict(
+            os.environ,
+            {
+                "AI_OFFLINE": "0",
+                "GEMINI_API_STYLE": "openai",
+                "AI_AGENT_GROQ_FALLBACK": "0",
+            },
+        ), patch("services.llm_service.GEMINI_API_KEY", "fixture"), patch(
+            "services.llm_service.GROQ_API_KEY", "fixture"
+        ), patch(
+            "services.agent_provider.requests.post", return_value=bad
+        ) as post:
+            provider = NativeAgentProvider()
+            answer = provider(
+                system=SYSTEM,
+                messages=[{"role": "user", "content": "fixture"}],
+                tools=[],
+            )
+        self.assertIsNone(answer["calls"])
+        self.assertEqual(post.call_count, 1)
+        self.assertEqual(
+            answer["attempts"][0]["error_category"], "provider_bad_request"
+        )
+        self.assertNotIn("private arbitrary", json.dumps(answer))
+        self.assertFalse(provider.gemini_compat_calls)
+
+    def test_gemini_compat_pipeline_grounding_execution_and_private_signatures(self):
+        rounds = [
+            [
+                call(
+                    "describe_semantic_concept",
+                    {"kind": "subject", "id": "products"},
+                    "describe",
+                )
+            ],
+            [
+                call("run_analysis", ranking_query(), "query"),
+                call("finish_analysis", {"active_query_ids": ["main"]}, "finish"),
+            ],
+        ]
+        responses = []
+        for calls in rounds:
+            response = Mock(ok=True)
+            response.json.return_value = {
+                "choices": [
+                    {
+                        "message": {
+                            "tool_calls": [
+                                {
+                                    "id": c["id"],
+                                    "type": "function",
+                                    "function": {
+                                        "name": c["name"],
+                                        "arguments": json.dumps(c["arguments"]),
+                                    },
+                                    "extra_content": {
+                                        "google": {
+                                            "thought_signature": "PRIVATE_SIGNATURE"
+                                        }
+                                    },
+                                }
+                                for c in calls
+                            ]
+                        }
+                    }
+                ],
+                "usage": {"prompt_tokens": 60, "completion_tokens": 10},
+            }
+            responses.append(response)
+        with patch.dict(
+            os.environ,
+            {
+                "AI_OFFLINE": "0",
+                "GEMINI_API_STYLE": "openai",
+                "AI_AGENT_GROQ_FALLBACK": "0",
+            },
+        ), patch("services.llm_service.GEMINI_API_KEY", "fixture"), patch(
+            "services.llm_service.GEMINI_MODELS", ("gemini-3.6-flash",)
+        ), patch(
+            "services.agent_provider.requests.post", side_effect=responses
+        ) as post:
+            p = self.pipeline(provider=NativeAgentProvider())
+            report = p.generate(
+                AiTextToReportRequest(prompt="fixture", reference_date=REFERENCE)
+            )
+        self.assertEqual(report["status"], "success")
+        self.assertTrue(report["charts"])
+        p.executor.assert_called_once()
+        self.assertEqual(post.call_count, 2)
+        self.assertNotIn("PRIVATE_SIGNATURE", json.dumps(report, default=str))
+        self.assertEqual(report["diagnostics"]["agent_rounds"], 2)
+        self.assertTrue(
+            all(
+                a["api_style"] == "openai"
+                for a in report["diagnostics"]["provider_calls"]
+            )
+        )
+        last = post.call_args.kwargs["json"]
+        self.assertEqual(len(last["tools"]), 6)
+        self.assertEqual(
+            last["messages"][2]["tool_calls"][0]["extra_content"]["google"][
+                "thought_signature"
+            ],
+            "PRIVATE_SIGNATURE",
+        )
+
     def test_native_provider_gemini_signature_and_groq_fallback(self):
         signed = {
             "functionCall": {
@@ -825,7 +1523,7 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(
             body["contents"][-1]["parts"][0]["functionResponse"]["id"], "call1"
         )
-        bad = Mock(ok=False, status_code=503)
+        bad = Mock(ok=False, status_code=500)
         good = Mock(ok=True)
         good.json.return_value = {
             "choices": [
@@ -858,6 +1556,112 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(post.call_count, 2)
         self.assertEqual(answer["attempts"][-1]["provider"], "groq")
         self.assertIsNone(answer["attempts"][-1]["tokens"]["input"])
+
+    def test_gemini_503_retries_same_signed_continuation_once(self):
+        for style in ("native", "openai"):
+            with self.subTest(style=style):
+                raw = {
+                    "id": "signed",
+                    "type": "function",
+                    "function": {
+                        "name": "search_semantic_catalog",
+                        "arguments": '{"query":"orders"}',
+                    },
+                    "extra_content": {"google": {"thought_signature": "OPAQUE"}},
+                }
+                good = Mock(ok=True)
+                good.json.return_value = {
+                    "candidates": [
+                        {
+                            "content": {
+                                "parts": [
+                                    {
+                                        "functionCall": {
+                                            "id": "signed",
+                                            "name": "search_semantic_catalog",
+                                            "args": {"query": "orders"},
+                                        },
+                                        "thoughtSignature": "OPAQUE",
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    "choices": [{"message": {"tool_calls": [raw]}}],
+                    "usage": {},
+                    "usageMetadata": {},
+                }
+                bad = Mock(ok=False, status_code=503)
+                bad.json.return_value = {"error": {"status": "UNAVAILABLE"}}
+                messages = [{"role": "user", "content": "fixture"}]
+                with patch.dict(
+                    os.environ,
+                    {
+                        "AI_OFFLINE": "0",
+                        "GEMINI_API_STYLE": style,
+                        "AI_AGENT_GROQ_FALLBACK": "0",
+                    },
+                ), patch("services.llm_service.GEMINI_API_KEY", "fixture"), patch(
+                    "services.llm_service.GEMINI_MODELS", ("working",)
+                ), patch(
+                    "services.agent_provider.requests.post",
+                    side_effect=[good, bad, good],
+                ) as post, patch(
+                    "services.agent_provider.time.sleep"
+                ) as pause:
+                    provider = NativeAgentProvider()
+                    first = provider(system=SYSTEM, messages=messages, tools=[])
+                    messages += [
+                        {"role": "assistant", "calls": first["calls"]},
+                        {
+                            "role": "tool",
+                            "id": "signed",
+                            "name": "search_semantic_catalog",
+                            "result": {"matches": []},
+                        },
+                    ]
+                    second = provider(system=SYSTEM, messages=messages, tools=[])
+                self.assertEqual(post.call_count, 3)
+                self.assertEqual(
+                    [a["status"] for a in second["attempts"]], ["failed", "success"]
+                )
+                self.assertEqual(second["attempts"][0]["http_status"], 503)
+                self.assertTrue(
+                    all(a["provider"] == "gemini" for a in second["attempts"])
+                )
+                self.assertEqual(provider.gemini_model, "working")
+                self.assertFalse(provider.primary_failed)
+                self.assertEqual(post.call_args_list[1], post.call_args_list[2])
+                payload = post.call_args_list[2].kwargs["json"]
+                self.assertIn("OPAQUE", json.dumps(payload))
+                self.assertNotIn("OPAQUE", json.dumps(second))
+                pause.assert_called_once_with(0.5)
+
+    def test_gemini_recovery_is_bounded_and_does_not_retry_auth_quota_schema(self):
+        for status, expected in ((503, 2), (400, 1), (401, 1), (429, 1), (500, 1)):
+            with self.subTest(status=status), patch.dict(
+                os.environ,
+                {
+                    "AI_OFFLINE": "0",
+                    "GEMINI_API_STYLE": "openai",
+                    "AI_AGENT_GROQ_FALLBACK": "0",
+                },
+            ), patch("services.llm_service.GEMINI_API_KEY", "fixture"), patch(
+                "services.llm_service.GEMINI_MODELS", ("working",)
+            ), patch(
+                "services.agent_provider.time.sleep"
+            ), patch(
+                "services.agent_provider.requests.post",
+                return_value=Mock(ok=False, status_code=status),
+            ) as post:
+                response = NativeAgentProvider()(
+                    system=SYSTEM,
+                    messages=[{"role": "user", "content": "fixture"}],
+                    tools=[],
+                )
+                self.assertIsNone(response["calls"])
+                self.assertEqual(post.call_count, expected)
+                self.assertEqual(len(response["attempts"]), expected)
 
     def test_supporting_budget_preserves_requested_operation(self):
         requested = ranking_query()

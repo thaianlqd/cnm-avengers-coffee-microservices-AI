@@ -206,13 +206,13 @@ class GuardedToolGateway:
             from src.agents.shopping_language import requested_product_category
             category = requested_product_category(self.user_message)
             from src.agents.shopping_language import normalize_shopping
-            mixed = bool(re.search(r'\b(?:nuoc|do uong|ly)\b', normalize_shopping(self.user_message))
-                         and re.search(r'\b(?:banh|do an)\b', normalize_shopping(self.user_message)))
+            mixed = bool(re.search(r'\b(?:nuoc|do uong|ly|uong)\b', normalize_shopping(self.user_message))
+                         and re.search(r'\b(?:banh|do an|an)\b', normalize_shopping(self.user_message)))
             if not (type(plan) is int and plan > 1) and not mixed:
                 if category or args.get('category') in {'drink', 'food'}:
                     args['category'] = category or 'all'
             if (args.get('category') in {'drink', 'food'} and normalize_shopping(args.get('search_text'))
-                    in {'nuoc', 'mon nuoc', 'do uong', 'thuc uong', 'banh', 'do an', 'thuc an'}):
+                    in {'nuoc', 'mon nuoc', 'do uong', 'thuc uong', 'uong', 'mon uong', 'banh', 'do an', 'thuc an', 'an', 'mon an'}):
                 args['search_text'] = ''  # Category words are not literal product-name constraints.
             scope = self.artifacts.discovery_scope
             if scope:

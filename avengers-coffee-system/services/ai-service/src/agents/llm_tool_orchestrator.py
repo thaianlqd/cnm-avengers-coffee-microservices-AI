@@ -68,6 +68,7 @@ For 3+ arms, multiple category scopes or additional reads after a complementary 
 as the TOTAL distinct reads on the first read. Never repeat an identical successful discovery read.
 Once the declared plan or same-scope opposite price reads are complete, synthesize from their evidence.
 Category is broad (drink/food); search_text is empty for generic nước/bánh; bánh có vị matcha uses food + matcha.
+For refreshing/cold drinks or hot weather requests (e.g. món mát, trời nóng, giải nhiệt), use category drink without setting search_text to mát. Only use sort_by='sold_desc' when the customer explicitly asks for bestsellers/top-selling items (bán chạy, bán nhiều, bestseller).
 For an unrestricted request use category all. For ranking, do not invent numeric price bounds.
 The newest request's scope overrides earlier topics; do not carry an older category into a broad request.
 Set inclusive=false for strict under/over boundaries and true for explicitly inclusive boundaries.

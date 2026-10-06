@@ -1,3 +1,4 @@
+import re
 import logging
 import html
 import unicodedata
@@ -147,7 +148,13 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
                     product = _clean_dict(dict(row))
                     haystack = " ".join(_catalog_name_key(product.get(field)) for field in
                                         ("product_name", "category", "parent_category"))
-                    if not terms or all(term in haystack for term in terms):
+                    def _term_matches(t, text):
+                        if t == "mat":
+                            return bool(re.search(r'(?<!\w)mat(?!\w)', text)) or "nong" not in text
+                        if t in {"nong", "lanh"}:
+                            return bool(re.search(r'(?<!\w)' + re.escape(t) + r'(?!\w)', text))
+                        return t in text
+                    if not terms or all(_term_matches(term, haystack) for term in terms):
                         products.append(product)
                         if len(products) >= params["limit"]:
                             break
@@ -588,6 +595,7 @@ def execute_get_product_insights(product_name: str) -> Dict[str, Any]:
 
             avg_rating = float(stats[0])
             total_reviews = stats[1]
+            comments = [r[0] for r in reviews]
             clean_comments = [re.sub(r"^\[.*?\]\s*(?:[^:]+:\s*)?", "", c).strip() for c in comments]
             clean_comments = [c for c in clean_comments if c]
 

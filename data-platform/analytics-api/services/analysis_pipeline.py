@@ -3,7 +3,7 @@
 from services.agent_pipeline import AnalysisPipeline
 
 
-def safe_failure(error):
+def safe_failure(error, provider_calls=None):
     category = getattr(error, "category", "internal")
     structured = getattr(error, "clarification", None)
     clarification_categories = {
@@ -26,6 +26,20 @@ def safe_failure(error):
         "forecast_unsupported",
     }
     messages = {
+        "agent_budget": "Trợ lý chưa hoàn tất kế hoạch trong số lượt xử lý cho phép. Vui lòng thử lại.",
+        "provider_unavailable": "Dịch vụ AI hiện chưa khả dụng nên chưa thể lập kế hoạch phân tích. Vui lòng thử lại sau.",
+        "provider_offline": "Dịch vụ AI đang ở chế độ offline nên chưa thể lập kế hoạch phân tích.",
+        "provider_configuration_missing": "Máy chủ chưa có cấu hình provider AI khả dụng. Vui lòng kiểm tra cấu hình dịch vụ AI.",
+        "provider_auth": "Xác thực với dịch vụ AI thất bại. Vui lòng kiểm tra API key trong cấu hình máy chủ.",
+        "provider_access_denied": "Nhà cung cấp AI từ chối quyền truy cập. Vui lòng kiểm tra quyền sử dụng dịch vụ AI.",
+        "provider_model_not_found": "Model AI được cấu hình chưa khả dụng. Vui lòng kiểm tra cấu hình model trên máy chủ.",
+        "provider_rate_limited": "Dịch vụ AI đang vượt giới hạn sử dụng hoặc quota. Vui lòng thử lại sau.",
+        "provider_daily_quota": "Model AI đã hết hạn mức theo ngày. Vui lòng chờ quota được cấp lại.",
+        "provider_timeout": "Dịch vụ AI phản hồi quá thời gian chờ. Vui lòng thử lại sau.",
+        "provider_connection": "Không thể kết nối đến nhà cung cấp AI. Vui lòng kiểm tra kết nối mạng của máy chủ.",
+        "provider_schema_invalid": "Nhà cung cấp AI từ chối cấu trúc yêu cầu. Cấu hình tích hợp dịch vụ AI cần được kiểm tra.",
+        "provider_bad_request": "Dịch vụ AI từ chối yêu cầu. Máy chủ cần kiểm tra nguyên nhân lỗi từ nhà cung cấp AI.",
+        "provider_invalid_json": "Dịch vụ AI trả về dữ liệu chưa hợp lệ. Vui lòng thử lại sau.",
         "privacy": "Yêu cầu có trường dữ liệu nhạy cảm; hệ thống không thể cung cấp trường này.",
         "metadata": "Danh mục dữ liệu hiện chưa sẵn sàng. Vui lòng thử lại sau.",
         "session": "Phiên phân tích đã hết hạn hoặc phiên bản đã thay đổi. Vui lòng đề xuất lại yêu cầu.",
@@ -41,6 +55,33 @@ def safe_failure(error):
             "Hệ thống chưa thể diễn giải hoặc kiểm chứng yêu cầu lúc này. Vui lòng thử lại.",
         )
     )
+    if category == "provider_daily_quota" and provider_calls:
+        import math
+
+        attempt = provider_calls[-1]
+        if isinstance(attempt, dict):
+            scopes = attempt.get("quota_scopes", [])
+            if isinstance(scopes, list):
+                limits = [
+                    s["limit"]
+                    for s in scopes
+                    if isinstance(s, dict)
+                    and s.get("unit") == "requests"
+                    and s.get("window") == "day"
+                    and type(s.get("limit")) is int
+                    and 0 < s["limit"] <= 1000000000
+                ]
+                if limits:
+                    message = f"Model AI đã hết hạn mức {min(limits)} yêu cầu/ngày."
+            delay = attempt.get("retry_after_seconds")
+            if (
+                type(delay) in (int, float)
+                and math.isfinite(delay)
+                and 0 < delay <= 86400
+            ):
+                hours, minutes = divmod(math.ceil(delay / 60), 60)
+                wait = f"{hours} giờ {minutes} phút" if hours else f"{minutes} phút"
+                message += f" Thời gian chờ nhà cung cấp báo: khoảng {wait}."
     options = (
         structured.get("choices", [])
         if structured

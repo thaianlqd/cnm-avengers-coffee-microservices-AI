@@ -18,7 +18,7 @@ function compile(relative) {
   } finally { rmSync(directory, { recursive: true, force: true }); }
 }
 const { AnalystChart, SeriesLineChart, HeatmapChart } = compile('../components/Charts.tsx');
-const { AnalystDashboardSummary, AnalystOptionalNarrative } = compile('../components/AnalystDashboardSummary.tsx');
+const { AnalystDashboardSummary, AnalystOptionalNarrative, AnalystReportReady } = compile('../components/AnalystDashboardSummary.tsx');
 const { AnalysisMeaning } = compile('../components/AnalysisMeaning.tsx');
 const render = (component, props) => renderToStaticMarkup(React.createElement(component, props));
 
@@ -57,6 +57,12 @@ test('empty optional narrative renders no section or filler', () => {
   assert.equal(render(AnalystOptionalNarrative, { report: { conclusions: [], recommendations: [] } }), '');
   const html = render(AnalystOptionalNarrative, { report: { conclusions: ['Có bằng chứng'], recommendations: [] } });
   assert.ok(html.includes('Có bằng chứng')); assert.ok(!html.includes('Khuyến nghị'));
+});
+test('only a successful report may show the ready banner', () => {
+  for (const report of [null, { status: 'error' }, { status: 'needs_clarification' }, { status: 'proposal_ready' }]) {
+    assert.equal(render(AnalystReportReady, { report, onOpen: () => {} }), '');
+  }
+  assert.ok(render(AnalystReportReady, { report: { status: 'success', title: 'Kết quả đã kiểm chứng' }, onOpen: () => {} }).includes('Kết quả đã kiểm chứng'));
 });
 test('AnalyticsView wires actual dashboard components and no static scope claim', () => {
   const source = readFileSync(new URL('../views/AnalyticsView.tsx', import.meta.url), 'utf8');

@@ -1,5 +1,19 @@
 import React from 'react';
 
+export const AnalystReportReady: React.FC<{ report: any; onOpen: () => void }> = ({ report, onOpen }) => {
+  if (report?.status !== 'success') return null;
+  return <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div className="flex items-center space-x-3">
+      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+      <div>
+        <div className="text-xs font-semibold text-slate-900">Bản xem trực quan đã sẵn sàng: {report.title || 'Báo cáo mới'}</div>
+        <div className="text-[11px] text-slate-500">Chuyển sang Bước 3 để xem Dashboard trực quan hoặc xuất file Word (.docx).</div>
+      </div>
+    </div>
+    <button onClick={onOpen} className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-medium transition-all shadow-xs cursor-pointer self-start sm:self-auto">Xem báo cáo (Bước 3)</button>
+  </div>;
+};
+
 export const AnalystDashboardSummary: React.FC<{ report: any }> = ({ report }) => {
   const plan = report.dashboard_plan || {};
   const omitted = plan.omitted_visuals || [];

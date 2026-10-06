@@ -542,13 +542,18 @@ class ToolArtifacts:
                 if doc.get('domain') == 'product_description' and doc.get('entity_type') == 'product':
                     descriptions.setdefault(str(doc.get('entity_id')), []).append(doc['content'])
         from src.agents.customer_flow_presentation import money
+        from src.rag.documents import normalize_text
+        user_norm = normalize_text(getattr(self, 'knowledge_question', '') or '')
+        asks_ranking = bool(re.search(r'\b(?:ban chay|so luong ban|nhieu nhat|top ban|mua nhieu|bestseller|chay nhat|doanh so|hot)\b', user_norm))
         lines = ['Dạ, mình gửi bạn các món phù hợp nhé:']
         ranking = next((r['result'] for r in reversed(self.logs) if r['result'].get('ranking') == 'completed_paid_quantity'), None)
-        if ranking:
+        if ranking and asks_ranking:
             labels = {'day': 'ngày', 'week': 'tuần', 'month': 'tháng', 'year': 'năm', 'all': 'toàn bộ thời gian'}
             period = labels.get(ranking.get('period'), 'khoảng đã chọn')
             anchor = ranking.get('period_anchor')
             lines[0] = f'Dạ, các món có số lượng bán nhiều nhất trong **{period}' + (f' chứa ngày {anchor}' if anchor else ' hiện tại' if period != 'toàn bộ thời gian' else '') + '** (đơn đã hoàn thành và thanh toán):'
+        elif re.search(r'\b(?:mat|giai nhiet|giai khat|troi nong|nang nong)\b', user_norm):
+            lines[0] = 'Dạ, hôm nay trời nóng, mình gợi ý bạn các món đồ uống thanh mát, giải nhiệt rất thích hợp nhé:'
         products = self.ui['products']
         scope = self.discovery_scope or {}
         requested = scope.get('requested_count')
@@ -568,7 +573,7 @@ class ToolArtifacts:
             index = product['display_index']
             price = product.get('final_price', product.get('price'))
             line = f"{index}. **{product['product_name']}**" + (f" — **{money(price)}**" if price is not None else '')
-            if product.get('sold_count') is not None:
+            if product.get('sold_count') is not None and asks_ranking:
                 line += f"\nĐã bán **{product['sold_count']}** sản phẩm trong **{product.get('order_count', 0)}** đơn."
             if product.get('la_moi') and not ranking:
                 line += '\nMón mới trong Menu.'
@@ -753,54 +758,57 @@ class ToolArtifacts:
             if self.branch_review_selection.get('message'):
                 return self.branch_review_selection['message']
             return 'Mình chưa đọc được đánh giá của các chi nhánh vừa hiển thị, nên chưa thể kết luận chi nhánh nào tốt nhất. Bạn thử lại nhé.'
+        has_insights = any(r['tool'] == 'get_product_insights' and r['result'].get('status') == 'ok' for r in self.logs)
         rag = [r['result'] for r in self.logs if r['tool'] in RAG_TOOLS]
         if rag:
             docs = {d['id']: d for result in rag for d in result.get('results', [])}
             if not docs:
-                return next((r.get('message') for r in rag if r.get('message')), 'Tài liệu hiện có chưa đủ thông tin để trả lời.')
-            quotes = []
-            proposed_quotes = envelope.get('evidence_quotes') or []
-            if not isinstance(proposed_quotes, list):
-                proposed_quotes = []
-            for claim in proposed_quotes[:3]:
-                if not isinstance(claim, dict) or not isinstance(claim.get('document_id'), str):
-                    quotes = []
-                    break
-                doc, quote = docs.get(claim.get('document_id')), claim.get('quote')
-                if not doc or not isinstance(quote, str) or quote not in doc['content'] or len(quote) < 12:
-                    quotes = []
-                    break
-                # Keep complete evidence, including qualifiers/negations.
-                if quote.strip() != doc['content'].strip():
-                    quotes = []
-                    break
-                quotes.append(quote)
-            valid_grounding = bool(quotes)
-            if not quotes:
-                quotes = [d['content'] for d in list(docs.values())[:2]]
-            evidence_words = {word for quote in quotes for word in normalize_text(quote).split()
-                              if len(word) >= 3 and word not in {'theo', 'hien', 'thong', 'tin', 'khach', 'hang'}}
-            reply_words = set(normalize_text(reply).split())
-            natural_grounding_visible = bool(evidence_words & reply_words)
-            # Normal static knowledge may use a cited natural paraphrase when
-            # its customer-facing text visibly overlaps the approved evidence.
-            # Safety facets, invalid citations and generic filler keep exact text.
-            if (not valid_grounding or not natural_grounding_visible
-                    or any(doc.get('domain') == 'product_description' for doc in docs.values())
-                    or self.safety_facet in {'ingredient', 'allergen'}):
-                # Product descriptions keep complete Menu evidence; mere word
-                # overlap does not justify an invented flavour/ingredient claim.
-                reply = 'Dạ, theo mô tả hiện có của quán:\n\n' + '\n\n'.join(quotes) if any(
-                    doc.get('domain') == 'product_description' for doc in docs.values()) else 'Theo tài liệu hiện có:\n' + '\n'.join(quotes)
-            # A compound consultation may also request current price. Preserve
-            # the approved knowledge qualifiers and append only provider facts.
-            prices = [r for row in self.logs if row['tool'] == 'check_price_and_stock'
-                      and row['result'].get('status') == 'ok'
-                      for r in row['result'].get('products', [])]
-            facts = [f"{r['product_name']}: {float(r['final_price']):,.0f}đ"
-                     for r in prices if r.get('product_name') and r.get('final_price') is not None]
-            if facts:
-                reply += '\nGiá hiện tại:\n' + '\n'.join(facts)
+                if not has_insights:
+                    return next((r.get('message') for r in rag if r.get('message')), 'Tài liệu hiện có chưa đủ thông tin để trả lời.')
+            else:
+                quotes = []
+                proposed_quotes = envelope.get('evidence_quotes') or []
+                if not isinstance(proposed_quotes, list):
+                    proposed_quotes = []
+                for claim in proposed_quotes[:3]:
+                    if not isinstance(claim, dict) or not isinstance(claim.get('document_id'), str):
+                        quotes = []
+                        break
+                    doc, quote = docs.get(claim.get('document_id')), claim.get('quote')
+                    if not doc or not isinstance(quote, str) or quote not in doc['content'] or len(quote) < 12:
+                        quotes = []
+                        break
+                    # Keep complete evidence, including qualifiers/negations.
+                    if quote.strip() != doc['content'].strip():
+                        quotes = []
+                        break
+                    quotes.append(quote)
+                valid_grounding = bool(quotes)
+                if not quotes:
+                    quotes = [d['content'] for d in list(docs.values())[:2]]
+                evidence_words = {word for quote in quotes for word in normalize_text(quote).split()
+                                  if len(word) >= 3 and word not in {'theo', 'hien', 'thong', 'tin', 'khach', 'hang'}}
+                reply_words = set(normalize_text(reply).split())
+                natural_grounding_visible = bool(evidence_words & reply_words)
+                # Normal static knowledge may use a cited natural paraphrase when
+                # its customer-facing text visibly overlaps the approved evidence.
+                # Safety facets, invalid citations and generic filler keep exact text.
+                if (not valid_grounding or not natural_grounding_visible
+                        or (any(doc.get('domain') == 'product_description' for doc in docs.values()) and not has_insights)
+                        or self.safety_facet in {'ingredient', 'allergen'}):
+                    # Product descriptions keep complete Menu evidence; mere word
+                    # overlap does not justify an invented flavour/ingredient claim.
+                    reply = 'Dạ, theo mô tả hiện có của quán:\n\n' + '\n\n'.join(quotes) if any(
+                        doc.get('domain') == 'product_description' for doc in docs.values()) else 'Theo tài liệu hiện có:\n' + '\n'.join(quotes)
+                # A compound consultation may also request current price. Preserve
+                # the approved knowledge qualifiers and append only provider facts.
+                prices = [r for row in self.logs if row['tool'] == 'check_price_and_stock'
+                          and row['result'].get('status') == 'ok'
+                          for r in row['result'].get('products', [])]
+                facts = [f"{r['product_name']}: {float(r['final_price']):,.0f}đ"
+                         for r in prices if r.get('product_name') and r.get('final_price') is not None]
+                if facts:
+                    reply += '\nGiá hiện tại:\n' + '\n'.join(facts)
         successful = {r['tool'] for r in self.logs
                       if r['result'].get('changed') is not False and r['result'].get('status') in {'ok', 'success', 'already_processed', 'require_confirmation'}}
         changed = {r['tool'] for r in self.logs if r['tool'] in successful and r['result'].get('changed') is not False}

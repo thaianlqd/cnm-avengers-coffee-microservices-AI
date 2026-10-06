@@ -48,6 +48,11 @@ class SemanticTools:
                 identity=value.get("identity"),
                 value_mode=value.get("value_grounding", {}).get("mode", "lookup"),
             )
+            if output["value_mode"] == "enum":
+                values = dimension_values(self.catalog, id)
+                output.update(
+                    canonical_values=values[:8], values_complete=len(values) <= 8
+                )
         pages = {}
         for field in ("metrics", "project", "subjects", "dimensions"):
             if field in output:
@@ -88,16 +93,14 @@ class SemanticTools:
         results.sort(key=lambda v: (-v[0], v[1], v[2]))
         page = results[arg.offset : arg.offset + arg.limit]
         self.discovered.update((kind, id) for _, kind, id, _ in page)
+        matches = []
+        for _, kind, id, value in page:
+            # Reuse a physically checked, bounded business projection. A model
+            # can choose subject/metric/dimensions without rediscovering each ID.
+            detail = self.describe(kind, id, limit=6, record=False)
+            matches.append(detail)
         return {
-            "matches": [
-                {
-                    "kind": kind,
-                    "id": id,
-                    "label": v["business_name"],
-                    **({"unit": v["unit"]} if "unit" in v else {}),
-                }
-                for _, kind, id, v in page
-            ],
+            "matches": matches,
             "total": len(results),
             "next_offset": (
                 arg.offset + arg.limit

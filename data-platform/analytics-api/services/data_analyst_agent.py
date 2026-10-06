@@ -1,6 +1,7 @@
 """One bounded LLM-first tool loop; no language routing or SQL model boundary."""
 
 import json
+import logging
 import os
 import time
 from dataclasses import dataclass
@@ -17,6 +18,8 @@ from services.analyst_contract import (
 from services.semantic_tools import SemanticTools
 from services.analytical_query_service import AnalyticalQueries
 from services.insight_service import analytical_features
+
+logger = logging.getLogger("ai-analyst-tools")
 
 
 def compact(value):
@@ -60,7 +63,9 @@ class AgentBudget:
         return cls(**values)
 
 
-SYSTEM = """You are a Vietnamese database-aware Data Analyst. Decide meaning from the user's request, then discover current semantic catalog concepts with tools. No catalog is preloaded. Never invent concepts, SQL, physical names, formulas, joins, values, causality or forecasts. Catalog metrics own their aggregation and business filters. Resolve a chosen dimension reference before filtering; ask a narrow clarification when business meaning is undefined. Preserve all requested parts, limits, population, time and metrics. Interpret dates as structured TimeSpec; the server normalizes dates after your decision using reference_date and timezone. Missing time means all_time. UI constraints are explicit user scope: conflicting scopes require clarification. Queries use logical operators only. Requested analyses take priority over supporting work. Supporting queries must reuse their requested parent's population and time. Stop when the request is satisfied; no speculative extra queries. Proposal mode registers validated queries without executing analytical queries. Finish with active operation references and optional DashboardPlan; every visual, KPI, insight and recommendation must reference validated results/evidence. Different units use separate linked views. A Top N subset cannot establish whole-population composition. Recommendations are cautious evidence-based checks, never invented stock/profit/future demand. For refinement use server references, replaces and changed_fields; unchanged fields inherit server scope. Keep prior operations unless explicitly replaced or removed. No chain-of-thought or reasoning text; use the tools to express decisions."""
+SYSTEM = """You are a Vietnamese database-aware Data Analyst. Decide meaning from the user's request, then discover current semantic catalog concepts with tools. No catalog is preloaded. Never invent concepts, SQL, physical names, formulas, joins, values, causality or forecasts. Catalog metrics own their aggregation and business filters. Use returned canonical values directly; resolve other dimension references before filtering. Ask a narrow clarification when business meaning is undefined. Preserve all requested parts, limits, population, time and metrics. Interpret dates as structured TimeSpec; the server normalizes dates after your decision using reference_date and timezone. Missing time means all_time. UI constraints are explicit user scope: conflicting scopes require clarification. Queries use logical operators only. Requested analyses take priority over supporting work. Supporting queries must reuse their requested parent's population and time. Stop when the request is satisfied; no speculative extra queries. Proposal mode registers validated queries without executing analytical queries. Finish with active operation references and optional DashboardPlan; every visual, KPI, insight and recommendation must reference validated results/evidence. Different units use separate linked views. A Top N subset cannot establish whole-population composition. Recommendations are cautious evidence-based checks, never invented stock/profit/future demand. For refinement use server references, replaces and changed_fields; unchanged fields inherit server scope. Keep prior operations unless explicitly replaced or removed. No chain-of-thought or reasoning text; use the tools to express decisions."""
+
+SYSTEM += " Search returns grounded concept summaries; do not describe them again if sufficient. Returned canonical enum values may be used directly; otherwise resolve the reference. Batch independent discoveries/resolutions into one round. Leave a round to run_analysis and finish_analysis; finish may follow registered queries in the same batch."
 
 TOOL_MODELS = {
     "search_semantic_catalog": (
@@ -132,6 +137,7 @@ class DataAnalystAgent:
             value_lookup_count=0,
             cost_rounds=[],
             provider_calls=[],
+            tool_trace=[],
             limitations=[],
             understanding_source="llm_first_native_tools",
             embedding_call_count=0,
@@ -157,6 +163,41 @@ class DataAnalystAgent:
             }
             for n in names
         ]
+
+    def record_tool(self, name, result, round_index, cache_hit=False):
+        name = name if name in TOOL_MODELS else "unavailable_tool"
+        status = result.get("status", "ok")
+        if not isinstance(status, str) or status not in {
+            "ok",
+            "resolved",
+            "unknown",
+            "ambiguous",
+            "validated_proposal",
+            "validated_result",
+            "finished",
+            "rejected",
+            "rejected_batch",
+            "projection_budget",
+            "omitted_supporting",
+            "needs_clarification",
+        }:
+            status = "other"
+        event = {
+            "round": round_index + 1,
+            "tool": name,
+            "status": status,
+            "cache_hit": cache_hit,
+            "registered_queries": len(self.queries.artifacts),
+        }
+        self.diagnostics["tool_trace"].append(event)
+        logger.info(
+            "Analyst tool round=%s name=%s status=%s cache_hit=%s registered_queries=%s",
+            event["round"],
+            name,
+            status,
+            cache_hit,
+            event["registered_queries"],
+        )
 
     def projection(self, a):
         if a.result is None:
@@ -358,6 +399,10 @@ class DataAnalystAgent:
                         "reference_date": self.reference.isoformat(),
                         "timezone": self.catalog.registry["timezone"],
                         "context": context or {},
+                        "budget": {
+                            "rounds": 1 if final_only else self.budget.rounds,
+                            "tools_per_round": self.budget.tools_per_round,
+                        },
                     }
                 ),
             }
@@ -439,6 +484,21 @@ class DataAnalystAgent:
                         else "provider_unavailable"
                     )
                 )
+                if response.get("offline"):
+                    category = "provider_offline"
+                elif response.get("configuration_missing"):
+                    category = "provider_configuration_missing"
+                elif categories and categories[-1] in {
+                    "provider_bad_request",
+                    "provider_auth",
+                    "provider_access_denied",
+                    "provider_model_not_found",
+                    "provider_rate_limited",
+                    "provider_daily_quota",
+                    "provider_timeout",
+                    "provider_connection",
+                }:
+                    category = categories[-1]
                 last_error = last_error or AnalysisError(
                     category, "Native provider did not return valid tool calls"
                 )
@@ -528,6 +588,7 @@ class DataAnalystAgent:
                             "result": result,
                         }
                     )
+                    self.record_tool(c["name"], result, round_index)
                     cost["tool_result_chars"] += len(compact(result))
                 continue
             messages.append({"role": "assistant", "calls": calls})
@@ -539,6 +600,7 @@ class DataAnalystAgent:
                 ),
             ):
                 try:
+                    cache_hit = False
                     name = c["name"]
                     args = c["arguments"]
                     if name == "run_analysis":
@@ -560,6 +622,7 @@ class DataAnalystAgent:
                         self.diagnostics["semantic_tool_calls"] += 1
                         cachekey = compact([name, args])
                         if cachekey in self.cache:
+                            cache_hit = True
                             self.diagnostics["semantic_cache_hits"] += 1
                             result = self.cache[cachekey]
                         else:
@@ -573,6 +636,13 @@ class DataAnalystAgent:
                                 )
                             result = self.semantic.invoke(name, args)
                             self.cache[cachekey] = result
+                    result = {
+                        **result,
+                        "agent_progress": {
+                            "rounds_remaining": rounds - round_index - 1,
+                            "registered_queries": len(self.queries.artifacts),
+                        },
+                    }
                     if len(compact(result)) > self.budget.tool_result_chars:
                         result = {
                             "status": "projection_budget",
@@ -582,10 +652,22 @@ class DataAnalystAgent:
                     messages.append(
                         {"role": "tool", "id": c["id"], "name": name, "result": result}
                     )
+                    self.record_tool(name, result, round_index, cache_hit)
                     cost["tool_result_chars"] += len(compact(result))
                     if self.plan:
                         break
                 except AnalysisError as exc:
+                    self.record_tool(
+                        c["name"],
+                        {
+                            "status": (
+                                "needs_clarification"
+                                if exc.clarification
+                                else "rejected"
+                            )
+                        },
+                        round_index,
+                    )
                     if exc.clarification:
                         raise
                     last_error = exc
@@ -610,6 +692,7 @@ class DataAnalystAgent:
                     last_error = AnalysisError(
                         "analysis_spec_invalid", "Invalid tool arguments"
                     )
+                    self.record_tool(c["name"], {"status": "rejected"}, round_index)
                     messages.append(
                         {
                             "role": "tool",
