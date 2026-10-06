@@ -1,6 +1,6 @@
 from typing import Optional, List, Dict, Any, Literal
 from datetime import date, datetime, timedelta
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SqlQueryRequest(BaseModel):
@@ -42,6 +42,7 @@ class AiTimeRange(BaseModel):
 
 class AiTextToReportRequest(BaseModel):
     prompt: str
+    analysis_depth: Literal["deep", "focused"] = "deep"
     reference_date: Optional[date] = None
     context: Optional[str] = ""
     time_range: Optional[AiTimeRange] = None
@@ -59,9 +60,16 @@ class AiSummarizeRequest(BaseModel):
     columns: Optional[List[str]] = []
 
 
+class AiVisualChange(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    chart_id: str = Field(min_length=1, max_length=64)
+    chart_type: Literal["bar", "horizontal_bar", "line", "area", "multi_line", "donut", "heatmap", "grouped_bar", "stacked_bar", "stacked_100", "scatter", "table"]
+
+
 class AiReportRefineRequest(BaseModel):
     current_report: Dict[str, Any]
-    feedback: str
+    feedback: str = ""
+    visual_changes: List[AiVisualChange] = Field(default_factory=list, max_length=8)
     conversation_history: Optional[List[Dict[str, str]]] = []
     domain: Optional[str] = "auto"
     # Session ID to retrieve server-side conversation memory.

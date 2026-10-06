@@ -36,7 +36,7 @@ class AnalysisArtifact:
 
 def signature(query, period, fingerprint):
     data = query.model_dump(mode="json")
-    for key in ("id", "role", "parent_id", "purpose", "replaces", "changed_fields"):
+    for key in ("id", "role", "parent_id", "purpose", "population_relation", "replaces", "changed_fields"):
         data.pop(key, None)
     data["time"] = period
     for key in ("metrics", "group_by", "project"):
@@ -92,9 +92,10 @@ class AnalyticalQueries:
             a.signature: a for a in self.previous.values() if a.result is not None
         }
         self.normalizations = []
+        self.parent_replacements = {}
 
     def prepare(self, arguments):
-        q, self.normalizations = canonicalize(arguments, self.previous)
+        q, self.normalizations = canonicalize(arguments, self.previous, self.parent_replacements)
         if self.enforce_discovery:
             self.semantic.require_query(q)
         if q.id in self.artifacts:
@@ -186,10 +187,13 @@ class AnalyticalQueries:
                 raise AnalysisError(
                     "query_scope", "Supporting operation requires requested parent"
                 )
+            if q.population_relation == "related":
+                compatible = self.semantic.related_population(parent.query.subject, q.subject, parent.query.metrics, q.metrics,
+                    allow_snapshot=period["start"] is None and parent.grounded.period["start"] is None)
+            else:
+                compatible = self.semantic.cohort_compatible(parent.query.subject, q.subject, parent.query.metrics, q.metrics)
             if (
-                not self.semantic.cohort_compatible(
-                    parent.query.subject, q.subject, parent.query.metrics, q.metrics
-                )
+                not compatible
                 or parent.grounded.period != period
                 or sorted((f.model_dump_json() for f in parent.query.filters))
                 != sorted((f.model_dump_json() for f in q.filters))

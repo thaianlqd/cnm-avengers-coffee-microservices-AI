@@ -674,7 +674,7 @@ class ToolArtifacts:
                 or (name in {'apply_voucher', 'skip_voucher'} and status in {'ok', 'success', 'already_processed'})
                 or status in {'needs_options', 'defaults_not_authorized', 'voucher_choice_required',
                              'profile_location_confirmation_required', 'needs_new_location', 'login_required',
-                             'product_choice_required', 'cart_change_not_requested', 'wallet_unavailable', 'insufficient_wallet'}
+                             'product_choice_required', 'ambiguous_product_options', 'cart_change_not_requested', 'wallet_unavailable', 'insufficient_wallet'}
                 or edits_complete or needs_option_choice
                 or (name == 'set_checkout_choices' and (
                     (self.business.get('checkout') or {}).get('profile_location_offer')

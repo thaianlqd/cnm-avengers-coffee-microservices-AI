@@ -31,6 +31,7 @@ class AnalyticalFields(Contract):
     role: Literal["requested", "supporting"] = "requested"
     parent_id: Optional[str] = None
     purpose: Literal["answer", "compare", "context", "relationship"] = "answer"
+    population_relation: Literal["same", "related"] = "same"
     # Refinement inherits scope from this server operation unless explicitly changed.
     replaces: Optional[str] = None
     changed_fields: List[
@@ -114,6 +115,8 @@ class AnalyticalQuery(AnalyticalFields):
             fail("paired_metrics_required", "metrics")
         if self.role == "supporting" and not self.parent_id:
             fail("supporting_parent_required", "parent_id")
+        if self.population_relation == "related" and (self.role != "supporting" or self.purpose == "answer"):
+            fail("scope_conflict", "population_relation")
         if self.changed_fields and not self.replaces:
             fail("replacement_reference_required", "replaces")
         return self

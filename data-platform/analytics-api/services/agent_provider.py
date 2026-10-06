@@ -319,12 +319,16 @@ def gemini_tool_schema(tool):
 
 
 class NativeAgentProvider:
-    """Bounded primary/fallback attempts; one same-model 503 recovery per round."""
+    """One transport attempt by default; legacy retries require explicit test policy."""
 
-    def __init__(self):
+    def __init__(self, *, legacy_policy=False):
+        self.legacy_policy = legacy_policy
         self.reset()
 
     def reset(self):
+        from services.provider_budget import ProviderBudget
+
+        self.default_budget = ProviderBudget() if not self.legacy_policy else None
         self.gemini_contents = []
         self.cursor = 0
         self.primary_failed = False
@@ -464,24 +468,28 @@ class NativeAgentProvider:
                 saved["extra_content"] = {"google": {"thought_signature": signature}}
             self.gemini_compat_calls[call["id"]] = saved
 
-    def __call__(self, *, system, messages, tools):
+    def __call__(self, *, system, messages, tools, call_budget=None):
+        from services.provider_budget import ProviderBudget
+
+        if not self.legacy_policy:
+            call_budget = call_budget or self.default_budget
         attempts = []
         if os.getenv("AI_OFFLINE", "").lower() in ("1", "true", "yes"):
             return {"calls": None, "attempts": [], "offline": True}
         if self.gemini_api_style not in {"native", "openai"}:
             return {"calls": None, "attempts": [], "configuration_missing": True}
-        # Try up to three configured models on 404 or explicit daily quota.
-        # Pin a successful model so signed continuation never hops models.
+        # Production selects the first configured Gemini model only. Explicit
+        # legacy transport retains its old model selection for migration tests.
         gemini_models = (
             [self.gemini_model]
             if self.gemini_model
-            else list(dict.fromkeys(llm_service.GEMINI_MODELS))[:3]
+            else list(dict.fromkeys(llm_service.GEMINI_MODELS))[:3 if self.legacy_policy else 1]
         )
         providers = deque(
             ("gemini", llm_service.GEMINI_API_KEY, m, i)
             for i, m in enumerate(gemini_models)
         )
-        if os.getenv("AI_AGENT_GROQ_FALLBACK", "1").lower() in ("1", "true", "yes"):
+        if self.legacy_policy and os.getenv("AI_AGENT_GROQ_FALLBACK", "1").lower() in ("1", "true", "yes"):
             providers.append(
                 ("groq", llm_service.GROQ_API_KEY, "openai/gpt-oss-120b", 0)
             )
@@ -506,6 +514,8 @@ class NativeAgentProvider:
                             payload["tools"], ensure_ascii=False, separators=(",", ":")
                         )
                     )
+                    if call_budget:
+                        call_budget.consume(len(json.dumps(payload, ensure_ascii=False, separators=(",", ":"))))
                     response = requests.post(
                         "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
                         headers={
@@ -523,6 +533,8 @@ class NativeAgentProvider:
                             payload["tools"], ensure_ascii=False, separators=(",", ":")
                         )
                     )
+                    if call_budget:
+                        call_budget.consume(len(json.dumps(payload, ensure_ascii=False, separators=(",", ":"))))
                     response = requests.post(
                         f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
                         params={"key": key},
@@ -530,6 +542,8 @@ class NativeAgentProvider:
                         timeout=25,
                     )
                 else:
+                    if call_budget:
+                        call_budget.consume()
                     response = requests.post(
                         "https://api.groq.com/openai/v1/chat/completions",
                         headers={"Authorization": f"Bearer {key}"},
@@ -614,9 +628,13 @@ class NativeAgentProvider:
                 attempt["error_category"] = "provider_timeout"
             except requests.exceptions.ConnectionError:
                 attempt["error_category"] = "provider_connection"
-            except (ValueError, IndexError, KeyError, TypeError):
+            except (ValueError, IndexError, KeyError, TypeError) as exc:
+                if getattr(exc, "category", None) in {"provider_call_budget_exceeded", "one_shot_context_budget_exceeded"}:
+                    raise
                 attempt["error_category"] = "invalid_tool_response"
-            except Exception:
+            except Exception as exc:
+                if getattr(exc, "category", None) in {"provider_call_budget_exceeded", "one_shot_context_budget_exceeded"}:
+                    raise
                 attempt.setdefault("error_category", "provider_unavailable")
             attempt["latency_ms"] = round((time.perf_counter() - started) * 1000, 2)
             attempts.append(attempt)
@@ -633,6 +651,8 @@ class NativeAgentProvider:
                 attempt.get("quota_scopes", []),
                 attempt.get("retry_after_seconds"),
             )
+            if not self.legacy_policy:
+                break
             if provider == "gemini":
                 if attempt.get("http_status") == 503 and not transient_retried:
                     # Retry the same signed continuation once. No model hop,

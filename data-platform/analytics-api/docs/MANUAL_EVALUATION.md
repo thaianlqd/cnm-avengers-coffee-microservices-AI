@@ -1,5 +1,7 @@
 # Manual Data Platform AI V2 evaluation
 
+> For the current one-shot policy and exact A–J live prompts, use [V2.4 manual evaluation](MANUAL_EVALUATION_V24.md). The 39-case record below is historical; current V2.4 qualification passes 86 offline fixtures.
+
 The saved offline run passed 39/39 cases with **zero real provider, embedding, or warehouse calls**. Complex interpretations and rows are scripted fixtures. These passes validate contracts and orchestration, not live language understanding or warehouse business truth.
 
 ## Repeat the offline checks

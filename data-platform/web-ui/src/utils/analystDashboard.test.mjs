@@ -19,7 +19,7 @@ function compile(relative) {
   } finally { rmSync(directory, { recursive: true, force: true }); }
 }
 const { AnalystChart, SeriesLineChart, HeatmapChart } = compile('../components/Charts.tsx');
-const { AnalystDashboardSummary, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence, AnalystViews, AnalystResultTable } = compile('../components/AnalystDashboardSummary.tsx');
+const { AnalystDashboardSummary, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence, AnalystViews, AnalystResultTable, AnalystPlanningSummary } = compile('../components/AnalystDashboardSummary.tsx');
 const { AnalysisClarification } = compile('../components/AnalysisClarification.tsx');
 const { AnalysisMeaning } = compile('../components/AnalysisMeaning.tsx');
 const render = (component, props) => renderToStaticMarkup(React.createElement(component, props));
@@ -79,8 +79,24 @@ test('only a successful report may show the ready banner', () => {
 });
 test('AnalyticsView wires actual dashboard components and no static scope claim', () => {
   const source = readFileSync(new URL('../views/AnalyticsView.tsx', import.meta.url), 'utf8');
-  assert.ok(source.includes('<AnalystViews charts={rep.charts || []} />')); assert.ok(source.includes('<AnalystOptionalNarrative report={rep} />'));
+  assert.ok(source.includes('<AnalystViews charts={rep.charts || []}')); assert.ok(source.includes('<AnalystOptionalNarrative report={rep} />'));
   assert.ok(!source.includes('KPI tăng trưởng, so sánh danh mục, cơ cấu'));
+});
+
+test('deep analysis is the default and the same depth is sent for approval', () => {
+  const source = readFileSync(new URL('../views/AnalyticsView.tsx', import.meta.url), 'utf8');
+  assert.ok(source.includes("const [aiAnalysisDepth, setAiAnalysisDepth] = useState('deep')"));
+  assert.equal((source.match(/analysis_depth: aiAnalysisDepth/g) || []).length, 2);
+  assert.ok(source.includes('Độ sâu phân tích')); assert.ok(source.includes('Tập trung vào câu hỏi'));
+});
+
+test('deep planning and related population evidence explain their actual scope', () => {
+  const summary = render(AnalystPlanningSummary, { diagnostics: { planning_mode: 'one_shot', analysis_depth: 'deep', requested_operation_count: 1, supporting_operation_count: 5 } });
+  assert.ok(summary.includes('5–6')); assert.ok(summary.includes('5 phần hỗ trợ'));
+  const html = render(AnalystEvidence, { report: { analysis_explanation: [{query_id:'internal', subject:'Khuyến mãi', objective:'Cơ cấu', role:'supporting', population_note:'Giữ nguyên bộ lọc; tập đơn có khuyến mãi được đo riêng.', metrics:[{label:'Chi tiêu', unit:'VND', historical:false, population_requirements:['Khuyến mãi có giá trị']}]}] } });
+  assert.ok(html.includes('tập đơn có khuyến mãi được đo riêng'));
+  assert.ok(html.includes('không thể suy ra diễn biến quá khứ'));
+  assert.ok(html.includes('Khuyến mãi có giá trị')); assert.ok(!html.includes('internal'));
 });
 
 test('seven views render requested first, with responsive widths and distinct units', () => {
@@ -145,4 +161,38 @@ test('analysis evidence exposes scope, sources and calculation references safely
 test('large bar axes use readable scales while exact values stay in tooltips', () => {
   const html = render(AnalystChart, { chart: { chart_type: 'bar', unit: 'VND', title: 'Doanh thu', data: [{ label: 'A', value: 1554792000 }, { label: 'B', value: 916533000 }] } });
   assert.ok(html.includes('tỷ')); assert.ok(html.includes('1.554.792.000')); assert.ok(html.includes('916.533.000'));
+});
+
+
+test('one-shot proposal distinguishes mandatory, optional and omitted work', () => {
+  const html = render(AnalystPlanningSummary, { diagnostics: { planning_mode: 'one_shot', requested_operation_count: 2, supporting_operation_count: 3, omitted_supporting_operation_count: 1, tool_trace: ['INTERNAL_TRACE'] } });
+  for (const text of ['một lượt AI', '2 phần theo yêu cầu', '3 phần hỗ trợ', '1 phần hỗ trợ đã được bỏ qua']) assert.ok(html.includes(text));
+  assert.ok(!html.includes('INTERNAL_TRACE')); assert.ok(!html.includes('vòng'));
+});
+
+test('manual retry renders only on errors and never invokes itself', () => {
+  let calls = 0;
+  const props = { response: { status: 'error', diagnostics: { error_category: 'invalid_analysis_contract' } }, onRetry: () => calls++ };
+  assert.ok(render(AnalysisClarification, props).includes('Thử lập lại kế hoạch')); assert.equal(calls, 0);
+  assert.ok(!render(AnalysisClarification, { ...props, response: { status: 'needs_clarification' } }).includes('Thử lập lại kế hoạch'));
+});
+
+test('chart presentation controls keep Top N caution and are disabled during refinement', () => {
+  const html = render(AnalystViews, { charts: [{ id: 'v1', chart_type: 'horizontal_bar', title: 'Top 5', selection: 'Top N', data: [{ label: 'A', value: 10 }], unit: 'sản phẩm' }], onChartTypeChange: () => {}, editing: true });
+  for (const text of ['Cách trình bày', 'disabled=""', 'Cột ngang', 'Cột dọc', 'không phải cơ cấu toàn bộ']) assert.ok(html.includes(text));
+});
+
+test('refinement wire sends revision and explicit visual action without full history', () => {
+  const source = readFileSync(new URL('../views/AnalyticsView.tsx', import.meta.url), 'utf8');
+  assert.ok(source.includes('current_report: { revision: repToRefine.revision }'));
+  assert.ok(source.includes('visual_changes: visualChanges || []'));
+  assert.ok(!source.includes('conversation_history:'));
+  assert.ok(source.includes('if (planningInFlight.current) return'));
+});
+
+test('one-shot guard failures have safe business headings', () => {
+  for (const [category, heading] of [['provider_call_budget_exceeded', 'Yêu cầu đã đạt giới hạn lượt AI'], ['one_shot_context_budget_exceeded', 'Phạm vi yêu cầu quá lớn'], ['dashboard_contract', 'Cách trình bày chưa phù hợp với dữ liệu']]) {
+    const html = render(AnalysisClarification, { response: { status: 'error', diagnostics: { error_category: category } } });
+    assert.ok(html.includes(heading)); assert.ok(!html.includes(category));
+  }
 });

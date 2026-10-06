@@ -37,6 +37,9 @@ def explain_analysis(artifacts, catalog, charts=(), evidence=()):
             "role": a.query.role,
             "parent_id": a.query.parent_id,
             "purpose": a.query.purpose,
+            "population_relation": a.query.population_relation,
+            "population_note": ("Phân tích liên quan dùng điều kiện đo lường riêng của chỉ số; giữ nguyên bộ lọc và thời gian đã chọn. Không suy ra tỷ trọng hoặc quan hệ nhân quả với phần chính."
+                                if a.query.population_relation == "related" else None),
             "supporting_reason": objectives[a.query.operation] if a.query.role == "supporting" else None,
             "subject": r["subjects"][a.query.subject]["business_name"],
             "objective": objectives[a.query.operation],
@@ -52,9 +55,16 @@ def explain_analysis(artifacts, catalog, charts=(), evidence=()):
                     "label": a.grounded.metrics[m]["business_name"],
                     "unit": a.grounded.metrics[m]["unit"],
                     "grain": a.grounded.metrics[m]["grain"],
+                    "historical": bool(a.grounded.metrics[m].get("time_column")),
                     "business_filters": a.grounded.metrics[m].get(
                         "business_filters", []
                     ),
+                    "population_requirements": [
+                        r["dimensions"][d]["business_name"] + " có giá trị"
+                        for column in a.grounded.metrics[m].get("required_non_null", [])
+                        for d, meta in r["dimensions"].items()
+                        if meta["table"] + "." + meta["column"] == column
+                    ],
                 }
                 for m in a.plan.metrics
             ],

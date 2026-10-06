@@ -1,4 +1,4 @@
-"""Production V2.3 orchestration. Meaning belongs to the native tool agent."""
+"""Production V2.4 orchestration. One provider decision owns business meaning."""
 
 import json
 import time
@@ -25,11 +25,15 @@ class AnalysisPipeline:
         executor=None,
         value_lookup=None,
         budget=None,
+        planning_mode="one_shot",
     ):
+        if planning_mode not in {"one_shot", "legacy"}:
+            raise ValueError("Unknown planning mode")
+        self.planning_mode = planning_mode
         self.metadata_loader = metadata_loader or (
             lambda: get_local_metadata(force=True)
         )
-        self.provider = provider or NativeAgentProvider()
+        self.provider = provider or NativeAgentProvider(legacy_policy=planning_mode == "legacy")
         self.executor = executor or execute_read_only
         self.value_lookup = value_lookup or lookup_dimension_values
         self.budget = budget or AgentBudget.from_env()
@@ -50,11 +54,11 @@ class AnalysisPipeline:
 
     def diagnostics(self, catalog, validation=None):
         return {
-            "pipeline_version": "2.3",
+            "pipeline_version": "2.4" if self.planning_mode == "one_shot" else "2.3",
             "schema_fingerprint": catalog.fingerprint,
             **deepcopy(self.semantic_info),
-            "provider_call_count": len(self.calls),
-            "provider_attempt_count": len(self.calls),
+            "provider_call_count": self.semantic_info.get("provider_call_count", len(self.calls)),
+            "provider_attempt_count": self.semantic_info.get("provider_attempt_count", len(self.calls)),
             "provider_model": self.calls[-1].get("model") if self.calls else None,
             "provider_api_style": self.calls[-1].get("api_style") if self.calls else None,
             "llm_stage_count": self.semantic_info.get("agent_rounds", 0),
@@ -63,7 +67,7 @@ class AnalysisPipeline:
             "planner": "logical_algebra_catalog_compiler",
             "embedding_call_count": 0,
             "retrieval": {
-                "strategy": "model_requested_semantic_tools",
+                "strategy": "compact_semantic_manifest" if self.planning_mode == "one_shot" else "model_requested_semantic_tools",
                 "vector_status": "not_requested",
             },
             "validation": validation or {},
@@ -83,6 +87,7 @@ class AnalysisPipeline:
                     "context",
                     "time_range",
                     "domain",
+                    "analysis_depth",
                     "branch",
                     "date_range",
                 )
@@ -102,6 +107,7 @@ class AnalysisPipeline:
         context = {
             "user_context": (request.context or "")[:1500],
             "required_subject": request.domain if request.domain and request.domain != "auto" else None,
+            "analysis_depth": getattr(request, "analysis_depth", "deep"),
         }
         ui = request.time_range
         period = None
@@ -156,7 +162,10 @@ class AnalysisPipeline:
         return context
 
     def agent(self, catalog, reference, proposal=False, previous=None, known_concepts=None):
-        agent = DataAnalystAgent(
+        from services.one_shot_planner import OneShotPlanner
+
+        planner = OneShotPlanner if self.planning_mode == "one_shot" else DataAnalystAgent
+        agent = planner(
             catalog,
             self.provider,
             self.executor,
@@ -166,6 +175,7 @@ class AnalysisPipeline:
             self.budget,
             proposal,
             previous,
+            **({"legacy_mode": True} if self.planning_mode == "legacy" else {}),
         )
         # References come only from fingerprint-checked server sessions.
         for ref in known_concepts or []:
@@ -233,6 +243,7 @@ class AnalysisPipeline:
         return main
 
     def save_meaning(self, session, artifacts, catalog, reference, plan):
+        session.analysis_depth = self.semantic_info.get("analysis_depth", session.analysis_depth)
         main = next(iter(artifacts.values()))
         session.analysis_spec = main.grounded.analysis_spec.model_dump(mode="json")
         session.grounded_spec = main.grounded.model_dump(mode="json")
@@ -252,19 +263,18 @@ class AnalysisPipeline:
             if all(a.result is not None for a in artifacts.values())
             else []
         )
+        selected_refs = set()
+        for a in artifacts.values():
+            q = a.query
+            selected_refs.add(("subject", q.subject))
+            selected_refs.update(("metric", m) for m in q.metrics)
+            selected_refs.update(("dimension", d) for d in [*q.group_by, *q.project, *[f.dimension for f in q.filters], *(q.ranking.per_group if q.ranking else [])])
+            selected_refs.update(("metric" if s.field in catalog.registry["metrics"] else "dimension", s.field)
+                                 for s in q.order_by)
+        references = selected_refs if self.planning_mode == "one_shot" else self._last_agent.semantic.discovered | selected_refs
         session.agent_state = AgentState(
             goal=session.original_prompt[:8000],
-            resolved_concepts=sorted(
-                {f"{kind}:{id}" for kind, id in self._last_agent.semantic.discovered}
-                |
-                {f"subject:{a.query.subject}" for a in artifacts.values()}
-                | {f"metric:{m}" for a in artifacts.values() for m in a.query.metrics}
-                | {
-                    f"dimension:{d}"
-                    for a in artifacts.values()
-                    for d in a.query.group_by
-                }
-            ),
+            resolved_concepts=sorted(f"{kind}:{id}" for kind, id in references),
             operation_refs=list(artifacts),
             result_refs=[id for id, a in artifacts.items() if a.result is not None],
             evidence_refs=[e["id"] for e in evidence],
@@ -348,16 +358,33 @@ class AnalysisPipeline:
                 reference = date.fromisoformat(session.agent_reference_date)
                 agent = self.agent(catalog, reference, previous=session.agent_artifacts,
                     known_concepts=session.agent_state.get("resolved_concepts", []))
+                self.semantic_info.update(analysis_depth=session.analysis_depth,
+                    target_visual_count=6 if session.analysis_depth == "deep" else None)
                 self.semantic_info["proposal_diagnostics"] = {
                     key: deepcopy(session.diagnostics.get(key)) for key in (
                         "agent_rounds", "semantic_tool_calls", "contract_repair_count",
                         "contract_rejection_count", "contract_normalization_count", "cost_rounds")
                 }
+                if self.planning_mode == "one_shot":
+                    self.semantic_info["proposal_diagnostics"] = {
+                        key: deepcopy(session.diagnostics.get(key)) for key in (
+                            "provider_call_budget", "provider_call_count", "provider_attempt_count",
+                            "semantic_manifest_chars", "decision_schema_chars", "total_context_chars",
+                            "analysis_depth", "supporting_operation_limit", "target_visual_count",
+                            "input_tokens", "output_tokens", "omitted_supporting_operation_count")}
+                    for key in ("omitted_supporting_operations", "omitted_supporting_operation_count", "limitations"):
+                        self.semantic_info[key] = deepcopy(session.diagnostics.get(key, self.semantic_info[key]))
                 try:
                     for id, old in session.agent_artifacts.items():
                         args = old.query.model_dump(mode="json")
                         args.update(replaces=None, changed_fields=[])
-                        agent.queries.run(agent.queries.prepare(args))
+                        try:
+                            agent.queries.run(agent.queries.prepare(args))
+                        except AnalysisError as exc:
+                            if self.planning_mode != "one_shot" or old.query.role == "requested":
+                                raise
+                            agent.omit(exc)
+                            self.semantic_info["limitations"].append({"reason": "supporting_execution", "message": "Một kết quả hỗ trợ chưa vượt qua kiểm chứng nên đã được bỏ qua."})
                 except AnalysisError as exc:
                     self.semantic_info.update(terminal_error=exc.category)
                     if exc.category in ("execution", "result_contract"):
@@ -367,6 +394,8 @@ class AnalysisPipeline:
                     raise
                 artifacts = agent.queries.artifacts
                 plan = DashboardPlan.model_validate(session.dashboard_plan)
+                plan.active_query_ids = list(artifacts)
+                self.semantic_info.update(agent_contract_status="valid_with_omitted_support" if self.semantic_info.get("omitted_supporting_operation_count") else "valid")
                 self.semantic_info.update(semantic_status="grounded", execution_status="passed", result_status="passed")
                 return self.report(artifacts, plan, catalog, session, reference)
         reference = self.reference(request, catalog)
@@ -389,13 +418,58 @@ class AnalysisPipeline:
             if catalog.fingerprint != session.schema_fingerprint:
                 raise AnalysisError("schema_changed", "Stored schema changed")
             reference = date.fromisoformat(session.agent_reference_date)
+            if request.visual_changes:
+                return self.refine_visuals(request, session, catalog, reference)
+            if not request.feedback.strip():
+                raise AnalysisError("invalid_analysis_contract", "Empty refinement")
             artifacts, plan = self.agent(
                 catalog, reference, previous=session.agent_artifacts,
                 known_concepts=session.agent_state.get("resolved_concepts", [])
-            ).run(request.feedback, {"revision": session.revision})
+            ).run(request.feedback, {
+                "analysis_depth": session.analysis_depth,
+                "revision": session.revision,
+                "current_visuals": [{k: c.get(k) for k in ("id", "scope_ref", "chart_type", "metrics")}
+                                    for c in session.report_response.get("charts", [])],
+            })
             return self.report(
                 artifacts, plan, catalog, session, reference, refined=True
             )
+
+    def refine_visuals(self, request, session, catalog, reference):
+        from services.dashboard_planner_service import chart_reason, comparison_reason
+        from services.analyst_contract import DashboardVisual
+
+        agent = self.agent(catalog, reference, previous=session.agent_artifacts)
+        for old in session.agent_artifacts.values():
+            args = old.query.model_dump(mode="json")
+            args.update(replaces=None, changed_fields=[])
+            agent.queries.run(agent.queries.prepare(args))  # Revalidate cached rows, no SQL.
+        artifacts = agent.queries.artifacts
+        plan = DashboardPlan.model_validate(session.dashboard_plan)
+        evidence = analytical_features(artifacts)
+        current = build_dashboard(artifacts, evidence, plan, self.budget.charts, self.budget.categories, self.budget.series)
+        # Include validated defaults supplied by the dashboard when a prior
+        # optional visual was ineligible. These are genuine server chart choices.
+        visuals = [DashboardVisual.model_validate(v) for v in current["dashboard_plan"]["visuals"]]
+        seen = set()
+        for change in request.visual_changes:
+            if change.chart_id in seen:
+                raise AnalysisError("dashboard_contract", "Duplicate visual change")
+            seen.add(change.chart_id)
+            chart = next((c for c in current["charts"] if c["id"] == change.chart_id), None)
+            if not chart:
+                raise AnalysisError("dashboard_contract", "Unknown server chart")
+            candidate = next((v for v in visuals if v.query_id == chart["scope_ref"] and v.chart_type == chart["chart_type"] and v.metrics == chart["metrics"]), None)
+            if not candidate:
+                raise AnalysisError("dashboard_contract", "Unknown stored visual")
+            updated = candidate.model_copy(update={"chart_type": change.chart_type})
+            reason = comparison_reason(updated, artifacts) if updated.compare_query_ids else chart_reason(updated, artifacts[updated.query_id], self.budget.categories, self.budget.series)
+            if reason:
+                raise AnalysisError("dashboard_contract", "Unsupported visual for this result")
+            visuals[visuals.index(candidate)] = updated
+        plan.visuals = visuals
+        self.semantic_info.update(agent_contract_status="valid", refinement_mode="structured_visual", result_reuse=True)
+        return self.report(artifacts, plan, catalog, session, reference, refined=True)
 
     def report(self, artifacts, plan, catalog, session, reference, refined=False):
         evidence = analytical_features(artifacts)
@@ -427,6 +501,12 @@ class AnalysisPipeline:
             )
         main = next(iter(artifacts.values()))
         first = results[main.query.id]
+        if self.semantic_info.get("analysis_depth") == "deep":
+            self.semantic_info["depth_coverage"] = {
+                "target_views": 6, "validated_views": len(dashboard["charts"]),
+                "status": "adequate" if len(dashboard["charts"]) >= 5 else "limited",
+                "planned_operations": len(artifacts),
+            }
         meaning = self.interpretation(artifacts)
         self.semantic_info.update(
             reference_date=reference.isoformat(),
@@ -448,13 +528,15 @@ class AnalysisPipeline:
             omitted_chart_count=len(dashboard["dashboard_plan"]["omitted_visuals"]),
             registered_requested_operations=sum(a.query.role == "requested" for a in artifacts.values()),
             registered_supporting_operations=sum(a.query.role == "supporting" for a in artifacts.values()),
+            requested_operation_count=sum(a.query.role == "requested" for a in artifacts.values()),
+            supporting_operation_count=sum(a.query.role == "supporting" for a in artifacts.values()),
         )
         response = {
             "status": "success",
             "completion_status": (
                 "partial" if self.semantic_info.get("limitations") else "complete"
             ),
-            "pipeline_version": "2.3",
+            "pipeline_version": "2.4" if self.planning_mode == "one_shot" else "2.3",
             "prompt": session.original_prompt,
             "session_id": session.session_id,
             "revision": session.revision + (1 if session.approved else 0),

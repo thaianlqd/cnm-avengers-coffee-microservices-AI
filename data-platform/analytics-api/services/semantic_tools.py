@@ -13,6 +13,23 @@ class SemanticTools:
         self.discovered = set()
         self.lookup_count = 0
 
+    def related_population(self, parent_subject, subject, parent_metrics, metrics, *, allow_snapshot=False):
+        """Explicit context may use a related fact/subset, with the same clock.
+
+        User filters and resolved period are still checked separately. This does
+        not authorize reconciliation, shares or causal claims across populations.
+        """
+        r = self.catalog.registry
+        try:
+            if not parent_metrics or not metrics:
+                return False
+            self.catalog.path(r["subjects"][subject]["source"], r["subjects"][parent_subject]["source"])
+            clocks = {r["metrics"][m].get("time_column") for m in [*parent_metrics, *metrics]}
+            return len(clocks) == 1 or (allow_snapshot and None in clocks
+                and r["subjects"][subject]["source"] == r["subjects"][parent_subject]["source"])
+        except (AnalysisError, KeyError):
+            return False
+
     def cohort_compatible(self, parent_subject, subject, parent_metrics, metrics):
         """Related facts share scope only through a checked child-to-parent path.
 
@@ -244,7 +261,7 @@ class SemanticTools:
             ),
         }
 
-    def resolve(self, arguments):
+    def resolve(self, arguments, *, allow_lookup=True):
         arg = ValueReference.model_validate(arguments)
         d = self.catalog.registry["dimensions"].get(arg.dimension)
         if not d:
@@ -266,12 +283,13 @@ class SemanticTools:
             canonical is None
             and d.get("value_grounding", {}).get("mode") == "lookup"
             and self.lookup
+            and allow_lookup
         ):
             self.lookup_count += 1
             values = list(self.lookup(d["table"], d["column"], arg.reference, limit=8))[
                 :8
             ]
-            exact = [v for v in values if value_text(v) == value_text(arg.reference)]
+            exact = list(dict.fromkeys(v for v in values if value_text(v) == value_text(arg.reference)))
             if len(exact) == 1:
                 canonical = exact[0]
         if canonical is not None:

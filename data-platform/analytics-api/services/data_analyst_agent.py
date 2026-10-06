@@ -1,4 +1,4 @@
-"""One bounded LLM-first tool loop; no language routing or SQL model boundary."""
+"""Legacy multi-round migration harness. Production uses OneShotPlanner."""
 
 import json
 import logging
@@ -112,7 +112,11 @@ class DataAnalystAgent:
         budget=None,
         proposal=False,
         previous=None,
+        *,
+        legacy_mode=False,
     ):
+        if not legacy_mode:
+            raise AnalysisError("provider_policy", "Multi-round planner requires explicit migration mode")
         from services.agent_provider import NativeAgentProvider
 
         if isinstance(provider, NativeAgentProvider):
@@ -276,110 +280,9 @@ class DataAnalystAgent:
         return result
 
     def clarify(self, arguments):
-        from services.analysis_understanding import clarify
+        from services.analyst_clarification import clarify_decision
 
-        arg = AgentClarification.model_validate(arguments)
-        known = arg.known_query or {}
-        # Only actual catalog labels cross the public boundary; partial meaning survives.
-        subject = arg.subject or known.get("subject")
-        if subject and subject not in self.catalog.registry["subjects"]:
-            raise AnalysisError(
-                "analysis_spec_invalid", "Unknown clarification subject"
-            )
-        data = {
-            "subject": subject,
-            "analysis_kind": known.get("operation", ""),
-            "metrics": known.get("metrics", []),
-            "dimensions": known.get("group_by", []),
-            "filters": known.get("filters", []),
-            "ranking": known.get("ranking"),
-        }
-        from services.analysis_contract import Filter, Ranking
-        from services.value_grounding_service import dimension_values
-
-        missing = list(arg.missing_fields)
-        for field, kind in (("metrics", "metrics"), ("dimensions", "dimensions")):
-            raw = data[field]
-            if not isinstance(raw, list):
-                data[field] = []
-                missing.append(field)
-            else:
-                data[field] = [
-                    v
-                    for v in raw
-                    if isinstance(v, str) and v in self.catalog.registry[kind]
-                ]
-        if data["ranking"]:
-            try:
-                data["ranking"] = Ranking.model_validate(data["ranking"]).model_dump(
-                    mode="json"
-                )
-            except ValueError:
-                data["ranking"] = None
-                missing.append("ranking")
-        safe_filters = []
-        raw_filters = data["filters"] if isinstance(data["filters"], list) else []
-        for raw in raw_filters:
-            try:
-                f = Filter.model_validate(raw)
-            except ValueError:
-                missing.append("filters")
-                continue
-            definition = self.catalog.registry["dimensions"].get(f.dimension)
-            if not definition:
-                continue
-            self.catalog.check_column(definition["table"], definition["column"])
-            values = f.value if isinstance(f.value, list) else [f.value]
-            allowed = dimension_values(self.catalog, f.dimension)
-            if all(
-                v in allowed
-                or v in self.semantic.resolved.get(f.dimension, set())
-                or definition.get("value_grounding", {}).get("mode") == "literal"
-                and type(v) in (int, float, bool)
-                for v in values
-            ):
-                safe_filters.append(f.model_dump(mode="json"))
-        data["filters"] = safe_filters
-        if known.get("time"):
-            from services.time_resolution_service import resolve_time
-
-            try:
-                scope, assumptions, _ = resolve_time(
-                    known["time"], self.reference, self.catalog.registry["timezone"]
-                )
-                data.update(
-                    time_range=scope.model_dump(mode="json"), assumptions=assumptions
-                )
-            except (ValueError, AnalysisError):
-                missing.append("time")
-        # The metric ambiguity helper rebuilds choices from this actual subject.
-        choices = None
-        if arg.reason == "metric_ambiguous" and subject:
-            choices = []
-            needed = set(data["dimensions"]) | {f["dimension"] for f in data["filters"]}
-            for metric in self.catalog.registry["subjects"][subject]["metrics"]:
-                try:
-                    self.semantic.describe("metric", metric)
-                    if not needed <= set(self.catalog.compatible_dimensions(metric)):
-                        continue
-                except AnalysisError:
-                    continue
-                meta = self.catalog.registry["metrics"][metric]
-                choices.append(
-                    {
-                        "id": metric,
-                        "label": meta["business_name"],
-                        "unit": meta["unit"],
-                        "followup": "Theo " + meta["business_name"],
-                    }
-                )
-        clarify(
-            self.catalog,
-            arg.reason,
-            data,
-            fields=list(dict.fromkeys(missing))[:12],
-            choices=choices,
-        )
+        return clarify_decision(self, arguments)
 
     def finish(self, arguments):
         plan = DashboardPlan.model_validate(arguments)

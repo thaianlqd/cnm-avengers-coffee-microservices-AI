@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { AnalystChart } from './Charts';
-import { analysisChartGroups, analysisChartSpan } from '../utils/analysisPresentation.mjs';
+import { analysisChartGroups, analysisChartSpan, analysisPlanLabel } from '../utils/analysisPresentation.mjs';
 
-export const AnalystViews: React.FC<{ charts?: any[] }> = ({ charts = [] }) => <div className="space-y-6">
+export const AnalystViews: React.FC<{ charts?: any[]; onChartTypeChange?: (id: string, type: string) => void; editing?: boolean }> = ({ charts = [], onChartTypeChange, editing = false }) => <div className="space-y-6">
   {analysisChartGroups(charts).map(group => <section key={group.role} aria-label={group.title} className="space-y-3">
     <h4 className="text-sm font-semibold text-slate-800">{group.title}</h4>
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
@@ -12,6 +12,13 @@ export const AnalystViews: React.FC<{ charts?: any[] }> = ({ charts = [] }) => <
           <h5 className="text-sm font-semibold text-slate-900">{chart.title}</h5>
           <p className="text-xs text-slate-500">{chart.purpose}</p>
           <p className="text-xs text-slate-500">{chart.chart_type_label}{chart.unit ? ` · ${chart.unit}` : ''}</p>
+          {onChartTypeChange && ['bar', 'horizontal_bar', 'line', 'area'].includes(chart.chart_type) && <label className="flex items-center gap-2 text-xs text-slate-600">
+            Cách trình bày
+            <select aria-label={`Cách trình bày: ${chart.title}`} value={chart.chart_type} disabled={editing}
+              onChange={event => onChartTypeChange(chart.id, event.target.value)} className="border border-slate-200 rounded-lg p-1 bg-white">
+              {(['line', 'area'].includes(chart.chart_type) ? ['line', 'area'] : ['horizontal_bar', 'bar']).map(type => <option key={type} value={type}>{analysisPlanLabel({ chart_type: type })}</option>)}
+            </select>
+          </label>}
           {chart.selection === 'Top N' && <p className="text-xs text-amber-700">Tập Top N được chọn; không phải cơ cấu toàn bộ.</p>}
           {chart.selection === 'limited' && <p className="text-xs text-amber-700">Kết quả có giới hạn số dòng.</p>}
         </div>
@@ -40,6 +47,17 @@ export const AnalystResultTable: React.FC<{ result: any; title?: string }> = ({ 
   </section>;
 };
 
+export const AnalystPlanningSummary: React.FC<{ diagnostics?: any }> = ({ diagnostics }) => {
+  if (diagnostics?.planning_mode !== 'one_shot') return null;
+  const omitted = Number.isInteger(diagnostics.omitted_supporting_operation_count) ? diagnostics.omitted_supporting_operation_count : 0;
+  return <div role="status" className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 space-y-1">
+    <p>Kế hoạch được lập trong một lượt AI. Bạn xác nhận phạm vi trước khi tạo báo cáo.</p>
+    {diagnostics.analysis_depth === 'deep' && <p>Phân tích sâu: mục tiêu 5–6 góc nhìn hữu ích theo dữ liệu và phạm vi đã chọn.</p>}
+    <p>{diagnostics.requested_operation_count || diagnostics.registered_requested_operations || 0} phần theo yêu cầu · {diagnostics.supporting_operation_count || diagnostics.registered_supporting_operations || 0} phần hỗ trợ</p>
+    {omitted > 0 && <p>{omitted} phần hỗ trợ đã được bỏ qua vì chưa hợp lệ hoặc vượt giới hạn. Các phần theo yêu cầu đã vượt qua kiểm chứng.</p>}
+  </div>;
+};
+
 export const AnalystReportReady: React.FC<{ report: any; onOpen: () => void }> = ({ report, onOpen }) => {
   if (report?.status !== 'success') return null;
   return <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -61,6 +79,7 @@ export const AnalystDashboardSummary: React.FC<{ report: any }> = ({ report }) =
     <p>{report.dashboard_description || `${(report.charts || []).length} biểu đồ và bảng kết quả theo phạm vi đã chọn.`}</p>
     {typeof plan.requested_chart_count === 'number' && <p>{plan.requested_chart_count} biểu đồ theo yêu cầu · {plan.supporting_chart_count || 0} biểu đồ hỗ trợ</p>}
     {omitted.length > 0 && <p>{omitted.length} đề xuất trực quan không được hiển thị do giới hạn hoặc không phù hợp với dữ liệu. Các bảng kết quả vẫn có bên dưới.</p>}
+    {report.diagnostics?.omitted_supporting_operation_count > 0 && <p>{report.diagnostics.omitted_supporting_operation_count} phần phân tích hỗ trợ đã được bỏ qua; báo cáo giữ các kết quả đã kiểm chứng.</p>}
   </div>;
 };
 
@@ -85,10 +104,13 @@ export const AnalystEvidence: React.FC<{ report: any }> = ({ report }) => {
       <div className="text-xs text-slate-600 mt-3 space-y-2">
         <p>Nguồn: {(op.data_sources || []).join(' · ')}</p>
         {op.supporting_reason && <p>Mục đích hỗ trợ: {op.supporting_reason}</p>}
+        {op.population_note && <p>{op.population_note}</p>}
         <p>Chỉ số: {(op.metrics || []).map((m: any) => `${m.label} (${m.unit})`).join(' · ') || 'Các trường chi tiết'}</p>
+        {op.metrics?.some((m: any) => m.population_requirements?.length) && <p>Phạm vi chỉ số: {op.metrics.map((m: any) => (m.population_requirements || []).join(', ')).filter(Boolean).join(' · ')}</p>}
         <p>Phân nhóm: {(op.dimensions || []).join(' · ') || 'Toàn phạm vi đã chọn'}</p>
         <p>Bộ lọc: {(op.filters || []).map((f: any) => `${f.label}: ${Array.isArray(f.value) ? f.value.join(', ') : String(f.value)}`).join(' · ') || 'Không có bộ lọc bổ sung'}</p>
         <p>Thời gian: {op.period?.start ? `${op.period.start} → ${op.period.end}` : 'Toàn bộ dữ liệu hiện có'} · {op.period?.timezone}</p>
+        {op.metrics?.some((m: any) => m.historical === false) && <p>Chỉ số hiện trạng: dữ liệu hiện có tại thời điểm quan sát; không thể suy ra diễn biến quá khứ.</p>}
         {op.metrics?.some((m: any) => m.business_filters?.length) && <p>Điều kiện chỉ số: {op.metrics.map((m: any) => (m.business_filters || []).map((f: any) => `${m.label}: ${f.dimension} ${f.operator} ${Array.isArray(f.value) ? f.value.join(', ') : String(f.value)}`).join('; ')).filter(Boolean).join(' · ')}</p>}
         <p>{op.rows_returned == null ? 'Kế hoạch chưa chạy truy vấn.' : `${op.rows_returned} dòng kết quả đã kiểm chứng.`} {op.selection === 'Top N' ? 'Tập Top N không đại diện toàn bộ cơ cấu.' : op.selection === 'limited' ? 'Kết quả có giới hạn số dòng.' : ''}</p>
         {(op.visuals || []).map((v: any) => <p key={v.id}>Lý do chọn biểu đồ: {v.reason}</p>)}

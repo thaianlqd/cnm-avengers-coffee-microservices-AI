@@ -1,8 +1,8 @@
-import { AnalystDashboardSummary, AnalystViews, AnalystResultTable, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence } from '../components/AnalystDashboardSummary';
+import { AnalystDashboardSummary, AnalystViews, AnalystResultTable, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence, AnalystPlanningSummary } from '../components/AnalystDashboardSummary';
 import { AnalysisClarification } from '../components/AnalysisClarification';
 import { AnalysisMeaning } from '../components/AnalysisMeaning';
 import { analysisPlanLabel } from '../utils/analysisPresentation.mjs';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePlatformStore } from '../store/usePlatformStore';
 import { 
   SmoothAreaChart, 
@@ -58,12 +58,15 @@ export const AnalyticsView: React.FC = () => {
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiTimeRange, setAiTimeRange] = useState('auto');
   const [aiDomain, setAiDomain] = useState('auto');
+  const [aiAnalysisDepth, setAiAnalysisDepth] = useState('deep');
   const [aiStatus, setAiStatus] = useState<any | null>(null);
 
   // Step 1: Pre-analysis proposal state
   const [pendingClarification, setPendingClarification] = useState<any | null>(null);
   const [aiPlan, setAiPlan] = useState<any | null>(null);
   const [isProposingPlan, setIsProposingPlan] = useState(false);
+  const planningInFlight = useRef(false);
+  const refinementInFlight = useRef(false);
 
   // Step 2: Visual preview report state
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
@@ -151,6 +154,8 @@ export const AnalyticsView: React.FC = () => {
     if (customPrompt) {
       setAiPrompt(customPrompt);
     }
+    if (planningInFlight.current) return;
+    planningInFlight.current = true;
     setIsProposingPlan(true);
     setGeneratedReport(null);
     setAiPlan(null);
@@ -164,6 +169,7 @@ export const AnalyticsView: React.FC = () => {
           context: '',
           time_range: { mode: aiTimeRange, start: null, end: null },
           domain: aiDomain,
+          analysis_depth: aiAnalysisDepth,
         }),
       });
       if (!response.ok) {
@@ -176,7 +182,7 @@ export const AnalyticsView: React.FC = () => {
         showToast(data.message || 'Yêu cầu cần được xem lại', data.status === 'error' ? 'error' : 'info');
       } else if (data.status === 'proposal_ready') {
         const planObj = data.proposal || data;
-        setAiPlan({ ...planObj, prompt: data.prompt || promptToSend, session_id: data.session_id, interpretation: data.interpretation, analysis_spec: data.analysis_spec });
+        setAiPlan({ ...planObj, prompt: data.prompt || promptToSend, session_id: data.session_id, interpretation: data.interpretation, analysis_spec: data.analysis_spec, diagnostics: data.diagnostics });
         setAiStep(2);
         showToast('Trợ lý AI đã đề xuất kế hoạch báo cáo. Vui lòng duyệt trước khi thực thi!', 'info');
       } else {
@@ -186,6 +192,7 @@ export const AnalyticsView: React.FC = () => {
       console.error('Lỗi đề xuất kế hoạch:', err);
       showToast(err.message || 'Không thể tạo đề xuất phân tích', 'error');
     } finally {
+      planningInFlight.current = false;
       setIsProposingPlan(false);
     }
   };
@@ -208,6 +215,7 @@ export const AnalyticsView: React.FC = () => {
           context: '',
           time_range: { mode: aiTimeRange, start: null, end: null },
           domain: aiDomain,
+          analysis_depth: aiAnalysisDepth,
           session_id: aiPlan?.prompt === promptToSend ? aiPlan?.session_id : null,
         }),
       });
@@ -248,7 +256,7 @@ export const AnalyticsView: React.FC = () => {
   };
 
   // ── Follow-up / Refine report iteratively based on user feedback ──
-  const handleFollowUpRefine = async (refinementText?: string, targetRep?: any) => {
+  const handleFollowUpRefine = async (refinementText?: string, targetRep?: any, visualChanges?: Array<{ chart_id: string; chart_type: string }>) => {
     const repToRefine = targetRep || generatedReport || viewingSavedReport;
     const text = (refinementText || followUpPrompt).trim();
     if (!text) {
@@ -260,25 +268,22 @@ export const AnalyticsView: React.FC = () => {
       return;
     }
 
+    if (refinementInFlight.current) return;
     const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     const userMsg = { id: `user-${Date.now()}`, sender: 'user' as const, text, time: timeStr };
     setRefinementChat(prev => [...prev, userMsg]);
     setFollowUpPrompt('');
+    refinementInFlight.current = true;
     setIsRefining(true);
 
     try {
-      const historyPayload = refinementChat.map(c => ({
-        role: c.sender === 'user' ? 'user' : 'assistant',
-        content: c.text
-      }));
-
       const response = await fetch('/api/ai/refine-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          current_report: repToRefine,
+          current_report: { revision: repToRefine.revision },
           feedback: text,
-          conversation_history: historyPayload,
+          visual_changes: visualChanges || [],
           domain: aiDomain,
           session_id: repToRefine?.session_id || null,
         }),
@@ -290,7 +295,7 @@ export const AnalyticsView: React.FC = () => {
       if (!['success', 'needs_clarification', 'error'].includes(data.status)) throw new Error(data.message || 'Bản sửa chưa vượt qua kiểm chứng');
       if (['needs_clarification', 'error'].includes(data.status)) {
         setPendingClarification({ ...data, feedback: text });
-        const replyText = data.assistant_reply || 'Trợ lý cần bạn làm rõ thêm yêu cầu tinh chỉnh.';
+        const replyText = data.assistant_reply || data.message || 'Trợ lý cần bạn làm rõ thêm yêu cầu tinh chỉnh.';
         setRefinementChat(prev => [...prev, {
           id: `ai-${Date.now()}`,
           sender: 'assistant',
@@ -334,6 +339,7 @@ export const AnalyticsView: React.FC = () => {
         time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
       }]);
     } finally {
+      refinementInFlight.current = false;
       setIsRefining(false);
     }
   };
@@ -1232,7 +1238,7 @@ export const AnalyticsView: React.FC = () => {
             </div>
           )}
 
-          <AnalystViews charts={rep.charts || []} />
+          <AnalystViews charts={rep.charts || []} editing={isRefining} onChartTypeChange={rep.session_id ? (id, type) => handleFollowUpRefine('Đổi cách trình bày biểu đồ', rep, [{ chart_id: id, chart_type: type }]) : undefined} />
         </div>
 
         {rep.result_sets && Object.entries(rep.result_sets).slice(1).map(([queryId, data]: [string, any]) => (
@@ -1247,7 +1253,7 @@ export const AnalyticsView: React.FC = () => {
               2. Các phát hiện chính
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Các tín hiệu định lượng nổi bật được trích xuất từ dữ liệu kèm theo nhận định đánh giá từ AI Agent.
+              Các tín hiệu định lượng nổi bật được tính từ kết quả đã kiểm chứng, kèm phạm vi và bằng chứng.
             </p>
           </div>
 
@@ -2509,6 +2515,13 @@ export const AnalyticsView: React.FC = () => {
                           <option value="delivery">Tài xế giao hàng</option>
                         </select>
                       </div>
+                      <div className="flex items-center bg-white border border-slate-200/90 rounded-xl px-3 py-1.5 text-xs text-slate-600">
+                        <span className="text-[11px] text-slate-400 mr-2">Độ sâu:</span>
+                        <select aria-label="Độ sâu phân tích" value={aiAnalysisDepth} onChange={(e) => setAiAnalysisDepth(e.target.value)} className="bg-transparent text-xs font-medium text-slate-700 outline-none cursor-pointer">
+                          <option value="deep">Phân tích sâu · 5–6 góc nhìn</option>
+                          <option value="focused">Tập trung vào câu hỏi</option>
+                        </select>
+                      </div>
                     </div>
 
                     {/* Submit Actions */}
@@ -2618,7 +2631,7 @@ export const AnalyticsView: React.FC = () => {
               )}
 
               {/* Proposal Content Card */}
-              {!isProposingPlan && aiPlan && <AnalysisMeaning interpretation={aiPlan.interpretation} />}
+              {!isProposingPlan && aiPlan && <><AnalysisMeaning interpretation={aiPlan.interpretation} /><AnalystPlanningSummary diagnostics={aiPlan.diagnostics} /></>}
               {!isProposingPlan && aiPlan && (
                 <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-5">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-4">
@@ -2796,7 +2809,8 @@ export const AnalyticsView: React.FC = () => {
               {!isGeneratingAi && ['needs_clarification', 'error'].includes(generatedReport?.status) && (
                 <AnalysisClarification response={generatedReport}
                   onChoice={(answer) => handleProposePlan(`${aiPrompt}. ${answer}`)}
-                  onEdit={() => setAiStep(1)} />
+                  onEdit={() => setAiStep(1)}
+                  onRetry={() => handleProposePlan()} />
               )}
 
               {/* Empty state if user jumped to step 3 with no report */}

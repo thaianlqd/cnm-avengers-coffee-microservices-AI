@@ -45,6 +45,9 @@ def analytical_features(artifacts):
                 "unit": a.grounded.metrics.get(metric, {}).get("unit", ""),
                 "scope": {
                     "period": a.grounded.period,
+                    "population_relation": a.query.population_relation,
+                    "metric_business_filters": a.grounded.metrics.get(metric, {}).get("business_filters", []),
+                    "metric_required_non_null": a.grounded.metrics.get(metric, {}).get("required_non_null", []),
                     "filters": [f.model_dump(mode="json") for f in a.query.filters],
                     "partition": partition or {},
                     "selection": (

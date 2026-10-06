@@ -3482,6 +3482,36 @@
         "non_negative": true,
         "additive": true,
         "description": "Số đơn theo giờ ở mức order; đơn vị đơn."
+      },
+      "purchasing_customer_count": {
+        "business_name": "Số khách mua hàng",
+        "aliases": [
+          "khách mua hàng",
+          "khách đã mua",
+          "purchasing customers"
+        ],
+        "expression": "COUNT(DISTINCT silver.don_hang.ma_nguoi_dung)",
+        "source": "silver.don_hang",
+        "grain": "order",
+        "time_column": "silver.don_hang.ngay_tao",
+        "unit": "khách",
+        "subjects": [
+          "orders",
+          "stores"
+        ],
+        "business_filters": [
+          {
+            "dimension": "order_status",
+            "operator": "in",
+            "value": [
+              "HOAN_THANH",
+              "DANG_GIAO"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "additive": false,
+        "description": "Số khách khác nhau đã mua trong phạm vi đơn hoàn thành/đang giao và kỳ được chọn; không phải tổng khách đăng ký. Không cộng số khách giữa các tháng/chi nhánh."
       }
     },
     "dimensions": {
@@ -3990,7 +4020,8 @@
         "metrics": [
           "revenue",
           "order_count",
-          "aov"
+          "aov",
+          "purchasing_customer_count"
         ],
         "detail_columns": [
           "order_id",
@@ -4188,7 +4219,8 @@
         "metrics": [
           "store_revenue",
           "store_order_count",
-          "store_aov"
+          "store_aov",
+          "purchasing_customer_count"
         ],
         "detail_columns": [
           "store"

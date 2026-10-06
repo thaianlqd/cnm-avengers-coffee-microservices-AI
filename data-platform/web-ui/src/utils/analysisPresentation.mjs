@@ -7,6 +7,9 @@ const titles = {
   result_contract: 'Kết quả chưa vượt qua kiểm chứng',
   unsupported_metric: 'Chỉ số chưa được hỗ trợ',
   unsupported_dimension: 'Chiều phân tích chưa được hỗ trợ',
+  provider_call_budget_exceeded: 'Yêu cầu đã đạt giới hạn lượt AI',
+  one_shot_context_budget_exceeded: 'Phạm vi yêu cầu quá lớn',
+  dashboard_contract: 'Cách trình bày chưa phù hợp với dữ liệu',
 };
 
 export function analysisFailureTitle(response = {}) {

@@ -10,6 +10,19 @@ class Contract(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+# (required fields, optional fields). Share this grammar between the model-facing
+# declaration and local validation; each kind has a different complete shape.
+TIME_SHAPES = {
+    "relative": (("mode",), ()),
+    "month": (("month",), ("year",)),
+    "quarter": (("quarter",), ("year",)),
+    "year": (("year",), ()),
+    "day": (("month", "day"), ("year",)),
+    "range": (("start", "end"), ()),
+    "rolling": (("amount", "unit"), ()),
+}
+
+
 class TimeSpec(Contract):
     """Intermediate calendar meaning; never passed to the SQL compiler."""
 

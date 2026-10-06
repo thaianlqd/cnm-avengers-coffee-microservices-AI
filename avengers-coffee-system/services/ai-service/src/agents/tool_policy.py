@@ -81,6 +81,16 @@ class GuardedToolGateway:
         self.entry_product_groups = {bucket: deepcopy(artifacts.visible.get(bucket + '_products') or [])
                                      for bucket in ('drink', 'food')}
         self.entry_focus = deepcopy(artifacts.focus.get('product'))
+        from src.agents.product_option_scope import resolve_product_option_scopes
+        self.entry_pending_products = deepcopy(context['business'].get('pending_products') or [])
+        self.next_pending_selection_index = max((int(row.get('selection_index') or index)
+            for index, row in enumerate(self.entry_pending_products, 1)), default=0) + 1
+        self.product_option_scopes = resolve_product_option_scopes(user_message,
+            self.entry_pending_products, self.entry_products, self.entry_product_groups)
+        if self.entry_pending_products:
+            logger.info('ProductOptionScope pending_count=%s target_count=%s explicit=%s ambiguous=%s',
+                len(self.entry_pending_products), len(self.product_option_scopes.clauses),
+                self.product_option_scopes.explicit, self.product_option_scopes.ambiguous)
         from src.agents.cart_edit_evidence import edit_plan, pending_option_followup
         artifacts.cart_edit_plan = edit_plan(user_message, self.entry_cart_lines)
         self.entry_cart_option_edit = (context['business'].get('checkout') or {}).get('pending_cart_option_edit')
@@ -553,6 +563,12 @@ class GuardedToolGateway:
                 return found
         return None
 
+    def option_message_for(self, product_id):
+        scopes = self.product_option_scopes
+        if scopes.ambiguous:
+            return ''
+        return scopes.clauses.get(str(product_id), '' if scopes.explicit or self.entry_pending_products else self.user_message)
+
     def _get_product_options(self, args):
         # Exact DB identity is safe even when Redis is absent; never resolve by
         # a model-supplied display name or trust a Redis option schema.
@@ -573,8 +589,8 @@ class GuardedToolGateway:
                     **{k: staged[k] for k in ('size', 'toppings', 'luong_da', 'do_ngot', 'loai_sua') if k in staged}}
                 product = self._stage_option_product(args['product_id'], result,
                     staged.get('quantity', 1), {**choices, **literal_option_choices(
-                        self.user_message, option_schema_from_result(result))})
-                if requests_custom_options(self.user_message):
+                        self.option_message_for(args['product_id']), option_schema_from_result(result))})
+                if requests_custom_options(self.option_message_for(args['product_id'])):
                     return denied('needs_options', product=product, option_groups=product['option_schema'])
         return result
 
@@ -588,9 +604,19 @@ class GuardedToolGateway:
 
     def _save_pending_product(self, product):
         pending = self.context['business'].get('pending_products') or []
-        pending = [product if str(row.get('product_id')) == product['product_id'] else row for row in pending]
+        existing = next((row for row in pending if str(row.get('product_id')) == product['product_id']), {})
+        saved = {**({'selection_index': existing['selection_index']} if existing.get('selection_index') else {}), **product}
+        if existing and not saved.get('selection_index'):
+            references = [int(row.get('display_index') or index) for index, row in enumerate(self.entry_products, 1)
+                if str(row.get('product_id')) == product['product_id']]
+            saved['selection_index'] = references[0] if len(references) == 1 else next(
+                index for index, row in enumerate(pending, 1) if str(row.get('product_id')) == product['product_id'])
+        if not saved.get('selection_index'):
+            saved['selection_index'] = self.next_pending_selection_index
+        self.next_pending_selection_index = max(self.next_pending_selection_index, int(saved['selection_index']) + 1)
+        pending = [saved if str(row.get('product_id')) == product['product_id'] else row for row in pending]
         if not any(str(row.get('product_id')) == product['product_id'] for row in pending):
-            pending.append(product)
+            pending.append(saved)
         cart_manager.set_pending_products(self.session_id, pending)
         cart_manager.set_pending_action(self.session_id, 'fill_options', {'count': len(pending)})
         self.context['business'] = business_state(self.session_id)
@@ -598,6 +624,7 @@ class GuardedToolGateway:
     def _configured_product(self, product_id, values, defaults=False, require_all=True, quantity=None):
         from src.agents.option_state import (option_schema_from_result, option_field, resolve_option_default,
             uses_global_option_defaults, default_option_fields, declines_toppings)
+        option_message = self.option_message_for(product_id) if require_all else getattr(self, 'active_edit_clause', self.user_message)
         self._configuring_product = True
         try:
             result = self._get_product_options({'product_id': product_id})
@@ -612,17 +639,18 @@ class GuardedToolGateway:
                            if str(row.get('product_id')) == product_id), {})
             selected = {**staged.get('selected_options', {}),
                 **{k: staged[k] for k in ('size', 'toppings', 'luong_da', 'do_ngot', 'loai_sua') if k in staged}}
-            if uses_global_option_defaults(self.user_message):
-                # Model guesses are not defaults. Keep prior customer choices
-                # and use Menu defaults for the rest, unless this turn changes them.
+            if uses_global_option_defaults(option_message):
+                selected = {}  # An explicit reset applies only to this product.
+                # Model guesses are not defaults. Reset earlier choices using
+                # Menu defaults; retain only explicit changes in this clause.
                 for field, value in list(values.items()):
                     requested = value if isinstance(value, list) else [value]
                     if not requested or not all(re.search(r'(?<!\w)' + re.escape(normalize_text(item)) + r'(?!\w)',
-                            normalize_text(self.user_message)) for item in requested):
+                            normalize_text(option_message)) for item in requested):
                         values.pop(field, None)
             values = {**selected, **values}
             from src.agents.shopping_language import explicit_shopping_quantity
-            explicit_quantity = explicit_shopping_quantity(self.user_message)
+            explicit_quantity = explicit_shopping_quantity(option_message)
             expected_quantity = getattr(self, 'turn_selection_quantities', {}).get(product_id,
                 explicit_quantity if explicit_quantity is not None else staged.get('quantity', 1))
             if staged and quantity is not None and int(quantity) != int(expected_quantity):
@@ -631,7 +659,6 @@ class GuardedToolGateway:
             quantity = expected_quantity if staged else (quantity if quantity is not None else 1)
         groups, output, missing = option_schema_from_result(result), {}, []
         from src.agents.option_state import validate_explicit_multi_value_group, literal_option_choices
-        option_message = self.user_message if require_all else getattr(self, 'active_edit_clause', self.user_message)
         literal_choices = literal_option_choices(option_message, groups)
         if require_all:
             values = {field: value for field, value in values.items()
@@ -660,15 +687,15 @@ class GuardedToolGateway:
                 literal_choices['toppings'] = evidence['valid_values']
         customizable = any(option_field(group['name']) == 'toppings' or len(group['values']) > 1 for group in groups)
         if defaults and customizable:
-            if not uses_global_option_defaults(self.user_message):
+            if not uses_global_option_defaults(option_message):
                 if require_all:
                     self._stage_option_product(product_id, result, quantity, {**selected, **literal_choices})
                 return None, denied('defaults_not_authorized',
                     message='Dạ, bạn muốn dùng tùy chọn mặc định của quán hay tự chọn ạ?')
         # Defaults are authorized by the customer's text, even when the model
         # omitted use_defaults. Optional fields follow Menu defaults on omission.
-        defaults = defaults or uses_global_option_defaults(self.user_message)
-        scoped_defaults = default_option_fields(self.user_message)
+        defaults = defaults or uses_global_option_defaults(option_message)
+        scoped_defaults = default_option_fields(option_message)
         by_field = {option_field(g['name']): g for g in groups if option_field(g['name'])}
         if 'toppings' in by_field and declines_toppings(option_message):
             values['toppings'] = []
@@ -716,6 +743,9 @@ class GuardedToolGateway:
         return 'ai-' + hashlib.sha256(raw.encode()).hexdigest()
 
     def _add_to_cart(self, args):
+        from src.agents.product_option_scope import option_question
+        if option_question(self.user_message):
+            return denied('cart_change_not_requested', message='Dạ, mình chưa thay đổi giỏ. Bạn cho mình từng món và tùy chọn muốn áp dụng để mình sửa đúng món nhé.')
         if args['product_id'] in self.updated_products:
             return denied('conflicting_cart_operations')
         if not self._product(args['product_id']):
@@ -781,6 +811,7 @@ class GuardedToolGateway:
         from src.agents.option_state import uses_global_option_defaults, requests_custom_options
         from src.agents.product_display import product_bucket
         pending = self.context['business'].get('pending_products') or []
+        from src.agents.product_option_scope import option_answer, option_question
         text = normalize_shopping(self.user_message)
         option_reply = (uses_global_option_defaults(self.user_message)
                         or requests_custom_options(self.user_message)
@@ -790,11 +821,16 @@ class GuardedToolGateway:
         if option_reply and not pending and self.entry_focus and self.entry_focus.get('source') == 'customer_selected_options':
             if str(self.entry_focus.get('product_id')) == product_id:
                 return None
-        if pending and option_reply:
-            named_pending = [row for row in pending if normalize_shopping(row.get('product_name')) in text]
-            from src.agents.option_state import literal_option_choices
-            matching_pending = [row for row in pending if literal_option_choices(self.user_message, row.get('option_schema') or [])]
-            permitted = named_pending if named_pending else matching_pending if len(matching_pending) == 1 else pending[:1]
+        if self.entry_pending_products and (option_reply or any(option_answer(
+                self.user_message, row.get('option_schema') or [])
+                for row in self.entry_pending_products)):
+            if option_question(self.user_message):
+                return denied('cart_change_not_requested', message='Dạ, mình chưa thay đổi giỏ. Bạn cho mình từng món và tùy chọn muốn áp dụng để mình sửa đúng món nhé.')
+            if self.product_option_scopes.ambiguous:
+                return denied('ambiguous_product_options', message='Bạn ghi tùy chọn riêng sau tên hoặc số của từng món giúp mình nhé.')
+            permitted = [row for row in self.entry_pending_products
+                if str(row['product_id']) in self.product_option_scopes.clauses
+                and option_answer(self.option_message_for(str(row['product_id'])), row.get('option_schema') or [])]
             if any(str(row.get('product_id')) == product_id for row in permitted):
                 return None
             return denied('product_choice_required', message='Dạ, mình đang hoàn thiện món bạn đã chọn; mình chưa thêm món khác ạ.')
@@ -835,6 +871,9 @@ class GuardedToolGateway:
     def _cart_target_error(self, line, operation=None):
         """Independently validate explicit ordinal/name evidence before writes."""
         self.active_edit_clause = self.user_message
+        from src.agents.product_option_scope import option_question
+        if option_question(self.user_message):
+            return denied('cart_change_not_requested', message='Dạ, mình chưa thay đổi giỏ. Bạn cho mình từng món và tùy chọn muốn áp dụng để mình sửa đúng món nhé.')
         if self.cart_option_followup and operation == 'update_cart_item':
             if str(line['cart_item_id']) != self.cart_option_followup['cart_item_id']:
                 return denied('cart_reference_conflict', expected_cart_item_id=self.cart_option_followup['cart_item_id'])

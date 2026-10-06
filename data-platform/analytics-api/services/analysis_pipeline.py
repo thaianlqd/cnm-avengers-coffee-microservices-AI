@@ -28,6 +28,12 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
     messages = {
         "approval_required": "Vui lòng lập và xác nhận kế hoạch phân tích trước khi thực thi.",
         "invalid_analysis_contract": "AI đã trả lời nhưng kế hoạch phân tích chưa hợp lệ. Vui lòng thử lập lại kế hoạch.",
+        "provider_call_budget_exceeded": "Hệ thống đã chặn lượt gọi AI vượt giới hạn của yêu cầu này. Bạn có thể chủ động lập lại kế hoạch.",
+        "one_shot_context_budget_exceeded": "Phạm vi yêu cầu vượt giới hạn ngữ cảnh. Vui lòng thu gọn yêu cầu phân tích.",
+        "semantic_manifest_budget_exceeded": "Danh mục phân tích vượt giới hạn ngữ cảnh hiện tại.",
+        "context_configuration": "Giới hạn ngữ cảnh trên máy chủ chưa hợp lệ.",
+        "provider_policy": "Cấu hình AI chưa đáp ứng giới hạn một lượt gọi cho mỗi yêu cầu. Vui lòng kiểm tra cấu hình máy chủ.",
+        "dashboard_contract": "Loại biểu đồ này chưa phù hợp với kết quả hiện tại. Báo cáo đã duyệt được giữ nguyên.",
         "duplicate_invalid_tool_call": "AI lặp lại một kế hoạch chưa hợp lệ; hệ thống đã dừng lượt sửa. Vui lòng lập lại kế hoạch.",
         "analysis_spec_invalid": "Kế hoạch phân tích chưa hợp lệ. Vui lòng lập lại kế hoạch.",
         "execution": "Truy vấn phân tích chưa thực thi thành công. Vui lòng thử lại sau.",
@@ -120,11 +126,11 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
             "execution_status": "failed" if category == "execution" else "passed" if category == "result_contract" else "not_started",
             "result_status": "failed" if category == "result_contract" else "not_started",
             **(layer_diagnostics or {}),
-            "provider_attempt_count": len(provider_calls or []),
+            "provider_attempt_count": (layer_diagnostics or {}).get("provider_attempt_count", len(provider_calls or [])),
             "agent_round_count": (layer_diagnostics or {}).get("agent_rounds", 0),
             "repair_round_count": (layer_diagnostics or {}).get("contract_repair_count", 0),
             "terminal_error": category,
-            "pipeline_version": "2.3",
+            "pipeline_version": (layer_diagnostics or {}).get("pipeline_version", "2.4"),
             "error_category": category,
             "missing_fields": (
                 structured.get("missing_fields", []) if structured else []

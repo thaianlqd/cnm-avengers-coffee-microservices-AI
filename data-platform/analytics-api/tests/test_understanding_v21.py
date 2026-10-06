@@ -289,7 +289,7 @@ class UnderstandingV21Tests(unittest.TestCase):
             ),
             ({"calls": "broken", "attempts": []}, "provider_invalid_tools"),
         ]:
-            pipeline = AnalysisPipeline(
+            pipeline = AnalysisPipeline(planning_mode="legacy",
                 metadata_loader=physical_metadata,
                 provider=Mock(return_value=provider_return),
                 executor=Mock(),
@@ -324,7 +324,7 @@ class UnderstandingV21Tests(unittest.TestCase):
         provider.assert_called_once()
 
     def test_reference_date_is_part_of_approved_request(self):
-        pipeline = AnalysisPipeline(
+        pipeline = AnalysisPipeline(planning_mode="legacy",
             metadata_loader=physical_metadata,
             provider=query_script(),
             executor=Mock(return_value=result(ranked_rows())),
@@ -573,7 +573,7 @@ class UnderstandingV21Tests(unittest.TestCase):
     def test_relative_refinements_keep_original_request_reference_date(self):
         from common import AiReportRefineRequest
 
-        pipeline = AnalysisPipeline(
+        pipeline = AnalysisPipeline(planning_mode="legacy",
             metadata_loader=physical_metadata,
             provider=query_script([ranking_query(time={"kind": "month", "month": 9})]),
             executor=Mock(return_value=result(ranked_rows())),

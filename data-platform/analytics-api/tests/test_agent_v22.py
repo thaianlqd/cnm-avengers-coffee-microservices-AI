@@ -64,6 +64,20 @@ def fixture_artifact(q):
     for f in a.plan.filters:
         if f.dimension in a.plan.dimensions and f.operator == "in":
             n = min(n, len(f.value))
+    if a.plan.dimensions and a.plan.kind != "trend" and all(
+        any(f.dimension == d and f.operator == "eq" for f in a.plan.filters)
+        for d in a.plan.dimensions
+    ):
+        n = 1
+    monthly_periods = None
+    if a.plan.kind == "trend" and a.plan.granularity == "month":
+        from services.time_resolution_service import shift_months
+        start = date.fromisoformat(a.plan.period["start"]) if a.plan.period["start"] else shift_months(REFERENCE, -2)
+        start = start.replace(day=1)
+        monthly_periods = [shift_months(start, i) for i in range(n)]
+        if a.plan.period["end"]:
+            monthly_periods = [value for value in monthly_periods if value <= date.fromisoformat(a.plan.period["end"])]
+        n = len(monthly_periods)
     for i in range(n):
         row = {}
         for d in a.plan.dimensions:
@@ -85,9 +99,8 @@ def fixture_artifact(q):
             )
             if a.plan.granularity == "week":
                 start -= timedelta(days=start.weekday())
-            row["period"] = (
-                start + timedelta(days=i * 7 if a.plan.granularity == "week" else i)
-            ).isoformat()
+            row["period"] = (monthly_periods[i] if monthly_periods is not None else
+                start + timedelta(days=i * 7 if a.plan.granularity == "week" else i)).isoformat()
         for m in a.plan.metrics:
             row[m] = (
                 100 - i * 10
@@ -123,7 +136,7 @@ class AgentTests(unittest.TestCase):
         self.catalog = AnalysisCatalog(physical_metadata())
 
     def pipeline(self, provider=None, executor=None, **kw):
-        return AnalysisPipeline(
+        return AnalysisPipeline(planning_mode="legacy",
             metadata_loader=physical_metadata,
             provider=provider or query_script(),
             executor=executor or Mock(return_value=result(ranked_rows())),
@@ -1014,7 +1027,7 @@ class AgentTests(unittest.TestCase):
                 response = Mock(
                     ok=False, status_code=status, text="PRIVATE_PROVIDER_BODY"
                 )
-                provider = NativeAgentProvider()
+                provider = NativeAgentProvider(legacy_policy=True)
                 with patch.dict(os.environ, {"AI_OFFLINE": "0"}), patch(
                     "services.llm_service.GEMINI_API_KEY", "PRIVATE_API_KEY"
                 ), patch("services.llm_service.GROQ_API_KEY", ""), patch(
@@ -1075,7 +1088,7 @@ class AgentTests(unittest.TestCase):
         ) as post, self.assertLogs(
             "ai-native-provider", level="WARNING"
         ) as logs:
-            p = self.pipeline(NativeAgentProvider())
+            p = self.pipeline(NativeAgentProvider(legacy_policy=True))
             with self.assertRaises(AnalysisError) as caught:
                 p.propose(AiTextToReportRequest(prompt="fixture"))
         self.assertEqual(post.call_count, 3)
@@ -1219,7 +1232,7 @@ class AgentTests(unittest.TestCase):
         ) as post, self.assertLogs(
             "ai-native-provider", level="WARNING"
         ) as logs:
-            provider = NativeAgentProvider()
+            provider = NativeAgentProvider(legacy_policy=True)
             p = self.pipeline(provider=provider)
             with self.assertRaises(AnalysisError) as caught:
                 p.propose(AiTextToReportRequest(prompt="fixture"))
@@ -1331,7 +1344,7 @@ class AgentTests(unittest.TestCase):
             "services.agent_provider.requests.post",
             side_effect=[quota, missing, working, quota],
         ) as post:
-            provider = NativeAgentProvider()
+            provider = NativeAgentProvider(legacy_policy=True)
             kwargs = {
                 "system": SYSTEM,
                 "messages": [{"role": "user", "content": "fixture"}],
@@ -1365,7 +1378,7 @@ class AgentTests(unittest.TestCase):
                 }
             ]
         }
-        provider = NativeAgentProvider()
+        provider = NativeAgentProvider(legacy_policy=True)
         kwargs = {
             "system": SYSTEM,
             "messages": [{"role": "user", "content": "fixture"}],
@@ -1436,7 +1449,7 @@ class AgentTests(unittest.TestCase):
         ), patch(
             "services.agent_provider.requests.post", return_value=response
         ) as post:
-            provider = NativeAgentProvider()
+            provider = NativeAgentProvider(legacy_policy=True)
             first = provider(system=SYSTEM, messages=messages, tools=tools)
             messages += [
                 {"role": "assistant", "calls": first["calls"]},
@@ -1497,7 +1510,7 @@ class AgentTests(unittest.TestCase):
         ), patch(
             "services.agent_provider.requests.post", return_value=bad
         ) as post:
-            provider = NativeAgentProvider()
+            provider = NativeAgentProvider(legacy_policy=True)
             answer = provider(
                 system=SYSTEM,
                 messages=[{"role": "user", "content": "fixture"}],
@@ -1566,7 +1579,7 @@ class AgentTests(unittest.TestCase):
         ), patch(
             "services.agent_provider.requests.post", side_effect=responses
         ) as post:
-            p = self.pipeline(provider=NativeAgentProvider())
+            p = self.pipeline(provider=NativeAgentProvider(legacy_policy=True))
             report = p.generate(
                 AiTextToReportRequest(prompt="fixture", reference_date=REFERENCE)
             )
@@ -1614,7 +1627,7 @@ class AgentTests(unittest.TestCase):
             ],
             "usageMetadata": {"promptTokenCount": 12, "candidatesTokenCount": 3},
         }
-        provider = NativeAgentProvider()
+        provider = NativeAgentProvider(legacy_policy=True)
         messages = [{"role": "user", "content": "fixture"}]
         tools = [
             {
@@ -1675,7 +1688,7 @@ class AgentTests(unittest.TestCase):
         ), patch("services.llm_service.GROQ_API_KEY", "fixture"), patch(
             "services.agent_provider.requests.post", side_effect=[bad, good]
         ) as post:
-            answer = NativeAgentProvider()(
+            answer = NativeAgentProvider(legacy_policy=True)(
                 system=SYSTEM,
                 messages=[{"role": "user", "content": "fixture"}],
                 tools=tools,
@@ -1736,7 +1749,7 @@ class AgentTests(unittest.TestCase):
                 ) as post, patch(
                     "services.agent_provider.time.sleep"
                 ) as pause:
-                    provider = NativeAgentProvider()
+                    provider = NativeAgentProvider(legacy_policy=True)
                     first = provider(system=SYSTEM, messages=messages, tools=[])
                     messages += [
                         {"role": "assistant", "calls": first["calls"]},
@@ -1781,7 +1794,7 @@ class AgentTests(unittest.TestCase):
                 "services.agent_provider.requests.post",
                 return_value=Mock(ok=False, status_code=status),
             ) as post:
-                response = NativeAgentProvider()(
+                response = NativeAgentProvider(legacy_policy=True)(
                     system=SYSTEM,
                     messages=[{"role": "user", "content": "fixture"}],
                     tools=[],
@@ -1961,6 +1974,7 @@ class AgentTests(unittest.TestCase):
             REFERENCE,
             {},
             budget=AgentBudget(tool_result_chars=2500, preview_rows=4),
+            legacy_mode=True,
         )
         projection = agent.projection(a)
         self.assertLessEqual(
@@ -2034,7 +2048,7 @@ class AgentTests(unittest.TestCase):
         q = query("energy", "energy_total", group_by=["region"])
         executor = Mock(return_value=result([{"region": "A", "energy_total": 100}]))
         agent = DataAnalystAgent(
-            catalog, query_script([q]), executor, None, REFERENCE, {}
+            catalog, query_script([q]), executor, None, REFERENCE, {}, legacy_mode=True
         )
         artifacts, plan = agent.run("unseen words")
         self.assertEqual(

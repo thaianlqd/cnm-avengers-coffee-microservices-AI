@@ -513,7 +513,7 @@ class OfflineTests(unittest.TestCase):
         self.assertTrue(all(t.startswith("silver.") for t in found["top_tables"]))
 
     def pipeline(self, provider=None, executor=None):
-        return AnalysisPipeline(
+        return AnalysisPipeline(planning_mode="legacy",
             metadata_loader=physical_metadata,
             provider=provider or query_script(),
             executor=executor or Mock(return_value=result(ranked_rows())),
@@ -784,8 +784,12 @@ class OfflineTests(unittest.TestCase):
         self.assertEqual(report["charts"], [])
         self.assertEqual(report["table_data"]["rows"], [])
         self.assertTrue(report["data_warnings"])
-        self.assertNotIn("98.5", json.dumps(report))
-        self.assertNotIn("4.8", json.dumps(report))
+        # Inspect analytical content, not wall-clock timestamps/latency that
+        # can coincidentally contain the provider's fabricated numbers.
+        content = json.dumps({key: report[key] for key in
+            ("charts", "table_data", "evidence", "assistant_reply")})
+        self.assertNotIn("98.5", content)
+        self.assertNotIn("4.8", content)
         with self.assertRaises(AnalysisError):
             understand(
                 "unclear composite request",

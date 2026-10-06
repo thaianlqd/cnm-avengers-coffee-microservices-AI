@@ -225,7 +225,7 @@ def customer_flow_reply(logs, state, discovery_reply=None):
             return customer_flow_reply(logs[:logs.index(earlier[-1])+1], state)
         return result['message']
     if result.get('status') in {'defaults_not_authorized', 'profile_location_confirmation_required', 'needs_new_location', 'login_required',
-                             'product_choice_required', 'cart_change_not_requested', 'invalid_option', 'wallet_unavailable', 'insufficient_wallet'}:
+                             'product_choice_required', 'ambiguous_product_options', 'cart_change_not_requested', 'invalid_option', 'wallet_unavailable', 'insufficient_wallet'}:
         return result['message']
     if result.get('status') == 'require_confirmation' and result.get('order_summary'):
         return checkout_summary(result['order_summary'])

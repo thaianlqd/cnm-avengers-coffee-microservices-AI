@@ -1,7 +1,7 @@
 """Repeatable offline matrix; explicit opt-in enables later read-only live QA.
 
 Run from analytics-api: python tools/analysis_matrix.py --output docs/MANUAL_MATRIX_OFFLINE.json
-Offline complex specs are scripted provider responses, NOT evidence of live NLP
+V2.4 offline decisions are scripted responses, NOT evidence of live NLP
 accuracy. Live mode never imports the application startup (which initializes views).
 """
 
@@ -21,7 +21,7 @@ from services.analysis_contract import AnalysisSpec, SpecPatch
 from services.analysis_understanding import merge_patch
 from services.analysis_pipeline import AnalysisPipeline, safe_failure
 from tests.analysis_fixtures import physical_metadata, result
-from tests.agent_fixtures import query_script, queries_from_spec, call
+from tests.agent_fixtures import queries_from_spec, call
 
 
 MEANING_FIELDS = (
@@ -75,126 +75,45 @@ def run_case(case, live=False):
                     ] = values
         return physical
 
-    scripted = None
     initial_queries = []
-    if (
-        not live
-        and case["expected_status"] == "success"
-        or not live
-        and case["id"] == "adversarial_six_rows"
-    ):
+    if not live and (case["expected_status"] == "success" or case["id"] == "adversarial_six_rows"):
         initial_queries = queries_from_spec(case["expected_spec"], metadata())
-        scripted = query_script(initial_queries)
+
+    def model_operation(q):
+        q = dict(q)
+        fields = q.pop("project", [])
+        if fields:
+            q["detail_fields"] = fields
+        if "changed_fields" in q:
+            q["changed_fields"] = ["detail_fields" if f == "project" else f for f in q["changed_fields"]]
+        return q
 
     def provider(**request):
         payload = json.loads(request["messages"][0]["content"])
-        mode = payload.get("mode")
-        provider_calls.append(mode)
-        if mode == "dashboard":
-            return {
-                "calls": [
-                    call(
-                        "finish_analysis",
-                        {"active_query_ids": [q["id"] for q in initial_queries]},
-                    )
-                ],
-                "attempts": [],
-            }
-        if mode == "refinement" and refinement:
-            new_spec = merge_patch(
-                AnalysisSpec.model_validate(case["expected_spec"]),
-                SpecPatch.model_validate(refinement["patch"]),
-            )
-            queries = queries_from_spec(new_spec.model_dump(mode="json"), metadata())
-            old = {q["id"]: q for q in initial_queries}
-            calls = []
-            for q in queries:
-                if q["id"] in old:
-                    q["replaces"] = q["id"]
-                    q["changed_fields"] = [
-                        k
-                        for k in (
-                            "subject",
-                            "operation",
-                            "metrics",
-                            "group_by",
-                            "filters",
-                            "project",
-                            "time",
-                            "granularity",
-                            "ranking",
-                            "order_by",
-                            "limit",
-                        )
-                        if q.get(k) != old[q["id"]].get(k)
-                    ]
-                calls.append(call("run_analysis", q, q["id"]))
-            visuals = [
-                {
-                    "query_id": q["id"],
-                    "chart_type": kind,
-                    "metrics": q["metrics"][:1],
-                    "x_field": (
-                        "period"
-                        if q["operation"] == "trend"
-                        else q["group_by"][0] if q["group_by"] else None
-                    ),
-                    "purpose": (
-                        "ranking" if q["operation"] == "ranking" else "comparison"
-                    ),
-                }
-                for q in queries
-                for kind in new_spec.requested_visualizations
-            ]
-            calls.append(
-                call(
-                    "finish_analysis",
-                    {
-                        "active_query_ids": [q["id"] for q in queries],
-                        "removed_query_ids": list(
-                            set(old) - {q["id"] for q in queries}
-                        ),
-                        "visuals": visuals,
-                    },
-                    "finish",
-                )
-            )
-            return {"calls": calls, "attempts": []}
-        if scripted:
-            return scripted(**request)
+        refining = bool(payload.get("state"))
+        provider_calls.append("one_shot_refinement" if refining else "one_shot_plan")
         if case.get("provider_response"):
-            error = (
-                "invalid_tool_response"
-                if case["provider_response"].get("data") is not None
-                else "provider_unavailable"
-            )
+            error = "invalid_tool_response" if case["provider_response"].get("data") is not None else "provider_unavailable"
             return {"calls": None, "attempts": [{"error_category": error}]}
-        spec = case["expected_spec"]
-        reason = case.get("expected_category") or (
-            "metric_ambiguous" if spec.get("ambiguities") else "clarification"
-        )
-        known = {
-            "subject": spec.get("subject"),
-            "operation": spec.get("analysis_kind"),
-            "metrics": spec.get("metrics", []),
-            "group_by": spec.get("dimensions", []),
-            "filters": spec.get("filters", []),
-            "ranking": spec.get("ranking"),
-        }
-        return {
-            "calls": [
-                call(
-                    "ask_clarification",
-                    {
-                        "reason": reason,
-                        "subject": spec.get("subject"),
-                        "known_query": known,
-                        "missing_fields": [],
-                    },
-                )
-            ],
-            "attempts": [],
-        }
+        if initial_queries:
+            queries = initial_queries
+            visuals, removed = [], []
+            if refining and refinement:
+                new_spec = merge_patch(AnalysisSpec.model_validate(case["expected_spec"]), SpecPatch.model_validate(refinement["patch"]))
+                queries = queries_from_spec(new_spec.model_dump(mode="json"), metadata())
+                old = {q["id"]: q for q in initial_queries}
+                for q in queries:
+                    if q["id"] in old:
+                        q["replaces"] = q["id"]
+                        q["changed_fields"] = [k for k in ("subject", "operation", "metrics", "group_by", "filters", "project", "time", "granularity", "ranking", "order_by", "limit") if q.get(k) != old[q["id"]].get(k)]
+                removed = sorted(set(old) - {q["id"] for q in queries})
+                visuals = [{"query_id": q["id"], "chart_type": kind, "metrics": q["metrics"][:1], "x_field": "period" if q["operation"] == "trend" else q["group_by"][0] if q["group_by"] else None, "purpose": "ranking" if q["operation"] == "ranking" else "comparison"} for q in queries for kind in new_spec.requested_visualizations]
+            value = {"decision_type": "plan", "requested_operations": [model_operation(q) for q in queries], "removed_query_ids": removed, "visuals": visuals}
+        else:
+            spec = case["expected_spec"]
+            reason = case.get("expected_category") or "metric_ambiguous"
+            value = {"decision_type": "unsupported" if reason in {"unsupported_metric", "forecast_unsupported", "unsupported_dimension"} else "clarification", "clarification": {"reason": reason, "subject": spec.get("subject"), "known_query": {"subject": spec.get("subject"), "operation": spec.get("analysis_kind"), "metrics": spec.get("metrics", []), "group_by": spec.get("dimensions", []), "filters": spec.get("filters", []), "ranking": spec.get("ranking")}, "missing_fields": []}}
+        return {"calls": [call("submit_analyst_decision", value)], "attempts": []}
 
     def execute(sql, row_limit=100):
         executed.append(sql)

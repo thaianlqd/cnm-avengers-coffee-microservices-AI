@@ -1,5 +1,7 @@
 # Data Platform AI V2.3 — implementation and qualification
 
+> Historical V2.3 record. Production now uses [V2.4 single-shot planning](AI_V24_IMPLEMENTATION.md); automatic repair/transport recovery described below is limited to explicit legacy tests.
+
 Implemented on 2026-10-06. All validation described here uses scripted tools, synthetic metadata/results or mocked transports. It does not establish live language accuracy or warehouse business truth.
 
 ## Starting state and scope

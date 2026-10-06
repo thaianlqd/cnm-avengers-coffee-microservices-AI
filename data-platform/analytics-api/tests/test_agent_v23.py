@@ -59,7 +59,7 @@ def rich_queries():
 def fixture_executor(queries):
     rows_by_sql = {}
     for q in queries:
-        a, _ = fixture_artifact({**q, "role": "requested", "parent_id": None})
+        a, _ = fixture_artifact({**q, "role": "requested", "parent_id": None, "population_relation": "same"})
         rows_by_sql[a.sql] = a.result
     return Mock(side_effect=lambda sql, **kw: deepcopy(rows_by_sql[sql]))
 
@@ -73,7 +73,7 @@ class V23Tests(unittest.TestCase):
         self.catalog = AnalysisCatalog(physical_metadata())
 
     def pipeline(self, provider, executor=None, budget=None):
-        return AnalysisPipeline(metadata_loader=physical_metadata, provider=provider,
+        return AnalysisPipeline(planning_mode="legacy", metadata_loader=physical_metadata, provider=provider,
             executor=executor or Mock(return_value=result(ranked_rows())), value_lookup=Mock(return_value=[]), budget=budget or AgentBudget())
 
     def request(self, prompt="Unseen analytical request"):
@@ -214,10 +214,10 @@ class V23Tests(unittest.TestCase):
         self.assertEqual(q.ranking.metric, "product_revenue")
 
     def test_exact_wire_shapes_compact_required_typed_and_non_mutating(self):
-        agent = DataAnalystAgent(self.catalog, ScriptedProvider(), None, None, REFERENCE, {})
+        agent = DataAnalystAgent(self.catalog, ScriptedProvider(), None, None, REFERENCE, {}, legacy_mode=True)
         agent.semantic.describe("subject", "products"); tools = agent.tools()
         originals = {name: deepcopy(model.model_json_schema()) for name, (model, _) in TOOL_MODELS.items()}
-        provider = NativeAgentProvider()
+        provider = NativeAgentProvider(legacy_policy=True)
         compat = provider._gemini_compat_body("fixture", [{"role": "user", "content": "fixture"}], tools, "fixture-model")
         native = provider._gemini_body("fixture", [{"role": "user", "content": "fixture"}], tools)
         wire = {t["function"]["name"]: t["function"]["parameters"] for t in compat["tools"]}

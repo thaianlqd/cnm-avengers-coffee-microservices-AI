@@ -48,7 +48,7 @@ def _invoke(action, payload):
             {
                 **pipeline.semantic_info,
                 "provider_calls": pipeline.calls,
-                "provider_call_count": len(pipeline.calls),
+                "provider_call_count": pipeline.semantic_info.get("provider_call_count", len(pipeline.calls)),
                 "embedding_call_count": pipeline.embedding_calls,
             }
         )
@@ -63,7 +63,9 @@ def ai_status():
     metadata = cache_status()
     return {
         "status": "ready" if metadata["local_ready"] else "unavailable",
-        "pipeline_version": "2.3",
+        "pipeline_version": "2.4",
+        "planning_mode": "one_shot",
+        "provider_call_budget": 1,
         "providers": providers,
         "metadata": metadata,
         "sessions": session_stats(),

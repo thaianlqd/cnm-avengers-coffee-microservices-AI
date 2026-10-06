@@ -342,6 +342,12 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
       # ── AI Analytics ──────────────────────────────────
+      # V2.4 one-shot invariants; env_file keys remain local to analytics-api.
+      DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN: "1"
+      DATA_ANALYST_ENABLE_CONTRACT_REPAIR: "0"
+      DATA_ANALYST_ENABLE_MODEL_ESCALATION: "0"
+      DATA_ANALYST_ENABLE_PROVIDER_FALLBACK: "0"
+      DATA_ANALYST_ENABLE_POST_RESULT_SYNTHESIS: "0"
       # Optional source access is metadata-only; analytical SQL always uses postgres-analytics.
       SOURCE_DB_HOST: ${DB_HOST:-aws-0-ap-southeast-1.pooler.supabase.com}
       SOURCE_DB_PORT: ${DB_PORT:-6543}

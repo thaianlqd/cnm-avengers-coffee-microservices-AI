@@ -42,15 +42,16 @@ def dimension_values(catalog, name):
 def aliases_for(catalog, name, values):
     d = catalog.registry["dimensions"][name]
     allowed = set(values)
-    aliases = {value_text(v): v for v in values}
-    aliases.update(
-        {
-            value_text(k): v
-            for k, v in d.get("value_aliases", {}).items()
-            if v in allowed
-        }
-    )
-    return aliases
+    # Qualified labels such as "Thành phố Hồ Chí Minh" carry the same value
+    # as the catalog's "Hồ Chí Minh". This uses only catalog labels, not the
+    # user sentence or a business-specific router. Collisions stay ambiguous.
+    pairs = [(value_text(v), v) for v in values]
+    pairs += [(value_text(d["business_name"] + " " + str(v)), v) for v in values]
+    pairs += [(value_text(k), v) for k, v in d.get("value_aliases", {}).items() if v in allowed]
+    candidates = {}
+    for alias, value in pairs:
+        candidates.setdefault(alias, set()).add(value)
+    return {alias: next(iter(found)) for alias, found in candidates.items() if len(found) == 1}
 
 
 def value_hints(prompt, catalog, dimensions=None, lookup=None):

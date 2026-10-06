@@ -8,6 +8,7 @@ import json
 from copy import deepcopy
 from pydantic import ValidationError
 from services.analysis_catalog import AnalysisError
+from services.analysis_contract import TIME_SHAPES
 from services.analyst_contract import AnalyticalQuery, AnalyticalToolInput
 
 
@@ -23,6 +24,7 @@ ISSUE_CODES = frozenset({
     "unsupported_subject", "unsupported_metric", "unsupported_dimension",
     "incompatible_metric_population", "scope_conflict", "filter_value_unresolved",
     "unsafe_relationship", "sensitive_field", "contract_rejected", "batch_aborted",
+    "detail_fields_only_for_detail", "supporting_budget", "operation_budget",
 })
 PATH_FIELDS = frozenset({
     *AnalyticalToolInput.model_fields, "metric", "direction", "top_n", "per_group",
@@ -31,7 +33,8 @@ PATH_FIELDS = frozenset({
     "visuals", "query_id", "chart_type", "x_field", "series_field", "priority",
     "compare_query_ids", "kpi_evidence_ids", "claims", "recommendations",
     "removed_query_ids", "reason", "known_query", "missing_fields", "query",
-    "offset", "reference", "contract", "batch",
+    "offset", "reference", "contract", "batch", "detail_fields", "decision_type",
+    "requested_operations", "supporting_operations", "clarification",
 })
 
 
@@ -71,7 +74,7 @@ def structural_payload(arguments):
     return data, rules
 
 
-def canonicalize(arguments, previous=None):
+def canonicalize(arguments, previous=None, parent_replacements=None):
     boundary = AnalyticalToolInput.model_validate(arguments)
     # exclude_unset preserves explicit nulls/values while retaining omission.
     data = boundary.model_dump(mode="json", exclude_unset=True)
@@ -83,23 +86,31 @@ def canonicalize(arguments, previous=None):
         if missing:
             raise ToolContractError([issue(f, "replacement_field_required") for f in missing])
         stored = old.query.model_dump(mode="json")
+        if stored.get("parent_id") in (parent_replacements or {}):
+            stored["parent_id"] = parent_replacements[stored["parent_id"]]
         for field in (
             "subject", "operation", "metrics", "group_by", "filters", "project",
             "time", "granularity", "ranking", "order_by", "limit",
         ):
             if field not in boundary.changed_fields:
                 data[field] = stored[field]
-        for field in ("role", "parent_id", "purpose"):
+        for field in ("role", "parent_id", "purpose", "population_relation"):
             if field not in boundary.model_fields_set:
                 data[field] = stored[field]
-            elif field in ("role", "parent_id") and data[field] != stored[field]:
+            elif field in ("role", "parent_id", "population_relation") and data[field] != stored[field]:
                 raise ToolContractError([issue(field, "scope_conflict")])
     data, rules = structural_payload(data)
     time = data.get("time")
     if isinstance(time, dict):
-        allowed = {"relative": {"mode"}, "rolling": {"amount", "unit"}, "range": {"start", "end"}, "year": {"year"}, "month": {"month", "year"}, "quarter": {"quarter", "year"}, "day": {"day", "month", "year"}}[time["kind"]]
-        if any(k != "kind" and v is not None and k not in allowed for k, v in time.items()):
-            raise ToolContractError([issue("time", "invalid_time_shape")])
+        required, optional = TIME_SHAPES[time["kind"]]
+        missing = [field for field in required if time.get(field) is None]
+        if missing:
+            raise ToolContractError([issue("time." + field, "field_required") for field in missing])
+        allowed = set(required + optional)
+        unexpected = [k for k, v in time.items() if k != "kind" and v is not None and k not in allowed]
+        if unexpected:
+            raise ToolContractError([issue("time", "invalid_time_shape"),
+                                     *[issue("time." + field, "unexpected_field") for field in unexpected]])
     if "purpose" not in data and data.get("role") == "supporting":
         data["purpose"] = "context"
     if data.get("operation") == "trend" and "granularity" not in data:

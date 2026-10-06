@@ -9,10 +9,9 @@ import re
 from src.agents.selection_language import parse_selection_reference, product_reference_category
 from src.agents.shopping_language import interpret_shopping, normalize_shopping, shopping_quantity
 from src.agents.product_display import product_bucket
-from src.agents.option_state import (option_schema_from_result, literal_option_choices,
-    uses_global_option_defaults, requests_custom_options)
+from src.agents.option_state import literal_option_choices, requests_custom_options
 from src.agents.customer_flow_presentation import options_prompt
-from src.common import cart_manager
+from src.agents.product_option_scope import option_answer, option_question
 
 
 def envelope(reply):
@@ -44,9 +43,10 @@ def product_references(gateway):
 def pending_prompt(products):
     blocks = []
     for index, row in enumerate(products, 1):
-        blocks.append(f"**Món đang chọn {index}: {row['product_name']} ×{row.get('quantity', 1)}**\n" +
+        ordinal = row.get('selection_index') or index
+        blocks.append(f"**Món đang chọn {ordinal}: {row['product_name']} ×{row.get('quantity', 1)}**\n" +
             options_prompt({'product': row, 'option_groups': row['option_schema']}))
-    return '\n\n'.join(blocks) + ('\n\nBạn chọn tùy chọn cho **món đang chọn 1** trước nhé; các món còn lại vẫn đang chờ, chưa vào giỏ.' if len(products) > 1 else '')
+    return '\n\n'.join(blocks) + ('\n\nBạn có thể ghi tùy chọn riêng sau **số hoặc tên của từng món** trong cùng một tin nhắn; các món trên vẫn đang chờ, chưa vào giỏ.' if len(products) > 1 else '')
 
 
 def selected_quantity(message, reference, index):
@@ -127,33 +127,52 @@ def customer_shopping_control(gateway):
                         'entity_type': 'product', 'domain': 'product_description', 'query': row['product_name']})
             return {'reply': None, 'error': None}
     pending = business.get('pending_products') or []
-    if pending and '?' not in message and not re.search(r'\b(?:xem|gia|review|chi tiet|mo ta|thanh toan|xoa|bo mon|huy)\b', text):
-        named = [row for row in pending if normalize_shopping(row['product_name']) in text]
-        matching = [row for row in pending if literal_option_choices(message, row.get('option_schema') or [])]
-        target = named[0] if len(named) == 1 else matching[0] if len(matching) == 1 else pending[0]
-        groups = target.get('option_schema') or []
-        choices = literal_option_choices(message, groups)
-        option_answer = bool(choices or uses_global_option_defaults(message) or requests_custom_options(message)
-                             or re.search(r'\b(?:topping|it da|it ngot|khong ngot|da rieng)\b', text)
-                             or text in {'ok', 'oke', 'oke dung roi', 'dung roi', 'dong y', 'khong them topping'})
-        if option_answer and not (interpretation.act == 'ADD_ITEM' and interpretation.targets
-                and not any(str(row['product_id']) == str(target['product_id']) for row in interpretation.targets)):
-            if requests_custom_options(message):
-                return envelope(pending_prompt(pending))
-            result = gateway.dispatch('add_to_cart', {'product_id': str(target['product_id']),
-                'quantity': int(target.get('quantity', 1)), **choices})
-            if result.get('status') in {'ok', 'already_processed'}:
+    if pending and not option_question(message) and not re.search(r'\b(?:xem|gia|review|chi tiet|mo ta|thanh toan|xoa|bo mon|huy)\b', text):
+        scopes = gateway.product_option_scopes
+        actionable = [(row, gateway.option_message_for(str(row['product_id']))) for row in pending
+            if option_answer(gateway.option_message_for(str(row['product_id'])), row.get('option_schema') or [])]
+        if scopes.ambiguous and option_answer(message):
+            return envelope('Bạn ghi tùy chọn riêng sau **số hoặc tên của từng món** giúp mình nhé.\n\n' + pending_prompt(pending))
+        if actionable:
+            prepared, errors = [], []
+            # Validate the entire batch before the first cart write. One missing
+            # size or invalid topping cannot silently consume another request.
+            for row, clause in actionable:
+                product_id = str(row['product_id'])
+                error = gateway._add_selection_error(product_id)
+                if not error and requests_custom_options(clause):
+                    error = {'message': options_prompt({'product': row, 'option_groups': row['option_schema']})}
+                if not error:
+                    configured, error = gateway._configured_product(product_id,
+                        literal_option_choices(clause, row.get('option_schema') or []), quantity=int(row.get('quantity', 1)))
+                    if not error:
+                        prepared.append((row, configured))
+                if error:
+                    errors.append(f"**{row['product_name']}**: " + (error.get('message') or 'Bạn chọn các tùy chọn còn thiếu nhé.'))
+            if errors:
+                for row, configured in prepared:
+                    gateway._save_pending_product({**row, **configured})
                 remaining = gateway.context['business'].get('pending_products') or []
-                if remaining:
-                    from src.agents.customer_flow_presentation import customer_flow_reply
-                    cart_reply = customer_flow_reply(gateway.artifacts.logs, gateway.artifacts.business) or ''
-                    gateway.artifacts.pending_selection_reply = cart_reply + '\n\n' + pending_prompt(remaining)
+                return envelope('Mình chưa thêm các món trong lượt này vào giỏ.\n\n' + '\n\n'.join(errors) + '\n\n' + pending_prompt(remaining))
+            for row, configured in prepared:
+                result = gateway.dispatch('add_to_cart', {'product_id': str(row['product_id']),
+                    'quantity': int(configured['quantity']),
+                    **{field: configured[field] for field in ('size', 'toppings', 'luong_da', 'do_ngot', 'loai_sua') if field in configured}})
+                if result.get('status') not in {'ok', 'already_processed'}:
+                    break
+            remaining = gateway.context['business'].get('pending_products') or []
+            if remaining:
+                from src.agents.customer_flow_presentation import customer_flow_reply
+                cart_reply = customer_flow_reply(gateway.artifacts.logs, gateway.artifacts.business) or ''
+                gateway.artifacts.pending_selection_reply = cart_reply + '\n\n' + pending_prompt(remaining)
             return {'reply': None, 'error': None}
     if interpretation.act == 'ADD_ITEM' and interpretation.quantity_valid and not re.search(r'\b(?:xoa|bo|sua|doi|tang|giam)\b', text):
         selected = list(interpretation.targets)
         if not selected:
             return None
         staged = []
+        next_selection_index = max((int(row.get('selection_index') or index)
+            for index, row in enumerate(pending, 1)), default=0) + 1
         gateway.turn_selection_quantities = {str(row['product_id']): selected_quantity(message, ref, index)
                                             for index, row in enumerate(selected)}
         for index, row in enumerate(selected):
@@ -165,6 +184,7 @@ def customer_shopping_control(gateway):
             if not product:
                 return None  # Gateway did not authorize the selection.
             product['quantity'] = selected_quantity(message, ref, index)
+            product['selection_index'] = product.get('selection_index') or next_selection_index + index
             if product['quantity'] < 1:
                 return envelope('Bạn chọn số lượng lớn hơn 0 giúp mình nhé.')
             gateway._save_pending_product(product)

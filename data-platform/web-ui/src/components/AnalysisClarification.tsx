@@ -7,7 +7,8 @@ export const AnalysisClarification: React.FC<{
   response: any;
   onChoice?: (answer: string) => void;
   onEdit?: () => void;
-}> = ({ response, onChoice, onEdit }) => {
+  onRetry?: () => void;
+}> = ({ response, onChoice, onEdit, onRetry }) => {
   const clarification = response?.clarification;
   const choices = (clarification?.choices || response?.options || []).filter(
     (choice: any) => choice && typeof choice === 'object' && typeof choice.label === 'string'
@@ -25,6 +26,7 @@ export const AnalysisClarification: React.FC<{
         </button>
       ))}</div>}
       {onEdit && <button type="button" onClick={onEdit} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs">Chỉnh sửa câu hỏi</button>}
+      {failed && onRetry && <button type="button" onClick={onRetry} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs">Thử lập lại kế hoạch</button>}
     </section>
   );
 };

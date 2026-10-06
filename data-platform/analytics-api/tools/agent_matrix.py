@@ -63,7 +63,7 @@ def cost_record(name, report):
 
 
 def scenarios():
-    p = AnalysisPipeline(
+    p = AnalysisPipeline(planning_mode="legacy",
         metadata_loader=physical_metadata,
         provider=query_script(),
         executor=Mock(return_value=result(ranked_rows())),
@@ -126,7 +126,7 @@ def scenarios():
         }
     )
     fixtures = [fixture_artifact(q)[0].result for q in queries]
-    p = AnalysisPipeline(
+    p = AnalysisPipeline(planning_mode="legacy",
         metadata_loader=physical_metadata,
         provider=query_script(queries),
         executor=Mock(side_effect=fixtures),

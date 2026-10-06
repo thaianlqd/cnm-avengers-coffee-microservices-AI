@@ -136,7 +136,7 @@ def model_projection(context, emergency=False):
                     'params': {key: compact(value) for key, value in
                         ((state.get('pending') or {}).get('params') or {}).items()
                         if key in {'product_id', 'cart_item_id', 'count', 'missing_fields'}}},
-        'pending_products': [{key: reference_value(row[key]) for key in (*LINE_FIELDS, 'option_schema', 'missing_fields')
+        'pending_products': [{key: reference_value(row[key]) for key in (*LINE_FIELDS, 'option_schema', 'missing_fields', 'selection_index')
                               if key in row} for row in state.get('pending_products') or []]},
         'visible': {kind: model_snapshot(kind, rows) for kind, rows in context.get('visible', {}).items()},
         'focus': compact(context.get('focus') or {}),
