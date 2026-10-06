@@ -29,6 +29,17 @@ export function analysisPlanLabel(chart = {}) {
 }
 
 export function analysisChartGroups(charts = []) {
+  if (charts.some(c => c.domain_label)) {
+    const groups = new Map();
+    // Requested work leads the story even when a domain has supporting views.
+    for (const chart of [...charts.filter(c => c.role !== 'supporting'), ...charts.filter(c => c.role === 'supporting')]) {
+      const role = chart.role === 'supporting' ? 'supporting' : 'requested';
+      const key = `${chart.domain_id || ''}:${role}:${chart.story_section || ''}`;
+      if (!groups.has(key)) groups.set(key, { role: key, title: [chart.domain_label, chart.story_section, role === 'supporting' ? 'Phân tích hỗ trợ' : 'Theo yêu cầu'].filter(Boolean).join(' · '), charts: [] });
+      groups.get(key).charts.push(chart);
+    }
+    return [...groups.values()];
+  }
   return [
     { role: 'requested', title: 'Phân tích theo yêu cầu', charts: charts.filter(c => c.role !== 'supporting') },
     { role: 'supporting', title: 'Phân tích hỗ trợ', charts: charts.filter(c => c.role === 'supporting') },

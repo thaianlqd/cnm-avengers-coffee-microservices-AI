@@ -1,0 +1,396 @@
+{
+  "pipeline_version": "2.5",
+  "real_provider_calls": 0,
+  "real_embedding_calls": 0,
+  "live_db_mutations": 0,
+  "live_db_queries": 0,
+  "note": "Scripted decisions and synthetic result rows qualify contracts/orchestration. They do not establish live language accuracy, latency or token cost. Token fields remain null when unreported.",
+  "scenarios": [
+    {
+      "scenario": "focused_products",
+      "depth": "focused",
+      "status": "success",
+      "provider_calls": 1,
+      "approval_provider_calls": 0,
+      "provider_input_tokens": null,
+      "provider_output_tokens": null,
+      "context": {
+        "native": 21420,
+        "compat": 21364,
+        "system_chars": 1647,
+        "question_ui_chars": 203,
+        "session_state_chars": 2,
+        "semantic_manifest_chars": 8384,
+        "semantic_manifest_complete": true,
+        "decision_schema_chars": 6366,
+        "global_domain_count": 16,
+        "global_domain_directory_chars": 1579,
+        "detailed_domain_ids": [
+          "products"
+        ],
+        "detailed_domain_pack_chars": {
+          "products": 865
+        },
+        "domain_context_chars": 2912,
+        "total_context_chars": 21420,
+        "context_char_budget": 24000
+      },
+      "requested_operations": 1,
+      "supporting_operations": 0,
+      "omitted_supports": 0,
+      "proposal_analytical_queries": 0,
+      "approval_db_queries": 1,
+      "chart_count": 1,
+      "chart_families": [
+        "horizontal_bar"
+      ],
+      "domain_count": 1,
+      "evidence_count": 3,
+      "peer_evidence_count": 0,
+      "depth_coverage": {
+        "target_views": [
+          1,
+          3
+        ],
+        "validated_views": 1,
+        "status": "adequate",
+        "planned_operations": 1
+      }
+    },
+    {
+      "scenario": "deep_sales",
+      "depth": "deep",
+      "status": "success",
+      "provider_calls": 1,
+      "approval_provider_calls": 0,
+      "provider_input_tokens": null,
+      "provider_output_tokens": null,
+      "context": {
+        "native": 23033,
+        "compat": 22977,
+        "system_chars": 1647,
+        "question_ui_chars": 193,
+        "session_state_chars": 2,
+        "semantic_manifest_chars": 8384,
+        "semantic_manifest_complete": true,
+        "decision_schema_chars": 6366,
+        "global_domain_count": 16,
+        "global_domain_directory_chars": 1579,
+        "detailed_domain_ids": [
+          "orders",
+          "stores"
+        ],
+        "detailed_domain_pack_chars": {
+          "orders": 1317,
+          "stores": 1006
+        },
+        "domain_context_chars": 4385,
+        "total_context_chars": 23033,
+        "context_char_budget": 24000
+      },
+      "requested_operations": 1,
+      "supporting_operations": 5,
+      "omitted_supports": 0,
+      "proposal_analytical_queries": 0,
+      "approval_db_queries": 6,
+      "chart_count": 6,
+      "chart_families": [
+        "bar",
+        "horizontal_bar",
+        "multi_line",
+        "donut"
+      ],
+      "domain_count": 3,
+      "evidence_count": 5,
+      "peer_evidence_count": 0,
+      "depth_coverage": {
+        "target_views": [
+          4,
+          6
+        ],
+        "validated_views": 6,
+        "status": "adequate",
+        "planned_operations": 6
+      }
+    },
+    {
+      "scenario": "comprehensive_business",
+      "depth": "comprehensive",
+      "status": "success",
+      "provider_calls": 1,
+      "approval_provider_calls": 0,
+      "provider_input_tokens": null,
+      "provider_output_tokens": null,
+      "context": {
+        "native": 23748,
+        "compat": 23692,
+        "system_chars": 1647,
+        "question_ui_chars": 242,
+        "session_state_chars": 2,
+        "semantic_manifest_chars": 8384,
+        "semantic_manifest_complete": true,
+        "decision_schema_chars": 6366,
+        "global_domain_count": 16,
+        "global_domain_directory_chars": 1579,
+        "detailed_domain_ids": [
+          "products",
+          "order_items",
+          "orders"
+        ],
+        "detailed_domain_pack_chars": {
+          "products": 865,
+          "order_items": 655,
+          "orders": 1317
+        },
+        "domain_context_chars": 4943,
+        "total_context_chars": 23748,
+        "context_char_budget": 24000
+      },
+      "requested_operations": 3,
+      "supporting_operations": 5,
+      "omitted_supports": 0,
+      "proposal_analytical_queries": 0,
+      "approval_db_queries": 8,
+      "chart_count": 8,
+      "chart_families": [
+        "bar",
+        "donut",
+        "scatter",
+        "horizontal_bar",
+        "multi_line"
+      ],
+      "domain_count": 5,
+      "evidence_count": 7,
+      "peer_evidence_count": 0,
+      "depth_coverage": {
+        "target_views": [
+          6,
+          8
+        ],
+        "validated_views": 8,
+        "status": "adequate",
+        "planned_operations": 8
+      }
+    },
+    {
+      "scenario": "deep_payments",
+      "depth": "deep",
+      "status": "success",
+      "provider_calls": 1,
+      "approval_provider_calls": 0,
+      "provider_input_tokens": null,
+      "provider_output_tokens": null,
+      "context": {
+        "native": 21150,
+        "compat": 21094,
+        "system_chars": 1647,
+        "question_ui_chars": 164,
+        "session_state_chars": 2,
+        "semantic_manifest_chars": 8384,
+        "semantic_manifest_complete": true,
+        "decision_schema_chars": 6366,
+        "global_domain_count": 16,
+        "global_domain_directory_chars": 1579,
+        "detailed_domain_ids": [
+          "payments"
+        ],
+        "detailed_domain_pack_chars": {
+          "payments": 788
+        },
+        "domain_context_chars": 2729,
+        "total_context_chars": 21150,
+        "context_char_budget": 24000
+      },
+      "requested_operations": 1,
+      "supporting_operations": 4,
+      "omitted_supports": 0,
+      "proposal_analytical_queries": 0,
+      "approval_db_queries": 5,
+      "chart_count": 6,
+      "chart_families": [
+        "bar",
+        "line",
+        "donut",
+        "heatmap"
+      ],
+      "domain_count": 1,
+      "evidence_count": 14,
+      "peer_evidence_count": 6,
+      "depth_coverage": {
+        "target_views": [
+          4,
+          6
+        ],
+        "validated_views": 6,
+        "status": "adequate",
+        "planned_operations": 5
+      }
+    },
+    {
+      "scenario": "deep_inventory",
+      "depth": "deep",
+      "status": "success",
+      "provider_calls": 1,
+      "approval_provider_calls": 0,
+      "provider_input_tokens": null,
+      "provider_output_tokens": null,
+      "context": {
+        "native": 21120,
+        "compat": 21064,
+        "system_chars": 1647,
+        "question_ui_chars": 165,
+        "session_state_chars": 2,
+        "semantic_manifest_chars": 8384,
+        "semantic_manifest_complete": true,
+        "decision_schema_chars": 6366,
+        "global_domain_count": 16,
+        "global_domain_directory_chars": 1579,
+        "detailed_domain_ids": [
+          "inventory"
+        ],
+        "detailed_domain_pack_chars": {
+          "inventory": 747
+        },
+        "domain_context_chars": 2688,
+        "total_context_chars": 21120,
+        "context_char_budget": 24000
+      },
+      "requested_operations": 1,
+      "supporting_operations": 3,
+      "omitted_supports": 0,
+      "proposal_analytical_queries": 0,
+      "approval_db_queries": 4,
+      "chart_count": 6,
+      "chart_families": [
+        "bar",
+        "heatmap"
+      ],
+      "domain_count": 1,
+      "evidence_count": 12,
+      "peer_evidence_count": 6,
+      "depth_coverage": {
+        "target_views": [
+          4,
+          6
+        ],
+        "validated_views": 6,
+        "status": "adequate",
+        "planned_operations": 4
+      }
+    },
+    {
+      "scenario": "deep_customers",
+      "depth": "deep",
+      "status": "success",
+      "provider_calls": 1,
+      "approval_provider_calls": 0,
+      "provider_input_tokens": null,
+      "provider_output_tokens": null,
+      "context": {
+        "native": 22703,
+        "compat": 22647,
+        "system_chars": 1647,
+        "question_ui_chars": 165,
+        "session_state_chars": 2,
+        "semantic_manifest_chars": 8384,
+        "semantic_manifest_complete": true,
+        "decision_schema_chars": 6366,
+        "global_domain_count": 16,
+        "global_domain_directory_chars": 1579,
+        "detailed_domain_ids": [
+          "customers",
+          "orders"
+        ],
+        "detailed_domain_pack_chars": {
+          "customers": 866,
+          "orders": 1317
+        },
+        "domain_context_chars": 4125,
+        "total_context_chars": 22703,
+        "context_char_budget": 24000
+      },
+      "requested_operations": 1,
+      "supporting_operations": 5,
+      "omitted_supports": 0,
+      "proposal_analytical_queries": 0,
+      "approval_db_queries": 6,
+      "chart_count": 6,
+      "chart_families": [
+        "bar",
+        "line",
+        "donut",
+        "heatmap"
+      ],
+      "domain_count": 1,
+      "evidence_count": 5,
+      "peer_evidence_count": 0,
+      "depth_coverage": {
+        "target_views": [
+          4,
+          6
+        ],
+        "validated_views": 6,
+        "status": "adequate",
+        "planned_operations": 6
+      }
+    },
+    {
+      "scenario": "focused_peer_sales",
+      "depth": "focused",
+      "status": "success",
+      "provider_calls": 1,
+      "approval_provider_calls": 0,
+      "provider_input_tokens": null,
+      "provider_output_tokens": null,
+      "context": {
+        "native": 21913,
+        "compat": 21857,
+        "system_chars": 1647,
+        "question_ui_chars": 199,
+        "session_state_chars": 2,
+        "semantic_manifest_chars": 8384,
+        "semantic_manifest_complete": true,
+        "decision_schema_chars": 6366,
+        "global_domain_count": 16,
+        "global_domain_directory_chars": 1579,
+        "detailed_domain_ids": [
+          "orders"
+        ],
+        "detailed_domain_pack_chars": {
+          "orders": 1317
+        },
+        "domain_context_chars": 3371,
+        "total_context_chars": 21913,
+        "context_char_budget": 24000
+      },
+      "requested_operations": 1,
+      "supporting_operations": 0,
+      "omitted_supports": 0,
+      "proposal_analytical_queries": 0,
+      "approval_db_queries": 1,
+      "chart_count": 1,
+      "chart_families": [
+        "bar"
+      ],
+      "domain_count": 1,
+      "evidence_count": 4,
+      "peer_evidence_count": 3,
+      "depth_coverage": {
+        "target_views": [
+          1,
+          3
+        ],
+        "validated_views": 1,
+        "status": "adequate",
+        "planned_operations": 1
+      }
+    },
+    {
+      "scenario": "delivery_history_unavailable",
+      "status": "needs_clarification",
+      "category": "historical_metric_unavailable",
+      "provider_calls": 1,
+      "proposal_analytical_queries": 0
+    }
+  ]
+}

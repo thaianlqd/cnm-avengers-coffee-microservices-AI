@@ -27,6 +27,7 @@ class DecisionOperation(Contract):
     limit: int = Field(default=100, ge=1, le=100)
     parent_id: Optional[str] = None
     purpose: Literal["answer", "context", "compare", "relationship"] = "answer"
+    lens_id: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z0-9_]{0,63}$")
     population_relation: Literal["same", "related"] = "same"
     replaces: Optional[str] = None
     changed_fields: List[Literal["subject", "operation", "metrics", "group_by", "filters", "time", "detail_fields", "ranking", "granularity", "order_by", "limit"]] = Field(default_factory=list, max_length=12)
@@ -70,6 +71,7 @@ def decision_tool(*, refinement=True):
         return {k: omit_null(v) for k, v in value.items()}
 
     operation = omit_null(operation)
+    partial_time = operation["properties"]["time"]
     if not refinement:
         for field in ("replaces", "changed_fields"):
             operation["properties"].pop(field, None)
@@ -90,15 +92,26 @@ def decision_tool(*, refinement=True):
     # A clarification draft is partial logical meaning, not arbitrary untyped JSON.
     draft = {"type": "object", "properties": {k: v for k, v in operation["properties"].items()
              if k in {"subject", "operation", "metrics", "group_by", "filters", "time", "ranking"}}}
+    # A clarification carries partial known meaning, not an executable query.
+    # Missing/invalid partial time is reported as a missing field locally.
+    draft["properties"]["time"] = partial_time
     clarification = expanded_schema(AgentClarification.model_json_schema())
     clarification["properties"]["known_query"] = draft
     clarification = omit_null(clarification)
+    requested = {**operation, "properties": {k: v for k, v in operation["properties"].items()
+                 if k not in {"parent_id", "purpose", "population_relation"}}}
+    support = {**operation, "properties": {k: v for k, v in operation["properties"].items()
+               if k not in {"filters", "time"}}}
+    support["required"] = ["id", "parent_id"]
+    # Supports inherit parent scope; the compatibility parser still validates
+    # explicit scope from old decisions. New calls don't repeat those fields.
     return {"name": "submit_analyst_decision", "description": "Submit one complete decision. Plan all requested and useful supporting operations together, within ui.supporting_limit. Time may be omitted.",
             "parameters": {"type": "object", "required": ["decision_type"], "properties": {
                 "decision_type": {"type": "string", "enum": ["plan", "clarification", "unsupported"]},
-                "requested_operations": {"type": "array", "items": operation},
-                "supporting_operations": {"type": "array", "items": operation},
+                "requested_operations": {"type": "array", "items": requested},
+                "supporting_operations": {"type": "array", "items": support},
                 "clarification": clarification,
                 "removed_query_ids": {"type": "array", "items": {"type": "string"}},
-                "visuals": {"type": "array", "items": omit_null(gemini_tool_schema({"name": "decision_visual", "parameters": DashboardVisual.model_json_schema()}))},
+                # Legacy stored decisions may still contain visuals. New model
+                # planning is analytical only; structured UI edits own visuals.
             }}}

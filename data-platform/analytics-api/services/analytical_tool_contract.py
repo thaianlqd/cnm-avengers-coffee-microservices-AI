@@ -35,6 +35,7 @@ PATH_FIELDS = frozenset({
     "removed_query_ids", "reason", "known_query", "missing_fields", "query",
     "offset", "reference", "contract", "batch", "detail_fields", "decision_type",
     "requested_operations", "supporting_operations", "clarification",
+    "lens_id",
 })
 
 
@@ -94,7 +95,7 @@ def canonicalize(arguments, previous=None, parent_replacements=None):
         ):
             if field not in boundary.changed_fields:
                 data[field] = stored[field]
-        for field in ("role", "parent_id", "purpose", "population_relation"):
+        for field in ("role", "parent_id", "purpose", "population_relation", "lens_id"):
             if field not in boundary.model_fields_set:
                 data[field] = stored[field]
             elif field in ("role", "parent_id", "population_relation") and data[field] != stored[field]:

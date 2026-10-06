@@ -23,7 +23,7 @@ def fmt(value):
     )
 
 
-def analytical_features(artifacts):
+def analytical_features(artifacts, catalog=None):
     evidence = []
 
     def add(a, metric, kind, feature, values, statement, partition=None):
@@ -44,6 +44,7 @@ def analytical_features(artifacts):
                 "values": values,
                 "unit": a.grounded.metrics.get(metric, {}).get("unit", ""),
                 "scope": {
+                    "label": catalog.registry["subjects"][a.query.subject]["business_name"] if catalog else "Phần phân tích đã chọn",
                     "period": a.grounded.period,
                     "population_relation": a.query.population_relation,
                     "metric_business_filters": a.grounded.metrics.get(metric, {}).get("business_filters", []),
@@ -362,6 +363,42 @@ def analytical_features(artifacts):
                     },
                     f'{a.grounded.metrics[metric]["business_name"]} giữa hai phạm vi đã chọn chênh {fmt(gap)} {a.grounded.metrics[metric]["unit"]}; đối chiếu bộ lọc từng phần để đọc chiều so sánh.',
                 )
+    if catalog is not None:
+        from services.domain_intelligence_service import DomainIntelligence
+        intelligence = DomainIntelligence(catalog)
+        for a in artifacts.values():
+            profile = intelligence.domain_for(a.query.subject)
+            # A peer baseline must cover the complete returned cohort. Top N,
+            # truncation, time buckets and mixed dimensions are not baselines.
+            if not profile or a.plan.ranking or a.plan.explicit_limit or a.query.operation not in {"aggregate", "cross_tab"} or a.result.get("truncated"):
+                continue
+            rows = a.result["rows"]
+            for signal in profile["health_signals"]:
+                metric = signal["metric"]
+                if metric not in a.plan.metrics or set(a.query.group_by) != set(signal["peer_dimensions"]) or len(rows) < signal["minimum_peer_groups"]:
+                    continue
+                if not all(number(row.get(metric)) for row in rows):
+                    continue
+                observation = signal["observation_metric"]
+                if observation and (observation not in a.plan.metrics or not all(number(row.get(observation)) and row[observation] >= signal["minimum_observations"] for row in rows)):
+                    continue
+                values = [row[metric] for row in rows]
+                baseline = (statistics.median if signal["comparison"] == "peer_median" else statistics.mean)(values)
+                baseline_label = "trung vị" if signal["comparison"] == "peer_median" else "trung bình"
+                meta = a.grounded.metrics[metric]
+                for row in rows:
+                    partition = {d: row[d] for d in a.plan.dimensions}
+                    entity = " / ".join(str(row[d]) for d in a.plan.dimensions if not d.endswith("_id")) or "Nhóm quan sát"
+                    gap = row[metric] - baseline
+                    relative = gap / abs(baseline) * 100 if baseline else None
+                    direction = signal["direction"]
+                    judgment = "above_peer" if gap > 0 else "below_peer" if gap < 0 else "at_peer"
+                    if signal["comparable_exposure"] and direction in {"higher_better", "lower_better"}:
+                        judgment = "at_peer" if not gap else "favorable" if (gap > 0) == (direction == "higher_better") else "needs_review"
+                    statement = f"{entity}: {meta['business_name']} {fmt(row[metric])} {meta['unit']}, chênh {fmt(gap)} {meta['unit']} so với {baseline_label} {fmt(baseline)} của {len(rows)} nhóm cùng phạm vi."
+                    if judgment not in {"favorable", "needs_review"}:
+                        statement += " Chênh lệch chưa xác định hiệu quả tốt/xấu vì chưa kiểm chứng quy mô hoạt động tương đương."
+                    add(a, metric, "comparison", "peer_gap", {"entity": entity, "actual": row[metric], "baseline": baseline, "baseline_type": signal["comparison"], "gap": gap, "relative_gap_pct": relative, "direction": direction, "judgment": judgment, "peer_groups": len(rows), "comparable_exposure": signal["comparable_exposure"]}, statement, partition)
     return evidence
 
 
@@ -433,6 +470,11 @@ def grounded_narrative(plan, evidence):
                 }
             )
     summary = " ".join(e["statement"] for e in selected[:5])
+    if not recommendations:
+        for e in selected:
+            if e["feature"] == "peer_gap" and e["values"]["judgment"] in {"below_peer", "needs_review"}:
+                recommendations.append({"text": "Đối chiếu quy mô hoạt động và cỡ mẫu của " + e["values"]["entity"] + " với nhóm cùng phạm vi trước khi điều chỉnh vận hành.", "evidence_id": e["id"], "action": "review_peer_context"})
+                break
     if len(selected) == 1:
         period = selected[0]["scope"]["period"]
         summary += (
@@ -454,10 +496,11 @@ def grounded_narrative(plan, evidence):
         "key_findings": [
             {
                 "finding": e["statement"],
-                "comment": f"Căn cứ phần phân tích {e['scope_ref']}; phạm vi {e['scope']['selection']}. Xem bằng chứng và phép tính kèm theo.",
+                "comment": f"Căn cứ {e['scope'].get('label', 'phần phân tích đã chọn')}; phạm vi {e['scope']['selection']}. Xem bằng chứng và phép tính kèm theo.",
                 "value": e["values"].get(
                     {
                         "population_gap": "gap",
+                        "peer_gap": "gap",
                         "group_comparison": "gap",
                         "leader": "value",
                         "top_gap": "gap",

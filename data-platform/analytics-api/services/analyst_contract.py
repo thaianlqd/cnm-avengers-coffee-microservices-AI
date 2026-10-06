@@ -31,6 +31,7 @@ class AnalyticalFields(Contract):
     role: Literal["requested", "supporting"] = "requested"
     parent_id: Optional[str] = None
     purpose: Literal["answer", "compare", "context", "relationship"] = "answer"
+    lens_id: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z0-9_]{0,63}$")
     population_relation: Literal["same", "related"] = "same"
     # Refinement inherits scope from this server operation unless explicitly changed.
     replaces: Optional[str] = None

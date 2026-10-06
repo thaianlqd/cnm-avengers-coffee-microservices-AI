@@ -246,8 +246,13 @@ class ToolArtifacts:
         if (not self.display_unresolved and all_success and complete and len(ids) == len(batches)
                 and len(ids) <= 16 and len(set(ids)) == len(ids)):
             self._publish_products(ids, 'server_unambiguous_batches')
-        else:
-            self._publish_products([], 'clarification')
+            return
+        if not self.display_unresolved and all_success and complete and len(batches) > 1:
+            all_ids = list(dict.fromkeys(pid for batch in batches for pid in batch['product_ids']))[:16]
+            if all_ids:
+                self._publish_products(all_ids, 'multi_batch_results')
+                return
+        self._publish_products([], 'clarification')
 
     def final_repair_allowed(self, issue):
         return (self.response_validation_issue in {'missing_envelope', 'display_selection_invalid'}

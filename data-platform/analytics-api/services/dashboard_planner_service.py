@@ -390,7 +390,7 @@ def render(v, a, index):
 
 
 def build_dashboard(
-    artifacts, evidence, plan=None, max_charts=8, max_categories=100, max_series=16
+    artifacts, evidence, plan=None, max_charts=8, max_categories=100, max_series=16, catalog=None
 ):
     proposals = list(plan.visuals) if plan and plan.visuals else defaults(artifacts)
     if plan and plan.visuals:
@@ -545,10 +545,43 @@ def build_dashboard(
                     "evidence_id": e["id"],
                 }
             )
+    domain_groups = []
+    story_sections = []
+    if catalog is not None:
+        from services.domain_intelligence_service import DomainIntelligence
+        intelligence = DomainIntelligence(catalog)
+        sections = {"ranking": "So sánh và xếp hạng", "aggregate": "Quy mô và đối chiếu", "trend": "Diễn biến theo thời gian", "distribution": "Cơ cấu đóng góp", "cross_tab": "Chẩn đoán theo các nhóm", "relationship": "Liên hệ quan sát"}
+        for chart in charts:
+            a = artifacts.get(chart.get("query_id") or chart.get("scope_ref"))
+            if not a:
+                continue
+            profile = intelligence.domain_for(a.query.subject)
+            if not profile:
+                continue
+            lens = next((l for l in profile["analytical_lenses"] if l["id"] == a.query.lens_id), None)
+            section = sections.get(a.query.operation, "Kết quả chi tiết")
+            chart.update(domain_id=profile["domain_id"], domain_label=profile["business_label"], lens_id=a.query.lens_id, lens_label=lens["business_label"] if lens else None, story_section=section)
+            if lens:
+                chart["purpose"] = lens["business_question"]
+            group = next((g for g in domain_groups if g["domain_id"] == profile["domain_id"]), None)
+            if group is None:
+                group = {"domain_id": profile["domain_id"], "label": profile["business_label"], "chart_ids": [], "query_ids": []}
+                domain_groups.append(group)
+            group["chart_ids"].append(chart["id"])
+            if a.query.id not in group["query_ids"]:
+                group["query_ids"].append(a.query.id)
+            key = (profile["domain_id"], section, chart["role"])
+            item = next((s for s in story_sections if (s["domain_id"], s["label"], s["role"]) == key), None)
+            if item is None:
+                item = {"domain_id": key[0], "label": section, "role": key[2], "chart_ids": []}
+                story_sections.append(item)
+            item["chart_ids"].append(chart["id"])
     return {
         "charts": charts,
         "kpi_cards": cards[:12],
         "dashboard_plan": {
+            "domain_groups": domain_groups,
+            "story_sections": story_sections,
             "active_query_ids": list(artifacts),
             "visuals": [v.model_dump() for v in proposals],
             "tables": tables,

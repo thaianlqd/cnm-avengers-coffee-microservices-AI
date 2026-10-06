@@ -28,7 +28,7 @@ def option_field(name: str) -> Optional[str]:
 
 _FIELD_ALIASES = {
     "size": r"(?:size|kich thuoc|kich co)",
-    "toppings": r"(?:topping|toping|do kem)",
+    "toppings": r"(?:topping|toppig|toping|do kem)",
     "luong_da": r"(?:luong da|da|ice)",
     "do_ngot": r"(?:do ngot|ngot|duong|sweet)",
     "loai_sua": r"(?:loai sua|sua|milk)",
@@ -61,7 +61,7 @@ def uses_global_option_defaults(message: str) -> bool:
 
 def declines_toppings(message: str) -> bool:
     text = _norm(message)
-    return bool(re.search(r'\b(?:khong|ko|k|bo)(?:\s+can)?(?:\s+them)?\s+(?:topping|toping|do kem)\b', text))
+    return bool(re.search(r'\b(?:khong|ko|k|bo)(?:\s+can)?(?:\s+them)?\s+(?:topping|toppig|toping|do kem)\b', text))
 
 
 def requests_custom_options(message: str) -> bool:
@@ -90,6 +90,36 @@ def resolve_option_default(group: Dict[str, Any], product_data: Optional[Dict[st
     source = product_data or {}
     name = str(group.get("name") or "")
     field = option_field(name)
+
+    # Standard default heuristics for Vietnamese beverage orders
+    if field == "luong_da":
+        for v in values:
+            if _norm(v) == _norm("Bình thường"):
+                return v
+    if field == "do_ngot":
+        for v in values:
+            if _norm(v) == _norm("Bình thường"):
+                return v
+    if field == "size":
+        gia_ban = source.get("gia_ban")
+        sizes_dict = source.get("sizes")
+        if gia_ban is not None and isinstance(sizes_dict, dict):
+            try:
+                base_price = float(gia_ban)
+                for s_name, s_price in sizes_dict.items():
+                    if s_name in values:
+                        try:
+                            if float(s_price) == base_price:
+                                return s_name
+                        except (ValueError, TypeError):
+                            pass
+            except (ValueError, TypeError):
+                pass
+        for preferred in ("Vừa", "Nhỏ", "Lớn"):
+            for v in values:
+                if _norm(v) == _norm(preferred):
+                    return v
+
     candidates = []
     dynamic = source.get("bien_the")
     if isinstance(dynamic, dict):
@@ -183,17 +213,23 @@ def validate_explicit_multi_value_group(
     """
     if not group.get("multiple") or option_field(group.get("name", "")) != "toppings":
         return None
-    if re.search(r"\b(?:không|khong)\s+(?:topping|toping)|\b(?:bỏ|bo)\s+(?:topping|toping)\b",
+    if re.search(r"\b(?:không|khong)\s+(?:topping|toppig|toping)|\b(?:bỏ|bo)\s+(?:topping|toppig|toping)\b",
                  message, flags=re.IGNORECASE):
         return None
-    marker = re.search(r"\b(?:topping|toping|đồ\s+kèm|do\s+kem)\b", message, flags=re.IGNORECASE)
+    marker = re.search(r"\b(?:topping|toppig|toping|đồ\s+kèm|do\s+kem)\b", message, flags=re.IGNORECASE)
     allowed_by_key = {_norm(value): value for value in group.get("values") or []}
     if marker:
         requested = message[marker.end():]
     elif allow_implicit and any(re.search(
         r"(?<!\w)" + re.escape(key) + r"(?!\w)", _norm(message)
     ) for key in allowed_by_key):
-        requested = message
+        folded = _norm(message)
+        spans = [m.span() for k in allowed_by_key for m in re.finditer(r'(?<!\w)' + re.escape(k) + r'(?!\w)', folded)]
+        if spans:
+            first_start = min(s[0] for s in spans)
+            requested = message[first_start:]
+        else:
+            return None
     else:
         return None
 

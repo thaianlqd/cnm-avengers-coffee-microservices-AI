@@ -254,7 +254,7 @@ def execute_get_product_options(product_name: str = "", product_id: Optional[str
             row = conn.execute(text(
                 f"""
                 SELECT ma_san_pham::text, ten_san_pham, bien_the, sizes,
-                       toppings, luong_da, do_ngot, loai_sua
+                       toppings, luong_da, do_ngot, loai_sua, gia_ban
                 FROM {menu_schema}.san_pham
                 WHERE trang_thai = TRUE 
                   AND {conditions}
@@ -271,7 +271,7 @@ def execute_get_product_options(product_name: str = "", product_id: Optional[str
             logger.debug("[ProductOptions] lookup=%s resolved_id=%s",
                          "product_id" if "product_id" in params else "product_name", product_id)
             product_data = dict(zip(
-                ("bien_the", "sizes", "toppings", "luong_da", "do_ngot", "loai_sua"),
+                ("bien_the", "sizes", "toppings", "luong_da", "do_ngot", "loai_sua", "gia_ban"),
                 list(row)[2:],
             ))
 

@@ -1,6 +1,7 @@
 from typing import Optional, List, Dict, Any, Literal
 from datetime import date, datetime, timedelta
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+from services.analysis_contract import Filter
 
 
 class SqlQueryRequest(BaseModel):
@@ -35,18 +36,39 @@ class ReportExportLogCreate(BaseModel):
 
 
 class AiTimeRange(BaseModel):
-    mode: Literal["auto", "today", "7d", "30d", "custom"] = "auto"
+    mode: Literal["auto", "today", "7d", "30d", "current_month", "previous_month", "current_quarter", "previous_quarter", "all_time", "custom"] = "auto"
     start: Optional[date] = None
     end: Optional[date] = None
+
+    @model_validator(mode="after")
+    def bounds(self):
+        if self.mode == "custom" and (not self.start or not self.end or self.start > self.end):
+            raise ValueError("Custom time requires ordered dates")
+        if self.mode != "custom" and (self.start or self.end):
+            raise ValueError("Dates are only valid for custom time")
+        return self
+
+
+class AiAnalysisScope(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    mode: Literal["auto", "all", "selected"] = "auto"
+    filters: List[Filter] = Field(default_factory=list, max_length=12)
+
+    @model_validator(mode="after")
+    def selection(self):
+        if (self.mode == "selected") != bool(self.filters):
+            raise ValueError("Only selected scope carries filters")
+        return self
 
 
 class AiTextToReportRequest(BaseModel):
     prompt: str
-    analysis_depth: Literal["deep", "focused"] = "deep"
+    analysis_depth: Literal["deep", "focused", "comprehensive"] = "deep"
+    analysis_scope: Optional[AiAnalysisScope] = None
     reference_date: Optional[date] = None
     context: Optional[str] = ""
     time_range: Optional[AiTimeRange] = None
-    domain: Optional[Literal["auto", "orders", "stores", "products", "customers", "payments", "delivery"]] = "auto"
+    domain: Optional[str] = Field(default="auto", pattern=r"^[a-z][a-z0-9_]{0,63}$")
     # Session ID for tracking conversation across report generation and refinement turns.
     session_id: Optional[str] = None
     # Legacy filters remain accepted for older clients.

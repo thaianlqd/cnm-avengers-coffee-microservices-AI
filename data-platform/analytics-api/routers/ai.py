@@ -1,7 +1,7 @@
 """Thin HTTP boundary for the Data Platform AI analysis contract."""
 
 import logging
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from common import (
     AiFeedbackRequest,
     AiReportRefineRequest,
@@ -10,9 +10,10 @@ from common import (
 )
 from services.analysis_pipeline import AnalysisPipeline, safe_failure
 from services.llm_service import provider_configuration
-from services.metadata_service import cache_status, sanitize_result_rows
+from services.metadata_service import cache_status, sanitize_result_rows, get_local_metadata, lookup_dimension_values
 from services.session_service import session_stats
-from services.analysis_catalog import AnalysisError
+from services.analysis_catalog import AnalysisError, AnalysisCatalog
+from services.domain_intelligence_service import DomainIntelligence
 
 # Temporary backward-compatible private imports for existing regression tests.
 from services.legacy_analysis_compat import (
@@ -63,13 +64,42 @@ def ai_status():
     metadata = cache_status()
     return {
         "status": "ready" if metadata["local_ready"] else "unavailable",
-        "pipeline_version": "2.4",
+        "pipeline_version": "2.5",
         "planning_mode": "one_shot",
         "provider_call_budget": 1,
         "providers": providers,
         "metadata": metadata,
         "sessions": session_stats(),
     }
+
+
+@router.get("/capabilities")
+def ai_capabilities():
+    try:
+        return DomainIntelligence(AnalysisCatalog(get_local_metadata())).capabilities()
+    except AnalysisError as error:
+        if error.category == "domain_metadata_invalid":
+            raise HTTPException(status_code=503, detail="Danh mục miền dữ liệu chưa hợp lệ.") from None
+        raise HTTPException(status_code=503, detail="Danh mục dữ liệu chưa sẵn sàng.") from None
+    except Exception:
+        raise HTTPException(status_code=503, detail="Danh mục dữ liệu chưa sẵn sàng.") from None
+
+
+@router.get("/scope-values")
+def ai_scope_values(dimension: str = Query(min_length=1, max_length=64), search: str = Query(min_length=2, max_length=80)):
+    """Explicit picker search, parameterized/read-only; no analytical inference."""
+    try:
+        catalog = AnalysisCatalog(get_local_metadata())
+        scopes = DomainIntelligence(catalog).capabilities()["scope_types"]
+        if not any(s["id"] == dimension and s["searchable"] for s in scopes):
+            raise HTTPException(status_code=422, detail="Phạm vi này chưa hỗ trợ tìm kiếm.")
+        d = catalog.registry["dimensions"][dimension]
+        values = lookup_dimension_values(d["table"], d["column"], search, limit=8)
+        return {"dimension": dimension, "values": [{"value": v, "label": str(v)} for v in values[:8] if type(v) in (str, int, bool) and len(str(v)) <= 100]}
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=503, detail="Chưa thể tra cứu phạm vi dữ liệu.") from None
 
 
 @router.post("/propose-plan")

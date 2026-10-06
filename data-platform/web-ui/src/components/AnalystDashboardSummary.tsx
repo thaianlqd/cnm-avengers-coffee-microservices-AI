@@ -11,6 +11,7 @@ export const AnalystViews: React.FC<{ charts?: any[]; onChartTypeChange?: (id: s
         <div className="border-b border-slate-100 pb-3 mb-4 space-y-1">
           <h5 className="text-sm font-semibold text-slate-900">{chart.title}</h5>
           <p className="text-xs text-slate-500">{chart.purpose}</p>
+          {chart.lens_label && <p className="text-xs text-indigo-700">Góc nhìn: {chart.lens_label}</p>}
           <p className="text-xs text-slate-500">{chart.chart_type_label}{chart.unit ? ` · ${chart.unit}` : ''}</p>
           {onChartTypeChange && ['bar', 'horizontal_bar', 'line', 'area'].includes(chart.chart_type) && <label className="flex items-center gap-2 text-xs text-slate-600">
             Cách trình bày
@@ -53,6 +54,8 @@ export const AnalystPlanningSummary: React.FC<{ diagnostics?: any }> = ({ diagno
   return <div role="status" className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 space-y-1">
     <p>Kế hoạch được lập trong một lượt AI. Bạn xác nhận phạm vi trước khi tạo báo cáo.</p>
     {diagnostics.analysis_depth === 'deep' && <p>Phân tích sâu: mục tiêu 5–6 góc nhìn hữu ích theo dữ liệu và phạm vi đã chọn.</p>}
+    {diagnostics.analysis_depth === 'comprehensive' && <p>Phân tích toàn diện: mở rộng các miền liên quan, hướng đến 6–8 góc nhìn khi dữ liệu cho phép.</p>}
+    {diagnostics.depth_coverage?.status === 'limited' && <p>Dữ liệu hoặc phạm vi hiện tại cung cấp ít góc nhìn hơn mục tiêu; báo cáo giữ các kết quả đã kiểm chứng.</p>}
     <p>{diagnostics.requested_operation_count || diagnostics.registered_requested_operations || 0} phần theo yêu cầu · {diagnostics.supporting_operation_count || diagnostics.registered_supporting_operations || 0} phần hỗ trợ</p>
     {omitted > 0 && <p>{omitted} phần hỗ trợ đã được bỏ qua vì chưa hợp lệ hoặc vượt giới hạn. Các phần theo yêu cầu đã vượt qua kiểm chứng.</p>}
   </div>;
@@ -77,6 +80,7 @@ export const AnalystDashboardSummary: React.FC<{ report: any }> = ({ report }) =
   const omitted = plan.omitted_visuals || [];
   return <div className="text-xs text-slate-500 space-y-1">
     <p>{report.dashboard_description || `${(report.charts || []).length} biểu đồ và bảng kết quả theo phạm vi đã chọn.`}</p>
+    {!!report.domain_summary?.length && <p>Miền dữ liệu đã phân tích: {report.domain_summary.map((d: any) => d.label).join(' · ')}</p>}
     {typeof plan.requested_chart_count === 'number' && <p>{plan.requested_chart_count} biểu đồ theo yêu cầu · {plan.supporting_chart_count || 0} biểu đồ hỗ trợ</p>}
     {omitted.length > 0 && <p>{omitted.length} đề xuất trực quan không được hiển thị do giới hạn hoặc không phù hợp với dữ liệu. Các bảng kết quả vẫn có bên dưới.</p>}
     {report.diagnostics?.omitted_supporting_operation_count > 0 && <p>{report.diagnostics.omitted_supporting_operation_count} phần phân tích hỗ trợ đã được bỏ qua; báo cáo giữ các kết quả đã kiểm chứng.</p>}
@@ -103,9 +107,13 @@ export const AnalystEvidence: React.FC<{ report: any }> = ({ report }) => {
       <summary className="text-sm font-semibold cursor-pointer">{op.subject} · {op.objective} · {op.role === 'supporting' ? 'Hỗ trợ' : 'Theo yêu cầu'}</summary>
       <div className="text-xs text-slate-600 mt-3 space-y-2">
         <p>Nguồn: {(op.data_sources || []).join(' · ')}</p>
+        {op.domain_label && <p>Miền dữ liệu: {op.domain_label}{op.lens_label ? ` · Góc nhìn: ${op.lens_label}` : ''}</p>}
         {op.supporting_reason && <p>Mục đích hỗ trợ: {op.supporting_reason}</p>}
         {op.population_note && <p>{op.population_note}</p>}
+        {(op.caveats || []).map((note: string) => <p key={note} className="text-amber-700">{note}</p>)}
         <p>Chỉ số: {(op.metrics || []).map((m: any) => `${m.label} (${m.unit})`).join(' · ') || 'Các trường chi tiết'}</p>
+        {(op.metrics || []).map((m: any) => <p key={m.id}>{m.business_meaning} {m.additive === false ? 'Không cộng các nhóm để suy ra tổng toàn phạm vi.' : ''}</p>)}
+        {!!op.comparison_baselines?.length && <p>So sánh nhóm dùng trung bình hoặc trung vị của các nhóm đầy đủ trong cùng phạm vi; chênh lệch không tự xác định hiệu quả tốt/xấu.</p>}
         {op.metrics?.some((m: any) => m.population_requirements?.length) && <p>Phạm vi chỉ số: {op.metrics.map((m: any) => (m.population_requirements || []).join(', ')).filter(Boolean).join(' · ')}</p>}
         <p>Phân nhóm: {(op.dimensions || []).join(' · ') || 'Toàn phạm vi đã chọn'}</p>
         <p>Bộ lọc: {(op.filters || []).map((f: any) => `${f.label}: ${Array.isArray(f.value) ? f.value.join(', ') : String(f.value)}`).join(' · ') || 'Không có bộ lọc bổ sung'}</p>

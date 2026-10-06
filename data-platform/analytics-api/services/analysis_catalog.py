@@ -86,6 +86,8 @@ class AnalysisCatalog:
             else json.loads(CATALOG_PATH.read_text())
         )
         self.registry = self.overlay["analysis_registry"]
+        from services.domain_intelligence_service import validate_profiles
+        validate_profiles(self.registry)
         self.tables = {
             n: t
             for n, t in physical.get("table_map", {}).items()

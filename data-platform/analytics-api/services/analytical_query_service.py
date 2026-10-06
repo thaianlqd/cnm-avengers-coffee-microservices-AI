@@ -36,7 +36,7 @@ class AnalysisArtifact:
 
 def signature(query, period, fingerprint):
     data = query.model_dump(mode="json")
-    for key in ("id", "role", "parent_id", "purpose", "population_relation", "replaces", "changed_fields"):
+    for key in ("id", "role", "parent_id", "purpose", "lens_id", "population_relation", "replaces", "changed_fields"):
         data.pop(key, None)
     data["time"] = period
     for key in ("metrics", "group_by", "project"):
@@ -160,6 +160,12 @@ class AnalyticalQueries:
             )
         except (ValueError, TypeError, OverflowError):
             raise ToolContractError([issue("time", "invalid_time_shape")]) from None
+        from services.domain_intelligence_service import DomainIntelligence
+        intelligence = DomainIntelligence(self.catalog)
+        intelligence.validate_lens(q)
+        required_domain = self.ui_context.get("required_domain")
+        if required_domain and q.role == "requested" and q.subject not in intelligence.available()[required_domain]["primary_subjects"]:
+            raise ToolContractError([issue("subject", "scope_conflict")])
         required_subject = self.ui_context.get("required_subject")
         if required_subject and q.role == "requested" and q.subject != required_subject:
             raise ToolContractError([issue("subject", "scope_conflict")])
@@ -177,6 +183,11 @@ class AnalyticalQueries:
             raise AnalysisError(
                 "query_scope", "Analysis omitted the selected UI population"
             )
+        query_filters = [f.model_dump(mode="json") for f in q.filters]
+        if any(f not in query_filters for f in self.ui_context.get("required_filters", [])):
+            raise AnalysisError("query_scope", "Analysis conflicts with selected UI population")
+        if self.ui_context.get("scope_mode") == "all" and query_filters:
+            raise AnalysisError("query_scope", "Analysis narrowed the selected entire-system population")
         if q.role == "supporting":
             parent = (
                 self.artifacts.get(q.parent_id)

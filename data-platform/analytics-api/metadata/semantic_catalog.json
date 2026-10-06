@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "description": "Semantic Knowledge Catalog & Comprehensive Data Dictionary cho Avengers Coffee AI — Toàn bộ CSDL Tầng Silver (19 bảng/view)",
   "silver_tables": {
     "silver.don_hang": {
@@ -2710,7 +2710,17 @@
         ],
         "non_negative": true,
         "additive": true,
-        "description": "Doanh thu ở mức order; đơn vị VND."
+        "description": "Doanh thu ở mức order; đơn vị VND.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "sum",
+        "business_meaning": "Tiền đơn sau giảm giá; đơn hoàn thành hoặc đang giao.",
+        "historical_capability": "historical",
+        "population_definition": "Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "order_count": {
         "business_name": "Số lượng đơn",
@@ -2732,7 +2742,17 @@
         "business_filters": [],
         "non_negative": true,
         "additive": true,
-        "description": "Số lượng đơn ở mức order; đơn vị đơn."
+        "description": "Số lượng đơn ở mức order; đơn vị đơn.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "count",
+        "business_meaning": "Số lượng đơn ở mức order; đơn vị đơn.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "aov": {
         "business_name": "Giá trị đơn trung bình",
@@ -2763,7 +2783,17 @@
         ],
         "non_negative": true,
         "additive": false,
-        "description": "Giá trị đơn trung bình ở mức order; đơn vị VND."
+        "description": "Giá trị đơn trung bình ở mức order; đơn vị VND.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "sum",
+        "business_meaning": "Giá trị đơn trung bình ở mức order; đơn vị VND.",
+        "historical_capability": "historical",
+        "population_definition": "Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "voucher_revenue": {
         "business_name": "Doanh thu đơn có khuyến mãi",
@@ -2797,7 +2827,17 @@
           "silver.don_hang.ma_voucher"
         ],
         "additive": true,
-        "description": "Doanh thu đơn có khuyến mãi ở mức order; đơn vị VND."
+        "description": "Doanh thu đơn có khuyến mãi ở mức order; đơn vị VND.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "sum",
+        "business_meaning": "Doanh thu đơn có khuyến mãi ở mức order; đơn vị VND.",
+        "historical_capability": "historical",
+        "population_definition": "Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']; có voucher",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "discount_amount": {
         "business_name": "Tổng tiền đã giảm giá",
@@ -2832,7 +2872,17 @@
           "silver.don_hang.ma_voucher"
         ],
         "additive": true,
-        "description": "Tổng tiền đã giảm giá ở mức order; đơn vị VND."
+        "description": "Tổng tiền đã giảm giá ở mức order; đơn vị VND.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "sum",
+        "business_meaning": "Tổng tiền đã giảm giá ở mức order; đơn vị VND.",
+        "historical_capability": "historical",
+        "population_definition": "Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']; có voucher",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "voucher_order_count": {
         "business_name": "Số đơn áp dụng khuyến mãi",
@@ -2857,7 +2907,17 @@
           "silver.don_hang.ma_voucher"
         ],
         "additive": true,
-        "description": "Số đơn áp dụng khuyến mãi ở mức order; đơn vị đơn."
+        "description": "Số đơn áp dụng khuyến mãi ở mức order; đơn vị đơn.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "count",
+        "business_meaning": "Mọi trạng thái đơn có mã voucher; khác tập doanh thu voucher.",
+        "historical_capability": "historical",
+        "population_definition": "có voucher",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "quantity_sold": {
         "business_name": "Số lượng sản phẩm bán",
@@ -2897,7 +2957,17 @@
         ],
         "non_negative": true,
         "additive": true,
-        "description": "Số lượng sản phẩm bán ở mức order_line; đơn vị sản phẩm."
+        "description": "Số lượng sản phẩm bán ở mức order_line; đơn vị sản phẩm.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "sum",
+        "business_meaning": "Số lượng sản phẩm bán ở mức order_line; đơn vị sản phẩm.",
+        "historical_capability": "historical",
+        "population_definition": "Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "item_revenue": {
         "business_name": "Doanh thu món",
@@ -2928,7 +2998,17 @@
         ],
         "non_negative": true,
         "additive": true,
-        "description": "Doanh thu món ở mức order_line; đơn vị VND."
+        "description": "Doanh thu món ở mức order_line; đơn vị VND.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "sum",
+        "business_meaning": "Doanh thu món ở mức order_line; đơn vị VND.",
+        "historical_capability": "historical",
+        "population_definition": "Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "product_revenue": {
         "business_name": "Doanh thu sản phẩm",
@@ -2958,7 +3038,17 @@
         ],
         "non_negative": true,
         "additive": true,
-        "description": "Doanh thu sản phẩm ở mức order_line; đơn vị VND."
+        "description": "Doanh thu sản phẩm ở mức order_line; đơn vị VND.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "sum",
+        "business_meaning": "Doanh thu sản phẩm ở mức order_line; đơn vị VND.",
+        "historical_capability": "historical",
+        "population_definition": "Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "store_revenue": {
         "business_name": "Doanh thu chi nhánh",
@@ -2988,7 +3078,17 @@
         ],
         "non_negative": true,
         "additive": true,
-        "description": "Doanh thu chi nhánh ở mức order; đơn vị VND."
+        "description": "Doanh thu chi nhánh ở mức order; đơn vị VND.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "sum",
+        "business_meaning": "Doanh thu chi nhánh ở mức order; đơn vị VND.",
+        "historical_capability": "historical",
+        "population_definition": "Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "store_order_count": {
         "business_name": "Số đơn chi nhánh",
@@ -3009,7 +3109,17 @@
         "business_filters": [],
         "non_negative": true,
         "additive": true,
-        "description": "Số đơn chi nhánh ở mức order; đơn vị đơn."
+        "description": "Số đơn chi nhánh ở mức order; đơn vị đơn.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "count",
+        "business_meaning": "Số đơn chi nhánh ở mức order; đơn vị đơn.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "store_aov": {
         "business_name": "AOV chi nhánh",
@@ -3039,7 +3149,17 @@
         ],
         "non_negative": true,
         "additive": false,
-        "description": "AOV chi nhánh ở mức order; đơn vị VND."
+        "description": "AOV chi nhánh ở mức order; đơn vị VND.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "average",
+        "business_meaning": "AOV chi nhánh ở mức order; đơn vị VND.",
+        "historical_capability": "historical",
+        "population_definition": "Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "customer_count": {
         "business_name": "Số khách",
@@ -3067,7 +3187,17 @@
         ],
         "non_negative": true,
         "additive": true,
-        "description": "Số khách ở mức customer; đơn vị khách."
+        "description": "Số khách ở mức customer; đơn vị khách.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "distinct_count",
+        "business_meaning": "Khách có vai trò CUSTOMER; thời gian là ngày đăng ký, không phải ngày mua.",
+        "historical_capability": "historical",
+        "population_definition": "Vai trò: CUSTOMER",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "total_spent": {
         "business_name": "Tổng chi tiêu tích lũy",
@@ -3095,7 +3225,17 @@
         ],
         "non_negative": true,
         "additive": true,
-        "description": "Tổng chi tiêu tích lũy ở mức customer; đơn vị VND."
+        "description": "Tổng chi tiêu tích lũy ở mức customer; đơn vị VND.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "sum",
+        "business_meaning": "Chi tiêu tích lũy hiện tại của khách đăng ký; không có lịch sử theo kỳ.",
+        "historical_capability": "snapshot",
+        "population_definition": "Vai trò: CUSTOMER",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "snapshot"
+        ]
       },
       "payment_count": {
         "business_name": "Số giao dịch",
@@ -3116,7 +3256,17 @@
         "business_filters": [],
         "non_negative": true,
         "additive": true,
-        "description": "Số giao dịch ở mức payment; đơn vị lượt."
+        "description": "Số giao dịch ở mức payment; đơn vị lượt.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "count",
+        "business_meaning": "Số giao dịch ở mức payment; đơn vị lượt.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "payment_revenue": {
         "business_name": "Doanh thu thanh toán",
@@ -3137,7 +3287,17 @@
         "business_filters": [],
         "non_negative": true,
         "additive": true,
-        "description": "Doanh thu thanh toán ở mức payment; đơn vị VND."
+        "description": "Doanh thu thanh toán ở mức payment; đơn vị VND.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "sum",
+        "business_meaning": "Doanh thu thanh toán ở mức payment; đơn vị VND.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "total_deliveries": {
         "business_name": "Tổng chuyến giao",
@@ -3158,7 +3318,17 @@
         "business_filters": [],
         "non_negative": true,
         "additive": true,
-        "description": "Tổng chuyến giao ở mức driver_snapshot; đơn vị lượt."
+        "description": "Tổng chuyến giao ở mức driver_snapshot; đơn vị lượt.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "sum",
+        "business_meaning": "Tổng chuyến tích lũy hiện tại của shipper; không có ngày thực hiện chuyến.",
+        "historical_capability": "snapshot",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "snapshot"
+        ]
       },
       "driver_rating": {
         "business_name": "Điểm đánh giá trung bình",
@@ -3180,7 +3350,17 @@
         "business_filters": [],
         "non_negative": true,
         "additive": false,
-        "description": "Điểm đánh giá trung bình ở mức driver_snapshot; đơn vị điểm."
+        "description": "Điểm đánh giá trung bình ở mức driver_snapshot; đơn vị điểm.",
+        "quality_direction": "higher_better",
+        "aggregation_semantics": "average",
+        "business_meaning": "Trung bình điểm hiện tại của shipper; thiếu số lượt đánh giá để kiểm tra cỡ mẫu.",
+        "historical_capability": "snapshot",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "snapshot"
+        ]
       },
       "stock_quantity": {
         "business_name": "Số lượng tồn kho",
@@ -3202,7 +3382,17 @@
         "business_filters": [],
         "non_negative": true,
         "additive": true,
-        "description": "Số lượng tồn kho ở mức store_product_snapshot; đơn vị đơn vị."
+        "description": "Số lượng tồn kho ở mức store_product_snapshot; đơn vị đơn vị.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "sum",
+        "business_meaning": "Tồn hiện tại; cộng các vị trí trong cùng lần quan sát, không cộng xuyên thời gian.",
+        "historical_capability": "snapshot",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "snapshot"
+        ]
       },
       "low_stock_count": {
         "business_name": "Số món dưới định mức",
@@ -3223,7 +3413,17 @@
         "business_filters": [],
         "non_negative": true,
         "additive": true,
-        "description": "Số món dưới định mức ở mức store_product_snapshot; đơn vị lượt."
+        "description": "Số món dưới định mức ở mức store_product_snapshot; đơn vị lượt.",
+        "quality_direction": "lower_better",
+        "aggregation_semantics": "conditional_count",
+        "business_meaning": "Số món dưới định mức ở mức store_product_snapshot; đơn vị lượt.",
+        "historical_capability": "snapshot",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "snapshot"
+        ]
       },
       "avg_product_rating": {
         "business_name": "Điểm đánh giá trung bình",
@@ -3245,7 +3445,17 @@
         "business_filters": [],
         "non_negative": true,
         "additive": false,
-        "description": "Điểm đánh giá trung bình ở mức review; đơn vị điểm."
+        "description": "Điểm đánh giá trung bình ở mức review; đơn vị điểm.",
+        "quality_direction": "higher_better",
+        "aggregation_semantics": "average",
+        "business_meaning": "Điểm đánh giá trung bình ở mức review; đơn vị điểm.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "review_count": {
         "business_name": "Số lượt đánh giá",
@@ -3267,7 +3477,17 @@
         "business_filters": [],
         "non_negative": true,
         "additive": true,
-        "description": "Số lượt đánh giá ở mức review; đơn vị lượt."
+        "description": "Số lượt đánh giá ở mức review; đơn vị lượt.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "count",
+        "business_meaning": "Số lượt đánh giá ở mức review; đơn vị lượt.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "avg_store_rating": {
         "business_name": "Điểm phục vụ trung bình",
@@ -3289,7 +3509,17 @@
         "business_filters": [],
         "non_negative": true,
         "additive": false,
-        "description": "Điểm phục vụ trung bình ở mức review; đơn vị điểm."
+        "description": "Điểm phục vụ trung bình ở mức review; đơn vị điểm.",
+        "quality_direction": "higher_better",
+        "aggregation_semantics": "average",
+        "business_meaning": "Điểm phục vụ trung bình ở mức review; đơn vị điểm.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "store_review_count": {
         "business_name": "Số lượt đánh giá quán",
@@ -3310,7 +3540,17 @@
         "business_filters": [],
         "non_negative": true,
         "additive": true,
-        "description": "Số lượt đánh giá quán ở mức review; đơn vị lượt."
+        "description": "Số lượt đánh giá quán ở mức review; đơn vị lượt.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "count",
+        "business_meaning": "Số lượt đánh giá quán ở mức review; đơn vị lượt.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "shift_count": {
         "business_name": "Tổng số ca làm",
@@ -3331,7 +3571,17 @@
         "business_filters": [],
         "non_negative": true,
         "additive": true,
-        "description": "Tổng số ca làm ở mức shift; đơn vị lượt."
+        "description": "Tổng số ca làm ở mức shift; đơn vị lượt.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "count",
+        "business_meaning": "Tổng số ca làm ở mức shift; đơn vị lượt.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "late_count": {
         "business_name": "Số ca đi trễ",
@@ -3352,7 +3602,17 @@
         "business_filters": [],
         "non_negative": true,
         "additive": true,
-        "description": "Số ca đi trễ ở mức shift; đơn vị lượt."
+        "description": "Số ca đi trễ ở mức shift; đơn vị lượt.",
+        "quality_direction": "lower_better",
+        "aggregation_semantics": "conditional_count",
+        "business_meaning": "Số ca đi trễ ở mức shift; đơn vị lượt.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "total_cash_difference": {
         "business_name": "Tổng tiền chênh lệch",
@@ -3374,7 +3634,17 @@
         "business_filters": [],
         "non_negative": false,
         "additive": true,
-        "description": "Tổng tiền chênh lệch ở mức cash_shift; đơn vị VND."
+        "description": "Tổng tiền chênh lệch ở mức cash_shift; đơn vị VND.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "sum",
+        "business_meaning": "Tổng tiền chênh lệch ở mức cash_shift; đơn vị VND.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "system_cash_revenue": {
         "business_name": "Doanh thu tiền mặt hệ thống",
@@ -3395,7 +3665,17 @@
         "business_filters": [],
         "non_negative": true,
         "additive": true,
-        "description": "Doanh thu tiền mặt hệ thống ở mức cash_shift; đơn vị VND."
+        "description": "Doanh thu tiền mặt hệ thống ở mức cash_shift; đơn vị VND.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "sum",
+        "business_meaning": "Doanh thu tiền mặt hệ thống ở mức cash_shift; đơn vị VND.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "reconciled_shifts": {
         "business_name": "Số ca đã đối soát",
@@ -3416,7 +3696,17 @@
         "business_filters": [],
         "non_negative": true,
         "additive": true,
-        "description": "Số ca đã đối soát ở mức cash_shift; đơn vị lượt."
+        "description": "Số ca đã đối soát ở mức cash_shift; đơn vị lượt.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "count",
+        "business_meaning": "Số ca đã đối soát ở mức cash_shift; đơn vị lượt.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "survey_response_count": {
         "business_name": "Số lượt phản hồi khảo sát",
@@ -3438,7 +3728,17 @@
         "business_filters": [],
         "non_negative": true,
         "additive": true,
-        "description": "Số lượt phản hồi khảo sát ở mức survey_response; đơn vị lượt."
+        "description": "Số lượt phản hồi khảo sát ở mức survey_response; đơn vị lượt.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "count",
+        "business_meaning": "Số lượt phản hồi khảo sát ở mức survey_response; đơn vị lượt.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "favorite_count": {
         "business_name": "Số lượt thả tim yêu thích",
@@ -3460,7 +3760,17 @@
         "business_filters": [],
         "non_negative": true,
         "additive": true,
-        "description": "Số lượt thả tim yêu thích ở mức favorite; đơn vị lượt."
+        "description": "Số lượt thả tim yêu thích ở mức favorite; đơn vị lượt.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "count",
+        "business_meaning": "Số lượt thả tim yêu thích ở mức favorite; đơn vị lượt.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "hourly_orders": {
         "business_name": "Số đơn theo giờ",
@@ -3481,7 +3791,17 @@
         "business_filters": [],
         "non_negative": true,
         "additive": true,
-        "description": "Số đơn theo giờ ở mức order; đơn vị đơn."
+        "description": "Số đơn theo giờ ở mức order; đơn vị đơn.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "count",
+        "business_meaning": "Số đơn theo giờ ở mức order; đơn vị đơn.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       },
       "purchasing_customer_count": {
         "business_name": "Số khách mua hàng",
@@ -3511,7 +3831,17 @@
         ],
         "non_negative": true,
         "additive": false,
-        "description": "Số khách khác nhau đã mua trong phạm vi đơn hoàn thành/đang giao và kỳ được chọn; không phải tổng khách đăng ký. Không cộng số khách giữa các tháng/chi nhánh."
+        "description": "Số khách khác nhau đã mua trong phạm vi đơn hoàn thành/đang giao và kỳ được chọn; không phải tổng khách đăng ký. Không cộng số khách giữa các tháng/chi nhánh.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "distinct_count",
+        "business_meaning": "Số khách khác nhau đã mua trong phạm vi đơn hoàn thành/đang giao và kỳ được chọn; không phải tổng khách đăng ký. Không cộng số khách giữa các tháng/chi nhánh.",
+        "historical_capability": "historical",
+        "population_definition": "Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend"
+        ]
       }
     },
     "dimensions": {
@@ -3528,7 +3858,8 @@
         "value_grounding": {
           "mode": "lookup",
           "max_candidates": 8
-        }
+        },
+        "scope_selectable": true
       },
       "product_id": {
         "table": "silver.san_pham",
@@ -3556,7 +3887,8 @@
         "value_grounding": {
           "mode": "lookup",
           "max_candidates": 8
-        }
+        },
+        "scope_selectable": true
       },
       "store": {
         "table": "silver.chi_nhanh",
@@ -3571,7 +3903,8 @@
         "value_grounding": {
           "mode": "lookup",
           "max_candidates": 8
-        }
+        },
+        "scope_selectable": true
       },
       "store_id": {
         "table": "silver.chi_nhanh",
@@ -3585,7 +3918,8 @@
         "value_grounding": {
           "mode": "lookup",
           "max_candidates": 8
-        }
+        },
+        "scope_selectable": true
       },
       "city": {
         "table": "silver.chi_nhanh",
@@ -3669,7 +4003,8 @@
         "value_grounding": {
           "mode": "enum",
           "max_candidates": 32
-        }
+        },
+        "scope_selectable": true
       },
       "customer_id": {
         "table": "silver.nguoi_dung",
@@ -3697,7 +4032,8 @@
         "value_grounding": {
           "mode": "lookup",
           "max_candidates": 8
-        }
+        },
+        "scope_selectable": true
       },
       "loyalty_points": {
         "table": "silver.nguoi_dung",
@@ -3792,7 +4128,8 @@
         "value_grounding": {
           "mode": "enum",
           "max_candidates": 32
-        }
+        },
+        "scope_selectable": true
       },
       "payment_status": {
         "table": "silver.don_hang",
@@ -3848,7 +4185,8 @@
         "value_grounding": {
           "mode": "lookup",
           "max_candidates": 8
-        }
+        },
+        "scope_selectable": true
       },
       "promotion_id": {
         "table": "silver.don_hang",
@@ -3876,7 +4214,8 @@
         "value_grounding": {
           "mode": "lookup",
           "max_candidates": 8
-        }
+        },
+        "scope_selectable": true
       },
       "driver_id": {
         "table": "silver.shipper",
@@ -3890,7 +4229,8 @@
         "value_grounding": {
           "mode": "lookup",
           "max_candidates": 8
-        }
+        },
+        "scope_selectable": true
       },
       "shift_name": {
         "table": "silver.ca_lam_viec_nhan_vien",
@@ -3988,7 +4328,8 @@
         "value_grounding": {
           "mode": "enum",
           "max_candidates": 32
-        }
+        },
+        "scope_selectable": true
       }
     },
     "subjects": {
@@ -4809,6 +5150,2131 @@
         "total",
         "count"
       ]
+    },
+    "domain_intelligence": {
+      "version": 1,
+      "profiles": {
+        "orders": {
+          "domain_id": "orders",
+          "business_label": "Đơn hàng và doanh thu",
+          "short_business_purpose": "Quy mô bán hàng, khách mua và kênh phục vụ.",
+          "model_aliases": [
+            "đơn hàng",
+            "bán hàng",
+            "doanh thu"
+          ],
+          "primary_subjects": [
+            "orders"
+          ],
+          "primary_entities": [
+            "order_id",
+            "store",
+            "city"
+          ],
+          "metric_refs": [
+            "revenue",
+            "order_count",
+            "aov",
+            "purchasing_customer_count"
+          ],
+          "dimension_refs": [
+            "order_id",
+            "store",
+            "city",
+            "payment_method",
+            "order_type",
+            "order_status"
+          ],
+          "analytical_lenses": [
+            {
+              "id": "sales_overview",
+              "business_label": "Quy mô doanh thu",
+              "business_question": "Quy mô doanh thu trong phạm vi đã chọn?",
+              "metric_refs": [
+                "revenue",
+                "aov",
+                "purchasing_customer_count"
+              ],
+              "dimension_refs": [
+                "city",
+                "store",
+                "payment_method",
+                "order_type"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": false,
+              "recommended_drilldowns": [
+                "city",
+                "store",
+                "payment_method"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "order_volume",
+              "business_label": "Lượng đơn và trạng thái",
+              "business_question": "Lượng đơn và trạng thái trong phạm vi đã chọn?",
+              "metric_refs": [
+                "order_count"
+              ],
+              "dimension_refs": [
+                "city",
+                "store",
+                "order_status",
+                "order_type"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "city",
+                "store",
+                "order_status"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "sales_trend",
+              "business_label": "Diễn biến bán hàng",
+              "business_question": "Diễn biến bán hàng trong phạm vi đã chọn?",
+              "metric_refs": [
+                "revenue"
+              ],
+              "dimension_refs": [
+                "city"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "city"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "buying_customers",
+              "business_label": "Khách mua trong kỳ",
+              "business_question": "Khách mua trong kỳ trong phạm vi đã chọn?",
+              "metric_refs": [
+                "purchasing_customer_count"
+              ],
+              "dimension_refs": [
+                "city",
+                "store"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": false,
+              "recommended_drilldowns": [
+                "city",
+                "store"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "channel_mix",
+              "business_label": "Cơ cấu kênh bán",
+              "business_question": "Cơ cấu kênh bán trong phạm vi đã chọn?",
+              "metric_refs": [
+                "revenue"
+              ],
+              "dimension_refs": [
+                "order_type",
+                "payment_method"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "order_type",
+                "payment_method"
+              ],
+              "related_lens_refs": []
+            }
+          ],
+          "health_signals": [
+            {
+              "metric": "revenue",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "store"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            },
+            {
+              "metric": "order_count",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "store"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            },
+            {
+              "metric": "aov",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "store"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            },
+            {
+              "metric": "purchasing_customer_count",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "store"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            }
+          ],
+          "diagnostic_dimensions": [
+            "order_id",
+            "store",
+            "city",
+            "payment_method",
+            "order_type",
+            "order_status"
+          ],
+          "drilldown_hierarchies": [
+            [
+              "city",
+              "store"
+            ]
+          ],
+          "comparison_semantics": [
+            "previous_period",
+            "same_period_previous_year",
+            "peer_average",
+            "peer_median",
+            "between_selected_groups"
+          ],
+          "related_domains": [
+            "stores",
+            "products",
+            "order_items",
+            "promotions",
+            "hourly",
+            "payments"
+          ],
+          "supporting_analysis_capabilities": [
+            "sales_overview",
+            "order_volume",
+            "sales_trend",
+            "buying_customers",
+            "channel_mix"
+          ],
+          "business_caveats": [
+            "no_causal_interpretation",
+            "non_additive",
+            "distinct_populations"
+          ]
+        },
+        "order_items": {
+          "domain_id": "order_items",
+          "business_label": "Dòng món trong đơn",
+          "short_business_purpose": "Sản lượng và thành tiền ở mức dòng món.",
+          "model_aliases": [
+            "dòng món",
+            "chi tiết đơn",
+            "món bán"
+          ],
+          "primary_subjects": [
+            "order_items"
+          ],
+          "primary_entities": [
+            "product",
+            "category"
+          ],
+          "metric_refs": [
+            "quantity_sold",
+            "item_revenue"
+          ],
+          "dimension_refs": [
+            "product",
+            "category",
+            "city",
+            "store"
+          ],
+          "analytical_lenses": [
+            {
+              "id": "item_volume",
+              "business_label": "Sản lượng món",
+              "business_question": "Sản lượng món trong phạm vi đã chọn?",
+              "metric_refs": [
+                "quantity_sold"
+              ],
+              "dimension_refs": [
+                "product",
+                "category",
+                "city",
+                "store"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "product",
+                "category",
+                "city"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "item_sales",
+              "business_label": "Thành tiền món",
+              "business_question": "Thành tiền món trong phạm vi đã chọn?",
+              "metric_refs": [
+                "item_revenue"
+              ],
+              "dimension_refs": [
+                "product",
+                "category",
+                "store"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "product",
+                "category",
+                "store"
+              ],
+              "related_lens_refs": []
+            }
+          ],
+          "health_signals": [
+            {
+              "metric": "quantity_sold",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "product"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            },
+            {
+              "metric": "item_revenue",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "product"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            }
+          ],
+          "diagnostic_dimensions": [
+            "product",
+            "category",
+            "city",
+            "store"
+          ],
+          "drilldown_hierarchies": [
+            [
+              "city",
+              "store"
+            ],
+            [
+              "category",
+              "product"
+            ]
+          ],
+          "comparison_semantics": [
+            "previous_period",
+            "same_period_previous_year",
+            "peer_average",
+            "peer_median",
+            "between_selected_groups"
+          ],
+          "related_domains": [
+            "products",
+            "orders",
+            "stores"
+          ],
+          "supporting_analysis_capabilities": [
+            "item_volume",
+            "item_sales"
+          ],
+          "business_caveats": [
+            "no_causal_interpretation",
+            "distinct_populations"
+          ]
+        },
+        "products": {
+          "domain_id": "products",
+          "business_label": "Sản phẩm",
+          "short_business_purpose": "Sản lượng và doanh thu dòng món; không đồng nhất doanh thu đơn.",
+          "model_aliases": [
+            "sản phẩm",
+            "món",
+            "bán chạy"
+          ],
+          "primary_subjects": [
+            "products"
+          ],
+          "primary_entities": [
+            "product",
+            "category",
+            "store"
+          ],
+          "metric_refs": [
+            "quantity_sold",
+            "product_revenue"
+          ],
+          "dimension_refs": [
+            "product",
+            "category",
+            "store",
+            "city"
+          ],
+          "analytical_lenses": [
+            {
+              "id": "product_volume",
+              "business_label": "Sản phẩm bán chạy",
+              "business_question": "Sản phẩm bán chạy trong phạm vi đã chọn?",
+              "metric_refs": [
+                "quantity_sold"
+              ],
+              "dimension_refs": [
+                "product",
+                "category",
+                "store",
+                "city"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "product",
+                "category",
+                "store"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "product_sales",
+              "business_label": "Doanh thu sản phẩm",
+              "business_question": "Doanh thu sản phẩm trong phạm vi đã chọn?",
+              "metric_refs": [
+                "product_revenue"
+              ],
+              "dimension_refs": [
+                "product",
+                "category",
+                "store",
+                "city"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "product",
+                "category",
+                "store"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "product_trend",
+              "business_label": "Diễn biến sản lượng",
+              "business_question": "Diễn biến sản lượng trong phạm vi đã chọn?",
+              "metric_refs": [
+                "quantity_sold"
+              ],
+              "dimension_refs": [
+                "category"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "category"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "category_mix",
+              "business_label": "Cơ cấu danh mục",
+              "business_question": "Cơ cấu danh mục trong phạm vi đã chọn?",
+              "metric_refs": [
+                "quantity_sold"
+              ],
+              "dimension_refs": [
+                "category"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "category"
+              ],
+              "related_lens_refs": []
+            }
+          ],
+          "health_signals": [
+            {
+              "metric": "quantity_sold",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "product"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            },
+            {
+              "metric": "product_revenue",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "product"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            }
+          ],
+          "diagnostic_dimensions": [
+            "product",
+            "category",
+            "store",
+            "city"
+          ],
+          "drilldown_hierarchies": [
+            [
+              "city",
+              "store"
+            ],
+            [
+              "category",
+              "product"
+            ]
+          ],
+          "comparison_semantics": [
+            "previous_period",
+            "same_period_previous_year",
+            "peer_average",
+            "peer_median",
+            "between_selected_groups"
+          ],
+          "related_domains": [
+            "order_items",
+            "product_reviews",
+            "wishlist_favorites",
+            "inventory"
+          ],
+          "supporting_analysis_capabilities": [
+            "product_volume",
+            "product_sales",
+            "product_trend",
+            "category_mix"
+          ],
+          "business_caveats": [
+            "no_causal_interpretation",
+            "distinct_populations"
+          ]
+        },
+        "stores": {
+          "domain_id": "stores",
+          "business_label": "Chi nhánh và điểm bán",
+          "short_business_purpose": "Đối chiếu nhiều tín hiệu cùng kỳ; quy mô khác nhau chưa chứng minh tốt/kém.",
+          "model_aliases": [
+            "chi nhánh",
+            "cửa hàng",
+            "điểm bán"
+          ],
+          "primary_subjects": [
+            "stores"
+          ],
+          "primary_entities": [
+            "city",
+            "store"
+          ],
+          "metric_refs": [
+            "store_revenue",
+            "store_order_count",
+            "store_aov",
+            "purchasing_customer_count"
+          ],
+          "dimension_refs": [
+            "city",
+            "store"
+          ],
+          "analytical_lenses": [
+            {
+              "id": "store_performance",
+              "business_label": "Tín hiệu doanh thu chi nhánh",
+              "business_question": "Tín hiệu doanh thu chi nhánh trong phạm vi đã chọn?",
+              "metric_refs": [
+                "store_revenue",
+                "store_aov",
+                "purchasing_customer_count"
+              ],
+              "dimension_refs": [
+                "city",
+                "store"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": false,
+              "recommended_drilldowns": [
+                "city",
+                "store"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "store_volume",
+              "business_label": "Lượng đơn chi nhánh",
+              "business_question": "Lượng đơn chi nhánh trong phạm vi đã chọn?",
+              "metric_refs": [
+                "store_order_count"
+              ],
+              "dimension_refs": [
+                "city",
+                "store"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "city",
+                "store"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "store_trend",
+              "business_label": "Diễn biến chi nhánh",
+              "business_question": "Diễn biến chi nhánh trong phạm vi đã chọn?",
+              "metric_refs": [
+                "store_revenue"
+              ],
+              "dimension_refs": [
+                "city",
+                "store"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "city",
+                "store"
+              ],
+              "related_lens_refs": []
+            }
+          ],
+          "health_signals": [
+            {
+              "metric": "store_revenue",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "store"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            },
+            {
+              "metric": "store_order_count",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "store"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            },
+            {
+              "metric": "store_aov",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "store"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            },
+            {
+              "metric": "purchasing_customer_count",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "store"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            }
+          ],
+          "diagnostic_dimensions": [
+            "city",
+            "store"
+          ],
+          "drilldown_hierarchies": [
+            [
+              "city",
+              "store"
+            ]
+          ],
+          "comparison_semantics": [
+            "previous_period",
+            "same_period_previous_year",
+            "peer_average",
+            "peer_median",
+            "between_selected_groups"
+          ],
+          "related_domains": [
+            "orders",
+            "products",
+            "promotions",
+            "store_reviews",
+            "inventory",
+            "staff_shifts",
+            "customer_surveys",
+            "cashier_reconciliation"
+          ],
+          "supporting_analysis_capabilities": [
+            "store_performance",
+            "store_volume",
+            "store_trend"
+          ],
+          "business_caveats": [
+            "no_causal_interpretation",
+            "non_additive",
+            "distinct_populations"
+          ]
+        },
+        "customers": {
+          "domain_id": "customers",
+          "business_label": "Khách đăng ký và hội viên",
+          "short_business_purpose": "Khách đăng ký theo ngày tạo; chi tiêu và điểm là hiện trạng, không phải khách mua trong kỳ.",
+          "model_aliases": [
+            "khách hàng",
+            "hội viên",
+            "loyalty"
+          ],
+          "primary_subjects": [
+            "customers"
+          ],
+          "primary_entities": [
+            "customer_role",
+            "loyalty_points"
+          ],
+          "metric_refs": [
+            "customer_count",
+            "total_spent"
+          ],
+          "dimension_refs": [
+            "customer_role",
+            "loyalty_points"
+          ],
+          "analytical_lenses": [
+            {
+              "id": "registrations",
+              "business_label": "Khách đăng ký",
+              "business_question": "Khách đăng ký trong phạm vi đã chọn?",
+              "metric_refs": [
+                "customer_count"
+              ],
+              "dimension_refs": [
+                "customer_role",
+                "loyalty_points"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "customer_role",
+                "loyalty_points"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "registration_trend",
+              "business_label": "Diễn biến đăng ký",
+              "business_question": "Diễn biến đăng ký trong phạm vi đã chọn?",
+              "metric_refs": [
+                "customer_count"
+              ],
+              "dimension_refs": [],
+              "supports_time_series": true,
+              "supports_ranking": false,
+              "supports_comparison": true,
+              "supports_distribution": false,
+              "recommended_drilldowns": [],
+              "related_lens_refs": []
+            },
+            {
+              "id": "spend_snapshot",
+              "business_label": "Chi tiêu tích lũy hiện tại",
+              "business_question": "Chi tiêu tích lũy hiện tại trong phạm vi đã chọn?",
+              "metric_refs": [
+                "total_spent"
+              ],
+              "dimension_refs": [
+                "customer_role",
+                "loyalty_points"
+              ],
+              "supports_time_series": false,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "customer_role",
+                "loyalty_points"
+              ],
+              "related_lens_refs": []
+            }
+          ],
+          "health_signals": [],
+          "diagnostic_dimensions": [
+            "customer_role",
+            "loyalty_points"
+          ],
+          "drilldown_hierarchies": [],
+          "comparison_semantics": [
+            "previous_period",
+            "same_period_previous_year",
+            "peer_average",
+            "peer_median",
+            "between_selected_groups"
+          ],
+          "related_domains": [
+            "orders"
+          ],
+          "supporting_analysis_capabilities": [
+            "registrations",
+            "registration_trend",
+            "spend_snapshot"
+          ],
+          "business_caveats": [
+            "no_causal_interpretation"
+          ]
+        },
+        "promotions": {
+          "domain_id": "promotions",
+          "business_label": "Khuyến mãi và voucher",
+          "short_business_purpose": "Đơn có voucher, giảm giá và doanh thu tập voucher; không có ROI hay mẫu số phát hành.",
+          "model_aliases": [
+            "voucher",
+            "khuyến mãi",
+            "ưu đãi"
+          ],
+          "primary_subjects": [
+            "promotions"
+          ],
+          "primary_entities": [
+            "promotion",
+            "store",
+            "city"
+          ],
+          "metric_refs": [
+            "voucher_revenue",
+            "discount_amount",
+            "voucher_order_count"
+          ],
+          "dimension_refs": [
+            "promotion",
+            "store",
+            "city"
+          ],
+          "analytical_lenses": [
+            {
+              "id": "voucher_usage",
+              "business_label": "Số đơn dùng voucher",
+              "business_question": "Số đơn dùng voucher trong phạm vi đã chọn?",
+              "metric_refs": [
+                "voucher_order_count"
+              ],
+              "dimension_refs": [
+                "promotion",
+                "store",
+                "city"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "promotion",
+                "store",
+                "city"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "voucher_revenue",
+              "business_label": "Doanh thu tập đơn voucher",
+              "business_question": "Doanh thu tập đơn voucher trong phạm vi đã chọn?",
+              "metric_refs": [
+                "voucher_revenue"
+              ],
+              "dimension_refs": [
+                "promotion",
+                "store",
+                "city"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "promotion",
+                "store",
+                "city"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "discount_amount",
+              "business_label": "Số tiền giảm",
+              "business_question": "Số tiền giảm trong phạm vi đã chọn?",
+              "metric_refs": [
+                "discount_amount"
+              ],
+              "dimension_refs": [
+                "promotion",
+                "store",
+                "city"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "promotion",
+                "store",
+                "city"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "voucher_trend",
+              "business_label": "Diễn biến sử dụng voucher",
+              "business_question": "Diễn biến sử dụng voucher trong phạm vi đã chọn?",
+              "metric_refs": [
+                "voucher_order_count"
+              ],
+              "dimension_refs": [
+                "promotion"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "promotion"
+              ],
+              "related_lens_refs": []
+            }
+          ],
+          "health_signals": [
+            {
+              "metric": "voucher_revenue",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "promotion"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            },
+            {
+              "metric": "discount_amount",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "promotion"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            },
+            {
+              "metric": "voucher_order_count",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "promotion"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            }
+          ],
+          "diagnostic_dimensions": [
+            "promotion",
+            "store",
+            "city"
+          ],
+          "drilldown_hierarchies": [
+            [
+              "city",
+              "store"
+            ]
+          ],
+          "comparison_semantics": [
+            "previous_period",
+            "same_period_previous_year",
+            "peer_average",
+            "peer_median",
+            "between_selected_groups"
+          ],
+          "related_domains": [
+            "orders",
+            "stores"
+          ],
+          "supporting_analysis_capabilities": [
+            "voucher_usage",
+            "voucher_revenue",
+            "discount_amount",
+            "voucher_trend"
+          ],
+          "business_caveats": [
+            "no_causal_interpretation",
+            "distinct_populations"
+          ]
+        },
+        "payments": {
+          "domain_id": "payments",
+          "business_label": "Giao dịch thanh toán",
+          "short_business_purpose": "Giao dịch theo ngày giao dịch; không đồng nhất đơn hàng hay doanh thu bán hàng.",
+          "model_aliases": [
+            "thanh toán",
+            "giao dịch",
+            "cổng tiền"
+          ],
+          "primary_subjects": [
+            "payments"
+          ],
+          "primary_entities": [
+            "payment_gateway",
+            "payment_status"
+          ],
+          "metric_refs": [
+            "payment_count",
+            "payment_revenue"
+          ],
+          "dimension_refs": [
+            "payment_gateway",
+            "payment_status"
+          ],
+          "analytical_lenses": [
+            {
+              "id": "payment_mix",
+              "business_label": "Cơ cấu giao dịch",
+              "business_question": "Cơ cấu giao dịch trong phạm vi đã chọn?",
+              "metric_refs": [
+                "payment_count"
+              ],
+              "dimension_refs": [
+                "payment_gateway",
+                "payment_status"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "payment_gateway",
+                "payment_status"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "payment_value",
+              "business_label": "Giá trị giao dịch",
+              "business_question": "Giá trị giao dịch trong phạm vi đã chọn?",
+              "metric_refs": [
+                "payment_revenue"
+              ],
+              "dimension_refs": [
+                "payment_gateway",
+                "payment_status"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "payment_gateway",
+                "payment_status"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "payment_trend",
+              "business_label": "Diễn biến thanh toán",
+              "business_question": "Diễn biến thanh toán trong phạm vi đã chọn?",
+              "metric_refs": [
+                "payment_count",
+                "payment_revenue"
+              ],
+              "dimension_refs": [
+                "payment_gateway"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "payment_gateway"
+              ],
+              "related_lens_refs": []
+            }
+          ],
+          "health_signals": [
+            {
+              "metric": "payment_count",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "payment_gateway"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            },
+            {
+              "metric": "payment_revenue",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "payment_gateway"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            }
+          ],
+          "diagnostic_dimensions": [
+            "payment_gateway",
+            "payment_status"
+          ],
+          "drilldown_hierarchies": [],
+          "comparison_semantics": [
+            "previous_period",
+            "same_period_previous_year",
+            "peer_average",
+            "peer_median",
+            "between_selected_groups"
+          ],
+          "related_domains": [
+            "orders"
+          ],
+          "supporting_analysis_capabilities": [
+            "payment_mix",
+            "payment_value",
+            "payment_trend"
+          ],
+          "business_caveats": [
+            "no_causal_interpretation",
+            "distinct_populations"
+          ]
+        },
+        "delivery": {
+          "domain_id": "delivery",
+          "business_label": "Giao hàng và shipper",
+          "short_business_purpose": "Hiện trạng tổng chuyến tích lũy và điểm shipper; không có ngày chuyến, SLA, thời lượng hay tỷ lệ thành công.",
+          "model_aliases": [
+            "giao hàng",
+            "shipper",
+            "tài xế"
+          ],
+          "primary_subjects": [
+            "delivery"
+          ],
+          "primary_entities": [
+            "driver_id"
+          ],
+          "metric_refs": [
+            "total_deliveries",
+            "driver_rating"
+          ],
+          "dimension_refs": [
+            "driver_id"
+          ],
+          "analytical_lenses": [
+            {
+              "id": "delivery_volume",
+              "business_label": "Tổng chuyến hiện tại",
+              "business_question": "Tổng chuyến hiện tại trong phạm vi đã chọn?",
+              "metric_refs": [
+                "total_deliveries"
+              ],
+              "dimension_refs": [
+                "driver_id"
+              ],
+              "supports_time_series": false,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "driver_id"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "shipper_rating",
+              "business_label": "Điểm shipper hiện tại",
+              "business_question": "Điểm shipper hiện tại trong phạm vi đã chọn?",
+              "metric_refs": [
+                "driver_rating"
+              ],
+              "dimension_refs": [
+                "driver_id"
+              ],
+              "supports_time_series": false,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": false,
+              "recommended_drilldowns": [
+                "driver_id"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "shipper_relationship",
+              "business_label": "Liên hệ chuyến và điểm",
+              "business_question": "Liên hệ chuyến và điểm trong phạm vi đã chọn?",
+              "metric_refs": [
+                "total_deliveries",
+                "driver_rating"
+              ],
+              "dimension_refs": [
+                "driver_id"
+              ],
+              "supports_time_series": false,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": false,
+              "recommended_drilldowns": [
+                "driver_id"
+              ],
+              "related_lens_refs": []
+            }
+          ],
+          "health_signals": [
+            {
+              "metric": "total_deliveries",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "driver_id"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            },
+            {
+              "metric": "driver_rating",
+              "direction": "higher_better",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "driver_id"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            }
+          ],
+          "diagnostic_dimensions": [
+            "driver_id"
+          ],
+          "drilldown_hierarchies": [],
+          "comparison_semantics": [
+            "peer_average",
+            "peer_median",
+            "between_selected_groups"
+          ],
+          "related_domains": [],
+          "supporting_analysis_capabilities": [
+            "delivery_volume",
+            "shipper_rating",
+            "shipper_relationship"
+          ],
+          "business_caveats": [
+            "no_causal_interpretation",
+            "snapshot_only",
+            "historical_unavailable",
+            "non_additive",
+            "sample_size_required"
+          ]
+        },
+        "inventory": {
+          "domain_id": "inventory",
+          "business_label": "Tồn kho",
+          "short_business_purpose": "Vị trí tồn và mức cảnh báo hiện tại; chưa có lịch sử tồn.",
+          "model_aliases": [
+            "tồn kho",
+            "định mức",
+            "nguyên liệu"
+          ],
+          "primary_subjects": [
+            "inventory"
+          ],
+          "primary_entities": [
+            "store",
+            "product",
+            "category"
+          ],
+          "metric_refs": [
+            "stock_quantity",
+            "low_stock_count"
+          ],
+          "dimension_refs": [
+            "store",
+            "product",
+            "category",
+            "city"
+          ],
+          "analytical_lenses": [
+            {
+              "id": "inventory_positions",
+              "business_label": "Vị trí tồn",
+              "business_question": "Vị trí tồn trong phạm vi đã chọn?",
+              "metric_refs": [
+                "stock_quantity"
+              ],
+              "dimension_refs": [
+                "store",
+                "product",
+                "category",
+                "city"
+              ],
+              "supports_time_series": false,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "store",
+                "product",
+                "category"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "inventory_alerts",
+              "business_label": "Dưới định mức",
+              "business_question": "Dưới định mức trong phạm vi đã chọn?",
+              "metric_refs": [
+                "low_stock_count"
+              ],
+              "dimension_refs": [
+                "store",
+                "product",
+                "category",
+                "city"
+              ],
+              "supports_time_series": false,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "store",
+                "product",
+                "category"
+              ],
+              "related_lens_refs": []
+            }
+          ],
+          "health_signals": [
+            {
+              "metric": "stock_quantity",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "product"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            },
+            {
+              "metric": "low_stock_count",
+              "direction": "lower_better",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "product"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            }
+          ],
+          "diagnostic_dimensions": [
+            "store",
+            "product",
+            "category",
+            "city"
+          ],
+          "drilldown_hierarchies": [
+            [
+              "city",
+              "store"
+            ],
+            [
+              "category",
+              "product"
+            ]
+          ],
+          "comparison_semantics": [
+            "peer_average",
+            "peer_median",
+            "between_selected_groups"
+          ],
+          "related_domains": [
+            "products",
+            "stores"
+          ],
+          "supporting_analysis_capabilities": [
+            "inventory_positions",
+            "inventory_alerts"
+          ],
+          "business_caveats": [
+            "no_causal_interpretation",
+            "snapshot_only",
+            "historical_unavailable"
+          ]
+        },
+        "product_reviews": {
+          "domain_id": "product_reviews",
+          "business_label": "Đánh giá sản phẩm",
+          "short_business_purpose": "Điểm quan sát và số lượt; cần đọc cùng cỡ mẫu.",
+          "model_aliases": [
+            "đánh giá món",
+            "chất lượng món",
+            "review món"
+          ],
+          "primary_subjects": [
+            "product_reviews"
+          ],
+          "primary_entities": [
+            "product",
+            "category"
+          ],
+          "metric_refs": [
+            "avg_product_rating",
+            "review_count"
+          ],
+          "dimension_refs": [
+            "product",
+            "category"
+          ],
+          "analytical_lenses": [
+            {
+              "id": "product_feedback",
+              "business_label": "Phản hồi sản phẩm",
+              "business_question": "Phản hồi sản phẩm trong phạm vi đã chọn?",
+              "metric_refs": [
+                "avg_product_rating",
+                "review_count"
+              ],
+              "dimension_refs": [
+                "product",
+                "category"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": false,
+              "recommended_drilldowns": [
+                "product",
+                "category"
+              ],
+              "related_lens_refs": []
+            }
+          ],
+          "health_signals": [
+            {
+              "metric": "avg_product_rating",
+              "direction": "higher_better",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "product"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            },
+            {
+              "metric": "review_count",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "product"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            }
+          ],
+          "diagnostic_dimensions": [
+            "product",
+            "category"
+          ],
+          "drilldown_hierarchies": [
+            [
+              "category",
+              "product"
+            ]
+          ],
+          "comparison_semantics": [
+            "previous_period",
+            "same_period_previous_year",
+            "peer_average",
+            "peer_median",
+            "between_selected_groups"
+          ],
+          "related_domains": [
+            "products"
+          ],
+          "supporting_analysis_capabilities": [
+            "product_feedback"
+          ],
+          "business_caveats": [
+            "no_causal_interpretation",
+            "non_additive",
+            "sample_size_required"
+          ]
+        },
+        "store_reviews": {
+          "domain_id": "store_reviews",
+          "business_label": "Đánh giá chi nhánh",
+          "short_business_purpose": "Điểm dịch vụ và số lượt; không suy ra nguyên nhân.",
+          "model_aliases": [
+            "đánh giá quán",
+            "phục vụ",
+            "không gian"
+          ],
+          "primary_subjects": [
+            "store_reviews"
+          ],
+          "primary_entities": [
+            "store",
+            "city"
+          ],
+          "metric_refs": [
+            "avg_store_rating",
+            "store_review_count"
+          ],
+          "dimension_refs": [
+            "store",
+            "city"
+          ],
+          "analytical_lenses": [
+            {
+              "id": "store_feedback",
+              "business_label": "Phản hồi chi nhánh",
+              "business_question": "Phản hồi chi nhánh trong phạm vi đã chọn?",
+              "metric_refs": [
+                "avg_store_rating",
+                "store_review_count"
+              ],
+              "dimension_refs": [
+                "store",
+                "city"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": false,
+              "recommended_drilldowns": [
+                "store",
+                "city"
+              ],
+              "related_lens_refs": []
+            }
+          ],
+          "health_signals": [
+            {
+              "metric": "avg_store_rating",
+              "direction": "higher_better",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "store"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            },
+            {
+              "metric": "store_review_count",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "store"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            }
+          ],
+          "diagnostic_dimensions": [
+            "store",
+            "city"
+          ],
+          "drilldown_hierarchies": [
+            [
+              "city",
+              "store"
+            ]
+          ],
+          "comparison_semantics": [
+            "previous_period",
+            "same_period_previous_year",
+            "peer_average",
+            "peer_median",
+            "between_selected_groups"
+          ],
+          "related_domains": [
+            "stores"
+          ],
+          "supporting_analysis_capabilities": [
+            "store_feedback"
+          ],
+          "business_caveats": [
+            "no_causal_interpretation",
+            "non_additive",
+            "sample_size_required"
+          ]
+        },
+        "staff_shifts": {
+          "domain_id": "staff_shifts",
+          "business_label": "Ca làm và chấm công",
+          "short_business_purpose": "Số ca và ca trễ theo ngày làm; số ca trễ chưa phải tỷ lệ.",
+          "model_aliases": [
+            "ca làm",
+            "chấm công",
+            "đi trễ"
+          ],
+          "primary_subjects": [
+            "staff_shifts"
+          ],
+          "primary_entities": [
+            "shift_name",
+            "store"
+          ],
+          "metric_refs": [
+            "shift_count",
+            "late_count"
+          ],
+          "dimension_refs": [
+            "shift_name",
+            "store",
+            "city",
+            "attendance_status"
+          ],
+          "analytical_lenses": [
+            {
+              "id": "shift_volume",
+              "business_label": "Quy mô ca làm",
+              "business_question": "Quy mô ca làm trong phạm vi đã chọn?",
+              "metric_refs": [
+                "shift_count"
+              ],
+              "dimension_refs": [
+                "shift_name",
+                "store",
+                "city"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "shift_name",
+                "store",
+                "city"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "attendance",
+              "business_label": "Chấm công",
+              "business_question": "Chấm công trong phạm vi đã chọn?",
+              "metric_refs": [
+                "late_count"
+              ],
+              "dimension_refs": [
+                "shift_name",
+                "attendance_status",
+                "store"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "shift_name",
+                "attendance_status",
+                "store"
+              ],
+              "related_lens_refs": []
+            }
+          ],
+          "health_signals": [
+            {
+              "metric": "shift_count",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "shift_name"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            },
+            {
+              "metric": "late_count",
+              "direction": "lower_better",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "shift_name"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            }
+          ],
+          "diagnostic_dimensions": [
+            "shift_name",
+            "store",
+            "city",
+            "attendance_status"
+          ],
+          "drilldown_hierarchies": [
+            [
+              "city",
+              "store"
+            ]
+          ],
+          "comparison_semantics": [
+            "previous_period",
+            "same_period_previous_year",
+            "peer_average",
+            "peer_median",
+            "between_selected_groups"
+          ],
+          "related_domains": [
+            "stores"
+          ],
+          "supporting_analysis_capabilities": [
+            "shift_volume",
+            "attendance"
+          ],
+          "business_caveats": [
+            "no_causal_interpretation"
+          ]
+        },
+        "cashier_reconciliation": {
+          "domain_id": "cashier_reconciliation",
+          "business_label": "Đối soát thu ngân",
+          "short_business_purpose": "Chênh lệch tiền có dấu; tổng bù trừ không đo mức sai lệch tuyệt đối.",
+          "model_aliases": [
+            "đối soát",
+            "thu ngân",
+            "lệch quỹ"
+          ],
+          "primary_subjects": [
+            "cashier_reconciliation"
+          ],
+          "primary_entities": [
+            "store",
+            "city"
+          ],
+          "metric_refs": [
+            "total_cash_difference",
+            "system_cash_revenue",
+            "reconciled_shifts"
+          ],
+          "dimension_refs": [
+            "store",
+            "city"
+          ],
+          "analytical_lenses": [
+            {
+              "id": "cash_difference",
+              "business_label": "Chênh lệch tiền có dấu",
+              "business_question": "Chênh lệch tiền có dấu trong phạm vi đã chọn?",
+              "metric_refs": [
+                "total_cash_difference"
+              ],
+              "dimension_refs": [
+                "store",
+                "city"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "store",
+                "city"
+              ],
+              "related_lens_refs": []
+            },
+            {
+              "id": "cash_activity",
+              "business_label": "Quy mô đối soát",
+              "business_question": "Quy mô đối soát trong phạm vi đã chọn?",
+              "metric_refs": [
+                "system_cash_revenue",
+                "reconciled_shifts"
+              ],
+              "dimension_refs": [
+                "store",
+                "city"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "store",
+                "city"
+              ],
+              "related_lens_refs": []
+            }
+          ],
+          "health_signals": [
+            {
+              "metric": "total_cash_difference",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "store"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            },
+            {
+              "metric": "system_cash_revenue",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "store"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            },
+            {
+              "metric": "reconciled_shifts",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "store"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            }
+          ],
+          "diagnostic_dimensions": [
+            "store",
+            "city"
+          ],
+          "drilldown_hierarchies": [
+            [
+              "city",
+              "store"
+            ]
+          ],
+          "comparison_semantics": [
+            "previous_period",
+            "same_period_previous_year",
+            "peer_average",
+            "peer_median",
+            "between_selected_groups"
+          ],
+          "related_domains": [
+            "stores"
+          ],
+          "supporting_analysis_capabilities": [
+            "cash_difference",
+            "cash_activity"
+          ],
+          "business_caveats": [
+            "no_causal_interpretation"
+          ]
+        },
+        "customer_surveys": {
+          "domain_id": "customer_surveys",
+          "business_label": "Khảo sát khách hàng",
+          "short_business_purpose": "Số phản hồi khảo sát; chưa có thang điểm hài lòng chuẩn.",
+          "model_aliases": [
+            "khảo sát",
+            "ý kiến khách",
+            "feedback"
+          ],
+          "primary_subjects": [
+            "customer_surveys"
+          ],
+          "primary_entities": [
+            "store",
+            "city"
+          ],
+          "metric_refs": [
+            "survey_response_count"
+          ],
+          "dimension_refs": [
+            "store",
+            "city"
+          ],
+          "analytical_lenses": [
+            {
+              "id": "survey_volume",
+              "business_label": "Lượng phản hồi",
+              "business_question": "Lượng phản hồi trong phạm vi đã chọn?",
+              "metric_refs": [
+                "survey_response_count"
+              ],
+              "dimension_refs": [
+                "store",
+                "city"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "store",
+                "city"
+              ],
+              "related_lens_refs": []
+            }
+          ],
+          "health_signals": [
+            {
+              "metric": "survey_response_count",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "store"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            }
+          ],
+          "diagnostic_dimensions": [
+            "store",
+            "city"
+          ],
+          "drilldown_hierarchies": [
+            [
+              "city",
+              "store"
+            ]
+          ],
+          "comparison_semantics": [
+            "previous_period",
+            "same_period_previous_year",
+            "peer_average",
+            "peer_median",
+            "between_selected_groups"
+          ],
+          "related_domains": [
+            "stores"
+          ],
+          "supporting_analysis_capabilities": [
+            "survey_volume"
+          ],
+          "business_caveats": [
+            "no_causal_interpretation"
+          ]
+        },
+        "wishlist_favorites": {
+          "domain_id": "wishlist_favorites",
+          "business_label": "Sản phẩm yêu thích",
+          "short_business_purpose": "Lượt lưu yêu thích; không phải lượng bán.",
+          "model_aliases": [
+            "yêu thích",
+            "wishlist",
+            "thả tim"
+          ],
+          "primary_subjects": [
+            "wishlist_favorites"
+          ],
+          "primary_entities": [
+            "product",
+            "category"
+          ],
+          "metric_refs": [
+            "favorite_count"
+          ],
+          "dimension_refs": [
+            "product",
+            "category"
+          ],
+          "analytical_lenses": [
+            {
+              "id": "favorite_interest",
+              "business_label": "Quan tâm sản phẩm",
+              "business_question": "Quan tâm sản phẩm trong phạm vi đã chọn?",
+              "metric_refs": [
+                "favorite_count"
+              ],
+              "dimension_refs": [
+                "product",
+                "category"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "product",
+                "category"
+              ],
+              "related_lens_refs": []
+            }
+          ],
+          "health_signals": [
+            {
+              "metric": "favorite_count",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "product"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            }
+          ],
+          "diagnostic_dimensions": [
+            "product",
+            "category"
+          ],
+          "drilldown_hierarchies": [
+            [
+              "category",
+              "product"
+            ]
+          ],
+          "comparison_semantics": [
+            "previous_period",
+            "same_period_previous_year",
+            "peer_average",
+            "peer_median",
+            "between_selected_groups"
+          ],
+          "related_domains": [
+            "products"
+          ],
+          "supporting_analysis_capabilities": [
+            "favorite_interest"
+          ],
+          "business_caveats": [
+            "no_causal_interpretation"
+          ]
+        },
+        "hourly": {
+          "domain_id": "hourly",
+          "business_label": "Khung giờ bán hàng",
+          "short_business_purpose": "Lượng đơn theo giờ tạo đơn tại múi giờ kinh doanh.",
+          "model_aliases": [
+            "khung giờ",
+            "cao điểm",
+            "theo giờ"
+          ],
+          "primary_subjects": [
+            "hourly"
+          ],
+          "primary_entities": [
+            "hour",
+            "store"
+          ],
+          "metric_refs": [
+            "hourly_orders"
+          ],
+          "dimension_refs": [
+            "hour",
+            "store",
+            "city"
+          ],
+          "analytical_lenses": [
+            {
+              "id": "hourly_load",
+              "business_label": "Lưu lượng theo giờ",
+              "business_question": "Lưu lượng theo giờ trong phạm vi đã chọn?",
+              "metric_refs": [
+                "hourly_orders"
+              ],
+              "dimension_refs": [
+                "hour",
+                "store",
+                "city"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "hour",
+                "store",
+                "city"
+              ],
+              "related_lens_refs": []
+            }
+          ],
+          "health_signals": [
+            {
+              "metric": "hourly_orders",
+              "direction": "contextual",
+              "comparison": "peer_average",
+              "peer_dimensions": [
+                "hour"
+              ],
+              "minimum_peer_groups": 3,
+              "comparable_exposure": false
+            }
+          ],
+          "diagnostic_dimensions": [
+            "hour",
+            "store",
+            "city"
+          ],
+          "drilldown_hierarchies": [
+            [
+              "city",
+              "store"
+            ]
+          ],
+          "comparison_semantics": [
+            "previous_period",
+            "same_period_previous_year",
+            "peer_average",
+            "peer_median",
+            "between_selected_groups"
+          ],
+          "related_domains": [
+            "orders",
+            "stores"
+          ],
+          "supporting_analysis_capabilities": [
+            "hourly_load"
+          ],
+          "business_caveats": [
+            "no_causal_interpretation"
+          ]
+        }
+      },
+      "caveat_labels": {
+        "snapshot_only": "Chỉ số phản ánh hiện trạng tại thời điểm quan sát; không suy ra diễn biến quá khứ.",
+        "historical_unavailable": "Nguồn hiện tại chưa có lịch sử theo kỳ cho các chỉ số này.",
+        "sample_size_required": "Cần số lượt quan sát hoặc đánh giá để kiểm tra cỡ mẫu trước khi kết luận về chất lượng.",
+        "non_additive": "Không cộng số khách khác nhau hoặc các giá trị trung bình giữa các nhóm để suy ra tổng.",
+        "distinct_populations": "Các chỉ số có thể dùng điều kiện dân số khác nhau; cần đối chiếu định nghĩa từng chỉ số.",
+        "no_causal_interpretation": "Liên hệ quan sát và chênh lệch nhóm chưa xác định nguyên nhân."
+      }
     }
   }
 }

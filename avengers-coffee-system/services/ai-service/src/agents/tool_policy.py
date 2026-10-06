@@ -668,7 +668,7 @@ class GuardedToolGateway:
                              for item in (value if isinstance(value, list) else [value]))}
         values.update(literal_choices)
         for group in groups:
-            evidence = None if declines_toppings(option_message) else validate_explicit_multi_value_group(option_message, group, groups)
+            evidence = None if declines_toppings(option_message) else validate_explicit_multi_value_group(option_message, group, groups, allow_implicit=True)
             if evidence and evidence['invalid_values']:
                 choices = {value: [label for label in evidence['allowed_values']
                     if re.search(r'(?<!\w)' + re.escape(normalize_text(value)) + r'(?!\w)', normalize_text(label))]

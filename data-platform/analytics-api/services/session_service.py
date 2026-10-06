@@ -76,6 +76,8 @@ class ReportSession:
     dashboard_plan: Dict[str, Any] = field(default_factory=dict)
     agent_state: Dict[str, Any] = field(default_factory=dict)
     analysis_depth: str = "deep"
+    ui_constraints: Dict[str, Any] = field(default_factory=dict)
+    contract_version: str = "2.5"
 
     # Full conversation history
     conversation_turns: List[ConversationTurn] = field(default_factory=list)

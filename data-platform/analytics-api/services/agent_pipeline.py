@@ -15,6 +15,7 @@ from services.dashboard_planner_service import build_dashboard
 from services.verified_analysis_service import record_verified
 from services.explanation_service import explain_analysis
 from services.analyst_contract import DashboardPlan, AgentState
+from services.domain_intelligence_service import DomainIntelligence, DEPTH_POLICIES
 
 
 class AnalysisPipeline:
@@ -54,7 +55,7 @@ class AnalysisPipeline:
 
     def diagnostics(self, catalog, validation=None):
         return {
-            "pipeline_version": "2.4" if self.planning_mode == "one_shot" else "2.3",
+            "pipeline_version": "2.5" if self.planning_mode == "one_shot" else "2.3",
             "schema_fingerprint": catalog.fingerprint,
             **deepcopy(self.semantic_info),
             "provider_call_count": self.semantic_info.get("provider_call_count", len(self.calls)),
@@ -67,7 +68,7 @@ class AnalysisPipeline:
             "planner": "logical_algebra_catalog_compiler",
             "embedding_call_count": 0,
             "retrieval": {
-                "strategy": "compact_semantic_manifest" if self.planning_mode == "one_shot" else "model_requested_semantic_tools",
+                "strategy": "compact_domain_intelligence" if self.planning_mode == "one_shot" else "model_requested_semantic_tools",
                 "vector_status": "not_requested",
             },
             "validation": validation or {},
@@ -88,6 +89,7 @@ class AnalysisPipeline:
                     "time_range",
                     "domain",
                     "analysis_depth",
+                    "analysis_scope",
                     "branch",
                     "date_range",
                 )
@@ -104,27 +106,38 @@ class AnalysisPipeline:
 
     def ui_context(self, request, catalog, reference):
         # Structured UI scope only; never scan the natural-language request.
+        domain = request.domain or "auto"
+        profiles = DomainIntelligence(catalog).available()
+        if domain not in {"auto", "multi", *profiles}:
+            raise AnalysisError("unsupported_domain", "Selected domain is unavailable")
         context = {
             "user_context": (request.context or "")[:1500],
-            "required_subject": request.domain if request.domain and request.domain != "auto" else None,
+            "domain": domain,
+            "required_domain": domain if domain not in {"auto", "multi"} else None,
             "analysis_depth": getattr(request, "analysis_depth", "deep"),
         }
         ui = request.time_range
         period = None
         if ui and ui.mode != "auto":
-            days = (
-                1
-                if ui.mode == "today"
-                else int(ui.mode[:-1]) if ui.mode != "custom" else None
-            )
-            period = (
-                {"start": str(ui.start), "end": str(ui.end)}
-                if ui.mode == "custom"
-                else {
-                    "start": str(reference - timedelta(days=days - 1)),
-                    "end": str(reference),
-                }
-            )
+            if ui.mode in {"current_month", "previous_month", "current_quarter", "previous_quarter", "all_time"}:
+                from services.analysis_catalog import resolve_period
+                from services.analysis_contract import TimeScope
+                resolved = resolve_period(TimeScope(mode=ui.mode, timezone=catalog.registry["timezone"]), reference)
+                period = {k: resolved[k] for k in ("start", "end")}
+            else:
+                days = (
+                    1
+                    if ui.mode == "today"
+                    else int(ui.mode[:-1]) if ui.mode != "custom" else None
+                )
+                period = (
+                    {"start": str(ui.start), "end": str(ui.end)}
+                    if ui.mode == "custom"
+                    else {
+                        "start": str(reference - timedelta(days=days - 1)),
+                        "end": str(reference),
+                    }
+                )
         elif request.date_range:
             import re
 
@@ -143,8 +156,30 @@ class AnalysisPipeline:
             else:
                 raise AnalysisError("clarification", "Use structured UI time range")
         context["required_period"] = period
+        scope = getattr(request, "analysis_scope", None)
+        if scope:
+            context["scope_mode"] = scope.mode
+            # Only structured semantic filters are interpreted here. Exact
+            # enum aliases are local; names/IDs require the existing safe lookup.
+            from services.semantic_tools import SemanticTools
+            resolver = SemanticTools(catalog, self.value_lookup)
+            canonical = []
+            for f in scope.filters:
+                definition = catalog.registry["dimensions"].get(f.dimension)
+                if not definition or not definition.get("scope_selectable"):
+                    raise AnalysisError("query_scope", "Unsupported selected scope")
+                values = f.value if isinstance(f.value, list) else [f.value]
+                grounded = []
+                for v in values:
+                    answer = resolver.resolve({"dimension": f.dimension, "reference": str(v)}, allow_lookup=resolver.lookup_count < self.budget.value_lookups)
+                    if answer["status"] != "resolved":
+                        raise AnalysisError("filter_value_unknown", "Selected scope could not be resolved")
+                    grounded.append(answer["value"])
+                canonical.append({"dimension": f.dimension, "operator": f.operator, "value": grounded if isinstance(f.value, list) else grounded[0]})
+            context["required_filters"] = canonical
+            context["scope_lookup_count"] = resolver.lookup_count
         branch = (request.branch or "").strip()
-        if branch and branch.lower() != "all":
+        if branch and branch.lower() != "all" and (not scope or scope.mode == "auto"):
             from services.value_grounding_service import (
                 aliases_for,
                 dimension_values,
@@ -202,6 +237,10 @@ class AnalysisPipeline:
                 raise AnalysisError(
                     "clarification", "Analysis omitted selected UI population"
                 )
+            if any(f not in [v.model_dump(mode="json") for v in a.query.filters] for f in context.get("required_filters", [])):
+                raise AnalysisError("query_scope", "Analysis conflicts with selected UI population")
+            if context.get("scope_mode") == "all" and a.query.filters:
+                raise AnalysisError("query_scope", "Analysis narrowed the selected entire-system population")
 
     def interpretation(self, artifacts):
         from services.analysis_understanding import labelled_interpretation
@@ -226,6 +265,7 @@ class AnalysisPipeline:
                 role=a.query.role,
                 parent_id=a.query.parent_id,
                 purpose=a.query.purpose,
+                **self.domain_meaning(a),
                 granularity=a.query.granularity if a.query.operation == "trend" else None,
                 kind=value["analysis_kind"],
             )
@@ -240,7 +280,18 @@ class AnalysisPipeline:
                 metrics=list({m["label"]: m for m in metrics}.values()),
             )
         main["operations"] = parts
+        main["analysis_depth"] = self.semantic_info.get("analysis_depth", "deep")
+        main["domains"] = list({p.get("domain_id"): {"id": p.get("domain_id"), "label": p.get("domain_label")} for p in parts if p.get("domain_id")}.values())
         return main
+
+    def domain_meaning(self, artifact):
+        p = DomainIntelligence(self._active_catalog).domain_for(artifact.query.subject)
+        if not p:
+            return {}
+        lens = next((l for l in p["analytical_lenses"] if l["id"] == artifact.query.lens_id), None)
+        return {"domain_id": p["domain_id"], "domain_label": p["business_label"],
+                "lens_label": lens["business_label"] if lens else None,
+                "population_relation": artifact.query.population_relation}
 
     def save_meaning(self, session, artifacts, catalog, reference, plan):
         session.analysis_depth = self.semantic_info.get("analysis_depth", session.analysis_depth)
@@ -259,7 +310,7 @@ class AnalysisPipeline:
         session.agent_reference_date = reference.isoformat()
         session.dashboard_plan = plan.model_dump(mode="json")
         evidence = (
-            analytical_features(artifacts)
+            analytical_features(artifacts, catalog)
             if all(a.result is not None for a in artifacts.values())
             else []
         )
@@ -290,6 +341,7 @@ class AnalysisPipeline:
         )
         self.enforce_ui(artifacts, context)
         session = create_session(request.prompt, request.domain or "auto")
+        session.ui_constraints = deepcopy(context)
         session.proposed_prompt = request.prompt
         session.proposed_request = self.request_signature(request)
         self.save_meaning(session, artifacts, catalog, reference, plan)
@@ -303,7 +355,7 @@ class AnalysisPipeline:
             ],
             "data_sources": [
                 {
-                    "name": catalog.overlay["silver_tables"][t].get(
+                    "name": catalog.overlay["silver_tables"].get(t, {}).get(
                         "business_name", "Nguồn dữ liệu đã kiểm chứng"
                     ),
                     "reason": "Đã đối chiếu metadata",
@@ -320,6 +372,9 @@ class AnalysisPipeline:
                     "chart_type": p["kind"],
                     "role": p["role"],
                     "reason": "Kiểm chứng loại biểu đồ sau khi có dữ liệu.",
+                    "domain_id": p.get("domain_id"),
+                    "domain_label": p.get("domain_label"),
+                    "lens_label": p.get("lens_label"),
                 }
                 for p in meaning["operations"]
             ],
@@ -329,6 +384,7 @@ class AnalysisPipeline:
                 "Nhận định từ bằng chứng",
             ],
             "analysis_spec": session.analysis_spec,
+            "domain_groups": meaning["domains"],
             "analysis_explanation": explain_analysis(artifacts, catalog),
             "session_id": session.session_id,
         }
@@ -351,6 +407,8 @@ class AnalysisPipeline:
             raise AnalysisError("session", "Session expired")
         if session:
             with session.analysis_lock:
+                if self.planning_mode == "one_shot" and session.contract_version != "2.5":
+                    raise AnalysisError("schema_changed", "Refresh the analysis proposal")
                 if session.proposed_request != self.request_signature(request):
                     raise AnalysisError("session", "Request changed after proposal")
                 if session.schema_fingerprint != catalog.fingerprint:
@@ -358,8 +416,9 @@ class AnalysisPipeline:
                 reference = date.fromisoformat(session.agent_reference_date)
                 agent = self.agent(catalog, reference, previous=session.agent_artifacts,
                     known_concepts=session.agent_state.get("resolved_concepts", []))
+                agent.queries.ui_context = deepcopy(session.ui_constraints)
                 self.semantic_info.update(analysis_depth=session.analysis_depth,
-                    target_visual_count=6 if session.analysis_depth == "deep" else None)
+                    target_visual_count=DEPTH_POLICIES[session.analysis_depth]["target_views"][-1])
                 self.semantic_info["proposal_diagnostics"] = {
                     key: deepcopy(session.diagnostics.get(key)) for key in (
                         "agent_rounds", "semantic_tool_calls", "contract_repair_count",
@@ -417,6 +476,8 @@ class AnalysisPipeline:
             catalog = self.catalog()
             if catalog.fingerprint != session.schema_fingerprint:
                 raise AnalysisError("schema_changed", "Stored schema changed")
+            if self.planning_mode == "one_shot" and session.contract_version != "2.5":
+                raise AnalysisError("schema_changed", "Refresh the analysis proposal")
             reference = date.fromisoformat(session.agent_reference_date)
             if request.visual_changes:
                 return self.refine_visuals(request, session, catalog, reference)
@@ -426,6 +487,7 @@ class AnalysisPipeline:
                 catalog, reference, previous=session.agent_artifacts,
                 known_concepts=session.agent_state.get("resolved_concepts", [])
             ).run(request.feedback, {
+                **session.ui_constraints,
                 "analysis_depth": session.analysis_depth,
                 "revision": session.revision,
                 "current_visuals": [{k: c.get(k) for k in ("id", "scope_ref", "chart_type", "metrics")}
@@ -440,13 +502,14 @@ class AnalysisPipeline:
         from services.analyst_contract import DashboardVisual
 
         agent = self.agent(catalog, reference, previous=session.agent_artifacts)
+        agent.queries.ui_context = deepcopy(session.ui_constraints)
         for old in session.agent_artifacts.values():
             args = old.query.model_dump(mode="json")
             args.update(replaces=None, changed_fields=[])
             agent.queries.run(agent.queries.prepare(args))  # Revalidate cached rows, no SQL.
         artifacts = agent.queries.artifacts
         plan = DashboardPlan.model_validate(session.dashboard_plan)
-        evidence = analytical_features(artifacts)
+        evidence = analytical_features(artifacts, catalog)
         current = build_dashboard(artifacts, evidence, plan, self.budget.charts, self.budget.categories, self.budget.series)
         # Include validated defaults supplied by the dashboard when a prior
         # optional visual was ineligible. These are genuine server chart choices.
@@ -472,7 +535,7 @@ class AnalysisPipeline:
         return self.report(artifacts, plan, catalog, session, reference, refined=True)
 
     def report(self, artifacts, plan, catalog, session, reference, refined=False):
-        evidence = analytical_features(artifacts)
+        evidence = analytical_features(artifacts, catalog)
         dashboard = build_dashboard(
             artifacts,
             evidence,
@@ -480,6 +543,7 @@ class AnalysisPipeline:
             self.budget.charts,
             self.budget.categories,
             self.budget.series,
+            catalog=catalog,
         )
         narrative = grounded_narrative(plan, evidence)
         results = {id: deepcopy(a.result) for id, a in artifacts.items()}
@@ -501,13 +565,22 @@ class AnalysisPipeline:
             )
         main = next(iter(artifacts.values()))
         first = results[main.query.id]
-        if self.semantic_info.get("analysis_depth") == "deep":
+        depth = self.semantic_info.get("analysis_depth", session.analysis_depth)
+        if depth in DEPTH_POLICIES:
+            target = DEPTH_POLICIES[depth]["target_views"]
             self.semantic_info["depth_coverage"] = {
-                "target_views": 6, "validated_views": len(dashboard["charts"]),
-                "status": "adequate" if len(dashboard["charts"]) >= 5 else "limited",
+                "target_views": target, "validated_views": len(dashboard["charts"]),
+                "status": "adequate" if len(dashboard["charts"]) >= target[0] else "limited",
                 "planned_operations": len(artifacts),
             }
         meaning = self.interpretation(artifacts)
+        domain_summary = []
+        for domain in meaning["domains"]:
+            query_ids = [p["query_id"] for p in meaning["operations"] if p.get("domain_id") == domain["id"]]
+            domain_summary.append({**domain, "query_ids": query_ids,
+                "requested_operations": sum(artifacts[id].query.role == "requested" for id in query_ids),
+                "supporting_operations": sum(artifacts[id].query.role == "supporting" for id in query_ids),
+                "evidence_refs": [e["id"] for e in evidence if e["scope_ref"] in query_ids]})
         self.semantic_info.update(
             reference_date=reference.isoformat(),
             chart_count=len(dashboard["charts"]),
@@ -536,12 +609,13 @@ class AnalysisPipeline:
             "completion_status": (
                 "partial" if self.semantic_info.get("limitations") else "complete"
             ),
-            "pipeline_version": "2.4" if self.planning_mode == "one_shot" else "2.3",
+            "pipeline_version": "2.5" if self.planning_mode == "one_shot" else "2.3",
             "prompt": session.original_prompt,
             "session_id": session.session_id,
             "revision": session.revision + (1 if session.approved else 0),
             "title": meaning["subject"],
             "description": "Phân tích từ các kết quả đã kiểm chứng.",
+            "domain_summary": domain_summary,
             "analysis_spec": main.grounded.analysis_spec.model_dump(mode="json"),
             "analysis_specs": {
                 id: a.grounded.analysis_spec.model_dump(mode="json")

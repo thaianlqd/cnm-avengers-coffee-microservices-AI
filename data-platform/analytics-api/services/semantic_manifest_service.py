@@ -10,6 +10,8 @@ from services.value_grounding_service import dimension_values
 
 _cache = OrderedDict()
 _lock = Lock()
+AGGREGATION_CODES = {"sum": "s", "average": "a", "count": "c", "conditional_count": "f", "distinct_count": "d", "catalog_defined": "x"}
+DIRECTION_CODES = {"higher_better": "h", "lower_better": "l", "neutral": "n", "contextual": "c"}
 
 
 def compact(value):
@@ -23,9 +25,9 @@ def char_limit(name, default, maximum):
         raise AnalysisError("context_configuration", "Invalid context allowance") from None
 
 
-def build_manifest(catalog, max_chars=None):
+def build_manifest(catalog, max_chars=None, subject_priority=()):
     maximum = max_chars if max_chars is not None else char_limit("DATA_ANALYST_SEMANTIC_MANIFEST_MAX_CHARS", 10000, 20000)
-    key = (catalog.fingerprint, maximum)
+    key = (catalog.fingerprint, maximum, tuple(subject_priority))
     with _lock:
         if key in _cache:
             _cache.move_to_end(key)
@@ -86,13 +88,14 @@ def build_manifest(catalog, max_chars=None):
                 sets.append(allowed)
             if scope not in scopes:
                 scopes.append(scope)
-            rows.append([id, m["business_name"], m["unit"], m["grain"], [s for s in m["subjects"] if s in ids], bool(m.get("additive")), bool(m.get("time_column")), sets.index(allowed), scopes.index(scope)])
+            rows.append([id, m["business_name"], m["unit"], m["grain"], [s for s in m["subjects"] if s in ids], bool(m.get("additive")), bool(m.get("time_column")), sets.index(allowed), scopes.index(scope), AGGREGATION_CODES.get(m.get("aggregation_semantics"), "x"), DIRECTION_CODES.get(m.get("quality_direction"), "c")])
         value = {"columns": {
             "subjects": "id,label,grain,metrics,default_dimension,detail_fields,historical_detail",
-            "metrics": "id,label,unit,grain,subjects,additive,historical,dimension_set,population_group",
+            "metrics": "id,label,unit,grain,subjects,additive,historical,dimension_set,population_group,aggregation,quality_direction",
             "dimensions": "id,label,type,value_mode"},
             "subjects": selected, "metrics": rows, "dimensions": [dims[d] for d in dids], "dimension_sets": sets,
             "complete": len(ids) == len(subjects), "omitted_subject_count": len(subjects) - len(ids)}
+        value["codes"] = {"aggregation": {v: k for k, v in AGGREGATION_CODES.items()}, "quality_direction": {v: k for k, v in DIRECTION_CODES.items()}}
         if enrich:
             enums, aliases = {}, {}
             for d in dids:
@@ -136,7 +139,7 @@ def build_manifest(catalog, max_chars=None):
             value["context_subjects"] = context_links
         return value
 
-    ids = list(subjects)
+    ids = list(dict.fromkeys([s for s in subject_priority if s in subjects] + list(subjects)))
     value = project(ids)
     if len(compact(value)) > maximum:
         value = project(ids, enrich=False)
@@ -156,3 +159,17 @@ def build_manifest(catalog, max_chars=None):
 
 def manifest_references(manifest):
     return {(kind, row[0]) for kind in ("subject", "metric", "dimension") for row in manifest[kind + "s"]}
+
+
+def provider_manifest(manifest):
+    """Remove compiler-owned grain and redundant metric-to-subject membership.
+
+    Subject rows already contain metric IDs. SQL grain remains authoritative in
+    the server catalog and never becomes a model supplied field.
+    """
+    value = deepcopy(manifest)
+    value["subjects"] = [[s[0], s[1], *s[3:]] for s in manifest["subjects"]]
+    value["metrics"] = [[m[0], m[1], m[2], *m[5:]] for m in manifest["metrics"]]
+    value["columns"]["subjects"] = "id,label,metrics,default_dimension,detail_fields,historical_detail"
+    value["columns"]["metrics"] = "id,label,unit,additive,historical,dimension_set,population_group,aggregation,quality_direction"
+    return value

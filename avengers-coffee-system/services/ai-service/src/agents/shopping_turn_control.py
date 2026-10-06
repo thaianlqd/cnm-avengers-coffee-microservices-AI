@@ -77,17 +77,19 @@ def customer_shopping_control(gateway):
         return {'reply': None, 'error': None}
     categories = visible.get('menu_categories') or []
     if categories and not business.get('pending_products'):
-        cat_ref = parse_selection_reference(message, active_namespace='MENU_CATEGORY')
-        category = None
+        cat_ref = parse_selection_reference(message, active_namespace='MENU_CATEGORY', allow_multiple=True)
+        selected_categories = []
         if cat_ref.requested and cat_ref.namespace in {None, 'MENU_CATEGORY'} and cat_ref.operation_semantics not in {'INFO_REFERENCE', 'NEGATE_REFERENCE', 'MUTATE_REFERENCE'}:
-            category = next((row for row in categories if row['display_index'] == cat_ref.ordinals[0]), None)
-        if not category:
+            selected_categories = [row for row in categories if row['display_index'] in cat_ref.ordinals]
+        if not selected_categories:
             matches = [row for row in categories if normalize_shopping(row['category_name']) == re.sub(
                 r'^(?:cho toi xem|cho minh xem|xem|chon|danh muc)\s+', '', text).strip()]
-            category = matches[0] if len(matches) == 1 else None
-        if category:
-            gateway.dispatch('filter_catalog', {'category': category['menu_bucket'],
-                'category_id': category['category_id'], 'search_text': '', 'limit': 16})
+            if len(matches) == 1:
+                selected_categories = matches
+        if selected_categories:
+            for cat in selected_categories:
+                gateway.dispatch('filter_catalog', {'category': cat['menu_bucket'],
+                    'category_id': str(cat['category_id']), 'search_text': '', 'limit': 16})
             return {'reply': None, 'error': None}
     # Map candidate ordinals always belong to the actual displayed map list.
     candidates = visible.get('location_candidates') or []

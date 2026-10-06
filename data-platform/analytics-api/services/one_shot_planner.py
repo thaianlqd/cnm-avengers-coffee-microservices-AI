@@ -9,17 +9,17 @@ from services.analyst_decision import AnalystDecision, DecisionOperation, decisi
 from services.analytical_tool_contract import ToolContractError, issue, rejection_issues
 from services.analytical_query_service import AnalyticalQueries
 from services.semantic_tools import SemanticTools
-from services.semantic_manifest_service import build_manifest, manifest_references, compact, char_limit
+from services.semantic_manifest_service import build_manifest, manifest_references, provider_manifest, compact, char_limit
 from services.provider_budget import ProviderTurn, validate_single_shot_policy
 from services.value_grounding_service import dimension_values, value_text
 from services.analyst_clarification import clarify_decision, clarify_filter, UnresolvedFilter
+from services.domain_intelligence_service import DomainIntelligence, DEPTH_POLICIES
 
-SYSTEM = """You are a Vietnamese Data Analyst. Submit exactly one submit_analyst_decision. Choose meaning using the request and manifest; never invent IDs, SQL, physical names, formulas, values, forecasts or causes. Preserve all requested metrics, Top N, filters, period and UI constraints. Clarify undefined meaning; unsupported means unavailable in the catalog.
-Deep mode: plan 5–7 distinct operations for about 5–6 useful views, covering scale, trend, breakdown and relevant related activity/composition. Use at most ui.supporting_limit supports per parent and eight operations total. Focused or explicitly single-number/table-only requests stay narrow. All supports are decided now; there is no second planning call. Do not duplicate views to fill a quota.
-Supports inherit parent user filters/time. population_relation=same requires the same metric population. For related context use population_relation=related, purpose=context and the same subject or checked context_subjects [parent,support] links with matching clocks. Same-subject snapshots are allowed only for all_time, never historical trends. Different population_group metrics need separate operations; never reconcile them or infer cross-population shares/causes. Buying customers differ from registered customers; promotion usage is not causal uplift.
-Omit unspecified time (all_time), never null/{} or kind alone. Explicit time needs one complete schema branch; range uses ISO start/end, not relative/custom. Historical metrics only for trends; all_time trends normally use month. Respect explicit granularity. Trends have at most one low-cardinality group; rank products/customers separately.
-Ranking requires group_by and ranking.top_n; one metric supplies ranking.metric, default DESC. Trend requires granularity. detail_fields is detail-only. Filters use canonical manifest.enums values; lookup references are verified. Do not repeat metric-owned predicates as user filters. Optional visuals reference operation IDs; normally omit for server selection.
-Refinement uses replaces and changed_fields; unchanged fields inherit server state. Keep requested operations unless replaced/removed. Chart-only refinement uses visuals without new operations. Return no prose; charts and summaries use validated evidence without further model calls."""
+SYSTEM = """Vietnamese business analyst: submit one plan, clarification or unsupported decision. Directory covers all domains; packs are candidate knowledge, not intent. Interpret question using delivered semantic IDs only. No SQL, invented metrics/values, forecasts, causes or prose.
+UI domain/time/scope are authoritative; AUTO permits interpretation. Omitted time=all_time; explicit time requires complete kind, ranges ISO dates. Broad questions need useful catalog lenses, not automatic clarification. Preserve EVERY requested component, including focused; over eight operations requires clarification. OPTIONAL depth: focused 1–3 views, deep 4–6 (5–6 useful), comprehensive 6–8 across relevant domains. Targets are not quotas. Use ui.supporting_limit; no filler. lens_id optional; contextual volume is not best/worst or a composite score.
+Supports inherit requested parent time/filters. same needs equal population_group; related needs purpose=context, context_subjects [parent,support] links and matching clocks. Never infer shares/causes across related populations. Snapshots only all_time, no history/trends. Registered customers differ from buyers; non-additive counts/averages cannot be summed.
+Ranking needs group_by/top_n (one metric defaults ranking.metric, DESC). Trend needs granularity, at most one low-cardinality group; all_time normally month. detail_fields only detail. Canonical enums; other values verified locally. Don't repeat metric-owned predicates. Server selects visuals/evidence after approval.
+Refinement: replaces/changed_fields, unchanged fields inherit; retain old requested work unless replaced/removed. No private reasoning."""
 
 class OneShotPlanner:
     def __init__(self, catalog, provider, executor, lookup, reference, diagnostics,
@@ -35,7 +35,7 @@ class OneShotPlanner:
         self.semantic = SemanticTools(catalog, lookup)
         self.queries = AnalyticalQueries(catalog, self.semantic, reference, executor, diagnostics, proposal, previous)
         self.queries.enforce_discovery = True
-        diagnostics.update(planning_mode="one_shot", pipeline_version="2.4", provider_calls=[],
+        diagnostics.update(planning_mode="one_shot", pipeline_version="2.5", provider_calls=[],
             provider_status="not_started", provider_error_category=None, agent_contract_status="not_started",
             agent_contract_error=None, terminal_error=None, db_query_count=0, value_lookup_count=0,
             contract_repair_count=0, contract_rejection_count=0, contract_normalization_count=0,
@@ -143,6 +143,9 @@ class OneShotPlanner:
         except UnresolvedFilter as error:
             clarify_filter(self, error, raw)
         except (ValueError, TypeError, KeyError) as error:
+            if getattr(error, "category", None) == "unsupported" and isinstance(raw, dict) and any(m in self.catalog.registry["metrics"] and not self.catalog.registry["metrics"][m].get("time_column") for m in raw.get("metrics", [])):
+                self.diagnostics.update(agent_contract_status="valid", semantic_status="unsupported")
+                raise AnalysisError("historical_metric_unavailable", "Snapshot history is unavailable") from None
             self.fail_contract(error)
         # Resolve and validate optional work independently, after every mandatory contract.
         counts = {}
@@ -230,17 +233,31 @@ class OneShotPlanner:
         try:
             validate_single_shot_policy()
             context = dict(context or {})
+            # Structured selection shares the same finite lookup allowance.
+            self.semantic.lookup_count = context.get("scope_lookup_count", 0)
+            for f in context.get("required_filters", []):
+                values = f["value"] if isinstance(f["value"], list) else [f["value"]]
+                self.semantic.resolved.setdefault(f["dimension"], set()).update(values)
+                for value in values:
+                    self.value_resolutions[(f["dimension"], type(value).__name__, value_text(value))] = {"status": "resolved", "value": value}
             depth = context.get("analysis_depth", "deep")
+            if depth not in DEPTH_POLICIES:
+                raise AnalysisError("context_configuration", "Unknown analysis depth")
+            policy = DEPTH_POLICIES[depth]
+            support_limit = policy["supports"]
             if depth == "deep":
                 try:
-                    support_limit = min(7, max(0, int(os.getenv("DATA_ANALYST_DEEP_SUPPORTING_OPERATIONS", "6"))))
+                    support_limit = min(6, max(0, int(os.getenv("DATA_ANALYST_DEEP_SUPPORTING_OPERATIONS", "6"))))
                 except ValueError:
                     raise AnalysisError("context_configuration", "Invalid deep analysis allowance") from None
-                self.budget = replace(self.budget, supporting_operations=support_limit)
+            self.budget = replace(self.budget, supporting_operations=support_limit)
             context["supporting_limit"] = self.budget.supporting_operations
             self.diagnostics.update(analysis_depth=depth, supporting_operation_limit=self.budget.supporting_operations,
-                                    target_visual_count=6 if depth == "deep" else None)
+                                    target_visual_count=policy["target_views"][-1], target_visual_range=policy["target_views"])
             manifest, hit = build_manifest(self.catalog)
+            intelligence = DomainIntelligence(self.catalog)
+            knowledge = intelligence.context(prompt, context.get("domain", "auto"), depth, manifest_references(manifest),
+                [a.query.subject for a in self.queries.previous.values()])
             state = []
             for id, a in self.queries.previous.items():
                 q = a.query.model_dump(mode="json", exclude_defaults=True)
@@ -251,18 +268,18 @@ class OneShotPlanner:
                 q.pop("changed_fields", None)
                 state.append({"query": q, "result_ref": id if a.result is not None else None})
             payload = {"request": prompt, "reference_date": self.reference.isoformat(),
-                "timezone": self.catalog.registry["timezone"], "ui": context, "manifest": manifest, "state": state}
+                "timezone": self.catalog.registry["timezone"], "ui": context, "manifest": provider_manifest(manifest), "domains": knowledge, "state": state}
             messages = [{"role": "user", "content": compact(payload)}]
             tools = [decision_tool(refinement=bool(self.queries.previous))]
             from services.agent_provider import gemini_tool_schema, NativeAgentProvider
             wire_tools = [{**t, "parameters": gemini_tool_schema(t)} for t in tools]
             # Include provider wrappers and JSON escaping. Both supported Gemini
             # styles fit before the allowance is consumed; no adapter state is mutated.
-            maximum = char_limit("DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS", 24000, 48000)
+            maximum = min(policy["body_chars"], char_limit("DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS", 24000, 48000))
             # Rich server state gets room by pruning the global metadata index,
             # never by removing approved query scope or reading the question.
             # This is local serialization/cache work, not another provider call.
-            for _ in range(3):
+            for _ in range(20):
                 preview = NativeAgentProvider()
                 native_body = preview._gemini_body(SYSTEM, messages, tools)
                 compat_body = preview._gemini_compat_body(SYSTEM, messages, tools, "configured_model")
@@ -270,21 +287,36 @@ class OneShotPlanner:
                 allowance = len(compact(manifest)) - max(0, chars - maximum) - 200
                 if chars <= maximum or allowance < 1000:
                     break
+                if len(knowledge["packs"]) > 1:
+                    omitted = knowledge["packs"].pop()
+                    knowledge["omitted_pack_ids"].append(omitted["id"])
+                    messages[0]["content"] = compact(payload)
+                    continue
                 try:
-                    candidate, candidate_hit = build_manifest(self.catalog, max_chars=allowance)
+                    candidate, candidate_hit = build_manifest(self.catalog, max_chars=allowance,
+                        subject_priority=[s for p in knowledge["packs"] for s in intelligence.available()[p["id"]]["primary_subjects"]])
                 except AnalysisError as error:
                     if error.category != "semantic_manifest_budget_exceeded":
                         raise
                     break
                 manifest, hit = candidate, candidate_hit
-                payload["manifest"] = manifest
+                payload["manifest"] = provider_manifest(manifest)
+                # Reproject packs after local manifest pruning. Undelivered
+                # semantic references must never be authorized via stale packs.
+                knowledge["packs"] = [intelligence.pack(intelligence.available()[p["id"]], manifest_references(manifest)) for p in knowledge["packs"]]
                 messages[0]["content"] = compact(payload)
             preview = NativeAgentProvider()
             chars = max(len(compact(preview._gemini_body(SYSTEM, messages, tools))),
                         len(compact(preview._gemini_compat_body(SYSTEM, messages, tools, "configured_model"))))
-            self.diagnostics.update(semantic_manifest_chars=len(compact(manifest)), manifest_cache_hit=hit,
+            self.diagnostics.update(semantic_manifest_chars=len(compact(payload["manifest"])), manifest_cache_hit=hit,
                 semantic_manifest_complete=manifest["complete"], decision_schema_chars=len(compact(wire_tools)),
                 total_context_chars=chars, context_char_budget=maximum)
+            self.diagnostics.update(domain_context_mode=depth, global_domain_count=len(knowledge["directory"]),
+                global_domain_directory_chars=len(compact(knowledge["directory"])),
+                detailed_domain_ids=[p["id"] for p in knowledge["packs"]], domain_packs_omitted=knowledge["omitted_pack_ids"],
+                detailed_domain_pack_chars={p["id"]: len(compact(p)) for p in knowledge["packs"]},
+                domain_context_chars=len(compact(knowledge)), system_chars=len(SYSTEM), session_state_chars=len(compact(state)),
+                question_ui_chars=len(compact({"request": prompt, "ui": context})))
             if chars > maximum:
                 raise AnalysisError("one_shot_context_budget_exceeded", "Planning context exceeds allowance")
             self.semantic.discovered.update(manifest_references(manifest))
@@ -318,7 +350,10 @@ class OneShotPlanner:
             try:
                 if not isinstance(calls, list) or len(calls) != 1 or not isinstance(calls[0], dict) or set(calls[0]) != {"id", "name", "arguments"} or calls[0]["name"] != "submit_analyst_decision" or not isinstance(calls[0]["id"], str):
                     raise ToolContractError([issue("contract", "invalid_analysis_shape")])
-                decision = AnalystDecision.model_validate(calls[0]["arguments"])
+                raw_decision = calls[0]["arguments"]
+                if isinstance(raw_decision, dict) and isinstance(raw_decision.get("requested_operations"), list) and len(raw_decision["requested_operations"]) > self.budget.operations:
+                    raise AnalysisError("requested_scope_too_large", "Reduce requested scope")
+                decision = AnalystDecision.model_validate(raw_decision)
                 if decision.decision_type != "plan":
                     if decision.requested_operations or decision.supporting_operations or decision.removed_query_ids or decision.visuals or not decision.clarification:
                         raise ToolContractError([issue("clarification", "invalid_analysis_shape")])
@@ -327,7 +362,7 @@ class OneShotPlanner:
                     self.diagnostics.update(agent_contract_status="valid", semantic_status=decision.decision_type)
                     clarify_decision(self, decision.clarification.model_dump(mode="json"))
             except (ValueError, TypeError, KeyError) as error:
-                if getattr(error, "clarification", None):
+                if getattr(error, "clarification", None) or getattr(error, "category", None) == "requested_scope_too_large":
                     raise
                 self.fail_contract(error)
             self.queries.ui_context = context or {}

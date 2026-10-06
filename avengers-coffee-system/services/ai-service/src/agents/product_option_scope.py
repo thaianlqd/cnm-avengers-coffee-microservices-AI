@@ -28,10 +28,10 @@ class ProductOptionScopes:
 def option_answer(message, groups=()):
     text = _fold(message).strip(' ,;.!')
     return bool(literal_option_choices(message, groups)
-        or any((validate_explicit_multi_value_group(message, group, groups) or {}).get('valid_values')
+        or any((validate_explicit_multi_value_group(message, group, groups, allow_implicit=True) or {}).get('valid_values')
             for group in groups if group.get('multiple'))
         or uses_global_option_defaults(message) or requests_custom_options(message)
-        or re.search(r'\b(?:size|kich thuoc|kich co|topping|toping|do kem|luong da|ngot|loai sua)\b', text)
+        or re.search(r'\b(?:size|kich thuoc|kich co|topping|toppig|toping|do kem|luong da|ngot|loai sua)\b', text)
         or text in {'ok', 'oke', 'dung roi', 'dong y', 'khong them topping'})
 
 

@@ -1,6 +1,8 @@
 import { AnalystDashboardSummary, AnalystViews, AnalystResultTable, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence, AnalystPlanningSummary } from '../components/AnalystDashboardSummary';
 import { AnalysisClarification } from '../components/AnalysisClarification';
 import { AnalysisMeaning } from '../components/AnalysisMeaning';
+import { AnalysisInputForm } from '../components/AnalysisInputForm';
+import { analysisInputPayload } from '../utils/analysisInput.mjs';
 import { analysisPlanLabel } from '../utils/analysisPresentation.mjs';
 import React, { useState, useEffect, useRef } from 'react';
 import { usePlatformStore } from '../store/usePlatformStore';
@@ -59,6 +61,16 @@ export const AnalyticsView: React.FC = () => {
   const [aiTimeRange, setAiTimeRange] = useState('auto');
   const [aiDomain, setAiDomain] = useState('auto');
   const [aiAnalysisDepth, setAiAnalysisDepth] = useState('deep');
+  const [aiCapabilities, setAiCapabilities] = useState<any>(null);
+  const [aiScope, setAiScope] = useState<any>({ mode: 'auto', filters: [] });
+  const [aiStart, setAiStart] = useState('');
+  const [aiEnd, setAiEnd] = useState('');
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch('/api/ai/capabilities', { signal: controller.signal }).then(r => r.ok ? r.json() : null).then(setAiCapabilities).catch(() => {});
+    return () => controller.abort();
+  }, []);
+  const aiInput = (prompt: string) => analysisInputPayload({ prompt, domain: aiDomain, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiAnalysisDepth });
   const [aiStatus, setAiStatus] = useState<any | null>(null);
 
   // Step 1: Pre-analysis proposal state
@@ -155,6 +167,8 @@ export const AnalyticsView: React.FC = () => {
       setAiPrompt(customPrompt);
     }
     if (planningInFlight.current) return;
+    let submittedInput: any;
+    try { submittedInput = aiInput(promptToSend); } catch (error: any) { showToast(error.message, 'info'); return; }
     planningInFlight.current = true;
     setIsProposingPlan(true);
     setGeneratedReport(null);
@@ -164,13 +178,7 @@ export const AnalyticsView: React.FC = () => {
       const response = await fetch('/api/ai/propose-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: promptToSend,
-          context: '',
-          time_range: { mode: aiTimeRange, start: null, end: null },
-          domain: aiDomain,
-          analysis_depth: aiAnalysisDepth,
-        }),
+        body: JSON.stringify(submittedInput),
       });
       if (!response.ok) {
         throw new Error('Lỗi phản hồi từ máy chủ AI khi đề xuất kế hoạch');
@@ -182,7 +190,7 @@ export const AnalyticsView: React.FC = () => {
         showToast(data.message || 'Yêu cầu cần được xem lại', data.status === 'error' ? 'error' : 'info');
       } else if (data.status === 'proposal_ready') {
         const planObj = data.proposal || data;
-        setAiPlan({ ...planObj, prompt: data.prompt || promptToSend, session_id: data.session_id, interpretation: data.interpretation, analysis_spec: data.analysis_spec, diagnostics: data.diagnostics });
+        setAiPlan({ ...planObj, submittedInput, prompt: data.prompt || promptToSend, session_id: data.session_id, interpretation: data.interpretation, analysis_spec: data.analysis_spec, diagnostics: data.diagnostics });
         setAiStep(2);
         showToast('Trợ lý AI đã đề xuất kế hoạch báo cáo. Vui lòng duyệt trước khi thực thi!', 'info');
       } else {
@@ -211,11 +219,7 @@ export const AnalyticsView: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: promptToSend,
-          context: '',
-          time_range: { mode: aiTimeRange, start: null, end: null },
-          domain: aiDomain,
-          analysis_depth: aiAnalysisDepth,
+          ...(aiPlan?.submittedInput || aiInput(promptToSend)),
           session_id: aiPlan?.prompt === promptToSend ? aiPlan?.session_id : null,
         }),
       });
@@ -564,6 +568,7 @@ export const AnalyticsView: React.FC = () => {
           pipeline_version: generatedReport.pipeline_version,
           analysis_spec: generatedReport.analysis_spec,
           interpretation: generatedReport.interpretation,
+          domain_summary: generatedReport.domain_summary,
           analytical_queries: generatedReport.analytical_queries,
           analysis_explanation: generatedReport.analysis_explanation,
           dashboard_plan: generatedReport.dashboard_plan,
@@ -2466,64 +2471,8 @@ export const AnalyticsView: React.FC = () => {
 
                 {/* Smart Omnibox Chat Input */}
                 <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 focus-within:bg-white focus-within:border-slate-400 focus-within:ring-2 focus-within:ring-slate-200/60 transition-all">
-                  <textarea
-                    value={aiPrompt}
-                    onChange={(e) => setAiPrompt(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        if (!isProposingPlan && !isGeneratingAi && aiPrompt.trim()) {
-                          handleProposePlan();
-                        }
-                      }
-                    }}
-                    placeholder="Nhập câu hỏi phân tích (ví dụ: Đánh giá tăng trưởng doanh thu theo khu vực, hoặc Top 5 món bán chạy nhất)..."
-                    rows={3}
-                    className="w-full text-xs sm:text-sm bg-transparent outline-none text-slate-800 font-normal resize-none placeholder-slate-400 leading-relaxed"
-                  />
-
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-slate-200/60 mt-3">
-                    {/* Filters */}
-                    <div className="flex flex-wrap items-center gap-2.5">
-                      <div className="flex items-center bg-white border border-slate-200/90 rounded-xl px-3 py-1.5 text-xs text-slate-600 shadow-2xs">
-                        <span className="text-[11px] text-slate-400 mr-2 font-medium">Thời gian:</span>
-                        <select
-                          value={aiTimeRange}
-                          onChange={(e) => setAiTimeRange(e.target.value)}
-                          className="bg-transparent text-xs font-medium text-slate-700 outline-none cursor-pointer"
-                        >
-                          <option value="auto">Tự động nhận diện</option>
-                          <option value="today">Hôm nay</option>
-                          <option value="7d">7 ngày qua</option>
-                          <option value="30d">30 ngày qua</option>
-                        </select>
-                      </div>
-
-                      <div className="flex items-center bg-white border border-slate-200/90 rounded-xl px-3 py-1.5 text-xs text-slate-600 shadow-2xs">
-                        <span className="text-[11px] text-slate-400 mr-2 font-medium">Phạm vi:</span>
-                        <select
-                          value={aiDomain}
-                          onChange={(e) => setAiDomain(e.target.value)}
-                          className="bg-transparent text-xs font-medium text-slate-700 outline-none cursor-pointer"
-                        >
-                          <option value="auto">Toàn hệ thống (Silver)</option>
-                          <option value="products">Sản phẩm & Thực đơn</option>
-                          <option value="orders">Doanh thu & Đơn hàng</option>
-                          <option value="stores">Chi nhánh cửa hàng</option>
-                          <option value="customers">Khách hàng & Hội viên</option>
-                          <option value="payments">Giao dịch thanh toán</option>
-                          <option value="delivery">Tài xế giao hàng</option>
-                        </select>
-                      </div>
-                      <div className="flex items-center bg-white border border-slate-200/90 rounded-xl px-3 py-1.5 text-xs text-slate-600">
-                        <span className="text-[11px] text-slate-400 mr-2">Độ sâu:</span>
-                        <select aria-label="Độ sâu phân tích" value={aiAnalysisDepth} onChange={(e) => setAiAnalysisDepth(e.target.value)} className="bg-transparent text-xs font-medium text-slate-700 outline-none cursor-pointer">
-                          <option value="deep">Phân tích sâu · 5–6 góc nhìn</option>
-                          <option value="focused">Tập trung vào câu hỏi</option>
-                        </select>
-                      </div>
-                    </div>
-
+                  <AnalysisInputForm capabilities={aiCapabilities} prompt={aiPrompt} domain={aiDomain} time={aiTimeRange} depth={aiAnalysisDepth} start={aiStart} end={aiEnd} scope={aiScope} disabled={isProposingPlan || isGeneratingAi} onPrompt={setAiPrompt} onDomain={setAiDomain} onTime={setAiTimeRange} onDepth={setAiAnalysisDepth} onStart={setAiStart} onEnd={setAiEnd} onScope={setAiScope} onSubmit={() => handleProposePlan()} />
+                  <div className="flex justify-end gap-3 pt-3 border-t border-slate-200/60 mt-3">
                     {/* Submit Actions */}
                     <div className="flex items-center space-x-2.5 self-end sm:self-auto">
                       {aiPrompt && (
@@ -2588,9 +2537,9 @@ export const AnalyticsView: React.FC = () => {
                     Câu hỏi: <span className="text-slate-600 font-normal italic">"{aiPlan?.prompt || aiPrompt || 'Chưa có câu hỏi'}"</span>
                   </div>
                   <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-2">
-                    <span>Phạm vi: {aiDomain}</span>
+                    <span>Miền dữ liệu: {aiCapabilities?.domains?.find((d: any) => d.id === aiDomain)?.label || (aiDomain === 'multi' ? 'Nhiều miền dữ liệu' : 'Tự động')}</span>
                     <span>•</span>
-                    <span>Thời gian: {aiTimeRange}</span>
+                    <span>Thời gian: {aiCapabilities?.time_presets?.find((t: any) => t.id === aiTimeRange)?.label || 'Tự động'}</span>
                     <span>•</span>
                     <span>Nguồn: Tầng Silver</span>
                   </div>

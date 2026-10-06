@@ -23,9 +23,18 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "ranking_scope_ambiguous",
         "unsupported_metric",
         "unsupported_dimension",
+        "unsupported_domain",
+        "query_scope",
+        "requested_scope_too_large",
+        "historical_metric_unavailable",
         "forecast_unsupported",
     }
     messages = {
+        "historical_metric_unavailable": "Một chỉ số yêu cầu chỉ có dữ liệu hiện trạng, chưa có lịch sử theo kỳ. Vui lòng chọn toàn bộ thời gian để xem hiện trạng hoặc thu gọn phần yêu cầu lịch sử.",
+        "requested_scope_too_large": "Yêu cầu có hơn 8 phần phân tích. Vui lòng thu gọn hoặc tách thành các câu hỏi nhỏ hơn; hệ thống chưa bỏ bớt phần bạn yêu cầu.",
+        "unsupported_domain": "Miền dữ liệu đã chọn chưa khả dụng. Vui lòng chọn lại miền từ danh mục hiện tại.",
+        "query_scope": "Kế hoạch không khớp phạm vi bạn đã chọn. Vui lòng kiểm tra và lập lại kế hoạch.",
+        "domain_metadata_invalid": "Danh mục miền dữ liệu chưa hợp lệ. Vui lòng kiểm tra metadata trên máy chủ.",
         "approval_required": "Vui lòng lập và xác nhận kế hoạch phân tích trước khi thực thi.",
         "invalid_analysis_contract": "AI đã trả lời nhưng kế hoạch phân tích chưa hợp lệ. Vui lòng thử lập lại kế hoạch.",
         "provider_call_budget_exceeded": "Hệ thống đã chặn lượt gọi AI vượt giới hạn của yêu cầu này. Bạn có thể chủ động lập lại kế hoạch.",
@@ -69,6 +78,8 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
             "Hệ thống chưa thể diễn giải hoặc kiểm chứng yêu cầu lúc này. Vui lòng thử lại.",
         )
     )
+    if category == "invalid_analysis_contract" and any(i.get("code") == "scope_conflict" for i in getattr(error, "issues", [])):
+        message = "Kế hoạch AI không khớp miền dữ liệu, thời gian hoặc phạm vi bạn đã chọn. Vui lòng lập lại kế hoạch với cùng lựa chọn."
     if category == "provider_daily_quota" and provider_calls:
         import math
 
@@ -130,7 +141,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
             "agent_round_count": (layer_diagnostics or {}).get("agent_rounds", 0),
             "repair_round_count": (layer_diagnostics or {}).get("contract_repair_count", 0),
             "terminal_error": category,
-            "pipeline_version": (layer_diagnostics or {}).get("pipeline_version", "2.4"),
+            "pipeline_version": (layer_diagnostics or {}).get("pipeline_version", "2.5"),
             "error_category": category,
             "missing_fields": (
                 structured.get("missing_fields", []) if structured else []

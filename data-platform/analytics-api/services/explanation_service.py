@@ -2,6 +2,8 @@
 
 
 def explain_analysis(artifacts, catalog, charts=(), evidence=()):
+    from services.domain_intelligence_service import DomainIntelligence
+    intelligence = DomainIntelligence(catalog)
     r = catalog.registry
     objectives = {
         "aggregate": "Đối chiếu quy mô theo các nhóm đã chọn",
@@ -28,11 +30,18 @@ def explain_analysis(artifacts, catalog, charts=(), evidence=()):
     }
     explanations = []
     for id, a in artifacts.items():
+        profile = intelligence.domain_for(a.query.subject)
+        lens = next((l for l in profile["analytical_lenses"] if l["id"] == a.query.lens_id), None) if profile else None
         refs = [e["id"] for e in evidence if e["scope_ref"] == id]
         sources = {a.plan.source}
         sources.update(j["to_table"] for j in a.plan.joins)
         sources.update(d["table"] for d in a.grounded.dimensions.values())
         item = {
+            "domain_id": profile["domain_id"] if profile else None,
+            "domain_label": profile["business_label"] if profile else None,
+            "lens_label": lens["business_label"] if lens else None,
+            "caveats": [r["domain_intelligence"]["caveat_labels"][c] for c in profile["business_caveats"]] if profile else [],
+            "comparison_baselines": [e["values"] for e in evidence if e["scope_ref"] == id and e["feature"] == "peer_gap"],
             "query_id": id,
             "role": a.query.role,
             "parent_id": a.query.parent_id,
@@ -56,6 +65,10 @@ def explain_analysis(artifacts, catalog, charts=(), evidence=()):
                     "unit": a.grounded.metrics[m]["unit"],
                     "grain": a.grounded.metrics[m]["grain"],
                     "historical": bool(a.grounded.metrics[m].get("time_column")),
+                    "direction": r["metrics"][m].get("quality_direction", "contextual"),
+                    "aggregation_semantics": r["metrics"][m].get("aggregation_semantics"),
+                    "business_meaning": r["metrics"][m].get("business_meaning"),
+                    "additive": a.grounded.metrics[m].get("additive", False),
                     "business_filters": a.grounded.metrics[m].get(
                         "business_filters", []
                     ),

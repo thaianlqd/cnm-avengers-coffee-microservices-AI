@@ -196,7 +196,7 @@ class OneShotTests(unittest.TestCase):
             self.assertIn("5–6", p.provider.requests[0]["system"])
             self.assertEqual(r["status"], "proposal_ready"); self.assertEqual(p.provider.call_count, 1)
         p = self.pipeline(); r = p.propose(self.request())
-        self.assertEqual(r["diagnostics"]["supporting_operation_limit"], 3)
+        self.assertEqual(r["diagnostics"]["supporting_operation_limit"], 1)
         self.assertEqual(r["diagnostics"]["analysis_depth"], "focused")
 
     def test_deep_six_views_across_payments_inventory_and_customers(self):
@@ -388,6 +388,11 @@ class OneShotTests(unittest.TestCase):
             for container in ("requested_operations", "supporting_operations"):
                 op = schema["properties"][container]["items"]
                 self.assertNotIn("time", op["required"])
+                if container == "supporting_operations":
+                    self.assertNotIn("time", op["properties"])
+                    self.assertNotIn("filters", op["properties"])
+                    self.assertIn("parent_id", op["required"])
+                    continue
                 branches = op["properties"]["time"]["anyOf"]
                 self.assertEqual(len(branches), 7)
                 for branch in branches:
@@ -507,7 +512,7 @@ class OneShotTests(unittest.TestCase):
 
     def test_approval_and_four_view_report_use_no_additional_provider_call(self):
         queries = investigation(); p = self.pipeline(scripted(decision(queries)), fixture_executor(queries))
-        req = self.request(); proposal = p.propose(req)
+        req = self.request(); req.analysis_depth = "deep"; proposal = p.propose(req)
         self.assertEqual(proposal["diagnostics"]["supporting_operation_count"], 3)
         p.executor.assert_not_called(); req.session_id = proposal["session_id"]
         report = p.generate(req)
@@ -732,7 +737,7 @@ class OneShotTests(unittest.TestCase):
         qs = investigation(); extra = {**qs[-1], "id": "extra", "granularity": "month"}
         p = self.pipeline(scripted(decision([*qs, extra])))
         d = p.propose(self.request())["diagnostics"]
-        self.assertEqual((d["requested_operation_count"], d["supporting_operation_count"], d["omitted_supporting_operation_count"]), (1, 3, 1))
+        self.assertEqual((d["requested_operation_count"], d["supporting_operation_count"], d["omitted_supporting_operation_count"]), (1, 1, 3))
 
     def test_oversized_optional_array_has_bounded_diagnostics_and_keeps_main(self):
         p = self.pipeline(scripted(decision(supporting_operations=[None] * 50)))

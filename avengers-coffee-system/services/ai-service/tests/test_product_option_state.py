@@ -258,3 +258,34 @@ def test_price_lookup_uses_all_accumulated_variant_values(monkeypatch):
     assert result["status"] == "ok"
     assert result["products"][0]["final_price"] == 66000
     assert result["products"][0]["size_surcharge"] == 10000
+
+
+def test_toppig_typo_and_drink_defaults():
+    from src.agents.option_state import validate_explicit_multi_value_group, resolve_option_default
+    group = {"name": "Topping", "values": ["Hạt Sen", "Trái Vải"], "multiple": True, "required": False}
+    schema = [
+        {"name": "Kích thước", "values": ["Lớn", "Nhỏ", "Vừa"], "required": True, "multiple": False},
+        group,
+        {"name": "Lượng đá", "values": ["Ít đá", "Đá riêng", "Bình thường"], "required": False, "multiple": False},
+        {"name": "Độ ngọt", "values": ["Ít ngọt", "Thêm ngọt", "Bình thường"], "required": False, "multiple": False},
+    ]
+
+    # Verify 'toppig' typo matches
+    ev = validate_explicit_multi_value_group(
+        "cho toi size lon toppig hat sen va trai vai, it da va them ngot nhe",
+        group, schema
+    )
+    assert ev is not None
+    assert ev["valid_values"] == ["Hạt Sen", "Trái Vải"]
+
+    # Verify standard defaults
+    product_data = {
+        "sizes": {"Lớn": 75000, "Nhỏ": 59000, "Vừa": 65000},
+        "gia_ban": 65000.0,
+        "luong_da": {"Ít đá": 0, "Đá riêng": 0, "Bình thường": 0},
+        "do_ngot": {"Ít ngọt": 0, "Thêm ngọt": 0, "Bình thường": 0},
+    }
+    assert resolve_option_default(schema[0], product_data) == "Vừa"
+    assert resolve_option_default(schema[2], product_data) == "Bình thường"
+    assert resolve_option_default(schema[3], product_data) == "Bình thường"
+
