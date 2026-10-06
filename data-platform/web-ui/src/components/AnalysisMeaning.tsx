@@ -13,6 +13,7 @@ export const AnalysisMeaning: React.FC<{ interpretation?: any }> = ({ interpreta
   return (
     <section aria-label="AI interpreted request" className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4 text-xs text-slate-700 space-y-2">
       <h3 className="font-semibold text-indigo-900">AI hiểu yêu cầu của bạn</h3>
+      {value.analysis_breadth && <p><strong>Mức phân tích đề xuất:</strong> {{ focused: 'Tập trung', deep: 'Phân tích sâu', comprehensive: 'Phân tích toàn diện' }[value.analysis_breadth as string]}</p>}
       <p><strong>Đối tượng:</strong> {value.subject} · {kinds[value.analysis_kind] || ''}</p>
       <p><strong>Chỉ số:</strong> {(value.metrics || []).map((m: any) => `${m.label}${m.unit ? ` (${m.unit})` : ''}`).join(', ') || (value.analysis_kind === 'detail' ? 'Dữ liệu chi tiết' : 'Chưa xác định chỉ số')}</p>
       <p><strong>Phạm vi:</strong> {filters.join('; ') || 'Không có bộ lọc bổ sung'}</p>

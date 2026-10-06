@@ -329,6 +329,7 @@ services:
     env_file:
       - ./data-platform/.env
     environment:
+      DATA_ANALYST_ALLOWED_ORIGINS: ${DATA_ANALYST_ALLOWED_ORIGINS:-}
       PORT: 8000
       # ── Database (Analytics DB riêng) ──────────────────
       DB_HOST: postgres-analytics

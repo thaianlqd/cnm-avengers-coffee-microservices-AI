@@ -1,6 +1,6 @@
 from typing import Optional, List, Dict, Any, Literal
 from datetime import date, datetime, timedelta
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, AliasChoices
 from services.analysis_contract import Filter
 
 
@@ -36,7 +36,7 @@ class ReportExportLogCreate(BaseModel):
 
 
 class AiTimeRange(BaseModel):
-    mode: Literal["auto", "today", "7d", "30d", "current_month", "previous_month", "current_quarter", "previous_quarter", "all_time", "custom"] = "auto"
+    mode: Literal["auto", "today", "7d", "30d", "current_month", "previous_month", "current_quarter", "previous_quarter", "current_year", "previous_year", "all_time", "custom"] = "auto"
     start: Optional[date] = None
     end: Optional[date] = None
 
@@ -62,18 +62,39 @@ class AiAnalysisScope(BaseModel):
 
 
 class AiTextToReportRequest(BaseModel):
-    prompt: str
+    prompt: str = Field(validation_alias=AliasChoices("question", "prompt"), min_length=1, max_length=8000)
+    analysis_context: str = Field(default="", max_length=2000)
+    analysis_expectation: str = Field(default="", max_length=1500)
+    analysis_module_id: Optional[str] = Field(default=None, pattern=r"^am_[a-f0-9]{24}$")
+    analysis_module_name: Optional[str] = Field(default=None, min_length=1, max_length=120)
+    natural_input: bool = Field(default=False, exclude=True)
     analysis_depth: Literal["deep", "focused", "comprehensive"] = "deep"
     analysis_scope: Optional[AiAnalysisScope] = None
     reference_date: Optional[date] = None
     context: Optional[str] = ""
-    time_range: Optional[AiTimeRange] = None
+    time_range: Optional[AiTimeRange] = Field(default=None, validation_alias=AliasChoices("time", "time_range"))
     domain: Optional[str] = Field(default="auto", pattern=r"^[a-z][a-z0-9_]{0,63}$")
     # Session ID for tracking conversation across report generation and refinement turns.
     session_id: Optional[str] = None
     # Legacy filters remain accepted for older clients.
     date_range: Optional[str] = None
     branch: Optional[str] = "all"
+
+    @model_validator(mode="before")
+    @classmethod
+    def natural_boundary(cls, raw):
+        if not isinstance(raw, dict):
+            return raw
+        data = dict(raw)
+        for new, old in (("question", "prompt"), ("time", "time_range")):
+            if new in data and old in data and data[new] != data[old]:
+                raise ValueError("Conflicting request aliases")
+        data["natural_input"] = any(k in data for k in ("question", "analysis_context", "analysis_expectation", "analysis_module_id", "analysis_module_name"))
+        if data["natural_input"] and "time" not in data and "time_range" not in data:
+            data["time_range"] = {"mode": "auto"}
+        if not str(data.get("question", data.get("prompt", ""))).strip():
+            raise ValueError("Question is required")
+        return data
 
 
 class AiSummarizeRequest(BaseModel):

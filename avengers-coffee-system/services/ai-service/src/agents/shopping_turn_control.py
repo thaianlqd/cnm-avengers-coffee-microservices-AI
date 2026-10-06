@@ -63,6 +63,58 @@ def selected_quantity(message, reference, index):
     return quantities[index] if reference.requested and index < len(quantities) else shopping_quantity(message)
 
 
+def resolve_branch_choice(message: str, branches: list):
+    if not branches or not message:
+        return None, False
+    text = normalize_shopping(message)
+    info_pattern = (r'\b(?:co\s+(?:cho\s+(?:de|dau)\s+xe|giu\s+xe|wifi|may\s+lanh|o\s+cam)|'
+                    r'mo\s+cua|dong\s+cua|may\s+gio|may\s+sao|danh\s+gia|review|sdt|so\s+dien\s+thoai)\b|\b(?:khong|ko)\s*[?]?$')
+    if re.search(info_pattern, text):
+        return None, False
+
+    word_to_num = {
+        'mot': 1, 'hai': 2, 'ba': 3, 'bon': 4, 'nam': 5,
+        'sau': 6, 'bay': 7, 'tam': 8, 'chin': 9, 'muoi': 10,
+        'dau tien': 1, 'thu nhat': 1, 'thu hai': 2, 'thu ba': 3,
+        'thu tu': 4, 'thu nam': 5
+    }
+
+    ordinal = None
+    m = re.search(r'\b(?:quan|chi\s*nhanh|dia\s*chi|cua\s*hang)\s*(?:so\s*)?(\d+|mot|hai|ba|bon|nam|sau|bay|tam|chin|muoi|dau\s*tien|thu\s*(?:nhat|hai|ba|tu|nam))\b', text)
+    if not m:
+        m = re.search(r'\b(?:chon|lay\s+o|lay\s+tai|den|ghe)\s+(?:so\s*|quan\s*|chi\s*nhanh\s*|dia\s*chi\s*|cua\s*hang\s*)?(\d+|mot|hai|ba|bon|nam|sau|bay|tam|chin|muoi|dau\s*tien|thu\s*(?:nhat|hai|ba|tu|nam))\b', text)
+    if not m:
+        m = re.search(r'^\s*(?:so\s*)?(\d+|mot|hai|ba|bon|nam|sau|bay|tam|chin|muoi|dau\s*tien|thu\s*(?:nhat|hai|ba|tu|nam))\s*(?:di|nhe|nha|a|oi)?\s*$', text)
+    if not m:
+        m = re.search(r'\bso\s+(\d+|mot|hai|ba|bon|nam|sau|bay|tam|chin|muoi)\b', text)
+
+    if m:
+        val = m.group(1).strip()
+        val = re.sub(r'\s+', ' ', val)
+        ordinal = int(val) if val.isdigit() else word_to_num.get(val)
+
+    if ordinal is not None:
+        matched = next((b for b in branches if int(b.get('display_index') or 0) == ordinal), None)
+        if not matched and 1 <= ordinal <= len(branches):
+            matched = branches[ordinal - 1]
+        if matched:
+            return matched, False
+        return None, True
+
+    for branch in branches:
+        bname = normalize_shopping(branch.get('branch_name') or branch.get('ten_chi_nhanh') or '')
+        baddr = normalize_shopping(branch.get('address') or branch.get('dia_chi') or '')
+        if bname and len(bname) > 3 and bname in text:
+            return branch, False
+        street_m = re.search(r'(\d+[a-z]?\s+[a-z0-9\s]+?)(?:,|phuong|quan|tp|$)', baddr)
+        if street_m:
+            street = street_m.group(1).strip()
+            if len(street) > 5 and street in text:
+                return branch, False
+
+    return None, False
+
+
 def customer_shopping_control(gateway):
     if gateway.shadow or gateway.existing_order_request:
         return None
@@ -101,6 +153,44 @@ def customer_shopping_control(gateway):
                 return envelope('Bạn chọn số địa điểm có trong danh sách vừa hiển thị nhé.')
             gateway.dispatch('select_location_candidate', {'candidate_id': candidate['candidate_id']})
             return {'reply': None, 'error': None}
+    branches = visible.get('branches') or []
+    if branches:
+        branch_choice, is_invalid_ordinal = resolve_branch_choice(message, branches)
+        if is_invalid_ordinal:
+            return envelope('Bạn chọn số chi nhánh có trong danh sách vừa hiển thị nhé.')
+        if branch_choice:
+            bid = str(branch_choice.get('branch_id') or branch_choice.get('ma_chi_nhanh'))
+            checkout = business.get('checkout') or {}
+            existing_deliv = checkout.get('delivery_type')
+            is_takeaway = bool(re.search(r'\b(?:mang\s*(?:ve|di)|take\s*away|lay\s+(?:tai|o|ve|hang)|den\s+lay|toi\s+lay|tu\s+(?:den\s+)?lay|ghe\s+lay)\b', text))
+            is_dine_in = bool(re.search(r'\b(?:uong|dung|an|ngoi)\s+(?:tai|o)\s+(?:quan|cho|day|tiem)\b', text) or re.search(r'\b(?:tai|o)\s+cho\b|\bngoi\s+lai\b|\bo\s+lai\s+quan\b', text))
+            deliv_type = None
+            if is_takeaway and not is_dine_in:
+                deliv_type = 'MANG_DI'
+            elif is_dine_in and not is_takeaway:
+                deliv_type = 'TAI_CHO'
+            elif existing_deliv in {'MANG_DI', 'TAI_CHO'}:
+                deliv_type = existing_deliv
+            from src.common import cart_manager
+            if deliv_type:
+                cart_manager.set_checkout_context(gateway.session_id, delivery_type=deliv_type)
+            gateway.dispatch('set_session_branch', {'branch_id': bid})
+            return {'reply': None, 'error': None}
+    # Explicit fulfillment choice without choosing branch or catalog items
+    is_takeaway = bool(re.search(r'\b(?:mang\s*(?:ve|di)|take\s*away|lay\s+(?:tai|o|ve|hang)|den\s+lay|toi\s+lay|tu\s+(?:den\s+)?lay|ghe\s+lay)\b', text))
+    is_dine_in = bool(re.search(r'\b(?:uong|dung|an|ngoi)\s+(?:tai|o)\s+(?:quan|cho|day|tiem)\b', text) or re.search(r'\b(?:tai|o)\s+cho\b|\bngoi\s+lai\b|\bo\s+lai\s+quan\b', text))
+    if (is_takeaway ^ is_dine_in) and not re.search(r'\b(?:xem|menu|thuc don|chi tiet|gia|mon|banh|nuoc|topping|size|huy|sua)\b', text):
+        chosen_type = 'MANG_DI' if is_takeaway else 'TAI_CHO'
+        from src.common import cart_manager
+        cart_manager.set_checkout_context(gateway.session_id, delivery_type=chosen_type)
+        cart_items = (business.get('cart') or {}).get('items') or []
+        branch_name = (business.get('cart') or {}).get('branch_name') or ''
+        type_name = 'đến lấy tại quán (mang đi)' if chosen_type == 'MANG_DI' else 'dùng tại chỗ'
+        at_branch = f' tại **{branch_name}**' if branch_name else ''
+        if not cart_items:
+            return envelope(f"Dạ, mình đã ghi nhận hình thức **{type_name}**{at_branch} cho bạn rồi nhé!\n\nBạn muốn xem menu món nước hay bánh của quán để chọn món ạ?")
+        gateway.dispatch('set_checkout_choices', {'delivery_type': chosen_type})
+        return {'reply': None, 'error': None}
     checkout = business.get('checkout') or {}
     if checkout.get('delivery_type') == 'GIAO_TAN_NOI' and checkout.get('checkout_requested') and not business.get('pending_products'):
         offer = checkout.get('profile_location_offer')

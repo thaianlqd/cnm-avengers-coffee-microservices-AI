@@ -8,6 +8,10 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
     structured = getattr(error, "clarification", None)
     clarification_categories = {
         "clarification",
+        "blueprint_ambiguous",
+        "insufficient_data",
+        "visualization_unavailable",
+        "module_needs_review",
         "unsupported",
         "session",
         "schema_changed",
@@ -30,6 +34,12 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "forecast_unsupported",
     }
     messages = {
+        "blueprint_ambiguous": "Phần phân tích này cần thêm một lựa chọn nghiệp vụ. Hãy chọn từ các phương án dữ liệu hiện có.",
+        "insufficient_data": "Phạm vi yêu cầu chưa có dữ liệu. Bạn có thể kiểm tra thời gian hoặc phạm vi và lập lại kế hoạch.",
+        "visualization_unavailable": "Dữ liệu hiện có chưa đủ để tạo biểu đồ phù hợp. Bạn có thể chọn phạm vi rộng hơn hoặc một cách nhóm khác.",
+        "module_needs_review": "Danh mục dữ liệu của bài toán đã thay đổi. Hãy cập nhật và duyệt lại bài toán trước khi chạy.",
+        "module_privacy": "Bài toán có phạm vi hoặc nội dung nhạy cảm không phù hợp để lưu. Hãy chọn phạm vi tổng hợp.",
+        "module_storage": "Kho lưu bài toán chưa sẵn sàng. Vui lòng thử lại sau.",
         "historical_metric_unavailable": "Một chỉ số yêu cầu chỉ có dữ liệu hiện trạng, chưa có lịch sử theo kỳ. Vui lòng chọn toàn bộ thời gian để xem hiện trạng hoặc thu gọn phần yêu cầu lịch sử.",
         "requested_scope_too_large": "Yêu cầu có hơn 8 phần phân tích. Vui lòng thu gọn hoặc tách thành các câu hỏi nhỏ hơn; hệ thống chưa bỏ bớt phần bạn yêu cầu.",
         "unsupported_domain": "Miền dữ liệu đã chọn chưa khả dụng. Vui lòng chọn lại miền từ danh mục hiện tại.",
@@ -116,7 +126,9 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
             if isinstance(v, dict) and v.get("label")
         ]
     )
+    from services.analysis_issue_service import actionable_issue
     return {
+        "issue": actionable_issue(error, message, structured),
         "status": (
             "needs_clarification" if category in clarification_categories else "error"
         ),
@@ -141,7 +153,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
             "agent_round_count": (layer_diagnostics or {}).get("agent_rounds", 0),
             "repair_round_count": (layer_diagnostics or {}).get("contract_repair_count", 0),
             "terminal_error": category,
-            "pipeline_version": (layer_diagnostics or {}).get("pipeline_version", "2.5.1"),
+            "pipeline_version": (layer_diagnostics or {}).get("pipeline_version", "2.6"),
             "error_category": category,
             "missing_fields": (
                 structured.get("missing_fields", []) if structured else []

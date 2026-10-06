@@ -5212,7 +5212,75 @@
                 "store",
                 "payment_method"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "orders",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "revenue",
+                  "aov",
+                  "purchasing_customer_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "revenue"
+                ],
+                "required_grouping": [],
+                "default_grouping": [],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "city"
+                  ],
+                  [
+                    "store"
+                  ],
+                  [
+                    "payment_method"
+                  ],
+                  [
+                    "order_type"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "stores",
+                  "products",
+                  "order_items",
+                  "promotions",
+                  "hourly",
+                  "payments"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "non_additive",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": [
+                  "city",
+                  "store",
+                  "payment_method",
+                  "order_type"
+                ]
+              }
             },
             {
               "id": "order_volume",
@@ -5236,7 +5304,76 @@
                 "store",
                 "order_status"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "orders",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "order_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "order_count"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "city"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "city"
+                  ],
+                  [
+                    "store"
+                  ],
+                  [
+                    "order_status"
+                  ],
+                  [
+                    "order_type"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "stores",
+                  "products",
+                  "order_items",
+                  "promotions",
+                  "hourly",
+                  "payments"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "non_additive",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": [
+                  "city",
+                  "store",
+                  "order_status",
+                  "order_type"
+                ]
+              }
             },
             {
               "id": "sales_trend",
@@ -5255,7 +5392,59 @@
               "recommended_drilldowns": [
                 "city"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "orders",
+                "default_operation": "trend",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution"
+                ],
+                "allowed_metric_refs": [
+                  "revenue"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "revenue"
+                ],
+                "required_grouping": [],
+                "default_grouping": [],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "city"
+                  ]
+                ],
+                "requires_historical_data": true,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "stores",
+                  "products",
+                  "order_items",
+                  "promotions",
+                  "hourly",
+                  "payments"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "non_additive",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": []
+              }
             },
             {
               "id": "buying_customers",
@@ -5276,7 +5465,67 @@
                 "city",
                 "store"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "orders",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "purchasing_customer_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "purchasing_customer_count"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "city"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "city"
+                  ],
+                  [
+                    "store"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "stores",
+                  "products",
+                  "order_items",
+                  "promotions",
+                  "hourly",
+                  "payments"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "non_additive",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": [
+                  "city",
+                  "store"
+                ]
+              }
             },
             {
               "id": "channel_mix",
@@ -5297,7 +5546,68 @@
                 "order_type",
                 "payment_method"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "orders",
+                "default_operation": "distribution",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "revenue"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "revenue"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "order_type"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "order_type"
+                  ],
+                  [
+                    "payment_method"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": true,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "stores",
+                  "products",
+                  "order_items",
+                  "promotions",
+                  "hourly",
+                  "payments"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "non_additive",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": [
+                  "order_type",
+                  "payment_method"
+                ]
+              }
             }
           ],
           "health_signals": [
@@ -5433,7 +5743,72 @@
                 "category",
                 "city"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "order_items",
+                "default_operation": "ranking",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "quantity_sold"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "quantity_sold"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "product"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "product"
+                  ],
+                  [
+                    "category"
+                  ],
+                  [
+                    "city"
+                  ],
+                  [
+                    "store"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "products",
+                  "orders",
+                  "stores"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": [
+                  "product",
+                  "category",
+                  "city",
+                  "store"
+                ]
+              }
             },
             {
               "id": "item_sales",
@@ -5456,7 +5831,68 @@
                 "category",
                 "store"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "order_items",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "item_revenue"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "item_revenue"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "product"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "product"
+                  ],
+                  [
+                    "category"
+                  ],
+                  [
+                    "store"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "products",
+                  "orders",
+                  "stores"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": [
+                  "product",
+                  "category",
+                  "store"
+                ]
+              }
             }
           ],
           "health_signals": [
@@ -5568,7 +6004,73 @@
                 "category",
                 "store"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "products",
+                "default_operation": "ranking",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "quantity_sold"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "quantity_sold"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "product"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "product"
+                  ],
+                  [
+                    "category"
+                  ],
+                  [
+                    "store"
+                  ],
+                  [
+                    "city"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "order_items",
+                  "product_reviews",
+                  "wishlist_favorites",
+                  "inventory"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": [
+                  "product",
+                  "category",
+                  "store",
+                  "city"
+                ]
+              }
             },
             {
               "id": "product_sales",
@@ -5592,7 +6094,73 @@
                 "category",
                 "store"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "products",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "product_revenue"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "product_revenue"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "product"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "product"
+                  ],
+                  [
+                    "category"
+                  ],
+                  [
+                    "store"
+                  ],
+                  [
+                    "city"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "order_items",
+                  "product_reviews",
+                  "wishlist_favorites",
+                  "inventory"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": [
+                  "product",
+                  "category",
+                  "store",
+                  "city"
+                ]
+              }
             },
             {
               "id": "product_trend",
@@ -5611,7 +6179,56 @@
               "recommended_drilldowns": [
                 "category"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "products",
+                "default_operation": "trend",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution"
+                ],
+                "allowed_metric_refs": [
+                  "quantity_sold"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "quantity_sold"
+                ],
+                "required_grouping": [],
+                "default_grouping": [],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "category"
+                  ]
+                ],
+                "requires_historical_data": true,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "order_items",
+                  "product_reviews",
+                  "wishlist_favorites",
+                  "inventory"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": []
+              }
             },
             {
               "id": "category_mix",
@@ -5630,7 +6247,57 @@
               "recommended_drilldowns": [
                 "category"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "products",
+                "default_operation": "distribution",
+                "allowed_operations": [
+                  "distribution",
+                  "aggregate"
+                ],
+                "allowed_metric_refs": [
+                  "quantity_sold"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "quantity_sold"
+                ],
+                "required_grouping": [
+                  "category"
+                ],
+                "default_grouping": [
+                  "category"
+                ],
+                "allowed_groupings": [
+                  [
+                    "category"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": true,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "order_items",
+                  "product_reviews",
+                  "wishlist_favorites",
+                  "inventory"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": []
+              }
             }
           ],
           "health_signals": [
@@ -5743,7 +6410,69 @@
                 "city",
                 "store"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "stores",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "store_revenue",
+                  "store_aov",
+                  "purchasing_customer_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [],
+                "required_grouping": [],
+                "default_grouping": [
+                  "store"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "city"
+                  ],
+                  [
+                    "store"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "orders",
+                  "products",
+                  "promotions",
+                  "store_reviews",
+                  "inventory",
+                  "staff_shifts",
+                  "customer_surveys",
+                  "cashier_reconciliation"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "non_additive",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": [
+                  "city",
+                  "store"
+                ]
+              }
             },
             {
               "id": "store_volume",
@@ -5764,7 +6493,70 @@
                 "city",
                 "store"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "stores",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "store_order_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "store_order_count"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "store"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "city"
+                  ],
+                  [
+                    "store"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "orders",
+                  "products",
+                  "promotions",
+                  "store_reviews",
+                  "inventory",
+                  "staff_shifts",
+                  "customer_surveys",
+                  "cashier_reconciliation"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "non_additive",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": [
+                  "city",
+                  "store"
+                ]
+              }
             },
             {
               "id": "store_trend",
@@ -5785,7 +6577,68 @@
                 "city",
                 "store"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "stores",
+                "default_operation": "trend",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "store_revenue"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "store_revenue"
+                ],
+                "required_grouping": [],
+                "default_grouping": [],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "city"
+                  ],
+                  [
+                    "store"
+                  ]
+                ],
+                "requires_historical_data": true,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "orders",
+                  "products",
+                  "promotions",
+                  "store_reviews",
+                  "inventory",
+                  "staff_shifts",
+                  "customer_surveys",
+                  "cashier_reconciliation"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "non_additive",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": [
+                  "city",
+                  "store"
+                ]
+              }
             }
           ],
           "health_signals": [
@@ -5912,7 +6765,61 @@
                 "customer_role",
                 "loyalty_points"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "customers",
+                "default_operation": "distribution",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "customer_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "customer_count"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "customer_role"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "customer_role"
+                  ],
+                  [
+                    "loyalty_points"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": true,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "orders"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation"
+                ],
+                "cross_tab_grouping_refs": [
+                  "customer_role",
+                  "loyalty_points"
+                ]
+              }
             },
             {
               "id": "registration_trend",
@@ -5927,7 +6834,47 @@
               "supports_comparison": true,
               "supports_distribution": false,
               "recommended_drilldowns": [],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "customers",
+                "default_operation": "trend",
+                "allowed_operations": [
+                  "aggregate",
+                  "trend"
+                ],
+                "allowed_metric_refs": [
+                  "customer_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "customer_count"
+                ],
+                "required_grouping": [],
+                "default_grouping": [],
+                "allowed_groupings": [
+                  []
+                ],
+                "requires_historical_data": true,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": null,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "orders"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation"
+                ],
+                "cross_tab_grouping_refs": []
+              }
             },
             {
               "id": "spend_snapshot",
@@ -5948,7 +6895,54 @@
                 "customer_role",
                 "loyalty_points"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "customers",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "total_spent"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "total_spent"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "customer_role"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "customer_role"
+                  ],
+                  [
+                    "loyalty_points"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [],
+                "default_granularity": null,
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "orders"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation"
+                ],
+                "cross_tab_grouping_refs": [
+                  "customer_role",
+                  "loyalty_points"
+                ]
+              }
             }
           ],
           "health_signals": [],
@@ -6025,7 +7019,67 @@
                 "store",
                 "city"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "promotions",
+                "default_operation": "ranking",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "voucher_order_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "voucher_order_count"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "promotion"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "promotion"
+                  ],
+                  [
+                    "store"
+                  ],
+                  [
+                    "city"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "orders",
+                  "stores"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": [
+                  "promotion",
+                  "store",
+                  "city"
+                ]
+              }
             },
             {
               "id": "voucher_revenue",
@@ -6048,7 +7102,67 @@
                 "store",
                 "city"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "promotions",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "voucher_revenue"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "voucher_revenue"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "promotion"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "promotion"
+                  ],
+                  [
+                    "store"
+                  ],
+                  [
+                    "city"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "orders",
+                  "stores"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": [
+                  "promotion",
+                  "store",
+                  "city"
+                ]
+              }
             },
             {
               "id": "discount_amount",
@@ -6071,7 +7185,67 @@
                 "store",
                 "city"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "promotions",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "discount_amount"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "discount_amount"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "promotion"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "promotion"
+                  ],
+                  [
+                    "store"
+                  ],
+                  [
+                    "city"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "orders",
+                  "stores"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": [
+                  "promotion",
+                  "store",
+                  "city"
+                ]
+              }
             },
             {
               "id": "voucher_trend",
@@ -6090,7 +7264,54 @@
               "recommended_drilldowns": [
                 "promotion"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "promotions",
+                "default_operation": "trend",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution"
+                ],
+                "allowed_metric_refs": [
+                  "voucher_order_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "voucher_order_count"
+                ],
+                "required_grouping": [],
+                "default_grouping": [],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "promotion"
+                  ]
+                ],
+                "requires_historical_data": true,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "orders",
+                  "stores"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": []
+              }
             }
           ],
           "health_signals": [
@@ -6202,7 +7423,62 @@
                 "payment_gateway",
                 "payment_status"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "payments",
+                "default_operation": "distribution",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "payment_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "payment_count"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "payment_gateway"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "payment_gateway"
+                  ],
+                  [
+                    "payment_status"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": true,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "orders"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": [
+                  "payment_gateway",
+                  "payment_status"
+                ]
+              }
             },
             {
               "id": "payment_value",
@@ -6223,7 +7499,62 @@
                 "payment_gateway",
                 "payment_status"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "payments",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "payment_revenue"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "payment_revenue"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "payment_gateway"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "payment_gateway"
+                  ],
+                  [
+                    "payment_status"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "orders"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": [
+                  "payment_gateway",
+                  "payment_status"
+                ]
+              }
             },
             {
               "id": "payment_trend",
@@ -6243,7 +7574,55 @@
               "recommended_drilldowns": [
                 "payment_gateway"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "payments",
+                "default_operation": "trend",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution"
+                ],
+                "allowed_metric_refs": [
+                  "payment_count",
+                  "payment_revenue"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "payment_count",
+                  "payment_revenue"
+                ],
+                "required_grouping": [],
+                "default_grouping": [],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "payment_gateway"
+                  ]
+                ],
+                "requires_historical_data": true,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "orders"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "distinct_populations"
+                ],
+                "cross_tab_grouping_refs": []
+              }
             }
           ],
           "health_signals": [
@@ -6333,7 +7712,49 @@
               "recommended_drilldowns": [
                 "driver_id"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "delivery",
+                "default_operation": "ranking",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "distribution"
+                ],
+                "allowed_metric_refs": [
+                  "total_deliveries"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "total_deliveries"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "driver_id"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "driver_id"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [],
+                "default_granularity": null,
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "snapshot_only",
+                  "historical_unavailable",
+                  "non_additive",
+                  "sample_size_required"
+                ],
+                "cross_tab_grouping_refs": []
+              }
             },
             {
               "id": "shipper_rating",
@@ -6352,7 +7773,48 @@
               "recommended_drilldowns": [
                 "driver_id"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "delivery",
+                "default_operation": "ranking",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking"
+                ],
+                "allowed_metric_refs": [
+                  "driver_rating"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "driver_rating"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "driver_id"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "driver_id"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [],
+                "default_granularity": null,
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "snapshot_only",
+                  "historical_unavailable",
+                  "non_additive",
+                  "sample_size_required"
+                ],
+                "cross_tab_grouping_refs": []
+              }
             },
             {
               "id": "shipper_relationship",
@@ -6372,7 +7834,51 @@
               "recommended_drilldowns": [
                 "driver_id"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "delivery",
+                "default_operation": "relationship",
+                "allowed_operations": [
+                  "relationship"
+                ],
+                "allowed_metric_refs": [
+                  "total_deliveries",
+                  "driver_rating"
+                ],
+                "required_metric_refs": [
+                  "total_deliveries",
+                  "driver_rating"
+                ],
+                "default_metric_refs": [
+                  "total_deliveries",
+                  "driver_rating"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "driver_id"
+                ],
+                "allowed_groupings": [
+                  [
+                    "driver_id"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [],
+                "default_granularity": null,
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "snapshot_only",
+                  "historical_unavailable",
+                  "non_additive",
+                  "sample_size_required"
+                ],
+                "cross_tab_grouping_refs": []
+              }
             }
           ],
           "health_signals": [
@@ -6470,7 +7976,65 @@
                 "product",
                 "category"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "inventory",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "stock_quantity"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "stock_quantity"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "product"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "store"
+                  ],
+                  [
+                    "product"
+                  ],
+                  [
+                    "category"
+                  ],
+                  [
+                    "city"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [],
+                "default_granularity": null,
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "products",
+                  "stores"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "snapshot_only",
+                  "historical_unavailable"
+                ],
+                "cross_tab_grouping_refs": [
+                  "store",
+                  "product",
+                  "category",
+                  "city"
+                ]
+              }
             },
             {
               "id": "inventory_alerts",
@@ -6494,7 +8058,65 @@
                 "product",
                 "category"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "inventory",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "low_stock_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "low_stock_count"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "product"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "store"
+                  ],
+                  [
+                    "product"
+                  ],
+                  [
+                    "category"
+                  ],
+                  [
+                    "city"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [],
+                "default_granularity": null,
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "products",
+                  "stores"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "snapshot_only",
+                  "historical_unavailable"
+                ],
+                "cross_tab_grouping_refs": [
+                  "store",
+                  "product",
+                  "category",
+                  "city"
+                ]
+              }
             }
           ],
           "health_signals": [
@@ -6599,7 +8221,64 @@
                 "product",
                 "category"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "product_reviews",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "avg_product_rating",
+                  "review_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "avg_product_rating",
+                  "review_count"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "product"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "product"
+                  ],
+                  [
+                    "category"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "products"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "non_additive",
+                  "sample_size_required"
+                ],
+                "cross_tab_grouping_refs": [
+                  "product",
+                  "category"
+                ]
+              }
             }
           ],
           "health_signals": [
@@ -6698,7 +8377,64 @@
                 "store",
                 "city"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "store_reviews",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "avg_store_rating",
+                  "store_review_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "avg_store_rating",
+                  "store_review_count"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "store"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "store"
+                  ],
+                  [
+                    "city"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "stores"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "non_additive",
+                  "sample_size_required"
+                ],
+                "cross_tab_grouping_refs": [
+                  "store",
+                  "city"
+                ]
+              }
             }
           ],
           "health_signals": [
@@ -6800,7 +8536,65 @@
                 "store",
                 "city"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "staff_shifts",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "shift_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "shift_count"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "shift_name"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "shift_name"
+                  ],
+                  [
+                    "store"
+                  ],
+                  [
+                    "city"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "stores"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation"
+                ],
+                "cross_tab_grouping_refs": [
+                  "shift_name",
+                  "store",
+                  "city"
+                ]
+              }
             },
             {
               "id": "attendance",
@@ -6823,7 +8617,65 @@
                 "attendance_status",
                 "store"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "staff_shifts",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "late_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "late_count"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "shift_name"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "shift_name"
+                  ],
+                  [
+                    "attendance_status"
+                  ],
+                  [
+                    "store"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "stores"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation"
+                ],
+                "cross_tab_grouping_refs": [
+                  "shift_name",
+                  "attendance_status",
+                  "store"
+                ]
+              }
             }
           ],
           "health_signals": [
@@ -6923,7 +8775,61 @@
                 "store",
                 "city"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "cashier_reconciliation",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "total_cash_difference"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "total_cash_difference"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "store"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "store"
+                  ],
+                  [
+                    "city"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "stores"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation"
+                ],
+                "cross_tab_grouping_refs": [
+                  "store",
+                  "city"
+                ]
+              }
             },
             {
               "id": "cash_activity",
@@ -6945,7 +8851,63 @@
                 "store",
                 "city"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "cashier_reconciliation",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "system_cash_revenue",
+                  "reconciled_shifts"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "system_cash_revenue",
+                  "reconciled_shifts"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "store"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "store"
+                  ],
+                  [
+                    "city"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "stores"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation"
+                ],
+                "cross_tab_grouping_refs": [
+                  "store",
+                  "city"
+                ]
+              }
             }
           ],
           "health_signals": [
@@ -7051,7 +9013,61 @@
                 "store",
                 "city"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "customer_surveys",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "survey_response_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "survey_response_count"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "store"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "store"
+                  ],
+                  [
+                    "city"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "stores"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation"
+                ],
+                "cross_tab_grouping_refs": [
+                  "store",
+                  "city"
+                ]
+              }
             }
           ],
           "health_signals": [
@@ -7136,7 +9152,61 @@
                 "product",
                 "category"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "wishlist_favorites",
+                "default_operation": "ranking",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "favorite_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "favorite_count"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "product"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "product"
+                  ],
+                  [
+                    "category"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": false,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "products"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation"
+                ],
+                "cross_tab_grouping_refs": [
+                  "product",
+                  "category"
+                ]
+              }
             }
           ],
           "health_signals": [
@@ -7224,7 +9294,66 @@
                 "store",
                 "city"
               ],
-              "related_lens_refs": []
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "hourly",
+                "default_operation": "distribution",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution",
+                  "cross_tab"
+                ],
+                "allowed_metric_refs": [
+                  "hourly_orders"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "hourly_orders"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "hour"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "hour"
+                  ],
+                  [
+                    "store"
+                  ],
+                  [
+                    "city"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": true,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "orders",
+                  "stores"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation"
+                ],
+                "cross_tab_grouping_refs": [
+                  "hour",
+                  "store",
+                  "city"
+                ]
+              }
             }
           ],
           "health_signals": [

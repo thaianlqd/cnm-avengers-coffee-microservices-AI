@@ -35,7 +35,8 @@ def denied(code, **details):
         'authoritative_cart_unavailable': 'Chưa thể tải dữ liệu giỏ hàng. Bạn vui lòng thử lại nhé.',
         'authentication_or_turn_required': 'Bạn vui lòng đăng nhập để thực hiện thao tác này nhé.',
         'order_target_mismatch': 'Mã đơn được chọn khác với mã bạn yêu cầu. Bạn gửi lại đúng mã đơn nhé.',
-        'wrong_authority': 'Yêu cầu này không thuộc phạm vi của công cụ vừa gọi. Hãy chọn công cụ phù hợp với dữ liệu cần tra cứu.'
+        'wrong_authority': 'Yêu cầu này không thuộc phạm vi của công cụ vừa gọi. Hãy chọn công cụ phù hợp với dữ liệu cần tra cứu.',
+        'pending_quantity_conflict': 'Số lượng bạn chọn khác với số lượng món đang chờ trong giỏ. Bạn kiểm tra lại giúp mình nhé.'
     }
     msg = details.pop('message', None) or default_messages.get(code, 'Chưa thể thực hiện yêu cầu này an toàn. Bạn kiểm tra lựa chọn hoặc bổ sung thông tin nhé.')
     return {'status': code, 'message': msg, **details}
@@ -270,7 +271,7 @@ class GuardedToolGateway:
                 result = denied('capability_not_available')
             elif capability.access != 'READ' and (not (state['authenticated'] or state.get('guest_session_id')) or not self.client_message_id):
                 result = denied('authentication_or_turn_required')
-            elif capability.access != 'READ' and name not in {'resolve_location', 'select_location_candidate', 'set_checkout_choices', 'cancel_order', 'update_order', 'reorder_order', 'confirm_order_change', 'discard_order_change'} and not state['cart_verified']:
+            elif capability.access != 'READ' and name not in {'resolve_location', 'select_location_candidate', 'set_checkout_choices', 'set_session_branch', 'cancel_order', 'update_order', 'reorder_order', 'confirm_order_change', 'discard_order_change'} and not state['cart_verified']:
                 result = denied('authoritative_cart_unavailable')
             elif state['checkout'].get('checkout_submission') and capability.access != 'READ' and name not in {'confirm_checkout', 'cancel_order', 'update_order', 'reorder_order', 'confirm_order_change', 'discard_order_change'}:
                 result = denied('transaction_completed_or_processing')
@@ -655,6 +656,7 @@ class GuardedToolGateway:
                 explicit_quantity if explicit_quantity is not None else staged.get('quantity', 1))
             if staged and quantity is not None and int(quantity) != int(expected_quantity):
                 return None, denied('pending_quantity_conflict', expected_quantity=int(expected_quantity),
+                    message='Số lượng bạn chọn khác với số lượng đang chờ trong giỏ. Bạn kiểm tra lại giúp mình nhé.',
                     recovery='Preserve the staged quantity unless the current message explicitly changes it.')
             quantity = expected_quantity if staged else (quantity if quantity is not None else 1)
         groups, output, missing = option_schema_from_result(result), {}, []

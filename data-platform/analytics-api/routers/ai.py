@@ -1,7 +1,8 @@
 """Thin HTTP boundary for the Data Platform AI analysis contract."""
 
 import logging
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request, Response
+from services.browser_owner import browser_owner
 from common import (
     AiFeedbackRequest,
     AiReportRefineRequest,
@@ -28,12 +29,12 @@ router = APIRouter(prefix="/api/ai", tags=["AI Data Assistant"])
 logger = logging.getLogger("ai-analytics")
 
 
-def _invoke(action, payload):
+def _invoke(action, payload, owner_id=None):
     if hasattr(payload, "prompt") and not payload.prompt.strip():
         raise HTTPException(
             status_code=422, detail="Yêu cầu phân tích không được để trống."
         )
-    pipeline = AnalysisPipeline()
+    pipeline = AnalysisPipeline(owner_id=owner_id)
     try:
         if action == "generate" and not payload.session_id:
             raise AnalysisError("approval_required", "Approve a server proposal before execution")
@@ -64,7 +65,7 @@ def ai_status():
     metadata = cache_status()
     return {
         "status": "ready" if metadata["local_ready"] else "unavailable",
-        "pipeline_version": "2.5.1",
+        "pipeline_version": "2.6",
         "planning_mode": "one_shot",
         "provider_call_budget": 1,
         "providers": providers,
@@ -103,23 +104,23 @@ def ai_scope_values(dimension: str = Query(min_length=1, max_length=64), search:
 
 
 @router.post("/propose-plan")
-def propose_plan(payload: AiTextToReportRequest):
-    return _invoke("propose", payload)
+def propose_plan(payload: AiTextToReportRequest, request: Request = None, response: Response = None):
+    return _invoke("propose", payload, browser_owner(request, response))
 
 
 @router.post("/generate-executive-report")
-def generate_executive_report(payload: AiTextToReportRequest):
-    return _invoke("generate", payload)
+def generate_executive_report(payload: AiTextToReportRequest, request: Request = None, response: Response = None):
+    return _invoke("generate", payload, browser_owner(request, response))
 
 
 @router.post("/refine-report")
-def refine_report(payload: AiReportRefineRequest):
-    return _invoke("refine", payload)
+def refine_report(payload: AiReportRefineRequest, request: Request = None, response: Response = None):
+    return _invoke("refine", payload, browser_owner(request, response))
 
 
 @router.post("/feedback")
-def log_user_feedback(payload: AiFeedbackRequest):
-    return _invoke("feedback", payload)
+def log_user_feedback(payload: AiFeedbackRequest, request: Request = None, response: Response = None):
+    return _invoke("feedback", payload, browser_owner(request, response))
 
 
 @router.post("/summarize")

@@ -123,7 +123,9 @@ def resolve_product_option_scopes(message, pending, catalog=(), groups=None):
             clauses[product_id] = clause
         return ProductOptionScopes(clauses, explicit=True, ambiguous=ambiguous)
     if pending:
-        if re.search(r'\b(?:tat ca|ca\s+\d+|moi mon|cac mon)\b', text):
+        if (uses_global_option_defaults(text)
+                or re.search(r'\b(?:tat ca|ca\s*(?:\d+|hai|ba|bon|tu|nam)|moi mon|cac mon|het|dong loat)\b', text)
+                or re.search(rf'\b(?:ca\s+)?{len(pending)}\s*(?:mon|ly|phan|nuoc|do uong)\b', text)):
             return ProductOptionScopes({str(row['product_id']): text for row in pending})
         # The unlabelled answer belongs to the first staged option question.
         return ProductOptionScopes({str(pending[0]['product_id']): text})

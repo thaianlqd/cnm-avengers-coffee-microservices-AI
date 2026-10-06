@@ -27,9 +27,13 @@ class AnalysisPipeline:
         value_lookup=None,
         budget=None,
         planning_mode="one_shot",
+        owner_id=None,
+        module_repository=None,
     ):
         if planning_mode not in {"one_shot", "legacy"}:
             raise ValueError("Unknown planning mode")
+        self.owner_id = owner_id
+        self.module_repository = module_repository
         self.planning_mode = planning_mode
         self.metadata_loader = metadata_loader or (
             lambda: get_local_metadata(force=True)
@@ -55,7 +59,7 @@ class AnalysisPipeline:
 
     def diagnostics(self, catalog, validation=None):
         return {
-            "pipeline_version": "2.5.1" if self.planning_mode == "one_shot" else "2.3",
+            "pipeline_version": "2.6" if self.planning_mode == "one_shot" else "2.3",
             "schema_fingerprint": catalog.fingerprint,
             **deepcopy(self.semantic_info),
             "provider_call_count": self.semantic_info.get("provider_call_count", len(self.calls)),
@@ -84,6 +88,10 @@ class AnalysisPipeline:
                 k: request.model_dump(mode="json").get(k)
                 for k in (
                     "prompt",
+                    "analysis_context",
+                    "analysis_expectation",
+                    "analysis_module_id",
+                    "analysis_module_name",
                     "reference_date",
                     "context",
                     "time_range",
@@ -116,10 +124,13 @@ class AnalysisPipeline:
             "required_domain": domain if domain not in {"auto", "multi"} else None,
             "analysis_depth": getattr(request, "analysis_depth", "deep"),
         }
+        context.update(natural_input=request.natural_input)
+        if request.natural_input:
+            context.update(analysis_context=request.analysis_context, analysis_expectation=request.analysis_expectation)
         ui = request.time_range
         period = None
         if ui and ui.mode != "auto":
-            if ui.mode in {"current_month", "previous_month", "current_quarter", "previous_quarter", "all_time"}:
+            if ui.mode in {"current_month", "previous_month", "current_quarter", "previous_quarter", "current_year", "previous_year", "all_time"}:
                 from services.analysis_catalog import resolve_period
                 from services.analysis_contract import TimeScope
                 resolved = resolve_period(TimeScope(mode=ui.mode, timezone=catalog.registry["timezone"]), reference)
@@ -280,6 +291,7 @@ class AnalysisPipeline:
                 metrics=list({m["label"]: m for m in metrics}.values()),
             )
         main["operations"] = parts
+        main["analysis_breadth"] = self.semantic_info.get("analysis_depth", "deep")
         main["analysis_depth"] = self.semantic_info.get("analysis_depth", "deep")
         main["domains"] = list({p.get("domain_id"): {"id": p.get("domain_id"), "label": p.get("domain_label")} for p in parts if p.get("domain_id")}.values())
         return main
@@ -336,11 +348,20 @@ class AnalysisPipeline:
         catalog = self.catalog()
         reference = self.reference(request, catalog)
         context = self.ui_context(request, catalog, reference)
-        artifacts, plan = self.agent(catalog, reference, proposal=True).run(
-            request.prompt, context
-        )
+        previous, concepts, module = {}, [], None
+        if request.analysis_module_id or request.analysis_module_name:
+            from services.analysis_module_service import AnalysisModules
+            modules = AnalysisModules(self.module_repository)
+            module = modules.resolve(self.owner_id, request.analysis_module_id, request.analysis_module_name, catalog)
+            previous, concepts = modules.prepare_context(self, module, catalog, reference, context)
+        artifacts, plan = self.agent(catalog, reference, proposal=True, previous=previous, known_concepts=concepts).run(request.prompt, context)
         self.enforce_ui(artifacts, context)
         session = create_session(request.prompt, request.domain or "auto")
+        session.owner_id = self.owner_id
+        session.natural_input = request.natural_input
+        session.analysis_inputs = {"original_question": request.prompt, "analysis_context": request.analysis_context, "analysis_expectation": request.analysis_expectation}
+        session.input_time_strategy = request.time_range.model_dump(mode="json") if request.time_range else {"mode": "auto"}
+        session.module_provenance = {"module_id": module["module_id"], "name": module["name"], "mode": "reference"} if module else None
         session.ui_constraints = deepcopy(context)
         session.proposed_prompt = request.prompt
         session.proposed_request = self.request_signature(request)
@@ -406,6 +427,7 @@ class AnalysisPipeline:
         if request.session_id and not session:
             raise AnalysisError("session", "Session expired")
         if session:
+            self.check_owner(session)
             with session.analysis_lock:
                 if self.planning_mode == "one_shot" and session.contract_version != "2.5":
                     raise AnalysisError("schema_changed", "Refresh the analysis proposal")
@@ -470,6 +492,7 @@ class AnalysisPipeline:
         session = get_session(request.session_id) if request.session_id else None
         if not session or not session.approved:
             raise AnalysisError("session", "Validated server session required")
+        self.check_owner(session)
         with session.analysis_lock:
             if request.current_report.get("revision") != session.revision:
                 raise AnalysisError("session", "Stale report revision")
@@ -545,6 +568,14 @@ class AnalysisPipeline:
             self.budget.series,
             catalog=catalog,
         )
+        if session.natural_input:
+            for a in artifacts.values():
+                if a.query.role != "requested":
+                    continue
+                if not a.result["rows"]:
+                    raise AnalysisError("insufficient_data", "No rows for the requested population")
+                if a.plan.kind != "detail" and (a.plan.dimensions or a.plan.kind == "trend") and not any(c["scope_ref"] == a.query.id for c in dashboard["charts"]):
+                    raise AnalysisError("visualization_unavailable", "Result cannot be visualized safely")
         narrative = grounded_narrative(plan, evidence)
         results = {id: deepcopy(a.result) for id, a in artifacts.items()}
         labels = {
@@ -609,8 +640,10 @@ class AnalysisPipeline:
             "completion_status": (
                 "partial" if self.semantic_info.get("limitations") else "complete"
             ),
-            "pipeline_version": "2.5.1" if self.planning_mode == "one_shot" else "2.3",
+            "pipeline_version": "2.6" if self.planning_mode == "one_shot" else "2.3",
             "prompt": session.original_prompt,
+            "module_provenance": session.module_provenance,
+            "analysis_breadth": self.semantic_info.get("analysis_depth", session.analysis_depth),
             "session_id": session.session_id,
             "revision": session.revision + (1 if session.approved else 0),
             "title": meaning["subject"],
@@ -695,6 +728,10 @@ class AnalysisPipeline:
         )
         return response
 
+    def check_owner(self, session):
+        if session.owner_id != self.owner_id:
+            raise AnalysisError("session", "Owned server session required")
+
     def feedback(self, request):
         session = get_session(request.session_id) if request.session_id else None
         if (
@@ -703,6 +740,7 @@ class AnalysisPipeline:
             and request.revision != session.revision
         ):
             return {"status": "recorded", "verified_example": False}
+        self.check_owner(session)
         catalog = self.catalog()
         return {
             "status": "recorded",

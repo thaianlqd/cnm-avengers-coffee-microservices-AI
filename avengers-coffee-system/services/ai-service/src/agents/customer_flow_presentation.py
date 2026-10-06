@@ -254,6 +254,24 @@ def customer_flow_reply(logs, state, discovery_reply=None):
         return None
     if name == 'get_product_options':
         return options_prompt(result) if result.get('option_groups') or result.get('options') else None
+    if name == 'set_session_branch':
+        bname = result.get('branch_name') or ''
+        cart = (state.get('cart') or {}).get('items') or []
+        deliv = (state.get('checkout') or {}).get('delivery_type')
+        if not cart:
+            if deliv == 'MANG_DI':
+                return f"Dạ, mình đã chọn quán **{bname}** cho đơn đến lấy tại quán rồi nhé!\n\nBạn muốn xem menu món nước hay bánh của quán để chọn món ạ?"
+            if deliv == 'TAI_CHO':
+                return f"Dạ, mình đã chọn quán **{bname}** cho đơn dùng tại chỗ rồi nhé!\n\nBạn muốn xem menu món nước hay bánh của quán để chọn món ạ?"
+            return (f"Dạ, mình đã chọn quán **{bname}** cho bạn rồi nhé!\n\n"
+                    f"Bạn muốn **đến lấy tại quán (mang đi)** hay **dùng tại chỗ** ạ? "
+                    f"Bạn có thể chọn hình thức nhận và xem menu món nước hoặc bánh của quán để chọn món nhé.")
+        lead = (f"Dạ, mình đã chọn quán **{bname}** cho đơn đến lấy tại quán của bạn rồi ạ." if deliv == 'MANG_DI'
+                else f"Dạ, mình đã chọn quán **{bname}** cho đơn dùng tại chỗ của bạn rồi ạ." if deliv == 'TAI_CHO'
+                else f"Dạ, mình đã chọn quán **{bname}** cho đơn hàng của bạn rồi ạ.")
+        tail = ("Bạn muốn **đến lấy tại quán (mang đi)** hay **dùng tại chỗ** để mình chuẩn bị đơn nhé?" if not deliv
+                else checkout_choices(state, result.get('payment_options') or []) if (state.get('checkout') or {}).get('voucher_decided') and result.get('quote_status') in {None, 'ok'} else None)
+        return '\n\n'.join(part for part in (lead, cart_review(state), tail) if part)
     if name == 'set_checkout_choices':
         choices = result.get('choices') or {}
         labels = dict(zip(FULFILLMENT_OPTIONS, FULFILLMENT_LABELS))

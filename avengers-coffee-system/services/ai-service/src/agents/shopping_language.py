@@ -96,6 +96,14 @@ def explicit_shopping_quantity(message: str) -> Optional[int]:
     plain = "".join(char for char in raw if unicodedata.category(char) != "Mn").replace("đ", "d")
     text = re.sub(r"\s+", " ", re.sub(r"[^\w#-]+", " ", plain)).strip()
     number = r"(-?\d+|mot|hai|ba|bon|tu|nam|sau|bay|tam|chin|muoi)"
+    # Collective item count phrases like "cả 2 món", "cả 2 ly", "2 món mặc định", "theo mặc định cả 2 món"
+    # describe the scope of products being configured or referred to, NOT an individual item quantity.
+    if re.search(r"\b(?:ca|tat ca)\s+" + number + r"\s*(?:cai|ly|phan|mon)?\b", text):
+        return None
+    if re.search(r"\b" + number + r"\s+mon\s+(?:mac dinh|theo mac dinh|deu|nay|tren|di|nhe|nha)\b", text):
+        return None
+    if re.search(r"\b(?:mac dinh|theo mac dinh)\s+(?:ca\s+)?" + number + r"\s+mon\b", text):
+        return None
     match = (re.search(r"\b(?:so luong|sl)\s*(?:la\s*)?" + number + r"\b", text)
              or re.search(r"(?<!\w)" + number + r"\s*(?:cai|ly|phan|mon)\b", text)
              or re.search(r"\bthem\s+" + number + r"\b", text))

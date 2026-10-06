@@ -53,6 +53,7 @@ class DecisionOperation(Contract):
 
 class AnalystDecision(Contract):
     decision_type: Literal["plan", "clarification", "unsupported"]
+    analysis_breadth: Optional[Literal["focused", "deep", "comprehensive"]] = None
     # Keep dictionaries here: an invalid optional item cannot invalidate the main plan.
     requested_operations: List[dict] = Field(default_factory=list, max_length=8)
     supporting_operations: List[Any] = Field(default_factory=list)
@@ -61,7 +62,7 @@ class AnalystDecision(Contract):
     visuals: List[DashboardVisual] = Field(default_factory=list, max_length=12)
 
 
-def decision_tool(*, refinement=True, supporting_limit=7):
+def decision_tool(*, refinement=True, supporting_limit=7, natural=False):
     from services.agent_provider import expanded_schema, gemini_tool_schema
 
     operation = gemini_tool_schema({"name": "decision_operation", "parameters": DecisionOperation.model_json_schema()})
@@ -112,11 +113,37 @@ def decision_tool(*, refinement=True, supporting_limit=7):
     support = {**operation, "properties": {k: v for k, v in operation["properties"].items()
                if k not in {"filters", "time", "purpose"}}}
     support["required"] = ["id", "parent_id"]
+    if natural:
+        # Lens-first intent: execution grammar is optional when blueprint-owned.
+        fields = {"id", "lens_id", "metrics", "group_by", "operation", "filters", "time", "ranking", "granularity", "replaces", "changed_fields"}
+        requested["properties"] = {k: v for k, v in requested["properties"].items() if k in fields}
+        requested["properties"]["domain"] = {"type": "string", "description": "Optional domain ID disambiguating a lens."}
+        requested["properties"]["lens_id"]["description"] = "Select a delivered business lens; omit blueprint-owned defaults. Supply ambiguous choices explicitly."
+        requested["properties"]["time"]["anyOf"] = [branch for branch in requested["properties"]["time"]["anyOf"] if branch["properties"]["kind"]["enum"][0] in {"relative","range","rolling"}]
+        requested["properties"]["time"]["description"] = "Omit if unspecified; calendar dates use ISO range. Unknown year requires clarification."
+        requested["properties"]["lens_id"]["description"] = "Business lens; omit unambiguous defaults."
+        requested["properties"]["domain"] = {"type":"string"}
+        requested["required"] = ["id", "lens_id"]
+        support["properties"] = {k: v for k, v in support["properties"].items() if k in fields | {"parent_id", "population_relation", "purpose"} and k not in {"filters", "time"}}
+        support["properties"]["purpose"] = {"type":"string", "enum":["answer","context","compare","relationship"]}
+        support["required"] = ["id", "lens_id", "parent_id"]
+        # Partial clarification time preserves missing calendar meaning, with
+        # compact field types; complete executable time branches stay above.
+        clarification["properties"]["known_query"]["properties"]["time"] = {
+            "type":"object", "properties": {
+                "kind":{"type":"string","enum":list(TIME_SHAPES)},
+                "mode":{"type":"string"},
+                **{f:{"type":"integer"} for f in ("year","month","quarter","day","amount")},
+                "unit":{"type":"string","enum":["day","month"]},
+                "start":{"type":"string","format":"date"},"end":{"type":"string","format":"date"}}}
+        for field in ("dimension","operator"):
+            clarification["properties"]["known_query"]["properties"]["filters"]["items"]["properties"][field].pop("description",None)
     # Supports inherit parent scope; the compatibility parser still validates
     # explicit scope from old decisions. New calls don't repeat those fields.
     return {"name": "submit_analyst_decision", "description": "Return only one structured decision; no prose. Preserve all requested work; supports inherit parent scope and use remaining capacity.",
             "parameters": {"type": "object", "required": ["decision_type"], "properties": {
                 "decision_type": {"type": "string", "enum": ["plan", "clarification", "unsupported"]},
+                **({"analysis_breadth": {"type": "string", "enum": ["focused", "deep", "comprehensive"], "description": "Infer breadth from question and optional expectation; preserve every requested component."}} if natural else {}),
                 "requested_operations": {"type": "array", "items": requested, "maxItems": 8},
                 "supporting_operations": {"type": "array", "items": support, "maxItems": min(7, max(0, supporting_limit)), "description": f"At most {min(7, max(0, supporting_limit))} optional operations, and at most 8 total including requested work."},
                 "clarification": clarification,

@@ -1,6 +1,7 @@
 import { AnalystDashboardSummary, AnalystViews, AnalystResultTable, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence, AnalystPlanningSummary } from '../components/AnalystDashboardSummary';
 import { AnalysisClarification } from '../components/AnalysisClarification';
 import { AnalysisMeaning } from '../components/AnalysisMeaning';
+import { AnalysisModules, AnalysisModuleSummary } from '../components/AnalysisModules';
 import { AnalysisInputForm } from '../components/AnalysisInputForm';
 import { analysisInputPayload } from '../utils/analysisInput.mjs';
 import { analysisPlanLabel } from '../utils/analysisPresentation.mjs';
@@ -58,6 +59,9 @@ export const AnalyticsView: React.FC = () => {
   // ─── AI ASSISTANT 3-STEP REPORT WORKFLOW STATE ───
   const [aiStep, setAiStep] = useState<1 | 2 | 3>(1);
   const [aiPrompt, setAiPrompt] = useState('');
+  const [aiAnalysisContext, setAiAnalysisContext] = useState('');
+  const [aiAnalysisExpectation, setAiAnalysisExpectation] = useState('');
+  const [activeModule, setActiveModule] = useState<AnalysisModuleSummary | null>(null);
   const [aiTimeRange, setAiTimeRange] = useState('auto');
   const [aiDomain, setAiDomain] = useState('auto');
   const [aiAnalysisDepth, setAiAnalysisDepth] = useState('deep');
@@ -70,7 +74,7 @@ export const AnalyticsView: React.FC = () => {
     fetch('/api/ai/capabilities', { signal: controller.signal }).then(r => r.ok ? r.json() : null).then(setAiCapabilities).catch(() => {});
     return () => controller.abort();
   }, []);
-  const aiInput = (prompt: string) => analysisInputPayload({ prompt, domain: aiDomain, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiAnalysisDepth });
+  const aiInput = (prompt: string) => analysisInputPayload({ question: prompt, context: aiAnalysisContext, expectation: aiAnalysisExpectation, moduleId: activeModule?.module_id, time: aiTimeRange, start: aiStart, end: aiEnd });
   const [aiStatus, setAiStatus] = useState<any | null>(null);
 
   // Step 1: Pre-analysis proposal state
@@ -2428,6 +2432,7 @@ export const AnalyticsView: React.FC = () => {
           {/* ──────────────────────────────────────────────────────────── */}
           {/* ── BƯỚC 1: ĐẶT CÂU HỎI & CHỌN GỢI Ý PHÂN TÍCH ── */}
           {/* ──────────────────────────────────────────────────────────── */}
+          <AnalysisModules active={activeModule} report={generatedReport} disabled={isProposingPlan || isGeneratingAi || isRefining} rerunTime={aiTimeRange === 'custom' ? (aiStart && aiEnd && aiStart <= aiEnd ? { mode: 'custom', start: aiStart, end: aiEnd } : null) : { mode: aiTimeRange }} onSelect={setActiveModule} onUpdate={inputs => { setAiPrompt(inputs.original_question || ''); setAiAnalysisContext(inputs.analysis_context || ''); setAiAnalysisExpectation(inputs.analysis_expectation || ''); }} onEdit={() => setAiStep(1)} onReport={data => { setGeneratedReport(data); setAiStep(3); if (data.status === 'success') { setReportVersions([{ version: data.revision || 1, label: 'Chạy lại bài toán', report: data, time: new Date().toLocaleTimeString('vi-VN') }]); setActiveVersionIndex(0); setRefinementChat([]); } }} />
           {aiStep === 1 && (
             <div className="space-y-6">
               <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
@@ -2471,7 +2476,7 @@ export const AnalyticsView: React.FC = () => {
 
                 {/* Smart Omnibox Chat Input */}
                 <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 focus-within:bg-white focus-within:border-slate-400 focus-within:ring-2 focus-within:ring-slate-200/60 transition-all">
-                  <AnalysisInputForm capabilities={aiCapabilities} prompt={aiPrompt} domain={aiDomain} time={aiTimeRange} depth={aiAnalysisDepth} start={aiStart} end={aiEnd} scope={aiScope} disabled={isProposingPlan || isGeneratingAi} onPrompt={setAiPrompt} onDomain={setAiDomain} onTime={setAiTimeRange} onDepth={setAiAnalysisDepth} onStart={setAiStart} onEnd={setAiEnd} onScope={setAiScope} onSubmit={() => handleProposePlan()} />
+                  <AnalysisInputForm prompt={aiPrompt} time={aiTimeRange} context={aiAnalysisContext} expectation={aiAnalysisExpectation} start={aiStart} end={aiEnd} disabled={isProposingPlan || isGeneratingAi} onPrompt={setAiPrompt} onTime={setAiTimeRange} onContext={setAiAnalysisContext} onExpectation={setAiAnalysisExpectation} onStart={setAiStart} onEnd={setAiEnd} onSubmit={() => handleProposePlan()} />
                   <div className="flex justify-end gap-3 pt-3 border-t border-slate-200/60 mt-3">
                     {/* Submit Actions */}
                     <div className="flex items-center space-x-2.5 self-end sm:self-auto">
@@ -2757,6 +2762,9 @@ export const AnalyticsView: React.FC = () => {
 
               {!isGeneratingAi && ['needs_clarification', 'error'].includes(generatedReport?.status) && (
                 <AnalysisClarification response={generatedReport}
+                  onSnapshot={answer => { setAiPrompt(answer); setAiTimeRange('all_time'); setAiStep(1); }}
+                  onModule={module => { setActiveModule(module); setAiStep(1); }}
+                  onUpdate={() => { setActiveModule(null); setAiStep(1); }}
                   onChoice={(answer) => handleProposePlan(`${aiPrompt}. ${answer}`)}
                   onEdit={() => setAiStep(1)}
                   onRetry={() => handleProposePlan()} />

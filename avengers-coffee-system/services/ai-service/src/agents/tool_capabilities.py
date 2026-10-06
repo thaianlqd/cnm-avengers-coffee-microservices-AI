@@ -232,6 +232,8 @@ def capabilities_for_context(context, *, entry_action=None, final_only=False, re
         allowed.add('resolve_location')  # Canonical location consultation too.
         if visible.get('location_candidates'):
             allowed.add('select_location_candidate')
+        if visible.get('branches') and not checkout.get('profile_location_offer'):
+            allowed.add('set_session_branch')
         if state.get('cart_verified'):
             if product_context:
                 allowed.add('add_to_cart')  # Changes of mind stay legal in every draft stage.

@@ -9,6 +9,9 @@ from services.semantic_manifest_service import build_manifest, manifest_referenc
 def wire_payload(payload):
     value = {**payload, "domains": deepcopy(payload["domains"])}
     knowledge = value["domains"]
+    if "lens_directory" in knowledge:
+        packed = {l[0] for p in knowledge["packs"] for l in p["lenses"]}
+        knowledge["lens_directory"] = {id: [l for l in lenses if l[0] not in packed] for id,lenses in knowledge["lens_directory"].items() if any(l[0] not in packed for l in lenses)}
     meanings = {}
     for pack in knowledge["packs"]:
         meanings.update(pack.pop("metric_meanings", {}))
@@ -71,7 +74,8 @@ def pack_context(catalog, intelligence, candidates, manifest, payload, tools, sy
             break
         manifest, hit = candidate, candidate_hit
         payload["manifest"] = provider_manifest(manifest)
-        knowledge["packs"] = [intelligence.pack(profiles[p["id"]], refs, p["tier"]) for p in knowledge["packs"]]
+        knowledge["packs"] = [{**intelligence.pack(profiles[p["id"]], refs, p["tier"]),
+            **({"blueprints": intelligence.blueprints(profiles[p["id"]], refs)} if "blueprints" in p else {})} for p in knowledge["packs"]]
         sizes = body_sizes(system, payload, tools)
     if any(not intelligence.covered(profiles[c["id"]], manifest_references(manifest)) or not any(p["id"] == c["id"] and p["lenses"] for p in knowledge["packs"]) for c in candidates if c["protected"]):
         raise AnalysisError("one_shot_context_budget_exceeded", "Explicit domain knowledge cannot fit")

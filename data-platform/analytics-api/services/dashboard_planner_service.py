@@ -19,7 +19,7 @@ PALETTE = [
 def defaults(artifacts):
     visuals = []
     for id, a in artifacts.items():
-        visible = [d for d in a.plan.dimensions if not d.endswith("_id")]
+        visible = [d for d in a.plan.dimensions if not d.endswith("_id")] or list(a.plan.dimensions)
         if a.query.operation == "relationship" and len(a.plan.metrics) == 2:
             candidate = DashboardVisual(query_id=id, chart_type="scatter", metrics=a.plan.metrics, x_field=a.plan.metrics[0], role=a.query.role, priority=80, purpose="relationship")
             if chart_reason(candidate, a, 100, 16) is None:
@@ -191,7 +191,7 @@ def chart_reason(v, a, max_categories, max_series):
         return "mixed_units_require_linked_views"
     if len({str(r[v.x_field]) for r in rows}) > max_categories:
         return "category_budget"
-    visible = [d for d in p.dimensions if not d.endswith("_id")]
+    visible = [d for d in p.dimensions if not d.endswith("_id")] or list(p.dimensions)
     if v.chart_type in ("line", "area", "multi_line"):
         if (
             p.kind != "trend"
@@ -428,6 +428,17 @@ def build_dashboard(
             -v.priority,
         ),
     )
+    # Ensure each requested question has a first eligible view before assigning
+    # extra views to a multi-metric result. Keep comparisons and semantic dedup.
+    first, extra, encountered = [], [], set()
+    for v in proposals:
+        artifact = artifacts.get(v.query_id)
+        reason = comparison_reason(v, artifacts) if v.compare_query_ids else chart_reason(v, artifact, max_categories, max_series) if artifact else "unknown_result_reference"
+        if artifact and artifact.query.role == "requested" and v.chart_type != "table" and reason is None and v.query_id not in encountered:
+            first.append(v); encountered.add(v.query_id)
+        else:
+            extra.append(v)
+    proposals = first + extra
     for v in proposals:
         a = artifacts.get(v.query_id)
         reason = (

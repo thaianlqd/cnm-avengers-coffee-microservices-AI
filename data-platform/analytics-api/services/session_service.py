@@ -78,6 +78,11 @@ class ReportSession:
     analysis_depth: str = "deep"
     ui_constraints: Dict[str, Any] = field(default_factory=dict)
     contract_version: str = "2.5"
+    owner_id: Optional[str] = None
+    natural_input: bool = False
+    analysis_inputs: Dict[str, Any] = field(default_factory=dict)
+    input_time_strategy: Dict[str, Any] = field(default_factory=dict)
+    module_provenance: Optional[Dict[str, Any]] = None
 
     # Full conversation history
     conversation_turns: List[ConversationTurn] = field(default_factory=list)

@@ -14,6 +14,7 @@ from services.analysis_contract import Contract
 from services.analysis_catalog import AnalysisError, normalize
 from services.semantic_manifest_service import build_manifest, compact
 from services.value_grounding_service import dimension_values, value_text
+from services.analytical_blueprint_service import AnalyticalBlueprint, validate_blueprint, validate_materialized, wire_blueprint
 
 QualityDirection = Literal["higher_better", "lower_better", "neutral", "contextual"]
 Baseline = Literal["previous_period", "same_period_previous_year", "peer_average", "peer_median", "between_selected_groups"]
@@ -31,6 +32,7 @@ class AnalyticalLens(Contract):
     supports_distribution: bool = False
     recommended_drilldowns: List[str] = Field(default_factory=list, max_length=8)
     related_lens_refs: List[str] = Field(default_factory=list, max_length=8)
+    blueprint: Optional[AnalyticalBlueprint] = None
 
 
 class HealthSignal(Contract):
@@ -99,6 +101,8 @@ def validate_profiles(registry):
                 if m.get("quality_direction", "contextual") not in {"higher_better", "lower_better", "neutral", "contextual"}:
                     raise ValueError("Invalid metric direction")
             for lens in lenses.values():
+                if lens.blueprint:
+                    validate_blueprint(lens.blueprint, lens, p, registry)
                 if not set(lens.metric_refs) <= set(p.metric_refs) or not set(lens.dimension_refs + lens.recommended_drilldowns) <= dims or not set(lens.related_lens_refs) <= lenses.keys():
                     raise ValueError("Invalid lens references")
                 if lens.supports_time_series and any(not registry["metrics"][m].get("time_column") for m in lens.metric_refs):
@@ -152,6 +156,15 @@ class DomainIntelligence:
                 # All lens measures are required: never quietly substitute a subset.
                 if not set(lens["metric_refs"]) <= set(p["metric_refs"]):
                     continue
+                blueprint = lens.get("blueprint")
+                if blueprint:
+                    defaults = set(blueprint["required_grouping"] + (blueprint["default_grouping"] or []))
+                    if not defaults <= allowed:
+                        continue
+                    blueprint["cross_tab_grouping_refs"] = [d for d in blueprint["cross_tab_grouping_refs"] if d in allowed]
+                    blueprint["allowed_groupings"] = [g for g in blueprint["allowed_groupings"] if set(g) <= allowed]
+                    if not blueprint["allowed_groupings"]:
+                        continue
                 compatible = set.intersection(*(set(self.catalog.compatible_dimensions(m)) for m in lens["metric_refs"])) & allowed
                 lens["dimension_refs"] = [d for d in lens["dimension_refs"] if d in compatible]
                 lens["recommended_drilldowns"] = [d for d in lens["recommended_drilldowns"] if d in compatible]
@@ -205,6 +218,7 @@ class DomainIntelligence:
         flag = {"trend": "supports_time_series", "ranking": "supports_ranking", "distribution": "supports_distribution"}.get(query.operation)
         if flag and not lens[flag]:
             raise AnalysisError("domain_lens_invalid", "Lens does not support this operation")
+        validate_materialized(query, lens)
 
     def capabilities(self):
         profiles = self.available()
@@ -219,7 +233,7 @@ class DomainIntelligence:
             if not any(id in p["dimension_refs"] for p in profiles.values()):
                 continue
             scope_types.append({"id": id, "label": d["business_name"], "values": dimension_values(self.catalog, id)[:50], "searchable": d.get("value_grounding", {}).get("mode") == "lookup"})
-        return {"status": "ready", "version": "2.5.1", "fingerprint": self.catalog.fingerprint,
+        return {"status": "ready", "version": "2.6", "fingerprint": self.catalog.fingerprint,
                 "domains": [{"id": id, "label": p["business_label"], "historical": any(self.catalog.registry["metrics"][m].get("time_column") for m in p["metric_refs"]), "caveats": [self.catalog.registry["domain_intelligence"]["caveat_labels"][c] for c in p["business_caveats"]]} for id, p in profiles.items()],
                 "analysis_depths": [{"id": "focused", "label": "Tập trung"}, {"id": "deep", "label": "Phân tích sâu"}, {"id": "comprehensive", "label": "Phân tích toàn diện"}],
                 "time_presets": [{"id": id, "label": label} for id, label in TIME_PRESETS.items()],
@@ -357,20 +371,25 @@ class DomainIntelligence:
                         candidates[id] = {"id": id, "priority": 3 if i == 0 else 4, "score": 0, "match_category": "related_domain", "protected": False}
         return sorted(candidates.values(), key=order)
 
-    def context(self, question, domain, depth, references, previous_subjects=(), max_chars=None, candidates=None):
+    def context(self, question, domain, depth, references, previous_subjects=(), max_chars=None, candidates=None, blueprints=False):
         profiles = self.available()
         candidates = candidates if candidates is not None else self.candidates(question, domain, depth, previous_subjects)
         policy = DEPTH_POLICIES[depth]
         packs, omitted = [], []
         for c in candidates:
             pack = self.pack(profiles[c["id"]], references)
+            if blueprints:
+                pack["blueprints"] = self.blueprints(profiles[c["id"]], references)
             if c["protected"] and not self.covered(profiles[c["id"]], references):
                 raise AnalysisError("one_shot_context_budget_exceeded", "Explicit domain knowledge cannot fit")
             if not pack["lenses"] or len(packs) >= policy["packs"] and not c["protected"]:
                 omitted.append(c["id"])
                 continue
             if len(packs) >= policy["packs"]:
+                definitions = pack.get("blueprints")
                 pack = self.pack(profiles[c["id"]], references, "compact")
+                if definitions is not None:
+                    pack["blueprints"] = definitions
             packs.append(pack)
         knowledge = {"version": 2, "directory_columns": "id,label", "directory": self.directory(profiles),
                 "lens_columns": "id,label,metrics,dimensions,capabilities(t=trend,r=ranking,c=comparison,d=distribution)",
@@ -378,6 +397,10 @@ class DomainIntelligence:
                 "health_columns": "metrics,baseline,peer_dimensions,comparable_exposure,min_peers,observation_metric,min_observations; directions in manifest",
                 "caveat_meanings": self.catalog.registry["domain_intelligence"].get("model_caveat_notes", self.catalog.registry["domain_intelligence"]["caveat_labels"]),
                 "packs": packs}
+        if blueprints:
+            knowledge["lens_directory"] = {id: [[l["id"],l["business_label"],l["blueprint"]["default_operation"],bool(l["blueprint"]["default_metric_refs"])] for l in p["analytical_lenses"] if l.get("blueprint")] for id,p in profiles.items()}
+            knowledge["lens_directory_columns"] = "lens_id,label,default_operation,unambiguous_metric_default; server materializes checked defaults, use explicit metrics only from manifest"
+            knowledge["blueprint_columns"] = "operation,default_metrics,default_grouping,allowed_groupings,default_granularity,flags(h=history,p=complete population,x=cross_tab two lens dimensions); omitted choices require clarification"
         # Only pack content is sent; retrieval evidence and omissions stay local.
         maximum = policy["domain_chars"] if max_chars is None else max_chars
         while len(compact(packs)) > maximum and self.degrade(knowledge, candidates, omitted, references):
@@ -390,6 +413,11 @@ class DomainIntelligence:
     @staticmethod
     def covered(profile, references):
         return all((kind, id) in references for kind, ids in (("subject", profile["primary_subjects"]), ("metric", profile["metric_refs"]), ("dimension", profile["dimension_refs"])) for id in ids)
+
+    @staticmethod
+    def blueprints(profile, references):
+        return {l["id"]: wire_blueprint(l["blueprint"]) for l in profile["analytical_lenses"]
+                if l.get("blueprint") and all(("metric", m) in references for m in l["metric_refs"])}
 
     def degrade(self, knowledge, candidates, omitted, references, descriptions_only=False):
         """Deterministic: descriptions, full→compact, then optional omission.
@@ -408,6 +436,8 @@ class DomainIntelligence:
         for pack in worst_first:
             if pack["tier"] == "full":
                 replacement = self.pack(self.available()[pack["id"]], references, "compact")
+                if "blueprints" in pack:
+                    replacement["blueprints"] = pack["blueprints"]
                 knowledge["packs"][knowledge["packs"].index(pack)] = replacement
                 return True
         for pack in worst_first:

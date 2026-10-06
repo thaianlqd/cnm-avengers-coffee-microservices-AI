@@ -20,47 +20,44 @@ function component(relative, name) {
   } finally { rmSync(directory, { recursive: true, force: true }); }
 }
 const Form = component('../components/AnalysisInputForm.tsx', 'AnalysisInputForm');
+const Modules = component('../components/AnalysisModules.tsx', 'AnalysisModules');
+const Clarification = component('../components/AnalysisClarification.tsx', 'AnalysisClarification');
 const Meaning = component('../components/AnalysisMeaning.tsx', 'AnalysisMeaning');
 const Summary = component('../components/AnalystDashboardSummary.tsx', 'AnalystPlanningSummary');
 const capabilities = { domains: [{ id: 'energy', label: 'Năng lượng' }, { id: 'reviews', label: 'Phản hồi' }], time_presets: [{ id: 'auto', label: 'Tự động' }, { id: 'previous_month', label: 'Tháng trước' }, { id: 'custom', label: 'Tùy chọn' }], scope_types: [{ id: 'region', label: 'Khu vực', values: ['A', 'B'] }] };
-const props = { capabilities, prompt: '', domain: 'auto', time: 'auto', depth: 'deep', start: '', end: '', scope: { mode: 'auto', filters: [] }, disabled: false,
-  ...Object.fromEntries(['onPrompt', 'onDomain', 'onTime', 'onDepth', 'onStart', 'onEnd', 'onScope', 'onSubmit'].map(key => [key, () => {}])) };
+const props = { capabilities, prompt: '', context: '', expectation: '', domain: 'auto', time: 'auto', depth: 'deep', start: '', end: '', scope: { mode: 'auto', filters: [] }, disabled: false,
+  ...Object.fromEntries(['onPrompt', 'onDomain', 'onTime', 'onDepth', 'onStart', 'onEnd', 'onScope', 'onContext', 'onExpectation', 'onSubmit'].map(key => [key, () => {}])) };
 const render = (Component, values) => renderToStaticMarkup(React.createElement(Component, values));
 
-test('exactly five conceptual inputs and only question required', () => {
+test('exactly four conceptual inputs, optional context/expectation, only question required', () => {
   const html = render(Form, props);
-  assert.equal((html.match(/data-analysis-input=/g) || []).length, 5);
+  assert.equal((html.match(/data-analysis-input=/g) || []).length, 4);
   assert.equal((html.match(/required=""/g) || []).length, 1);
-  for (const label of ['Câu hỏi phân tích', 'Miền dữ liệu', 'Thời gian', 'Phạm vi phân tích', 'Độ sâu phân tích']) assert.ok(html.includes(label));
-  for (const internal of ['metric_refs', 'group_by', 'granularity', 'chart_type', 'population_group']) assert.ok(!html.includes(internal));
+  for (const label of ['Câu hỏi phân tích', 'Thời gian', 'Ngữ cảnh phân tích', 'Mong muốn phân tích']) assert.ok(html.includes(label));
+  for (const internal of ['metric_refs', 'group_by', 'granularity', 'chart_type', 'population_group', 'analysis-domain', 'analysis-depth', 'analysis-scope']) assert.ok(!html.includes(internal));
 });
-test('catalog additions appear without a fixed domain option list', () => {
-  const html = render(Form, props);
-  assert.ok(html.includes('Năng lượng')); assert.ok(html.includes('Phản hồi'));
-  assert.ok(!html.includes('Sản phẩm &amp; Thực đơn'));
-  const source = readFileSync(new URL('../components/AnalysisInputForm.tsx', import.meta.url), 'utf8');
-  assert.ok(source.includes('p.capabilities?.domains'));
+test('AI selects breadth; optional natural expectation has no selector', () => {
+  const html = render(Form, { ...props, expectation: 'Nhiều góc nhìn phù hợp' });
+  assert.ok(html.includes('Nhiều góc nhìn phù hợp'));
+  for (const mode of ['focused', 'deep', 'comprehensive']) assert.ok(!html.includes(`value="${mode}"`));
 });
-test('all three depth modes are available and deep is selected', () => {
-  const html = render(Form, props);
-  for (const mode of ['focused', 'deep', 'comprehensive']) assert.ok(html.includes(`value="${mode}"`));
-  assert.ok(html.includes('value="deep" selected=""'));
-});
-test('custom dates are nested within time, without adding a sixth conceptual input', () => {
+test('custom dates stay within time without adding conceptual inputs', () => {
   const html = render(Form, { ...props, time: 'custom', start: '2026-09-01', end: '2026-09-30' });
-  assert.equal((html.match(/data-analysis-input=/g) || []).length, 5);
+  assert.equal((html.match(/data-analysis-input=/g) || []).length, 4);
   assert.equal((html.match(/type="date"/g) || []).length, 2);
-  assert.ok(html.includes('2026-09-01')); assert.ok(html.includes('2026-09-30'));
 });
-test('scope has business labels and existing canonical values', () => {
-  const html = render(Form, { ...props, scope: { mode: 'selected', filters: [{ dimension: 'region', operator: 'in', value: ['A', 'B'] }] } });
-  assert.ok(html.includes('Khu vực: A, B')); assert.ok(!html.includes('region: A'));
-  assert.equal((html.match(/data-analysis-input=/g) || []).length, 5);
-});
-test('unavailable catalog still supports automatic choices', () => {
+test('time presets work without capability network response', () => {
   const html = render(Form, { ...props, capabilities: null });
-  assert.ok(html.includes('Danh mục chưa sẵn sàng')); assert.ok(html.includes('Tự động'));
-  assert.ok(!html.includes('value="energy"'));
+  for (const mode of ['auto', 'previous_month', 'current_year', 'custom']) assert.ok(html.includes(`value="${mode}"`));
+});
+test('question-only natural payload omits blank optional fields and engine configuration', () => {
+  assert.deepEqual(analysisInputPayload({ question: '  Kiểm tra hoạt động  ' }), { question: 'Kiểm tra hoạt động', time: { mode: 'auto' } });
+  assert.deepEqual(analysisInputPayload({ question: 'X', context: '  ', expectation: '' }), { question: 'X', time: { mode: 'auto' } });
+});
+test('four natural fields and explicit module selection survive approval unchanged', () => {
+  const input = analysisInputPayload({ question: 'Câu hỏi', time: 'current_month', context: 'Hai thành phố', expectation: 'Nhiều góc nhìn', moduleId: 'am_123456789012345678901234' });
+  assert.deepEqual(input, { question: 'Câu hỏi', time: { mode: 'current_month' }, analysis_context: 'Hai thành phố', analysis_expectation: 'Nhiều góc nhìn', analysis_module_id: 'am_123456789012345678901234' });
+  assert.deepEqual({ ...input, session_id: 'approved' }.question, input.question);
 });
 test('question-only submission has auto constraints and deep default', () => {
   assert.deepEqual(analysisInputPayload({ prompt: '  Kiểm tra hoạt động  ' }), { prompt: 'Kiểm tra hoạt động', domain: 'auto', time_range: { mode: 'auto' }, analysis_scope: { mode: 'auto', filters: [] }, analysis_depth: 'deep' });
@@ -88,4 +85,18 @@ test('proposal groups domains and explains catalog lens without raw semantic IDs
 test('comprehensive copy and limited coverage do not promise a quota', () => {
   const html = render(Summary, { diagnostics: { planning_mode: 'one_shot', analysis_depth: 'comprehensive', depth_coverage: { status: 'limited' } } });
   assert.ok(html.includes('6–8')); assert.ok(html.includes('khi dữ liệu cho phép')); assert.ok(html.includes('ít góc nhìn hơn mục tiêu'));
+});
+
+test('module save requires approved success, active chip and provenance use business labels', () => {
+  const base = { active: { module_id: 'private_id', name: 'Kinh doanh hàng tháng', compatibility: 'ready' }, disabled: false, onSelect() {}, onReport() {}, onEdit() {}, onUpdate() {} };
+  const pending = render(Modules, { ...base, report: { status: 'proposal_ready', session_id: 'server' } });
+  assert.ok(!pending.includes('Lưu thành bài toán mới'));
+  const success = render(Modules, { ...base, report: { status: 'success', session_id: 'server', module_provenance: { name: 'Kinh doanh hàng tháng', mode: 'rerun' }, sql: 'SELECT secret', rows: ['private'] } });
+  assert.ok(success.includes('Lưu thành bài toán mới')); assert.ok(success.includes('Bỏ bài toán đang chọn'));
+  assert.ok(success.includes('Chạy lại với dữ liệu hiện tại')); assert.ok(!success.includes('SELECT')); assert.ok(!success.includes('private_id'));
+});
+test('actionable issue renders known meaning, missing choice and explicit snapshot action', () => {
+  const html = render(Clarification, { response: { status: 'needs_clarification', issue: { title: 'Chưa có lịch sử', what_is_known: ['Giao hàng'], what_is_missing: ['Chưa có ngày thực hiện chuyến'], suggested_actions: [{ type: 'snapshot', label: 'Xem hiện trạng', followup: 'Phân tích hiện trạng' }] } }, onEdit() {}, onSnapshot() {} });
+  for (const text of ['Chưa có lịch sử', 'Giao hàng', 'Chưa có ngày thực hiện chuyến', 'Xem hiện trạng']) assert.ok(html.includes(text));
+  assert.ok(!html.includes('group_by'));
 });

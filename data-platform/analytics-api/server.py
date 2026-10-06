@@ -82,6 +82,8 @@ app.include_router(query.router)
 app.include_router(system.router)
 app.include_router(reports.router)
 app.include_router(ai.router)
+from routers import analysis_modules
+app.include_router(analysis_modules.router)
 
 
 # ─── Static SPA Serving ───

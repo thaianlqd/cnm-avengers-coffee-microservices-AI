@@ -1,0 +1,275 @@
+{
+  "pipeline_version": "2.6",
+  "real_provider_calls": 0,
+  "external_embedding_calls": 0,
+  "live_db_mutations": 0,
+  "live_db_queries": 0,
+  "note": "Scripted decisions and fixture rows verify contracts, not live language interpretation. Actual provider token counts are unreported, not estimates.",
+  "scenarios": [
+    {
+      "scenario": "A",
+      "status": "success",
+      "breadth": "focused",
+      "provider_calls": 1,
+      "approval_provider_calls": 0,
+      "proposal_analytical_queries": 0,
+      "approval_fixture_queries": 1,
+      "chart_count": 1,
+      "chart_families": [
+        "horizontal_bar"
+      ],
+      "requested_operations": 1,
+      "supporting_operations": 0,
+      "normalizations": [
+        "lens_default_subject",
+        "lens_default_operation",
+        "lens_default_metric",
+        "lens_default_grouping",
+        "lens_default_ranking_direction",
+        "ranking_metric_from_single_selection"
+      ],
+      "body_chars": {
+        "native": 22925,
+        "compat": 22874
+      },
+      "headroom": 1075,
+      "schema_chars": 5504,
+      "domain_chars": 6068,
+      "state_chars": 2,
+      "manifest_chars": 7525,
+      "actual_input_tokens": null,
+      "actual_output_tokens": null
+    },
+    {
+      "scenario": "B",
+      "status": "success",
+      "breadth": "deep",
+      "provider_calls": 1,
+      "approval_provider_calls": 0,
+      "proposal_analytical_queries": 0,
+      "approval_fixture_queries": 4,
+      "chart_count": 3,
+      "chart_families": [
+        "horizontal_bar",
+        "line",
+        "donut"
+      ],
+      "requested_operations": 1,
+      "supporting_operations": 3,
+      "normalizations": [
+        "lens_default_subject",
+        "lens_default_operation",
+        "lens_default_metric",
+        "lens_default_grouping",
+        "lens_default_granularity",
+        "lens_default_ranking",
+        "lens_default_ranking_direction",
+        "ranking_metric_from_single_selection",
+        "lens_required_grouping"
+      ],
+      "body_chars": {
+        "native": 22261,
+        "compat": 22210
+      },
+      "headroom": 1739,
+      "schema_chars": 5504,
+      "domain_chars": 5496,
+      "state_chars": 2,
+      "manifest_chars": 7525,
+      "actual_input_tokens": null,
+      "actual_output_tokens": null
+    },
+    {
+      "scenario": "C",
+      "status": "success",
+      "breadth": "deep",
+      "provider_calls": 1,
+      "approval_provider_calls": 0,
+      "proposal_analytical_queries": 0,
+      "approval_fixture_queries": 4,
+      "chart_count": 4,
+      "chart_families": [
+        "horizontal_bar",
+        "bar",
+        "line",
+        "donut"
+      ],
+      "requested_operations": 4,
+      "supporting_operations": 0,
+      "normalizations": [
+        "lens_default_subject",
+        "lens_default_operation",
+        "lens_default_metric",
+        "lens_default_grouping",
+        "lens_default_ranking_direction",
+        "ranking_metric_from_single_selection",
+        "lens_required_grouping",
+        "lens_default_granularity"
+      ],
+      "body_chars": {
+        "native": 22809,
+        "compat": 22758
+      },
+      "headroom": 1191,
+      "schema_chars": 5504,
+      "domain_chars": 5888,
+      "state_chars": 2,
+      "manifest_chars": 7525,
+      "actual_input_tokens": null,
+      "actual_output_tokens": null
+    },
+    {
+      "scenario": "D",
+      "status": "success",
+      "breadth": "deep",
+      "provider_calls": 1,
+      "approval_provider_calls": 0,
+      "proposal_analytical_queries": 0,
+      "approval_fixture_queries": 6,
+      "chart_count": 5,
+      "chart_families": [
+        "horizontal_bar",
+        "bar",
+        "line",
+        "donut"
+      ],
+      "requested_operations": 6,
+      "supporting_operations": 0,
+      "normalizations": [
+        "lens_default_subject",
+        "lens_default_operation",
+        "lens_default_metric",
+        "lens_default_grouping",
+        "lens_default_granularity",
+        "lens_default_ranking",
+        "lens_default_ranking_direction",
+        "ranking_metric_from_single_selection"
+      ],
+      "body_chars": {
+        "native": 22605,
+        "compat": 22554
+      },
+      "headroom": 1395,
+      "schema_chars": 5504,
+      "domain_chars": 6974,
+      "state_chars": 2,
+      "manifest_chars": 6243,
+      "actual_input_tokens": null,
+      "actual_output_tokens": null
+    },
+    {
+      "scenario": "E",
+      "status": "success",
+      "breadth": "comprehensive",
+      "provider_calls": 1,
+      "approval_provider_calls": 0,
+      "proposal_analytical_queries": 0,
+      "approval_fixture_queries": 8,
+      "chart_count": 7,
+      "chart_families": [
+        "horizontal_bar",
+        "bar",
+        "line",
+        "donut"
+      ],
+      "requested_operations": 8,
+      "supporting_operations": 0,
+      "normalizations": [
+        "lens_default_subject",
+        "lens_default_operation",
+        "lens_default_metric",
+        "lens_default_grouping",
+        "lens_default_granularity",
+        "lens_default_ranking",
+        "lens_default_ranking_direction",
+        "ranking_metric_from_single_selection",
+        "lens_required_grouping"
+      ],
+      "body_chars": {
+        "native": 22710,
+        "compat": 22659
+      },
+      "headroom": 1290,
+      "schema_chars": 5504,
+      "domain_chars": 5788,
+      "state_chars": 2,
+      "manifest_chars": 7525,
+      "actual_input_tokens": null,
+      "actual_output_tokens": null
+    },
+    {
+      "scenario": "F",
+      "status": "needs_clarification",
+      "issue_category": "HISTORICAL_DATA_UNAVAILABLE",
+      "provider_calls": 1,
+      "analytical_queries": 0,
+      "automatic_reduced_analysis": false
+    },
+    {
+      "scenario": "G",
+      "status": "saved",
+      "version": "2.6",
+      "raw_sql_stored": false,
+      "result_rows_stored": false
+    },
+    {
+      "scenario": "H",
+      "status": "success",
+      "provider_calls": 0,
+      "fixture_queries": 4,
+      "result_reuse": false
+    },
+    {
+      "scenario": "I",
+      "status": "proposal_ready",
+      "provider_calls": 1,
+      "proposal_analytical_queries": 0,
+      "retained_requested_operations": 1,
+      "body_chars": {
+        "native": 22474,
+        "compat": 22423
+      },
+      "state_chars": 1269
+    },
+    {
+      "scenario": "J",
+      "status": "success",
+      "breadth": "comprehensive",
+      "provider_calls": 1,
+      "approval_provider_calls": 0,
+      "proposal_analytical_queries": 0,
+      "approval_fixture_queries": 8,
+      "chart_count": 7,
+      "chart_families": [
+        "horizontal_bar",
+        "bar",
+        "line",
+        "donut"
+      ],
+      "requested_operations": 8,
+      "supporting_operations": 0,
+      "normalizations": [
+        "lens_default_subject",
+        "lens_default_operation",
+        "lens_default_metric",
+        "lens_default_grouping",
+        "lens_default_granularity",
+        "lens_default_ranking",
+        "lens_default_ranking_direction",
+        "ranking_metric_from_single_selection",
+        "lens_required_grouping"
+      ],
+      "body_chars": {
+        "native": 22954,
+        "compat": 22903
+      },
+      "headroom": 1046,
+      "schema_chars": 5504,
+      "domain_chars": 7690,
+      "state_chars": 2,
+      "manifest_chars": 5774,
+      "actual_input_tokens": null,
+      "actual_output_tokens": null
+    }
+  ]
+}

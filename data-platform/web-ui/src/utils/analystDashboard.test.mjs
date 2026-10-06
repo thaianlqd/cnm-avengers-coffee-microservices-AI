@@ -83,14 +83,13 @@ test('AnalyticsView wires actual dashboard components and no static scope claim'
   assert.ok(!source.includes('KPI tăng trưởng, so sánh danh mục, cơ cấu'));
 });
 
-test('deep analysis is the default and the same depth is sent for approval', () => {
+test('natural fields replace depth configuration and approval reuses submitted input', () => {
   const source = readFileSync(new URL('../views/AnalyticsView.tsx', import.meta.url), 'utf8');
-  assert.ok(source.includes("const [aiAnalysisDepth, setAiAnalysisDepth] = useState('deep')"));
-  assert.ok(source.includes('scope: aiScope, depth: aiAnalysisDepth'));
+  assert.ok(source.includes('question: prompt, context: aiAnalysisContext, expectation: aiAnalysisExpectation'));
   assert.ok(source.includes('body: JSON.stringify(submittedInput)'));
   assert.ok(source.includes('aiPlan?.submittedInput || aiInput(promptToSend)'));
   const form = readFileSync(new URL('../components/AnalysisInputForm.tsx', import.meta.url), 'utf8');
-  assert.ok(form.includes('Độ sâu phân tích')); assert.ok(form.includes('Tập trung'));
+  assert.ok(form.includes('Mong muốn phân tích')); assert.ok(!form.includes('Độ sâu phân tích'));
 });
 
 test('deep planning and related population evidence explain their actual scope', () => {

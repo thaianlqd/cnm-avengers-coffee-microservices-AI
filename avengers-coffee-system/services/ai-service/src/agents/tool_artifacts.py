@@ -679,6 +679,7 @@ class ToolArtifacts:
         stop = (name == 'compare_branch_reviews' or (name in ORDER_TOOLS and last['result'].get('message')) or (name in {'resolve_location', 'select_location_candidate', 'find_nearest_branch', 'ask_branch'}
                  and (last['result'].get('branches') or last['result'].get('order_summary') or last['result'].get('location_candidates')))
                 or status in {'branch_unavailable_or_unknown', 'customer_branch_selection_required'}
+                or (name == 'set_session_branch' and status in {'ok', 'success', 'already_processed'})
                 or (name == 'request_checkout' and status == 'require_confirmation')
                 or (name == 'confirm_checkout' and status in {'ok', 'success', 'already_processed'})
                 or (name == 'finish_cart' and status == 'ok')
