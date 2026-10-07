@@ -62,16 +62,42 @@ def locality_matches(address: str, requested: str) -> bool:
         level = level_aliases.get(match.group("level"), match.group("level"))
         return level, folded[match.end():].strip()
 
-    requested_level, area = identity(requested.split(",", 1)[0])
+    req_parts = [p.strip() for p in requested.split(",") if p.strip()]
+    req_first = req_parts[0] if req_parts else requested
+    req_city = req_parts[1] if len(req_parts) > 1 else None
+    if not req_city:
+        match_city = re.search(r"\b(?:thành\s+phố|tp\.?|tỉnh)\s+([^,]+)$", requested, re.IGNORECASE)
+        if match_city:
+            req_city = match_city.group(0).strip()
+    match_split = re.search(r"\b(?:thành\s+phố|tp\.?|tỉnh|quận|huyện|q\.?|h\.?)\b", req_first, re.IGNORECASE)
+    if match_split and match_split.start() > 0:
+        req_first = req_first[:match_split.start()].strip()
+    requested_level, area = identity(req_first)
     if not area:
         return False
+    area_matched = False
     for component in str(address or "").split(","):
         component_level, bare = identity(component)
         if bare == area and (
             requested_level is None or component_level is None or component_level == requested_level
         ):
-            return True
-    return False
+            area_matched = True
+            break
+    if not area_matched:
+        return False
+    if req_city:
+        _, bare_city = identity(req_city)
+        if bare_city:
+            addr_norm = normalize(address)
+            city_aliases = {
+                "ho chi minh": ["ho chi minh", "hcm", "tp hcm", "tp.hcm", "sai gon"],
+                "ha noi": ["ha noi", "hn", "tp hn"],
+                "da nang": ["da nang", "dn"],
+            }
+            expected_aliases = city_aliases.get(bare_city, [bare_city])
+            if not any(alias in addr_norm for alias in expected_aliases):
+                return False
+    return True
 
 
 def infer_city_from_addresses(requested: str, addresses: list[str]) -> tuple[str | None, bool]:

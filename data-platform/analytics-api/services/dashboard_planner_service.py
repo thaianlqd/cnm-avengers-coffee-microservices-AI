@@ -1,7 +1,9 @@
 """Validate model dashboard choices against stored rows; no chart-only queries."""
 
 from services.analyst_contract import DashboardPlan, DashboardVisual
-from services.insight_service import number
+from services.insight_service import number, trend_bucket_coverage
+import hashlib
+import json
 
 
 PALETTE = [
@@ -14,6 +16,16 @@ PALETTE = [
     "#ef4444",
     "#64748b",
 ]
+
+
+def paired_aggregate(a):
+    """Complement volume comparisons with an average from the same entity rows."""
+    visible = [d for d in a.plan.dimensions if not d.endswith("_id")]
+    if a.plan.kind != "aggregate" or a.plan.ranking or a.plan.explicit_limit or len(visible) != 1:
+        return None
+    totals = [m for m in a.plan.metrics if a.grounded.metrics[m].get("additive")]
+    averages = [m for m in a.plan.metrics if a.grounded.metrics[m].get("aggregation_semantics") == "average"]
+    return [totals[0], averages[0]] if totals and averages else None
 
 
 def defaults(artifacts):
@@ -34,10 +46,12 @@ def defaults(artifacts):
             continue
         for metric in a.plan.metrics:
             composition = (
-                a.plan.kind == "distribution"
+                a.plan.kind in {"aggregate", "distribution"}
+                and len(visible) == 1
+                and not a.plan.ranking
                 and not a.plan.explicit_limit
                 and a.grounded.metrics[metric].get("additive")
-                and 2 <= len(a.result["rows"]) <= 8
+                and (2 <= len(a.result["rows"]) if a.plan.kind == "distribution" else 3 <= len(a.result["rows"]) <= 6)
                 and all(
                     number(r.get(metric)) and r[metric] >= 0 for r in a.result["rows"]
                 )
@@ -50,7 +64,7 @@ def defaults(artifacts):
                     "multi_line"
                     if a.plan.kind == "trend" and len(visible) == 1
                     else (
-                        "line"
+                            ("area" if a.grounded.metrics[metric].get("additive") and a.grounded.metrics[metric].get("non_negative") else "line")
                         if a.plan.kind == "trend" and not visible
                         else (
                             "heatmap"
@@ -61,6 +75,8 @@ def defaults(artifacts):
                 )
             )
             x = "period" if a.plan.kind == "trend" else visible[0] if visible else None
+            if kind == "bar" and len(visible) == 1 and any(len(str(r.get(x))) > 18 for r in a.result["rows"]):
+                kind = "horizontal_bar"
             if x:
                 visuals.append(
                     DashboardVisual(
@@ -90,6 +106,12 @@ def defaults(artifacts):
                         ),
                     )
                 )
+    for id, a in artifacts.items():
+        pair = paired_aggregate(a)
+        if pair:
+            candidate = DashboardVisual(query_id=id, chart_type="scatter", metrics=pair, x_field=pair[0], role=a.query.role, priority=60, purpose="relationship")
+            if chart_reason(candidate, a, 100, 16) is None:
+                visuals.append(candidate)
     scalar = [
         a
         for a in artifacts.values()
@@ -165,6 +187,18 @@ def population_label(a):
     )
 
 
+def category_preview(v, a, max_categories):
+    """A labelled display subset; complete analytical rows remain authoritative."""
+    visible = [d for d in a.plan.dimensions if not d.endswith("_id")] or list(a.plan.dimensions)
+    return (
+        a.plan.kind in {"aggregate", "distribution"}
+        and not a.plan.ranking and not a.plan.explicit_limit
+        and v.chart_type in {"bar", "horizontal_bar", "grouped_bar"}
+        and len(visible) == 1 and v.x_field == visible[0] and not v.series_field
+        and len({str(r.get(v.x_field)) for r in a.result["rows"]}) > max_categories
+    )
+
+
 def chart_reason(v, a, max_categories, max_series):
     p = a.plan
     rows = a.result["rows"]
@@ -189,7 +223,7 @@ def chart_reason(v, a, max_categories, max_series):
     units = {a.grounded.metrics[m]["unit"] for m in v.metrics}
     if len(units) > 1 and v.chart_type != "scatter":
         return "mixed_units_require_linked_views"
-    if len({str(r[v.x_field]) for r in rows}) > max_categories:
+    if len({str(r[v.x_field]) for r in rows}) > max_categories and v.chart_type not in {"donut", "scatter"} and not category_preview(v, a, max_categories):
         return "category_budget"
     visible = [d for d in p.dimensions if not d.endswith("_id")] or list(p.dimensions)
     if v.chart_type in ("line", "area", "multi_line"):
@@ -208,7 +242,7 @@ def chart_reason(v, a, max_categories, max_series):
             return "requires_partition_series"
     elif v.chart_type == "scatter":
         if (
-            a.query.operation != "relationship"
+            (a.query.operation != "relationship" and v.metrics != paired_aggregate(a))
             or len(v.metrics) != 2
             or v.x_field != v.metrics[0]
             or len(rows) < 3
@@ -244,10 +278,9 @@ def chart_reason(v, a, max_categories, max_series):
     ):
         return "requires_single_metric"
     if v.chart_type == "donut" and (
-        p.kind != "distribution"
+        p.kind not in {"aggregate", "distribution"}
         or p.explicit_limit
         or p.ranking
-        or len(rows) > 8
         or len(rows) < 2
         or not a.grounded.metrics[v.metrics[0]].get("additive")
         or any(r[v.metrics[0]] < 0 for r in rows)
@@ -259,9 +292,13 @@ def chart_reason(v, a, max_categories, max_series):
     return None
 
 
-def render(v, a, index):
+def render(v, a, index, max_categories=100):
     rows = a.result["rows"]
+    population_count = len(rows)
     metric = v.metrics[0]
+    preview = category_preview(v, a, max_categories)
+    if preview:
+        rows = sorted(rows, key=lambda r: (-r[metric], tuple(str(r.get(d)) for d in a.plan.dimensions)))[:min(20, max_categories)]
     meta = a.grounded.metrics[metric]
     output = {
         "id": f"visual_{index+1}",
@@ -304,6 +341,19 @@ def render(v, a, index):
         if v.x_field == "period"
         else a.grounded.dimensions.get(v.x_field, {}).get("business_name", "")
     )
+    # Shared physical metric definitions may have different domain aliases.
+    # A display equivalence key includes their full population and query shape.
+    identity = [
+        a.plan.source, a.plan.joins,
+        [a.grounded.metrics[m]["expression"] for m in v.metrics],
+        [a.grounded.metrics[m].get("business_filters", []) for m in v.metrics],
+        [a.grounded.metrics[m].get("required_non_null", []) for m in v.metrics],
+        a.plan.dimensions, [f.model_dump(mode="json") for f in a.plan.filters],
+        a.plan.time_column, a.plan.period, a.plan.granularity, a.plan.ranking.model_dump(mode="json") if a.plan.ranking else None,
+        a.plan.row_limit, a.plan.explicit_limit, v.x_field, v.series_field,
+        "share" if v.chart_type in {"donut", "stacked_100"} else "raw",
+    ]
+    output["semantic_view_key"] = hashlib.sha256(json.dumps(identity, sort_keys=True, default=str).encode()).hexdigest()
     output["series_label"] = a.grounded.dimensions.get(v.series_field, {}).get(
         "business_name", ""
     )
@@ -315,8 +365,21 @@ def render(v, a, index):
         output["title"] += " theo " + {"day": "ngày", "week": "tuần", "month": "tháng", "quarter": "quý", "year": "năm"}[a.plan.granularity]
     output["title"] += " — " + population_label(a)
     output.update(selection="Top N" if a.plan.ranking else "limited" if a.plan.explicit_limit else "complete", layout="wide" if v.chart_type in ("line", "area", "multi_line", "heatmap", "scatter") else "standard")
+    if a.plan.kind == "trend":
+        output.update(granularity=a.plan.granularity, period=a.grounded.period)
+        partial = sum(trend_bucket_coverage(r["period"], a.plan.granularity, a.grounded.period)["partial"] for r in rows)
+        if partial:
+            output["time_note"] = "Kỳ đầu hoặc cuối chưa đủ ngày trong phạm vi đã chọn. Chỉ so sánh biến động khi có ít nhất hai kỳ đầy đủ; biểu đồ vẫn giữ mọi kỳ."
+    if preview:
+        output.update(selection="display_subset", population_count=population_count,
+                      displayed_count=len(rows), selection_metric=metric)
+        output["title"] += f" — {len(rows)}/{population_count} nhóm có {meta['business_name'].lower()} cao nhất"
+        output["purpose"] = "Hiển thị một phần các nhóm; bảng kết quả và số liệu phân tích dùng toàn bộ phạm vi."
     if v.chart_type == "scatter":
         output.update(
+            title=" / ".join(a.grounded.metrics[m]["business_name"] for m in v.metrics) + " — " + population_label(a),
+            observation_label=" / ".join(a.grounded.dimensions[d]["business_name"] for d in a.plan.dimensions if not d.endswith("_id")),
+            population_count=len(rows),
             data=[
                 {
                     "x": r[v.metrics[0]],
@@ -386,6 +449,12 @@ def render(v, a, index):
             }
             for i, r in enumerate(rows)
         ]
+        if v.chart_type == "donut" and len(rows) > 8:
+            ordered = sorted(output["data"], key=lambda r: (-r["value"], r["label"]))
+            tail = ordered[6:]
+            noun = "danh mục" if v.x_field == "category" else "nhóm"
+            output["data"] = [{**r, "color": PALETTE[i]} for i,r in enumerate(ordered[:6])] + [{"label": f"Khác ({len(tail)} {noun})", "value": sum(r["value"] for r in tail), "color": "#94a3b8"}]
+            output.update(grouped_categories=len(tail), population_count=len(rows))
     return output
 
 
@@ -410,7 +479,7 @@ def build_dashboard(
         ]
     charts = []
     omitted = []
-    seen = set()
+    seen = {}
     covered = set()
     tables = []
     # A model cannot demote a requested source by claiming its chart is supporting.
@@ -466,6 +535,9 @@ def build_dashboard(
             else None
         )
         if not reason and key in seen:
+            existing = seen[key]
+            existing["scope_refs"] = list(dict.fromkeys([*existing.get("scope_refs", [existing["scope_ref"]]), v.query_id, *v.compare_query_ids]))
+            covered.update((a.query.id, m) for m in v.metrics)
             reason = "duplicate_semantic_view"
         if not reason and len(charts) >= max_charts:
             reason = "chart_budget"
@@ -500,7 +572,7 @@ def build_dashboard(
                 ],
             }
         else:
-            rendered = render(v, a, len(charts)) if not reason else None
+            rendered = render(v, a, len(charts), max_categories) if not reason else None
         if not reason and rendered is None:
             reason = "invalid_composition_total"
         if reason:
@@ -515,7 +587,7 @@ def build_dashboard(
             )
         else:
             charts.append(rendered)
-            seen.add(key)
+            seen[key] = rendered
             covered.update((a.query.id, m) for m in v.metrics)
     # Preserve every returned metric through a view or an explicit result table.
     for id, a in artifacts.items():
@@ -570,7 +642,7 @@ def build_dashboard(
             if not profile:
                 continue
             lens = next((l for l in profile["analytical_lenses"] if l["id"] == a.query.lens_id), None)
-            section = sections.get(a.query.operation, "Kết quả chi tiết")
+            section = sections["relationship"] if chart["chart_type"] == "scatter" else sections.get(a.query.operation, "Kết quả chi tiết")
             chart.update(domain_id=profile["domain_id"], domain_label=profile["business_label"], lens_id=a.query.lens_id, lens_label=lens["business_label"] if lens else None, story_section=section)
             if lens:
                 chart["purpose"] = lens["business_question"]

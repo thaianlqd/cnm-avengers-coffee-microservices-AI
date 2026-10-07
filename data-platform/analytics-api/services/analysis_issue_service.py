@@ -10,7 +10,8 @@ def actionable_issue(error, message, clarification=None):
     elif code in {"query_scope", "unsupported_domain"}: category = "SCOPE_CONFLICT"
     elif code.startswith("time_"): category = "TIME_CONFLICT"
     elif code == "unsupported_metric": category = "METRIC_UNAVAILABLE"
-    elif code in {"requested_scope_too_large", "one_shot_context_budget_exceeded"}: category = "REQUESTED_SCOPE_TOO_LARGE"
+    elif code == "requested_scope_too_large": category = "REQUESTED_SCOPE_TOO_LARGE"
+    elif code in {"one_shot_context_budget_exceeded", "semantic_manifest_budget_exceeded", "context_configuration"}: category = "PLANNING_CAPACITY"
     elif code in {"invalid_analysis_contract", "analysis_spec_invalid", "module_needs_review", "schema_changed"}: category = "PLAN_FAILED"
     elif code.startswith("unsupported") or code in {"forecast_unsupported", "privacy", "module_privacy", "domain_lens_invalid"}: category = "UNSUPPORTED_ANALYSIS"
     titles = {
@@ -18,6 +19,7 @@ def actionable_issue(error, message, clarification=None):
         "INSUFFICIENT_DATA": "Chưa đủ dữ liệu để phân tích", "SCOPE_CONFLICT": "Cần xác nhận phạm vi",
         "TIME_CONFLICT": "Cần xác nhận thời gian", "METRIC_UNAVAILABLE": "Chỉ số chưa khả dụng",
         "REQUESTED_SCOPE_TOO_LARGE": "Cần chia nhỏ bài toán", "PLAN_FAILED": "Cần cập nhật kế hoạch",
+        "PLANNING_CAPACITY": "Chưa thể chuẩn bị đầy đủ ngữ cảnh phân tích",
         "UNSUPPORTED_ANALYSIS": "Phân tích chưa được hỗ trợ", "SYSTEM_UNAVAILABLE": "Chưa thể hoàn tất phân tích",
     }
     known = getattr(error, "known", [])
@@ -32,7 +34,7 @@ def actionable_issue(error, message, clarification=None):
     if code in {"module_needs_review", "schema_changed"}:
         actions.append({"type": "update_module", "label": "Cập nhật bài toán", "followup": None})
     actions.append({"type": "edit_question", "label": "Chỉnh câu hỏi", "followup": None})
-    if category in {"SYSTEM_UNAVAILABLE", "PLAN_FAILED"}:
+    if category in {"SYSTEM_UNAVAILABLE", "PLAN_FAILED", "PLANNING_CAPACITY"}:
         actions.append({"type": "retry", "label": "Lập lại kế hoạch", "followup": None})
     missing = {"metrics": "Chọn chỉ số để đánh giá.", "group_by": "Chọn cách nhóm kết quả.", "granularity": "Chọn nhịp thời gian.", "ranking": "Chọn số lượng kết quả xếp hạng."}.get(getattr(error, "missing", None), message)
     return {"category": category, "title": titles[category], "what_is_known": known,

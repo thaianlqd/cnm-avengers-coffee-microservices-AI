@@ -19,8 +19,9 @@ def envelope(reply):
         'mutation_claims': [], 'evidence_quotes': []}, ensure_ascii=False), 'error': None}
 
 
-def product_references(gateway):
-    ref = parse_selection_reference(gateway.user_message, active_namespace='PRODUCT', allow_multiple=True)
+def product_references(gateway, message=None):
+    msg = message if message is not None else gateway.user_message
+    ref = parse_selection_reference(msg, active_namespace='PRODUCT', allow_multiple=True)
     targets = []
     invalid = ref.namespace not in {None, 'PRODUCT'}
     if ref.namespace == 'MIXED':
@@ -86,7 +87,7 @@ def resolve_branch_choice(message: str, branches: list):
     if not m:
         m = re.search(r'^\s*(?:so\s*)?(\d+|mot|hai|ba|bon|nam|sau|bay|tam|chin|muoi|dau\s*tien|thu\s*(?:nhat|hai|ba|tu|nam))\s*(?:di|nhe|nha|a|oi)?\s*$', text)
     if not m:
-        m = re.search(r'\bso\s+(\d+|mot|hai|ba|bon|nam|sau|bay|tam|chin|muoi)\b', text)
+        m = re.search(r'(?<!\bnuoc\s)(?<!\bbanh\s)(?<!\bmon\s)(?<!\bly\s)(?<!\bdo uong\s)(?<!\bdo an\s)(?<!\bthuc uong\s)(?<!\bsan pham\s)\bso\s+(\d+|mot|hai|ba|bon|nam|sau|bay|tam|chin|muoi)\b', text)
 
     if m:
         val = m.group(1).strip()
@@ -113,6 +114,64 @@ def resolve_branch_choice(message: str, branches: list):
                 return branch, False
 
     return None, False
+
+
+def clean_branch_clause(message: str, branch_choice: dict = None) -> str:
+    if not message:
+        return ""
+    text = message
+    branch_ordinal_pattern = (
+        r'(?:[,;]|\b(?:và|va|với|voi)\b)?\s*'
+        r'(?:(?:tôi|toi|mình|minh|em|anh)\s+)?'
+        r'(?:'
+            r'\b(?:lấy|lay|nhận|nhan)\s+(?:ở|o|tại|tai)\s*(?:địa\s*chỉ|dia\s*chi|quán|quan|chi\s*nhánh|chi\s*nhanh|cửa\s*hàng|cua\s*hang)?\s*(?:số\s*|so\s*)?(?:\d+|một|mot|hai|ba|bốn|bon|năm|nam|sáu|sau|bảy|bay|tám|tam|chín|chin|mười|muoi)\b'
+            r'|'
+            r'\b(?:ở|o|tại|tai|đến|den|ghé|ghe)\b\s*(?:địa\s*chỉ|dia\s*chi|quán|quan|chi\s*nhánh|chi\s*nhanh|cửa\s*hàng|cua\s*hang)?\s*(?:số\s*|so\s*)?(?:\d+|một|mot|hai|ba|bốn|bon|năm|nam|sáu|sau|bảy|bay|tám|tam|chín|chin|mười|muoi)\b'
+            r'|'
+            r'\b(?:địa\s*chỉ|dia\s*chi|quán|quan|chi\s*nhánh|chi\s*nhanh|cửa\s*hàng|cua\s*hang)\s*(?:số\s*|so\s*)?(?:\d+|một|mot|hai|ba|bốn|bon|năm|nam|sáu|sau|bảy|bay|tám|tam|chín|chin|mười|muoi)\b'
+        r')'
+        r'\s*(?:nhé|nhe|nha|đi|di|ạ|a|ơi|oi)?'
+    )
+    cleaned = re.sub(branch_ordinal_pattern, ' ', text, flags=re.IGNORECASE)
+    if branch_choice:
+        bname = branch_choice.get('branch_name') or branch_choice.get('ten_chi_nhanh') or ''
+        if bname and len(bname) > 3:
+            cleaned = re.sub(re.escape(bname), ' ', cleaned, flags=re.IGNORECASE)
+        baddr = branch_choice.get('address') or branch_choice.get('dia_chi') or ''
+        street_m = re.search(r'(\d+[a-z]?\s+[^\s,]+(?:\s+[^\s,]+){1,3})', baddr)
+        if street_m:
+            street = street_m.group(1).strip()
+            if len(street) > 5:
+                cleaned = re.sub(re.escape(street), ' ', cleaned, flags=re.IGNORECASE)
+    return re.sub(r'\s+', ' ', cleaned).strip(' ,;')
+
+
+def strip_product_clauses(text: str) -> str:
+    if not text:
+        return ""
+    prod_pat = (
+        r'(?:(?:oke|ok|dạ|da)\s*[,.]?\s*)?'
+        r'(?:(?:cho\s+(?:tôi|toi|mình|minh|em)|lấy\s+(?:cho\s+(?:tôi|toi|mình|minh|em))?|mua|thêm|them|đặt|dat|chọn|chon)\s+)?'
+        r'(?:món|mon|nước|nuoc|bánh|banh|ly|phần|phan|sản\s+phẩm|san\s+pham)?\s*'
+        r'(?:số\s*|so\s*|thứ\s*|thu\s*)?\d+'
+        r'(?:\s*(?:và|va|,|với|voi)\s*(?:món|mon|nước|nuoc|bánh|banh|ly|phần|phan|sản\s+phẩm|san\s+pham)?\s*(?:số\s*|so\s*|thứ\s*|thu\s*)?\d+)*\s*'
+        r'(?:đi|di|nhé|nhe|nha|ạ|a)?'
+    )
+    res = re.sub(r'^\s*' + prod_pat + r'\s*(?:[,;]|\s+(?:ở|o|tại|tai|khu\s+vực|khu\s+vuc|gần|gan|chi\s+nhánh(?:\s+ở|\s+o)?)\s*|\s+)', '', text, flags=re.IGNORECASE).strip()
+    res = re.sub(r'(?:[,;]|\s+(?:ở|o|tại|tai)?)\s*' + prod_pat + r'\s*$', '', res, flags=re.IGNORECASE).strip()
+    return res
+
+
+def strip_fulfillment_clauses(text: str) -> str:
+    if not text:
+        return ""
+    fulfillment_pat = (
+        r'(?:(?:tôi|toi|mình|minh|em)\s+)?'
+        r'(?:(?:muốn\s+|muon\s+)?(?:lấy|lay|mang|uống|uong|dùng|dung|ngồi|ngoi)\s+(?:tại\s+quán|tai\s+quan|mang\s+về|mang\s+ve|mang\s+đi|mang\s+di|tại\s+chỗ|tai\s+cho))'
+        r'(?:\s+(?:có\s+được\s+không|co\s+duoc\s+khong|được\s+không|duoc\s+khong|nhé|nhe|nha|ạ|a|được|duoc))?'
+        r'[,;]?'
+    )
+    return re.sub(fulfillment_pat, '', text, flags=re.IGNORECASE).strip(' ,;')
 
 
 def customer_shopping_control(gateway):
@@ -162,8 +221,21 @@ def customer_shopping_control(gateway):
             bid = str(branch_choice.get('branch_id') or branch_choice.get('ma_chi_nhanh'))
             checkout = business.get('checkout') or {}
             existing_deliv = checkout.get('delivery_type')
-            is_takeaway = bool(re.search(r'\b(?:mang\s*(?:ve|di)|take\s*away|lay\s+(?:tai|o|ve|hang)|den\s+lay|toi\s+lay|tu\s+(?:den\s+)?lay|ghe\s+lay)\b', text))
-            is_dine_in = bool(re.search(r'\b(?:uong|dung|an|ngoi)\s+(?:tai|o)\s+(?:quan|cho|day|tiem)\b', text) or re.search(r'\b(?:tai|o)\s+cho\b|\bngoi\s+lai\b|\bo\s+lai\s+quan\b', text))
+
+            cleaned_message = clean_branch_clause(message, branch_choice)
+            cleaned_text = normalize_shopping(cleaned_message)
+
+            is_takeaway = bool(
+                re.search(r'\b(?:mang\s*(?:ve|di)|take\s*away)\b', text)
+                or re.search(r'\b(?:den\s+lay\s+mang\s*(?:ve|di)|tu\s+(?:den\s+)?lay\s+mang\s*(?:ve|di)|ghe\s+lay\s+mang\s*(?:ve|di))\b', text)
+                or re.search(r'\b(?:lay\s+hang(?:\s+tai\s+quan)?|lay\s+do\s+mang\s*(?:ve|di))\b', text)
+                or re.search(r'\b(?:lay\s+(?:tai|o|ve|hang)|den\s+lay|toi\s+lay|tu\s+(?:den\s+)?lay|ghe\s+lay)\b', cleaned_text)
+            )
+            is_dine_in = bool(
+                re.search(r'\b(?:uong|dung|an|ngoi)\s+(?:tai|o)\s+(?:quan|cho|day|tiem)\b', text)
+                or re.search(r'\b(?:tai|o)\s+cho\b|\bngoi\s+lai\b|\bo\s+lai\s+quan\b', text)
+                or re.search(r'\b(?:uong|dung|an|ngoi)\b', cleaned_text)
+            )
             deliv_type = None
             if is_takeaway and not is_dine_in:
                 deliv_type = 'MANG_DI'
@@ -175,7 +247,20 @@ def customer_shopping_control(gateway):
             if deliv_type:
                 cart_manager.set_checkout_context(gateway.session_id, delivery_type=deliv_type)
             gateway.dispatch('set_session_branch', {'branch_id': bid})
-            return {'reply': None, 'error': None}
+            gateway.turn_selected_branch = branch_choice
+
+            clean_ref, clean_targets, clean_invalid = product_references(gateway, cleaned_message)
+            clean_interp = interpret_shopping(cleaned_message, snapshot=gateway.entry_products,
+                active_catalog=[row for rows in gateway.entry_product_groups.values() for row in rows],
+                ordinal_targets=clean_targets, ordinal_requested=clean_ref.requested,
+                ordinal_invalid=clean_invalid, focus=gateway.entry_focus)
+            has_product_command = (clean_ref.requested and not clean_invalid and bool(clean_targets)) or bool(clean_interp.targets)
+            if has_product_command:
+                gateway.user_message = cleaned_message
+                message = cleaned_message
+                text = cleaned_text
+            else:
+                return {'reply': None, 'error': None}
     # Explicit fulfillment choice without choosing branch or catalog items
     is_takeaway = bool(re.search(r'\b(?:mang\s*(?:ve|di)|take\s*away|lay\s+(?:tai|o|ve|hang)|den\s+lay|toi\s+lay|tu\s+(?:den\s+)?lay|ghe\s+lay)\b', text))
     is_dine_in = bool(re.search(r'\b(?:uong|dung|an|ngoi)\s+(?:tai|o)\s+(?:quan|cho|day|tiem)\b', text) or re.search(r'\b(?:tai|o)\s+cho\b|\bngoi\s+lai\b|\bo\s+lai\s+quan\b', text))
@@ -219,7 +304,7 @@ def customer_shopping_control(gateway):
                 r'\b(?:xem|review|goi y|chi tiet|mon|banh|topping|size)\b', text):
             gateway.dispatch('resolve_location', {'location': location.value, 'kind': location.kind, 'for_checkout': True})
             return {'reply': None, 'error': None}
-    ref, targets, invalid = product_references(gateway)
+    ref, targets, invalid = product_references(gateway, message)
     interpretation = interpret_shopping(message, snapshot=gateway.entry_products,
         active_catalog=[row for rows in gateway.entry_product_groups.values() for row in rows],
         ordinal_targets=targets, ordinal_requested=ref.requested, ordinal_invalid=invalid,
@@ -240,6 +325,14 @@ def customer_shopping_control(gateway):
             return {'reply': None, 'error': None}
     pending = business.get('pending_products') or []
     if pending and not option_question(message) and not re.search(r'\b(?:xem|gia|review|chi tiet|mo ta|thanh toan|xoa|bo mon|huy)\b', text):
+        is_takeaway = bool(re.search(r'\b(?:mang\s*(?:ve|di)|take\s*away|den\s+lay|tu\s+(?:den\s+)?lay|ghe\s+lay)\b', text))
+        is_dine_in = bool(re.search(r'\b(?:uong|dung|an|ngoi)\s+(?:tai|o)\s+(?:quan|cho|day|tiem)\b', text) or re.search(r'\b(?:tai|o)\s+cho\b|\bngoi\s+lai\b|\bo\s+lai\s+quan\b', text))
+        if is_takeaway and not is_dine_in:
+            from src.common import cart_manager
+            cart_manager.set_checkout_context(gateway.session_id, delivery_type='MANG_DI')
+        elif is_dine_in and not is_takeaway:
+            from src.common import cart_manager
+            cart_manager.set_checkout_context(gateway.session_id, delivery_type='TAI_CHO')
         scopes = gateway.product_option_scopes
         actionable = [(row, gateway.option_message_for(str(row['product_id']))) for row in pending
             if option_answer(gateway.option_message_for(str(row['product_id'])), row.get('option_schema') or [])]
@@ -307,14 +400,65 @@ def customer_shopping_control(gateway):
                     staged.append(product)
             else:
                 staged.append(product)
+        is_takeaway = bool(re.search(r'\b(?:mang\s*(?:ve|di)|take\s*away|lay\s+tai\s+quan|den\s+lay|tu\s+(?:den\s+)?lay|ghe\s+lay)\b', text))
+        is_dine_in = bool(re.search(r'\b(?:uong|dung|an|ngoi)\s+(?:tai|o)\s+(?:quan|cho|day|tiem)\b', text) or re.search(r'\b(?:tai|o)\s+cho\b|\bngoi\s+lai\b|\bo\s+lai\s+quan\b', text))
+        if is_takeaway and not is_dine_in:
+            from src.common import cart_manager
+            cart_manager.set_checkout_context(gateway.session_id, delivery_type='MANG_DI')
+        elif is_dine_in and not is_takeaway:
+            from src.common import cart_manager
+            cart_manager.set_checkout_context(gateway.session_id, delivery_type='TAI_CHO')
+        loc_reply = None
+        cleaned_loc_text = strip_fulfillment_clauses(strip_product_clauses(message))
+        from src.agents.location_parser import parse_location
+        parsed_loc = parse_location(cleaned_loc_text)
+        if (parsed_loc.kind in {'address', 'area', 'poi', 'branch_query'} and (parsed_loc.value or parsed_loc.admin_hints)
+                and not re.search(r'\b(?:xem|review|goi y|chi tiet|mon|banh|topping|size|gia|menu)\b', normalize_shopping(cleaned_loc_text))):
+            loc_val = parsed_loc.value or (parsed_loc.admin_hints[0] if parsed_loc.admin_hints else '')
+            loc_kind = 'area' if parsed_loc.kind == 'branch_query' else parsed_loc.kind
+            loc_result = gateway.dispatch('resolve_location', {
+                'location': loc_val,
+                'kind': loc_kind,
+                'for_checkout': False
+            })
+            if loc_result:
+                from src.agents.customer_flow_presentation import branch_choices, location_choices
+                if loc_result.get('branches'):
+                    loc_reply = branch_choices(loc_result)
+                elif loc_result.get('location_candidates'):
+                    loc_reply = location_choices(loc_result)
+                elif loc_result.get('message'):
+                    loc_reply = loc_result['message']
         if staged:
             prompt = pending_prompt(staged)
             staged_ids = {str(item['product_id']) for item in staged}
-            directly_added = [row for row in selected if str(row['product_id']) not in staged_ids]
+            turn_quantities = getattr(gateway, 'turn_selection_quantities', {}) or {}
+            directly_added = [
+                {**row, 'quantity': turn_quantities.get(str(row['product_id']), row.get('quantity', 1))}
+                for row in selected if str(row['product_id']) not in staged_ids
+            ]
             if directly_added:
                 added_names = ', '.join(f"**{row['product_name']} ×{row.get('quantity', 1)}**" for row in directly_added)
                 prefix = f"Dạ, mình đã thêm {added_names} vào giỏ hàng của bạn rồi ạ.\n\nCòn với các món đang chọn, bạn chọn giúp mình tùy chọn nhé:\n\n"
                 prompt = prefix + prompt
+            selected_branch = getattr(gateway, 'turn_selected_branch', None)
+            if selected_branch:
+                bname = selected_branch.get('branch_name') or selected_branch.get('ten_chi_nhanh') or ''
+                deliv = (gateway.context['business'].get('checkout') or {}).get('delivery_type')
+                if deliv == 'MANG_DI':
+                    branch_prefix = f"Dạ, mình đã chọn quán **{bname}** cho đơn đến lấy tại quán của bạn rồi ạ.\n\n"
+                elif deliv == 'TAI_CHO':
+                    branch_prefix = f"Dạ, mình đã chọn quán **{bname}** cho đơn dùng tại chỗ của bạn rồi ạ.\n\n"
+                else:
+                    branch_prefix = (f"Dạ, mình đã chọn quán **{bname}** cho bạn rồi nhé!\n"
+                                     f"Bạn muốn **đến lấy tại quán (mang đi)** hay **dùng tại chỗ** để mình chuẩn bị đơn nhé?\n\n")
+                prompt = branch_prefix + prompt
+            elif loc_reply:
+                prompt = loc_reply + '\n\n' + prompt
             gateway.artifacts.pending_selection_reply = prompt
+        elif loc_reply:
+            from src.agents.customer_flow_presentation import customer_flow_reply
+            cart_reply = customer_flow_reply(gateway.artifacts.logs, gateway.artifacts.business) or ''
+            gateway.artifacts.pending_selection_reply = (loc_reply + '\n\n' + cart_reply).strip()
         return {'reply': None, 'error': None}
     return None

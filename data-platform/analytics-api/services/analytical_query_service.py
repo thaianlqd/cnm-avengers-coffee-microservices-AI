@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import logging
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -19,6 +20,29 @@ from services.analysis_query import (
 from services.analysis_presentation import safe_rows
 from services.time_resolution_service import resolve_time
 from services.value_grounding_service import dimension_values
+
+
+RESULT_RULES = {
+    "Result population exceeds": "population_limit",
+    "Result columns differ": "projection_columns",
+    "Result row fields differ": "projection_rows",
+    "Sensitive result field": "sensitive_field",
+    "Metric must be finite numeric": "metric_numeric",
+    "Negative metric": "metric_negative",
+    "Returned dimension violates filter": "filter_mismatch",
+    "Detail timestamp outside": "timestamp_bounds",
+    "Invalid detail timestamp": "timestamp_type",
+    "Time bucket outside": "bucket_bounds",
+    "Invalid time bucket": "bucket_type",
+    "Top N exceeded": "ranking_limit",
+    "Metric ordering violates": "ranking_order",
+    "NULL ordering violates": "null_order",
+    "Invalid per-group rank": "rank_position",
+    "Time buckets must be ascending": "bucket_order",
+    "Numeric ordering violates": "numeric_order",
+    "Duplicate analytical grain": "duplicate_grain",
+}
+logger = logging.getLogger("ai-analytics")
 
 
 @dataclass
@@ -253,18 +277,32 @@ class AnalyticalQueries:
         self.pending[q.id] = artifact
         return artifact
 
+    def check_result(self, result, artifact, source):
+        verdict = validate_results(result, artifact.plan, artifact.grounded, self.catalog)
+        if verdict.valid:
+            return verdict
+        codes = sorted({next((code for prefix, code in RESULT_RULES.items() if error.startswith(prefix)), "result_invalid") for error in verdict.errors})
+        # Only controlled rule codes and shape counts. Never log SQL, provider
+        # prose, operation IDs, filters, row values or exception text.
+        diagnostic = {"source": source, "operation": artifact.plan.kind,
+                      "row_count": len(result.get("rows", [])),
+                      "row_limit": artifact.plan.row_limit, "rules": codes}
+        failures = self.diagnostics.setdefault("result_failures", [])
+        if len(failures) < 8:
+            failures.append(diagnostic)
+        logger.warning("Result rejected source=%s operation=%s rows=%s limit=%s rules=%s",
+                       source, artifact.plan.kind, diagnostic["row_count"], artifact.plan.row_limit, ",".join(codes))
+        error = AnalysisError("result_contract", "Result does not satisfy the analytical contract")
+        error.result_issues = codes
+        if codes == ["population_limit"]:
+            error.business_category = "requested_scope_too_large"
+        raise error
+
     def run(self, artifact):
         cached = self.cache.get(artifact.signature)
         if cached and (self.proposal or cached.result is not None):
             if cached.result is not None:
-                verdict = validate_results(
-                    cached.result, artifact.plan, artifact.grounded, self.catalog
-                )
-                if not verdict.valid:
-                    raise AnalysisError(
-                        "result_contract",
-                        "Cached result fails the current logical contract",
-                    )
+                self.check_result(cached.result, artifact, "cache")
             artifact.result, artifact.contract = deepcopy(cached.result), deepcopy(
                 cached.contract
             )
@@ -282,13 +320,7 @@ class AnalyticalQueries:
                     "execution",
                     "Compiled read-only query failed; no SQL repair is allowed",
                 ) from exc
-            verdict = validate_results(
-                result, artifact.plan, artifact.grounded, self.catalog
-            )
-            if not verdict.valid:
-                raise AnalysisError(
-                    "result_contract", "Result does not satisfy the analytical contract"
-                )
+            verdict = self.check_result(result, artifact, "execution")
             artifact.result = {**result, "rows": safe_rows(result["rows"])}
             artifact.contract = verdict.model_dump()
             artifact.observed_at = datetime.now(timezone.utc).isoformat()
@@ -304,13 +336,6 @@ class AnalyticalQueries:
             args.update(replaces=None, changed_fields=[])
             artifact = self.prepare(args)
             if old.result is not None:
-                verdict = validate_results(
-                    old.result, artifact.plan, artifact.grounded, self.catalog
-                )
-                if not verdict.valid:
-                    raise AnalysisError(
-                        "result_contract",
-                        "Stored result no longer satisfies its contract",
-                    )
+                self.check_result(old.result, artifact, "stored")
             self.run(artifact)
         return self.artifacts.get(id)

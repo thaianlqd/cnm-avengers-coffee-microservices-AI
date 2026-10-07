@@ -2,7 +2,7 @@ import React from 'react';
 import { analysisChartGroups } from '../utils/analysisPresentation.mjs';
 
 /** User-visible analytical scope, shared by proposal and validated report. */
-export const AnalysisMeaning: React.FC<{ interpretation?: any }> = ({ interpretation: value }) => {
+export const AnalysisMeaning: React.FC<{ interpretation?: any; compact?: boolean }> = ({ interpretation: value, compact = false }) => {
   if (!value || typeof value !== 'object') return null;
   const period = value.time_range || {};
   const ranking = value.ranking;
@@ -10,6 +10,14 @@ export const AnalysisMeaning: React.FC<{ interpretation?: any }> = ({ interpreta
   const grains: Record<string, string> = { day: 'ngày', week: 'tuần', month: 'tháng', quarter: 'quý', year: 'năm' };
   const operators: Record<string, string> = { eq: '=', in: 'thuộc', gt: '>', gte: '≥', lt: '<', lte: '≤' };
   const filters = (value.filters || []).map((f: any) => `${f.dimension} ${operators[f.operator || 'eq'] || '='} ${Array.isArray(f.value) ? f.value.join(', ') : String(f.value)}`);
+  if (compact) return <details className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
+    <summary className="cursor-pointer flex flex-wrap items-center gap-x-4 gap-y-2 list-none">
+      <span className="font-medium text-slate-700">{filters.join(' · ') || 'Toàn phạm vi'}</span>
+      <span>{period.start ? `${period.start} → ${period.end}` : 'Toàn bộ thời gian'}</span>
+      <span className="ml-auto text-slate-400">Xem phạm vi ▾</span>
+    </summary>
+    <div className="mt-3"><AnalysisMeaning interpretation={value} /></div>
+  </details>;
   return (
     <section aria-label="AI interpreted request" className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4 text-xs text-slate-700 space-y-2">
       <h3 className="font-semibold text-indigo-900">AI hiểu yêu cầu của bạn</h3>
@@ -27,7 +35,7 @@ export const AnalysisMeaning: React.FC<{ interpretation?: any }> = ({ interpreta
       {(value.components || []).map((part: any) => (
         <p key={part.id}><strong>{part.id}:</strong> {kinds[part.kind] || 'Phân tích'}; {part.subject ? `${part.subject}; ` : ''}{part.metrics.join(', ')}{part.filters?.length ? `; ${part.filters.map((f: any) => `${f.dimension}: ${f.value}`).join('; ')}` : ''}{part.ranking ? `; Top ${part.ranking.top_n}, ${part.ranking.direction === 'ASC' ? 'tăng dần' : 'giảm dần'}` : ''}</p>
       ))}
-      {(value.operations || []).length > 1 && analysisChartGroups(value.operations).map(group => <section key={group.role} className="space-y-2"><h4 className="font-semibold">{group.title}</h4>{group.charts.map((part: any) => (
+      {(value.operations || []).length > 1 && <details className="border-t border-indigo-100 pt-2"><summary className="cursor-pointer font-medium">{value.operations.length} phần phân tích · Xem kế hoạch chi tiết</summary>{analysisChartGroups(value.operations).map(group => <section key={group.role} className="space-y-2"><h4 className="font-semibold">{group.title}</h4>{group.charts.map((part: any) => (
         <div key={part.query_id} className="border-t border-indigo-100 pt-2">
           <p><strong>{part.domain_label || part.subject} · {part.role === 'supporting' ? 'Phân tích hỗ trợ' : 'Theo yêu cầu'}:</strong> {part.lens_label || kinds[part.kind] || 'Phân tích'}</p>
           <p>{(part.metrics || []).map((m: any) => `${m.label} (${m.unit})`).join(', ')}</p>
@@ -37,7 +45,7 @@ export const AnalysisMeaning: React.FC<{ interpretation?: any }> = ({ interpreta
           {part.ranking && <p>Top {part.ranking.top_n} theo {part.ranking.metric}, {part.ranking.direction === 'ASC' ? 'tăng dần' : 'giảm dần'}{part.ranking.per_group?.length ? `; trong từng ${part.ranking.per_group.join(', ')}` : ''}</p>}
           {part.role === 'supporting' && <p>Giữ cùng bộ lọc và thời gian với phần phân tích theo yêu cầu.</p>}
         </div>
-      ))}</section>)}
+      ))}</section>)}</details>}
       {value.assumptions?.length > 0 && <p><strong>Giả định:</strong> {value.assumptions.join('; ')}</p>}
     </section>
   );

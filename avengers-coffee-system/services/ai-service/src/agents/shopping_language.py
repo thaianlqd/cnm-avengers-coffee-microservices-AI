@@ -20,6 +20,7 @@ def normalize_shopping(value: Any) -> str:
     raw = unicodedata.normalize("NFD", str(value or "").casefold())
     plain = "".join(char for char in raw if unicodedata.category(char) != "Mn").replace("đ", "d")
     text = re.sub(r"\s+", " ", re.sub(r"[^\w#]+", " ", plain)).strip()
+    text = re.sub(r"\b(?:b(?:o|ot|oot|ott)p+ing|bo(?:topping|toping))\b", "bo topping", text)
     return re.sub(r"\b(?:k|ko)\b", "khong", text)
 
 
@@ -303,18 +304,24 @@ def interpret_shopping(
             "quantity": quantity, "quantity_valid": quantity > 0}
     if not text:
         return ShoppingInterpretation(**base)
-    if re.search(
-        r"\b(?:voucher|ma giam gia|thanh toan|checkout|chot don|dat don|"
-        r"giao hang|lay tai quan|chi nhanh|dia chi|lich su don|don hang|"
-        r"xoa mon|bo mon|sua topping|doi so luong|tang so luong|giam so luong)\b",
+    cart_mutation = bool(re.search(
+        r"\b(?:xoa mon|bo mon|sua topping|doi so luong|tang so luong|giam so luong)\b",
         text,
-    ):
+    ))
+    non_shopping_intent = bool(re.search(
+        r"\b(?:voucher|ma giam gia|thanh toan|checkout|chot don|dat don|"
+        r"giao hang|lay tai quan|chi nhanh|dia chi|lich su don|don hang)\b",
+        text,
+    ))
+    if cart_mutation or (non_shopping_intent and not ordinal_requested):
         return ShoppingInterpretation(**base, act="NOT_APPLICABLE")
     negative = bool(re.search(
         r"\b(?:khong\s+(?:lay|mua|them|chon)|dung\s+(?:them|mua|lay)|"
         r"bo\s+(?:mon|cai|san pham|qua|topping|size)|huy)\b", text))
+    non_product_co = bool(re.search(r"\bco\s+duoc\s+khong\b|\bco\s+(?:cua\s+hang|chi\s+nhanh|quan|dia\s+chi)\b", text))
+    co_inquiry = bool(re.search(r"\bco\b.*\b(?:khong|nao|gi)\b", text) and not non_product_co)
     info = bool(re.search(r"\b(?:gia|bao nhieu|review|danh gia|nhan xet|ngon|vi|topping|size|thanh phan|the nao)\b", text)
-                or re.search(r"\bco\b.*\b(?:khong|nao|gi)\b", text)
+                or co_inquiry
                 or re.search(r"\b(?:xem|tim|goi y|menu|thuc don)\b", text))
     selection_style = bool(re.search(
         r"\b(?:mua|lay|them|chon|dat)\b|\b(?:cho|lam)\s+(?:toi|minh)\b", text,
@@ -369,9 +376,6 @@ def interpret_shopping(
     if negative:
         return ShoppingInterpretation(**base, act="NEGATE_PRODUCT", entity_type=entity,
                                       targets=targets, reference_source=source, ambiguity=ambiguity)
-    if targets and (info or re.search(r"\b(?:co|con)\b.*\b(?:khong|nao|gi)\b", text)):
-        return ShoppingInterpretation(**base, act="PRODUCT_INFO", entity_type=entity,
-                                      targets=targets, reference_source=source)
     if ambiguity:
         return ShoppingInterpretation(**base, act="AMBIGUOUS", entity_type="PRODUCT",
                                       ambiguity=ambiguity,
@@ -379,9 +383,16 @@ def interpret_shopping(
                                       family=family[0] if family else None,
                                       search_text=family[2] if family else None,
                                       label=family[3] if family else None)
-    if targets and _selects_target(text, targets, source):
+    explicit_info = bool(re.search(
+        r"\b(?:gia|bao nhieu|review|danh gia|nhan xet|ngon|vi|topping|size|thanh phan|"
+        r"the nao|chi tiet|mo ta|hoi|co\s+(?:nhung\s+)?gi)\b", text
+    ) or re.search(r"\b(?:xem|tim|goi y|menu|thuc don)\b", text))
+    if targets and _selects_target(text, targets, source) and not explicit_info:
         return ShoppingInterpretation(**base, act="ADD_ITEM", read_only=False,
                                       entity_type=entity, targets=targets, reference_source=source)
+    if targets and (info or (re.search(r"\b(?:co|con)\b.*\b(?:khong|nao|gi)\b", text) and not non_product_co)):
+        return ShoppingInterpretation(**base, act="PRODUCT_INFO", entity_type=entity,
+                                      targets=targets, reference_source=source)
     if targets:
         return ShoppingInterpretation(**base, act="PRODUCT_INFO", entity_type=entity,
                                       targets=targets, reference_source=source)

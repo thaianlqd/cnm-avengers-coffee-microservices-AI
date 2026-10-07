@@ -14,6 +14,7 @@ from services.analysis_contract import (
     QueryPlan,
     Ranking,
     ValidationResult,
+    MAX_ANALYTICAL_ROWS,
 )
 from services.sql_service import (
     validate_read_only_sql,
@@ -177,7 +178,11 @@ def build_plans(grounded, catalog):
                     if edge["to_table"] not in reached:
                         joins.append(edge)
                         reached.add(edge["to_table"])
-            limit = rank.top_n if rank and not rank.per_group else 100
+            limit = (
+                rank.top_n if rank and not rank.per_group
+                else 100 if comp.kind == "detail"
+                else MAX_ANALYTICAL_ROWS
+            )
             if comp.kind == "aggregate" and not dimensions:
                 limit = 1
             elif comp.row_limit is not None and not rank:
@@ -545,7 +550,7 @@ def validate_results(result, plan, grounded, catalog):
             for dimension in plan.dimensions:
                 definition = catalog.registry["dimensions"][dimension]
                 if (
-                    definition["table"] + "." + definition["column"] != plan.time_column
+                    (definition.get("expression") or definition["table"] + "." + definition["column"]) != plan.time_column
                     or row.get(dimension) is None
                 ):
                     continue

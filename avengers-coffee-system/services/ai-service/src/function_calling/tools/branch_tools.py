@@ -218,7 +218,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
             if user_lat is None or user_lon is None:
                 resolution = None
                 structured_address = location_kind == "address" and "," in target_address
-                if location_kind == "poi" or structured_address:
+                if location_kind in {"poi", "area", "admin_area"} or structured_address:
                     resolution = resolve_location(
                         target_address, location_kind, getattr(parsed_location, "admin_hints", ()))
                     if (resolution.status == "rejected" and location_kind == "address"

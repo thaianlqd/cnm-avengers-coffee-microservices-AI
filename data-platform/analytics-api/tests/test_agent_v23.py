@@ -332,7 +332,7 @@ class V23Tests(unittest.TestCase):
     def test_rich_dashboard_result_reuse_diversity_and_units(self):
         queries = rich_queries(); p = self.pipeline(query_script(queries), executor=fixture_executor(queries)); r = p.generate(self.request())
         self.assertEqual((len(r["charts"]), r["diagnostics"]["db_query_count"], p.provider.call_count), (7, 6, 2))
-        self.assertTrue({"horizontal_bar", "bar", "line", "donut", "multi_line"} <= {c["chart_type"] for c in r["charts"]})
+        self.assertTrue({"horizontal_bar", "bar", "area", "donut", "multi_line"} <= {c["chart_type"] for c in r["charts"]})
         self.assertEqual({c["unit"] for c in r["charts"] if c.get("query_id") == "main"}, {"sản phẩm", "VND"})
         self.assertTrue(all(c["chart_type"] != "donut" for c in r["charts"] if c.get("query_id") == "main"))
         self.assertEqual(r["dashboard_plan"]["quality"]["distinct_operations"], 6)

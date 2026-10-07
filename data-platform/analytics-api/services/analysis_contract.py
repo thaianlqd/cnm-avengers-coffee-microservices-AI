@@ -236,6 +236,11 @@ class GroundedAnalysisSpec(Contract):
     retrieval: Dict[str, Any]
 
 
+# Server execution budget for complete grouped populations. User Top N/detail
+# limits remain capped at 100; they are separate from this completeness budget.
+MAX_ANALYTICAL_ROWS = 2000
+
+
 class QueryPlan(Contract):
     id: str
     kind: str
@@ -255,7 +260,7 @@ class QueryPlan(Contract):
     period: Dict[str, Any]
     granularity: str
     ranking: Optional[Ranking]
-    row_limit: int = Field(ge=1, le=100)
+    row_limit: int = Field(ge=1, le=MAX_ANALYTICAL_ROWS)
     group: Optional[str] = None
     schema_fingerprint: str
     explicit_limit: bool = False

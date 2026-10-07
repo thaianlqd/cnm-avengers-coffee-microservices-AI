@@ -5,6 +5,22 @@ import statistics
 import hashlib
 import json
 from collections import defaultdict
+from datetime import date, timedelta
+
+
+def trend_bucket_coverage(value, granularity, period):
+    """Calendar coverage of a bucket, clipped only by the approved time scope."""
+    start = date.fromisoformat(str(value)[:10])
+    if granularity in {"day", "week"}:
+        next_start = start + timedelta(days=7 if granularity == "week" else 1)
+    else:
+        months = {"month": 1, "quarter": 3, "year": 12}[granularity]
+        offset = start.year * 12 + start.month - 1 + months
+        next_start = date(offset // 12, offset % 12 + 1, 1)
+    end = next_start - timedelta(days=1)
+    partial = bool((period.get("start") and start.isoformat() < period["start"])
+                   or (period.get("end") and end.isoformat() > period["end"]))
+    return {"start": start.isoformat(), "end": end.isoformat(), "partial": partial}
 
 
 def number(value):
@@ -168,22 +184,30 @@ def analytical_features(artifacts, catalog=None):
                     )
                 if a.plan.kind == "trend" and len(pairs) >= 2:
                     # Missing/null buckets are not interpolated or converted to zero.
-                    first, last = values[0], values[-1]
+                    coverage = [trend_bucket_coverage(r["period"], a.plan.granularity, a.grounded.period) for r, _ in pairs]
+                    complete = [p for p, c in zip(pairs, coverage) if not c["partial"]]
+                    partial_count = sum(c["partial"] for c in coverage)
+                    if len(complete) < 2:
+                        add(a, metric, "trend", "period_coverage", {"complete_buckets": len(complete), "partial_buckets": partial_count},
+                            f"{label}{suffix}: chưa có hai kỳ đầy đủ trong phạm vi để so sánh biến động; biểu đồ giữ nguyên các kỳ quan sát.", partition)
+                        continue
+                    first, last = complete[0][1], complete[-1][1]
                     change = last - first
                     pct = change / abs(first) * 100 if first else None
-                    peak, trough = max(pairs, key=lambda p: p[1]), min(
-                        pairs, key=lambda p: p[1]
+                    trend_values = [v for _, v in complete]
+                    peak, trough = max(complete, key=lambda p: p[1]), min(
+                        complete, key=lambda p: p[1]
                     )
                     x = [
                         __import__("datetime")
                         .date.fromisoformat(str(r["period"])[:10])
                         .toordinal()
-                        for r, _ in pairs
+                        for r, _ in complete
                     ]
-                    meanx, meany = statistics.mean(x), statistics.mean(values)
+                    meanx, meany = statistics.mean(x), statistics.mean(trend_values)
                     denominator = sum((v - meanx) ** 2 for v in x)
                     slope = (
-                        sum((v - meanx) * (y - meany) for v, y in zip(x, values))
+                        sum((v - meanx) * (y - meany) for v, y in zip(x, trend_values))
                         / denominator
                         if denominator
                         else None
@@ -201,23 +225,27 @@ def analytical_features(artifacts, catalog=None):
                             "direction": (
                                 "up" if change > 0 else "down" if change < 0 else "flat"
                             ),
-                            "first_period": str(pairs[0][0]["period"]),
-                            "last_period": str(pairs[-1][0]["period"]),
+                            "first_period": str(complete[0][0]["period"]),
+                            "last_period": str(complete[-1][0]["period"]),
+                            "comparison_basis": "complete_periods" if partial_count else "observed_periods",
+                            "comparable": True,
+                            "excluded_partial_buckets": partial_count,
+                            "complete_buckets": len(complete),
                             "peak_period": str(peak[0]["period"]),
                             "peak": peak[1],
                             "trough_period": str(trough[0]["period"]),
                             "trough": trough[1],
                             "slope_per_day": slope,
-                            "volatility": statistics.pstdev(values),
+                            "volatility": statistics.pstdev(trend_values),
                             "observed_buckets": len(pairs),
                             "null_buckets": len(batch) - len(pairs),
                         },
-                        f"{label}{suffix} thay đổi từ {fmt(first)} thành {fmt(last)} {unit} giữa hai kỳ quan sát đầu và cuối"
+                        f"{label}{suffix} thay đổi từ {fmt(first)} thành {fmt(last)} {unit} giữa kỳ {str(complete[0][0]['period'])[:10]} và {str(complete[-1][0]['period'])[:10]}"
                         + (
                             f" ({fmt(pct)}%)."
                             if pct is not None
                             else "; kỳ đầu bằng 0 nên không tính phần trăm."
-                        ),
+                        ) + (f" Chỉ đối chiếu kỳ đầy đủ; {partial_count} kỳ biên chưa đủ ngày vẫn có trên biểu đồ." if partial_count else ""),
                         partition,
                     )
                     add(
@@ -228,9 +256,10 @@ def analytical_features(artifacts, catalog=None):
                         {
                             "peak": peak[1],
                             "trough": trough[1],
-                            "volatility": statistics.pstdev(values),
+                            "volatility": statistics.pstdev(trend_values),
+                            "excluded_partial_buckets": partial_count,
                         },
-                        f'{label}{suffix} đạt đỉnh {fmt(peak[1])} {unit} ở {peak[0]["period"]}; thấp nhất {fmt(trough[1])} {unit} ở {trough[0]["period"]}.',
+                        f'{label}{suffix} đạt đỉnh {fmt(peak[1])} {unit} ở {peak[0]["period"]}; thấp nhất {fmt(trough[1])} {unit} ở {trough[0]["period"]}.' + (" Chỉ tính các kỳ đầy đủ trong phạm vi." if partial_count else ""),
                         partition,
                     )
                 if (

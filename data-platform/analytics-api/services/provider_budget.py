@@ -6,14 +6,17 @@ from services.analysis_catalog import AnalysisError
 
 
 class ProviderBudget:
-    # This is a production invariant, not an environment-tunable retry count.
+    # Standalone transports default to one call; planning may reserve one repair.
     max_calls = 1
 
-    def __init__(self, diagnostics=None):
+    def __init__(self, diagnostics=None, max_calls=1):
+        if max_calls not in (1, 2):
+            raise AnalysisError("provider_policy", "Planning permits at most two calls")
+        self.max_calls = max_calls
         self.diagnostics = diagnostics if diagnostics is not None else {}
         self.used = 0
         self.lock = Lock()
-        self.diagnostics.update(provider_call_budget=1, provider_call_count=0,
+        self.diagnostics.update(provider_call_budget=max_calls, provider_call_count=0,
                                 provider_attempt_count=0, provider_call_budget_block_count=0)
 
     def consume(self, context_chars=None):
@@ -36,7 +39,7 @@ class ProviderBudget:
 class ProviderTurn:
     def __init__(self, provider, diagnostics):
         self.provider = provider
-        self.budget = ProviderBudget(diagnostics)
+        self.budget = ProviderBudget(diagnostics, max_calls=validate_single_shot_policy())
 
     def invoke(self, **request):
         from services.agent_provider import NativeAgentProvider
@@ -51,9 +54,14 @@ class ProviderTurn:
 
 
 def validate_single_shot_policy():
-    """Unsafe deployment settings fail closed; none enables a hidden legacy loop."""
-    if os.getenv("DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN", "1").strip() != "1":
-        raise AnalysisError("provider_policy", "Production requires a one-call allowance")
-    for flag in ("CONTRACT_REPAIR", "MODEL_ESCALATION", "PROVIDER_FALLBACK", "POST_RESULT_SYNTHESIS"):
+    """An optional second call repairs planning only; no hidden provider loops."""
+    maximum = os.getenv("DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN", "1").strip()
+    repair = os.getenv("DATA_ANALYST_ENABLE_CONTRACT_REPAIR", "0").strip().lower()
+    if maximum not in {"1", "2"} or repair not in {"0", "false", "no", "1", "true", "yes"}:
+        raise AnalysisError("provider_policy", "Invalid bounded planning allowance")
+    if (maximum == "2") != (repair in {"1", "true", "yes"}):
+        raise AnalysisError("provider_policy", "Two-call planning requires explicit repair policy")
+    for flag in ("MODEL_ESCALATION", "PROVIDER_FALLBACK", "POST_RESULT_SYNTHESIS"):
         if os.getenv("DATA_ANALYST_ENABLE_" + flag, "0").strip().lower() not in {"0", "false", "no"}:
-            raise AnalysisError("provider_policy", "Production requires disabled automatic calls")
+            raise AnalysisError("provider_policy", "Automatic fallback and synthesis remain disabled")
+    return int(maximum)

@@ -72,7 +72,7 @@ def wire_blueprint(b):
     # Column grammar is declared once; IDs/labels/allowed metrics are in lenses.
     return [b["default_operation"], b["default_metric_refs"], b["default_grouping"],
             b["allowed_groupings"], b["default_granularity"],
-            "".join(c for c, flag in (("h", b["requires_historical_data"]), ("p", b["requires_complete_population"]), ("x", bool(b.get("cross_tab_grouping_refs")))) if flag)]
+            "".join(c for c, flag in (("h", b["requires_historical_data"]), ("p", b["requires_complete_population"]), ("x", bool(b.get("cross_tab_grouping_refs")))) if flag), b["allowed_operations"], b["allowed_granularities"], b["required_metric_refs"]]
 
 
 class BlueprintIssue(AnalysisError):
@@ -106,7 +106,7 @@ def materialize(raw, catalog, intelligence, previous=None, context=None):
                if l["id"] == lens_id and (domain is None or p["domain_id"] == domain)
                and (data.get("subject") is None or data["subject"] in p["primary_subjects"])]
     if len(matches) != 1:
-        raise AnalysisError("domain_lens_invalid", "Selected lens is unavailable or ambiguous")
+        raise ToolContractError([issue("lens_id", "unknown_reference")])
     profile, lens = matches[0]
     b = lens.get("blueprint")
     if not b:  # Legacy/test-only profiles may retain explicit operation grammar.
@@ -127,7 +127,7 @@ def materialize(raw, catalog, intelligence, previous=None, context=None):
     if operation not in b["allowed_operations"]:
         if operation == "trend" and any(not catalog.registry["metrics"][m].get("time_column") for m in b["allowed_metric_refs"]):
             raise historical_issue(profile)
-        raise AnalysisError("domain_lens_invalid", "Lens does not support the selected operation")
+        raise ToolContractError([issue("operation", "lens_operation_incompatible")])
     if missing("group_by"):
         grouping = b["required_grouping"] or b["default_grouping"]
         # A trend can deliberately aggregate over time without an entity series.
@@ -155,15 +155,15 @@ def validate_materialized(query, lens):
     if not b:
         return
     if query.subject != b["subject"] or query.operation not in b["allowed_operations"]:
-        raise AnalysisError("domain_lens_invalid", "Blueprint operation incompatible")
+        raise ToolContractError([issue("operation", "lens_operation_incompatible")])
     if not set(b["required_metric_refs"]) <= set(query.metrics) or not set(query.metrics) <= set(b["allowed_metric_refs"]):
-        raise AnalysisError("domain_lens_invalid", "Blueprint metric incompatible")
+        raise ToolContractError([issue("metrics", "lens_metric_incompatible")])
     if query.group_by not in b["allowed_groupings"] and not (query.operation == "cross_tab" and len(query.group_by) == 2 and set(query.group_by) <= set(b.get("cross_tab_grouping_refs", [])) and set(b["required_grouping"]) <= set(query.group_by)):
-        raise AnalysisError("domain_lens_invalid", "Blueprint grouping incompatible")
+        raise ToolContractError([issue("group_by", "lens_grouping_incompatible")])
     if query.operation == "trend" and query.granularity not in b["allowed_granularities"]:
-        raise AnalysisError("domain_lens_invalid", "Blueprint granularity incompatible")
+        raise ToolContractError([issue("granularity", "lens_granularity_incompatible")])
     if query.operation == "distribution" and b["requires_complete_population"] and (query.ranking or query.model_fields_set & {"limit", "order_by"} and (query.limit != 100 or query.order_by)):
-        raise AnalysisError("domain_lens_invalid", "Composition requires the complete population")
+        raise ToolContractError([issue("limit", "lens_complete_population_required")])
 
 
 def historical_issue(profile):

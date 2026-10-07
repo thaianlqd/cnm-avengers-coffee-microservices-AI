@@ -290,6 +290,17 @@ def customer_flow_reply(logs, state, discovery_reply=None):
         lead = {'add_to_cart': 'Dạ, mình đã thêm món vào giỏ của bạn ạ.',
                 'update_cart_item': 'Dạ, mình đã cập nhật món theo yêu cầu của bạn ạ.',
                 'remove_cart_item': 'Dạ, mình đã xóa món bạn chọn khỏi giỏ ạ.'}[name]
+        branch_log = next((entry for entry in logs if entry['tool'] == 'set_session_branch' and entry['result'].get('status') == 'ok'), None)
+        if branch_log and name == 'add_to_cart':
+            bname = branch_log['result'].get('branch_name') or (state.get('cart') or {}).get('branch_name') or ''
+            deliv = (state.get('checkout') or {}).get('delivery_type')
+            if deliv == 'MANG_DI':
+                lead = f"Dạ, mình đã chọn quán **{bname}** cho đơn đến lấy tại quán và thêm món vào giỏ của bạn rồi ạ."
+            elif deliv == 'TAI_CHO':
+                lead = f"Dạ, mình đã chọn quán **{bname}** cho đơn dùng tại chỗ và thêm món vào giỏ của bạn rồi ạ."
+            else:
+                lead = (f"Dạ, mình đã chọn quán **{bname}** và thêm món vào giỏ của bạn rồi nhé!\n\n"
+                        f"Bạn muốn **đến lấy tại quán (mang đi)** hay **dùng tại chỗ** để mình chuẩn bị đơn nhé?")
         if result.get('remaining_quantity') is not None:
             lead = f"Dạ, mình đã bớt **{result['removed_quantity']}** sản phẩm ở dòng bạn chọn; còn **{result['remaining_quantity']}** trong giỏ ạ."
         if name == 'add_to_cart' and result.get('changed') is False and result.get('message'):

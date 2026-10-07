@@ -25,7 +25,9 @@ ISSUE_CODES = frozenset({
     "incompatible_metric_population", "scope_conflict", "filter_value_unresolved",
     "unsafe_relationship", "sensitive_field", "contract_rejected", "batch_aborted",
     "detail_fields_only_for_detail", "supporting_budget", "operation_budget",
-    "conflicting_filter_dimension",
+    "conflicting_filter_dimension", "lens_not_delivered", "lens_operation_incompatible",
+    "lens_metric_incompatible", "lens_grouping_incompatible",
+    "lens_granularity_incompatible", "lens_complete_population_required",
 })
 PATH_FIELDS = frozenset({
     *AnalyticalToolInput.model_fields, "metric", "direction", "top_n", "per_group",

@@ -6426,7 +6426,9 @@
                   "purchasing_customer_count"
                 ],
                 "required_metric_refs": [],
-                "default_metric_refs": [],
+                "default_metric_refs": [
+                  "store_revenue"
+                ],
                 "required_grouping": [],
                 "default_grouping": [
                   "store"

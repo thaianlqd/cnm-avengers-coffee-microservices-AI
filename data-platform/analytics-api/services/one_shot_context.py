@@ -23,6 +23,24 @@ def wire_payload(payload):
         knowledge.pop("health_columns", None)
     if not any(p["tier"] == "compact" for p in knowledge["packs"]):
         knowledge.pop("compact_lens_columns", None)
+    if knowledge.pop("share_blueprints", False):
+        # Blueprint rows repeat metric/grouping/operation lists across lenses.
+        # Share whole values without dropping IDs, capabilities or constraints.
+        sets = []
+        for pack in knowledge["packs"]:
+            for lens, row in pack.get("blueprints", {}).items():
+                encoded = []
+                for cell in row:
+                    if isinstance(cell, list) and cell:
+                        if cell not in sets:
+                            sets.append(cell)
+                        encoded.append(sets.index(cell))
+                    else:
+                        encoded.append(cell)
+                pack["blueprints"][lens] = encoded
+        if sets:
+            knowledge["blueprint_sets"] = sets
+            knowledge["blueprint_encoding"] = "In blueprint rows, integer cells reference blueprint_sets[index]; all other cells are literal. Submit semantic IDs, never indices."
     return value
 
 
@@ -55,6 +73,15 @@ def pack_context(catalog, intelligence, candidates, manifest, payload, tools, sy
         if not intelligence.degrade(knowledge, candidates, omitted, manifest_references(manifest)):
             break
         sizes = body_sizes(system, payload, tools)
+    # Mandatory compact packs must survive. Lossless sharing comes before
+    # whole-subject sharding, which can remove semantics from a broad request.
+    if max(sizes.values()) > min(target, maximum) and any(p.get("blueprints") for p in knowledge["packs"]):
+        knowledge["share_blueprints"] = True
+        shared_sizes = body_sizes(system, payload, tools)
+        if max(shared_sizes.values()) < max(sizes.values()):
+            sizes = shared_sizes
+        else:
+            knowledge.pop("share_blueprints")
     # Very large catalogs / stored sessions may still need whole-subject shards.
     # Protect every direct domain, then previous meaning, before optional shards.
     while max(sizes.values()) > maximum:

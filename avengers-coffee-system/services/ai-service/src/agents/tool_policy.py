@@ -670,7 +670,11 @@ class GuardedToolGateway:
                              for item in (value if isinstance(value, list) else [value]))}
         values.update(literal_choices)
         for group in groups:
-            evidence = None if declines_toppings(option_message) else validate_explicit_multi_value_group(option_message, group, groups, allow_implicit=True)
+            group_field = option_field(group.get('name', ''))
+            is_toppings = group_field == 'toppings'
+            topping_values = group.get('values') or [] if is_toppings else []
+            has_removed = bool(is_toppings and specific_removed_toppings(option_message, topping_values))
+            evidence = None if (declines_toppings(option_message) or has_removed) else validate_explicit_multi_value_group(option_message, group, groups, allow_implicit=True)
             if evidence and evidence['invalid_values']:
                 choices = {value: [label for label in evidence['allowed_values']
                     if re.search(r'(?<!\w)' + re.escape(normalize_text(value)) + r'(?!\w)', normalize_text(label))]
@@ -825,19 +829,25 @@ class GuardedToolGateway:
         from src.agents.product_display import product_bucket
         pending = self.context['business'].get('pending_products') or []
         from src.agents.product_option_scope import option_answer, option_question
-        text = normalize_shopping(self.user_message)
-        option_reply = (uses_global_option_defaults(self.user_message)
-                        or requests_custom_options(self.user_message)
+        msg = self.user_message
+        if self.artifacts.visible.get('branches') or getattr(self, 'turn_selected_branch', None):
+            from src.agents.shopping_turn_control import clean_branch_clause
+            cleaned = clean_branch_clause(msg, getattr(self, 'turn_selected_branch', None))
+            if cleaned:
+                msg = cleaned
+        text = normalize_shopping(msg)
+        option_reply = (uses_global_option_defaults(msg)
+                        or requests_custom_options(msg)
                         or bool(re.search(r'\b(?:size|topping|da|ngot|sua)\b', text))
                         or bool(re.search(r'\b(?:oke|ok|dong y|duoc|dung roi|chinh xac|chuan roi|dung vay|oke ban|chuan|dung do)\b', text)))
-        option_reply = option_reply and '?' not in self.user_message and not re.search(r'\b(?:bao nhieu|la gi|the nao|tham khao|xem truoc)\b', text)
+        option_reply = option_reply and '?' not in msg and not re.search(r'\b(?:bao nhieu|la gi|the nao|tham khao|xem truoc)\b', text)
         if option_reply and not pending and self.entry_focus and self.entry_focus.get('source') == 'customer_selected_options':
             if str(self.entry_focus.get('product_id')) == product_id:
                 return None
         if self.entry_pending_products and (option_reply or any(option_answer(
-                self.user_message, row.get('option_schema') or [])
+                msg, row.get('option_schema') or [])
                 for row in self.entry_pending_products)):
-            if option_question(self.user_message):
+            if option_question(msg):
                 return denied('cart_change_not_requested', message='Dạ, mình chưa thay đổi giỏ. Bạn cho mình từng món và tùy chọn muốn áp dụng để mình sửa đúng món nhé.')
             if self.product_option_scopes.ambiguous:
                 return denied('ambiguous_product_options', message='Bạn ghi tùy chọn riêng sau tên hoặc số của từng món giúp mình nhé.')
@@ -849,7 +859,7 @@ class GuardedToolGateway:
             return denied('product_choice_required', message='Dạ, mình đang hoàn thiện món bạn đã chọn; mình chưa thêm món khác ạ.')
         if str(self.context.get('selected_product_id') or '') == product_id:
             return None
-        reference = parse_selection_reference(self.user_message, active_namespace='PRODUCT', allow_multiple=True)
+        reference = parse_selection_reference(msg, active_namespace='PRODUCT', allow_multiple=True)
         targets = []
         for index, ordinal in enumerate(reference.ordinals):
             label = reference.ordinal_labels[index] if index < len(reference.ordinal_labels) else ''
@@ -858,7 +868,7 @@ class GuardedToolGateway:
             rows = [row for row in source if not category or product_bucket(row) == category]
             index_field = 'group_display_index' if category else 'display_index'
             targets.extend(row for position, row in enumerate(rows, 1) if (row.get(index_field) or position) == ordinal)
-        interpreted = interpret_shopping(self.user_message, snapshot=self.entry_products,
+        interpreted = interpret_shopping(msg, snapshot=self.entry_products,
             active_catalog=list(self.artifacts.product_candidates.values()) + list(self.options.values()),
             ordinal_targets=targets, ordinal_requested=reference.requested,
             ordinal_invalid=reference.namespace not in {None, 'PRODUCT'} and not (
@@ -880,6 +890,19 @@ class GuardedToolGateway:
     def _cart_line(self, line_id):
         return next((r for r in self.context['business']['cart']['items']
                      if str(r.get('cart_item_id') or r.get('line_id')) == line_id), None)
+
+    def _cart_line_for_product(self, product_id):
+        active_clause = getattr(self, 'active_edit_clause', self.user_message)
+        from src.agents.cart_edit_evidence import clause_targets
+        targets = clause_targets(active_clause, self.entry_cart_lines)
+        for t in targets:
+            if str(t.get('product_id')) == str(product_id):
+                return t
+        cart_items = (self.context['business'].get('cart') or {}).get('items') or []
+        for row in cart_items:
+            if str(row.get('product_id')) == str(product_id):
+                return row
+        return next((row for row in self.entry_cart_lines if str(row.get('product_id')) == str(product_id)), None)
 
     def _cart_target_error(self, line, operation=None):
         """Independently validate explicit ordinal/name evidence before writes."""
@@ -960,10 +983,9 @@ class GuardedToolGateway:
 
     def _update_cart_item(self, args):
         from src.agents.cart_edit_evidence import removal_quantity
-        subtraction = next((row for row in self.artifacts.cart_edit_plan
-            if row['tool'] == 'remove_cart_item' and row['cart_item_id'] == args['cart_item_id']
-            and removal_quantity(row['clause']) is not None), None)
-        if subtraction:
+        removal_plan = next((row for row in self.artifacts.cart_edit_plan
+            if row['tool'] == 'remove_cart_item' and row['cart_item_id'] == args['cart_item_id']), None)
+        if removal_plan or (isinstance(args.get('desired_state'), dict) and args['desired_state'].get('quantity') == 0):
             return self._remove_cart_item({key: value for key, value in args.items() if key != 'desired_state'})
         line = self._cart_line(args['cart_item_id'])
         if not line or not args['desired_state']:

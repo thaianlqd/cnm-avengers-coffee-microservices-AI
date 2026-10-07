@@ -452,7 +452,9 @@ class AnalysisPipeline:
                             "provider_call_budget", "provider_call_count", "provider_attempt_count",
                             "semantic_manifest_chars", "decision_schema_chars", "total_context_chars",
                             "analysis_depth", "supporting_operation_limit", "target_visual_count",
-                            "input_tokens", "output_tokens", "omitted_supporting_operation_count")}
+                            "input_tokens", "output_tokens", "omitted_supporting_operation_count",
+                            "contract_repair_count", "contract_rejection_count", "planning_retry_reason",
+                            "repair_context_chars", "transport_retry_count")}
                     for key in ("omitted_supporting_operations", "omitted_supporting_operation_count", "limitations"):
                         self.semantic_info[key] = deepcopy(session.diagnostics.get(key, self.semantic_info[key]))
                 try:
@@ -574,8 +576,12 @@ class AnalysisPipeline:
                     continue
                 if not a.result["rows"]:
                     raise AnalysisError("insufficient_data", "No rows for the requested population")
-                if a.plan.kind != "detail" and (a.plan.dimensions or a.plan.kind == "trend") and not any(c["scope_ref"] == a.query.id for c in dashboard["charts"]):
-                    raise AnalysisError("visualization_unavailable", "Result cannot be visualized safely")
+                if a.plan.kind != "detail" and (a.plan.dimensions or a.plan.kind == "trend") and not any(a.query.id in c.get("scope_refs", [c["scope_ref"]]) for c in dashboard["charts"]):
+                    # The validated table already contains every row. A visual
+                    # density/shape limit must not discard successful analysis.
+                    reasons = sorted({v["reason"] for v in dashboard["dashboard_plan"]["omitted_visuals"] if v["query_id"] == a.query.id})
+                    self.semantic_info.setdefault("table_fallbacks", []).append({"query_id": a.query.id, "reasons": reasons or ["no_eligible_visual"]})
+                    self.semantic_info.setdefault("limitations", []).append({"reason": "table_fallback", "message": "Một góc nhìn được trình bày trong bảng dữ liệu đầy đủ vì cấu trúc hoặc số nhóm chưa phù hợp với biểu đồ."})
         narrative = grounded_narrative(plan, evidence)
         results = {id: deepcopy(a.result) for id, a in artifacts.items()}
         labels = {

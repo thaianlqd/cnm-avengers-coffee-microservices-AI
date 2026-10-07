@@ -107,6 +107,9 @@ def _admin_fields(place: dict) -> dict[str, list[str]]:
 
 def _admin_constraints(query: str, admin_hints: tuple[str, ...] = ()) -> dict[str, tuple[str, ...]]:
     """Return explicit administrative constraints grouped by semantic level."""
+    if not admin_hints:
+        from src.agents.location_parser import parse_location
+        admin_hints = getattr(parse_location(query), "admin_hints", ())
     source = list(admin_hints) or [part.strip() for part in str(query or "").split(",")]
     constraints: dict[str, list[str]] = {"ward": [], "district": [], "city": []}
     for component in source:
@@ -352,6 +355,14 @@ def resolve_location(query: str, kind: str = "admin_area",
                             rejected_previews.append(preview)
 
             count = len(candidates)
+            if match_type == "admin_area" and len(accepted) > 1:
+                admin_only = [
+                    (c, p) for c, p in accepted
+                    if any(str(c.get("ref_id", "")).startswith(prefix) for prefix in ("vm:WARD:", "vm:DIST:", "vm:CITY:", "vm:PROV:", "vm:ADMIN:"))
+                    or not str(c.get("ref_id", "")).startswith(("vm:POI:", "vmg:POI:"))
+                ]
+                if admin_only:
+                    accepted = admin_only
             if len(accepted) > 1:
                 previews = _bounded_candidates([
                     preview for candidate, place in accepted

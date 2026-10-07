@@ -48,10 +48,10 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "approval_required": "Vui lòng lập và xác nhận kế hoạch phân tích trước khi thực thi.",
         "invalid_analysis_contract": "AI đã trả lời nhưng kế hoạch phân tích chưa hợp lệ. Vui lòng thử lập lại kế hoạch.",
         "provider_call_budget_exceeded": "Hệ thống đã chặn lượt gọi AI vượt giới hạn của yêu cầu này. Bạn có thể chủ động lập lại kế hoạch.",
-        "one_shot_context_budget_exceeded": "Phạm vi yêu cầu vượt giới hạn ngữ cảnh. Vui lòng thu gọn yêu cầu phân tích.",
-        "semantic_manifest_budget_exceeded": "Danh mục phân tích vượt giới hạn ngữ cảnh hiện tại.",
+        "one_shot_context_budget_exceeded": "Hệ thống chưa chuẩn bị được đầy đủ ngữ cảnh dữ liệu để lập kế hoạch. Vui lòng thử lại.",
+        "semantic_manifest_budget_exceeded": "Hệ thống chưa chuẩn bị được đầy đủ danh mục dữ liệu trong dung lượng lập kế hoạch hiện tại.",
         "context_configuration": "Giới hạn ngữ cảnh trên máy chủ chưa hợp lệ.",
-        "provider_policy": "Cấu hình AI chưa đáp ứng giới hạn một lượt gọi cho mỗi yêu cầu. Vui lòng kiểm tra cấu hình máy chủ.",
+        "provider_policy": "Cấu hình AI chưa đáp ứng giới hạn số lượt gọi cho mỗi yêu cầu. Vui lòng kiểm tra cấu hình máy chủ.",
         "dashboard_contract": "Loại biểu đồ này chưa phù hợp với kết quả hiện tại. Báo cáo đã duyệt được giữ nguyên.",
         "duplicate_invalid_tool_call": "AI lặp lại một kế hoạch chưa hợp lệ; hệ thống đã dừng lượt sửa. Vui lòng lập lại kế hoạch.",
         "analysis_spec_invalid": "Kế hoạch phân tích chưa hợp lệ. Vui lòng lập lại kế hoạch.",
@@ -88,6 +88,9 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
             "Hệ thống chưa thể diễn giải hoặc kiểm chứng yêu cầu lúc này. Vui lòng thử lại.",
         )
     )
+    population_overflow = category == "result_contract" and getattr(error, "result_issues", None) == ["population_limit"]
+    if population_overflow:
+        message = "Phạm vi có quá nhiều nhóm kết quả để phân tích trong một lượt. Hãy thu gọn thời gian, phạm vi hoặc yêu cầu Top N; hệ thống chưa cắt bớt dữ liệu để tạo báo cáo."
     if category == "invalid_analysis_contract" and any(i.get("code") == "scope_conflict" for i in getattr(error, "issues", [])):
         message = "Kế hoạch AI không khớp miền dữ liệu, thời gian hoặc phạm vi bạn đã chọn. Vui lòng lập lại kế hoạch với cùng lựa chọn."
     if category == "provider_daily_quota" and provider_calls:
@@ -130,7 +133,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
     return {
         "issue": actionable_issue(error, message, structured),
         "status": (
-            "needs_clarification" if category in clarification_categories else "error"
+            "needs_clarification" if category in clarification_categories or population_overflow else "error"
         ),
         "question": message,
         "message": message,

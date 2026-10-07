@@ -163,3 +163,230 @@ def test_customer_shopping_control_selects_branch_with_explicit_dine_in(runtime,
     reply = customer_flow_reply(gw.artifacts.logs, gw.context['business'])
     assert 'Highlands Coffee 425 Nguyen Oanh HCM' in reply
     assert 'dùng tại chỗ' in reply
+
+
+def test_customer_shopping_control_compound_product_and_branch(runtime, monkeypatch):
+    """When customer says 'oke cho tôi nước số 1 đi, tôi lấy ở địa chỉ số 1 nhé':
+    - Branch 1 is set
+    - Product 1 is staged/selected
+    - delivery_type is not forced to MANG_DI
+    - Response confirms branch, asks for fulfillment choice (takeaway vs dine-in), and prompts options for product 1
+    """
+    from src.function_calling.tools import branch_tools, cart_tools, product_tools
+    monkeypatch.setattr(cart_tools, 'is_authenticated_cart_session', lambda sid: True)
+    monkeypatch.setattr(branch_tools, '_get_engine', lambda: None)
+    monkeypatch.setattr(branch_tools, 'branch_identity_available', lambda engine, bid: True)
+    monkeypatch.setattr(branch_tools, 'execute_set_session_branch', lambda sid, bid, bname, customer_selected=True: {
+        'status': 'ok', 'branch_id': bid, 'branch_name': bname, 'message': 'ok'
+    })
+    monkeypatch.setattr(product_tools, 'execute_get_product_options', lambda *args, **kwargs: {
+        'status': 'ok',
+        'product_id': 'P01',
+        'product_name': '1 Lít Matcha Latte Tây Bắc Sữa Yến Mạch',
+        'option_groups': [
+            {'name': 'Size', 'values': ['Vừa', 'Lớn']},
+            {'name': 'Lượng đá', 'values': ['Không đá', 'Ít đá']}
+        ]
+    })
+
+    products = [
+        {'display_index': 1, 'group_display_index': 1, 'product_id': 'P01', 'product_name': '1 Lít Matcha Latte Tây Bắc Sữa Yến Mạch', 'category': 'Matcha'}
+    ]
+
+    cm = ConversationMemory(runtime.redis)
+    data = cm.load(runtime.sid)
+    data['visible_snapshots']['branches'] = list(BRANCHES)
+    data['visible_snapshots']['products'] = list(products)
+    data['visible_snapshots']['product_groups'] = {'drink': list(products)}
+    cm.save(runtime.sid, data)
+
+    cart_manager.replace_items_from_order_cart(runtime.sid, [])
+
+    gw = gateway(runtime, 'oke cho tôi nước số 1 đi, tôi lấy ở địa chỉ số 1 nhé')
+
+    result = customer_shopping_control(gw)
+    assert result == {'reply': None, 'error': None}
+
+    # Verify branch was set to CN01
+    calls = [c['tool'] for c in gw.artifacts.logs]
+    assert 'set_session_branch' in calls
+    assert 'get_product_options' in calls
+
+    # Verify delivery_type is NOT forced to MANG_DI
+    prefs = cart_manager.get_checkout_prefs(runtime.sid)
+    assert prefs.get('delivery_type') is None
+
+    # Verify pending prompt
+    reply = gw.artifacts.pending_selection_reply
+    assert reply is not None
+    assert 'Highlands Coffee D9 Tân Phú' in reply
+    assert 'đến lấy tại quán (mang đi)' in reply
+    assert 'dùng tại chỗ' in reply
+    assert '1 Lít Matcha Latte' in reply
+    assert 'Size' in reply
+
+
+def test_customer_shopping_control_compound_product_and_location(runtime, monkeypatch):
+    """When customer says 'cho tôi món số 3, phường tân phú thành phố hồ chí minh nhé':
+    - Product 3 is staged/selected with option prompt
+    - Location 'phường tân phú thành phố hồ chí minh' is dispatched to resolve_location
+    - Resulting reply contains both location/branch info and product option prompt
+    """
+    from src.function_calling.tools import cart_tools, product_tools
+    monkeypatch.setattr(cart_tools, 'is_authenticated_cart_session', lambda sid: True)
+    monkeypatch.setattr(product_tools, 'execute_get_product_options', lambda *args, **kwargs: {
+        'status': 'ok',
+        'product_id': 'P03',
+        'product_name': 'Bạc Xỉu',
+        'option_groups': [
+            {'name': 'Kích thước', 'required': True, 'values': ['Vừa', 'Lớn']},
+            {'name': 'Lượng đá', 'values': ['Bình thường', 'Ít đá']},
+            {'name': 'Độ ngọt', 'values': ['Bình thường', 'Ít ngọt']}
+        ]
+    })
+
+    products = [
+        {'display_index': 1, 'group_display_index': 1, 'product_id': 'P01', 'product_name': 'Cà Phê Muối', 'category': 'Cà Phê'},
+        {'display_index': 2, 'group_display_index': 2, 'product_id': 'P02', 'product_name': 'Americano', 'category': 'Cà Phê'},
+        {'display_index': 3, 'group_display_index': 3, 'product_id': 'P03', 'product_name': 'Bạc Xỉu', 'category': 'Cà Phê'},
+    ]
+
+    cm = ConversationMemory(runtime.redis)
+    data = cm.load(runtime.sid)
+    data['visible_snapshots']['branches'] = []
+    data['visible_snapshots']['products'] = list(products)
+    data['visible_snapshots']['product_groups'] = {'drink': list(products)}
+    cm.save(runtime.sid, data)
+
+    cart_manager.replace_items_from_order_cart(runtime.sid, [])
+
+    gw = gateway(runtime, 'cho tôi món số 3, phường tân phú thành phố hồ chí minh nhé')
+
+    result = customer_shopping_control(gw)
+    assert result == {'reply': None, 'error': None}
+
+    calls = [c['tool'] for c in gw.artifacts.logs]
+    assert 'get_product_options' in calls
+    assert 'resolve_location' in calls
+
+    loc_call = next(c for c in gw.artifacts.logs if c['tool'] == 'resolve_location')
+    assert 'tân phú' in loc_call['args']['location'].lower()
+
+    reply = gw.artifacts.pending_selection_reply
+    assert reply is not None
+    # Both location resolution and product options must be present
+    assert 'Bạc Xỉu' in reply
+    assert 'Kích thước' in reply
+
+def test_customer_shopping_control_compound_product_takeaway_and_location(runtime, monkeypatch):
+    """When customer says:
+    'cho tôi món số 3 đi, tôi lấy tại quán có được không bên bạn có cửa hàng nào ở phường tân phú k'
+    - Product 3 is staged/selected with option prompt
+    - Delivery type is set to MANG_DI ('tôi lấy tại quán')
+    - Location inquiry 'phường tân phú' is dispatched to resolve_location
+    - Resulting reply contains location resolution message and product option prompt
+    - No bogus menu category message
+    """
+    from src.function_calling.tools import cart_tools, product_tools
+    monkeypatch.setattr(cart_tools, 'is_authenticated_cart_session', lambda sid: True)
+    monkeypatch.setattr(product_tools, 'execute_get_product_options', lambda *args, **kwargs: {
+        'status': 'ok',
+        'product_id': 'P03',
+        'product_name': 'Bạc Xỉu',
+        'option_groups': [
+            {'name': 'Kích thước', 'required': True, 'values': ['Vừa', 'Lớn']},
+            {'name': 'Lượng đá', 'values': ['Bình thường', 'Ít đá']},
+            {'name': 'Độ ngọt', 'values': ['Bình thường', 'Ít ngọt']}
+        ]
+    })
+
+    products = [
+        {'display_index': 1, 'group_display_index': 1, 'product_id': 'P01', 'product_name': 'Cà Phê Muối', 'category': 'Cà Phê'},
+        {'display_index': 2, 'group_display_index': 2, 'product_id': 'P02', 'product_name': 'Americano', 'category': 'Cà Phê'},
+        {'display_index': 3, 'group_display_index': 3, 'product_id': 'P03', 'product_name': 'Bạc Xỉu', 'category': 'Cà Phê'},
+    ]
+
+    cm = ConversationMemory(runtime.redis)
+    data = cm.load(runtime.sid)
+    data['visible_snapshots']['branches'] = []
+    data['visible_snapshots']['products'] = list(products)
+    data['visible_snapshots']['product_groups'] = {'drink': list(products)}
+    cm.save(runtime.sid, data)
+
+    cart_manager.replace_items_from_order_cart(runtime.sid, [])
+
+    gw = gateway(runtime, 'cho tôi món số 3 đi, tôi lấy tại quán có được không bên bạn có cửa hàng nào ở phường tân phú k')
+
+    result = customer_shopping_control(gw)
+    assert result == {'reply': None, 'error': None}
+
+    prefs = cart_manager.get_checkout_prefs(runtime.sid)
+    assert prefs.get('delivery_type') == 'MANG_DI'
+
+    calls = [c['tool'] for c in gw.artifacts.logs]
+    assert 'get_product_options' in calls
+    assert 'resolve_location' in calls
+
+    loc_call = next(c for c in gw.artifacts.logs if c['tool'] == 'resolve_location')
+    assert 'tân phú' in loc_call['args']['location'].lower()
+
+    reply = gw.artifacts.pending_selection_reply
+    assert reply is not None
+    assert 'Menu hiện chưa có danh mục đang bán' not in reply
+    assert 'Bạc Xỉu' in reply
+    assert 'Kích thước' in reply
+    # Must have asked for city clarification or shown candidates
+    assert any(term in reply.lower() for term in ['tân phú', 'thành phố', 'tỉnh', 'chi nhánh'])
+
+
+def test_customer_shopping_control_compound_location_answer_and_product(runtime, monkeypatch):
+    """When customer says:
+    'phường tân phú thành phố hồ chí minh, cho tôi món 1 đi'
+    - Product 1 is staged/selected with option prompt
+    - Location 'phường tân phú thành phố hồ chí minh' is dispatched to resolve_location
+    - Resulting reply contains location info (e.g. candidates or branches) and product option prompt
+    """
+    from src.function_calling.tools import cart_tools, product_tools
+    monkeypatch.setattr(cart_tools, 'is_authenticated_cart_session', lambda sid: True)
+    monkeypatch.setattr(product_tools, 'execute_get_product_options', lambda *args, **kwargs: {
+        'status': 'ok',
+        'product_id': 'P01',
+        'product_name': 'Cà Phê Muối Avenger',
+        'option_groups': [
+            {'name': 'Kích thước', 'required': True, 'values': ['Vừa', 'Lớn']},
+            {'name': 'Lượng đá', 'values': ['Bình thường', 'Ít đá']},
+            {'name': 'Độ ngọt', 'values': ['Bình thường', 'Ít ngọt']}
+        ]
+    })
+
+    products = [
+        {'display_index': 1, 'group_display_index': 1, 'product_id': 'P01', 'product_name': 'Cà Phê Muối Avenger', 'category': 'Cà Phê'},
+        {'display_index': 2, 'group_display_index': 2, 'product_id': 'P02', 'product_name': 'Americano', 'category': 'Cà Phê'},
+    ]
+
+    cm = ConversationMemory(runtime.redis)
+    data = cm.load(runtime.sid)
+    data['visible_snapshots']['branches'] = []
+    data['visible_snapshots']['products'] = list(products)
+    data['visible_snapshots']['product_groups'] = {'drink': list(products)}
+    cm.save(runtime.sid, data)
+
+    cart_manager.replace_items_from_order_cart(runtime.sid, [])
+
+    gw = gateway(runtime, 'phường tân phú thành phố hồ chí minh, cho tôi món 1 đi')
+
+    result = customer_shopping_control(gw)
+    assert result == {'reply': None, 'error': None}
+
+    calls = [c['tool'] for c in gw.artifacts.logs]
+    assert 'get_product_options' in calls
+    assert 'resolve_location' in calls
+
+    loc_call = next(c for c in gw.artifacts.logs if c['tool'] == 'resolve_location')
+    assert 'tân phú' in loc_call['args']['location'].lower()
+
+    reply = gw.artifacts.pending_selection_reply
+    assert reply is not None
+    assert 'Cà Phê Muối Avenger' in reply
+    assert 'Kích thước' in reply
+    assert any(term in reply.lower() for term in ['tân phú', 'địa điểm', 'chi nhánh'])

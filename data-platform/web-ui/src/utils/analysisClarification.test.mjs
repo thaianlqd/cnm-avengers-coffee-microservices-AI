@@ -54,3 +54,11 @@ test('provider error and legacy raw ID options do not become user ambiguity', ()
   for (const id of ['quantity_sold', 'provider_invalid_json']) assert.ok(!html.includes(id));
   assert.ok(!html.includes('Cần làm rõ'));
 });
+
+test('server context capacity is not presented as missing user input or an oversized question', () => {
+  const message='Hệ thống chưa chuẩn bị được đầy đủ ngữ cảnh dữ liệu để lập kế hoạch. Vui lòng thử lại.';
+  const html=renderToStaticMarkup(React.createElement(AnalysisClarification, {response:{status:'error',message,issue:{category:'PLANNING_CAPACITY',title:'Chưa thể chuẩn bị đầy đủ ngữ cảnh phân tích',what_is_missing:[message]}},onRetry(){}}));
+  assert.ok(html.includes('role="alert"'));assert.ok(html.includes('Thử lập lại kế hoạch'));
+  assert.equal(html.split(message).length-1,1);
+  assert.ok(!html.includes('Cần bổ sung:'));assert.ok(!html.includes('Cần chia nhỏ'));
+});

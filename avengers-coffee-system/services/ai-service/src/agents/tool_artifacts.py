@@ -437,6 +437,9 @@ class ToolArtifacts:
             result = row['result']
             if row['tool'] in WRITES and result.get('status') in {'ok', 'success', 'already_processed', 'require_confirmation'}:
                 if result.get('message'):
+                    from src.agents.cart_edit_evidence import unfinished_edits
+                    if len(getattr(self, 'cart_edit_plan', [])) > 1 and unfinished_edits(self.cart_edit_plan, self.logs):
+                        continue
                     return safe_text(result['message'], 3000)
                 if row['tool'] == 'skip_voucher':
                     return 'Đã ghi nhận lựa chọn không dùng mã giảm giá.'
@@ -511,11 +514,13 @@ class ToolArtifacts:
             self.used_customer_flow = True
             return self.pending_selection_reply
         menu = [row['result'] for row in self.logs if row['tool'] == 'get_menu_categories']
-        if menu:
+        if menu and not self.visible.get('products') and not self.visible.get('branches'):
             self.used_customer_flow = True
             if menu[-1].get('status') != 'ok':
                 return menu[-1].get('message') or 'Mình chưa đọc được menu. Bạn thử lại nhé.'
             rows = self.visible.get('menu_categories') or []
+            if not rows and menu[-1].get('menu_categories'):
+                rows = menu[-1]['menu_categories']
             if not rows:
                 return 'Menu hiện chưa có danh mục đang bán.'
             drinks = [row for row in rows if str(row.get('menu_bucket', '')).lower() == 'drink']
@@ -572,7 +577,7 @@ class ToolArtifacts:
         reply = customer_flow_reply(self.logs, self.business, discovery_reply)
         from src.agents.cart_edit_evidence import unfinished_edits
         pending_edits = unfinished_edits(getattr(self, 'cart_edit_plan', []), self.logs)
-        if reply and len(getattr(self, 'cart_edit_plan', [])) > 1 and pending_edits:
+        if (reply or pending_edits) and len(getattr(self, 'cart_edit_plan', [])) > 1 and pending_edits:
             completed = [row for row in self.logs if row['tool'] in {'update_cart_item', 'remove_cart_item'}
                          and row['result'].get('status') in {'ok', 'already_processed'}]
             if completed:
@@ -580,14 +585,16 @@ class ToolArtifacts:
             details = []
             for request in pending_edits:
                 denial = next((row['result'].get('message') for row in reversed(self.logs)
-                    if row['tool'] == request['tool'] and str(row['args'].get('cart_item_id')) == request['cart_item_id']
-                    and row['result'].get('status') == 'invalid_option' and row['result'].get('message')), None)
-                details.append(denial or ('Sửa' if request['tool'] == 'update_cart_item' else 'Xóa') +
-                               ' **' + request['product_name'] + '**')
+                    if row['tool'] == request['tool'] and str(row.get('args', {}).get('cart_item_id')) == request['cart_item_id']
+                    and row['result'].get('message') and row['result'].get('status') != 'ok'), None)
+                details.append(denial or (('Sửa' if request['tool'] == 'update_cart_item' else 'Xóa') +
+                               ' **' + request['product_name'] + '**'))
             prefix = ('Dạ, mình mới cập nhật được **một phần yêu cầu** của bạn ạ.' if completed else
-                      'Dạ, mình chưa cập nhật các món theo yêu cầu này ạ.')
-            reply = (prefix + '\n\n' + reply +
-                     '\n\n**Còn chưa thực hiện:**\n' + '\n'.join('- ' + detail for detail in details))
+                      'Dạ, mình chưa cập nhật được các món theo yêu cầu này ạ.')
+            lead = ((prefix + '\n\n' + reply) if reply else prefix)
+            reply = (lead +
+                     '\n\n**Còn chưa thực hiện được:**\n' + '\n'.join('- ' + detail for detail in details) +
+                     '\n\nBạn kiểm tra lại và gửi lại yêu cầu để mình hỗ trợ nhé.')
         if reply:
             self.used_customer_flow = True
         return reply

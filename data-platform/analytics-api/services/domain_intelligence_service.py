@@ -12,6 +12,7 @@ from typing import List, Literal, Optional
 from pydantic import Field
 from services.analysis_contract import Contract
 from services.analysis_catalog import AnalysisError, normalize
+from services.analytical_tool_contract import ToolContractError, issue
 from services.semantic_manifest_service import build_manifest, compact
 from services.value_grounding_service import dimension_values, value_text
 from services.analytical_blueprint_service import AnalyticalBlueprint, validate_blueprint, validate_materialized, wire_blueprint
@@ -213,11 +214,15 @@ class DomainIntelligence:
             return
         p = self.domain_for(query.subject)
         lens = next((l for l in p["analytical_lenses"] if l["id"] == query.lens_id), None) if p else None
-        if not lens or not set(query.metrics) <= set(lens["metric_refs"]) or not set(query.group_by) <= set(lens["dimension_refs"]):
-            raise AnalysisError("domain_lens_invalid", "Analysis conflicts with catalog lens")
+        if not lens:
+            raise ToolContractError([issue("lens_id", "unknown_reference")])
+        if not set(query.metrics) <= set(lens["metric_refs"]):
+            raise ToolContractError([issue("metrics", "lens_metric_incompatible")])
+        if not set(query.group_by) <= set(lens["dimension_refs"]):
+            raise ToolContractError([issue("group_by", "lens_grouping_incompatible")])
         flag = {"trend": "supports_time_series", "ranking": "supports_ranking", "distribution": "supports_distribution"}.get(query.operation)
         if flag and not lens[flag]:
-            raise AnalysisError("domain_lens_invalid", "Lens does not support this operation")
+            raise ToolContractError([issue("operation", "lens_operation_incompatible")])
         validate_materialized(query, lens)
 
     def capabilities(self):
@@ -400,7 +405,7 @@ class DomainIntelligence:
         if blueprints:
             knowledge["lens_directory"] = {id: [[l["id"],l["business_label"],l["blueprint"]["default_operation"],bool(l["blueprint"]["default_metric_refs"])] for l in p["analytical_lenses"] if l.get("blueprint")] for id,p in profiles.items()}
             knowledge["lens_directory_columns"] = "lens_id,label,default_operation,unambiguous_metric_default; server materializes checked defaults, use explicit metrics only from manifest"
-            knowledge["blueprint_columns"] = "operation,default_metrics,default_grouping,allowed_groupings,default_granularity,flags(h=history,p=complete population,x=cross_tab two lens dimensions); omitted choices require clarification"
+            knowledge["blueprint_columns"] = "operation,default_metrics,default_grouping,allowed_groupings,default_granularity,flags(h=history,p=complete population,x=cross_tab two lens dimensions),allowed_operations,allowed_granularities,required_metrics; omitted choices require clarification"
         # Only pack content is sent; retrieval evidence and omissions stay local.
         maximum = policy["domain_chars"] if max_chars is None else max_chars
         while len(compact(packs)) > maximum and self.degrade(knowledge, candidates, omitted, references):

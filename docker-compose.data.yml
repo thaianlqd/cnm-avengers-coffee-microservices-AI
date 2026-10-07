@@ -343,9 +343,9 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
       # ── AI Analytics ──────────────────────────────────
-      # V2.4 one-shot invariants; env_file keys remain local to analytics-api.
-      DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN: "1"
-      DATA_ANALYST_ENABLE_CONTRACT_REPAIR: "0"
+      # V2.6 bounded planning: one initial call and at most one targeted repair.
+      DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN: "2"
+      DATA_ANALYST_ENABLE_CONTRACT_REPAIR: "1"
       DATA_ANALYST_ENABLE_MODEL_ESCALATION: "0"
       DATA_ANALYST_ENABLE_PROVIDER_FALLBACK: "0"
       DATA_ANALYST_ENABLE_POST_RESULT_SYNTHESIS: "0"

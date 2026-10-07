@@ -42,9 +42,10 @@ def _invoke(action, payload, owner_id=None):
     except Exception as error:
         failure = safe_failure(error, pipeline.calls, pipeline.semantic_info)
         logger.warning(
-            "Analysis rejected action=%s category=%s",
+            "Analysis rejected action=%s category=%s contract_issues=%s",
             action,
             failure["diagnostics"]["error_category"],
+            pipeline.semantic_info.get("contract_issues", []),
         )
         failure["diagnostics"].update(
             {
@@ -61,13 +62,14 @@ def _invoke(action, payload, owner_id=None):
 
 @router.get("/status")
 def ai_status():
+    from services.provider_budget import validate_single_shot_policy
     providers = provider_configuration()
     metadata = cache_status()
     return {
         "status": "ready" if metadata["local_ready"] else "unavailable",
         "pipeline_version": "2.6",
         "planning_mode": "one_shot",
-        "provider_call_budget": 1,
+        "provider_call_budget": validate_single_shot_policy(),
         "providers": providers,
         "metadata": metadata,
         "sessions": session_stats(),

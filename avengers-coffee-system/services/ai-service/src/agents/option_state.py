@@ -8,7 +8,8 @@ from typing import Any, Dict, List, Optional, Tuple
 def _norm(value: Any) -> str:
     raw = unicodedata.normalize("NFD", str(value or "").lower())
     folded = "".join(c for c in raw if unicodedata.category(c) != "Mn").replace("đ", "d")
-    return re.sub(r"\s+", " ", folded).strip()
+    text = re.sub(r"\s+", " ", folded).strip()
+    return re.sub(r"\b(?:b(?:o|ot|oot|ott)p+ing|bo(?:topping|toping))\b", "bo topping", text)
 
 
 def option_field(name: str) -> Optional[str]:

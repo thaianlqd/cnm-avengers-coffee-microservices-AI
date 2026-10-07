@@ -20,6 +20,17 @@ function compile(relative) {
 }
 const { AnalystChart, SeriesLineChart, HeatmapChart } = compile('../components/Charts.tsx');
 const { AnalystDashboardSummary, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence, AnalystViews, AnalystResultTable, AnalystPlanningSummary } = compile('../components/AnalystDashboardSummary.tsx');
+
+test('large population chart discloses display subset and complete analytical coverage', () => {
+  const html = renderToStaticMarkup(React.createElement(AnalystViews, { charts: [{
+    id: 'preview', chart_type: 'bar', title: 'Doanh thu theo nhóm', role: 'requested',
+    selection: 'display_subset', displayed_count: 20, population_count: 416,
+    data: [{ label: 'Nhóm A', value: 100 }],
+  }] }));
+  assert.ok(html.includes('20/416'));
+  assert.ok(html.includes('số liệu phân tích dùng đầy đủ các nhóm'));
+  assert.ok(!html.includes('Tập Top N được chọn'));
+});
 const { AnalysisClarification } = compile('../components/AnalysisClarification.tsx');
 const { AnalysisMeaning } = compile('../components/AnalysisMeaning.tsx');
 const render = (component, props) => renderToStaticMarkup(React.createElement(component, props));
@@ -155,7 +166,7 @@ test('analysis evidence exposes scope, sources and calculation references safely
     analysis_explanation: [{ query_id: 'main', subject: 'Doanh thu', objective: 'Đối chiếu quy mô', role: 'requested', data_sources: ['Đơn hàng'], metrics: [{ label: 'Doanh thu', unit: 'VND', business_filters: [] }], dimensions: ['Thành phố'], filters: [{ label: 'Thành phố', value: ['Hà Nội', 'Hồ Chí Minh'] }], period: { start: '2026-07-01', end: '2026-09-30', timezone: 'Asia/Ho_Chi_Minh' }, rows_returned: 2, selection: 'complete', evidence_refs: ['main:gap'], visuals: [{ id: 'v1', reason: 'So sánh các nhóm cùng đơn vị' }] }],
     evidence: [{ id: 'main:gap', statement: 'Chênh lệch quan sát', scope_ref: 'main', unit: 'VND', values: { gap: 20 } }]
   } });
-  for (const value of ['Đơn hàng', 'Hà Nội', 'Hồ Chí Minh', '2026-07-01', '2 dòng', 'Bằng chứng 1', 'So sánh các nhóm cùng đơn vị', 'main%3Agap', '20']) assert.ok(html.includes(value), value);
+  for (const value of ['Đơn hàng', 'Hà Nội', 'Hồ Chí Minh', '2026-07-01', '2 dòng', 'Tra cứu 1 phép tính', 'So sánh các nhóm cùng đơn vị', 'main%3Agap', '20']) assert.ok(html.includes(value), value);
   assert.equal(render(AnalystEvidence, { report: {} }), '');
   const proposal = render(AnalystEvidence, { report: { analysis_explanation: [{ query_id: 'x', subject: '<script>', objective: 'Kiểm tra', metrics: [], period: {}, rows_returned: null }] } });
   assert.ok(proposal.includes('Kế hoạch chưa chạy truy vấn')); assert.ok(!proposal.includes('<script>'));
@@ -168,7 +179,7 @@ test('large bar axes use readable scales while exact values stay in tooltips', (
 
 test('one-shot proposal distinguishes mandatory, optional and omitted work', () => {
   const html = render(AnalystPlanningSummary, { diagnostics: { planning_mode: 'one_shot', requested_operation_count: 2, supporting_operation_count: 3, omitted_supporting_operation_count: 1, tool_trace: ['INTERNAL_TRACE'] } });
-  for (const text of ['một lượt AI', '2 phần theo yêu cầu', '3 phần hỗ trợ', '1 phần hỗ trợ đã được bỏ qua']) assert.ok(html.includes(text));
+  for (const text of ['AI đã lập kế hoạch', '2 phần theo yêu cầu', '3 phần hỗ trợ', '1 phần hỗ trợ đã được bỏ qua']) assert.ok(html.includes(text));
   assert.ok(!html.includes('INTERNAL_TRACE')); assert.ok(!html.includes('vòng'));
 });
 
@@ -197,4 +208,58 @@ test('one-shot guard failures have safe business headings', () => {
     const html = render(AnalysisClarification, { response: { status: 'error', diagnostics: { error_category: category } } });
     assert.ok(html.includes(heading)); assert.ok(!html.includes(category));
   }
+});
+
+test('large evidence collections are collapsed and bounded to one page', () => {
+  const evidence = Array.from({ length: 1200 }, (_, i) => ({ id: `calc-${i}`, scope_ref: 'main', statement: `Calcul ${i}`, unit: 'VND', values: { value: i } }));
+  const html = render(AnalystEvidence, { report: { analysis_explanation: [{ query_id: 'main', subject: 'Doanh thu', evidence_refs: evidence.map(e => e.id) }], evidence } });
+  assert.ok(!html.includes('open=""'));
+  assert.equal((html.match(/id="evidence-/g) || []).length, 8);
+  assert.ok(html.includes('Trang 1/150')); assert.ok(html.includes('Tìm bằng chứng'));
+  assert.ok(!html.includes('Bằng chứng 1199')); assert.ok(!html.includes('Calcul 8<'));
+});
+
+test('dashboard opens with up to eight charts and keeps all result tables in disclosure', () => {
+  const { AnalystDashboard } = compile('../components/AnalystDashboardSummary.tsx');
+  const html = render(AnalystDashboard, { report: { charts: Array.from({ length: 9 }, (_, i) => ({ id: `c${i}`, title: `Chart ${i}`, chart_type: 'bar', data: [{ label: 'A', value: i }] })), result_sets: { all: { columns: ['value'], rows: [{ value: 1 }] } } } });
+  assert.equal((html.match(/<article/g) || []).length, 8);
+  assert.ok(html.includes('Xem thêm 1 biểu đồ')); assert.ok(html.includes('Bảng dữ liệu')); assert.ok(html.includes('Diễn giải đầy đủ'));
+  assert.ok(!html.includes('open=""'));
+});
+
+test('long category labels get a bounded horizontal view and zero stays zero', () => {
+  const html = render(AnalystViews, { charts: [{ title: 'Doanh thu — Kỳ đo dài', chart_type: 'bar', data: Array.from({ length: 20 }, (_, i) => ({ label: `Tên chi nhánh rất dài ${i}`, value: i })) }] });
+  assert.ok(html.includes('Nhóm tiếp theo')); assert.ok(html.includes('1–10/20'));
+  assert.ok(html.includes('width:0%')); assert.match(html, /<h5[^>]*>Doanh thu<\/h5>/);
+  assert.ok(!html.includes('Tên chi nhánh rất dài 10'));
+});
+
+test('compact dashboard uses one two-column grid across different story sections', () => {
+  const charts = ['So sánh và xếp hạng', 'Quy mô và đối chiếu', 'Cơ cấu đóng góp', 'Diễn biến theo thời gian'].map((story_section, i) => ({ id: 'c' + i, domain_label: 'Sản phẩm', domain_id: 'products', story_section, chart_type: i === 3 ? 'multi_line' : 'bar', title: 'Góc nhìn ' + i, data: [] }));
+  const html = render(AnalystViews, { charts, compact: true });
+  assert.equal((html.match(/data-dashboard-grid/g) || []).length, 1);
+  assert.equal((html.match(/<article/g) || []).length, 4);
+  assert.ok(!html.includes('lg:col-span-2'));
+  assert.ok(html.includes('lg:grid-cols-2'));
+});
+
+test('time axes use five short labels, with full dates retained for tooltips', () => {
+  const html = render(SeriesLineChart, { data: Array.from({ length: 14 }, (_, i) => ({ label: `2026-09-${String(i + 1).padStart(2, '0')}T00:00:00`, s: i })), series: [{ key: 's', label: 'Sản lượng', color: '#2563eb' }] });
+  assert.equal((html.match(/y="278"/g) || []).length, 5);
+  assert.ok(html.includes('01/09')); assert.ok(html.includes('14/09'));
+  assert.ok(html.includes('<title>2026-09-14T00:00:00'));
+});
+
+test('top ten shows all ten observations with multiple bar colors', () => {
+  const html = render(AnalystChart, { chart: { chart_type: 'horizontal_bar', selection: 'Top N', data: Array.from({ length: 10 }, (_, i) => ({ label: 'Món ' + i, value: 10 - i })) } });
+  assert.ok(html.includes('Món 9')); assert.ok(!html.includes('Nhóm tiếp theo'));
+  for (const color of ['#2563eb', '#059669', '#d97706']) assert.ok(html.includes(color));
+});
+
+test('clipped weekly buckets are marked and disclose the actual selected dates', () => {
+  const html = render(AnalystChart, { chart: { chart_type: 'area', granularity: 'week', period: { start: '2026-07-01', end: '2026-09-30' }, data: [{ label: '2026-06-29T00:00:00', value: 624 }, { label: '2026-09-28T00:00:00', value: 274 }] } });
+  assert.ok(html.includes('29/06*')); assert.ok(html.includes('28/09*'));
+  assert.ok(html.includes('2026-07-01 → 2026-07-05'));
+  assert.ok(html.includes('2026-09-28 → 2026-09-30'));
+  assert.equal((html.match(/fill="white"/g) || []).length, 2);
 });

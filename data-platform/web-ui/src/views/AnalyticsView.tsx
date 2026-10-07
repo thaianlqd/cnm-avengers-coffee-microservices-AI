@@ -1,4 +1,4 @@
-import { AnalystDashboardSummary, AnalystViews, AnalystResultTable, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence, AnalystPlanningSummary } from '../components/AnalystDashboardSummary';
+import { AnalystDashboard, AnalystDashboardSummary, AnalystViews, AnalystResultTable, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence, AnalystPlanningSummary } from '../components/AnalystDashboardSummary';
 import { AnalysisClarification } from '../components/AnalysisClarification';
 import { AnalysisMeaning } from '../components/AnalysisMeaning';
 import { AnalysisModules, AnalysisModuleSummary } from '../components/AnalysisModules';
@@ -930,7 +930,6 @@ export const AnalyticsView: React.FC = () => {
     return (
       <div className="space-y-6">
         {pendingClarification && <AnalysisClarification response={pendingClarification} onChoice={(answer) => handleFollowUpRefine(`${pendingClarification.feedback}. ${answer}`, rep)} onEdit={() => { setFollowUpPrompt(pendingClarification.feedback || ''); setPendingClarification(null); }} />}
-        <AnalysisMeaning interpretation={rep.interpretation} />
         {/* Report Header Bar - Spacious Responsive Layout */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4">
           {/* Tier 1: Meta, Status & Quick Feedback */}
@@ -1004,10 +1003,10 @@ export const AnalyticsView: React.FC = () => {
           {/* Tier 2: Wide Uncramped Title & Context */}
           <div className="space-y-1.5 max-w-5xl">
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug">
-              {rep.title || 'Báo Cáo Phân Tích Dữ Liệu Tự Động'}
+              {rep.analysis_spec ? (rep.prompt || 'Dashboard phân tích') : rep.title || 'Báo Cáo Phân Tích Dữ Liệu Tự Động'}
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-              {rep.description || rep.interpreted_request || 'Bản phân tích chuyên sâu tự động lưu trữ trên hệ thống.'}
+              {rep.analysis_spec ? 'Các góc nhìn từ dữ liệu trong phạm vi bạn đã chọn.' : rep.description || rep.interpreted_request || 'Bản phân tích chuyên sâu tự động lưu trữ trên hệ thống.'}
             </p>
           </div>
 
@@ -1099,6 +1098,11 @@ export const AnalyticsView: React.FC = () => {
           </div>
         </div>
 
+        {rep.analysis_spec ? <>
+          <AnalysisMeaning interpretation={rep.interpretation} compact />
+          {showSqlCode && (rep.sql || rep.sql_query) && <pre className="bg-slate-900 text-slate-200 p-4 rounded-xl text-xs overflow-auto">{rep.sql ? Object.entries(rep.sql).map(([name, sql]) => `-- ${name}\n${sql}`).join('\n\n') : rep.sql_query}</pre>}
+          <AnalystDashboard report={rep} editing={isRefining} onChartTypeChange={rep.session_id ? (id, type) => handleFollowUpRefine('Đổi cách trình bày biểu đồ', rep, [{ chart_id: id, chart_type: type }]) : undefined} />
+        </> : <>
         {/* SECTION: Data Warnings / Sanity Alerts (Phase 3.3) */}
         {rep.data_warnings && rep.data_warnings.length > 0 && (
           <div className="bg-amber-50/90 border border-amber-200/90 rounded-2xl p-4 shadow-2xs flex items-start gap-3 text-amber-900">
@@ -1476,14 +1480,14 @@ export const AnalyticsView: React.FC = () => {
 
         <AnalystOptionalNarrative report={rep} />
 
+        </>}
+
         {/* Góp ý chỉnh sửa báo cáo */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+        <details className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs">
+          <summary className="cursor-pointer text-sm font-semibold text-slate-700">Điều chỉnh phân tích</summary>
           <div className="mb-3">
-            <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
-              Góp ý chỉnh sửa báo cáo
-            </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Nhập yêu cầu nếu bạn muốn AI điều chỉnh lại số liệu, loại biểu đồ hoặc nội dung báo cáo.
+              Nhập yêu cầu để đổi phạm vi, cách nhóm hoặc cách trình bày.
             </p>
           </div>
 
@@ -1552,7 +1556,7 @@ export const AnalyticsView: React.FC = () => {
               ))}
             </div>
           )}
-        </div>
+        </details>
 
         {/* Footnote */}
         <div className="text-[11px] text-slate-400 text-center py-2 border-t border-slate-100">

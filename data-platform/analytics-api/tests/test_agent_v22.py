@@ -689,7 +689,9 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(executor.call_count, 5)
         self.assertEqual(provider.call_count, 2)
         kinds = {c["chart_type"] for c in response["charts"]}
-        self.assertTrue({"bar", "horizontal_bar", "multi_line", "donut"} <= kinds)
+        # Complete additive group partitions can now use composition views;
+        # representation is determined by semantics rather than a type quota.
+        self.assertTrue({"horizontal_bar", "multi_line", "donut"} <= kinds)
         self.assertEqual(response["dashboard_plan"]["supporting_chart_count"], 4)
         self.assertEqual(len(response["analysis_explanation"]), 5)
         evidence_ids = {e["id"] for e in response["evidence"]}
@@ -899,7 +901,7 @@ class AgentTests(unittest.TestCase):
             build_dashboard({"main": a}, [], bad)["dashboard_plan"]["omitted_visuals"]
         )
 
-    def test_distribution_defaults_use_bar_for_average_or_many_categories(self):
+    def test_distribution_defaults_use_bar_for_average_and_group_complete_composition(self):
         average, _ = fixture_artifact(
             query("orders", "aov", "distribution", group_by=["store"])
         )
@@ -913,9 +915,10 @@ class AgentTests(unittest.TestCase):
             {"product": f"Nhóm {i}", "product_id": str(i), "quantity_sold": i + 1}
             for i in range(9)
         ]
-        self.assertEqual(
-            build_dashboard({"main": complete}, [])["charts"][0]["chart_type"], "bar"
-        )
+        chart = build_dashboard({"main": complete}, [])["charts"][0]
+        self.assertEqual(chart["chart_type"], "donut")
+        self.assertEqual(len(chart["data"]), 7)
+        self.assertEqual(sum(r["value"] for r in chart["data"]), 45)
         complete.result["rows"] = complete.result["rows"][:3]
         self.assertEqual(
             build_dashboard({"main": complete}, [])["charts"][0]["chart_type"], "donut"

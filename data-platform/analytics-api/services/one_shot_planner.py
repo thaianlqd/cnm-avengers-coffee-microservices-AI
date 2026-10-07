@@ -1,4 +1,4 @@
-"""Production planning: one decision, local validation, zero repair/synthesis calls."""
+"""Production planning: local validation with at most one targeted repair."""
 
 import time
 import os
@@ -55,13 +55,14 @@ class OneShotPlanner:
             input_tokens=None, output_tokens=None, cumulative_planning_input_tokens=None,
             cumulative_planning_output_tokens=None)
         self.turn = ProviderTurn(provider, diagnostics)
+        self.budget = replace(self.budget, contract_repairs=self.turn.budget.max_calls - 1)
         self.value_resolutions = {}
         self.intelligence = DomainIntelligence(catalog)
 
     def fail_contract(self, error):
         issues = rejection_issues(error)
         self.diagnostics.update(agent_contract_status="invalid", agent_contract_error="invalid_analysis_contract",
-                                terminal_error="invalid_analysis_contract", contract_rejection_count=1,
+                                terminal_error="invalid_analysis_contract", contract_rejection_count=self.diagnostics["contract_rejection_count"] + 1,
                                 contract_issues=issues)
         rejected = ToolContractError(issues)
         rejected.business_category = getattr(error,"category",None)
@@ -108,7 +109,7 @@ class OneShotPlanner:
         raw, rules = normalize_operation(raw)
         context = getattr(self.queries, "ui_context", {}) or {}
         if context.get("natural_input") and raw.get("lens_id") and raw["lens_id"] not in getattr(self, "delivered_lenses", set()):
-            raise AnalysisError("domain_lens_invalid", "Use a delivered business lens")
+            raise ToolContractError([issue("lens_id", "lens_not_delivered")])
         raw, blueprint_rules = materialize(raw, self.catalog, self.intelligence, self.queries.previous)
         self.record_normalizations([*rules, *blueprint_rules])
         if blueprint_rules:
@@ -165,14 +166,26 @@ class OneShotPlanner:
             self.fail_contract(ToolContractError([issue("removed_query_ids", "unknown_reference")]))
         requested, supporting, replaced = {}, {}, set()
         try:
-            for raw in decision.requested_operations:
-                before = set(self.queries.pending)
-                a = self.prepare(raw, "requested")
-                if a.query.id in requested or a.query.replaces in replaced or a.query.id in before:
-                    raise ToolContractError([issue("id", "duplicate_field")])
-                requested[a.query.id] = a
-                if a.query.replaces:
-                    replaced.add(a.query.replaces)
+            invalid = []
+            for index, raw in enumerate(decision.requested_operations):
+                snapshot = dict(self.queries.pending)
+                try:
+                    before = set(self.queries.pending)
+                    a = self.prepare(raw, "requested")
+                    if a.query.id in requested or a.query.replaces in replaced or a.query.id in before:
+                        raise ToolContractError([issue("id", "duplicate_field")])
+                    requested[a.query.id] = a
+                    if a.query.replaces:
+                        replaced.add(a.query.replaces)
+                except (BlueprintIssue, UnresolvedFilter):
+                    raise
+                except (ValueError, TypeError, KeyError) as error:
+                    if self.turn.budget.max_calls == 1 or getattr(error, "category", None) in {"historical_metric_unavailable", "unsupported"}:
+                        raise
+                    self.queries.pending = snapshot
+                    invalid.extend(issue(["requested_operations", index, *e["path"].split(".")], e["code"]) for e in rejection_issues(error))
+            if invalid:
+                raise ToolContractError(invalid)
             for id, old in previous.items():
                 if old.query.role == "requested" and id not in removed | replaced:
                     args = old.query.model_dump(mode="json")
@@ -191,7 +204,7 @@ class OneShotPlanner:
             if getattr(error, "category", None) == "unsupported" and isinstance(raw, dict) and any(m in self.catalog.registry["metrics"] and not self.catalog.registry["metrics"][m].get("time_column") for m in raw.get("metrics", [])):
                 self.diagnostics.update(agent_contract_status="valid", semantic_status="unsupported")
                 raise AnalysisError("historical_metric_unavailable", "Snapshot history is unavailable") from None
-            if getattr(error, "category", None) in {"historical_metric_unavailable", "domain_lens_invalid"}:
+            if getattr(error, "category", None) == "historical_metric_unavailable":
                 raise
             self.fail_contract(error)
         # Resolve and validate optional work independently, after every mandatory contract.
@@ -255,6 +268,12 @@ class OneShotPlanner:
                 visuals.append(visual)
         except (ValueError, TypeError, KeyError) as error:
             self.fail_contract(error)
+        from services.agent_pipeline import AnalysisPipeline
+        try:
+            AnalysisPipeline.enforce_ui(prepared, getattr(self.queries, "ui_context", {}) or {})
+        except AnalysisError as error:
+            error.planning_scope_conflict = True
+            raise
         active = {}
         for a in [*requested.values(), *supporting.values()]:
             try:
@@ -274,6 +293,51 @@ class OneShotPlanner:
             analytical_tool_calls=len(active), registered_requested_operations=len(requested),
             registered_supporting_operations=sum(a.query.role == "supporting" for a in active.values()))
         return active, DashboardPlan(active_query_ids=list(active), visuals=visuals)
+
+    def accept_response(self, response, natural, context):
+        calls = response.get("calls")
+        if not calls:
+            category = "provider_unavailable"
+            if response.get("offline"):
+                category = "provider_offline"
+            elif response.get("configuration_missing"):
+                category = "provider_configuration_missing"
+            elif response.get("attempts"):
+                category = response.get("attempts", [])[-1].get("error_category", category)
+                category = {"provider_schema": "provider_schema_invalid", "invalid_tool_response": "provider_invalid_json", "provider_http": "provider_unavailable"}.get(category, category)
+            self.diagnostics.update(provider_status="failed", provider_error_category=category)
+            raise AnalysisError(category, "Provider did not return a decision")
+        self.diagnostics.update(provider_status="success", provider_error_category=None)
+        try:
+            if not isinstance(calls, list) or len(calls) != 1 or not isinstance(calls[0], dict) or set(calls[0]) != {"id", "name", "arguments"} or calls[0]["name"] != "submit_analyst_decision" or not isinstance(calls[0]["id"], str):
+                raise ToolContractError([issue("contract", "invalid_analysis_shape")])
+            raw_decision = calls[0]["arguments"]
+            if isinstance(raw_decision, dict) and isinstance(raw_decision.get("requested_operations"), list) and len(raw_decision["requested_operations"]) > self.budget.operations:
+                raise AnalysisError("requested_scope_too_large", "Reduce requested scope")
+            decision = AnalystDecision.model_validate(raw_decision)
+            if natural:
+                depth = decision.analysis_breadth or "deep"
+                policy = DEPTH_POLICIES[depth]
+                self.budget = replace(self.budget, supporting_operations=policy["supports"])
+                self.diagnostics.update(analysis_depth=depth, analysis_breadth=depth,
+                    supporting_operation_limit=policy["supports"], target_visual_count=policy["target_views"][-1], target_visual_range=policy["target_views"])
+            if decision.decision_type != "plan":
+                if decision.requested_operations or decision.supporting_operations or decision.removed_query_ids or decision.visuals or not decision.clarification:
+                    raise ToolContractError([issue("clarification", "invalid_analysis_shape")])
+                if decision.decision_type == "unsupported" and decision.clarification.reason not in {"unsupported_metric", "unsupported_dimension", "forecast_unsupported"}:
+                    raise ToolContractError([issue("clarification.reason", "invalid_enum")])
+                self.diagnostics.update(agent_contract_status="valid", semantic_status=decision.decision_type)
+                if decision.clarification.known_query is not None:
+                    draft, rules = normalize_operation(decision.clarification.known_query)
+                    self.record_normalizations(rules)
+                    decision.clarification.known_query = draft
+                clarify_decision(self, decision.clarification.model_dump(mode="json"))
+        except (ValueError, TypeError, KeyError) as error:
+            if getattr(error, "clarification", None) or getattr(error, "category", None) == "requested_scope_too_large":
+                raise
+            self.fail_contract(error)
+        self.queries.ui_context = context or {}
+        return self.accept_plan(decision)
 
     def run(self, prompt, context=None):
         started = time.perf_counter()
@@ -336,7 +400,8 @@ class OneShotPlanner:
             wire_tools = [{**t, "parameters": gemini_tool_schema(t)} for t in tools]
             # Include provider wrappers and JSON escaping. Both supported Gemini
             # styles fit before the allowance is consumed; no adapter state is mutated.
-            maximum = min(policy["body_chars"], char_limit("DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS", 24000, 24000))
+            hard_maximum = char_limit("DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS", 48000 if natural else 24000, 48000)
+            maximum = min(policy["body_chars"], hard_maximum)
             packing_allowance = maximum - min(1000, maximum // 20) if natural else maximum
             self.diagnostics["packing_target_chars"] = packing_allowance
             manifest, packing_hit, sizes, omitted = pack_context(self.catalog, intelligence, candidates, manifest,
@@ -345,9 +410,17 @@ class OneShotPlanner:
             messages = context_messages(payload)
             delivered_knowledge = wire_payload(payload)["domains"]
             chars = max(sizes.values())
+            # Keep the economical 24k target for ordinary requests. Required
+            # multi-domain knowledge can expand the allowance only after local
+            # compaction/sharding, without another provider call or lost scope.
+            if natural and maximum < chars <= hard_maximum:
+                maximum = min(hard_maximum, ((chars + 1999) // 1000) * 1000)
             self.diagnostics.update(semantic_manifest_chars=len(compact(payload["manifest"])), manifest_cache_hit=hit,
                 semantic_manifest_complete=manifest["complete"], decision_schema_chars=len(compact(wire_tools)),
                 total_context_chars=chars, context_char_budget=maximum)
+            self.diagnostics.update(context_hard_char_budget=hard_maximum,
+                                    context_budget_expanded=maximum > policy["body_chars"],
+                                    blueprint_context_shared=bool(delivered_knowledge.get("blueprint_sets")))
             self.diagnostics.update(domain_context_mode=depth, global_domain_count=len(knowledge["directory"]),
                 global_domain_directory_chars=len(compact(knowledge["directory"])),
                 detailed_domain_ids=[p["id"] for p in knowledge["packs"]], domain_packs_omitted=omitted,
@@ -369,63 +442,86 @@ class OneShotPlanner:
                 self.delivered_lenses = {l[0] for lenses in delivered_knowledge.get("lens_directory", {}).values() for l in lenses}
                 self.delivered_lenses.update(l[0] for p in delivered_knowledge["packs"] for l in p["lenses"])
                 self.diagnostics["delivered_lens_count"] = len(self.delivered_lenses)
-            try:
-                response = self.turn.invoke(system=system, messages=messages, tools=tools) or {}
-            except AnalysisError:
-                raise
-            except Exception:
-                response = {"calls": None, "attempts": []}
-            self.diagnostics["agent_rounds"] = 1
-            self.diagnostics["provider_calls"] = response.get("attempts", [])
-            if len(self.diagnostics["provider_calls"]) > 1:
-                raise AnalysisError("provider_call_budget_exceeded", "Provider returned multiple attempts")
-            if self.diagnostics["provider_calls"]:
-                usage = self.diagnostics["provider_calls"][0].get("tokens", {})
-                self.diagnostics.update(input_tokens=usage.get("input"), output_tokens=usage.get("output"),
-                    cumulative_planning_input_tokens=usage.get("input"), cumulative_planning_output_tokens=usage.get("output"))
-            calls = response.get("calls")
-            if not calls:
-                category = "provider_unavailable"
-                if response.get("offline"):
-                    category = "provider_offline"
-                elif response.get("configuration_missing"):
-                    category = "provider_configuration_missing"
-                elif self.diagnostics["provider_calls"]:
-                    category = self.diagnostics["provider_calls"][-1].get("error_category", category)
-                    category = {"provider_schema": "provider_schema_invalid", "invalid_tool_response": "provider_invalid_json", "provider_http": "provider_unavailable"}.get(category, category)
-                self.diagnostics.update(provider_status="failed", provider_error_category=category)
-                raise AnalysisError(category, "Provider did not return a decision")
-            self.diagnostics.update(provider_status="success", provider_error_category=None)
-            try:
-                if not isinstance(calls, list) or len(calls) != 1 or not isinstance(calls[0], dict) or set(calls[0]) != {"id", "name", "arguments"} or calls[0]["name"] != "submit_analyst_decision" or not isinstance(calls[0]["id"], str):
-                    raise ToolContractError([issue("contract", "invalid_analysis_shape")])
-                raw_decision = calls[0]["arguments"]
-                if isinstance(raw_decision, dict) and isinstance(raw_decision.get("requested_operations"), list) and len(raw_decision["requested_operations"]) > self.budget.operations:
-                    raise AnalysisError("requested_scope_too_large", "Reduce requested scope")
-                decision = AnalystDecision.model_validate(raw_decision)
-                if natural:
-                    depth = decision.analysis_breadth or "deep"
-                    policy = DEPTH_POLICIES[depth]
-                    self.budget = replace(self.budget, supporting_operations=policy["supports"])
-                    self.diagnostics.update(analysis_depth=depth, analysis_breadth=depth,
-                        supporting_operation_limit=policy["supports"], target_visual_count=policy["target_views"][-1], target_visual_range=policy["target_views"])
-                if decision.decision_type != "plan":
-                    if decision.requested_operations or decision.supporting_operations or decision.removed_query_ids or decision.visuals or not decision.clarification:
-                        raise ToolContractError([issue("clarification", "invalid_analysis_shape")])
-                    if decision.decision_type == "unsupported" and decision.clarification.reason not in {"unsupported_metric", "unsupported_dimension", "forecast_unsupported"}:
-                        raise ToolContractError([issue("clarification.reason", "invalid_enum")])
-                    self.diagnostics.update(agent_contract_status="valid", semantic_status=decision.decision_type)
-                    if decision.clarification.known_query is not None:
-                        draft, rules = normalize_operation(decision.clarification.known_query)
-                        self.record_normalizations(rules)
-                        decision.clarification.known_query = draft
-                    clarify_decision(self, decision.clarification.model_dump(mode="json"))
-            except (ValueError, TypeError, KeyError) as error:
-                if getattr(error, "clarification", None) or getattr(error, "category", None) == "requested_scope_too_large":
-                    raise
-                self.fail_contract(error)
-            self.queries.ui_context = context or {}
-            return self.accept_plan(decision)
+            repair_operation_count = 0
+            for attempt in range(self.turn.budget.max_calls):
+                response = {}
+                try:
+                    try:
+                        response = self.turn.invoke(system=system, messages=messages, tools=tools) or {}
+                    except AnalysisError:
+                        raise
+                    except Exception:
+                        response = {"calls": None, "attempts": []}
+                    attempts = response.get("attempts", [])
+                    self.diagnostics["agent_rounds"] = attempt + 1
+                    self.diagnostics["provider_calls"].extend(attempts)
+                    if len(attempts) > 1:
+                        raise AnalysisError("provider_call_budget_exceeded", "Transport returned multiple attempts")
+                    for field, token in (("input_tokens", "input"), ("output_tokens", "output")):
+                        values = [a.get("tokens", {}).get(token) for a in self.diagnostics["provider_calls"]]
+                        total = sum(v for v in values if isinstance(v, int)) if any(isinstance(v, int) for v in values) else None
+                        self.diagnostics[field] = total
+                        self.diagnostics["cumulative_planning_" + field] = total
+                    if repair_operation_count:
+                        returned = response.get("calls")
+                        fixed = returned[0].get("arguments") if isinstance(returned, list) and len(returned) == 1 and isinstance(returned[0], dict) else None
+                        if isinstance(fixed, dict) and fixed.get("decision_type") == "plan" and isinstance(fixed.get("requested_operations"), list) and len(fixed["requested_operations"]) < repair_operation_count:
+                            self.fail_contract(ToolContractError([issue("requested_operations", "invalid_analysis_shape")]))
+                    result = self.accept_response(response, natural, context)
+                    self.diagnostics.update(terminal_error=None, agent_contract_error=None, contract_issues=[])
+                    return result
+                except AnalysisError as error:
+                    category = error.category
+                    last = (response.get("attempts") or [{}])[-1]
+                    transient = category in {"provider_timeout", "provider_connection"} or category == "provider_unavailable" and last.get("http_status", 0) in {500, 502, 503, 504}
+                    repairable = category in {"invalid_analysis_contract", "provider_invalid_json"} or getattr(error, "planning_scope_conflict", False)
+                    # No guessing genuine business ambiguity, no quota/auth retries,
+                    # and no replay of SQL or result validation failures.
+                    if attempt or not (repairable or transient) or self.turn.budget.used >= self.turn.budget.max_calls or self.diagnostics["db_query_count"]:
+                        raise
+                    issues = rejection_issues(error) if repairable else []
+                    self.diagnostics["planning_retry_reason"] = category
+                    self.diagnostics["contract_repair_count"] += int(repairable)
+                    self.diagnostics["transport_retry_count"] = int(transient)
+                    self.diagnostics["repaired_contract_issues"] = issues
+                    failed_calls = response.get("calls")
+                    raw = next((c.get("arguments") for c in failed_calls if isinstance(c, dict) and isinstance(c.get("arguments"), dict)), None) if isinstance(failed_calls, list) else None
+                    if repairable:
+                        operations = (raw or {}).get("requested_operations")
+                        repair_operation_count = len(operations) if isinstance(operations, list) and len(operations) <= self.budget.operations else 0
+                        # Reuse the delivered catalog, omit verbose domain packs and
+                        # global discovery prose. No results or SQL enter this call.
+                        repair = {k: v for k, v in wire_payload(payload).items() if k != "domains"}
+                        repair["validation_issues"] = issues
+                        if raw and len(compact(raw)) <= 6000:
+                            repair["rejected_decision"] = raw
+                        lens_ids = {o.get("lens_id") for o in ((raw or {}).get("requested_operations") or []) if isinstance(o, dict)}
+                        selected_packs = [p for p in delivered_knowledge["packs"] if any(l[0] in lens_ids for l in p["lenses"])]
+                        repair["domains"] = {"packs": selected_packs or delivered_knowledge["packs"],
+                                             "lens_directory": delivered_knowledge.get("lens_directory", {}),
+                                             **{k: delivered_knowledge[k] for k in ("lens_columns", "compact_lens_columns", "blueprint_columns", "lens_directory_columns", "blueprint_sets", "blueprint_encoding") if k in delivered_knowledge}}
+                        system = "Repair the rejected analyst decision using these validation issues. Preserve every requested component, UI constraints and original meaning. Use only delivered semantic IDs/lenses. No SQL, prose, invented values or dropped work. Return one submit_analyst_decision. " + ("Unchanged refinement fields inherit previous state. " if refinement else "")
+                        from services.one_shot_context import body_sizes
+                        repair_chars = max(body_sizes(system, repair, tools).values())
+                        if repair_chars > maximum:
+                            repair.pop("rejected_decision", None)
+                            repair_chars = max(body_sizes(system, repair, tools).values())
+                        self.diagnostics["repair_context_chars"] = repair_chars
+                        if repair_chars > maximum:
+                            raise AnalysisError("one_shot_context_budget_exceeded", "Repair exceeds bounded context")
+                        messages = [{"role": "user", "content": compact(repair)}]
+                    from services.agent_provider import NativeAgentProvider
+                    if isinstance(self.turn.provider, NativeAgentProvider):
+                        # Independent repair: do not replay opaque signed tool calls.
+                        # The shared allowance survives transport reset.
+                        self.turn.provider.reset()
+                    self.queries.pending.clear()
+                    self.queries.parent_replacements = {}
+                    self.diagnostics["omitted_supporting_operations"] = []
+                    self.diagnostics["omitted_supporting_operation_count"] = 0
+                    self.diagnostics["limitations"] = []
+                    self.diagnostics["terminal_error"] = None
+
         except AnalysisError as error:
             period = (context or {}).get("required_period")
             if period and period.get("start"):
