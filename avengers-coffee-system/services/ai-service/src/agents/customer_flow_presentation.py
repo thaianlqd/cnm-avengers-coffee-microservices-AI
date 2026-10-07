@@ -229,10 +229,10 @@ def customer_flow_reply(logs, state, discovery_reply=None):
         return login_gate['message']
     milestones = {'add_to_cart', 'update_cart_item', 'remove_cart_item', 'finish_cart',
                   'apply_voucher', 'skip_voucher', 'remove_voucher', 'get_product_options',
-                  'set_checkout_choices', 'request_checkout', 'confirm_checkout', 'resolve_location',
+                  'set_checkout_choices', 'set_fulfillment_choice', 'set_payment_choice', 'request_checkout', 'confirm_checkout', 'resolve_location',
                   'select_location_candidate', 'find_nearest_branch', 'ask_branch', 'set_session_branch'}
     relevant = [row for row in logs if row['tool'] in milestones
-                and not (row['tool'] == 'set_checkout_choices' and row['result'].get('changed') is False)]
+                and not (row['tool'] in {'set_checkout_choices', 'set_fulfillment_choice', 'set_payment_choice'} and row['result'].get('changed') is False)]
     if not relevant:
         return None
     row = relevant[-1]
@@ -294,7 +294,7 @@ def customer_flow_reply(logs, state, discovery_reply=None):
         tail = ("Bạn muốn **đến lấy tại quán (mang đi)** hay **dùng tại chỗ** để mình chuẩn bị đơn nhé?" if not deliv
                 else checkout_choices(state, result.get('payment_options') or []) if (state.get('checkout') or {}).get('voucher_decided') and result.get('quote_status') in {None, 'ok'} else None)
         return '\n\n'.join(part for part in (lead, cart_review(state), tail) if part)
-    if name == 'set_checkout_choices':
+    if name in {'set_checkout_choices', 'set_fulfillment_choice', 'set_payment_choice'}:
         choices = result.get('choices') or {}
         labels = dict(zip(FULFILLMENT_OPTIONS, FULFILLMENT_LABELS))
         lead = 'Dạ, mình đã ghi nhận lựa chọn của bạn ạ.'

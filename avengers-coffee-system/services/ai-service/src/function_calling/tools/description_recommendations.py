@@ -5,7 +5,7 @@ from src.rag.documents import normalize_document
 logger = logging.getLogger(__name__)
 
 
-def recommend_from_descriptions(query, category='all', top_k=5, search_text=None):
+def recommend_from_descriptions(query, category='all', top_k=5, search_text=None, preference_concepts=None):
     empty = {'products': [], 'recommendation_evidence': [], 'recommendation_basis': 'product_description'}
     if not isinstance(query, str) or not query.strip():
         return {**empty, 'status': 'error', 'message': 'Cần nhu cầu hoặc sở thích để tra mô tả sản phẩm.'}
@@ -14,7 +14,10 @@ def recommend_from_descriptions(query, category='all', top_k=5, search_text=None
         from src.function_calling.tools.knowledge_tools import safe_knowledge_results
         from src.function_calling.tools.product_tools import execute_filter_catalog
         found = get_rag_service().lookup(query, top_k=10, domain='product_description',
-            entity_type='product', authority='knowledge', source='menu.san_pham.mo_ta')
+            entity_type='product', authority='knowledge', source='menu.san_pham.mo_ta',
+            **({'preference_concepts': preference_concepts} if preference_concepts else {}))
+        logger.info('[DescriptionRecommendation] backend=%s candidates=%s top_scores=%s status=%s',
+            found.get('backend'), found.get('candidate_count'), found.get('score_diagnostics'), found.get('status'))
         if found.get('status') not in {'ok', 'not_found'}:
             return {**empty, 'status': 'unavailable', 'message': 'Mình chưa tra được mô tả sản phẩm lúc này. Bạn thử lại nhé.'}
         docs = [normalized for doc in found.get('results') or []
@@ -31,6 +34,8 @@ def recommend_from_descriptions(query, category='all', top_k=5, search_text=None
             if menu.get('status') not in {'ok', 'not_found'}:
                 return {**empty, 'status': 'unavailable', 'message': 'Mình chưa xác minh được Menu hiện tại. Bạn thử lại nhé.'}
             active = {str(row['product_id']): row for row in menu.get('products') or []}
+            logger.info('[DescriptionRecommendation] current_menu_rejected_count=%s reason=inactive_or_category_or_identity',
+                len(set(evidence) - set(active)))
             ids = [key for key in evidence if key in active][:max(1, min(10, int(top_k or 5)))]
             if ids:
                 return {'status': 'ok', 'recommendation_basis': 'product_description',

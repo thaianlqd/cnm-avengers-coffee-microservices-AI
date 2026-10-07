@@ -153,6 +153,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
         user_lat, user_lon = None, None
         distance_basis = "unavailable"
         location_estimate = None
+        resolved_location_record = None
         selected_location = resolved_location or (
             prefs.get("selected_location_candidate") if session_id else None
         )
@@ -170,6 +171,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                 ).strip()
                 location_kind = "poi"
                 distance_basis = "provider_candidate"
+                resolved_location_record = dict(selected_location)
 
         with engine.connect() as conn:
             from src.function_calling.helpers import _norm
@@ -233,6 +235,12 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                             resolution = estimate
                             location_estimate = estimate.normalized_label
                     coords = ((resolution.lat, resolution.lng) if resolution.status == "ok" else None)
+                    if resolution.status == 'ok':
+                        resolved_location_record = {'display_address': target_address,
+                            'normalized_label': resolution.normalized_label or target_address,
+                            'lat': resolution.lat, 'lng': resolution.lng,
+                            'provider_ref_id': getattr(resolution, 'provider_ref_id', None),
+                            'admin_components': getattr(resolution, 'administrative_components', None) or {}}
                     if resolution.status == "ambiguous":
                         location_candidates = list(getattr(resolution, "candidates", ()) or ())
                         listed = "\n".join(
@@ -447,6 +455,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
             "branches": top_branches,
             "availability_branches": annotated_branches if delivery_type == "GIAO_TAN_NOI" else top_branches,
             "normalized_location": target_address,
+            **({'resolved_location': resolved_location_record} if resolved_location_record else {}),
             "location_provider_ref_id": (
                 selected_location.get("provider_ref_id") if selected_location else None
             ),

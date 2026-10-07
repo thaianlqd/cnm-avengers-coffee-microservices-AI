@@ -148,7 +148,7 @@ def model_tool_result(name, result, artifacts=None):
     if name in {'get_cart', 'get_cart_quote', 'filter_catalog', 'get_recommendations',
                 'check_price_and_stock', 'get_applicable_vouchers', 'finish_cart',
                 'apply_voucher', 'remove_voucher', 'skip_voucher', 'add_to_cart', 'update_cart_item',
-                'remove_cart_item', 'request_checkout', 'set_checkout_choices', 'set_session_branch',
+                'remove_cart_item', 'request_checkout', 'set_checkout_choices', 'set_fulfillment_choice', 'set_payment_choice', 'set_session_branch',
                 'resolve_location', 'select_location_candidate', 'get_payment_options', 'get_product_options',
                 'ask_branch', 'find_nearest_branch'}:
         return value
@@ -190,6 +190,7 @@ class ToolArtifacts:
         self.checkout = None
         self.business = ((context or {}).get('business') or {})
         self.response_validation_issue = None
+        self.validated_response_kind = None
         self.display_unresolved = False
         self.discovery_batches = []  # Turn-local IDs/args only; never persisted as memory.
         self.discovery_read_count = 0
@@ -207,7 +208,8 @@ class ToolArtifacts:
 
     def discovery_repair_progress(self):
         """A fresh canonical catalog result is progress, not another protocol repair."""
-        if not self.semantic_mode or not self.logs or self.semantic_batch_pending:
+        if not self.semantic_mode or not self.logs or (self.semantic_batch_pending
+                and not getattr(self, 'semantic_plan_read_progress', False)):
             return False
         last = self.logs[-1]
         return (last['tool'] in DISCOVERY_TOOLS and last['result'].get('status') == 'ok'
@@ -227,7 +229,7 @@ class ToolArtifacts:
             return True
         if self.planned_discovery_reads:
             return len(self.discovery_batches) >= self.planned_discovery_reads
-        if (len(logs) == 1 and logs[0]['result'].get('recommendation_basis') == 'product_description'):
+        if (len(logs) == 1 and logs[0]['result'].get('recommendation_basis') in {'product_description', 'menu_name'}):
             return True  # A scoped description search is a complete recommendation read.
         return complementary_pair_complete(self.discovery_batches)
 
@@ -290,6 +292,10 @@ class ToolArtifacts:
         self._publish_products([], 'clarification')
 
     def final_repair_allowed(self, issue):
+        if issue.startswith('FORMAT_REQUIRED:') and not self.logs:
+            # An established configuration/confirmation must retain the
+            # existing guarded dispatch opportunity, including plain prose.
+            return not self.business.get('pending_products') and not self.has_pending_confirmation
         if self.repeated_read_feedback():
             return False  # Formatting repair must not close an unresolved draft.
         return (self.response_validation_issue in {'missing_envelope', 'display_selection_invalid'}
@@ -466,7 +472,7 @@ class ToolArtifacts:
                 if not any(later['tool'] == 'request_checkout'
                            for later in self.logs[self.logs.index(row)+1:]):
                     return safe_text(row['result']['message'], 3000)
-        checkout_tools = {'set_checkout_choices', 'get_payment_options', 'request_checkout', 'set_session_branch'}
+        checkout_tools = {'set_checkout_choices', 'set_fulfillment_choice', 'set_payment_choice', 'get_payment_options', 'request_checkout', 'set_session_branch'}
         if (any(row['tool'] in checkout_tools and row['result'].get('status') in SUCCESS for row in self.logs)
                 or (self.business.get('cart_verified') and (self.business.get('cart') or {}).get('items')
                     and (self.business.get('checkout') or {}).get('checkout_requested')
@@ -478,7 +484,7 @@ class ToolArtifacts:
                 prefs = self.business.get('checkout') or {}
                 fulfillment = {'TAI_CHO': 'dùng tại quán', 'MANG_DI': 'mang đi', 'GIAO_TAN_NOI': 'giao tận nơi'}
                 prefix = ('Đã ghi nhận hình thức ' + fulfillment[prefs['delivery_type']] + '. '
-                    if any(row['tool'] == 'set_checkout_choices' and row['result'].get('status') in SUCCESS
+                    if any(row['tool'] in {'set_checkout_choices', 'set_fulfillment_choice', 'set_payment_choice'} and row['result'].get('status') in SUCCESS
                            for row in self.logs) and prefs.get('delivery_type') in fulfillment else '')
                 return prefix + checkout_guidance(missing)
         for row in reversed(self.logs):
@@ -558,6 +564,13 @@ class ToolArtifacts:
         return '\n\n'.join(lines)
 
     def customer_flow_reply(self):
+        if (self.semantic_mode and self.validated_response_kind == 'social'
+                and self.logs and all(row['tool'] in {'get_cart', 'get_cart_quote'}
+                    and row['result'].get('status') in {'ok', 'empty_cart'} for row in self.logs)):
+            return None  # Incidental pure reads cannot replace a validated social reply.
+        if self.semantic_mode and getattr(self, 'semantic_partial_reply', None):
+            self.used_customer_flow = True
+            return self.semantic_partial_reply
         if getattr(self, 'pending_selection_reply', None):
             self.used_customer_flow = True
             return self.pending_selection_reply
@@ -622,7 +635,7 @@ class ToolArtifacts:
             return None
         if self.discovery_batches and not any(row['result'].get('selection_staged') for row in self.logs) and not any(row['tool'] in {
                 'add_to_cart', 'update_cart_item', 'remove_cart_item', 'finish_cart',
-                'apply_voucher', 'skip_voucher', 'remove_voucher', 'set_checkout_choices'} for row in self.logs):
+                'apply_voucher', 'skip_voucher', 'remove_voucher', 'set_checkout_choices', 'set_fulfillment_choice', 'set_payment_choice'} for row in self.logs):
             return None  # Extra option reads during discovery do not select/configure a product.
         from src.agents.customer_flow_presentation import customer_flow_reply
         self.finalize_display()
@@ -691,7 +704,7 @@ class ToolArtifacts:
             for row in reads) if self.semantic_mode else
             bool(re.search(r'\b(?:ban chay|so luong ban|nhieu nhat|top ban|mua nhieu|bestseller|chay nhat|doanh so|hot)\b', user_norm)))
         lines = ['Dạ, mình gửi bạn các món phù hợp nhé:']
-        preference_reads = [row for row in reads if row['args'].get('criteria') == 'preferences']
+        preference_reads = [row for row in reads if row['result'].get('recommendation_basis') == 'product_description']
         if preference_reads:
             lines[0] = 'Dựa trên mô tả sản phẩm, mình gợi ý các món sau để bạn tham khảo nhé:'
         ranking = next((r['result'] for r in reversed(self.logs) if r['result'].get('ranking') == 'completed_paid_quantity'), None)
@@ -774,7 +787,7 @@ class ToolArtifacts:
                 return json.dumps({'response_kind': 'consultation', 'reply': reply, 'mutation_claims': [],
                     'evidence_quotes': [], 'display_product_ids': [r['product_id'] for r in self.ui['products']],
                     'display_product_count': len(self.ui['products'])}, ensure_ascii=False)
-        meaningful = [row for row in self.logs if not (row['tool'] == 'set_checkout_choices'
+        meaningful = [row for row in self.logs if not (row['tool'] in {'set_checkout_choices', 'set_fulfillment_choice', 'set_payment_choice'}
             and row['result'].get('changed') is False)]
         if not meaningful:
             return None
@@ -790,7 +803,8 @@ class ToolArtifacts:
             row['tool'] == request['tool'] and str(row['args'].get('cart_item_id')) == request['cart_item_id']
             and row['result'].get('status') == 'invalid_option' for row in self.logs) for request in unfinished))
         from src.agents.order_management import ORDER_TOOLS
-        stop = ((self.semantic_mode and name in {'add_to_cart', 'update_cart_item', 'remove_cart_item', 'set_checkout_choices'} and status in {'ok', 'already_processed'})
+        stop = ((self.semantic_mode and name in {'add_to_cart', 'update_cart_item', 'remove_cart_item', 'set_checkout_choices', 'set_fulfillment_choice', 'set_payment_choice'} and status in {'ok', 'already_processed'})
+                or (self.semantic_mode and name == 'get_menu_categories' and status == 'ok')
                 or (self.semantic_mode and name == 'get_product_options' and status == 'ok')
                 or (self.semantic_mode and name in {'resolve_location', 'select_location_candidate'} and last['result'].get('message') and status not in {'error', 'unavailable'})
                 or name == 'compare_branch_reviews' or (name in ORDER_TOOLS and last['result'].get('message')) or (name in {'resolve_location', 'select_location_candidate', 'find_nearest_branch', 'ask_branch'}
@@ -807,7 +821,7 @@ class ToolArtifacts:
                              'profile_location_confirmation_required', 'needs_new_location', 'login_required',
                              'product_choice_required', 'ambiguous_product_options', 'cart_change_not_requested', 'wallet_unavailable', 'insufficient_wallet'}
                 or edits_complete or needs_option_choice
-                or (name == 'set_checkout_choices' and (
+                or (name in {'set_checkout_choices', 'set_fulfillment_choice', 'set_payment_choice'} and (
                     (self.business.get('checkout') or {}).get('profile_location_offer')
                     or (last['result'].get('profile_location') or {}).get('status') in {'empty', 'unavailable'})))
         reply = self.customer_flow_reply() if stop else None
@@ -856,9 +870,12 @@ class ToolArtifacts:
         try:
             envelope = json.loads(raw)
         except (ValueError, TypeError):
-            return 'Return the required JSON envelope with response_kind, reply, mutation_claims and evidence_quotes.'
+            return 'FORMAT_REQUIRED: Return the JSON envelope with response_kind, reply, mutation_claims and evidence_quotes. Formatting alone never requires a business tool.'
         if not isinstance(envelope, dict) or not isinstance(envelope.get('reply'), str):
-            return 'Return the required JSON envelope with a string reply.'
+            return 'FORMAT_REQUIRED: Return the JSON envelope with a string reply.'
+        if self.semantic_mode and not self.logs and envelope.get('response_kind') not in {'social', 'clarification', 'consultation', 'action'}:
+            return ('FORMAT_REQUIRED: Declare response_kind=social/clarification/consultation/action in the final JSON. '
+                    'For a greeting/social reply use social with no tools; do not invent a business read to satisfy formatting.')
         display_issue = self._display_issue(envelope)
         self.display_unresolved = bool(display_issue)
         if display_issue:
@@ -1060,7 +1077,7 @@ class ToolArtifacts:
             (r'\bda\s+(?:duoc\s+)?ap\s+(?:voucher|ma)\b', {'apply_voucher'}),
             (r'\bda\s+(?:duoc\s+)?them\b', {'add_to_cart', 'confirm_order_change'}),
             (r'\bda\s+(?:duoc\s+)?xoa\b', {'remove_cart_item', 'remove_voucher', 'discard_pending_product'}),
-            (r'\bda\s+(?:duoc\s+)?cap nhat\b', {'update_cart_item', 'set_checkout_choices', 'set_session_branch', 'confirm_order_change'}),
+            (r'\bda\s+(?:duoc\s+)?cap nhat\b', {'update_cart_item', 'set_checkout_choices', 'set_fulfillment_choice', 'set_payment_choice', 'set_session_branch', 'confirm_order_change'}),
         ):
             if re.search(pattern, normalized) and not successful.intersection(tools):
                 if not (('get_product_insights' in successful or 'get_product_description' in successful or 'search_knowledge_base' in successful)
@@ -1104,6 +1121,8 @@ class ToolArtifacts:
             return self._fallback('unverified_amount')
         from src.agents.guardrails import check_output
         checked, _ = check_output(safe_text(reply, 3000))
+        if checked:
+            self.validated_response_kind = envelope.get('response_kind')
         return checked or self.factual_fallback()
 
     def _fallback(self, issue):

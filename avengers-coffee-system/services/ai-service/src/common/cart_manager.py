@@ -72,6 +72,7 @@ def _parse_json_object(value: Any) -> Dict[str, Any]:
 def _order_item_payload(item: Dict[str, Any]) -> Dict[str, Any]:
     """Return only fields that can change the order represented by a cart line."""
     return {
+        "cart_item_id": str(item.get("cart_item_id") or item.get("id") or item.get("line_id") or ""),
         "product_id": str(item.get("product_id") or item.get("ma_san_pham") or ""),
         "product_name": str(item.get("product_name") or item.get("ten_san_pham") or ""),
         "quantity": max(1, int(item.get("quantity") or item.get("so_luong") or 1)),
@@ -583,7 +584,8 @@ def set_checkout_context(session_id: str, **values: Any) -> Dict[str, Any]:
     with _get_session_lock(session_id):
         session = _get_or_create_session(session_id)
         prefs = dict(session.get("checkout_prefs") or {})
-        order_affecting_keys = {"voucher_code", "discount_amount"}
+        order_affecting_keys = {"voucher_code", "discount_amount", "confirmed_destination", "address_confirmed",
+            "branch_destination_fingerprint", "location_state"}
         order_state_changed = False
         for key, value in values.items():
             old_value = prefs.get(key)
@@ -670,6 +672,7 @@ def reset_conversation_draft(session_id: str) -> Dict[str, Any]:
             "profile_location_offer", "profile_location_checked_for",
             "store_location", "location_source",
             "location_candidate_snapshot", "selected_location_candidate",
+            "confirmed_destination", "address_confirmed", "branch_destination_fingerprint", "location_state",
             "last_resolved_location", "last_branch_discovery_candidates", "last_branch_focus",
             "summary_amounts", "checkout_action_expires_at", "order_management_action", "order_management_focus",
         )
@@ -774,6 +777,8 @@ def cart_fingerprint(session_id: str) -> str:
                 "payment_method", "delivery_type", "delivery_method",
                 "delivery_address", "voucher_code", "discount_amount",
                 "summary_amounts",
+                "confirmed_destination", "address_confirmed", "branch_destination_fingerprint",
+                "summary_quote_items",
             )
         },
         "items": sorted(
@@ -782,6 +787,7 @@ def cart_fingerprint(session_id: str) -> str:
                 str(item.get("product_id")),
                 str(item.get("size") or ""),
                 str(item.get("note") or ""),
+                str(item.get("cart_item_id") or ""),
             ),
         ),
     }

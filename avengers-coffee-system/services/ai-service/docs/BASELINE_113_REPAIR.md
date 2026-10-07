@@ -96,3 +96,5 @@ Lỗi đọc giỏ rồi báo đã áp dụng mặc định được xử lý ri
 Lỗi đối chiếu địa chỉ sau khi bổ sung thành phố: [ADDRESS_COMPONENT_GROUNDING_FIX.md](ADDRESS_COMPONENT_GROUNDING_FIX.md), checkpoint tiếp theo: 2.717 passed, 0 failed, 1 skipped; 0 request Gemini/Vietmap thật để test.
 
 Lỗi dùng doanh số để trả lời nhu cầu/thời tiết: [DESCRIPTION_RECOMMENDATIONS_FIX.md](DESCRIPTION_RECOMMENDATIONS_FIX.md), checkpoint tiếp theo: 2.737 passed, 0 failed, 1 skipped; thêm luồng tìm theo mô tả sản phẩm và tách tiêu chí bestsellers. 0 request Gemini/Vietmap thật để test.
+
+Provider transport/resilience: [PROVIDER_RESILIENCE_FIX.md](PROVIDER_RESILIENCE_FIX.md), checkpoint 2026-10-07: 2.788 passed, 0 failed, 1 skipped. Deadline tuần tự 15/28 mặc định, clamp cấu hình cũ 18/30, transient cooldown theo provider/model; không đổi semantic architecture. LIVE_PROVIDER_REQUESTS = 0.

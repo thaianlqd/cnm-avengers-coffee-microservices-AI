@@ -149,7 +149,7 @@ def test_selection_then_all_options_then_compound_delivery_in_real_loop(runtime,
         captured.append(state) or {'reply': 'Bạn cung cấp địa chỉ giao cụ thể nhé.', 'tool_calls_log': [
             {'tool': 'find_nearest_branch', 'result': {'status': 'needs_location'}}]}))
     plan('Mang đến điểm mới giúp mình', [
-        {'tool': 'set_checkout_choices', 'args': {'delivery_type': 'GIAO_TAN_NOI'}, 'supplied_location': True},
+        {'tool': 'set_fulfillment_choice', 'facet': 'fulfillment', 'args': {'delivery_type': 'GIAO_TAN_NOI'}, 'supplied_location': True},
         {'tool': 'resolve_location', 'args': {'kind': 'poi', 'for_checkout': True},
          'reference': {'namespace': 'LOCATION', 'kind': 'literal', 'value': 'điểm mới'}},
     ])
@@ -219,7 +219,7 @@ def test_missing_fulfillment_is_repaired_before_checkout_location(runtime, monke
     message = 'Nhờ đem tới điểm mình vừa nói nhé'
     location = {'tool': 'resolve_location', 'commitment': 'SELECTED', 'evidence': message,
         'args': {'location': 'Điểm mới', 'kind': 'poi', 'for_checkout': True}}
-    repair = {'actions': [{'tool': 'set_checkout_choices', 'commitment': 'SELECTED', 'evidence': message,
+    repair = {'actions': [{'tool': 'set_fulfillment_choice', 'facet': 'fulfillment', 'commitment': 'SELECTED', 'evidence': message,
         'supplied_location': True, 'args': {'delivery_type': 'GIAO_TAN_NOI'}}, location]}
     runtime.provider.plan([('customer_actions', repair)])
     first = deepcopy(runtime.provider.steps[0])
@@ -612,10 +612,10 @@ def test_complete_semantic_customer_journey_through_order_creation(runtime, monk
             {'tool': 'find_nearest_branch', 'result': {'status': 'ok'}}]}
     monkeypatch.setattr(order_flow_graph, '_handle_location_request', geo)
     send('Giao tới địa chỉ mình vừa cung cấp nhé', [
-        {'tool': 'set_checkout_choices', 'args': {'delivery_type': 'GIAO_TAN_NOI'}, 'supplied_location': True},
+        {'tool': 'set_fulfillment_choice', 'facet': 'fulfillment', 'args': {'delivery_type': 'GIAO_TAN_NOI'}, 'supplied_location': True},
         {'tool': 'resolve_location', 'args': {'location': 'Địa chỉ đầy đủ từ khách', 'kind': 'address', 'for_checkout': True}}])
     assert len(geo_calls) == 1 and not geo_calls[0]['force_read_only_location']
-    send('Trả tiền khi nhận hàng', [{'tool': 'set_checkout_choices', 'args': {'payment_method': 'THANH_TOAN_KHI_NHAN_HANG'}}])
+    send('Mình thanh toán COD', [{'tool': 'set_payment_choice', 'facet': 'payment', 'reference': {'namespace': 'PAYMENT', 'kind': 'name', 'value': 'COD'}, 'args': {'payment_method': 'THANH_TOAN_KHI_NHAN_HANG'}}])
     def summary(sid, **kwargs):
         cart = cart_manager.get_cart(sid)
         cart_manager.set_checkout_context(sid, checkout_requested=True, checkout_action_id='journey-action',
@@ -641,7 +641,7 @@ def test_compound_delivery_poi_uses_real_address_precision_gate(runtime, monkeyp
     monkeypatch.setitem(TOOL_EXECUTORS, 'get_user_profile', lambda *a: pytest.fail('literal confused with profile'))
     message = 'Nhờ giao đến Chợ Bà Chiểu nhé'
     runtime.provider.plan([('customer_actions', {'actions': [
-        {'tool': 'set_checkout_choices', 'commitment': 'SELECTED', 'evidence': message,
+        {'tool': 'set_fulfillment_choice', 'facet': 'fulfillment', 'commitment': 'SELECTED', 'evidence': message,
          'supplied_location': True, 'args': {'delivery_type': 'GIAO_TAN_NOI'}},
         {'tool': 'resolve_location', 'commitment': 'SELECTED', 'evidence': message,
          'args': {'kind': 'poi', 'for_checkout': True},

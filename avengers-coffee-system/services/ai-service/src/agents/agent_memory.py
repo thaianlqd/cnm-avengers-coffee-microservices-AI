@@ -39,7 +39,7 @@ ENTITY_FIELDS = {
                  'dieu_kien_ap_dung', 'so_tien_giam_du_kien', 'display_index'),
     'branches': ('branch_id', 'branch_name', 'ma_chi_nhanh', 'ten_chi_nhanh', 'dia_chi',
                  'khoang_cach_km', 'availability_status', 'unavailable_products', 'unverified_products', 'display_index'),
-    'location_candidates': ('candidate_id', 'normalized_label', 'display_address', 'lat', 'lng',
+    'location_candidates': ('candidate_id', 'provider_ref_id', 'normalized_label', 'display_address', 'lat', 'lng',
                             'admin_components', 'provider', 'display_index'),
     'payment_options': ('code', 'value', 'label', 'enabled', 'reason', 'display_index'),
 }

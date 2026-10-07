@@ -42,10 +42,14 @@ def test_outage_before_any_tool_explains_failure_without_changing_cart(runtime, 
     assert len(runtime.provider.requests) == 1  # Existing attempt budget remains in force.
 
 
-def test_new_message_after_outage_can_use_the_normal_discovery_flow(runtime):
+def test_new_message_after_outage_can_use_the_normal_discovery_flow(runtime, monkeypatch):
+    from src.common import agent_provider_policy as policy
+    clock = [100.0]
+    monkeypatch.setattr(policy.time, 'monotonic', lambda: clock[0])
     runtime.provider.steps = [TimeoutError('synthetic timeout')]
     message = 'hello tôi muốn mua cà phê nóng'
     runtime.turn(message)
+    clock[0] += 31  # Provider recovers after the short transient health cooldown.
     runtime.provider.plan([('filter_catalog', {'category': 'drink', 'search_text': 'cà phê', 'limit': 2})])
     result = runtime.turn(message)
     assert result['ui_payload']['products']

@@ -77,7 +77,8 @@ def summary_fake(runtime, monkeypatch):
         action = cart_manager.get_checkout_prefs(sid)['checkout_action_id']
         cart_manager.set_pending_action(sid, 'confirm_checkout', {'action_id': action})
         return {'status': 'require_confirmation', 'message': 'Bạn xem bản tóm tắt rồi xác nhận ở lượt tiếp theo nhé.',
-            'order_summary': {'action_id': action, 'items': cart_manager.get_cart(sid)['items'], 'final_total': 70000}}
+            'order_summary': {'action_id': action, 'items': cart_manager.get_cart(sid)['items'], 'final_total': 70000,
+                'delivery_address': cart_manager.get_checkout_prefs(sid).get('delivery_address')}}
     monkeypatch.setattr(cart_tools, 'execute_request_checkout', prepare)
     return calls
 
@@ -104,7 +105,7 @@ def calls(*operations):
 def test_inventory_schema_and_action_projection(runtime):
     action = setup_checkout(runtime)
     g = gateway(runtime)
-    assert (len(CAPABILITIES), len(READS), len(WRITES)) == (40, 21, 19)
+    assert (len(CAPABILITIES), len(READS), len(WRITES)) == (42, 21, 21)
     params = next(row['function']['parameters'] for row in tool_schemas() if row['function']['name'] == 'confirm_checkout')
     assert params == {'type': 'object', 'properties': {}, 'required': [], 'additionalProperties': False}
     assert action not in model_projection(g.context)[1]

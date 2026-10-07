@@ -37,6 +37,8 @@ TOOL_TARGETS = {
     'cancel_order': ('ORDER', 'order_id'), 'update_order': ('ORDER', 'order_id'),
     'reorder_order': ('ORDER', 'order_id'), 'resolve_location': ('PROFILE_ADDRESS', 'location'),
     'filter_catalog': ('MENU_CATEGORY', 'category_id'),
+    'set_payment_choice': ('PAYMENT', 'payment_method'),
+    'set_fulfillment_choice': ('FULFILLMENT', 'delivery_type'),
 }
 
 
@@ -90,6 +92,32 @@ def model_repair(code, **details):
         'message': 'Mình chưa thực hiện phần yêu cầu này; hệ thống đang kiểm tra lại đề xuất.', **details}
 
 
+def canonical_recommendation_arguments(args):
+    """Normalize explicitly supplied model fields, never parse customer language."""
+    args = deepcopy(args)
+    if not isinstance(args, dict):
+        return args, None
+    query = args.get('preference_query')
+    has_need = isinstance(query, str) and bool(query.strip())
+    if has_need and not args.get('criteria'):
+        args['criteria'] = 'preferences'
+    if has_need and args.get('criteria') != 'preferences':
+        return args, model_repair('recommendation_basis_conflict',
+            repair_hint='preference_query explicitly declares description-based suitability. '
+            'Keep this need with criteria=preferences; do not substitute sales/price/rating.')
+    if args.get('criteria') == 'preferences':
+        from src.rag.documents import normalize_text
+        search = args.get('search_text')
+        concepts = args.get('preference_concepts')
+        # The model already labeled this exact value as a description concept.
+        # Do not ALSO turn it into a literal product-name filter. A distinct
+        # family filter remains untouched.
+        if isinstance(search, str) and search.strip() and isinstance(concepts, list):
+            if normalize_text(search) in {normalize_text(c) for c in concepts if isinstance(c, str) and c.strip()}:
+                args['search_text'] = ''
+    return args, None
+
+
 def provider_parameters(spec):
     """Canonical vocabulary for generation; legacy aliases remain server-only."""
     spec = deepcopy(spec)
@@ -110,12 +138,16 @@ def provider_parameters(spec):
 
 
 CONTROL_HINTS = {
+    'get_menu_categories': 'Generic menu request reads categories with args={}; no product selection or preference search. Newest request replaces prior discovery goals.',
+    'filter_catalog': 'Use for requested product names/families and category browsing; omitted search_text means unrestricted category. SELECTED purchases require canonical options after a unique match. Never search descriptions for a named purchase.',
+    'get_recommendations': 'Use criteria=preferences with preference_query and preference_concepts for suitability. Named purchases use filter_catalog, not description mentions; changing the request replaces prior preferences. search_text restricts product family ONLY; never repeat a taste concept there. Preserve the need when repairing; never replace this operation with name search or sales.',
     'get_cart': 'QUESTION reads committed cart plus separate pending selections; never completes CONFIGURE/DEFAULTS. For a pending option/default instruction use add_to_cart, not this read. Empty cart never cancels pending selection.',
     'get_product_options': 'SELECTED stages only: return required choices to customer. QUESTION inspects.',
     'add_to_cart': 'option_intent SELECT stages unresolved choices; CONFIGURE uses provided values; DEFAULTS needs defaults_evidence. No implicit defaults.',
     'update_cart_item': 'desired_state patches one exact owned line; other lines/options remain.',
-    'set_checkout_choices': 'Record fulfillment/payment explicitly chosen now. Set action.supplied_location=true when a new destination is also supplied.',
-    'resolve_location': 'Destination requires set_checkout_choices first, then for_checkout=true for delivery (including POI). New literals have LOCATION or no reference; only saved state uses PROFILE_ADDRESS.',
+    'set_fulfillment_choice': 'facet=fulfillment. Record ONLY explicitly committed fulfillment; supplied_location=true suppresses a saved-address offer. Never payment.',
+    'set_payment_choice': 'facet=payment. Requires canonical PAYMENT reference and exact choice evidence. Named reference quotes the method; ordinal must answer current payment choices. Generic acknowledgment needs unique pending choice.',
+    'resolve_location': 'Destination requires set_fulfillment_choice first, then for_checkout=true. New literals use LOCATION; saved choices use PROFILE_ADDRESS. Never infer payment.',
     'find_nearest_branch': 'Read-only location questions; never substitutes for recording delivery/checkout destination.',
     'finish_cart': 'Finish selection and open mandatory voucher decision; never implies skip/apply.',
     'skip_voucher': 'Explicitly decline vouchers; do not infer from generic acknowledgment.',
@@ -125,10 +157,15 @@ CONTROL_HINTS = {
 
 def customer_actions_schema(allowed, tool_rows=None, *, model_facing=False):
     from src.agents.tool_capabilities import CAPABILITIES, tool_schemas
+    allowed = set(allowed)
+    if model_facing:
+        allowed.discard('set_checkout_choices')
     rows = tool_rows if tool_rows is not None else tool_schemas(allowed)
     properties, contracts = {}, []
     for row in rows:
         name, parameters = row['function']['name'], row['function']['parameters']
+        if name not in allowed:
+            continue
         if model_facing:
             parameters = provider_parameters(parameters)
         fields = parameters.get('properties', {})
@@ -138,7 +175,9 @@ def customer_actions_schema(allowed, tool_rows=None, *, model_facing=False):
         contracts.append(name + '(' + CAPABILITIES[name].access + '; ' + CAPABILITIES[name].owner + '): ' +
             ','.join(key + ('!' if key in required else '') for key in fields) +
             (' — ' + CONTROL_HINTS[name] if name in CONTROL_HINTS else ''))
-    description = ('Call customer_actions ONLY with {"actions":[{"tool":"get_cart","commitment":"QUESTION","args":{},"evidence":"exact current quotation"}]}. Never put tool/args at root. Execute all business reads/selections/changes through this contract. '
+    description = ('Use customer_actions only when the NEWEST customer request needs a business read, selection or change. '
+        'For social conversation return final JSON with response_kind=social, reply, mutation_claims:[], evidence_quotes:[]; do not call any business tool just to greet. '
+        'For business work supply {actions:[...]} with the appropriate operation on each action. No default operation. Never put tool/args at root. '
         'args is an object, not an encoded string. QUESTION reads facts; get_product_options SELECTED stages a chosen product. '
         'Writes need current evidence. ! marks required args unless reference supplies the target. '
         'A displayed list number is reference kind=ordinal with index, never an ID argument. '
@@ -162,7 +201,7 @@ def customer_actions_schema(allowed, tool_rows=None, *, model_facing=False):
                                 'namespace': {'type': 'string', 'enum': list(NAMESPACES)},
                                 'value': {'type': 'string'}, 'index': {'type': 'integer', 'minimum': 1},
                                 'scope': {'type': 'string', 'enum': ['drink', 'food']}}},
-                        'facet': {'type': 'string', 'enum': ['description', 'taste', 'ingredient', 'allergen']},
+                        'facet': {'type': 'string', 'enum': ['description', 'taste', 'ingredient', 'allergen', 'fulfillment', 'payment', 'location', 'cart', 'voucher']},
                         'exclude_previous': {'type': 'boolean'},
                         'supplied_location': {'type': 'boolean'},
                     }}}}}}}
@@ -202,6 +241,10 @@ def validate_commitment(action, access, message):
     evidence = action.get('evidence')
     if not isinstance(evidence, str) or not evidence.strip() or evidence not in message:
         return model_repair('missing_current_evidence', repair_hint='Quote the exact current customer span for this action; do not paraphrase or use history.')
+    if action['tool'] in {'set_fulfillment_choice', 'set_payment_choice'}:
+        facet = 'payment' if action['tool'] == 'set_payment_choice' else 'fulfillment'
+        if action.get('facet') != facet:
+            return model_repair('checkout_facet_required', expected_facet=facet)
     if action['tool'] == 'add_to_cart':
         intent = action.get('option_intent')
         if intent not in {'SELECT', 'CONFIGURE', 'DEFAULTS'}:
@@ -267,7 +310,11 @@ def candidates(gateway, namespace, reference):
         rows = list(gateway.artifacts.visible.get(kind) or [])
     if namespace == 'PAYMENT':
         selected = (state.get('checkout') or {}).get('payment_method')
-        from src.agents.checkout_choices import PAYMENT_OPTIONS
+        from src.agents.checkout_choices import PAYMENT_OPTIONS, PAYMENT_LABELS
+        if reference.get('kind') in {'id', 'name'}:
+            # Named supported methods are canonical even before a list is shown.
+            # Ordinals and acknowledgments still require a displayed/pending owner.
+            rows += [{'code': code, 'label': label} for code, label in zip(PAYMENT_OPTIONS, PAYMENT_LABELS)]
         if selected in PAYMENT_OPTIONS:
             rows.append({'code': selected})
     if namespace == 'ORDER':
@@ -294,7 +341,11 @@ def ground_reference(gateway, namespace, reference):
     if kind == 'id':
         rows = [row for row in rows if identity(row, fields) == str(value)]
     elif kind == 'name':
-        rows = [row for row in rows if any(str(row.get(key, '')).casefold() == str(value).casefold() for key in names)]
+        from src.rag.documents import normalize_text
+        rows = [row for row in rows if any(str(row.get(key, '')).casefold() == str(value).casefold()
+            or namespace == 'PAYMENT' and len(normalize_text(value)) >= 3
+            and (' ' + normalize_text(value) + ' ') in (' ' + normalize_text(row.get(key, '')) + ' ')
+            for key in names)]
     elif kind == 'ordinal':
         field = ('selection_index' if namespace == 'PRODUCT'
                  and reference.get('scope') is None and gateway.entry_pending_products else
@@ -428,6 +479,17 @@ def ground_action(gateway, action):
         return None, None, error
     canonical = (row.get('product_name') if field in {'product_name', 'product_name_query'} else
                  identity(row, NAMESPACES[namespace][1]))
+    if namespace == 'FULFILLMENT':
+        # Literal canonical business labels are identity evidence. If quoted,
+        # they cannot authorize a different enum. Implicit/paraphrased meaning
+        # still belongs to the model; no phrase dictionary or choice inference.
+        from src.rag.documents import normalize_text
+        evidence = ' ' + normalize_text(action.get('evidence')) + ' '
+        named = {identity(candidate, NAMESPACES[namespace][1]) for candidate in candidates(gateway, namespace, reference)
+            if candidate.get('label') and (' ' + normalize_text(candidate['label']) + ' ') in evidence}
+        if named and named != {canonical}:
+            return None, None, model_repair('canonical_choice_evidence_conflict', expected_namespace=namespace,
+                repair_hint='Quote only the chosen canonical business label and use its matching enum; do not change the chosen method.')
     if field in args and str(args[field]).casefold() != str(canonical).casefold():
         known_ids = {identity(item, NAMESPACES[namespace][1])
                      for item in candidates(gateway, namespace, reference)}
@@ -439,8 +501,10 @@ def ground_action(gateway, action):
     args[field] = canonical
     if namespace == 'PAYMENT' and row.get('enabled') is False:
         return None, None, {'status': 'payment_not_available', 'message': row.get('reason') or 'Phương thức thanh toán này chưa khả dụng. Bạn chọn phương thức khác nhé.', 'recovery_kind': 'clarify'}
-    if namespace == 'CART_LINE' and reference['kind'] == 'ordinal':
-        args['cart_line_ordinal'] = reference['index']
+    if namespace == 'CART_LINE':
+        ordinal = args.pop('cart_line_ordinal', None)
+        if ordinal is not None and int(ordinal) != int(row.get('display_index') or gateway.entry_cart_lines.index(row) + 1):
+            return None, None, model_repair('reference_conflict', target_field='cart_line_ordinal')
     if namespace == 'MENU_CATEGORY':
         args['category'] = row['menu_bucket']
     return args, row, None

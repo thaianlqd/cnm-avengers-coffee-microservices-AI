@@ -87,6 +87,9 @@ def test_category_and_global_ordinals_resolve_the_displayed_id(runtime, message,
 
 def test_default_retry_after_provider_timeout_retains_the_selected_product(runtime, monkeypatch):
     from src.agents import llm_tool_orchestrator
+    from src.common import agent_provider_policy as policy
+    clock = [100.0]
+    monkeypatch.setattr(policy.time, 'monotonic', lambda: clock[0])
     monkeypatch.setattr(llm_tool_orchestrator, '_legacy_language_control', lambda *a: None)
     runtime.products[0]['product_name'] = 'Cà Phê Sữa Nóng'
     runtime.provider.plan([('get_product_options', dict(product_id='101'))])
@@ -95,6 +98,11 @@ def test_default_retry_after_provider_timeout_retains_the_selected_product(runti
     failed = runtime.turn('theo mặc định đi bạn ơi')
     assert failed['error'] and not runtime.writes
     assert ConversationMemory(runtime.redis).load(runtime.sid)['focus']['product']['product_id'] == '101'
+    attempts = len(runtime.provider.requests)
+    cooling = runtime.turn('theo mặc định đi bạn ơi')
+    assert cooling['error'] == 'network_timeout' and len(runtime.provider.requests) == attempts
+    assert not runtime.writes
+    clock[0] += 31  # Retry after actual transient recovery, not through another key.
     runtime.provider.plan([('add_to_cart', dict(product_id='101', use_defaults=True))])
     added = runtime.turn('theo mặc định đi bạn ơi')
     assert added['error'] is None and len(runtime.writes) == 1

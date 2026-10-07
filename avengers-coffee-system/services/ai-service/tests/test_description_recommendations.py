@@ -54,6 +54,27 @@ def test_description_relevance_then_live_menu_identity_price_scope(runtime, desc
     assert 'sort_by' not in descriptions.calls[0] and 'ranking' not in result
 
 
+@pytest.mark.parametrize('query,concepts', [
+    ('Thời tiết oi quá, cho mình nước dễ chịu hơi ngọt nhé', ['thanh mát', 'ngọt nhẹ']),
+    ('Tìm thứ giải khát có độ ngọt vừa thôi', ['giải khát', 'ngọt nhẹ']),
+    ('Muốn đồ uống lạnh với chút vị ngọt', ['dùng lạnh', 'ngọt nhẹ']),
+])
+def test_compositional_preferences_require_all_description_concepts(runtime, descriptions, monkeypatch, query, concepts):
+    docs = [doc('101', 'Hương trái cây thanh mát, dùng lạnh giải khát, vị ngọt nhẹ dễ chịu.'),
+        doc('102', 'Cà phê đắng, phục vụ nóng, ngọt nhẹ.'),
+        doc('inactive', 'Hương trái cây thanh mát, dùng lạnh giải khát, vị ngọt nhẹ dễ chịu.'),
+        # A title is identity, never taste evidence.
+        {**doc('103', 'Bánh bơ mềm.'), 'title': 'thanh mát dùng lạnh giải khát ngọt nhẹ'}]
+    monkeypatch.setattr(rag_service, 'load_all_rag_data', lambda: deepcopy(docs))
+    assert descriptions.service.load()['status'] == 'ok'
+    result = recommend_from_descriptions(query, 'drink', preference_concepts=concepts)
+    assert [p['product_id'] for p in result['products']] == ['101']
+    assert result['recommendation_evidence'][0]['content'] == docs[0]['content']
+    assert 'sort_by' not in descriptions.calls[-1]
+    absent = recommend_from_descriptions('Sở thích chưa có', 'drink', preference_concepts=['tinh vân lượng tử'])
+    assert absent['status'] == 'not_found' and not absent['products']
+
+
 @pytest.mark.parametrize('query', ['', 'tinh vân lượng tử xa xăm'])
 def test_missing_or_unmatched_preference_never_falls_back_to_bestsellers(descriptions, query):
     result = recommend_from_descriptions(query)

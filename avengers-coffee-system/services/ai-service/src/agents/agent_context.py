@@ -12,7 +12,8 @@ PREF_FIELDS = ('delivery_type', 'payment_method', 'delivery_address', 'address_c
     'checkout_action_id', 'checkout_action_expires_at', 'summary_fingerprint', 'flow_stage',
     'location_address', 'summary_amounts', 'completed_order_id', 'stock_conflicts', 'checkout_submission',
     'voucher_offer_pending', 'pending_product_reference', 'profile_location_offer', 'profile_location_checked_for',
-    'pending_cart_option_edit', 'order_management_action', 'order_management_focus', 'partial_delivery_address')
+    'pending_cart_option_edit', 'order_management_action', 'order_management_focus', 'partial_delivery_address',
+    'confirmed_destination', 'location_state', 'branch_destination_fingerprint')
 LINE_FIELDS = ('cart_item_id', 'line_id', 'product_id', 'product_name', 'quantity', 'size',
                'toppings', 'luong_da', 'do_ngot', 'loai_sua', 'unit_price', 'line_total')
 
@@ -59,6 +60,8 @@ def build_context(session_id, memory, history=None, selected_product_id=None, sh
     from src.agents.tool_artifacts import candidate_id
     fallbacks['location_candidates'] = [{**row, 'candidate_id': row.get('candidate_id') or candidate_id(row)}
         for row in fallbacks.get('location_candidates') or []]
+    if prefs.get('location_candidate_snapshot') or prefs.get('confirmed_destination'):
+        visible['location_candidates'] = snapshot('location_candidates', fallbacks['location_candidates'])
     for kind, rows in fallbacks.items():
         if not visible.get(kind):
             visible[kind] = snapshot(kind, rows)

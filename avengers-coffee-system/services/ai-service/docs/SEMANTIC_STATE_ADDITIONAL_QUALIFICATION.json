@@ -1,0 +1,228 @@
+{
+  "business_authority": "isolated in-memory fixtures; NO real cart/order/geo writes",
+  "budget": 16,
+  "cases": [
+    {
+      "case": "fulfillment_payment",
+      "user_message": "Mình sẽ lấy tại quán, tiền trả bằng QR ngân hàng nhé.",
+      "expected_facets": "pickup and explicit QR",
+      "provider_requests": 3,
+      "protocol_repairs": 1,
+      "latency_ms": 27810.49,
+      "executed_writes": [],
+      "tool_results": [
+        {
+          "tool": "customer_actions",
+          "args": {},
+          "result": {
+            "status": "invalid_semantic_arguments",
+            "changed": false,
+            "recovery_kind": "model_repair",
+            "message": "Mình chưa thực hiện phần yêu cầu này; hệ thống đang kiểm tra lại đề xuất."
+          }
+        }
+      ],
+      "final_authoritative_state": {
+        "session_id": "lan20-e0bd4ecfaa1c4312af891ce64c9df0a1",
+        "cart_id": null,
+        "cart_version": null,
+        "user_id": null,
+        "authoritative": false,
+        "cart_sync_status": "local",
+        "branch_id": null,
+        "branch_name": null,
+        "items": [
+          {
+            "line_id": 800,
+            "cart_item_id": 800,
+            "product_id": "101",
+            "product_name": "Cà Phê Alpha",
+            "quantity": 1,
+            "unit_price": 30000.0,
+            "line_total": 0.0,
+            "configuration_signature": null,
+            "size": "M",
+            "toppings": [
+              "Pearl"
+            ],
+            "luong_da": null,
+            "do_ngot": null,
+            "loai_sua": null,
+            "note": null
+          },
+          {
+            "line_id": 801,
+            "cart_item_id": 801,
+            "product_id": "102",
+            "product_name": "Cà Phê Beta",
+            "quantity": 1,
+            "unit_price": 40000.0,
+            "line_total": 0.0,
+            "configuration_signature": null,
+            "size": "M",
+            "toppings": [
+              "Pearl"
+            ],
+            "luong_da": null,
+            "do_ngot": null,
+            "loai_sua": null,
+            "note": null
+          }
+        ],
+        "item_count": 2,
+        "subtotal": 70000.0,
+        "total_price": 70000.0,
+        "is_empty": false,
+        "is_checking_out": false,
+        "checkout_prefs": {
+          "voucher_decided": true,
+          "processed_order_turns": {
+            "2723762700e340088a57698c1ebca8dc": {
+              "message": "Mình sẽ lấy tại quán, tiền trả bằng QR ngân hàng nhé.",
+              "selected_product_id": null,
+              "result": {
+                "reply": "Mình chưa thực hiện phần yêu cầu này; hệ thống đang kiểm tra lại đề xuất.",
+                "ui_payload": {
+                  "products": [],
+                  "vouchers": [],
+                  "branches": [],
+                  "actions": [],
+                  "cart": {
+                    "session_id": "lan20-e0bd4ecfaa1c4312af891ce64c9df0a1",
+                    "cart_id": null,
+                    "cart_version": null,
+                    "user_id": null,
+                    "authoritative": false,
+                    "cart_sync_status": "local",
+                    "branch_id": null,
+                    "branch_name": null,
+                    "items": [
+                      {
+                        "line_id": 800,
+                        "cart_item_id": 800,
+                        "product_id": "101",
+                        "product_name": "Cà Phê Alpha",
+                        "quantity": 1,
+                        "unit_price": 30000.0,
+                        "line_total": 0.0,
+                        "configuration_signature": null,
+                        "size": "M",
+                        "toppings": [
+                          "Pearl"
+                        ],
+                        "luong_da": null,
+                        "do_ngot": null,
+                        "loai_sua": null,
+                        "note": null
+                      },
+                      {
+                        "line_id": 801,
+                        "cart_item_id": 801,
+                        "product_id": "102",
+                        "product_name": "Cà Phê Beta",
+                        "quantity": 1,
+                        "unit_price": 40000.0,
+                        "line_total": 0.0,
+                        "configuration_signature": null,
+                        "size": "M",
+                        "toppings": [
+                          "Pearl"
+                        ],
+                        "luong_da": null,
+                        "do_ngot": null,
+                        "loai_sua": null,
+                        "note": null
+                      }
+                    ],
+                    "item_count": 2,
+                    "subtotal": 70000.0,
+                    "total_price": 70000.0,
+                    "is_empty": false,
+                    "is_checking_out": false,
+                    "checkout_prefs": {
+                      "voucher_decided": true
+                    },
+                    "last_order_id": null
+                  }
+                },
+                "checkout_payload": null,
+                "tool_calls_log": [
+                  {
+                    "tool": "customer_actions",
+                    "args": {},
+                    "result": {
+                      "status": "invalid_semantic_arguments",
+                      "changed": false,
+                      "recovery_kind": "model_repair",
+                      "message": "Mình chưa thực hiện phần yêu cầu này; hệ thống đang kiểm tra lại đề xuất."
+                    }
+                  }
+                ],
+                "error": "provider_transient",
+                "conversation_state": "SHOPPING"
+              }
+            }
+          }
+        },
+        "last_order_id": null
+      },
+      "reply": "Mình chưa thực hiện phần yêu cầu này; hệ thống đang kiểm tra lại đề xuất.",
+      "error": "provider_transient",
+      "passed": false
+    }
+  ],
+  "attempts": [
+    {
+      "attempt": 1,
+      "model": "gemini-3.5-flash-lite",
+      "context_chars": 8068,
+      "tool_schema_chars": 9062,
+      "http_status": 200,
+      "usage": {
+        "completion_tokens": 115,
+        "prompt_tokens": 4394,
+        "total_tokens": 4509
+      },
+      "proposal": {
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_73014",
+            "type": "function",
+            "function": {
+              "arguments": "{\"actions\":[{\"args\":{\"delivery_type\":\"TAI_CHO\"},\"commitment\":\"AFFIRMED\",\"evidence\":\"Mình sẽ lấy tại quán\",\"tool\":\"set_fulfillment_choice\"},{\"tool\":\"set_payment_choice\",\"evidence\":\"tiền trả bằng QR ngân hàng nhé\",\"args\":{\"payment_payment_method\":\"NGAN_HANG_QR\",\"payment_method\":\"NGAN_HANG_QR\"},\"commitment\":\"AFFIRMED\"}]}",
+              "name": "customer_actions"
+            }
+          }
+        ]
+      },
+      "latency_ms": 1785.65
+    },
+    {
+      "attempt": 2,
+      "model": "gemini-3.5-flash-lite",
+      "context_chars": 9183,
+      "tool_schema_chars": 9062,
+      "error_type": "ReadTimeout",
+      "latency_ms": 15030.17
+    },
+    {
+      "attempt": 3,
+      "model": "gemini-3.1-flash-lite",
+      "context_chars": 9183,
+      "tool_schema_chars": 9062,
+      "http_status": 503,
+      "latency_ms": 2656.29
+    }
+  ],
+  "stop_reason": "repeated_provider_errors",
+  "qualification_status": "NOT_QUALIFIED; stopped after two consecutive provider failures; no further live sends",
+  "previous_run_actual_sends": 24,
+  "aggregate_actual_sends": 27,
+  "aggregate_authorized_cap": 40,
+  "manual_notes": [
+    "First response had forbidden payment_payment_method field and misbound fulfillment TAI_CHO for canonical pickup label; the entire malformed batch was rejected before writes.",
+    "Repair send timed out, fallback Gemini 3.1 returned HTTP 503. Stop fence then ended run; no restart of the run or budget.",
+    "No actual business writes or payment/fulfillment mutations occurred."
+  ]
+}

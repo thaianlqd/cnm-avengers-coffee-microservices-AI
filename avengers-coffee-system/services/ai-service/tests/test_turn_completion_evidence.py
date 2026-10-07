@@ -165,7 +165,7 @@ def test_action_completion_evidence_is_generic_not_product_phrase_specific(runti
     g = gateway_for(runtime, 'Chuyển sang mang đi nhé')
     runtime.provider.steps = [tool_step(g, 'get_cart', commitment='QUESTION'),
         final_step('action', 'Đã ghi nhận mang đi.'),
-        tool_step(g, 'set_checkout_choices', {'delivery_type': 'MANG_DI'})]
+        tool_step(g, 'set_fulfillment_choice', {'delivery_type': 'MANG_DI'}, facet='fulfillment')]
     result = runtime.turn(g.user_message)
     assert result['error'] is None and len(runtime.provider.requests) == 3
     assert cart_manager.get_checkout_prefs(runtime.sid)['delivery_type'] == 'MANG_DI'

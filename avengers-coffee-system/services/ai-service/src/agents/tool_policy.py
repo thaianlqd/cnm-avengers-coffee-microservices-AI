@@ -86,6 +86,7 @@ class GuardedToolGateway:
         self.summary_refreshed = False
         self.options = {}
         self.semantic_repair_pending = False
+        self.semantic_plan = None
         self.semantic_repair_count = 0
         self.repair_in_progress = False
         self.completed_semantic_targets = {}
@@ -138,7 +139,7 @@ class GuardedToolGateway:
         self.entry_branches = {str(r.get('branch_id') or r.get('ma_chi_nhanh')) for r in artifacts.visible.get('branches', [])}
         self.handlers = {name: getattr(self, '_'+name) for name in (
             'get_product_options', 'add_to_cart', 'update_cart_item', 'remove_cart_item', 'finish_cart',
-            'skip_voucher', 'apply_voucher', 'remove_voucher', 'discard_pending_product', 'set_session_branch', 'set_checkout_choices',
+            'skip_voucher', 'apply_voucher', 'remove_voucher', 'discard_pending_product', 'set_session_branch', 'set_checkout_choices', 'set_fulfillment_choice', 'set_payment_choice',
             'resolve_location', 'select_location_candidate', 'request_checkout', 'confirm_checkout',
             'search_knowledge_base', 'get_product_description', 'get_cart_quote', 'get_payment_options',
             'cancel_order', 'update_order', 'reorder_order', 'confirm_order_change', 'discard_order_change',
@@ -174,81 +175,249 @@ class GuardedToolGateway:
             'evidence': self.user_message, 'reference': {'kind': 'id', 'value': product_id},
             'args': {'product_id': product_id}})
 
+    def stage_text_proposal(self, raw):
+        """Retain misplaced structured intent, never execute a prose write claim."""
+        if not isinstance(raw, str) or len(raw) > 16000:
+            return None
+        cleaned = raw.strip()
+        if cleaned.startswith('```') and cleaned.endswith('```'):
+            cleaned = cleaned.split('\n', 1)[-1][:-3].strip()
+        try:
+            envelope = json.loads(cleaned)
+        except (ValueError, TypeError):
+            return None
+        if not isinstance(envelope, dict) or not isinstance(envelope.get('actions'), list):
+            return None
+        # A deliberately invalid root enters the same no-write staging boundary.
+        return self.customer_actions({'actions': envelope['actions'], 'misplaced_text_proposal': True})
+
+    @staticmethod
+    def _normalize_action(proposal):
+        """Wire placement compatibility only; no language or choice inference."""
+        normalized = deepcopy(proposal) if isinstance(proposal, dict) else {'invalid_wire_action': True}
+        try:
+            name = normalized.get('tool')
+            if 'args' not in normalized and 'args_json' not in normalized and name in CAPABILITIES and CAPABILITIES[name].access == 'READ':
+                spec = next((r['function']['parameters'] for r in tool_schemas({name})), {})
+                if not spec.get('properties') and not spec.get('required'):
+                    normalized['args'] = {}
+            if 'args_json' in normalized:
+                if 'args' in normalized or not isinstance(normalized['args_json'], str) or len(normalized['args_json']) > 2000:
+                    raise ValueError('conflicting arguments')
+                normalized['args'] = json.loads(normalized.pop('args_json'))
+            values = normalized.get('args')
+            if not isinstance(values, dict):
+                return normalized
+            for field in ('reference', 'facet', 'evidence', 'option_intent', 'defaults_evidence', 'supplied_location', 'exclude_previous'):
+                if field in values:
+                    if field in normalized and normalized[field] != values[field]:
+                        raise ValueError('conflicting action metadata')
+                    normalized[field] = values.pop(field)
+            if normalized.get('tool') == 'update_cart_item':
+                from src.agents.tool_capabilities import CUSTOM_SCHEMAS
+                patch_fields = CUSTOM_SCHEMAS['update_cart_item']['function']['parameters']['properties']['desired_state']['properties']
+                flat = {key: values.pop(key) for key in list(values) if key in patch_fields}
+                if flat:
+                    patch = values.get('desired_state', {})
+                    if not isinstance(patch, dict) or any(key in patch and patch[key] != value for key, value in flat.items()):
+                        raise ValueError('conflicting patch')
+                    values['desired_state'] = {**patch, **flat}
+            if normalized.get('tool') in {'set_fulfillment_choice', 'set_payment_choice'}:
+                normalized.setdefault('facet', 'fulfillment' if normalized['tool'] == 'set_fulfillment_choice' else 'payment')
+            if normalized.get('tool') == 'add_to_cart':
+                normalized.setdefault('option_intent', 'DEFAULTS' if values.get('use_defaults') else 'CONFIGURE' if any(k in values for k in ('size', 'kich_co', 'toppings', 'luong_da', 'ice', 'do_ngot', 'sugar', 'loai_sua', 'milk')) else 'SELECT')
+            if normalized.get('tool') == 'get_recommendations':
+                from src.agents.semantic_control import canonical_recommendation_arguments
+                normalized['args'], _ = canonical_recommendation_arguments(values)
+            if name in CAPABILITIES:
+                spec = next((r['function']['parameters'] for r in tool_schemas({name})), {})
+                # Accept misplaced selected-tool arguments only when there is
+                # a unique consistent representation; metadata keeps its own
+                # placement. Never drop unknown fields or resolve conflicts.
+                metadata = {'tool', 'commitment', 'args', 'evidence', 'reference', 'facet',
+                    'option_intent', 'defaults_evidence', 'exclude_previous', 'supplied_location'}
+                for field in set(normalized) - metadata:
+                    if field in spec.get('properties', {}):
+                        value = normalized.pop(field)
+                        if field in normalized['args'] and normalized['args'][field] != value:
+                            raise ValueError('conflicting tool argument')
+                        normalized['args'][field] = value
+        except (ValueError, TypeError, AttributeError):
+            normalized['invalid_wire_action'] = True
+        return normalized
+
     def customer_actions(self, args):
-        from src.agents.semantic_control import customer_actions_schema, failure
-        spec = customer_actions_schema(CAPABILITIES)['function']['parameters']
-        actions = []
-        self.repair_in_progress = self.semantic_repair_pending
+        from src.agents.semantic_control import customer_actions_schema, model_repair
+        from src.agents.semantic_plan import SemanticPlan
+        spec = customer_actions_schema(CAPABILITIES)['function']['parameters']['properties']['actions']['items']
+        replayed_results = []
+        repaired_read_completed = False
+        self.repair_in_progress = bool(self.semantic_plan and self.semantic_plan.failed)
         self.semantic_repair_count += int(self.repair_in_progress)
         try:
-            if not isinstance(args, dict) or set(args) != {'actions'} or not isinstance(args['actions'], list):
+            if (not isinstance(args, dict) or not isinstance(args.get('actions'), list)
+                    or not 1 <= len(args['actions']) <= 16):
                 raise ValueError('invalid batch envelope')
-            for proposal in args['actions']:
-                if not isinstance(proposal, dict):
-                    raise ValueError('invalid action')
-                normalized = deepcopy(proposal)
-                # Read existing callers safely during migration. The model now
-                # receives a typed object schema, with no double JSON encoding.
-                if 'args_json' in normalized:
-                    if 'args' in normalized or not isinstance(normalized['args_json'], str) or len(normalized['args_json']) > 2000:
-                        raise ValueError('conflicting arguments')
-                    normalized['args'] = json.loads(normalized.pop('args_json'))
-                    if normalized.get('tool') == 'add_to_cart' and isinstance(normalized['args'], dict):
-                        normalized.setdefault('option_intent', 'DEFAULTS' if normalized['args'].get('use_defaults') else 'CONFIGURE' if any(k in normalized['args'] for k in ('size', 'kich_co', 'toppings', 'luong_da', 'ice', 'do_ngot', 'sugar', 'loai_sua', 'milk')) else 'SELECT')
-                        if normalized['option_intent'] == 'DEFAULTS':
-                            normalized.setdefault('defaults_evidence', normalized.get('evidence'))
-                if not isinstance(normalized.get('args'), dict):
-                    raise ValueError('tool arguments must be an object')
-                actions.append(normalized)
-            if not validate_args({'actions': actions}, spec):
-                raise ValueError('invalid semantic schema')
+            invalid_envelope = set(args) != {'actions'}
+            actions = [self._normalize_action(proposal) for proposal in args['actions']]
+            if self.repair_in_progress:
+                if invalid_envelope:
+                    raise ValueError('invalid repair envelope')
+                from src.agents.semantic_control import TOOL_TARGETS, ground_action
+                fresh = []
+                for proposal in actions:
+                    field = TOOL_TARGETS.get(proposal.get('tool'), (None, None))[1]
+                    grounded, _, error = ground_action(self, proposal) if validate_args(proposal, spec) else (None, None, True)
+                    key = (proposal.get('tool'), str(grounded.get(field)) if grounded and field else None)
+                    failed = self.semantic_plan.failed
+                    repairing_target = (proposal.get('tool') == failed['tool'] and
+                        (not failed.get('bound_cart_item_id') or key[1] == failed['bound_cart_item_id']))
+                    if not error and key in self.completed_semantic_targets and not repairing_target:
+                        result = {**deepcopy(self.completed_semantic_targets[key]), 'status': 'already_processed', 'changed': False}
+                        replayed_results.append({'tool': proposal['tool'], 'result': self.model_result(result, proposal['tool'])})
+                        self.artifacts.collect(proposal['tool'], grounded, result)
+                    else:
+                        fresh.append(proposal)
+                actions = fresh
+                if (actions and self.semantic_plan.failed['tool'] in CAPABILITIES
+                        and all(validate_args(a, spec) and CAPABILITIES[a['tool']].access == 'READ' for a in actions)
+                        and self.semantic_plan.failed['tool'] not in {a['tool'] for a in actions}):
+                    if CAPABILITIES[self.semantic_plan.failed['tool']].access == 'READ':
+                        raise ValueError('repair same failed read before changing authority')
+                    results = [{'tool': a['tool'], 'result': self.model_result(self.execute_semantic(a), a['tool'])} for a in actions]
+                    self.artifacts.semantic_plan_read_progress = True
+                    return {'status': 'ok', 'changed': False, 'read_only': True, 'results': results,
+                        'remaining_actions': len(self.semantic_plan.pending), 'plan_id': self.semantic_plan.plan_id,
+                        'failed_action': deepcopy(self.semantic_plan.failed['proposal']),
+                        'continuation_hint': 'Read completed. Repair the same failed action; server still retains its siblings.'}
+                failed = self.semantic_plan.failed
+                if (len(actions) == 2 and (failed['result'] or {}).get('status') == 'checkout_location_preconditions_missing'
+                        and actions[0].get('tool') == 'set_fulfillment_choice' and actions[1].get('tool') == failed['tool']):
+                    prerequisite = SemanticPlan(actions[:1]).actions[0]
+                    prerequisite['original_index'] = None
+                    self.semantic_plan.actions.insert(self.semantic_plan.actions.index(failed), prerequisite)
+                    failed['dependencies'].append(prerequisite['action_id'])
+                    actions = actions[1:]
+                repaired_read_completed = bool(len(actions) == 1 and failed['tool'] in CAPABILITIES
+                    and CAPABILITIES[failed['tool']].access == 'READ' and actions[0].get('tool') == failed['tool'])
+                if len(actions) != 1 or not self.semantic_plan.repair(actions[0]):
+                    raise ValueError('repair only failed action')
+            elif self.semantic_plan and self.semantic_plan.pending:
+                raise ValueError('unfinished plan')
+            else:
+                self.semantic_plan = SemanticPlan(actions)
+                from src.agents.semantic_control import ground_action
+                for row in self.semantic_plan.actions:
+                    if row['tool'] in {'remove_cart_item', 'update_cart_item'} and isinstance(row['proposal'].get('args'), dict):
+                        bound, target, error = ground_action(self, row['proposal'])
+                        if not error and target:
+                            row['bound_cart_item_id'] = str(bound['cart_item_id'])
+                if invalid_envelope:
+                    self.semantic_plan.actions[0]['status'] = 'NEEDS_REPAIR'
+                    self.semantic_plan.actions[0]['result'] = model_repair('invalid_semantic_arguments')
+                    raise ValueError('invalid root retained without execution')
         except (ValueError, TypeError, RecursionError):
-            result = denied('invalid_semantic_arguments', recovery_kind='model_repair',
-                message='Đề xuất chưa hợp lệ; mình chưa thực hiện thay đổi.',
-                repair_hint='Wrap every proposal in customer_actions({actions:[{tool:existing_tool,commitment:decision,args:{allowed_fields},evidence:exact_current_quote}]}). Never place tool or args at root. Retry failed/unexecuted actions only.')
+            result = model_repair('invalid_semantic_arguments',
+                repair_hint='Supply actions only at root. Repair exactly ONE failed action; server retains siblings and successful writes.')
+            if self.semantic_plan and self.semantic_plan.failed:
+                result.update(plan_id=self.semantic_plan.plan_id, plan=self.semantic_plan.projection(),
+                    failed_action=deepcopy(self.semantic_plan.failed['proposal']),
+                    remaining_actions=len(self.semantic_plan.pending))
+                self.artifacts.semantic_batch_pending = len(self.semantic_plan.pending)
             self.semantic_repair_pending = True
             self.artifacts.collect('customer_actions', {}, result)
-            logger.info('[SemanticControl] tool=customer_actions decision=deny code=invalid_semantic_arguments action_count=%s', len(actions))
             return result
-        results = []
-        # Whole proposal structure is checked before any writes. Business
-        # preconditions are checked immediately before each dependent tool.
-        self.artifacts.semantic_batch_pending = len(actions)
-        try:
-            for index, action in enumerate(actions):
-                result = self.execute_semantic(action)
-                results.append({'tool': action['tool'], 'result': self.model_result(result, action['tool'])})
-                self.artifacts.semantic_batch_pending -= 1
-                next_action = actions[index + 1] if index + 1 < len(actions) else {}
-                stage_next_selection = (result.get('status') == 'needs_options'
-                    and action['tool'] == 'add_to_cart' and action.get('option_intent') == 'SELECT'
-                    and next_action.get('tool') == 'add_to_cart'
-                    and next_action.get('option_intent') == 'SELECT')
-                if result.get('status') not in {'ok', 'success', 'already_processed', 'require_confirmation',
-                                               'not_found', 'no_applicable_voucher', 'need_branch_selection'} and not stage_next_selection:
-                    # Never run a dependent write after a failed grounding or
-                    # a missing prerequisite. Independent SELECT actions can
-                    # still stage the other products the customer selected.
-                    break
-                if action['tool'] in {'confirm_checkout', 'confirm_order_change'}:
-                    break
-        finally:
-            self.artifacts.semantic_batch_pending = 0
-        self.semantic_repair_pending = bool(results and results[-1]['result'].get('recovery_kind') == 'model_repair')
-        logger.info('[SemanticBatch] %s', json.dumps({'action_count': len(actions), 'executed_count': len(results),
-            'remaining_count': len(actions)-len(results), 'successful_write_count': sum(
-                CAPABILITIES[r['tool']].access != 'READ' and r['result'].get('status') in {'ok', 'success'} and r['result'].get('changed') is not False for r in results),
-            'repair_requested': self.semantic_repair_pending, 'repair_in_progress': self.repair_in_progress, 'repair_count': self.semantic_repair_count}))
-        changed = any(CAPABILITIES[row['tool']].access != 'READ'
-            and row['result'].get('status') in {'ok', 'success', 'already_processed'}
-            and row['result'].get('changed') is not False for row in results)
-        read_only = all(CAPABILITIES[a['tool']].access == 'READ' and not (
-            a['tool'] == 'get_product_options' and a['commitment'] in {'SELECTED', 'AFFIRMED', 'CORRECTION'}) for a in actions)
-        return {'status': 'ok', 'changed': changed, 'read_only': read_only,
-            'same_turn_read_reused': read_only and all(r['result'].get('same_turn_read_reused') for r in results),
-            'results': results, 'remaining_actions': len(actions) - len(results),
-            **({'recovery_kind': 'model_repair', 'repair_hint': 'Repair only failed/unexecuted actions; successful changes are already applied.'}
-               if results and results[-1]['result'].get('recovery_kind') == 'model_repair' else {})}
+        plan, results = self.semantic_plan, replayed_results
+        self.artifacts.semantic_plan_read_progress = False
+        invalid = next((r for r in plan.pending if not validate_args(r['proposal'], spec)), None)
+        if invalid:
+            invalid['status'] = 'NEEDS_REPAIR'
+            invalid['result'] = model_repair('invalid_semantic_arguments')
+            self.semantic_repair_pending = True
+            self.artifacts.semantic_batch_pending = len(plan.pending)
+            self.artifacts.collect('customer_actions', {}, invalid['result'])
+            return {**invalid['result'], 'plan_id': plan.plan_id, 'plan': plan.projection(),
+                'failed_action': deepcopy(invalid['proposal']), 'remaining_actions': len(plan.pending),
+                'repair_hint': 'Repair exactly this failed action. Server retains all siblings.'}
+        repaired_id = next((r['action_id'] for r in plan.pending), None) if self.repair_in_progress else None
+        self.artifacts.semantic_batch_pending = len(plan.pending)
+        for row in plan.actions:
+            if row['status'] in {'SUCCEEDED', 'ALREADY_PROCESSED', 'SKIPPED'}:
+                continue
+            if row['status'] == 'BLOCKED':
+                break
+            proposal = row['proposal']
+            row['status'] = 'EXECUTING'
+            logger.info('[SemanticPlan] plan_id=%s action_id=%s index=%s status=EXECUTING', plan.plan_id, row['action_id'], row['original_index'])
+            if not validate_args(proposal, spec):
+                result = model_repair('invalid_semantic_arguments', repair_hint='Use this action schema and only selected tool fields.')
+                self.artifacts.collect('customer_actions', {}, result)
+            else:
+                from src.agents.semantic_control import ground_action
+                if row.get('bound_cart_item_id'):
+                    bound, _, error = ground_action(self, proposal)
+                    if not error and str(bound.get('cart_item_id')) != row['bound_cart_item_id']:
+                        error = model_repair('repair_target_conflict')
+                else:
+                    error = None
+                result = error or self.execute_semantic(proposal)
+            row['result'] = deepcopy(result)
+            results.append({'tool': row['tool'], 'action_id': row['action_id'],
+                'result': self.model_result(result, row['tool'])})
+            status = result.get('status')
+            accepted = status in {'ok', 'success', 'already_processed', 'require_confirmation',
+                'not_found', 'no_applicable_voucher', 'need_branch_selection'}
+            # Independent unresolved product selections may all be staged.
+            staged = status == 'needs_options' and proposal.get('option_intent') == 'SELECT'
+            row['status'] = ('NEEDS_REPAIR' if result.get('recovery_kind') == 'model_repair' else
+                'ALREADY_PROCESSED' if status == 'already_processed' else
+                'SUCCEEDED' if accepted or staged else 'BLOCKED')
+            self.artifacts.semantic_batch_pending = len(plan.pending)
+            logger.info('[SemanticPlan] plan_id=%s action_id=%s index=%s status=%s pending=%s',
+                plan.plan_id, row['action_id'], row['original_index'], row['status'], len(plan.pending))
+            if row['status'] in {'NEEDS_REPAIR', 'BLOCKED'} or row['tool'] in {'confirm_checkout', 'confirm_order_change'}:
+                break
+        self.semantic_repair_pending = bool(plan.failed)
+        # BLOCKED is a customer clarification boundary; retain the journal for presentation.
+        self.artifacts.semantic_batch_pending = len(plan.pending) if plan.failed else 0
+        self.artifacts.semantic_plan = plan.projection()
+        self.artifacts.semantic_partial_reply = None
+        if plan.pending and not plan.failed:
+            from src.agents.customer_flow_presentation import cart_review
+            names = {'remove_cart_item': 'xóa món', 'update_cart_item': 'sửa món',
+                'add_to_cart': 'thêm món', 'resolve_location': 'xác nhận địa điểm',
+                'set_payment_choice': 'chọn thanh toán', 'set_fulfillment_choice': 'chọn hình thức nhận'}
+            details = []
+            for pending in plan.pending:
+                target = next((r for r in self.entry_cart_lines
+                    if str(r.get('cart_item_id')) == pending.get('bound_cart_item_id')), {})
+                label = names.get(pending['tool'], 'hoàn tất phần yêu cầu')
+                if target.get('product_name'):
+                    label += ' **' + target['product_name'] + '**'
+                explanation = (pending.get('result') or {}).get('message')
+                details.append('- Chưa thực hiện ' + label + (': ' + explanation if explanation else '; đang chờ phần trước được làm rõ.'))
+            self.artifacts.semantic_partial_reply = cart_review({'cart': cart_manager.get_cart(self.session_id)}) + '\n\n' + '\n'.join(details)
+        changed = any(CAPABILITIES.get(r['tool']) and CAPABILITIES[r['tool']].access != 'READ'
+            and (r['result'] or {}).get('status') in {'ok', 'success'}
+            and (r['result'] or {}).get('changed') is not False for r in plan.actions)
+        read_only = all(CAPABILITIES.get(r['tool']) and CAPABILITIES[r['tool']].access == 'READ'
+            and not (r['tool'] == 'get_product_options' and r['proposal'].get('commitment') in {'SELECTED', 'AFFIRMED', 'CORRECTION'}) for r in plan.actions)
+        logger.info('[SemanticBatch] %s', json.dumps({'plan_id': plan.plan_id,
+            'action_count': len(plan.actions), 'pending_count': len(plan.pending),
+            'repaired_action_id': repaired_id, 'successful_write_count': sum(
+                bool(CAPABILITIES.get(r['tool']) and CAPABILITIES[r['tool']].access != 'READ'
+                and r['status'] == 'SUCCEEDED' and (r['result'] or {}).get('changed') is not False) for r in plan.actions)}))
+        return {'status': 'ok', 'plan_id': plan.plan_id, 'plan': plan.projection(),
+            'changed': changed, 'read_only': read_only,
+            'selection_continuation_required': self.artifacts.semantic_discovery_requires_continuation,
+            'repaired_read_completed': repaired_read_completed and not plan.pending,
+            'repaired_action_id': repaired_id if not plan.failed else plan.failed['action_id'],
+            'same_turn_read_reused': read_only and bool(results) and all(r['result'].get('same_turn_read_reused') for r in results),
+            'results': results, 'remaining_actions': len(plan.pending),
+            **({'recovery_kind': 'model_repair', 'failed_action': deepcopy(plan.failed['proposal']),
+                'repaired_action_id': plan.failed['action_id'],
+                'repair_hint': 'Return exactly the failed action corrected. Do NOT emit siblings or successful actions; server continues them.'}
+                if plan.failed else {})}
 
     def _semantic_diagnostic(self, action, result, row=None):
         from src.agents.semantic_control import TOOL_TARGETS
@@ -272,7 +441,7 @@ class GuardedToolGateway:
                 message='Bạn kiểm tra phần tóm tắt mới rồi xác nhận ở lượt tiếp theo nhé.')
             self.artifacts.collect(action['tool'], {}, result)
             return result
-        if action['tool'] in DISCOVERY_TOOLS and action['commitment'] in {'SELECTED', 'AFFIRMED', 'CORRECTION'}:
+        if action['tool'] == 'filter_catalog' and action['commitment'] in {'SELECTED', 'AFFIRMED', 'CORRECTION'}:
             self.artifacts.semantic_discovery_requires_continuation = True
         self.semantic_tool_count += 1
         from src.agents.agent_memory import limit
@@ -308,7 +477,7 @@ class GuardedToolGateway:
             from src.agents.semantic_control import TOOL_TARGETS
             field = TOOL_TARGETS.get(action['tool'], (None, None))[1]
             completed_key = (action['tool'], str(args.get(field)) if field else None)
-            if ((self.repair_in_progress or self.semantic_repair_count) and capability.access != 'READ'
+            if (not self.semantic_plan and (self.repair_in_progress or self.semantic_repair_count) and capability.access != 'READ'
                     and completed_key in self.completed_semantic_targets):
                 result = {**deepcopy(self.completed_semantic_targets[completed_key]), 'status': 'already_processed', 'changed': False}
                 self.artifacts.collect(action['tool'], args, result)
@@ -367,6 +536,12 @@ class GuardedToolGateway:
         started = time.monotonic()
         capability = CAPABILITIES.get(name)
         if isinstance(args, dict):
+            if self.semantic_mode and name == 'get_recommendations':
+                from src.agents.semantic_control import canonical_recommendation_arguments
+                args, error = canonical_recommendation_arguments(args)
+                if error:
+                    self.artifacts.collect(name, args, error)
+                    return error
             from src.agents.semantic_control import canonical_option_arguments
             args, normalization_error = canonical_option_arguments(name, args)
             if normalization_error:
@@ -501,7 +676,7 @@ class GuardedToolGateway:
                 result = denied('capability_not_available')
             elif capability.access != 'READ' and (not (state['authenticated'] or state.get('guest_session_id')) or not self.client_message_id):
                 result = denied('authentication_or_turn_required')
-            elif capability.access != 'READ' and name not in {'resolve_location', 'select_location_candidate', 'set_checkout_choices', 'set_session_branch', 'cancel_order', 'update_order', 'reorder_order', 'confirm_order_change', 'discard_order_change'} and not state['cart_verified']:
+            elif capability.access != 'READ' and name not in {'resolve_location', 'select_location_candidate', 'set_checkout_choices', 'set_fulfillment_choice', 'set_payment_choice', 'set_session_branch', 'cancel_order', 'update_order', 'reorder_order', 'confirm_order_change', 'discard_order_change'} and not state['cart_verified']:
                 result = denied('authoritative_cart_unavailable')
             elif state['checkout'].get('checkout_submission') and capability.access != 'READ' and name not in {'confirm_checkout', 'cancel_order', 'update_order', 'reorder_order', 'confirm_order_change', 'discard_order_change'}:
                 result = denied('transaction_completed_or_processing')
@@ -574,10 +749,10 @@ class GuardedToolGateway:
     def _presentation_result(self, name, result):
         """Attach fresh read evidence to successful draft milestones for text and UI."""
         milestones = {'add_to_cart', 'update_cart_item', 'remove_cart_item', 'finish_cart',
-                      'apply_voucher', 'skip_voucher', 'remove_voucher', 'set_checkout_choices'}
+                      'apply_voucher', 'skip_voucher', 'remove_voucher', 'set_checkout_choices', 'set_fulfillment_choice', 'set_payment_choice'}
         if name not in milestones or result.get('status') not in {'ok', 'already_processed'}:
             return result
-        if name == 'set_checkout_choices' and result.get('changed') is False:
+        if name in {'set_checkout_choices', 'set_fulfillment_choice', 'set_payment_choice'} and result.get('changed') is False:
             return result  # Preferences are unchanged; no new price/wallet read is needed.
         result = dict(result)
         if name == 'add_to_cart' and self.entry_cart_lines and not any(
@@ -597,7 +772,7 @@ class GuardedToolGateway:
             if key in quoted:
                 result[key] = quoted[key]
         prefs = cart_manager.get_checkout_prefs(self.session_id)
-        if (name in {'apply_voucher', 'skip_voucher', 'remove_voucher', 'finish_cart', 'set_checkout_choices'}
+        if (name in {'apply_voucher', 'skip_voucher', 'remove_voucher', 'finish_cart', 'set_checkout_choices', 'set_fulfillment_choice', 'set_payment_choice'}
                 and prefs.get('voucher_decided') and not prefs.get('voucher_revalidation_required')
                 and quoted.get('status') == 'ok'):
             from src.agents.checkout_choices import FULFILLMENT_OPTIONS, FULFILLMENT_LABELS
@@ -692,6 +867,20 @@ class GuardedToolGateway:
                     repair_hint='Choose an explicit basis: preferences with preference_query for needs/taste/occasion, '
                     'bestsellers only for a sales-popularity request, rating/price/new for those explicit requests. '
                     'A social remark needs no tool. Never default a preference request to sales ranking.')
+            from src.rag.documents import normalize_text as description_key
+            query = args.get('preference_query') or ''
+            concepts = args.get('preference_concepts') or []
+            if (args.get('criteria') == 'preferences' and len(concepts) == 1
+                    and description_key(query) == description_key(concepts[0]) and not args.get('search_text')):
+                # Model supplied a single literal entity-like query. Let Menu
+                # settle whether it names products before consulting prose
+                # that can mention other products in comparisons/negations.
+                matches = TOOL_EXECUTORS['filter_catalog']({'category': args.get('category', 'all'),
+                    'search_text': query, 'limit': args.get('top_k', 5)}, self.session_id)
+                if matches.get('status') == 'ok' and matches.get('products'):
+                    if self.active_semantic and self.active_semantic.get('commitment') in {'SELECTED', 'AFFIRMED', 'CORRECTION'}:
+                        self.artifacts.semantic_discovery_requires_continuation = True
+                    return {**matches, 'recommendation_basis': 'menu_name'}
         args = dict(args)
         if name == 'get_store_reviews' and self.context.get('displayed_review_selection') is not None:
             requested = (self.context['displayed_review_selection'] or {}).get('branch_ids') or []
@@ -1615,6 +1804,9 @@ class GuardedToolGateway:
     def _set_checkout_choices(self, args):
         if not args:
             return denied('missing_choice')
+        if self.semantic_mode and (self.active_semantic or {}).get('tool') == 'set_checkout_choices':
+            return denied('checkout_facet_required', recovery_kind='model_repair',
+                repair_hint='Use separate set_fulfillment_choice facet=fulfillment and set_payment_choice facet=payment with distinct choice evidence.')
         # Reuse the established deterministic parser only as independent safety
         # evidence for explicit choices. The model still owns intent/planning.
         from src.agents.agent_service import _explicit_checkout_choices, _checkout_choice_conflict
@@ -1648,11 +1840,16 @@ class GuardedToolGateway:
             return denied('checkout_choice_not_selected',
                 message='Dạ, bạn chọn giúp mình cách nhận hàng và phương thức thanh toán mong muốn nhé.')
         cart_manager.set_checkout_prefs(self.session_id, **args)
+        for key in args:
+            logger.info('[CheckoutFacet] facet=%s previous_set=%s new_set=%s explicit_authorization=%s',
+                key, bool(prefs.get(key)), bool(args[key]), bool(self.active_semantic) if self.semantic_mode else bool(explicit))
         if args.get('delivery_type'):
             cart_manager.set_checkout_context(self.session_id, checkout_requested=True)
         if args.get('delivery_type') and args['delivery_type'] != prefs.get('delivery_type'):
             cart_manager.clear_branch(self.session_id)
-            cart_manager.set_checkout_context(self.session_id, address_confirmed=None, branch_candidates=None)
+            cart_manager.set_checkout_context(self.session_id, address_confirmed=None, branch_candidates=None,
+                confirmed_destination=None, selected_location_candidate=None,
+                branch_destination_fingerprint=None, location_state='NONE')
             self.artifacts.visible['branches'] = []
         if changed:
             self._invalidate_summary()
@@ -1661,8 +1858,34 @@ class GuardedToolGateway:
             result['profile_location'] = self._offer_profile_location(args['delivery_type'])
         return result
 
+    def _set_fulfillment_choice(self, args):
+        return self._set_checkout_choices(args)
+
+    def _set_payment_choice(self, args):
+        from src.agents.semantic_control import model_repair
+        proposal = self.active_semantic or {}
+        ref = proposal.get('reference') or {}
+        evidence = normalize_text(proposal.get('evidence'))
+        kind = ref.get('kind')
+        if ref.get('namespace') != 'PAYMENT':
+            return model_repair('payment_choice_evidence_required', repair_hint='Use PAYMENT reference tied to the current chosen method, not delivery/location evidence.')
+        if kind in {'name', 'id'}:
+            value = normalize_text(ref.get('value'))
+            if not value or (' ' + value + ' ') not in (' ' + evidence + ' '):
+                return model_repair('payment_choice_evidence_required')
+        elif kind == 'ordinal':
+            if not self.artifacts.visible.get('payment_options'):
+                return model_repair('payment_choice_not_presented')
+        else:
+            pending = cart_manager.get_checkout_prefs(self.session_id).get('pending_payment_choice') or {}
+            if pending.get('code') != args['payment_method'] or pending.get('owner_turn') == self.client_message_id:
+                return model_repair('payment_acknowledgment_unowned')
+        return self._set_checkout_choices(args)
+
     def _offer_profile_location(self, delivery_type):
         """Offer the actual saved address for every fulfillment, before geo/branch discovery."""
+        if cart_manager.get_checkout_prefs(self.session_id).get('confirmed_destination'):
+            return {'status': 'confirmed_destination'}
         from src.agents.location_parser import parse_location, canonical_address
         literal = None if self.semantic_mode else parse_location(self.user_message)
         cart_manager.set_checkout_context(self.session_id, profile_location_offer=None,
@@ -1716,6 +1939,18 @@ class GuardedToolGateway:
             args['kind'] = parsed_args.kind
         prefs = cart_manager.get_checkout_prefs(self.session_id)
         offer = prefs.get('profile_location_offer')
+        if self.semantic_mode and prefs.get('confirmed_destination'):
+            ref = (self.active_semantic or {}).get('reference') or {}
+            if ref.get('namespace') == 'PROFILE_ADDRESS' and (self.active_semantic or {}).get('commitment') != 'CORRECTION':
+                return denied('confirmed_destination_change_required', message='Bạn đã xác nhận địa điểm giao. Nếu muốn đổi, bạn nói rõ địa chỉ mới nhé.')
+            if args['location'] != prefs['confirmed_destination']['display_address']:
+                evidence = normalize_text((self.active_semantic or {}).get('evidence'))
+                literal_value = normalize_text(args['location'])
+                if (ref.get('namespace') != 'PROFILE_ADDRESS' and evidence not in literal_value
+                        and literal_value not in evidence):
+                    return denied('confirmed_destination_change_required', message='Bạn nói rõ địa chỉ mới muốn thay địa điểm đã xác nhận nhé.')
+                cart_manager.set_checkout_context(self.session_id, confirmed_destination=None,
+                    selected_location_candidate=None, branch_destination_fingerprint=None, location_state='LOCATION_LITERAL_RECEIVED')
         offered_addresses = (offer or {}).get('addresses') or ([{'full_address': offer['address']}] if offer else [])
         from src.agents.location_parser import parse_location, locality_matches
         literal = None if self.semantic_mode else parse_location(self.user_message)
@@ -1780,13 +2015,16 @@ class GuardedToolGateway:
             if not self.context['business']['cart']['items'] or not cart_manager.get_checkout_prefs(self.session_id).get('delivery_type'):
                 return denied('checkout_location_preconditions_missing', recovery_kind='model_repair',
                     repair_hint='Record the explicitly requested fulfillment using set_checkout_choices first (supplied_location=true for a new destination), then retry only resolve_location. Never infer a fulfillment not requested by the customer.')
-            cart_manager.set_checkout_context(self.session_id, checkout_requested=True)
+            cart_manager.set_checkout_context(self.session_id, checkout_requested=True,
+                location_state='LOCATION_LITERAL_RECEIVED')
         if not getattr(self, '_selected_location', None):
             self.artifacts.visible['location_candidates'] = []
             cart_manager.set_checkout_context(self.session_id, location_candidate_snapshot=None, selected_location_candidate=None)
         state = {'session_id': self.session_id, 'user_message': args['location'], 'history': [],
             'cart': cart_manager.get_cart(self.session_id), 'force_read_only_location': not args.get('for_checkout'),
             'location_override': (parsed_args if parsed_args.kind == args['kind'] else Location(args['kind'], args['location']))}
+        if self.semantic_mode:
+            state['semantic_location_authorized'] = True
         if location_purpose == 'nearby_branches':
             state['location_purpose'] = location_purpose
         if getattr(self, '_selected_location', None):
@@ -1795,6 +2033,25 @@ class GuardedToolGateway:
         if args.get('for_checkout'):
             _persist_branch_candidates_from_result(self.session_id, result)
         nearest = next((r['result'] for r in result.get('tool_calls_log', []) if r['tool'] == 'find_nearest_branch'), {})
+        current_prefs = cart_manager.get_checkout_prefs(self.session_id)
+        resolved = nearest.get('resolved_location')
+        if (self.semantic_mode and args.get('for_checkout') and resolved
+                and current_prefs.get('delivery_type') == 'GIAO_TAN_NOI' and current_prefs.get('address_confirmed')):
+            from src.agents.confirmed_destination import from_candidate
+            from src.agents.tool_artifacts import candidate_id
+            resolved = {**resolved, 'display_address': current_prefs['delivery_address']}
+            resolved.setdefault('candidate_id', candidate_id(resolved))
+            destination = from_candidate(resolved)
+            if not destination:
+                return denied('invalid_location_candidate')
+            cart_manager.set_checkout_context(self.session_id, confirmed_destination=destination,
+                selected_location_candidate=resolved, location_state='LOCATION_READY',
+                branch_destination_fingerprint=destination['fingerprint'])
+            self.context['business'] = business_state(self.session_id)
+            if not missing_checkout_fields(self.context['business']):
+                checkout = self._request_checkout({})
+                self.artifacts.collect('request_checkout', {}, checkout)
+                return checkout
         # The established delivery adapter may prepare a summary after geo and
         # compatible-branch validation. Preserve that actual authority/UI;
         # do not hide it and prompt another redundant summary operation.
@@ -1817,6 +2074,16 @@ class GuardedToolGateway:
             if (cart_manager.get_pending_action(self.session_id) or {}).get('type') == 'select_location_candidate':
                 cart_manager.clear_pending_action(self.session_id)
             self.artifacts.visible['location_candidates'] = []
+        if (self.semantic_mode and args.get('for_checkout') and not summary
+                and cart_manager.get_checkout_prefs(self.session_id).get('address_confirmed')):
+            self.context['business'] = business_state(self.session_id)
+            missing = missing_checkout_fields(self.context['business'])
+            if missing:
+                result['reply'] = 'Dạ, mình đã xác nhận địa chỉ giao.\n\n' + checkout_guidance(missing)
+            if cart_manager.get_checkout_prefs(self.session_id).get('location_state') == 'LOCATION_READY':
+                # Branch discovery has already selected the delivery branch.
+                # Its alternatives must not override the next missing step.
+                nearest = {key: value for key, value in nearest.items() if key != 'branches'}
         return {**nearest, 'status': 'require_confirmation' if summary else nearest.get('status') or 'needs_location',
             'location_purpose': location_purpose,
             'message': result['reply'], **({'order_summary': summary} if summary else {})}
@@ -1834,6 +2101,54 @@ class GuardedToolGateway:
             if parsed.kind != 'address' or parsed.missing:
                 return denied('incomplete_delivery_address')
             kind = 'address'
+        if self.semantic_mode and prefs.get('delivery_type') == 'GIAO_TAN_NOI':
+            from src.agents.confirmed_destination import from_candidate
+            from src.agents.tool_artifacts import candidate_id
+            current_candidates = (prefs.get('location_candidate_snapshot') or {}).get('candidates') or []
+            if not any(candidate_id(row) == candidate_id(candidate) for row in current_candidates):
+                return denied('stale_location_candidate', message='Danh sách địa điểm này không còn là lựa chọn đang chờ. Bạn gửi lại địa chỉ muốn dùng nhé.')
+            destination = from_candidate(candidate)
+            if not destination:
+                return denied('invalid_location_candidate')
+            cart_manager.clear_branch(self.session_id)
+            self._invalidate_summary()
+            cart_manager.set_checkout_prefs(self.session_id, delivery_address=destination['display_address'])
+            cart_manager.set_checkout_context(self.session_id, confirmed_destination=destination,
+                selected_location_candidate=deepcopy(candidate), address_confirmed=True,
+                location_address=destination['display_address'], location_source='provider_candidate',
+                location_state='ADDRESS_CONFIRMED', profile_location_offer=None, suggested_address=None,
+                partial_delivery_address=None, location_pending=None, location_candidate_snapshot=None,
+                branch_candidates=None, checkout_requested=True)
+            if (cart_manager.get_pending_action(self.session_id) or {}).get('type') in {'select_location_candidate', 'confirm_address'}:
+                cart_manager.clear_pending_action(self.session_id)
+            self.artifacts.visible['location_candidates'] = []
+            logger.info('[LocationState] state=ADDRESS_CONFIRMED candidate_id=%s fingerprint=%s',
+                candidate['candidate_id'], destination['fingerprint'][:12])
+            nearest = branch_tools.execute_find_nearest_branch(location=destination['display_address'],
+                session_id=self.session_id, resolved_location=deepcopy(candidate))
+            branches = nearest.get('branches') or []
+            if nearest.get('status') != 'ok' or not branches:
+                return {**nearest, 'changed': True, 'message': nearest.get('message') or
+                    'Địa chỉ đã được xác nhận; mình chưa xác minh được chi nhánh phục vụ. Bạn thử lại bước tìm chi nhánh nhé.'}
+            chosen = branches[0]
+            selected = branch_tools.execute_set_session_branch(self.session_id,
+                str(chosen.get('ma_chi_nhanh') or chosen.get('branch_id')),
+                str(chosen.get('ten_chi_nhanh') or chosen.get('branch_name')), customer_selected=True)
+            self.artifacts.collect('set_session_branch', {'branch_id': str(chosen.get('ma_chi_nhanh') or chosen.get('branch_id'))}, selected)
+            if selected.get('status') != 'ok':
+                return selected
+            cart_manager.set_checkout_context(self.session_id, location_state='LOCATION_READY',
+                branch_destination_fingerprint=destination['fingerprint'])
+            self.context['business'] = business_state(self.session_id)
+            missing = missing_checkout_fields(self.context['business'])
+            if not missing:
+                summary = self._request_checkout({})
+                self.artifacts.collect('request_checkout', {}, summary)
+                return summary
+            return {'status': 'ok', 'changed': True, 'location_state': 'LOCATION_READY',
+                'destination_fingerprint': destination['fingerprint'], 'missing': missing,
+                'message': 'Dạ, mình đã xác nhận địa chỉ **' + destination['display_address'] + '**.\n\n'
+                    + (checkout_guidance(missing) if missing else 'Bạn có thể xem lại tóm tắt đơn hàng trước khi xác nhận nhé.')}
         self._selected_location = candidate
         try:
             return self._resolve_location({'location': address, 'kind': kind,
@@ -1843,6 +2158,10 @@ class GuardedToolGateway:
 
     def _request_checkout(self, args):
         prefs = cart_manager.get_checkout_prefs(self.session_id)
+        from src.agents.confirmed_destination import drift
+        if drift(prefs):
+            logger.warning('[LocationState] address_drift_rejected=true')
+            return denied('confirmed_destination_drift', message='Địa chỉ tóm tắt chưa khớp địa điểm bạn đã xác nhận. Mình chưa tạo tóm tắt hoặc đặt đơn.')
         cart = self.context['business']['cart']
         if not cart['items']:
             return denied('empty_cart')
@@ -1856,6 +2175,12 @@ class GuardedToolGateway:
         fresh = (prefs.get('checkout_action_id') and prefs.get('summary_fingerprint') == cart_manager.cart_fingerprint(self.session_id)
                  and float(prefs.get('checkout_action_expires_at') or 0) > time.time())
         result = cart_tools.execute_request_checkout(self.session_id, reuse_summary=bool(fresh) or args.get('reuse_summary', False))
+        destination = prefs.get('confirmed_destination')
+        if (destination and result.get('status') == 'require_confirmation'
+                and (result.get('order_summary') or {}).get('delivery_address') != destination['display_address']):
+            self._invalidate_summary()
+            logger.warning('[LocationState] summary_address_drift_rejected=true')
+            return denied('confirmed_destination_drift', message='Tóm tắt chưa khớp địa điểm đã xác nhận. Mình chưa đặt đơn.')
         if self.confirmation_recovery is not None:
             self.summary_refreshed = True
         if self.semantic_mode and result.get('status') == 'require_confirmation':

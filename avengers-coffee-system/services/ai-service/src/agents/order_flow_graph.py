@@ -1817,14 +1817,17 @@ def _location_candidate_result(session_id: str, result: Dict[str, Any], *, query
     candidates = list(nearest.get("location_candidates") or [])[:5]
     if nearest.get("status") not in {"ambiguous", "rejected"} or not candidates:
         return False
-    cart_manager.set_checkout_context(session_id, location_candidate_snapshot={
+    from uuid import uuid4
+    snapshot_id = uuid4().hex
+    cart_manager.set_checkout_context(session_id, location_state='GEO_CANDIDATES_PRESENTED', location_candidate_snapshot={
+        'snapshot_id': snapshot_id,
         "query": query, "kind": kind, "transactional": bool(transactional),
         "candidates": candidates,
     })
     cart_manager.set_pending_action(session_id, "select_location_candidate", {
         "count": len(candidates), "status": nearest.get("status"),
     })
-    logger.info("[LocationCandidate] decision=clarify candidate_snapshot=%d", len(candidates))
+    logger.info("[LocationCandidate] decision=clarify snapshot_id=%s candidate_count=%d", snapshot_id, len(candidates))
     return True
 
 
@@ -1948,6 +1951,7 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
         result = _confirm_saved_location(
             session_id, "đúng địa chỉ đó", history=state.get("history") or [],
             resolved_location=state.get("resolved_location_candidate"),
+            **({'semantic_authorized': True} if state.get('semantic_location_authorized') else {}),
         )
         if result:
             nearest = next((entry.get("result") or {} for entry in reversed(result.get("tool_calls_log") or [])
@@ -1967,6 +1971,8 @@ def _handle_location_request(state: OrderConversationState) -> Dict[str, Any]:
                 session_id, result, query=location, kind=parsed.kind, transactional=True,
             ):
                 return result
+        if result and state.get('semantic_location_authorized'):
+            return result  # Semantic gateway owns promotion and next prerequisites.
         return _advance_checkout_if_ready(session_id, result) if result else reply(
             "Mình chưa xác định được vị trí trên bản đồ. Bạn kiểm tra lại số nhà, tên đường, phường/xã và tỉnh/thành phố nhé."
             if prefs.get("delivery_type") == "GIAO_TAN_NOI" else
@@ -4518,6 +4524,10 @@ _GRAPH = _build_graph() if StateGraph else None
 def _sanitize_replay_result(result: Dict[str, Any]) -> Dict[str, Any]:
     """Retain the user-visible response and UI effects, not diagnostic payloads."""
     compact = {key: result.get(key) for key in ("reply", "checkout_payload", "error", "conversation_state")}
+    from src.common.provider_retry import known_no_tool_failure
+    if known_no_tool_failure(result):
+        compact['_provider_retry'] = dict(result['_provider_retry'])
+        compact['retry_after_seconds'] = result.get('retry_after_seconds')
     if result.get("gate"):
         compact["gate"] = result["gate"]
     card_fields = {

@@ -39,6 +39,8 @@ WRITES = {
     'discard_pending_product': ('order/draft', 'exact canonical staged product; no committed cart mutation'),
     'set_session_branch': ('identity/inventory', 'current candidate; verified compatibility; customer choice'),
     'set_checkout_choices': ('order', 'supported fulfillment/payment; invalidate dependent summary'),
+    'set_fulfillment_choice': ('order', 'explicit fulfillment facet only; no payment fields'),
+    'set_payment_choice': ('order', 'explicit payment facet and canonical current choice'),
     'resolve_location': ('geo', 'literal address/area; canonical provider resolution'),
     'select_location_candidate': ('geo/order', 'current provider candidate; immutable coordinates/address'),
     'request_checkout': ('order', 'fresh cart; voucher decided; choices/address/branch complete'),
@@ -94,6 +96,10 @@ CUSTOM_SCHEMAS = {
     'set_checkout_choices': schema('set_checkout_choices', {
         'delivery_type': {'type': 'string', 'enum': ['GIAO_TAN_NOI', 'MANG_DI', 'TAI_CHO']},
         'payment_method': {'type': 'string', 'enum': ['VNPAY', 'NGAN_HANG_QR', 'VI_DIEN_TU', 'THANH_TOAN_KHI_NHAN_HANG']}}),
+    'set_fulfillment_choice': schema('set_fulfillment_choice', {
+        'delivery_type': {'type': 'string', 'enum': ['GIAO_TAN_NOI', 'MANG_DI', 'TAI_CHO']}}, ('delivery_type',)),
+    'set_payment_choice': schema('set_payment_choice', {
+        'payment_method': {'type': 'string', 'enum': ['VNPAY', 'NGAN_HANG_QR', 'VI_DIEN_TU', 'THANH_TOAN_KHI_NHAN_HANG']}}, ('payment_method',)),
     'set_session_branch': schema('set_session_branch', {'branch_id': STRING}, ('branch_id',)),
     'resolve_location': schema('resolve_location', {'location': STRING,
         'kind': {'type': 'string', 'enum': ['area', 'address', 'poi']},
@@ -246,6 +252,9 @@ def capabilities_for_context(context, *, entry_action=None, final_only=False, re
                 allowed.add('discard_pending_product')
             if cart:
                 allowed.update({'update_cart_item', 'remove_cart_item', 'set_checkout_choices'})
+                if context.get('semantic_control'):
+                    allowed.discard('set_checkout_choices')
+                    allowed.update({'set_fulfillment_choice', 'set_payment_choice'})
                 unfinished = bool(staged or checkout.get('pending_product_reference'))
                 if not unfinished and (
                         stage not in {'VOUCHER', 'CART_READY', 'PAYMENT', 'SUMMARY'}
@@ -303,7 +312,6 @@ def tool_schemas(allowed=None):
         for prop in params.get('properties', {}).values():
             prop.pop('description', None)
         if name == 'filter_catalog':
-            params['required'] = ['search_text']
             params['properties']['search_text']['description'] = 'Narrower requested product family/name; empty string for unrestricted category.'
         if name in {'filter_catalog', 'get_recommendations'}:
             params['properties']['planned_discovery_reads'] = {'type': 'integer', 'minimum': 1, 'maximum': 16,

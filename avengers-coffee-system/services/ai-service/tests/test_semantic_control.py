@@ -33,6 +33,8 @@ def gateway_for(runtime, message='Một cách diễn đạt chưa có trong bộ
 
 
 def action(gateway, tool, args=None, commitment='SELECTED', reference=None, **fields):
+    if tool in {'set_fulfillment_choice', 'set_payment_choice'}:
+        fields.setdefault('facet', 'payment' if tool == 'set_payment_choice' else 'fulfillment')
     if tool == 'add_to_cart':
         fields.setdefault('option_intent', 'DEFAULTS' if (args or {}).get('use_defaults') else 'CONFIGURE' if any(key in (args or {}) for key in ('size', 'kich_co', 'toppings', 'luong_da', 'ice', 'do_ngot', 'sugar', 'loai_sua', 'milk')) else 'SELECT')
         if fields['option_intent'] == 'DEFAULTS':
@@ -54,7 +56,7 @@ def send_actions(gateway, payload):
 ])
 def test_unseen_fulfillment_paraphrases_do_not_veto_correct_semantics(runtime, message):
     gateway = gateway_for(runtime, message)
-    result = gateway.execute_semantic(action(gateway, 'set_checkout_choices', {'delivery_type': 'GIAO_TAN_NOI'}))
+    result = gateway.execute_semantic(action(gateway, 'set_fulfillment_choice', {'delivery_type': 'GIAO_TAN_NOI'}))
     assert result['status'] == 'ok'
     assert cart_manager.get_checkout_prefs(runtime.sid)['delivery_type'] == 'GIAO_TAN_NOI'
 
@@ -65,8 +67,8 @@ def test_unseen_fulfillment_paraphrases_do_not_veto_correct_semantics(runtime, m
     ('update_cart_item', {'cart_item_id': '800', 'desired_state': {'quantity': 3}}),
     ('remove_cart_item', {'cart_item_id': '800'}),
     ('apply_voucher', {'voucher_code': 'FORGED'}),
-    ('set_checkout_choices', {'delivery_type': 'GIAO_TAN_NOI'}),
-    ('set_checkout_choices', {'payment_method': 'VNPAY'}),
+    ('set_fulfillment_choice', {'delivery_type': 'GIAO_TAN_NOI'}),
+    ('set_payment_choice', {'payment_method': 'VNPAY'}),
     ('resolve_location', {'location': 'Chợ do khách đề cập', 'kind': 'poi'}),
     ('set_session_branch', {'branch_id': 'FAKE'}),
     ('cancel_order', {'order_id': str(uuid4())}),
@@ -189,9 +191,9 @@ def test_voucher_best_selection_and_rejection_are_grounded(runtime, monkeypatch)
 
 
 def test_wallet_policy_still_rejects_unavailable_payment(runtime, monkeypatch):
-    gateway = gateway_for(runtime)
+    gateway = gateway_for(runtime, 'Mình trả bằng Ví Avengers')
     monkeypatch.setattr(cart_tools, 'validate_wallet_selection', lambda s: {'reply': 'Wallet unavailable'})
-    result = gateway.execute_semantic(action(gateway, 'set_checkout_choices', {'payment_method': 'VI_DIEN_TU'}))
+    result = gateway.execute_semantic(action(gateway, 'set_payment_choice', {'payment_method': 'VI_DIEN_TU'}, reference={'namespace': 'PAYMENT', 'kind': 'name', 'value': 'Ví Avengers'}))
     assert result['status'] == 'wallet_unavailable'
 
 
@@ -221,7 +223,7 @@ def test_saved_profile_reference_is_exact_and_ambiguous_addresses_clarify(runtim
 
 def test_evidence_must_be_current_and_batch_shape_checked_before_writes(runtime):
     gateway = gateway_for(runtime)
-    request = action(gateway, 'set_checkout_choices', {'delivery_type': 'MANG_DI'})
+    request = action(gateway, 'set_fulfillment_choice', {'delivery_type': 'MANG_DI'})
     request['evidence'] = 'a quote from an older turn'
     assert gateway.execute_semantic(request)['status'] == 'missing_current_evidence'
     invalid = send_actions(gateway, {'actions': [action(gateway, 'remove_cart_item', {'cart_item_id': '800'}),
@@ -232,10 +234,10 @@ def test_evidence_must_be_current_and_batch_shape_checked_before_writes(runtime)
 
 def test_real_orchestrator_uses_same_provider_loop_and_no_raw_shortcut(runtime):
     message = 'Mình nghiêng về phương án đem tới chỗ mình ở á'
-    runtime.provider.plan([('customer_actions', {'actions': [{'tool': 'set_checkout_choices',
+    runtime.provider.plan([('customer_actions', {'actions': [{'tool': 'set_fulfillment_choice', 'facet': 'fulfillment',
         'commitment': 'SELECTED', 'evidence': message, 'args_json': json.dumps({'delivery_type': 'GIAO_TAN_NOI'})}]})])
     result = runtime.turn(message)
-    assert result['tool_calls_log'][0]['tool'] == 'set_checkout_choices'
+    assert result['tool_calls_log'][0]['tool'] == 'set_fulfillment_choice'
     assert result['tool_calls_log'][0]['result']['status'] == 'ok'
     assert len(runtime.provider.requests) == 1  # Existing milestone ends the loop.
 
@@ -251,7 +253,7 @@ def test_direct_model_mutation_without_semantic_evidence_is_denied(runtime):
 @pytest.mark.parametrize('commitment', ['SELECTED', 'CORRECTION'])
 def test_fulfillment_commands_and_corrections_use_enums_not_phrase_maps(runtime, delivery_type, commitment):
     gateway = gateway_for(runtime, 'Ừ chuyển qua phương án khác hợp với mình hơn')
-    result = gateway.execute_semantic(action(gateway, 'set_checkout_choices', {'delivery_type': delivery_type}, commitment))
+    result = gateway.execute_semantic(action(gateway, 'set_fulfillment_choice', {'delivery_type': delivery_type}, commitment))
     assert result['status'] == 'ok'
     assert cart_manager.get_checkout_prefs(runtime.sid)['delivery_type'] == delivery_type
 
@@ -259,10 +261,10 @@ def test_fulfillment_commands_and_corrections_use_enums_not_phrase_maps(runtime,
 def test_payment_and_fulfillment_ordinal_reference_share_grounder(runtime):
     gateway = gateway_for(runtime)
     gateway.artifacts.visible['payment_options'] = [{'code': 'VNPAY', 'enabled': True, 'display_index': 1}]
-    result = gateway.execute_semantic(action(gateway, 'set_checkout_choices', reference={
+    result = gateway.execute_semantic(action(gateway, 'set_payment_choice', reference={
         'namespace': 'PAYMENT', 'kind': 'ordinal', 'index': 1}))
     assert result['status'] == 'ok'
-    result = gateway.execute_semantic(action(gateway, 'set_checkout_choices', reference={
+    result = gateway.execute_semantic(action(gateway, 'set_fulfillment_choice', reference={
         'namespace': 'FULFILLMENT', 'kind': 'ordinal', 'index': 2}))
     assert result['status'] == 'ok'
     prefs = cart_manager.get_checkout_prefs(runtime.sid)
@@ -272,7 +274,7 @@ def test_payment_and_fulfillment_ordinal_reference_share_grounder(runtime):
 def test_unavailable_displayed_payment_cannot_be_selected(runtime):
     gateway = gateway_for(runtime)
     gateway.artifacts.visible['payment_options'] = [{'code': 'VNPAY', 'enabled': False, 'reason': 'Unavailable'}]
-    result = gateway.execute_semantic(action(gateway, 'set_checkout_choices', reference={
+    result = gateway.execute_semantic(action(gateway, 'set_payment_choice', reference={
         'namespace': 'PAYMENT', 'kind': 'singleton'}))
     assert result['status'] == 'payment_not_available'
 
@@ -530,7 +532,7 @@ def test_partial_batch_reports_committed_cart_and_actual_unresolved_target(runti
         action(gateway, 'remove_cart_item', reference={'kind': 'id', 'value': 'invented'}),
         action(gateway, 'add_to_cart', {'product_id': '102', 'size': 'M'}),
     ]})
-    assert result['remaining_actions'] == 1 and result['changed'] is True and len(runtime.writes) == 1
+    assert result['remaining_actions'] == 2 and result['changed'] is True and len(runtime.writes) == 1
     reply = gateway.artifacts.factual_fallback()
     assert '×3' in reply and 'giỏ' in reply.lower() and 'so sánh' not in reply
 
@@ -640,7 +642,7 @@ def test_compound_fulfillment_with_location_does_not_offer_a_different_profile_a
     monkeypatch.setattr(order_flow_graph, '_handle_location_request', resolve)
     gateway = gateway_for(runtime, 'Mình ghé lấy, tìm quanh khu này giúp mình')
     result = send_actions(gateway, {'actions': [
-        action(gateway, 'set_checkout_choices', {'delivery_type': 'MANG_DI'}, supplied_location=True),
+        action(gateway, 'set_fulfillment_choice', {'delivery_type': 'MANG_DI'}, supplied_location=True),
         action(gateway, 'resolve_location', {'location': 'Khu vực khách cung cấp', 'kind': 'area', 'for_checkout': False}),
     ]})
     assert result['remaining_actions'] == 0 and locations[0].kind == 'area'

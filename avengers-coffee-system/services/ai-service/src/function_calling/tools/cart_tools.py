@@ -921,6 +921,13 @@ def _normalize_checkout_args(payment_method: Optional[str], delivery_type: Optio
     valid_dts = {"GIAO_TAN_NOI", "MANG_DI", "TAI_CHO"}
     return (pm_raw if pm_raw in valid_pms else None, dt_raw if dt_raw in valid_dts else None)
 
+def _quote_item_binding(quote):
+    """Bind individual quoted prices/options even when total changes offset."""
+    return sorted([{key: item.get(key) for key in ('id', 'line_id', 'product_id', 'quantity',
+        'unit_price', 'line_total', 'size', 'toppings', 'luong_da', 'do_ngot', 'loai_sua', 'options')}
+        for item in (quote or {}).get('items', [])], key=lambda item: str(item.get('id') or item.get('line_id')))
+
+
 def execute_request_checkout(
     session_id: str,
     payment_method: Optional[str] = None,
@@ -940,6 +947,9 @@ def execute_request_checkout(
     if delivery_address is not None:
         cart_manager.set_checkout_prefs(session_id, delivery_address=delivery_address)
         prefs = cart_manager.get_checkout_prefs(session_id)
+    from src.agents.confirmed_destination import drift
+    if drift(prefs):
+        return {"status": "confirmed_destination_drift", "message": "Địa chỉ chưa khớp địa điểm đã xác nhận. Chưa thể tạo tóm tắt."}
     payment_method = requested_payment or prefs.get("payment_method")
     delivery_type = requested_delivery or prefs.get("delivery_type")
     try:
@@ -1056,6 +1066,7 @@ def execute_request_checkout(
 
     # Store the authoritative amounts for later confirmation.
     cart_manager.set_checkout_context(session_id, summary_amounts={"subtotal": total, "discount_amount": discount_amount, "delivery_fee": delivery_fee, "final_total": final_total})
+    cart_manager.set_checkout_context(session_id, summary_quote_items=_quote_item_binding(quote))
     cart_manager.set_checkout_context(session_id, flow_stage="SUMMARY")
     summary_state = cart_manager.mark_checkout_summary(session_id, reuse_existing=reuse_summary)
     cart_manager.set_pending_action(session_id, "confirm_checkout", {})
@@ -1216,6 +1227,9 @@ def _execute_confirm_checkout(
         return {"status": "stale_checkout", "message": "Địa chỉ xác nhận không khớp bản tóm tắt hiện tại. Vui lòng xem lại đơn hàng."}
     payment_method = prefs.get("payment_method")
     delivery_type = prefs.get("delivery_type")
+    from src.agents.confirmed_destination import drift
+    if drift(prefs):
+        return {"status": "stale_checkout", "message": "Địa chỉ không khớp địa điểm đã xác nhận. Đơn chưa được tạo."}
 
     payment_method, delivery_type = _normalize_checkout_args(payment_method, delivery_type)
     if payment_method not in {"THANH_TOAN_KHI_NHAN_HANG", "VNPAY", "NGAN_HANG_QR", "VI_DIEN_TU"}:
@@ -1231,6 +1245,9 @@ def _execute_confirm_checkout(
         if not quote or any(float(quote.get(key) or 0) != float(value) for key, value in prefs["summary_amounts"].items()):
             cart_manager.set_checkout_context(session_id, summary_fingerprint=None)
             return {"status": "stale_checkout", "message": "Giá/ưu đãi/phí giao hàng vừa thay đổi. Cần xem tóm tắt mới trước khi đặt."}
+        if 'summary_quote_items' in prefs and prefs['summary_quote_items'] != _quote_item_binding(quote):
+            cart_manager.set_checkout_context(session_id, summary_fingerprint=None)
+            return {"status": "stale_checkout", "message": "Giá hoặc cấu hình món vừa thay đổi. Bạn xem lại tóm tắt trước khi xác nhận nhé."}
 
     if payment_method == 'VI_DIEN_TU':
         total = (prefs.get('summary_amounts') or {}).get('final_total')

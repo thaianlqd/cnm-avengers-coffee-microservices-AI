@@ -71,6 +71,12 @@ class ProviderRequestError(RuntimeError):
         self.headers = response.headers
         self.error_text = response.text
 
+
+def _request_timeout(seconds):
+    """Share the assigned wait across connect/read; no transport-level retry."""
+    from urllib3.util import Timeout
+    return Timeout(total=seconds, connect=min(3.0, seconds), read=seconds)
+
 class OpenRouterCompletions:
     def __init__(self, api_key):
         self.api_key = api_key
@@ -103,7 +109,7 @@ class OpenRouterCompletions:
         last_resp = None
         for fallback_model in fallback_models if allow_fallback else [model]:
             payload["model"] = fallback_model
-            resp = requests.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers, timeout=timeout)
+            resp = requests.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers, timeout=_request_timeout(timeout))
             if resp.ok:
                 return FakeResponse(resp.json())
             last_resp = resp
@@ -143,7 +149,7 @@ class GeminiCompletions:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
-        resp = requests.post("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", json=payload, headers=headers, timeout=timeout)
+        resp = requests.post("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", json=payload, headers=headers, timeout=_request_timeout(timeout))
         if resp.ok:
             return FakeResponse(resp.json())
         raise ProviderRequestError('gemini', resp)
@@ -179,7 +185,7 @@ class OpenAICompletions:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
-        resp = requests.post(self.base_url.rstrip('/')+'/chat/completions', json=payload, headers=headers, timeout=timeout)
+        resp = requests.post(self.base_url.rstrip('/')+'/chat/completions', json=payload, headers=headers, timeout=_request_timeout(timeout))
         if resp.ok:
             return FakeResponse(resp.json())
         raise ProviderRequestError('openai', resp)
@@ -417,6 +423,7 @@ def groq_agent_chat(
     customer_step_response_provider=None,
     repair_progress_provider=None,
     repeated_read_feedback_provider=None,
+    semantic_proposal_stager=None,
 ) -> Dict[str, Any]:
     """
     Agentic chat loop với Groq Function Calling.
@@ -468,6 +475,8 @@ def groq_agent_chat(
     read_completion_repairs = 0
     final_envelope_repairs = 0
     final_envelope_repair_active = False
+    dialogue_format_repairs = 0
+    dialogue_format_repair_active = False
     mutation_succeeded = False
     provider_turn_health = {}
 
@@ -727,6 +736,12 @@ def groq_agent_chat(
                             'ok', 'success', 'already_processed', 'needs_options', 'require_confirmation'}):
                         turn_tool_cache[tool_hash] = result
                 if guarded and isinstance(result, dict):
+                    if (protocol_repair_round and tool_name == 'customer_actions'
+                            and result.get('status') == 'ok' and result.get('read_only') is True
+                            and result.get('repaired_read_completed') is True
+                            and not result.get('selection_continuation_required')
+                            and result.get('repaired_action_id') and result.get('remaining_actions') == 0):
+                        successful_required_repair = True
                     if result.get('recovery_kind') == 'model_repair':
                         recoverable_write_denial = True
                         protocol_repair_requested = True
@@ -787,12 +802,15 @@ def groq_agent_chat(
                     "content": encoded_result,
                 })
 
-            if guarded and customer_step_response_provider and not required_repair_tool and not confirmation_denied_stop:
+            if (guarded and customer_step_response_provider and not confirmation_denied_stop
+                    and (not required_repair_tool or required_repair_tool == 'customer_actions'
+                        and successful_required_repair and not protocol_repair_requested)):
                 rendered = customer_step_response_provider()
                 if rendered:
                     return {'reply': rendered, 'tool_calls_log': tool_calls_log,
                             'checkout_payload': checkout_payload, 'error': None}
             if (protocol_repair_round and not protocol_repair_requested
+                    and not successful_required_repair
                     and not (repair_progress_provider and repair_progress_provider())):
                 # A valid but unrelated read does not complete the failed
                 # request. A fresh canonical discovery may still require a
@@ -873,6 +891,25 @@ def groq_agent_chat(
             # Tiếp tục vòng lặp để Groq đọc kết quả tool
             continue
 
+        # A structured action mistakenly placed in final JSON has no write
+        # authority. Journal its intent before the bounded tool-only repair so
+        # a corrected first action cannot erase still-pending siblings.
+        if guarded and semantic_proposal_stager and not force_tools_disabled:
+            staged = semantic_proposal_stager((assistant_msg.content or '').strip())
+            if staged:
+                if protocol_repairs >= 1:
+                    return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
+                            'error': 'semantic_repair_exhausted'}
+                protocol_repairs += 1
+                if metrics is not None:
+                    metrics['protocol_repair_count'] = protocol_repairs
+                provider_turn_health['semantic_repair_pending'] = True
+                force_tool_required = True
+                required_repair_tool = 'customer_actions'
+                current_messages.append({'role': 'system', 'content':
+                    'Actions in prose were NOT executed. Call customer_actions with ONLY the failed action corrected. '
+                    'Server retains siblings. Ignore unverified reply/mutation claims. ' + json.dumps(staged, ensure_ascii=False)})
+                continue
         if guarded and provider_turn_health.get('semantic_repair_pending'):
             return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
                     'error': 'semantic_repair_exhausted'}
@@ -881,6 +918,31 @@ def groq_agent_chat(
         reply_text = (assistant_msg.content or "").strip()
         issue = final_response_validator(reply_text) if final_response_validator else None
         if issue:
+            logger.info('[AgentResponseValidation] round=%d category=%s executed_tool_count=%d',
+                round_idx, str(issue).split(':', 1)[0] if str(issue).startswith(('FORMAT_REQUIRED:', 'TOOL_REQUIRED:')) else 'response_contract',
+                len(tool_calls_log))
+            if (guarded and not tool_calls_log and str(issue).startswith('FORMAT_REQUIRED:')
+                    and (not final_response_repair_allowed or final_response_repair_allowed(issue))):
+                if dialogue_format_repairs or round_idx >= max_tool_rounds:
+                    return {'reply': '', 'tool_calls_log': [], 'checkout_payload': None,
+                            'error': 'response_evidence_required'}
+                dialogue_format_repairs += 1
+                dialogue_format_repair_active = True
+                force_tools_disabled, force_tool_required = True, False
+                if metrics is not None:
+                    metrics['dialogue_format_repair_count'] = dialogue_format_repairs
+                current_messages.append({'role': 'system', 'content': issue})
+                continue
+            if dialogue_format_repair_active:
+                # A now-typed business request still needs authority. A format
+                # repair neither supplies facts nor closes business intent.
+                if str(issue).startswith('TOOL_REQUIRED:') and round_idx < max_tool_rounds:
+                    dialogue_format_repair_active = False
+                    force_tools_disabled, force_tool_required = False, True
+                    current_messages.append({'role': 'system', 'content': issue})
+                    continue
+                return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
+                        'error': 'response_evidence_required'}
             if (guarded and final_response_repair_allowed and final_response_repair_allowed(issue)):
                 if not final_envelope_repairs:
                     final_envelope_repairs = 1

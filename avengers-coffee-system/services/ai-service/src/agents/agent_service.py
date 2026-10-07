@@ -793,6 +793,7 @@ def _confirm_saved_location(
     message: str,
     history: Optional[List[Dict[str, str]]] = None,
     resolved_location: Optional[Dict[str, Any]] = None,
+    semantic_authorized: bool = False,
 ) -> Optional[Dict[str, Any]]:
     prefs = cart_manager.get_checkout_prefs(session_id)
     from src.function_calling.tools.user_tools import _clean_profile_address
@@ -802,14 +803,14 @@ def _confirm_saved_location(
     normalized = _normalize_chat_text(message)
 
     # Do not treat product choices or options as address confirmations
-    if re.search(
+    if not semantic_authorized and re.search(
         r"\b(?:nuoc|do uong|banh|do an|mon|ly|phan|chai|size|it da|da rieng|luong da|duong|topping)\b",
         normalized,
     ):
         return None
 
     from src.agents.location_parser import parse_location
-    confirms = _is_plain_confirmation(message) or parse_location(message).kind == "reference"
+    confirms = semantic_authorized or _is_plain_confirmation(message) or parse_location(message).kind == "reference"
     if not confirms:
         return None
 

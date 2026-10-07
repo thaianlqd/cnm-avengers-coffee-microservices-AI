@@ -14,6 +14,8 @@ def normalize_discovery_args(name, args):
             'max_price': None, 'min_price_inclusive': True, 'max_price_inclusive': True,
             'sort_by': 'price_asc', 'limit': 5, 'search_text': ''}
         value = {**defaults, **value}
+        if value['search_text'].strip() in {"''", '""'}:
+            value['search_text'] = ''  # Empty-string wire literal, never a Menu name.
         if value['sort_by'] == 'sold_desc':
             value.setdefault('period', 'month')
             value.setdefault('period_anchor', None)

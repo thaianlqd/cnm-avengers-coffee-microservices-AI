@@ -47,7 +47,7 @@ def test_finish_cart_opens_voucher_then_choices_then_checkout_summary(semantic_r
     runtime = semantic_runtime
     def send(message, operations):
         g = gateway_for(runtime, message)
-        runtime.provider.plan([('customer_actions', {'actions': [action(g, name, args) for name, args in operations]})])
+        runtime.provider.plan([('customer_actions', {'actions': [action(g, name, args, **({'reference': {'namespace': 'PAYMENT', 'kind': 'name', 'value': 'tiền mặt'}} if name == 'set_payment_choice' else {})) for name, args in operations]})])
         return runtime.turn(message)
     monkeypatch.setattr(voucher_tools,'execute_get_applicable_vouchers',lambda s: {'status':'ok','vouchers':[{'ma_voucher':'SYNTHETIC-V','ten_voucher':'V'}]})
     result = send('hoàn tất giỏ', [('finish_cart', {})])
@@ -55,7 +55,8 @@ def test_finish_cart_opens_voucher_then_choices_then_checkout_summary(semantic_r
     assert cart_manager.get_pending_action(runtime.sid)['type']=='select_voucher'
     assert gateway(runtime, 'xem đơn', filtered=False).dispatch('request_checkout', {})['status']=='need_voucher_decision'
     send('bỏ mã, lấy tại quán, tiền mặt', [('skip_voucher', {}),
-        ('set_checkout_choices', {'delivery_type':'MANG_DI','payment_method':'THANH_TOAN_KHI_NHAN_HANG'})])
+        ('set_fulfillment_choice', {'delivery_type':'MANG_DI'}),
+        ('set_payment_choice', {'payment_method':'THANH_TOAN_KHI_NHAN_HANG'})])
     calls=[]
     def checkout(s,reuse_summary=False):
         calls.append(reuse_summary)
@@ -199,7 +200,7 @@ def test_multi_selection_options_change_mind_and_replacement(semantic_runtime):
     runtime = semantic_runtime
     def send(message, operations):
         g = gateway_for(runtime, message)
-        runtime.provider.plan([('customer_actions', {'actions': [action(g, name, args) for name, args in operations]})])
+        runtime.provider.plan([('customer_actions', {'actions': [action(g, name, args, **({'reference': {'namespace': 'PAYMENT', 'kind': 'name', 'value': 'tiền mặt'}} if name == 'set_payment_choice' else {})) for name, args in operations]})])
         return runtime.turn(message)
     send('lấy món số 1 hai ly và món số 2 một ly', [
         ('add_to_cart', {'product_id':'101','quantity':2}),
@@ -404,7 +405,11 @@ def test_provider_wrappers_normalize_tool_calls_usage_and_json_format(monkeypatc
         tools=[{'type':'function','function':{'name':'get_cart'}}],response_format={'type':'json_object'})
     assert result.usage['prompt_tokens']==7 and result.model=='provider-model'
     assert result.choices[0].message.tool_calls[0].function.name=='get_cart'
-    assert captured[0]['json']['response_format']=={'type':'json_object'} and captured[0]['timeout']==30
+    assert captured[0]['json']['response_format']=={'type':'json_object'}
+    timeout = captured[0]['timeout']
+    assert timeout.total == 30 and timeout.connect_timeout == 3
+    timeout.start_connect()
+    assert 0 < timeout.read_timeout <= timeout.total
 
 
 def test_malformed_response_claims_after_write_replay_known_outcome(runtime):

@@ -684,6 +684,8 @@ TOOL_GET_RECOMMENDATIONS = {
                     "description": "Nhóm món cụ thể khách yêu cầu, ví dụ 'trà trái cây', 'cold brew', 'bánh ngọt'. Bỏ trống nếu khách chỉ hỏi chung.",
                 },
                 "preference_query": {"type": "string", "description": "Nhu cầu/hương vị để tìm trong mô tả sản phẩm; chỉ dùng với preferences."},
+                "preference_concepts": {"type": "array", "minItems": 1, "maxItems": 4,
+                    "items": {"type": "string"}, "description": "preferences: separate concise taste/comfort concepts, without social filler; all need description evidence."},
                 "period": {"type": "string", "enum": ["day", "week", "month", "year", "all"]},
                 "period_anchor": {"type": "string"},
                 "top_k": {
@@ -695,10 +697,10 @@ TOOL_GET_RECOMMENDATIONS = {
     },
 }
 
-def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "hot", category: str = "all", top_k: int = 5, search_text: Optional[str] = None, period: str = "month", period_anchor: Optional[str] = None, preference_query: Optional[str] = None) -> Dict[str, Any]:
+def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "hot", category: str = "all", top_k: int = 5, search_text: Optional[str] = None, period: str = "month", period_anchor: Optional[str] = None, preference_query: Optional[str] = None, preference_concepts: Optional[list] = None) -> Dict[str, Any]:
     if criteria == 'preferences':
         from .description_recommendations import recommend_from_descriptions
-        return recommend_from_descriptions(preference_query, category, top_k, search_text)
+        return recommend_from_descriptions(preference_query, category, top_k, search_text, preference_concepts)
     if criteria in {"hot", "bestsellers", "new"}:
         return execute_filter_catalog(category=category, search_text=search_text, limit=top_k,
             sort_by="sold_desc" if criteria in {"hot", "bestsellers"} else "new", period=period, period_anchor=period_anchor)
