@@ -202,6 +202,15 @@ def branch_choices(result):
 
 def customer_flow_reply(logs, state, discovery_reply=None):
     """Render only a tool-owned milestone; interruptions with no milestone stay LLM-owned."""
+    unresolved = logs[-1]['result'] if logs and logs[-1]['result'].get('recovery_kind') == 'clarify' else None
+    if unresolved:
+        committed_cart = next((row['result'] for row in reversed(logs[:-1])
+            if row['tool'] in {'add_to_cart', 'update_cart_item', 'remove_cart_item'}
+            and row['result'].get('status') in {'ok', 'already_processed'}
+            and row['result'].get('cart')), None)
+        if committed_cart:
+            return cart_review(committed_cart) + '\n\n' + unresolved['message']
+        return unresolved['message']
     login_gate = next((row['result'] for row in reversed(logs) if row['result'].get('status') == 'login_required'), None)
     if login_gate:
         return login_gate['message']

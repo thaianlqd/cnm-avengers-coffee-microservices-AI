@@ -477,7 +477,7 @@ def preview_message(kind, order_id, data):
     return f'Dạ, bạn xem trước thay đổi đơn **{order_id}**:\n\n' + '\n'.join(lines) + f"\n\nĐịa chỉ: {data.get('delivery_address') or ''}\nKhung giờ: {data.get('delivery_slot') or 'Chưa chọn'}\nGhi chú: {data.get('note') or 'Không có'}\nTạm tính: **{money(data['subtotal'])}**\nGiảm giá ({data.get('voucher_code') or 'Không áp dụng'}): **{money(data['discount_amount'])}**\nPhí giao giữ theo đơn: **{money(data['delivery_fee'])}**\n**Tổng mới: {money(data['final_total'])}**" + settlement + '\n\nBạn **xác nhận sửa đơn** theo thông tin trên nhé?'
 
 
-def prepare(session_id, kind, args, turn_id):
+def prepare(session_id, kind, args, turn_id, *, canonical_line_ids=False):
     # Selecting another order/action abandons the old quote even if the new order is locked.
     prefs = cart_manager.get_checkout_prefs(session_id)
     stale = {field: None for field in ('order_management_action', 'order_management_focus')
@@ -524,7 +524,7 @@ def prepare(session_id, kind, args, turn_id):
         for change in changes:
             raw_id = change.get('order_line_id')
             row = next((r for r in rows if r.get('id') == raw_id or str(r.get('id')) == str(raw_id)), None)
-            if not row and current.get('items'):
+            if not row and current.get('items') and not canonical_line_ids:
                 matched_item = next((item for item in current['items']
                                      if item.get('display_index') == raw_id or str(item.get('display_index')) == str(raw_id)), None)
                 if matched_item:
@@ -570,7 +570,7 @@ def prepare(session_id, kind, args, turn_id):
     return {'status': 'require_confirmation', 'changed': False, 'order_id': current['order_id'], 'message': message}
 
 
-def confirm(session_id, message, turn_id, entry_action):
+def confirm(session_id, message, turn_id, entry_action, *, semantic_commitment=None):
     action = cart_manager.get_checkout_prefs(session_id).get('order_management_action')
     if not action or not entry_action or action != entry_action or action['created_turn_id'] == turn_id:
         return {'status': 'preview_required', 'message': 'Mình cần gửi lại phần xem trước để bạn xác nhận trên lượt tiếp theo nhé.'}
@@ -580,7 +580,7 @@ def confirm(session_id, message, turn_id, entry_action):
     target = ORDER_ID.search(message.lower())
     if target and target.group() != action['order_id']:
         return {'status': 'confirmation_required', 'message': 'Mã đơn bạn xác nhận khác phần xem trước. Bạn chọn lại đơn nhé.'}
-    if not confirmation_allowed(message, action):
+    if (semantic_commitment != 'AFFIRMED' if semantic_commitment is not None else not confirmation_allowed(message, action)):
         return {'status': 'confirmation_required', 'message': 'Bạn xác nhận đúng thay đổi vừa xem, hay muốn chỉnh lại ạ?'}
     kind, oid, payload = action['kind'], action['order_id'], action['payload']
     if kind == 'cancel_order':

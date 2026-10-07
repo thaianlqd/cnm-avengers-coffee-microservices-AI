@@ -52,6 +52,12 @@ class ScriptedProvider:
 
 @pytest.fixture
 def runtime(monkeypatch):
+    # Existing tests characterize the pre-semantic compatibility API. Production
+    # defaults to semantic_mode=True. The system-wide semantic suite restores
+    # that default and supplies typed model output explicitly, without NLU mocks.
+    from functools import partial
+    semantic_orchestrator = agent.run_llm_tool_turn
+    monkeypatch.setattr(agent, 'run_llm_tool_turn', partial(semantic_orchestrator, semantic_mode=False))
     sid = 'lan20-'+uuid4().hex
     monkeypatch.setenv('AI_CHAT_ORCHESTRATOR_MODE', 'llm_tools')
     # Guarded inference now owns its provider policy. Keep this shared fixture
@@ -128,7 +134,8 @@ def runtime(monkeypatch):
     ConversationMemory(redis).save(sid,{**empty_memory(),'visible_snapshots':{'products':products},'focus':{'product':products[0]}})
     def turn(message='Synthetic request', **kwargs):
         return agent_service.run_agent(sid,message,client_message_id=kwargs.pop('client_message_id',uuid4().hex),**kwargs)
-    return SimpleNamespace(sid=sid,redis=redis,provider=provider,writes=writes,reads=reads,products=products,turn=turn,durable=durable)
+    return SimpleNamespace(sid=sid,redis=redis,provider=provider,writes=writes,reads=reads,products=products,turn=turn,durable=durable,
+        semantic_orchestrator=semantic_orchestrator)
 
 
 @pytest.mark.parametrize('message,args,count', [

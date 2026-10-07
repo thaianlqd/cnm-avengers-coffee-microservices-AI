@@ -27,8 +27,14 @@ TOOL_SEARCH_KNOWLEDGE_BASE = {
 
 
 def execute_search_knowledge_base(query, domain=None, entity_type=None, entity_id=None, source=None, session_id=None,
-                                  selected_product_id=None, reference_out=None):
-    route = knowledge_route(query)
+                                  selected_product_id=None, reference_out=None, *, semantic_route=None):
+    # Internal gateway route, never an exposed model argument. Retrieval,
+    # approved-source filters and evidence sanitation remain authoritative.
+    route = semantic_route if semantic_route is not None else knowledge_route(query)
+    if semantic_route is not None:
+        from src.rag.documents import STATIC_DOMAINS, SLOW_DOMAINS
+        if route.get('owner') != 'rag' or domain not in STATIC_DOMAINS | SLOW_DOMAINS:
+            return {'status': 'authority_required', 'results': [], 'message': INSUFFICIENT_MESSAGE}
     if route['owner'] not in {'rag', 'conversation'}:
         return {'status': 'authority_required', 'owner': route['owner'], 'results': [],
                 'message': 'Thông tin này cần tra cứu từ dịch vụ nghiệp vụ hiện tại.'}

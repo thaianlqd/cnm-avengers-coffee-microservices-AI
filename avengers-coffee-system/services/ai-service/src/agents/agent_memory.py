@@ -124,10 +124,11 @@ class ConversationMemory:
         focus = data.get('focus') or {}
         for kind, fields in {'product': ('product_id', 'product_name', 'source'),
                              'order': ('order_id',),
-                             'cart_line': ('line_id', 'product_id', 'product_name'),
+                             'menu_category': ('category_id', 'category_name', 'menu_bucket'),
+                             'cart_line': ('cart_item_id', 'line_id', 'product_id', 'product_name'),
                              'branch': ('branch_id', 'branch_name'),
                              'voucher': ('voucher_code',),
-                             'location': ('normalized_label', 'display_address')}.items():
+                             'location': ('candidate_id', 'normalized_label', 'display_address')}.items():
             if isinstance(focus.get(kind), dict):
                 result['focus'][kind] = {k: compact(focus[kind][k]) for k in fields if k in focus[kind]}
         result['last_tool_summary'] = [{k: compact(row[k]) for k in ('tool', 'status', 'count') if k in row}

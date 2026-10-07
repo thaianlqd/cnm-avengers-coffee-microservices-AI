@@ -85,6 +85,7 @@ CUSTOM_SCHEMAS = {
         'desired_state': {'type': 'object', 'properties': {'quantity': {'type': 'integer', 'minimum': 1},
             **OPTION_PROPERTIES}, 'additionalProperties': False}}, ('cart_item_id', 'desired_state')),
     'remove_cart_item': schema('remove_cart_item', {'cart_item_id': STRING,
+        'quantity': {'type': 'integer', 'minimum': 1, 'maximum': 999},
         'cart_line_ordinal': {'type': 'integer', 'minimum': 1}}, ('cart_item_id',)),
     'get_product_options': schema('get_product_options', {'product_id': STRING}, ('product_id',), 'Read current canonical option values before choosing/configuring a product.'),
     'get_cart_quote': schema('get_cart_quote'), 'get_payment_options': schema('get_payment_options'),
@@ -132,7 +133,7 @@ PURPOSES = {
     'skip_voucher': 'Skip only on an explicit customer request to skip/decline vouchers. Generic OK/cart completion is not permission to skip.',
     'set_checkout_choices': 'Record only explicitly selected fulfillment/payment. A new fulfillment reads saved profile locations and offers them for customer confirmation on a later turn. Do not resolve the offer immediately; acknowledge both choices when provided together.',
     'update_cart_item': 'Edit one exact current cart line with an absolute patch. For ordinal references include cart_line_ordinal matching its CURRENT cart display_index. Product-list ordinals are a separate namespace. Do not edit another row because the requested row already has that value.',
-    'remove_cart_item': 'Remove one exact current cart line. For ordinal references include cart_line_ordinal matching CURRENT cart display_index, not product-list rank.',
+    'remove_cart_item': 'Remove one exact current cart line. Optional quantity subtracts only that many units. For ordinal references include cart_line_ordinal matching CURRENT cart display_index, not product-list rank.',
     'get_order_history': 'Read the authenticated customer\'s most recent placed orders, newest first, with current order/payment statuses and dates. Includes pending, cancelled and completed orders. limit is the requested count (default 5, maximum 20). Not the current draft cart or checkout summary.',
     'get_order_details': 'Read full current existing owned order, status, payment, exact order_line_id, sizes/toppings/options, address and revision. Read before editing; order_line_id is NOT a cart line or product ordinal.',
     'cancel_order': 'Prepare cancellation preview for an owned order_id, optional literal customer reason. Never cancels immediately. Requires later confirmation. If no exact ID read order history and ask the customer to select; never guess.',
@@ -184,20 +185,22 @@ def capabilities_for_context(context, *, entry_action=None, final_only=False, re
     # Secondary profile/completed-order capabilities remain in
     # CAPABILITIES and tool_schemas(), outside the default ordering surface.
     allowed = {'get_menu_categories', 'filter_catalog', 'get_recommendations', 'search_knowledge_base', 'get_cart', 'get_product_insights'}
-    if context.get('branch_review_request'):
+    if context.get('semantic_control') or context.get('branch_review_request'):
         allowed.update({'get_store_reviews', 'get_top_rated_stores'})
         if visible.get('branches'):
             allowed.add('compare_branch_reviews')
-        if context.get('displayed_review_selection') is not None:
+        if not context.get('semantic_control') and context.get('displayed_review_selection') is not None:
             allowed.difference_update({'search_knowledge_base', 'get_top_rated_stores'})
-    if context.get('recent_order_read'):
+    if context.get('semantic_control') or context.get('recent_order_read'):
         allowed.add('get_order_history')  # Executor asks guests to log in; actor is session-owned.
-    if state.get('authenticated') and context.get('order_management'):
-        kind = context.get('order_management_kind')
+    if state.get('authenticated') and (context.get('semantic_control') or context.get('order_management')):
+        kind = None if context.get('semantic_control') else context.get('order_management_kind')
         allowed.update({'get_order_history', 'get_order_details', 'track_order_status'})
-        if not context.get('recent_order_read'):
+        order_context = bool(visible.get('orders') or checkout.get('order_management_focus')
+                             or checkout.get('order_management_action'))
+        if (order_context if context.get('semantic_control') else not context.get('recent_order_read')):
             allowed.update({kind} if kind in {'cancel_order', 'update_order', 'reorder_order'} else {'cancel_order', 'update_order', 'reorder_order'})
-        if kind != 'cancel_order':
+        if (order_context if context.get('semantic_control') else kind != 'cancel_order'):
             allowed.update({'get_product_options', 'check_price_and_stock'})
         if checkout.get('order_management_action'):
             allowed.update({'confirm_order_change', 'discard_order_change'})
@@ -207,18 +210,18 @@ def capabilities_for_context(context, *, entry_action=None, final_only=False, re
         allowed.update({'get_product_options', 'get_product_insights', 'check_price_and_stock'})
         # During cart/checkout consultation, search_knowledge_base already
         # serves approved product taste/description/ingredient evidence.
-        if not cart or staged:
+        if context.get('semantic_control') or not cart or staged:
             allowed.add('get_product_description')
     # Resolve handles both read-only location consultation and explicit draft
     # checkout locations for authenticated users. Avoid publishing both geo
     # adapters throughout cart checkout; guests keep the read-only adapter.
-    if not cart or not mutable:
+    if context.get('semantic_control') or not cart or not mutable:
         allowed.add('find_nearest_branch')
     if cart:
         allowed.add('get_cart_quote')
-        if voucher_gate or voucher_decided:
+        if context.get('semantic_control') or voucher_gate or voucher_decided:
             allowed.add('get_applicable_vouchers')
-        if checkout_started:
+        if context.get('semantic_control') or checkout_started:
             allowed.add('get_payment_options')
     pickup = checkout.get('delivery_type') in {'MANG_DI', 'TAI_CHO'}
     if cart and pickup and not checkout.get('profile_location_offer'):
@@ -228,6 +231,8 @@ def capabilities_for_context(context, *, entry_action=None, final_only=False, re
             (pickup and not cart_state.get('branch_id')) or (delivery and (
                 not checkout.get('delivery_address') or not checkout.get('address_confirmed'))))):
         allowed.add('get_user_profile')
+    if context.get('semantic_control') and state.get('authenticated'):
+        allowed.add('get_user_profile')  # Read saved addresses without selecting one.
     if mutable:
         allowed.add('resolve_location')  # Canonical location consultation too.
         if visible.get('location_candidates'):
@@ -333,7 +338,7 @@ def validate_args(value, spec):
             return False
         return all(validate_args(v, props[k]) for k, v in value.items() if k in props)
     if kind == 'array':
-        return len(value) <= spec.get('maxItems', 16) and all(validate_args(v, spec.get('items', {})) for v in value)
+        return spec.get('minItems', 0) <= len(value) <= spec.get('maxItems', 16) and all(validate_args(v, spec.get('items', {})) for v in value)
     if kind == 'string':
         return len(value) <= 2000
     if kind in {'number', 'integer'}:

@@ -151,15 +151,17 @@ def model_tool_result(name, result, artifacts=None):
 
 
 class ToolArtifacts:
-    def __init__(self, memory, knowledge_question=None, context=None):
+    def __init__(self, memory, knowledge_question=None, context=None, semantic_mode=False):
+        self.semantic_mode = semantic_mode
+        self.semantic_batch_pending = 0
         # Existing knowledge authority is an output safety boundary for
         # ingredient/allergen claims, even if the model proposes a wrong read.
         from src.rag.authority import knowledge_route
-        route = knowledge_route(knowledge_question or '')
+        route = {} if semantic_mode else knowledge_route(knowledge_question or '')
         self.safety_facet = route.get('facet') if route.get('owner') == 'rag' else None
         self.knowledge_question = knowledge_question or ''
         from src.agents.shopping_language import requested_discovery_family
-        self.discovery_scope = requested_discovery_family(self.knowledge_question)
+        self.discovery_scope = None if semantic_mode else requested_discovery_family(self.knowledge_question)
         self.visible = dict(memory.get('visible_snapshots') or {})
         self.focus = dict(memory.get('focus') or {})
         pending_products = ((context or {}).get('business') or {}).get('pending_products') or []
@@ -622,7 +624,9 @@ class ToolArtifacts:
         from src.agents.customer_flow_presentation import money
         from src.rag.documents import normalize_text
         user_norm = normalize_text(getattr(self, 'knowledge_question', '') or '')
-        asks_ranking = bool(re.search(r'\b(?:ban chay|so luong ban|nhieu nhat|top ban|mua nhieu|bestseller|chay nhat|doanh so|hot)\b', user_norm))
+        asks_ranking = (any(row['args'].get('sort_by') == 'sold_desc' or row['args'].get('criteria') == 'hot'
+            for row in reads) if self.semantic_mode else
+            bool(re.search(r'\b(?:ban chay|so luong ban|nhieu nhat|top ban|mua nhieu|bestseller|chay nhat|doanh so|hot)\b', user_norm)))
         lines = ['Dạ, mình gửi bạn các món phù hợp nhé:']
         ranking = next((r['result'] for r in reversed(self.logs) if r['result'].get('ranking') == 'completed_paid_quantity'), None)
         if ranking and asks_ranking:
@@ -630,7 +634,7 @@ class ToolArtifacts:
             period = labels.get(ranking.get('period'), 'khoảng đã chọn')
             anchor = ranking.get('period_anchor')
             lines[0] = f'Dạ, các món có số lượng bán nhiều nhất trong **{period}' + (f' chứa ngày {anchor}' if anchor else ' hiện tại' if period != 'toàn bộ thời gian' else '') + '** (đơn đã hoàn thành và thanh toán):'
-        elif re.search(r'\b(?:mat|giai nhiet|giai khat|troi nong|nang nong)\b', user_norm):
+        elif not self.semantic_mode and re.search(r'\b(?:mat|giai nhiet|giai khat|troi nong|nang nong)\b', user_norm):
             lines[0] = 'Dạ, hôm nay trời nóng, mình gợi ý bạn các món đồ uống thanh mát, giải nhiệt rất thích hợp nhé:'
         products = self.ui['products']
         scope = self.discovery_scope or {}
@@ -667,6 +671,8 @@ class ToolArtifacts:
 
     def completed_customer_step(self):
         """A customer-choice boundary has enough authoritative evidence to render now."""
+        if self.semantic_mode and self.semantic_batch_pending:
+            return None
         if not self.logs:
             return None
         meaningful = [row for row in self.logs if not (row['tool'] == 'set_checkout_choices'
@@ -691,7 +697,9 @@ class ToolArtifacts:
                 or (name == 'confirm_checkout' and status in {'ok', 'success', 'already_processed'})
                 or (name == 'finish_cart' and status == 'ok')
                 or (name in {'apply_voucher', 'skip_voucher'} and status in {'ok', 'success', 'already_processed'})
-                or status in {'needs_options', 'defaults_not_authorized', 'voucher_choice_required',
+                or status in {'semantic_evidence_required', 'semantic_commitment_required', 'unknown_reference',
+                             'ambiguous_reference', 'reference_conflict', 'knowledge_domain_required',
+                             'needs_options', 'defaults_not_authorized', 'voucher_choice_required',
                              'profile_location_confirmation_required', 'needs_new_location', 'login_required',
                              'product_choice_required', 'ambiguous_product_options', 'cart_change_not_requested', 'wallet_unavailable', 'insufficient_wallet'}
                 or edits_complete or needs_option_choice
@@ -757,7 +765,7 @@ class ToolArtifacts:
             if row['tool'] in WRITES and row['result'].get('changed') is not False and row['result'].get('status') in {'ok', 'success', 'already_processed'}}
         successful_tools = {row['tool'] for row in self.logs
             if row['result'].get('status') in SUCCESS}
-        if (self.has_pending_confirmation and not any(row['tool'] == 'confirm_checkout' for row in self.logs)
+        if (not self.semantic_mode and self.has_pending_confirmation and not any(row['tool'] == 'confirm_checkout' for row in self.logs)
                 and {'get_cart', 'get_cart_quote'} <= successful_tools
                 and 'request_checkout' not in successful_tools):
             return ('TOOL_REQUIRED: Cart lines and a quote do not render the canonical confirmation UI. '
