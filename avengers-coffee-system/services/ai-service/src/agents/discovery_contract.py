@@ -27,6 +27,8 @@ def normalize_discovery_args(name, args):
         value['limit'] = max(1, min(16, int(value['limit'])))
     elif name == 'get_recommendations':
         value = {'criteria': 'hot', 'category': 'all', 'top_k': 5, 'search_text': '', **value}
+        if value['criteria'] == 'bestsellers':
+            value['criteria'] = 'hot'  # Same authority/cache; legacy alias is server-only.
         if value['criteria'] == 'hot':
             value.setdefault('period', 'month')
             value.setdefault('period_anchor', None)

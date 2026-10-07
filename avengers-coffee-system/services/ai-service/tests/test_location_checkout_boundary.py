@@ -90,7 +90,7 @@ def test_delivery_missing_locality_can_be_supplied_next_turn(monkeypatch):
     first = order_flow_graph.run_order_flow(session, "tôi ở 87C Tân Thắng, P. Sơn Kỳ, Tân Phú")
     assert "tỉnh/thành phố" in first["reply"] and "quận/huyện" not in first["reply"]
     second = order_flow_graph.run_order_flow(session, "Quận Tân Phú, TP.HCM")
-    assert seen == ["87C Tân Thắng, Phường Sơn Kỳ, Tân Phú, Quận Tân Phú, Thành phố HCM"]
+    assert seen == ["87C Tân Thắng, Phường Sơn Kỳ, Tân Phú, Quận Tân Phú, Thành phố Hồ Chí Minh"]
     assert "Đã chọn chi nhánh" in second["reply"]
     assert not cart_manager.get_checkout_prefs(session).get("partial_delivery_address")
 

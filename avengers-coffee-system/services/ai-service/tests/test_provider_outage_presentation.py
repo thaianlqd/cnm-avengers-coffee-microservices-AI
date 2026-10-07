@@ -53,7 +53,9 @@ def test_new_message_after_outage_can_use_the_normal_discovery_flow(runtime):
     assert len(runtime.reads) == 1 and not runtime.writes
 
 
-def test_outage_after_a_write_keeps_verified_result_and_replay_does_not_repeat_it(runtime):
+def test_outage_after_a_write_keeps_verified_result_and_replay_does_not_repeat_it(runtime, monkeypatch):
+    from src.agents import llm_tool_orchestrator
+    monkeypatch.setattr(llm_tool_orchestrator, '_legacy_language_control', lambda *a: None)
     runtime.provider.plan([('update_cart_item', {
         'cart_item_id': '800', 'cart_line_ordinal': 1, 'desired_state': {'quantity': 2},
     })])

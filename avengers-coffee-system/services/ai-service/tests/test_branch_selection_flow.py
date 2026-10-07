@@ -146,6 +146,8 @@ def test_customer_shopping_control_selects_branch_with_explicit_dine_in(runtime,
     monkeypatch.setattr(branch_tools, 'execute_set_session_branch', lambda sid, bid, bname, customer_selected=True: {
         'status': 'ok', 'branch_id': bid, 'branch_name': bname, 'message': 'ok'
     })
+    # This scenario starts with branch selection, before choosing any products.
+    cart_manager.replace_items_from_order_cart(runtime.sid, [])
 
     cm = ConversationMemory(runtime.redis)
     data = cm.load(runtime.sid)

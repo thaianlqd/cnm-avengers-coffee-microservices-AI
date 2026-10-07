@@ -2878,6 +2878,12 @@ def _understand(state: OrderConversationState) -> OrderConversationState:
                                         and pending_type in {"select_voucher", "confirm_checkout"}
                                     )}}
     if location.kind in {"reference", "reference_question", "change_reference"}:
+        meaning = shopping_interpretation.get("meaning")
+        if initial_refs and meaning and meaning.act == "PRODUCT_INFO":
+            # An established product question outranks a location deictic in
+            # its conversational frame. Both interpretations already exist;
+            # this only preserves the authority of the resolved product read.
+            return {**state, "intent": {"intent": "PRODUCT_INFO", "products": initial_refs}}
         return {**state, "intent": {"intent": "LOCATION_REFERENCE", "location_kind": location.kind}}
     if (location.kind in {"address", "area", "poi"}
             and _is_standalone_location_statement(state["user_message"], location.kind)):

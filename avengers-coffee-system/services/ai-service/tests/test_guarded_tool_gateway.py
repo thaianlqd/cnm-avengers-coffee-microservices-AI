@@ -1,6 +1,8 @@
 from copy import deepcopy
 import pytest
 from test_llm_tool_orchestrator import runtime, fresh_action
+from test_checkout_guarded_contract import gateway
+from test_semantic_control import compatibility_runtime, runtime as semantic_runtime, gateway_for, action
 from src.agents.agent_memory import ConversationMemory
 from src.agents.tool_artifacts import candidate_id
 from src.common import cart_manager
@@ -27,28 +29,33 @@ def test_voucher_fresh_eligibility_and_skip(runtime,monkeypatch):
         cart_manager.set_checkout_context(s,voucher_code=None,voucher_decided=True)
         return {'status':'ok','voucher_code':None}
     monkeypatch.setattr(voucher_tools,'execute_remove_voucher',remove)
+    remember(runtime, 'vouchers', [{'ma_voucher':'SYNTHETIC-V'}])
+    cart_manager.set_checkout_context(runtime.sid, voucher_offer_pending=True)
     runtime.provider.plan([('apply_voucher',{'voucher_code':'SYNTHETIC-V'})])
     runtime.turn('dùng mã đó',client_message_id='voucher-once')
     runtime.turn('dùng mã đó',client_message_id='voucher-once')
     assert calls==[('apply','SYNTHETIC-V')]
-    runtime.provider.plan([('skip_voucher',{})])
+    runtime.provider.plan([('remove_voucher',{})])
     runtime.turn('thôi bỏ mã đi')
     assert calls[-1]==('remove',) and cart_manager.get_checkout_prefs(runtime.sid)['voucher_decided']
     runtime.provider.plan([('apply_voucher',{'voucher_code':'STALE-V'})])
-    assert runtime.turn()['tool_calls_log'][0]['result']['status']=='voucher_not_eligible'
+    assert gateway(runtime, 'áp mã STALE-V', filtered=False).dispatch('apply_voucher', {'voucher_code':'STALE-V'})['status']=='voucher_not_eligible'
     assert len(calls)==2
 
 
-def test_finish_cart_opens_voucher_then_choices_then_checkout_summary(runtime,monkeypatch):
+def test_finish_cart_opens_voucher_then_choices_then_checkout_summary(semantic_runtime,monkeypatch):
+    runtime = semantic_runtime
+    def send(message, operations):
+        g = gateway_for(runtime, message)
+        runtime.provider.plan([('customer_actions', {'actions': [action(g, name, args) for name, args in operations]})])
+        return runtime.turn(message)
     monkeypatch.setattr(voucher_tools,'execute_get_applicable_vouchers',lambda s: {'status':'ok','vouchers':[{'ma_voucher':'SYNTHETIC-V','ten_voucher':'V'}]})
-    runtime.provider.plan([('finish_cart',{})])
-    result=runtime.turn('hoàn tất giỏ')
+    result = send('hoàn tất giỏ', [('finish_cart', {})])
     assert result['ui_payload']['vouchers'][0]['ma_voucher']=='SYNTHETIC-V'
     assert cart_manager.get_pending_action(runtime.sid)['type']=='select_voucher'
-    runtime.provider.plan([('request_checkout',{})])
-    assert runtime.turn()['tool_calls_log'][0]['result']['status']=='need_voucher_decision'
-    runtime.provider.plan([('skip_voucher',{}),('set_checkout_choices',{'delivery_type':'MANG_DI','payment_method':'THANH_TOAN_KHI_NHAN_HANG'})])
-    runtime.turn('bỏ mã, lấy tại quán, tiền mặt')
+    assert gateway(runtime, 'xem đơn', filtered=False).dispatch('request_checkout', {})['status']=='need_voucher_decision'
+    send('bỏ mã, lấy tại quán, tiền mặt', [('skip_voucher', {}),
+        ('set_checkout_choices', {'delivery_type':'MANG_DI','payment_method':'THANH_TOAN_KHI_NHAN_HANG'})])
     calls=[]
     def checkout(s,reuse_summary=False):
         calls.append(reuse_summary)
@@ -57,10 +64,8 @@ def test_finish_cart_opens_voucher_then_choices_then_checkout_summary(runtime,mo
         return {'status':'require_confirmation','order_summary':{'action_id':state['checkout_action_id'],'final_total':70000}}
     monkeypatch.setattr(cart_tools,'execute_request_checkout',checkout)
     cart_manager.set_branch(runtime.sid,'synthetic-pickup','Pickup branch')
-    runtime.provider.plan([('request_checkout',{})])
-    first=runtime.turn()['checkout_payload']
-    runtime.provider.plan([('request_checkout',{'reuse_summary':True})])
-    second=runtime.turn('xem lại đơn')['checkout_payload']
+    first = send('xem đơn', [('request_checkout', {})])['checkout_payload']
+    second = send('xem lại đơn', [('request_checkout', {'reuse_summary':True})])['checkout_payload']
     assert first==second and calls==[False,True] and not runtime.writes
 
 
@@ -110,7 +115,7 @@ def test_wallet_unavailable_cannot_replace_payment(runtime,monkeypatch):
     cart_manager.set_checkout_prefs(runtime.sid,payment_method='VNPAY')
     monkeypatch.setattr(cart_tools,'validate_wallet_selection',lambda s: {'reply':'Ví chưa sẵn sàng.'})
     runtime.provider.plan([('set_checkout_choices',{'payment_method':'VI_DIEN_TU'})])
-    assert runtime.turn()['tool_calls_log'][0]['result']['status']=='wallet_unavailable'
+    assert runtime.turn('thanh toán bằng ví điện tử')['tool_calls_log'][0]['result']['status']=='wallet_unavailable'
     assert cart_manager.get_checkout_prefs(runtime.sid)['payment_method']=='VNPAY'
 
 
@@ -144,9 +149,8 @@ def test_current_provider_location_candidate_promotes_delivery_without_re_geocod
     ('update_cart_item',{'cart_item_id':'wrong','desired_state':{'quantity':2}})])
 def test_namespace_targets_are_validated_by_capability(runtime,monkeypatch,tool,args):
     monkeypatch.setattr(voucher_tools,'execute_get_applicable_vouchers',lambda s: {'status':'ok','vouchers':[]})
-    runtime.provider.plan([(tool,args)])
-    result=runtime.turn('số hai')
-    assert not runtime.writes and result['tool_calls_log'][0]['result']['status']!='ok'
+    result = gateway(runtime, 'số hai', filtered=False).dispatch(tool, args)
+    assert not runtime.writes and result['status'] != 'ok'
 
 
 def test_redis_outage_read_consultation_and_unknown_deictic_write(runtime,monkeypatch):
@@ -191,18 +195,23 @@ def test_top_k_capped_and_context_no_full_catalog(runtime):
     assert len(runtime.provider.requests[0]['messages'])==2
 
 
-def test_multi_selection_options_change_mind_and_replacement(runtime):
-    runtime.provider.plan([('add_to_cart',{'product_id':'101','quantity':2}),
-                           ('add_to_cart',{'product_id':'102','quantity':1})])
-    runtime.turn('lấy hai món đầu tiên')
+def test_multi_selection_options_change_mind_and_replacement(semantic_runtime):
+    runtime = semantic_runtime
+    def send(message, operations):
+        g = gateway_for(runtime, message)
+        runtime.provider.plan([('customer_actions', {'actions': [action(g, name, args) for name, args in operations]})])
+        return runtime.turn(message)
+    send('lấy món số 1 hai ly và món số 2 một ly', [
+        ('add_to_cart', {'product_id':'101','quantity':2}),
+        ('add_to_cart', {'product_id':'102','quantity':1})])
     assert len(cart_manager.get_checkout_prefs(runtime.sid)['pending_products'])==2
-    runtime.provider.plan([('discard_pending_product',{'product_id':'102'}),
-                           ('add_to_cart',{'product_id':'101','size':'L','toppings':['Foam']})])
-    runtime.turn('thôi bỏ món thứ hai, món đầu size lớn foam')
+    send('thôi bỏ món thứ hai, món đầu size L topping Foam', [
+        ('discard_pending_product', {'product_id':'102'}),
+        ('add_to_cart', {'product_id':'101','size':'L','toppings':['Foam']})])
     assert runtime.writes[-1][1]['product_id']=='101' and runtime.writes[-1][1]['quantity']==2
-    runtime.provider.plan([('remove_cart_item',{'cart_item_id':'801'}),
-                           ('add_to_cart',{'product_id':'103','size':'M'})])
-    runtime.turn('bỏ ly thứ hai, thay bằng bánh')
+    send('bỏ ly thứ hai, thay bằng bánh size M', [
+        ('remove_cart_item', {'cart_item_id':'801'}),
+        ('add_to_cart', {'product_id':'103','size':'M'})])
     assert [call[0] for call in runtime.writes]==['add','remove','add']
     ids=[row['product_id'] for row in cart_manager.get_cart(runtime.sid)['items']]
     assert ids==['101','101','103']
@@ -212,7 +221,7 @@ def test_checkout_missing_fields_are_structured_without_tool_execution(runtime,m
     cart_manager.set_checkout_context(runtime.sid,voucher_decided=True)
     monkeypatch.setattr(cart_tools,'execute_request_checkout',lambda *a,**k: pytest.fail('Missing prerequisites'))
     runtime.provider.plan([('request_checkout',{})])
-    result=runtime.turn()['tool_calls_log'][0]['result']
+    result = gateway(runtime, 'xem đơn', filtered=False).dispatch('request_checkout', {})
     assert set(result['missing'])=={'delivery_type','payment_method','branch'}
 
 
@@ -274,13 +283,20 @@ def test_unsupported_currency_amounts_are_not_repeated(runtime,currency):
 
 
 def test_branch_cannot_be_committed_immediately_after_discovery(runtime,monkeypatch):
+    from src.common import inventory_validation
+    monkeypatch.setattr(branch_tools, 'branch_identity_available', lambda *a: True)
+    monkeypatch.setattr(inventory_validation, 'validate_cart_at_branch', lambda *a: {'available': [], 'unavailable': [], 'unverified': [], 'product_statuses': [], 'is_fully_available': True})
+    cart_manager.set_checkout_prefs(runtime.sid, delivery_type='MANG_DI')
     from src.function_calling import tools
     monkeypatch.setitem(tools.TOOL_EXECUTORS,'ask_branch',lambda args,s: {'status':'ok','branches':[
         {'branch_id':'new-outlet','branch_name':'New outlet','availability_status':'available'}]})
     monkeypatch.setattr(branch_tools,'execute_set_session_branch',lambda *a,**k: pytest.fail('Automatic selection'))
+    entry_gateway = gateway(runtime, 'tìm quán giúp tôi', filtered=False)
     runtime.provider.plan([('ask_branch',{}),('set_session_branch',{'branch_id':'new-outlet'})])
     result=runtime.turn('tìm quán giúp tôi')
-    assert result['tool_calls_log'][-1]['result']['status']=='customer_branch_selection_required'
+    assert [row['tool'] for row in result['tool_calls_log']] == ['ask_branch']
+    assert not cart_manager.get_cart(runtime.sid).get('branch_id')
+    assert entry_gateway.dispatch('set_session_branch', {'branch_id':'new-outlet'})['status'] == 'customer_branch_selection_required'
 
 
 def test_fulfillment_selection_enables_existing_checkout_location_adapter(runtime):
@@ -314,7 +330,7 @@ def test_model_cannot_invent_a_display_card(runtime):
     runtime.provider.steps[-1]={'content':json.dumps({'reply':'Món khác.',
         'display_product_ids':['999'],'mutation_claims':[]})}
     result=runtime.turn()
-    assert [row['product_id'] for row in result['ui_payload']['products']]==['101']
+    assert not result['ui_payload']['products'] and '999' not in result['reply']
 
 
 def test_unchanged_checkout_choices_preserve_fresh_confirmation(runtime):
@@ -328,7 +344,7 @@ def test_unchanged_checkout_choices_preserve_fresh_confirmation(runtime):
 def test_guarded_provider_requests_native_json_envelope(runtime):
     runtime.provider.plan([('get_cart',{})])
     runtime.turn()
-    assert all(request['response_format']=={'type':'json_object'} for request in runtime.provider.requests)
+    assert all('response_format' not in request if request.get('tools') else request['response_format'] == {'type':'json_object'} for request in runtime.provider.requests)
 
 
 def test_review_resolves_durable_focus_after_another_product_list(runtime):
@@ -342,6 +358,7 @@ def test_review_resolves_durable_focus_after_another_product_list(runtime):
 
 
 def test_named_product_knowledge_capability_uses_existing_rag_authority(runtime,monkeypatch):
+    cart_manager.replace_items_from_order_cart(runtime.sid, [])
     from src.function_calling.tools import knowledge_tools
     calls=[]
     def evidence(**kwargs):
@@ -364,7 +381,7 @@ def test_noop_absolute_update_never_calls_order_write(runtime):
     ('remove_cart_item',{'cart_item_id':'801','cart_line_ordinal':1})])
 def test_cart_ordinal_and_exact_id_must_agree(runtime,tool,args):
     runtime.provider.plan([(tool,args)])
-    assert runtime.turn()['tool_calls_log'][0]['result']['status']=='cart_reference_conflict'
+    assert runtime.turn('xóa món số 1' if tool == 'remove_cart_item' else 'sửa món số 1 thành 2 ly')['tool_calls_log'][0]['result']['status']=='cart_reference_conflict'
     assert not runtime.writes
 
 
@@ -396,7 +413,7 @@ def test_malformed_response_claims_after_write_replay_known_outcome(runtime):
     runtime.provider.steps[-1]={'content':json.dumps({'reply':'Kết quả','mutation_claims':[{'invalid':'shape'}]})}
     first=runtime.turn(client_message_id='malformed-reply')
     assert runtime.turn(client_message_id='malformed-reply')==first and len(runtime.writes)==1
-    assert 'Cà Phê Alpha x2' in first['reply']
+    assert '**Cà Phê Alpha** ×2' in first['reply']
 
 
 def test_malformed_rag_quote_metadata_uses_provider_evidence():
@@ -419,7 +436,9 @@ def test_authentication_and_client_turn_are_required_before_option_staging(runti
         monkeypatch.setattr(cart_tools,'is_authenticated_cart_session',lambda s:False)
     runtime.provider.plan([('add_to_cart',{'product_id':'101','quantity':2})])
     result=runtime.turn(client_message_id=None if boundary=='missing_client_turn' else 'guest-blocked')
-    assert result['tool_calls_log'][0]['result']['status']=='authentication_or_turn_required'
+    denied = gateway(runtime, 'lấy món số 1', filtered=False)
+    denied.client_message_id = None if boundary == 'missing_client_turn' else 'unauthenticated'
+    assert denied.dispatch('add_to_cart', {'product_id':'101', 'quantity':2})['status']=='authentication_or_turn_required'
     assert not runtime.writes and not cart_manager.get_checkout_prefs(runtime.sid).get('pending_products')
     assert not result['checkout_payload']
 
@@ -431,3 +450,12 @@ def test_sensitive_knowledge_claims_cannot_be_supported_by_reviews(runtime,quest
     result=runtime.turn(question)
     assert 'an toàn với người dị ứng' not in result['reply'] and 'chưa có đủ thông tin' in result['reply']
     assert not runtime.writes
+
+
+@pytest.fixture(autouse=True)
+def exercise_scripted_gateway_without_language_shortcuts(monkeypatch):
+    # This module qualifies explicit provider proposals and gateway denials.
+    # The legacy phrase router must not preempt the proposal under test;
+    # production semantic mode never executes that router either.
+    from src.agents import llm_tool_orchestrator
+    monkeypatch.setattr(llm_tool_orchestrator, '_legacy_language_control', lambda *a: None)

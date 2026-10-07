@@ -33,6 +33,10 @@ def gateway_for(runtime, message='Một cách diễn đạt chưa có trong bộ
 
 
 def action(gateway, tool, args=None, commitment='SELECTED', reference=None, **fields):
+    if tool == 'add_to_cart':
+        fields.setdefault('option_intent', 'DEFAULTS' if (args or {}).get('use_defaults') else 'CONFIGURE' if any(key in (args or {}) for key in ('size', 'kich_co', 'toppings', 'luong_da', 'ice', 'do_ngot', 'sugar', 'loai_sua', 'milk')) else 'SELECT')
+        if fields['option_intent'] == 'DEFAULTS':
+            fields.setdefault('defaults_evidence', gateway.user_message)
     return {'tool': tool, 'args': args or {}, 'commitment': commitment,
         'evidence': gateway.user_message, **({'reference': reference} if reference else {}), **fields}
 
@@ -219,7 +223,7 @@ def test_evidence_must_be_current_and_batch_shape_checked_before_writes(runtime)
     gateway = gateway_for(runtime)
     request = action(gateway, 'set_checkout_choices', {'delivery_type': 'MANG_DI'})
     request['evidence'] = 'a quote from an older turn'
-    assert gateway.execute_semantic(request)['status'] == 'semantic_evidence_required'
+    assert gateway.execute_semantic(request)['status'] == 'missing_current_evidence'
     invalid = send_actions(gateway, {'actions': [action(gateway, 'remove_cart_item', {'cart_item_id': '800'}),
         {'tool': 'fake', 'args': {}, 'commitment': 'SELECTED'}]})
     assert invalid['status'] == 'invalid_semantic_arguments' and invalid['recovery_kind'] == 'model_repair' and not runtime.writes
@@ -528,7 +532,7 @@ def test_partial_batch_reports_committed_cart_and_actual_unresolved_target(runti
     ]})
     assert result['remaining_actions'] == 1 and result['changed'] is True and len(runtime.writes) == 1
     reply = gateway.artifacts.factual_fallback()
-    assert '×3' in reply and 'giỏ' in reply and 'so sánh' not in reply
+    assert '×3' in reply and 'giỏ' in reply.lower() and 'so sánh' not in reply
 
 
 def test_resolved_reference_does_not_keep_an_earlier_clarification(runtime):

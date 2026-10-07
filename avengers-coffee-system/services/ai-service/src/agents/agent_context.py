@@ -12,7 +12,7 @@ PREF_FIELDS = ('delivery_type', 'payment_method', 'delivery_address', 'address_c
     'checkout_action_id', 'checkout_action_expires_at', 'summary_fingerprint', 'flow_stage',
     'location_address', 'summary_amounts', 'completed_order_id', 'stock_conflicts', 'checkout_submission',
     'voucher_offer_pending', 'pending_product_reference', 'profile_location_offer', 'profile_location_checked_for',
-    'pending_cart_option_edit', 'order_management_action', 'order_management_focus')
+    'pending_cart_option_edit', 'order_management_action', 'order_management_focus', 'partial_delivery_address')
 LINE_FIELDS = ('cart_item_id', 'line_id', 'product_id', 'product_name', 'quantity', 'size',
                'toppings', 'luong_da', 'do_ngot', 'loai_sua', 'unit_price', 'line_total')
 
@@ -118,6 +118,13 @@ def model_cart(cart):
                    'display_index': index} for index, row in enumerate(cart.get('items') or [], 1)]}
 
 
+def model_pending_products(rows, *, include_schema=True):
+    return [{key: reference_value(row[key]) for key in
+             (*LINE_FIELDS, 'option_schema', 'missing_fields', 'selection_index')
+             if key in row and (include_schema or key != 'option_schema')}
+            for row in rows or []]
+
+
 def model_projection(context, emergency=False):
     """Project a COPY. Budgeting cannot erase gateway authority/candidates."""
     state = context['business']
@@ -127,7 +134,8 @@ def model_projection(context, emergency=False):
         'checkout': {key: compact(checkout[key]) for key in ('flow_stage', 'delivery_type',
             'payment_method', 'delivery_address', 'address_confirmed', 'voucher_code',
             'voucher_decided', 'voucher_revalidation_required', 'checkout_requested',
-            'profile_location_offer', 'profile_location_checked_for', 'pending_cart_option_edit', 'order_management_focus') if key in checkout},
+            'profile_location_offer', 'profile_location_checked_for', 'pending_cart_option_edit', 'order_management_focus',
+            'partial_delivery_address') if key in checkout},
         'order_change_preview': {key: compact(checkout['order_management_action'][key]) for key in ('kind', 'order_id', 'expires_at') if key in checkout['order_management_action']} if checkout.get('order_management_action') else None,
         'summary_fresh': state.get('confirmation_fresh', False),
         'checkout_missing': missing_checkout_fields(state),
@@ -136,8 +144,7 @@ def model_projection(context, emergency=False):
                     'params': {key: compact(value) for key, value in
                         ((state.get('pending') or {}).get('params') or {}).items()
                         if key in {'product_id', 'cart_item_id', 'count', 'missing_fields'}}},
-        'pending_products': [{key: reference_value(row[key]) for key in (*LINE_FIELDS, 'option_schema', 'missing_fields', 'selection_index')
-                              if key in row} for row in state.get('pending_products') or []]},
+        'pending_products': model_pending_products(state.get('pending_products'))},
         'visible': {kind: model_snapshot(kind, rows) for kind, rows in context.get('visible', {}).items()},
         'focus': compact(context.get('focus') or {}),
         'order_reference': compact(context.get('order_reference')),

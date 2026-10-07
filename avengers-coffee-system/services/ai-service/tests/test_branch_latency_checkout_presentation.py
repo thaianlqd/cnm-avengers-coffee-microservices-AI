@@ -189,3 +189,12 @@ def test_confirmation_words_in_summary_question_are_accepted(phrase):
 def test_confirmation_negatives_and_changes_remain_blocked(phrase):
     from src.agents.tier1 import classify_confirmation
     assert classify_confirmation(phrase, 'confirm_checkout') != 'YES'
+
+
+@pytest.fixture(autouse=True)
+def exercise_scripted_gateway_without_language_shortcuts(monkeypatch):
+    # This module qualifies explicit provider proposals and gateway denials.
+    # The legacy phrase router must not preempt the proposal under test;
+    # production semantic mode never executes that router either.
+    from src.agents import llm_tool_orchestrator
+    monkeypatch.setattr(llm_tool_orchestrator, '_legacy_language_control', lambda *a: None)

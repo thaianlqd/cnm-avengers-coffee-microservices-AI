@@ -46,6 +46,19 @@ def cart_review(result):
     return '\n'.join(lines)
 
 
+def cart_read_reply(result, state):
+    """Committed lines and uncommitted selections are distinct customer facts."""
+    blocks = [cart_review(result)]
+    pending = state.get('pending_products') or []
+    if pending:
+        blocks.append('Các món đang chọn dưới đây **chưa vào giỏ**, đang chờ hoàn tất tùy chọn:')
+        for index, product in enumerate(pending, 1):
+            blocks.append(f"Món đang chọn {product.get('selection_index') or index} ×{product.get('quantity') or 1}:\n" +
+                options_prompt({'product': product, 'option_groups': product.get('option_schema') or [],
+                                'missing': product.get('missing_fields') or []}))
+    return '\n\n'.join(blocks)
+
+
 def checkout_choices(state, payment_options=()):
     prefs = state.get('checkout') or {}
     blocks = []
@@ -294,7 +307,7 @@ def customer_flow_reply(logs, state, discovery_reply=None):
         if (result.get('profile_location') or {}).get('status') == 'unavailable':
             lead += '\nMình chưa đọc được địa chỉ hồ sơ lúc này; bạn cho mình địa chỉ hoặc khu vực đang ở nhé.'
         tail = checkout_choices(state, result.get('payment_options') or [])
-        return lead + '\n\n' + tail if tail else None
+        return lead + '\n\n' + tail if tail else lead + '\n\nBạn có thể xem lại tóm tắt đơn hàng trước khi xác nhận nhé.'
     if name in {'add_to_cart', 'update_cart_item', 'remove_cart_item'}:
         lead = {'add_to_cart': 'Dạ, mình đã thêm món vào giỏ của bạn ạ.',
                 'update_cart_item': 'Dạ, mình đã cập nhật món theo yêu cầu của bạn ạ.',

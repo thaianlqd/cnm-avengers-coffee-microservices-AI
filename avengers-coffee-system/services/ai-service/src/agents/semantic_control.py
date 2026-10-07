@@ -65,32 +65,98 @@ def _merge_parameter(left, right):
     return result
 
 
-def customer_actions_schema(allowed, tool_rows=None):
+OPTION_ALIASES = {'kich_co': 'size', 'ice': 'luong_da', 'sugar': 'do_ngot', 'milk': 'loai_sua'}
+
+
+def canonical_option_arguments(tool, args):
+    """Normalize declared wire aliases once; never interpret option values."""
+    args = deepcopy(args)
+    sets = ([args] if tool == 'add_to_cart' else [args.get('desired_state')] if tool == 'update_cart_item'
+            else [*(args.get('changes') or []), *(args.get('add_items') or [])] if tool == 'update_order' else [])
+    for options in sets:
+        if not isinstance(options, dict):
+            continue
+        for alias, canonical in OPTION_ALIASES.items():
+            if alias in options:
+                if canonical in options and options[canonical] != options[alias]:
+                    return None, model_repair('option_attribute_conflict', field=canonical,
+                        repair_hint='Supply one consistent value per option field.')
+                options[canonical] = options.pop(alias)
+    return args, None
+
+
+def model_repair(code, **details):
+    return {'status': code, 'changed': False, 'recovery_kind': 'model_repair',
+        'message': 'Mình chưa thực hiện phần yêu cầu này; hệ thống đang kiểm tra lại đề xuất.', **details}
+
+
+def provider_parameters(spec):
+    """Canonical vocabulary for generation; legacy aliases remain server-only."""
+    spec = deepcopy(spec)
+    if spec.get('type') == 'object':
+        props = spec.get('properties', {})
+        for alias, canonical in OPTION_ALIASES.items():
+            if canonical in props:
+                props.pop(alias, None)
+        if 'criteria' in props and 'hot' in props['criteria'].get('enum', []):
+            props['criteria']['enum'] = [value for value in props['criteria']['enum'] if value != 'hot']
+        props.pop('use_defaults', None)
+        spec['properties'] = {key: provider_parameters(value) for key, value in props.items()}
+        if 'required' in spec:
+            spec['required'] = [key for key in spec['required'] if key in props]
+    elif spec.get('type') == 'array':
+        spec['items'] = provider_parameters(spec['items'])
+    return spec
+
+
+CONTROL_HINTS = {
+    'get_cart': 'QUESTION reads committed cart plus separate pending selections; never completes CONFIGURE/DEFAULTS. For a pending option/default instruction use add_to_cart, not this read. Empty cart never cancels pending selection.',
+    'get_product_options': 'SELECTED stages only: return required choices to customer. QUESTION inspects.',
+    'add_to_cart': 'option_intent SELECT stages unresolved choices; CONFIGURE uses provided values; DEFAULTS needs defaults_evidence. No implicit defaults.',
+    'update_cart_item': 'desired_state patches one exact owned line; other lines/options remain.',
+    'set_checkout_choices': 'Record fulfillment/payment explicitly chosen now. Set action.supplied_location=true when a new destination is also supplied.',
+    'resolve_location': 'Destination requires set_checkout_choices first, then for_checkout=true for delivery (including POI). New literals have LOCATION or no reference; only saved state uses PROFILE_ADDRESS.',
+    'find_nearest_branch': 'Read-only location questions; never substitutes for recording delivery/checkout destination.',
+    'finish_cart': 'Finish selection and open mandatory voucher decision; never implies skip/apply.',
+    'skip_voucher': 'Explicitly decline vouchers; do not infer from generic acknowledgment.',
+    'request_checkout': 'Prepare/review summary only after prerequisites; reuse_summary=true to review.',
+    'confirm_checkout': 'AFFIRMED to fresh prior-turn summary only; never prepare then confirm in same turn.',
+}
+
+def customer_actions_schema(allowed, tool_rows=None, *, model_facing=False):
     from src.agents.tool_capabilities import CAPABILITIES, tool_schemas
     rows = tool_rows if tool_rows is not None else tool_schemas(allowed)
     properties, contracts = {}, []
     for row in rows:
         name, parameters = row['function']['name'], row['function']['parameters']
+        if model_facing:
+            parameters = provider_parameters(parameters)
         fields = parameters.get('properties', {})
         for key, spec in fields.items():
             properties[key] = _merge_parameter(properties[key], spec) if key in properties else deepcopy(spec)
         required = set(parameters.get('required', []))
         contracts.append(name + '(' + CAPABILITIES[name].access + '; ' + CAPABILITIES[name].owner + '): ' +
-            ','.join(key + ('!' if key in required else '') for key in fields))
-    description = ('Execute all business reads/selections/changes through this one semantic contract. '
+            ','.join(key + ('!' if key in required else '') for key in fields) +
+            (' — ' + CONTROL_HINTS[name] if name in CONTROL_HINTS else ''))
+    description = ('Call customer_actions ONLY with {"actions":[{"tool":"get_cart","commitment":"QUESTION","args":{},"evidence":"exact current quotation"}]}. Never put tool/args at root. Execute all business reads/selections/changes through this contract. '
         'args is an object, not an encoded string. QUESTION reads facts; get_product_options SELECTED stages a chosen product. '
-        'Writes need current evidence. ! marks required args unless reference supplies the target. Tool arguments:\n' + '\n'.join(contracts))
+        'Writes need current evidence. ! marks required args unless reference supplies the target. '
+        'A displayed list number is reference kind=ordinal with index, never an ID argument. '
+        'Copy IDs only from canonical server rows; omit the target argument when reference supplies it. Tool arguments:\n' + '\n'.join(contracts))
     return {'type': 'function', 'function': {'name': 'customer_actions',
         'description': description,
         'parameters': {'type': 'object', 'additionalProperties': False,
             'required': ['actions'], 'properties': {'actions': {'type': 'array', 'minItems': 1, 'maxItems': 16,
-                'items': {'type': 'object', 'additionalProperties': False, 'required': ['tool', 'commitment', 'args'],
+                'items': {'type': 'object', 'additionalProperties': False, 'required': ['tool', 'commitment', 'args'] + (['evidence'] if model_facing else []),
                     'properties': {
-                        'tool': {'type': 'string', 'enum': sorted(allowed)},
+                        'tool': {'type': 'string', 'enum': sorted(allowed), 'description': 'REQUIRED operation name on EVERY action. For configuring a pending product this is add_to_cart. Never omit this discriminator.'},
                         'commitment': {'type': 'string', 'enum': list(COMMITMENTS)},
                         'args': {'type': 'object', 'properties': properties, 'additionalProperties': False},
-                        'evidence': {'type': 'string', 'description': 'For writes: exact current customer span supporting THIS action, not history.'},
+                        'evidence': {'type': 'string', 'description': 'Exact CURRENT customer quotation, preserving spelling/case/accents, supporting this action. Never history or paraphrase.'},
+                        'option_intent': {'type': 'string', 'enum': ['SELECT', 'CONFIGURE', 'DEFAULTS'], 'description': 'For add_to_cart: SELECT chooses product only; CONFIGURE supplies options; DEFAULTS explicitly authorizes Menu defaults.'},
+                        'defaults_evidence': {'type': 'string', 'description': 'Only DEFAULTS: exact current span where customer requests default configuration; product selection alone never authorizes this.'},
                         'reference': {'type': 'object', 'additionalProperties': False,
+                            'description': 'Numbered choice: kind=ordinal,index=<display_index> in the target namespace. This supplies the target; omit its ID argument. kind=id/value must copy a canonical ID, never a list position.',
                             'required': ['kind'], 'properties': {
                                 'kind': {'type': 'string', 'enum': list(REFERENCE_KINDS)},
                                 'namespace': {'type': 'string', 'enum': list(NAMESPACES)},
@@ -135,7 +201,19 @@ def validate_commitment(action, access, message):
         return failure('semantic_commitment_required')
     evidence = action.get('evidence')
     if not isinstance(evidence, str) or not evidence.strip() or evidence not in message:
-        return failure('semantic_evidence_required')
+        return model_repair('missing_current_evidence', repair_hint='Quote the exact current customer span for this action; do not paraphrase or use history.')
+    if action['tool'] == 'add_to_cart':
+        intent = action.get('option_intent')
+        if intent not in {'SELECT', 'CONFIGURE', 'DEFAULTS'}:
+            return model_repair('missing_option_intent', repair_hint='Distinguish product SELECT from CONFIGURE and explicitly requested DEFAULTS.')
+        if intent == 'DEFAULTS':
+            defaults_evidence = action.get('defaults_evidence')
+            if not isinstance(defaults_evidence, str) or not defaults_evidence.strip() or defaults_evidence not in message:
+                return model_repair('defaults_evidence_required', repair_hint='Defaults require a current customer request for defaults; otherwise SELECT/CONFIGURE without use_defaults.')
+        elif action['args'].get('use_defaults'):
+            return model_repair('defaults_not_authorized', repair_hint='Product selection is not default authorization. SELECT stages choices; CONFIGURE supplies actual values.')
+        if intent == 'SELECT' and any(key in action['args'] for key in (*OPTION_ALIASES, *OPTION_ALIASES.values(), 'toppings')):
+            return model_repair('option_intent_conflict', repair_hint='Option values require CONFIGURE; SELECT leaves required choices unresolved.')
     return None
 
 
@@ -170,6 +248,13 @@ def candidates(gateway, namespace, reference):
             rows = gateway.entry_pending_products
         elif reference.get('scope'):
             rows = gateway.entry_product_groups.get(reference['scope']) or []
+            if not rows:
+                # Older snapshots store only the ordered common list. Recover
+                # group membership from canonical Menu categories, preserving
+                # the displayed order and keeping group ordinals independent.
+                from src.agents.product_display import product_bucket
+                rows = [row for row in gateway.entry_products
+                        if product_bucket(row) == reference['scope']]
         else:
             rows = list(gateway.entry_products) + list(gateway.artifacts.product_candidates.values())
             if reference.get('kind') in {'id', 'name'}:
@@ -245,8 +330,31 @@ def ground_reference(gateway, namespace, reference):
     return rows[0], None
 
 
+def identity_repair(gateway, namespace, field, reference, code):
+    """Correct a model's ID representation without interpreting customer text.
+
+    The next proposal must choose a canonical ID or a typed reference. Never
+    coerce numeric IDs into ordinals: real business IDs can also be numeric.
+    No candidate universe means there is nothing safe for the model to repair.
+    """
+    if field in {'product_name', 'product_name_query', 'location'}:
+        return None
+    rows = candidates(gateway, namespace, reference)
+    if not rows:
+        return None
+    return model_repair(code, unresolved_namespace=namespace, ambiguity_count=0,
+        target_field=field, candidate_count=len(rows),
+        repair_hint=f'The proposed {field} is not a canonical {namespace} ID. '
+            'Use the existing server candidates: a numbered choice needs reference '
+            'kind=ordinal,index=<display_index>; otherwise copy an exact ID. '
+            f'Omit args.{field} when the reference supplies the target. '
+            'Do not guess an ID or ask the customer to repeat a choice solely because this proposal used the wrong representation.')
+
+
 def ground_action(gateway, action):
     args = deepcopy(action['args'])
+    if action['tool'] == 'add_to_cart' and action.get('option_intent') == 'DEFAULTS':
+        args['use_defaults'] = True
     target = TOOL_TARGETS.get(action['tool'])
     reference = action.get('reference')
     if action['tool'] == 'resolve_location' and reference:
@@ -284,11 +392,21 @@ def ground_action(gateway, action):
         # coordinates/address validity remain with canonical geo providers.
         return args, None, None
     if reference and reference.get('namespace', namespace) != namespace:
-        return None, None, failure('reference_conflict', namespace)
+        return None, None, model_repair('invalid_reference_namespace', expected_namespace=namespace, repair_hint='Use the target namespace from this tool contract, without guessing identity.')
+    if reference and (reference['kind'] == 'literal' or reference['kind'] == 'recent' and namespace != 'ORDER' or reference['kind'] == 'best' and namespace != 'VOUCHER'):
+        return None, None, model_repair('invalid_reference_kind', expected_namespace=namespace, repair_hint='recent is ORDER only, best is VOUCHER only, literal is LOCATION only. Use current exact id/name/ordinal/focus/pending/singleton as applicable.')
     if not reference:
-        if field not in args:
+        if (action['tool'] == 'add_to_cart' and field not in args
+                and action.get('option_intent') in {'CONFIGURE', 'DEFAULTS'}):
+            # Meaning/commitment was validated before grounding. A target-free
+            # configuration can bind only the unique selected pending product,
+            # never an arbitrary visible/focused/cart product. Multiple pending
+            # entities remain genuinely ambiguous and cannot share attributes.
+            reference = {'namespace': 'PRODUCT', 'kind': 'pending'}
+        elif field not in args:
             return args, None, None  # Existing schema returns required-fields recovery.
-        reference = {'kind': 'name' if field in {'product_name', 'product_name_query'} else 'id', 'value': str(args[field])}
+        else:
+            reference = {'kind': 'name' if field in {'product_name', 'product_name_query'} else 'id', 'value': str(args[field])}
     row, error = ground_reference(gateway, namespace, reference)
     if error:
         # A literal UUID/code supplied by the customer is explicit structural
@@ -303,10 +421,20 @@ def ground_action(gateway, action):
         # existing canonical catalog resolver obtain the identity first.
         if action['tool'] == 'get_product_insights' and reference['kind'] == 'name':
             return args, None, None
+        if reference['kind'] == 'id' and error.get('status') == 'unknown_reference':
+            repair = identity_repair(gateway, namespace, field, reference, 'unknown_reference')
+            if repair:
+                return None, None, repair
         return None, None, error
     canonical = (row.get('product_name') if field in {'product_name', 'product_name_query'} else
                  identity(row, NAMESPACES[namespace][1]))
     if field in args and str(args[field]).casefold() != str(canonical).casefold():
+        known_ids = {identity(item, NAMESPACES[namespace][1])
+                     for item in candidates(gateway, namespace, reference)}
+        if str(args[field]) not in known_ids:
+            repair = identity_repair(gateway, namespace, field, reference, 'reference_conflict')
+            if repair:
+                return None, None, repair
         return None, None, failure('reference_conflict', namespace)
     args[field] = canonical
     if namespace == 'PAYMENT' and row.get('enabled') is False:

@@ -26,6 +26,16 @@ TOOL_SEARCH_KNOWLEDGE_BASE = {
         }, 'required': ['query']}}}
 
 
+def safe_knowledge_results(documents):
+    """Shared evidence sanitation for consultation and description discovery."""
+    from src.function_calling.tools import ALL_TOOL_SCHEMAS
+    internal_names = [t['function']['name'] for t in ALL_TOOL_SCHEMAS]
+    return [d for d in documents
+            if not _UNSAFE_EVIDENCE.search(normalize_text(d['content']))
+            and not any(re.search(r'(?<!\w)' + re.escape(name) + r'(?!\w)', d['content'])
+                        for name in internal_names)]
+
+
 def execute_search_knowledge_base(query, domain=None, entity_type=None, entity_id=None, source=None, session_id=None,
                                   selected_product_id=None, reference_out=None, *, semantic_route=None):
     # Internal gateway route, never an exposed model argument. Retrieval,
@@ -67,11 +77,7 @@ def execute_search_knowledge_base(query, domain=None, entity_type=None, entity_i
         terms = KNOWLEDGE_TOPICS.get(filters['domain'], ()) if isinstance(filters['domain'], str) else ()
         expanded_query = query + (' ' + ' '.join(terms) if terms else '')
         result = get_rag_service().lookup(expanded_query, **filters)
-        from src.function_calling.tools import ALL_TOOL_SCHEMAS
-        internal_names = [t['function']['name'] for t in ALL_TOOL_SCHEMAS]
-        safe_results = [d for d in result['results']
-                        if not _UNSAFE_EVIDENCE.search(normalize_text(d['content']))
-                        and not any(re.search(r'(?<!\w)' + re.escape(name) + r'(?!\w)', d['content']) for name in internal_names)]
+        safe_results = safe_knowledge_results(result['results'])
         result['results'] = safe_results
         if result['status'] == 'ok' and not safe_results:
             result['status'] = 'not_found'

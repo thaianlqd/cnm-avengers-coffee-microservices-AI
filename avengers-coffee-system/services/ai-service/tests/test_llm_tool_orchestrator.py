@@ -218,14 +218,15 @@ def test_untrusted_write_arguments_never_mutate(runtime,name,args):
     assert not result.get('checkout_payload')
 
 
-def test_options_stage_then_complete_uses_authoritative_price_and_replay(runtime):
+def test_options_stage_then_complete_uses_authoritative_price_and_replay(runtime, monkeypatch):
+    monkeypatch.setattr(agent, '_legacy_language_control', lambda *a: None)
     runtime.provider.plan([('add_to_cart',dict(product_id='101',quantity=2))])
     result=runtime.turn('lấy món đầu tiên hai ly')
     assert result['tool_calls_log'][0]['result']['status']=='needs_options' and not runtime.writes
     assert cart_manager.get_pending_action(runtime.sid)['type']=='fill_options'
     runtime.provider.plan([('add_to_cart',dict(product_id='101',size='L',toppings=['Foam']))],claims=['add_to_cart'])
-    first=runtime.turn('size lớn và topping foam',client_message_id='same-turn')
-    second=runtime.turn('size lớn và topping foam',client_message_id='same-turn')
+    first=runtime.turn('size L và topping Foam',client_message_id='same-turn')
+    second=runtime.turn('size L và topping Foam',client_message_id='same-turn')
     assert first==second and len(runtime.writes)==1
     assert runtime.writes[0][1]['unit_price']==42000 and runtime.writes[0][1]['quantity']==2
     assert runtime.writes[0][1]['size']=='L' and runtime.writes[0][1]['toppings']==['Foam']

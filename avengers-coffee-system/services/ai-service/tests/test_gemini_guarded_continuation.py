@@ -123,9 +123,9 @@ def test_real_serializer_preserves_signed_continuation_and_dynamic_surface(wire,
     result = wire.runtime.turn('Cho xem menu.')
     assert result['error'] is None
     assert len(wire.runtime.reads) == 1 and not wire.runtime.writes
-    assert len(wire.sent[0]['tools']) == 6 and len(wire.sent[1]['tools']) == 11
+    assert len(wire.sent[0]['tools']) == 8 and len(wire.sent[1]['tools']) == 12
     added = {r['function']['name'] for r in wire.sent[1]['tools']} - {r['function']['name'] for r in wire.sent[0]['tools']}
-    assert added == {'get_product_options', 'get_product_insights', 'check_price_and_stock', 'get_product_description', 'add_to_cart'}
+    assert added == {'get_product_options', 'check_price_and_stock', 'get_product_description', 'add_to_cart'}
     for payload in wire.sent[1:]:
         calls = [c for m in payload['messages'] for c in m.get('tool_calls', [])]
         responses = [m for m in payload['messages'] if m['role'] == 'tool']
@@ -140,18 +140,18 @@ def test_real_serializer_preserves_signed_continuation_and_dynamic_surface(wire,
     assert metrics['request_count'] == 2 + another_tool
     assert SIGNATURE_A not in caplog.text and SIGNATURE_B not in caplog.text
     assert SIGNATURE_A not in json.dumps(result) and SIGNATURE_A not in json.dumps(wire.runtime.redis.data)
-    assert all(p['response_format'] == {'type': 'json_object'} for p in wire.sent)
+    assert all('response_format' not in p for p in wire.sent if p.get('tools'))
 
 
 def test_recognized_format_retry_preserves_read_result_and_one_key(wire, caplog):
     browsing(wire)
-    wire.steps.extend([tool('filter_catalog', {'search_text': '', 'limit': 2}),
+    wire.steps.extend([tool('filter_catalog', {'search_text': '', 'limit': 2, 'planned_discovery_reads': 1}),
         error('response_format is not supported with tools'), envelope(ids=['101', '102'])])
     result = wire.runtime.turn('Cho xem menu.')
     assert result['error'] is None and len(wire.runtime.reads) == 1
     original, retry = wire.sent[1:]
-    assert original['messages'] == retry['messages'] and original['tools'] == retry['tools']
-    assert original['tool_choice'] == retry['tool_choice'] == 'auto'
+    assert original['messages'] == retry['messages'] and not original.get('tools') and not retry.get('tools')
+    assert original.get('tool_choice') == retry.get('tool_choice')
     assert 'response_format' in original and 'response_format' not in retry
     assert wire.slots[1] == wire.slots[2]
     metrics = turn_metrics(caplog)
@@ -166,7 +166,7 @@ def test_recognized_format_retry_preserves_read_result_and_one_key(wire, caplog)
     ('opaque unknown complaint private-body-marker', 1, 'unknown_incompatible_request'),
     ('Function call is missing a thought_signature private-body-marker', 1, 'tool_continuation_incompatible'),
     ('Invalid tools parameters additionalProperties private-body-marker', 1, 'tool_schema_incompatible'),
-    ('response_format not supported private-body-marker', 2, 'response_format_incompatible'),
+    ('response_format not supported private-body-marker', 1, 'response_format_incompatible'),
 ])
 def test_400_stops_without_rotating_all_accounts_or_unbounded_retry(wire, caplog, message, count, category):
     wire.steps.extend([error(message), error(message)])
@@ -292,7 +292,7 @@ def test_safe_error_categories(message, category, field):
 
 def test_native_mime_error_retries_format_once_without_replaying_mutations(wire, caplog):
     browsing(wire)
-    wire.steps.extend([tool('filter_catalog', {'search_text': '', 'limit': 2}),
+    wire.steps.extend([tool('filter_catalog', {'search_text': '', 'limit': 2, 'planned_discovery_reads': 1}),
         error("Function calling with a response mime type: 'application/json' is unsupported"), envelope(ids=['101', '102'])])
     result = wire.runtime.turn('Cho xem menu.')
     assert result['error'] is None and len(wire.runtime.reads) == 1
@@ -300,3 +300,21 @@ def test_native_mime_error_retries_format_once_without_replaying_mutations(wire,
     assert wire.sent[1]['max_tokens'] == wire.sent[2]['max_tokens']
     assert 'response_format' in wire.sent[1] and 'response_format' not in wire.sent[2]
     assert wire.slots[-1] == wire.slots[-2] and not wire.runtime.writes
+
+
+def test_semantic_repair_uses_auto_same_key_and_signed_history(wire, monkeypatch, caplog):
+    from src.agents import llm_tool_orchestrator
+    monkeypatch.setattr(llm_tool_orchestrator, 'run_llm_tool_turn', wire.runtime.semantic_orchestrator)
+    message = 'Lấy món Alpha cỡ L nhé'
+    proposal = {'commitment': 'SELECTED', 'args': {'product_id': '101', 'size': 'L'},
+        'option_intent': 'CONFIGURE', 'evidence': message}
+    wire.steps.extend([tool('customer_actions', {'actions': [proposal]}),
+        tool('customer_actions', {'actions': [{**proposal, 'tool': 'add_to_cart'}]}, SIGNATURE_B)])
+    result = wire.runtime.turn(message)
+    assert result['error'] is None and len(wire.runtime.writes) == 1
+    assert len(wire.sent) == 2 and len(set(wire.slots)) == 1
+    assert all(payload['tool_choice'] == 'auto' and 'response_format' not in payload for payload in wire.sent)
+    prior_call = wire.sent[1]['messages'][2]['tool_calls'][0]
+    assert prior_call['extra_content']['google']['thought_signature'] == SIGNATURE_A
+    assert turn_metrics(caplog)['protocol_repair_count'] == 1
+    assert SIGNATURE_A not in caplog.text and SIGNATURE_A not in json.dumps(result)

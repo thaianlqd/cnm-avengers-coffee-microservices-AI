@@ -72,7 +72,8 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
                            search_text: Optional[str] = None, sort_by: str = "price_asc",
                            limit: int = 16, constraint_type: Optional[str] = None,
                            approx_price: Optional[int] = None, period: str = "month",
-                           period_anchor: Optional[str] = None, category_id: Optional[str] = None) -> Dict[str, Any]:
+                           period_anchor: Optional[str] = None, category_id: Optional[str] = None,
+                           product_ids: Optional[list[str]] = None) -> Dict[str, Any]:
     import os
     if category not in {"all", "drink", "food"} or sellable_scope not in {"normal", "topping"}:
         return {"status": "error", "message": "Bộ lọc danh mục không hợp lệ."}
@@ -81,6 +82,11 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
                   _DRINK_ROOTS if category == "drink" else _FOOD_ROOTS)
     params: Dict[str, Any] = {"roots": list(root_names), "limit": max(1, min(50, int(limit or 16)))}
     predicates = ["sp.trang_thai = TRUE"]
+    if product_ids is not None:
+        if not product_ids:
+            return {'status': 'not_found', 'products': []}
+        predicates.append('sp.ma_san_pham::text = ANY(:product_ids)')
+        params['product_ids'] = [str(key) for key in product_ids]
     if sellable_scope == "topping":
         predicates.append("LOWER(dm.ten_danh_muc) = 'topping'")
     else:
@@ -652,10 +658,9 @@ TOOL_GET_RECOMMENDATIONS = {
     "function": {
         "name": "get_recommendations",
         "description": (
-            "Lấy danh sách gợi ý món uống cho khách. Có thể lấy theo độ phổ biến (bán chạy) "
-            "hoặc theo đánh giá cao (5 sao) (ví dụ: 'món đánh giá cao', 'món ngon nhất cửa hàng'). NẾU khách hỏi 'món ... cửa hàng' thì vẫn là hỏi về món, CHỨ KHÔNG phải hỏi về chi nhánh. "
-            "LƯU Ý QUAN TRỌNG: Câu trả lời của bạn PHẢI tự nhiên như một người tư vấn. "
-            "TUYỆT ĐỐI KHÔNG SỬ DỤNG BẢNG (TABLE) DƯỚI MỌI HÌNH THỨC."
+            "Gợi ý theo tiêu chí rõ ràng: preferences tìm nhu cầu/hương vị trong mô tả sản phẩm; "
+            "bestsellers xếp theo doanh số khi khách yêu cầu bán chạy; rating/price/new theo yêu cầu tương ứng. "
+            "Câu xã giao không tự động yêu cầu danh sách sản phẩm. Không đổi nhu cầu thành bán chạy nếu thiếu mô tả."
         ),
         "parameters": {
             "type": "object",
@@ -666,8 +671,8 @@ TOOL_GET_RECOMMENDATIONS = {
                 },
                 "criteria": {
                     "type": "string",
-                    "enum": ["hot", "rating", "price_desc", "price_asc", "new"],
-                    "description": "Tiêu chí lọc. 'hot' cho món bán chạy, 'rating' cho món đánh giá cao nhất (NẾU khách nói 'cao nhất' sau khi vừa nhắc đến đánh giá, PHẢI DÙNG 'rating'). 'price_desc' cho món giá cao nhất, 'price_asc' cho món giá rẻ nhất."
+                    "enum": ["hot", "bestsellers", "preferences", "rating", "price_desc", "price_asc", "new"],
+                    "description": "preferences: nhu cầu/hương vị (cần preference_query); bestsellers: yêu cầu bán chạy; rating: đánh giá; price_desc/price_asc: giá; new: món mới. hot là tên tương thích cũ của bestsellers."
                 },
                 "category": {
                     "type": "string",
@@ -678,6 +683,7 @@ TOOL_GET_RECOMMENDATIONS = {
                     "type": "string",
                     "description": "Nhóm món cụ thể khách yêu cầu, ví dụ 'trà trái cây', 'cold brew', 'bánh ngọt'. Bỏ trống nếu khách chỉ hỏi chung.",
                 },
+                "preference_query": {"type": "string", "description": "Nhu cầu/hương vị để tìm trong mô tả sản phẩm; chỉ dùng với preferences."},
                 "period": {"type": "string", "enum": ["day", "week", "month", "year", "all"]},
                 "period_anchor": {"type": "string"},
                 "top_k": {
@@ -689,10 +695,13 @@ TOOL_GET_RECOMMENDATIONS = {
     },
 }
 
-def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "hot", category: str = "all", top_k: int = 5, search_text: Optional[str] = None, period: str = "month", period_anchor: Optional[str] = None) -> Dict[str, Any]:
-    if criteria in {"hot", "new"}:
+def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "hot", category: str = "all", top_k: int = 5, search_text: Optional[str] = None, period: str = "month", period_anchor: Optional[str] = None, preference_query: Optional[str] = None) -> Dict[str, Any]:
+    if criteria == 'preferences':
+        from .description_recommendations import recommend_from_descriptions
+        return recommend_from_descriptions(preference_query, category, top_k, search_text)
+    if criteria in {"hot", "bestsellers", "new"}:
         return execute_filter_catalog(category=category, search_text=search_text, limit=top_k,
-            sort_by="sold_desc" if criteria == "hot" else "new", period=period, period_anchor=period_anchor)
+            sort_by="sold_desc" if criteria in {"hot", "bestsellers"} else "new", period=period, period_anchor=period_anchor)
     try:
         engine = _get_engine()
         import os

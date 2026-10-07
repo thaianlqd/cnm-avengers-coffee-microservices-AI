@@ -290,6 +290,10 @@ def validate_explicit_multi_value_group(
                   if not any(start <= match.start() < end for start, end in protected)]
     if boundaries:
         requested = requested[:min(boundaries)].strip(' ,')
+        # A conjunction before the next option belongs to that boundary, not
+        # to the final topping label ("Foam Dừa và ít đá").
+        requested = re.sub(r'\s+(?:và|va|với|voi)\s*$', '', requested,
+                           flags=re.IGNORECASE)
 
     candidates = []
     for raw in re.split(r"\s*(?:,|&|\+)\s*|\s+(?:và|va|với|voi)\s+", requested,

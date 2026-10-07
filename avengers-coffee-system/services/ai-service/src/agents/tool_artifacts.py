@@ -55,11 +55,16 @@ def model_tool_result(name, result, artifacts=None):
     if result.get('status') not in SUCCESS | {'no_applicable_voucher', 'empty_cart'}:
         return compact(result)  # Preserve every denial/recovery field.
     value = {key: compact(result[key]) for key in ('status', 'message', 'changed',
-        'same_turn_read_reused', 'product_id', 'product_name', 'quantity', 'unit_price',
+        'same_turn_read_reused', 'selection_staged', 'product_id', 'product_name', 'quantity', 'unit_price',
         'voucher_code', 'voucher_decided', 'discount_amount', 'so_tien_giam', 'final_total',
         'ranking', 'period', 'period_anchor', 'period_start', 'period_end', 'new_product_basis',
         'quote_status', 'payment_options_status', 'total_cart', 'choices', 'profile_location', 'remaining_cart_edits',
         'order_id', 'order_status', 'payment_method', 'total_price', 'normalized_location') if key in result}
+    if result.get('recommendation_basis') == 'product_description':
+        value['recommendation_basis'] = 'product_description'
+        value['recommendation_evidence'] = [{key: doc[key] for key in
+            ('id', 'entity_id', 'content', 'source') if key in doc}
+            for doc in result.get('recommendation_evidence') or []]
     if isinstance(result.get('cart'), dict):
         value['cart'] = model_cart(result['cart'])
         for row in value['cart']['items']:
@@ -67,6 +72,15 @@ def model_tool_result(name, result, artifacts=None):
     if isinstance(result.get('quote'), dict):
         value['quote'] = {key: result['quote'][key] for key in ('subtotal', 'discount_amount',
             'delivery_fee', 'final_total', 'voucher_code', 'voucher_valid') if key in result['quote']}
+    if name in {'get_cart', 'get_cart_quote'} and artifacts and artifacts.semantic_mode:
+        # This is read evidence, not completion of a pending configuration.
+        # Reuse the compact context projection so identity/options survive the
+        # read without copying business/replay internals into the prompt.
+        from src.agents.agent_context import model_pending_products
+        value['pending_products'] = model_pending_products(
+            artifacts.business.get('pending_products'), include_schema=False)
+        value['completion'] = {'mutated': False,
+            'pending_configuration': bool(value['pending_products'])}
     for kind in ('products', 'vouchers', 'branches', 'location_candidates', 'payment_options', 'fulfillment_options'):
         if not isinstance(result.get(kind), list):
             continue
@@ -154,6 +168,7 @@ class ToolArtifacts:
     def __init__(self, memory, knowledge_question=None, context=None, semantic_mode=False):
         self.semantic_mode = semantic_mode
         self.semantic_batch_pending = 0
+        self.semantic_discovery_requires_continuation = False
         # Existing knowledge authority is an output safety boundary for
         # ingredient/allergen claims, even if the model proposes a wrong read.
         from src.rag.authority import knowledge_route
@@ -183,14 +198,37 @@ class ToolArtifacts:
         self.display_selection_source = None
         self.validated_display_product_count = 0
 
-    def discovery_complete(self):
-        if not self.logs or any(row['tool'] not in DISCOVERY_TOOLS
-                                or row['result'].get('status') != 'ok' for row in self.logs):
+    def discovery_presentation_logs(self, repaired_protocol=False):
+        # Keep the complete audit log. A rejected wrapper has no business
+        # effect and must not poison presentation after a valid replacement.
+        return [row for row in self.logs if not (repaired_protocol
+            and row['tool'] == 'customer_actions'
+            and row['result'].get('recovery_kind') == 'model_repair')]
+
+    def discovery_repair_progress(self):
+        """A fresh canonical catalog result is progress, not another protocol repair."""
+        if not self.semantic_mode or not self.logs or self.semantic_batch_pending:
+            return False
+        last = self.logs[-1]
+        return (last['tool'] in DISCOVERY_TOOLS and last['result'].get('status') == 'ok'
+            and not last['result'].get('same_turn_read_reused')
+            and bool(self.discovery_batches and self.discovery_batches[-1]['product_ids']))
+
+    def discovery_complete(self, repaired_protocol=False):
+        # A catalog plan describes reads, not completion of an explicit
+        # purchase. Keep executors available for the canonical option step.
+        if self.semantic_mode and self.semantic_discovery_requires_continuation:
+            return False
+        logs = self.discovery_presentation_logs(repaired_protocol)
+        if not logs or any(row['tool'] not in DISCOVERY_TOOLS
+                                or row['result'].get('status') != 'ok' for row in logs):
             return False
         if self.discovery_read_reused_count:
             return True
         if self.planned_discovery_reads:
             return len(self.discovery_batches) >= self.planned_discovery_reads
+        if (len(logs) == 1 and logs[0]['result'].get('recommendation_basis') == 'product_description'):
+            return True  # A scoped description search is a complete recommendation read.
         return complementary_pair_complete(self.discovery_batches)
 
     def _publish_products(self, ids, source):
@@ -249,14 +287,11 @@ class ToolArtifacts:
                 and len(ids) <= 16 and len(set(ids)) == len(ids)):
             self._publish_products(ids, 'server_unambiguous_batches')
             return
-        if not self.display_unresolved and all_success and complete and len(batches) > 1:
-            all_ids = list(dict.fromkeys(pid for batch in batches for pid in batch['product_ids']))[:16]
-            if all_ids:
-                self._publish_products(all_ids, 'multi_batch_results')
-                return
         self._publish_products([], 'clarification')
 
     def final_repair_allowed(self, issue):
+        if self.repeated_read_feedback():
+            return False  # Formatting repair must not close an unresolved draft.
         return (self.response_validation_issue in {'missing_envelope', 'display_selection_invalid'}
                 and bool(self.logs) and all(row['result'].get('status') in SUCCESS for row in self.logs))
 
@@ -411,6 +446,17 @@ class ToolArtifacts:
         flow_reply = self.customer_flow_reply()
         if flow_reply:
             return flow_reply
+        if self.semantic_mode and self.logs and self.logs[-1]['result'].get('recovery_kind') == 'model_repair':
+            # A later target/protocol fault must not hide an earlier committed
+            # cart edit. Render its authoritative result without claiming that
+            # the remaining action completed or replaying the successful write.
+            committed = next((row['result'] for row in reversed(self.logs)
+                if row['tool'] in {'add_to_cart', 'update_cart_item', 'remove_cart_item'}
+                and row['result'].get('status') in {'ok', 'already_processed'}
+                and isinstance(row['result'].get('cart'), dict)), None)
+            if committed is not None:
+                from src.agents.customer_flow_presentation import cart_review
+                return cart_review(committed) + '\n\nMình chưa xử lý xong phần còn lại của yêu cầu. Các thay đổi đã thực hiện ở trên được giữ nguyên.'
         if self.branch_review_selection is not None:
             return self.branch_review_selection.get('message') or 'Mình chưa đọc được đánh giá của các chi nhánh vừa hiển thị, nên chưa thể kết luận chi nhánh nào tốt nhất. Bạn thử lại nhé.'
         from src.agents.tool_capabilities import WRITES
@@ -515,6 +561,11 @@ class ToolArtifacts:
         if getattr(self, 'pending_selection_reply', None):
             self.used_customer_flow = True
             return self.pending_selection_reply
+        if (self.semantic_mode and self.logs and all(row['tool'] in {'get_cart', 'get_cart_quote'}
+                and row['result'].get('status') in {'ok', 'empty_cart'} for row in self.logs)):
+            from src.agents.customer_flow_presentation import cart_read_reply
+            self.used_customer_flow = True
+            return cart_read_reply(self.logs[-1]['result'], self.business)
         menu = [row['result'] for row in self.logs if row['tool'] == 'get_menu_categories']
         if menu and not self.visible.get('products') and not self.visible.get('branches'):
             self.used_customer_flow = True
@@ -569,7 +620,7 @@ class ToolArtifacts:
             return order_reads[-1]['result']['message']
         if self.safety_facet:
             return None
-        if self.discovery_batches and not any(row['tool'] in {
+        if self.discovery_batches and not any(row['result'].get('selection_staged') for row in self.logs) and not any(row['tool'] in {
                 'add_to_cart', 'update_cart_item', 'remove_cart_item', 'finish_cart',
                 'apply_voucher', 'skip_voucher', 'remove_voucher', 'set_checkout_choices'} for row in self.logs):
             return None  # Extra option reads during discovery do not select/configure a product.
@@ -601,14 +652,23 @@ class ToolArtifacts:
             self.used_customer_flow = True
         return reply
 
-    def discovery_product_reply(self, allow_cart_mutations=False):
+    def discovery_product_reply(self, allow_cart_mutations=False, repaired_protocol=False):
         """A catalog row is not evidence for taste, ingredients or popularity."""
+        logs = self.discovery_presentation_logs(repaired_protocol)
+        if self.semantic_mode and any(row['result'].get('selection_staged') for row in self.logs):
+            return None  # Selection/configuration takes precedence over incidental discovery.
         allowed = DISCOVERY_TOOLS | RAG_TOOLS | {'get_product_options'}
         if allow_cart_mutations:
             allowed |= {'add_to_cart', 'update_cart_item', 'remove_cart_item'}
-        if self.safety_facet or any(row['tool'] not in allowed for row in self.logs):
+        if self.safety_facet or any(row['tool'] not in allowed for row in logs):
             return None
-        reads = [row for row in self.logs if row['tool'] in DISCOVERY_TOOLS]
+        reads = [row for row in logs if row['tool'] in DISCOVERY_TOOLS]
+        if (reads and len(reads) == len(logs) and all(
+                row['tool'] == 'get_recommendations'
+                and row['result'].get('recommendation_basis') == 'product_description'
+                and row['result'].get('status') in {'not_found', 'unavailable'} for row in reads)):
+            self.used_product_facts = True
+            return reads[-1]['result']['message']
         if self.discovery_scope and reads and all(row['result'].get('status') == 'not_found' for row in reads):
             self.used_product_facts = True
             return reads[-1]['result']['message']
@@ -616,6 +676,9 @@ class ToolArtifacts:
             return None
         descriptions = {}
         for row in self.logs:
+            if row['result'].get('recommendation_basis') == 'product_description':
+                for doc in row['result'].get('recommendation_evidence') or []:
+                    descriptions.setdefault(str(doc.get('entity_id')), []).append(doc['content'])
             if row['tool'] not in RAG_TOOLS or row['result'].get('status') != 'ok':
                 continue
             for doc in row['result'].get('results') or []:
@@ -624,10 +687,13 @@ class ToolArtifacts:
         from src.agents.customer_flow_presentation import money
         from src.rag.documents import normalize_text
         user_norm = normalize_text(getattr(self, 'knowledge_question', '') or '')
-        asks_ranking = (any(row['args'].get('sort_by') == 'sold_desc' or row['args'].get('criteria') == 'hot'
+        asks_ranking = (any(row['args'].get('sort_by') == 'sold_desc' or row['args'].get('criteria') in {'hot', 'bestsellers'}
             for row in reads) if self.semantic_mode else
             bool(re.search(r'\b(?:ban chay|so luong ban|nhieu nhat|top ban|mua nhieu|bestseller|chay nhat|doanh so|hot)\b', user_norm)))
         lines = ['Dạ, mình gửi bạn các món phù hợp nhé:']
+        preference_reads = [row for row in reads if row['args'].get('criteria') == 'preferences']
+        if preference_reads:
+            lines[0] = 'Dựa trên mô tả sản phẩm, mình gợi ý các món sau để bạn tham khảo nhé:'
         ranking = next((r['result'] for r in reversed(self.logs) if r['result'].get('ranking') == 'completed_paid_quantity'), None)
         if ranking and asks_ranking:
             labels = {'day': 'ngày', 'week': 'tuần', 'month': 'tháng', 'year': 'năm', 'all': 'toàn bộ thời gian'}
@@ -665,16 +731,49 @@ class ToolArtifacts:
             if source:
                 line += '\n' + '\n\n'.join(source)
             lines.append(line)
+        if mixed and all(bucket in PRODUCT_REFERENCE_LABELS for bucket in buckets):
+            lines.append('Bạn có thể chọn theo nhóm: ' + ', '.join(
+                f"**{PRODUCT_REFERENCE_LABELS[bucket].lower()} số 1**"
+                for bucket in dict.fromkeys(row['menu_bucket'] for row in display_rows)) + '.')
         lines.append('Bạn muốn chọn món nào, hoặc xem mô tả chi tiết món nào ạ?')
         self.used_product_facts = True
         return '\n\n'.join(lines)
 
-    def completed_customer_step(self):
+    def completed_customer_step(self, repair_in_progress=False):
         """A customer-choice boundary has enough authoritative evidence to render now."""
         if self.semantic_mode and self.semantic_batch_pending:
             return None
         if not self.logs:
             return None
+        if self.semantic_mode and self.logs[-1]['result'].get('recovery_kind') == 'model_repair':
+            return None  # Prior discovery cannot conceal a new unresolved protocol fault.
+        logs = self.discovery_presentation_logs(repair_in_progress)
+        if (self.semantic_mode and logs and self.planned_discovery_reads <= 1 and all(
+                row['tool'] == 'get_recommendations'
+                and row['result'].get('recommendation_basis') == 'product_description'
+                and row['result'].get('status') in {'not_found', 'unavailable'} for row in logs)):
+            self._publish_products([], 'description_evidence_unavailable')
+            reply = self.discovery_product_reply(repaired_protocol=repair_in_progress)
+            return json.dumps({'response_kind': 'clarification', 'reply': reply, 'mutation_claims': [],
+                'evidence_quotes': [], 'display_product_ids': [], 'display_product_count': 0}, ensure_ascii=False)
+        # Several canonical matches require a customer product choice. A
+        # singleton SELECTED lookup still continues to configuration; a family
+        # request never authorizes choosing an arbitrary matching product.
+        product_choice = (self.semantic_discovery_requires_continuation
+            and len(self.discovery_batches) == 1
+            and len(self.discovery_batches[0]['product_ids']) > 1
+            and self.planned_discovery_reads <= 1
+            and bool(logs) and all(row['tool'] in DISCOVERY_TOOLS
+                and row['result'].get('status') == 'ok' for row in logs))
+        if (self.semantic_mode and len(self.discovery_batches) == 1
+                and (product_choice or (not self.semantic_discovery_requires_continuation
+                    and self.discovery_complete(repaired_protocol=repair_in_progress)))):
+            self.finalize_display()
+            reply = self.discovery_product_reply(repaired_protocol=repair_in_progress)
+            if reply:
+                return json.dumps({'response_kind': 'consultation', 'reply': reply, 'mutation_claims': [],
+                    'evidence_quotes': [], 'display_product_ids': [r['product_id'] for r in self.ui['products']],
+                    'display_product_count': len(self.ui['products'])}, ensure_ascii=False)
         meaningful = [row for row in self.logs if not (row['tool'] == 'set_checkout_choices'
             and row['result'].get('changed') is False)]
         if not meaningful:
@@ -691,7 +790,10 @@ class ToolArtifacts:
             row['tool'] == request['tool'] and str(row['args'].get('cart_item_id')) == request['cart_item_id']
             and row['result'].get('status') == 'invalid_option' for row in self.logs) for request in unfinished))
         from src.agents.order_management import ORDER_TOOLS
-        stop = (name == 'compare_branch_reviews' or (name in ORDER_TOOLS and last['result'].get('message')) or (name in {'resolve_location', 'select_location_candidate', 'find_nearest_branch', 'ask_branch'}
+        stop = ((self.semantic_mode and name in {'add_to_cart', 'update_cart_item', 'remove_cart_item', 'set_checkout_choices'} and status in {'ok', 'already_processed'})
+                or (self.semantic_mode and name == 'get_product_options' and status == 'ok')
+                or (self.semantic_mode and name in {'resolve_location', 'select_location_candidate'} and last['result'].get('message') and status not in {'error', 'unavailable'})
+                or name == 'compare_branch_reviews' or (name in ORDER_TOOLS and last['result'].get('message')) or (name in {'resolve_location', 'select_location_candidate', 'find_nearest_branch', 'ask_branch'}
                  and (last['result'].get('branches') or last['result'].get('order_summary') or last['result'].get('location_candidates')))
                 or status in {'branch_unavailable_or_unknown', 'customer_branch_selection_required'}
                 or (name == 'set_session_branch' and status in {'ok', 'success', 'already_processed'})
@@ -714,6 +816,18 @@ class ToolArtifacts:
         self.response_validation_issue = None
         return json.dumps({'response_kind': 'action', 'reply': reply,
                            'mutation_claims': [], 'evidence_quotes': []}, ensure_ascii=False)
+
+    def repeated_read_feedback(self):
+        """One dispatch correction, without classifying text or authorizing writes."""
+        if (not self.semantic_mode or not self.business.get('pending_products') or not self.logs
+                or any(row['tool'] not in {'get_cart', 'get_cart_quote'} for row in self.logs)):
+            return None
+        return ('The committed cart read is already available and made no change. '
+                'pending_products are still selected and not yet in the cart. Re-evaluate the NEWEST request: '
+                'for supplied options call add_to_cart CONFIGURE; for explicit defaults call DEFAULTS with '
+                'current defaults_evidence and the canonical pending reference. Do not repeat the read. '
+                'If the request is only a question/interruption, return consultation/social without writing. '
+                'An action response requires executed action evidence; a read is not action completion.')
 
     def response_issue(self, raw):
         self.response_validation_issue = None
@@ -750,6 +864,18 @@ class ToolArtifacts:
         if display_issue:
             self.response_validation_issue = 'display_selection_invalid'
             return display_issue
+        discovery_logs = self.discovery_presentation_logs(repaired_protocol=True)
+        if (self.semantic_mode and self.semantic_discovery_requires_continuation
+                and len(self.discovery_batches) == 1
+                and len(self.discovery_batches[0]['product_ids']) == 1
+                and self.planned_discovery_reads <= 1
+                and discovery_logs and all(row['tool'] in DISCOVERY_TOOLS
+                    and row['result'].get('status') == 'ok' for row in discovery_logs)):
+            self.response_validation_issue = 'selected_product_requires_options'
+            return ('TOOL_REQUIRED: The customer selected a product and the canonical lookup has exactly one match. '
+                    'A completed discovery read is not completion of that selection. '
+                    'Call get_product_options with SELECTED and the exact returned product_id; '
+                    'do not ask the customer to select it again or silently authorize defaults.')
         if not self.logs and envelope.get('response_kind') not in {'social', 'clarification'}:
             return ('TOOL_REQUIRED: There is no current tool evidence. You MUST call the appropriate capability now. '
                     'For product discovery use filter_catalog/get_recommendations; for a fact use its authority. History is not factual authority.')
@@ -757,6 +883,16 @@ class ToolArtifacts:
                 and self.safety_facet and self.has_canonical_product):
             return ('TOOL_REQUIRED: One canonical product is already established. Use get_product_description '
                     'or search_knowledge_base for this static product facet instead of asking which product.')
+        if (self.semantic_mode and not self.logs and envelope.get('response_kind') == 'clarification'
+                and self.business.get('pending_products')):
+            self.response_validation_issue = 'pending_configuration_requires_tool'
+            return ('TOOL_REQUIRED: Product selection is already recorded in business.pending_products. '
+                    'Ground the newest request against those pending identities, not unrelated catalog guesses. '
+                    'If the customer supplies options, use add_to_cart CONFIGURE with the pending reference '
+                    'and supplied attributes; use DEFAULTS only with current defaults_evidence. '
+                    'For questions/interruptions use the appropriate read, without mutating the draft. '
+                    'If clarification is needed, read get_product_options for the established target(s) '
+                    'and ask only the unresolved choice, not which product was already selected.')
         denied_statuses = {'wrong_authority', 'requires_product', 'unknown_product_reference'}
         if (envelope.get('response_kind') and self.logs
                 and all(row['result'].get('status') in denied_statuses for row in self.logs)):
@@ -767,6 +903,19 @@ class ToolArtifacts:
             if row['tool'] in WRITES and row['result'].get('changed') is not False and row['result'].get('status') in {'ok', 'success', 'already_processed'}}
         successful_tools = {row['tool'] for row in self.logs
             if row['result'].get('status') in SUCCESS}
+        executed_actions = any(row['tool'] in WRITES
+            and row['result'].get('status') in {'ok', 'success', 'already_processed'} for row in self.logs)
+        if (self.semantic_mode and envelope.get('response_kind') == 'action'
+                and not executed_actions and self.logs
+                and all(row['result'].get('status') in {'ok', 'empty_cart'}
+                        and not row['result'].get('selection_staged') for row in self.logs)):
+            self.response_validation_issue = 'action_not_executed'
+            return ('TOOL_REQUIRED: An action response cannot complete with read-only evidence and no '
+                    'successful change. Execute the requested action with current evidence and canonical '
+                    'references. Pending configuration uses add_to_cart CONFIGURE/DEFAULTS; DEFAULTS '
+                    'requires defaults_evidence. Never replay successful actions. If the newest request '
+                    'is actually a question/social interruption, correct response_kind and report only '
+                    'verified state; do not claim a change or mutate to justify the reply.')
         if (not self.semantic_mode and self.has_pending_confirmation and not any(row['tool'] == 'confirm_checkout' for row in self.logs)
                 and {'get_cart', 'get_cart_quote'} <= successful_tools
                 and 'request_checkout' not in successful_tools):

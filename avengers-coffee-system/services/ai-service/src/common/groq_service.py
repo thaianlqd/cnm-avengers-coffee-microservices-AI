@@ -415,6 +415,8 @@ def groq_agent_chat(
     final_response_repair_allowed=None,
     final_response_repair_context_provider=None,
     customer_step_response_provider=None,
+    repair_progress_provider=None,
+    repeated_read_feedback_provider=None,
 ) -> Dict[str, Any]:
     """
     Agentic chat loop với Groq Function Calling.
@@ -462,6 +464,8 @@ def groq_agent_chat(
     required_repair_tool = None
     repeated_tool_result = None
     semantic_repairs = 0
+    protocol_repairs = 0
+    read_completion_repairs = 0
     final_envelope_repairs = 0
     final_envelope_repair_active = False
     mutation_succeeded = False
@@ -501,6 +505,7 @@ def groq_agent_chat(
         success = False
         last_err = ""
         t0 = time.perf_counter()
+        protocol_repair_round = bool(provider_turn_health.get('semantic_repair_pending'))
         if guarded:
             from src.common.agent_provider_policy import completion
             if tool_surface_provider:
@@ -651,6 +656,7 @@ def groq_agent_chat(
             # Thực thi từng tool call
             repeated_signature = False
             recoverable_write_denial = False
+            protocol_repair_requested = False
             successful_required_repair = False
             terminal_success = False
             confirmation_denied_stop = False
@@ -723,6 +729,7 @@ def groq_agent_chat(
                 if guarded and isinstance(result, dict):
                     if result.get('recovery_kind') == 'model_repair':
                         recoverable_write_denial = True
+                        protocol_repair_requested = True
                     if result.get('same_turn_read_reused'):
                         repeated_signature, repeated_tool_result = True, result
                     if result.get('status') in {'ok', 'success', 'already_processed', 'require_confirmation'} and not is_read:
@@ -785,6 +792,24 @@ def groq_agent_chat(
                 if rendered:
                     return {'reply': rendered, 'tool_calls_log': tool_calls_log,
                             'checkout_payload': checkout_payload, 'error': None}
+            if (protocol_repair_round and not protocol_repair_requested
+                    and not (repair_progress_provider and repair_progress_provider())):
+                # A valid but unrelated read does not complete the failed
+                # request. A fresh canonical discovery may still require a
+                # normal selection/configuration step; the repair count stays
+                # unchanged and any second protocol fault is still terminal.
+                return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
+                        'error': 'semantic_repair_exhausted'}
+            if protocol_repair_requested:
+                if protocol_repairs >= 1:
+                    return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
+                            'error': 'semantic_repair_exhausted'}
+                protocol_repairs += 1
+                provider_turn_health['semantic_repair_pending'] = True
+                if metrics is not None:
+                    metrics['protocol_repair_count'] = protocol_repairs
+            else:
+                provider_turn_health['semantic_repair_pending'] = False
             if recoverable_write_denial:
                 semantic_repairs += 1
             if successful_required_repair or terminal_success or confirmation_denied_stop:
@@ -795,11 +820,22 @@ def groq_agent_chat(
                 current_messages.append({'role': 'system', 'content':
                     'The operation is complete or requires customer clarification. Answer from its evidence; no more tools.'})
             elif repeated_signature:
-                force_tools_disabled = not required_repair_round
+                feedback = (repeated_read_feedback_provider() if guarded
+                    and repeated_read_feedback_provider and not read_completion_repairs
+                    and not mutation_succeeded and not required_repair_round else None)
+                if feedback:
+                    read_completion_repairs += 1
+                    semantic_repairs += 1
+                    if metrics is not None:
+                        metrics['read_completion_repair_count'] = read_completion_repairs
+                # Keep one chance to dispatch an unresolved selection. It uses
+                # the existing round budget, and also permits a read-only final
+                # answer; a pending draft never grants mutation permission.
+                force_tools_disabled = not required_repair_round and not feedback
                 force_tool_required = required_repair_round
                 current_messages.append({
                     "role": "system",
-                    "content": ("That read has already been performed. Correct the previously denied write using its "
+                    "content": feedback or ("That read has already been performed. Correct the previously denied write using its "
                                 "structured recovery fields; do not repeat the read."
                                 if required_repair_round else
                                 "Use the tool results already provided and answer the user now. Do not request another tool."),
@@ -836,6 +872,10 @@ def groq_agent_chat(
                     'Synthesize the final JSON and display selection from these batches; no more tools.'})
             # Tiếp tục vòng lặp để Groq đọc kết quả tool
             continue
+
+        if guarded and provider_turn_health.get('semantic_repair_pending'):
+            return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
+                    'error': 'semantic_repair_exhausted'}
 
         # ── Case 2: Groq trả về text → kết thúc ──────────────────────────
         reply_text = (assistant_msg.content or "").strip()

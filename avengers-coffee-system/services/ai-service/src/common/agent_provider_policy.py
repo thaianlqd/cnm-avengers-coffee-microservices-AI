@@ -145,6 +145,9 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
     attempts, last_reason, compacted = 0, 'provider_unavailable', False
     previous_attempt = None
     providers = provider_order(preferred)
+    pinned = turn_health.get('last_success') if turn_health.get('semantic_repair_pending') else None
+    if pinned and pinned[0] in providers:
+        providers = [pinned[0], *[p for p in providers if p != pinned[0]]]
     for provider_index, provider in enumerate(providers):
         if provider not in {'gemini', 'openai', 'groq', 'openrouter', 'cerebras'}:
             continue
@@ -154,6 +157,8 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
         with _lock:
             start = _next_slot.get(provider, 0) % max(1, primary_count)
         slots = list(range(start, primary_count)) + list(range(start)) + list(range(primary_count, len(keys)))
+        if pinned and pinned[0] == provider and pinned[1] in slots:
+            slots = [pinned[1], *[slot for slot in slots if slot != pinned[1]]]
         # Reserve one actual attempt for a configured emergency provider. The
         # old trailing account remains usable when primary accounts cool down.
         reserve = int(any(credentials(other) for other in providers[provider_index+1:]
@@ -164,6 +169,8 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
         remaining = max(0, deadline-time.monotonic())
         provider_deadline = deadline - (min(timeout, remaining/3) if reserve and budget > 1 else 0)
         models = models_for(provider, tier, explicit_model, preferred)
+        if pinned and pinned[0] == provider and pinned[2] in models:
+            models = [pinned[2], *[model for model in models if model != pinned[2]]]
         for model_index, model in enumerate(models):
             # Keep one of the existing attempts for a later configured model.
             model_budget = max(1, provider_budget - int(model_index < len(models) - 1))
@@ -201,10 +208,17 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                     client = wrappers.OpenAIClient(keys[slot], base_url='https://api.cerebras.ai/v1')
                 while attempts < model_budget and time.monotonic() < model_deadline:
                     kwargs = {'model': model, 'messages': inference_messages(messages, provider), 'max_tokens': max_tokens,
-                        'temperature': 0.35, 'response_format': {'type': 'json_object'},
+                        'temperature': 0.1, 'response_format': {'type': 'json_object'},
                         'timeout': max(0.1, min(timeout, model_deadline-time.monotonic()))}
                     if schemas:
                         kwargs.update(tools=schemas, tool_choice='required' if required else 'auto')
+                        if (provider == 'gemini' and required and len(schemas) == 1
+                                and schemas[0].get('function', {}).get('name') == 'customer_actions'):
+                            # Live qualification rejects ANY/named forcing for this
+                            # nested contract. The server still requires one repaired
+                            # action proposal; prose cannot satisfy protocol repair.
+                            kwargs['tool_choice'] = 'auto'
+                            mode = 'gemini_semantic_repair_auto'
                     if provider == 'gemini' and (mode == 'gemini_without_response_format' or schemas):
                         kwargs.pop('response_format', None)
                     if provider == 'openrouter':
@@ -239,6 +253,7 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                             raise ValueError('empty_provider_response')
                         with _lock:
                             _next_slot[provider] = (slot+1) % max(1, primary_count)
+                        turn_health['last_success'] = (provider, slot, model)
                         return response, client, model, None
                     except Exception as exc:
                         kind, status, delay = classify(exc)

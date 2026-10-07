@@ -133,8 +133,12 @@ def test_pickup_area_prioritizes_exact_locality_and_supplements_nearby(monkeypat
     monkeypatch.setattr(branch_tools, '_get_engine', lambda: Engine())
     monkeypatch.setattr(branch_tools, '_check_business_hours', lambda: None)
     monkeypatch.setattr(branch_tools, 'validate_cart_at_branch', lambda *_args: {'unavailable': [], 'unverified': []})
-    monkeypatch.setattr(geo, 'geocode_address', lambda _address: coords)
+    monkeypatch.setattr(geo, 'resolve_location', lambda *a: geo.LocationResolution('ok', lat=coords[0], lng=coords[1]) if coords else geo.LocationResolution('provider_error'))
     result = branch_tools.execute_find_nearest_branch(location='phường Gò Vấp', session_id=session)
+    if coords is None:
+        assert result['status'] == 'provider_error'
+        assert not result.get('branches')  # Never invent a map origin on provider failure.
+        return
     assert result['status'] == 'need_branch_selection'
     assert [item['ma_chi_nhanh'] for item in result['branches']] == ['GV2', 'GV1', 'TD1']
     assert all(item['khoang_cach_km'] == 0 for item in result['branches'])

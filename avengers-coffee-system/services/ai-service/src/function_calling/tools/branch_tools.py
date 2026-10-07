@@ -11,13 +11,15 @@ MAX_DELIVERY_RADIUS_KM = 5.0  # Existing customer delivery radius.
 
 def _availability_fields(result):
     return {
-        "availability_status": ("unavailable" if result["unavailable"] else
-                                "unknown" if result["unverified"] else "available"),
-        "available_products": result["available"],
-        "unavailable_products": result["unavailable"],
-        "unverified_products": result["unverified"],
-        "product_availability": result["product_statuses"],
-        "is_fully_available": result["is_fully_available"],
+        "availability_status": ("unavailable" if result.get("unavailable") else
+                                "available" if result.get("is_fully_available") is True
+                                    and not result.get("unverified") else "unknown"),
+        "available_products": result.get("available") or [],
+        "unavailable_products": result.get("unavailable") or [],
+        "unverified_products": result.get("unverified") or [],
+        "product_availability": result.get("product_statuses") or [],
+        "is_fully_available": result.get("is_fully_available") is True
+            and not result.get("unavailable") and not result.get("unverified"),
     }
 
 
@@ -257,6 +259,9 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                             "message": "Mình chưa tìm thấy địa điểm này trên bản đồ. Bạn kiểm tra lại tên hoặc cho mình thêm khu vực nhé.",
                         }
                     if resolution.status == "rejected":
+                        reasons = list(getattr(resolution, 'rejection_reasons', ()) or ())
+                        logger.info('[LocationValidation] kind=%s status=rejected reasons=%s',
+                                    location_kind, reasons)
                         location_candidates = list(getattr(resolution, "candidates", ()) or ())
                         listed = "\n".join(
                             f"{index}. {row.get('normalized_label') or 'Địa điểm'}"
@@ -266,6 +271,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                         )
                         return {
                             "status": "rejected", "normalized_location": target_address,
+                            "rejection_reasons": reasons,
                             "location_candidates": location_candidates,
                             "message": ("Mình tìm thấy một số địa điểm tên gần giống, nhưng khu vực chưa khớp hoàn toàn:\n"
                                         + listed + "\nBạn có phải một trong các địa điểm này không?" if listed else
