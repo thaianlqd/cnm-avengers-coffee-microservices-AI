@@ -193,11 +193,15 @@ def test_wallet_policy_still_rejects_unavailable_payment(runtime, monkeypatch):
 
 def test_order_and_branch_capabilities_do_not_depend_on_raw_words(runtime):
     gateway = gateway_for(runtime, 'Dạ nhờ bạn xem giúp cái vừa rồi ạ')
-    names = {row['function']['name'] for row in gateway.tool_surface()[0]}
+    surface = gateway.tool_surface()[0]
+    assert [row['function']['name'] for row in surface] == ['customer_actions']
+    names = set(surface[0]['function']['parameters']['properties']['actions']['items']['properties']['tool']['enum'])
     assert {'get_order_history', 'get_order_details', 'get_store_reviews', 'get_top_rated_stores'} <= names
     assert not {'cancel_order', 'update_order', 'reorder_order'} & names
     gateway.artifacts.visible['orders'] = [{'order_id': str(uuid4())}]
-    names = {row['function']['name'] for row in gateway.tool_surface()[0]}
+    surface = gateway.tool_surface()[0]
+    assert [row['function']['name'] for row in surface] == ['customer_actions']
+    names = set(surface[0]['function']['parameters']['properties']['actions']['items']['properties']['tool']['enum'])
     assert {'cancel_order', 'update_order', 'reorder_order'} <= names
 
 
@@ -218,7 +222,7 @@ def test_evidence_must_be_current_and_batch_shape_checked_before_writes(runtime)
     assert gateway.execute_semantic(request)['status'] == 'semantic_evidence_required'
     invalid = send_actions(gateway, {'actions': [action(gateway, 'remove_cart_item', {'cart_item_id': '800'}),
         {'tool': 'fake', 'args': {}, 'commitment': 'SELECTED'}]})
-    assert invalid['status'] == 'semantic_evidence_required' and not runtime.writes
+    assert invalid['status'] == 'invalid_semantic_arguments' and invalid['recovery_kind'] == 'model_repair' and not runtime.writes
     assert not validate_args({'actions': []}, customer_actions_schema({'get_cart'})['function']['parameters'])
 
 
@@ -408,13 +412,14 @@ def test_wire_arguments_are_all_decoded_before_any_mutation(runtime, invalid_jso
          'args_json': '{"cart_item_id":"800"}'},
         {'tool': 'get_cart', 'commitment': 'QUESTION', 'args_json': invalid_json},
     ]})
-    assert result['status'] == 'invalid_arguments' and not runtime.writes
+    assert result['status'] == 'invalid_semantic_arguments' and result['recovery_kind'] == 'model_repair' and not runtime.writes
 
 
 def test_semantic_wire_schema_has_defined_object_fields(runtime):
     def check(spec):
         if spec.get('type') == 'object':
-            assert spec.get('properties')  # No open-ended object passed to providers.
+            assert 'properties' in spec  # Empty args are explicit closed objects.
+            assert spec.get('additionalProperties') is False
             for child in spec['properties'].values():
                 check(child)
         elif spec.get('type') == 'array':

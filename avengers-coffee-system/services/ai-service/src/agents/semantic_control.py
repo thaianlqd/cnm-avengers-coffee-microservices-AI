@@ -8,8 +8,9 @@ import re
 
 COMMITMENTS = ('SELECTED', 'AFFIRMED', 'REJECTED', 'NEGATED', 'QUESTION',
                'HYPOTHETICAL', 'CONDITIONAL', 'CORRECTION', 'UNKNOWN')
-REFERENCE_KINDS = ('id', 'name', 'ordinal', 'focus', 'pending', 'singleton', 'recent', 'best')
+REFERENCE_KINDS = ('id', 'name', 'literal', 'ordinal', 'focus', 'pending', 'singleton', 'recent', 'best')
 NAMESPACES = {
+    'LOCATION': (None, ('location',), ('location',)),
     'PRODUCT': ('products', ('product_id', 'ma_san_pham'), ('product_name', 'ten_san_pham')),
     'CART_LINE': (None, ('cart_item_id', 'line_id'), ('product_name',)),
     'VOUCHER': ('vouchers', ('voucher_code', 'ma_voucher'), ('ten_voucher', 'ten_chuong_trinh')),
@@ -39,16 +40,55 @@ TOOL_TARGETS = {
 }
 
 
-def customer_actions_schema(allowed):
+def _merge_parameter(left, right):
+    """Union shapes for provider generation; the selected tool validates legality."""
+    result = deepcopy(left)
+    result.pop('description', None)
+    if left.get('type') != right.get('type'):
+        raise ValueError('incompatible business parameter types')
+    if 'enum' in left and 'enum' in right:
+        result['enum'] = list(dict.fromkeys([*left['enum'], *right['enum']]))
+    else:
+        result.pop('enum', None)
+    for bound, combine in [('minimum', min), ('maximum', max), ('minItems', min), ('maxItems', max)]:
+        if bound in left and bound in right:
+            result[bound] = combine(left[bound], right[bound])
+        else:
+            result.pop(bound, None)
+    if left.get('type') == 'object':
+        props = result.setdefault('properties', {})
+        for key, spec in right.get('properties', {}).items():
+            props[key] = _merge_parameter(props[key], spec) if key in props else deepcopy(spec)
+        result['required'] = sorted(set(left.get('required', [])) & set(right.get('required', [])))
+    elif left.get('type') == 'array':
+        result['items'] = _merge_parameter(left['items'], right['items'])
+    return result
+
+
+def customer_actions_schema(allowed, tool_rows=None):
+    from src.agents.tool_capabilities import CAPABILITIES, tool_schemas
+    rows = tool_rows if tool_rows is not None else tool_schemas(allowed)
+    properties, contracts = {}, []
+    for row in rows:
+        name, parameters = row['function']['name'], row['function']['parameters']
+        fields = parameters.get('properties', {})
+        for key, spec in fields.items():
+            properties[key] = _merge_parameter(properties[key], spec) if key in properties else deepcopy(spec)
+        required = set(parameters.get('required', []))
+        contracts.append(name + '(' + CAPABILITIES[name].access + '; ' + CAPABILITIES[name].owner + '): ' +
+            ','.join(key + ('!' if key in required else '') for key in fields))
+    description = ('Execute all business reads/selections/changes through this one semantic contract. '
+        'args is an object, not an encoded string. QUESTION reads facts; get_product_options SELECTED stages a chosen product. '
+        'Writes need current evidence. ! marks required args unless reference supplies the target. Tool arguments:\n' + '\n'.join(contracts))
     return {'type': 'function', 'function': {'name': 'customer_actions',
-        'description': 'Interpret this turn once. Ground and execute existing tools in dependency order. Required for writes and selecting/configuring options. No extra model call.',
+        'description': description,
         'parameters': {'type': 'object', 'additionalProperties': False,
             'required': ['actions'], 'properties': {'actions': {'type': 'array', 'minItems': 1, 'maxItems': 16,
-                'items': {'type': 'object', 'additionalProperties': False, 'required': ['tool', 'commitment', 'args_json'],
+                'items': {'type': 'object', 'additionalProperties': False, 'required': ['tool', 'commitment', 'args'],
                     'properties': {
                         'tool': {'type': 'string', 'enum': sorted(allowed)},
                         'commitment': {'type': 'string', 'enum': list(COMMITMENTS)},
-                        'args_json': {'type': 'string', 'description': 'JSON object matching the named tool parameters; use {} for no arguments. Server validates after grounding.'},
+                        'args': {'type': 'object', 'properties': properties, 'additionalProperties': False},
                         'evidence': {'type': 'string', 'description': 'For writes: exact current customer span supporting THIS action, not history.'},
                         'reference': {'type': 'object', 'additionalProperties': False,
                             'required': ['kind'], 'properties': {
@@ -71,7 +111,7 @@ def failure(code, namespace=None, count=0):
         'reference_conflict': 'Tham chiếu và lựa chọn chưa khớp nhau. Bạn chỉ rõ món hoặc lựa chọn muốn áp dụng giúp mình nhé.',
     }
     labels = {'PRODUCT': 'món', 'CART_LINE': 'dòng trong giỏ', 'VOUCHER': 'mã giảm giá',
-        'BRANCH': 'chi nhánh', 'ORDER': 'đơn hàng', 'PROFILE_ADDRESS': 'địa chỉ đã lưu',
+        'BRANCH': 'chi nhánh', 'ORDER': 'đơn hàng', 'PROFILE_ADDRESS': 'địa chỉ đã lưu', 'LOCATION': 'địa điểm',
         'LOCATION_CANDIDATE': 'địa điểm trên bản đồ', 'MENU_CATEGORY': 'danh mục Menu'}
     message = messages.get(code, messages['unknown_reference'])
     if namespace in labels and code in {'ambiguous_reference', 'unknown_reference', 'reference_conflict'}:
@@ -209,6 +249,26 @@ def ground_action(gateway, action):
     args = deepcopy(action['args'])
     target = TOOL_TARGETS.get(action['tool'])
     reference = action.get('reference')
+    if action['tool'] == 'resolve_location' and reference:
+        namespace = reference.get('namespace', 'LOCATION' if reference['kind'] == 'literal' else 'PROFILE_ADDRESS')
+        if namespace == 'LOCATION':
+            value = reference.get('value') or args.get('location')
+            if reference['kind'] not in {'literal', 'name'} or not isinstance(value, str) or not value.strip():
+                return None, None, failure('unknown_reference', 'LOCATION')
+            if args.get('location') and args['location'].strip().casefold() != value.strip().casefold():
+                return None, None, failure('reference_conflict', 'LOCATION')
+            args['location'] = value.strip()
+            return args, None, None  # Geo authority still resolves this new literal.
+        if namespace == 'LOCATION_CANDIDATE':
+            row, error = ground_reference(gateway, namespace, reference)
+            if error:
+                return None, None, error
+            address = row.get('display_address') or row.get('normalized_label')
+            if args.get('location') and args['location'].casefold() != str(address).casefold():
+                return None, None, failure('reference_conflict', namespace)
+            args['location'] = address
+            args.setdefault('kind', 'poi')
+            return args, row, None
     if action['tool'] == 'set_checkout_choices' and reference:
         namespace = reference.get('namespace')
         if namespace not in {'PAYMENT', 'FULFILLMENT'}:

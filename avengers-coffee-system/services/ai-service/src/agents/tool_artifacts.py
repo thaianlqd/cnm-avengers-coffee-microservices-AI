@@ -680,6 +680,8 @@ class ToolArtifacts:
         if not meaningful:
             return None
         last = meaningful[-1]
+        if self.semantic_mode and last['result'].get('recovery_kind') == 'model_repair':
+            return None  # A protocol fault belongs to model repair, not customer intent clarification.
         status, name = last['result'].get('status'), last['tool']
         from src.agents.cart_edit_evidence import unfinished_edits
         edit_plan = getattr(self, 'cart_edit_plan', [])

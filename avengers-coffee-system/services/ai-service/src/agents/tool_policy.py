@@ -173,21 +173,31 @@ class GuardedToolGateway:
     def customer_actions(self, args):
         from src.agents.semantic_control import customer_actions_schema, failure
         spec = customer_actions_schema(CAPABILITIES)['function']['parameters']
-        if not validate_args(args, spec):
-            result = failure('semantic_evidence_required')
-            self.artifacts.collect('customer_actions', {}, result)
-            return result
         actions = []
         try:
+            if not isinstance(args, dict) or set(args) != {'actions'} or not isinstance(args['actions'], list):
+                raise ValueError('invalid batch envelope')
             for proposal in args['actions']:
-                decoded = json.loads(proposal['args_json'])
-                if not isinstance(decoded, dict):
+                if not isinstance(proposal, dict):
+                    raise ValueError('invalid action')
+                normalized = deepcopy(proposal)
+                # Read existing callers safely during migration. The model now
+                # receives a typed object schema, with no double JSON encoding.
+                if 'args_json' in normalized:
+                    if 'args' in normalized or not isinstance(normalized['args_json'], str) or len(normalized['args_json']) > 2000:
+                        raise ValueError('conflicting arguments')
+                    normalized['args'] = json.loads(normalized.pop('args_json'))
+                if not isinstance(normalized.get('args'), dict):
                     raise ValueError('tool arguments must be an object')
-                actions.append({**{key: value for key, value in proposal.items() if key != 'args_json'},
-                                'args': decoded})
+                actions.append(normalized)
+            if not validate_args({'actions': actions}, spec):
+                raise ValueError('invalid semantic schema')
         except (ValueError, TypeError, RecursionError):
-            result = denied('invalid_arguments')
+            result = denied('invalid_semantic_arguments', recovery_kind='model_repair',
+                message='Đề xuất chưa hợp lệ; mình chưa thực hiện thay đổi.',
+                repair_hint='Retry customer_actions using actions with tool, commitment, args object and exact current evidence for changes; match the supplied schema.')
             self.artifacts.collect('customer_actions', {}, result)
+            logger.info('[SemanticControl] tool=customer_actions decision=deny code=invalid_semantic_arguments action_count=%s', len(actions))
             return result
         results = []
         # Whole proposal structure is checked before any writes. Business
@@ -210,7 +220,13 @@ class GuardedToolGateway:
         changed = any(CAPABILITIES[row['tool']].access != 'READ'
             and row['result'].get('status') in {'ok', 'success', 'already_processed'}
             and row['result'].get('changed') is not False for row in results)
-        return {'status': 'ok', 'changed': changed, 'results': results, 'remaining_actions': len(actions) - len(results)}
+        read_only = all(CAPABILITIES[a['tool']].access == 'READ' and not (
+            a['tool'] == 'get_product_options' and a['commitment'] in {'SELECTED', 'AFFIRMED', 'CORRECTION'}) for a in actions)
+        return {'status': 'ok', 'changed': changed, 'read_only': read_only,
+            'same_turn_read_reused': read_only and all(r['result'].get('same_turn_read_reused') for r in results),
+            'results': results, 'remaining_actions': len(actions) - len(results),
+            **({'recovery_kind': 'model_repair', 'repair_hint': 'Repair only failed/unexecuted actions; successful changes are already applied.'}
+               if results and results[-1]['result'].get('recovery_kind') == 'model_repair' else {})}
 
     def execute_semantic(self, action):
         from src.agents.semantic_control import validate_commitment, ground_action, failure
@@ -277,17 +293,10 @@ class GuardedToolGateway:
                                                final_only=final_only, repair_tool=repair_tool,
                                                confirmation_recovery=self.confirmation_recovery)
         rows = tool_schemas(self.allowed)
-        if self.semantic_mode:
-            # Shared prompt/evidence protocol owns meaning; concise schemas
-            # retain argument shapes and state filtering without repeating BPM.
-            for row in rows:
-                name = row['function']['name']
-                capability = CAPABILITIES[name]
-                row['function']['description'] = f'{capability.access}; authority={capability.owner}. Use customer_actions for commitments.'
         self.schemas = {r['function']['name']: r['function']['parameters'] for r in rows}
         if self.semantic_mode and not final_only:
             from src.agents.semantic_control import customer_actions_schema
-            rows.append(customer_actions_schema(self.allowed))
+            rows = [customer_actions_schema(self.allowed, rows)]
         return rows, self.executors()
 
     def cache_key(self, name, args):
@@ -311,6 +320,21 @@ class GuardedToolGateway:
     def dispatch(self, name, args):
         started = time.monotonic()
         capability = CAPABILITIES.get(name)
+        if name in {'add_to_cart', 'update_cart_item', 'update_order'} and isinstance(args, dict):
+            args = deepcopy(args)
+            option_sets = ([args] if name == 'add_to_cart' else [args.get('desired_state')] if name == 'update_cart_item'
+                           else [*(args.get('changes') or []), *(args.get('add_items') or [])])
+            for options in option_sets:
+                if not isinstance(options, dict):
+                    continue
+                for alias, canonical in (('kich_co', 'size'), ('ice', 'luong_da'), ('sugar', 'do_ngot'), ('milk', 'loai_sua')):
+                    if alias in options:
+                        if canonical in options and options[canonical] != options[alias]:
+                            result = denied('option_attribute_conflict', message='Các tùy chọn đề xuất chưa khớp nhau; mình chưa thay đổi món.',
+                                recovery_kind='model_repair', repair_hint='Supply one consistent value per option field.', field=canonical)
+                            self.artifacts.collect(name, {}, result)
+                            return result
+                        options[canonical] = options.pop(alias)
         if name == 'confirm_checkout' and self.confirmation_recovery is None:
             self.confirmation_recovery = 'confirm_checkout'
         if name == 'update_order' and isinstance(args, dict):
@@ -1593,6 +1617,9 @@ class GuardedToolGateway:
         return {'status': 'offered', **offer}
 
     def _resolve_location(self, args):
+        target = (self.active_semantic or {}).get('canonical_target') or {}
+        if self.semantic_mode and target.get('candidate_id') and not getattr(self, '_selected_location', None):
+            return self._select_location_candidate({'candidate_id': target['candidate_id']})
         from src.agents.order_flow_graph import _handle_location_request, _persist_branch_candidates_from_result
         from src.agents.location_parser import Location
         args = dict(args)

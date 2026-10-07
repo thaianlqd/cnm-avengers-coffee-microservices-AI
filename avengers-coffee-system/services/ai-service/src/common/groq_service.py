@@ -717,10 +717,12 @@ def groq_agent_chat(
                                   if guarded else {"status": "error", "message": f"Tool '{tool_name}' không tồn tại."})
 
                     # Lưu vào cache
-                    if not guarded or (not is_read and isinstance(result, dict) and result.get('status') in {
+                    if not guarded or (not is_read and isinstance(result, dict) and not result.get('read_only') and result.get('status') in {
                             'ok', 'success', 'already_processed', 'needs_options', 'require_confirmation'}):
                         turn_tool_cache[tool_hash] = result
                 if guarded and isinstance(result, dict):
+                    if result.get('recovery_kind') == 'model_repair':
+                        recoverable_write_denial = True
                     if result.get('same_turn_read_reused'):
                         repeated_signature, repeated_tool_result = True, result
                     if result.get('status') in {'ok', 'success', 'already_processed', 'require_confirmation'} and not is_read:
@@ -811,8 +813,8 @@ def groq_agent_chat(
                 force_tool_required = True
                 current_messages.append({
                     "role": "system",
-                    "content": ("The requested write was denied by server safety evidence. "
-                                "Retry the same operation now using the exact structured recovery fields. "
+                    "content": ("The proposal needs correction using server feedback. "
+                                "Retry only failed/unexecuted actions using the structured recovery fields; successful actions are already applied. "
                                 "Do not switch operation types and do not answer with prose yet."),
                 })
             elif required_repair_tool:
