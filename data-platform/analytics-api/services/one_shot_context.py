@@ -12,6 +12,14 @@ def wire_payload(payload):
     if "lens_directory" in knowledge:
         packed = {l[0] for p in knowledge["packs"] for l in p["lenses"]}
         knowledge["lens_directory"] = {id: [l for l in lenses if l[0] not in packed] for id,lenses in knowledge["lens_directory"].items() if any(l[0] not in packed for l in lenses)}
+    # Compact packs reference the authoritative subject/metric compatibility
+    # index already delivered in the manifest. Avoid repeating long ID lists.
+    if "manifest" in payload:
+        for pack in knowledge["packs"]:
+            if pack["tier"] == "compact":
+                pack.pop("metrics", None)
+                pack.pop("dimensions", None)
+        knowledge["compact_lens_columns"] = "id,label,metrics,capabilities; subject metrics and compatible dimensions in manifest"
     meanings = {}
     for pack in knowledge["packs"]:
         meanings.update(pack.pop("metric_meanings", {}))

@@ -25,6 +25,7 @@ class AnalyticalLens(Contract):
     id: str = Field(pattern=r"^[a-z][a-z0-9_]{0,63}$")
     business_label: str = Field(max_length=100)
     business_question: str = Field(max_length=180)
+    example_intents: List[str] = Field(default_factory=list, max_length=2)
     metric_refs: List[str] = Field(min_length=1, max_length=6)
     dimension_refs: List[str] = Field(default_factory=list, max_length=8)
     supports_time_series: bool = False
@@ -78,6 +79,9 @@ def validate_profiles(registry):
         notes = metadata.get("model_caveat_notes", metadata.get("caveat_labels", {}))
         if set(notes) != set(metadata.get("caveat_labels", {})) or any(not isinstance(v, str) or not 1 <= len(v) <= 160 for v in notes.values()):
             raise ValueError("Invalid model caveat notes")
+        for edge in metadata.get("business_relationships", []):
+            if edge.get("from_domain") not in profiles or edge.get("to_domain") not in profiles or edge.get("population_relation") != "related" or not edge.get("meaning") or not edge.get("invalid_uses"):
+                raise ValueError("Invalid business relationship")
         for id, p in profiles.items():
             if not set(p.business_caveats) <= metadata.get("caveat_labels", {}).keys():
                 raise ValueError("Unknown business caveat")
@@ -238,7 +242,7 @@ class DomainIntelligence:
             if not any(id in p["dimension_refs"] for p in profiles.values()):
                 continue
             scope_types.append({"id": id, "label": d["business_name"], "values": dimension_values(self.catalog, id)[:50], "searchable": d.get("value_grounding", {}).get("mode") == "lookup"})
-        return {"status": "ready", "version": "2.6", "fingerprint": self.catalog.fingerprint,
+        return {"status": "ready", "version": "2.7", "fingerprint": self.catalog.fingerprint,
                 "domains": [{"id": id, "label": p["business_label"], "historical": any(self.catalog.registry["metrics"][m].get("time_column") for m in p["metric_refs"]), "caveats": [self.catalog.registry["domain_intelligence"]["caveat_labels"][c] for c in p["business_caveats"]]} for id, p in profiles.items()],
                 "analysis_depths": [{"id": "focused", "label": "Tập trung"}, {"id": "deep", "label": "Phân tích sâu"}, {"id": "comprehensive", "label": "Phân tích toàn diện"}],
                 "time_presets": [{"id": id, "label": label} for id, label in TIME_PRESETS.items()],
@@ -333,11 +337,13 @@ class DomainIntelligence:
                 texts += [(a, "entity_alias_match") for a in [r["dimensions"][d]["business_name"], *r["dimensions"][d].get("aliases", [])]]
             for m in p["metric_refs"]:
                 texts += [(a, "metric_alias_match") for a in [r["metrics"][m]["business_name"], *r["metrics"][m].get("aliases", [])]]
+            for lens in p["analytical_lenses"]:
+                texts += [(a, "lens_example_match") for a in [lens["business_label"], lens["business_question"], *lens.get("example_intents", [])]]
             for text, category in texts:
                 phrase = value_text(text)
                 if len(phrase) >= 3 and phrase not in stop and any(t not in stop and not t.isdigit() for t in phrase.split()):
                     index.setdefault(phrase, {}).setdefault(category, set()).add(id)
-        categories = ("exact_business_label_match", "alias_match", "entity_alias_match", "metric_alias_match")
+        categories = ("exact_business_label_match", "alias_match", "entity_alias_match", "metric_alias_match", "lens_example_match")
         matches = []
         for phrase, by_category in index.items():
             # A direct subject/profile alias takes precedence over a shared
@@ -353,7 +359,7 @@ class DomainIntelligence:
         for start, end, strength, id, category in matches:
             if any(a <= start and end <= b and n > strength and other != id for a, b, n, other, _ in matches):
                 continue
-            candidate = {"id": id, "priority": 2, "score": strength, "match_category": category, "protected": True}
+            candidate = {"id": id, "priority": 2, "score": strength, "match_category": category, "protected": category != "lens_example_match"}
             if id not in direct or (strength, -categories.index(category)) > (direct[id]["score"], -categories.index(direct[id]["match_category"])):
                 direct[id] = candidate
         if domain in profiles:
@@ -366,8 +372,8 @@ class DomainIntelligence:
         if not candidates and profiles:
             terms = set(question_text.split()) - stop
             scores = [(len(terms & set(value_text(p["business_label"]).split())), id) for id, p in profiles.items()]
-            score, id = sorted(scores, key=lambda v: (-v[0], v[1]))[0]
-            candidates[id] = {"id": id, "priority": 3, "score": score, "match_category": "catalog_candidate", "protected": False}
+            for score, id in sorted(scores, key=lambda v: (-v[0], v[1]))[:3]:
+                candidates[id] = {"id": id, "priority": 3, "score": score, "match_category": "catalog_candidate", "protected": False}
         if candidates and depth != "focused":
             anchors = sorted(candidates.values(), key=order)
             for i, anchor in enumerate(anchors):
@@ -403,8 +409,8 @@ class DomainIntelligence:
                 "caveat_meanings": self.catalog.registry["domain_intelligence"].get("model_caveat_notes", self.catalog.registry["domain_intelligence"]["caveat_labels"]),
                 "packs": packs}
         if blueprints:
-            knowledge["lens_directory"] = {id: [[l["id"],l["business_label"],l["blueprint"]["default_operation"],bool(l["blueprint"]["default_metric_refs"])] for l in p["analytical_lenses"] if l.get("blueprint")] for id,p in profiles.items()}
-            knowledge["lens_directory_columns"] = "lens_id,label,default_operation,unambiguous_metric_default; server materializes checked defaults, use explicit metrics only from manifest"
+            knowledge["lens_directory"] = {id: [[l["id"],l["business_label"],l["blueprint"]["default_operation"],bool(l["blueprint"]["default_metric_refs"]),l["metric_refs"],l["blueprint"]["default_grouping"],"".join(code for code,flag in (("t","supports_time_series"),("r","supports_ranking"),("c","supports_comparison"),("d","supports_distribution")) if l[flag]) ] for l in p["analytical_lenses"] if l.get("blueprint")] for id,p in profiles.items()}
+            knowledge["lens_directory_columns"] = "lens_id,label,default_operation,unambiguous_metric_default,metrics,default_grouping,capabilities(t/r/c/d); server materializes checked defaults"
             knowledge["blueprint_columns"] = "operation,default_metrics,default_grouping,allowed_groupings,default_granularity,flags(h=history,p=complete population,x=cross_tab two lens dimensions),allowed_operations,allowed_granularities,required_metrics; omitted choices require clarification"
         # Only pack content is sent; retrieval evidence and omissions stay local.
         maximum = policy["domain_chars"] if max_chars is None else max_chars

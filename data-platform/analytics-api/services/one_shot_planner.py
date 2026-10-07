@@ -24,7 +24,8 @@ Supports inherit requested parent time/filters. same needs equal population_grou
 Ranking needs group_by/top_n (one metric defaults ranking.metric, DESC). Trend needs granularity, at most one low-cardinality group; all_time normally month. detail_fields only detail. Canonical enums; other values verified locally. Don't repeat metric-owned predicates. Server selects visuals/evidence after approval.
 Refinement: replaces/changed_fields, unchanged fields inherit; retain old requested work unless replaced/removed. No private reasoning."""
 
-NATURAL_SYSTEM = """Vietnamese business analyst: one structured plan, clarification or unsupported; no SQL/prose/private reasoning. Separate inputs: question=business intent; optional analysis_context=scope; optional analysis_expectation=coverage/presentation; ui.required_period and structured scope are hard constraints. AUTO interprets question time; omitted time=all_time. Choose analysis_breadth focused/deep/comprehensive yourself. Preserve EVERY requested component; over 8 operations asks to split, never drops work. Focused 1–3, deep 4–6, comprehensive 6–8 useful views, targets not quotas. No filler.
+NATURAL_SYSTEM = """V2.7: Declare analysis_components for every requested business requirement, mapped to requested operation IDs. Unavailable requirements remain with status/reason and no operations; never silently substitute metrics. Supports are separate.
+Vietnamese business analyst: one structured plan, clarification or unsupported; no SQL/prose/private reasoning. Separate inputs: question=business intent; optional analysis_context=scope; optional analysis_expectation=coverage/presentation; ui.required_period and structured scope are hard constraints. AUTO interprets question time; omitted time=all_time. Choose analysis_breadth focused/deep/comprehensive yourself. Preserve EVERY requested component; over 8 operations asks to split, never drops work. Focused 1–3, deep 4–6, comprehensive 6–8 useful views, targets not quotas. No filler.
 Use delivered IDs only. Directory/lenses cover available domains; packs are candidate knowledge, not intent. Select business lens; server fills omitted blueprint defaults. Null default needs a real business choice. Explicit ranking overrides aggregate default; ranking needs Top N/direction when requested. Trends need historical data; snapshots only all_time, never fabricated history. No forecasts, causes, composite best/worst scores or invented metrics/values.
 Supports inherit parent time/filters: same needs equal population_group; related needs purpose=context, declared subject links and matching clocks. No shares/reconciliation across related populations. Buyers differ from registered customers; distinct counts/averages non-additive. Top N is not whole composition. At most 8 total operations; optional support counts must match selected breadth. Server validates values, SQL, evidence and visuals after approval."""
 
@@ -42,7 +43,7 @@ class OneShotPlanner:
         self.semantic = SemanticTools(catalog, lookup)
         self.queries = AnalyticalQueries(catalog, self.semantic, reference, executor, diagnostics, proposal, previous)
         self.queries.enforce_discovery = True
-        diagnostics.update(planning_mode="one_shot", pipeline_version="2.6", provider_calls=[],
+        diagnostics.update(planning_mode="one_shot", pipeline_version="2.7", provider_calls=[],
             provider_status="not_started", provider_error_category=None, agent_contract_status="not_started",
             agent_contract_error=None, terminal_error=None, db_query_count=0, value_lookup_count=0,
             contract_repair_count=0, contract_rejection_count=0, contract_normalization_count=0,
@@ -274,6 +275,15 @@ class OneShotPlanner:
         except AnalysisError as error:
             error.planning_scope_conflict = True
             raise
+        from services.analysis_coverage_service import canonical_components, coverage_diagnostics
+        try:
+            components, origin = canonical_components(decision.analysis_components, prepared, self.intelligence)
+        except (ValueError, TypeError, KeyError) as error:
+            self.fail_contract(error)
+        self.diagnostics.update(analysis_components=components, coverage_origin=origin,
+                                **coverage_diagnostics(components, prepared))
+        if any(c["status"] != "planned" and c["requested_or_supporting"] == "requested" for c in components) and not self.proposal:
+            raise AnalysisError("approval_required", "Reduced requested scope needs explicit approval")
         active = {}
         for a in [*requested.values(), *supporting.values()]:
             try:
@@ -423,6 +433,11 @@ class OneShotPlanner:
                                     blueprint_context_shared=bool(delivered_knowledge.get("blueprint_sets")))
             self.diagnostics.update(domain_context_mode=depth, global_domain_count=len(knowledge["directory"]),
                 global_domain_directory_chars=len(compact(knowledge["directory"])),
+                global_lens_directory_chars=len(compact(delivered_knowledge.get("lens_directory", {}))),
+                retrieval_candidate_count=len(candidates),
+                retrieval_confidence="high" if any(c["protected"] for c in candidates) else "low",
+                coverage_contract_chars=len(compact(wire_tools[0].get("parameters", {}).get("properties", {}).get("analysis_components", {}))),
+                example_intent_chars=0,
                 detailed_domain_ids=[p["id"] for p in knowledge["packs"]], domain_packs_omitted=omitted,
                 detailed_domain_pack_chars={p["id"]: len(compact(p)) for p in delivered_knowledge["packs"]},
                 domain_context_chars=len(compact(delivered_knowledge)), system_chars=len(system), session_state_chars=len(compact(state)),
@@ -443,6 +458,7 @@ class OneShotPlanner:
                 self.delivered_lenses.update(l[0] for p in delivered_knowledge["packs"] for l in p["lenses"])
                 self.diagnostics["delivered_lens_count"] = len(self.delivered_lenses)
             repair_operation_count = 0
+            repair_components = set()
             for attempt in range(self.turn.budget.max_calls):
                 response = {}
                 try:
@@ -467,6 +483,11 @@ class OneShotPlanner:
                         fixed = returned[0].get("arguments") if isinstance(returned, list) and len(returned) == 1 and isinstance(returned[0], dict) else None
                         if isinstance(fixed, dict) and fixed.get("decision_type") == "plan" and isinstance(fixed.get("requested_operations"), list) and len(fixed["requested_operations"]) < repair_operation_count:
                             self.fail_contract(ToolContractError([issue("requested_operations", "invalid_analysis_shape")]))
+                    from services.analysis_coverage_service import requested_identity
+                    returned = response.get("calls")
+                    fixed = returned[0].get("arguments") if isinstance(returned, list) and len(returned) == 1 and isinstance(returned[0], dict) else None
+                    if repair_components and isinstance(fixed, dict) and fixed.get("decision_type") == "plan" and not repair_components <= requested_identity(fixed.get("analysis_components", [])):
+                        self.fail_contract(ToolContractError([issue("analysis_components", "missing_requested_component")]))
                     result = self.accept_response(response, natural, context)
                     self.diagnostics.update(terminal_error=None, agent_contract_error=None, contract_issues=[])
                     return result
@@ -487,6 +508,7 @@ class OneShotPlanner:
                     failed_calls = response.get("calls")
                     raw = next((c.get("arguments") for c in failed_calls if isinstance(c, dict) and isinstance(c.get("arguments"), dict)), None) if isinstance(failed_calls, list) else None
                     if repairable:
+                        repair_components = requested_identity((raw or {}).get("analysis_components", []))
                         operations = (raw or {}).get("requested_operations")
                         repair_operation_count = len(operations) if isinstance(operations, list) and len(operations) <= self.budget.operations else 0
                         # Reuse the delivered catalog, omit verbose domain packs and

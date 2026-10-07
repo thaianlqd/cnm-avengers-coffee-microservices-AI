@@ -79,6 +79,9 @@ class ReportSession:
     ui_constraints: Dict[str, Any] = field(default_factory=dict)
     contract_version: str = "2.5"
     owner_id: Optional[str] = None
+    analysis_components: List[Dict[str, Any]] = field(default_factory=list)
+    coverage_origin: str = "execution_only"
+    partial_scope: bool = False
     natural_input: bool = False
     analysis_inputs: Dict[str, Any] = field(default_factory=dict)
     input_time_strategy: Dict[str, Any] = field(default_factory=dict)

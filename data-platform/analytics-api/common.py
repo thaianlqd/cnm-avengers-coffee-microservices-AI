@@ -68,6 +68,7 @@ class AiTextToReportRequest(BaseModel):
     analysis_module_id: Optional[str] = Field(default=None, pattern=r"^am_[a-f0-9]{24}$")
     analysis_module_name: Optional[str] = Field(default=None, min_length=1, max_length=120)
     natural_input: bool = Field(default=False, exclude=True)
+    accept_partial_scope: bool = False
     analysis_depth: Literal["deep", "focused", "comprehensive"] = "deep"
     analysis_scope: Optional[AiAnalysisScope] = None
     reference_date: Optional[date] = None

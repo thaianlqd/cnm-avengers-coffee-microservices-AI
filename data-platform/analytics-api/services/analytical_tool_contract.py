@@ -13,6 +13,7 @@ from services.analyst_contract import AnalyticalQuery, AnalyticalToolInput
 
 
 ISSUE_CODES = frozenset({
+    "missing_requested_component",
     "field_required", "invalid_enum", "invalid_type", "unexpected_field",
     "invalid_range", "invalid_limit", "invalid_identifier", "duplicate_field",
     "invalid_time_shape", "invalid_filter_shape", "invalid_analysis_shape",
@@ -38,7 +39,7 @@ PATH_FIELDS = frozenset({
     "removed_query_ids", "reason", "known_query", "missing_fields", "query",
     "offset", "reference", "contract", "batch", "detail_fields", "decision_type",
     "requested_operations", "supporting_operations", "clarification",
-    "lens_id",
+    "lens_id", "analysis_components", "operation_ids", "business_goal", "domain_id",
 })
 
 

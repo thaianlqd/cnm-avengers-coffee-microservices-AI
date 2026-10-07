@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "typecheck": "tsc --noEmit",
+    "test:ai-quality": "node --test src/utils/analysisQuality.test.mjs",
     "test:ai-charts": "node --test src/utils/aiChartConfig.test.mjs",
     "preview": "vite preview",
     "test:ai-understanding": "node --test src/utils/analysisClarification.test.mjs",

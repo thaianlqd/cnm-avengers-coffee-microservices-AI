@@ -128,6 +128,14 @@ def analytical_features(artifacts, catalog=None):
                         f"{label}: {fmt(values[0])} {unit} trong phạm vi đã chọn.",
                         partition,
                     )
+                if len(pairs) == 1 and a.plan.dimensions and a.plan.kind in {"aggregate", "distribution"} and not a.plan.ranking:
+                    names = [d for d in a.plan.dimensions if not d.endswith("_id")]
+                    entity = " / ".join(str(pairs[0][0][d]) for d in names)
+                    add(a, metric, "aggregate", "scalar", {"value": values[0], "entity": entity, "observed_groups": 1},
+                        f"Nhóm duy nhất trả về {entity}: {label.lower()} là {fmt(values[0])} {unit} trong phạm vi đã chọn.", partition)
+                if len(pairs) == 1 and a.plan.kind == "trend":
+                    add(a, metric, "trend", "period_coverage", {"observed_buckets": 1},
+                        f"{label}{suffix}: chỉ có một kỳ quan sát, chưa đủ để so sánh biến động.", partition)
                 if (
                     a.plan.ranking
                     and metric == a.plan.ranking.metric

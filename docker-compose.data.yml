@@ -329,6 +329,7 @@ services:
     env_file:
       - ./data-platform/.env
     environment:
+      ANALYTICS_INITIALIZE_WAREHOUSE_ON_STARTUP: "false"
       DATA_ANALYST_ALLOWED_ORIGINS: ${DATA_ANALYST_ALLOWED_ORIGINS:-}
       PORT: 8000
       # ── Database (Analytics DB riêng) ──────────────────

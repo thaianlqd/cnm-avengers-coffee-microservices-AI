@@ -2713,13 +2713,28 @@
         "description": "Doanh thu ở mức order; đơn vị VND.",
         "quality_direction": "contextual",
         "aggregation_semantics": "sum",
-        "business_meaning": "Tiền đơn sau giảm giá; đơn hoàn thành hoặc đang giao.",
+        "business_meaning": "Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
         "historical_capability": "historical",
         "population_definition": "Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+        "aggregation_behavior": "Tổng trên các bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "order"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "order_count": {
@@ -2745,13 +2760,28 @@
         "description": "Số lượng đơn ở mức order; đơn vị đơn.",
         "quality_direction": "contextual",
         "aggregation_semantics": "count",
-        "business_meaning": "Số lượng đơn ở mức order; đơn vị đơn.",
+        "business_meaning": "Đếm mọi đơn theo ngày tạo, gồm cả đơn hủy; không dùng làm mẫu số AOV của tập đơn hợp lệ.",
         "historical_capability": "historical",
         "population_definition": "Toàn bộ bản ghi của đối tượng",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Đếm mọi đơn theo ngày tạo, gồm cả đơn hủy; không dùng làm mẫu số AOV của tập đơn hợp lệ.",
+        "aggregation_behavior": "Số bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "order"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "aov": {
@@ -2785,14 +2815,30 @@
         "additive": false,
         "description": "Giá trị đơn trung bình ở mức order; đơn vị VND.",
         "quality_direction": "contextual",
-        "aggregation_semantics": "sum",
-        "business_meaning": "Giá trị đơn trung bình ở mức order; đơn vị VND.",
+        "aggregation_semantics": "average",
+        "business_meaning": "Tổng giá trị chia số đơn trong cùng tập HOAN_THANH/DANG_GIAO. Không cộng hoặc lấy trung bình các AOV nhóm.",
         "historical_capability": "historical",
         "population_definition": "Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Tổng giá trị chia số đơn trong cùng tập HOAN_THANH/DANG_GIAO. Không cộng hoặc lấy trung bình các AOV nhóm.",
+        "aggregation_behavior": "Trung bình theo công thức danh mục; không lấy trung bình của các trung bình nhóm.",
+        "additivity_by_dimension": {
+          "disjoint_groups": false,
+          "overlapping_groups": false,
+          "across_time": false,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "order"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Không cộng kết quả các nhóm; cần tính lại trên quần thể gốc.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "voucher_revenue": {
@@ -2830,13 +2876,28 @@
         "description": "Doanh thu đơn có khuyến mãi ở mức order; đơn vị VND.",
         "quality_direction": "contextual",
         "aggregation_semantics": "sum",
-        "business_meaning": "Doanh thu đơn có khuyến mãi ở mức order; đơn vị VND.",
+        "business_meaning": "Tổng giá trị đơn HOAN_THANH/DANG_GIAO có mã voucher; mô tả tập đơn dùng voucher, chưa chứng minh hiệu quả tăng thêm.",
         "historical_capability": "historical",
         "population_definition": "Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']; có voucher",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Tổng giá trị đơn HOAN_THANH/DANG_GIAO có mã voucher; mô tả tập đơn dùng voucher, chưa chứng minh hiệu quả tăng thêm.",
+        "aggregation_behavior": "Tổng trên các bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "order"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "discount_amount": {
@@ -2875,13 +2936,28 @@
         "description": "Tổng tiền đã giảm giá ở mức order; đơn vị VND.",
         "quality_direction": "contextual",
         "aggregation_semantics": "sum",
-        "business_meaning": "Tổng tiền đã giảm giá ở mức order; đơn vị VND.",
+        "business_meaning": "Tổng số tiền giảm trên đơn HOAN_THANH/DANG_GIAO có mã voucher; không phải chi phí đầy đủ của chiến dịch.",
         "historical_capability": "historical",
         "population_definition": "Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']; có voucher",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Tổng số tiền giảm trên đơn HOAN_THANH/DANG_GIAO có mã voucher; không phải chi phí đầy đủ của chiến dịch.",
+        "aggregation_behavior": "Tổng trên các bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "order"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "voucher_order_count": {
@@ -2910,13 +2986,28 @@
         "description": "Số đơn áp dụng khuyến mãi ở mức order; đơn vị đơn.",
         "quality_direction": "contextual",
         "aggregation_semantics": "count",
-        "business_meaning": "Mọi trạng thái đơn có mã voucher; khác tập doanh thu voucher.",
+        "business_meaning": "Đếm đơn có mã voucher ở mọi trạng thái; khác quần thể doanh thu đơn voucher hợp lệ.",
         "historical_capability": "historical",
         "population_definition": "có voucher",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Đếm đơn có mã voucher ở mọi trạng thái; khác quần thể doanh thu đơn voucher hợp lệ.",
+        "aggregation_behavior": "Số bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "order"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "quantity_sold": {
@@ -2960,13 +3051,28 @@
         "description": "Số lượng sản phẩm bán ở mức order_line; đơn vị sản phẩm.",
         "quality_direction": "contextual",
         "aggregation_semantics": "sum",
-        "business_meaning": "Số lượng sản phẩm bán ở mức order_line; đơn vị sản phẩm.",
+        "business_meaning": "Tổng số lượng trên dòng món thuộc đơn HOAN_THANH/DANG_GIAO; đếm số đơn vị bán, không phải số sản phẩm khác nhau.",
         "historical_capability": "historical",
         "population_definition": "Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Tổng số lượng trên dòng món thuộc đơn HOAN_THANH/DANG_GIAO; đếm số đơn vị bán, không phải số sản phẩm khác nhau.",
+        "aggregation_behavior": "Tổng trên các bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "order_line"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "item_revenue": {
@@ -3001,13 +3107,28 @@
         "description": "Doanh thu món ở mức order_line; đơn vị VND.",
         "quality_direction": "contextual",
         "aggregation_semantics": "sum",
-        "business_meaning": "Doanh thu món ở mức order_line; đơn vị VND.",
+        "business_meaning": "Tổng thành tiền dòng món thuộc đơn HOAN_THANH/DANG_GIAO; không mặc định bằng tổng tiền đơn.",
         "historical_capability": "historical",
         "population_definition": "Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Tổng thành tiền dòng món thuộc đơn HOAN_THANH/DANG_GIAO; không mặc định bằng tổng tiền đơn.",
+        "aggregation_behavior": "Tổng trên các bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "order_line"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "product_revenue": {
@@ -3041,13 +3162,28 @@
         "description": "Doanh thu sản phẩm ở mức order_line; đơn vị VND.",
         "quality_direction": "contextual",
         "aggregation_semantics": "sum",
-        "business_meaning": "Doanh thu sản phẩm ở mức order_line; đơn vị VND.",
+        "business_meaning": "Tổng thành tiền dòng sản phẩm thuộc đơn HOAN_THANH/DANG_GIAO; không mặc định đối soát bằng doanh thu cấp đơn.",
         "historical_capability": "historical",
         "population_definition": "Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Tổng thành tiền dòng sản phẩm thuộc đơn HOAN_THANH/DANG_GIAO; không mặc định đối soát bằng doanh thu cấp đơn.",
+        "aggregation_behavior": "Tổng trên các bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "order_line"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "store_revenue": {
@@ -3081,13 +3217,28 @@
         "description": "Doanh thu chi nhánh ở mức order; đơn vị VND.",
         "quality_direction": "contextual",
         "aggregation_semantics": "sum",
-        "business_meaning": "Doanh thu chi nhánh ở mức order; đơn vị VND.",
+        "business_meaning": "Tổng giá trị đơn HOAN_THANH/DANG_GIAO theo điểm bán, theo ngày tạo đơn.",
         "historical_capability": "historical",
         "population_definition": "Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Tổng giá trị đơn HOAN_THANH/DANG_GIAO theo điểm bán, theo ngày tạo đơn.",
+        "aggregation_behavior": "Tổng trên các bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "order"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "store_order_count": {
@@ -3112,13 +3263,28 @@
         "description": "Số đơn chi nhánh ở mức order; đơn vị đơn.",
         "quality_direction": "contextual",
         "aggregation_semantics": "count",
-        "business_meaning": "Số đơn chi nhánh ở mức order; đơn vị đơn.",
+        "business_meaning": "Đếm mọi đơn của điểm bán, gồm cả đơn hủy; không thay thế số đơn hợp lệ khi tính AOV.",
         "historical_capability": "historical",
         "population_definition": "Toàn bộ bản ghi của đối tượng",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Đếm mọi đơn của điểm bán, gồm cả đơn hủy; không thay thế số đơn hợp lệ khi tính AOV.",
+        "aggregation_behavior": "Số bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "order"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "store_aov": {
@@ -3152,13 +3318,29 @@
         "description": "AOV chi nhánh ở mức order; đơn vị VND.",
         "quality_direction": "contextual",
         "aggregation_semantics": "average",
-        "business_meaning": "AOV chi nhánh ở mức order; đơn vị VND.",
+        "business_meaning": "Trung bình giá trị đơn HOAN_THANH/DANG_GIAO của điểm bán; cần trọng số số đơn hợp lệ để gộp giữa các điểm bán.",
         "historical_capability": "historical",
         "population_definition": "Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Trung bình giá trị đơn HOAN_THANH/DANG_GIAO của điểm bán; cần trọng số số đơn hợp lệ để gộp giữa các điểm bán.",
+        "aggregation_behavior": "Trung bình theo công thức danh mục; không lấy trung bình của các trung bình nhóm.",
+        "additivity_by_dimension": {
+          "disjoint_groups": false,
+          "overlapping_groups": false,
+          "across_time": false,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "order"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Không cộng kết quả các nhóm; cần tính lại trên quần thể gốc.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "customer_count": {
@@ -3190,13 +3372,28 @@
         "description": "Số khách ở mức customer; đơn vị khách.",
         "quality_direction": "contextual",
         "aggregation_semantics": "distinct_count",
-        "business_meaning": "Khách có vai trò CUSTOMER; thời gian là ngày đăng ký, không phải ngày mua.",
+        "business_meaning": "Đếm định danh khách đăng ký vai trò CUSTOMER theo ngày tạo tài khoản; không phải số khách đã mua. Chỉ cộng nhóm khách không giao nhau.",
         "historical_capability": "historical",
         "population_definition": "Vai trò: CUSTOMER",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Đếm định danh khách đăng ký vai trò CUSTOMER theo ngày tạo tài khoản; không phải số khách đã mua. Chỉ cộng nhóm khách không giao nhau.",
+        "aggregation_behavior": "Đếm định danh duy nhất trong từng phạm vi; các nhóm có thể giao nhau.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "customer"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "total_spent": {
@@ -3228,13 +3425,29 @@
         "description": "Tổng chi tiêu tích lũy ở mức customer; đơn vị VND.",
         "quality_direction": "contextual",
         "aggregation_semantics": "sum",
-        "business_meaning": "Chi tiêu tích lũy hiện tại của khách đăng ký; không có lịch sử theo kỳ.",
+        "business_meaning": "Tổng trường chi tiêu tích lũy hiện tại trên tài khoản CUSTOMER; chưa có lịch sử theo kỳ, không phải chi tiêu phát sinh trong kỳ đăng ký.",
         "historical_capability": "snapshot",
         "population_definition": "Vai trò: CUSTOMER",
         "recommended_uses": [
           "overview",
           "comparison",
           "snapshot"
+        ],
+        "business_definition": "Tổng trường chi tiêu tích lũy hiện tại trên tài khoản CUSTOMER; chưa có lịch sử theo kỳ, không phải chi tiêu phát sinh trong kỳ đăng ký.",
+        "aggregation_behavior": "Tổng trên các bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": false,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "customer"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Không áp bộ lọc kỳ lịch sử hoặc suy ra xu hướng từ dữ liệu hiện trạng.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "payment_count": {
@@ -3259,13 +3472,28 @@
         "description": "Số giao dịch ở mức payment; đơn vị lượt.",
         "quality_direction": "contextual",
         "aggregation_semantics": "count",
-        "business_meaning": "Số giao dịch ở mức payment; đơn vị lượt.",
+        "business_meaning": "Đếm mọi giao dịch theo ngày tạo giao dịch, gồm mọi trạng thái; không mặc định bằng số đơn thanh toán thành công.",
         "historical_capability": "historical",
         "population_definition": "Toàn bộ bản ghi của đối tượng",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Đếm mọi giao dịch theo ngày tạo giao dịch, gồm mọi trạng thái; không mặc định bằng số đơn thanh toán thành công.",
+        "aggregation_behavior": "Số bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "payment"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "payment_revenue": {
@@ -3290,13 +3518,28 @@
         "description": "Doanh thu thanh toán ở mức payment; đơn vị VND.",
         "quality_direction": "contextual",
         "aggregation_semantics": "sum",
-        "business_meaning": "Doanh thu thanh toán ở mức payment; đơn vị VND.",
+        "business_meaning": "Tổng số tiền giao dịch theo ngày tạo giao dịch, gồm mọi trạng thái; không mặc định là doanh thu thuần hoặc dòng tiền thành công.",
         "historical_capability": "historical",
         "population_definition": "Toàn bộ bản ghi của đối tượng",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Tổng số tiền giao dịch theo ngày tạo giao dịch, gồm mọi trạng thái; không mặc định là doanh thu thuần hoặc dòng tiền thành công.",
+        "aggregation_behavior": "Tổng trên các bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "payment"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "total_deliveries": {
@@ -3321,13 +3564,29 @@
         "description": "Tổng chuyến giao ở mức driver_snapshot; đơn vị lượt.",
         "quality_direction": "contextual",
         "aggregation_semantics": "sum",
-        "business_meaning": "Tổng chuyến tích lũy hiện tại của shipper; không có ngày thực hiện chuyến.",
+        "business_meaning": "Tổng bộ đếm chuyến giao tích lũy hiện tại của shipper; chưa có nhật ký chuyến hoặc lịch sử theo kỳ.",
         "historical_capability": "snapshot",
         "population_definition": "Toàn bộ bản ghi của đối tượng",
         "recommended_uses": [
           "overview",
           "comparison",
           "snapshot"
+        ],
+        "business_definition": "Tổng bộ đếm chuyến giao tích lũy hiện tại của shipper; chưa có nhật ký chuyến hoặc lịch sử theo kỳ.",
+        "aggregation_behavior": "Tổng trên các bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": false,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "driver_snapshot"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Không áp bộ lọc kỳ lịch sử hoặc suy ra xu hướng từ dữ liệu hiện trạng.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "driver_rating": {
@@ -3353,13 +3612,29 @@
         "description": "Điểm đánh giá trung bình ở mức driver_snapshot; đơn vị điểm.",
         "quality_direction": "higher_better",
         "aggregation_semantics": "average",
-        "business_meaning": "Trung bình điểm hiện tại của shipper; thiếu số lượt đánh giá để kiểm tra cỡ mẫu.",
+        "business_meaning": "Trung bình trường điểm đánh giá hiện tại của shipper; chưa có cỡ mẫu đánh giá và lịch sử từng chuyến.",
         "historical_capability": "snapshot",
         "population_definition": "Toàn bộ bản ghi của đối tượng",
         "recommended_uses": [
           "overview",
           "comparison",
           "snapshot"
+        ],
+        "business_definition": "Trung bình trường điểm đánh giá hiện tại của shipper; chưa có cỡ mẫu đánh giá và lịch sử từng chuyến.",
+        "aggregation_behavior": "Trung bình theo công thức danh mục; không lấy trung bình của các trung bình nhóm.",
+        "additivity_by_dimension": {
+          "disjoint_groups": false,
+          "overlapping_groups": false,
+          "across_time": false,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "driver_snapshot"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Không cộng kết quả các nhóm; cần tính lại trên quần thể gốc.",
+          "Không áp bộ lọc kỳ lịch sử hoặc suy ra xu hướng từ dữ liệu hiện trạng."
         ]
       },
       "stock_quantity": {
@@ -3385,13 +3660,29 @@
         "description": "Số lượng tồn kho ở mức store_product_snapshot; đơn vị đơn vị.",
         "quality_direction": "contextual",
         "aggregation_semantics": "sum",
-        "business_meaning": "Tồn hiện tại; cộng các vị trí trong cùng lần quan sát, không cộng xuyên thời gian.",
+        "business_meaning": "Tổng số lượng tồn hiện tại của các vị trí sản phẩm tại điểm bán; chưa có lịch sử biến động tồn.",
         "historical_capability": "snapshot",
         "population_definition": "Toàn bộ bản ghi của đối tượng",
         "recommended_uses": [
           "overview",
           "comparison",
           "snapshot"
+        ],
+        "business_definition": "Tổng số lượng tồn hiện tại của các vị trí sản phẩm tại điểm bán; chưa có lịch sử biến động tồn.",
+        "aggregation_behavior": "Tổng trên các bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": false,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "store_product_snapshot"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Không áp bộ lọc kỳ lịch sử hoặc suy ra xu hướng từ dữ liệu hiện trạng.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "low_stock_count": {
@@ -3416,13 +3707,28 @@
         "description": "Số món dưới định mức ở mức store_product_snapshot; đơn vị lượt.",
         "quality_direction": "lower_better",
         "aggregation_semantics": "conditional_count",
-        "business_meaning": "Số món dưới định mức ở mức store_product_snapshot; đơn vị lượt.",
+        "business_meaning": "Đếm vị trí tồn có số lượng nhỏ hơn hoặc bằng mức cảnh báo; không phải tỷ lệ thiếu hàng hoặc số đơn mất bán.",
         "historical_capability": "snapshot",
         "population_definition": "Toàn bộ bản ghi của đối tượng",
         "recommended_uses": [
           "overview",
           "comparison",
           "snapshot"
+        ],
+        "business_definition": "Đếm vị trí tồn có số lượng nhỏ hơn hoặc bằng mức cảnh báo; không phải tỷ lệ thiếu hàng hoặc số đơn mất bán.",
+        "aggregation_behavior": "Đếm bản ghi thỏa điều kiện danh mục.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": false,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "store_product_snapshot"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Không áp bộ lọc kỳ lịch sử hoặc suy ra xu hướng từ dữ liệu hiện trạng."
         ]
       },
       "avg_product_rating": {
@@ -3448,13 +3754,28 @@
         "description": "Điểm đánh giá trung bình ở mức review; đơn vị điểm.",
         "quality_direction": "higher_better",
         "aggregation_semantics": "average",
-        "business_meaning": "Điểm đánh giá trung bình ở mức review; đơn vị điểm.",
+        "business_meaning": "Trung bình số sao đánh giá sản phẩm, làm tròn hai chữ số; đọc cùng số lượt đánh giá, không cộng trung bình nhóm.",
         "historical_capability": "historical",
         "population_definition": "Toàn bộ bản ghi của đối tượng",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Trung bình số sao đánh giá sản phẩm, làm tròn hai chữ số; đọc cùng số lượt đánh giá, không cộng trung bình nhóm.",
+        "aggregation_behavior": "Trung bình theo công thức danh mục; không lấy trung bình của các trung bình nhóm.",
+        "additivity_by_dimension": {
+          "disjoint_groups": false,
+          "overlapping_groups": false,
+          "across_time": false,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "review"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Không cộng kết quả các nhóm; cần tính lại trên quần thể gốc."
         ]
       },
       "review_count": {
@@ -3480,13 +3801,28 @@
         "description": "Số lượt đánh giá ở mức review; đơn vị lượt.",
         "quality_direction": "contextual",
         "aggregation_semantics": "count",
-        "business_meaning": "Số lượt đánh giá ở mức review; đơn vị lượt.",
+        "business_meaning": "Đếm bản ghi đánh giá sản phẩm theo ngày tạo đánh giá; không phải số người đánh giá duy nhất.",
         "historical_capability": "historical",
         "population_definition": "Toàn bộ bản ghi của đối tượng",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Đếm bản ghi đánh giá sản phẩm theo ngày tạo đánh giá; không phải số người đánh giá duy nhất.",
+        "aggregation_behavior": "Số bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "review"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "avg_store_rating": {
@@ -3512,13 +3848,28 @@
         "description": "Điểm phục vụ trung bình ở mức review; đơn vị điểm.",
         "quality_direction": "higher_better",
         "aggregation_semantics": "average",
-        "business_meaning": "Điểm phục vụ trung bình ở mức review; đơn vị điểm.",
+        "business_meaning": "Trung bình số sao đánh giá chi nhánh, làm tròn hai chữ số; đọc cùng cỡ mẫu đánh giá, không cộng trung bình nhóm.",
         "historical_capability": "historical",
         "population_definition": "Toàn bộ bản ghi của đối tượng",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Trung bình số sao đánh giá chi nhánh, làm tròn hai chữ số; đọc cùng cỡ mẫu đánh giá, không cộng trung bình nhóm.",
+        "aggregation_behavior": "Trung bình theo công thức danh mục; không lấy trung bình của các trung bình nhóm.",
+        "additivity_by_dimension": {
+          "disjoint_groups": false,
+          "overlapping_groups": false,
+          "across_time": false,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "review"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Không cộng kết quả các nhóm; cần tính lại trên quần thể gốc."
         ]
       },
       "store_review_count": {
@@ -3543,13 +3894,28 @@
         "description": "Số lượt đánh giá quán ở mức review; đơn vị lượt.",
         "quality_direction": "contextual",
         "aggregation_semantics": "count",
-        "business_meaning": "Số lượt đánh giá quán ở mức review; đơn vị lượt.",
+        "business_meaning": "Đếm bản ghi đánh giá chi nhánh theo ngày tạo đánh giá; không phải số khách duy nhất.",
         "historical_capability": "historical",
         "population_definition": "Toàn bộ bản ghi của đối tượng",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Đếm bản ghi đánh giá chi nhánh theo ngày tạo đánh giá; không phải số khách duy nhất.",
+        "aggregation_behavior": "Số bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "review"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "shift_count": {
@@ -3574,13 +3940,28 @@
         "description": "Tổng số ca làm ở mức shift; đơn vị lượt.",
         "quality_direction": "contextual",
         "aggregation_semantics": "count",
-        "business_meaning": "Tổng số ca làm ở mức shift; đơn vị lượt.",
+        "business_meaning": "Đếm bản ghi ca nhân viên theo ngày làm việc; không phải số nhân viên duy nhất hoặc giờ công.",
         "historical_capability": "historical",
         "population_definition": "Toàn bộ bản ghi của đối tượng",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Đếm bản ghi ca nhân viên theo ngày làm việc; không phải số nhân viên duy nhất hoặc giờ công.",
+        "aggregation_behavior": "Số bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "shift"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "late_count": {
@@ -3605,13 +3986,27 @@
         "description": "Số ca đi trễ ở mức shift; đơn vị lượt.",
         "quality_direction": "lower_better",
         "aggregation_semantics": "conditional_count",
-        "business_meaning": "Số ca đi trễ ở mức shift; đơn vị lượt.",
+        "business_meaning": "Đếm ca có trạng thái chấm công DI_TRE theo ngày làm việc; chưa chuẩn hóa theo tổng ca nên không gọi là tỷ lệ đi trễ.",
         "historical_capability": "historical",
         "population_definition": "Toàn bộ bản ghi của đối tượng",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Đếm ca có trạng thái chấm công DI_TRE theo ngày làm việc; chưa chuẩn hóa theo tổng ca nên không gọi là tỷ lệ đi trễ.",
+        "aggregation_behavior": "Đếm bản ghi thỏa điều kiện danh mục.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "shift"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả."
         ]
       },
       "total_cash_difference": {
@@ -3637,13 +4032,28 @@
         "description": "Tổng tiền chênh lệch ở mức cash_shift; đơn vị VND.",
         "quality_direction": "contextual",
         "aggregation_semantics": "sum",
-        "business_meaning": "Tổng tiền chênh lệch ở mức cash_shift; đơn vị VND.",
+        "business_meaning": "Tổng chênh lệch tiền mặt có dấu theo ngày tạo ca đối soát; số âm và dương có thể bù nhau, không phải tổng độ lệch tuyệt đối.",
         "historical_capability": "historical",
         "population_definition": "Toàn bộ bản ghi của đối tượng",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Tổng chênh lệch tiền mặt có dấu theo ngày tạo ca đối soát; số âm và dương có thể bù nhau, không phải tổng độ lệch tuyệt đối.",
+        "aggregation_behavior": "Tổng trên các bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "cash_shift"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "system_cash_revenue": {
@@ -3668,13 +4078,28 @@
         "description": "Doanh thu tiền mặt hệ thống ở mức cash_shift; đơn vị VND.",
         "quality_direction": "contextual",
         "aggregation_semantics": "sum",
-        "business_meaning": "Doanh thu tiền mặt hệ thống ở mức cash_shift; đơn vị VND.",
+        "business_meaning": "Tổng trường tiền mặt hệ thống theo ngày tạo ca đối soát; khác quần thể doanh thu đơn hàng.",
         "historical_capability": "historical",
         "population_definition": "Toàn bộ bản ghi của đối tượng",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Tổng trường tiền mặt hệ thống theo ngày tạo ca đối soát; khác quần thể doanh thu đơn hàng.",
+        "aggregation_behavior": "Tổng trên các bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "cash_shift"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "reconciled_shifts": {
@@ -3699,13 +4124,28 @@
         "description": "Số ca đã đối soát ở mức cash_shift; đơn vị lượt.",
         "quality_direction": "contextual",
         "aggregation_semantics": "count",
-        "business_meaning": "Số ca đã đối soát ở mức cash_shift; đơn vị lượt.",
+        "business_meaning": "Đếm ca đối soát theo ngày tạo ca, không suy ra tất cả ca đã được phê duyệt.",
         "historical_capability": "historical",
         "population_definition": "Toàn bộ bản ghi của đối tượng",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Đếm ca đối soát theo ngày tạo ca, không suy ra tất cả ca đã được phê duyệt.",
+        "aggregation_behavior": "Số bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "cash_shift"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "survey_response_count": {
@@ -3731,13 +4171,28 @@
         "description": "Số lượt phản hồi khảo sát ở mức survey_response; đơn vị lượt.",
         "quality_direction": "contextual",
         "aggregation_semantics": "count",
-        "business_meaning": "Số lượt phản hồi khảo sát ở mức survey_response; đơn vị lượt.",
+        "business_meaning": "Đếm phản hồi khảo sát theo ngày tạo, chưa có mẫu số người được mời nên không tính tỷ lệ phản hồi.",
         "historical_capability": "historical",
         "population_definition": "Toàn bộ bản ghi của đối tượng",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Đếm phản hồi khảo sát theo ngày tạo, chưa có mẫu số người được mời nên không tính tỷ lệ phản hồi.",
+        "aggregation_behavior": "Số bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "survey_response"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "favorite_count": {
@@ -3763,13 +4218,28 @@
         "description": "Số lượt thả tim yêu thích ở mức favorite; đơn vị lượt.",
         "quality_direction": "contextual",
         "aggregation_semantics": "count",
-        "business_meaning": "Số lượt thả tim yêu thích ở mức favorite; đơn vị lượt.",
+        "business_meaning": "Đếm bản ghi yêu thích sản phẩm theo ngày tạo; thể hiện quan tâm, không phải mua hàng hoặc chuyển đổi.",
         "historical_capability": "historical",
         "population_definition": "Toàn bộ bản ghi của đối tượng",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Đếm bản ghi yêu thích sản phẩm theo ngày tạo; thể hiện quan tâm, không phải mua hàng hoặc chuyển đổi.",
+        "aggregation_behavior": "Số bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "favorite"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "hourly_orders": {
@@ -3794,13 +4264,28 @@
         "description": "Số đơn theo giờ ở mức order; đơn vị đơn.",
         "quality_direction": "contextual",
         "aggregation_semantics": "count",
-        "business_meaning": "Số đơn theo giờ ở mức order; đơn vị đơn.",
+        "business_meaning": "Đếm mọi đơn theo giờ của ngày tạo đơn, gồm cả đơn hủy; chưa chuẩn hóa theo số ngày quan sát.",
         "historical_capability": "historical",
         "population_definition": "Toàn bộ bản ghi của đối tượng",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Đếm mọi đơn theo giờ của ngày tạo đơn, gồm cả đơn hủy; chưa chuẩn hóa theo số ngày quan sát.",
+        "aggregation_behavior": "Số bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "order"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       },
       "purchasing_customer_count": {
@@ -3834,13 +4319,29 @@
         "description": "Số khách khác nhau đã mua trong phạm vi đơn hoàn thành/đang giao và kỳ được chọn; không phải tổng khách đăng ký. Không cộng số khách giữa các tháng/chi nhánh.",
         "quality_direction": "contextual",
         "aggregation_semantics": "distinct_count",
-        "business_meaning": "Số khách khác nhau đã mua trong phạm vi đơn hoàn thành/đang giao và kỳ được chọn; không phải tổng khách đăng ký. Không cộng số khách giữa các tháng/chi nhánh.",
+        "business_meaning": "Đếm người dùng duy nhất có đơn HOAN_THANH/DANG_GIAO trong phạm vi; cùng khách có thể mua ở nhiều điểm bán, không cộng khách giữa nhóm.",
         "historical_capability": "historical",
         "population_definition": "Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']",
         "recommended_uses": [
           "overview",
           "comparison",
           "trend"
+        ],
+        "business_definition": "Đếm người dùng duy nhất có đơn HOAN_THANH/DANG_GIAO trong phạm vi; cùng khách có thể mua ở nhiều điểm bán, không cộng khách giữa nhóm.",
+        "aggregation_behavior": "Đếm định danh duy nhất trong từng phạm vi; các nhóm có thể giao nhau.",
+        "additivity_by_dimension": {
+          "disjoint_groups": false,
+          "overlapping_groups": false,
+          "across_time": false,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "order"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Không cộng kết quả các nhóm; cần tính lại trên quần thể gốc.",
+          "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
         ]
       }
     },
@@ -3859,7 +4360,17 @@
           "mode": "lookup",
           "max_candidates": 8
         },
-        "scope_selectable": true
+        "scope_selectable": true,
+        "business_meaning": "Sản phẩm",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [
+          [
+            "category",
+            "product"
+          ]
+        ],
+        "cardinality_hint": "unknown_until_result"
       },
       "product_id": {
         "table": "silver.san_pham",
@@ -3873,7 +4384,12 @@
         "value_grounding": {
           "mode": "lookup",
           "max_candidates": 8
-        }
+        },
+        "business_meaning": "Mã sản phẩm",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
       },
       "category": {
         "table": "silver.danh_muc",
@@ -3888,7 +4404,17 @@
           "mode": "lookup",
           "max_candidates": 8
         },
-        "scope_selectable": true
+        "scope_selectable": true,
+        "business_meaning": "Danh mục",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [
+          [
+            "category",
+            "product"
+          ]
+        ],
+        "cardinality_hint": "unknown_until_result"
       },
       "store": {
         "table": "silver.chi_nhanh",
@@ -3904,7 +4430,17 @@
           "mode": "lookup",
           "max_candidates": 8
         },
-        "scope_selectable": true
+        "scope_selectable": true,
+        "business_meaning": "Chi nhánh",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [
+          [
+            "city",
+            "store"
+          ]
+        ],
+        "cardinality_hint": "unknown_until_result"
       },
       "store_id": {
         "table": "silver.chi_nhanh",
@@ -3919,7 +4455,12 @@
           "mode": "lookup",
           "max_candidates": 8
         },
-        "scope_selectable": true
+        "scope_selectable": true,
+        "business_meaning": "Mã chi nhánh",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
       },
       "city": {
         "table": "silver.chi_nhanh",
@@ -4004,7 +4545,17 @@
           "mode": "enum",
           "max_candidates": 32
         },
-        "scope_selectable": true
+        "scope_selectable": true,
+        "business_meaning": "Thành phố",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [
+          [
+            "city",
+            "store"
+          ]
+        ],
+        "cardinality_hint": "enumerated"
       },
       "customer_id": {
         "table": "silver.nguoi_dung",
@@ -4018,7 +4569,12 @@
         "value_grounding": {
           "mode": "lookup",
           "max_candidates": 8
-        }
+        },
+        "business_meaning": "Mã khách hàng",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
       },
       "customer_role": {
         "table": "silver.nguoi_dung",
@@ -4033,7 +4589,12 @@
           "mode": "lookup",
           "max_candidates": 8
         },
-        "scope_selectable": true
+        "scope_selectable": true,
+        "business_meaning": "Vai trò",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
       },
       "loyalty_points": {
         "table": "silver.nguoi_dung",
@@ -4047,7 +4608,12 @@
         "value_grounding": {
           "mode": "literal",
           "max_candidates": 8
-        }
+        },
+        "business_meaning": "Điểm thành viên",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
       },
       "lifetime_spend": {
         "table": "silver.nguoi_dung",
@@ -4061,7 +4627,12 @@
         "value_grounding": {
           "mode": "literal",
           "max_candidates": 8
-        }
+        },
+        "business_meaning": "Chi tiêu tích lũy",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
       },
       "order_id": {
         "table": "silver.don_hang",
@@ -4075,7 +4646,12 @@
         "value_grounding": {
           "mode": "lookup",
           "max_candidates": 8
-        }
+        },
+        "business_meaning": "Mã đơn",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
       },
       "order_status": {
         "table": "silver.don_hang",
@@ -4105,7 +4681,12 @@
         "value_grounding": {
           "mode": "enum",
           "max_candidates": 32
-        }
+        },
+        "business_meaning": "Trạng thái đơn",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "enumerated"
       },
       "payment_method": {
         "table": "silver.don_hang",
@@ -4129,7 +4710,12 @@
           "mode": "enum",
           "max_candidates": 32
         },
-        "scope_selectable": true
+        "scope_selectable": true,
+        "business_meaning": "Phương thức thanh toán",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "enumerated"
       },
       "payment_status": {
         "table": "silver.don_hang",
@@ -4143,7 +4729,12 @@
         "value_grounding": {
           "mode": "lookup",
           "max_candidates": 8
-        }
+        },
+        "business_meaning": "Trạng thái thanh toán",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
       },
       "order_amount": {
         "table": "silver.don_hang",
@@ -4157,7 +4748,12 @@
         "value_grounding": {
           "mode": "literal",
           "max_candidates": 8
-        }
+        },
+        "business_meaning": "Giá trị đơn",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
       },
       "order_created": {
         "table": "silver.don_hang",
@@ -4171,7 +4767,12 @@
         "value_grounding": {
           "mode": "lookup",
           "max_candidates": 8
-        }
+        },
+        "business_meaning": "Ngày tạo đơn",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
       },
       "promotion": {
         "table": "silver.khuyen_mai",
@@ -4186,7 +4787,12 @@
           "mode": "lookup",
           "max_candidates": 8
         },
-        "scope_selectable": true
+        "scope_selectable": true,
+        "business_meaning": "Khuyến mãi",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
       },
       "promotion_id": {
         "table": "silver.don_hang",
@@ -4200,7 +4806,12 @@
         "value_grounding": {
           "mode": "lookup",
           "max_candidates": 8
-        }
+        },
+        "business_meaning": "Mã khuyến mãi",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
       },
       "payment_gateway": {
         "table": "silver.giao_dich_thanh_toan",
@@ -4215,7 +4826,12 @@
           "mode": "lookup",
           "max_candidates": 8
         },
-        "scope_selectable": true
+        "scope_selectable": true,
+        "business_meaning": "Cổng thanh toán",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
       },
       "driver_id": {
         "table": "silver.shipper",
@@ -4230,7 +4846,12 @@
           "mode": "lookup",
           "max_candidates": 8
         },
-        "scope_selectable": true
+        "scope_selectable": true,
+        "business_meaning": "Mã người giao",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
       },
       "shift_name": {
         "table": "silver.ca_lam_viec_nhan_vien",
@@ -4244,7 +4865,12 @@
         "value_grounding": {
           "mode": "lookup",
           "max_candidates": 8
-        }
+        },
+        "business_meaning": "Ca làm",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
       },
       "attendance_status": {
         "table": "silver.ca_lam_viec_nhan_vien",
@@ -4265,7 +4891,12 @@
         "value_grounding": {
           "mode": "enum",
           "max_candidates": 32
-        }
+        },
+        "business_meaning": "Trạng thái chấm công",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "enumerated"
       },
       "stock_quantity_detail": {
         "table": "silver.ton_kho_san_pham",
@@ -4279,7 +4910,12 @@
         "value_grounding": {
           "mode": "literal",
           "max_candidates": 8
-        }
+        },
+        "business_meaning": "Số lượng tồn",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
       },
       "warning_threshold": {
         "table": "silver.ton_kho_san_pham",
@@ -4293,7 +4929,12 @@
         "value_grounding": {
           "mode": "literal",
           "max_candidates": 8
-        }
+        },
+        "business_meaning": "Mức cảnh báo",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
       },
       "hour": {
         "table": "silver.don_hang",
@@ -4307,7 +4948,12 @@
         "value_grounding": {
           "mode": "lookup",
           "max_candidates": 8
-        }
+        },
+        "business_meaning": "Giờ",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
       },
       "order_type": {
         "table": "silver.don_hang",
@@ -4329,7 +4975,12 @@
           "mode": "enum",
           "max_candidates": 32
         },
-        "scope_selectable": true
+        "scope_selectable": true,
+        "business_meaning": "Hình thức nhận hàng",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "enumerated"
       }
     },
     "subjects": {
@@ -5280,7 +5931,11 @@
                   "payment_method",
                   "order_type"
                 ]
-              }
+              },
+              "example_intents": [
+                "Quy mô doanh thu trong phạm vi đã chọn?",
+                "Phân tích quy mô doanh thu trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "order_volume",
@@ -5373,7 +6028,11 @@
                   "order_status",
                   "order_type"
                 ]
-              }
+              },
+              "example_intents": [
+                "Lượng đơn và trạng thái trong phạm vi đã chọn?",
+                "Phân tích lượng đơn và trạng thái trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "sales_trend",
@@ -5444,7 +6103,11 @@
                   "distinct_populations"
                 ],
                 "cross_tab_grouping_refs": []
-              }
+              },
+              "example_intents": [
+                "Diễn biến bán hàng trong phạm vi đã chọn?",
+                "Phân tích diễn biến bán hàng trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "buying_customers",
@@ -5525,7 +6188,11 @@
                   "city",
                   "store"
                 ]
-              }
+              },
+              "example_intents": [
+                "Khách mua trong kỳ trong phạm vi đã chọn?",
+                "Phân tích khách mua trong kỳ trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "channel_mix",
@@ -5607,7 +6274,11 @@
                   "order_type",
                   "payment_method"
                 ]
-              }
+              },
+              "example_intents": [
+                "Cơ cấu kênh bán trong phạm vi đã chọn?",
+                "Phân tích cơ cấu kênh bán trong phạm vi đã chọn."
+              ]
             }
           ],
           "health_signals": [
@@ -5808,7 +6479,11 @@
                   "city",
                   "store"
                 ]
-              }
+              },
+              "example_intents": [
+                "Sản lượng món trong phạm vi đã chọn?",
+                "Phân tích sản lượng món trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "item_sales",
@@ -5892,7 +6567,11 @@
                   "category",
                   "store"
                 ]
-              }
+              },
+              "example_intents": [
+                "Thành tiền món trong phạm vi đã chọn?",
+                "Phân tích thành tiền món trong phạm vi đã chọn."
+              ]
             }
           ],
           "health_signals": [
@@ -6070,7 +6749,11 @@
                   "store",
                   "city"
                 ]
-              }
+              },
+              "example_intents": [
+                "Sản phẩm bán chạy trong phạm vi đã chọn?",
+                "Phân tích sản phẩm bán chạy trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "product_sales",
@@ -6160,7 +6843,11 @@
                   "store",
                   "city"
                 ]
-              }
+              },
+              "example_intents": [
+                "Doanh thu sản phẩm trong phạm vi đã chọn?",
+                "Phân tích doanh thu sản phẩm trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "product_trend",
@@ -6228,7 +6915,11 @@
                   "distinct_populations"
                 ],
                 "cross_tab_grouping_refs": []
-              }
+              },
+              "example_intents": [
+                "Diễn biến sản lượng trong phạm vi đã chọn?",
+                "Phân tích diễn biến sản lượng trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "category_mix",
@@ -6297,7 +6988,11 @@
                   "distinct_populations"
                 ],
                 "cross_tab_grouping_refs": []
-              }
+              },
+              "example_intents": [
+                "Cơ cấu danh mục trong phạm vi đã chọn?",
+                "Phân tích cơ cấu danh mục trong phạm vi đã chọn."
+              ]
             }
           ],
           "health_signals": [
@@ -6474,7 +7169,11 @@
                   "city",
                   "store"
                 ]
-              }
+              },
+              "example_intents": [
+                "Tín hiệu doanh thu chi nhánh trong phạm vi đã chọn?",
+                "Phân tích tín hiệu doanh thu chi nhánh trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "store_volume",
@@ -6558,7 +7257,11 @@
                   "city",
                   "store"
                 ]
-              }
+              },
+              "example_intents": [
+                "Lượng đơn chi nhánh trong phạm vi đã chọn?",
+                "Phân tích lượng đơn chi nhánh trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "store_trend",
@@ -6640,7 +7343,11 @@
                   "city",
                   "store"
                 ]
-              }
+              },
+              "example_intents": [
+                "Diễn biến chi nhánh trong phạm vi đã chọn?",
+                "Phân tích diễn biến chi nhánh trong phạm vi đã chọn."
+              ]
             }
           ],
           "health_signals": [
@@ -6821,7 +7528,11 @@
                   "customer_role",
                   "loyalty_points"
                 ]
-              }
+              },
+              "example_intents": [
+                "Khách đăng ký trong phạm vi đã chọn?",
+                "Phân tích khách đăng ký trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "registration_trend",
@@ -6876,7 +7587,11 @@
                   "no_causal_interpretation"
                 ],
                 "cross_tab_grouping_refs": []
-              }
+              },
+              "example_intents": [
+                "Diễn biến đăng ký trong phạm vi đã chọn?",
+                "Phân tích diễn biến đăng ký trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "spend_snapshot",
@@ -6944,7 +7659,11 @@
                   "customer_role",
                   "loyalty_points"
                 ]
-              }
+              },
+              "example_intents": [
+                "Chi tiêu tích lũy hiện tại trong phạm vi đã chọn?",
+                "Phân tích chi tiêu tích lũy hiện tại trong phạm vi đã chọn."
+              ]
             }
           ],
           "health_signals": [],
@@ -7081,7 +7800,11 @@
                   "store",
                   "city"
                 ]
-              }
+              },
+              "example_intents": [
+                "Số đơn dùng voucher trong phạm vi đã chọn?",
+                "Phân tích số đơn dùng voucher trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "voucher_revenue",
@@ -7164,7 +7887,11 @@
                   "store",
                   "city"
                 ]
-              }
+              },
+              "example_intents": [
+                "Doanh thu tập đơn voucher trong phạm vi đã chọn?",
+                "Phân tích doanh thu tập đơn voucher trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "discount_amount",
@@ -7247,7 +7974,11 @@
                   "store",
                   "city"
                 ]
-              }
+              },
+              "example_intents": [
+                "Số tiền giảm trong phạm vi đã chọn?",
+                "Phân tích số tiền giảm trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "voucher_trend",
@@ -7313,7 +8044,11 @@
                   "distinct_populations"
                 ],
                 "cross_tab_grouping_refs": []
-              }
+              },
+              "example_intents": [
+                "Diễn biến sử dụng voucher trong phạm vi đã chọn?",
+                "Phân tích diễn biến sử dụng voucher trong phạm vi đã chọn."
+              ]
             }
           ],
           "health_signals": [
@@ -7480,7 +8215,11 @@
                   "payment_gateway",
                   "payment_status"
                 ]
-              }
+              },
+              "example_intents": [
+                "Cơ cấu giao dịch trong phạm vi đã chọn?",
+                "Phân tích cơ cấu giao dịch trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "payment_value",
@@ -7556,7 +8295,11 @@
                   "payment_gateway",
                   "payment_status"
                 ]
-              }
+              },
+              "example_intents": [
+                "Giá trị giao dịch trong phạm vi đã chọn?",
+                "Phân tích giá trị giao dịch trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "payment_trend",
@@ -7624,7 +8367,11 @@
                   "distinct_populations"
                 ],
                 "cross_tab_grouping_refs": []
-              }
+              },
+              "example_intents": [
+                "Diễn biến thanh toán trong phạm vi đã chọn?",
+                "Phân tích diễn biến thanh toán trong phạm vi đã chọn."
+              ]
             }
           ],
           "health_signals": [
@@ -7756,7 +8503,11 @@
                   "sample_size_required"
                 ],
                 "cross_tab_grouping_refs": []
-              }
+              },
+              "example_intents": [
+                "Tổng chuyến hiện tại trong phạm vi đã chọn?",
+                "Phân tích tổng chuyến hiện tại trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "shipper_rating",
@@ -7816,7 +8567,11 @@
                   "sample_size_required"
                 ],
                 "cross_tab_grouping_refs": []
-              }
+              },
+              "example_intents": [
+                "Điểm shipper hiện tại trong phạm vi đã chọn?",
+                "Phân tích điểm shipper hiện tại trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "shipper_relationship",
@@ -7880,7 +8635,11 @@
                   "sample_size_required"
                 ],
                 "cross_tab_grouping_refs": []
-              }
+              },
+              "example_intents": [
+                "Liên hệ chuyến và điểm trong phạm vi đã chọn?",
+                "Phân tích liên hệ chuyến và điểm trong phạm vi đã chọn."
+              ]
             }
           ],
           "health_signals": [
@@ -8036,7 +8795,11 @@
                   "category",
                   "city"
                 ]
-              }
+              },
+              "example_intents": [
+                "Vị trí tồn trong phạm vi đã chọn?",
+                "Phân tích vị trí tồn trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "inventory_alerts",
@@ -8118,7 +8881,11 @@
                   "category",
                   "city"
                 ]
-              }
+              },
+              "example_intents": [
+                "Dưới định mức trong phạm vi đã chọn?",
+                "Phân tích dưới định mức trong phạm vi đã chọn."
+              ]
             }
           ],
           "health_signals": [
@@ -8280,7 +9047,11 @@
                   "product",
                   "category"
                 ]
-              }
+              },
+              "example_intents": [
+                "Phản hồi sản phẩm trong phạm vi đã chọn?",
+                "Phân tích phản hồi sản phẩm trong phạm vi đã chọn."
+              ]
             }
           ],
           "health_signals": [
@@ -8436,7 +9207,11 @@
                   "store",
                   "city"
                 ]
-              }
+              },
+              "example_intents": [
+                "Phản hồi chi nhánh trong phạm vi đã chọn?",
+                "Phân tích phản hồi chi nhánh trong phạm vi đã chọn."
+              ]
             }
           ],
           "health_signals": [
@@ -8596,7 +9371,11 @@
                   "store",
                   "city"
                 ]
-              }
+              },
+              "example_intents": [
+                "Quy mô ca làm trong phạm vi đã chọn?",
+                "Phân tích quy mô ca làm trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "attendance",
@@ -8677,7 +9456,11 @@
                   "attendance_status",
                   "store"
                 ]
-              }
+              },
+              "example_intents": [
+                "Chấm công trong phạm vi đã chọn?",
+                "Phân tích chấm công trong phạm vi đã chọn."
+              ]
             }
           ],
           "health_signals": [
@@ -8831,7 +9614,11 @@
                   "store",
                   "city"
                 ]
-              }
+              },
+              "example_intents": [
+                "Chênh lệch tiền có dấu trong phạm vi đã chọn?",
+                "Phân tích chênh lệch tiền có dấu trong phạm vi đã chọn."
+              ]
             },
             {
               "id": "cash_activity",
@@ -8909,7 +9696,11 @@
                   "store",
                   "city"
                 ]
-              }
+              },
+              "example_intents": [
+                "Quy mô đối soát trong phạm vi đã chọn?",
+                "Phân tích quy mô đối soát trong phạm vi đã chọn."
+              ]
             }
           ],
           "health_signals": [
@@ -9069,7 +9860,11 @@
                   "store",
                   "city"
                 ]
-              }
+              },
+              "example_intents": [
+                "Lượng phản hồi trong phạm vi đã chọn?",
+                "Phân tích lượng phản hồi trong phạm vi đã chọn."
+              ]
             }
           ],
           "health_signals": [
@@ -9208,7 +10003,11 @@
                   "product",
                   "category"
                 ]
-              }
+              },
+              "example_intents": [
+                "Quan tâm sản phẩm trong phạm vi đã chọn?",
+                "Phân tích quan tâm sản phẩm trong phạm vi đã chọn."
+              ]
             }
           ],
           "health_signals": [
@@ -9355,7 +10154,11 @@
                   "store",
                   "city"
                 ]
-              }
+              },
+              "example_intents": [
+                "Lưu lượng theo giờ trong phạm vi đã chọn?",
+                "Phân tích lưu lượng theo giờ trong phạm vi đã chọn."
+              ]
             }
           ],
           "health_signals": [
@@ -9415,7 +10218,324 @@
         "non_additive": "Không cộng số khách khác nhau hoặc các giá trị trung bình giữa các nhóm để suy ra tổng.",
         "distinct_populations": "Các chỉ số có thể dùng điều kiện dân số khác nhau; cần đối chiếu định nghĩa từng chỉ số.",
         "no_causal_interpretation": "Liên hệ quan sát và chênh lệch nhóm chưa xác định nguyên nhân."
-      }
+      },
+      "business_relationships": [
+        {
+          "from_domain": "orders",
+          "to_domain": "stores",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "orders",
+          "to_domain": "products",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "orders",
+          "to_domain": "order_items",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "orders",
+          "to_domain": "promotions",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "orders",
+          "to_domain": "hourly",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "orders",
+          "to_domain": "payments",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "order_items",
+          "to_domain": "products",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "order_items",
+          "to_domain": "orders",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "order_items",
+          "to_domain": "stores",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "products",
+          "to_domain": "order_items",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "products",
+          "to_domain": "product_reviews",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "products",
+          "to_domain": "wishlist_favorites",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "products",
+          "to_domain": "inventory",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "stores",
+          "to_domain": "orders",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "stores",
+          "to_domain": "products",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "stores",
+          "to_domain": "promotions",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "stores",
+          "to_domain": "store_reviews",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "stores",
+          "to_domain": "inventory",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "stores",
+          "to_domain": "staff_shifts",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "stores",
+          "to_domain": "customer_surveys",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "stores",
+          "to_domain": "cashier_reconciliation",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "customers",
+          "to_domain": "orders",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "promotions",
+          "to_domain": "orders",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "promotions",
+          "to_domain": "stores",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "payments",
+          "to_domain": "orders",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "inventory",
+          "to_domain": "products",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "inventory",
+          "to_domain": "stores",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "product_reviews",
+          "to_domain": "products",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "store_reviews",
+          "to_domain": "stores",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "staff_shifts",
+          "to_domain": "stores",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "cashier_reconciliation",
+          "to_domain": "stores",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "customer_surveys",
+          "to_domain": "stores",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "wishlist_favorites",
+          "to_domain": "products",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "hourly",
+          "to_domain": "orders",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        },
+        {
+          "from_domain": "hourly",
+          "to_domain": "stores",
+          "population_relation": "related",
+          "meaning": "Nguồn liên quan có quần thể và định nghĩa riêng; chỉ nối nghĩa qua đường liên kết đã kiểm tra.",
+          "invalid_uses": [
+            "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
+          ]
+        }
+      ]
     }
   }
 }

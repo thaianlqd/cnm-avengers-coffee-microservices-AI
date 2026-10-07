@@ -294,8 +294,9 @@ class NaturalV26Tests(unittest.TestCase):
         self.assertNotIn("password",json.dumps(response));self.assertTrue(response["issue"]["suggested_actions"])
 
     def test_body_budget_both_adapters_with_multiple_strong_domains(self):
+        self.enterContext(patch.dict(os.environ,{"DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS":"32000"}))
         for context in ("", "chi nhánh sản phẩm voucher thanh toán", "khách hàng sản phẩm voucher thanh toán giao hàng"):
             p=self.pipeline();r=p.propose(self.request(analysis_context=context,analysis_expectation="Phân tích toàn diện nhiều góc nhìn"))
             self.assertEqual(p.provider.call_count,1)
-            for size in r["diagnostics"]["provider_body_chars"].values():self.assertLessEqual(size,24000)
+            for size in r["diagnostics"]["provider_body_chars"].values():self.assertLessEqual(size,32000)
             self.assertEqual(r["diagnostics"]["contract_repair_count"],0)

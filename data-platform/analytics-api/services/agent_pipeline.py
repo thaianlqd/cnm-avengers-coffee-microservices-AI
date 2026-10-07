@@ -59,7 +59,7 @@ class AnalysisPipeline:
 
     def diagnostics(self, catalog, validation=None):
         return {
-            "pipeline_version": "2.6" if self.planning_mode == "one_shot" else "2.3",
+            "pipeline_version": "2.7" if self.planning_mode == "one_shot" else "2.3",
             "schema_fingerprint": catalog.fingerprint,
             **deepcopy(self.semantic_info),
             "provider_call_count": self.semantic_info.get("provider_call_count", len(self.calls)),
@@ -366,8 +366,11 @@ class AnalysisPipeline:
         session.proposed_prompt = request.prompt
         session.proposed_request = self.request_signature(request)
         self.save_meaning(session, artifacts, catalog, reference, plan)
+        session.analysis_components = deepcopy(self.semantic_info.get("analysis_components", []))
+        session.coverage_origin = self.semantic_info.get("coverage_origin", "execution_only")
+        session.partial_scope = any(c["requested_or_supporting"] == "requested" and c["status"] != "planned" for c in session.analysis_components)
         meaning = self.interpretation(artifacts)
-        proposal = {
+        proposal = {"analysis_components": session.analysis_components, "partial_scope": session.partial_scope,
             "title": meaning["subject"],
             "summary_intent": "Kiểm tra từng phần, chỉ số, bộ lọc và thời gian trước khi tạo báo cáo.",
             "interpretation": meaning,
@@ -411,6 +414,7 @@ class AnalysisPipeline:
         }
         response = {
             "status": "proposal_ready",
+            "outcome": "PARTIAL_AVAILABLE" if session.partial_scope else "SUCCESS",
             "prompt": request.prompt,
             "proposal": proposal,
             "session_id": session.session_id,
@@ -435,9 +439,13 @@ class AnalysisPipeline:
                     raise AnalysisError("session", "Request changed after proposal")
                 if session.schema_fingerprint != catalog.fingerprint:
                     raise AnalysisError("schema_changed", "Refresh proposal")
+                if session.partial_scope and not request.accept_partial_scope:
+                    raise AnalysisError("approval_required", "Reduced requested scope needs explicit approval")
+                self.semantic_info.update(analysis_components=deepcopy(session.analysis_components), coverage_origin=session.coverage_origin)
                 reference = date.fromisoformat(session.agent_reference_date)
                 agent = self.agent(catalog, reference, previous=session.agent_artifacts,
                     known_concepts=session.agent_state.get("resolved_concepts", []))
+                self.semantic_info.update(analysis_components=deepcopy(session.analysis_components), coverage_origin=session.coverage_origin)
                 agent.queries.ui_context = deepcopy(session.ui_constraints)
                 self.semantic_info.update(analysis_depth=session.analysis_depth,
                     target_visual_count=DEPTH_POLICIES[session.analysis_depth]["target_views"][-1])
@@ -646,7 +654,7 @@ class AnalysisPipeline:
             "completion_status": (
                 "partial" if self.semantic_info.get("limitations") else "complete"
             ),
-            "pipeline_version": "2.6" if self.planning_mode == "one_shot" else "2.3",
+            "pipeline_version": "2.7" if self.planning_mode == "one_shot" else "2.3",
             "prompt": session.original_prompt,
             "module_provenance": session.module_provenance,
             "analysis_breadth": self.semantic_info.get("analysis_depth", session.analysis_depth),
@@ -720,6 +728,31 @@ class AnalysisPipeline:
                 },
             ),
         }
+        from services.analysis_quality_service import assess_report, report_limitations
+        from services.analysis_coverage_service import canonical_components
+        declared = self.semantic_info.get("analysis_components") or (session.analysis_components if session.coverage_origin == "declared" else [])
+        components, origin = canonical_components(declared, artifacts, DomainIntelligence(catalog))
+        origin = self.semantic_info.get("coverage_origin", session.coverage_origin) if declared else origin
+        session.analysis_components, session.coverage_origin = components, origin
+        response["analysis_components"] = components
+        response["quality_context"] = {"version": "2.7", "catalog_fingerprint": catalog.fingerprint,
+            "coverage_origin": origin, "ui_constraints": session.ui_constraints,
+            "reference_date": reference.isoformat(), "limitations": deepcopy(self.semantic_info.get("limitations", [])),
+            "partial_scope_approved": session.partial_scope}
+        safe_plan = plan.model_dump(mode="json")
+        by_evidence = {e["id"]: e for e in evidence}
+        safe_plan["claims"] = [c for c in safe_plan["claims"] if c["evidence_id"] in by_evidence
+            and (c["metric"], c["scope_ref"], c["claim_type"]) == tuple(by_evidence[c["evidence_id"]][k] for k in ("metric", "scope_ref", "claim_type"))
+            and (c.get("text") is None or c["text"] == by_evidence[c["evidence_id"]]["statement"])]
+        safe_plan["recommendations"] = [c for c in safe_plan["recommendations"] if any(r["evidence_id"] == c["evidence_id"] and r["action"] == c["action"] for r in narrative["recommendations"])]
+        response["dashboard_plan_input"] = safe_plan
+        response["quality_limitations"] = report_limitations(artifacts, response["charts"], catalog, response["quality_context"]["limitations"])
+        response["outcome"] = "PARTIAL_AVAILABLE" if any(c["requested_or_supporting"] == "requested" and c["status"] != "planned" for c in components) else "SUCCESS"
+        if response["outcome"] == "PARTIAL_AVAILABLE":
+            response["completion_status"] = "partial"
+        started_quality = time.perf_counter()
+        response["quality_assessment"] = assess_report(response, catalog, artifacts=artifacts)
+        response["diagnostics"]["quality_score_compute_ms"] = round((time.perf_counter() - started_quality) * 1000, 2)
         self.save_meaning(session, artifacts, catalog, reference, plan)
         session.last_result_contract = response["result_contracts"]
         session.approved = True

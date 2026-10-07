@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AnalysisQualityScore } from './AnalysisQualityScore';
 import { AnalystChart } from './Charts';
 import { chartAccent, conciseChartTitle, dashboardCharts, dashboardHighlights, dashboardFindings, initialChartType, chartExplanation } from '../utils/analystDashboardLayout.mjs';
 import { formatChartValue } from '../utils/aiChartConfig.mjs';
@@ -59,6 +60,7 @@ export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChar
     <div className="flex flex-wrap gap-2 items-center justify-between"><h3 className="text-sm font-semibold text-slate-900">Các góc nhìn phân tích</h3><span className="text-xs text-slate-400">{selected.charts.length} biểu đồ{selected.duplicateCount ? ` · ${selected.duplicateCount} góc nhìn trùng đã gộp` : ''}</span></div>
     <AnalystViews charts={showAll ? selected.charts : selected.charts.slice(0, 8)} compact editing={editing} onChartTypeChange={onChartTypeChange} />
     {selected.charts.length > 8 && <button onClick={() => setShowAll(!showAll)} className="w-full rounded-xl border border-slate-200 py-3 text-xs text-slate-600 hover:bg-white">{showAll ? 'Thu gọn biểu đồ' : `Xem thêm ${selected.charts.length - 8} biểu đồ`}</button>}
+    <AnalysisQualityScore assessment={report.quality_assessment} />
     {!!results.length && <details className="rounded-2xl border border-slate-200 bg-white p-4"><summary className="cursor-pointer flex justify-between text-sm font-semibold text-slate-700">Bảng dữ liệu<span className="text-xs font-normal text-slate-400">{results.length} bảng · Mở để tra cứu</span></summary><div className="space-y-3 mt-4">{results.map(([id, data]) => <AnalystResultTable key={id} result={data} title={report.analysis_explanation?.find((op: any) => op.query_id === id)?.lens_label || report.analysis_explanation?.find((op: any) => op.query_id === id)?.subject} />)}</div></details>}
     <details className="rounded-2xl border border-slate-200 bg-white p-4"><summary className="cursor-pointer text-sm font-semibold text-slate-700">Diễn giải đầy đủ</summary><div className="text-sm text-slate-600 leading-relaxed mt-4"><p>{report.executive_summary}</p><AnalystOptionalNarrative report={report} /></div></details>
     <AnalystEvidence report={report} />

@@ -123,8 +123,8 @@ def test_turn_12_06_direct_added_quantity_in_prefix(runtime, monkeypatch):
 
     msg = "cho tôi mua nước số 2 và bánh số 3 2 cái đi bạn"
     drinks = [
-        {"product_id": "201", "product_name": "Frappe Choco Chip", "category": "Frappe"},
-        {"product_id": "202", "product_name": "Frappe Matcha Tây Bắc", "category": "Frappe",
+        {"product_id": "201", "product_name": "Frappe Choco Chip", "category": "Frappe", "parent_category": "Đồ uống"},
+        {"product_id": "202", "product_name": "Frappe Matcha Tây Bắc", "category": "Frappe", "parent_category": "Đồ uống",
          "option_schema": [
              {"name": "Kích thước", "values": ["Nhỏ", "Vừa", "Lớn"], "required": True},
              {"name": "Topping", "values": ["Hạt Sen", "Foam Dừa"], "multiple": True},
@@ -132,11 +132,11 @@ def test_turn_12_06_direct_added_quantity_in_prefix(runtime, monkeypatch):
          ]},
     ]
     cakes = [
-        {"product_id": "301", "product_name": "Bánh Trung Thu Cà Phê Lava", "category": "Bánh Trung Thu",
+        {"product_id": "301", "product_name": "Bánh Trung Thu Cà Phê Lava", "category": "Bánh Trung Thu", "parent_category": "Bánh & đồ ăn",
          "option_schema": [{"name": "Kích thước", "values": ["Nhỏ"], "required": False, "fixed": True}]},
-        {"product_id": "302", "product_name": "Bánh Trung Thu Đậu Xanh", "category": "Bánh Trung Thu",
+        {"product_id": "302", "product_name": "Bánh Trung Thu Đậu Xanh", "category": "Bánh Trung Thu", "parent_category": "Bánh & đồ ăn",
          "option_schema": [{"name": "Kích thước", "values": ["Nhỏ"], "required": False, "fixed": True}]},
-        {"product_id": "303", "product_name": "Bánh Trung Thu Matcha", "category": "Bánh Trung Thu",
+        {"product_id": "303", "product_name": "Bánh Trung Thu Matcha", "category": "Bánh Trung Thu", "parent_category": "Bánh & đồ ăn",
          "option_schema": [{"name": "Kích thước", "values": ["Nhỏ"], "required": False, "fixed": True}]},
     ]
     all_items = numbered_products(drinks + cakes)
@@ -144,13 +144,20 @@ def test_turn_12_06_direct_added_quantity_in_prefix(runtime, monkeypatch):
     cake_item = all_items[4]
 
     runtime.products = all_items
-    gw = gateway(runtime, msg)
+    gw = gateway(runtime, msg, filtered=False)
     gw.entry_products = all_items
     gw.entry_product_groups = {
         "drink": all_items[:2],
         "food": all_items[2:]
     }
 
+    from src.function_calling import helpers
+    from src.function_calling.tools import cart_tools
+    monkeypatch.setattr(helpers, "_require_valid_session", lambda _sid: "customer")
+    monkeypatch.setattr(cart_tools, "execute_add_to_cart", lambda *args, **kwargs:
+        {"status": "ok", "message": "Đã thêm vào giỏ hàng"})
+    monkeypatch.setattr(product_tools, "execute_check_price_and_stock", lambda **kwargs:
+        {"status": "ok", "products": [{"product_id": "303", "final_price": 99000, "is_active": True}]})
     monkeypatch.setattr(product_tools, "execute_get_product_options", lambda product_id, **kwargs:
         dict(status="ok", product_id=product_id,
              product_name="Frappe Matcha Tây Bắc" if product_id == "202" else "Bánh Trung Thu Matcha",
@@ -158,8 +165,6 @@ def test_turn_12_06_direct_added_quantity_in_prefix(runtime, monkeypatch):
 
     ctrl = customer_shopping_control(gw)
     assert ctrl is not None
-    # Reply contains JSON envelope with prompt
-    reply_data = json.loads(ctrl["reply"])
-    reply_text = reply_data["reply"]
-    assert "**Bánh Trung Thu Matcha ×2**" in reply_text
-    assert "Frappe Matcha Tây Bắc" in reply_text
+    assert gw.artifacts.pending_selection_reply is not None
+    assert "**Bánh Trung Thu Matcha ×2**" in gw.artifacts.pending_selection_reply
+    assert "Frappe Matcha Tây Bắc" in gw.artifacts.pending_selection_reply

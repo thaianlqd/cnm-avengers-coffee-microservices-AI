@@ -66,6 +66,9 @@ def _background_init_warehouse_views():
 
 @app.on_event("startup")
 def on_startup():
+    if os.getenv("ANALYTICS_INITIALIZE_WAREHOUSE_ON_STARTUP", "false").lower() != "true":
+        logger.info("Warehouse bootstrap disabled; serving existing schemas without startup DDL.")
+        return
     ready = init_warehouse_views()
     if not ready:
         logger.info("Warehouse views pending source data sync. Starting background initialization watcher.")

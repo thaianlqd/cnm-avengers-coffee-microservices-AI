@@ -130,8 +130,16 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         ]
     )
     from services.analysis_issue_service import actionable_issue
+    issue = actionable_issue(error, message, structured)
+    from services.analysis_quality_service import not_scored
+    outcome = ('INSUFFICIENT_DATA' if issue['category'] in {'HISTORICAL_DATA_UNAVAILABLE', 'INSUFFICIENT_DATA'}
+               else 'UNSUPPORTED' if issue['category'] in {'METRIC_UNAVAILABLE', 'UNSUPPORTED_ANALYSIS'}
+               else 'NEEDS_INPUT' if issue['category'] in {'NEEDS_CLARIFICATION', 'SCOPE_CONFLICT', 'TIME_CONFLICT', 'REQUESTED_SCOPE_TOO_LARGE'}
+               else 'SYSTEM_ERROR')
     return {
-        "issue": actionable_issue(error, message, structured),
+        "outcome": outcome,
+        "quality_assessment": not_scored(message),
+        "issue": issue,
         "status": (
             "needs_clarification" if category in clarification_categories or population_overflow else "error"
         ),
@@ -156,7 +164,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
             "agent_round_count": (layer_diagnostics or {}).get("agent_rounds", 0),
             "repair_round_count": (layer_diagnostics or {}).get("contract_repair_count", 0),
             "terminal_error": category,
-            "pipeline_version": (layer_diagnostics or {}).get("pipeline_version", "2.6"),
+            "pipeline_version": (layer_diagnostics or {}).get("pipeline_version", "2.7"),
             "error_category": category,
             "missing_fields": (
                 structured.get("missing_fields", []) if structured else []

@@ -225,6 +225,7 @@ export const AnalyticsView: React.FC = () => {
         body: JSON.stringify({
           ...(aiPlan?.submittedInput || aiInput(promptToSend)),
           session_id: aiPlan?.prompt === promptToSend ? aiPlan?.session_id : null,
+          accept_partial_scope: Boolean(aiPlan?.partial_scope),
         }),
       });
       if (!response.ok) {
@@ -481,7 +482,7 @@ export const AnalyticsView: React.FC = () => {
     }
   };
 
-  const handleLoadSavedReportToView = (report: any) => {
+  const handleLoadSavedReportToView = async (report: any) => {
     let config = report.module_config;
     if (typeof config === 'string') {
       try {
@@ -519,6 +520,12 @@ export const AnalyticsView: React.FC = () => {
     if (typeof reportData.sql === 'string' && reportData.sql.startsWith('{')) {
       try { reportData.sql = JSON.parse(reportData.sql); } catch (e) {}
     }
+    // Always recompute from saved rows and current metadata; never trust a stored score.
+    reportData.quality_assessment = { status: 'not_scored', reason: 'Chưa thể kiểm chứng lại báo cáo lưu trữ.' };
+    try {
+      const res = await fetch('/api/ai/verify-report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(reportData) });
+      if (res.ok) reportData.quality_assessment = (await res.json()).quality_assessment;
+    } catch {}
     setViewingSavedReport(reportData);
     const viewTime = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     setReportVersions([
@@ -569,6 +576,13 @@ export const AnalyticsView: React.FC = () => {
         ai_summary: Array.isArray(generatedReport.ai_insights) ? generatedReport.ai_insights.join(' | ') : '',
         created_by: 'Trợ lý AI Data Platform',
         module_config: {
+          status: 'success',
+          outcome: generatedReport.outcome,
+          analysis_components: generatedReport.analysis_components,
+          quality_context: generatedReport.quality_context,
+          quality_limitations: generatedReport.quality_limitations,
+          dashboard_plan_input: generatedReport.dashboard_plan_input,
+          quality_assessment: generatedReport.quality_assessment,
           pipeline_version: generatedReport.pipeline_version,
           analysis_spec: generatedReport.analysis_spec,
           interpretation: generatedReport.interpretation,
@@ -2713,6 +2727,7 @@ export const AnalyticsView: React.FC = () => {
                     </div>
                   </div>
 
+                  {aiPlan.partial_scope && <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 space-y-2"><p className="font-semibold">Một phần yêu cầu chưa có dữ liệu hoặc định nghĩa để thực hiện.</p><p>Bạn có thể xác nhận chạy các phần hiện có. Báo cáo sẽ ghi rõ những phần chưa thực hiện.</p><ul className="space-y-1">{(aiPlan.analysis_components || []).filter((c: any) => c.requested_or_supporting === 'requested' && c.status !== 'planned').map((c: any) => <li key={c.id}>{c.business_goal}</li>)}</ul></div>}
                   {/* Actions Footer */}
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-slate-100">
                     <button
@@ -2737,7 +2752,7 @@ export const AnalyticsView: React.FC = () => {
                         disabled={isGeneratingAi}
                         className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-medium shadow-xs transition-all cursor-pointer"
                       >
-                        Xác nhận & Bắt đầu Phân tích
+                        {aiPlan.partial_scope ? 'Xác nhận chạy các phần hiện có' : 'Xác nhận & Bắt đầu Phân tích'}
                       </button>
                     </div>
                   </div>

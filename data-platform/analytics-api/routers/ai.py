@@ -1,7 +1,7 @@
 """Thin HTTP boundary for the Data Platform AI analysis contract."""
 
 import logging
-from fastapi import APIRouter, HTTPException, Query, Request, Response
+from fastapi import APIRouter, Body, HTTPException, Query, Request, Response
 from services.browser_owner import browser_owner
 from common import (
     AiFeedbackRequest,
@@ -67,7 +67,7 @@ def ai_status():
     metadata = cache_status()
     return {
         "status": "ready" if metadata["local_ready"] else "unavailable",
-        "pipeline_version": "2.6",
+        "pipeline_version": "2.7",
         "planning_mode": "one_shot",
         "provider_call_budget": validate_single_shot_policy(),
         "providers": providers,
@@ -149,3 +149,14 @@ def _sanitize_and_resolve_kpi_cards(cards, normalized_results):
         }
         for card in cards
     ]
+
+
+@router.post("/verify-report")
+def verify_report(payload: dict = Body(...)):
+    """Pure revalidation of saved logical queries/rows. No stored SQL is executed."""
+    from services.analysis_quality_service import verify_saved_report, not_scored
+    try:
+        catalog = AnalysisCatalog(get_local_metadata())
+        return {"quality_assessment": verify_saved_report(payload, catalog)}
+    except Exception:
+        return {"quality_assessment": not_scored("Danh mục chưa sẵn sàng; chưa thể kiểm chứng báo cáo.")}

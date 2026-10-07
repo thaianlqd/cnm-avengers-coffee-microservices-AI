@@ -283,6 +283,7 @@ def export_report_docx(payload: dict):
         except Exception as e:
             pass
 
+    report_data = _verified_export(report_data)
     buffer = generate_report_docx(report_data)
     return StreamingResponse(
         buffer,
@@ -315,6 +316,7 @@ def download_saved_report_docx(report_id: str):
                 title = report["title"] or "Bao_Cao_Phan_Tich_AI"
                 content_disposition = _make_content_disposition(title, timestamp=False)
 
+                report_data = _verified_export(report_data)
                 buffer = generate_report_docx(report_data)
                 return StreamingResponse(
                     buffer,
@@ -325,3 +327,15 @@ def download_saved_report_docx(report_id: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi xuất báo cáo DOCX: {str(e)}")
+
+
+def _verified_export(report_data):
+    from services.analysis_quality_service import verify_saved_report, not_scored
+    from services.analysis_catalog import AnalysisCatalog
+    from services.metadata_service import get_local_metadata
+    data = dict(report_data)
+    try:
+        data['quality_assessment'] = verify_saved_report(data, AnalysisCatalog(get_local_metadata()))
+    except Exception:
+        data['quality_assessment'] = not_scored('Danh mục chưa sẵn sàng để kiểm chứng lại báo cáo.')
+    return data

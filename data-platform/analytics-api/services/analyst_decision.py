@@ -51,9 +51,13 @@ class DecisionOperation(Contract):
         return data
 
 
+from services.analysis_coverage_service import AnalysisComponent
+
+
 class AnalystDecision(Contract):
     decision_type: Literal["plan", "clarification", "unsupported"]
     analysis_breadth: Optional[Literal["focused", "deep", "comprehensive"]] = None
+    analysis_components: List[AnalysisComponent] = Field(default_factory=list, max_length=16)
     # Keep dictionaries here: an invalid optional item cannot invalidate the main plan.
     requested_operations: List[dict] = Field(default_factory=list, max_length=8)
     supporting_operations: List[Any] = Field(default_factory=list)
@@ -144,6 +148,7 @@ def decision_tool(*, refinement=True, supporting_limit=7, natural=False):
             "parameters": {"type": "object", "required": ["decision_type"], "properties": {
                 "decision_type": {"type": "string", "enum": ["plan", "clarification", "unsupported"]},
                 **({"analysis_breadth": {"type": "string", "enum": ["focused", "deep", "comprehensive"], "description": "Infer breadth from question and optional expectation; preserve every requested component."}} if natural else {}),
+                **({"analysis_components": {"type": "array", "maxItems": 16, "items": omit_null(expanded_schema(AnalysisComponent.model_json_schema())), "description": "Declare every explicit business requirement and its operation IDs; mark unavailable work explicitly with reason. No reasoning."}} if natural else {}),
                 "requested_operations": {"type": "array", "items": requested, "maxItems": 8},
                 "supporting_operations": {"type": "array", "items": support, "maxItems": min(7, max(0, supporting_limit)), "description": f"At most {min(7, max(0, supporting_limit))} optional operations, and at most 8 total including requested work."},
                 "clarification": clarification,

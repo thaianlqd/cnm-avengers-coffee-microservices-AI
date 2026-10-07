@@ -88,6 +88,7 @@ class AnalysisModules:
             definition = {**inputs,"resolved_analysis_breadth":session.analysis_depth,
                 "resolved_domains":session.report_response.get("interpretation",{}).get("domains",[]),
                 "resolved_lenses":list(dict.fromkeys(q["lens_id"] for q in queries if q.get("lens_id"))),
+                "analysis_components":deepcopy(session.analysis_components), "coverage_origin":session.coverage_origin,
                 "canonical_templates":queries, "dashboard_preferences":deepcopy(session.dashboard_plan),
                 "time_strategy":{"kind":"fixed" if mode == "custom" or mode == "auto" and all(q["time"]["kind"] == "range" for q in queries) else "dynamic", "selection":strategy},
                 "scope_strategy":{"kind":"parameterizable" if parameterizable_scope else "fixed", "allowed_dimensions":sorted({f["dimension"] for q in queries for f in q["filters"]}) if parameterizable_scope else []},
@@ -170,6 +171,9 @@ class AnalysisModules:
             pipeline.semantic_info["limitations"].append({"reason":"omitted_supporting_operations","message":"Một phần phân tích hỗ trợ không phù hợp với kỳ hoặc phạm vi mới nên đã được bỏ qua."})
         artifacts = agent.queries.artifacts
         session = create_session(d["original_question"])
+        session.analysis_components = deepcopy(d.get("analysis_components", []))
+        session.coverage_origin = d.get("coverage_origin", "execution_only")
+        session.partial_scope = any(c.get("status") != "planned" and c.get("requested_or_supporting") == "requested" for c in session.analysis_components)
         session.owner_id = pipeline.owner_id
         session.natural_input = True
         session.analysis_inputs = {k:d.get(k,"") for k in ("original_question","analysis_context","analysis_expectation")}
