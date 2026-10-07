@@ -32,12 +32,12 @@ def checkout_next_step(state):
     prefs = state.get('checkout') or {}
     if state.get('pending_products'):
         return ('OPTIONS: pending_products are ALREADY SELECTED even if cart.items is empty. '
-                'For supplied options use this shape, filling args from the request and quoting evidence exactly: {"actions":[{"tool":"add_to_cart","commitment":"SELECTED","args":{},"option_intent":"CONFIGURE","reference":{"namespace":"PRODUCT","kind":"pending"},"evidence":"exact current span"}]}. '
-                'Explicit defaults use DEFAULTS with defaults_evidence. Do not read an empty cart and ask to select again. '
-                'Ask only still-missing required fields; preserve each pending product and its quantity. Questions remain read-only.')
+                'Use semantic_configure_product with only supplied options and reference kind=pending. '
+                'Explicit defaults use semantic_use_product_defaults. Ask only missing required fields. '
+                'Questions use semantic_ask_product_options and remain read-only.')
     if prefs.get('delivery_type') == 'GIAO_TAN_NOI' and prefs.get('partial_delivery_address'):
         return ('LOCATION: checkout.partial_delivery_address retains the customer-supplied address. '
-                'A location follow-up completes/corrects that draft via resolve_location(for_checkout=true); '
+                'A location follow-up completes/corrects that draft via semantic_resolve_new_location(for_checkout=true); '
                 'retain supplied house/street/locality components, ask only missing precision. '
                 'Do not invent a city, saved address or provider coordinate. Questions remain read-only.')
     if prefs.get('voucher_offer_pending') or prefs.get('voucher_revalidation_required'):

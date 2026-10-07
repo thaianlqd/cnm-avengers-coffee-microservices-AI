@@ -6,11 +6,6 @@ from src.rag.documents import PRODUCT_DOMAINS, normalize_text
 
 logger = logging.getLogger(__name__)
 INSUFFICIENT_MESSAGE = 'Tài liệu nội bộ chưa có đủ thông tin để trả lời câu hỏi này. Bạn có thể hỏi nhân viên để xác minh nhé.'
-# Treat instruction-shaped evidence as untrusted; do not send it to generation or echo it.
-_UNSAFE_EVIDENCE = re.compile(
-    r'ignore\s+(?:all\s+)?(?:previous|system)\s+instructions|bo qua.*(?:chi dan|huong dan).*truoc|'
-    r'system\s*prompt|api[_ ]?key|access[_ ]?token|password|(?:reveal|expose).*secret', re.I)
-
 TOOL_SEARCH_KNOWLEDGE_BASE = {
     'type': 'function', 'function': {
         'name': 'search_knowledge_base',
@@ -28,12 +23,8 @@ TOOL_SEARCH_KNOWLEDGE_BASE = {
 
 def safe_knowledge_results(documents):
     """Shared evidence sanitation for consultation and description discovery."""
-    from src.function_calling.tools import ALL_TOOL_SCHEMAS
-    internal_names = [t['function']['name'] for t in ALL_TOOL_SCHEMAS]
-    return [d for d in documents
-            if not _UNSAFE_EVIDENCE.search(normalize_text(d['content']))
-            and not any(re.search(r'(?<!\w)' + re.escape(name) + r'(?!\w)', d['content'])
-                        for name in internal_names)]
+    from src.rag.untrusted_data import safe_evidence_text
+    return [d for d in documents if safe_evidence_text(d['content'])]
 
 
 def execute_search_knowledge_base(query, domain=None, entity_type=None, entity_id=None, source=None, session_id=None,

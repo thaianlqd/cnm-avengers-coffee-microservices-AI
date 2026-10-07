@@ -1,0 +1,89 @@
+{
+  "baseline": "2887 passed, 1 skipped, 2 warnings in 18.49s",
+  "network": "Docker --network none",
+  "stages": [
+    {
+      "stage": "01_registry_schema",
+      "exit_code": 0,
+      "pytest_summary": "204 passed, 16 deselected in 1.17s"
+    },
+    {
+      "stage": "02_protocol_fuzz",
+      "exit_code": 0,
+      "pytest_summary": "16 passed, 204 deselected in 0.59s"
+    },
+    {
+      "stage": "03_semantic_plan",
+      "exit_code": 0,
+      "pytest_summary": "173 passed, 1 warning in 1.45s"
+    },
+    {
+      "stage": "04_product_configuration",
+      "exit_code": 0,
+      "pytest_summary": "58 passed, 1 warning in 1.49s"
+    },
+    {
+      "stage": "05_recommendation_scope",
+      "exit_code": 0,
+      "pytest_summary": "53 passed, 1 warning in 2.28s"
+    },
+    {
+      "stage": "06_compound_cart",
+      "exit_code": 0,
+      "pytest_summary": "61 passed, 1 warning in 1.03s"
+    },
+    {
+      "stage": "07_checkout_payment_location",
+      "exit_code": 0,
+      "pytest_summary": "175 passed, 1 warning in 1.90s"
+    },
+    {
+      "stage": "08_order_management",
+      "exit_code": 0,
+      "pytest_summary": "86 passed, 1 warning in 1.14s"
+    },
+    {
+      "stage": "09_rag_reviews",
+      "exit_code": 0,
+      "pytest_summary": "57 passed, 2 warnings in 2.06s"
+    },
+    {
+      "stage": "10_provider_resilience",
+      "exit_code": 0,
+      "pytest_summary": "108 passed, 1 warning in 3.00s"
+    },
+    {
+      "stage": "11_full_suite",
+      "exit_code": 0,
+      "pytest_summary": "3121 passed, 1 skipped, 2 warnings in 21.04s"
+    }
+  ],
+  "health": {
+    "http_status": 200,
+    "body": {
+      "status": "ok",
+      "cf_trained": true,
+      "groq_available": true,
+      "groq_model": "dynamic_fallback",
+      "stt_model": "whisper-large-v3-turbo",
+      "chat_orchestrator_mode": "llm_tools",
+      "agent_provider": "gemini",
+      "agent_model": "tier_policy",
+      "agent_model_tiering": true,
+      "agent_fallback_providers": "gemini",
+      "redis_available": true
+    }
+  },
+  "deployed_source_hashes": {
+    "src/agents/semantic_registry.py": "3590289ea0ed0ad2bf29f072850482a6d1c9d3536c939dc5d7d1e16ba5fd1996",
+    "src/agents/semantic_errors.py": "b43b1ba824927c0018391bf6aad8113464fc2f8157f0b3c45264e95f13623767",
+    "src/agents/semantic_plan.py": "834358b6334a7cc6ce870a8e80812cfe0ab345ff7e6619433c6ddc449c235695",
+    "src/agents/tool_policy.py": "4eda75695cc669cb365c4e84cf0261489bc190bafeb58042c3c67acca4efecf4",
+    "src/common/groq_service.py": "6ebce35b71b5f6206858e900f4c0ba62feded39db487ef021bfec380596bb798",
+    "src/rag/untrusted_data.py": "f8a975ab2626ac476f84bc5a2320104e8fa195b6eb8f6d18052167e4d7781ead"
+  },
+  "live_provider_requests": 0,
+  "docker_image_config_digest": "sha256:7d71635853c828bae3baa8d810d63d27e7a6f348830834e816f8c705e036c0c6",
+  "docker_build_exit_code": 0,
+  "docker_recreate_exit_code": 0
+}

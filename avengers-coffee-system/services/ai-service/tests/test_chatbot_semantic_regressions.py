@@ -61,7 +61,7 @@ def test_union_wire_fields_are_revalidated_against_the_selected_tool(runtime):
     # delivery_type is legal in the shared schema but never in add_to_cart.
     result = gateway.customer_actions({'actions': [action(gateway, 'add_to_cart', {
         'product_id': '101', 'size': 'L', 'delivery_type': 'MANG_DI'})]})
-    assert result['results'][0]['result']['status'] == 'invalid_arguments' and result['recovery_kind'] == 'model_repair' and not runtime.writes
+    assert result['status'] == 'invalid_semantic_arguments' and result['recovery_kind'] == 'model_repair' and not runtime.writes
 
 
 def test_typed_and_legacy_arguments_cannot_conflict_and_batch_is_atomic_on_shape(runtime):
@@ -193,10 +193,11 @@ def test_defaults_have_separate_current_authorization(runtime):
 
 def test_model_surface_only_publishes_canonical_option_vocabulary(runtime):
     gateway = gateway_for(runtime)
-    surface = gateway.tool_surface()[0][0]['function']['parameters']['properties']['actions']['items']
-    fields = surface['properties']['args']['properties']
+    surface = {row['function']['name']: row['function']['parameters'] for row in gateway.tool_surface()[0]}
+    fields = surface['semantic_configure_product']['properties']
     assert 'size' in fields and not {'kich_co', 'ice', 'sugar', 'milk', 'use_defaults'} & set(fields)
-    assert 'option_intent' in surface['properties'] and 'evidence' in surface['required']
+    assert 'evidence' in surface['semantic_configure_product']['required']
+    assert 'size' not in surface['semantic_ask_product_options']['properties']
 
 
 def test_unsupported_reference_kind_is_protocol_repair_but_multiple_entities_clarify(runtime):
@@ -280,7 +281,7 @@ def test_discovery_then_selection_shows_options_and_preserves_pending_owner(runt
     runtime.provider.plan([('customer_actions', {'actions': [stage]})])
     first = deepcopy(runtime.provider.steps[0])
     first['tool_calls'][0]['function']['arguments'] = json.dumps({'actions': [
-        {'tool': 'filter_catalog', 'args': {'search_text': 'Alpha'}, 'commitment': 'SELECTED', 'evidence': message}]})
+        {'tool': 'filter_catalog', 'args': {'category': 'all', 'search_text': 'Alpha'}, 'commitment': 'SELECTED', 'evidence': message}]})
     runtime.provider.steps.insert(0, first)
     result = runtime.turn(message)
     assert cart_manager.get_checkout_prefs(runtime.sid)['pending_products'][0]['product_id'] == '101'
@@ -332,7 +333,7 @@ def test_failed_repair_cannot_drift_into_more_tool_decisions(runtime, repair):
 def test_declared_single_discovery_plan_finishes_in_one_request(runtime):
     runtime.provider.plan([('customer_actions', {'actions': [{
         'tool': 'filter_catalog', 'commitment': 'QUESTION', 'evidence': 'Cho xem cà phê',
-        'args': {'search_text': 'Cà Phê', 'planned_discovery_reads': 1}}]})])
+        'args': {'category': 'all', 'search_text': 'Cà Phê', 'planned_discovery_reads': 1}}]})])
     result = runtime.turn('Cho xem cà phê')
     assert result['error'] is None and len(result['ui_payload']['products']) == 2
     assert len(runtime.provider.requests) == 1 and not runtime.writes
@@ -343,7 +344,7 @@ def test_selected_singleton_plan_keeps_tools_available_then_configures_implicit_
     option_authority(monkeypatch)
     message = 'Mình mua Alpha'
     read = {'tool': 'filter_catalog', 'commitment': 'SELECTED', 'evidence': message,
-        'args': {'search_text': 'Alpha', 'planned_discovery_reads': 1}}
+        'args': {'category': 'all', 'search_text': 'Alpha', 'planned_discovery_reads': 1}}
     stage = {'tool': 'get_product_options', 'commitment': 'SELECTED', 'evidence': message,
         'args': {}, 'reference': {'namespace': 'PRODUCT', 'kind': 'id', 'value': '101'}}
     runtime.provider.plan([('customer_actions', {'actions': [stage]})])
@@ -372,7 +373,7 @@ def test_selected_singleton_plan_keeps_tools_available_then_configures_implicit_
 def test_selected_singleton_cannot_finish_with_another_choose_product_reply(runtime):
     message = 'Lấy Alpha'
     read = {'tool': 'filter_catalog', 'commitment': 'SELECTED', 'evidence': message,
-        'args': {'search_text': 'Alpha', 'planned_discovery_reads': 1}}
+        'args': {'category': 'all', 'search_text': 'Alpha', 'planned_discovery_reads': 1}}
     stage = {'tool': 'get_product_options', 'commitment': 'SELECTED', 'evidence': message,
         'args': {'product_id': '101'}}
     runtime.provider.plan([('customer_actions', {'actions': [read]})])
@@ -453,7 +454,7 @@ def test_pending_options_do_not_block_social_or_explicit_browsing_interruptions(
     assert not runtime.writes
 
 
-@pytest.mark.parametrize('commitment,plan', [('SELECTED', {}), ('QUESTION', {'planned_discovery_reads': 1})])
+@pytest.mark.parametrize('commitment,plan', [('SELECTED', {}), ('QUESTION', {'category': 'all', 'planned_discovery_reads': 1})])
 def test_repaired_product_family_discovery_shows_choices_and_keeps_existing_cart(runtime, commitment, plan):
     # Existing configured drink; a new family request must not select one of
     # several returned products, or discard the already committed drink.
@@ -484,7 +485,7 @@ def test_repaired_product_family_discovery_shows_choices_and_keeps_existing_cart
 def test_repaired_exact_product_lookup_continues_to_options_without_another_repair(runtime):
     message = 'Mình chọn Alpha nhé'
     read = {'tool': 'filter_catalog', 'commitment': 'SELECTED', 'evidence': message,
-        'args': {'search_text': 'Alpha'}}
+        'args': {'category': 'all', 'search_text': 'Alpha'}}
     stage = {'tool': 'get_product_options', 'commitment': 'SELECTED', 'evidence': message,
         'args': {'product_id': '101'}}
     runtime.provider.plan([('customer_actions', {'actions': [stage]})])
@@ -503,7 +504,7 @@ def test_repaired_exact_product_lookup_continues_to_options_without_another_repa
 def test_successful_repair_read_does_not_reset_protocol_repair_budget(runtime):
     message = 'Mình chọn Alpha nhé'
     read = {'tool': 'filter_catalog', 'commitment': 'SELECTED', 'evidence': message,
-        'args': {'search_text': 'Alpha'}}
+        'args': {'category': 'all', 'search_text': 'Alpha'}}
     runtime.provider.plan([('customer_actions', {'actions': [read]})])
     good = deepcopy(runtime.provider.steps[0])
     bad = deepcopy(good)
@@ -517,7 +518,7 @@ def test_successful_repair_read_does_not_reset_protocol_repair_budget(runtime):
 def test_prior_catalog_evidence_cannot_hide_a_new_protocol_fault(runtime):
     gateway = gateway_for(runtime)
     gateway.customer_actions({'actions': [action(gateway, 'filter_catalog',
-        {'search_text': 'Cà Phê', 'planned_discovery_reads': 1}, commitment='QUESTION')]})
+        {'category': 'all', 'search_text': 'Cà Phê', 'planned_discovery_reads': 1}, commitment='QUESTION')]})
     gateway.customer_actions({'actions': [{'commitment': 'QUESTION', 'args': {}}]})
     assert gateway.artifacts.discovery_batches
     assert gateway.artifacts.completed_customer_step(repair_in_progress=True) is None
@@ -528,7 +529,7 @@ def test_successful_write_fence_survives_repaired_discovery_continuation(runtime
     gateway = gateway_for(runtime, message)
     update = action(gateway, 'update_cart_item', {'cart_item_id': '800', 'desired_state': {'quantity': 3}})
     bad = action(gateway, 'add_to_cart', {'product_id': '102', 'size': 'L', 'kich_co': 'M'})
-    read = action(gateway, 'filter_catalog', {'search_text': 'Alpha'}, commitment='SELECTED')
+    read = action(gateway, 'filter_catalog', {'category': 'all', 'search_text': 'Alpha'}, commitment='SELECTED')
     changed_update = action(gateway, 'update_cart_item', {'cart_item_id': '800', 'desired_state': {'quantity': 8}})
     add = action(gateway, 'add_to_cart', {'product_id': '102', 'size': 'L'})
     runtime.provider.plan([('customer_actions', {'actions': [update, bad]})])
@@ -584,7 +585,7 @@ def test_complete_semantic_customer_journey_through_order_creation(runtime, monk
         assert len(runtime.provider.requests) == before + 1
         return result
     send('Quán có cà phê gì?', [{'tool': 'filter_catalog', 'commitment': 'QUESTION',
-        'args': {'search_text': 'Cà Phê', 'planned_discovery_reads': 1}}])
+        'args': {'category': 'all', 'search_text': 'Cà Phê', 'planned_discovery_reads': 1}}])
     send('Lấy món đầu', [{'tool': 'get_product_options', 'args': {},
         'reference': {'namespace': 'PRODUCT', 'kind': 'ordinal', 'index': 1}}])
     assert not runtime.writes

@@ -200,14 +200,16 @@ def test_wallet_policy_still_rejects_unavailable_payment(runtime, monkeypatch):
 def test_order_and_branch_capabilities_do_not_depend_on_raw_words(runtime):
     gateway = gateway_for(runtime, 'Dạ nhờ bạn xem giúp cái vừa rồi ạ')
     surface = gateway.tool_surface()[0]
-    assert [row['function']['name'] for row in surface] == ['customer_actions']
-    names = set(surface[0]['function']['parameters']['properties']['actions']['items']['properties']['tool']['enum'])
+    assert surface and all(row['function']['name'].startswith('semantic_') for row in surface)
+    from src.agents.semantic_registry import operation_registry
+    names = {operation_registry()[row['function']['name']].executor for row in surface}
     assert {'get_order_history', 'get_order_details', 'get_store_reviews', 'get_top_rated_stores'} <= names
     assert not {'cancel_order', 'update_order', 'reorder_order'} & names
     gateway.artifacts.visible['orders'] = [{'order_id': str(uuid4())}]
     surface = gateway.tool_surface()[0]
-    assert [row['function']['name'] for row in surface] == ['customer_actions']
-    names = set(surface[0]['function']['parameters']['properties']['actions']['items']['properties']['tool']['enum'])
+    assert surface and all(row['function']['name'].startswith('semantic_') for row in surface)
+    from src.agents.semantic_registry import operation_registry
+    names = {operation_registry()[row['function']['name']].executor for row in surface}
     assert {'cancel_order', 'update_order', 'reorder_order'} <= names
 
 

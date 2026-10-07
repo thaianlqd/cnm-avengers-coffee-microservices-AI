@@ -424,6 +424,7 @@ def groq_agent_chat(
     repair_progress_provider=None,
     repeated_read_feedback_provider=None,
     semantic_proposal_stager=None,
+    semantic_batch_executor=None,
 ) -> Dict[str, Any]:
     """
     Agentic chat loop với Groq Function Calling.
@@ -669,7 +670,16 @@ def groq_agent_chat(
             successful_required_repair = False
             terminal_success = False
             confirmation_denied_stop = False
-            for tc in assistant_msg.tool_calls:
+            batch_results = None
+            if guarded and semantic_batch_executor and any(
+                    str(tc.function.name).startswith('semantic_') for tc in assistant_msg.tool_calls):
+                # No member executes until the gateway has validated and frozen
+                # the entire response, including malformed/unknown siblings.
+                if len(assistant_msg.tool_calls) > 16 or len(tool_calls_log) + len(assistant_msg.tool_calls) > max_tool_rounds * 4:
+                    return {'reply': '', 'tool_calls_log': tool_calls_log,
+                            'checkout_payload': checkout_payload, 'error': 'tool_call_budget_exceeded'}
+                batch_results = semantic_batch_executor(assistant_msg.tool_calls)
+            for call_index, tc in enumerate(assistant_msg.tool_calls):
                 if guarded and len(tool_calls_log) >= max_tool_rounds * 4:
                     return {"reply": "", "tool_calls_log": tool_calls_log,
                             "checkout_payload": checkout_payload, "error": "tool_call_budget_exceeded"}
@@ -693,7 +703,9 @@ def groq_agent_chat(
                 tool_hash = f"{tool_name}|{canonical_args}"
                 from src.agents.tool_capabilities import CAPABILITIES
                 is_read = tool_name in CAPABILITIES and CAPABILITIES[tool_name].access == 'READ'
-                if tool_hash in turn_tool_cache and (not guarded or (not is_read and tool_name in (tool_executors or {}))):
+                if batch_results is not None:
+                    result = batch_results[call_index]
+                elif tool_hash in turn_tool_cache and (not guarded or (not is_read and tool_name in (tool_executors or {}))):
                     logger.info("[Groq Agent] Repeated tool signature; forcing final completion: %s", tool_name if guarded else tool_hash)
                     result = turn_tool_cache[tool_hash]
                     repeated_signature = True
@@ -736,7 +748,7 @@ def groq_agent_chat(
                             'ok', 'success', 'already_processed', 'needs_options', 'require_confirmation'}):
                         turn_tool_cache[tool_hash] = result
                 if guarded and isinstance(result, dict):
-                    if (protocol_repair_round and tool_name == 'customer_actions'
+                    if (protocol_repair_round and (tool_name == 'customer_actions' or batch_results is not None)
                             and result.get('status') == 'ok' and result.get('read_only') is True
                             and result.get('repaired_read_completed') is True
                             and not result.get('selection_continuation_required')
@@ -979,7 +991,7 @@ def groq_agent_chat(
     # Đã hết max_tool_rounds mà chưa có text reply
     logger.warning("[Groq Agent] Max tool rounds (%d) exceeded without text reply", max_tool_rounds)
     return {
-        "reply": "Xin lỗi, mình cần thêm thông tin để hỗ trợ bạn. Bạn có thể nói rõ hơn về yêu cầu không?",
+        "reply": "" if guarded else "Xin lỗi, mình cần thêm thông tin để hỗ trợ bạn. Bạn có thể nói rõ hơn về yêu cầu không?",
         "tool_calls_log": tool_calls_log,
         "checkout_payload": checkout_payload,
         "error": "max_rounds_exceeded",

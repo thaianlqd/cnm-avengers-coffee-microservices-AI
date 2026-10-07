@@ -8,6 +8,13 @@ FULFILLMENT_OPTIONS = ("GIAO_TAN_NOI", "MANG_DI", "TAI_CHO")
 PAYMENT_OPTIONS = ("VNPAY", "NGAN_HANG_QR", "VI_DIEN_TU", "THANH_TOAN_KHI_NHAN_HANG")
 FULFILLMENT_LABELS = ("Giao tận nơi", "Lấy tại quán", "Dùng tại chỗ")
 PAYMENT_LABELS = ("VNPAY — ATM / Internet Banking", "Chuyển khoản QR ngân hàng", "Ví Avengers", "Tiền mặt (COD)")
+# Inventory aliases ground semantic references; never scan a raw customer sentence.
+PAYMENT_ALIASES = {
+    'VNPAY': ('VNPAY',),
+    'NGAN_HANG_QR': ('QR', 'QR ngân hàng', 'Ngân hàng QR', 'Chuyển khoản QR'),
+    'VI_DIEN_TU': ('Ví', 'Ví Avengers', 'Ví điện tử', 'Avengers Wallet'),
+    'THANH_TOAN_KHI_NHAN_HANG': ('COD', 'Tiền mặt', 'Cash', 'Thanh toán khi nhận hàng'),
+}
 CHECKOUT_CHOICE_TYPES = {"select_checkout_choices", "select_fulfillment", "select_payment"}
 _DELIVERY_PHRASES = {"GIAO_TAN_NOI": "giao tận nơi", "MANG_DI": "lấy tại quán", "TAI_CHO": "dùng tại chỗ"}
 _PAYMENT_PHRASES = {"VNPAY": "thanh toán VNPAY", "NGAN_HANG_QR": "thanh toán QR ngân hàng",

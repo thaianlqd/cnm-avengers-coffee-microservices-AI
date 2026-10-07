@@ -79,7 +79,7 @@ def test_structured_family_filter_is_preserved(runtime, monkeypatch):
         seen.append(deepcopy(args)) or {'status': 'not_found', 'recommendation_basis': 'product_description',
                                        'products': [], 'message': 'Không đủ mô tả phù hợp.'})
     g = gateway_for(runtime, 'Please suggest something with citrus notes')
-    result = g.customer_actions({'actions': [action(g, 'get_recommendations', {
+    result = g.customer_actions({'actions': [action(g, 'get_recommendations', {'category': 'all',
         'preference_query': 'citrus notes', 'preference_concepts': ['citrus'], 'search_text': 'cold brew'},
         commitment='QUESTION')]})
     assert result['remaining_actions'] == 0
@@ -88,7 +88,7 @@ def test_structured_family_filter_is_preserved(runtime, monkeypatch):
 
 def test_conflicting_explicit_basis_requires_repair_without_sales_fallback(runtime):
     g = gateway_for(runtime, 'Gợi ý theo nhu cầu này')
-    result = g.customer_actions({'actions': [action(g, 'get_recommendations', {
+    result = g.customer_actions({'actions': [action(g, 'get_recommendations', {'category': 'all',
         'criteria': 'bestsellers', 'preference_query': 'unusual preference'}, commitment='QUESTION')]})
     assert result['recovery_kind'] == 'model_repair'
     assert result['results'][0]['result']['status'] == 'recommendation_basis_conflict'
@@ -99,15 +99,16 @@ def test_failed_read_cannot_switch_operation_and_drop_need(runtime):
     g = gateway_for(runtime, 'Một nhu cầu chưa rõ')
     failed = g.customer_actions({'actions': [action(g, 'get_recommendations', {}, commitment='QUESTION')]})
     assert failed['remaining_actions'] == 1
-    switched = g.customer_actions({'actions': [action(g, 'filter_catalog', {'search_text': 'something'}, commitment='QUESTION')]})
+    switched = g.customer_actions({'actions': [action(g, 'filter_catalog', {'category': 'all', 'search_text': 'something'}, commitment='QUESTION')]})
     assert switched['recovery_kind'] == 'model_repair' and not runtime.reads
     assert switched['failed_action']['tool'] == 'get_recommendations'
 
 
 def test_model_schema_has_no_default_cart_example():
-    description = customer_actions_schema(CAPABILITIES, model_facing=True)['function']['description']
-    assert '"tool":"get_cart"' not in description
-    assert 'social' in description and 'get_recommendations' in description and 'preference_query' in description
+    from src.agents.semantic_registry import operation_registry
+    descriptions = [op.schema()['function']['description'] for op in operation_registry().values()]
+    assert not any('"tool":"get_cart"' in text for text in descriptions)
+    assert 'semantic_recommend_by_preference' in operation_registry()
 
 
 def test_reported_sweet_cool_proposal_uses_approved_descriptions(runtime, descriptions, monkeypatch):

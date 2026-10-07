@@ -327,6 +327,9 @@ class ToolArtifacts:
         return kept
 
     def collect(self, name, args, result):
+        if self.semantic_mode:
+            from src.agents.semantic_errors import classify_result
+            classify_result(result)
         self.logs.append({'tool': name, 'args': compact(args), 'result': result})
         if name == 'get_order_history' and result.get('status') != 'ok':
             self.visible['orders'] = []
@@ -502,7 +505,9 @@ class ToolArtifacts:
                       if row['tool'] in DISCOVERY_TOOLS and row['result'].get('status') != 'ok']
             if failed:
                 return safe_text(failed[-1].get('message') or 'Mình chưa xác minh đủ kết quả. Bạn thử lại yêu cầu này nhé.', 3000)
-            return 'Bạn muốn tổng cộng bao nhiêu món trong danh sách so sánh này?'
+            if not self.semantic_mode and len(self.discovery_batches) == 2 and complementary_pair_complete(self.discovery_batches):
+                return 'Bạn muốn tổng cộng bao nhiêu món trong hai nhóm vừa so sánh ạ?'
+            return 'Mình chưa tổng hợp được kết quả vừa tra cứu. Bạn thử lại cùng tin nhắn nhé.'
         lines = [f"- **{r['product_name']}**: **{float(r['final_price']):,.0f}đ**" for r in self.ui['products'] if r.get('final_price') is not None]
         if lines:
             return 'Dạ, mình gửi bạn các món phù hợp nhé:\n\n' + '\n'.join(lines) + '\n\nBạn muốn chọn món nào ạ?'
@@ -531,6 +536,9 @@ class ToolArtifacts:
                          if r.get('product_name') and r.get('quantity')]
                 if items:
                     return 'Giỏ hàng hiện tại:\n' + '\n'.join(items)
+        if self.semantic_mode and (getattr(self, 'protocol_error', None) or any(
+                row['result'].get('recovery_kind') == 'model_repair' for row in self.logs)):
+            return 'Trợ lý chưa xử lý xong yêu cầu do lỗi diễn giải. Bạn thử lại cùng tin nhắn nhé; các thay đổi đã xác nhận vẫn được giữ nguyên.'
         return next((safe_text(row['result'].get('message')) for row in reversed(self.logs)
                      if row['result'].get('message')), 'Mình chưa xác minh được kết quả. Bạn thử lại đúng tin nhắn này nhé.')
 

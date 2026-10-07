@@ -268,8 +268,9 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                 'timeout': min(timeout, route_deadline - time.monotonic(), deadline - time.monotonic())}
             if schemas:
                 kwargs.update(tools=schemas, tool_choice='required' if required else 'auto')
-                if (provider == 'gemini' and required and len(schemas) == 1
-                        and schemas[0].get('function', {}).get('name') == 'customer_actions'):
+                if (provider == 'gemini' and required and all(
+                        row.get('function', {}).get('name') == 'customer_actions'
+                        or row.get('function', {}).get('name', '').startswith('semantic_') for row in schemas)):
                     kwargs['tool_choice'] = 'auto'
                     mode = 'gemini_semantic_repair_auto'
             if provider == 'gemini' and (mode == 'gemini_without_response_format' or schemas):

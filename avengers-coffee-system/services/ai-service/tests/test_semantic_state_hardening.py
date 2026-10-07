@@ -153,10 +153,14 @@ def test_non_commitments_never_write(runtime, commitment, tool, args, facet):
 
 
 def test_model_surface_splits_checkout_facets():
-    surface = customer_actions_schema(CAPABILITIES, model_facing=True)
-    tools = surface['function']['parameters']['properties']['actions']['items']['properties']['tool']['enum']
-    assert 'set_checkout_choices' not in tools
-    assert {'set_fulfillment_choice', 'set_payment_choice'} <= set(tools)
+    from src.agents.semantic_registry import operation_registry
+    registry = operation_registry()
+    assert 'semantic_set_checkout_choices' not in registry
+    assert {'semantic_set_fulfillment', 'semantic_set_payment'} <= set(registry)
+    fulfillment = registry['semantic_set_fulfillment'].parameters()['properties']
+    payment = registry['semantic_set_payment'].parameters()['properties']
+    assert 'payment_method' not in fulfillment and 'delivery_type' not in payment
+
 
 
 @pytest.mark.parametrize('method,name', [('THANH_TOAN_KHI_NHAN_HANG', 'COD'), ('NGAN_HANG_QR', 'QR ngân hàng')])

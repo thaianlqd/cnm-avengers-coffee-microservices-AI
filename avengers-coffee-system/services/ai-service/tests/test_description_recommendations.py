@@ -107,15 +107,18 @@ def test_description_matches_cannot_publish_inactive_products_or_wrong_category(
 
 
 def test_model_surface_has_explicit_bestsellers_not_ambiguous_hot():
-    schema = customer_actions_schema(CAPABILITIES, model_facing=True)
-    criteria = schema['function']['parameters']['properties']['actions']['items']['properties']['args']['properties']['criteria']['enum']
-    assert 'preferences' in criteria and 'bestsellers' in criteria and 'hot' not in criteria
+    from src.agents.semantic_registry import operation_registry
+    schema = operation_registry()['semantic_recommend_by_preference'].schema()
+    fields = schema['function']['parameters']['properties']
+    assert {'scope', 'concepts'} <= set(schema['function']['parameters']['required'])
+    assert not {'criteria', 'preference_query', 'preference_concepts', 'search_text'} & set(fields)
+
     catalog = next(row for row in tool_schemas() if row['function']['name'] == 'filter_catalog')
     assert 'product_ids' not in catalog['function']['parameters']['properties']
     assert not validate_args({'product_ids': ['forged']}, catalog['function']['parameters'])
 
 
-@pytest.mark.parametrize('args', [{}, {'criteria': 'preferences'}])
+@pytest.mark.parametrize('args', [{'category': 'all'}, {'category': 'all', 'criteria': 'preferences'}])
 def test_missing_semantic_basis_gets_internal_repair_not_default_sales(runtime, args):
     g = gateway_for(runtime, 'Mình muốn được tư vấn theo nhu cầu')
     result = g.execute_semantic(action(g, 'get_recommendations', args, commitment='QUESTION'))
@@ -145,7 +148,7 @@ def test_preference_discovery_renders_description_in_one_scripted_inference(runt
 def test_unmatched_preference_returns_evidence_failure_without_generated_products(runtime, descriptions):
     g = gateway_for(runtime, 'Mình muốn một hương vị chưa có')
     runtime.provider.plan([('customer_actions', {'actions': [action(g, 'get_recommendations',
-        {'criteria': 'preferences', 'preference_query': 'tinh vân lượng tử xa xăm'}, commitment='QUESTION')]})],
+        {'category': 'all', 'criteria': 'preferences', 'preference_query': 'tinh vân lượng tử xa xăm'}, commitment='QUESTION')]})],
         reply='Mình gợi ý các món bán chạy nhé.')
     result = runtime.turn(g.user_message)
     assert 'chưa tìm được' in result['reply'] and 'bán chạy' not in result['reply']

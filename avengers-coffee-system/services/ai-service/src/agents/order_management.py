@@ -478,6 +478,11 @@ def preview_message(kind, order_id, data):
 
 
 def prepare(session_id, kind, args, turn_id, *, canonical_line_ids=False):
+    if kind == 'update_order':
+        from src.agents.tool_capabilities import CUSTOM_SCHEMAS, validate_args
+        if not validate_args(args, CUSTOM_SCHEMAS['update_order']['function']['parameters']):
+            return {'status': 'invalid_arguments', 'changed': False, 'recovery_kind': 'model_repair',
+                'message': 'Mình chưa tạo bản xem trước do lỗi diễn giải yêu cầu.'}
     # Selecting another order/action abandons the old quote even if the new order is locked.
     prefs = cart_manager.get_checkout_prefs(session_id)
     stale = {field: None for field in ('order_management_action', 'order_management_focus')
@@ -541,12 +546,12 @@ def prepare(session_id, kind, args, turn_id, *, canonical_line_ids=False):
                 if key not in {'order_line_id', 'product_name'}:
                     if key == 'options' and isinstance(value, dict):
                         for ok, ov in value.items():
-                            row[field_map.get(ok, ok)] = ov
+                            row[field_map[ok]] = ov
                     else:
-                        row[field_map.get(key, key)] = value
+                        row[field_map[key]] = value
         rows = [r for r in rows if r['so_luong'] > 0]
         for added in args.get('add_items') or []:
-            rows.append({field_map.get(k, k): v for k, v in added.items()})
+            rows.append({field_map[k]: v for k, v in added.items()})
         if not rows:
             return {'status': 'empty_order', 'message': 'Đơn cần còn ít nhất một món. Bạn muốn huỷ đơn thì nói huỷ đơn nhé.'}
         payload = {'items': rows, 'expected_revision': current['revision']}

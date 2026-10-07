@@ -19,7 +19,7 @@ NAMESPACES = {
     'ORDER': ('orders', ('order_id', 'ma_don_hang'), ('order_id',)),
     'PROFILE_ADDRESS': (None, ('full_address',), ('label', 'full_address')),
     'MENU_CATEGORY': ('menu_categories', ('category_id',), ('category_name',)),
-    'PAYMENT': ('payment_options', ('code', 'value'), ('label',)),
+    'PAYMENT': ('payment_options', ('code', 'value'), ('label', 'aliases')),
     'FULFILLMENT': (None, ('value',), ('label',)),
 }
 TOOL_TARGETS = {
@@ -40,31 +40,6 @@ TOOL_TARGETS = {
     'set_payment_choice': ('PAYMENT', 'payment_method'),
     'set_fulfillment_choice': ('FULFILLMENT', 'delivery_type'),
 }
-
-
-def _merge_parameter(left, right):
-    """Union shapes for provider generation; the selected tool validates legality."""
-    result = deepcopy(left)
-    result.pop('description', None)
-    if left.get('type') != right.get('type'):
-        raise ValueError('incompatible business parameter types')
-    if 'enum' in left and 'enum' in right:
-        result['enum'] = list(dict.fromkeys([*left['enum'], *right['enum']]))
-    else:
-        result.pop('enum', None)
-    for bound, combine in [('minimum', min), ('maximum', max), ('minItems', min), ('maxItems', max)]:
-        if bound in left and bound in right:
-            result[bound] = combine(left[bound], right[bound])
-        else:
-            result.pop(bound, None)
-    if left.get('type') == 'object':
-        props = result.setdefault('properties', {})
-        for key, spec in right.get('properties', {}).items():
-            props[key] = _merge_parameter(props[key], spec) if key in props else deepcopy(spec)
-        result['required'] = sorted(set(left.get('required', [])) & set(right.get('required', [])))
-    elif left.get('type') == 'array':
-        result['items'] = _merge_parameter(left['items'], right['items'])
-    return result
 
 
 OPTION_ALIASES = {'kich_co': 'size', 'ice': 'luong_da', 'sugar': 'do_ngot', 'milk': 'loai_sua'}
@@ -88,7 +63,7 @@ def canonical_option_arguments(tool, args):
 
 
 def model_repair(code, **details):
-    return {'status': code, 'changed': False, 'recovery_kind': 'model_repair',
+    return {'status': code, 'changed': False, 'recovery_kind': 'model_repair', 'error_class': 'MODEL_PROTOCOL',
         'message': 'Mình chưa thực hiện phần yêu cầu này; hệ thống đang kiểm tra lại đề xuất.', **details}
 
 
@@ -137,72 +112,34 @@ def provider_parameters(spec):
     return spec
 
 
-CONTROL_HINTS = {
-    'get_menu_categories': 'Generic menu request reads categories with args={}; no product selection or preference search. Newest request replaces prior discovery goals.',
-    'filter_catalog': 'Use for requested product names/families and category browsing; omitted search_text means unrestricted category. SELECTED purchases require canonical options after a unique match. Never search descriptions for a named purchase.',
-    'get_recommendations': 'Use criteria=preferences with preference_query and preference_concepts for suitability. Named purchases use filter_catalog, not description mentions; changing the request replaces prior preferences. search_text restricts product family ONLY; never repeat a taste concept there. Preserve the need when repairing; never replace this operation with name search or sales.',
-    'get_cart': 'QUESTION reads committed cart plus separate pending selections; never completes CONFIGURE/DEFAULTS. For a pending option/default instruction use add_to_cart, not this read. Empty cart never cancels pending selection.',
-    'get_product_options': 'SELECTED stages only: return required choices to customer. QUESTION inspects.',
-    'add_to_cart': 'option_intent SELECT stages unresolved choices; CONFIGURE uses provided values; DEFAULTS needs defaults_evidence. No implicit defaults.',
-    'update_cart_item': 'desired_state patches one exact owned line; other lines/options remain.',
-    'set_fulfillment_choice': 'facet=fulfillment. Record ONLY explicitly committed fulfillment; supplied_location=true suppresses a saved-address offer. Never payment.',
-    'set_payment_choice': 'facet=payment. Requires canonical PAYMENT reference and exact choice evidence. Named reference quotes the method; ordinal must answer current payment choices. Generic acknowledgment needs unique pending choice.',
-    'resolve_location': 'Destination requires set_fulfillment_choice first, then for_checkout=true. New literals use LOCATION; saved choices use PROFILE_ADDRESS. Never infer payment.',
-    'find_nearest_branch': 'Read-only location questions; never substitutes for recording delivery/checkout destination.',
-    'finish_cart': 'Finish selection and open mandatory voucher decision; never implies skip/apply.',
-    'skip_voucher': 'Explicitly decline vouchers; do not infer from generic acknowledgment.',
-    'request_checkout': 'Prepare/review summary only after prerequisites; reuse_summary=true to review.',
-    'confirm_checkout': 'AFFIRMED to fresh prior-turn summary only; never prepare then confirm in same turn.',
-}
-
 def customer_actions_schema(allowed, tool_rows=None, *, model_facing=False):
-    from src.agents.tool_capabilities import CAPABILITIES, tool_schemas
-    allowed = set(allowed)
+    """Private migration envelope shape; NEVER a provider schema.
+
+    Argument validation is operation-specific in _valid_proposal. There is no
+    merged argument schema, even for the old offline/migration adapter.
+    """
     if model_facing:
-        allowed.discard('set_checkout_choices')
-    rows = tool_rows if tool_rows is not None else tool_schemas(allowed)
-    properties, contracts = {}, []
-    for row in rows:
-        name, parameters = row['function']['name'], row['function']['parameters']
-        if name not in allowed:
-            continue
-        if model_facing:
-            parameters = provider_parameters(parameters)
-        fields = parameters.get('properties', {})
-        for key, spec in fields.items():
-            properties[key] = _merge_parameter(properties[key], spec) if key in properties else deepcopy(spec)
-        required = set(parameters.get('required', []))
-        contracts.append(name + '(' + CAPABILITIES[name].access + '; ' + CAPABILITIES[name].owner + '): ' +
-            ','.join(key + ('!' if key in required else '') for key in fields) +
-            (' — ' + CONTROL_HINTS[name] if name in CONTROL_HINTS else ''))
-    description = ('Use customer_actions only when the NEWEST customer request needs a business read, selection or change. '
-        'For social conversation return final JSON with response_kind=social, reply, mutation_claims:[], evidence_quotes:[]; do not call any business tool just to greet. '
-        'For business work supply {actions:[...]} with the appropriate operation on each action. No default operation. Never put tool/args at root. '
-        'args is an object, not an encoded string. QUESTION reads facts; get_product_options SELECTED stages a chosen product. '
-        'Writes need current evidence. ! marks required args unless reference supplies the target. '
-        'A displayed list number is reference kind=ordinal with index, never an ID argument. '
-        'Copy IDs only from canonical server rows; omit the target argument when reference supplies it. Tool arguments:\n' + '\n'.join(contracts))
+        raise ValueError('Use semantic_registry operation-specific provider functions')
     return {'type': 'function', 'function': {'name': 'customer_actions',
-        'description': description,
+        'description': 'Private migration adapter, not exposed to inference.',
         'parameters': {'type': 'object', 'additionalProperties': False,
             'required': ['actions'], 'properties': {'actions': {'type': 'array', 'minItems': 1, 'maxItems': 16,
-                'items': {'type': 'object', 'additionalProperties': False, 'required': ['tool', 'commitment', 'args'] + (['evidence'] if model_facing else []),
+                'items': {'type': 'object', 'additionalProperties': False, 'required': ['tool', 'commitment', 'args'],
                     'properties': {
-                        'tool': {'type': 'string', 'enum': sorted(allowed), 'description': 'REQUIRED operation name on EVERY action. For configuring a pending product this is add_to_cart. Never omit this discriminator.'},
+                        'tool': {'type': 'string', 'enum': sorted(allowed)},
                         'commitment': {'type': 'string', 'enum': list(COMMITMENTS)},
-                        'args': {'type': 'object', 'properties': properties, 'additionalProperties': False},
-                        'evidence': {'type': 'string', 'description': 'Exact CURRENT customer quotation, preserving spelling/case/accents, supporting this action. Never history or paraphrase.'},
-                        'option_intent': {'type': 'string', 'enum': ['SELECT', 'CONFIGURE', 'DEFAULTS'], 'description': 'For add_to_cart: SELECT chooses product only; CONFIGURE supplies options; DEFAULTS explicitly authorizes Menu defaults.'},
-                        'defaults_evidence': {'type': 'string', 'description': 'Only DEFAULTS: exact current span where customer requests default configuration; product selection alone never authorizes this.'},
+                        # Replaced with the selected executor's exact schema before validation.
+                        'args': {'type': 'object', 'properties': {}, 'additionalProperties': False},
+                        'evidence': {'type': 'string'},
+                        'option_intent': {'type': 'string', 'enum': ['SELECT', 'CONFIGURE', 'DEFAULTS']},
+                        'defaults_evidence': {'type': 'string'},
                         'reference': {'type': 'object', 'additionalProperties': False,
-                            'description': 'Numbered choice: kind=ordinal,index=<display_index> in the target namespace. This supplies the target; omit its ID argument. kind=id/value must copy a canonical ID, never a list position.',
                             'required': ['kind'], 'properties': {
                                 'kind': {'type': 'string', 'enum': list(REFERENCE_KINDS)},
                                 'namespace': {'type': 'string', 'enum': list(NAMESPACES)},
                                 'value': {'type': 'string'}, 'index': {'type': 'integer', 'minimum': 1},
                                 'scope': {'type': 'string', 'enum': ['drink', 'food']}}},
-                        'facet': {'type': 'string', 'enum': ['description', 'taste', 'ingredient', 'allergen', 'fulfillment', 'payment', 'location', 'cart', 'voucher']},
-                        'exclude_previous': {'type': 'boolean'},
+                        'facet': {'type': 'string'}, 'exclude_previous': {'type': 'boolean'},
                         'supplied_location': {'type': 'boolean'},
                     }}}}}}}
 
@@ -227,15 +164,24 @@ def failure(code, namespace=None, count=0):
 
 def validate_commitment(action, access, message):
     commitment = action['commitment']
+    if action.get('operation'):
+        from src.agents.semantic_registry import operation_registry
+        operation = operation_registry().get(action['operation'])
+        if not operation or commitment not in operation.allowed_commitments:
+            return model_repair('semantic_commitment_required')
+        access, allowed = operation.access, operation.allowed_commitments
+    else:
+        # Private legacy migration lane; the typed lane takes policy solely
+        # from the registry, including product selection's draft WRITE access.
+        allowed = {'SELECTED', 'AFFIRMED', 'CORRECTION'}
+        if action['tool'] in {'skip_voucher', 'remove_voucher', 'discard_order_change', 'discard_pending_product'}:
+            allowed.add('REJECTED')
+        if action['tool'] == 'resolve_location' and action.get('reference') and action['reference'].get('namespace', 'PROFILE_ADDRESS') == 'PROFILE_ADDRESS':
+            allowed.add('REJECTED')
+        if action['tool'] in {'confirm_checkout', 'confirm_order_change'}:
+            allowed = {'AFFIRMED'}
     if access == 'READ':
         return None
-    allowed = {'SELECTED', 'AFFIRMED', 'CORRECTION'}
-    if action['tool'] in {'skip_voucher', 'remove_voucher', 'discard_order_change', 'discard_pending_product'}:
-        allowed.add('REJECTED')
-    if action['tool'] == 'resolve_location' and action.get('reference') and action['reference'].get('namespace', 'PROFILE_ADDRESS') == 'PROFILE_ADDRESS':
-        allowed.add('REJECTED')
-    if action['tool'] in {'confirm_checkout', 'confirm_order_change'}:
-        allowed = {'AFFIRMED'}
     if commitment not in allowed:
         return failure('semantic_commitment_required')
     evidence = action.get('evidence')
@@ -310,11 +256,11 @@ def candidates(gateway, namespace, reference):
         rows = list(gateway.artifacts.visible.get(kind) or [])
     if namespace == 'PAYMENT':
         selected = (state.get('checkout') or {}).get('payment_method')
-        from src.agents.checkout_choices import PAYMENT_OPTIONS, PAYMENT_LABELS
+        from src.agents.checkout_choices import PAYMENT_OPTIONS, PAYMENT_LABELS, PAYMENT_ALIASES
         if reference.get('kind') in {'id', 'name'}:
             # Named supported methods are canonical even before a list is shown.
             # Ordinals and acknowledgments still require a displayed/pending owner.
-            rows += [{'code': code, 'label': label} for code, label in zip(PAYMENT_OPTIONS, PAYMENT_LABELS)]
+            rows += [{'code': code, 'label': label, 'aliases': list(PAYMENT_ALIASES[code])} for code, label in zip(PAYMENT_OPTIONS, PAYMENT_LABELS)]
         if selected in PAYMENT_OPTIONS:
             rows.append({'code': selected})
     if namespace == 'ORDER':
@@ -329,6 +275,8 @@ def candidates(gateway, namespace, reference):
         key = identity(row, fields)
         if key:
             unique.setdefault(key, deepcopy(row))
+            if namespace == 'PAYMENT' and row.get('aliases'):
+                unique[key]['aliases'] = deepcopy(row['aliases'])
     return list(unique.values())
 
 
@@ -342,7 +290,8 @@ def ground_reference(gateway, namespace, reference):
         rows = [row for row in rows if identity(row, fields) == str(value)]
     elif kind == 'name':
         from src.rag.documents import normalize_text
-        rows = [row for row in rows if any(str(row.get(key, '')).casefold() == str(value).casefold()
+        rows = [row for row in rows if (namespace == 'PAYMENT' and normalize_text(value) in
+            {normalize_text(alias) for alias in row.get('aliases', [])}) or any(str(row.get(key, '')).casefold() == str(value).casefold()
             or namespace == 'PAYMENT' and len(normalize_text(value)) >= 3
             and (' ' + normalize_text(value) + ' ') in (' ' + normalize_text(row.get(key, '')) + ' ')
             for key in names)]
@@ -459,6 +408,25 @@ def ground_action(gateway, action):
         else:
             reference = {'kind': 'name' if field in {'product_name', 'product_name_query'} else 'id', 'value': str(args[field])}
     row, error = ground_reference(gateway, namespace, reference)
+    if (error and namespace == 'PRODUCT' and action.get('operation') and reference.get('kind') == 'name'):
+        # The model supplied name meaning; Menu alone supplies identity. Never
+        # use descriptions, popularity or a model ID to resolve a purchase.
+        from src.function_calling.tools import TOOL_EXECUTORS
+        found = TOOL_EXECUTORS['filter_catalog']({'category': 'all',
+            'search_text': reference.get('value', ''), 'limit': 16}, gateway.session_id)
+        rows = [candidate for candidate in found.get('products', []) if candidate.get('product_id')]
+        from src.rag.documents import normalize_text
+        exact = [candidate for candidate in rows if normalize_text(candidate.get('product_name')) == normalize_text(reference.get('value'))]
+        matches = exact or rows
+        ids = {str(candidate['product_id']) for candidate in matches}
+        if found.get('status') not in {'ok', 'not_found'}:
+            return None, None, {'status': 'authority_unavailable', 'changed': False,
+                'message': 'Mình chưa xác minh được Menu lúc này. Bạn thử lại cùng tin nhắn nhé.'}
+        if len(ids) == 1:
+            row, error = matches[0], None
+            gateway.artifacts.product_candidates[str(row['product_id'])] = deepcopy(row)
+        else:
+            return None, None, failure('ambiguous_reference' if ids else 'unknown_reference', 'PRODUCT', len(ids))
     if error:
         # A literal UUID/code supplied by the customer is explicit structural
         # evidence; ownership/eligibility still comes from its service.

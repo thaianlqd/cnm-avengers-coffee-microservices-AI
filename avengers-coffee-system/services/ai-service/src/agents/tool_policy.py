@@ -153,6 +153,55 @@ class GuardedToolGateway:
             result['customer_actions'] = lambda args, session_id: self.customer_actions(args)
         return result
 
+    def semantic_calls(self, calls):
+        """Collect the WHOLE assistant response before any semantic execution.
+
+        All wire proposals, including malformed siblings, enter one journal.
+        Results retain the original tool-call IDs in the provider loop.
+        """
+        from src.agents.semantic_registry import materialize_operation
+        proposals = []
+        for call in calls:
+            try:
+                payload = json.loads(call.function.arguments or '{}')
+            except (TypeError, ValueError):
+                payload = None
+            proposals.append(materialize_operation(call.function.name, payload))
+        result = self.customer_actions({'actions': proposals})
+        failed = (self.semantic_plan.failed or {}).get('proposal') if self.semantic_plan else None
+        if failed and failed.get('operation'):
+            from src.agents.semantic_registry import operation_registry
+            op = operation_registry().get(failed['operation'])
+            if op:
+                result.update(repair_function=op.function_name, repair_parameters=op.parameters(),
+                    repair_hint=op.repair_hint())
+        output = [result]
+        for row in self.semantic_plan.actions[1:] if self.semantic_plan else []:
+            output.append({'status': 'batch_member', 'changed': False,
+                'plan_id': self.semantic_plan.plan_id, 'action_id': row['action_id'],
+                'action_status': row['status'], 'result': row.get('result')})
+        return (output + [{'status': 'batch_member', 'changed': False}] * len(calls))[:len(calls)]
+
+    @staticmethod
+    def _valid_proposal(proposal, legacy_spec):
+        if proposal.get('operation'):
+            from src.agents.semantic_registry import validate_operation, materialize_operation
+            name, payload = proposal['operation'], proposal.get('semantic_payload')
+            return (validate_operation(name, payload)
+                and proposal == materialize_operation(name, payload))
+        from src.agents.semantic_control import TOOL_TARGETS
+        selected = next((row['function']['parameters'] for row in tool_schemas({proposal.get('tool')})), None)
+        if selected is None:
+            return False
+        spec = deepcopy(legacy_spec)
+        selected = deepcopy(selected)
+        target = TOOL_TARGETS.get(proposal.get('tool'), (None, None))[1]
+        # Canonical target requiredness is checked after grounding; no argument
+        # from a different executor is valid in this migration envelope.
+        selected['required'] = [key for key in selected.get('required', []) if key != target]
+        spec['properties']['args'] = selected
+        return validate_args(proposal, spec)
+
     def dispatch_model(self, name, args):
         """Direct reads are questions; every state change needs typed evidence."""
         capability = CAPABILITIES.get(name)
@@ -259,7 +308,8 @@ class GuardedToolGateway:
                     or not 1 <= len(args['actions']) <= 16):
                 raise ValueError('invalid batch envelope')
             invalid_envelope = set(args) != {'actions'}
-            actions = [self._normalize_action(proposal) for proposal in args['actions']]
+            actions = [deepcopy(proposal) if isinstance(proposal, dict) and proposal.get('operation')
+                else self._normalize_action(proposal) for proposal in args['actions']]
             if self.repair_in_progress:
                 if invalid_envelope:
                     raise ValueError('invalid repair envelope')
@@ -267,7 +317,7 @@ class GuardedToolGateway:
                 fresh = []
                 for proposal in actions:
                     field = TOOL_TARGETS.get(proposal.get('tool'), (None, None))[1]
-                    grounded, _, error = ground_action(self, proposal) if validate_args(proposal, spec) else (None, None, True)
+                    grounded, _, error = ground_action(self, proposal) if self._valid_proposal(proposal, spec) else (None, None, True)
                     key = (proposal.get('tool'), str(grounded.get(field)) if grounded and field else None)
                     failed = self.semantic_plan.failed
                     repairing_target = (proposal.get('tool') == failed['tool'] and
@@ -280,7 +330,7 @@ class GuardedToolGateway:
                         fresh.append(proposal)
                 actions = fresh
                 if (actions and self.semantic_plan.failed['tool'] in CAPABILITIES
-                        and all(validate_args(a, spec) and CAPABILITIES[a['tool']].access == 'READ' for a in actions)
+                        and all(self._valid_proposal(a, spec) and CAPABILITIES[a['tool']].access == 'READ' for a in actions)
                         and self.semantic_plan.failed['tool'] not in {a['tool'] for a in actions}):
                     if CAPABILITIES[self.semantic_plan.failed['tool']].access == 'READ':
                         raise ValueError('repair same failed read before changing authority')
@@ -308,10 +358,24 @@ class GuardedToolGateway:
                 self.semantic_plan = SemanticPlan(actions)
                 from src.agents.semantic_control import ground_action
                 for row in self.semantic_plan.actions:
-                    if row['tool'] in {'remove_cart_item', 'update_cart_item'} and isinstance(row['proposal'].get('args'), dict):
+                    if (self._valid_proposal(row['proposal'], spec) or (
+                            (row['tool'] in {'remove_cart_item', 'update_cart_item'}
+                             or row['proposal'].get('operation') and row['proposal'].get('reference'))
+                            and isinstance(row['proposal'].get('args'), dict)
+                            and (not row['proposal'].get('reference') or validate_args(
+                                row['proposal']['reference'], spec['properties']['reference'])))):
                         bound, target, error = ground_action(self, row['proposal'])
                         if not error and target:
-                            row['bound_cart_item_id'] = str(bound['cart_item_id'])
+                            from src.agents.semantic_control import TOOL_TARGETS
+                            namespace, field = TOOL_TARGETS.get(row['tool'], (None, None))
+                            if field and field in bound:
+                                row['bound_target'] = (namespace, field, str(bound[field]))
+                                if namespace == 'CART_LINE':
+                                    row['bound_cart_item_id'] = str(bound[field])
+                if any(row.get('bound_cart_item_id') for row in self.semantic_plan.actions):
+                    self.context['turn_cart_ordinals'] = self.artifacts.turn_cart_ordinals = {
+                        str(row['cart_item_id']): row.get('display_index', index)
+                        for index, row in enumerate(self.entry_cart_lines, 1)}
                 if invalid_envelope:
                     self.semantic_plan.actions[0]['status'] = 'NEEDS_REPAIR'
                     self.semantic_plan.actions[0]['result'] = model_repair('invalid_semantic_arguments')
@@ -329,7 +393,7 @@ class GuardedToolGateway:
             return result
         plan, results = self.semantic_plan, replayed_results
         self.artifacts.semantic_plan_read_progress = False
-        invalid = next((r for r in plan.pending if not validate_args(r['proposal'], spec)), None)
+        invalid = next((r for r in plan.pending if not self._valid_proposal(r['proposal'], spec)), None)
         if invalid:
             invalid['status'] = 'NEEDS_REPAIR'
             invalid['result'] = model_repair('invalid_semantic_arguments')
@@ -349,14 +413,15 @@ class GuardedToolGateway:
             proposal = row['proposal']
             row['status'] = 'EXECUTING'
             logger.info('[SemanticPlan] plan_id=%s action_id=%s index=%s status=EXECUTING', plan.plan_id, row['action_id'], row['original_index'])
-            if not validate_args(proposal, spec):
+            if not self._valid_proposal(proposal, spec):
                 result = model_repair('invalid_semantic_arguments', repair_hint='Use this action schema and only selected tool fields.')
                 self.artifacts.collect('customer_actions', {}, result)
             else:
                 from src.agents.semantic_control import ground_action
-                if row.get('bound_cart_item_id'):
+                if row.get('bound_target'):
                     bound, _, error = ground_action(self, proposal)
-                    if not error and str(bound.get('cart_item_id')) != row['bound_cart_item_id']:
+                    _, field, identity = row['bound_target']
+                    if not error and str(bound.get(field)) != identity:
                         error = model_repair('repair_target_conflict')
                 else:
                     error = None
@@ -436,6 +501,13 @@ class GuardedToolGateway:
     def execute_semantic(self, action):
         from src.agents.semantic_control import validate_commitment, ground_action, failure
         capability = CAPABILITIES.get(action['tool'])
+        if action.get('operation'):
+            from src.agents.semantic_registry import operation_registry
+            operation = operation_registry().get(action['operation'])
+            if not operation or action['commitment'] not in operation.allowed_commitments:
+                result = failure('semantic_commitment_required')
+                self.artifacts.collect(action['tool'], action['args'], result)
+                return result
         if action['tool'] == 'confirm_checkout' and getattr(self, 'semantic_summary_prepared', False):
             result = denied('confirmation_required', reason='summary_prepared_this_turn',
                 message='Bạn kiểm tra phần tóm tắt mới rồi xác nhận ở lượt tiếp theo nhé.')
@@ -510,9 +582,16 @@ class GuardedToolGateway:
         rows = tool_schemas(self.allowed)
         self.schemas = {r['function']['name']: r['function']['parameters'] for r in rows}
         if self.semantic_mode and not final_only:
-            from src.agents.semantic_control import customer_actions_schema
-            rows = [customer_actions_schema(self.allowed, rows, model_facing=True)]
-        return rows, self.executors()
+            from src.agents.semantic_registry import operations_for_context
+            rows = [op.schema() for op in operations_for_context(self.context, self.allowed)]
+        executors = self.executors()
+        if self.semantic_mode and not final_only:
+            from src.agents.semantic_registry import materialize_operation
+            for row in rows:
+                name = row['function']['name']
+                executors[name] = lambda payload, session_id, n=name: self.customer_actions(
+                    {'actions': [materialize_operation(n, payload)]})
+        return rows, executors
 
     def cache_key(self, name, args):
         revision = self.business_revision if name in CAPABILITIES and CAPABILITIES[name].access == 'READ' else 'write'
@@ -590,7 +669,7 @@ class GuardedToolGateway:
                 denied_msg = "Yêu cầu sửa đơn hàng chưa đầy đủ hoặc không hợp lệ. Bạn có thể nói rõ món hoặc số thứ tự món và tuỳ chọn muốn đổi (ví dụ: 'đổi món 2 sang ít đá' hoặc 'đổi món 2 sang Trà Sữa') nhé."
             result = denied('invalid_arguments',
                 **({'recovery_kind': 'model_repair', 'repair_hint': 'Use only this selected tool\'s allowed fields, including its required fields.'} if self.semantic_mode else {}),
-                message=denied_msg,
+                message=('Mình chưa xử lý xong phần yêu cầu này do lỗi diễn giải của trợ lý. Bạn thử lại cùng tin nhắn nhé.' if self.semantic_mode else denied_msg),
                 required_fields=spec.get('required', []),
                 allowed_fields=list(spec.get('properties', {})))
             if name == 'confirm_checkout':
@@ -610,6 +689,11 @@ class GuardedToolGateway:
         if not self.shadow and not self.active_semantic:
             self.context['business'] = business_state(self.session_id)
         if self.semantic_mode and name in DISCOVERY_TOOLS:
+            if args.get('category') not in {'drink', 'food', 'all'}:
+                from src.agents.semantic_control import model_repair
+                result = model_repair('semantic_scope_required', repair_hint='Choose explicit scope drink, food or all. Missing scope never broadens to all.')
+                self.artifacts.collect(name, args, result)
+                return result
             plan = args.get('planned_discovery_reads')
             if name == 'get_recommendations' and 'criteria' not in args:
                 args = {**args, 'criteria': None}  # Do not introduce the legacy sales default before validation.
@@ -720,7 +804,8 @@ class GuardedToolGateway:
         from src.agents.tool_artifacts import public_result
         if name == 'confirm_checkout' and result.get('status') != 'invalid_arguments' and self.confirmation_recovery == 'confirm_checkout':
             self.confirmation_recovery = 'stop'
-        result = public_result(result)
+        from src.rag.untrusted_data import safe_review_result
+        result = public_result(safe_review_result(result))
         if len(self.artifacts.cart_edit_plan) > 1 and name in {'update_cart_item', 'remove_cart_item'}:
             from src.agents.cart_edit_evidence import unfinished_edits
             result['remaining_cart_edits'] = len(unfinished_edits(self.artifacts.cart_edit_plan,
@@ -870,7 +955,7 @@ class GuardedToolGateway:
             from src.rag.documents import normalize_text as description_key
             query = args.get('preference_query') or ''
             concepts = args.get('preference_concepts') or []
-            if (args.get('criteria') == 'preferences' and len(concepts) == 1
+            if (not (self.active_semantic or {}).get('operation') and args.get('criteria') == 'preferences' and len(concepts) == 1
                     and description_key(query) == description_key(concepts[0]) and not args.get('search_text')):
                 # Model supplied a single literal entity-like query. Let Menu
                 # settle whether it names products before consulting prose
@@ -1030,7 +1115,7 @@ class GuardedToolGateway:
                 choices = {**staged.get('selected_options', {}),
                     **{k: staged[k] for k in ('size', 'toppings', 'luong_da', 'do_ngot', 'loai_sua') if k in staged}}
                 product = self._stage_option_product(args['product_id'], result,
-                    staged.get('quantity', 1), {**choices, **literal_option_choices(
+                    (self.active_semantic or {}).get('selection_quantity', staged.get('quantity', 1)), {**choices, **literal_option_choices(
                         '' if self.semantic_mode else self.option_message_for(args['product_id']), option_schema_from_result(result))})
                 if self.semantic_mode:
                     result = {**result, 'selection_staged': True}

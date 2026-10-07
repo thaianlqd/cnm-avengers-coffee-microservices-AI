@@ -53,7 +53,7 @@ WRITES = {
 }
 CAPABILITIES = {name: Capability('READ', owner, 'server-owned session; validated schema', result)
                 for name, (owner, result) in READS.items()}
-CAPABILITIES.update({name: Capability('FINAL_WRITE' if name == 'confirm_checkout' else 'WRITE',
+CAPABILITIES.update({name: Capability('FINAL_WRITE' if name in {'confirm_checkout', 'confirm_order_change'} else 'WRITE',
     owner, preconditions, 'business_result') for name, (owner, preconditions) in WRITES.items()})
 # Audit every old executor, including deliberately unexposed capabilities.
 EXCLUDED = {'get_user_preferences': 'long-term preference inference is outside this session BPM',
@@ -112,10 +112,10 @@ CUSTOM_SCHEMAS = {
         'edit_request': {**STRING, 'description': 'Exact current customer message for guided item selection. Do not combine with other changes.'},
         'changes': {'type': 'array', 'maxItems': 32, 'items': {'type': 'object', 'properties': {
             'order_line_id': {'type': 'integer', 'minimum': 1}, 'quantity': {'type': 'integer', 'minimum': 0, 'maximum': 999},
-            'product_id': STRING, 'product_name': STRING, **OPTION_PROPERTIES, 'note': STRING}, 'required': ['order_line_id'], 'additionalProperties': True}},
+            'product_id': STRING, 'product_name': STRING, **OPTION_PROPERTIES, 'options': {'type': 'object', 'properties': OPTION_PROPERTIES, 'additionalProperties': False}, 'note': STRING}, 'required': ['order_line_id'], 'additionalProperties': False}},
         'add_items': {'type': 'array', 'maxItems': 16, 'items': {'type': 'object', 'properties': {
             'product_id': STRING, 'quantity': {'type': 'integer', 'minimum': 1, 'maximum': 999},
-            **OPTION_PROPERTIES, 'note': STRING}, 'required': ['product_id', 'quantity'], 'additionalProperties': True}},
+            **OPTION_PROPERTIES, 'note': STRING}, 'required': ['product_id', 'quantity'], 'additionalProperties': False}},
         'delivery_address': STRING, 'delivery_slot': STRING, 'note': STRING}, ('order_id',)),
     'reorder_order': schema('reorder_order', {'order_id': STRING}, ('order_id',)),
     'confirm_order_change': schema('confirm_order_change'),
@@ -191,6 +191,8 @@ def capabilities_for_context(context, *, entry_action=None, final_only=False, re
     # Secondary profile/completed-order capabilities remain in
     # CAPABILITIES and tool_schemas(), outside the default ordering surface.
     allowed = {'get_menu_categories', 'filter_catalog', 'get_recommendations', 'search_knowledge_base', 'get_cart', 'get_product_insights'}
+    if context.get('semantic_control'):
+        allowed.add('get_product_options')  # Typed named references can ground through Menu without prior display.
     if context.get('semantic_control') or context.get('branch_review_request'):
         allowed.update({'get_store_reviews', 'get_top_rated_stores'})
         if visible.get('branches'):

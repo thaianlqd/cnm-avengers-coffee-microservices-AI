@@ -591,22 +591,24 @@ def execute_get_product_insights(product_name: str) -> Dict[str, Any]:
         params = {f"w_{i}": f"%{w}%" for i, w in enumerate(words)}
         
         with engine.connect() as conn:
-            row = conn.execute(text(
+            rows = conn.execute(text(
                 f"""
                 SELECT ma_san_pham::text, ten_san_pham
                 FROM {menu_schema}.san_pham
-                WHERE trang_thai = TRUE 
-                  AND {conditions}
-                ORDER BY la_hot DESC, ten_san_pham ASC
-                LIMIT 1
+                WHERE trang_thai = TRUE AND {conditions}
+                ORDER BY ten_san_pham ASC
+                LIMIT 16
                 """
-            ), params).fetchone()
-            
-            if not row:
+            ), params).fetchall()
+            exact = [row for row in rows if _catalog_name_key(row[1]).strip() == _catalog_name_key(product_name).strip()]
+            matches = exact or rows
+            if not matches:
                 return {"status": "not_found", "message": f"Không tìm thấy món '{product_name}' trong menu."}
-                
-            product_id = row[0]
-            found_name = row[1]
+            if len(matches) != 1:
+                return {'status': 'ambiguous_reference', 'unresolved_namespace': 'PRODUCT',
+                    'products': [{'product_id': str(row[0]), 'product_name': row[1]} for row in matches],
+                    'message': 'Có nhiều món phù hợp. Bạn chọn đúng tên món để mình đọc đánh giá nhé.'}
+            product_id, found_name = matches[0]
 
             stats = conn.execute(text(
                 f"""

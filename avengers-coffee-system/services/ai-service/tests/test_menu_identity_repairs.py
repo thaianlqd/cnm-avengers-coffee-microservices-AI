@@ -29,7 +29,7 @@ def test_named_request_uses_menu_before_description_mentions(runtime, monkeypatc
     monkeypatch.setitem(tools.TOOL_EXECUTORS, 'get_recommendations', lambda args, sid:
         product_tools.execute_get_recommendations(**args))
     g = gateway_for(runtime, 'Một yêu cầu mua món có tên mới')
-    runtime.provider.steps = [step({'actions': [action(g, 'get_recommendations', {
+    runtime.provider.steps = [step({'actions': [action(g, 'get_recommendations', {'category': 'all',
         'criteria': 'preferences', 'preference_query': query, 'preference_concepts': [query],
         'search_text': ''}, commitment='SELECTED')]})]
     result = runtime.turn(g.user_message)
@@ -101,7 +101,7 @@ def test_change_from_taste_to_named_family_replaces_previous_cards(runtime, monk
     monkeypatch.setitem(tools.TOOL_EXECUTORS, 'filter_catalog', lambda args, sid:
         {'status': 'ok', 'products': deepcopy(rows)})
     g = gateway_for(runtime, 'à thôi cho tôi mua cà phê sữa đi')
-    runtime.provider.steps = [step({'actions': [action(g, 'get_recommendations', {
+    runtime.provider.steps = [step({'actions': [action(g, 'get_recommendations', {'category': 'all',
         'criteria': 'preferences', 'preference_query': 'cà phê sữa',
         'preference_concepts': ['cà phê sữa'], 'search_text': ''}, commitment='SELECTED')]})]
     result = runtime.turn(g.user_message)
@@ -114,7 +114,7 @@ def test_single_named_purchase_still_needs_explicit_option_selection(runtime, mo
     monkeypatch.setitem(tools.TOOL_EXECUTORS, 'filter_catalog', lambda args, sid:
         {'status': 'ok', 'products': [deepcopy(row)]})
     g = gateway_for(runtime, 'Chọn tên món này')
-    runtime.provider.steps = [step({'actions': [action(g, 'get_recommendations', {
+    runtime.provider.steps = [step({'actions': [action(g, 'get_recommendations', {'category': 'all',
         'criteria': 'preferences', 'preference_query': row['product_name'],
         'preference_concepts': [row['product_name']]}, commitment='SELECTED')]}),
         step({'actions': [action(g, 'get_product_options', {'product_id': row['product_id']}, commitment='SELECTED')]})]
