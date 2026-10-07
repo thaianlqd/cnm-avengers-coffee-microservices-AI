@@ -57,6 +57,37 @@ class VerifiableV27Tests(unittest.TestCase):
         v=next(c for c in r['quality_assessment']['components'] if c['id']=='visualization_appropriateness')
         self.assertEqual(v['status'],'not_applicable');self.assertEqual(v['score'],10)
 
+    def test_null_scalar_is_insufficient_data_without_a_score(self):
+        d=plan([{'id':'main','lens_id':'sales_overview'}],[component(lens='sales_overview',domain='orders')])
+        p=self.pipeline(d);p.executor=Mock(return_value=result([{'revenue':None}]))
+        req=AiTextToReportRequest(question='Tổng doanh thu',reference_date=date(2026,10,7));req.session_id=p.propose(req)['session_id']
+        with self.assertRaises(AnalysisError) as caught:p.generate(req)
+        self.assertEqual(caught.exception.category,'insufficient_data')
+        self.assertIsNone(safe_failure(caught.exception)['quality_assessment']['score'])
+
+    def test_saved_comment_conclusion_label_and_numeric_finding_are_verified(self):
+        _,_,r=self.approved()
+        for field in ('comment','conclusion','label','finding_value'):
+            with self.subTest(field=field):
+                bad=deepcopy(r)
+                if field=='comment':bad['key_findings'][0]['comment']='Chắc chắn chiến dịch làm tăng doanh thu.'
+                elif field=='conclusion':bad['conclusions']=['Chắc chắn chiến dịch làm tăng doanh thu.']
+                elif field=='label':bad['kpi_cards'][0]['label']='Lợi nhuận ròng'
+                else:bad['key_findings'][0]['value']=999999
+                self.assertLess(verify_saved_report(bad,self.catalog)['score'],90)
+
+    def test_export_recomputes_stale_score_without_sql_or_provider(self):
+        from routers.reports import _verified_export
+        from services.docx_service import generate_report_docx
+        from docx import Document
+        _,_,r=self.approved();r['quality_assessment']={'score':1}
+        with patch('services.metadata_service.get_local_metadata',return_value=physical_metadata()):
+            verified=_verified_export(r)
+        self.assertGreaterEqual(verified['quality_assessment']['score'],90)
+        text=' '.join(p.text for p in Document(generate_report_docx(verified)).paragraphs)
+        self.assertIn('Mức độ kiểm chứng',text)
+        self.assertIn('/100',text)
+
     def test_partial_requires_explicit_approval_and_caps_score(self):
         missing=component('history',lens='delivery_volume',domain='delivery');missing.update(operation_ids=[],status='insufficient_data',reason='historical_data_unavailable')
         p=self.pipeline(plan(components=[component(),missing]));req=AiTextToReportRequest(question='Sản phẩm và lịch sử shipper',reference_date=date(2026,10,7))
@@ -88,6 +119,20 @@ class VerifiableV27Tests(unittest.TestCase):
             elif change=='coverage':bad['charts'][0]['scope_refs']=['nonexistent']
             else:bad['charts'].append(deepcopy(bad['charts'][0]))
             q=verify_saved_report(bad,self.catalog);self.assertLessEqual(q['score'],74)
+
+    def test_equivalent_metric_aliases_share_one_chart_without_losing_coverage(self):
+        d=plan([{'id':'main','lens_id':'sales_overview','metrics':['revenue'],'group_by':['store']},
+                {'id':'branch','lens_id':'store_performance','metrics':['store_revenue'],'group_by':['store']}],
+               [component(lens='sales_overview',domain='orders'),component('branch',lens='store_performance',domain='stores')])
+        p=self.pipeline(d)
+        p.executor=Mock(side_effect=lambda sql,**kw:result([{'store':'Chi nhánh A','store_id':'s1',
+            'store_revenue' if 'AS store_revenue' in sql or 'AS "store_revenue"' in sql else 'revenue':1500}]))
+        req=AiTextToReportRequest(question='Doanh thu và doanh thu chi nhánh',reference_date=date(2026,10,7));req.session_id=p.propose(req)['session_id'];r=p.generate(req)
+        self.assertEqual(len(r['charts']),1);self.assertEqual(set(r['charts'][0]['scope_refs']),{'main','branch'})
+        self.assertGreaterEqual(r['quality_assessment']['score'],90)
+        self.assertEqual(r['quality_assessment'],verify_saved_report(r,self.catalog))
+        bad=deepcopy(r);bad['result_sets']['branch']['rows'][0]['store_revenue']=99999
+        self.assertLessEqual(verify_saved_report(bad,self.catalog)['score'],74)
 
     def test_stale_legacy_failed_invalid_result_unscored(self):
         _,_,r=self.approved()
@@ -162,3 +207,5 @@ class VerifiableV27Tests(unittest.TestCase):
     def test_schema_declares_coverage_without_private_reasoning(self):
         schema=decision_tool(natural=True)['parameters']['properties']['analysis_components']
         self.assertEqual(schema['maxItems'],16);self.assertNotIn('reasoning',schema['items']['properties'])
+        self.assertIn('analysis_components',decision_tool(natural=True)['parameters']['required'])
+        self.assertNotIn('analysis_components',decision_tool(natural=False)['parameters']['required'])

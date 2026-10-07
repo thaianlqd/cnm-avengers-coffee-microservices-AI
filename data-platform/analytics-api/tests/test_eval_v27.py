@@ -16,7 +16,7 @@ class EvalV27Tests(unittest.TestCase):
             guard=patch(name,side_effect=AssertionError('External service forbidden'));guard.start();self.addCleanup(guard.stop)
         self.catalog=AnalysisCatalog(physical_metadata());self.cases=load_cases()
     def test_golden_count_all_domains_lenses_and_split_families(self):
-        self.assertEqual(len(self.cases),100);ops=[o for c in self.cases for o in c['expected_operations']]
+        self.assertEqual(len(self.cases),104);ops=[o for c in self.cases for o in c['expected_operations']]
         self.assertEqual(len({o['domain_id'] for o in ops}),16);self.assertEqual(len({o['lens_id'] for o in ops}),38)
         families={}
         for c in self.cases:families.setdefault(c['family'],set()).add(c['split'])
@@ -27,6 +27,8 @@ class EvalV27Tests(unittest.TestCase):
         expected=self.cases[0]['expected_operations'];bad=deepcopy(expected);bad[0]['metrics']=['invented']
         self.assertEqual(prf(tokens(bad)['metric'],tokens(expected)['metric'])['f1'],0)
         bad[0]['lens_id']='wrong';self.assertEqual(prf(tokens(bad)['lens'],tokens(expected)['lens'])['f1'],0)
+        another=deepcopy(expected[0]);another['filters']=[{'dimension':'city','value':'Hà Nội'}]
+        self.assertEqual(prf(tokens(expected)['component'],tokens(expected+[another])['component'])['recall'],.5)
     def test_filter_order_is_irrelevant_but_values_and_operators_matter(self):
         a=[{'dimension':'city','operator':'in','value':['Hà Nội','Hồ Chí Minh']}];b=deepcopy(a);b[0]['value'].reverse()
         self.assertEqual(filters(a),filters(b));b[0]['value']=['Hà Nội'];self.assertNotEqual(filters(a),filters(b))
@@ -56,8 +58,9 @@ class EvalV27Tests(unittest.TestCase):
     def test_correct_refusal_and_clarification_count_as_pass(self):
         for id in ('profit','ambiguous_store','history_shipper'):
             c=next(c for c in self.cases if c['id']==id)
-            r=assess_case(c,{'outcome':c['expected_outcome'],'status':'needs_clarification'},self.catalog)
+            r=assess_case(c,{'outcome':c['expected_outcome'],'status':'needs_clarification','issue':{'category':c['expected_issue_category'],'what_is_missing':['Tiêu chí hoặc dữ liệu cần bổ sung.'],'suggested_actions':[{'type':'edit_question','label':'Chỉnh câu hỏi'}]}},self.catalog)
             self.assertTrue(r['passed']);self.assertIsNone(r['result_exact'])
+            self.assertFalse(assess_case(c,{'outcome':c['expected_outcome'],'status':'needs_clarification'},self.catalog)['passed'])
     def test_unexpected_refusal_for_supported_question_fails(self):
         r=assess_case(self.cases[0],{'outcome':'UNSUPPORTED','status':'error'},self.catalog)
         self.assertFalse(r['passed']);self.assertIn('wrong_outcome',r['failures'])
@@ -65,6 +68,7 @@ class EvalV27Tests(unittest.TestCase):
         rows=[dict(id='a',run_id=str(i),passed=i!=2,outcome='SUCCESS') for i in range(3)]
         s=stability(rows);self.assertEqual(s['complete_cases'],1);self.assertEqual(s['all_runs_pass_rate'],0)
         self.assertEqual(stability(rows[:2])['complete_cases'],0)
+        self.assertEqual(stability(rows,required_case_ids=['a','b'])['incomplete_cases'],['b'])
         with self.assertRaises(ValueError):stability(rows+[rows[0]])
     def test_synthetic_metadata_audit_all_blueprints(self):
         r=audit(self.catalog);self.assertEqual(r['errors'],[]);self.assertEqual((r['domain_count'],r['lens_count']),(16,38))

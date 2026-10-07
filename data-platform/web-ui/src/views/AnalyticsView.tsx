@@ -1,4 +1,5 @@
 import { AnalystDashboard, AnalystDashboardSummary, AnalystViews, AnalystResultTable, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence, AnalystPlanningSummary } from '../components/AnalystDashboardSummary';
+import { AnalysisQualityScore } from '../components/AnalysisQualityScore';
 import { AnalysisClarification } from '../components/AnalysisClarification';
 import { AnalysisMeaning } from '../components/AnalysisMeaning';
 import { AnalysisModules, AnalysisModuleSummary } from '../components/AnalysisModules';
@@ -1267,6 +1268,8 @@ export const AnalyticsView: React.FC = () => {
 
           <AnalystViews charts={rep.charts || []} editing={isRefining} onChartTypeChange={rep.session_id ? (id, type) => handleFollowUpRefine('Đổi cách trình bày biểu đồ', rep, [{ chart_id: id, chart_type: type }]) : undefined} />
         </div>
+
+        <AnalysisQualityScore assessment={rep.quality_assessment} />
 
         {rep.result_sets && Object.entries(rep.result_sets).slice(1).map(([queryId, data]: [string, any]) => (
           <AnalystResultTable key={queryId} result={data} title={rep.analysis_explanation?.find((op: any) => op.query_id === queryId)?.subject} />

@@ -1,0 +1,67 @@
+{
+  "contexts": [
+    {
+      "scenario": "product",
+      "status": "proposal_ready",
+      "provider_body_chars": {
+        "native": 22798,
+        "compat": 22747
+      },
+      "context_char_budget": 24000,
+      "context_hard_char_budget": 48000,
+      "context_budget_expanded": false,
+      "global_lens_directory_chars": null,
+      "coverage_contract_chars": null,
+      "example_intent_chars": null,
+      "detailed_domain_ids": [
+        "products",
+        "order_items"
+      ]
+    },
+    {
+      "scenario": "six_domains",
+      "status": "proposal_ready",
+      "provider_body_chars": {
+        "native": 22900,
+        "compat": 22849
+      },
+      "context_char_budget": 24000,
+      "context_hard_char_budget": 48000,
+      "context_budget_expanded": false,
+      "global_lens_directory_chars": null,
+      "coverage_contract_chars": null,
+      "example_intent_chars": null,
+      "detailed_domain_ids": [
+        "customers",
+        "orders",
+        "products",
+        "stores",
+        "delivery",
+        "promotions"
+      ]
+    },
+    {
+      "scenario": "unknown_vocabulary",
+      "status": "proposal_ready",
+      "provider_body_chars": {
+        "native": 22053,
+        "compat": 22002
+      },
+      "context_char_budget": 24000,
+      "context_hard_char_budget": 48000,
+      "context_budget_expanded": false,
+      "global_lens_directory_chars": null,
+      "coverage_contract_chars": null,
+      "example_intent_chars": null,
+      "detailed_domain_ids": [
+        "cashier_reconciliation"
+      ]
+    }
+  ],
+  "verification": {
+    "status": "unavailable_in_baseline"
+  },
+  "real_provider_calls": 0,
+  "embedding_calls": 0,
+  "live_db_mutations": 0
+}

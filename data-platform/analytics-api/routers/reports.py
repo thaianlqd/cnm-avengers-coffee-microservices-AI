@@ -250,6 +250,7 @@ def export_report_docx(payload: dict):
     if not report_data:
         raise HTTPException(status_code=400, detail="Không có dữ liệu báo cáo để xuất file DOCX")
     
+    report_data = _verified_export(report_data)
     title = report_data.get("title") or "Bao_Cao_Phan_Tich_AI"
     content_disposition = _make_content_disposition(title, timestamp=True)
 
@@ -283,7 +284,6 @@ def export_report_docx(payload: dict):
         except Exception as e:
             pass
 
-    report_data = _verified_export(report_data)
     buffer = generate_report_docx(report_data)
     return StreamingResponse(
         buffer,

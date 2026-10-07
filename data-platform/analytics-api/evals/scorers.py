@@ -39,7 +39,6 @@ def tokens(operations):
     for o in operations:
         anchor=(o['domain_id'],o.get('lens_id'))
         values['domain'].add(o['domain_id']);values['lens'].add(anchor)
-        values['component'].add(anchor)
         for f in o['metrics']:values['metric'].add((*anchor,f))
         for f in o['group_by']:values['grouping'].add((*anchor,f))
         values['filter'].add((*anchor,json.dumps(filters(o.get('filters',[])),ensure_ascii=False)))
@@ -47,6 +46,9 @@ def tokens(operations):
         values['operation'].add((*anchor,o['operation']))
         rank=o.get('ranking')
         values['ranking'].add((*anchor,json.dumps(rank,sort_keys=True) if rank else None))
+        meaning=[o['operation'],sorted(o['metrics']),sorted(o['group_by']),filters(o.get('filters',[])),
+                 period.get('start'),period.get('end'),o.get('granularity') if o['operation']=='trend' else None,rank]
+        values['component'].add((*anchor,json.dumps(meaning,sort_keys=True,ensure_ascii=False)))
     return values
 
 
@@ -54,6 +56,10 @@ def assess_case(case, report, catalog):
     outcome=report.get('outcome') or ('SUCCESS' if report.get('status')=='success' else 'SYSTEM_ERROR')
     expected_success=case['expected_outcome'] in ('SUCCESS','PARTIAL_AVAILABLE')
     failures=[];outcome_pass=outcome==case['expected_outcome']
+    if case.get('expected_issue_category'):
+        issue=report.get('issue',{})
+        if issue.get('category')!=case['expected_issue_category'] or not issue.get('what_is_missing') or not issue.get('suggested_actions'):
+            outcome_pass=False;failures.append('non_actionable_or_wrong_refusal')
     if not outcome_pass:failures.append('unexpected_clarification' if outcome=='NEEDS_INPUT' else 'wrong_outcome')
     artifacts={};actual_ops=[];result_pass=None;chart_pass=None;grounded_pass=None;safety_pass=True
     if report.get('status')=='success':
@@ -68,12 +74,13 @@ def assess_case(case, report, catalog):
                     operation=a.query.operation,metrics=a.query.metrics,group_by=a.query.group_by,filters=[f.model_dump() for f in a.query.filters],
                     period=a.grounded.period,granularity=a.query.granularity,ranking=a.query.ranking.model_dump() if a.query.ranking else None))
             if not all(a.contract['valid'] for a in artifacts.values()):raise ValueError('Invalid result contract')
-            expected_by_lens={(o['domain_id'],o['lens_id']):o for o in case['expected_operations']}
+            unmatched=list(case['expected_operations'])
             comparisons=[]
             for o in actual_ops:
-                e=expected_by_lens.get((o['domain_id'],o['lens_id']))
+                e=next((e for e in unmatched if all(tokens([e])[f]==tokens([o])[f] for f in FIELDS)),None)
                 comparisons.append(bool(e) and result_equal(report['result_sets'][o['id']]['rows'],oracle(e)))
-            result_pass=bool(comparisons) and len(comparisons)==len(expected_by_lens) and all(comparisons)
+                if e:unmatched.remove(e)
+            result_pass=bool(comparisons) and not unmatched and all(comparisons)
             checks=chart_checks(report.get('charts',[]),artifacts)
             q=verify_saved_report(report,catalog);components={c['id']:c for c in q['components']}
             chart_pass=all(c['valid'] for c in checks) and components.get('visualization_appropriateness',{}).get('score')==10
@@ -85,6 +92,13 @@ def assess_case(case, report, catalog):
             if not grounded_pass:failures.append('unsupported_claim')
         except (ValueError,TypeError,KeyError,IndexError):
             safety_pass=False;failures.append('contract_invalid')
+    if case.get('expected_unavailable'):
+        unavailable=[c for c in report.get('analysis_components',[]) if c.get('status')!='planned']
+        for expected in case['expected_unavailable']:
+            if not any(all(c.get(k)==v for k,v in expected.items()) for c in unavailable):
+                outcome_pass=False;failures.append('missing_requested_component')
+        if not report.get('quality_context',{}).get('partial_scope_approved') or report.get('quality_assessment',{}).get('score',100)>74:
+            outcome_pass=False;failures.append('silent_reduced_scope')
     expected_tokens=tokens(case['expected_operations']);actual_tokens=tokens(actual_ops)
     semantics={f:prf(actual_tokens[f],expected_tokens[f]) for f in FIELDS}
     semantic_pass=all(v['f1']==1 for v in semantics.values()) if expected_success else outcome_pass
@@ -133,7 +147,7 @@ def aggregate(rows):
             p95_latency_ms=percentile([r['latency_ms'] for r in rows],.95),p95_context_chars=percentile([r['context_chars'] for r in rows],.95),p95_quality_compute_ms=percentile([r['quality_compute_ms'] for r in rows],.95)))
 
 
-def stability(records,required_runs=3):
+def stability(records,required_runs=3,required_case_ids=None):
     """Only independently recorded run IDs count; duplicate IDs are rejected."""
     by_case={}
     for r in records:
@@ -142,6 +156,6 @@ def stability(records,required_runs=3):
         if r['run_id'] in runs:raise ValueError('Duplicate stability run')
         runs[r['run_id']]=r
     complete={id:runs for id,runs in by_case.items() if len(runs)>=required_runs}
-    return dict(required_runs=required_runs,complete_cases=len(complete),incomplete_cases=sorted(set(by_case)-set(complete)),
+    return dict(required_runs=required_runs,complete_cases=len(complete),incomplete_cases=sorted((set(required_case_ids) if required_case_ids is not None else set(by_case))-set(complete)),
         all_runs_pass_rate=mean(all(r['passed'] for r in runs.values()) for runs in complete.values()) if complete else None,
         stable_outcome_rate=mean(len({r['outcome'] for r in runs.values()})==1 for runs in complete.values()) if complete else None)

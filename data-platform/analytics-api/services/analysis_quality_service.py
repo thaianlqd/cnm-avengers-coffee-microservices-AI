@@ -1,6 +1,7 @@
 """Pure report verification, distinct from golden accuracy. No I/O or SQL execution."""
 from copy import deepcopy
 from datetime import date
+import json
 from services.analysis_quality_contract import AnalysisQualityAssessment, VERSION
 from services.analysis_coverage_service import canonical_components
 from services.analysis_catalog import AnalysisError
@@ -61,26 +62,72 @@ def chart_checks(charts, artifacts):
             scopes = chart.get('scope_refs', [ref])
             if not isinstance(scopes, list) or ref not in scopes or any(id not in artifacts for id in scopes):
                 raise ValueError('Invalid scopes')
-            if not v.compare_query_ids and any(artifacts[id].signature != a.signature or not set(v.metrics) <= set(artifacts[id].plan.metrics) for id in scopes):
-                raise ValueError('False chart coverage')
+            bindings = [(ref, m) for m in v.metrics]
             reason = comparison_reason(v, artifacts) if v.compare_query_ids else chart_reason(v, a, 100, 16)
+            expected = None
             if not reason:
-                expected = (build_dashboard(artifacts, [], DashboardPlan(active_query_ids=list(artifacts), visuals=[v]))['charts'][0]
+                expected = (next(c for c in build_dashboard(artifacts, [], DashboardPlan(active_query_ids=list(artifacts), visuals=[v]))['charts']
+                                 if c.get('query_id', c.get('scope_ref')) == ref and set(c.get('scope_refs', [])) == set(scopes))
                             if v.compare_query_ids else render(v, a, 0))
                 for key in ('data', 'metrics', 'unit', 'selection', 'series', 'series_keys', 'y_unit'):
                     if chart.get(key) != expected.get(key):
                         reason = 'chart_data_mismatch'
                         break
-            identity = (a.signature, tuple(v.metrics), v.x_field, v.series_field,
+                if not reason:
+                    for id in scopes:
+                        if id == ref:
+                            continue
+                        other = artifacts[id]
+                        if v.compare_query_ids:
+                            bindings.extend((id, m) for m in v.metrics)
+                            continue
+                        mapped = equivalent_visual_metrics(v, a, other, expected)
+                        if mapped is None:
+                            reason = 'false_chart_coverage'
+                            break
+                        bindings.extend((id, m) for m in mapped)
+            identity = (expected['semantic_view_key'] if expected and not v.compare_query_ids else a.signature,
+                        tuple(v.metrics) if v.compare_query_ids else (), v.x_field, v.series_field,
                         tuple(sorted(v.compare_query_ids)), 'share' if v.chart_type in {'donut', 'stacked_100'} else 'raw')
             if identity in identities:
                 reason = 'duplicate_semantic_view'
             identities.add(identity)
             checks.append({'valid': reason is None, 'reason': reason, 'query_id': ref,
-                           'scope_refs': chart.get('scope_refs', [ref]), 'metrics': v.metrics})
-        except (ValueError, TypeError, KeyError, IndexError):
+                           'scope_refs': scopes, 'metrics': v.metrics, 'covered_pairs': bindings})
+        except (ValueError, TypeError, KeyError, IndexError, StopIteration):
             checks.append({'valid': False, 'reason': 'invalid_chart_contract', 'query_id': None, 'scope_refs': [], 'metrics': []})
     return checks
+
+
+def equivalent_visual_metrics(visual, source, other, expected):
+    """Production merges identical physical views across domain metric aliases.
+
+    Check the same renderer-owned semantic key AND actual values, so an alias
+    cannot falsely claim coverage for a different population or tampered rows.
+    """
+    def identity(artifact, metric):
+        definition = artifact.grounded.metrics[metric]
+        return tuple(json.dumps(definition.get(k), sort_keys=True, default=str) for k in
+                     ('expression', 'unit', 'business_filters', 'required_non_null'))
+    mapped = []
+    for metric in visual.metrics:
+        matches = [m for m in other.plan.metrics if identity(source, metric) == identity(other, m)]
+        if len(matches) != 1:
+            return None
+        mapped.append(matches[0])
+    candidate = visual.model_copy(update={'query_id': other.query.id, 'metrics': mapped})
+    if chart_reason(candidate, other, 100, 16):
+        return None
+    rendered = render(candidate, other, 0)
+    if not rendered or rendered.get('semantic_view_key') != expected.get('semantic_view_key'):
+        return None
+    aliases = dict(zip(mapped, visual.metrics))
+    def rows(data, rename=False):
+        return sorted(json.dumps({aliases.get(k, k) if rename else k: value for k,value in row.items()},
+                                 sort_keys=True, ensure_ascii=False, default=str) for row in data)
+    if rows(rendered['data'], True) != rows(expected['data']):
+        return None
+    return mapped
 
 
 def report_limitations(artifacts, charts, catalog, omissions=()):
@@ -128,6 +175,9 @@ def assess_report(report, catalog, *, artifacts=None):
             verdict = validate_results(a.result, a.plan, a.grounded, catalog)
             if not verdict.valid or not report.get('result_contracts', {}).get(id, {}).get('valid'):
                 return not_scored('Kết quả chưa vượt qua kiểm chứng; cần chạy lại phân tích.')
+            if a.query.role == 'requested' and (not a.result['rows'] or (a.plan.metrics and not any(
+                    row.get(metric) is not None for row in a.result['rows'] for metric in a.plan.metrics))):
+                return not_scored('Không có giá trị quan sát cho phần yêu cầu; cần bổ sung dữ liệu.')
         components, _ = canonical_components(report['analysis_components'], artifacts, DomainIntelligence(catalog))
     except (ValueError, KeyError, TypeError):
         return not_scored('Ngữ nghĩa hoặc metadata báo cáo chưa vượt qua kiểm chứng.')
@@ -153,7 +203,11 @@ def assess_report(report, catalog, *, artifacts=None):
     for card in report.get('kpi_cards', []):
         e = canonical.get(card.get('evidence_id'), {})
         field = {'scalar':'value','top_gap':'gap','selected_total':'total','change':'change','concentration':'largest_share_pct'}.get(e.get('feature'))
-        claims.append(card.get('evidence_id') in valid_refs and field is not None and card.get('value') == e.get('values', {}).get(field) and card.get('unit') == ('%' if e.get('feature') == 'concentration' else e.get('unit')))
+        label = {'scalar':'Giá trị trong phạm vi','top_gap':'Chênh lệch hạng 1–2','selected_total':'Tổng của tập Top N',
+                 'change':'Thay đổi giữa hai kỳ quan sát','concentration':'Tỷ trọng lớn nhất'}.get(e.get('feature'))
+        claims.append(card.get('evidence_id') in valid_refs and field is not None and card.get('value') == e.get('values', {}).get(field)
+                      and card.get('unit') == ('%' if e.get('feature') == 'concentration' else e.get('unit'))
+                      and card.get('label') == label and card.get('metric') == e.get('metric') and card.get('scope_ref') == e.get('scope_ref'))
     for finding in report.get('key_findings', []):
         e = canonical.get(finding.get('evidence_id'), {})
         claims.append(finding.get('evidence_id') in valid_refs and finding.get('finding') == e.get('statement') and finding.get('value_details') == e.get('values') and finding.get('value') == e.get('values', {}).get({'population_gap':'gap','peer_gap':'gap','group_comparison':'gap','leader':'value','top_gap':'gap','change':'change','concentration':'largest_share_pct','scalar':'value','selected_total':'total','pearson':'r'}.get(e.get('feature'),'')))
@@ -167,9 +221,15 @@ def assess_report(report, catalog, *, artifacts=None):
         claims.append(report['executive_summary'] == expected_narrative['executive_summary'])
     for rec in report.get('recommendations', []):
         claims.append(rec.get('evidence_id') in valid_refs and rec in expected_narrative['recommendations'])
+    for finding in report.get('key_findings', []):
+        e = canonical.get(finding.get('evidence_id'))
+        expected_comment = (f"Căn cứ {e['scope'].get('label', 'phần phân tích đã chọn')}; phạm vi {e['scope']['selection']}. Xem bằng chứng và phép tính kèm theo." if e else None)
+        claims.append(e is not None and finding.get('comment') == expected_comment)
+    for conclusion in report.get('conclusions', []):
+        claims.append(conclusion in expected_narrative['conclusions'])
     charts = chart_checks(report.get('charts', []), artifacts)
     applicable = [(id,m) for id,a in artifacts.items() if a.query.role == 'requested' and (a.plan.dimensions or a.plan.kind == 'trend') and a.plan.kind != 'detail' for m in a.plan.metrics]
-    covered = sum(any(c['valid'] and id in c['scope_refs'] and m in c['metrics'] for c in charts) for id,m in applicable)
+    covered = sum(any(c['valid'] and (id,m) in c['covered_pairs'] for c in charts) for id,m in applicable)
     invalid_charts = sum(not c['valid'] for c in charts)
     visual_pass = covered + sum(c['valid'] for c in charts)
     visual_total = len(applicable) + len(charts)
@@ -198,6 +258,10 @@ def assess_report(report, catalog, *, artifacts=None):
     if any(a.plan.kind == 'trend' for a in artifacts.values()):
         unverified.append(item('causes', 'Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.'))
     actions = []
+    if not claims or not all(claims):
+        actions.append({**item('review_evidence', 'Đối chiếu bằng chứng hoặc chạy lại trước khi sử dụng các nhận định chưa được kiểm chứng.'), 'action':'review_evidence'})
+    if invalid_charts or covered < len(applicable):
+        actions.append({**item('review_visuals', 'Xem bảng kết quả đầy đủ và chọn cách trình bày phù hợp với các chỉ số.'), 'action':'review_scope'})
     for f in facts:
         if f['id'].startswith('snapshot:'):
             actions.append({**item(f['id'], 'Bổ sung nguồn lịch sử nếu muốn phân tích xu hướng.', f['scope_ref']), 'action':'add_history'})

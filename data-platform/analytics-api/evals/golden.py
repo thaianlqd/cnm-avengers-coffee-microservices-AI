@@ -89,14 +89,26 @@ def cases():
         ('wrong_lens','Tính toán số liệu không có định nghĩa.','SYSTEM_ERROR',{'decision_type':'plan','requested_operations':[{'id':'main','lens_id':'invented_lens'}]}),
         ('invalid_mapping','Kiểm tra lỗi ánh xạ yêu cầu.','SYSTEM_ERROR',{'decision_type':'plan','requested_operations':[{'id':'main','lens_id':'product_volume'}],'analysis_components':[dict(declared('main','products','product_volume'),operation_ids=['absent'])]})]
     for i,(id,question,outcome,decision) in enumerate(negative):
-        values.append(dict(id=id,family=id,split='holdout' if i%3==0 else 'dev',difficulty='unsupported' if outcome in ('UNSUPPORTED','INSUFFICIENT_DATA') else 'ambiguous' if outcome=='NEEDS_INPUT' else 'adversarial',input={'question':question,'time':{'mode':'all_time'}},expected_outcome=outcome,expected_operations=[],scripted_decision=decision))
+        issue_category=('METRIC_UNAVAILABLE' if id in ('profit','roi') else 'UNSUPPORTED_ANALYSIS' if id=='forecast' else 'NEEDS_CLARIFICATION' if outcome=='NEEDS_INPUT' else 'HISTORICAL_DATA_UNAVAILABLE' if outcome=='INSUFFICIENT_DATA' else 'PLAN_FAILED')
+        values.append(dict(id=id,family=id,split='holdout' if i%3==0 else 'dev',difficulty='unsupported' if outcome in ('UNSUPPORTED','INSUFFICIENT_DATA') else 'ambiguous' if outcome=='NEEDS_INPUT' else 'adversarial',input={'question':question,'time':{'mode':'all_time'}},expected_outcome=outcome,expected_issue_category=issue_category,expected_operations=[],scripted_decision=decision))
     # Four explicit scoped contrasts test exact filter/time/ranking semantics.
     for i,(base,city) in enumerate([('product_volume','Hồ Chí Minh'),('product_sales','Hà Nội'),('sales_overview','Hồ Chí Minh'),('payment_value','Hà Nội')]):
         c=deepcopy(next(c for c in values if c['family']==base));c.update(id=f'scoped_{i+1}',family=f'scoped_{i+1}',difficulty='medium',split='holdout' if i==3 else 'dev')
         c['input']['analysis_context']='Chỉ '+city;c['expected_operations'][0]['filters']=[{'dimension':'city','operator':'eq','value':city}]
         c['scripted_decision']['requested_operations'][0]['filters']=deepcopy(c['expected_operations'][0]['filters'])
         values.append(c)
-    assert len(values)==100
+    for i,lens in enumerate(('product_volume','sales_overview')):
+        c=deepcopy(next(c for c in values if c['family']==lens));c.update(id=f'partial_{i+1}',family=f'partial_{i+1}',difficulty='deep',split='holdout' if i else 'dev',expected_outcome='PARTIAL_AVAILABLE')
+        missing=dict(declared('history','delivery','delivery_volume'),operation_ids=[],status='insufficient_data',reason='historical_data_unavailable')
+        c['scripted_decision']['analysis_components'].append(missing)
+        c['input']['question']+=' Kèm lịch sử tổng chuyến shipper tháng trước.'
+        c['expected_unavailable']=[{'domain_id':'delivery','lens_id':'delivery_volume','reason':'historical_data_unavailable'}]
+        values.append(c)
+    for i,lens in enumerate(('product_volume','product_sales')):
+        c=deepcopy(next(c for c in values if c['family']==lens));c.update(id=f'repair_{i+1}',family=f'repair_{i+1}',difficulty='adversarial',split='holdout' if i else 'dev')
+        bad=deepcopy(c['scripted_decision']);bad['analysis_components'][0]['operation_ids']=['absent']
+        c['scripted_decisions']=[bad,c['scripted_decision']];values.append(c)
+    assert len(values)==104
     return values
 
 

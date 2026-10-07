@@ -522,7 +522,8 @@ def build_dashboard(
         if a and v.chart_type == "table" and reason is None:
             tables.append({"query_id": a.query.id, "role": a.query.role})
             continue
-        key = (
+        preview = render(v, a, len(charts), max_categories) if not reason and not v.compare_query_ids else None
+        key = ("physical_view", preview["semantic_view_key"]) if preview else (
             (
                 a.signature,
                 tuple(v.metrics),
@@ -572,7 +573,7 @@ def build_dashboard(
                 ],
             }
         else:
-            rendered = render(v, a, len(charts), max_categories) if not reason else None
+            rendered = preview if not reason else None
         if not reason and rendered is None:
             reason = "invalid_composition_total"
         if reason:

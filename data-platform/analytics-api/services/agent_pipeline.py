@@ -582,7 +582,9 @@ class AnalysisPipeline:
             for a in artifacts.values():
                 if a.query.role != "requested":
                     continue
-                if not a.result["rows"]:
+                if not a.result["rows"] or (a.plan.metrics and not any(
+                    row.get(metric) is not None for row in a.result["rows"] for metric in a.plan.metrics
+                )):
                     raise AnalysisError("insufficient_data", "No rows for the requested population")
                 if a.plan.kind != "detail" and (a.plan.dimensions or a.plan.kind == "trend") and not any(a.query.id in c.get("scope_refs", [c["scope_ref"]]) for c in dashboard["charts"]):
                     # The validated table already contains every row. A visual

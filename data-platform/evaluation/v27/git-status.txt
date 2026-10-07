@@ -1,0 +1,23 @@
+ M data-platform/analytics-api/evals/golden.py
+ M data-platform/analytics-api/evals/run_eval.py
+ M data-platform/analytics-api/evals/scorers.py
+ M data-platform/analytics-api/routers/reports.py
+ M data-platform/analytics-api/services/agent_pipeline.py
+ M data-platform/analytics-api/services/analysis_coverage_service.py
+ M data-platform/analytics-api/services/analysis_pipeline.py
+ M data-platform/analytics-api/services/analysis_quality_service.py
+ M data-platform/analytics-api/services/analyst_decision.py
+ M data-platform/analytics-api/services/dashboard_planner_service.py
+ M data-platform/analytics-api/services/docx_service.py
+ M data-platform/analytics-api/tests/test_contract_v251.py
+ M data-platform/analytics-api/tests/test_eval_v27.py
+ M data-platform/analytics-api/tests/test_verifiable_v27.py
+ D data-platform/analytics-api/tools/probe_eval_v27.py
+ D data-platform/analytics-api/tools/probe_v27.py
+ M data-platform/web-ui/src/views/AnalyticsView.tsx
+?? data-platform/AI_V27_EVALUATION_METHODOLOGY.md
+?? data-platform/AI_V27_IMPLEMENTATION_REPORT.md
+?? data-platform/AI_V27_MANUAL_MATRIX.md
+?? data-platform/AI_V27_VERIFIABLE_ANALYST.md
+?? data-platform/analytics-api/tools/profile_v27.py
+?? data-platform/evaluation/

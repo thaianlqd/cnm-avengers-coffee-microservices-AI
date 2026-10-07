@@ -32,6 +32,10 @@ def canonical_components(declared, artifacts, intelligence):
             errors.append(issue(["analysis_components", i], "duplicate_field"))
         seen.add(c["id"])
         p = profiles.get(c["domain_id"])
+        if not p and c["status"] != "planned" and c["domain_id"] in intelligence.profiles:
+            # A known domain may be physically unavailable. Keep the declared
+            # missing requirement visible; this never authorizes execution.
+            p = intelligence.profiles[c["domain_id"]].model_dump(mode="json")
         lens = next((l for l in p["analytical_lenses"] if l["id"] == c["lens_id"]), None) if p else None
         if c["domain_id"] and not p or c["lens_id"] and not lens:
             errors.append(issue(["analysis_components", i], "unknown_reference"))
@@ -41,8 +45,6 @@ def canonical_components(declared, artifacts, intelligence):
             continue
         if not c["operation_ids"]:
             errors.append(issue(["analysis_components", i, "operation_ids"], "missing_requested_component"))
-        if c["domain_id"] and not p or c["lens_id"] and not lens:
-            errors.append(issue(["analysis_components", i], "unknown_reference"))
         for ref in c["operation_ids"]:
             a = artifacts.get(ref)
             if not a or a.query.role != c["requested_or_supporting"] or p and a.query.subject not in p["primary_subjects"] or c["lens_id"] and a.query.lens_id != c["lens_id"]:

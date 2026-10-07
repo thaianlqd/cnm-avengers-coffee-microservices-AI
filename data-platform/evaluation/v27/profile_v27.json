@@ -1,0 +1,69 @@
+{
+  "contexts": [
+    {
+      "scenario": "product",
+      "status": "proposal_ready",
+      "provider_body_chars": {
+        "native": 22696,
+        "compat": 22645
+      },
+      "context_char_budget": 24000,
+      "context_hard_char_budget": 48000,
+      "context_budget_expanded": false,
+      "global_lens_directory_chars": 3579,
+      "coverage_contract_chars": 714,
+      "example_intent_chars": 0,
+      "detailed_domain_ids": [
+        "products"
+      ]
+    },
+    {
+      "scenario": "six_domains",
+      "status": "proposal_ready",
+      "provider_body_chars": {
+        "native": 29165,
+        "compat": 29114
+      },
+      "context_char_budget": 31000,
+      "context_hard_char_budget": 48000,
+      "context_budget_expanded": true,
+      "global_lens_directory_chars": 1733,
+      "coverage_contract_chars": 714,
+      "example_intent_chars": 0,
+      "detailed_domain_ids": [
+        "customers",
+        "orders",
+        "products",
+        "stores",
+        "delivery",
+        "promotions"
+      ]
+    },
+    {
+      "scenario": "unknown_vocabulary",
+      "status": "proposal_ready",
+      "provider_body_chars": {
+        "native": 22604,
+        "compat": 22553
+      },
+      "context_char_budget": 24000,
+      "context_hard_char_budget": 48000,
+      "context_budget_expanded": false,
+      "global_lens_directory_chars": 3952,
+      "coverage_contract_chars": 714,
+      "example_intent_chars": 0,
+      "detailed_domain_ids": []
+    }
+  ],
+  "verification": {
+    "samples": 20,
+    "median_ms": 65.74,
+    "p95_ms": 81.26,
+    "score": 100,
+    "result_rows": 7,
+    "interpretation": "Pure stored-report verification, local synthetic fixture; not provider latency or worst-case capacity."
+  },
+  "real_provider_calls": 0,
+  "embedding_calls": 0,
+  "live_db_mutations": 0
+}

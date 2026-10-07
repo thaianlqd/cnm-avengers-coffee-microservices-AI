@@ -710,7 +710,7 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
     else:
         doc.add_paragraph(quality.get("reason") or "Chưa đủ metadata để chấm theo V2.7.")
     doc.add_paragraph("Điểm kiểm chứng đối chiếu phạm vi, số liệu và bằng chứng; không phải xác suất AI trả lời đúng.")
-    for key, label in (("completed", "Đã thực hiện"), ("missing", "Chưa thực hiện"), ("unverified", "Chưa thể xác minh"), ("limitations", "Giới hạn dữ liệu")):
+    for key, label in (("completed", "Đã thực hiện"), ("missing", "Chưa thực hiện"), ("unverified", "Chưa thể xác minh"), ("limitations", "Giới hạn dữ liệu"), ("suggested_next_actions", "Bước tiếp theo")):
         values = quality.get(key, [])
         if values:
             doc.add_paragraph(label + ": " + "; ".join(v["label"] for v in values[:8]))

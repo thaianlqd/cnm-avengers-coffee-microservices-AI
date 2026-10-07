@@ -145,7 +145,7 @@ def decision_tool(*, refinement=True, supporting_limit=7, natural=False):
     # Supports inherit parent scope; the compatibility parser still validates
     # explicit scope from old decisions. New calls don't repeat those fields.
     return {"name": "submit_analyst_decision", "description": "Return only one structured decision; no prose. Preserve all requested work; supports inherit parent scope and use remaining capacity.",
-            "parameters": {"type": "object", "required": ["decision_type"], "properties": {
+            "parameters": {"type": "object", "required": ["decision_type", *(["analysis_components"] if natural else [])], "properties": {
                 "decision_type": {"type": "string", "enum": ["plan", "clarification", "unsupported"]},
                 **({"analysis_breadth": {"type": "string", "enum": ["focused", "deep", "comprehensive"], "description": "Infer breadth from question and optional expectation; preserve every requested component."}} if natural else {}),
                 **({"analysis_components": {"type": "array", "maxItems": 16, "items": omit_null(expanded_schema(AnalysisComponent.model_json_schema())), "description": "Declare every explicit business requirement and its operation IDs; mark unavailable work explicitly with reason. No reasoning."}} if natural else {}),

@@ -1,0 +1,186 @@
+{
+  "version": "2.7.1",
+  "mode": "offline",
+  "model_accuracy_measured": false,
+  "dataset_sha256": "9db85087f482c0bb4221f394cb78642aa394fdf6f4a9c17c4dcf91bb49e43a70",
+  "aggregate": {
+    "cases": 104,
+    "pass_rate": {
+      "passed": 104,
+      "total": 104,
+      "rate": 1.0,
+      "wilson_95": [
+        0.9643786456275479,
+        0.9999999999999999
+      ]
+    },
+    "semantic": {
+      "domain": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "lens": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "metric": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "grouping": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "filter": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "time": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "operation": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "ranking": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "component": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    },
+    "semantic_pass": {
+      "passed": 104,
+      "total": 104,
+      "rate": 1.0,
+      "wilson_95": [
+        0.9643786456275479,
+        0.9999999999999999
+      ]
+    },
+    "plan_valid": {
+      "passed": 104,
+      "total": 104,
+      "rate": 1.0,
+      "wilson_95": [
+        0.9643786456275479,
+        0.9999999999999999
+      ]
+    },
+    "first_attempt_valid": {
+      "passed": 102,
+      "total": 104,
+      "rate": 0.9807692307692307,
+      "wilson_95": [
+        0.9325768708423217,
+        0.9947102884149359
+      ]
+    },
+    "bounded_repair_rate": 0.019230769230769232,
+    "repair_success": {
+      "passed": 2,
+      "total": 2,
+      "rate": 1.0,
+      "wilson_95": [
+        0.34238022750665303,
+        1
+      ]
+    },
+    "result_exact": {
+      "passed": 92,
+      "total": 92,
+      "rate": 1.0,
+      "wilson_95": [
+        0.9599186107143782,
+        1
+      ]
+    },
+    "dashboard_correct": {
+      "passed": 92,
+      "total": 92,
+      "rate": 1.0,
+      "wilson_95": [
+        0.9599186107143782,
+        1
+      ]
+    },
+    "grounded": {
+      "passed": 92,
+      "total": 92,
+      "rate": 1.0,
+      "wilson_95": [
+        0.9599186107143782,
+        1
+      ]
+    },
+    "clarification_correct": {
+      "passed": 3,
+      "total": 3,
+      "rate": 1.0,
+      "wilson_95": [
+        0.4385029682449546,
+        1
+      ]
+    },
+    "refusal_correct": {
+      "passed": 6,
+      "total": 6,
+      "rate": 1.0,
+      "wilson_95": [
+        0.6096657120978346,
+        1
+      ]
+    },
+    "safety_violations": 0,
+    "cost": {
+      "average_provider_calls": 1.0192307692307692,
+      "observed_input_tokens": null,
+      "observed_output_tokens": null,
+      "p95_latency_ms": 297.14,
+      "p95_context_chars": 22918,
+      "p95_quality_compute_ms": 26.76
+    }
+  },
+  "split_counts": {
+    "dev": 76,
+    "holdout": 28
+  },
+  "difficulty_counts": {
+    "adversarial": 5,
+    "ambiguous": 3,
+    "deep": 2,
+    "medium": 18,
+    "multi-domain": 8,
+    "simple": 62,
+    "unsupported": 6
+  },
+  "real_provider_calls_initiated_by_assistant": 0,
+  "external_judge_calls": 0,
+  "external_embedding_calls": 0,
+  "live_db_mutations_initiated_by_assistant": 0,
+  "local_readonly_audit": {
+    "version": "2.7.1",
+    "source": "live_local_metadata_read_only",
+    "domain_count": 16,
+    "lens_count": 38,
+    "metric_count": 33,
+    "dimension_count": 26,
+    "relationship_count": 35,
+    "unavailable_domains": [],
+    "errors": [],
+    "provider_calls": 0,
+    "live_db_mutations": 0
+  }
+}

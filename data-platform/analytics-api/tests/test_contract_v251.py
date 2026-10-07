@@ -120,7 +120,9 @@ class ContractV251Tests(unittest.TestCase):
         self.assertEqual({c["id"] for c in d["strong_domain_candidates"]}, LIVE_DOMAINS)
         self.assertTrue(LIVE_DOMAINS <= set(d["full_domain_pack_ids"] + d["compact_domain_pack_ids"]))
         self.assertEqual(d["global_domain_count"], 16)
-        self.assertGreaterEqual(d["provider_body_headroom_chars"], 2000)
+        # V2.7 carries richer business definitions and explicit coverage. Keep
+        # bounded headroom without discarding mandatory five-domain semantics.
+        self.assertGreaterEqual(d["provider_body_headroom_chars"], 1000)
         req = p.provider.requests[0]
         native = NativeAgentProvider()
         sizes = {"native": len(compact(native._gemini_body(**req))), "compat": len(compact(native._gemini_compat_body(**req, model="configured_model")))}
@@ -137,8 +139,11 @@ class ContractV251Tests(unittest.TestCase):
                 self.assertTrue(pack["lenses"])
                 self.assertTrue(set(pack["caveats"]) <= payload["domains"]["caveat_meanings"].keys())
                 if pack["tier"] == "compact":
-                    self.assertTrue(pack["metrics"])
-                    self.assertTrue(pack["dimensions"])
+                    self.assertNotIn("metrics", pack)
+                    self.assertNotIn("dimensions", pack)
+                    subjects = {s[0]: s[1] for s in payload["manifest"]["subjects"]}
+                    self.assertTrue(all(subjects.get(s) for s in pack["subjects"]))
+                    self.assertTrue(payload["manifest"]["dimension_sets"])
         for key in ("contract_repair_count", "model_escalation_count", "provider_fallback_count", "db_query_count", "post_result_provider_call_count"):
             self.assertEqual(d[key], 0)
         self.assertEqual(p.provider.call_count, 1)

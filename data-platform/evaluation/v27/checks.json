@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-07",
+  "backend": {
+    "command": "python -B tools/qualify_v26.py",
+    "passed": 519,
+    "failed": 0,
+    "seconds": 102.261,
+    "network": "none",
+    "live_http_and_db": "forbidden"
+  },
+  "backend_evaluator_followup": {
+    "command": "python -B -m unittest tests.test_eval_v27",
+    "passed": 13,
+    "failed": 0,
+    "seconds": 0.909
+  },
+  "frontend": {
+    "command": "node --test src/utils/*.test.mjs",
+    "passed": 79,
+    "failed": 0
+  },
+  "typecheck": "passed",
+  "vite_build": "passed",
+  "docker_api_build": "passed",
+  "docker_web_build": "passed",
+  "api_health": "ok",
+  "web_http_status": 200,
+  "model_accuracy_measured": false,
+  "real_provider_calls_initiated_by_assistant": 0,
+  "judge_calls": 0,
+  "embedding_calls": 0,
+  "live_db_mutations_initiated_by_assistant": 0,
+  "no_commit": true,
+  "no_push": true
+}
