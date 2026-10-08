@@ -1,77 +1,136 @@
 {
   "live_provider_requests": 0,
   "legacy_system_prompt_chars": 6386,
-  "semantic_system_prompt_chars": 5025,
+  "semantic_system_prompt_chars": 5219,
   "states": [
     {
       "state": "browsing",
-      "legacy_flat_schema_chars": 7519,
-      "exact_schema_chars": 10831,
-      "exposed_functions": 21,
-      "context_chars": 495
+      "legacy_flat_schema_chars": 7527,
+      "exact_schema_chars": 9985,
+      "exposed_functions": 20,
+      "context_chars": 495,
+      "system_prompt_chars": 5219,
+      "previous_exact_schema_chars": 10831,
+      "previous_exposed_functions": 21
     },
     {
       "state": "products",
-      "legacy_flat_schema_chars": 8256,
-      "exact_schema_chars": 14114,
-      "exposed_functions": 25,
-      "context_chars": 573
+      "legacy_flat_schema_chars": 8264,
+      "exact_schema_chars": 11426,
+      "exposed_functions": 22,
+      "context_chars": 573,
+      "system_prompt_chars": 5219,
+      "previous_exact_schema_chars": 14114,
+      "previous_exposed_functions": 25
     },
     {
       "state": "pending_product",
-      "legacy_flat_schema_chars": 8341,
-      "exact_schema_chars": 14859,
-      "exposed_functions": 26,
-      "context_chars": 917
+      "legacy_flat_schema_chars": 8349,
+      "exact_schema_chars": 13980,
+      "exposed_functions": 25,
+      "context_chars": 917,
+      "system_prompt_chars": 5219,
+      "previous_exact_schema_chars": 14859,
+      "previous_exposed_functions": 26
     },
     {
       "state": "cart",
-      "legacy_flat_schema_chars": 9972,
-      "exact_schema_chars": 18178,
-      "exposed_functions": 33,
-      "context_chars": 729
+      "legacy_flat_schema_chars": 9980,
+      "exact_schema_chars": 15446,
+      "exposed_functions": 30,
+      "context_chars": 729,
+      "system_prompt_chars": 5219,
+      "previous_exact_schema_chars": 18178,
+      "previous_exposed_functions": 33
     },
     {
       "state": "voucher",
-      "legacy_flat_schema_chars": 10078,
-      "exact_schema_chars": 18855,
-      "exposed_functions": 34,
-      "context_chars": 834
+      "legacy_flat_schema_chars": 10086,
+      "exact_schema_chars": 16112,
+      "exposed_functions": 31,
+      "context_chars": 834,
+      "system_prompt_chars": 5219,
+      "previous_exact_schema_chars": 18855,
+      "previous_exposed_functions": 34
     },
     {
       "state": "location",
-      "legacy_flat_schema_chars": 10348,
-      "exact_schema_chars": 19829,
-      "exposed_functions": 36,
-      "context_chars": 921
+      "legacy_flat_schema_chars": 10356,
+      "exact_schema_chars": 17075,
+      "exposed_functions": 33,
+      "context_chars": 921,
+      "system_prompt_chars": 5219,
+      "previous_exact_schema_chars": 19829,
+      "previous_exposed_functions": 36
+    },
+    {
+      "state": "payment_needed",
+      "legacy_flat_schema_chars": 10356,
+      "exact_schema_chars": 17075,
+      "exposed_functions": 33,
+      "context_chars": 928,
+      "system_prompt_chars": 5219,
+      "previous_exact_schema_chars": 19829,
+      "previous_exposed_functions": 36
     },
     {
       "state": "summary",
-      "legacy_flat_schema_chars": 10680,
-      "exact_schema_chars": 20559,
-      "exposed_functions": 38,
-      "context_chars": 1004
+      "legacy_flat_schema_chars": 10688,
+      "exact_schema_chars": 17805,
+      "exposed_functions": 35,
+      "context_chars": 1004,
+      "system_prompt_chars": 5219,
+      "previous_exact_schema_chars": 20559,
+      "previous_exposed_functions": 38
     },
     {
       "state": "order_change",
-      "legacy_flat_schema_chars": 11692,
-      "exact_schema_chars": 22384,
-      "exposed_functions": 38,
-      "context_chars": 815
+      "legacy_flat_schema_chars": 11700,
+      "exact_schema_chars": 19619,
+      "exposed_functions": 35,
+      "context_chars": 815,
+      "system_prompt_chars": 5219,
+      "previous_exact_schema_chars": 22384,
+      "previous_exposed_functions": 38
     }
   ],
-  "worst_case_exact_schema_chars": 27104,
+  "worst_case_exact_schema_chars": 26912,
   "registry": [
     {
       "operation": "DISCOVER_PRODUCTS",
-      "function": "semantic_discover_products",
+      "function_name": "semantic_discover_products",
       "executor": "filter_catalog",
       "access": "READ",
       "namespace": "MENU_CATEGORY",
       "facet": "discovery",
-      "required": [
+      "required_semantic_fields": [
         "scope"
       ],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "fixed_args": {
+        "sort_by": "menu"
+      },
+      "renames": {
+        "scope": "category",
+        "product_family": "search_text",
+        "requested_count": "limit"
+      },
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -84,22 +143,47 @@
         "min_price_inclusive": "A: inclusive optional price bound.",
         "planned_discovery_reads": "A: presentation planning only; no new semantic scope or selection.",
         "product_family": "A: no narrower family filter, within the REQUIRED explicit scope.",
-        "reference": "A: no optional category-ID restriction within explicit scope.",
+        "reference": "A: omission means NO entity target; retain explicit filter scope only.",
         "requested_count": "A: bounded read pagination (business default 5), never a selected quantity."
       },
       "preconditions": "server-owned session; validated schema"
     },
     {
       "operation": "RECOMMEND_BY_PREFERENCE",
-      "function": "semantic_recommend_by_preference",
+      "function_name": "semantic_recommend_by_preference",
       "executor": "get_recommendations",
       "access": "READ",
       "namespace": null,
       "facet": "preference",
-      "required": [
+      "required_semantic_fields": [
         "scope",
         "concepts"
       ],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {
+        "criteria": "preferences"
+      },
+      "renames": {
+        "scope": "category",
+        "product_family": "search_text",
+        "requested_count": "top_k",
+        "concepts": "preference_concepts"
+      },
+      "joined_args": [
+        [
+          "preference_concepts",
+          "preference_query"
+        ]
+      ],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -114,15 +198,34 @@
     },
     {
       "operation": "RANK_BY_SALES",
-      "function": "semantic_rank_by_sales",
+      "function_name": "semantic_rank_by_sales",
       "executor": "filter_catalog",
       "access": "READ",
       "namespace": null,
       "facet": "rank_by_sales",
-      "required": [
+      "required_semantic_fields": [
         "scope",
         "period"
       ],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {
+        "sort_by": "sold_desc"
+      },
+      "renames": {
+        "scope": "category",
+        "product_family": "search_text",
+        "requested_count": "limit"
+      },
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -138,15 +241,47 @@
     },
     {
       "operation": "RANK_BY_PRICE",
-      "function": "semantic_rank_by_price",
+      "function_name": "semantic_rank_by_price",
       "executor": "filter_catalog",
       "access": "READ",
       "namespace": null,
       "facet": "rank_by_price",
-      "required": [
+      "required_semantic_fields": [
         "scope",
         "direction"
       ],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {},
+      "renames": {
+        "scope": "category",
+        "product_family": "search_text",
+        "requested_count": "limit"
+      },
+      "joined_args": [],
+      "value_mappings": [
+        [
+          "direction",
+          "sort_by",
+          [
+            [
+              "ascending",
+              "price_asc"
+            ],
+            [
+              "descending",
+              "price_desc"
+            ]
+          ]
+        ]
+      ],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -161,14 +296,33 @@
     },
     {
       "operation": "DISCOVER_NEW_PRODUCTS",
-      "function": "semantic_discover_new_products",
+      "function_name": "semantic_discover_new_products",
       "executor": "filter_catalog",
       "access": "READ",
       "namespace": null,
       "facet": "discover_new_products",
-      "required": [
+      "required_semantic_fields": [
         "scope"
       ],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {
+        "sort_by": "new"
+      },
+      "renames": {
+        "scope": "category",
+        "product_family": "search_text",
+        "requested_count": "limit"
+      },
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -183,14 +337,33 @@
     },
     {
       "operation": "RANK_BY_RATING",
-      "function": "semantic_rank_by_rating",
+      "function_name": "semantic_rank_by_rating",
       "executor": "get_recommendations",
       "access": "READ",
       "namespace": null,
       "facet": "rank_by_rating",
-      "required": [
+      "required_semantic_fields": [
         "scope"
       ],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {
+        "criteria": "rating"
+      },
+      "renames": {
+        "scope": "category",
+        "product_family": "search_text",
+        "requested_count": "top_k"
+      },
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -205,12 +378,25 @@
     },
     {
       "operation": "READ_MENU",
-      "function": "semantic_read_menu",
+      "function_name": "semantic_read_menu",
       "executor": "get_menu_categories",
       "access": "READ",
       "namespace": null,
       "facet": "menu",
-      "required": [],
+      "required_semantic_fields": [],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -220,15 +406,41 @@
     },
     {
       "operation": "SELECT_PRODUCT",
-      "function": "semantic_select_product",
+      "function_name": "semantic_select_product",
       "executor": "get_product_options",
       "access": "WRITE",
       "namespace": "PRODUCT",
       "facet": "product_selection",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence",
         "reference"
+      ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [
+        [
+          "quantity",
+          "selection_quantity"
+        ]
+      ],
+      "require_any_fields": [],
+      "exposure_policy": "draft_selection",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -243,14 +455,33 @@
     },
     {
       "operation": "ASK_PRODUCT_OPTIONS",
-      "function": "semantic_ask_product_options",
+      "function_name": "semantic_ask_product_options",
       "executor": "get_product_options",
       "access": "READ",
       "namespace": "PRODUCT",
       "facet": "product_options",
-      "required": [
+      "required_semantic_fields": [
         "reference"
       ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -260,14 +491,43 @@
     },
     {
       "operation": "CONFIGURE_PRODUCT",
-      "function": "semantic_configure_product",
+      "function_name": "semantic_configure_product",
       "executor": "add_to_cart",
       "access": "WRITE",
       "namespace": "PRODUCT",
       "facet": "product_configuration",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence"
+      ],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": "pending",
+      "implicit_reference_precondition": "unique_selected_pending_product",
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton",
+        "pending"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [
+        "quantity",
+        "size",
+        "luong_da",
+        "do_ngot",
+        "loai_sua",
+        "toppings"
+      ],
+      "exposure_policy": "pending_product",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -288,14 +548,43 @@
     },
     {
       "operation": "USE_PRODUCT_DEFAULTS",
-      "function": "semantic_use_product_defaults",
+      "function_name": "semantic_use_product_defaults",
       "executor": "add_to_cart",
       "access": "WRITE",
       "namespace": "PRODUCT",
       "facet": "product_defaults",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence"
+      ],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": "pending",
+      "implicit_reference_precondition": "unique_selected_pending_product",
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton",
+        "pending"
+      ],
+      "fixed_args": {
+        "use_defaults": true
+      },
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [
+        [
+          "evidence",
+          "defaults_evidence"
+        ]
+      ],
+      "require_any_fields": [],
+      "exposure_policy": "pending_product",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -310,15 +599,36 @@
     },
     {
       "operation": "DISCARD_PRODUCT_SELECTION",
-      "function": "semantic_discard_product_selection",
+      "function_name": "semantic_discard_product_selection",
       "executor": "discard_pending_product",
       "access": "WRITE",
       "namespace": "PRODUCT",
       "facet": "discard_product_selection",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence",
         "reference"
+      ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "pending_product",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -332,15 +642,34 @@
     },
     {
       "operation": "ASK_PRODUCT_FACT",
-      "function": "semantic_ask_product_fact",
+      "function_name": "semantic_ask_product_fact",
       "executor": "get_product_description",
       "access": "READ",
       "namespace": "PRODUCT",
       "facet": "product_fact",
-      "required": [
+      "required_semantic_fields": [
         "facet",
         "reference"
       ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -352,14 +681,33 @@
     },
     {
       "operation": "ASK_PRODUCT_REVIEW",
-      "function": "semantic_ask_product_review",
+      "function_name": "semantic_ask_product_review",
       "executor": "get_product_insights",
       "access": "READ",
       "namespace": "PRODUCT",
       "facet": "review",
-      "required": [
+      "required_semantic_fields": [
         "reference"
       ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -369,14 +717,33 @@
     },
     {
       "operation": "ASK_PRODUCT_PRICE",
-      "function": "semantic_ask_product_price",
+      "function_name": "semantic_ask_product_price",
       "executor": "check_price_and_stock",
       "access": "READ",
       "namespace": "PRODUCT",
       "facet": "price",
-      "required": [
+      "required_semantic_fields": [
         "reference"
       ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -393,15 +760,28 @@
     },
     {
       "operation": "ASK_KNOWLEDGE",
-      "function": "semantic_ask_knowledge",
+      "function_name": "semantic_ask_knowledge",
       "executor": "search_knowledge_base",
       "access": "READ",
       "namespace": null,
       "facet": "knowledge",
-      "required": [
+      "required_semantic_fields": [
         "query",
         "domain"
       ],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -411,12 +791,25 @@
     },
     {
       "operation": "READ_CART",
-      "function": "semantic_read_cart",
+      "function_name": "semantic_read_cart",
       "executor": "get_cart",
       "access": "READ",
       "namespace": null,
       "facet": "read_cart",
-      "required": [],
+      "required_semantic_fields": [],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -426,12 +819,25 @@
     },
     {
       "operation": "READ_CART_TOTAL",
-      "function": "semantic_read_cart_total",
+      "function_name": "semantic_read_cart_total",
       "executor": "get_cart_quote",
       "access": "READ",
       "namespace": null,
       "facet": "read_cart_total",
-      "required": [],
+      "required_semantic_fields": [],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -441,16 +847,37 @@
     },
     {
       "operation": "UPDATE_CART_LINE",
-      "function": "semantic_update_cart_line",
+      "function_name": "semantic_update_cart_line",
       "executor": "update_cart_item",
       "access": "WRITE",
       "namespace": "CART_LINE",
       "facet": "update_cart_line",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence",
         "desired_state",
         "reference"
+      ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -463,15 +890,36 @@
     },
     {
       "operation": "REMOVE_CART_LINE",
-      "function": "semantic_remove_cart_line",
+      "function_name": "semantic_remove_cart_line",
       "executor": "remove_cart_item",
       "access": "WRITE",
       "namespace": "CART_LINE",
       "facet": "remove_cart_line",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence",
         "reference"
+      ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -486,14 +934,29 @@
     },
     {
       "operation": "FINISH_CART",
-      "function": "semantic_finish_cart",
+      "function_name": "semantic_finish_cart",
       "executor": "finish_cart",
       "access": "WRITE",
       "namespace": null,
       "facet": "finish_cart",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence"
+      ],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -506,12 +969,25 @@
     },
     {
       "operation": "READ_ELIGIBLE_VOUCHERS",
-      "function": "semantic_read_eligible_vouchers",
+      "function_name": "semantic_read_eligible_vouchers",
       "executor": "get_applicable_vouchers",
       "access": "READ",
       "namespace": null,
       "facet": "read_eligible_vouchers",
-      "required": [],
+      "required_semantic_fields": [],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -521,15 +997,37 @@
     },
     {
       "operation": "CHOOSE_VOUCHER",
-      "function": "semantic_choose_voucher",
+      "function_name": "semantic_choose_voucher",
       "executor": "apply_voucher",
       "access": "WRITE",
       "namespace": "VOUCHER",
       "facet": "choose_voucher",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence",
         "reference"
+      ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton",
+        "best"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -542,14 +1040,29 @@
     },
     {
       "operation": "SKIP_VOUCHER",
-      "function": "semantic_skip_voucher",
+      "function_name": "semantic_skip_voucher",
       "executor": "skip_voucher",
       "access": "WRITE",
       "namespace": null,
       "facet": "skip_voucher",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence"
+      ],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -563,14 +1076,29 @@
     },
     {
       "operation": "REMOVE_VOUCHER",
-      "function": "semantic_remove_voucher",
+      "function_name": "semantic_remove_voucher",
       "executor": "remove_voucher",
       "access": "WRITE",
       "namespace": null,
       "facet": "remove_voucher",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence"
+      ],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -584,12 +1112,25 @@
     },
     {
       "operation": "READ_PAYMENT_OPTIONS",
-      "function": "semantic_read_payment_options",
+      "function_name": "semantic_read_payment_options",
       "executor": "get_payment_options",
       "access": "READ",
       "namespace": null,
       "facet": "read_payment_options",
-      "required": [],
+      "required_semantic_fields": [],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -599,15 +1140,36 @@
     },
     {
       "operation": "SET_PAYMENT",
-      "function": "semantic_set_payment",
+      "function_name": "semantic_set_payment",
       "executor": "set_payment_choice",
       "access": "WRITE",
       "namespace": "PAYMENT",
       "facet": "payment",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence",
         "reference"
+      ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -620,15 +1182,36 @@
     },
     {
       "operation": "SET_FULFILLMENT",
-      "function": "semantic_set_fulfillment",
+      "function_name": "semantic_set_fulfillment",
       "executor": "set_fulfillment_choice",
       "access": "WRITE",
       "namespace": "FULFILLMENT",
       "facet": "fulfillment",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence",
         "reference"
+      ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -643,12 +1226,25 @@
     },
     {
       "operation": "READ_PROFILE_ADDRESSES",
-      "function": "semantic_read_profile_addresses",
+      "function_name": "semantic_read_profile_addresses",
       "executor": "get_user_profile",
       "access": "READ",
       "namespace": null,
       "facet": "read_profile_addresses",
-      "required": [],
+      "required_semantic_fields": [],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -658,17 +1254,34 @@
     },
     {
       "operation": "RESOLVE_NEW_LOCATION",
-      "function": "semantic_resolve_new_location",
+      "function_name": "semantic_resolve_new_location",
       "executor": "resolve_location",
       "access": "WRITE",
       "namespace": "LOCATION",
       "facet": "resolve_new_location",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence",
         "kind",
         "for_checkout",
         "reference"
+      ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "literal"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -681,17 +1294,38 @@
     },
     {
       "operation": "SELECT_PROFILE_ADDRESS",
-      "function": "semantic_select_profile_address",
+      "function_name": "semantic_select_profile_address",
       "executor": "resolve_location",
       "access": "WRITE",
       "namespace": "PROFILE_ADDRESS",
       "facet": "select_profile_address",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence",
         "kind",
         "for_checkout",
         "reference"
+      ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "saved_addresses",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -705,15 +1339,36 @@
     },
     {
       "operation": "SELECT_LOCATION_CANDIDATE",
-      "function": "semantic_select_location_candidate",
+      "function_name": "semantic_select_location_candidate",
       "executor": "select_location_candidate",
       "access": "WRITE",
       "namespace": "LOCATION_CANDIDATE",
       "facet": "select_location_candidate",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence",
         "reference"
+      ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "location_candidates",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -726,14 +1381,27 @@
     },
     {
       "operation": "FIND_NEARBY_BRANCHES",
-      "function": "semantic_find_nearby_branches",
+      "function_name": "semantic_find_nearby_branches",
       "executor": "find_nearest_branch",
       "access": "READ",
       "namespace": null,
       "facet": "find_nearby_branches",
-      "required": [
+      "required_semantic_fields": [
         "location"
       ],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -743,12 +1411,25 @@
     },
     {
       "operation": "READ_BRANCHES",
-      "function": "semantic_read_branches",
+      "function_name": "semantic_read_branches",
       "executor": "ask_branch",
       "access": "READ",
       "namespace": null,
       "facet": "read_branches",
-      "required": [],
+      "required_semantic_fields": [],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -758,15 +1439,36 @@
     },
     {
       "operation": "SELECT_BRANCH",
-      "function": "semantic_select_branch",
+      "function_name": "semantic_select_branch",
       "executor": "set_session_branch",
       "access": "WRITE",
       "namespace": "BRANCH",
       "facet": "select_branch",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence",
         "reference"
+      ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "branch_candidates",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -779,12 +1481,25 @@
     },
     {
       "operation": "READ_BRANCH_RATINGS",
-      "function": "semantic_read_branch_ratings",
+      "function_name": "semantic_read_branch_ratings",
       "executor": "get_top_rated_stores",
       "access": "READ",
       "namespace": null,
       "facet": "read_branch_ratings",
-      "required": [],
+      "required_semantic_fields": [],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -794,14 +1509,33 @@
     },
     {
       "operation": "ASK_BRANCH_REVIEW",
-      "function": "semantic_ask_branch_review",
+      "function_name": "semantic_ask_branch_review",
       "executor": "get_store_reviews",
       "access": "READ",
       "namespace": "BRANCH",
       "facet": "ask_branch_review",
-      "required": [
+      "required_semantic_fields": [
         "reference"
       ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -811,14 +1545,27 @@
     },
     {
       "operation": "COMPARE_BRANCH_REVIEWS",
-      "function": "semantic_compare_branch_reviews",
+      "function_name": "semantic_compare_branch_reviews",
       "executor": "compare_branch_reviews",
       "access": "READ",
       "namespace": null,
       "facet": "compare_branch_reviews",
-      "required": [
+      "required_semantic_fields": [
         "branch_ids"
       ],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -828,14 +1575,29 @@
     },
     {
       "operation": "PREPARE_CHECKOUT",
-      "function": "semantic_prepare_checkout",
+      "function_name": "semantic_prepare_checkout",
       "executor": "request_checkout",
       "access": "WRITE",
       "namespace": null,
       "facet": "prepare_checkout",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence"
+      ],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -850,14 +1612,29 @@
     },
     {
       "operation": "CONFIRM_CHECKOUT",
-      "function": "semantic_confirm_checkout",
+      "function_name": "semantic_confirm_checkout",
       "executor": "confirm_checkout",
       "access": "FINAL_WRITE",
       "namespace": null,
       "facet": "confirm_checkout",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence"
+      ],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "AFFIRMED"
@@ -868,12 +1645,25 @@
     },
     {
       "operation": "READ_ORDER_HISTORY",
-      "function": "semantic_read_order_history",
+      "function_name": "semantic_read_order_history",
       "executor": "get_order_history",
       "access": "READ",
       "namespace": null,
       "facet": "read_order_history",
-      "required": [],
+      "required_semantic_fields": [],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -885,14 +1675,34 @@
     },
     {
       "operation": "READ_ORDER",
-      "function": "semantic_read_order",
+      "function_name": "semantic_read_order",
       "executor": "get_order_details",
       "access": "READ",
       "namespace": "ORDER",
       "facet": "read_order",
-      "required": [
+      "required_semantic_fields": [
         "reference"
       ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton",
+        "recent"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -902,14 +1712,34 @@
     },
     {
       "operation": "TRACK_ORDER",
-      "function": "semantic_track_order",
+      "function_name": "semantic_track_order",
       "executor": "track_order_status",
       "access": "READ",
       "namespace": "ORDER",
       "facet": "track_order",
-      "required": [
+      "required_semantic_fields": [
         "reference"
       ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton",
+        "recent"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "always",
+      "repair_prerequisite_access": [],
       "allowed_commitments": [
         "QUESTION"
       ],
@@ -919,15 +1749,37 @@
     },
     {
       "operation": "PREPARE_ORDER_CANCEL",
-      "function": "semantic_prepare_order_cancel",
+      "function_name": "semantic_prepare_order_cancel",
       "executor": "cancel_order",
       "access": "WRITE",
       "namespace": "ORDER",
       "facet": "prepare_order_cancel",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence",
         "reference"
+      ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton",
+        "recent"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "owned_order",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -942,15 +1794,37 @@
     },
     {
       "operation": "PREPARE_ORDER_UPDATE",
-      "function": "semantic_prepare_order_update",
+      "function_name": "semantic_prepare_order_update",
       "executor": "update_order",
       "access": "WRITE",
       "namespace": "ORDER",
       "facet": "prepare_order_update",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence",
         "reference"
+      ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton",
+        "recent"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "owned_order",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -969,15 +1843,37 @@
     },
     {
       "operation": "PREPARE_REORDER",
-      "function": "semantic_prepare_reorder",
+      "function_name": "semantic_prepare_reorder",
       "executor": "reorder_order",
       "access": "WRITE",
       "namespace": "ORDER",
       "facet": "prepare_reorder",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence",
         "reference"
+      ],
+      "target_required": true,
+      "reference_required_in_schema": true,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton",
+        "recent"
+      ],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "owned_order",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -990,14 +1886,29 @@
     },
     {
       "operation": "CONFIRM_ORDER_CHANGE",
-      "function": "semantic_confirm_order_change",
+      "function_name": "semantic_confirm_order_change",
       "executor": "confirm_order_change",
       "access": "FINAL_WRITE",
       "namespace": null,
       "facet": "confirm_order_change",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence"
+      ],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "order_preview",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "AFFIRMED"
@@ -1008,14 +1919,29 @@
     },
     {
       "operation": "DISCARD_ORDER_CHANGE",
-      "function": "semantic_discard_order_change",
+      "function_name": "semantic_discard_order_change",
       "executor": "discard_order_change",
       "access": "WRITE",
       "namespace": null,
       "facet": "discard_order_change",
-      "required": [
+      "required_semantic_fields": [
         "commitment",
         "evidence"
+      ],
+      "target_required": false,
+      "reference_required_in_schema": false,
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "fixed_args": {},
+      "renames": {},
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "exposure_policy": "order_draft",
+      "repair_prerequisite_access": [
+        "READ"
       ],
       "allowed_commitments": [
         "SELECTED",
@@ -3046,7 +3972,7 @@
     },
     {
       "path": "src/agents/llm_tool_orchestrator.py",
-      "lines": 294,
+      "lines": 296,
       "sites": [
         {
           "line": 54,
@@ -3109,7 +4035,7 @@
           "expression": "context['business']['checkout'].get('flow_stage') or 'SHOPPING'"
         },
         {
-          "line": 253,
+          "line": 255,
           "kind": "or_fallback",
           "expression": "prefs.get('processed_order_turns') or {}"
         },
@@ -7271,7 +8197,7 @@
     },
     {
       "path": "src/agents/semantic_control.py",
-      "lines": 478,
+      "lines": 483,
       "sites": [
         {
           "line": 115,
@@ -7320,22 +8246,22 @@
           "expression": "state.get('checkout') or {}"
         },
         {
-          "line": 361,
+          "line": 366,
           "kind": "get_default",
           "expression": "reference.get('namespace', 'LOCATION' if reference['kind'] == 'literal' else 'PROFILE_ADDRESS')"
         },
         {
-          "line": 396,
+          "line": 401,
           "kind": "or_fallback",
           "expression": "reference['kind'] == 'literal' or (reference['kind'] == 'recent' and namespace != 'ORDER') or (reference['kind'] == 'best' and namespace != 'VOUCHER')"
         },
         {
-          "line": 420,
+          "line": 425,
           "kind": "or_fallback",
           "expression": "exact or rows"
         },
         {
-          "line": 434,
+          "line": 439,
           "kind": "or_fallback",
           "expression": "namespace == 'ORDER' and re.fullmatch('[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}', value) or (namespace == 'VOUCHER' and value)"
         },
@@ -7350,27 +8276,27 @@
           "expression": "gateway.entry_profile_offer or {}"
         },
         {
-          "line": 363,
+          "line": 368,
           "kind": "or_fallback",
           "expression": "reference.get('value') or args.get('location')"
         },
         {
-          "line": 364,
+          "line": 369,
           "kind": "or_fallback",
           "expression": "reference['kind'] not in {'literal', 'name'} or not isinstance(value, str) or (not value.strip())"
         },
         {
-          "line": 374,
+          "line": 379,
           "kind": "or_fallback",
           "expression": "row.get('display_address') or row.get('normalized_label')"
         },
         {
-          "line": 394,
+          "line": 399,
           "kind": "get_default",
           "expression": "reference.get('namespace', namespace)"
         },
         {
-          "line": 433,
+          "line": 438,
           "kind": "or_fallback",
           "expression": "args.get(field) or reference.get('value') or ''"
         },
@@ -7395,17 +8321,17 @@
           "expression": "state.get('checkout') or {}"
         },
         {
-          "line": 416,
+          "line": 421,
           "kind": "get_default",
           "expression": "reference.get('value', '')"
         },
         {
-          "line": 417,
+          "line": 422,
           "kind": "get_default",
           "expression": "found.get('products', [])"
         },
         {
-          "line": 471,
+          "line": 476,
           "kind": "or_fallback",
           "expression": "row.get('reason') or 'Phương thức thanh toán này chưa khả dụng. Bạn chọn phương thức khác nhé.'"
         },
@@ -7420,7 +8346,7 @@
           "expression": "gateway.artifacts.focus.get(focus_key) or {}"
         },
         {
-          "line": 474,
+          "line": 479,
           "kind": "or_fallback",
           "expression": "row.get('display_index') or gateway.entry_cart_lines.index(row) + 1"
         },
@@ -7433,6 +8359,11 @@
           "line": 52,
           "kind": "or_fallback",
           "expression": "args.get('add_items') or []"
+        },
+        {
+          "line": 237,
+          "kind": "or_fallback",
+          "expression": "state.get('pending_products') or []"
         },
         {
           "line": 256,
@@ -7540,111 +8471,185 @@
     },
     {
       "path": "src/agents/semantic_registry.py",
-      "lines": 343,
+      "lines": 411,
       "sites": [
         {
-          "line": 18,
+          "line": 44,
           "kind": "parameter",
           "function": "closed",
           "field": "properties",
           "value": "None"
         },
         {
-          "line": 18,
+          "line": 44,
           "kind": "parameter",
           "function": "closed",
           "field": "required",
           "value": "()"
         },
         {
-          "line": 273,
+          "line": 59,
+          "kind": "parameter",
+          "function": "reference_schema",
+          "field": "kinds",
+          "value": "None"
+        },
+        {
+          "line": 353,
+          "kind": "parameter",
+          "function": "valid_reference",
+          "field": "kinds",
+          "value": "None"
+        },
+        {
+          "line": 27,
+          "kind": "or_fallback",
+          "expression": "context.get('business') or {}"
+        },
+        {
+          "line": 343,
           "kind": "or_fallback",
           "expression": "op is None or not _strict(payload, op.parameters())"
         },
         {
-          "line": 284,
+          "line": 354,
           "kind": "or_fallback",
-          "expression": "not namespace or not isinstance(ref, dict) or (not _strict(ref, reference_schema(namespace)))"
+          "expression": "not namespace or not isinstance(ref, dict) or (not _strict(ref, reference_schema(namespace, kinds)))"
         },
         {
-          "line": 292,
+          "line": 362,
           "kind": "or_fallback",
           "expression": "'value' in ref and kind not in {'id', 'name', 'literal'} or ('index' in ref and kind != 'ordinal')"
         },
         {
-          "line": 140,
+          "line": 28,
+          "kind": "or_fallback",
+          "expression": "state.get('checkout') or {}"
+        },
+        {
+          "line": 28,
+          "kind": "or_fallback",
+          "expression": "context.get('visible') or {}"
+        },
+        {
+          "line": 175,
           "kind": "or_fallback",
           "expression": "len(value.strip()) < spec.get('minLength', 0) or len(value) > spec.get('maxLength', 2000)"
         },
         {
-          "line": 160,
+          "line": 196,
           "kind": "or_fallback",
           "expression": "access or CAPABILITIES[executor].access"
         },
         {
-          "line": 327,
+          "line": 309,
+          "kind": "get_default",
+          "expression": "{'SELECT_PROFILE_ADDRESS': 'saved_addresses', 'SELECT_LOCATION_CANDIDATE': 'location_candidates', 'SELECT_BRANCH': 'branch_candidates', 'PREPARE_ORDER_CANCEL': 'owned_order', 'PREPARE_ORDER_UPDATE': 'owned_order', 'PREPARE_REORDER': 'owned_order', 'CONFIRM_ORDER_CHANGE': 'order_preview', 'DISCARD_ORDER_CHANGE': 'order_draft'}.get(name, 'always')"
+        },
+        {
+          "line": 333,
+          "kind": "or_fallback",
+          "expression": "not op.namespace or op.allowed_reference_kinds"
+        },
+        {
+          "line": 396,
           "kind": "get_default",
           "expression": "payload.get('commitment', 'QUESTION')"
         },
         {
-          "line": 328,
+          "line": 397,
           "kind": "get_default",
           "expression": "payload.get('evidence', '')"
         },
         {
-          "line": 328,
+          "line": 397,
           "kind": "get_default",
           "expression": "payload.get('facet', op.facet)"
         },
         {
-          "line": 19,
+          "line": 34,
+          "kind": "or_fallback",
+          "expression": "checkout.get('profile_location_offer') or context.get('profile_address_candidates_available') or visible.get('profile_addresses')"
+        },
+        {
+          "line": 38,
+          "kind": "or_fallback",
+          "expression": "visible.get('orders') or checkout.get('order_management_focus') or checkout.get('order_management_action')"
+        },
+        {
+          "line": 40,
+          "kind": "or_fallback",
+          "expression": "checkout.get('order_management_action') or checkout.get('order_management_focus')"
+        },
+        {
+          "line": 45,
           "kind": "or_fallback",
           "expression": "properties or {}"
         },
         {
-          "line": 165,
+          "line": 32,
           "kind": "or_fallback",
-          "expression": "facet or name.lower()"
+          "expression": "state.get('authenticated') or state.get('guest_session_id')"
         },
         {
-          "line": 167,
+          "line": 60,
           "kind": "or_fallback",
-          "expression": "description or name.replace('_', ' ').capitalize()"
+          "expression": "kinds or NAMESPACE_REFERENCES[namespace]"
         },
         {
-          "line": 168,
-          "kind": "or_fallback",
-          "expression": "omissions or ('Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.' if actual_access == 'READ' else 'Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.')"
-        },
-        {
-          "line": 330,
-          "kind": "get_default",
-          "expression": "payload.get('reference', {'kind': 'pending'})"
-        },
-        {
-          "line": 140,
+          "line": 175,
           "kind": "get_default",
           "expression": "spec.get('minLength', 0)"
         },
         {
-          "line": 140,
+          "line": 175,
           "kind": "get_default",
           "expression": "spec.get('maxLength', 2000)"
         },
         {
-          "line": 164,
+          "line": 200,
           "kind": "or_fallback",
           "expression": "fields or {}"
         },
         {
-          "line": 288,
+          "line": 202,
+          "kind": "or_fallback",
+          "expression": "facet or name.lower()"
+        },
+        {
+          "line": 205,
+          "kind": "or_fallback",
+          "expression": "description or name.replace('_', ' ').capitalize()"
+        },
+        {
+          "line": 206,
+          "kind": "or_fallback",
+          "expression": "omissions or ('Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.' if actual_access == 'READ' else 'Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.')"
+        },
+        {
+          "line": 325,
+          "kind": "get_default",
+          "expression": "NAMESPACE_REFERENCES.get(op.namespace, ())"
+        },
+        {
+          "line": 211,
+          "kind": "or_fallback",
+          "expression": "reference_kinds or (COMMON_REFERENCES if namespace == 'PRODUCT' and (not implicit) else NAMESPACE_REFERENCES.get(namespace, ()))"
+        },
+        {
+          "line": 358,
           "kind": "get_default",
           "expression": "ref.get('value', '')"
         },
         {
-          "line": 305,
+          "line": 375,
           "kind": "get_default",
           "expression": "payload.get('facet', op.facet)"
+        },
+        {
+          "line": 211,
+          "kind": "get_default",
+          "expression": "NAMESPACE_REFERENCES.get(namespace, ())"
         }
       ]
     },
@@ -9191,7 +10196,7 @@
     },
     {
       "path": "src/agents/tool_policy.py",
-      "lines": 2383,
+      "lines": 2395,
       "sites": [
         {
           "line": 46,
@@ -9243,35 +10248,35 @@
           "value": "None"
         },
         {
-          "line": 1153,
+          "line": 1165,
           "kind": "parameter",
           "function": "_configured_product",
           "field": "defaults",
           "value": "False"
         },
         {
-          "line": 1153,
+          "line": 1165,
           "kind": "parameter",
           "function": "_configured_product",
           "field": "require_all",
           "value": "True"
         },
         {
-          "line": 1153,
+          "line": 1165,
           "kind": "parameter",
           "function": "_configured_product",
           "field": "quantity",
           "value": "None"
         },
         {
-          "line": 1525,
+          "line": 1537,
           "kind": "parameter",
           "function": "_cart_target_error",
           "field": "operation",
           "value": "None"
         },
         {
-          "line": 2379,
+          "line": 2391,
           "kind": "parameter",
           "function": "model_result",
           "field": "tool_name",
@@ -9308,197 +10313,197 @@
           "expression": "action.get('reference') or {}"
         },
         {
-          "line": 665,
+          "line": 677,
           "kind": "or_fallback",
           "expression": "not capability or name not in self.schemas or (not validate_args(args, self.schemas[name]))"
         },
         {
-          "line": 813,
+          "line": 825,
           "kind": "or_fallback",
           "expression": "capability.access == 'READ' or result.get('status') in {'ok', 'already_processed', 'needs_options', 'require_confirmation'}"
         },
         {
-          "line": 838,
+          "line": 850,
           "kind": "or_fallback",
           "expression": "name not in milestones or result.get('status') not in {'ok', 'already_processed'}"
         },
         {
-          "line": 881,
+          "line": 893,
           "kind": "or_fallback",
           "expression": "len(set(ids)) != len(ids) or not set(ids).issubset(candidates) or (selection is not None and (not expected or set(ids) != set(expected)))"
         },
         {
-          "line": 886,
+          "line": 898,
           "kind": "or_fallback",
           "expression": "expected or [str(r.get('branch_id') or r.get('ma_chi_nhanh')) for r in self.artifacts.visible.get('branches', []) if str(r.get('branch_id') or r.get('ma_chi_nhanh')) in ids]"
         },
         {
-          "line": 1068,
+          "line": 1080,
           "kind": "or_fallback",
           "expression": "self.context['business'].get('pending_products') or []"
         },
         {
-          "line": 1069,
+          "line": 1081,
           "kind": "or_fallback",
           "expression": "self.artifacts.focus.get('product') or self.context.get('focus', {}).get('product')"
         },
         {
-          "line": 1072,
+          "line": 1084,
           "kind": "or_fallback",
           "expression": "self.context['business']['cart'].get('items') or []"
         },
         {
-          "line": 1097,
+          "line": 1109,
           "kind": "get_default",
           "expression": "scopes.clauses.get(str(product_id), '' if scopes.explicit or self.entry_pending_products else self.user_message)"
         },
         {
-          "line": 1135,
+          "line": 1147,
           "kind": "or_fallback",
           "expression": "self.context['business'].get('pending_products') or []"
         },
         {
-          "line": 1167,
+          "line": 1179,
           "kind": "or_fallback",
           "expression": "result.get('status') != 'ok' or str(result.get('product_id')) != product_id"
         },
         {
-          "line": 1255,
+          "line": 1267,
           "kind": "or_fallback",
           "expression": "defaults or uses_global_option_defaults(option_message)"
         },
         {
-          "line": 1309,
+          "line": 1321,
           "kind": "or_fallback",
           "expression": "result.get('status') != 'ok' or str(result.get('product_id')) != product_id"
         },
         {
-          "line": 1349,
+          "line": 1361,
           "kind": "or_fallback",
           "expression": "type(quantity) is not int or not 1 <= quantity <= 999"
         },
         {
-          "line": 1415,
+          "line": 1427,
           "kind": "or_fallback",
           "expression": "priced.get('status') != 'ok' or not row or row.get('final_price') is None or (row.get('is_active') is False)"
         },
         {
-          "line": 1448,
+          "line": 1460,
           "kind": "or_fallback",
           "expression": "self.context['business'].get('pending_products') or []"
         },
         {
-          "line": 1451,
+          "line": 1463,
           "kind": "or_fallback",
           "expression": "self.artifacts.visible.get('branches') or getattr(self, 'turn_selected_branch', None)"
         },
         {
-          "line": 1457,
+          "line": 1469,
           "kind": "or_fallback",
           "expression": "uses_global_option_defaults(msg) or requests_custom_options(msg) or bool(re.search('\\\\b(?:size|topping|da|ngot|sua)\\\\b', text)) or bool(re.search('\\\\b(?:oke|ok|dong y|duoc|dung roi|chinh xac|chuan roi|dung vay|oke ban|chuan|dung do)\\\\b', text))"
         },
         {
-          "line": 1519,
+          "line": 1531,
           "kind": "or_fallback",
           "expression": "(self.context['business'].get('cart') or {}).get('items') or []"
         },
         {
-          "line": 1608,
+          "line": 1620,
           "kind": "or_fallback",
           "expression": "removal_plan or (isinstance(args.get('desired_state'), dict) and args['desired_state'].get('quantity') == 0)"
         },
         {
-          "line": 1611,
+          "line": 1623,
           "kind": "or_fallback",
           "expression": "not line or not args['desired_state']"
         },
         {
-          "line": 1744,
+          "line": 1756,
           "kind": "or_fallback",
           "expression": "quoted.get('status') not in {None, 'ok'} or value.get('status') == 'error'"
         },
         {
-          "line": 1778,
+          "line": 1790,
           "kind": "or_fallback",
           "expression": "cart_manager.get_checkout_prefs(self.session_id).get('pending_products') or []"
         },
         {
-          "line": 1806,
+          "line": 1818,
           "kind": "or_fallback",
           "expression": "listed.get('vouchers') or []"
         },
         {
-          "line": 1807,
+          "line": 1819,
           "kind": "or_fallback",
           "expression": "listed.get('status') != 'ok' or not self.context['business']['cart']['items'] or (not any((str(r.get('ma_voucher') or r.get('voucher_code')).upper() == code for r in candidates)))"
         },
         {
-          "line": 1822,
+          "line": 1834,
           "kind": "or_fallback",
           "expression": "prefs.get('voucher_binding_fingerprint') == binding or prefs.get('summary_fingerprint') == cart_manager.cart_fingerprint(self.session_id)"
         },
         {
-          "line": 1825,
+          "line": 1837,
           "kind": "or_fallback",
           "expression": "candidate.get('so_tien_giam_du_kien') is None or candidate['so_tien_giam_du_kien'] == prefs.get('discount_amount')"
         },
         {
-          "line": 1868,
+          "line": 1880,
           "kind": "or_fallback",
           "expression": "checked['unavailable'] or checked['unverified']"
         },
         {
-          "line": 1951,
+          "line": 1963,
           "kind": "or_fallback",
           "expression": "self.active_semantic or {}"
         },
         {
-          "line": 1952,
+          "line": 1964,
           "kind": "or_fallback",
           "expression": "proposal.get('reference') or {}"
         },
         {
-          "line": 1978,
+          "line": 1990,
           "kind": "or_fallback",
           "expression": "self.semantic_mode and (self.active_semantic or {}).get('supplied_location') or (literal and literal.kind in {'address', 'area', 'poi'} and literal.value)"
         },
         {
-          "line": 1989,
+          "line": 2001,
           "kind": "or_fallback",
           "expression": "profile.get('address_items') or []"
         },
         {
-          "line": 2009,
+          "line": 2021,
           "kind": "or_fallback",
           "expression": "(self.active_semantic or {}).get('canonical_target') or {}"
         },
         {
-          "line": 2039,
+          "line": 2051,
           "kind": "or_fallback",
           "expression": "(offer or {}).get('addresses') or ([{'full_address': offer['address']}] if offer else [])"
         },
         {
-          "line": 2144,
+          "line": 2156,
           "kind": "or_fallback",
           "expression": "result.get('tool_calls_log') or []"
         },
         {
-          "line": 2181,
+          "line": 2193,
           "kind": "or_fallback",
           "expression": "candidate.get('display_address') or candidate.get('normalized_label')"
         },
         {
-          "line": 2253,
+          "line": 2265,
           "kind": "or_fallback",
           "expression": "self.context['business'].get('pending_products') or prefs.get('pending_product_reference')"
         },
         {
-          "line": 2255,
+          "line": 2267,
           "kind": "or_fallback",
           "expression": "not prefs.get('voucher_decided') or prefs.get('voucher_revalidation_required')"
         },
         {
-          "line": 2279,
+          "line": 2291,
           "kind": "or_fallback",
           "expression": "cart_manager.get_pending_action(self.session_id) or {}"
         },
@@ -9543,237 +10548,242 @@
           "expression": "not operation or action['commitment'] not in operation.allowed_commitments"
         },
         {
-          "line": 666,
+          "line": 578,
+          "kind": "or_fallback",
+          "expression": "self.profile_address_candidates or self.entry_profile_offer"
+        },
+        {
+          "line": 678,
           "kind": "or_fallback",
           "expression": "self.schemas.get(name) or {}"
         },
         {
-          "line": 930,
+          "line": 942,
           "kind": "or_fallback",
           "expression": "self.entry_order_reference['status'] != 'ok' or args['order_id'].lower() != self.entry_order_reference['order_id']"
         },
         {
-          "line": 933,
+          "line": 945,
           "kind": "or_fallback",
           "expression": "targets and (len(set(targets)) != 1 or args['order_id'].lower() != targets[0]) or (not targets and self.entry_order_focus and (args['order_id'].lower() != self.entry_order_focus['order_id']))"
         },
         {
-          "line": 950,
+          "line": 962,
           "kind": "or_fallback",
           "expression": "not args.get('criteria') or (args['criteria'] == 'preferences' and (not (args.get('preference_query') or '').strip()))"
         },
         {
-          "line": 956,
+          "line": 968,
           "kind": "or_fallback",
           "expression": "args.get('preference_query') or ''"
         },
         {
-          "line": 957,
+          "line": 969,
           "kind": "or_fallback",
           "expression": "args.get('preference_concepts') or []"
         },
         {
-          "line": 971,
+          "line": 983,
           "kind": "or_fallback",
           "expression": "(self.context['displayed_review_selection'] or {}).get('branch_ids') or []"
         },
         {
-          "line": 1000,
+          "line": 1012,
           "kind": "or_fallback",
           "expression": "self.artifacts.focus.get('product') or self.context.get('focus', {}).get('product')"
         },
         {
-          "line": 1035,
+          "line": 1047,
           "kind": "or_fallback",
           "expression": "self.context['business']['cart'].get('branch_id') or 'Chưa chọn'"
         },
         {
-          "line": 1064,
+          "line": 1076,
           "kind": "or_fallback",
           "expression": "self.artifacts.visible.get('products') or []"
         },
         {
-          "line": 1066,
+          "line": 1078,
           "kind": "or_fallback",
           "expression": "self.artifacts.visible.get(bucket + '_products') or []"
         },
         {
-          "line": 1194,
+          "line": 1206,
           "kind": "get_default",
           "expression": "getattr(self, 'turn_selection_quantities', {}).get(product_id, explicit_quantity if explicit_quantity is not None else staged.get('quantity', 1))"
         },
         {
-          "line": 1259,
+          "line": 1271,
           "kind": "or_fallback",
           "expression": "by_field['toppings'].get('values') or []"
         },
         {
-          "line": 1276,
+          "line": 1288,
           "kind": "or_fallback",
           "expression": "any((v not in group['values'] for v in requested)) or (not group.get('multiple') and len(requested) != 1) or (group.get('required') and (not requested))"
         },
         {
-          "line": 1293,
+          "line": 1305,
           "kind": "or_fallback",
           "expression": "quantity or 1"
         },
         {
-          "line": 1332,
+          "line": 1344,
           "kind": "or_fallback",
           "expression": "not group or any((item is None for item in canonical)) or (not group.get('multiple') and len(requested) != 1) or (group.get('required') and (not requested))"
         },
         {
-          "line": 1348,
+          "line": 1360,
           "kind": "get_default",
           "expression": "staged.get('quantity', 1)"
         },
         {
-          "line": 1387,
+          "line": 1399,
           "kind": "or_fallback",
           "expression": "not name or not re.search('\\\\b' + re.escape(name) + '\\\\b', message)"
         },
         {
-          "line": 1398,
+          "line": 1410,
           "kind": "get_default",
           "expression": "args.get('use_defaults', False)"
         },
         {
-          "line": 1419,
+          "line": 1431,
           "kind": "or_fallback",
           "expression": "self.context['business'].get('pending_products') or []"
         },
         {
-          "line": 1438,
+          "line": 1450,
           "kind": "or_fallback",
           "expression": "self.active_semantic or {}"
         },
         {
-          "line": 1465,
+          "line": 1477,
           "kind": "or_fallback",
           "expression": "option_reply or any((option_answer(msg, row.get('option_schema') or []) for row in self.entry_pending_products))"
         },
         {
-          "line": 1485,
+          "line": 1497,
           "kind": "or_fallback",
           "expression": "self.entry_product_groups.get(category) or self.entry_products"
         },
         {
-          "line": 1497,
+          "line": 1509,
           "kind": "or_fallback",
           "expression": "re.search('\\\\b(?:mua|lay|them|dat|chon)\\\\b', text) or self.entry_focus"
         },
         {
-          "line": 1498,
+          "line": 1510,
           "kind": "or_fallback",
           "expression": "self.options.get(product_id) or product_tools.execute_get_product_options(product_id=product_id)"
         },
         {
-          "line": 1500,
+          "line": 1512,
           "kind": "or_fallback",
           "expression": "target_name and target_name in text or any((str(row.get('product_id')) == product_id for row in interpreted.targets))"
         },
         {
-          "line": 1504,
+          "line": 1516,
           "kind": "or_fallback",
           "expression": "interpreted.category or 'all'"
         },
         {
-          "line": 1504,
+          "line": 1516,
           "kind": "or_fallback",
           "expression": "interpreted.search_text or ''"
         },
         {
-          "line": 1675,
+          "line": 1687,
           "kind": "or_fallback",
           "expression": "cart_manager.get_checkout_prefs(self.session_id).get('pending_cart_option_edit') or {}"
         },
         {
-          "line": 1711,
+          "line": 1723,
           "kind": "or_fallback",
           "expression": "cart_manager.get_checkout_prefs(self.session_id).get('pending_cart_option_edit') or {}"
-        },
-        {
-          "line": 1746,
-          "kind": "or_fallback",
-          "expression": "value.get('vouchers') or []"
-        },
-        {
-          "line": 1747,
-          "kind": "or_fallback",
-          "expression": "quoted.get('cart') or {}"
-        },
-        {
-          "line": 1747,
-          "kind": "or_fallback",
-          "expression": "quoted.get('quote') or {}"
         },
         {
           "line": 1758,
           "kind": "or_fallback",
+          "expression": "value.get('vouchers') or []"
+        },
+        {
+          "line": 1759,
+          "kind": "or_fallback",
+          "expression": "quoted.get('cart') or {}"
+        },
+        {
+          "line": 1759,
+          "kind": "or_fallback",
+          "expression": "quoted.get('quote') or {}"
+        },
+        {
+          "line": 1770,
+          "kind": "or_fallback",
           "expression": "not prefs.get('voucher_decided') or prefs.get('voucher_revalidation_required')"
         },
         {
-          "line": 1959,
+          "line": 1971,
           "kind": "or_fallback",
           "expression": "not value or ' ' + value + ' ' not in ' ' + evidence + ' '"
         },
         {
-          "line": 2028,
+          "line": 2040,
           "kind": "or_fallback",
           "expression": "(self.active_semantic or {}).get('reference') or {}"
         },
         {
-          "line": 2064,
+          "line": 2076,
           "kind": "or_fallback",
           "expression": "literal.kind not in {'address', 'area', 'poi'} or not literal.value"
         },
         {
-          "line": 2072,
+          "line": 2084,
           "kind": "or_fallback",
           "expression": "'?' in self.user_message or re.search('\\\\b(?:la gi|dia chi nao|co phai)\\\\b', normalize_text(self.user_message))"
         },
         {
-          "line": 2078,
+          "line": 2090,
           "kind": "or_fallback",
           "expression": "not self.entry_profile_offer or self.entry_profile_offer != offer or (not selected_address) or (normalize_text(selected_address) != normalize_text(args['location']))"
         },
         {
-          "line": 2100,
+          "line": 2112,
           "kind": "or_fallback",
           "expression": "not self.context['business']['cart']['items'] or not cart_manager.get_checkout_prefs(self.session_id).get('delivery_type')"
         },
         {
-          "line": 2186,
+          "line": 2198,
           "kind": "or_fallback",
           "expression": "parsed.kind != 'address' or parsed.missing"
         },
         {
-          "line": 2192,
+          "line": 2204,
           "kind": "or_fallback",
           "expression": "(prefs.get('location_candidate_snapshot') or {}).get('candidates') or []"
         },
         {
-          "line": 2214,
+          "line": 2226,
           "kind": "or_fallback",
           "expression": "nearest.get('branches') or []"
         },
         {
-          "line": 2215,
+          "line": 2227,
           "kind": "or_fallback",
           "expression": "nearest.get('status') != 'ok' or not branches"
         },
         {
-          "line": 2314,
+          "line": 2326,
           "kind": "or_fallback",
           "expression": "product_facet(self.user_message) is not None or bool(re.search('\\\\b(?:huong vi|vi|thanh phan|nguyen lieu|mo ta|thong tin|dac diem|uong nhu nao|an nhu nao)\\\\b', normalize_text(self.user_message)))"
         },
         {
-          "line": 2333,
+          "line": 2345,
           "kind": "or_fallback",
           "expression": "product_facet(self.user_message) is not None or bool(re.search('\\\\b(?:huong vi|vi|thanh phan|nguyen lieu|mo ta|thong tin|dac diem|uong nhu nao|an nhu nao)\\\\b', normalize_text(self.user_message)))"
         },
         {
-          "line": 2358,
+          "line": 2370,
           "kind": "or_fallback",
           "expression": "knowledge_route(args.get('query', '')).get('facet') or product_facet(self.user_message)"
         },
@@ -9863,167 +10873,172 @@
           "expression": "(action.get('reference') or {}).get('namespace') or TOOL_TARGETS.get(action['tool'], (None,))[0]"
         },
         {
-          "line": 714,
+          "line": 589,
+          "kind": "or_fallback",
+          "expression": "(failed or {}).get('operation') or ((failed or {}).get('proposal') or {}).get('operation')"
+        },
+        {
+          "line": 726,
           "kind": "or_fallback",
           "expression": "category or args.get('category') in {'drink', 'food'}"
         },
         {
-          "line": 750,
+          "line": 762,
           "kind": "or_fallback",
           "expression": "name != self.confirmation_recovery or self.summary_refreshed"
         },
         {
-          "line": 878,
+          "line": 890,
           "kind": "or_fallback",
           "expression": "selection or {}"
         },
         {
-          "line": 882,
+          "line": 894,
           "kind": "or_fallback",
           "expression": "not expected or set(ids) != set(expected)"
         },
         {
-          "line": 909,
+          "line": 921,
           "kind": "or_fallback",
           "expression": "args['edit_request'] != self.user_message or set(args) != {'order_id', 'edit_request'}"
         },
         {
-          "line": 1024,
+          "line": 1036,
           "kind": "get_default",
           "expression": "args.get('limit' if name == 'filter_catalog' else 'top_k', 5)"
         },
         {
-          "line": 1039,
+          "line": 1051,
           "kind": "or_fallback",
           "expression": "result.get('address_items') or []"
         },
         {
-          "line": 1086,
+          "line": 1098,
           "kind": "or_fallback",
           "expression": "product_id or ''"
         },
         {
-          "line": 1097,
+          "line": 1109,
           "kind": "or_fallback",
           "expression": "scopes.explicit or self.entry_pending_products"
         },
         {
-          "line": 1174,
+          "line": 1186,
           "kind": "get_default",
           "expression": "staged.get('selected_options', {})"
         },
         {
-          "line": 1176,
+          "line": 1188,
           "kind": "get_default",
           "expression": "staged.get('quantity', quantity or 1)"
         },
         {
-          "line": 1181,
+          "line": 1193,
           "kind": "get_default",
           "expression": "staged.get('selected_options', {})"
         },
         {
-          "line": 1207,
+          "line": 1219,
           "kind": "or_fallback",
           "expression": "result.get('product_name') or ''"
         },
         {
-          "line": 1225,
+          "line": 1237,
           "kind": "get_default",
           "expression": "group.get('name', '')"
         },
         {
-          "line": 1227,
+          "line": 1239,
           "kind": "or_fallback",
           "expression": "group.get('values') or []"
         },
         {
-          "line": 1229,
+          "line": 1241,
           "kind": "or_fallback",
           "expression": "declines_toppings(option_message) or has_removed"
         },
         {
-          "line": 1246,
+          "line": 1258,
           "kind": "or_fallback",
           "expression": "option_field(group['name']) == 'toppings' or len(group['values']) > 1"
         },
         {
-          "line": 1265,
+          "line": 1277,
           "kind": "or_fallback",
           "expression": "(cart_line.get('toppings') if cart_line else None) or (staged.get('toppings') if staged else []) or []"
         },
         {
-          "line": 1313,
+          "line": 1325,
           "kind": "get_default",
           "expression": "staged.get('selected_options', {})"
         },
         {
-          "line": 1412,
+          "line": 1424,
           "kind": "or_fallback",
           "expression": "self.context['business']['cart'].get('branch_id') or 'Chưa chọn'"
         },
         {
-          "line": 1478,
+          "line": 1490,
           "kind": "or_fallback",
           "expression": "self.context.get('selected_product_id') or ''"
         },
         {
-          "line": 1499,
+          "line": 1511,
           "kind": "or_fallback",
           "expression": "options_info.get('product_name') or ''"
         },
         {
-          "line": 1632,
+          "line": 1644,
           "kind": "get_default",
           "expression": "patch.get('toppings', [])"
         },
         {
-          "line": 1752,
+          "line": 1764,
           "kind": "or_fallback",
           "expression": "self.context['business'].get('pending') or {}"
         },
         {
-          "line": 1965,
+          "line": 1977,
           "kind": "or_fallback",
           "expression": "cart_manager.get_checkout_prefs(self.session_id).get('pending_payment_choice') or {}"
         },
         {
-          "line": 1966,
+          "line": 1978,
           "kind": "or_fallback",
           "expression": "pending.get('code') != args['payment_method'] or pending.get('owner_turn') == self.client_message_id"
         },
         {
-          "line": 2044,
+          "line": 2056,
           "kind": "or_fallback",
           "expression": "not self.entry_profile_offer or self.entry_profile_offer != offer"
         },
         {
-          "line": 2077,
+          "line": 2089,
           "kind": "or_fallback",
           "expression": "(selection or {}).get('address') or (offer['address'] if decision == 'YES' else None)"
         },
         {
-          "line": 2146,
+          "line": 2158,
           "kind": "or_fallback",
           "expression": "entry.get('result') or {}"
         },
         {
-          "line": 2172,
+          "line": 2184,
           "kind": "or_fallback",
           "expression": "nearest.get('status') or 'needs_location'"
         },
         {
-          "line": 2262,
+          "line": 2274,
           "kind": "or_fallback",
           "expression": "bool(fresh) or args.get('reuse_summary', False)"
         },
         {
-          "line": 2323,
+          "line": 2335,
           "kind": "or_fallback",
           "expression": "args.get('query') or product['product_name']"
         },
         {
-          "line": 2374,
+          "line": 2386,
           "kind": "or_fallback",
           "expression": "quoted.get('quote') or {}"
         },
@@ -10073,277 +11088,277 @@
           "expression": "ref.get('namespace') or ('LOCATION' if action['tool'] == 'resolve_location' and (not ref or ref.get('kind') == 'literal') else TOOL_TARGETS.get(action['tool'], (None,))[0])"
         },
         {
-          "line": 673,
+          "line": 685,
           "kind": "get_default",
           "expression": "spec.get('required', [])"
         },
         {
-          "line": 715,
+          "line": 727,
           "kind": "or_fallback",
           "expression": "category or 'all'"
         },
         {
-          "line": 793,
+          "line": 805,
           "kind": "or_fallback",
           "expression": "result.get('products') or []"
         },
         {
-          "line": 880,
+          "line": 892,
           "kind": "or_fallback",
           "expression": "r.get('branch_id') or r.get('ma_chi_nhanh')"
         },
         {
-          "line": 880,
+          "line": 892,
           "kind": "get_default",
           "expression": "self.artifacts.visible.get('branches', [])"
         },
         {
-          "line": 886,
+          "line": 898,
           "kind": "or_fallback",
           "expression": "r.get('branch_id') or r.get('ma_chi_nhanh')"
         },
         {
-          "line": 887,
+          "line": 899,
           "kind": "get_default",
           "expression": "self.artifacts.visible.get('branches', [])"
         },
         {
-          "line": 900,
+          "line": 912,
           "kind": "or_fallback",
           "expression": "args.get('changes') or []"
         },
         {
-          "line": 901,
+          "line": 913,
           "kind": "or_fallback",
           "expression": "args.get('add_items') or []"
         },
         {
-          "line": 933,
+          "line": 945,
           "kind": "or_fallback",
           "expression": "len(set(targets)) != 1 or args['order_id'].lower() != targets[0]"
         },
         {
-          "line": 999,
+          "line": 1011,
           "kind": "or_fallback",
           "expression": "self.artifacts.visible.get('products') or []"
         },
         {
-          "line": 1033,
+          "line": 1045,
           "kind": "or_fallback",
           "expression": "self.context['business']['cart'].get('items') or []"
         },
         {
-          "line": 1051,
+          "line": 1063,
           "kind": "or_fallback",
           "expression": "self.artifacts.visible.get('products') or []"
         },
         {
-          "line": 1069,
+          "line": 1081,
           "kind": "get_default",
           "expression": "self.context.get('focus', {})"
         },
         {
-          "line": 1078,
+          "line": 1090,
           "kind": "or_fallback",
           "expression": "product_id or ''"
         },
         {
-          "line": 1115,
+          "line": 1127,
           "kind": "get_default",
           "expression": "staged.get('selected_options', {})"
         },
         {
-          "line": 1118,
+          "line": 1130,
           "kind": "get_default",
           "expression": "(self.active_semantic or {}).get('selection_quantity', staged.get('quantity', 1))"
         },
         {
-          "line": 1139,
+          "line": 1151,
           "kind": "or_fallback",
           "expression": "row.get('display_index') or index"
         },
         {
-          "line": 1176,
+          "line": 1188,
           "kind": "or_fallback",
           "expression": "quantity or 1"
         },
         {
-          "line": 1189,
+          "line": 1201,
           "kind": "or_fallback",
           "expression": "not requested or not all((re.search('(?<!\\\\w)' + re.escape(normalize_text(item)) + '(?!\\\\w)', normalize_text(option_message)) for item in requested))"
         },
         {
-          "line": 1195,
+          "line": 1207,
           "kind": "get_default",
           "expression": "staged.get('quantity', 1)"
         },
         {
-          "line": 1208,
+          "line": 1220,
           "kind": "get_default",
           "expression": "group.get('values', [])"
         },
         {
-          "line": 1216,
+          "line": 1228,
           "kind": "or_fallback",
           "expression": "field in selected and selected[field] == value or all((re.search('(?<!\\\\w)' + re.escape(normalize_text(item)) + '(?!\\\\w)', normalize_text(option_message)) for item in (value if isinstance(value, list) else [value])))"
         },
         {
-          "line": 1286,
+          "line": 1298,
           "kind": "or_fallback",
           "expression": "defaults or field in scoped_defaults or (not group.get('required')) or (group.get('fixed') and field != 'toppings')"
         },
         {
-          "line": 1311,
+          "line": 1323,
           "kind": "or_fallback",
           "expression": "self.context['business'].get('pending_products') or []"
         },
         {
-          "line": 1343,
+          "line": 1355,
           "kind": "or_fallback",
           "expression": "defaults or not group.get('required') or (group.get('fixed') and field != 'toppings')"
         },
         {
-          "line": 1414,
+          "line": 1426,
           "kind": "get_default",
           "expression": "priced.get('products', [])"
         },
         {
-          "line": 1486,
+          "line": 1498,
           "kind": "or_fallback",
           "expression": "not category or product_bucket(row) == category"
         },
         {
-          "line": 1519,
+          "line": 1531,
           "kind": "or_fallback",
           "expression": "self.context['business'].get('cart') or {}"
         },
         {
-          "line": 1580,
+          "line": 1592,
           "kind": "or_fallback",
           "expression": "line.get('display_index') or 0"
         },
         {
-          "line": 1640,
+          "line": 1652,
           "kind": "or_fallback",
           "expression": "key in request['fields'] or line.get(key) != value"
         },
         {
-          "line": 1699,
+          "line": 1711,
           "kind": "or_fallback",
           "expression": "entry_line.get('quantity') or 1"
         },
         {
-          "line": 1701,
+          "line": 1713,
           "kind": "or_fallback",
           "expression": "entry_line.get('quantity') or 1"
         },
         {
-          "line": 1720,
+          "line": 1732,
           "kind": "or_fallback",
           "expression": "cart_manager.get_pending_action(self.session_id) or {}"
         },
         {
-          "line": 1742,
+          "line": 1754,
           "kind": "get_default",
           "expression": "result.get('tool_calls_log', [])"
         },
         {
-          "line": 1743,
+          "line": 1755,
           "kind": "get_default",
           "expression": "result.get('tool_calls_log', [])"
         },
         {
-          "line": 1813,
+          "line": 1825,
           "kind": "or_fallback",
           "expression": "chosen.get('so_tien_giam_du_kien') or 0"
         },
         {
-          "line": 1813,
+          "line": 1825,
           "kind": "or_fallback",
           "expression": "best.get('so_tien_giam_du_kien') or 0"
         },
         {
-          "line": 1851,
+          "line": 1863,
           "kind": "get_default",
           "expression": "self.artifacts.visible.get('branches', [])"
         },
         {
-          "line": 1864,
+          "line": 1876,
           "kind": "or_fallback",
           "expression": "self.artifacts.ui.get('branches') or self.artifacts.visible.get('branches') or []"
         },
         {
-          "line": 1876,
+          "line": 1888,
           "kind": "or_fallback",
           "expression": "row.get('branch_name') or row.get('ten_chi_nhanh') or ''"
         },
         {
-          "line": 1879,
+          "line": 1891,
           "kind": "or_fallback",
           "expression": "result.get('available_products') or []"
         },
         {
-          "line": 1880,
+          "line": 1892,
           "kind": "or_fallback",
           "expression": "result.get('unavailable_products') or []"
         },
         {
-          "line": 1881,
+          "line": 1893,
           "kind": "or_fallback",
           "expression": "result.get('unverified_products') or []"
         },
         {
-          "line": 1882,
+          "line": 1894,
           "kind": "or_fallback",
           "expression": "result.get('product_availability') or []"
         },
         {
-          "line": 2009,
+          "line": 2021,
           "kind": "or_fallback",
           "expression": "self.active_semantic or {}"
         },
         {
-          "line": 2039,
+          "line": 2051,
           "kind": "or_fallback",
           "expression": "offer or {}"
         },
         {
-          "line": 2120,
+          "line": 2132,
           "kind": "get_default",
           "expression": "result.get('tool_calls_log', [])"
         },
         {
-          "line": 2177,
+          "line": 2189,
           "kind": "get_default",
           "expression": "self.artifacts.visible.get('location_candidates', [])"
         },
         {
-          "line": 2216,
+          "line": 2228,
           "kind": "or_fallback",
           "expression": "nearest.get('message') or 'Địa chỉ đã được xác nhận; mình chưa xác minh được chi nhánh phục vụ. Bạn thử lại bước tìm chi nhánh nhé.'"
         },
         {
-          "line": 2220,
+          "line": 2232,
           "kind": "or_fallback",
           "expression": "chosen.get('ma_chi_nhanh') or chosen.get('branch_id')"
         },
         {
-          "line": 2221,
+          "line": 2233,
           "kind": "or_fallback",
           "expression": "chosen.get('ten_chi_nhanh') or chosen.get('branch_name')"
         },
         {
-          "line": 2261,
+          "line": 2273,
           "kind": "or_fallback",
           "expression": "prefs.get('checkout_action_expires_at') or 0"
         },
         {
-          "line": 2262,
+          "line": 2274,
           "kind": "get_default",
           "expression": "args.get('reuse_summary', False)"
         },
         {
-          "line": 2357,
+          "line": 2369,
           "kind": "or_fallback",
           "expression": "self.active_semantic or {}"
         },
@@ -10393,137 +11408,142 @@
           "expression": "TOOL_TARGETS.get(action['tool'], (None,))"
         },
         {
-          "line": 674,
+          "line": 594,
+          "kind": "or_fallback",
+          "expression": "op.function_name == failed_op.function_name or op.access in failed_op.repair_prerequisite_access"
+        },
+        {
+          "line": 686,
           "kind": "get_default",
           "expression": "spec.get('properties', {})"
         },
         {
-          "line": 963,
+          "line": 975,
           "kind": "get_default",
           "expression": "args.get('category', 'all')"
         },
         {
-          "line": 964,
+          "line": 976,
           "kind": "get_default",
           "expression": "args.get('top_k', 5)"
         },
         {
-          "line": 971,
+          "line": 983,
           "kind": "or_fallback",
           "expression": "self.context['displayed_review_selection'] or {}"
         },
         {
-          "line": 998,
+          "line": 1010,
           "kind": "or_fallback",
           "expression": "args.get('product_name') or ''"
         },
         {
-          "line": 1000,
+          "line": 1012,
           "kind": "get_default",
           "expression": "self.context.get('focus', {})"
         },
         {
-          "line": 1015,
+          "line": 1027,
           "kind": "get_default",
           "expression": "args.get('product_name', '')"
         },
         {
-          "line": 1016,
+          "line": 1028,
           "kind": "get_default",
           "expression": "resolved.get('products', [])"
         },
         {
-          "line": 1023,
+          "line": 1035,
           "kind": "or_fallback",
           "expression": "self.active_semantic or {}"
         },
         {
-          "line": 1045,
+          "line": 1057,
           "kind": "or_fallback",
           "expression": "result.get('products') or []"
         },
         {
-          "line": 1058,
+          "line": 1070,
           "kind": "get_default",
           "expression": "resolved.get('products', [])"
         },
         {
-          "line": 1118,
+          "line": 1130,
           "kind": "get_default",
           "expression": "staged.get('quantity', 1)"
         },
         {
-          "line": 1172,
+          "line": 1184,
           "kind": "get_default",
           "expression": "self.context['business'].get('pending_products', [])"
         },
         {
-          "line": 1179,
+          "line": 1191,
           "kind": "get_default",
           "expression": "self.context['business'].get('pending_products', [])"
         },
         {
-          "line": 1267,
+          "line": 1279,
           "kind": "get_default",
           "expression": "values.get('toppings', [])"
         },
         {
-          "line": 1315,
+          "line": 1327,
           "kind": "or_fallback",
           "expression": "self.active_semantic or {}"
         },
         {
-          "line": 1849,
+          "line": 1861,
           "kind": "or_fallback",
           "expression": "self.artifacts.ui.get('branches') or self.artifacts.visible.get('branches') or []"
         },
         {
-          "line": 1892,
+          "line": 1904,
           "kind": "or_fallback",
           "expression": "self.active_semantic or {}"
         },
         {
-          "line": 1978,
+          "line": 1990,
           "kind": "or_fallback",
           "expression": "self.active_semantic or {}"
         },
         {
-          "line": 1992,
+          "line": 2004,
           "kind": "or_fallback",
           "expression": "row.get('label') or ''"
         },
         {
-          "line": 2028,
+          "line": 2040,
           "kind": "or_fallback",
           "expression": "self.active_semantic or {}"
         },
         {
-          "line": 2092,
+          "line": 2104,
           "kind": "or_fallback",
           "expression": "cart_manager.get_pending_action(self.session_id) or {}"
         },
         {
-          "line": 2159,
+          "line": 2171,
           "kind": "or_fallback",
           "expression": "cart_manager.get_pending_action(self.session_id) or {}"
         },
         {
-          "line": 2192,
+          "line": 2204,
           "kind": "or_fallback",
           "expression": "prefs.get('location_candidate_snapshot') or {}"
         },
         {
-          "line": 2207,
+          "line": 2219,
           "kind": "or_fallback",
           "expression": "cart_manager.get_pending_action(self.session_id) or {}"
         },
         {
-          "line": 2222,
+          "line": 2234,
           "kind": "or_fallback",
           "expression": "chosen.get('ma_chi_nhanh') or chosen.get('branch_id')"
         },
         {
-          "line": 2265,
+          "line": 2277,
           "kind": "or_fallback",
           "expression": "result.get('order_summary') or {}"
         },
@@ -10538,147 +11558,157 @@
           "expression": "action.get('reference') or {}"
         },
         {
-          "line": 652,
+          "line": 589,
+          "kind": "or_fallback",
+          "expression": "failed or {}"
+        },
+        {
+          "line": 590,
+          "kind": "or_fallback",
+          "expression": "(failed or {}).get('proposal') or {}"
+        },
+        {
+          "line": 664,
           "kind": "or_fallback",
           "expression": "c.get('options') or {}"
         },
         {
-          "line": 761,
+          "line": 773,
           "kind": "or_fallback",
           "expression": "not (state['authenticated'] or state.get('guest_session_id')) or not self.client_message_id"
         },
         {
-          "line": 845,
+          "line": 857,
           "kind": "or_fallback",
           "expression": "self.context.get('recent') or []"
         },
         {
-          "line": 888,
+          "line": 900,
           "kind": "or_fallback",
           "expression": "r.get('branch_id') or r.get('ma_chi_nhanh')"
         },
         {
-          "line": 958,
+          "line": 970,
           "kind": "or_fallback",
           "expression": "self.active_semantic or {}"
         },
         {
-          "line": 985,
+          "line": 997,
           "kind": "or_fallback",
           "expression": "res.get('revision') or (res.get('order') or {}).get('revision')"
         },
         {
-          "line": 1113,
+          "line": 1125,
           "kind": "get_default",
           "expression": "self.context['business'].get('pending_products', [])"
         },
         {
-          "line": 1118,
+          "line": 1130,
           "kind": "or_fallback",
           "expression": "self.active_semantic or {}"
         },
         {
-          "line": 1329,
+          "line": 1341,
           "kind": "get_default",
           "expression": "(group or {}).get('values', [])"
         },
         {
-          "line": 1335,
+          "line": 1347,
           "kind": "get_default",
           "expression": "(group or {}).get('values', [])"
         },
         {
-          "line": 1426,
+          "line": 1438,
           "kind": "or_fallback",
           "expression": "cart_manager.get_pending_action(self.session_id) or {}"
         },
         {
-          "line": 1466,
+          "line": 1478,
           "kind": "or_fallback",
           "expression": "row.get('option_schema') or []"
         },
         {
-          "line": 1474,
+          "line": 1486,
           "kind": "or_fallback",
           "expression": "row.get('option_schema') or []"
         },
         {
-          "line": 1488,
+          "line": 1500,
           "kind": "or_fallback",
           "expression": "row.get(index_field) or position"
         },
         {
-          "line": 1510,
+          "line": 1522,
           "kind": "or_fallback",
           "expression": "r.get('cart_item_id') or r.get('line_id')"
         },
         {
-          "line": 1553,
+          "line": 1565,
           "kind": "or_fallback",
           "expression": "targets[0].get('cart_item_id') or targets[0].get('line_id')"
         },
         {
-          "line": 1621,
+          "line": 1633,
           "kind": "or_fallback",
           "expression": "expected.get('cart_item_id') or expected.get('line_id')"
         },
         {
-          "line": 1695,
+          "line": 1707,
           "kind": "or_fallback",
           "expression": "expected.get('cart_item_id') or expected.get('line_id')"
         },
         {
-          "line": 1792,
+          "line": 1804,
           "kind": "or_fallback",
           "expression": "(self.active_semantic or {}).get('reference') or {}"
         },
         {
-          "line": 1811,
+          "line": 1823,
           "kind": "or_fallback",
           "expression": "row.get('so_tien_giam_du_kien') or 0"
         },
         {
-          "line": 1851,
+          "line": 1863,
           "kind": "or_fallback",
           "expression": "r.get('branch_id') or r.get('ma_chi_nhanh')"
         },
         {
-          "line": 1863,
+          "line": 1875,
           "kind": "or_fallback",
           "expression": "b.get('branch_id') or b.get('ma_chi_nhanh')"
         },
         {
-          "line": 1993,
+          "line": 2005,
           "kind": "or_fallback",
           "expression": "row.get('is_default') or full_address == address"
         },
         {
-          "line": 2029,
+          "line": 2041,
           "kind": "or_fallback",
           "expression": "self.active_semantic or {}"
         },
         {
-          "line": 2032,
+          "line": 2044,
           "kind": "or_fallback",
           "expression": "self.active_semantic or {}"
         },
         {
-          "line": 2046,
+          "line": 2058,
           "kind": "or_fallback",
           "expression": "self.active_semantic or {}"
         },
         {
-          "line": 2077,
+          "line": 2089,
           "kind": "or_fallback",
           "expression": "selection or {}"
         },
         {
-          "line": 2147,
+          "line": 2159,
           "kind": "or_fallback",
           "expression": "cart_manager.get_cart(self.session_id).get('branch_id') or ''"
         },
         {
-          "line": 2358,
+          "line": 2370,
           "kind": "get_default",
           "expression": "args.get('query', '')"
         },
@@ -10723,177 +11753,182 @@
           "expression": "TOOL_TARGETS.get(action['tool'], (None,))"
         },
         {
-          "line": 940,
+          "line": 952,
           "kind": "or_fallback",
           "expression": "self.active_semantic or {}"
         },
         {
-          "line": 950,
+          "line": 962,
           "kind": "or_fallback",
           "expression": "args.get('preference_query') or ''"
         },
         {
-          "line": 1088,
+          "line": 1100,
           "kind": "get_default",
           "expression": "r.get('product_name', '')"
         },
         {
-          "line": 1263,
+          "line": 1275,
           "kind": "get_default",
           "expression": "self.context['business'].get('pending_products', [])"
         },
         {
-          "line": 1440,
+          "line": 1452,
           "kind": "get_default",
           "expression": "decision.get('args', {})"
         },
         {
-          "line": 1585,
+          "line": 1597,
           "kind": "or_fallback",
           "expression": "expected.get('cart_item_id') or expected.get('line_id')"
         },
         {
-          "line": 1619,
+          "line": 1631,
           "kind": "or_fallback",
           "expression": "row.get('display_index') or 0"
         },
         {
-          "line": 1693,
+          "line": 1705,
           "kind": "or_fallback",
           "expression": "row.get('display_index') or 0"
         },
         {
-          "line": 1798,
+          "line": 1810,
           "kind": "or_fallback",
           "expression": "prefs.get('voucher_code') or ''"
         },
         {
-          "line": 1799,
+          "line": 1811,
           "kind": "or_fallback",
           "expression": "prefs.get('voucher_code') or ''"
         },
         {
-          "line": 2294,
+          "line": 2306,
           "kind": "or_fallback",
           "expression": "pending.get('type') != 'confirm_checkout' or float(pending.get('expires_at') or 0) <= time.time()"
         },
         {
-          "line": 761,
+          "line": 773,
           "kind": "or_fallback",
           "expression": "state['authenticated'] or state.get('guest_session_id')"
         },
         {
-          "line": 870,
+          "line": 882,
           "kind": "or_fallback",
           "expression": "quoted.get('quote') or {}"
         },
         {
-          "line": 987,
+          "line": 999,
           "kind": "or_fallback",
           "expression": "r.get('ten_san_pham') or r.get('product_name')"
         },
         {
-          "line": 987,
+          "line": 999,
           "kind": "or_fallback",
           "expression": "(res.get('order') or {}).get('chi_tiet') or []"
         },
         {
-          "line": 1055,
+          "line": 1067,
           "kind": "get_default",
           "expression": "row.get('product_name', '')"
         },
         {
-          "line": 1329,
+          "line": 1341,
           "kind": "or_fallback",
           "expression": "group or {}"
         },
         {
-          "line": 1335,
+          "line": 1347,
           "kind": "or_fallback",
           "expression": "group or {}"
         },
         {
-          "line": 1582,
+          "line": 1594,
           "kind": "or_fallback",
           "expression": "row.get('display_index') or 0"
         },
         {
-          "line": 1599,
+          "line": 1611,
           "kind": "or_fallback",
           "expression": "row.get('cart_item_id') or row.get('line_id')"
         },
         {
-          "line": 1815,
+          "line": 1827,
           "kind": "or_fallback",
           "expression": "best.get('ma_voucher') or best.get('voucher_code')"
         },
         {
-          "line": 1824,
+          "line": 1836,
           "kind": "or_fallback",
           "expression": "r.get('ma_voucher') or r.get('voucher_code')"
         },
         {
-          "line": 1827,
+          "line": 1839,
           "kind": "or_fallback",
           "expression": "prefs.get('voucher_code') or ''"
         },
         {
-          "line": 2287,
+          "line": 2299,
           "kind": "or_fallback",
           "expression": "self.active_semantic or {}"
         },
         {
-          "line": 2292,
+          "line": 2304,
           "kind": "or_fallback",
           "expression": "prefs.get('checkout_action_expires_at') or 0"
         },
         {
-          "line": 2355,
+          "line": 2367,
           "kind": "or_fallback",
           "expression": "self.active_semantic or {}"
         },
         {
-          "line": 985,
+          "line": 590,
+          "kind": "or_fallback",
+          "expression": "failed or {}"
+        },
+        {
+          "line": 997,
           "kind": "or_fallback",
           "expression": "res.get('order') or {}"
         },
         {
-          "line": 1058,
+          "line": 1070,
           "kind": "get_default",
           "expression": "row.get('product_name', '')"
         },
         {
-          "line": 1792,
+          "line": 1804,
           "kind": "or_fallback",
           "expression": "self.active_semantic or {}"
         },
         {
-          "line": 1807,
+          "line": 1819,
           "kind": "or_fallback",
           "expression": "r.get('ma_voucher') or r.get('voucher_code')"
         },
         {
-          "line": 1812,
+          "line": 1824,
           "kind": "or_fallback",
           "expression": "row.get('ma_voucher') or row.get('voucher_code')"
         },
         {
-          "line": 2364,
+          "line": 2376,
           "kind": "get_default",
           "expression": "args.get('query', '')"
         },
         {
-          "line": 2365,
+          "line": 2377,
           "kind": "get_default",
           "expression": "result.get('results', [])"
         },
         {
-          "line": 1563,
+          "line": 1575,
           "kind": "or_fallback",
           "expression": "self.entry_focus or {}"
         },
         {
-          "line": 2294,
+          "line": 2306,
           "kind": "or_fallback",
           "expression": "pending.get('expires_at') or 0"
         },
@@ -10903,12 +11938,12 @@
           "expression": "r['result'] or {}"
         },
         {
-          "line": 987,
+          "line": 999,
           "kind": "or_fallback",
           "expression": "res.get('order') or {}"
         },
         {
-          "line": 795,
+          "line": 807,
           "kind": "or_fallback",
           "expression": "row.get(key) or ''"
         }
@@ -12057,722 +13092,717 @@
     },
     {
       "path": "src/common/groq_service.py",
-      "lines": 1147,
+      "lines": 1165,
       "sites": [
         {
-          "line": 309,
+          "line": 317,
           "kind": "parameter",
           "function": "groq_chat",
           "field": "max_tokens",
           "value": "512"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "tools",
           "value": "None"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "tool_executors",
           "value": "None"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "session_id",
           "value": "''"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "max_tool_rounds",
           "value": "10"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "max_tokens",
           "value": "400"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "guarded",
           "value": "False"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "tool_result_formatter",
           "value": "None"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "metrics",
           "value": "None"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "context_char_limit",
           "value": "None"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "final_response_validator",
           "value": "None"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "agent_provider",
           "value": "None"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "agent_model",
           "value": "None"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "tool_surface_provider",
           "value": "None"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "model_context_provider",
           "value": "None"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "context_compactor",
           "value": "None"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "model_tier_provider",
           "value": "None"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "tool_result_projector",
           "value": "None"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "discovery_completion_provider",
           "value": "None"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "final_response_repair_allowed",
           "value": "None"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "final_response_repair_context_provider",
           "value": "None"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "customer_step_response_provider",
           "value": "None"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "repair_progress_provider",
           "value": "None"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "repeated_read_feedback_provider",
           "value": "None"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "semantic_proposal_stager",
           "value": "None"
         },
         {
-          "line": 401,
+          "line": 409,
           "kind": "parameter",
           "function": "groq_agent_chat",
           "field": "semantic_batch_executor",
           "value": "None"
         },
         {
-          "line": 1006,
+          "line": 1024,
           "kind": "parameter",
           "function": "groq_transcribe_audio",
           "field": "filename",
           "value": "'audio.webm'"
         },
         {
-          "line": 1006,
+          "line": 1024,
           "kind": "parameter",
           "function": "groq_transcribe_audio",
           "field": "language",
           "value": "'vi'"
         },
         {
-          "line": 1064,
+          "line": 1082,
           "kind": "parameter",
           "function": "groq_extract_order_intent",
           "field": "history",
           "value": "''"
         },
         {
-          "line": 84,
+          "line": 92,
           "kind": "parameter",
           "function": "create",
           "field": "tools",
           "value": "None"
         },
         {
-          "line": 84,
+          "line": 92,
           "kind": "parameter",
           "function": "create",
           "field": "tool_choice",
           "value": "'auto'"
         },
         {
-          "line": 84,
+          "line": 92,
           "kind": "parameter",
           "function": "create",
           "field": "max_tokens",
           "value": "2048"
         },
         {
-          "line": 84,
+          "line": 92,
           "kind": "parameter",
           "function": "create",
           "field": "temperature",
           "value": "0.1"
         },
         {
-          "line": 84,
+          "line": 92,
           "kind": "parameter",
           "function": "create",
           "field": "response_format",
           "value": "None"
         },
         {
-          "line": 84,
+          "line": 92,
           "kind": "parameter",
           "function": "create",
           "field": "timeout",
           "value": "30"
         },
         {
-          "line": 84,
+          "line": 92,
           "kind": "parameter",
           "function": "create",
           "field": "allow_fallback",
           "value": "True"
         },
         {
-          "line": 135,
+          "line": 143,
           "kind": "parameter",
           "function": "create",
           "field": "tools",
           "value": "None"
         },
         {
-          "line": 135,
+          "line": 143,
           "kind": "parameter",
           "function": "create",
           "field": "tool_choice",
           "value": "'auto'"
         },
         {
-          "line": 135,
+          "line": 143,
           "kind": "parameter",
           "function": "create",
           "field": "max_tokens",
           "value": "2048"
         },
         {
-          "line": 135,
+          "line": 143,
           "kind": "parameter",
           "function": "create",
           "field": "temperature",
           "value": "0.1"
         },
         {
-          "line": 135,
+          "line": 143,
           "kind": "parameter",
           "function": "create",
           "field": "response_format",
           "value": "None"
         },
         {
-          "line": 135,
+          "line": 143,
           "kind": "parameter",
           "function": "create",
           "field": "timeout",
           "value": "30"
         },
         {
-          "line": 167,
+          "line": 175,
           "kind": "parameter",
           "function": "__init__",
           "field": "base_url",
           "value": "'https://api.openai.com/v1'"
         },
         {
-          "line": 171,
+          "line": 179,
           "kind": "parameter",
           "function": "create",
           "field": "tools",
           "value": "None"
         },
         {
-          "line": 171,
+          "line": 179,
           "kind": "parameter",
           "function": "create",
           "field": "tool_choice",
           "value": "'auto'"
         },
         {
-          "line": 171,
+          "line": 179,
           "kind": "parameter",
           "function": "create",
           "field": "max_tokens",
           "value": "1000"
         },
         {
-          "line": 171,
+          "line": 179,
           "kind": "parameter",
           "function": "create",
           "field": "temperature",
           "value": "0.1"
         },
         {
-          "line": 171,
+          "line": 179,
           "kind": "parameter",
           "function": "create",
           "field": "response_format",
           "value": "None"
         },
         {
-          "line": 171,
+          "line": 179,
           "kind": "parameter",
           "function": "create",
           "field": "timeout",
           "value": "30"
         },
         {
-          "line": 194,
+          "line": 202,
           "kind": "parameter",
           "function": "__init__",
           "field": "base_url",
           "value": "'https://api.openai.com/v1'"
         },
         {
-          "line": 198,
+          "line": 206,
           "kind": "parameter",
           "function": "__init__",
           "field": "base_url",
           "value": "'https://api.openai.com/v1'"
         },
         {
-          "line": 1069,
+          "line": 1087,
           "kind": "or_fallback",
           "expression": "not user_text or not user_text.strip()"
         },
         {
-          "line": 34,
+          "line": 42,
           "kind": "get_default",
           "expression": "d.get('type', 'function')"
         },
         {
-          "line": 62,
+          "line": 70,
           "kind": "or_fallback",
           "expression": "d.get('usage') or {}"
         },
         {
-          "line": 624,
+          "line": 639,
           "kind": "or_fallback",
           "expression": "not success or not resp"
         },
         {
-          "line": 35,
+          "line": 43,
           "kind": "get_default",
           "expression": "d.get('function', {})"
         },
         {
-          "line": 57,
+          "line": 65,
           "kind": "get_default",
           "expression": "d.get('message', {})"
         },
         {
-          "line": 486,
+          "line": 501,
           "kind": "or_fallback",
           "expression": "not requested_provider or requested_provider == 'auto' or _client_provider(selected_client) == requested_provider"
         },
         {
-          "line": 633,
+          "line": 648,
           "kind": "or_fallback",
           "expression": "getattr(resp, 'usage', None) or {}"
         },
         {
-          "line": 845,
+          "line": 863,
           "kind": "or_fallback",
           "expression": "successful_required_repair or terminal_success or confirmation_denied_stop"
         },
         {
-          "line": 1117,
+          "line": 1135,
           "kind": "get_default",
           "expression": "item.get('product_name', '')"
         },
         {
-          "line": 1127,
+          "line": 1145,
           "kind": "or_fallback",
           "expression": "raw_name in p_name or p_name in raw_name"
         },
         {
-          "line": 61,
+          "line": 69,
           "kind": "get_default",
           "expression": "d.get('choices', [])"
         },
         {
-          "line": 329,
+          "line": 337,
           "kind": "or_fallback",
           "expression": "resp.choices[0].message.content or ''"
         },
         {
-          "line": 381,
+          "line": 389,
           "kind": "or_fallback",
           "expression": "'gpt' in av_model or 'llama' in av_model"
         },
         {
-          "line": 383,
+          "line": 391,
           "kind": "or_fallback",
           "expression": "'guard' in av_model.lower() or 'whisper' in av_model.lower()"
         },
         {
-          "line": 545,
+          "line": 560,
           "kind": "or_fallback",
           "expression": "error or ''"
         },
         {
-          "line": 549,
+          "line": 564,
           "kind": "or_fallback",
           "expression": "configured_client or _get_groq_client()"
         },
         {
-          "line": 636,
+          "line": 651,
           "kind": "get_default",
           "expression": "metrics.get('input_tokens', 0)"
         },
         {
-          "line": 636,
+          "line": 651,
           "kind": "or_fallback",
           "expression": "usage_value('prompt_tokens') or 0"
         },
         {
-          "line": 637,
+          "line": 652,
           "kind": "get_default",
           "expression": "metrics.get('output_tokens', 0)"
         },
         {
-          "line": 637,
+          "line": 652,
           "kind": "or_fallback",
           "expression": "usage_value('completion_tokens') or 0"
         },
         {
-          "line": 642,
+          "line": 657,
           "kind": "get_default",
           "expression": "metrics.get('llm_latency_ms', 0)"
         },
         {
-          "line": 678,
+          "line": 693,
           "kind": "or_fallback",
           "expression": "len(assistant_msg.tool_calls) > 16 or len(tool_calls_log) + len(assistant_msg.tool_calls) > max_tool_rounds * 4"
         },
         {
-          "line": 818,
+          "line": 835,
           "kind": "or_fallback",
           "expression": "not required_repair_tool or (required_repair_tool == 'customer_actions' and successful_required_repair and (not protocol_repair_requested))"
         },
         {
-          "line": 930,
+          "line": 949,
           "kind": "or_fallback",
           "expression": "assistant_msg.content or ''"
         },
         {
-          "line": 937,
-          "kind": "or_fallback",
-          "expression": "not final_response_repair_allowed or final_response_repair_allowed(issue)"
-        },
-        {
-          "line": 938,
+          "line": 956,
           "kind": "or_fallback",
           "expression": "dialogue_format_repairs or round_idx >= max_tool_rounds"
         },
         {
-          "line": 1123,
+          "line": 1141,
           "kind": "get_default",
           "expression": "p.get('ten_san_pham', '')"
         },
         {
-          "line": 1133,
+          "line": 1151,
           "kind": "or_fallback",
           "expression": "item.get('quantity') or 1"
         },
         {
-          "line": 456,
+          "line": 464,
           "kind": "or_fallback",
           "expression": "agent_provider or ''"
         },
         {
-          "line": 534,
+          "line": 549,
           "kind": "get_default",
           "expression": "metrics.get('exposed_tool_count', 0)"
         },
         {
-          "line": 536,
+          "line": 551,
           "kind": "get_default",
           "expression": "metrics.get('tool_schema_chars', 0)"
         },
         {
-          "line": 539,
+          "line": 554,
           "kind": "get_default",
           "expression": "metrics.get('max_exposed_tool_count', 0)"
         },
         {
-          "line": 542,
+          "line": 557,
           "kind": "or_fallback",
           "expression": "requested_provider or 'auto'"
         },
         {
-          "line": 635,
+          "line": 650,
           "kind": "get_default",
           "expression": "usage.get(key, 0)"
         },
         {
-          "line": 649,
+          "line": 664,
           "kind": "get_default",
           "expression": "metrics.get('tool_round_count', 0)"
         },
         {
-          "line": 661,
+          "line": 676,
           "kind": "or_fallback",
           "expression": "assistant_msg.content or ''"
         },
         {
-          "line": 689,
+          "line": 704,
           "kind": "or_fallback",
           "expression": "tc.function.arguments or '{}'"
         },
         {
-          "line": 787,
+          "line": 802,
           "kind": "get_default",
           "expression": "result.get('remaining_cart_edits', 0)"
         },
         {
-          "line": 534,
+          "line": 549,
           "kind": "or_fallback",
           "expression": "tools or []"
         },
         {
-          "line": 535,
+          "line": 550,
           "kind": "or_fallback",
           "expression": "tools or []"
         },
         {
-          "line": 538,
+          "line": 553,
           "kind": "or_fallback",
           "expression": "tools or []"
         },
         {
-          "line": 539,
+          "line": 554,
           "kind": "or_fallback",
           "expression": "tools or []"
         },
         {
-          "line": 589,
+          "line": 604,
           "kind": "or_fallback",
           "expression": "'413' in err or 'too large' in err.lower()"
         },
         {
-          "line": 607,
+          "line": 622,
           "kind": "or_fallback",
           "expression": "'404' in err or 'does not exist' in err or 'decommissioned' in err"
         },
         {
-          "line": 610,
+          "line": 625,
           "kind": "or_fallback",
           "expression": "'429' in err or 'rate_limit' in err.lower()"
         },
         {
-          "line": 628,
+          "line": 643,
           "kind": "or_fallback",
           "expression": "'rate_limit' in last_err.lower() or '429' in last_err or '402' in last_err"
         },
         {
-          "line": 639,
+          "line": 654,
           "kind": "or_fallback",
           "expression": "getattr(resp, 'model', None) or model"
         },
         {
-          "line": 641,
+          "line": 656,
           "kind": "get_default",
           "expression": "metrics.get('request_count', 0)"
         },
         {
-          "line": 708,
+          "line": 723,
           "kind": "or_fallback",
           "expression": "not guarded or (not is_read and tool_name in (tool_executors or {}))"
         },
         {
-          "line": 747,
+          "line": 762,
           "kind": "or_fallback",
           "expression": "not guarded or (not is_read and isinstance(result, dict) and (not result.get('read_only')) and (result.get('status') in {'ok', 'success', 'already_processed', 'needs_options', 'require_confirmation'}))"
         },
         {
-          "line": 751,
+          "line": 766,
           "kind": "or_fallback",
           "expression": "tool_name == 'customer_actions' or batch_results is not None"
         },
         {
-          "line": 764,
+          "line": 779,
           "kind": "or_fallback",
           "expression": "tool_name in {'request_checkout', 'confirm_checkout'} or (tool_name in {'resolve_location', 'select_location_candidate'} and result.get('status') == 'require_confirmation' and bool(result.get('order_summary')))"
         },
         {
-          "line": 781,
+          "line": 796,
           "kind": "or_fallback",
           "expression": "result.get('active_operation') or required_repair_tool or tool_name"
         },
         {
-          "line": 807,
+          "line": 822,
           "kind": "get_default",
           "expression": "metrics.get('tool_result_chars', 0)"
         },
         {
-          "line": 910,
+          "line": 928,
           "kind": "or_fallback",
           "expression": "assistant_msg.content or ''"
         },
         {
-          "line": 1145,
+          "line": 1163,
           "kind": "or_fallback",
           "expression": "best_product.get('hinh_anh_url') or ''"
         },
         {
-          "line": 574,
+          "line": 589,
           "kind": "get_default",
           "expression": "metrics.get('provider_attempt_count', 0)"
         },
         {
-          "line": 590,
+          "line": 605,
           "kind": "or_fallback",
           "expression": "'tokens per minute' in err.lower() or 'tpm' in err.lower()"
         },
         {
-          "line": 639,
+          "line": 654,
           "kind": "or_fallback",
           "expression": "getattr(resp, 'model', None) or model"
         },
         {
-          "line": 651,
+          "line": 666,
           "kind": "or_fallback",
           "expression": "repeated_tool_result or {}"
         },
         {
-          "line": 653,
+          "line": 668,
           "kind": "or_fallback",
           "expression": "message or 'Mình đã có kết quả tra cứu ở trên nhưng chưa thể diễn đạt thêm lúc này.'"
         },
         {
-          "line": 868,
+          "line": 886,
           "kind": "or_fallback",
           "expression": "feedback or ('That read has already been performed. Correct the previously denied write using its structured recovery fields; do not repeat the read.' if required_repair_round else 'Use the tool results already provided and answer the user now. Do not request another tool.')"
         },
         {
-          "line": 507,
+          "line": 522,
           "kind": "or_fallback",
           "expression": "m.get('content') or ''"
         },
         {
-          "line": 510,
+          "line": 525,
           "kind": "or_fallback",
           "expression": "m.get('content') or ''"
         },
         {
-          "line": 585,
+          "line": 600,
           "kind": "get_default",
           "expression": "metrics.get('provider_failure_count', 0)"
         },
         {
-          "line": 586,
+          "line": 601,
           "kind": "get_default",
           "expression": "metrics.get('failed_provider_latency_ms', 0)"
         },
         {
-          "line": 718,
+          "line": 733,
           "kind": "or_fallback",
           "expression": "tool_executors or {}"
         },
         {
-          "line": 724,
+          "line": 739,
           "kind": "or_fallback",
           "expression": "successful_required_repair or terminal_success or confirmation_denied_stop"
         },
         {
-          "line": 527,
+          "line": 542,
           "kind": "or_fallback",
           "expression": "m.get('content') or ''"
         },
         {
-          "line": 530,
+          "line": 545,
           "kind": "or_fallback",
           "expression": "m.get('content') or ''"
         },
         {
-          "line": 708,
+          "line": 723,
           "kind": "or_fallback",
           "expression": "tool_executors or {}"
         }
@@ -14129,7 +15159,7 @@
     },
     {
       "path": "src/function_calling/tools/product_tools.py",
-      "lines": 890,
+      "lines": 891,
       "sites": [
         {
           "line": 69,
@@ -14237,133 +15267,133 @@
           "value": "None"
         },
         {
-          "line": 236,
+          "line": 237,
           "kind": "parameter",
           "function": "execute_get_product_options",
           "field": "product_name",
           "value": "''"
         },
         {
-          "line": 236,
+          "line": 237,
           "kind": "parameter",
           "function": "execute_get_product_options",
           "field": "product_id",
           "value": "None"
         },
         {
-          "line": 371,
+          "line": 372,
           "kind": "parameter",
           "function": "execute_check_price_and_stock",
           "field": "branch_id",
           "value": "'Chưa chọn'"
         },
         {
-          "line": 371,
+          "line": 372,
           "kind": "parameter",
           "function": "execute_check_price_and_stock",
           "field": "size",
           "value": "None"
         },
         {
-          "line": 371,
+          "line": 372,
           "kind": "parameter",
           "function": "execute_check_price_and_stock",
           "field": "quantity",
           "value": "1"
         },
         {
-          "line": 371,
+          "line": 372,
           "kind": "parameter",
           "function": "execute_check_price_and_stock",
           "field": "session_id",
           "value": "''"
         },
         {
-          "line": 371,
+          "line": 372,
           "kind": "parameter",
           "function": "execute_check_price_and_stock",
           "field": "toppings",
           "value": "None"
         },
         {
-          "line": 371,
+          "line": 372,
           "kind": "parameter",
           "function": "execute_check_price_and_stock",
           "field": "luong_da",
           "value": "None"
         },
         {
-          "line": 371,
+          "line": 372,
           "kind": "parameter",
           "function": "execute_check_price_and_stock",
           "field": "do_ngot",
           "value": "None"
         },
         {
-          "line": 371,
+          "line": 372,
           "kind": "parameter",
           "function": "execute_check_price_and_stock",
           "field": "loai_sua",
           "value": "None"
         },
         {
-          "line": 702,
+          "line": 703,
           "kind": "parameter",
           "function": "execute_get_recommendations",
           "field": "user_id",
           "value": "None"
         },
         {
-          "line": 702,
+          "line": 703,
           "kind": "parameter",
           "function": "execute_get_recommendations",
           "field": "criteria",
           "value": "'hot'"
         },
         {
-          "line": 702,
+          "line": 703,
           "kind": "parameter",
           "function": "execute_get_recommendations",
           "field": "category",
           "value": "'all'"
         },
         {
-          "line": 702,
+          "line": 703,
           "kind": "parameter",
           "function": "execute_get_recommendations",
           "field": "top_k",
           "value": "5"
         },
         {
-          "line": 702,
+          "line": 703,
           "kind": "parameter",
           "function": "execute_get_recommendations",
           "field": "search_text",
           "value": "None"
         },
         {
-          "line": 702,
+          "line": 703,
           "kind": "parameter",
           "function": "execute_get_recommendations",
           "field": "period",
           "value": "'month'"
         },
         {
-          "line": 702,
+          "line": 703,
           "kind": "parameter",
           "function": "execute_get_recommendations",
           "field": "period_anchor",
           "value": "None"
         },
         {
-          "line": 702,
+          "line": 703,
           "kind": "parameter",
           "function": "execute_get_recommendations",
           "field": "preference_query",
           "value": "None"
         },
         {
-          "line": 702,
+          "line": 703,
           "kind": "parameter",
           "function": "execute_get_recommendations",
           "field": "preference_concepts",
@@ -14375,17 +15405,17 @@
           "expression": "category not in {'all', 'drink', 'food'} or sellable_scope not in {'normal', 'topping'}"
         },
         {
-          "line": 245,
+          "line": 246,
           "kind": "or_fallback",
           "expression": "product_id or getattr(product_name, 'product_id', None)"
         },
         {
-          "line": 505,
+          "line": 506,
           "kind": "or_fallback",
           "expression": "size or extra_values"
         },
         {
-          "line": 604,
+          "line": 605,
           "kind": "or_fallback",
           "expression": "exact or rows"
         },
@@ -14395,7 +15425,7 @@
           "expression": "len(products) >= params['limit'] or len(rows) < page_size"
         },
         {
-          "line": 501,
+          "line": 502,
           "kind": "or_fallback",
           "expression": "p['gia_ban'] or 0"
         },
@@ -14415,17 +15445,17 @@
           "expression": "not terms or all((_term_matches(term, haystack) for term in terms))"
         },
         {
-          "line": 716,
+          "line": 717,
           "kind": "or_fallback",
           "expression": "category or 'all'"
         },
         {
-          "line": 739,
+          "line": 740,
           "kind": "or_fallback",
           "expression": "search_text or ''"
         },
         {
-          "line": 535,
+          "line": 536,
           "kind": "or_fallback",
           "expression": "stock['so_luong_ton'] or 0"
         },
@@ -14435,27 +15465,27 @@
           "expression": "bool(re.search('(?<!\\\\w)mat(?!\\\\w)', text)) or 'nong' not in text"
         },
         {
-          "line": 503,
+          "line": 504,
           "kind": "or_fallback",
           "expression": "toppings or []"
         },
         {
-          "line": 544,
+          "line": 545,
           "kind": "or_fallback",
           "expression": "row[2] or 0"
         },
         {
-          "line": 545,
+          "line": 546,
           "kind": "or_fallback",
           "expression": "'size' in _norm(row[0]) or 'kich thuoc' in _norm(row[0])"
         },
         {
-          "line": 297,
+          "line": 298,
           "kind": "or_fallback",
           "expression": "r[0] or ''"
         },
         {
-          "line": 298,
+          "line": 299,
           "kind": "or_fallback",
           "expression": "r[1] or ''"
         }

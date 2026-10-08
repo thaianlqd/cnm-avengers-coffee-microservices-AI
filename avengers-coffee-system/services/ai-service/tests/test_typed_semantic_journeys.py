@@ -268,3 +268,28 @@ def test_journey_k_protocol_repair_signed_continuation_and_no_write_replay(runti
     assert runtime.provider.requests[1]['messages'][2]['tool_calls'][0]['extra_content']['google']['thought_signature'] == 'fixture-signature'
     assert runtime.turn(message, client_message_id='typed-repair') == result
     assert len(runtime.writes) == 1
+
+
+@pytest.mark.parametrize('malformed_first', [False, True])
+def test_recommendation_to_family_discovery_selection_and_configuration(runtime, descriptions, monkeypatch, malformed_first):
+    cart_manager.replace_items_from_order_cart(runtime.sid, [])
+    option_authority(monkeypatch)
+    recommended = send(runtime, 'Synthetic tart preference', ('RECOMMEND_BY_PREFERENCE', {
+        'scope': 'drink', 'concepts': ['thanh mát', 'chua nhẹ'], 'planned_discovery_reads': 1}))
+    assert [p['product_id'] for p in recommended['ui_payload']['products']] == ['101']
+    from test_semantic_repair_modes import step
+    runtime.provider.steps = ([{'content': '{broken'}] if malformed_first else []) + [step('discover_products', {
+        'scope': 'all', 'product_family': 'Beta', 'planned_discovery_reads': 1})]
+    request_before = len(runtime.provider.requests)
+    found = runtime.turn('Synthetic change of mind to Beta family')
+    assert found['error'] is None and [p['product_id'] for p in found['ui_payload']['products']] == ['102']
+    assert len(runtime.provider.requests) - request_before == 1 + malformed_first
+    assert runtime.provider.requests[-1]['tools']
+    discovery = next(row for row in found['tool_calls_log'] if row['tool'] == 'filter_catalog')
+    assert discovery['args']['search_text'].casefold() == 'beta' and discovery['args']['category'] == 'all'
+    assert discovery['args']['sort_by'] == 'menu' and 'category_id' not in discovery['args']
+    assert not runtime.writes
+    send(runtime, 'Select exact Beta', ('SELECT_PRODUCT', {'reference': ref('102')}))
+    assert not runtime.writes and cart_manager.get_checkout_prefs(runtime.sid)['pending_products'][0]['product_id'] == '102'
+    send(runtime, 'Synthetic large size', ('CONFIGURE_PRODUCT', {'size': 'L', 'luong_da': 'Ít đá', 'do_ngot': 'Ít ngọt'}))
+    assert len(runtime.writes) == 1 and runtime.writes[0][1]['product_id'] == '102'

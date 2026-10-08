@@ -234,7 +234,7 @@ def candidates(gateway, namespace, reference):
         rows = [{'value': value, 'label': label} for value, label in zip(FULFILLMENT_OPTIONS, FULFILLMENT_LABELS)]
     elif namespace == 'PRODUCT':
         if reference.get('kind') == 'pending':
-            rows = gateway.entry_pending_products
+            rows = state.get('pending_products') or []
         elif reference.get('scope'):
             rows = gateway.entry_product_groups.get(reference['scope']) or []
             if not rows:
@@ -326,6 +326,11 @@ def ground_reference(gateway, namespace, reference):
     elif kind not in {'singleton', 'pending'}:
         rows = []
     if len(rows) != 1:
+        if namespace == 'PRODUCT' and kind == 'pending' and not rows:
+            return None, {'status': 'pending_product_required', 'changed': False,
+                'error_class': 'BUSINESS_PRECONDITION', 'recovery_kind': 'clarify',
+                'unresolved_namespace': namespace, 'ambiguity_count': 0,
+                'message': 'Bạn chọn món cần cấu hình trước nhé; hiện chưa có món đang chờ tùy chọn.'}
         return None, failure('ambiguous_reference' if rows else 'unknown_reference', namespace, len(rows))
     return rows[0], None
 
@@ -353,7 +358,7 @@ def identity_repair(gateway, namespace, field, reference, code):
 
 def ground_action(gateway, action):
     args = deepcopy(action['args'])
-    if action['tool'] == 'add_to_cart' and action.get('option_intent') == 'DEFAULTS':
+    if not action.get('operation') and action['tool'] == 'add_to_cart' and action.get('option_intent') == 'DEFAULTS':
         args['use_defaults'] = True
     target = TOOL_TARGETS.get(action['tool'])
     reference = action.get('reference')
@@ -396,7 +401,7 @@ def ground_action(gateway, action):
     if reference and (reference['kind'] == 'literal' or reference['kind'] == 'recent' and namespace != 'ORDER' or reference['kind'] == 'best' and namespace != 'VOUCHER'):
         return None, None, model_repair('invalid_reference_kind', expected_namespace=namespace, repair_hint='recent is ORDER only, best is VOUCHER only, literal is LOCATION only. Use current exact id/name/ordinal/focus/pending/singleton as applicable.')
     if not reference:
-        if (action['tool'] == 'add_to_cart' and field not in args
+        if (not action.get('operation') and action['tool'] == 'add_to_cart' and field not in args
                 and action.get('option_intent') in {'CONFIGURE', 'DEFAULTS'}):
             # Meaning/commitment was validated before grounding. A target-free
             # configuration can bind only the unique selected pending product,

@@ -575,6 +575,7 @@ class GuardedToolGateway:
         # Candidate identity enables fact/option capabilities without pretending
         # those candidates already have customer-visible ordinals.
         self.context['discovery_candidates_available'] = bool(self.artifacts.product_candidates)
+        self.context['profile_address_candidates_available'] = bool(self.profile_address_candidates or self.entry_profile_offer)
         self.repair_tool = repair_tool
         self.allowed = capabilities_for_context(self.context, entry_action=self.entry_action,
                                                final_only=final_only, repair_tool=repair_tool,
@@ -582,8 +583,19 @@ class GuardedToolGateway:
         rows = tool_schemas(self.allowed)
         self.schemas = {r['function']['name']: r['function']['parameters'] for r in rows}
         if self.semantic_mode and not final_only:
-            from src.agents.semantic_registry import operations_for_context
-            rows = [op.schema() for op in operations_for_context(self.context, self.allowed)]
+            from src.agents.semantic_registry import operations_for_context, operation_registry
+            operations = operations_for_context(self.context, self.allowed)
+            failed = self.semantic_plan.failed if self.semantic_plan else None
+            failed_op = operation_registry().get((failed or {}).get('operation') or
+                ((failed or {}).get('proposal') or {}).get('operation'))
+            if failed_op:
+                # Registry-owned repair meanings; safe prerequisite reads may
+                # establish identity, but cannot replace the failed action.
+                operations = [op for op in operations if op.function_name == failed_op.function_name
+                    or op.access in failed_op.repair_prerequisite_access]
+                if failed_op.executor in self.allowed and failed_op not in operations:
+                    operations.append(failed_op)
+            rows = [op.schema() for op in operations]
         executors = self.executors()
         if self.semantic_mode and not final_only:
             from src.agents.semantic_registry import materialize_operation

@@ -78,7 +78,7 @@ def test_every_operation_exact_schema_mapping_requiredness_and_exposure(name, ru
         assert not validate_operation(name, {**value, foreign: 'foreign'}), (name, foreign)
     proposal = materialize_operation(name, value)
     assert proposal['tool'] == op.executor and proposal['operation'] == name
-    if op.namespace:
+    if 'reference' in value or op.implicit_reference_kind:
         assert proposal['reference']['namespace'] == op.namespace
     assert op.preconditions and op.omissions and op.repair_classification == 'model_repair'
     if op.access != 'READ':
@@ -87,7 +87,7 @@ def test_every_operation_exact_schema_mapping_requiredness_and_exposure(name, ru
         assert op.allowed_commitments == ('AFFIRMED',)
     gateway = gateway_for(runtime, 'fixture')
     exposed = operations_for_context(gateway.context, {op.executor})
-    assert name in {row.function_name for row in exposed}
+    assert (name in {row.function_name for row in exposed}) == op.exposed(gateway.context)
     assert name not in {row.function_name for row in operations_for_context(gateway.context, set())}
 
 

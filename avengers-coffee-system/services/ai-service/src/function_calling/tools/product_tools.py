@@ -56,7 +56,7 @@ TOOL_FILTER_CATALOG = {
                 "max_price": {"type": "number"},
                 "max_price_inclusive": {"type": "boolean"},
                 "search_text": {"type": "string"},
-                "sort_by": {"type": "string", "enum": ["price_asc", "price_desc", "sold_desc", "new"]},
+                "sort_by": {"type": "string", "enum": ["menu", "price_asc", "price_desc", "sold_desc", "new"]},
                 "period": {"type": "string", "enum": ["day", "week", "month", "year", "all"]},
                 "period_anchor": {"type": "string", "description": "YYYY-MM-DD within the requested Vietnam calendar period; omit for current period."},
                 "limit": {"type": "integer"},
@@ -101,7 +101,7 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
         predicates.append("sp.gia_ban " + ("<=" if max_price_inclusive else "<") + " :max_price")
         params["max_price"] = float(max_price)
     ranking = sort_by == "sold_desc"
-    if sort_by not in {"price_asc", "price_desc", "sold_desc", "new"}:
+    if sort_by not in {"menu", "price_asc", "price_desc", "sold_desc", "new"}:
         return {"status": "error", "message": "Tiêu chí sắp xếp không hợp lệ."}
     sales_cte, sales_join, sales_columns = "", "", ""
     if ranking:
@@ -125,7 +125,7 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
     terms = _catalog_name_key(search_text).split() if search_text else []
     order = "DESC" if sort_by == "price_desc" else "ASC"
     sort_sql = ("sales.sold_count DESC, sp.ma_san_pham ASC" if ranking else
-                "sp.ten_san_pham ASC, sp.ma_san_pham ASC" if sort_by == "new" else
+                "sp.ten_san_pham ASC, sp.ma_san_pham ASC" if sort_by in {"menu", "new"} else
                 f"sp.gia_ban {order}, sp.ten_san_pham ASC, sp.ma_san_pham ASC")
     try:
         products = []
@@ -172,6 +172,7 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
                     break
                 offset += page_size
         return {"status": "ok" if products else "not_found", "products": products[:params["limit"]],
+            **({"ordering_basis": "canonical_menu_name_id"} if sort_by == "menu" else {}),
             **({"ranking": "completed_paid_quantity", "period": period, "period_anchor": period_anchor,
                 "period_start": str(params["period_start"]), "period_end": str(params["period_end"]),
                 "message": "Xếp theo số lượng đã bán trong đơn hoàn thành, đã thanh toán." if products else

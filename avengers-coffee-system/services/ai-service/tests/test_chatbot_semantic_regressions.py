@@ -193,6 +193,9 @@ def test_defaults_have_separate_current_authorization(runtime):
 
 def test_model_surface_only_publishes_canonical_option_vocabulary(runtime):
     gateway = gateway_for(runtime)
+    assert 'semantic_configure_product' not in {row['function']['name'] for row in gateway.tool_surface()[0]}
+    cart_manager.set_pending_products(runtime.sid, [runtime.products[0]])
+    gateway = gateway_for(runtime)
     surface = {row['function']['name']: row['function']['parameters'] for row in gateway.tool_surface()[0]}
     fields = surface['semantic_configure_product']['properties']
     assert 'size' in fields and not {'kich_co', 'ice', 'sugar', 'milk', 'use_defaults'} & set(fields)
@@ -406,7 +409,9 @@ def test_implicit_configuration_never_guesses_from_display_focus_or_multiple_pen
     cart_manager.set_pending_products(runtime.sid, runtime.products[:count])
     gateway = gateway_for(runtime)
     result = gateway.execute_semantic(action(gateway, 'add_to_cart', {'size': 'L'}))
-    assert result['status'] == ('ambiguous_reference' if count else 'unknown_reference')
+    assert result['status'] == ('ambiguous_reference' if count else 'pending_product_required')
+    if not count:
+        assert result['error_class'] == 'BUSINESS_PRECONDITION'
     assert not runtime.writes
 
 

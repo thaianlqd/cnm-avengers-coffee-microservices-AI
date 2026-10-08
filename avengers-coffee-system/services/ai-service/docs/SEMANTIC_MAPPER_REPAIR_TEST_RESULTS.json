@@ -1,0 +1,67 @@
+{
+  "starting_head": "62c3a6cce7e6792992cf830a7c3abcff83a1316e",
+  "network": "none",
+  "live_provider_requests": 0,
+  "results": [
+    {
+      "group": "01_registry",
+      "command": "python -m pytest tests/test_semantic_registry_contract.py -q --tb=short",
+      "exit_code": 0,
+      "summary": "220 passed in 1.22s"
+    },
+    {
+      "group": "02_mapper_reference",
+      "command": "python -m pytest tests/test_semantic_mapper_reference_policy.py -q --tb=short",
+      "exit_code": 0,
+      "summary": "276 passed in 1.02s"
+    },
+    {
+      "group": "03_repair_state",
+      "command": "python -m pytest tests/test_semantic_repair_modes.py tests/test_semantic_dialogue_repairs.py -q --tb=short",
+      "exit_code": 0,
+      "summary": "21 passed, 1 warning in 2.14s"
+    },
+    {
+      "group": "04_typed_journeys",
+      "command": "python -m pytest tests/test_typed_semantic_journeys.py -q --tb=short",
+      "exit_code": 0,
+      "summary": "16 passed, 1 warning in 2.53s"
+    },
+    {
+      "group": "05_plan_compound",
+      "command": "python -m pytest tests/test_semantic_control.py tests/test_semantic_state_hardening.py tests/test_compound_discovery_contract.py tests/test_reported_compound_user_turns.py tests/test_compound_cart_language.py tests/test_reference_identity_repair.py -q --tb=short",
+      "exit_code": 0,
+      "summary": "255 passed, 1 warning in 2.23s"
+    },
+    {
+      "group": "06_product_recommendation",
+      "command": "python -m pytest tests/test_product_option_state.py tests/test_description_recommendations.py tests/test_chatbot_semantic_regressions.py tests/test_surgical_recommendation_regressions.py tests/test_recommendation_memory.py tests/test_product_insights_multi_turn.py tests/test_mixed_incomplete_product_reference.py -q --tb=short",
+      "exit_code": 0,
+      "summary": "175 passed, 1 warning in 3.22s"
+    },
+    {
+      "group": "07_checkout_location_payment",
+      "command": "python -m pytest tests/test_checkout_guarded_contract.py tests/test_cart_voucher_checkout_flow.py tests/test_customer_checkout_presentation.py tests/test_checkout_context_catalog_final.py tests/test_profile_location_hardening.py tests/test_final_location_recovery_hardening.py tests/test_location_checkout_boundary.py tests/test_live_manual_checkout_followups.py tests/test_reported_checkout_followups.py tests/test_branch_latency_checkout_presentation.py -q --tb=short",
+      "exit_code": 0,
+      "summary": "377 passed, 1 warning in 3.78s"
+    },
+    {
+      "group": "08_orders",
+      "command": "python -m pytest tests/test_order_management_and_sales.py tests/test_recent_order_history.py tests/test_order_edit_dialogue.py tests/test_order_intent_router.py tests/test_numbered_order_selection.py -q --tb=short",
+      "exit_code": 0,
+      "summary": "170 passed, 1 warning in 1.69s"
+    },
+    {
+      "group": "09_provider_resilience",
+      "command": "python -m pytest tests/test_provider_resilience.py tests/test_provider_retry_recovery.py tests/test_provider_wait_budget.py tests/test_provider_outage_presentation.py tests/test_gemini_guarded_continuation.py -q --tb=short",
+      "exit_code": 0,
+      "summary": "99 passed, 1 warning in 2.00s"
+    },
+    {
+      "group": "10_full",
+      "command": "python -m pytest tests -q --tb=short",
+      "exit_code": 0,
+      "summary": "3407 passed, 1 skipped, 2 warnings in 20.69s"
+    }
+  ]
+}

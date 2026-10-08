@@ -7,7 +7,7 @@ import subprocess
 import sys
 from types import ModuleType
 from pathlib import Path
-from src.agents.semantic_registry import operation_registry, operations_for_context
+from src.agents.semantic_registry import operation_registry, operations_for_context, validate_registry
 from src.agents.tool_capabilities import capabilities_for_context, CAPABILITIES
 from src.agents.llm_tool_orchestrator import SYSTEM_PROMPT, LEGACY_SYSTEM_PROMPT
 from src.agents.agent_context import model_projection
@@ -21,21 +21,24 @@ def representative_states():
         'pending': None, 'pending_products': []}, 'visible': {}, 'focus': {}, 'recent': []}
     product = {'product_id': 'fixture-product', 'product_name': 'Fixture product', 'quantity': 1, 'size': 'M', 'unit_price': 30000}
     states = {'browsing': deepcopy(base)}
-    for name in ('products', 'pending_product', 'cart', 'voucher', 'location', 'summary', 'order_change'):
+    for name in ('products', 'pending_product', 'cart', 'voucher', 'location', 'payment_needed', 'summary', 'order_change'):
         ctx = deepcopy(base)
         ctx['visible']['products'] = [product]
         if name == 'pending_product':
             ctx['business']['pending_products'] = [product]
-        if name in {'cart', 'voucher', 'location', 'summary', 'order_change'}:
+        if name in {'cart', 'voucher', 'location', 'payment_needed', 'summary', 'order_change'}:
             ctx['business']['cart']['items'] = [{**product, 'cart_item_id': 'fixture-line'}]
         checkout = ctx['business']['checkout']
         if name == 'voucher':
             checkout.update(flow_stage='VOUCHER', voucher_offer_pending=True)
             ctx['visible']['vouchers'] = [{'ma_voucher': 'fixture-voucher'}]
-        if name in {'location', 'summary'}:
+        if name in {'location', 'payment_needed', 'summary'}:
             checkout.update(delivery_type='GIAO_TAN_NOI', voucher_decided=True, checkout_requested=True)
             ctx['visible']['branches'] = [{'branch_id': 'fixture-branch'}]
             ctx['visible']['location_candidates'] = [{'candidate_id': 'fixture-candidate'}]
+        if name == 'payment_needed':
+            checkout.update(delivery_address='Fixture address', address_confirmed=True)
+            ctx['business']['cart']['branch_id'] = 'fixture-branch'
         if name == 'summary':
             checkout.update(payment_method='NGAN_HANG_QR', delivery_address='Fixture address', address_confirmed=True,
                             checkout_action_id='fixture-action')
@@ -82,7 +85,13 @@ def baseline_schema_builder(source_dir=None):
         modules[0].tool_schemas(allowed), model_facing=True)
 
 
-def audit(source_dir=None):
+def audit(source_dir=None, previous_registry_source=None):
+    validate_registry(operation_registry())
+    previous = None
+    if previous_registry_source:
+        previous = ModuleType('_static_previous_semantic_registry')
+        sys.modules[previous.__name__] = previous
+        exec(compile(Path(previous_registry_source).read_text(), '<previous semantic HEAD>', 'exec'), previous.__dict__)
     sizes = []
     baseline = baseline_schema_builder(source_dir)
     for name, ctx in representative_states().items():
@@ -90,15 +99,28 @@ def audit(source_dir=None):
         operations = operations_for_context(ctx, allowed)
         old = [baseline(allowed)]
         new = [op.schema() for op in operations]
+        before = [op.schema() for op in previous.operations_for_context(ctx, allowed)] if previous else None
         _, encoded = model_projection(ctx)
         sizes.append({'state': name, 'legacy_flat_schema_chars': len(json.dumps(old, ensure_ascii=False)),
                       'exact_schema_chars': len(json.dumps(new, ensure_ascii=False)), 'exposed_functions': len(new),
-                      'context_chars': len(encoded)})
+                      'context_chars': len(encoded), 'system_prompt_chars': len(SYSTEM_PROMPT),
+                      **({'previous_exact_schema_chars': len(json.dumps(before, ensure_ascii=False)),
+                          'previous_exposed_functions': len(before)} if before is not None else {})})
     return {'live_provider_requests': 0, 'legacy_system_prompt_chars': len(LEGACY_SYSTEM_PROMPT),
             'semantic_system_prompt_chars': len(SYSTEM_PROMPT), 'states': sizes,
             'worst_case_exact_schema_chars': len(json.dumps([op.schema() for op in operation_registry().values()], ensure_ascii=False)),
-            'registry': [{'operation': op.name, 'function': op.function_name, 'executor': op.executor, 'access': op.access,
-                          'namespace': op.namespace, 'facet': op.facet, 'required': op.parameters()['required'],
+            'registry': [{'operation': op.name, 'function_name': op.function_name, 'executor': op.executor, 'access': op.access,
+                          'namespace': op.namespace, 'facet': op.facet, 'required_semantic_fields': op.parameters()['required'],
+                          'target_required': op.target_required,
+                          'reference_required_in_schema': 'reference' in op.parameters()['required'],
+                          'implicit_reference_kind': op.implicit_reference_kind,
+                          'implicit_reference_precondition': op.implicit_reference_precondition,
+                          'allowed_reference_kinds': op.allowed_reference_kinds,
+                          'fixed_args': dict(op.fixed_args), 'renames': dict(op.renames),
+                          'joined_args': op.joined_args, 'value_mappings': op.value_mappings,
+                          'metadata_mappings': op.metadata_mappings, 'require_any_fields': op.require_any_fields,
+                          'exposure_policy': op.exposure_policy,
+                          'repair_prerequisite_access': op.repair_prerequisite_access,
                           'allowed_commitments': op.allowed_commitments, 'omissions': op.omissions,
                           'optional_field_policies': op.omission_policies(),
                           'preconditions': op.preconditions} for op in operation_registry().values()],
@@ -108,7 +130,9 @@ def audit(source_dir=None):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--baseline-source-dir', help='Read immutable starting-HEAD sources exported by git show (for offline containers without git).')
-    report = audit(parser.parse_args().baseline_source_dir)
+    parser.add_argument('--previous-registry-source', help='Immutable registry exported from immediately preceding HEAD, for before/after state counts.')
+    args = parser.parse_args()
+    report = audit(args.baseline_source_dir, args.previous_registry_source)
     path = ROOT / 'docs' / 'SEMANTIC_CONTRACT_STATIC_AUDIT.json'
     path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
     print(json.dumps({key: value for key, value in report.items() if key not in {'registry', 'default_inventory'}}, ensure_ascii=False))

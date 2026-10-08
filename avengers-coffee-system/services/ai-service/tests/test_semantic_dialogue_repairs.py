@@ -30,7 +30,7 @@ def test_missing_kind_is_format_repair_not_forced_business_read(runtime, message
     assert result['error'] is None and result['reply'] == 'Dạ, chào bạn!'
     assert not result['tool_calls_log'] and not runtime.reads and not runtime.writes
     assert len(runtime.provider.requests) == 2
-    assert not runtime.provider.requests[1].get('tools')
+    assert runtime.provider.requests[1].get('tools')
 
 
 def test_social_final_is_not_overwritten_by_incidental_cart_read(runtime):
@@ -49,7 +49,7 @@ def test_format_repaired_business_question_still_requires_authority(runtime):
     result = runtime.turn(text)
     assert result['error'] is None and result['ui_payload']['products']
     assert len(runtime.reads) == 1 and not runtime.writes
-    assert not runtime.provider.requests[1].get('tools')
+    assert runtime.provider.requests[1].get('tools')
     assert runtime.provider.requests[2].get('tools')
 
 

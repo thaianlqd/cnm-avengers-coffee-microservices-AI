@@ -13,6 +13,7 @@ import os
 import re
 import time
 import unicodedata
+from enum import Enum
 from typing import Any, Dict, List, Optional
 from src.common.gemini_compat import inference_messages, tool_extra_content
 
@@ -22,6 +23,13 @@ logger = logging.getLogger(__name__)
 _llm_clients = []
 _active_client_idx = 0
 _clients_initialized = False
+
+class RepairMode(str, Enum):
+    NONE = 'NONE'
+    PRE_TOOL_RESPONSE_REPAIR = 'PRE_TOOL_RESPONSE_REPAIR'
+    SEMANTIC_PROTOCOL_REPAIR = 'SEMANTIC_PROTOCOL_REPAIR'
+    POST_TOOL_FINAL_ENVELOPE_REPAIR = 'POST_TOOL_FINAL_ENVELOPE_REPAIR'
+
 
 class FakeFunction:
     def __init__(self, d):
@@ -475,11 +483,18 @@ def groq_agent_chat(
     protocol_repairs = 0
     read_completion_repairs = 0
     final_envelope_repairs = 0
-    final_envelope_repair_active = False
     dialogue_format_repairs = 0
-    dialogue_format_repair_active = False
     mutation_succeeded = False
     provider_turn_health = {}
+    repair_mode = RepairMode.NONE
+
+    def enter_repair(mode):
+        nonlocal repair_mode
+        repair_mode = mode
+        if metrics is not None:
+            metrics['repair_mode'] = mode.value
+            metrics.setdefault('repair_modes', []).append(mode.value)
+        logger.info('[AgentRepair] mode=%s executed_tool_count=%d', mode.value, len(tool_calls_log))
 
     # Resolve model một lần duy nhất cho cả cuộc hội thoại (cached sau lần đầu)
     def model_for(selected_client):
@@ -499,7 +514,7 @@ def groq_agent_chat(
 
     for round_idx in range(max_tool_rounds + 2):
         # The extra slot is exclusively one tools-disabled envelope repair.
-        if round_idx > max_tool_rounds and not final_envelope_repair_active:
+        if round_idx > max_tool_rounds and repair_mode != RepairMode.POST_TOOL_FINAL_ENVELOPE_REPAIR:
             break
         resp = None
         if guarded and round_idx == max_tool_rounds:
@@ -522,7 +537,7 @@ def groq_agent_chat(
                 tools, tool_executors = tool_surface_provider(force_tools_disabled, required_repair_tool)
             if force_tools_disabled:
                 tools, tool_executors = [], {}
-            if model_context_provider and not final_envelope_repair_active:
+            if model_context_provider and repair_mode != RepairMode.POST_TOOL_FINAL_ENVELOPE_REPAIR:
                 current_messages[0] = model_context_provider()
             if context_char_limit and sum(len(str(m.get('content') or '')) for m in current_messages) > context_char_limit:
                 if context_compactor:
@@ -814,6 +829,8 @@ def groq_agent_chat(
                     "content": encoded_result,
                 })
 
+            if repair_mode == RepairMode.PRE_TOOL_RESPONSE_REPAIR:
+                enter_repair(RepairMode.NONE)
             if (guarded and customer_step_response_provider and not confirmation_denied_stop
                     and (not required_repair_tool or required_repair_tool == 'customer_actions'
                         and successful_required_repair and not protocol_repair_requested)):
@@ -829,12 +846,13 @@ def groq_agent_chat(
                 # normal selection/configuration step; the repair count stays
                 # unchanged and any second protocol fault is still terminal.
                 return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
-                        'error': 'semantic_repair_exhausted'}
+                        'error': 'semantic_repair_exhausted', 'error_class': 'MODEL_PROTOCOL'}
             if protocol_repair_requested:
                 if protocol_repairs >= 1:
                     return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
-                            'error': 'semantic_repair_exhausted'}
+                            'error': 'semantic_repair_exhausted', 'error_class': 'MODEL_PROTOCOL'}
                 protocol_repairs += 1
+                enter_repair(RepairMode.SEMANTIC_PROTOCOL_REPAIR)
                 provider_turn_health['semantic_repair_pending'] = True
                 if metrics is not None:
                     metrics['protocol_repair_count'] = protocol_repairs
@@ -911,10 +929,11 @@ def groq_agent_chat(
             if staged:
                 if protocol_repairs >= 1:
                     return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
-                            'error': 'semantic_repair_exhausted'}
+                            'error': 'semantic_repair_exhausted', 'error_class': 'MODEL_PROTOCOL'}
                 protocol_repairs += 1
                 if metrics is not None:
                     metrics['protocol_repair_count'] = protocol_repairs
+                enter_repair(RepairMode.SEMANTIC_PROTOCOL_REPAIR)
                 provider_turn_health['semantic_repair_pending'] = True
                 force_tool_required = True
                 required_repair_tool = 'customer_actions'
@@ -924,7 +943,7 @@ def groq_agent_chat(
                 continue
         if guarded and provider_turn_health.get('semantic_repair_pending'):
             return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
-                    'error': 'semantic_repair_exhausted'}
+                    'error': 'semantic_repair_exhausted', 'error_class': 'MODEL_PROTOCOL'}
 
         # ── Case 2: Groq trả về text → kết thúc ──────────────────────────
         reply_text = (assistant_msg.content or "").strip()
@@ -933,32 +952,31 @@ def groq_agent_chat(
             logger.info('[AgentResponseValidation] round=%d category=%s executed_tool_count=%d',
                 round_idx, str(issue).split(':', 1)[0] if str(issue).startswith(('FORMAT_REQUIRED:', 'TOOL_REQUIRED:')) else 'response_contract',
                 len(tool_calls_log))
-            if (guarded and not tool_calls_log and str(issue).startswith('FORMAT_REQUIRED:')
-                    and (not final_response_repair_allowed or final_response_repair_allowed(issue))):
+            if guarded and not tool_calls_log and str(issue).startswith('FORMAT_REQUIRED:'):
                 if dialogue_format_repairs or round_idx >= max_tool_rounds:
                     return {'reply': '', 'tool_calls_log': [], 'checkout_payload': None,
-                            'error': 'response_evidence_required'}
+                            'error': 'response_evidence_required', 'error_class': 'MODEL_PROTOCOL'}
                 dialogue_format_repairs += 1
-                dialogue_format_repair_active = True
-                force_tools_disabled, force_tool_required = True, False
+                enter_repair(RepairMode.PRE_TOOL_RESPONSE_REPAIR)
+                # No tool has executed: a corrected final OR a permitted
+                # semantic operation may satisfy the same turn.
+                force_tools_disabled, force_tool_required = False, False
                 if metrics is not None:
                     metrics['dialogue_format_repair_count'] = dialogue_format_repairs
                 current_messages.append({'role': 'system', 'content': issue})
                 continue
-            if dialogue_format_repair_active:
-                # A now-typed business request still needs authority. A format
-                # repair neither supplies facts nor closes business intent.
+            if repair_mode == RepairMode.PRE_TOOL_RESPONSE_REPAIR:
                 if str(issue).startswith('TOOL_REQUIRED:') and round_idx < max_tool_rounds:
-                    dialogue_format_repair_active = False
+                    enter_repair(RepairMode.NONE)
                     force_tools_disabled, force_tool_required = False, True
                     current_messages.append({'role': 'system', 'content': issue})
                     continue
                 return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
-                        'error': 'response_evidence_required'}
+                        'error': 'response_evidence_required', 'error_class': 'MODEL_PROTOCOL'}
             if (guarded and final_response_repair_allowed and final_response_repair_allowed(issue)):
                 if not final_envelope_repairs:
                     final_envelope_repairs = 1
-                    final_envelope_repair_active = True
+                    enter_repair(RepairMode.POST_TOOL_FINAL_ENVELOPE_REPAIR)
                     force_tools_disabled, force_tool_required, required_repair_tool = True, False, None
                     if metrics is not None:
                         metrics['final_envelope_repair_count'] = 1
@@ -967,10 +985,10 @@ def groq_agent_chat(
                     current_messages.append({'role': 'system', 'content': issue})
                     continue
                 return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
-                        'error': 'response_evidence_required'}
-            if final_envelope_repair_active:
+                        'error': 'response_evidence_required', 'error_class': 'MODEL_PROTOCOL'}
+            if repair_mode == RepairMode.POST_TOOL_FINAL_ENVELOPE_REPAIR:
                 return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
-                        'error': 'response_evidence_required'}
+                        'error': 'response_evidence_required', 'error_class': 'MODEL_PROTOCOL'}
             if round_idx < max_tool_rounds and not force_tools_disabled:
                 semantic_repairs += 1
                 force_tool_required = str(issue).startswith('TOOL_REQUIRED:')
@@ -979,7 +997,7 @@ def groq_agent_chat(
                 current_messages.append({'role': 'system', 'content': issue})
                 continue
             return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
-                    'error': 'response_evidence_required'}
+                    'error': 'response_evidence_required', 'error_class': 'MODEL_PROTOCOL'}
         logger.info("[Groq Agent] Final reply after %d tool rounds, len=%d", round_idx, len(reply_text))
         return {
             "reply": reply_text,
