@@ -274,6 +274,11 @@ def test_duplicate_typed_write_cannot_execute_twice(runtime):
 
 
 def test_named_purchase_without_display_uses_menu_identity_not_popularity(runtime):
+    from src.agents.agent_memory import ConversationMemory
+    memory = ConversationMemory(runtime.redis).load(runtime.sid)
+    memory['visible_snapshots']['products'] = []
+    memory['focus'] = {}
+    ConversationMemory(runtime.redis).save(runtime.sid, memory)
     gateway = gateway_for(runtime, 'fixture')
     gateway.entry_products = []
     gateway.entry_cart_lines = []

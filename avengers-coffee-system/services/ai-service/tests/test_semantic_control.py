@@ -204,7 +204,8 @@ def test_order_and_branch_capabilities_do_not_depend_on_raw_words(runtime):
     from src.agents.semantic_registry import operation_registry
     names = {operation_registry()[row['function']['name']].executor for row in surface
         if row['function']['name'] in operation_registry()}
-    assert {'get_order_history', 'get_order_details', 'get_store_reviews', 'get_top_rated_stores'} <= names
+    assert 'semantic_interrupt' in {row['function']['name'] for row in surface}
+    assert {'get_order_history', 'get_order_details', 'get_store_reviews', 'get_top_rated_stores'} <= gateway.allowed
     assert not {'cancel_order', 'update_order', 'reorder_order'} & names
     gateway.artifacts.visible['orders'] = [{'order_id': str(uuid4())}]
     surface = gateway.tool_surface()[0]
@@ -212,7 +213,7 @@ def test_order_and_branch_capabilities_do_not_depend_on_raw_words(runtime):
     from src.agents.semantic_registry import operation_registry
     names = {operation_registry()[row['function']['name']].executor for row in surface
         if row['function']['name'] in operation_registry()}
-    assert {'cancel_order', 'update_order', 'reorder_order'} <= names
+    assert {'cancel_order', 'update_order', 'reorder_order'} <= gateway.allowed
 
 
 def test_saved_profile_reference_is_exact_and_ambiguous_addresses_clarify(runtime):

@@ -6,6 +6,7 @@ registry. Business schemas are a second, independent authority boundary.
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import lru_cache
+from src.agents.semantic_prerequisites import prerequisite_policies
 from src.agents.semantic_progress import PROGRESS_POLICIES, GOAL_FAMILIES, PROGRESS_ROLES
 
 COMMITMENTS = ('SELECTED', 'AFFIRMED', 'REJECTED', 'NEGATED', 'QUESTION',
@@ -338,6 +339,9 @@ def validate_registry(registry):
         assert op.repair_compatible_goals == (op.goal_family,), op.name
         assert all(n.removeprefix('semantic_').upper() in PROGRESS_POLICIES for n in op.repair_prerequisites), op.name
         assert op.function_name not in op.repair_prerequisites, op.name
+        policies = prerequisite_policies(op.function_name)
+        assert {p.operation for p in policies} == set(op.repair_prerequisites), op.name
+        assert all(p.owner_operation == op.function_name and p.reason and p.predicate for p in policies), op.name
         assert set(op.allowed_reference_kinds) <= set(NAMESPACE_REFERENCES.get(op.namespace, ())), op.name
         assert op.exposure_policy in exposure_facts({}), op.name
         if op.implicit_reference_kind is not None:
@@ -432,7 +436,7 @@ INTERRUPT_NAME = 'semantic_interrupt'
 
 def interrupt_schema():
     return {'type': 'function', 'function': {'name': INTERRUPT_NAME,
-        'description': 'Safely switch semantic domain for THIS user turn. No business side effect or completion. Preserve drafts; next inference must call a function in target_domain. Cannot abandon an unfinished execution plan.',
+        'description': 'Safely switch to a DIFFERENT semantic domain for THIS user turn, at most once. Same-domain interrupts are rejected. No business side effect or completion. Preserve drafts; next inference must call a target-domain primary or its explicitly needed prerequisite. A prerequisite cannot own or complete the primary goal. Cannot abandon an unfinished or committed execution plan.',
         'parameters': closed({'target_domain': {'type': 'string', 'enum': list(GOAL_FAMILIES)}}, ('target_domain',))}}
 
 

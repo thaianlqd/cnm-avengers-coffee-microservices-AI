@@ -551,6 +551,8 @@ def groq_agent_chat(
                     return {'reply': '', 'tool_calls_log': tool_calls_log,
                             'checkout_payload': checkout_payload, 'error': 'context_budget_exceeded'}
             if metrics is not None:
+                if force_tools_disabled:
+                    metrics['final_synthesis_count'] = metrics.get('final_synthesis_count', 0) + 1
                 metrics['exposed_tool_count'] = max(metrics.get('exposed_tool_count', 0), len(tools or []))
                 chars = len(json.dumps(tools or [], ensure_ascii=False))
                 metrics['tool_schema_chars'] = max(metrics.get('tool_schema_chars', 0), chars)

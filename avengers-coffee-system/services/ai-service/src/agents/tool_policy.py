@@ -91,7 +91,10 @@ class GuardedToolGateway:
         self.repair_in_progress = False
         self.completed_semantic_targets = {}
         from src.agents.turn_contract import TurnContract, state_obligation
-        self.turn_contract = TurnContract(primary_state_obligation=state_obligation(context))
+        from src.agents.product_snapshot import ProductDisplaySnapshot
+        self.product_display_snapshot = ProductDisplaySnapshot.capture(artifacts.visible, artifacts.focus.get('product'))
+        context['turn_product_snapshot'] = self.product_display_snapshot.descriptor()
+        self.turn_contract = TurnContract(primary_state_obligation=state_obligation(context), context=context)
         if semantic_mode:
             artifacts.turn_contract = self.turn_contract
         self.updated_products = set()
@@ -157,7 +160,20 @@ class GuardedToolGateway:
             result['customer_actions'] = lambda args, session_id: self.customer_actions(args)
         return result
 
+    def refresh_turn_progress_facts(self):
+        logs = self.artifacts.logs
+        def read(tool):
+            return any(row['tool'] == tool and row['result'].get('status') in {'ok', 'not_found'} for row in logs)
+        self.context['turn_progress_facts'] = {
+            'product_options': list(self.options),
+            'product_candidates': list(self.artifacts.product_candidates.values()),
+            'vouchers_read': read('get_applicable_vouchers'), 'payment_options_read': read('get_payment_options'),
+            'profile_addresses_read': read('get_user_profile'), 'branches_read': read('ask_branch') or read('find_nearest_branch'),
+            'location_candidates_read': bool(self.artifacts.visible.get('location_candidates')),
+            'owned_order_details': read('get_order_details'), 'product_price_read': read('get_product_price')}
+
     def enter_turn_repair(self, mode):
+        self.refresh_turn_progress_facts()
         self.turn_contract.enter_repair(mode, self.context, self.semantic_plan)
 
     def turn_state(self):
@@ -172,6 +188,8 @@ class GuardedToolGateway:
         c = self.turn_contract
         logger.info('[TurnContinuity] %s', json.dumps({
             'turn_contract_id': c.turn_contract_id, 'goal_family': c.goal_family,
+            'goal_owner_operation': c.goal_owner_operation, 'repair_target_operation': c.repair_target,
+            'interrupt_count': c.interrupt_count, 'prerequisite_count': c.prerequisite_count,
             'repair_mode': c.repair_mode, 'normal_surface_count': getattr(self, 'normal_surface_count', 0),
             'repair_surface_count': getattr(self, 'repair_surface_count', 0),
             'allowed_repair_operations': sorted(c.allowed_operations()) if c.constrained else [],
@@ -181,12 +199,13 @@ class GuardedToolGateway:
             'progress_result': progress or c.progress_result, 'non_progress_reason': reason,
             'safe_interrupt_domain': domain, 'turn_completion_reason': c.turn_completion_reason}))
 
-    def continuity_denial(self, reason):
+    def continuity_denial(self, reason, preserve_contract=False):
         from src.agents.semantic_control import model_repair
-        self.turn_contract.progress_result = 'NON_PROGRESS'
-        self.turn_contract.drift_count += 1
+        if not preserve_contract:
+            self.turn_contract.progress_result = 'NON_PROGRESS'
+            self.turn_contract.drift_count += 1
         self.continuity_event(progress='NON_PROGRESS', reason=reason)
-        return model_repair('semantic_drift', error_subtype='SEMANTIC_DRIFT', continuation_required=True,
+        return model_repair('semantic_drift', error_subtype='SEMANTIC_DRIFT', continuation_required=not preserve_contract,
             turn_contract_id=self.turn_contract.turn_contract_id,
             goal_family=self.turn_contract.goal_family, non_progress_reason=reason,
             allowed_repair_operations=sorted(self.turn_contract.allowed_operations()),
@@ -197,6 +216,7 @@ class GuardedToolGateway:
         """Validate continuity for the WHOLE response before any execution/artifact."""
         from src.agents.semantic_registry import (materialize_operation, operation_registry,
             INTERRUPT_NAME, validate_interrupt)
+        self.refresh_turn_progress_facts()
         proposals, operations, payloads = [], [], []
         for call in calls:
             try:
@@ -217,7 +237,7 @@ class GuardedToolGateway:
                         'continuation_required': True, 'target_domain': payloads[0]['target_domain'],
                         'turn_contract_id': self.turn_contract.turn_contract_id}
                 else:
-                    result = self.continuity_denial(reason)
+                    result = self.continuity_denial(reason, preserve_contract=reason == 'same_domain_interrupt')
             return [result] + [{'status': 'batch_member', 'changed': False}] * (len(calls) - 1)
         contract = self.turn_contract
         for op, proposal in zip(operations, proposals):
@@ -239,21 +259,19 @@ class GuardedToolGateway:
                 self.continuity_event(op, 'NON_PROGRESS', reason)
                 result = self.continuity_denial(reason)
                 return [result] + [{'status': 'batch_member', 'changed': False}] * (len(calls) - 1)
-        if contract.scoped_domain and contract.progress_result == 'INTERRUPT_PENDING' and len(calls) == 1 and operations[0]:
-            # The explicit switch opens a domain; the next typed operation
-            # establishes whether this is a question or a state-changing goal.
-            contract.bound_operation = operations[0].function_name
         if contract.constrained:
             prerequisites = [op for op in operations if op and contract.is_prerequisite(op)]
             if prerequisites and (len(calls) != 1 or contract.prerequisite_count >= 1):
                 result = self.continuity_denial('prerequisite_budget_or_mixed_actions')
                 return [result] + [{'status': 'batch_member', 'changed': False}] * (len(calls) - 1)
-            if prerequisites:
-                contract.prerequisite_count += 1
-        if not contract.goal_family and operations[0]:
-            contract.goal_family = operations[0].goal_family
         before = deepcopy(self.context['business'])
         result = self.customer_actions({'actions': proposals})
+        # Observe the accepted batch only after its second validation pass.
+        # Establishing the first primary's owner must not narrow an already
+        # accepted same-goal sibling before that sibling reaches the journal.
+        for op in operations:
+            if op:
+                contract.observe_operation(op, standalone=len(calls) == 1)
         failed = (self.semantic_plan.failed or {}).get('proposal') if self.semantic_plan else None
         if failed and failed.get('operation'):
             op = operation_registry().get(failed['operation'])
@@ -261,6 +279,7 @@ class GuardedToolGateway:
                 result.update(repair_function=op.function_name, repair_parameters=op.parameters(),
                     repair_hint=op.repair_hint())
         if result.get('recovery_kind') == 'model_repair':
+            self.refresh_turn_progress_facts()
             contract.enter_repair('SEMANTIC_PROTOCOL_REPAIR', self.context, self.semantic_plan)
         else:
             from src.agents.turn_contract import validate_turn_progress
@@ -272,10 +291,11 @@ class GuardedToolGateway:
                         if row['proposal'].get('operation') == op.function_name and row.get('result')), None)
                     actual = row['result'] if row else (result.get('results') or [{}])[-1].get('result', {})
                     progress, reason = validate_turn_progress(contract, op, actual,
-                        self.semantic_plan, before, self.context['business'], self.artifacts)
+                        self.semantic_plan, before, self.context['business'], self.artifacts, accepted_for_contract=True)
                     evaluated.append(progress)
                     progress_events.append((op, progress, reason))
             if evaluated:
+                contract.prerequisite_count += int('PREREQUISITE_COMPLETED' in evaluated)
                 contract.progress_result = evaluated[-1]
                 contract.turn_completion_reason = ('goal_authority_and_plan_complete' if contract.progress_result == 'COMPLETED'
                     else 'authoritative_business_clarification' if contract.progress_result == 'BLOCKED' else None)
@@ -485,6 +505,18 @@ class GuardedToolGateway:
                     and CAPABILITIES[failed['tool']].access == 'READ' and actions[0].get('tool') == failed['tool'])
                 if len(actions) != 1 or not self.semantic_plan.repair(actions[0]):
                     raise ValueError('repair only failed action')
+                # Malformed references cannot be bound at initial preflight.
+                # Freeze the corrected canonical target before execution;
+                # existing sibling bindings remain untouched.
+                if not failed.get('bound_target'):
+                    bound, target, error = ground_action(self, failed['proposal'])
+                    namespace, field = TOOL_TARGETS.get(failed['tool'], (None, None))
+                    if not error and target and field and field in bound:
+                        failed['bound_target'] = (namespace, field, str(bound[field]))
+                        if namespace == 'PRODUCT':
+                            failed['bound_product_id'] = str(bound[field])
+                            failed['product_snapshot_id'] = self.product_display_snapshot.snapshot_id
+                            failed['product_snapshot_fingerprint'] = self.product_display_snapshot.fingerprint
             elif self.semantic_plan and self.semantic_plan.pending:
                 raise ValueError('unfinished plan')
             else:
@@ -503,6 +535,10 @@ class GuardedToolGateway:
                             namespace, field = TOOL_TARGETS.get(row['tool'], (None, None))
                             if field and field in bound:
                                 row['bound_target'] = (namespace, field, str(bound[field]))
+                                if namespace == 'PRODUCT':
+                                    row['bound_product_id'] = str(bound[field])
+                                    row['product_snapshot_id'] = self.product_display_snapshot.snapshot_id
+                                    row['product_snapshot_fingerprint'] = self.product_display_snapshot.fingerprint
                                 if namespace == 'CART_LINE':
                                     row['bound_cart_item_id'] = str(bound[field])
                 if any(row.get('bound_cart_item_id') for row in self.semantic_plan.actions):
@@ -716,6 +752,7 @@ class GuardedToolGateway:
         rows = tool_schemas(self.allowed)
         self.schemas = {r['function']['name']: r['function']['parameters'] for r in rows}
         if self.semantic_mode and not final_only:
+            self.refresh_turn_progress_facts()
             from src.agents.turn_contract import normal_operations_for_context, repair_operations_for_contract
             from src.agents.semantic_registry import interrupt_schema
             normal = normal_operations_for_context(self.context, self.allowed)
@@ -724,7 +761,8 @@ class GuardedToolGateway:
                 if self.turn_contract.constrained else normal)
             rows = [op.schema() for op in operations]
             # Interrupt is control-only and is never mapped to a business executor.
-            if not self.turn_contract.writes_already_committed and not (self.semantic_plan and self.semantic_plan.pending):
+            if (not self.turn_contract.writes_already_committed and self.turn_contract.interrupt_count < 1
+                    and not self.turn_contract.selection_snapshot_locked and not (self.semantic_plan and self.semantic_plan.pending)):
                 rows.append(interrupt_schema())
             self.repair_surface_count = len(rows) if self.turn_contract.constrained else 0
         executors = self.executors()

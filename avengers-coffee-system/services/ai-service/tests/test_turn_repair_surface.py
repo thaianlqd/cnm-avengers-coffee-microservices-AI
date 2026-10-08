@@ -14,6 +14,8 @@ REGISTRY = operation_registry()
 def test_goal_by_every_operation_compatibility(goal, name):
     c = TurnContract(goal_family=goal, repair_mode='PRE_TOOL_RESPONSE_REPAIR', primary_state_obligation=goal)
     primaries = [op for op in REGISTRY.values() if op.goal_family == goal and op.progress_role in {'PRIMARY', 'FINALIZATION'}]
+    if not primaries:
+        primaries = [op for op in REGISTRY.values() if op.goal_family == goal and op.progress_role == 'CONSULTATION']
     allowed = {op.function_name for op in primaries} | {n for op in primaries for n in op.repair_prerequisites}
     assert c.eligibility(REGISTRY[name])[0] == (name in allowed)
 
@@ -21,7 +23,8 @@ def test_goal_by_every_operation_compatibility(goal, name):
 @pytest.mark.parametrize('name', REGISTRY)
 def test_protocol_repair_all_operation_pairs_preserves_exact_meaning(name):
     op = REGISTRY[name]
-    c = TurnContract(goal_family=op.goal_family, bound_operation=name, repair_mode='SEMANTIC_PROTOCOL_REPAIR')
+    c = TurnContract(goal_family=op.goal_family, bound_operation=name, repair_mode='SEMANTIC_PROTOCOL_REPAIR',
+        consultation_operation=name if op.access == 'READ' else None)
     for other in REGISTRY.values():
         assert c.eligibility(other)[0] == (other.function_name in {name, *op.repair_prerequisites})
 
@@ -42,6 +45,9 @@ def test_pending_product_normal_and_repair_surfaces_are_small_and_typed(runtime)
 
 def test_no_pending_pre_tool_repair_is_restricted_generic_plus_interrupt(runtime):
     g = gateway_for(runtime)
+    g.context['visible']['products'] = []
+    g.context['turn_product_snapshot']['ordered_product_ids'] = []
+    g.artifacts.visible['products'] = []
     normal, _ = g.tool_surface()
     g.enter_turn_repair('PRE_TOOL_RESPONSE_REPAIR')
     repair, _ = g.tool_surface()

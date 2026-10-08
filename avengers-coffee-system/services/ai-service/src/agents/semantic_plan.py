@@ -48,5 +48,6 @@ class SemanticPlan:
 
     def projection(self):
         return [{key: deepcopy(row[key]) for key in
-            ('action_id', 'original_index', 'tool', 'operation', 'facet', 'reference', 'dependencies', 'status')}
+            ('action_id', 'original_index', 'tool', 'operation', 'facet', 'reference', 'dependencies', 'status',
+             'bound_target', 'bound_product_id', 'product_snapshot_id', 'product_snapshot_fingerprint') if key in row}
             for row in self.actions]

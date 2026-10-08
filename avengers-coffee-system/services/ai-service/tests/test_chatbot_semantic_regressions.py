@@ -479,6 +479,10 @@ def test_repaired_product_family_discovery_shows_choices_and_keeps_existing_cart
 
 
 def test_repaired_exact_product_lookup_continues_to_options_without_another_repair(runtime):
+    from src.agents.agent_memory import ConversationMemory
+    memory = ConversationMemory(runtime.redis).load(runtime.sid)
+    memory['visible_snapshots']['products'] = []
+    ConversationMemory(runtime.redis).save(runtime.sid, memory)
     message = 'Mình chọn Alpha nhé'
     selection = {'reference': {'kind': 'name', 'value': 'Alpha'}, 'commitment': 'SELECTED', 'evidence': message}
     runtime.provider.steps = [typed_step('select_product', {**selection, 'reference': {'kind': 'invalid'}}),
@@ -492,6 +496,10 @@ def test_repaired_exact_product_lookup_continues_to_options_without_another_repa
 
 
 def test_successful_repair_read_does_not_reset_protocol_repair_budget(runtime):
+    from src.agents.agent_memory import ConversationMemory
+    memory = ConversationMemory(runtime.redis).load(runtime.sid)
+    memory['visible_snapshots']['products'] = []
+    ConversationMemory(runtime.redis).save(runtime.sid, memory)
     message = 'Mình chọn Alpha nhé'
     bad = typed_step('select_product', {'reference': {'kind': 'invalid'}, 'commitment': 'SELECTED', 'evidence': message})
     runtime.provider.steps = [bad,

@@ -73,6 +73,9 @@ def test_repeated_cart_read_keeps_one_bounded_pending_dispatch_opportunity(runti
 
 def test_reported_no_tool_repeat_read_and_unstructured_success_can_still_dispatch(runtime):
     stage(runtime)
+    drafts = cart_manager.get_checkout_prefs(runtime.sid)['pending_products']
+    drafts[0].pop('option_schema', None)
+    cart_manager.set_pending_products(runtime.sid, drafts)
     g = gateway_for(runtime, 'theo mặc định cho tôi đi bạn')
     from semantic_scripted_steps import step as typed_step
     prose = {'content': 'Dạ, tôi đã thiết lập theo mặc định cho bạn rồi nhé.'}

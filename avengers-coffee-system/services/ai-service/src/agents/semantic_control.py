@@ -4,6 +4,7 @@ This protocol rides in the existing agent tool response. The business tools and
 their policy checks remain the executors; no classifier/provider call lives here.
 """
 from copy import deepcopy
+import json
 import re
 
 COMMITMENTS = ('SELECTED', 'AFFIRMED', 'REJECTED', 'NEGATED', 'QUESTION',
@@ -220,7 +221,7 @@ def canonical_focus(namespace, row):
     return result
 
 
-def candidates(gateway, namespace, reference):
+def candidates(gateway, namespace, reference, operation=None):
     kind, fields, _ = NAMESPACES[namespace]
     state = gateway.context['business']
     if namespace == 'CART_LINE':
@@ -236,7 +237,8 @@ def candidates(gateway, namespace, reference):
         if reference.get('kind') == 'pending':
             rows = state.get('pending_products') or []
         elif reference.get('scope'):
-            rows = gateway.entry_product_groups.get(reference['scope']) or []
+            rows = (gateway.product_display_snapshot.rows(reference['scope']) if operation
+                and hasattr(gateway, 'product_display_snapshot') else gateway.entry_product_groups.get(reference['scope'])) or []
             if not rows:
                 # Older snapshots store only the ordered common list. Recover
                 # group membership from canonical Menu categories, preserving
@@ -245,11 +247,14 @@ def candidates(gateway, namespace, reference):
                 rows = [row for row in gateway.entry_products
                         if product_bucket(row) == reference['scope']]
         else:
-            rows = list(gateway.entry_products) + list(gateway.artifacts.product_candidates.values())
+            entry_rows = (gateway.product_display_snapshot.rows() if operation
+                and hasattr(gateway, 'product_display_snapshot') else gateway.entry_products)
+            rows = list(entry_rows) + list(gateway.artifacts.product_candidates.values())
             if reference.get('kind') in {'id', 'name'}:
                 rows += list(gateway.entry_cart_lines)
             rows += state.get('pending_products') or []
-            focus = gateway.artifacts.focus.get('product')
+            focus = (gateway.product_display_snapshot.focus if operation == 'semantic_select_product'
+                and hasattr(gateway, 'product_display_snapshot') else gateway.artifacts.focus.get('product'))
             if focus:
                 rows.append(focus)
     else:
@@ -280,11 +285,11 @@ def candidates(gateway, namespace, reference):
     return list(unique.values())
 
 
-def ground_reference(gateway, namespace, reference):
+def ground_reference(gateway, namespace, reference, operation=None):
     if namespace not in NAMESPACES:
         return None, failure('unknown_reference', namespace)
     _, fields, names = NAMESPACES[namespace]
-    rows = candidates(gateway, namespace, reference)
+    rows = candidates(gateway, namespace, reference, operation=operation)
     kind, value = reference.get('kind'), reference.get('value')
     if kind == 'id':
         rows = [row for row in rows if identity(row, fields) == str(value)]
@@ -296,15 +301,34 @@ def ground_reference(gateway, namespace, reference):
             and (' ' + normalize_text(value) + ' ') in (' ' + normalize_text(row.get(key, '')) + ' ')
             for key in names)]
     elif kind == 'ordinal':
-        field = ('selection_index' if namespace == 'PRODUCT'
-                 and reference.get('scope') is None and gateway.entry_pending_products else
-                 'group_display_index' if reference.get('scope') else 'display_index')
-        if field == 'selection_index':
+        configuring = operation in {'semantic_configure_product', 'semantic_use_product_defaults'}
+        pending_ordinal = (namespace == 'PRODUCT' and reference.get('scope') is None
+            and gateway.entry_pending_products and (configuring or operation is None))
+        field = 'selection_index' if pending_ordinal else 'group_display_index' if reference.get('scope') else 'display_index'
+        if pending_ordinal:
             rows = gateway.entry_pending_products
+        elif namespace == 'PRODUCT' and operation and hasattr(gateway, 'product_display_snapshot'):
+            entry = gateway.context.get('turn_product_snapshot') or {}
+            frozen = gateway.product_display_snapshot
+            if entry.get('snapshot_id') != frozen.snapshot_id or entry.get('fingerprint') != frozen.fingerprint:
+                return None, model_repair('product_snapshot_integrity', error_subtype='SNAPSHOT_MISMATCH')
+            rows = gateway.product_display_snapshot.rows(reference.get('scope'))
         rows = [row for index, row in enumerate(rows, 1) if int(row.get(field) or index) == reference.get('index')]
+        if namespace == 'PRODUCT' and operation and rows and hasattr(gateway, 'product_display_snapshot'):
+            import logging
+            snapshot = gateway.product_display_snapshot
+            logging.getLogger(__name__).info('[ProductSnapshotGrounding] %s', json.dumps({
+                'entry_snapshot_id': gateway.context['turn_product_snapshot']['snapshot_id'],
+                'grounding_snapshot_id': snapshot.snapshot_id,
+                'entry_fingerprint': gateway.context['turn_product_snapshot']['fingerprint'],
+                'grounding_fingerprint': snapshot.fingerprint,
+                'reference_authority': 'pending_selection' if pending_ordinal else 'display',
+                'canonical_product_id': identity(rows[0], fields)}))
     elif kind == 'focus':
         focus_key = 'location' if namespace == 'LOCATION_CANDIDATE' else namespace.lower()
-        focus = gateway.artifacts.focus.get(focus_key) or {}
+        focus = (gateway.product_display_snapshot.focus if namespace == 'PRODUCT'
+            and operation == 'semantic_select_product' and hasattr(gateway, 'product_display_snapshot')
+            else gateway.artifacts.focus.get(focus_key)) or {}
         key = identity(focus, fields)
         if not key and namespace in {'PAYMENT', 'FULFILLMENT'}:
             field = 'payment_method' if namespace == 'PAYMENT' else 'delivery_type'
@@ -412,7 +436,7 @@ def ground_action(gateway, action):
             return args, None, None  # Existing schema returns required-fields recovery.
         else:
             reference = {'kind': 'name' if field in {'product_name', 'product_name_query'} else 'id', 'value': str(args[field])}
-    row, error = ground_reference(gateway, namespace, reference)
+    row, error = ground_reference(gateway, namespace, reference, operation=action.get('operation'))
     if (error and namespace == 'PRODUCT' and action.get('operation') and reference.get('kind') == 'name'):
         # The model supplied name meaning; Menu alone supplies identity. Never
         # use descriptions, popularity or a model ID to resolve a purchase.

@@ -22,6 +22,10 @@ def metrics(caplog):
 
 def test_pre_tool_malformed_business_can_execute_semantic_in_same_turn(runtime, caplog):
     caplog.set_level(logging.INFO)
+    from src.agents.agent_memory import ConversationMemory
+    memory = ConversationMemory(runtime.redis).load(runtime.sid)
+    memory['visible_snapshots']['products'] = []
+    ConversationMemory(runtime.redis).save(runtime.sid, memory)
     runtime.provider.steps = [{'content': '{broken'}, step('interrupt', {'target_domain': 'DISCOVERY'}), step('discover_products', {
         'scope': 'drink', 'product_family': 'Beta', 'planned_discovery_reads': 1})]
     result = runtime.turn('Synthetic family discovery')

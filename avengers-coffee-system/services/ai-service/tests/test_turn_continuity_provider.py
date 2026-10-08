@@ -45,7 +45,7 @@ def test_pre_tool_wrong_valid_read_then_configuration_recovers_without_repeat(ru
     assert all(r['tool'] not in {'get_menu_categories', 'get_order_history', 'get_payment_options'} for r in result['tool_calls_log'])
     assert not result['ui_payload']['products'] and not result['ui_payload']['branches']
     surface = {r['function']['name'] for r in runtime.provider.requests[count + 1]['tools']}
-    assert surface == {'semantic_configure_product', 'semantic_use_product_defaults', 'semantic_ask_product_options', 'semantic_interrupt'}
+    assert surface == {'semantic_configure_product', 'semantic_use_product_defaults', 'semantic_interrupt'}
     assert metrics(caplog)['turn_progress'] == 'COMPLETED'
     assert metrics(caplog)['protocol_repair_count'] == 1
     assert 'operation_outside_turn_contract' in caplog.text
@@ -58,6 +58,9 @@ def test_pre_tool_wrong_valid_read_then_configuration_recovers_without_repeat(ru
 def test_exact_option_prerequisite_requires_continuation_then_primary(runtime, caplog, protocol_first):
     caplog.set_level(logging.INFO)
     stage(runtime)
+    drafts = cart_manager.get_checkout_prefs(runtime.sid)['pending_products']
+    drafts[0].pop('option_schema', None)  # Explicitly missing server option evidence.
+    cart_manager.set_pending_products(runtime.sid, drafts)
     count = len(runtime.provider.requests)
     bad = step('configure_product', {'commitment': 'SELECTED', 'evidence': 'Fixture configuration', 'size': 'M', 'foreign': True})
     runtime.provider.steps = [bad if protocol_first else {'content': '{broken'},
@@ -95,6 +98,10 @@ def test_repair_fuzz_is_bounded_and_preserves_state(runtime, pattern):
     else:
         scripted = [first, step('ask_product_options', {'reference': ref('101')}),
             step('ask_product_options', {'reference': ref('101')}), configure()]
+    if pattern == 'repeat_prerequisite':
+        drafts = cart_manager.get_checkout_prefs(runtime.sid)['pending_products']
+        drafts[0].pop('option_schema', None)
+        cart_manager.set_pending_products(runtime.sid, drafts)
     count = len(runtime.provider.requests)
     runtime.provider.steps = scripted
     result = runtime.turn('Fixture configuration')
@@ -162,7 +169,7 @@ def test_text_actions_never_request_unadvertised_customer_actions(runtime):
     value = json.loads(misplaced['content'])
     value['actions'] = [{'tool': 'remove_cart_item', 'args': {'cart_item_id': '801'}}]
     misplaced['content'] = json.dumps(value)
-    runtime.provider.steps = [misplaced, interrupt('CART_EDIT'),
+    runtime.provider.steps = [interrupt('CART_EDIT'), misplaced,
         step('remove_cart_line', {'reference': {'kind': 'ordinal', 'index': 2}, 'commitment': 'SELECTED', 'evidence': 'Fixture remove'})]
     result = runtime.turn('Fixture remove')
     assert result['error'] is None and len(runtime.writes) == 1
@@ -259,7 +266,9 @@ def test_compound_first_action_repair_keeps_original_ordinals_and_all_siblings(r
 def test_registered_product_prerequisite_cannot_change_frozen_canonical_target(runtime):
     g = gateway_for(runtime, 'Fixture selected identity')
     value = {'reference': ref('101'), 'commitment': 'SELECTED', 'evidence': g.user_message}
-    g.semantic_calls(calls(('semantic_select_product', {**value, 'size': 'L'})))
+    # Configuration genuinely lacks option facts; selection already obtains
+    # them itself and therefore no longer exposes this supporting read.
+    g.semantic_calls(calls(('semantic_configure_product', {**value, 'size': {'malformed': 'L'}})))
     assert g.turn_contract.must_preserve_target[-1] == '101'
     result = g.semantic_calls(calls(('semantic_ask_product_options', {'reference': ref('102')})))[0]
     assert result['status'] == 'semantic_drift' and result['non_progress_reason'] == 'canonical_target_changed'

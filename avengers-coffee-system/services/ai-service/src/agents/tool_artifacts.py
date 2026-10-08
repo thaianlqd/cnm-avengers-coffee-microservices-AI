@@ -613,6 +613,13 @@ class ToolArtifacts:
             from src.agents.customer_flow_presentation import cart_read_reply
             self.used_customer_flow = True
             return cart_read_reply(self.logs[-1]['result'], self.business)
+        staged = {str(row['result'].get('product_id')) for row in self.logs if row['result'].get('selection_staged')}
+        if self.semantic_mode and len(staged) > 1:
+            pending = [row for row in self.business.get('pending_products', []) if str(row.get('product_id')) in staged]
+            if len(pending) == len(staged):
+                from src.agents.customer_flow_presentation import selection_options_reply
+                self.used_customer_flow = True
+                return selection_options_reply(pending)
         menu = [row['result'] for row in self.logs if row['tool'] == 'get_menu_categories']
         if menu and not self.visible.get('products') and not self.visible.get('branches'):
             self.used_customer_flow = True
@@ -887,9 +894,7 @@ class ToolArtifacts:
         if not issue and self.continuity_open():
             envelope = json.loads(raw)
             contract = self.turn_contract
-            if (envelope.get('response_kind') == 'social' and not self.logs and not contract.bound_operation
-                    and (contract.goal_family == 'SOCIAL' or not contract.primary_state_obligation
-                        and not contract.scoped_domain)):
+            if (envelope.get('response_kind') == 'social' and not self.logs and not contract.repair_target and not contract.scoped_domain):
                 contract.progress_result, contract.turn_completion_reason = 'COMPLETED', 'valid_social_response'
             else:
                 issue = 'TOOL_REQUIRED: Complete the same server turn contract using an allowed semantic operation; a prerequisite or unrelated read is not completion. Use semantic_interrupt only for a genuine domain switch.'

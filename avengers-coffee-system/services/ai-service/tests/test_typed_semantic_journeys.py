@@ -278,7 +278,7 @@ def test_recommendation_to_family_discovery_selection_and_configuration(runtime,
         'scope': 'drink', 'concepts': ['thanh mát', 'chua nhẹ'], 'planned_discovery_reads': 1}))
     assert [p['product_id'] for p in recommended['ui_payload']['products']] == ['101']
     from test_semantic_repair_modes import step
-    runtime.provider.steps = ([{'content': '{broken'}, step('interrupt', {'target_domain': 'DISCOVERY'})] if malformed_first else []) + [step('discover_products', {
+    runtime.provider.steps = ([step('interrupt', {'target_domain': 'DISCOVERY'}), step('discover_products', {'scope': 'invalid'})] if malformed_first else []) + [step('discover_products', {
         'scope': 'all', 'product_family': 'Beta', 'planned_discovery_reads': 1})]
     request_before = len(runtime.provider.requests)
     found = runtime.turn('Synthetic change of mind to Beta family')

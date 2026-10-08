@@ -46,6 +46,16 @@ def cart_review(result):
     return '\n'.join(lines)
 
 
+def selection_options_reply(products):
+    """Each canonical selected draft keeps its own required option boundary."""
+    blocks = ['Mình đã ghi nhận các món dưới đây; **chưa vào giỏ** vì còn chờ tùy chọn:']
+    for index, product in enumerate(products, 1):
+        blocks.append(f"Món đang chọn {product.get('selection_index') or index} ×{product.get('quantity') or 1}:\n" +
+            options_prompt({'product': product, 'option_groups': product.get('option_schema') or [],
+                'missing': product.get('missing_fields') or []}))
+    return '\n\n'.join(blocks)
+
+
 def cart_read_reply(result, state):
     """Committed lines and uncommitted selections are distinct customer facts."""
     blocks = [cart_review(result)]

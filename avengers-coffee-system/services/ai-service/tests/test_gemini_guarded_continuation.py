@@ -344,8 +344,8 @@ def test_actions_in_final_json_are_unexecuted_until_tool_repair_and_siblings_sur
         second['tool_calls'][0]['id'] = 'sibling'
         first['tool_calls'] += second['tool_calls']
         return first
-    wire.steps.extend([{'content': '```json\n' + json.dumps(misplaced, ensure_ascii=False) + '\n```'},
-        tool('semantic_interrupt', {'target_domain': 'CART_EDIT'}), corrected])
+    wire.steps.extend([tool('semantic_interrupt', {'target_domain': 'CART_EDIT'}),
+        {'content': '```json\n' + json.dumps(misplaced, ensure_ascii=False) + '\n```'}, corrected])
     result = wire.runtime.turn(message)
     assert result['error'] is None and len(wire.sent) == 3
     assert len(wire.runtime.writes) == 2

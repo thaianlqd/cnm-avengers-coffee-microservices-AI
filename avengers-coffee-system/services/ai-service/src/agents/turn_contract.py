@@ -34,6 +34,8 @@ def state_obligation(context):
         if not checkout.get('payment_method'):
             return 'PAYMENT'
         return 'CHECKOUT'
+    if any(row.get('product_id') for row in visible.get('products', [])):
+        return 'PRODUCT_SELECTION'
     return None
 
 
@@ -47,19 +49,26 @@ def commitment_class(value):
 class TurnContract:
     turn_contract_id: str = field(default_factory=lambda: uuid4().hex)
     goal_family: str | None = None
+    goal_owner_operation: str | None = None
+    repair_target_operation: str | None = None
+    # Migration alias: a retry target only, NEVER ownership/role authority.
+    bound_operation: str | None = None
+    consultation_operation: str | None = None
     primary_state_obligation: str | None = None
     repair_mode: str = 'NONE'
-    bound_operation: str | None = None
     must_preserve_facet: str | None = None
     must_preserve_target: tuple | None = None
+    repair_reference: dict | None = None
     commitment_class: str | None = None
     scoped_domain: bool = False
+    selection_snapshot_locked: bool = False
     writes_already_committed: int = 0
     progress_result: str = 'UNSTARTED'
     turn_completion_reason: str | None = None
     prerequisite_count: int = 0
     interrupt_count: int = 0
     drift_count: int = 0
+    context: dict = field(default_factory=dict, repr=False, compare=False)
 
     @property
     def constrained(self):
@@ -69,8 +78,34 @@ class TurnContract:
     def can_present(self):
         return not self.constrained or self.progress_result in {'COMPLETED', 'BLOCKED'}
 
+    @property
+    def repair_target(self):
+        return self.repair_target_operation or self.bound_operation
+
+    def primary_operations(self):
+        from src.agents.semantic_registry import operation_registry
+        registry = operation_registry()
+        if self.goal_owner_operation:
+            op = registry.get(self.goal_owner_operation)
+            return [op] if op and op.goal_family == self.goal_family and op.progress_role in {'PRIMARY', 'FINALIZATION'} else []
+        target = registry.get(self.repair_target)
+        if target and target.goal_family == self.goal_family and target.progress_role in {'PRIMARY', 'FINALIZATION'}:
+            return [target]
+        return [op for op in registry.values() if op.goal_family == self.goal_family
+            and op.progress_role in {'PRIMARY', 'FINALIZATION'}]
+
+    def needed_prerequisites(self):
+        from src.agents.semantic_registry import prerequisite_policies
+        return {policy.operation for owner in self.primary_operations()
+            for policy in prerequisite_policies(owner.function_name)
+            if policy.needed(self.context, self.must_preserve_target, self.repair_reference)}
+
+    def registered_prerequisites(self):
+        return {name for owner in self.primary_operations() for name in owner.repair_prerequisites}
+
     def enter_repair(self, mode, context, plan=None):
-        self.repair_mode = mode
+        previous_mode = self.repair_mode
+        self.repair_mode, self.context = mode, context
         if mode not in {'PRE_TOOL_RESPONSE_REPAIR', 'SEMANTIC_PROTOCOL_REPAIR'}:
             return
         failed = plan.failed if plan else None
@@ -78,27 +113,59 @@ class TurnContract:
         if failed and failed.get('operation') in operation_registry():
             proposal = failed['proposal']
             op = operation_registry()[failed['operation']]
-            self.goal_family, self.bound_operation = op.goal_family, op.function_name
+            # The already accepted compound journal can establish the failed
+            # primary's ownership on FIRST repair. Later prerequisite retries
+            # cannot redefine the goal or its owner.
+            supporting_active_goal = bool(self.goal_family and op.function_name in self.registered_prerequisites())
+            if previous_mode == 'NONE' and not self.scoped_domain and not supporting_active_goal:
+                self.goal_family = op.goal_family
+                self.goal_owner_operation = op.function_name if op.progress_role in {'PRIMARY', 'FINALIZATION'} else None
+            elif not self.goal_family:
+                self.goal_family = op.goal_family
+            if not self.goal_owner_operation and op.goal_family == self.goal_family and op.progress_role in {'PRIMARY', 'FINALIZATION'}:
+                self.goal_owner_operation = op.function_name
+            self.repair_target_operation = self.bound_operation = op.function_name
             self.must_preserve_facet = failed.get('facet')
             self.must_preserve_target = failed.get('bound_target')
+            self.repair_reference = deepcopy(proposal.get('reference'))
             wire = proposal.get('semantic_payload') or {}
             wire = wire if isinstance(wire, dict) else {}
             self.commitment_class = commitment_class(wire.get('commitment', proposal.get('commitment')))
         elif not self.goal_family:
             self.primary_state_obligation = state_obligation(context)
             self.goal_family = self.primary_state_obligation or 'GENERIC_CONSULTATION'
+        if (mode == 'PRE_TOOL_RESPONSE_REPAIR' and self.goal_family == 'PRODUCT_SELECTION'
+                and context.get('turn_product_snapshot', {}).get('ordered_product_ids')):
+            self.goal_owner_operation = 'semantic_select_product'
+            self.selection_snapshot_locked = True
         self.progress_result, self.turn_completion_reason = 'NEEDS_REPAIR', None
+
+    def observe_operation(self, op, standalone=False):
+        """Accept metadata meaning; a prerequisite never acquires goal ownership."""
+        if not self.goal_family:
+            self.goal_family = op.goal_family
+        if op.goal_family != self.goal_family:
+            return
+        if op.progress_role in {'PRIMARY', 'FINALIZATION'} and not self.goal_owner_operation:
+            self.goal_owner_operation = op.function_name
+        elif standalone and not self.constrained and op.access == 'READ':
+            self.consultation_operation = op.function_name
 
     def allowed_operations(self):
         from src.agents.semantic_registry import operation_registry
         registry = operation_registry()
-        if self.bound_operation:
-            op = registry[self.bound_operation]
-            return {op.function_name, *op.repair_prerequisites}
-        primary = [op for op in registry.values() if self.goal_family in op.repair_compatible_goals
-            and (not self.primary_state_obligation or self.scoped_domain
-                or op.progress_role in {'PRIMARY', 'FINALIZATION'})]
-        return {op.function_name for op in primary} | {n for op in primary for n in op.repair_prerequisites}
+        if self.consultation_operation and not self.goal_owner_operation:
+            return {self.consultation_operation}
+        target = registry.get(self.repair_target)
+        if target and not self.scoped_domain and not self.goal_owner_operation and target.goal_family == self.goal_family and target.progress_role not in {'PRIMARY', 'FINALIZATION'}:
+            return {target.function_name}
+        owners = self.primary_operations()
+        if owners:
+            return {op.function_name for op in owners} | self.needed_prerequisites()
+        # A domain containing ONLY consultation operations is explicitly a
+        # read-only goal. Retry binding cannot turn its role into PRIMARY.
+        return {op.function_name for op in registry.values() if op.goal_family == self.goal_family
+            and op.progress_role == 'CONSULTATION'}
 
     def eligibility(self, op, proposal=None):
         if not self.constrained:
@@ -106,8 +173,10 @@ class TurnContract:
         if self.repair_mode == 'POST_TOOL_FINAL_ENVELOPE_REPAIR':
             return False, 'final_envelope_only'
         if op is None or op.function_name not in self.allowed_operations():
-            return False, 'operation_outside_turn_contract'
-        if op.function_name == self.bound_operation and proposal:
+            reason = ('unneeded_prerequisite' if op and op.function_name in self.registered_prerequisites()
+                else 'operation_outside_turn_contract')
+            return False, reason
+        if op.function_name == self.repair_target and proposal:
             if self.must_preserve_facet is not None and proposal.get('facet') != self.must_preserve_facet:
                 return False, 'facet_changed'
             if self.commitment_class and commitment_class(proposal.get('commitment')) not in {None, self.commitment_class}:
@@ -115,13 +184,15 @@ class TurnContract:
         return True, None
 
     def is_prerequisite(self, op):
-        if self.bound_operation:
-            return op.function_name != self.bound_operation
+        # Classification is independent of retry binding, plan index and
+        # interrupt. A cross-domain registered support operation keeps its role.
         return (op.goal_family != self.goal_family or op.progress_role == 'PREREQUISITE'
-            or bool(self.primary_state_obligation) and not self.scoped_domain
-                and op.progress_role not in {'PRIMARY', 'FINALIZATION'})
+            or op.function_name in self.registered_prerequisites()
+                and op.function_name not in {owner.function_name for owner in self.primary_operations()})
 
     def interrupt(self, domain, plan=None):
+        if domain == self.goal_family:
+            return False, 'same_domain_interrupt'
         if self.repair_mode == 'POST_TOOL_FINAL_ENVELOPE_REPAIR':
             return False, 'final_envelope_only'
         if domain not in GOAL_FAMILIES or self.interrupt_count >= 1:
@@ -130,9 +201,12 @@ class TurnContract:
             return False, 'unfinished_semantic_plan'
         if self.writes_already_committed:
             return False, 'committed_plan_cannot_switch'
+        if self.selection_snapshot_locked:
+            return False, 'frozen_selection_goal'
         self.interrupt_count += 1
-        self.goal_family, self.bound_operation = domain, None
-        self.must_preserve_facet = self.must_preserve_target = self.commitment_class = None
+        self.goal_family, self.goal_owner_operation = domain, None
+        self.repair_target_operation = self.bound_operation = self.consultation_operation = None
+        self.must_preserve_facet = self.must_preserve_target = self.commitment_class = self.repair_reference = None
         self.scoped_domain = True
         self.progress_result, self.turn_completion_reason = 'INTERRUPT_PENDING', None
         return True, None
@@ -154,16 +228,17 @@ def repair_operations_for_contract(contract, context, allowed):
     # became false. Executor/business authorization is still independently checked.
     from src.agents.semantic_registry import operation_registry
     operations = operations_for_context(context, allowed)
-    if contract.bound_operation:
-        op = operation_registry()[contract.bound_operation]
+    contract.context = context
+    if contract.repair_target:
+        op = operation_registry()[contract.repair_target]
         if op.executor in allowed and op not in operations:
             operations.append(op)
     return [op for op in operations if contract.eligibility(op)[0]]
 
 
-def validate_turn_progress(contract, op, result, plan=None, before=None, after=None, artifacts=None):
+def validate_turn_progress(contract, op, result, plan=None, before=None, after=None, artifacts=None, accepted_for_contract=False):
     """Goal + exact role + authoritative result + plan closure, never status alone."""
-    allowed, reason = contract.eligibility(op)
+    allowed, reason = (True, None) if accepted_for_contract else contract.eligibility(op)
     if not allowed:
         return 'NON_PROGRESS', reason
     if result.get('recovery_kind') == 'model_repair':
@@ -175,8 +250,18 @@ def validate_turn_progress(contract, op, result, plan=None, before=None, after=N
         row['result'].get('status') == result.get('status') for row in artifacts.logs))
     if not authoritative:
         return 'NON_PROGRESS', 'authoritative_result_missing'
-    if contract.constrained and contract.is_prerequisite(op):
+    direct_consultation = (not contract.goal_owner_operation and
+        (contract.consultation_operation == op.function_name or
+            not contract.primary_operations() and op.progress_role == 'CONSULTATION' and op.goal_family == contract.goal_family))
+    if contract.constrained and contract.is_prerequisite(op) and not direct_consultation:
         return 'PREREQUISITE_COMPLETED', 'registered_prerequisite_only'
+    if contract.constrained and op.name == 'SELECT_PRODUCT' and after is not None:
+        intended = {row['bound_target'][2] for row in plan.actions
+            if row.get('operation') == op.function_name and row.get('bound_target')} if plan else set()
+        selected = {str(row.get('product_id')) for row in after.get('pending_products', [])}
+        selected |= {str(row.get('product_id')) for row in (after.get('cart') or {}).get('items', [])}
+        if not intended or not intended <= selected:
+            return 'NON_PROGRESS', 'selected_product_state_missing'
     if contract.constrained and after is not None and result.get('status') in {'ok', 'success'}:
         checkout = after.get('checkout') or {}
         milestones = {'payment_method': checkout.get('payment_method'),
@@ -204,4 +289,8 @@ def validate_turn_progress(contract, op, result, plan=None, before=None, after=N
     if plan and any(row['status'] not in {'SUCCEEDED', 'ALREADY_PROCESSED', 'SKIPPED'}
             for row in plan.actions):
         return 'PROGRESSED', 'plan_actions_remain'
+    if contract.constrained and not direct_consultation and (
+            op.goal_family != contract.goal_family or op.progress_role not in {'PRIMARY', 'FINALIZATION'}
+            or not op.terminal_for_goal):
+        return 'NON_PROGRESS', 'primary_completion_not_proven'
     return 'COMPLETED', 'goal_authority_and_plan_complete'

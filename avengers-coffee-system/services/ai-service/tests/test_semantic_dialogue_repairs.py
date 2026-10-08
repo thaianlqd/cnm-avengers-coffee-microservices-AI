@@ -42,6 +42,10 @@ def test_social_final_is_not_overwritten_by_incidental_cart_read(runtime):
 
 
 def test_format_repaired_business_question_still_requires_authority(runtime):
+    from src.agents.agent_memory import ConversationMemory
+    memory = ConversationMemory(runtime.redis).load(runtime.sid)
+    memory['visible_snapshots']['products'] = []
+    ConversationMemory(runtime.redis).save(runtime.sid, memory)
     text = 'Cho mình xem các thức uống hiện tại'
     g = gateway_for(runtime, text)
     from test_semantic_repair_modes import step
