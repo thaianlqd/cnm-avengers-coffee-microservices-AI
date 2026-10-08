@@ -238,7 +238,11 @@ class GroundedAnalysisSpec(Contract):
 
 # Server execution budget for complete grouped populations. User Top N/detail
 # limits remain capped at 100; they are separate from this completeness budget.
-MAX_ANALYTICAL_ROWS = 2000
+from services.analytical_capacity_planner import AnalyticalCapacityContract
+
+# Compatibility alias for callers; this is EXECUTION capacity, never a display
+# or session budget. Compilation and runtime validation consult the contract.
+MAX_ANALYTICAL_ROWS = AnalyticalCapacityContract().execution_rows
 
 
 class QueryPlan(Contract):
@@ -260,7 +264,7 @@ class QueryPlan(Contract):
     period: Dict[str, Any]
     granularity: str
     ranking: Optional[Ranking]
-    row_limit: int = Field(ge=1, le=MAX_ANALYTICAL_ROWS)
+    row_limit: int = Field(ge=1, le=500000)
     group: Optional[str] = None
     schema_fingerprint: str
     explicit_limit: bool = False

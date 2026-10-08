@@ -133,7 +133,7 @@ class VerifiableV27Tests(unittest.TestCase):
         self.assertGreaterEqual(r['quality_assessment']['score'],90)
         self.assertEqual(r['quality_assessment'],verify_saved_report(r,self.catalog))
         bad=deepcopy(r);bad['result_sets']['branch']['rows'][0]['store_revenue']=99999
-        self.assertLessEqual(verify_saved_report(bad,self.catalog)['score'],74)
+        self.assertEqual(verify_saved_report(bad,self.catalog)['status'],'not_scored')
 
     def test_stale_legacy_failed_invalid_result_unscored(self):
         _,_,r=self.approved()

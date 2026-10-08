@@ -63,8 +63,11 @@ class ResultReliabilityTests(unittest.TestCase):
             self.assertEqual(p.provider.call_count, 1)
             self.assertEqual(report["diagnostics"]["provider_call_count"], 0)
             self.assertEqual(p.executor.call_count, 5)
-            self.assertEqual(len(report["result_sets"]["products"]["rows"]), 145)
-            self.assertEqual(len(report["result_sets"]["stores"]["rows"]), 145)
+            self.assertEqual(report["result_sets"]["products"]["total_rows"], 145)
+            self.assertEqual(report["result_sets"]["stores"]["total_rows"], 145)
+            from services.result_artifact_store import artifact_store
+            self.assertEqual(len(artifact_store().get(report['result_sets']['products']['artifact_ref'])['rows']),145)
+            self.assertLessEqual(len(report['result_sets']['products']['rows']),50)
             for id in ("trend", "stores", "products", "hours"):
                 self.assertTrue(any(c["query_id"] == id for c in report["charts"]))
             for c in report["charts"]:
@@ -103,7 +106,7 @@ class ResultReliabilityTests(unittest.TestCase):
         g = self.catalog.ground(spec, date(2026, 10, 7))
         self.assertEqual(build_plans(g, self.catalog)[0].row_limit, 100)
         self.assertTrue(validate_sql(a.sql, a.plan, a.grounded, self.catalog).valid)
-        self.assertFalse(validate_sql(a.sql.replace("LIMIT 2001", "LIMIT 2000"), a.plan, a.grounded, self.catalog).valid)
+        self.assertFalse(validate_sql(a.sql.replace(f"LIMIT {MAX_ANALYTICAL_ROWS+1}", f"LIMIT {MAX_ANALYTICAL_ROWS}"), a.plan, a.grounded, self.catalog).valid)
 
     def test_hour_expression_is_not_timestamp_but_raw_timestamp_stays_checked(self):
         _, _, a = self.artifact("hourly_load")

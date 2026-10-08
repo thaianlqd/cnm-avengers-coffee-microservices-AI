@@ -66,6 +66,16 @@ def audit(output):
             req=AiTextToReportRequest(question=QUESTION,reference_date=date(2026,10,8))
             try:
                 proposal=p.propose(req);session=proposal['session_id'];approve(req,proposal);r=p.generate(req)
+                # Oracle assertions always consume the full immutable population,
+                # never the response's bounded preview.
+                from services.result_artifact_store import artifact_store
+                from copy import deepcopy
+                preview_report=deepcopy(r)
+                for result in r['result_sets'].values():
+                    if result.get('artifact_ref'):
+                        result['rows']=artifact_store().get(result['artifact_ref'])['rows']
+                if r.get('evidence_ref'):
+                    r['evidence']=artifact_store().get(r['evidence_ref'])['rows']
                 add(kind+':outcome',r['outcome'],'SUCCESS');add(kind+':calls',p.provider.call_count,1)
                 add(kind+':scope',all(c['state']=='RESOLVED' for c in r['resolved_requirement_coverage']),True)
                 for q in r['analytical_queries']:
@@ -99,7 +109,9 @@ def audit(output):
                     if evidence['feature']=='leader':
                         code=source['leaders'][evidence['metric']]['code'];name=source['names'].get(code) or code
                         add(kind+':leader_identity:'+evidence['metric'],evidence['values']['entity'],name if name==code else f'{name} ({code})')
-                add(kind+':saved_verifier',verify_saved_report(r,p._active_catalog),r['quality_assessment'])
+                # Fingerprints bind the transported preview; verify its original
+                # shape, while numerical oracle checks above use full artifacts.
+                add(kind+':saved_verifier',verify_saved_report(preview_report,p._active_catalog),r['quality_assessment'])
                 add(kind+':roi_guardrail',any('không kết luận ROI' in l['label'] for l in r['quality_limitations']),True)
                 add(kind+':accuracy_unknown',r['quality_assessment']['accuracy_assessment']['status'],'not_measured')
                 summaries.append(dict(shape=kind,provider_calls=p.provider.call_count,queries=len(r['analytical_queries']),charts=len(r['charts']),score=r['quality_assessment']['score'],checks=r['quality_assessment']['verification_checks']))

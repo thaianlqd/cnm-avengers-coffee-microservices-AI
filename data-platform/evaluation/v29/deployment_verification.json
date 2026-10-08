@@ -1,0 +1,31 @@
+{
+  "version": "2.9.0",
+  "date": "2026-10-08",
+  "starting_head": "354e3aad443f546b7fa97b234904d15b48cc0da2",
+  "backend_suite": {"passed": 623, "total": 623, "seconds": 186.952, "runner": "python -m tools.run_tests_v29", "offline": true},
+  "frontend_suite": {"passed": 94, "total": 94, "typecheck": "passed", "production_build": "passed"},
+  "docker_build": {"analytics-api": "passed", "web-ui": "passed"},
+  "recreated_services": ["analytics-api", "web-ui"],
+  "other_services": {"checked": 19, "started_at_unchanged": true, "customer_chatbot_untouched": true},
+  "container_health": {"avengers_analytics_api": "healthy", "avengers_analytics_web": "healthy"},
+  "api_health": {"status": "ok", "service": "avengers-analytics-api", "version": "2.9.0", "provider_budget": 3, "session_backend": "redis", "artifact_backend": "redis", "execution_rows": 50000},
+  "web_proxy_health": {"status": "ok", "version": "2.9.0", "provider_budget": 3, "session_backend": "redis", "artifact_backend": "redis"},
+  "frontend_http_status": 200,
+  "redis_runtime_probe": {
+    "status": "passed",
+    "full_rows": 5000,
+    "artifact_bytes": 7351754,
+    "session_bytes": 232185,
+    "response_bytes": 835815,
+    "quality_score": 90.0,
+    "full_saved_verification": true,
+    "pagination": true,
+    "dimension_drilldown": true,
+    "cross_owner_denied": true,
+    "stale_cas_denied": true,
+    "scripted_provider_calls": 1,
+    "audit_owned_session_deleted": true
+  },
+  "LIVE_PROVIDER_REQUESTS": 0,
+  "WAREHOUSE_WRITES": 0
+}

@@ -62,15 +62,32 @@ export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChar
     <AnalystViews charts={showAll ? selected.charts : selected.charts.slice(0, 8)} compact editing={editing} onChartTypeChange={onChartTypeChange} />
     {selected.charts.length > 8 && <button onClick={() => setShowAll(!showAll)} className="w-full rounded-xl border border-slate-200 py-3 text-xs text-slate-600 hover:bg-white">{showAll ? 'Thu gọn biểu đồ' : `Xem thêm ${selected.charts.length - 8} biểu đồ`}</button>}
     <AnalysisQualityScore assessment={report.quality_assessment} />
-    {!!results.length && <details className="rounded-2xl border border-slate-200 bg-white p-4"><summary className="cursor-pointer flex justify-between text-sm font-semibold text-slate-700">Bảng dữ liệu<span className="text-xs font-normal text-slate-400">{results.length} bảng · Mở để tra cứu</span></summary><div className="space-y-3 mt-4">{results.map(([id, data]) => <AnalystResultTable key={id} result={data} title={report.analysis_explanation?.find((op: any) => op.query_id === id)?.lens_label || report.analysis_explanation?.find((op: any) => op.query_id === id)?.subject} />)}</div></details>}
+    {!!results.length && <details className="rounded-2xl border border-slate-200 bg-white p-4"><summary className="cursor-pointer flex justify-between text-sm font-semibold text-slate-700">Bảng dữ liệu<span className="text-xs font-normal text-slate-400">{results.length} bảng · Mở để tra cứu</span></summary><div className="space-y-3 mt-4">{results.map(([id, data]) => <AnalystResultTable key={id} result={data} sessionId={report.session_id} queryId={id} title={report.analysis_explanation?.find((op: any) => op.query_id === id)?.lens_label || report.analysis_explanation?.find((op: any) => op.query_id === id)?.subject} />)}</div></details>}
     <details className="rounded-2xl border border-slate-200 bg-white p-4"><summary className="cursor-pointer text-sm font-semibold text-slate-700">Diễn giải đầy đủ</summary><div className="text-sm text-slate-600 leading-relaxed mt-4"><p>{report.executive_summary}</p><AnalystOptionalNarrative report={report} /></div></details>
     <AnalystEvidence report={report} />
   </div>;
 };
 
-export const AnalystResultTable: React.FC<{ result: any; title?: string }> = ({ result, title }) => {
+export const AnalystResultTable: React.FC<{ result: any; title?: string; sessionId?: string; queryId?: string }> = ({ result, title, sessionId, queryId }) => {
   const [page, setPage] = useState(1), [search, setSearch] = useState('');
-  const allRows = result.rows || [];
+  const [remote, setRemote] = useState<any>(null), [loading, setLoading] = useState(false), [error, setError] = useState('');
+  const [dimension, setDimension] = useState(''), [value, setValue] = useState('');
+  const paged = Boolean(sessionId && queryId && result.artifact_ref && result.total_rows > (result.rows?.length || 0));
+  const allRows = remote?.rows || result.rows || [];
+  const totalRows = remote?.total_rows ?? result.total_rows ?? allRows.length;
+  const load = async (offset: number) => {
+    if (!sessionId || !queryId || loading) return;
+    setLoading(true); setError('');
+    try {
+      const params = new URLSearchParams({ offset: String(offset), limit: '50' });
+      if (dimension && value) { params.set('dimension', dimension); params.set('value', value); }
+      const response = await fetch(`/api/ai/sessions/${encodeURIComponent(sessionId)}/results/${encodeURIComponent(queryId)}?${params}`, { credentials: 'same-origin' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Chưa tải được trang kết quả.');
+      if (data.artifact_id !== result.artifact_ref.artifact_id) throw new Error('Báo cáo đã thay đổi; hãy mở lại kết quả hiện tại.');
+      setRemote(data); setPage(1);
+    } catch (e: any) { setError(e.message); } finally { setLoading(false); }
+  };
   const rows = allRows.filter((row: any) => !search || Object.values(row).some(value => String(value ?? '').toLocaleLowerCase('vi').includes(search.toLocaleLowerCase('vi'))));
   const pageSize = 15, pages = Math.max(1, Math.ceil(rows.length / pageSize));
   const activePage = Math.min(page, pages);
@@ -87,7 +104,10 @@ export const AnalystResultTable: React.FC<{ result: any; title?: string }> = ({ 
   };
   return <section className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
     <h3 className="font-semibold text-sm">{title || (result.role === 'supporting' ? 'Kết quả hỗ trợ' : 'Kết quả theo yêu cầu')}</h3>
-    <div className="flex gap-2"><input aria-label={`Tìm trong bảng ${title || 'kết quả'}`} placeholder="Tìm trong bảng…" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} className="min-w-0 flex-1 rounded-lg border border-slate-200 p-2 text-xs" /><button onClick={download} className="rounded-lg border border-slate-200 px-3 text-xs text-slate-600">Tải CSV đầy đủ</button></div>
+    <div className="flex gap-2"><input aria-label={`Tìm trong bảng ${title || 'kết quả'}`} placeholder="Tìm trong phần hiển thị…" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} className="min-w-0 flex-1 rounded-lg border border-slate-200 p-2 text-xs" /><button onClick={download} className="rounded-lg border border-slate-200 px-3 text-xs text-slate-600">{totalRows > allRows.length ? 'Tải CSV phần hiển thị' : 'Tải CSV đầy đủ'}</button></div>
+    {result.artifact_ref && <p className="text-xs text-slate-500">Hiển thị {allRows.length}/{totalRows} nhóm. Các chỉ số và mẫu số dùng toàn bộ phạm vi phân tích.</p>}
+    {paged && <div className="flex flex-wrap gap-2 text-xs"><select aria-label="Chiều xem chi tiết" value={dimension} onChange={e => setDimension(e.target.value)}><option value="">Toàn bộ nhóm</option>{(result.artifact_ref.provenance?.dimensions || []).map((d: string) => <option key={d} value={d}>{result.column_labels?.[d] || d}</option>)}</select><input aria-label="Giá trị nhóm" value={value} onChange={e => setValue(e.target.value)} placeholder="Giá trị hoặc mã nhóm" /><button disabled={loading} onClick={() => load(0)}>Xem nhóm</button><button disabled={loading || !(remote?.offset > 0)} onClick={() => load(Math.max(0, remote.offset - 50))}>Phần trước</button><button disabled={loading || (remote ? remote.next_offset == null : allRows.length >= totalRows)} onClick={() => load(remote?.next_offset ?? allRows.length)}>Xem thêm</button>{loading && <span>Đang tải…</span>}</div>}
+    {error && <p role="alert" className="text-xs text-amber-700">{error}</p>}
     {result.as_of && <p className="text-xs text-slate-500">Dữ liệu quan sát lúc {result.as_of}</p>}
     <div className="overflow-x-auto"><table className="w-full text-left text-xs">
       <thead><tr>{result.columns.map((column: string) => <th className="p-2" key={column}>{result.column_labels?.[column] || 'Trường dữ liệu'}</th>)}</tr></thead>

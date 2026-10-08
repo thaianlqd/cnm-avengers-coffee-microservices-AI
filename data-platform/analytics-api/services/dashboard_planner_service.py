@@ -35,7 +35,7 @@ def defaults(artifacts):
         visible = [d for d in a.plan.dimensions if not d.endswith("_id")] or list(a.plan.dimensions)
         if a.query.operation == "relationship" and len(a.plan.metrics) == 2:
             candidate = DashboardVisual(query_id=id, chart_type="scatter", metrics=a.plan.metrics, x_field=a.plan.metrics[0], role=a.query.role, priority=80, purpose="relationship")
-            if chart_reason(candidate, a, 100, 16) is None:
+            if chart_reason(candidate, a, 100, 16) in (None, 'chart_point_budget'):
                 visuals.append(candidate)
             continue
         same_unit = (len(a.plan.metrics) > 1
@@ -113,7 +113,7 @@ def defaults(artifacts):
         pair = paired_aggregate(a)
         if pair:
             candidate = DashboardVisual(query_id=id, chart_type="scatter", metrics=pair, x_field=pair[0], role=a.query.role, priority=60, purpose="relationship")
-            if chart_reason(candidate, a, 100, 16) is None:
+            if chart_reason(candidate, a, 100, 16) in (None, 'chart_point_budget'):
                 visuals.append(candidate)
     scalar = [
         a
@@ -205,13 +205,17 @@ def category_preview(v, a, max_categories):
 
 def chart_reason(v, a, max_categories, max_series):
     p = a.plan
-    rows = a.result["rows"]
+    rows, _ = presentation_rows(v, a, max_categories, max_series)
     fields = set(p.output_columns)
     display=dimension_labeler(p.dimensions,rows,a.grounded.dimensions)
     if not rows:
         return "empty_result"
     if v.chart_type == "table":
         return None
+    from services.analytical_capacity_planner import AnalyticalCapacityContract
+    displayed_rows = min(len(rows), max_categories) if category_preview(v, a, max_categories) else len(rows)
+    if displayed_rows*(1 if v.chart_type=='scatter' else max(1,len(v.metrics))) > AnalyticalCapacityContract.from_env().chart_points:
+        return 'chart_point_budget'
     if not v.metrics or not set(v.metrics) <= set(p.metrics):
         return "unknown_metric"
     if (
@@ -298,9 +302,9 @@ def chart_reason(v, a, max_categories, max_series):
 
 
 def render(v, a, index, max_categories=100):
-    rows = a.result["rows"]
+    rows, subset = presentation_rows(v, a, max_categories, 16)
     display=dimension_labeler(a.plan.dimensions,rows,a.grounded.dimensions)
-    population_count = len(rows)
+    population_count = len(a.result['rows'])
     metric = v.metrics[0]
     preview = category_preview(v, a, max_categories)
     if preview:
@@ -384,6 +388,10 @@ def render(v, a, index, max_categories=100):
                       displayed_count=len(rows), selection_metric=metric)
         output["title"] += f" — {len(rows)}/{population_count} nhóm có {meta['business_name'].lower()} cao nhất"
         output["purpose"] = "Hiển thị một phần các nhóm; bảng kết quả và số liệu phân tích dùng toàn bộ phạm vi."
+    if subset:
+        output.update(selection='display_subset', population_count=population_count, full_population_count=population_count,
+                      displayed_count=len(rows), selection_metric=metric,
+                      capacity_note=f'Hiển thị {len(rows)}/{population_count} nhóm; số liệu phân tích dùng toàn bộ dữ liệu.')
     if v.chart_type == "scatter":
         output.update(
             title=" / ".join(a.grounded.metrics[m]["business_name"] for m in v.metrics) + " — " + population_label(a),
@@ -705,3 +713,36 @@ def build_dashboard(
         },
         "dashboard_description": f"{len(charts)} biểu đồ, {min(len(cards),12)} chỉ số tóm tắt và bảng kết quả cho {len(artifacts)} phần phân tích đã kiểm chứng.",
     }
+
+
+def presentation_rows(v, a, max_categories=100, max_series=16):
+    """Exact series selection for browsing; no subset feeds business evidence.
+
+    Entire periods are retained for each selected series. Non-additive metrics
+    never rank series by summing averages. Dense shapes use a paged table.
+    """
+    rows = a.result['rows']
+    from services.analytical_capacity_planner import AnalyticalCapacityContract
+    c = AnalyticalCapacityContract.from_env()
+    if a.plan.kind != 'trend' or not v.series_field or not v.metrics:
+        return rows, False
+    metric = v.metrics[0]
+    if not a.grounded.metrics.get(metric, {}).get('additive'):
+        return rows, False
+    periods = len({str(r.get('period')) for r in rows})
+    allowed = min(max_series, c.series, c.chart_points//max(1,periods*len(v.metrics)))
+    if not allowed:
+        return rows, False
+    # Canonical identity distinguishes duplicate series labels.
+    desc = a.grounded.dimensions.get(v.series_field, {})
+    identity = desc.get('identity') or v.series_field
+    totals = {}
+    for row in rows:
+        if not number(row.get(metric)):
+            return rows, False
+        key = (str(row.get(identity)), str(row.get(v.series_field)))
+        totals[key] = totals.get(key, 0)+row[metric]
+    if len(totals) <= allowed:
+        return rows, False
+    selected = set(sorted(totals, key=lambda k:(-totals[k],k))[:allowed])
+    return [r for r in rows if (str(r.get(identity)),str(r.get(v.series_field))) in selected], True

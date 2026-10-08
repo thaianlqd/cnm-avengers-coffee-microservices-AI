@@ -135,17 +135,17 @@ class OverviewTests(unittest.TestCase):
             actual,changes=complete_unique_grouping(intent,request_anchors(question,self.catalog,{}),index)
             self.assertEqual(actual,intent);self.assertEqual(changes,[])
 
-    def test_true_overflow_still_fails_the_same_two_thousand_row_contract(self):
+    def test_execution_overflow_is_separate_from_old_inline_row_limit(self):
         from tests.test_agent_v22 import fixture_artifact,query
         a,_=fixture_artifact(query('orders','revenue','trend',granularity='week',time={'kind':'relative','mode':'all_time'}))
         self.assertEqual(a.plan.row_limit,MAX_ANALYTICAL_ROWS)
-        self.assertEqual(MAX_ANALYTICAL_ROWS,2000)
-        rows=[dict(period=(datetime(1980,1,7)+timedelta(weeks=i)).isoformat(),revenue=1) for i in range(2001)]
+        self.assertGreater(MAX_ANALYTICAL_ROWS,2000)
+        rows=[dict(period=(datetime(1980,1,7)+timedelta(weeks=i)).isoformat(),revenue=1) for i in range(MAX_ANALYTICAL_ROWS+1)]
         result=dict(columns=['period','revenue'],rows=rows,truncated=False)
         verdict=validate_results(result,a.plan,a.grounded,self.catalog)
         self.assertFalse(verdict.valid)
         self.assertTrue(any('population exceeds' in e for e in verdict.errors))
-        result['rows']=rows[:2000]
+        result['rows']=rows[:2001]
         self.assertTrue(validate_results(result,a.plan,a.grounded,self.catalog).valid)
 
     def test_refinement_after_normalization_keeps_weekly_clock_and_other_requirements(self):

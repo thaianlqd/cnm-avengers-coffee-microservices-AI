@@ -62,7 +62,7 @@ def semantic_failure_summary(diagnostics):
 def actionable_issue(error, message, clarification=None, diagnostics=None):
     code = getattr(error, "business_category", None) or getattr(error, "category", "internal")
     category = "SYSTEM_UNAVAILABLE"
-    if code in {"blueprint_ambiguous", "clarification", "not_analytical_request", "filter_value_unknown", "filter_value_ambiguous", "subject_ambiguous", "metric_ambiguous", "granularity_ambiguous"}:
+    if code in {"capacity_requires_choice", "blueprint_ambiguous", "clarification", "not_analytical_request", "filter_value_unknown", "filter_value_ambiguous", "subject_ambiguous", "metric_ambiguous", "granularity_ambiguous"}:
         category = "NEEDS_CLARIFICATION"
     elif code == "historical_metric_unavailable": category = "HISTORICAL_DATA_UNAVAILABLE"
     elif code in {"insufficient_data", "visualization_unavailable"}: category = "INSUFFICIENT_DATA"

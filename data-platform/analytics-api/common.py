@@ -62,6 +62,7 @@ class AiAnalysisScope(BaseModel):
 
 
 class AiTextToReportRequest(BaseModel):
+    refresh: bool = False
     proposal_revision: Optional[int] = None
     intent_fingerprint: Optional[str] = None
     plan_fingerprint: Optional[str] = None

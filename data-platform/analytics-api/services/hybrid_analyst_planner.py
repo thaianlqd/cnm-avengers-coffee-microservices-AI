@@ -124,6 +124,13 @@ class HybridAnalystPlanner(OneShotPlanner):
             "request_anchors":self.anchors}
         if context.get("semantic_intent"):
             payload["current_intent"] = context["semantic_intent"]
+        from services.semantic_example_service import confirmed_examples
+        payload['confirmed_examples'] = confirmed_examples(selected, self.catalog, limit=1)
+        profiles=self.queries.capacity_planner.profiles
+        relevant_dims={d for m in self.vocabulary(selected)['metrics'] for d in m[-1]}
+        payload['value_profiles']=[dict(dimension=d, distinct_upper_bound=p.get('distinct_upper_bound'),
+            identity=p.get('canonical_identity'), values=p.get('common_values',[])[:8])
+            for d,p in sorted(profiles.items()) if d in relevant_dims and p.get('distinct_upper_bound') is not None][:8]
         self.diagnostics.update(required_domain_pack_ids=required,supporting_domain_pack_ids=[d for d in selected if d not in required],
             detailed_domain_ids=selected,pruned_optional_domain_ids=[],retrieval_confidence="high" if required else "low",
             retrieval_candidate_count=len(candidates),global_domain_count=len(index.domains))
@@ -278,6 +285,8 @@ class HybridAnalystPlanner(OneShotPlanner):
         self.diagnostics.update(analysis_components=components,coverage_origin="server_resolved",
             resolved_requirement_coverage=resolved["coverage"],request_anchor_verification="passed",
             **coverage_diagnostics(components,prepared))
+        from services.analytical_capacity_planner import dry_analysis_plan
+        self.diagnostics['dry_plan'] = dry_analysis_plan(prepared, resolved['coverage'], resolved['feature_bindings'], resolved['plan_fingerprint'])
         return prepared
 
     def run(self, prompt, context=None):
@@ -308,6 +317,16 @@ class HybridAnalystPlanner(OneShotPlanner):
         # blueprint packs are no longer part of model interpretation.
         payload["domains"]={"packs":[]}
         sizes=body_sizes(system,payload,tools)
+        # Optional retrieval hints must never crowd out the approved meaning
+        # during refinement. Keep the same hard provider-body budget.
+        pruned=[]
+        for field in ('value_profiles', 'confirmed_examples'):
+            if max(sizes.values()) <= maximum:
+                break
+            if payload.pop(field, None) is not None:
+                pruned.append(field)
+                sizes=body_sizes(system,payload,tools)
+        self.diagnostics['pruned_optional_context_fields']=pruned
         self.diagnostics.update(total_context_chars=max(sizes.values()),primary_context_chars=max(sizes.values()),provider_body_chars=sizes,
             decision_schema_chars=len(compact(tools)),schema_chars=len(compact(tools[0]["parameters"])),provider_body_headroom_chars=maximum-max(sizes.values()),
             system_chars=len(system),coverage_contract_chars=0)
@@ -376,7 +395,7 @@ class HybridAnalystPlanner(OneShotPlanner):
                     resolved=resolver.resolve(intent)
                     before={r.id:r for r in intent.requirements}
                     for req in resolved['intent'].requirements:
-                        for field in ('analysis_kind','dimension_ids','derived_features'):
+                        for field in ('analysis_kind','dimension_ids','derived_features','granularity'):
                             if getattr(before[req.id],field)!=getattr(req,field):
                                 self.diagnostics.setdefault('semantic_normalizations',[]).append(dict(
                                     requirement_id=req.id,field=field,rule='catalog_semantic_normalization',value=getattr(req,field)))

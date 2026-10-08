@@ -16,15 +16,19 @@ WEIGHTS = {'request_coverage':20, 'semantic_consistency':15, 'result_integrity':
 def verification_score(checks, *, independent_accuracy=None):
     parsed=[VerificationCheck.model_validate(c) for c in checks]
     by_id={c.id:c for c in parsed}
-    if len(by_id)!=len(parsed) or set(by_id)!=set(WEIGHTS):
+    weights = WEIGHTS
+    capacity_aware = 'population_correctness' in by_id
+    if capacity_aware:
+        weights = {**WEIGHTS, 'request_coverage':10, 'population_correctness':5, 'provenance_completeness':5}
+    if len(by_id)!=len(parsed) or set(by_id)!=set(weights):
         raise ValueError('Exactly one observation per configured check group is required')
     if any(c.passed>c.total or (c.total==0)!=(c.status=='not_applicable') for c in parsed):
         raise ValueError('Invalid observation counts')
-    active=sum(w for id,w in WEIGHTS.items() if by_id[id].total)
+    active=sum(w for id,w in weights.items() if by_id[id].total)
     if not active:
         return dict(score=None,score_method=None,score_breakdown=[])
     parts=[];earned=0
-    for id,weight in WEIGHTS.items():
+    for id,weight in weights.items():
         c=by_id[id]
         possible=90*weight/active if c.total else 0
         points=possible*c.passed/c.total if c.total else 0
@@ -39,5 +43,7 @@ def verification_score(checks, *, independent_accuracy=None):
     external=10*accuracy.matched_count/accuracy.reference_count if measured else 0
     parts.append(ScorePart(id='independent_reference',label='Đối chứng độc lập',earned_points=round(external,4),possible_points=10,status='passed' if measured and external==10 else 'partial' if measured else 'not_measured'))
     method=ScoreMethod(unmeasured_points=0 if measured else 10)
+    if capacity_aware:
+        method.id = 'verification_evidence_v2'
     return dict(score=round(earned+external,1),score_method=method.model_dump(mode='json'),
         score_breakdown=[p.model_dump(mode='json') for p in parts])

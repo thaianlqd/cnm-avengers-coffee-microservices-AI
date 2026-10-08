@@ -14,7 +14,6 @@ from services.analysis_contract import (
     QueryPlan,
     Ranking,
     ValidationResult,
-    MAX_ANALYTICAL_ROWS,
 )
 from services.sql_service import (
     validate_read_only_sql,
@@ -22,6 +21,7 @@ from services.sql_service import (
     validate_sql_ast_security,
 )
 from services.metadata_service import is_sensitive_column
+from services.analytical_capacity_planner import AnalyticalCapacityContract
 
 
 def build_plans(grounded, catalog):
@@ -188,7 +188,7 @@ def build_plans(grounded, catalog):
             limit = (
                 rank.top_n if rank and not rank.per_group
                 else 100 if comp.kind == "detail"
-                else MAX_ANALYTICAL_ROWS
+                else AnalyticalCapacityContract.from_env().execution_rows
             )
             if comp.kind == "aggregate" and not dimensions:
                 limit = 1

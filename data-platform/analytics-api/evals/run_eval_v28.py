@@ -58,6 +58,7 @@ def run_case(case):
     if planning_executed or executor.call_count:failures.append('planning_executed_sql')
     if case.get('delta') and p.provider.call_count!=1:failures.append('delta_provider_count')
     return dict(id=case['id'],group=case['group'],passed=not failures,failures=failures,status=report['status'],provider_calls=provider.call_count,
+        failure_stage=report.get('diagnostics',{}).get('failure_stage'),
         latency_ms=round((time.perf_counter()-started)*1000,2),**{k:p.semantic_info.get(k) for k in ('total_context_chars','repair_context_chars','schema_chars','resolver_latency_ms','compiler_latency_ms')})
 
 

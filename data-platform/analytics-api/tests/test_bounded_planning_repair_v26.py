@@ -94,17 +94,19 @@ class BoundedRepairTests(unittest.TestCase):
         self.assertEqual(caught.exception.category,'invalid_analysis_contract')
         self.assertEqual(provider.call_count,2);p.executor.assert_not_called()
 
-    def test_valid_large_series_result_preserved_as_table_without_provider_replan(self):
+    def test_valid_large_series_uses_bounded_presentation_without_provider_replan(self):
         q={'id':'many','subject':'products','operation':'trend','metrics':['quantity_sold'],'group_by':['category'],'granularity':'week'}
         provider=ScriptedProvider([call('submit_analyst_decision',plan(q))])
         p=self.pipeline(provider);req=self.request();proposal=p.propose(req)
         rows=[{'period':'2026-07-06','category':'Danh mục '+str(i),'quantity_sold':i+1} for i in range(17)]
         p.executor=Mock(return_value=result(rows));req.session_id=proposal['session_id'];r=p.generate(req)
-        self.assertEqual(r['status'],'success');self.assertEqual(r['completion_status'],'partial')
+        self.assertEqual(r['status'],'success');self.assertEqual(r['completion_status'],'complete')
         self.assertEqual(len(r['result_sets']['many']['rows']),17)
-        self.assertIn('series_budget',r['diagnostics']['table_fallbacks'][0]['reasons'])
+        self.assertEqual(r['charts'][0]['selection'],'display_subset')
+        self.assertEqual(r['charts'][0]['population_count'],17)
+        self.assertEqual(r['charts'][0]['displayed_count'],16)
         self.assertEqual(provider.call_count,1);self.assertEqual(p.executor.call_count,1)
-        self.assertTrue(r['data_warnings'])
+        self.assertIn('toàn bộ dữ liệu',r['charts'][0]['capacity_note'])
 
     def test_four_component_repair_clears_partial_preflight_and_preserves_all_views(self):
         views=[product(),{'id':'sales','lens_id':'product_sales'},{'id':'mix','lens_id':'category_mix'},{'id':'trend','lens_id':'product_trend'}]

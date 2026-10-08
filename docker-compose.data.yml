@@ -39,7 +39,7 @@ services:
       SOURCE_DB_HOST: ${DB_HOST:-aws-0-ap-southeast-1.pooler.supabase.com}
       SOURCE_DB_PORT: ${DB_PORT:-6543}
       SOURCE_DB_USER: ${DB_USER:-postgres.seneuycwihbyqjdtcdvu}
-      SOURCE_DB_PASSWORD: ${DB_PASSWORD:-afSMTJmSkNwOEmAT}
+      SOURCE_DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD; rotate any previously committed source credential}
       SOURCE_DB_NAME: ${DB_NAME:-postgres}
       SOURCE_DB_SSLMODE: ${PGSSLMODE:-require}
       # Target: postgres-analytics (local)
@@ -355,6 +355,11 @@ services:
       DATA_ANALYST_PROVIDER_READ_TIMEOUT_SECONDS: ${DATA_ANALYST_PROVIDER_READ_TIMEOUT_SECONDS:-60}
       DATA_ANALYST_ENV: production
       DATA_ANALYST_SESSION_STORE: redis
+      DATA_ANALYST_ARTIFACT_STORE: redis
+      DATA_ANALYST_CAPACITY_EXECUTION_ROWS: "50000"
+      DATA_ANALYST_CAPACITY_CHART_POINTS: "500"
+      DATA_ANALYST_CAPACITY_RESPONSE_BYTES: "1000000"
+      DATA_ANALYST_CAPACITY_SESSION_BYTES: "1000000"
       DATA_ANALYST_REDIS_URL: ${DATA_ANALYST_REDIS_URL:-redis://host.docker.internal:6379/2}
       DATA_ANALYST_REPORT_SQL_MODE: ${DATA_ANALYST_REPORT_SQL_MODE:-disabled}
       DATA_ANALYST_REPORT_ADMIN_TOKEN: ${DATA_ANALYST_REPORT_ADMIN_TOKEN:-}
@@ -362,7 +367,7 @@ services:
       SOURCE_DB_HOST: ${DB_HOST:-aws-0-ap-southeast-1.pooler.supabase.com}
       SOURCE_DB_PORT: ${DB_PORT:-6543}
       SOURCE_DB_USER: ${DB_USER:-postgres.seneuycwihbyqjdtcdvu}
-      SOURCE_DB_PASSWORD: ${DB_PASSWORD:-afSMTJmSkNwOEmAT}
+      SOURCE_DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD; rotate any previously committed source credential}
       SOURCE_DB_NAME: ${DB_NAME:-postgres}
       SOURCE_DB_SSLMODE: ${PGSSLMODE:-require}
     ports:

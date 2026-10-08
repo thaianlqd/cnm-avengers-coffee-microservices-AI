@@ -29,6 +29,32 @@ router = APIRouter(prefix="/api/ai", tags=["AI Data Assistant"])
 logger = logging.getLogger("ai-analytics")
 
 
+@router.get('/sessions/{session_id}/results/{query_id}')
+def result_page(session_id: str, query_id: str, request: Request, response: Response,
+                offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=200),
+                dimension: str = Query(None), value: str = Query(None)):
+    """Page/filter immutable approved results; never accept SQL or arbitrary IDs."""
+    from services.session_service import get_session
+    from services.result_artifact_store import artifact_store
+    owner = browser_owner(request, response)
+    session = get_session(session_id)
+    if not session or session.owner_id != owner or not session.approved:
+        raise HTTPException(404, 'Phiên phân tích đã hết hạn hoặc không thuộc trình duyệt này.')
+    artifact = session.agent_artifacts.get(query_id)
+    if not artifact or not artifact.result_ref:
+        raise HTTPException(404, 'Không tìm thấy kết quả trong kế hoạch đã duyệt.')
+    try:
+        filters = {dimension:value} if dimension is not None and value is not None else {}
+        page = artifact_store().page(artifact.result_ref, offset, limit, filters)
+        page['revision'] = session.revision
+        page['catalog_fingerprint'] = session.schema_fingerprint
+        page['resolved_plan_fingerprint'] = session.plan_fingerprint
+        return page
+    except AnalysisError as error:
+        raise HTTPException(410 if error.category=='artifact_expired' else 503 if error.category=='artifact_store_unavailable' else 400,
+                            safe_failure(error)['message']) from None
+
+
 def _invoke(action, payload, owner_id=None):
     if hasattr(payload, "prompt") and not payload.prompt.strip():
         raise HTTPException(

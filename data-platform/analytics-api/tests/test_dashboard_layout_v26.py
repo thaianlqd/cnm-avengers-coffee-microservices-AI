@@ -101,18 +101,14 @@ class DashboardLayoutTests(unittest.TestCase):
         self.assertEqual(set(dashboard['charts'][0]['scope_refs']),{'main','second'})
         self.assertEqual(len(dashboard['dashboard_plan']['tables']),2)
 
-    def test_full_store_population_adds_paired_revenue_aov_view_without_extra_queries(self):
+    def test_dense_paired_population_uses_table_without_sampling_or_extra_queries(self):
         a, _=fixture_artifact(query('stores','store_revenue',metrics=['store_revenue','store_aov','purchasing_customer_count'],group_by=['store']))
         a.result['rows']=[{'store':f'Chi nhánh {i}','store_id':str(i),'store_revenue':i*1000,'store_aov':100+i%7,'purchasing_customer_count':i%9+1} for i in range(1,1216)]
         dashboard=build_dashboard({a.query.id:a},[])
-        scatter=next(c for c in dashboard['charts'] if c['chart_type']=='scatter')
-        self.assertEqual(scatter['metrics'],['store_revenue','store_aov'])
-        self.assertEqual(len(scatter['data']),1215)
-        self.assertEqual(scatter['data'][0]['x'],1000)
-        self.assertEqual(scatter['data'][0]['y'],101)
-        self.assertEqual(scatter['observation_label'],'Chi nhánh')
-        self.assertEqual(len(dashboard['charts']),4)
-        self.assertIn('AOV',scatter['title'])
+        self.assertFalse(any(c['chart_type']=='scatter' for c in dashboard['charts']))
+        self.assertTrue(any(v['chart_type']=='scatter' and v['reason']=='chart_point_budget' for v in dashboard['dashboard_plan']['omitted_visuals']))
+        self.assertEqual(len(a.result['rows']),1215)
+        self.assertEqual(len(dashboard['charts']),3)
         self.assertEqual(len(dashboard['dashboard_plan']['tables']),1)
         a.plan.explicit_limit=True
         self.assertFalse(any(c['chart_type']=='scatter' for c in build_dashboard({a.query.id:a},[])['charts']))

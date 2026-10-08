@@ -27,13 +27,13 @@ from routers import (
 app = FastAPI(
     title="Avengers Coffee Modern Enterprise Data Platform API",
     description="Enterprise Analytics & Self-Service BI Platform with Text-to-Report AI",
-    version="2.1.0"
+    version="2.9.0"
 )
 
 # ─── CORS Middleware ───
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[v.strip().rstrip('/') for v in os.getenv('DATA_ANALYST_ALLOWED_ORIGINS', '').split(',') if v.strip() and v.strip() != '*'],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -108,7 +108,12 @@ if os.path.exists(DIST_DIR):
 @app.get("/health")
 @app.get("/api/health")
 def health_check():
-    return {"status": "ok", "service": "avengers-analytics-api"}
+    from services.analytical_capacity_planner import AnalyticalCapacityContract
+    return {"status": "ok", "service": "avengers-analytics-api", 'version':'2.9.0',
+            'provider_budget':int(os.getenv('DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN','3')),
+            'session_backend':os.getenv('DATA_ANALYST_SESSION_STORE','memory'),
+            'artifact_backend':os.getenv('DATA_ANALYST_ARTIFACT_STORE',os.getenv('DATA_ANALYST_SESSION_STORE','memory')),
+            'execution_rows':AnalyticalCapacityContract.from_env().execution_rows}
 
 
 if __name__ == "__main__":

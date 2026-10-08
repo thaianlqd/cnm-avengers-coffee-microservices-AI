@@ -25,7 +25,7 @@ def contribution_charts(artifacts, evidence):
         if not denominator or denominator.plan.ranking or denominator.plan.explicit_limit:
             continue
         visible=[d for d in a.plan.dimensions if not d.endswith('_id') and d not in dict(partition)]
-        if len(visible)!=1 or not 1<=len(facts)<=100:
+        if len(visible)!=1 or not facts:
             continue
         scoped_rows=[r for r in a.result['rows'] if all(r[k]==v for k,v in partition)]
         display=dimension_labeler(a.plan.dimensions,a.result['rows'],a.grounded.dimensions)
@@ -42,8 +42,11 @@ def contribution_charts(artifacts, evidence):
             rows.append(dict(label=display(row,visible[0]),value=pct,numerator=value,denominator=total,evidence_id=e['id']))
         if not valid:
             continue
+        population_count = len(rows)
+        if len(rows) > 100:
+            rows = sorted(rows, key=lambda r:(-r['numerator'], r['label']))[:20]
         label=a.grounded.metrics[metric]['business_name']
-        selection='Top N' if a.plan.ranking else 'limited' if a.plan.explicit_limit else 'complete'
+        selection='display_subset' if len(rows)<population_count else 'Top N' if a.plan.ranking else 'limited' if a.plan.explicit_limit else 'complete'
         suffix=f" · Top {a.plan.ranking.top_n}" if a.plan.ranking else ''
         if partition:suffix+=' · '+' / '.join(str(v) for k,v in partition)
         identity=json.dumps([a.signature,denominator.signature,metric,'contribution_share',partition],sort_keys=True,default=str)
@@ -53,6 +56,7 @@ def contribution_charts(artifacts, evidence):
             role=a.query.role,priority=70,purpose='distribution',selection=selection,layout='standard',
             value_transform='contribution_share',denominator_scope_ref=denominator_ref,denominator_selection='complete',
             numerator_unit=a.grounded.metrics[metric]['unit'],data=rows,partition=dict(partition),
-            evidence_refs=[e['id'] for e in facts],semantic_view_key=hashlib.sha256(identity.encode()).hexdigest(),
+            evidence_refs=[r['evidence_id'] for r in rows], population_count=population_count, displayed_count=len(rows),
+            semantic_view_key=hashlib.sha256(identity.encode()).hexdigest(),
             denominator_note='Mỗi tỷ trọng = giá trị của mục / tổng cùng phạm vi đầy đủ × 100; không dùng tổng Top N làm mẫu số.'))
     return output

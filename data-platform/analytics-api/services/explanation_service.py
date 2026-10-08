@@ -41,7 +41,7 @@ def explain_analysis(artifacts, catalog, charts=(), evidence=()):
             "domain_label": profile["business_label"] if profile else None,
             "lens_label": lens["business_label"] if lens else None,
             "caveats": [r["domain_intelligence"]["caveat_labels"][c] for c in profile["business_caveats"]] if profile else [],
-            "comparison_baselines": [e["values"] for e in evidence if e["scope_ref"] == id and e["feature"] == "peer_gap"],
+            "comparison_baselines": [e["values"] for e in evidence if e["scope_ref"] == id and e["feature"] == "peer_gap"][:20],
             "query_id": id,
             "role": a.query.role,
             "parent_id": a.query.parent_id,
@@ -101,7 +101,8 @@ def explain_analysis(artifacts, catalog, charts=(), evidence=()):
                 else "limited" if a.plan.explicit_limit else "complete"
             ),
             "rows_returned": len(a.result["rows"]) if a.result is not None else None,
-            "evidence_refs": refs,
+            "evidence_refs": refs[:50],
+            "evidence_count": len(refs),
             "visuals": [
                 {
                     "id": c["id"],

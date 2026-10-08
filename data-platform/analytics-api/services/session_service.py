@@ -332,11 +332,23 @@ def encode_session(session):
     from dataclasses import fields, asdict
     data = {f.name:getattr(session,f.name) for f in fields(session) if f.name not in {"analysis_lock","agent_artifacts","conversation_turns"}}
     data["conversation_turns"] = [asdict(t) for t in session.conversation_turns[-MAX_CONVERSATION_TURNS:]]
-    data["agent_artifacts"] = {id:{"query":a.query.model_dump(mode="json"),"grounded":a.grounded.model_dump(mode="json"),
-        "plan":a.plan.model_dump(mode="json"),"sql":a.sql,"signature":a.signature,"result":a.result,"contract":a.contract,
-        "reused":a.reused,"observed_at":a.observed_at} for id,a in session.agent_artifacts.items()}
+    from services.result_artifact_store import artifact_store, fingerprint
+    from services.analytical_capacity_planner import AnalyticalCapacityContract
+    data['agent_artifacts'] = {}
+    for id,a in session.agent_artifacts.items():
+        if a.result is not None and not a.result_ref:
+            a.result_ref = artifact_store().put(a.result, query_fingerprint=a.signature,
+                plan_fingerprint=fingerprint(a.plan.model_dump(mode='json')), schema_fingerprint=a.plan.schema_fingerprint,
+                provenance=dict(dimensions=a.plan.dimensions, time=a.plan.period))
+        data['agent_artifacts'][id] = dict(query=a.query.model_dump(mode='json'), grounded=a.grounded.model_dump(mode='json'),
+            plan=a.plan.model_dump(mode='json'), sql=a.sql, signature=a.signature, result=None,
+            result_ref=a.result_ref, capacity=a.capacity, contract=a.contract, reused=a.reused, observed_at=a.observed_at)
+    # Migrate old result-heavy sessions on their next save. No huge inline fallback.
+    if data.get('report_response', {}).get('result_sets'):
+        from services.analysis_response_service import session_report_summary
+        data['report_response'] = session_report_summary(data['report_response'])
     body = json.dumps(data,ensure_ascii=False,separators=(",", ":"),default=str)
-    if len(body.encode()) > 4_000_000:
+    if len(body.encode()) > AnalyticalCapacityContract.from_env().session_bytes:
         from services.analysis_catalog import AnalysisError
         raise AnalysisError("session_capacity","Server session exceeds bounded storage size")
     return body

@@ -266,7 +266,10 @@ class OneShotTests(unittest.TestCase):
         self.reject(decision(requested_operations=[wire(simple_query()), {"id": "bad", "subject": "products", "metrics": ["imaginary"], "operation": "aggregate"}]))
 
     def test_guard_blocks_second_scripted_invocation_before_mock(self):
-        provider = scripted(decision()); d = {}; turn = ProviderTurn(provider, d)
+        provider = scripted(decision()); d = {}
+        # This archived guard deliberately selects its historical one-call policy.
+        with patch.dict(os.environ,{'DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN':'1','DATA_ANALYST_ENABLE_CONTRACT_REPAIR':'0'}):
+            turn = ProviderTurn(provider, d)
         turn.invoke(system="", messages=[], tools=[])
         with self.assertRaises(AnalysisError) as caught:
             turn.invoke(system="", messages=[], tools=[])
@@ -462,7 +465,7 @@ class OneShotTests(unittest.TestCase):
         self.assertEqual(p.provider.call_count, 0); p.executor.assert_not_called()
 
     def test_unsafe_configuration_cannot_enable_additional_calls(self):
-        for name, value in (("DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN", "2"), ("DATA_ANALYST_ENABLE_CONTRACT_REPAIR", "1"), ("DATA_ANALYST_ENABLE_PROVIDER_FALLBACK", "1"), ("DATA_ANALYST_ENABLE_MODEL_ESCALATION", "1"), ("DATA_ANALYST_ENABLE_POST_RESULT_SYNTHESIS", "1")):
+        for name, value in (("DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN", "4"), ("DATA_ANALYST_ENABLE_CONTRACT_REPAIR", "invalid"), ("DATA_ANALYST_ENABLE_PROVIDER_FALLBACK", "1"), ("DATA_ANALYST_ENABLE_MODEL_ESCALATION", "1"), ("DATA_ANALYST_ENABLE_POST_RESULT_SYNTHESIS", "1")):
             with patch.dict(os.environ, {name: value}):
                 p = self.pipeline()
                 with self.assertRaises(AnalysisError) as caught: p.propose(self.request())

@@ -331,6 +331,8 @@ class AnalysisPipeline:
             artifact.query = artifact.query.model_copy(
                 update={"replaces": None, "changed_fields": []}
             )
+            # The full population is transient execution state, never session data.
+            artifact.result = None
         session.agent_reference_date = reference.isoformat()
         session.dashboard_plan = plan.model_dump(mode="json")
         evidence = (
@@ -352,7 +354,7 @@ class AnalysisPipeline:
             resolved_concepts=sorted(f"{kind}:{id}" for kind, id in references),
             operation_refs=list(artifacts),
             result_refs=[id for id, a in artifacts.items() if a.result is not None],
-            evidence_refs=[e["id"] for e in evidence],
+            evidence_refs=[e["id"] for e in evidence[:100]],
             dashboard=plan,
         ).model_dump(mode="json")
 
@@ -443,6 +445,7 @@ class AnalysisPipeline:
         return response
 
     def generate(self, request):
+        self.semantic_info['force_refresh'] = bool(getattr(request,'refresh',False))
         catalog = self.catalog()
         session = get_session(request.session_id) if request.session_id else None
         if request.session_id and not session:
@@ -628,7 +631,13 @@ class AnalysisPipeline:
                     self.semantic_info.setdefault("table_fallbacks", []).append({"query_id": a.query.id, "reasons": reasons or ["no_eligible_visual"]})
                     self.semantic_info.setdefault("limitations", []).append({"reason": "table_fallback", "message": "Một góc nhìn được trình bày trong bảng dữ liệu đầy đủ vì cấu trúc hoặc số nhóm chưa phù hợp với biểu đồ."})
         narrative = grounded_narrative(plan, evidence)
-        results = {id: deepcopy(a.result) for id, a in artifacts.items()}
+        from services.analytical_capacity_planner import AnalyticalCapacityContract
+        from services.result_artifact_store import artifact_store, fingerprint, serialized
+        capacity_contract = AnalyticalCapacityContract.from_env()
+        results = {id: {**deepcopy(a.result), 'rows': deepcopy(a.result['rows'][:capacity_contract.preview_rows]),
+            'total_rows': len(a.result['rows']), 'displayed_count': min(len(a.result['rows']), capacity_contract.preview_rows),
+            'artifact_ref': a.result_ref, 'computation_scope': 'FULL_QUERY_POPULATION',
+            'presentation_scope': 'BOUNDED_PREVIEW'} for id,a in artifacts.items()}
         labels = {
             id: v["business_name"] for id, v in catalog.registry["dimensions"].items()
         }
@@ -662,7 +671,7 @@ class AnalysisPipeline:
             domain_summary.append({**domain, "query_ids": query_ids,
                 "requested_operations": sum(artifacts[id].query.role == "requested" for id in query_ids),
                 "supporting_operations": sum(artifacts[id].query.role == "supporting" for id in query_ids),
-                "evidence_refs": [e["id"] for e in evidence if e["scope_ref"] in query_ids]})
+                "evidence_refs": [e["id"] for e in evidence if e["scope_ref"] in query_ids][:100]})
         self.semantic_info.update(
             reference_date=reference.isoformat(),
             chart_count=len(dashboard["charts"]),
@@ -734,7 +743,9 @@ class AnalysisPipeline:
                 "columns": first["columns"],
                 "column_labels": first["column_labels"],
                 "rows": first["rows"],
-                "total_rows": len(first["rows"]),
+                "total_rows": first['total_rows'],
+                "query_id": main.query.id,
+                "artifact_ref": main.result_ref,
             },
             "sql": {"main": main.sql},
             "sql_query": main.sql,
@@ -798,22 +809,48 @@ class AnalysisPipeline:
         safe_plan["recommendations"] = [c for c in safe_plan["recommendations"] if any(r["evidence_id"] == c["evidence_id"] and r["action"] == c["action"] for r in narrative["recommendations"])]
         response["dashboard_plan_input"] = safe_plan
         response["quality_limitations"] = report_limitations(artifacts, response["charts"], catalog, response["quality_context"]["limitations"])
+        # Per-row derived facts can be larger than the original result. Preserve
+        # all of them externally and expose a deterministic evidence preview.
+        if len(evidence) > capacity_contract.evidence_preview:
+            response['evidence_ref'] = artifact_store().put(dict(columns=[], rows=evidence),
+                query_fingerprint=fingerprint(self.semantic_info.get('derived_feature_bindings', [])),
+                plan_fingerprint=session.plan_fingerprint or self.semantic_info.get('resolved_plan_fingerprint', ''),
+                schema_fingerprint=catalog.fingerprint, provenance=dict(kind='evidence'))
+            response['evidence'] = evidence[:capacity_contract.evidence_preview]
+        estimates = [a.capacity['estimated_rows'] for a in artifacts.values()]
+        response['capacity'] = dict(estimated_rows=sum(estimates) if all(n is not None for n in estimates) else None,
+            actual_rows=sum(len(a.result['rows']) for a in artifacts.values()),
+            execution_strategy='FULL_RESULT', presentation_strategy='SUMMARY_PLUS_DRILLDOWN',
+            full_population_count=sum(len(a.result['rows']) for a in artifacts.values()),
+            displayed_count=sum(len(r['rows']) for r in results.values()), artifact_backed=True,
+            artifact_bytes=sum(a.result_ref['byte_size'] for a in artifacts.values()), response_bytes=0,
+            computation_scope='FULL_QUERY_POPULATION', presentation_scope='BOUNDED_SUBSET')
         response["outcome"] = "PARTIAL_AVAILABLE" if any(c["requested_or_supporting"] == "requested" and c["status"] != "planned" for c in components) else "SUCCESS"
         if response["outcome"] == "PARTIAL_AVAILABLE":
             response["completion_status"] = "partial"
         started_quality = time.perf_counter()
+        from services.analysis_response_service import bound_response, session_report_summary
+        bound_response(response, capacity_contract)
         self.semantic_info["failure_stage"] = "QUALITY_VERIFICATION"
         response["quality_assessment"] = assess_report(response, catalog, artifacts=artifacts)
         if response["quality_context"]["version"] == "2.8" and response["quality_assessment"]["status"] == "not_scored":
             raise AnalysisError("quality_verification","Report provenance failed independent verification")
         self.semantic_info["failure_stage"] = None
         response["diagnostics"]["quality_score_compute_ms"] = round((time.perf_counter() - started_quality) * 1000, 2)
+        import logging
+        logging.getLogger('ai-analytics').info('[Verification] score=%s measured_checks=%s failed_checks=%s not_measured=%s',
+            response['quality_assessment']['score'],len(response['quality_assessment']['verification_checks']),
+            sum(c['status'] not in {'passed','not_applicable'} for c in response['quality_assessment']['verification_checks']),
+            response['quality_assessment']['accuracy_assessment']['status'])
         self.save_meaning(session, artifacts, catalog, reference, plan)
         session.last_result_contract = response["result_contracts"]
         session.approved = True
         session.revision = response["revision"]
         session.diagnostics = response["diagnostics"]
-        session.report_response = deepcopy(response)
+        # Measure/reduce transport before committing report state. Scalar KPIs
+        # and exact derived facts are never recomputed on a preview.
+        bound_response(response, capacity_contract)
+        session.report_response = session_report_summary(response)
         session.update_state(
             response["sql"],
             {"row_count": len(first["rows"])},

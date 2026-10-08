@@ -251,7 +251,24 @@ class AnalyticalResolver:
         if req.analysis_kind == "relationship" and len(req.metric_ids) != 2:
             raise ResolutionIssues([self.issue(req,"metric_ids","paired_metrics_required")])
         if req.analysis_kind == "trend" and not req.granularity:
-            raise ResolutionIssues([self.issue(req,"granularity","granularity_required")])
+            # Missing cadence is a server presentation policy. Explicit cadence
+            # has already been completed/checked by request anchors and is never
+            # changed here. Prefer week, then coarser exact calendar buckets.
+            from services.analytical_capacity_planner import AnalyticalCapacityPlanner, period_count
+            from services.value_profile_service import profiles_for
+            planner = AnalyticalCapacityPlanner(self.catalog, profiles_for(self.catalog))
+            period = resolve_time(req.time.model_dump(mode='json', exclude_none=True) if req.time else
+                                  {'kind':'relative','mode':'all_time'},self.reference,self.catalog.registry['timezone'])[2]
+            counts = [planner.dimension_count(d, req.filters) for d in req.dimension_ids]
+            from math import prod
+            groups = prod(counts) if all(v is not None for v in counts) else 1
+            for cadence in ('week','month','quarter','year'):
+                periods = period_count(period, cadence)
+                if periods is None or groups*periods <= planner.contract.execution_rows:
+                    req.granularity = cadence
+                    break
+            if not req.granularity:
+                raise AnalysisError('capacity_requires_choice','Implicit trend population requires smaller scope')
         period = resolve_time(req.time.model_dump(mode="json", exclude_none=True) if req.time else {"kind":"relative","mode":"all_time"},self.reference,self.catalog.registry["timezone"])[2]
         if (period["start"] or req.analysis_kind == "trend") and any(not self.index.metrics[m]["historical"] for m in req.metric_ids):
             return req, [], "INSUFFICIENT_DATA", "historical_data_unavailable", []

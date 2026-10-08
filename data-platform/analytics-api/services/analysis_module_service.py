@@ -138,6 +138,8 @@ class AnalysisModules:
             raise AnalysisError("session", "Previous report expired; rerun the module")
         pipeline.check_owner(session)
         response = deepcopy(session.report_response)
+        from services.analysis_response_service import restore_report_presentation
+        response = restore_report_presentation(response, session.agent_artifacts, pipeline.catalog())
         response["module_provenance"] = {"module_id":id,"name":module["name"],"mode":"previous_run"}
         return response
 

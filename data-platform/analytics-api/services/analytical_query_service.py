@@ -56,6 +56,8 @@ class AnalysisArtifact:
     contract: dict = None
     reused: bool = False
     observed_at: str = ""
+    result_ref: dict = None
+    capacity: dict = None
 
 
 def signature(query, period, fingerprint):
@@ -95,7 +97,11 @@ class AnalyticalQueries:
         )
         self.diagnostics, self.proposal = diagnostics, proposal
         self.artifacts = {}
-        self.previous = previous or {}
+        self.previous = deepcopy(previous or {})
+        from services.result_artifact_store import artifact_store
+        for artifact in self.previous.values():
+            if artifact.result is None and artifact.result_ref and not self.diagnostics.get('force_refresh'):
+                artifact.result = artifact_store().get(artifact.result_ref)
         for artifact in self.previous.values():
             if artifact.plan.schema_fingerprint != catalog.fingerprint:
                 raise AnalysisError(
@@ -117,6 +123,16 @@ class AnalyticalQueries:
         }
         self.normalizations = []
         self.parent_replacements = {}
+        from services.analytical_capacity_planner import AnalyticalCapacityPlanner
+        from services.value_profile_service import profiles_for, warehouse_statistics
+        from services.sql_service import execute_read_only
+        profiles = profiles_for(catalog)
+        if executor is execute_read_only:
+            try:
+                profiles = profiles_for(catalog, warehouse_statistics)
+            except Exception:
+                self.diagnostics['value_profile_status'] = 'metadata_only'
+        self.capacity_planner = AnalyticalCapacityPlanner(catalog, profiles)
 
     def stage(self, name):
         if self.diagnostics.get("pipeline_version") == "2.8":
@@ -272,13 +288,15 @@ class AnalyticalQueries:
         verdict = validate_plan(plan, ground, self.catalog)
         if not verdict.valid:
             raise AnalysisError(verdict.category, "Analytical contract rejected")
+        self.stage('CAPACITY_PLANNING')
+        capacity = self.capacity_planner.plan(plan)
         self.stage("SQL_COMPILATION")
         sql = compile_sql(plan, ground, self.catalog)
         for verdict in (validate_sql(sql, plan, ground, self.catalog),):
             if not verdict.valid:
                 raise AnalysisError(verdict.category, "Analytical contract rejected")
         artifact = AnalysisArtifact(
-            q, ground, plan, sql, signature(q, period, self.catalog.fingerprint)
+            q, ground, plan, sql, signature(q, period, self.catalog.fingerprint), capacity=capacity
         )
         self.pending[q.id] = artifact
         self.stage(None)
@@ -311,23 +329,53 @@ class AnalyticalQueries:
         raise error
 
     def run(self, artifact):
-        cached = self.cache.get(artifact.signature)
-        if cached and (self.proposal or cached.result is not None):
-            if cached.result is not None:
-                self.check_result(cached.result, artifact, "cache")
+        cached = None if self.diagnostics.get('force_refresh') else self.cache.get(artifact.signature)
+        from services.sql_service import execute_read_only
+        from services.result_artifact_store import artifact_store
+        if not cached and not self.proposal and not self.diagnostics.get('force_refresh') and self.executor is execute_read_only:
+            reference=artifact_store().find(artifact.signature,self.catalog.fingerprint)
+            if reference:
+                from dataclasses import replace
+                result=artifact_store().get(reference)
+                cached=replace(artifact,result=result,result_ref=reference,
+                    contract=validate_results(result,artifact.plan,artifact.grounded,self.catalog).model_dump(),
+                    observed_at=reference.get('provenance',{}).get('observed_at',reference['created_at']))
+        from services.analytical_capacity_planner import AnalyticalCapacityContract
+        contract = AnalyticalCapacityContract.from_env()
+        if cached and cached.result is not None:
+            self.check_result(cached.result, artifact, 'cache')
+        fresh = cached and cached.observed_at and (datetime.now(timezone.utc)-datetime.fromisoformat(cached.observed_at)).total_seconds() <= contract.cache_freshness
+        if cached and (self.proposal or fresh):
             artifact.result, artifact.contract = deepcopy(cached.result), deepcopy(
                 cached.contract
             )
             artifact.reused = True
             artifact.observed_at = cached.observed_at
+            artifact.result_ref = deepcopy(cached.result_ref)
             self.diagnostics["analytical_cache_hits"] += 1
         elif not self.proposal:
             self.diagnostics["db_query_count"] += 1
             try:
+                from services.sql_service import execute_read_only, dry_run_sql
+                dry_runner = dry_run_sql if self.executor is execute_read_only else getattr(self.executor, 'dry_run', None)
+                # Explicit adapter protocol; unittest mocks must not invent it.
+                if self.executor is not execute_read_only and 'dry_run' not in getattr(type(self.executor), '__dict__', {}) and 'dry_run' not in getattr(self.executor, '__dict__', {}):
+                    dry_runner = None
+                if dry_runner:
+                    self.stage('DRY_RUN')
+                    try:
+                        valid, _ = dry_runner(artifact.sql)
+                    except Exception:
+                        raise AnalysisError('dry_run_failed', 'Database preflight unavailable') from None
+                    self.diagnostics['dry_run_count'] = self.diagnostics.get('dry_run_count', 0)+1
+                    if not valid:
+                        raise AnalysisError('dry_run_failed', 'Compiled query failed database preflight')
                 self.stage("SQL_EXECUTION")
                 result = self.executor(
                     artifact.sql, row_limit=artifact.plan.row_limit + 1
                 )
+            except AnalysisError:
+                raise
             except Exception as exc:
                 raise AnalysisError(
                     "execution",
@@ -337,6 +385,22 @@ class AnalyticalQueries:
             artifact.result = {**result, "rows": safe_rows(result["rows"])}
             artifact.contract = verdict.model_dump()
             artifact.observed_at = datetime.now(timezone.utc).isoformat()
+        from services.result_artifact_store import fingerprint
+        if artifact.result_ref and artifact.result_ref['plan_fingerprint'] != fingerprint(artifact.plan.model_dump(mode='json')):
+            # Same physical query under a new requirement ID: reuse data, issue
+            # a new immutable reference bound to this server plan.
+            artifact.result_ref = None
+        if artifact.result is not None and not artifact.result_ref:
+            self.stage('ARTIFACT_PERSISTENCE')
+            from services.result_artifact_store import artifact_store, fingerprint
+            artifact.result.pop('sql', None)
+            artifact.result_ref = artifact_store().put(artifact.result, query_fingerprint=artifact.signature,
+                plan_fingerprint=fingerprint(artifact.plan.model_dump(mode='json')), schema_fingerprint=self.catalog.fingerprint,
+                provenance=dict(dimensions=artifact.plan.dimensions, subject=artifact.query.subject,
+                                time=artifact.plan.period, observed_at=artifact.observed_at))
+            logger.info('[Execution] rows=%s bytes=%s artifact_id=%s cache_hit=%s',
+                artifact.result_ref['row_count'], artifact.result_ref['byte_size'], artifact.result_ref['artifact_id'], artifact.reused)
+        self.stage(None)
         self.artifacts[artifact.query.id] = artifact
         self.cache[artifact.signature] = artifact
         return artifact

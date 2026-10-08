@@ -616,6 +616,8 @@ export const AnalyticsView: React.FC = () => {
           schema_fingerprint: generatedReport.schema_fingerprint,
           result_contracts: generatedReport.result_contracts,
           result_sets: generatedReport.result_sets,
+          capacity: generatedReport.capacity,
+          evidence_ref: generatedReport.evidence_ref,
           visualization_specs: generatedReport.visualization_specs,
           diagnostics: generatedReport.diagnostics,
           session_id: generatedReport.session_id,
@@ -1291,7 +1293,7 @@ export const AnalyticsView: React.FC = () => {
         <AnalysisQualityScore assessment={rep.quality_assessment} />
 
         {rep.result_sets && Object.entries(rep.result_sets).slice(1).map(([queryId, data]: [string, any]) => (
-          <AnalystResultTable key={queryId} result={data} title={rep.analysis_explanation?.find((op: any) => op.query_id === queryId)?.subject} />
+          <AnalystResultTable key={queryId} result={data} sessionId={rep.session_id} queryId={queryId} title={rep.analysis_explanation?.find((op: any) => op.query_id === queryId)?.subject} />
         ))}
         <AnalystEvidence report={rep} />
 
@@ -1372,7 +1374,8 @@ export const AnalyticsView: React.FC = () => {
         </div>
 
         {/* SECTION 3: Phân tích Dữ liệu Chi tiết */}
-        {rep.table_data && (
+        {rep.table_data?.artifact_ref && <AnalystResultTable result={rep.table_data} title={rep.table_data.title} sessionId={rep.session_id} queryId={rep.table_data.query_id} />}
+        {rep.table_data && !rep.table_data.artifact_ref && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
@@ -1399,7 +1402,7 @@ export const AnalyticsView: React.FC = () => {
                   )}
                 </div>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  Tổng cộng {rep.table_data.rows?.length || 0} bản ghi dữ liệu hợp lệ trích xuất từ tầng Silver
+                  Hiển thị {rep.table_data.rows?.length || 0}/{rep.table_data.total_rows ?? rep.table_data.rows?.length ?? 0} nhóm · Chỉ số phân tích dùng toàn bộ phạm vi
                 </p>
               </div>
 

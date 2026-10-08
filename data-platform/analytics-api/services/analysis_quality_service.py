@@ -1,4 +1,4 @@
-"""Pure report verification, distinct from golden accuracy. No I/O or SQL execution."""
+"""Report verification using immutable evidence; no warehouse SQL or provider calls."""
 from copy import deepcopy
 from datetime import date
 import json
@@ -41,7 +41,19 @@ def restore_artifacts(report, catalog):
         a = queries.prepare(raw)
         if a.query.id in prepared:
             raise AnalysisError('quality_metadata', 'Duplicate operation')
-        a.result = deepcopy(report['result_sets'][a.query.id])
+        supplied = report['result_sets'][a.query.id]
+        if supplied.get('artifact_ref'):
+            from services.result_artifact_store import artifact_store, fingerprint
+            ref = supplied['artifact_ref']
+            if (ref['query_fingerprint'] != a.signature or ref['schema_fingerprint'] != catalog.fingerprint
+                or ref['plan_fingerprint'] != fingerprint(a.plan.model_dump(mode='json'))):
+                raise AnalysisError('quality_metadata', 'Result reference differs from approved query')
+            a.result = artifact_store().get(ref)
+            a.result_ref = ref
+            if supplied.get('rows', []) != a.result['rows'][:len(supplied.get('rows', []))] or supplied['total_rows'] != len(a.result['rows']):
+                raise AnalysisError('quality_metadata', 'Result preview mismatch')
+        else:
+            a.result = deepcopy(supplied)
         a.contract = validate_results(a.result, a.plan, a.grounded, catalog).model_dump()
         prepared[a.query.id] = a
     return prepared
@@ -187,6 +199,13 @@ def report_limitations(artifacts, charts, catalog, omissions=()):
 
 
 def assess_report(report, catalog, *, artifacts=None):
+    # A bounded evidence preview does not replace the full verified fact set.
+    if report.get('evidence_ref'):
+        from services.result_artifact_store import artifact_store
+        full_evidence = artifact_store().get(report['evidence_ref'])['rows']
+        if report.get('evidence', []) != full_evidence[:len(report.get('evidence', []))]:
+            return not_scored('Bằng chứng trình bày không khớp kho kết quả.')
+        report = {**report, 'evidence': full_evidence}
     context = report.get('quality_context', {})
     if report.get('status') != 'success' or context.get('version') not in {'2.7', '2.8'} or not report.get('analysis_components'):
         return not_scored()
@@ -234,6 +253,10 @@ def assess_report(report, catalog, *, artifacts=None):
     except (ValueError, KeyError, TypeError):
         return not_scored('Ngữ nghĩa hoặc metadata báo cáo chưa vượt qua kiểm chứng.')
     canonical = {e['id']: e for e in analytical_features(artifacts, catalog, report.get('derived_feature_bindings'))}
+    # Index per-row feature evidence once; high-cardinality shares must not
+    # require a quadratic scan during verification.
+    feature_rows = {(e['scope_ref'],e['feature'],e['metric'],json.dumps(e['values'].get('dimensions'),sort_keys=True,default=str))
+                    for e in canonical.values()}
     supplied = {e.get('id'): e for e in report.get('evidence', []) if isinstance(e, dict)}
     valid_refs = {id for id, e in supplied.items() if id in canonical and e == canonical[id]}
     def refs(scope):
@@ -281,7 +304,11 @@ def assess_report(report, catalog, *, artifacts=None):
         claims.append(conclusion in expected_narrative['conclusions'])
     charts = chart_checks(report.get('charts', []), artifacts, list(canonical.values()))
     applicable = [(id,m) for id,a in artifacts.items() if a.query.role == 'requested' and (a.plan.dimensions or a.plan.kind == 'trend') and a.plan.kind != 'detail' for m in a.plan.metrics]
-    covered = sum(any(c['valid'] and (id,m) in c['covered_pairs'] for c in charts) for id,m in applicable)
+    capacity_tables = {v['query_id'] for v in report.get('dashboard_plan',{}).get('omitted_visuals',[])
+                       if v['reason'] in {'chart_point_budget','chart_payload_budget','category_budget','series_budget'}}
+    table_pairs = {(t['query_id'],m) for t in report.get('dashboard_plan',{}).get('tables',[]) for m in t.get('metrics',[])
+                   if t['query_id'] in capacity_tables and report['result_sets'].get(t['query_id'],{}).get('artifact_ref')}
+    covered = sum(any(c['valid'] and (id,m) in c['covered_pairs'] for c in charts) or (id,m) in table_pairs for id,m in applicable)
     invalid_charts = sum(not c['valid'] for c in charts)
     visual_pass = covered + sum(c['valid'] for c in charts)
     visual_total = len(applicable) + len(charts)
@@ -305,10 +332,9 @@ def assess_report(report, catalog, *, artifacts=None):
         feature=aliases.get(binding['feature'],binding['feature'])
         if feature=='contribution_share':
             a=artifacts[binding['query_id']]
-            return bool(a.result['rows'] and binding['metric_ids']) and all(any(
-                e['scope_ref']==binding['query_id'] and e['feature']==feature and e['metric']==metric and
-                e['values'].get('dimensions')=={d:row[d] for d in a.plan.dimensions}
-                for e in canonical.values()) for metric in binding['metric_ids'] for row in a.result['rows'])
+            return bool(a.result['rows'] and binding['metric_ids']) and all(
+                (binding['query_id'],feature,metric,json.dumps({d:row[d] for d in a.plan.dimensions},sort_keys=True,default=str)) in feature_rows
+                for metric in binding['metric_ids'] for row in a.result['rows'])
         return bool(binding['metric_ids']) and all(any(
             e['scope_ref']==binding['query_id'] and e['feature']==feature and
             (e['metric']==metric or feature=='pearson')
@@ -364,6 +390,30 @@ def assess_report(report, catalog, *, artifacts=None):
             check('visualization_appropriateness',LABELS['visualization_appropriateness'],visual_pass,visual_total,summaries[4]),
             check('limitation_disclosure',LABELS['limitation_disclosure'],disclosed_count,len(facts),summaries[5]),
         ]
+        if report.get('capacity'):
+            from services.result_artifact_store import fingerprint
+            population = []
+            provenance_checks = []
+            for id,a in artifacts.items():
+                r = report['result_sets'][id]
+                ref = r.get('artifact_ref') or {}
+                population.append(not a.result.get('truncated') and r.get('total_rows') == len(a.result['rows'])
+                    and r.get('rows', []) == a.result['rows'][:len(r.get('rows', []))])
+                provenance_checks.append(ref.get('content_hash') == fingerprint(a.result)
+                    and ref.get('query_fingerprint') == a.signature and ref.get('schema_fingerprint') == catalog.fingerprint
+                    and ref.get('plan_fingerprint') == fingerprint(a.plan.model_dump(mode='json')))
+            for binding in bindings:
+                if binding['feature']=='contribution_share':
+                    numerator=artifacts[binding['query_id']]
+                    denominator=artifacts[binding['denominator_query_id']]
+                    population.append(not denominator.plan.ranking and not denominator.plan.explicit_limit
+                        and not denominator.result.get('truncated') and denominator.query.filters==numerator.query.filters
+                        and denominator.grounded.period==numerator.grounded.period and verified_feature(binding))
+            measurements.extend([
+                check('population_correctness','Quần thể và mẫu số',sum(population),len(population),
+                      'Kiểm tra toàn bộ kết quả không bị cắt; phần hiển thị là tiền tố có gắn tổng số nhóm. Tỷ trọng được tính lại với truy vấn mẫu số đầy đủ.'),
+                check('provenance_completeness','Nguồn gốc kết quả',sum(provenance_checks),len(provenance_checks),
+                      'Hash nội dung, truy vấn, kế hoạch và danh mục khớp kết quả đầy đủ; không xác nhận dữ liệu nguồn độc lập.')])
         unverified.append(item('independent_accuracy','Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.'))
     complete = cap==100 and all(c['status'] in {'passed','not_applicable'} for c in measurements)
     scored = {}
@@ -386,11 +436,13 @@ def verify_saved_report(report, catalog):
             return not_scored()
         queries = report.get('analytical_queries', [])
         results = report.get('result_sets', {})
-        if (not isinstance(queries, list) or len(queries)>8 or not isinstance(results, dict) or len(results)>8
+        from services.analytical_capacity_planner import AnalyticalCapacityContract
+        c = AnalyticalCapacityContract.from_env()
+        if (not isinstance(queries, list) or len(queries)>c.operations or not isinstance(results, dict) or len(results)>c.operations
             or len(report.get('evidence', []))>4000 or len(report.get('charts', []))>24
             or len(report.get('analysis_components', []))>16
-            or any(not isinstance(r, dict) or len(r.get('rows', []))>2000 for r in results.values())):
+            or any(not isinstance(r, dict) or len(r.get('rows', []))>(c.preview_rows if r.get('artifact_ref') else c.execution_rows) for r in results.values())):
             return not_scored('Báo cáo vượt giới hạn kiểm chứng; cần chạy lại phân tích.')
         return assess_report(report, catalog)
-    except (ValueError, KeyError, TypeError, AttributeError, IndexError):
+    except (AnalysisError, ValueError, KeyError, TypeError, AttributeError, IndexError):
         return not_scored('Metadata báo cáo chưa hợp lệ; cần chạy lại phân tích.')

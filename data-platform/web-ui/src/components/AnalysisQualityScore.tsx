@@ -3,7 +3,7 @@ import React from 'react';
 export const AnalysisQualityScore: React.FC<{ assessment?: any }> = ({ assessment }) => {
   const q = assessment || {}, checked = ['verified', 'partially_verified'].includes(q.status);
   const accuracy = q.accuracy_assessment || {};
-  const scored = checked && q.score_method?.id === 'verification_evidence_v1' && Number.isFinite(q.score) && q.score >= 0 && q.score <= 100;
+  const scored = checked && ['verification_evidence_v1', 'verification_evidence_v2'].includes(q.score_method?.id) && Number.isFinite(q.score) && q.score >= 0 && q.score <= 100;
   const fmt = (value: number) => value.toLocaleString('vi-VN', { maximumFractionDigits: 1 });
   const measured = accuracy.status === 'measured' && Number.isFinite(accuracy.accuracy_pct) && accuracy.reference_count > 0 && accuracy.reference_source;
   const checks = q.verification_checks?.length ? q.verification_checks : q.components || [];

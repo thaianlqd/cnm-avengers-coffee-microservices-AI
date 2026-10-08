@@ -7,6 +7,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
     category = getattr(error, "category", "internal")
     structured = getattr(error, "clarification", None)
     clarification_categories = {
+        'capacity_requires_choice',
         "clarification",
         "not_analytical_request",
         "blueprint_ambiguous",
@@ -35,6 +36,15 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "forecast_unsupported",
     }
     messages = {
+        'capacity_requires_choice': 'Phạm vi và nhịp thời gian yêu cầu vượt dung lượng thực thi. Chọn khoảng thời gian ngắn hơn, ít nhóm hơn hoặc nhịp tuần/tháng; hệ thống chưa thay đổi yêu cầu của bạn.',
+        'artifact_store_unavailable': 'Kho kết quả phân tích chưa sẵn sàng. Dữ liệu lớn chưa được lưu vào phiên; cần khôi phục kho kết quả.',
+        'artifact_expired': 'Kết quả phân tích đã hết hạn lưu trữ. Hãy làm mới báo cáo để lấy dữ liệu hiện tại.',
+        'artifact_integrity': 'Nguồn gốc hoặc nội dung kết quả lưu trữ không khớp. Hệ thống đã chặn kết quả; cần kiểm tra kho và làm mới báo cáo.',
+        'artifact_capacity': 'Kết quả vượt dung lượng kho phân tích. Cần chọn phạm vi hoặc cấu trúc tổng hợp nhỏ hơn.',
+        'response_capacity': 'Metadata báo cáo vượt dung lượng phản hồi. Cần giảm phần trình bày; hệ thống chưa thay đổi số liệu nghiệp vụ.',
+        'session_capacity': 'Trạng thái điều khiển phiên vượt dung lượng lưu trữ. Cần kiểm tra kích thước kế hoạch hoặc lịch sử phiên; dữ liệu kết quả được lưu riêng.',
+        'capacity_configuration': 'Cấu hình dung lượng phân tích trên máy chủ chưa hợp lệ.',
+        'dry_run_failed': 'Kế hoạch hợp lệ nhưng truy vấn chưa qua kiểm tra PostgreSQL trước thực thi. Cần kiểm tra danh mục và kết nối cơ sở dữ liệu.',
         "blueprint_ambiguous": "Phần phân tích này cần thêm một lựa chọn nghiệp vụ. Hãy chọn từ các phương án dữ liệu hiện có.",
         "insufficient_data": "Phạm vi yêu cầu chưa có dữ liệu. Bạn có thể kiểm tra thời gian hoặc phạm vi và lập lại kế hoạch.",
         "visualization_unavailable": "Dữ liệu hiện có chưa đủ để tạo biểu đồ phù hợp. Bạn có thể chọn phạm vi rộng hơn hoặc một cách nhóm khác.",
@@ -97,6 +107,8 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
             "Hệ thống chưa thể diễn giải hoặc kiểm chứng yêu cầu lúc này. Vui lòng thử lại.",
         )
     )
+    if category == 'capacity_requires_choice' and getattr(error, 'estimated_rows', None):
+        message = f"Yêu cầu tạo khoảng {error.estimated_rows:,} nhóm kết quả. " + message
     population_overflow = category == "result_contract" and getattr(error, "result_issues", None) == ["population_limit"]
     if population_overflow:
         message = "Phạm vi có quá nhiều nhóm kết quả để phân tích trong một lượt. Hãy thu gọn thời gian, phạm vi hoặc yêu cầu Top N; hệ thống chưa cắt bớt dữ liệu để tạo báo cáo."
@@ -145,6 +157,28 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
                else 'UNSUPPORTED' if issue['category'] in {'METRIC_UNAVAILABLE', 'UNSUPPORTED_ANALYSIS'}
                else 'NEEDS_INPUT' if issue['category'] in {'NEEDS_CLARIFICATION', 'SCOPE_CONFLICT', 'TIME_CONFLICT', 'REQUESTED_SCOPE_TOO_LARGE'}
                else 'SYSTEM_ERROR')
+    stages = {'capacity_requires_choice':'CAPACITY_PLANNING', 'capacity_configuration':'CAPACITY_PLANNING',
+              'artifact_store_unavailable':'ARTIFACT_PERSISTENCE', 'artifact_expired':'ARTIFACT_PERSISTENCE',
+              'artifact_integrity':'ARTIFACT_PERSISTENCE', 'artifact_capacity':'ARTIFACT_PERSISTENCE',
+              'dry_run_failed':'DRY_RUN', 'response_capacity':'RESPONSE_SERIALIZATION',
+              'session_capacity':'SESSION_PERSISTENCE', 'session_storage':'SESSION_PERSISTENCE',
+              'result_contract':'RESULT_VALIDATION', 'execution':'SQL_EXECUTION',
+              'quality_verification':'QUALITY_VERIFICATION', 'dashboard_contract':'DASHBOARD_PLANNING',
+              'semantic_intent_invalid':'SEMANTIC_INTENT', 'provider_invalid_json':'PROVIDER_FORMAT'}
+    stage = (layer_diagnostics or {}).get('failure_stage') or stages.get(category) or (
+        'PROVIDER_TRANSPORT' if category.startswith('provider_') else 'PLAN_VALIDATION')
+    actions = {'capacity_requires_choice':'ask_scope_or_granularity_choice',
+               'artifact_store_unavailable':'restore_storage_without_semantic_retry',
+               'artifact_expired':'refresh_approved_query', 'artifact_integrity':'reject_artifact_and_refresh',
+               'artifact_capacity':'ask_smaller_artifact_scope', 'dry_run_failed':'inspect_plan_and_datasource',
+               'response_capacity':'reduce_presentation_only', 'session_capacity':'reduce_control_state',
+               'session_storage':'restore_session_storage', 'capacity_configuration':'repair_server_configuration',
+               'execution':'inspect_datasource_without_semantic_retry', 'result_contract':'inspect_full_result_contract'}
+    known = {k:v for k,v in (layer_diagnostics or {}).items() if k in {
+        'request_anchor_verification','semantic_status','execution_status','result_status'} and v is not None}
+    known['provider_attempt_count'] = len(provider_calls or [])
+    if structured and structured.get('known_interpretation'):
+        known['interpretation'] = structured['known_interpretation']
     return {
         "outcome": outcome,
         "quality_assessment": not_scored(message),
@@ -161,10 +195,6 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
             structured.get("known_interpretation") if structured else None
         ),
         "diagnostics": {
-            "failure_stage": (layer_diagnostics or {}).get("failure_stage") or (
-                "PROVIDER_FORMAT" if category == "provider_invalid_json" else "PROVIDER_TRANSPORT" if category.startswith("provider_")
-                else "RESULT_VALIDATION" if category == "result_contract" else "SQL_EXECUTION" if category == "execution"
-                else "SEMANTIC_INTENT" if category == "semantic_intent_invalid" else "PLAN_VALIDATION"),
             "provider_status": "failed" if category.startswith("provider_") else "success" if any(a.get("status") == "success" for a in provider_calls or []) else "not_started",
             "provider_error_category": category if category.startswith("provider_") else None,
             "agent_contract_status": "invalid" if category in {"invalid_analysis_contract", "duplicate_invalid_tool_call", "analysis_spec_invalid"} else "valid",
@@ -173,6 +203,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
             "execution_status": "failed" if category == "execution" else "passed" if category == "result_contract" else "not_started",
             "result_status": "failed" if category == "result_contract" else "not_started",
             **(layer_diagnostics or {}),
+            "failure_stage": stage,
             "provider_attempt_count": (layer_diagnostics or {}).get("provider_attempt_count", len(provider_calls or [])),
             "agent_round_count": (layer_diagnostics or {}).get("agent_rounds", 0),
             "repair_round_count": (layer_diagnostics or {}).get("contract_repair_count", 0),
@@ -187,4 +218,9 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
             ),
         },
         "charts": [],
+        'failure': dict(stage=stage, code=category, user_impact=outcome,
+            what_is_known=known, what_failed=category,
+            retry_helps=category in {'provider_timeout','provider_connection','provider_http','provider_rate_limited'},
+            needs_user_input=outcome=='NEEDS_INPUT', recommended_server_action=actions.get(category,
+                'request_clarification' if outcome=='NEEDS_INPUT' else 'inspect_failed_stage')),
     }

@@ -1,0 +1,60 @@
+{
+  "version": "2.9",
+  "case_count": 110,
+  "passed": 110,
+  "measurement_scope": "OFFLINE_SCRIPTED_SERVER_QUALIFICATION",
+  "reliability": {
+    "first_click_success_rate": {
+      "numerator": 100,
+      "denominator": 100,
+      "rate": 1.0
+    },
+    "primary_call_success_rate": {
+      "numerator": 75,
+      "denominator": 100,
+      "rate": 0.75
+    },
+    "repair_recovery_rate": {
+      "numerator": 25,
+      "denominator": 25,
+      "rate": 1.0
+    },
+    "third_attempt_recovery_rate": {
+      "numerator": 0,
+      "denominator": 25,
+      "rate": 0.0
+    },
+    "semantic_intent_accuracy": {
+      "status": "not_measured",
+      "reason": "Scripted providers; live labeled semantic qualification required"
+    },
+    "reference_value_accuracy": {
+      "status": "fixture_checks_only",
+      "reason": "Independent Python arithmetic on synthetic data; source oracle reported separately"
+    }
+  },
+  "failure_rates_by_stage": {
+    "semantic_retrieval_failures": 0,
+    "semantic_interpretation_failures": 0,
+    "semantic_coverage_failures": 0,
+    "resolver_failures": 0,
+    "capacity_planning_failures": 0,
+    "dry_run_failures": 0,
+    "sql_execution_failures": 0,
+    "result_validation_failures": 0,
+    "artifact_failures": 0,
+    "presentation_failures": 0
+  },
+  "failures": [],
+  "large_scenarios": [
+    "business_overview",
+    "product_portfolio",
+    "voucher",
+    "store_performance",
+    "order_payment"
+  ],
+  "capacity_tests": 8,
+  "capacity_failures": 0,
+  "LIVE_PROVIDER_REQUESTS": 0,
+  "WAREHOUSE_WRITES": 0
+}
