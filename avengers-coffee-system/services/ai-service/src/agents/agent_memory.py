@@ -46,7 +46,8 @@ ENTITY_FIELDS = {
 
 ENTITY_FIELDS["drink_products"] = ENTITY_FIELDS["products"]
 ENTITY_FIELDS["food_products"] = ENTITY_FIELDS["products"]
-ENTITY_FIELDS["menu_categories"] = ("category_id", "category_name", "menu_bucket", "display_index")
+ENTITY_FIELDS["menu_categories"] = ("category_id", "category_name", "menu_bucket", "display_index",
+    "category_label", "parent_category_name", "has_children")
 
 
 def compact(value, depth=0):
@@ -115,6 +116,7 @@ class ConversationMemory:
     def bounded(data):
         result = empty_memory()
         result['version'] = int(data.get('version') or 1)
+        result['product_display'] = compact(data.get('product_display') or {})
         result['recent_turns'] = [{'role': row['role'], 'content': safe_text(row.get('content'))}
             for row in data.get('recent_turns', []) if isinstance(row, dict)
             and row.get('role') in {'user', 'assistant'}][-2*limit('AI_AGENT_RECENT_TURNS', 8, 1, 8):]
@@ -141,6 +143,12 @@ class ConversationMemory:
         while size() > budget and result['recent_turns']:
             result['recent_turns'].pop(0)
         while size() > budget and any(result['visible_snapshots'].values()):
+            if result['product_display'] and any(result['visible_snapshots'].get(kind) for kind in ('products', 'drink_products', 'food_products')):
+                # Never retain a partially truncated reference collection.
+                for kind in ('products', 'drink_products', 'food_products'):
+                    result['visible_snapshots'][kind] = []
+                result['product_display'] = {}
+                continue
             kind = max(result['visible_snapshots'], key=lambda k: len(json.dumps(result['visible_snapshots'][k], ensure_ascii=False)))
             result['visible_snapshots'][kind].pop()
         return result

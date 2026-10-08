@@ -12,11 +12,13 @@ logger = logging.getLogger(__name__)
 IDENTITIES = {'products': ('product_id',), 'pending_products': ('product_id',),
     'cart_lines': ('cart_item_id', 'line_id'), 'vouchers': ('ma_voucher', 'voucher_code'),
     'branches': ('branch_id', 'ma_chi_nhanh'), 'location_candidates': ('candidate_id',),
-    'profile_addresses': ('address_id',), 'orders': ('order_id',), 'payment_options': ('code', 'value')}
+    'profile_addresses': ('address_id',), 'orders': ('order_id',), 'payment_options': ('code', 'value'),
+    'menu_categories': ('category_id',)}
 NAMES = {'products': ('product_name',), 'pending_products': ('product_name',), 'cart_lines': ('product_name',),
     'vouchers': ('ten_voucher', 'ma_voucher', 'voucher_code'), 'branches': ('branch_name', 'ten_chi_nhanh'),
     'location_candidates': ('normalized_label', 'display_address'), 'profile_addresses': ('label', 'full_address'),
-    'orders': ('order_id',), 'payment_options': ('label', 'code', 'value')}
+    'orders': ('order_id',), 'payment_options': ('label', 'code', 'value'),
+    'menu_categories': ('category_name', 'category_label')}
 
 
 def identity(domain, row):
@@ -72,7 +74,7 @@ class TurnContext:
         addresses = visible.get('profile_addresses') or offer.get('addresses') or (
             [{'full_address': offer['address']}] if offer.get('address') else [])
         addresses = [{**r, 'address_id': digest(r.get('full_address'))[:24]} for r in addresses]
-        products = ProductDisplaySnapshot.capture(visible, context.get('focus', {}).get('product'))
+        products = ProductDisplaySnapshot.capture(visible, context.get('focus', {}).get('product'), context.get('product_display'))
         focus = dict(context.get('focus') or {})
         checkout = state.get('checkout') or {}
         order_focus = checkout.get('order_management_action') or checkout.get('order_management_focus') or {}
@@ -85,7 +87,7 @@ class TurnContext:
             'cart_lines': state['cart']['items'], 'vouchers': visible.get('vouchers') or [],
             'branches': visible.get('branches') or [], 'location_candidates': visible.get('location_candidates') or [],
             'profile_addresses': addresses, 'orders': visible.get('orders') or [],
-            'payment_options': visible.get('payment_options') or []}}
+            'payment_options': visible.get('payment_options') or [], 'menu_categories': visible.get('menu_categories') or []}}
         encoded = json.dumps(data, ensure_ascii=False, sort_keys=True, separators=(',', ':'), default=str)
         return cls(uuid4().hex, digest(data), products, encoded)
 
@@ -111,6 +113,9 @@ class TurnContext:
             'order_references': {'focus': {'kind': 'focus'} if self.focus.get('order', {}).get('order_id') else None,
                 'last_created': {'kind': 'last_created'} if state.get('checkout', {}).get('last_created_order_id') else None},
             'visible_products': project('products', 'display_index'),
+            'visible_product_collections': self.product_display_snapshot.collections_context(),
+            'product_numbering': self.product_display_snapshot.collection()['numbering'],
+            'discovery_state': state.get('discovery_state') or {},
             'pending_products': project('pending_products', 'pending_index'),
             'cart_lines': project('cart_lines', 'cart_index'),
             'visible': {d: project(d, 'display_index') for d in IDENTITIES if d not in {'products', 'pending_products', 'cart_lines'}},
@@ -121,21 +126,29 @@ class TurnContext:
 
 
 class GroundingError(ValueError):
-    def __init__(self, code, domain):
-        self.code, self.domain = code, domain
+    def __init__(self, code, domain, paths=None):
+        self.code, self.domain, self.paths = code, domain, paths or []
         super().__init__(code)
 
 
-def ground(turn, domain, ref, *, rows=None, intent=None, user_message=''):
+def ground(turn, domain, ref, *, rows=None, intent=None, user_message='', reference_path=None):
     """No fuzzy identity, later-turn ordinal list or guessed default target."""
     candidates = turn.rows(domain) if rows is None else rows
     kind = ref['kind']
     matches = candidates
+    collection = turn.product_display_snapshot.collection() if domain == 'products' else None
     if kind in {'ordinal', 'cart_ordinal', 'pending_ordinal'}:
         # Supplemental prerequisite rows can never become an ordinal namespace.
         candidates = turn.rows(domain)
         field = 'selection_index' if domain == 'pending_products' else 'display_index'
         matches = [r for i, r in enumerate(candidates, 1) if r.get(field, i) == ref['index']]
+        if domain == 'products' and collection and not collection['valid']:
+            matches = []
+    elif kind == 'group_ordinal':
+        if domain != 'products':
+            raise GroundingError('invalid_reference_group', domain)
+        collection = turn.product_display_snapshot.collection(ref['group'])
+        matches = [r for i, r in enumerate(collection['rows'], 1) if r.get('group_display_index', i) == ref['index']]
     elif kind == 'name':
         matches = [r for r in candidates if any(str(r.get(k, '')).casefold() == ref['value'].casefold() for k in NAMES[domain])]
     elif kind == 'id':
@@ -160,9 +173,23 @@ def ground(turn, domain, ref, *, rows=None, intent=None, user_message=''):
     row = next(iter(unique.values())) if len(unique) == 1 else None
     snapshot = turn.product_display_snapshot if domain == 'products' else turn
     logger.info('[HybridGrounding] %s', json.dumps({'intent': intent, 'reference_kind': kind,
+        'reference_group': ref.get('group'), 'reference_space': collection['namespace'] if collection else domain,
+        'collection_fingerprint': collection['fingerprint'] if collection else None,
         'reference_index': ref.get('index'), 'snapshot_type': domain, 'snapshot_id': snapshot.snapshot_id,
         'snapshot_fingerprint': snapshot.fingerprint, 'canonical_target_id': identity(domain, row) if row else None,
         'result': 'grounded' if row else 'ambiguous' if unique else 'unresolved'}))
+    parts = (reference_path or '').split('/')
+    logger.info('[HybridReference] %s', json.dumps({'intent': intent,
+        'command_index': int(parts[2]) if len(parts) > 2 else None,
+        'reference_index': int(parts[-1]) if parts[-1].isdigit() else None,
+        'reference_kind': kind, 'reference_group': ref.get('group'), 'reference_index_value': ref.get('index'),
+        'reference_space': collection['namespace'] if collection else domain,
+        'snapshot_fingerprint': collection['fingerprint'] if collection else snapshot.fingerprint,
+        'grounding_result': 'grounded' if row else 'ambiguous' if unique else 'unresolved',
+        'canonical_target_id_hash': digest(identity(domain, row)) if row else None}))
     if row is None:
-        raise GroundingError('ambiguous_reference' if unique else 'unknown_reference', domain)
+        from src.agents.hybrid_diagnostics import record
+        record('reference_grounding_failure', intents=[intent] if intent else [], reference_kinds=[kind])
+        raise GroundingError('ambiguous_reference' if unique else 'unknown_reference', domain,
+                             [reference_path] if reference_path else [])
     return row

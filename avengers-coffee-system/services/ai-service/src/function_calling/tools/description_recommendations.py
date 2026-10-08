@@ -5,7 +5,7 @@ from src.rag.documents import normalize_document
 logger = logging.getLogger(__name__)
 
 
-def recommend_from_descriptions(query, category='all', top_k=5, search_text=None, preference_concepts=None):
+def recommend_from_descriptions(query, category='all', top_k=5, search_text=None, preference_concepts=None, **constraints):
     empty = {'products': [], 'recommendation_evidence': [], 'recommendation_basis': 'product_description'}
     if not isinstance(query, str) or not query.strip():
         return {**empty, 'status': 'error', 'message': 'Cần nhu cầu hoặc sở thích để tra mô tả sản phẩm.'}
@@ -30,13 +30,25 @@ def recommend_from_descriptions(query, category='all', top_k=5, search_text=None
             evidence.setdefault(doc['entity_id'], doc)
         if evidence:
             menu = execute_filter_catalog(category=category, search_text=search_text, limit=10,
-                                          product_ids=list(evidence))
+                                          product_ids=list(evidence), **constraints)
             if menu.get('status') not in {'ok', 'not_found'}:
                 return {**empty, 'status': 'unavailable', 'message': 'Mình chưa xác minh được Menu hiện tại. Bạn thử lại nhé.'}
             active = {str(row['product_id']): row for row in menu.get('products') or []}
             logger.info('[DescriptionRecommendation] current_menu_rejected_count=%s reason=inactive_or_category_or_identity',
                 len(set(evidence) - set(active)))
-            ids = [key for key in evidence if key in active][:max(1, min(10, int(top_k or 5)))]
+            # Offer diverse suggestions for duplicate Menu records with the same
+            # visible identity AND description. Keep the selected real ID;
+            # do not delete/merge records or collapse distinct recipes/prices.
+            ids, presented = [], set()
+            for key in evidence:
+                if key not in active:
+                    continue
+                row = active[key]
+                signature = (row['product_name'], row.get('category'), row.get('final_price'), evidence[key]['content'])
+                if signature not in presented:
+                    presented.add(signature)
+                    ids.append(key)
+            ids = ids[:max(1, min(10, int(top_k or 5)))]
             if ids:
                 return {'status': 'ok', 'recommendation_basis': 'product_description',
                         'products': [active[key] for key in ids],

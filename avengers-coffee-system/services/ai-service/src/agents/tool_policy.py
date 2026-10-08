@@ -1366,6 +1366,8 @@ class GuardedToolGateway:
                         self.artifacts.semantic_discovery_requires_continuation = True
                     return {**matches, 'recommendation_basis': 'menu_name'}
         args = dict(args)
+        if name == 'get_products_reviews' and any(self._product(key) is None for key in args['product_ids']):
+            return denied('product_reference_required', message='Bạn chọn các món trong danh sách vừa xem nhé.')
         if name == 'get_store_reviews' and self.context.get('displayed_review_selection') is not None:
             requested = (self.context['displayed_review_selection'] or {}).get('branch_ids') or []
             if args.get('branch_id') not in requested:
@@ -2275,9 +2277,18 @@ class GuardedToolGateway:
                 message='Dạ, chi nhánh này chưa thể nhận đủ các món trong giỏ. Đơn của bạn chưa được tạo; bạn chọn quán khác hoặc sửa món nhé.')
         if checked['unavailable'] or checked['unverified']:
             return unavailable_result(checked)
+        def clear_superseded_profile_origin():
+            prefs = cart_manager.get_checkout_prefs(self.session_id)
+            if (prefs.get('delivery_type') in {'MANG_DI', 'TAI_CHO'}
+                    and (prefs.get('profile_location_offer') or {}).get('purpose') == 'nearby_branches'):
+                cart_manager.set_checkout_context(self.session_id, profile_location_offer=None, suggested_address=None)
+                if (cart_manager.get_pending_action(self.session_id) or {}).get('type') == 'confirm_address':
+                    cart_manager.clear_pending_action(self.session_id)
+
         if str(cart_manager.get_cart(self.session_id).get('branch_id')) == bid:
             if not branch_tools.branch_identity_available(engine, bid):
                 return denied('branch_unavailable_or_unknown')
+            clear_superseded_profile_origin()
             return {'status': 'already_processed', 'changed': False,
                 'message': 'Chi nhánh này đã được chọn cho đơn hàng.'}
         result = self._write('set_session_branch', args, lambda: branch_tools.execute_set_session_branch(
@@ -2290,6 +2301,7 @@ class GuardedToolGateway:
                 'product_statuses': result.get('product_availability') or [],
                 'is_fully_available': False})
         if result.get('status') == 'ok':
+            clear_superseded_profile_origin()
             self._invalidate_summary()
             cart_manager.set_checkout_context(self.session_id, location_pending=None, address_change_requested=None)
         return result
@@ -2787,6 +2799,19 @@ class GuardedToolGateway:
         return cart_tools.execute_get_cart_quote(self.session_id)
 
     def _get_payment_options(self, args):
+        if self.semantic_mode and (self.active_semantic or {}).get('informational'):
+            # At entry there is no order amount to validate. With an actual
+            # cart, keep fresh wallet eligibility so its card can be selected;
+            # an informational read still cannot advance the checkout flow.
+            quoted = (cart_tools.execute_get_cart_quote(self.session_id)
+                      if self.context['business'].get('cart', {}).get('items') else {})
+            amount = (quoted.get('quote') or {}).get('final_total')
+            result = cart_tools.get_wallet_payment_options(self.session_id, amount)
+            for option in result.get('payment_options') or []:
+                if option.get('code') == 'VI_DIEN_TU' and option.get('balance') is not None and amount is None:
+                    option['reason'] = 'Số dư ví sẽ được kiểm tra với tổng tiền khi thanh toán đơn.'
+            return {'status': 'ok', **result, 'informational': True,
+                    'quote_status': quoted.get('status')}
         quoted = cart_tools.execute_get_cart_quote(self.session_id)
         amount = (quoted.get('quote') or {}).get('final_total')
         return {'status': 'ok', **cart_tools.get_wallet_payment_options(self.session_id, amount),

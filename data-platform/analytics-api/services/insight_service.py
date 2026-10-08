@@ -438,6 +438,7 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None):
                     if judgment not in {"favorable", "needs_review"}:
                         statement += " Chênh lệch chưa xác định hiệu quả tốt/xấu vì chưa kiểm chứng quy mô hoạt động tương đương."
                     add(a, metric, "comparison", "peer_gap", {"entity": entity, "actual": row[metric], "baseline": baseline, "baseline_type": signal["comparison"], "gap": gap, "relative_gap_pct": relative, "direction": direction, "judgment": judgment, "peer_groups": len(rows), "comparable_exposure": signal["comparable_exposure"]}, statement, partition)
+    seen_shares = set()
     for binding in feature_bindings or []:
         if binding.get("feature") != "contribution_share":
             continue
@@ -456,6 +457,10 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None):
             meta = a.grounded.metrics.get(metric)
             if not meta or not meta.get("additive") or metric not in denominator.plan.metrics:
                 continue
+            key = (a.query.id, denominator.query.id, metric)
+            if key in seen_shares:
+                continue
+            seen_shares.add(key)
             for row in a.result["rows"]:
                 partition = {d:row[d] for d in keys}
                 total = totals.get(tuple(partition.values()), {}).get(metric)

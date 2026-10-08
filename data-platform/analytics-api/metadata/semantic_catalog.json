@@ -10672,6 +10672,8 @@
       ]
     ],
     "metric_concept_groups": [["aov", "store_aov"]],
+    "population_scope_qualifiers": ["phạm vi", "điều kiện", "định nghĩa"],
+    "grouping_qualifiers": ["theo"],
     "granularity_aliases": {
       "day": [
         "theo ngày",

@@ -278,25 +278,40 @@ class AnalyticalResolver:
             "contribution_share":{"aggregate","ranking","distribution","cross_tab"}}
         additive_features={'contribution_share','concentration','selected_total'}
         ranked_features={'leader','top_gap','selected_total'}
-        targets={}
+        targets={}; feature_issues=[]; invalid_bindings=set()
         for feature, selected in req.feature_metrics.items():
             if feature not in req.derived_features or not selected or len(selected)>6 or not set(selected)<=set(req.metric_ids):
-                raise ResolutionIssues([self.issue(req,'feature_metrics','invalid_feature_metric_targets')])
+                invalid_bindings.add(feature)
+                feature_issues.append(self.issue(req,'feature_metrics','invalid_feature_metric_targets',
+                    feature=feature,allowed_metric_ids=req.metric_ids,
+                    binding_failure='inactive_feature' if feature not in req.derived_features else
+                        'empty_targets' if not selected else 'targets_outside_requirement',
+                    expected_shapes=sorted(required_shapes[feature])))
+        conflicting_shapes={f for f in req.derived_features if req.analysis_kind not in required_shapes[f]
+                            or f=='scalar' and req.dimension_ids}
+        protected_features=sorted(set(req.derived_features)-conflicting_shapes-invalid_bindings)
         for feature in req.derived_features:
             selected=req.feature_metrics.get(feature)
             if selected is None:
                 selected=([req.ranking.metric_id] if req.ranking and feature in ranked_features|{'contribution_share'}
                           else [m for m in req.metric_ids if feature not in additive_features or self.catalog.registry['metrics'][m].get('additive')])
             targets[feature]=set(selected)
-            if req.analysis_kind not in required_shapes[feature] or feature=='scalar' and req.dimension_ids:
+            if feature in conflicting_shapes:
                 # A malformed semantic feature is repairable interpretation,
                 # not proof that the requested business metrics are unavailable.
-                raise ResolutionIssues([self.issue(req,'derived_features','feature_shape_conflict',
+                feature_issues.extend([self.issue(req,'derived_features','feature_shape_conflict',
                     feature=feature,expected_shapes=sorted(required_shapes[feature]),
-                    protected_features=sorted(set(req.derived_features)-{feature})),
+                    protected_features=protected_features),
                     self.issue(req,'feature_metrics','feature_shape_binding_conflict',feature=feature),
                     {'requirement_id':None,'field':'derived_features','code':'feature_requirement_decomposition',
                      'candidate_ids':[feature],'metric_ids':req.feature_metrics.get(feature,req.metric_ids)}])
+        # Collect ALL independently visible conflicts before bounded recovery.
+        # Otherwise call 2 fixes a binding only to discover the shape on call 3,
+        # and valid-looking siblings incorrectly freeze other invalid features.
+        if feature_issues:
+            raise ResolutionIssues(feature_issues)
+        for feature in req.derived_features:
+            selected=targets[feature]
             if (not selected
                 or feature in ranked_features and set(selected)!={req.ranking.metric_id}
                 or feature in additive_features and any(not self.catalog.registry['metrics'][m].get('additive') for m in selected)):
@@ -389,9 +404,30 @@ class AnalyticalResolver:
 
     def resolve(self, intent):
         normalized, operations, coverage, bindings, issues, seen = [], [], [], [], [], set()
-        for raw in intent.requirements:
+        # Requested work always resolves first. Optional model-proposed views may
+        # enrich the approved plan, but never substitute for a requested goal.
+        ordered = sorted(intent.requirements, key=lambda r: bool(r.supporting_for))
+        requested_ops = {}
+        support_count = 0
+        from services.semantic_tools import SemanticTools
+        scope_tools = SemanticTools(self.catalog, None)
+        for raw in ordered:
             try:
                 req, ops, state, reason, features = self.resolve_requirement(raw)
+                if raw.supporting_for:
+                    parent = next((p for p in requested_ops.get(raw.supporting_for, [])
+                        if all(scope_tools.related_population(p['subject'], o['subject'], p['metrics'], o['metrics'],
+                            allow_snapshot=o['time'].get('mode') == 'all_time')
+                            and p['time'] == o['time'] and p['filters'] == o['filters'] for o in ops)), None)
+                    if state != 'RESOLVED' or not parent or not ops or support_count + len(ops) > 3 or len(operations) + len(ops) > 8:
+                        req = req.model_copy(update={'availability':'unsupported','reason':'definition_unavailable'})
+                        ops, features, state, reason = [], [], 'UNSUPPORTED', 'definition_unavailable'
+                    else:
+                        for op in ops:
+                            op.update(role='supporting', parent_id=parent['id'], purpose='context', population_relation='related')
+                        support_count += len(ops)
+                else:
+                    requested_ops[req.id] = ops
                 key = digest(requirement_meaning(req,self.reference,self.catalog))
                 if key in seen:
                     continue
@@ -400,26 +436,55 @@ class AnalyticalResolver:
                 coverage.append({"requirement_id":req.id,"state":state,"reason":reason,"operation_ids":[op["id"] for op in ops],
                                  "derived_features":req.derived_features,"goal":req.goal})
             except ResolutionIssues as error:
-                issues.extend(error.issues)
+                if raw.supporting_for:
+                    req = raw.model_copy(update={'availability':'unsupported','reason':'definition_unavailable'})
+                    normalized.append(req)
+                    coverage.append({'requirement_id':req.id,'state':'UNSUPPORTED','reason':'definition_unavailable',
+                        'operation_ids':[],'derived_features':req.derived_features,'goal':req.goal})
+                else:
+                    issues.extend(error.issues)
             except (ValueError,TypeError,KeyError):
                 issues.append(self.issue(raw,"time","invalid_semantic_shape"))
         if issues:
             error = ResolutionIssues(issues)
             error.accepted_requirements = normalized
             raise error
+        # Requirements/features may share exactly the same executable query.
+        # Use the existing result-reuse identity (including all population,
+        # time, grain and metric fields), not their semantic display labels.
+        from services.analytical_query_service import signature
+        from services.analytical_tool_contract import canonicalize
+        unique, aliases = {}, {}
+        for op in sorted(operations,key=lambda o:o['id']):
+            query,_ = canonicalize(op,{}, {})
+            period = resolve_time(query.time.model_dump(mode='json'),self.reference,self.catalog.registry['timezone'])[2]
+            key = (signature(query,period,self.catalog.fingerprint), op['role'], op.get('parent_id'))
+            if key not in unique:
+                unique[key] = op
+            aliases[op['id']] = unique[key]['id']
+        operations = list(unique.values())
+        for op in operations:
+            if op.get('parent_id'):
+                op['parent_id'] = aliases[op['parent_id']]
+        for c in coverage:
+            c['operation_ids'] = sorted({aliases[id] for id in c['operation_ids']})
+        for binding in bindings:
+            binding['query_id'] = aliases[binding['query_id']]
+            if 'denominator_query_id' in binding:
+                binding['denominator_query_id'] = aliases[binding['denominator_query_id']]
         if len(operations)>8:
             raise AnalysisError("requested_scope_too_large","Legal plan exceeds bounded operation capacity")
         normalized.sort(key=lambda r:digest(requirement_meaning(r,self.reference,self.catalog)))
         coverage.sort(key=lambda c:c['requirement_id'])
         bindings.sort(key=lambda b:(b['requirement_id'],b['feature'],b['query_id']))
-        operations.sort(key=lambda o:(o['operation']!='ranking',o['id']))
+        operations.sort(key=lambda o:(o['role']=='supporting',o['operation']!='ranking',o['id']))
         intent = AnalysisIntentEnvelope(decision="analyze",requirements=normalized)
         components = []
         by_id = {o["id"]:o for o in operations}
         for c in coverage:
             domains = {p["domain_id"] for o in (by_id[id] for id in c["operation_ids"]) for p in self.index.domains.values() if o["subject"] in p["primary_subjects"]}
             components.append({"id":c["requirement_id"],"business_goal":c["goal"][:120],"domain_id":next(iter(domains)) if len(domains)==1 else None,
-                "lens_id":None,"requested_or_supporting":"requested","operation_ids":c["operation_ids"],
+                "lens_id":None,"requested_or_supporting":"supporting" if next(r for r in normalized if r.id==c["requirement_id"]).supporting_for else "requested","operation_ids":c["operation_ids"],
                 "status":"planned" if c["state"]=="RESOLVED" else c["state"].lower(),"reason":c["reason"]})
         return {"intent":intent,"operations":operations,"coverage":coverage,"components":components,"feature_bindings":bindings,
                 "intent_fingerprint":intent_fingerprint(intent,self.reference,self.catalog),

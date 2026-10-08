@@ -2,6 +2,25 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { dashboardCharts, dashboardPrimaryCharts, dashboardHighlights, initialChartType, chartAccent, compositionData, trendComparison, dashboardFindings, chartExplanation, reportHeading } from './analystDashboardLayout.mjs';
 
+test('overview KPIs use whole-scope values, deduplicate equivalent revenue and retain population differences', () => {
+  const scope = { source:'orders', joins:[], dimensions:[], filters:[], time_column:'created', period:{start:'2026-08-26',end:'2026-10-09'} };
+  const query_plans = [
+    {id:'revenue_total',...scope,metric_expressions:{revenue:'SUM(total)'}},
+    {id:'ticket_total',...scope,metric_expressions:{revenue:'SUM(total)',aov:'SUM(total)/COUNT(*)'}},
+    {id:'volume_total',...scope,metric_expressions:{order_count:'COUNT(*)'}},
+  ];
+  const evidence = [
+    {id:'peak',scope_ref:'mix',metric:'revenue',feature:'group_comparison',values:{largest_value:250,largest:'A'}},
+    ...[['revenue_total','revenue',550],['ticket_total','revenue',550],['ticket_total','aov',110],['volume_total','order_count',5]]
+      .map(([scope_ref,metric,value])=>({id:scope_ref+metric,scope_ref,metric,feature:'scalar',values:{value}})),
+  ];
+  const cards = dashboardHighlights({evidence,query_plans});
+  assert.equal(cards.length,3);
+  assert.deepEqual(cards.map(c=>c.value).sort((a,b)=>a-b),[5,110,550]);
+  query_plans[1].filters=[{dimension:'status',operator:'eq',value:'completed'}];
+  assert.equal(dashboardHighlights({evidence,query_plans}).length,4);
+});
+
 test('comparison retains columns even with concentration evidence', () => {
   const chart={scope_ref:'q',metric:'revenue',purpose:'comparison',chart_type:'bar',selection:'complete',data:[{label:'A',value:1},{label:'B',value:2}]};
   const evidence=[{scope_ref:'q',metric:'revenue',feature:'concentration',scope:{selection:'complete'},values:{total:3}}];

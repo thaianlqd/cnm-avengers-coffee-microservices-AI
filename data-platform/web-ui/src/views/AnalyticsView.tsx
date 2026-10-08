@@ -1135,6 +1135,7 @@ export const AnalyticsView: React.FC = () => {
         </div>
 
         {rep.analysis_spec ? <>
+          {rep.prompt && reportHeading(rep) !== rep.prompt && <details className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600"><summary className="cursor-pointer font-medium">Câu hỏi phân tích đầy đủ</summary><p className="mt-3 leading-relaxed">{rep.prompt}</p></details>}
           <AnalysisMeaning interpretation={rep.interpretation} compact />
           {showSqlCode && (rep.sql || rep.sql_query) && <pre className="bg-slate-900 text-slate-200 p-4 rounded-xl text-xs overflow-auto">{rep.sql ? Object.entries(rep.sql).map(([name, sql]) => `-- ${name}\n${sql}`).join('\n\n') : rep.sql_query}</pre>}
           <AnalystDashboard report={rep} editing={isRefining} onChartTypeChange={rep.session_id ? (id, type) => handleFollowUpRefine('Đổi cách trình bày biểu đồ', rep, [{ chart_id: id, chart_type: type }]) : undefined} />

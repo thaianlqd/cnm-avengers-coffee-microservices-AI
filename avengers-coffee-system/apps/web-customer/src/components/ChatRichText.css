@@ -1,0 +1,12 @@
+.chat-rich-text { line-height: 1.65; overflow-wrap: anywhere; }
+.chat-rich-text p, .chat-rich-text ol, .chat-rich-text ul { margin: 0 0 12px; }
+.chat-rich-text > :last-child { margin-bottom: 0; }
+.chat-rich-text p, .chat-rich-text li { white-space: pre-wrap; }
+.chat-rich-text strong, .chat-rich-heading { font-weight: 650; }
+.chat-rich-text em { font-style: italic; }
+.chat-rich-text ol, .chat-rich-text ul { padding-left: 23px; }
+.chat-rich-text ol { list-style: decimal; }
+.chat-rich-text ul { list-style: disc; }
+.chat-rich-text li { padding-left: 3px; margin-bottom: 9px; }
+.chat-rich-text li:last-child { margin-bottom: 0; }
+.chat-rich-text hr { border: 0; border-top: 1px solid #e2e8f0; margin: 16px 0; }

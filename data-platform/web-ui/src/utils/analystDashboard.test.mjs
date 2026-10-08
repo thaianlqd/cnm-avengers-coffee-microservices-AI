@@ -234,13 +234,24 @@ test('long category labels get a bounded horizontal view and zero stays zero', (
   assert.ok(!html.includes('Tên chi nhánh rất dài 10'));
 });
 
-test('compact dashboard uses one two-column grid across different story sections', () => {
+test('compact dashboard uses one responsive grid across different story sections', () => {
   const charts = ['So sánh và xếp hạng', 'Quy mô và đối chiếu', 'Cơ cấu đóng góp', 'Diễn biến theo thời gian'].map((story_section, i) => ({ id: 'c' + i, domain_label: 'Sản phẩm', domain_id: 'products', story_section, chart_type: i === 3 ? 'multi_line' : 'bar', title: 'Góc nhìn ' + i, data: [] }));
   const html = render(AnalystViews, { charts, compact: true });
   assert.equal((html.match(/data-dashboard-grid/g) || []).length, 1);
   assert.equal((html.match(/<article/g) || []).length, 4);
   assert.ok(!html.includes('lg:col-span-2'));
-  assert.ok(html.includes('lg:grid-cols-2'));
+  assert.ok(html.includes('lg:grid-cols-6'));
+});
+
+test('overview displays a wide trend beside composition and a visible result table', () => {
+  const { AnalystDashboard } = compile('../components/AnalystDashboardSummary.tsx');
+  const html = render(AnalystDashboard,{report:{charts:[
+    {id:'mix',chart_type:'donut',title:'Cơ cấu',data:[{label:'A',value:40},{label:'B',value:60}]},
+    {id:'trend',chart_type:'line',title:'Diễn biến',data:[{label:'2026-09-01',value:100}]},
+  ],result_sets:{q:{columns:['order_type','revenue'],column_labels:{order_type:'Hình thức nhận hàng',revenue:'Doanh thu'},rows:[{order_type:'DUNG_TAI_CHO',revenue:249482000}]}}}});
+  assert.ok(html.includes('lg:col-span-4'));assert.ok(html.includes('lg:col-span-2'));
+  assert.ok(html.includes('role="tabpanel"'));assert.ok(html.includes('Dùng tại chỗ'));
+  assert.ok(html.includes('249.482.000'));assert.ok(html.includes('Bảng dữ liệu đối chiếu'));
 });
 
 test('time axes use five short labels, with full dates retained for tooltips', () => {

@@ -116,13 +116,16 @@ def test_ineligible_emergency_does_not_reserve_or_call(runtime, monkeypatch, con
 
 
 def test_next_turn_skips_stalled_model_across_all_keys_then_expiry_restores(runtime, monkeypatch):
-    fake = setup_latency(runtime, monkeypatch, [100, 1, 1, 1])
+    fake = setup_latency(runtime, monkeypatch, [100, 1, 1, 1, 1])
     fake.complete()
     _, next_metrics = fake.complete()
     assert [call['model'] for call in fake.calls] == [PRIMARY, SECONDARY, SECONDARY]
-    assert next_metrics['provider_routes_skipped_cooldown'] == 3
+    assert next_metrics['provider_routes_skipped_cooldown'] == 0
     assert next_metrics['provider_attempt_count'] == 1 and next_metrics['models_tried'] == [SECONDARY]
     fake.clock[0] += 31
+    _, retained = fake.complete()
+    assert retained['models_tried'] == [SECONDARY]
+    fake.clock[0] += 180
     _, restored = fake.complete()
     assert restored['models_tried'] == [PRIMARY]
     assert ("gemini", PRIMARY) not in policy._transient_cooldowns

@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 _lock = threading.Lock()
 _cooldowns = {}  # (provider, credential SHA-256, model) -> monotonic deadline
 _transient_cooldowns = {}  # (provider, model) -> (monotonic deadline, fixed reason); shared across keys
+_healthy_fallbacks = {}  # provider -> (model, expiry); short recovery window, no credential values
 _invalid_credentials = set()
 _next_slot = {}
 
@@ -183,6 +184,13 @@ def _routes(preferred, explicit_model, tier, pinned):
             start = _next_slot.get(provider, 0) % max(1, primary_count)
         slots = list(range(start, primary_count)) + list(range(start)) + list(range(primary_count, len(keys)))
         models = models_for(provider, tier, explicit_model, preferred)
+        with _lock:
+            healthy_model, healthy_until = _healthy_fallbacks.get(provider, (None, 0))
+            if healthy_until <= time.monotonic():
+                _healthy_fallbacks.pop(provider, None)
+                healthy_model = None
+        if not explicit_model and healthy_model in models:
+            models = [healthy_model, *[model for model in models if model != healthy_model]]
         if pinned and pinned[0] == provider:
             if pinned[1] in slots:
                 slots = [pinned[1], *[slot for slot in slots if slot != pinned[1]]]
@@ -328,6 +336,7 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                 if value not in values:
                     values.append(value)
             identity = (provider, slot, model)
+            last_attempt = previous_attempt
             switched = previous_attempt is not None and previous_attempt != identity
             failover_used |= switched
             metrics['fallback_count'] = metrics.get('fallback_count', 0) + int(switched)
@@ -356,6 +365,13 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                 with _lock:
                     _next_slot[provider] = (slot+1) % max(1, route['primary_count'])
                     _transient_cooldowns.pop(group, None)
+                    if failover_used and last_attempt and last_attempt[0] == provider and last_attempt[2] != model:
+                        unhealthy_group = (provider, last_attempt[2])
+                        if unhealthy_group in _transient_cooldowns:
+                            duration = number('AI_AGENT_PROVIDER_RECOVERY_WINDOW_SECONDS', 180, 30, 300)
+                            old_model, until = _healthy_fallbacks.get(provider, (None, 0))
+                            if old_model != model or until <= time.monotonic():
+                                _healthy_fallbacks[provider] = (model, time.monotonic() + duration)
                 turn_health['last_success'] = (provider, slot, model)
                 if failover_used:
                     metrics['failover_success'] = True
@@ -414,6 +430,8 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                     elif kind in {'network_timeout', 'provider_transient'}:
                         cool = number('AI_AGENT_PROVIDER_TRANSIENT_COOLDOWN_SECONDS', 30, 5, 60)
                         _transient_cooldowns[group] = (time.monotonic()+cool, kind)
+                        if _healthy_fallbacks.get(provider, (None, 0))[0] == model:
+                            _healthy_fallbacks.pop(provider, None)
                 if kind in {'network_timeout', 'provider_transient'}:
                     metrics[kind+'_count'] += 1
                     # Prefer a different provider when explicitly allowed; otherwise

@@ -72,6 +72,7 @@ def runtime(monkeypatch):
     from src.common import agent_provider_policy
     monkeypatch.setattr(agent_provider_policy, '_cooldowns', {})
     monkeypatch.setattr(agent_provider_policy, '_transient_cooldowns', {})
+    monkeypatch.setattr(agent_provider_policy, '_healthy_fallbacks', {})
     monkeypatch.setattr(agent_provider_policy, '_invalid_credentials', set())
     monkeypatch.setattr(agent_provider_policy, '_next_slot', {})
     monkeypatch.setattr(agent_memory, 'redis_client', lambda: redis)

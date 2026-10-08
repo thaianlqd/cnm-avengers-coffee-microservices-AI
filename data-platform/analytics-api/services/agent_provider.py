@@ -532,6 +532,7 @@ class NativeAgentProvider:
                     )
                     if call_budget:
                         call_budget.consume(len(json.dumps(payload, ensure_ascii=False, separators=(",", ":"))))
+                        timeout=call_budget.http_timeout() or timeout
                     response = requests.post(
                         "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
                         headers={
@@ -551,6 +552,7 @@ class NativeAgentProvider:
                     )
                     if call_budget:
                         call_budget.consume(len(json.dumps(payload, ensure_ascii=False, separators=(",", ":"))))
+                        timeout=call_budget.http_timeout() or timeout
                     response = requests.post(
                         f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
                         params={"key": key},
@@ -648,11 +650,11 @@ class NativeAgentProvider:
             except requests.exceptions.ConnectionError:
                 attempt["error_category"] = "provider_connection"
             except (ValueError, IndexError, KeyError, TypeError) as exc:
-                if getattr(exc, "category", None) in {"provider_call_budget_exceeded", "one_shot_context_budget_exceeded"}:
+                if getattr(exc, "category", None) in {"provider_call_budget_exceeded", "one_shot_context_budget_exceeded", "planning_timeout"}:
                     raise
                 attempt["error_category"] = "invalid_tool_response"
             except Exception as exc:
-                if getattr(exc, "category", None) in {"provider_call_budget_exceeded", "one_shot_context_budget_exceeded"}:
+                if getattr(exc, "category", None) in {"provider_call_budget_exceeded", "one_shot_context_budget_exceeded", "planning_timeout"}:
                     raise
                 attempt.setdefault("error_category", "provider_unavailable")
             attempt["latency_ms"] = round((time.perf_counter() - started) * 1000, 2)

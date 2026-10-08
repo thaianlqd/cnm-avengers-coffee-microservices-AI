@@ -105,7 +105,7 @@ def calls(*operations):
 def test_inventory_schema_and_action_projection(runtime):
     action = setup_checkout(runtime)
     g = gateway(runtime)
-    assert (len(CAPABILITIES), len(READS), len(WRITES)) == (42, 21, 21)
+    assert (len(CAPABILITIES), len(READS), len(WRITES)) == (44, 23, 21)
     params = next(row['function']['parameters'] for row in tool_schemas() if row['function']['name'] == 'confirm_checkout')
     assert params == {'type': 'object', 'properties': {}, 'required': [], 'additionalProperties': False}
     assert action not in model_projection(g.context)[1]

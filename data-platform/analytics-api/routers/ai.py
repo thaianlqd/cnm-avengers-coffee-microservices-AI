@@ -1,6 +1,8 @@
 """Thin HTTP boundary for the Data Platform AI analysis contract."""
 
 import logging
+import asyncio
+import time
 from fastapi import APIRouter, Body, HTTPException, Query, Request, Response
 from services.browser_owner import browser_owner
 from common import (
@@ -132,7 +134,25 @@ def ai_scope_values(dimension: str = Query(min_length=1, max_length=64), search:
 
 
 @router.post("/propose-plan")
+async def bounded_propose_plan(payload: AiTextToReportRequest, request: Request = None, response: Response = None):
+    from services.provider_budget import request_deadline
+    owner=browser_owner(request,response)
+    token=request_deadline.set(time.monotonic()+27)
+    try:
+        # The HTTP deadline also covers catalog I/O and preflight. A timed-out
+        # worker cannot start provider work or create a proposal after expiry;
+        # proposal planning never executes analytical result queries.
+        return await asyncio.wait_for(asyncio.to_thread(_invoke,'propose',payload,owner),timeout=29)
+    except asyncio.TimeoutError:
+        logger.warning('Analysis planning HTTP deadline exhausted')
+        return safe_failure(AnalysisError('planning_timeout','Planning response deadline exhausted'),
+                            layer_diagnostics={'failure_stage':'PLANNING_DEADLINE','planning_budget_ms':27000})
+    finally:
+        request_deadline.reset(token)
+
+
 def propose_plan(payload: AiTextToReportRequest, request: Request = None, response: Response = None):
+    """Synchronous adapter retained for existing internal/offline callers."""
     return _invoke("propose", payload, browser_owner(request, response))
 
 

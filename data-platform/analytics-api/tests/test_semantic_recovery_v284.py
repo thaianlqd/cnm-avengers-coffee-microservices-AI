@@ -179,7 +179,9 @@ class RecoveryTests(fixture.unittest.TestCase):
         with patch.dict(os.environ,{'AI_OFFLINE':'0','GEMINI_API_STYLE':'native','DATA_ANALYST_INTENT_TRANSPORT':'json'}),patch.object(llm_service,'GEMINI_API_KEY','fixture'),patch.object(llm_service,'GEMINI_MODELS',['fixture']),patch('services.agent_provider.requests.post',side_effect=[requests.exceptions.ReadTimeout('private'),Mock(ok=True,json=Mock(return_value=body))]) as http,patch('services.hybrid_analyst_planner.time.sleep'):
             p=self.pipeline(NativeAgentProvider());proposal=p.propose(self.request())
             self.assertEqual(http.call_count,2);self.assertEqual(proposal['diagnostics']['transport_retry_count'],1)
-            self.assertTrue(all(c.kwargs['timeout']==(8,60) for c in http.call_args_list))
+            self.assertTrue(all(c.kwargs['timeout'].total<=(18 if i==0 else 8) and c.kwargs['timeout'].connect_timeout<=2
+                                for i,c in enumerate(http.call_args_list)))
+            self.assertEqual(proposal['diagnostics']['planning_budget_ms'],27000)
             p.executor.assert_not_called()
 
     def test_native_and_compat_transports_receive_partial_repair_schema(self):

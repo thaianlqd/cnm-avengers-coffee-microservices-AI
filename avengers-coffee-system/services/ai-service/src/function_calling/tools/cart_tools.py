@@ -74,6 +74,7 @@ def _variant_unit_price(
         return "".join(c for c in raw if unicodedata.category(c) != "Mn").replace("đ", "d")
 
     price = float(base_price or 0)
+    surcharge = 0.0
     normalized_size = normalized(size)
     extras = {normalized(value) for value in extra_values if value}
     for row in variant_rows:
@@ -82,8 +83,8 @@ def _variant_unit_price(
         if is_size and normalized_size and normalized(value) == normalized_size:
             price = amount
         elif not is_size and normalized(value) in extras:
-            price += amount
-    return price
+            surcharge += amount
+    return price + surcharge
 
 
 def _only_size_value(variant_rows: List[Any]) -> Optional[str]:

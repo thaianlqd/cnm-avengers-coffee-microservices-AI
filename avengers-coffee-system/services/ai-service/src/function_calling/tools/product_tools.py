@@ -19,16 +19,18 @@ def _category_hierarchy_cte(menu_schema: str) -> str:
     """Authoritative full category ancestry shared by catalog read providers."""
     return f"""
         WITH RECURSIVE ancestors AS (
-            SELECT ma_danh_muc AS leaf_id, ma_danh_muc_cha, ten_danh_muc, 0 AS depth
+            SELECT ma_danh_muc AS leaf_id, ma_danh_muc AS ancestor_id, ma_danh_muc_cha, ten_danh_muc, 0 AS depth
             FROM {menu_schema}.danh_muc
             UNION ALL
-            SELECT a.leaf_id, parent.ma_danh_muc_cha, parent.ten_danh_muc, a.depth + 1
+            SELECT a.leaf_id, parent.ma_danh_muc, parent.ma_danh_muc_cha, parent.ten_danh_muc, a.depth + 1
             FROM ancestors a JOIN {menu_schema}.danh_muc parent
               ON parent.ma_danh_muc = a.ma_danh_muc_cha
             WHERE a.depth < 8
         ), category_paths AS (
             SELECT leaf_id,
                    STRING_AGG(LOWER(ten_danh_muc), ' ' ORDER BY depth) AS category_path,
+                   ARRAY_AGG(ancestor_id::text ORDER BY depth DESC) AS category_ids,
+                   ARRAY_AGG(ten_danh_muc ORDER BY depth DESC) AS category_names,
                    (ARRAY_AGG(ten_danh_muc ORDER BY depth DESC))[1] AS root_name
             FROM ancestors
             GROUP BY leaf_id
@@ -56,7 +58,7 @@ TOOL_FILTER_CATALOG = {
                 "max_price": {"type": "number"},
                 "max_price_inclusive": {"type": "boolean"},
                 "search_text": {"type": "string"},
-                "sort_by": {"type": "string", "enum": ["menu", "price_asc", "price_desc", "sold_desc", "new"]},
+                "sort_by": {"type": "string", "enum": ["menu", "price_asc", "price_desc", "sold_desc", "new", "rating_desc", "rating_asc"]},
                 "period": {"type": "string", "enum": ["day", "week", "month", "year", "all"]},
                 "period_anchor": {"type": "string", "description": "YYYY-MM-DD within the requested Vietnam calendar period; omit for current period."},
                 "limit": {"type": "integer"},
@@ -92,7 +94,7 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
     else:
         predicates.append("paths.root_name = ANY(:roots)")
     if category_id:
-        predicates.append("dm.ma_danh_muc::text = :category_id")
+        predicates.append(":category_id = ANY(paths.category_ids)")
         params["category_id"] = category_id
     if min_price is not None:
         predicates.append("sp.gia_ban " + (">=" if min_price_inclusive else ">") + " :min_price")
@@ -101,7 +103,8 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
         predicates.append("sp.gia_ban " + ("<=" if max_price_inclusive else "<") + " :max_price")
         params["max_price"] = float(max_price)
     ranking = sort_by == "sold_desc"
-    if sort_by not in {"menu", "price_asc", "price_desc", "sold_desc", "new"}:
+    rating_ranking = sort_by in {"rating_desc", "rating_asc"}
+    if sort_by not in {"menu", "price_asc", "price_desc", "sold_desc", "new", "rating_desc", "rating_asc"}:
         return {"status": "error", "message": "Tiêu chí sắp xếp không hợp lệ."}
     sales_cte, sales_join, sales_columns = "", "", ""
     if ranking:
@@ -120,11 +123,22 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
               AND d.ngay_tao < CAST(:period_end AS timestamptz) GROUP BY ct.ma_san_pham)"""
         sales_join = "JOIN sales ON sales.product_id = sp.ma_san_pham::text"
         sales_columns = ", sales.sold_count, sales.order_count"
+    if rating_ranking:
+        order_schema = os.getenv("ORDER_SCHEMA", "orders")
+        sales_cte = f""", ratings AS (
+            SELECT TRIM(ma_san_pham::text) AS product_id, AVG(so_sao)::float AS avg_rating,
+                   COUNT(*)::integer AS total_reviews
+            FROM {order_schema}.danh_gia_san_pham
+            WHERE so_sao BETWEEN 1 AND 5 GROUP BY TRIM(ma_san_pham::text))"""
+        sales_join = "JOIN ratings ON ratings.product_id = sp.ma_san_pham::text"
+        sales_columns = ", ratings.avg_rating, ratings.total_reviews"
     if sort_by == "new":
         predicates.append("sp.la_moi = TRUE")
     terms = _catalog_name_key(search_text).split() if search_text else []
     order = "DESC" if sort_by == "price_desc" else "ASC"
     sort_sql = ("sales.sold_count DESC, sp.ma_san_pham ASC" if ranking else
+                ("ratings.avg_rating " + ("ASC" if sort_by == "rating_asc" else "DESC") +
+                 ", ratings.total_reviews DESC, sp.ten_san_pham ASC, sp.ma_san_pham ASC") if rating_ranking else
                 "sp.ten_san_pham ASC, sp.ma_san_pham ASC" if sort_by in {"menu", "new"} else
                 f"sp.gia_ban {order}, sp.ten_san_pham ASC, sp.ma_san_pham ASC")
     try:
@@ -173,6 +187,9 @@ def execute_filter_catalog(category: str = "all", sellable_scope: str = "normal"
                 offset += page_size
         return {"status": "ok" if products else "not_found", "products": products[:params["limit"]],
             **({"ordering_basis": "canonical_menu_name_id"} if sort_by == "menu" else {}),
+            **({"ranking": "recorded_product_rating", "message":
+                "Xếp theo điểm trung bình từ đánh giá sản phẩm trong hệ thống; khi bằng điểm, ưu tiên nhiều lượt đánh giá hơn." if products else
+                "Chưa có sản phẩm phù hợp có đánh giá để xếp hạng."} if rating_ranking else {}),
             **({"ranking": "completed_paid_quantity", "period": period, "period_anchor": period_anchor,
                 "period_start": str(params["period_start"]), "period_end": str(params["period_end"]),
                 "message": "Xếp theo số lượng đã bán trong đơn hoàn thành, đã thanh toán." if products else
@@ -192,6 +209,7 @@ def execute_get_menu_categories() -> Dict[str, Any]:
                 {_category_hierarchy_cte(menu_schema)}
                 SELECT DISTINCT dm.ma_danh_muc::text AS category_id,
                     dm.ten_danh_muc AS category_name,
+                    paths.category_ids, paths.category_names,
                     CASE WHEN paths.root_name = ANY(:drink_roots) THEN 'drink'
                          ELSE 'food' END AS menu_bucket
                 FROM {menu_schema}.danh_muc dm
@@ -615,7 +633,12 @@ def execute_get_product_insights(product_name: str) -> Dict[str, Any]:
                 f"""
                 SELECT 
                     ROUND(COALESCE(AVG(so_sao), 0)::numeric, 1) as avg_rating,
-                    COUNT(id) as total_reviews
+                    COUNT(id) as total_reviews,
+                    COUNT(*) FILTER (WHERE so_sao = 5),
+                    COUNT(*) FILTER (WHERE so_sao = 4),
+                    COUNT(*) FILTER (WHERE so_sao = 3),
+                    COUNT(*) FILTER (WHERE so_sao = 2),
+                    COUNT(*) FILTER (WHERE so_sao = 1)
                 FROM {order_schema}.danh_gia_san_pham
                 WHERE ma_san_pham::text = :pid
                 """
@@ -623,19 +646,21 @@ def execute_get_product_insights(product_name: str) -> Dict[str, Any]:
 
             reviews = conn.execute(text(
                 f"""
-                SELECT binh_luan
+                SELECT binh_luan, so_sao, ngay_tao
                 FROM {order_schema}.danh_gia_san_pham
                 WHERE ma_san_pham::text = :pid AND binh_luan IS NOT NULL AND LENGTH(binh_luan) >= 2
-                ORDER BY ngay_tao DESC
-                LIMIT 2
+                ORDER BY ngay_tao DESC, id DESC
+                LIMIT 5
                 """
             ), {"pid": product_id}).fetchall()
 
             avg_rating = float(stats[0])
             total_reviews = stats[1]
-            comments = [r[0] for r in reviews]
-            clean_comments = [re.sub(r"^\[.*?\]\s*(?:[^:]+:\s*)?", "", c).strip() for c in comments]
-            clean_comments = [c for c in clean_comments if c]
+            review_rows = [{'comment': str(r[0]).strip(), 'rating': int(r[1]),
+                            'created_at': r[2].isoformat() if r[2] else None} for r in reviews if str(r[0]).strip()]
+            # Preserve source labels such as [Dữ liệu mẫu] and the complete
+            # comment. Neither a prefix nor text before a colon is disposable.
+            clean_comments = [r['comment'] for r in review_rows]
 
         if total_reviews == 0:
             return {
@@ -650,6 +675,8 @@ def execute_get_product_insights(product_name: str) -> Dict[str, Any]:
             "avg_rating": avg_rating,
             "total_reviews": total_reviews,
             "recent_comments": clean_comments,
+            "reviews": review_rows,
+            "rating_distribution": {str(star): int(stats[7 - star]) for star in range(5, 0, -1)},
             "message": f"Món {found_name} được đánh giá trung bình {avg_rating}/5 sao (từ {total_reviews} lượt)."
         }
     except Exception as e:
@@ -686,6 +713,9 @@ TOOL_GET_RECOMMENDATIONS = {
                     "type": "string",
                     "description": "Nhóm món cụ thể khách yêu cầu, ví dụ 'trà trái cây', 'cold brew', 'bánh ngọt'. Bỏ trống nếu khách chỉ hỏi chung.",
                 },
+                "category_id": {"type": "string"},
+                "min_price": {"type": "number"}, "max_price": {"type": "number"},
+                "min_price_inclusive": {"type": "boolean"}, "max_price_inclusive": {"type": "boolean"},
                 "preference_query": {"type": "string", "description": "Nhu cầu/hương vị để tìm trong mô tả sản phẩm; chỉ dùng với preferences."},
                 "preference_concepts": {"type": "array", "minItems": 1, "maxItems": 4,
                     "items": {"type": "string"}, "description": "preferences: separate concise taste/comfort concepts, without social filler; all need description evidence."},
@@ -700,192 +730,20 @@ TOOL_GET_RECOMMENDATIONS = {
     },
 }
 
-def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "hot", category: str = "all", top_k: int = 5, search_text: Optional[str] = None, period: str = "month", period_anchor: Optional[str] = None, preference_query: Optional[str] = None, preference_concepts: Optional[list] = None) -> Dict[str, Any]:
+def execute_get_recommendations(user_id: Optional[str] = None, criteria: str = "hot", category: str = "all", top_k: int = 5, search_text: Optional[str] = None, period: str = "month", period_anchor: Optional[str] = None, preference_query: Optional[str] = None, preference_concepts: Optional[list] = None,
+                                category_id: Optional[str] = None, min_price: Optional[float] = None,
+                                max_price: Optional[float] = None, min_price_inclusive: bool = True,
+                                max_price_inclusive: bool = True) -> Dict[str, Any]:
+    constraints = dict(category_id=category_id, min_price=min_price, max_price=max_price,
+                       min_price_inclusive=min_price_inclusive, max_price_inclusive=max_price_inclusive)
+    if criteria in {'rating', 'price_asc', 'price_desc'}:
+        return execute_filter_catalog(category=category, search_text=search_text, limit=top_k,
+            sort_by='rating_desc' if criteria == 'rating' else criteria, **constraints)
     if criteria == 'preferences':
         from .description_recommendations import recommend_from_descriptions
-        return recommend_from_descriptions(preference_query, category, top_k, search_text, preference_concepts)
+        return recommend_from_descriptions(preference_query, category, top_k, search_text, preference_concepts, **constraints)
     if criteria in {"hot", "bestsellers", "new"}:
         return execute_filter_catalog(category=category, search_text=search_text, limit=top_k,
-            sort_by="sold_desc" if criteria in {"hot", "bestsellers"} else "new", period=period, period_anchor=period_anchor)
-    try:
-        engine = _get_engine()
-        import os
-        import sys
-        menu_schema = os.getenv("MENU_SCHEMA", "menu")
-        order_schema = os.getenv("ORDER_SCHEMA", "orders")
-
-        category = str(category or "all").lower()
-        if category not in {"drink", "food", "all"}:
-            return {"status": "error", "message": "Danh mục gợi ý không hợp lệ."}
-
-        # Category IDs differ between seed data and deployed databases. Reuse
-        # the same recursive ancestry contract as execute_filter_catalog.
-        category_cte = _category_hierarchy_cte(menu_schema)
-        category_join = f"""
-            LEFT JOIN {menu_schema}.danh_muc dm ON dm.ma_danh_muc = sp.ma_danh_muc
-            JOIN category_paths paths ON paths.leaf_id = sp.ma_danh_muc
-        """
-        category_path = "COALESCE(paths.category_path, '')"
-        category_where = ""
-        category_params: Dict[str, Any] = {}
-        if category == "drink":
-            category_where = " AND paths.root_name = ANY(:category_roots)"
-            category_params["category_roots"] = list(_DRINK_ROOTS)
-        elif category == "food":
-            category_where = " AND paths.root_name = ANY(:category_roots)"
-            category_params["category_roots"] = list(_FOOD_ROOTS)
-
-        search_where = ""
-        search_params: Dict[str, Any] = {}
-        if str(search_text or "").strip():
-            search_where = """
-                AND (
-                    """ + category_path + """ LIKE :search_text
-                    OR LOWER(sp.ten_san_pham) LIKE :search_text
-                )
-            """
-            search_params["search_text"] = f"%{str(search_text).strip().lower()}%"
-
-        def get_by_rating():
-            with engine.connect() as conn:
-                rows = conn.execute(text(f"""
-                    {category_cte}
-                    SELECT sp.ten_san_pham, COALESCE(AVG(dg.so_sao), 0) as avg_rating
-                    FROM {menu_schema}.san_pham sp
-                    {category_join}
-                    JOIN {order_schema}.danh_gia_san_pham dg ON TRIM(sp.ma_san_pham::text) = TRIM(dg.ma_san_pham::text)
-                    WHERE sp.trang_thai = TRUE {category_where} {search_where}
-                    GROUP BY sp.ma_san_pham, sp.ten_san_pham
-                    ORDER BY avg_rating DESC, sp.ten_san_pham ASC
-                    LIMIT :top_k
-                """), {"top_k": top_k, **category_params, **search_params}).mappings().all()
-                return [r["ten_san_pham"] for r in rows]
-
-        def get_by_hot():
-            cf_model = getattr(sys.modules.get("__main__"), "cf_model", None)
-            if cf_model is not None and user_id and category == "all":
-                recs = cf_model.recommend(user_id=user_id, limit=top_k, category_filter=category)
-                return [r["name"] for r in recs]
-            else:
-                with engine.connect() as conn:
-                    rows = conn.execute(text(f"""
-                        {category_cte}
-                        SELECT sp.ten_san_pham
-                        FROM {menu_schema}.san_pham sp
-                        {category_join}
-                        WHERE sp.trang_thai = TRUE {category_where} {search_where}
-                        ORDER BY sp.la_hot DESC, sp.ten_san_pham ASC
-                        LIMIT :top_k
-                    """), {"top_k": top_k, **category_params, **search_params}).mappings().all()
-                    return [r["ten_san_pham"] for r in rows]
-
-        def get_all_alphabet():
-            with engine.connect() as conn:
-                rows = conn.execute(text(f"""
-                    {category_cte}
-                    SELECT sp.ten_san_pham
-                    FROM {menu_schema}.san_pham sp
-                    {category_join}
-                    WHERE sp.trang_thai = TRUE {category_where} {search_where}
-                    ORDER BY sp.ten_san_pham ASC
-                """), {**category_params, **search_params}).mappings().all()
-                return [r["ten_san_pham"] for r in rows]
-
-        def get_by_price_desc():
-            with engine.connect() as conn:
-                rows = conn.execute(text(f"""
-                    {category_cte}
-                    SELECT sp.ten_san_pham
-                    FROM {menu_schema}.san_pham sp
-                    {category_join}
-                    WHERE sp.trang_thai = TRUE {category_where} {search_where}
-                    ORDER BY sp.gia_ban DESC, sp.ten_san_pham ASC
-                    LIMIT :top_k
-                """), {"top_k": top_k, **category_params, **search_params}).mappings().all()
-                return [r["ten_san_pham"] for r in rows]
-
-        def get_by_price_asc():
-            with engine.connect() as conn:
-                rows = conn.execute(text(f"""
-                    {category_cte}
-                    SELECT sp.ten_san_pham
-                    FROM {menu_schema}.san_pham sp
-                    {category_join}
-                    WHERE sp.trang_thai = TRUE {category_where} {search_where}
-                    ORDER BY sp.gia_ban ASC, sp.ten_san_pham ASC
-                    LIMIT :top_k
-                """), {"top_k": top_k, **category_params, **search_params}).mappings().all()
-                return [r["ten_san_pham"] for r in rows]
-
-        # Lớp 1
-        products = []
-        source = criteria
-        if criteria == "rating":
-            products = get_by_rating()
-            if not products: # Lớp 2 (Fallback)
-                products = get_by_hot()
-                source = "hot"
-        elif criteria == "price_desc":
-            products = get_by_price_desc()
-        elif criteria == "price_asc":
-            products = get_by_price_asc()
-        else:
-            products = get_by_hot()
-
-        # Lớp 3 (Fallback cuối cùng)
-        if not products:
-            products = get_all_alphabet()
-            source = "alphabet"
-
-        if not products:
-            return {
-                "status": "not_found", 
-                "message": f"BẮT BUỘC BÁO KHÁCH: Hiện hệ thống thực sự không có món nào thuộc danh mục này. Hãy chủ động gợi ý khách chuyển sang danh mục khác (ví dụ: 'Bạn có muốn tham khảo menu {'đồ ăn' if category == 'drink' else 'đồ uống'} không?')!"
-            }
-
-        final_recommendation = ", ".join(products)
-        note = ""
-        if criteria == "rating" and source == "hot":
-            note = "BẮT BUỘC BÁO KHÁCH: Hiện tại danh mục này chưa có sản phẩm nào có đánh giá. Đây là các món BÁN CHẠY (hot) thay thế. TUYỆT ĐỐI KHÔNG được nói đây là món đánh giá cao."
-        elif source == "alphabet":
-            note = f"BẮT BUỘC BÁO KHÁCH: Món này chưa có đánh giá hoặc lượt mua nổi bật, đây là danh sách {len(products)} món có sẵn trong menu."
-        elif len(products) < top_k:
-            note = f"Lưu ý: Chỉ tìm thấy {len(products)} sản phẩm phù hợp."
-
-        if note:
-            final_recommendation = f"{final_recommendation}. {note}"
-
-        with engine.connect() as conn:
-            product_rows = conn.execute(text(f"""
-                {category_cte}
-                SELECT sp.ma_san_pham::text AS product_id,
-                       sp.ten_san_pham AS product_name,
-                       sp.gia_ban AS final_price,
-                       sp.hinh_anh_url,
-                       dm.ten_danh_muc AS category,
-                       paths.root_name AS parent_category
-                FROM {menu_schema}.san_pham sp
-                {category_join}
-                WHERE sp.ten_san_pham = ANY(:product_names)
-            """), {"product_names": products}).mappings().all()
-        product_by_name = {row["product_name"]: _clean_dict(dict(row)) for row in product_rows}
-        structured_products = [product_by_name[name] for name in products if name in product_by_name]
-
-        # Strip image URLs from the AI-visible product list to prevent the model
-        # from rendering markdown images in the chat reply.  The frontend picks
-        # up images from cache.current.products (fetched at /menu/san-pham).
-        ai_products = [
-            {k: v for k, v in p.items() if k != "hinh_anh_url"}
-            for p in structured_products
-        ]
-
-        return {
-            "status": "ok",
-            "source": source,
-            "recommendations": final_recommendation,
-            "products": ai_products,
-        }
-
-    except Exception as e:
-        logger.error("[AgentTools] get_recommendations error: %s", e)
-        return {"status": "error", "message": "Không thể lấy gợi ý lúc này."}
+            sort_by="sold_desc" if criteria in {"hot", "bestsellers"} else "new", period=period, period_anchor=period_anchor,
+            **{k: v for k, v in constraints.items() if v is not None and (not k.endswith("_inclusive") or v is False)})
+    return {'status': 'error', 'products': [], 'message': 'Tiêu chí gợi ý không hợp lệ.'}

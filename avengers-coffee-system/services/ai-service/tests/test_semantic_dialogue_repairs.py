@@ -133,7 +133,8 @@ def test_reported_sweet_cool_proposal_uses_approved_descriptions(runtime, descri
         'preference_concepts': ['ngọt', 'mát'], 'planned_discovery_reads': 1})]
     result = runtime.turn(text)
     assert result['error'] is None and [p['product_id'] for p in result['ui_payload']['products']] == ['101']
-    assert docs[0]['content'] in result['reply'] and 'bán chạy' not in result['reply']
+    assert docs[0]['content'] in result['reply'].replace('**', '') and 'bán chạy' not in result['reply']
+    assert '**thanh mát**' in result['reply']
     assert len(runtime.provider.requests) == 1 and not runtime.writes
     assert descriptions.calls[0]['search_text'] == ''
 

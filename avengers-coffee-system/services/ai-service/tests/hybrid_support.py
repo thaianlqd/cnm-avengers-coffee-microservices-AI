@@ -33,6 +33,7 @@ def hybrid(runtime, monkeypatch):
     monkeypatch.setenv('AI_AGENT_ARCHITECTURE', 'hybrid')
     monkeypatch.setattr(socket.socket, 'connect', lambda *a, **k: pytest.fail('Live network forbidden'))
     monkeypatch.setattr(socket, 'create_connection', lambda *a, **k: pytest.fail('Live network forbidden'))
+    monkeypatch.setitem(TOOL_EXECUTORS, 'get_store_info', lambda a,s: {'status': 'ok', 'branches': []})
     monkeypatch.setitem(TOOL_EXECUTORS, 'get_user_profile', lambda a, s: {'status': 'ok', 'address_items': []})
     from src.agents.checkout_choices import PAYMENT_OPTIONS, PAYMENT_LABELS
     monkeypatch.setattr(cart_tools, 'get_wallet_payment_options', lambda s, amount=None: {

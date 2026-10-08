@@ -43,7 +43,8 @@ class OverviewTests(unittest.TestCase):
 
     def test_exact_failed_redis_intent_succeeds_in_one_interpretation(self):
         _,_,report,proposal=self.report(RECORDED['failed_intent'])
-        self.assertEqual(len(report['analytical_queries']),8)
+        self.assertEqual(len(report['analytical_queries']),7)
+        self.assert_shared_share_denominator(report, {'req_city_dist','req_store_rank'}, 'store_revenue')
         self.assertTrue(all(c['state']=='RESOLVED' for c in report['resolved_requirement_coverage']))
         trend=next(q for q in report['analytical_queries'] if q['operation']=='trend')
         self.assertEqual(trend['group_by'],[])
@@ -59,8 +60,25 @@ class OverviewTests(unittest.TestCase):
 
     def test_observed_successful_variant_remains_valid(self):
         _,_,report,_=self.report(RECORDED['successful_intent'])
-        self.assertEqual(len(report['analytical_queries']),7)
+        self.assertEqual(len(report['analytical_queries']),6)
+        self.assert_shared_share_denominator(report, {'revenue_by_city','revenue_by_store'}, 'revenue')
         self.assertEqual(len(report['charts']),5)
+
+    def assert_shared_share_denominator(self,report,requirements,metric):
+        bindings=[b for b in report['derived_feature_bindings']
+            if b['feature']=='contribution_share' and b['requirement_id'] in requirements]
+        self.assertEqual({b['requirement_id'] for b in bindings},requirements)
+        denominators={b['denominator_query_id'] for b in bindings}
+        self.assertEqual(len(denominators),1)
+        denominator=next(q for q in report['analytical_queries'] if q['id'] in denominators)
+        self.assertEqual(denominator['metrics'],[metric])
+        self.assertEqual(denominator['group_by'],[])
+        self.assertEqual(report['result_sets'][denominator['id']]['rows'][0][metric],700)
+        coverage={c['requirement_id']:c for c in report['resolved_requirement_coverage']}
+        for binding in bindings:
+            self.assertEqual(coverage[binding['requirement_id']]['state'],'RESOLVED')
+            self.assertIn(binding['query_id'],coverage[binding['requirement_id']]['operation_ids'])
+            self.assertIn(denominator['id'],coverage[binding['requirement_id']]['operation_ids'])
 
     def test_missing_store_axis_comes_only_from_unique_unrepresented_question_fact(self):
         meaning=deepcopy(RECORDED['successful_intent'])

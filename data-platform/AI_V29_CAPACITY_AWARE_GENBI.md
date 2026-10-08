@@ -5,10 +5,12 @@ Implementation and qualification date: 2026-10-08 (Asia/Ho_Chi_Minh).
 Original V2.9 `STARTING_HEAD = 354e3aad443f546b7fa97b234904d15b48cc0da2`.
 `V2.9 IMPLEMENTATION COMMIT = 830470c5ff5a375b6ebd12c9af000667cb539276`
 (`feat: cap nhat ai data`), branch `branch_thaian`.
-This final-review pass started from and verified that same implementation HEAD;
-the initial worktree and index were clean. The implementation is committed; only
-the new final-review fixes are uncommitted. `FINAL_FIX_COMMIT` is pending the
-user's commit/push. This agent performed no commit, push, reset, customer chatbot
+The original final-review pass started from that implementation HEAD with a clean
+worktree/index. Those review fixes are now committed as
+`FINAL_FIX_COMMIT = 19ac766666e89fa76c33195527cdefab8c811667`
+(`chua xong data AI`), observed while handling the new overview failure.
+Verified current HEAD is that commit. The subsequent overview repair changes are
+uncommitted; this agent performed no commit, push, reset, customer chatbot
 edit, credential rotation, or warehouse write.
 
 ## Audit and migration
@@ -42,7 +44,7 @@ The security plane remains the existing catalog table/column allowlists,
 sensitive-column rejection, strict SQL AST equality, server compiler,
 read-only transaction and timeout. No executable tool graph or SQL is added to
 the model contract. Existing V2.8/V2.8.5 contract/version names remain compatible;
-runtime health separately identifies final-review release 2.9.1.
+runtime health separately identifies final-review release 2.9.6.
 
 Migration changes the storage representation around these existing foundations.
 Old inline artifacts externalize on their next session save. New artifacts are
@@ -313,16 +315,17 @@ checks read full artifacts; saved verification checks the original transported
 preview. The oracle covers these assertions and does not establish universal AI
 accuracy. It created only audit-owned development sessions and no warehouse writes.
 
-Final qualification passed **635/635 backend tests**, **96/96 frontend tests**,
+Current qualification passed **666/666 backend tests**, **98/98 frontend tests**,
 TypeScript checks, Vite production build, and both Docker builds. Only
 `analytics-api` and `web-ui` were explicitly recreated; both are healthy at version
-2.9.1. Eighteen other container start times remained unchanged. Redis automatically
-restarted twice during this pass (background save, then the large synthetic probe);
+2.9.6. The current API/UI follow-up preserved all nineteen other container start times.
+During the initial review, eighteen of nineteen other start times remained unchanged; Redis automatically
+restarted twice (background save, then the large synthetic probe);
 it was not stopped or restarted by an agent command. Its normal readiness is now
 restored. Redis's 128 MiB container limit versus about 153 MB logical used memory
 suggests resource pressure; an OOM cause is not established by the available logs.
 
-The final bounded real Redis runtime probe retained **200 rows / 17,353 artifact
+The bounded real Redis runtime probe from the initial review retained **200 rows / 17,353 artifact
 bytes**, with **146,256 session bytes** and **217,548 response bytes**. Full saved-report
 verification, approved-result pagination, dimension drilldown, cross-owner denial,
 stale Redis CAS denial, decoded-cache reuse, and fail-closed behavior during an
@@ -360,8 +363,9 @@ strict tamper rejection and the current independent execution bound.
 1. **Starting history:** original V2.9 STARTING_HEAD is
    `354e3aad443f546b7fa97b234904d15b48cc0da2`; implementation commit and this
    final-review STARTING_HEAD are `830470c5ff5a375b6ebd12c9af000667cb539276`.
-2. **Verified current HEAD:** `830470c5ff5a375b6ebd12c9af000667cb539276`.
-   FINAL_FIX_COMMIT remains pending; no agent commit/push occurred.
+2. **Verified current HEAD:** `19ac766666e89fa76c33195527cdefab8c811667`,
+   the user's committed initial review fixes. The subsequent overview follow-up is
+   uncommitted; no agent commit/push occurred.
 3. **Capacity cleanup:** the import-time integer was removed in favor of
    `max_analytical_rows()` reading `from_env()`. Repository search found no Python
    callers of `MAX_ANALYTICAL_ROWS`; its remaining occurrence describes historical
@@ -404,16 +408,16 @@ strict tamper rejection and the current independent execution bound.
    The current 110-case scripted evaluation passes: 100/100 supported first-click,
    75/100 primary, 25/25 second, and third not exercised. Separate tests exercise
    third-call success and failure. Live semantic accuracy remains unmeasured.
-10. **Current tests:** 635/635 backend (233.787 seconds), 96/96 frontend,
+10. **Current tests:** 666/666 backend (231.259 seconds), 98/98 frontend,
     110/110 golden cases and eight capacity cases; typecheck passes. Tests retain
     strict approval/owner/metric/feature/integrity/score regressions. Expected chart
     presentation assertions were migrated for the intentional dashboard change.
-11. **Build:** Vite and Docker builds pass; only Analytics API and UI were explicitly
-    recreated. Customer chatbot files and processes are unchanged.
-12. **Runtime verification:** API and web proxy liveness HTTP 200 / version 2.9.1;
+11. **Build:** Vite and Docker builds pass; the initial review explicitly recreated
+    Analytics API and UI. The current 2.9.6 follow-up rebuilds/recreates API and UI only. Customer chatbot files and processes are untouched by this agent.
+12. **Runtime verification:** API and web proxy liveness HTTP 200 / version 2.9.6;
     readiness HTTP 200 with Redis, catalog and warehouse true; UI HTTP 200;
     both analytics containers healthy. Real Redis pagination/owner/CAS/cache checks
-    pass for 200 synthetic rows. Independent read-only voucher oracle: 206/206.
+    pass for 200 synthetic rows. Independent read-only voucher oracle retained from 2.9.5: 206/206 (not rerun in 2.9.6).
     The larger live Redis probe failed; see the deployment resource limitation above.
 13. **LIVE_PROVIDER_REQUESTS = 0.** Scripted providers only; no measured live-model
     one-shot guarantee is inferred from fixture success.
@@ -455,6 +459,154 @@ Inspect `diagnostics.provider_call_count` (at most 3), requirement coverage and 
 proposal metrics before approving the report. Check the initial chart mix, expand
 the remaining views and verify shares use full denominators. Existing approvals
 bind catalog fingerprints; create a new proposal after this catalog update.
+
+### Follow-up: failed 45-day overview (2.9.3)
+
+The user's exact 45-day question failed before SQL. Logs at 12:35 UTC showed
+scalar-on-trend, then late coverage gaps and a rejected frozen rewrite. The first
+follow-up batched independent resolver/coverage issues and exposed addition-only
+repair IDs. Later logs at 12:51–12:52 UTC exposed the remaining causes: a revenue
+share attached to the wrong metric, a population-definition phrase incorrectly
+required as a grouping axis, and repeated additions overflowing eight operations.
+The raw failed model envelopes were not captured; reconstructed tests use the
+recorded shapes/issues, not a claimed exact copy of provider wire responses.
+
+Primary drafts now separate an explicitly declared whole-scope scalar into an
+aggregate preserving its metrics, filters and time. A contribution-share binding
+is completed only when a catalog feature phrase names an additive metric and
+exactly one compatible grouped requirement exists. Ambiguous targets and average
+shares remain unresolved/unsupported. Neither rule applies to frozen repairs or
+approved refinements. The finite catalog scope-qualifier vocabulary applies to all
+dimension aliases: “phạm vi trạng thái đơn” requests available population
+information; an independent status mention or explicit “theo” grouping remains
+an axis requirement. Missing catalog definitions still fail validation.
+
+The resolver reuses exact executable-query identities before applying the existing
+eight-operation ceiling. All requirement coverage and feature denominator IDs are
+remapped. Different metrics (including AOV variants), populations, filters and time
+remain distinct. Nine semantic requirements sharing the same query use two physical
+queries, while nine genuinely different scopes still fail closed. Duplicate share
+evidence from identical bindings is emitted once. No larger query/provider budget,
+model SQL, warehouse writes or weakened frozen-scope rule was introduced.
+
+The exact-question fixtures complete four reconstructed missing/wrong/empty binding
+variants on the primary scripted call. Scalar decomposition also completes on the
+primary call. Full saved verification passes; accepted axis/time attacks still
+exhaust the three-call ceiling without SQL. The two historical overview query-count
+assertions now verify shared denominator coverage and its independently expected
+value, rather than expecting duplicate executions.
+
+Final qualification: 648/648 backend tests (205.469 seconds), 110 golden cases,
+eight capacity cases, and 206/206 independent read-only voucher assertions. The
+unchanged frontend retains its prior 96 tests/typecheck/build. After the API-only
+2.9.3 rebuild, the exact 45-day question also produced SUCCESS with four real
+read-only warehouse queries and Redis artifacts, one scripted interpretation,
+bar/donut/multi-line charts, and matching saved-report verification. Its audit-owned
+session was deleted. The score of 90 is deterministic verification, not a probability
+of correct AI interpretation.
+
+API and web proxy liveness/readiness return HTTP 200 / 2.9.3; both analytics
+containers are healthy. All twenty other container start times, including UI,
+Redis and customer chatbot, are unchanged in this follow-up. LIVE_PROVIDER_REQUESTS
+= 0 and WAREHOUSE_WRITES = 0. Live-model first-call accuracy remains unmeasured.
+Refresh the UI and create a new proposal using the original question; existing
+approvals are bound to the earlier catalog fingerprint.
+
+### Follow-up: first submission reliability and response deadline (2.9.4)
+
+The failed submission at 13:36 UTC consumed three provider calls in 6,230.51 ms:
+invalid feature targets were discovered before incompatible feature shapes. Its
+13:36:52 rejection was semantic, not evidence of absent warehouse data. The later
+15:13 UTC submission succeeded on its primary call in 2,346.49 ms. Identical
+language can yield different model envelopes; waiting alone cannot fix this.
+
+The resolver now collects binding errors and every incompatible feature shape in
+one validation pass. Shape repairs protect compatible sibling features, rather
+than freezing another feature already known to have an invalid shape. Repairs
+must clear removed feature-map entries, preserve valid bindings, and move
+incompatible work into separate requirements without changing accepted filters,
+time, grouping or cadence. Context supplies valid metric/additive target options.
+This is general contract recovery; no question-specific SQL or language route is
+introduced. The provider ceiling stays three and rejected patches gain no scope.
+
+Each hybrid planning turn shares 27 seconds across context, interpretation and
+preflight, reserving three seconds for deterministic planning. Provider transport
+gets at most eight seconds per attempt (two for connect, remaining read), reduced
+when the shared allowance runs low. A retry/reset does not reset this deadline.
+The async propose-plan HTTP boundary returns within a 29-second timeout even when
+catalog/provider I/O stalls. Context propagates to the worker: expired work cannot
+start another provider attempt or create a proposal after it returns. In-flight
+blocking I/O may finish after the response; it cannot be forcibly interrupted by
+cancelling the Python await. Analytical result execution remains a separate,
+explicitly approved generation request. Browser/network delay is outside this
+server response bound; successful live-model completion is not guaranteed.
+
+Deadline failures are SYSTEM_ERROR, explicitly explaining the 30-second processing
+limit and retaining the question. They are not presented as missing user input or
+insufficient source data. A real blocked-worker probe measured 29,090.97 ms and
+confirmed late work is rejected, without any provider or warehouse request.
+
+All 655 backend regressions pass (218.089 seconds), with 110 golden and eight
+capacity cases. Seven new tests cover combined binding/shape recovery, valid
+sibling protection, frozen scope, shrinking transport timeouts, slow native
+responses, the HTTP timeout and expired request entry. The reconstructed combined
+shape finishes in one submission with two scripted calls; the separate valid shape
+uses one. After the API-only 2.9.4 build/recreate, both also pass against the real
+read-only warehouse and Redis: four/six queries, saved verification score 90 and
+bar/donut/multi-line charts. Recorded 808/775 ms totals exclude real provider latency
+because meaning is scripted; these are not live-AI latency claims.
+
+The fresh independent voucher oracle passes 206/206 assertions. API/proxy readiness
+and liveness are HTTP 200 / 2.9.4; both analytics containers are healthy, and all
+twenty other container start times are unchanged. Frontend code retains its prior
+96 tests/typecheck/build. No customer chatbot files were modified by this follow-up;
+other work already present in that directory is preserved. LIVE_PROVIDER_REQUESTS
+= 0; WAREHOUSE_WRITES = 0. No agent commit or push occurred.
+
+### Follow-up: inactive feature binding canonicalization (2.9.5)
+
+At 15:29 UTC the valid comparison resolved on every attempt, while
+sales_summary_trend_type repeatedly failed contribution_share binding validation.
+Three calls finished in 5,264.36 ms without analytical execution. The raw failed
+envelope was not retained. Its recorded trend/comparison shapes and issue identify
+a remaining canonicalization gap: an inactive feature-map entry can be repeated
+by the model even when the requested share already belongs to the comparison.
+Tests reconstruct this class with six target variants; they do not claim exact
+provider-wire replay or a measured live-model success rate.
+
+In the contract, derived_features declares calculations and feature_metrics only
+narrows targets of those declared calculations. Primary drafts now discard map
+entries whose feature is absent from that requirement's derived_features. No
+calculation is declared or executed by such an entry. Active entries (including
+empty, unknown or non-additive targets) remain untouched for strict validation.
+Request anchors still require all explicit calculations: an orphan hint alone
+cannot satisfy a missing share. Repairs and approved/saved-report verification do
+not apply this cleanup, so it cannot authorize frozen changes or conceal tampering.
+The rule is feature-generic and preserves every metric, grouping, time and filter.
+
+Binding errors now distinguish inactive_feature, empty_targets and
+targets_outside_requirement for future diagnostics; arbitrary model prose is not
+logged. Schema guidance explicitly limits overrides to active features and stays
+within the existing compact-schema budget. Initial qualification caught an overly
+long description; it was shortened, the threshold was preserved, and the final
+complete suite passed 661/661 tests (225.336 seconds). The focused suite passed
+37/37; the six inactive target variants all finish on the primary scripted call
+with the same plan fingerprint. Native JSON and OpenAI-compatible adapters also
+pass with strictly mocked HTTP. The 110 golden and eight capacity cases pass.
+
+After the API-only 2.9.5 rebuild/recreate, valid baseline and two orphan-binding
+variants pass using real read-only warehouse queries and Redis, one scripted
+interpretation and five queries each. Their plan fingerprints match; revenue
+shares total 100%, saved verification passes, and score is 90. Charts include
+bar, donut, multi-line and scatter. Recorded 857/618/613 ms totals use scripted
+meaning and do not measure real AI latency. All audit-owned sessions were deleted.
+The independent source oracle passes 206/206 assertions again.
+
+API/proxy liveness/readiness return HTTP 200 / 2.9.5; both analytics containers are
+healthy. All twenty other container start times are unchanged. The prior 27-second
+planning / 29-second proposal-response deadline is retained. Frontend code and
+customer chatbot work are untouched by this follow-up. LIVE_PROVIDER_REQUESTS = 0;
+WAREHOUSE_WRITES = 0. These changes remain uncommitted on the verified HEAD above.
 
 ## Remaining limits and manual qualification
 
@@ -514,3 +666,69 @@ reliability for a real provider beyond this scripted corpus.
 `LIVE_PROVIDER_REQUESTS = 0`
 
 `WAREHOUSE_WRITES = 0`
+
+
+### Follow-up: primary latency and analyst dashboard (2.9.6)
+
+Qualification date: 2026-10-09 (Asia/Ho_Chi_Minh). The user's new failure was
+transport latency, not the earlier inactive feature binding. Recorded API logs
+at 00:24 show three provider timeouts of 6156.8 / 6139.55 / 6193.31 ms and a
+19144.24 ms failed planning turn. At 00:25, the manual retry encountered HTTP
+503, another timeout, then completed in 13896.29 ms with the same requested
+meaning. No failed raw model envelope was available; the successful user-pasted
+semantic intent is retained as the regression fixture.
+
+The primary HTTP allowance is now 18 seconds (up to 16 seconds read + 2 seconds
+connect), while recovery is capped at 8 seconds and shrinks with the same
+monotonic deadline. The shared provider allowance remains at most 24 seconds,
+reserving three seconds within the 27-second planner allowance. The HTTP
+proposal boundary remains 29 seconds. The maximum remains three calls and no
+new model/provider fallback was enabled. A scripted 12-second primary response
+now produces a proposal on the first call; a 16-second timeout followed by a
+five-second response completes within the same request budget. These are
+transport mocks, not measurements of live provider success or latency.
+
+Optional related meaning is represented by `supporting_for`, which references
+a requested requirement label. The model may suggest two or three useful related
+views for overview/deep work in the same interpretation. The server still owns
+all executable IDs, SQL, operation roles, parents, scope checks and fingerprints.
+Requested work resolves first; optional views cannot satisfy request anchors.
+Supports require a real requested parent, catalog-verified related population,
+identical filters/time, and fit at most three additional operations and eight
+total operations. Invalid optional proposals are disclosed as unavailable and
+do not cause another provider request or discard the requested plan. They are
+included in the proposal before the user approves execution. No automatic
+post-approval exploration or post-result model synthesis was introduced.
+
+The dashboard now starts with verified whole-scope KPIs, avoids duplicate revenue
+cards from equivalent scalar queries, and preserves distinct population filters.
+A partial/channel trend cannot become a whole-scope change KPI. A complete
+primary-metric concentration can supply the fourth card. It uses a wide trend
+beside a compact composition chart, a responsive grid for additional validated
+views, labels supporting views, and exposes a tabbed detailed result table with
+Vietnamese business labels and full numeric values. Long question titles are
+shortened using validated domain labels; the full question remains accessible.
+
+Final offline qualification: 666/666 backend tests (231.259 s), 98/98 frontend
+tests, typecheck and production build, 110/110 golden cases plus eight capacity
+cases. Existing context/schema limits remained unchanged; an initially overlong
+schema description was shortened until both limits passed. A separate fixture
+probe confirmed an unknown optional filter is omitted while the requested
+five-query report completes and saved verification passes.
+
+Read-only warehouse/Redis qualification: recorded intent produced five queries
+and three charts; explicitly scripted related views produced eight queries and
+seven charts (bar, donut, multi_line, scatter), both SUCCESS, score 90 and exact
+saved-report re-verification. Score 90 is internal verification, not measured
+semantic or reference accuracy. Audit-owned sessions were removed. Live AI HTTP
+calls and warehouse writes performed by this follow-up: zero. Model suggestion
+quality and real provider latency remain unmeasured. Browser visual inspection
+was attempted but the computer-use surface denied Chrome access; no screenshot
+QA is claimed. Rendered component checks, typecheck and builds passed.
+
+After the 2.9.6 rebuild/recreate, API/proxy liveness and readiness return HTTP 200
+with version 2.9.6; both containers are healthy. The served web bundle contains
+the updated dashboard, and all nineteen other container start times are unchanged.
+The recorded and expanded read-only warehouse/Redis probes passed again after
+deployment (five/three and eight/seven queries/charts respectively). No agent
+commit, customer-service restart or warehouse write was performed.

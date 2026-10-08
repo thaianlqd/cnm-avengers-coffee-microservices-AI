@@ -34,13 +34,16 @@ def test_error_classes_stay_distinct_without_leaking_bodies(exc, expected):
 
 
 def test_503_cools_model_across_keys_and_recovers_after_expiry(runtime, monkeypatch):
-    fake = setup_latency(runtime, monkeypatch, [error(503), 1, 1, 1])
+    fake = setup_latency(runtime, monkeypatch, [error(503), 1, 1, 1, 1])
     result, first = fake.complete()
     assert result[0] is not None and first['provider_transient_count'] == 1
     assert first['provider_error_category'] == 'provider_transient'
     fake.complete()
     assert [c['model'] for c in fake.calls] == [PRIMARY, SECONDARY, SECONDARY]
     fake.clock[0] += 31
+    fake.complete()
+    assert fake.calls[-1]['model'] == SECONDARY
+    fake.clock[0] += 180
     fake.complete()
     assert fake.calls[-1]['model'] == PRIMARY
 

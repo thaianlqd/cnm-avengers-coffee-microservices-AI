@@ -19,8 +19,8 @@ from services.domain_intelligence_service import DEPTH_POLICIES
 from services.agent_provider import NativeAgentProvider
 
 logger = logging.getLogger("ai-analytics")
-SYSTEM = """Extract Vietnamese business analytical meaning into one intent envelope. Each requirement states a distinct user goal once. Use semantic metric/dimension IDs in the vocabulary. lens_hint is optional advice. No SQL, subjects, executable IDs, parents, query roles, coverage mappings, charts or reasoning. Preserve every explicit metric, filter, time, ranking and derived feature. Question is authoritative; context/expectation guide business focus/presentation and never override it. Structured UI time/scope outrank question; omitted time means all_time. Separate incompatible populations as business requirements without substituting meaning. Unsupported definitions (ROI without costs, forecasts) remain explicit unavailable requirements with controlled reasons. A clarification names only genuinely missing business meaning. Top N is not a complete population; contribution_share uses a server-verified denominator. No invented values, causes or history. IDs label user requirements only."""
-REPAIR_SYSTEM = """Repair ONLY the identified semantic fields/requirements. Return one intent envelope with requirement id and only the corrected fields. Omitted fields are preserved by the server. Do not resend unaffected requirements. For an omitted derived feature, add it to a compatible existing requirement using only id and derived_features, preserving existing features. Add a new requirement only for genuinely omitted analytical work. All other fields are frozen. Use the bounded vocabulary or state a genuine clarification/limitation. No SQL, executable graph, reasoning or results."""
+SYSTEM = """Extract Vietnamese business analytical meaning into one intent envelope. Each requirement states a distinct user goal once. Use semantic metric/dimension IDs in the vocabulary. lens_hint is optional advice. No SQL, subjects, executable IDs, parents, query roles, coverage mappings, charts or reasoning. Preserve every explicit metric, filter, time, ranking and derived feature. Question is authoritative; context/expectation guide business focus/presentation and never override it. Structured UI time/scope outrank question; omitted time means all_time. Separate incompatible populations as business requirements without substituting meaning. Unsupported definitions (ROI without costs, forecasts) remain explicit unavailable requirements with controlled reasons. A clarification names only genuinely missing business meaning. Top N is not a complete population; contribution_share uses a server-verified denominator. No invented values, causes or history. IDs label user requirements only. Overview/deep: suggest 2–3 distinct related views with supporting_for=requested ID, same filters/time. Explicit goals stay requested. Optional work is validated before approval."""
+REPAIR_SYSTEM = """Repair ONLY the identified semantic fields/requirements. Return one intent envelope with requirement id and only the corrected fields. Omitted fields are preserved by the server. Do not resend unaffected requirements. Correct ALL supplied conflicts together. When removing a feature, also remove its feature_metrics entry; feature_metrics is a full replacement map, not a nested patch. For a shape conflict, retain protected_features and move the conflicting feature to a new requirement with its valid shape, original filters and original time. Do not alter the existing trend cadence or grouping to accommodate a whole-scope feature. For an omitted derived feature, add it to a compatible existing requirement using only id and derived_features, preserving existing features. Add a new requirement only for genuinely omitted analytical work. All other fields are frozen. Use the bounded vocabulary or state a genuine clarification/limitation. No SQL, executable graph, reasoning or results."""
 SYSTEM += " A user instruction not to conclude ROI/causality is a guardrail, not a request to calculate ROI. For a feature applying to one of several displayed metrics, use feature_metrics. A table of catalog aggregations is aggregate, not raw detail. Greetings or text without an analytical goal use clarification reason not_analytical_request and missing_fields:[analysis_goal]."
 
 
@@ -105,8 +105,9 @@ class HybridAnalystPlanner(OneShotPlanner):
             "shape_rules":{"trend":"Set granularity; group only independent business axes, not raw timestamps.",
                 "detail":"Only raw row projections, without metric_ids. A table of SUM/COUNT/AVG by voucher/product/etc is aggregate, not detail.",
                 "ranking":"Set ranking.limit and ranking.metric_id. Additional displayed metrics do not change the ordering criterion.",
-                "features":"Include requested calculations. Set feature_metrics, e.g. contribution_share:[voucher_revenue] with count/discount/aov displayed. Averages cannot form shares. leader/top_gap need ranking.metric_id; separate leader metrics need separate ranking requirements. Wrong feature shape is repairable, not unavailable data.",
+                "features":"scalar needs aggregate with no dimensions; separate whole-scope KPIs from trends/grouped comparisons. Set feature_metrics, e.g. contribution_share:[voucher_revenue], never averages. leader/top_gap need ranking.metric_id; different leader metrics need separate rankings. Invalid shape is repairable.",
                 "metric_definitions":"Honor request_anchors IDs. Concept neighbors are not equivalents: aov SUM/COUNT(*) vs store_aov AVG ignores NULL.",
+                "scope":"population_scopes request catalog definitions, not grouping axes. Keep independent dimension anchors.",
                 "constraints":"Do not turn a prohibition such as không kết luận ROI into a requirement to calculate ROI. Preserve it as a conclusion constraint. Only a positive request for an unavailable calculation needs an unavailable requirement.",
                 "clarification":"Use not_analytical_request for greetings/nonsense without an analytical goal. missing_fields must name genuinely missing metric_ids, dimension_ids, time, filters or analysis_goal. Do not request fields already explicit in the question."},
             "dimensions":[[d,r["dimensions"][d]["business_name"]] for d in dims],
@@ -281,7 +282,8 @@ class HybridAnalystPlanner(OneShotPlanner):
         self.semantic.discovered.update(AnalyticalResolver(self.catalog,self.reference).index.references)
         prepared={}
         self.diagnostics["failure_stage"]="PLAN_VALIDATION"
-        for op in resolved["operations"]:
+        for op in sorted(resolved["operations"],key=lambda o:o["role"]=="supporting"):
+            self.turn.budget.remaining()
             try:
                 self.ground_values(op)
             except UnresolvedFilter as error:
@@ -302,6 +304,7 @@ class HybridAnalystPlanner(OneShotPlanner):
 
     def run(self, prompt, context=None):
         started=time.perf_counter();context=dict(context or {})
+        self.turn.budget.start_deadline()
         resolver=AnalyticalResolver(self.catalog,self.reference,context)
         refinement=bool(context.get("semantic_intent"))
         original=context.get("original_question",prompt)
@@ -356,6 +359,7 @@ class HybridAnalystPlanner(OneShotPlanner):
                         raise AnalysisError("provider_call_budget_exceeded","Nested transport attempts forbidden")
                     self.diagnostics["provider_calls"].extend(attempts)
                     self.diagnostics["agent_rounds"]=self.turn.budget.used
+                    self.turn.budget.remaining()
                     raw=self.read_response(response,delta=tools[0]["name"] == "submit_analysis_delta")
                     if kind == "primary" and isinstance(raw.get("requirements"), list):
                         self.raw_requirements = {r["id"]:deepcopy(r) for r in raw["requirements"] if isinstance(r,dict) and isinstance(r.get("id"),str)}
@@ -387,6 +391,16 @@ class HybridAnalystPlanner(OneShotPlanner):
                         intent,completed=complete_unique_grouping(intent,self.anchors,resolver.index)
                         intent,cadences=complete_explicit_granularity(intent,self.anchors)
                         completed += cadences
+                        if kind == 'primary':
+                            from services.analysis_intent import remove_inactive_feature_bindings
+                            intent,inactive=remove_inactive_feature_bindings(intent)
+                            completed += inactive
+                            from services.request_anchors import complete_explicit_share_targets
+                            intent,bindings=complete_explicit_share_targets(intent,self.anchors,self.catalog)
+                            completed += bindings
+                            from services.analysis_intent import decompose_scalar_draft
+                            intent,scalars=decompose_scalar_draft(intent)
+                            completed += scalars
                         previous=intent
                         if completed:self.diagnostics.setdefault('semantic_normalizations',[]).extend(completed)
                     self.diagnostics["failure_stage"]="ANALYTICAL_RESOLUTION"
@@ -394,7 +408,7 @@ class HybridAnalystPlanner(OneShotPlanner):
                     # Resolve lookup references into semantic meaning BEFORE IDs
                     # and fingerprints are generated; preflight cannot mutate scope.
                     for req in intent.requirements:
-                        if req.availability == "requested" and all(f.dimension in resolver.index.dimensions for f in req.filters):
+                        if req.availability == "requested" and not req.supporting_for and all(f.dimension in resolver.index.dimensions for f in req.filters):
                             normalized = resolver.normalize(req)
                             data = normalized.model_dump(mode="json")
                             try:
@@ -403,7 +417,21 @@ class HybridAnalystPlanner(OneShotPlanner):
                                 raise AnalysisError("filter_value_ambiguous" if error.resolution['status']=='ambiguous' else "filter_value_unknown",
                                     "Grounded dimension value requires clarification",choices=error.resolution.get('choices',[])) from None
                             req.filters = IntentRequirement.model_validate(data).filters
-                    resolved=resolver.resolve(intent)
+                    try:
+                        resolved=resolver.resolve(intent)
+                    except ResolutionIssues as error:
+                        # Report independent coverage gaps with the resolver
+                        # conflict in the SAME repair, rather than spending the
+                        # last call discovering a previously visible omission.
+                        # This runs only after an authorized intent was accepted;
+                        # rejected repair fields never gain new permissions.
+                        try:
+                            draft=[resolver.normalize(r) for r in intent.requirements]
+                            coverage_issues=verify_anchors(self.anchors,draft,self.reference,self.catalog)
+                        except (AnalysisError,ValueError,TypeError,KeyError):
+                            coverage_issues=[]  # Invalid scope remains a resolver error.
+                        error.issues.extend(i for i in coverage_issues if i not in error.issues)
+                        raise
                     before={r.id:r for r in intent.requirements}
                     for req in resolved['intent'].requirements:
                         for field in ('analysis_kind','dimension_ids','derived_features','granularity'):
@@ -474,6 +502,14 @@ class HybridAnalystPlanner(OneShotPlanner):
                         "validation_issues":issues,"affected_requirements":rejected,
                         "frozen_requirement_ids":[r.id for r in previous.requirements if r.id not in targets] if previous else [],
                         "vocabulary":self.vocabulary(domains or self.diagnostics["detailed_domain_ids"]),"domains":{"packs":[]}}
+                    payload['feature_target_options']=[dict(requirement_id=r.id,
+                        metric_ids=r.metric_ids,
+                        additive_metric_ids=[m for m in r.metric_ids if m in self.catalog.registry['metrics']
+                            and self.catalog.registry['metrics'][m].get('additive')])
+                        for r in previous.requirements if r.id in targets] if previous else []
+                    if any(i.get('requirement_id') is None for i in issues):
+                        payload['request_anchors']=self.anchors
+                        payload['addition_policy']='Use a new repair_add ID for omitted work. Existing untargeted requirements cannot change.'
                     if any(i.get('requirement_id') is None and i['field']=='derived_features' for i in issues):
                         payload['feature_repair_candidates']=[dict(id=r.id,analysis_kind=r.analysis_kind,
                             metric_ids=r.metric_ids,dimension_ids=r.dimension_ids,derived_features=r.derived_features)
@@ -504,7 +540,10 @@ class HybridAnalystPlanner(OneShotPlanner):
                     if format_repair:
                         self.diagnostics["contract_repair_count"] += 1
                     if transient and isinstance(self.turn.provider,NativeAgentProvider):
-                        time.sleep(min(2,last.get("retry_after_seconds",0.15*(attempt+1)))+random.uniform(0,0.1))
+                        delay=min(2,last.get("retry_after_seconds",0.15*(attempt+1)))+random.uniform(0,0.1)
+                        if self.turn.budget.remaining(reserve=3) <= delay:
+                            raise AnalysisError('planning_timeout','No time remains for bounded recovery') from None
+                        time.sleep(delay)
                 if isinstance(self.turn.provider,NativeAgentProvider):
                     self.turn.provider.reset()
                     recovery=os.getenv("DATA_ANALYST_RECOVERY_MODEL","").strip()
@@ -522,7 +561,9 @@ class HybridAnalystPlanner(OneShotPlanner):
                 code="historical_metric_unavailable" if "INSUFFICIENT_DATA" in states else "clarification" if "NEEDS_INPUT" in states else "unsupported_metric"
                 raise AnalysisError(code,"No executable requested capability")
             compiled=time.perf_counter()
+            self.turn.budget.remaining()
             prepared=self.preflight(resolved,context)
+            self.turn.budget.remaining()
             self.diagnostics["compiler_latency_ms"]=round((time.perf_counter()-compiled)*1000,2)
             self.resolved=resolved
             self.diagnostics["request_anchors"] = self.anchors
@@ -550,9 +591,12 @@ class HybridAnalystPlanner(OneShotPlanner):
                 resolved_plan_fingerprint=resolved["plan_fingerprint"],resolved_operations=resolved["operations"],resolver_version=resolved["resolver_version"],
                 derived_feature_bindings=resolved["feature_bindings"],analysis_depth=depth,analysis_breadth=depth,
                 target_visual_count=DEPTH_POLICIES[depth]["target_views"][-1],target_visual_range=DEPTH_POLICIES[depth]["target_views"],
-                requested_operation_count=len(prepared),registered_requested_operations=len(prepared),supporting_operation_count=0,
+                requested_operation_count=sum(a.query.role=='requested' for a in prepared.values()),
+                registered_requested_operations=sum(a.query.role=='requested' for a in prepared.values()),
+                supporting_operation_count=sum(a.query.role=='supporting' for a in prepared.values()),
+                omitted_supporting_operation_count=sum(c['requested_or_supporting']=='supporting' and c['status']!='planned' for c in resolved['components']),
                 agent_contract_status="valid",agent_contract_error=None,semantic_status="grounded",failure_stage=None,terminal_error=None,contract_issues=[])
-            if any(c["state"]!="RESOLVED" for c in resolved["coverage"]) and not self.proposal:
+            if any(c["status"]!="planned" and c["requested_or_supporting"]=="requested" for c in resolved["components"]) and not self.proposal:
                 raise AnalysisError("approval_required","Partial requirements need current explicit approval")
             # Grounded filters are authoritative; persist normalized meaning.
             active={}

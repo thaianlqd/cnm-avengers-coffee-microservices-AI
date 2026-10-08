@@ -1,8 +1,18 @@
 """Request-owned allowance, consumed before transport or scripted invocation."""
 
 import os
+import time
+from contextvars import ContextVar
 from threading import Lock
 from services.analysis_catalog import AnalysisError
+
+request_deadline = ContextVar('analysis_request_deadline', default=None)
+
+
+def check_request_deadline():
+    deadline=request_deadline.get()
+    if deadline is not None and time.monotonic() >= deadline:
+        raise AnalysisError('planning_timeout','Planning request expired')
 
 
 class ProviderBudget:
@@ -16,11 +26,42 @@ class ProviderBudget:
         self.diagnostics = diagnostics if diagnostics is not None else {}
         self.used = 0
         self.lock = Lock()
+        self.deadline = None
         self.diagnostics.update(provider_call_budget=max_calls, provider_call_count=0,
                                 provider_attempt_count=0, provider_call_budget_block_count=0)
 
+    def start_deadline(self):
+        # One submission shares a wall-clock allowance across all three calls;
+        # reserve three seconds for deterministic planning after interpretation.
+        self.deadline = min(time.monotonic()+27,request_deadline.get() or float('inf'))
+        self.diagnostics.update(planning_budget_ms=27000,provider_attempt_timeout_ms=18000,
+                                provider_recovery_timeout_ms=8000)
+
+    def remaining(self, reserve=0):
+        if self.deadline is None:
+            return None
+        seconds=self.deadline-time.monotonic()-reserve
+        self.diagnostics['planning_remaining_ms']=round(max(0,seconds)*1000,2)
+        if seconds <= 0:
+            self.diagnostics['terminal_error']='planning_timeout'
+            raise AnalysisError('planning_timeout','Planning wall-clock allowance exhausted')
+        return seconds
+
+    def http_timeout(self):
+        from urllib3.util import Timeout
+        remaining=self.remaining(reserve=3)
+        if remaining is None:
+            return None
+        # A six-second read window repeatedly abandoned otherwise viable
+        # interpretations. Spend the shared allowance on the primary response;
+        # recovery still consumes the remaining deadline, never a fresh one.
+        total=min(18 if self.used == 1 else 8,remaining)
+        connect=min(2,total/4)
+        return Timeout(total=total,connect=connect,read=total-connect)
+
     def consume(self, context_chars=None):
         with self.lock:
+            self.remaining(reserve=3)
             if self.used >= self.max_calls:
                 self.diagnostics["provider_call_budget_block_count"] += 1
                 self.diagnostics["terminal_error"] = "provider_call_budget_exceeded"
@@ -50,7 +91,9 @@ class ProviderTurn:
                 raise AnalysisError("provider_policy", "Legacy transport cannot serve production planning")
             return self.provider(call_budget=self.budget, **request)
         self.budget.consume()
-        return self.provider(**request)
+        response=self.provider(**request)
+        self.budget.remaining()
+        return response
 
 
 def validate_single_shot_policy():

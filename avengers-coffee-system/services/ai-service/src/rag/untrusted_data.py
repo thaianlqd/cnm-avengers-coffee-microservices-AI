@@ -4,7 +4,7 @@ import re
 from src.rag.documents import normalize_text
 
 _UNSAFE = re.compile(
-    r'ignore\s+(?:all\s+)?(?:previous|system)\s+instructions|bo qua.*(?:chi dan|huong dan).*truoc|'
+    r'ignore\s+(?:all\s+)?(?:previous|system)(?:\s+system)?\s+instructions|bo qua.*(?:chi dan|huong dan).*truoc|'
     r'system\s*prompt|api[_ ]?key|access[_ ]?token|password|(?:reveal|expose).*secret', re.I)
 
 

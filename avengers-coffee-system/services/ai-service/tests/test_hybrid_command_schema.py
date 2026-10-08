@@ -49,11 +49,11 @@ def test_all_visible_first_class_without_synthetic_ordinals(references):
 
 def test_only_lossless_normalization_is_audited():
     raw = json.dumps({'kind': 'commands', 'commands': c('SELECT_PRODUCTS', mode='EXPLICIT',
-        references=[{'kind': 'ordinal', 'index': '3'}]), 'message': None})
+        references=[{'kind': 'ordinal', 'index': '3'}])})
     value, error, rules = validate_envelope(raw)
     assert not error and value['commands'][0]['args']['references'][0]['index'] == 3
     assert set(rules) == set(NORMALIZATION_AUDIT)
-    assert len(COMMAND_ARGS) == 31
+    assert len(COMMAND_ARGS) == 33  # Typed browse refinement and restored READ_MENU.
 
 
 def test_compound_explicit_choices_are_allowed_but_final_confirmation_standalone():

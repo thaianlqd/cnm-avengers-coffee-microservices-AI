@@ -13,30 +13,32 @@ class IntentRanking(Contract):
     direction: Literal["top", "bottom"] = "top"
     limit: int = Field(ge=1, le=100)
     metric_id: Optional[str] = Field(default=None,
-        description='Ranking criterion: choose the metric explicitly requested for ordering, even when other metrics are displayed alongside it. Must be in metric_ids.')
+        description='Explicit ordering metric in metric_ids; other displayed metrics do not change ranking.')
     per_group: list[str] = Field(default_factory=list, max_length=2)
 
 
 class IntentRequirement(Contract):
     id: str = Field(pattern=r"^[a-z][a-z0-9_]{0,39}$")
     goal: str = Field(default="Phân tích yêu cầu", min_length=1, max_length=2000,
-                      description="Optional display label, preferably <=120 characters; not executable meaning.")
+                      description="Display label <=120 chars preferred; not executable meaning.")
     domain_id: Optional[str] = None
     lens_hint: Optional[str] = None
+    supporting_for: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z0-9_]{0,39}$",
+        description='Related view of a requested requirement ID.')
     metric_ids: list[str] = Field(default_factory=list, max_length=6)
     dimension_ids: list[str] = Field(default_factory=list, max_length=4,
-        description='Business grouping axes only. Trend has an implicit period axis from granularity; do not add its raw observation timestamp (e.g. order_created).')
+        description='Business grouping axes only; trend period comes from granularity, not a raw timestamp.')
     analysis_kind: Optional[Literal['comparison', Operation]] = Field(default=None,
-        description='Business comparison uses comparison or aggregate. cross_tab means two independent grouping dimensions, not two values of one dimension.')
+        description='comparison/aggregate for groups; cross_tab requires two independent dimensions.')
     filters: list[Filter] = Field(default_factory=list, max_length=12)
     time: Optional[TimeSpec] = None
     ranking: Optional[IntentRanking] = None
     granularity: Optional[Granularity] = Field(default=None,
         description='Required for trend: day/week/month/quarter/year. Preserve the cadence explicitly requested in the question.')
     derived_features: list[DerivedFeature] = Field(default_factory=list, max_length=10,
-        description='scalar for whole-scope KPI; selected_total only sums a selected Top N cohort. Do not use selected_total for an average.')
+        description='scalar: ungrouped KPI. selected_total: sum a Top N cohort, never an average.')
     feature_metrics: dict[DerivedFeature, list[str]] = Field(default_factory=dict, max_length=10,
-        description='Feature targets within metric_ids. E.g. contribution_share:[voucher_revenue] with aov displayed. Omit for compatible defaults.')
+        description='Targets only ACTIVE derived_features within metric_ids. Omit inactive entries and unnecessary maps.')
     availability: Literal["requested", "needs_input", "unsupported", "insufficient_data"] = "requested"
     reason: Optional[Literal["historical_data_unavailable", "metric_unavailable",
                              "definition_unavailable", "ambiguous_criterion"]] = None
@@ -113,6 +115,65 @@ def intent_tool(delta=False):
     return tool
 
 
+def remove_inactive_feature_bindings(intent):
+    """Discard map entries that do not bind any declared feature in a draft.
+
+    derived_features declares work; feature_metrics only narrows its targets.
+    An orphan map entry cannot declare or execute work. Keep every active entry,
+    including invalid/empty ones, for strict validation. Request anchors still
+    require explicitly requested work; approved intents and repairs stay strict.
+    """
+    result=intent.model_copy(deep=True)
+    changes=[]
+    for req in result.requirements:
+        if req.availability!='requested':
+            continue
+        for feature in sorted(set(req.feature_metrics)-set(req.derived_features)):
+            req.feature_metrics.pop(feature)
+            changes.append(dict(requirement_id=req.id,field='feature_metrics',
+                rule='inactive_feature_binding',feature=feature))
+    return result,changes
+
+
+def decompose_scalar_draft(intent):
+    """Separate an explicitly declared whole-scope KPI from its grouped view.
+
+    Pure semantic structure: preserve selected metrics, filters and time; do not
+    infer features from prose or turn a ranked cohort into a full population.
+    This applies to an unapproved primary draft only, never a frozen repair.
+    """
+    import hashlib
+    result = intent.model_copy(deep=True)
+    ids = {r.id for r in result.requirements}
+    additions, changes = [], []
+    for req in result.requirements:
+        if req.availability != 'requested' or req.ranking or 'scalar' not in req.derived_features:
+            continue
+        if req.analysis_kind not in {'trend','aggregate','comparison','cross_tab'} or (
+                req.analysis_kind == 'aggregate' and not req.dimension_ids):
+            continue
+        targets = req.feature_metrics.get('scalar', req.metric_ids)
+        if not targets or not set(targets) <= set(req.metric_ids) or len(ids) >= 16:
+            continue
+        base = 'kpi_'+hashlib.sha256(req.id.encode()).hexdigest()[:16]
+        id = base
+        n = 1
+        while id in ids:
+            id = base+'_'+str(n); n += 1
+        kpi = req.model_copy(deep=True)
+        kpi.id = id; kpi.goal = 'Chỉ số tổng trong cùng phạm vi'
+        kpi.metric_ids = sorted(set(targets)); kpi.dimension_ids = []
+        kpi.analysis_kind = 'aggregate'; kpi.granularity = None
+        kpi.derived_features = ['scalar']; kpi.feature_metrics = {'scalar': sorted(set(targets))}
+        req.derived_features = [f for f in req.derived_features if f != 'scalar']
+        req.feature_metrics.pop('scalar', None)
+        ids.add(id); additions.append(kpi)
+        changes.append(dict(requirement_id=req.id,field='derived_features',
+            rule='scalar_scope_decomposition',scalar_requirement_id=id,metric_ids=kpi.metric_ids))
+    result.requirements.extend(additions)
+    return result, changes
+
+
 def repair_tool(issues, previous=None):
     """Use the same transport, but expose only fields authorized for repair.
 
@@ -130,6 +191,17 @@ def repair_tool(issues, previous=None):
         if not (previous and all(i['field']=='derived_features' for i in issues) and features and
                 all(any(kind(r) in shapes.get(f,set()) and r.availability=='requested'
                         for r in previous.requirements) for f in features)):
+            # Global missing work authorizes additions, not rewrites of frozen
+            # requirements. Exclude their IDs in the provider grammar as well
+            # as the existing local merge guard. Labels convey no SQL authority.
+            existing = {r.id for r in previous.requirements} if previous else set()
+            additions = [f'repair_add_{n}' for n in range(1, 33)
+                         if f'repair_add_{n}' not in existing][:max(0, 16-len(existing))]
+            item = tool['parameters']['properties']['requirements']['items']
+            item['properties']['id']['enum'] = sorted(targets) + additions
+            tool['description'] = ('Repair named targets with id and corrected fields only. '
+                'Missing work must use a new repair_add ID; never resend frozen requirements. '
+                'New requirements need complete meaning, including the original time scope.')
             return tool
         targets.update(r.id for r in previous.requirements if r.availability=='requested' and
                        any(kind(r) in shapes.get(f,set()) for f in features))

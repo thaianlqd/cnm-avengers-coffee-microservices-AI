@@ -26,9 +26,12 @@ CART_REF = deepcopy(REF)
 CART_REF['properties']['kind']['enum'].append('cart_ordinal')
 ORDER_REF = deepcopy(REF)
 ORDER_REF['properties']['kind']['enum'].append('last_created')
+PRODUCT_REF = deepcopy(REF)
+PRODUCT_REF['properties'].update(group=enum('drink', 'food'))
+PRODUCT_REF['properties']['kind']['enum'].append('group_ordinal')
 OPTIONS = obj({'size': TEXT, 'toppings': {'type': 'array', 'items': TEXT, 'maxItems': 16},
     'ice': TEXT, 'sweetness': TEXT, 'milk': TEXT})
-SELECTION = deepcopy(REF)
+SELECTION = deepcopy(PRODUCT_REF)
 SELECTION['properties']['quantity'] = QUANTITY
 
 
@@ -40,16 +43,24 @@ CHANGE = obj({'action': enum('REMOVE', 'SET_QUANTITY', 'CONFIGURE'), 'target': C
     'quantity': QUANTITY, 'options': OPTIONS}, ('action', 'target'))
 ORDER_CHANGE = obj({'action': enum('REMOVE', 'SET_QUANTITY', 'CONFIGURE'), 'target': REF,
     'quantity': QUANTITY, 'options': OPTIONS}, ('action', 'target'))
+GROUPS = array(enum('drink', 'food'), 2)
+DISCOVERY_FIELDS = {'scope': enum('drink', 'food', 'all'), 'query': {**TEXT, 'minLength': 0}, 'count': COUNT,
+    'menu_category': REF,
+    'basis': enum('name', 'price', 'sales', 'new', 'rating'), 'direction': enum('ascending', 'descending'),
+    'min_price': AMOUNT, 'max_price': AMOUNT, 'min_price_inclusive': BOOL, 'max_price_inclusive': BOOL, 'period': enum('day', 'week', 'month', 'year', 'all'),
+    'period_anchor': TEXT, 'exclude_previous': BOOL, 'requested_groups': GROUPS,
+    'group_counts': obj({'drink': COUNT, 'food': COUNT})}
 
 COMMAND_ARGS = {
-    'DISCOVER_PRODUCTS': obj({'scope': enum('drink', 'food', 'all'), 'query': {**TEXT, 'minLength': 0}, 'count': COUNT,
-        'basis': enum('name', 'price', 'sales', 'new', 'rating'), 'direction': enum('ascending', 'descending'),
-        'min_price': AMOUNT, 'max_price': AMOUNT,
-        'period': enum('day', 'week', 'month', 'year', 'all'), 'period_anchor': TEXT, 'exclude_previous': BOOL}, ('scope',)),
+    'READ_MENU': obj({'scope': enum('drink', 'food', 'all'), 'target': REF}),
+    'DISCOVER_PRODUCTS': obj(DISCOVERY_FIELDS, ('scope',)),
+    'REFINE_DISCOVERY': obj({'set': obj(DISCOVERY_FIELDS), 'clear': array(enum(*[k for k in DISCOVERY_FIELDS if k != 'scope'])),
+        'add_groups': GROUPS, 'remove_groups': GROUPS}),
     'RECOMMEND_PRODUCTS': obj({'scope': enum('drink', 'food', 'all'), 'concepts': array(TEXT, 4),
-        'family': TEXT, 'count': COUNT, 'exclude_previous': BOOL}, ('scope', 'concepts')),
-    'READ_PRODUCT_INFO': obj({'target': REF, 'facet': enum('description', 'ingredient', 'allergen', 'price', 'stock', 'options', 'reviews'),
-        'query': TEXT}, ('target', 'facet')),
+        'family': TEXT, 'count': COUNT, 'exclude_previous': BOOL, 'menu_category': REF,
+        'min_price': AMOUNT, 'max_price': AMOUNT, 'min_price_inclusive': BOOL, 'max_price_inclusive': BOOL}, ('scope', 'concepts')),
+    'READ_PRODUCT_INFO': obj({'target': PRODUCT_REF, 'facet': enum('description', 'ingredient', 'allergen', 'price', 'stock', 'options', 'reviews'),
+        'query': TEXT, 'targets': array(PRODUCT_REF), 'all_visible': BOOL, 'detail': enum('summary', 'detailed')}, ('facet',)),
     'SELECT_PRODUCTS': obj({'mode': enum('ALL_VISIBLE', 'EXPLICIT'),
         'references': {**array(SELECTION), 'minItems': 0}}, ('mode',)),
     'CONFIGURE_PRODUCT': obj({'target': PENDING_REF, 'options': OPTIONS, 'quantity': QUANTITY,
@@ -82,9 +93,9 @@ COMMAND_ARGS = {
     'ASK_KNOWLEDGE': obj({'query': TEXT, 'domain': enum('faq', 'policy', 'product_description', 'company', 'branches',
         'brand', 'privacy', 'refund', 'contact', 'careers', 'franchise', 'ordering_policy', 'promotion_policy',
         'membership', 'gift_card', 'ingredient', 'product_faq'),
-        'target': REF, 'facet': enum('description', 'ingredient', 'allergen')}, ('query', 'domain')),
+        'target': PRODUCT_REF, 'facet': enum('description', 'ingredient', 'allergen')}, ('query', 'domain')),
     'READ_STORE_INFO': obj({'facet': enum('branches', 'reviews', 'hours', 'policy'), 'target': REF,
-        'query': TEXT}, ('facet',)),
+        'query': TEXT, 'count': {'type': 'integer', 'minimum': 1, 'maximum': 5}}, ('facet',)),
     'COMPARE_BRANCH_REVIEWS': obj({'targets': array(REF, 5)}, ('targets',)),
 }
 ENVELOPE = obj({'kind': enum('commands', 'clarification', 'social'),
@@ -93,12 +104,13 @@ ENVELOPE = obj({'kind': enum('commands', 'clarification', 'social'),
 ENVELOPE['properties']['commands']['minItems'] = 0
 READ_INTENTS = frozenset({'DISCOVER_PRODUCTS', 'RECOMMEND_PRODUCTS', 'READ_PRODUCT_INFO', 'READ_CART',
     'LIST_VOUCHERS', 'LIST_PAYMENT_OPTIONS', 'LIST_ORDERS', 'READ_ORDER', 'ASK_KNOWLEDGE',
-    'READ_STORE_INFO', 'COMPARE_BRANCH_REVIEWS'})
+    'READ_STORE_INFO', 'COMPARE_BRANCH_REVIEWS', 'REFINE_DISCOVERY', 'READ_MENU'})
 FINAL_INTENTS = frozenset({'CONFIRM_CHECKOUT', 'CONFIRM_ORDER_CHANGE'})
 NORMALIZATION_AUDIT = {
     'json_object': 'Decode strict JSON; duplicate keys and nonfinite values rejected.',
     'canonical_integer': 'Canonical integer string at an explicitly integer schema field.',
     'commands_singleton': 'One command object becomes one-item commands array.',
+    'command_message_null': 'An omitted non-authoritative command message becomes null; all command validation still applies.',
 }
 
 
@@ -115,6 +127,10 @@ def validate_envelope(raw):
     if isinstance(value, dict) and isinstance(value.get('commands'), dict):
         value['commands'] = [value['commands']]
         rules.append('commands_singleton')
+    if (isinstance(value, dict) and value.get('kind') == 'commands' and 'message' not in value
+            and isinstance(value.get('commands'), list) and value['commands']):
+        value['message'] = None
+        rules.append('command_message_null')
     error = first_failure(value, ENVELOPE)
     if error:
         code, path = error
@@ -137,6 +153,30 @@ def validate_envelope(raw):
             return None, failure(*error), list(dict.fromkeys(rules))
         command['args'] = args
         path = f'/commands/{i}/args'
+        if intent in {'DISCOVER_PRODUCTS', 'REFINE_DISCOVERY', 'RECOMMEND_PRODUCTS'}:
+            criteria = args.get('set', {}) if intent == 'REFINE_DISCOVERY' else args
+            groups = criteria.get('requested_groups') or []
+            counts = criteria.get('group_counts') or {}
+            if len(groups) != len(set(groups)) or any(len(args.get(k, [])) != len(set(args.get(k, []))) for k in ('add_groups', 'remove_groups', 'clear')):
+                return None, failure('duplicate_discovery_group', path), rules
+            if groups and criteria.get('scope', 'all') != 'all' and groups != [criteria['scope']]:
+                return None, failure('discovery_scope_conflict', path), rules
+            if counts and (not groups or set(counts) != set(groups) or sum(counts.values()) > 16
+                           or 'count' in criteria and sum(counts.values()) != criteria['count']):
+                return None, failure('discovery_count_conflict', path), rules
+            if groups and criteria.get('count', 5) < len(groups):
+                return None, failure('discovery_count_conflict', path), rules
+            if criteria.get('min_price', 0) > criteria.get('max_price', 1000000000):
+                return None, failure('discovery_price_conflict', path), rules
+            if intent == 'REFINE_DISCOVERY' and (not any(args.values()) or
+                    set(args.get('add_groups', [])) & set(args.get('remove_groups', [])) or
+                    set(args.get('clear', [])) & set(criteria) or
+                    ('requested_groups' in criteria or 'scope' in criteria) and (args.get('add_groups') or args.get('remove_groups'))):
+                return None, failure('discovery_delta_conflict', path), rules
+        if intent == 'READ_PRODUCT_INFO':
+            selectors = sum(bool(args.get(k)) for k in ('target', 'targets', 'all_visible'))
+            if selectors != 1 or (args.get('targets') or args.get('all_visible')) and args['facet'] != 'reviews':
+                return None, failure('product_information_target_conflict', path), rules
         if intent == 'SELECT_PRODUCTS' and ((args['mode'] == 'EXPLICIT' and not args.get('references'))
                 or (args['mode'] == 'ALL_VISIBLE' and args.get('references'))):
             return None, failure('selection_mode_conflict', path + '/references'), rules
@@ -157,10 +197,14 @@ def validate_envelope(raw):
         # Reference conditional grammar is checked independently of key names.
         def refs(item, at):
             if isinstance(item, dict):
-                if 'kind' in item and 'kind' in REF['properties'] and item.get('kind') in PENDING_REF['properties']['kind']['enum'] + ['cart_ordinal', 'last_created']:
+                if 'kind' in item and item.get('kind') in PENDING_REF['properties']['kind']['enum'] + ['cart_ordinal', 'last_created', 'group_ordinal']:
                     kind = item['kind']
-                    ordinal = kind in {'ordinal', 'pending_ordinal', 'cart_ordinal'}
+                    ordinal = kind in {'ordinal', 'pending_ordinal', 'cart_ordinal', 'group_ordinal'}
                     required = 'index' if ordinal else 'value' if kind in {'name', 'id'} else None
+                    if kind == 'group_ordinal' and 'group' not in item:
+                        return failure('missing_reference_group', at + '/group')
+                    if kind != 'group_ordinal' and 'group' in item:
+                        return failure('invalid_reference_group', at + '/group')
                     if required and required not in item:
                         return failure('missing_reference_value', at + '/' + required)
                     if ('index' in item and not ordinal or 'value' in item and kind not in {'name', 'id'}):
@@ -182,7 +226,7 @@ def validate_envelope(raw):
         return None, failure('final_confirmation_must_be_standalone', '/commands'), rules
     exclusive = {'SELECT_PRODUCTS', 'EDIT_CART', 'SET_PAYMENT', 'SET_FULFILLMENT',
         'CHOOSE_VOUCHER', 'SKIP_VOUCHER', 'REMOVE_VOUCHER', 'PROVIDE_LOCATION', 'SELECT_PROFILE_ADDRESS',
-        'SELECT_LOCATION_CANDIDATE', 'PREPARE_ORDER_CHANGE', 'REORDER_ORDER'}
+        'SELECT_LOCATION_CANDIDATE', 'PREPARE_ORDER_CHANGE', 'REORDER_ORDER', 'REFINE_DISCOVERY'}
     if any(intents.count(i) > 1 for i in exclusive):
         return None, failure('conflicting_duplicate_command', '/commands'), rules
     if len(set(intents) & {'CHOOSE_VOUCHER', 'SKIP_VOUCHER', 'REMOVE_VOUCHER'}) > 1:

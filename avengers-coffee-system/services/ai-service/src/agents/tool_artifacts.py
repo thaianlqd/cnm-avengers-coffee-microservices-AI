@@ -7,7 +7,7 @@ from src.agents.agent_memory import compact, snapshot, safe_text
 from src.agents.discovery_contract import (DISCOVERY_TOOLS, DISCOVERY_RESPONSE_CONTRACT,
     normalize_discovery_args, discovery_signature, complementary_pair_complete)
 from src.rag.documents import normalize_text
-from src.agents.product_display import numbered_products, PRODUCT_GROUP_LABELS, PRODUCT_REFERENCE_LABELS
+from src.agents.product_display import numbered_products, product_bucket, PRODUCT_GROUP_LABELS, PRODUCT_REFERENCE_LABELS
 
 SUCCESS = {'success', 'ok', 'require_confirmation', 'already_processed', 'need_branch_selection', 'ambiguous', 'rejected'}
 RAG_TOOLS = {'search_knowledge_base', 'get_product_description'}
@@ -178,6 +178,8 @@ class ToolArtifacts:
         from src.agents.shopping_language import requested_discovery_family
         self.discovery_scope = None if semantic_mode else requested_discovery_family(self.knowledge_question)
         self.visible = dict(memory.get('visible_snapshots') or {})
+        self.product_display = deepcopy((context or {}).get('product_display') or memory.get('product_display') or {})
+        self.hybrid_display_owned = False
         self.focus = dict(memory.get('focus') or {})
         pending_products = ((context or {}).get('business') or {}).get('pending_products') or []
         self.has_canonical_product = bool(self.focus.get('product') or len(pending_products) == 1)
@@ -233,16 +235,23 @@ class ToolArtifacts:
             return True  # A scoped description search is a complete recommendation read.
         return complementary_pair_complete(self.discovery_batches)
 
-    def _publish_products(self, ids, source):
+    def _publish_products(self, ids, source, refreshed_groups=None):
         canonical = {**self.product_candidates,
             **{str(row['product_id']): row for row in self.ui['products']}}
-        self.ui['products'] = numbered_products([canonical[key] for key in ids])
+        rows = [canonical[key] for key in ids]
+        grouped = self.hybrid_display_owned and len({product_bucket(row) for row in rows}) > 1
+        self.ui['products'] = numbered_products(rows, grouped=grouped)
         self.visible['menu_categories'] = []
         self.visible['products'] = snapshot('products', self.ui['products'])
         for bucket in ('drink', 'food'):
             rows = [row for row in self.ui['products'] if row.get('menu_bucket') == bucket]
-            if rows:
+            if rows or self.hybrid_display_owned and bucket in (refreshed_groups or []):
                 self.visible[bucket + '_products'] = snapshot('products', rows)
+        if self.hybrid_display_owned:
+            from src.agents.product_collections import publication
+            refreshed = refreshed_groups if refreshed_groups is not None else list({product_bucket(row) for row in self.ui['products']} & {'drink', 'food'})
+            self.product_display = publication(self.product_display, self.visible, refreshed, source,
+                self.business.get('checkout', {}).get('last_created_order_id'))
         self.display_selection_source = source
         self.validated_display_product_count = len(ids)
         focus = self.focus.get('product') or {}
@@ -262,6 +271,9 @@ class ToolArtifacts:
                for row in self.logs):
             self.ui['products'] = []
             self.visible.pop('products', None)
+            for group in ('drink_products', 'food_products'):
+                self.visible.pop(group, None)
+            self.product_display = {}
             self.validated_display_product_count = 0
             self.display_selection_source = None
             return  # A completed order must not resurrect earlier discovery cards.
@@ -372,6 +384,10 @@ class ToolArtifacts:
             self.visible['products'] = []
             self.ui['products'] = []
             self.focus.pop('product', None)
+            if self.hybrid_display_owned:
+                from src.agents.product_collections import publication
+                self.product_display = publication(self.product_display, self.visible, [], 'hybrid_menu_categories',
+                    self.business.get('checkout', {}).get('last_created_order_id'))
         product = result.get('canonical_product')
         if product and product.get('product_id') and product.get('product_name'):
             self.focus['product'] = {**product, 'source': name}
@@ -399,6 +415,11 @@ class ToolArtifacts:
                     'branch_name': branch.get('branch_name') or branch.get('ten_chi_nhanh')}
         if name in {'resolve_location', 'select_location_candidate'} and result.get('normalized_location'):
             self.focus['location'] = {'normalized_label': result['normalized_location']}
+        if name in {'get_top_rated_stores', 'get_store_info'} and result.get('status') in {'ok', 'not_found'}:
+            self.visible['branches'] = []
+            self.ui['branches'] = []
+        if name == 'get_top_rated_stores' and result.get('status') == 'ok':
+            result = {**result, 'branches': result.get('stores') or []}
         for kind in ('products', 'vouchers', 'branches', 'location_candidates', 'payment_options'):
             rows = result.get(kind)
             if not isinstance(rows, list) or not rows:
@@ -450,6 +471,7 @@ class ToolArtifacts:
     def memory_update(self, memory, user_message, reply, stage):
         self.finalize_display()
         return {**memory, 'visible_snapshots': self.visible, 'focus': self.focus,
+            'product_display': self.product_display,
             'recent_turns': list(memory.get('recent_turns') or []) + [
                 {'role': 'user', 'content': safe_text(user_message)}, {'role': 'assistant', 'content': safe_text(reply)}],
             'last_active_business_stage': stage,
@@ -760,6 +782,8 @@ class ToolArtifacts:
             period = labels.get(ranking.get('period'), 'khoảng đã chọn')
             anchor = ranking.get('period_anchor')
             lines[0] = f'Dạ, các món có số lượng bán nhiều nhất trong **{period}' + (f' chứa ngày {anchor}' if anchor else ' hiện tại' if period != 'toàn bộ thời gian' else '') + '** (đơn đã hoàn thành và thanh toán):'
+        elif any(r['args'].get('sort_by') in {'rating_asc', 'rating_desc'} or r['args'].get('criteria') == 'rating' for r in reads):
+            lines[0] = 'Dạ, đây là các món xếp theo **điểm đánh giá trung bình** trong hệ thống:'
         elif not self.semantic_mode and re.search(r'\b(?:mat|giai nhiet|giai khat|troi nong|nang nong)\b', user_norm):
             lines[0] = 'Dạ, hôm nay trời nóng, mình gợi ý bạn các món đồ uống thanh mát, giải nhiệt rất thích hợp nhé:'
         products = self.ui['products']
@@ -783,13 +807,16 @@ class ToolArtifacts:
             line = f"{index}. **{product['product_name']}**" + (f" — **{money(price)}**" if price is not None else '')
             if product.get('sold_count') is not None and asks_ranking:
                 line += f"\nĐã bán **{product['sold_count']}** sản phẩm trong **{product.get('order_count', 0)}** đơn."
+            if product.get('avg_rating') is not None and product.get('total_reviews'):
+                line += f"\n**{product['avg_rating']:.2f}/5 sao** từ **{product['total_reviews']} lượt đánh giá**."
             if product.get('la_moi') and not ranking:
                 line += '\nMón mới trong Menu.'
             # Keep the exact product identity; never use another product's text
             # or infer its contents from the display name/category.
             source = list(dict.fromkeys(descriptions.get(str(product['product_id']), [])))
             if source:
-                line += '\n' + '\n\n'.join(source)
+                from src.agents.product_information_presentation import highlight_description
+                line += '\n' + '\n\n'.join(highlight_description(text) for text in source)
             lines.append(line)
         if mixed and all(bucket in PRODUCT_REFERENCE_LABELS for bucket in buckets):
             lines.append('Bạn có thể chọn theo nhóm: ' + ', '.join(

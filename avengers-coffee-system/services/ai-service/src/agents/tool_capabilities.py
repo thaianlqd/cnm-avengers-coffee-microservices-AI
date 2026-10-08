@@ -14,6 +14,8 @@ class Capability:
 
 
 READS = {
+    'get_products_reviews': ('reviews', 'scoped_product_reviews'),
+    'get_store_info': ('identity', 'branches/hours'),
     'get_menu_categories': ('menu', 'menu_categories'),
     'compare_branch_reviews': ('reviews', 'scoped_branch_reviews'),
     'filter_catalog': ('menu', 'products'), 'get_recommendations': ('menu', 'products'),
@@ -73,6 +75,10 @@ STRING = {'type': 'string'}
 OPTION_PROPERTIES = {key: STRING for key in ('size', 'kich_co', 'luong_da', 'ice', 'do_ngot', 'sugar', 'loai_sua', 'milk')}
 OPTION_PROPERTIES['toppings'] = {'type': 'array', 'items': STRING, 'maxItems': 16}
 CUSTOM_SCHEMAS = {
+    'get_products_reviews': schema('get_products_reviews', {'product_ids': {'type':'array', 'items':STRING, 'minItems':1, 'maxItems':16}}, ('product_ids',)),
+    'get_store_info': schema('get_store_info', {'branch_id': STRING, 'search_text': STRING, 'area': STRING,
+        'limit': {'type':'integer', 'minimum':1, 'maximum':5}},
+        description='Read active canonical branches and published hours for an informational question, independent of cart/checkout. Kiosks have no published hours in this source.'),
     'get_menu_categories': schema('get_menu_categories', description='Read menu categories before showing products for a generic menu request.'),
     'compare_branch_reviews': schema('compare_branch_reviews', {
         'branch_ids': {'type': 'array', 'minItems': 1, 'maxItems': 5, 'items': STRING}}, ('branch_ids',),

@@ -36,6 +36,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "forecast_unsupported",
     }
     messages = {
+        'planning_timeout': 'Hệ thống chưa hoàn tất lập kế hoạch trong giới hạn 30 giây. Đây là lỗi xử lý hoặc thời gian phản hồi của hệ thống; câu hỏi được giữ nguyên và chưa cần bổ sung thông tin.',
         'capacity_requires_choice': 'Phạm vi và nhịp thời gian yêu cầu vượt dung lượng thực thi. Chọn khoảng thời gian ngắn hơn, ít nhóm hơn hoặc nhịp tuần/tháng; hệ thống chưa thay đổi yêu cầu của bạn.',
         'artifact_store_unavailable': 'Kho kết quả phân tích chưa sẵn sàng. Dữ liệu lớn chưa được lưu vào phiên; cần khôi phục kho kết quả.',
         'artifact_expired': 'Kết quả phân tích đã hết hạn lưu trữ. Hãy làm mới báo cáo để lấy dữ liệu hiện tại.',
@@ -157,7 +158,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
                else 'UNSUPPORTED' if issue['category'] in {'METRIC_UNAVAILABLE', 'UNSUPPORTED_ANALYSIS'}
                else 'NEEDS_INPUT' if issue['category'] in {'NEEDS_CLARIFICATION', 'SCOPE_CONFLICT', 'TIME_CONFLICT', 'REQUESTED_SCOPE_TOO_LARGE'}
                else 'SYSTEM_ERROR')
-    stages = {'capacity_requires_choice':'CAPACITY_PLANNING', 'capacity_configuration':'CAPACITY_PLANNING',
+    stages = {'planning_timeout':'PLANNING_DEADLINE', 'capacity_requires_choice':'CAPACITY_PLANNING', 'capacity_configuration':'CAPACITY_PLANNING',
               'artifact_store_unavailable':'ARTIFACT_PERSISTENCE', 'artifact_expired':'ARTIFACT_PERSISTENCE',
               'artifact_integrity':'ARTIFACT_PERSISTENCE', 'artifact_capacity':'ARTIFACT_PERSISTENCE',
               'dry_run_failed':'DRY_RUN', 'response_capacity':'RESPONSE_SERIALIZATION',

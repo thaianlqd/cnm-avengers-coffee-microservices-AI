@@ -669,6 +669,7 @@ def reset_conversation_draft(session_id: str) -> Dict[str, Any]:
             "location_address", "stock_conflicts", "pending_action",
             "partial_delivery_address", "address_change_requested",
             "profile_address_candidates", "location_pending", "last_product_focus",
+            "hybrid_product_display", "hybrid_discovery_state", "last_product_suggestions",
             "profile_location_offer", "profile_location_checked_for",
             "store_location", "location_source",
             "location_candidate_snapshot", "selected_location_candidate",

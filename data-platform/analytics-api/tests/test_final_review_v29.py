@@ -15,6 +15,20 @@ from evals.run_eval_v29 import rates
 from tests import test_hybrid_v28 as f
 from tests.test_capacity_v29 import req
 from tests.analysis_fixtures import physical_metadata
+from evals.fixture_warehouse import FixtureWarehouse
+
+OVERVIEW_45D = ('Tổng hợp hoạt động kinh doanh trong 45 ngày gần nhất: doanh thu, số đơn và giá trị đơn trung bình. '
+    'Hiển thị xu hướng theo tuần, so sánh doanh thu giữa các loại đơn và tính tỷ trọng doanh thu của từng loại. '
+    'Làm rõ phạm vi trạng thái đơn dùng để tính từng chỉ số.')
+
+
+def malformed_overview():
+    # Reconstructed from the recorded shapes/issues; raw model output absent.
+    return f.envelope(req('req_1',['revenue','order_count','aov'],['order_type'],
+        kind='trend',days=45,granularity='week',features=['scalar'],
+        feature_metrics={'scalar':['revenue','order_count','aov']}),
+        req('req_2',['revenue'],['order_type'],kind='cross_tab',days=45,
+            features=['contribution_share'],feature_metrics={'contribution_share':['revenue']}))
 
 
 class FinalReviewTests(unittest.TestCase):
@@ -153,3 +167,36 @@ class FinalReviewTests(unittest.TestCase):
         p=self.pipeline(f.scripted(raw,bad,bad))
         with self.assertRaises(AnalysisError):p.propose(self.request('Doanh thu và giá trị đơn trung bình theo chi nhánh trong 90 ngày gần nhất'))
         self.assertEqual(p.provider.call_count,3);p.executor.assert_not_called()
+
+    def test_recorded_overview_normalizes_scalar_scope_then_reports(self):
+        warehouse=FixtureWarehouse(self.catalog.overlay);self.addCleanup(warehouse.close)
+        p=self.pipeline(f.scripted(malformed_overview()),executor=Mock(wraps=warehouse))
+        request=self.request(OVERVIEW_45D);proposal=p.propose(request)
+        self.assertIn('scalar_scope_decomposition',{n['rule'] for n in proposal['diagnostics']['semantic_normalizations']})
+        p.executor.assert_not_called();self.assertEqual(p.provider.call_count,1)
+        f.approve(request,proposal);report=p.generate(request)
+        self.assertEqual(report['outcome'],'SUCCESS');self.assertEqual(p.provider.call_count,1)
+        self.assertTrue(all(c['state']=='RESOLVED' for c in report['resolved_requirement_coverage']))
+        self.assertTrue({'bar','donut'}.issubset({c['chart_type'] for c in report['charts']}))
+        self.assertTrue(any(c['chart_type'] in {'line','multi_line'} for c in report['charts']))
+
+    def test_batched_coverage_does_not_unlock_accepted_axes_or_time(self):
+        raw=malformed_overview()
+        raw['requirements'][0]['derived_features']=['leader']
+        raw['requirements'][0]['feature_metrics']={'leader':['revenue']}
+        question=OVERVIEW_45D+' Thống kê số đơn theo trạng thái đơn.'
+        for changed in ({'dimension_ids':['order_status']},{'time':{'kind':'relative','mode':'all_time'}}):
+            with self.subTest(changed=changed):
+                attack=f.envelope({'id':'req_1','derived_features':[],'feature_metrics':{},**changed})
+                p=self.pipeline(f.scripted(raw,attack,attack))
+                with self.assertRaises(AnalysisError):p.propose(self.request(question))
+                self.assertEqual(p.provider.call_count,3);p.executor.assert_not_called()
+                self.assertEqual(p.semantic_info['failure_code'],'untargeted_field_changed')
+
+    def test_global_missing_dimension_schema_excludes_frozen_requirements(self):
+        from services.analysis_intent import repair_tool
+        previous=AnalysisIntentEnvelope.model_validate(f.envelope(req('req_1',['order_count'],['order_type'],days=45)))
+        tool=repair_tool([dict(requirement_id=None,field='dimension_ids',code='explicit_dimensions_missing',candidate_ids=['order_status'])],previous)
+        ids=tool['parameters']['properties']['requirements']['items']['properties']['id']['enum']
+        self.assertNotIn('req_1',ids);self.assertIn('repair_add_1',ids)
+        self.assertEqual(len(ids),15)

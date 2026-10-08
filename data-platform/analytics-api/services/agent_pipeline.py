@@ -359,6 +359,8 @@ class AnalysisPipeline:
         ).model_dump(mode="json")
 
     def propose(self, request):
+        from services.provider_budget import check_request_deadline
+        check_request_deadline()
         catalog = self.catalog()
         reference = self.reference(request, catalog)
         context = self.ui_context(request, catalog, reference)
@@ -369,6 +371,7 @@ class AnalysisPipeline:
             module = modules.resolve(self.owner_id, request.analysis_module_id, request.analysis_module_name, catalog)
             previous, concepts = modules.prepare_context(self, module, catalog, reference, context)
         artifacts, plan = self.agent(catalog, reference, proposal=True, previous=previous, known_concepts=concepts).run(request.prompt, context)
+        check_request_deadline()
         self.enforce_ui(artifacts, context)
         session = create_session(request.prompt, request.domain or "auto", owner_id=self.owner_id)
         session.owner_id = self.owner_id

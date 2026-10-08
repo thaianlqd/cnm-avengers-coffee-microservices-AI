@@ -63,5 +63,5 @@ test('verification appears below views and before expandable tables on desktop a
   const html = renderToStaticMarkup(React.createElement(AnalystDashboard, { report: { charts: [], quality_assessment: q, result_sets: { a: { rows: [{ qty: 1 }], columns: ['qty'] } } } }));
   assert.ok(html.indexOf('data-dashboard-grid') < html.indexOf('data-analysis-quality'));
   assert.ok(html.indexOf('data-analysis-quality') < html.indexOf('Bảng dữ liệu'));
-  assert.match(html, /grid-cols-1 lg:grid-cols-2/); assert.match(html, /grid-cols-1 md:grid-cols-2/);
+  assert.match(html, /grid-cols-1 lg:grid-cols-6/); assert.match(html, /grid-cols-1 md:grid-cols-2/);
 });

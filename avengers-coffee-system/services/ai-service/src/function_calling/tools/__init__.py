@@ -1,4 +1,6 @@
 from typing import Dict, Any, List
+from .store_information_tools import execute_get_store_info
+from .product_review_tools import execute_get_products_reviews
 
 from .branch_tools import (
     TOOL_ASK_BRANCH, execute_ask_branch,
@@ -72,6 +74,8 @@ ALL_TOOL_SCHEMAS: List[Dict[str, Any]] = [
 # Dispatch map: tool_name -> executor function
 # Backend injection for session_id via lambda args, session_id
 TOOL_EXECUTORS = {
+    "get_products_reviews": lambda args, session_id: execute_get_products_reviews(**args),
+    "get_store_info": lambda args, session_id: execute_get_store_info(**args),
     "ask_branch": lambda args, session_id: execute_ask_branch(session_id=session_id),
     "find_nearest_branch": lambda args, session_id: execute_find_nearest_branch(session_id=session_id, **args),
     "set_session_branch": lambda args, session_id: execute_set_session_branch(session_id=session_id, **args),

@@ -53,6 +53,22 @@ def request_anchors(question, catalog, ui):
     output['dimensions'] = [d for d in output['dimensions'] if not any(
         m['start'] <= d['start'] and d['end'] <= m['end'] and m['end']-m['start'] > d['end']-d['start']
         for m in output['metrics'])]
+    # Qualified catalog-definition mentions have a different coverage role
+    # from grouping axes. This finite metadata lexicon applies to ALL dimensions;
+    # it neither selects an analytical subject nor generates a query.
+    scope_vocabulary = {}
+    for id, definition in r['dimensions'].items():
+        for alias in [definition['business_name'], *definition.get('aliases', [])]:
+            for qualifier in r.get('population_scope_qualifiers', []):
+                scope_vocabulary.setdefault(value_text(qualifier+' '+alias), set()).add(id)
+    output['population_scopes'] = exact_mentions(text, scope_vocabulary)
+    grouping = exact_mentions(text, {value_text(prefix)+' '+phrase: ids
+        for prefix in r.get('grouping_qualifiers', []) for phrase,ids in scope_vocabulary.items()})
+    output['population_scopes'] = [s for s in output['population_scopes'] if not any(
+        g['start'] <= s['start'] and s['end'] <= g['end'] for g in grouping)]
+    output['dimensions'] = [d for d in output['dimensions'] if not any(
+        s['start'] <= d['start'] and d['end'] <= s['end'] and
+        set(d['candidate_ids']) <= set(s['candidate_ids']) for s in output['population_scopes'])]
     feature_vocabulary = {}
     for id, definition in r.get("derived_features", {}).items():
         for alias in definition.get("aliases", []):
@@ -137,10 +153,57 @@ def complete_unique_grouping(intent, anchors, index):
     return result,[dict(requirement_id=target.id,field='dimension_ids',rule='unique_unrepresented_explicit_grouping',dimension_ids=sorted(dimensions))]
 
 
+def complete_explicit_share_targets(intent, anchors, catalog):
+    """Complete only uniquely proven user feature/metric bindings in a draft.
+
+    The metric mention must be contained in the catalog feature phrase. Multiple
+    compatible requirements/metrics remain unresolved. Never repair frozen scope,
+    silently make averages additive, or supply an unmentioned business feature.
+    """
+    result = intent.model_copy(deep=True)
+    changes = []
+    for feature in anchors.get('features', []):
+        if feature['candidate_ids'] != ['contribution_share']:
+            continue
+        named = {m for a in anchors['metrics'] if feature['start'] <= a['start'] and
+                 a['end'] <= feature['end'] for m in a['candidate_ids']}
+        if not named:
+            continue
+        eligible = []
+        for req in result.requirements:
+            if req.availability != 'requested' or not req.dimension_ids or req.analysis_kind not in {
+                    'aggregate','comparison','cross_tab','ranking','distribution'}:
+                continue
+            targets = set(req.metric_ids) & named
+            if len(targets) != 1 or not catalog.registry['metrics'][next(iter(targets))].get('additive'):
+                continue
+            if req.ranking and req.ranking.metric_id not in targets:
+                continue
+            eligible.append((req, sorted(targets)))
+        if len(eligible) != 1:
+            continue
+        req, targets = eligible[0]
+        if 'contribution_share' not in req.derived_features or req.feature_metrics.get('contribution_share') != targets:
+            req.derived_features = sorted(set(req.derived_features) | {'contribution_share'})
+            req.feature_metrics['contribution_share'] = targets
+            changes.append(dict(requirement_id=req.id,field='feature_metrics',
+                rule='unique_explicit_user_feature_target',feature='contribution_share',metric_ids=targets))
+    return result, changes
+
+
 def verify_anchors(anchors, requirements, reference, catalog):
     from services.time_resolution_service import resolve_time
     issues = []
+    requirements = [r for r in requirements if not r.supporting_for]
     requested = [r for r in requirements if r.availability == "requested"]
+    selected = {m for req in requested for m in req.metric_ids if m in catalog.registry['metrics']}
+    for scope in anchors.get('population_scopes', []):
+        # Definitions are reported for every executed metric. A qualified scope
+        # is covered only when selected catalog metrics actually expose it.
+        if not any(catalog.registry['metrics'][m].get('population_definition') and
+                   d in catalog.compatible_dimensions(m) for m in selected for d in scope['candidate_ids']):
+            issues.append(dict(requirement_id=None,field='metric_ids',code='population_scope_unavailable',
+                               candidate_ids=scope['candidate_ids']))
     for kind, field in (("metrics", "metric_ids"), ("dimensions", "dimension_ids"), ("features", "derived_features")):
         represented = {id for r in requirements for id in getattr(r, field)}
         if kind == 'metrics':

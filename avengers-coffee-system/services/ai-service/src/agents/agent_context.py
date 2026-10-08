@@ -47,6 +47,7 @@ def business_state(session_id, shadow=False):
             and prefs.get('summary_fingerprint') == cart_manager.cart_fingerprint(session_id)
             and float(prefs.get('checkout_action_expires_at') or 0) > time.time()),
         'pending': deepcopy(prefs.get('pending_action')),
+        'discovery_state': deepcopy(prefs.get('hybrid_discovery_state') or {}),
         'pending_products': deepcopy(prefs.get('pending_products') or [])}
 
 
@@ -56,6 +57,17 @@ def build_context(session_id, memory, history=None, selected_product_id=None, sh
     # carry no authority for a write. Gateway refreshes every proposed target.
     prefs = ((cart_manager._SESSION_CARTS.get(session_id) or {}).get('checkout_prefs') or {}) if shadow else cart_manager.get_checkout_prefs(session_id)
     visible = dict(memory.get('visible_snapshots') or {})
+    product_display = dict(memory.get('product_display') or {})
+    durable_display = prefs.get('hybrid_product_display') or {}
+    if not product_display and durable_display:
+        product_display = dict(durable_display.get('metadata') or {})
+        visible.update(durable_display.get('visible') or {})
+    last_order = state['checkout'].get('last_created_order_id')
+    reset_products = bool(product_display and product_display.get('last_order_id') != last_order)
+    if reset_products:
+        for kind in ('products', 'drink_products', 'food_products'):
+            visible[kind] = []
+        product_display = {}
     fallbacks = {'products': prefs.get('last_product_suggestions'), 'branches': prefs.get('branch_candidates'),
         'vouchers': prefs.get('voucher_candidates'),
         'location_candidates': (prefs.get('location_candidate_snapshot') or {}).get('candidates')}
@@ -65,10 +77,14 @@ def build_context(session_id, memory, history=None, selected_product_id=None, sh
     if prefs.get('location_candidate_snapshot') or prefs.get('confirmed_destination'):
         visible['location_candidates'] = snapshot('location_candidates', fallbacks['location_candidates'])
     for kind, rows in fallbacks.items():
+        if kind == 'products' and (reset_products or product_display):
+            continue
         if not visible.get(kind):
             visible[kind] = snapshot(kind, rows)
     focus = dict(memory.get('focus') or {})
-    if not focus.get('product') and prefs.get('last_product_focus'):
+    if reset_products:
+        focus.pop('product', None)
+    if not reset_products and not focus.get('product') and prefs.get('last_product_focus'):
         focus['product'] = compact(prefs['last_product_focus'])
     recent = memory.get('recent_turns') or history or []
     sensitive = bool(state['pending'] or state['pending_products'] or focus or selected_product_id)
@@ -77,7 +93,7 @@ def build_context(session_id, memory, history=None, selected_product_id=None, sh
     recent = [{'role': row['role'], 'content': safe_text(row.get('content'), 700)}
               for row in recent if row.get('role') in {'user', 'assistant'}]
     recent = recent[-2*model_turns:] if model_turns else []
-    context = {'business': state, 'visible': visible, 'focus': focus,
+    context = {'business': state, 'visible': visible, 'focus': focus, 'product_display': product_display,
                'selected_product_id': selected_product_id, 'recent': recent}
     return bound_context(context) if project else (context, None)
 

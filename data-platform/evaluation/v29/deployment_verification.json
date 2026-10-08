@@ -1,24 +1,25 @@
 {
-  "version": "2.9.1",
-  "date": "2026-10-08",
+  "version": "2.9.6",
+  "date": "2026-10-09",
   "original_v29_starting_head": "354e3aad443f546b7fa97b234904d15b48cc0da2",
   "v29_implementation_commit": "830470c5ff5a375b6ebd12c9af000667cb539276",
   "starting_head": "830470c5ff5a375b6ebd12c9af000667cb539276",
-  "verified_current_head": "830470c5ff5a375b6ebd12c9af000667cb539276",
-  "final_fix_commit": null,
-  "final_fix_commit_status": "Uncommitted final review fixes; user may commit/push",
+  "verified_current_head": "19ac766666e89fa76c33195527cdefab8c811667",
+  "final_fix_commit": "19ac766666e89fa76c33195527cdefab8c811667",
+  "final_fix_commit_status": "Initial review fixes committed by user; subsequent overview follow-ups remain uncommitted",
   "backend_suite": {
-    "passed": 635,
-    "total": 635,
-    "seconds": 233.787,
+    "passed": 666,
+    "total": 666,
+    "seconds": 231.259,
     "runner": "python -m tools.run_tests_v29",
     "offline": true
   },
   "frontend_suite": {
-    "passed": 96,
-    "total": 96,
+    "passed": 98,
+    "total": 98,
     "typecheck": "passed",
-    "production_build": "passed"
+    "production_build": "passed",
+    "followup_status": "Updated dashboard; all 98 tests, typecheck and build rerun"
   },
   "offline_evaluation": {
     "passed": 110,
@@ -36,13 +37,11 @@
   ],
   "other_services": {
     "checked": 19,
-    "started_at_unchanged_count": 18,
+    "started_at_unchanged_count": 19,
     "customer_chatbot_untouched": true,
     "manual_restarts": 0,
-    "automatic_restarts_observed": [
-      "avengers_redis"
-    ],
-    "reason": "Redis restarted automatically during background save and large synthetic probe; 128 MiB container limit versus 153030832 logical used-memory bytes, resource pressure suspected, OOM not proven"
+    "automatic_restarts_observed": [],
+    "scope": "Before/after 2.9.6 deployment; prior Redis resource observations retained in history"
   },
   "container_health": {
     "avengers_analytics_api": "healthy",
@@ -52,7 +51,7 @@
     "status": "ok",
     "check": "liveness",
     "service": "avengers-analytics-api",
-    "version": "2.9.1",
+    "version": "2.9.6",
     "provider_budget": 3,
     "session_backend": "redis",
     "artifact_backend": "redis",
@@ -62,7 +61,7 @@
     "status": "ok",
     "check": "liveness",
     "service": "avengers-analytics-api",
-    "version": "2.9.1",
+    "version": "2.9.6",
     "provider_budget": 3,
     "session_backend": "redis",
     "artifact_backend": "redis",
@@ -71,7 +70,7 @@
   "api_readiness": {
     "status": "ready",
     "service": "avengers-analytics-api",
-    "version": "2.9.1",
+    "version": "2.9.6",
     "session_backend": "redis",
     "artifact_backend": "redis",
     "backend_configuration_valid": true,
@@ -84,7 +83,7 @@
   "web_proxy_readiness": {
     "status": "ready",
     "service": "avengers-analytics-api",
-    "version": "2.9.1",
+    "version": "2.9.6",
     "session_backend": "redis",
     "artifact_backend": "redis",
     "backend_configuration_valid": true,
@@ -98,7 +97,8 @@
     "http_status": 503,
     "redis_available": false,
     "liveness_status": "ok",
-    "stopped_redis": false
+    "stopped_redis": false,
+    "verified_runtime_version": "2.9.1; unchanged check also covered by current offline suite"
   },
   "frontend_http_status": 200,
   "redis_runtime_probe": {
@@ -118,7 +118,8 @@
     "cache_does_not_mask_outage": true,
     "audit_owned_session_deleted": true,
     "live_provider_requests": 0,
-    "warehouse_writes": 0
+    "warehouse_writes": 0,
+    "verified_runtime_version": "2.9.1"
   },
   "large_real_redis_probe": {
     "status": "failed_dependency",
@@ -127,5 +128,433 @@
   },
   "pagination_strategy": "OPTION_A_VERIFIED_FULL_BLOB_WITH_BOUNDED_DECODED_CACHE",
   "LIVE_PROVIDER_REQUESTS": 0,
-  "WAREHOUSE_WRITES": 0
+  "WAREHOUSE_WRITES": 0,
+  "followup_fix_commit": null,
+  "overview_followup": {
+    "observed_error": "Qualified population scope misclassified as grouping; invalid share targets; duplicate executable queries caused eight-operation overflow",
+    "intake_head": "830470c5ff5a375b6ebd12c9af000667cb539276",
+    "prior_work_committed_during_followup": "19ac766666e89fa76c33195527cdefab8c811667",
+    "focused_tests": {
+      "passed": 70,
+      "total": 70,
+      "seconds": 49.255
+    },
+    "reproduction": "Exact user question; reconstructed primary intents from recorded shapes/issues, raw model envelopes absent",
+    "scripted_recovery": {
+      "user_submissions": 1,
+      "provider_calls": 1,
+      "binding_variants": 4,
+      "report_outcome": "SUCCESS",
+      "charts": [
+        "bar",
+        "donut",
+        "multi_line"
+      ],
+      "scalar_draft_decomposition": true,
+      "frozen_axis_and_time_attacks_rejected": true
+    },
+    "api_build": "passed",
+    "recreated_services": [
+      "analytics-api"
+    ],
+    "other_services": {
+      "checked": 20,
+      "started_at_unchanged": true
+    },
+    "LIVE_PROVIDER_REQUESTS": 0,
+    "WAREHOUSE_WRITES": 0,
+    "current_followup_intake_head": "19ac766666e89fa76c33195527cdefab8c811667",
+    "migrated_overview_tests": {
+      "passed": 10,
+      "total": 10,
+      "seconds": 6.845
+    },
+    "exact_query_reuse": {
+      "semantic_requirements": 9,
+      "physical_queries": 2,
+      "coverage_retained": true,
+      "distinct_nine_query_scopes_rejected": true
+    },
+    "deployed_readonly_overview": {
+      "status": "passed",
+      "question": "Tổng hợp hoạt động kinh doanh trong 45 ngày gần nhất: doanh thu, số đơn và giá trị đơn trung bình. Hiển thị xu hướng theo tuần, so sánh doanh thu giữa các loại đơn và tính tỷ trọng doanh thu của từng loại. Làm rõ phạm vi trạng thái đơn dùng để tính từng chỉ số.",
+      "meaning_source": "Reconstructed scripted primary intent; real read-only warehouse and Redis",
+      "outcome": "SUCCESS",
+      "provider_calls": 1,
+      "queries": 4,
+      "chart_types": [
+        "bar",
+        "donut",
+        "multi_line"
+      ],
+      "quality_score": 90.0,
+      "saved_verification": true,
+      "live_provider_requests": 0,
+      "warehouse_writes": 0,
+      "audit_owned_session_deleted": true
+    },
+    "qualified_runtime_version": "2.9.3; retained historical result"
+  },
+  "recreated_services_scope": "Current 2.9.6 follow-up rebuilds and recreates analytics-api and web-ui only",
+  "source_reference": {
+    "matched": 206,
+    "total": 206,
+    "read_only": true,
+    "live_provider_requests": 0,
+    "warehouse_writes": 0,
+    "qualification_scope": "Retained independent source qualification from 2.9.5; not rerun in 2.9.6"
+  },
+  "first_submission_followup": {
+    "intake_head": "19ac766666e89fa76c33195527cdefab8c811667",
+    "observed_failure": {
+      "utc": "2026-10-08T13:36:52Z",
+      "provider_calls": 3,
+      "planning_ms": 6230.51,
+      "category": "semantic_intent_invalid",
+      "issue_sequence": [
+        "invalid_feature_metric_targets",
+        "feature_shape_conflict",
+        "feature_shape_binding_conflict",
+        "feature_requirement_decomposition"
+      ]
+    },
+    "observed_successful_resubmission": {
+      "utc": "2026-10-08T15:13:00Z",
+      "provider_calls": 1,
+      "planning_ms": 2346.49
+    },
+    "fix": "Collect all independently visible binding/shape conflicts together; preserve only valid sibling features; explicit replacement-map/decomposition repair instructions; shared deadline, no fourth call",
+    "new_regression_tests": 7,
+    "deadline": {
+      "planning_budget_ms": 27000,
+      "provider_reserve_ms": 3000,
+      "per_attempt_transport_ms": 8000,
+      "http_response_timeout_ms": 29000,
+      "scope": "propose-plan; generation remains separately approved"
+    },
+    "deadline_probe": {
+      "status": "passed",
+      "boundary": "actual async proposal route",
+      "response_ms": 29090.97,
+      "error_category": "planning_timeout",
+      "live_provider_requests": 0,
+      "warehouse_writes": 0,
+      "late_work_rejected": true
+    },
+    "deployed_readonly_overview": {
+      "status": "passed",
+      "version": "2.9.4",
+      "question": "Tổng hợp hoạt động kinh doanh trong 45 ngày gần nhất: doanh thu, số đơn và giá trị đơn trung bình. Hiển thị xu hướng theo tuần, so sánh doanh thu giữa các loại đơn và tính tỷ trọng doanh thu của từng loại. Làm rõ phạm vi trạng thái đơn dùng để tính từng chỉ số.",
+      "meaning_source": "Reconstructed scripted meanings; real read-only warehouse and Redis",
+      "reports": [
+        {
+          "variant": "separate_primary",
+          "outcome": "SUCCESS",
+          "provider_calls": 1,
+          "queries": 4,
+          "planning_ms": 330.99,
+          "total_ms": 807.98,
+          "chart_types": [
+            "bar",
+            "donut",
+            "multi_line"
+          ],
+          "quality_score": 90.0,
+          "saved_verification": true
+        },
+        {
+          "variant": "combined_recovery",
+          "outcome": "SUCCESS",
+          "provider_calls": 2,
+          "queries": 6,
+          "planning_ms": 261.77,
+          "total_ms": 774.53,
+          "chart_types": [
+            "bar",
+            "donut",
+            "multi_line"
+          ],
+          "quality_score": 90.0,
+          "saved_verification": true
+        }
+      ],
+      "audit_owned_sessions_deleted": true,
+      "live_provider_requests": 0,
+      "warehouse_writes": 0
+    },
+    "backend_tests": {
+      "passed": 655,
+      "total": 655,
+      "seconds": 218.089
+    },
+    "recreated_services": [
+      "analytics-api"
+    ],
+    "other_services": {
+      "checked": 20,
+      "started_at_unchanged": true
+    },
+    "api_build": "passed",
+    "LIVE_PROVIDER_REQUESTS": 0,
+    "WAREHOUSE_WRITES": 0,
+    "limitations": "Reconstructed scripted primary/repair intents; live-model accuracy and successful-response latency not measured. Deadline bounds response, not a guarantee of successful interpretation."
+  },
+  "inactive_binding_followup": {
+    "intake_head": "19ac766666e89fa76c33195527cdefab8c811667",
+    "observed_failure": {
+      "utc": "2026-10-08T15:29:16Z",
+      "provider_calls": 3,
+      "planning_ms": 5264.36,
+      "category": "semantic_intent_invalid",
+      "requirement_id": "sales_summary_trend_type",
+      "feature": "contribution_share",
+      "frozen_valid_requirement": "sales_summary_comparison",
+      "issue_code": "invalid_feature_metric_targets"
+    },
+    "raw_failed_envelope_captured": false,
+    "reproduction_scope": "Reconstructed trend/comparison shapes; six inactive-target variants, not an exact provider-wire replay",
+    "fix": "Primary-only canonicalization removes bindings for undeclared features; all active entries, user anchors, frozen repairs and approved reports retain strict validation",
+    "new_regression_tests": 6,
+    "binding_variants": 6,
+    "focused_tests": {
+      "passed": 37,
+      "total": 37,
+      "seconds": 41.426
+    },
+    "backend_tests": {
+      "passed": 661,
+      "total": 661,
+      "seconds": 225.336
+    },
+    "provider_adapters": {
+      "status": "passed",
+      "transports": [
+        {
+          "style": "native",
+          "provider_http_mock_calls": 1,
+          "provider_calls": 1,
+          "outcome": "SUCCESS",
+          "queries": 5,
+          "saved_verification": true
+        },
+        {
+          "style": "openai",
+          "provider_http_mock_calls": 1,
+          "provider_calls": 1,
+          "outcome": "SUCCESS",
+          "queries": 5,
+          "saved_verification": true
+        }
+      ],
+      "provider_http": "mocked; Session.request forbidden",
+      "live_provider_requests": 0,
+      "warehouse_writes": 0
+    },
+    "deployed_readonly_overview": {
+      "status": "passed",
+      "version": "2.9.5",
+      "question": "Tổng hợp hoạt động kinh doanh trong 45 ngày gần nhất: doanh thu, số đơn và giá trị đơn trung bình. Hiển thị xu hướng theo tuần, so sánh doanh thu giữa các loại đơn và tính tỷ trọng doanh thu của từng loại. Làm rõ phạm vi trạng thái đơn dùng để tính từng chỉ số.",
+      "meaning_source": "Reconstructed from recorded shapes/issues; raw failed envelope not retained",
+      "warehouse": "Real read-only warehouse; Redis sessions/artifacts",
+      "reports": [
+        {
+          "inactive_targets": null,
+          "provider_calls": 1,
+          "outcome": "SUCCESS",
+          "queries": 5,
+          "quality_score": 90,
+          "total_ms": 856.75,
+          "saved_verification": true,
+          "chart_types": [
+            "bar",
+            "donut",
+            "multi_line",
+            "scatter"
+          ]
+        },
+        {
+          "inactive_targets": [
+            "revenue"
+          ],
+          "provider_calls": 1,
+          "outcome": "SUCCESS",
+          "queries": 5,
+          "quality_score": 90,
+          "total_ms": 618.34,
+          "saved_verification": true,
+          "chart_types": [
+            "bar",
+            "donut",
+            "multi_line",
+            "scatter"
+          ]
+        },
+        {
+          "inactive_targets": [
+            "aov"
+          ],
+          "provider_calls": 1,
+          "outcome": "SUCCESS",
+          "queries": 5,
+          "quality_score": 90,
+          "total_ms": 613.04,
+          "saved_verification": true,
+          "chart_types": [
+            "bar",
+            "donut",
+            "multi_line",
+            "scatter"
+          ]
+        }
+      ],
+      "same_fingerprint_as_valid_baseline": true,
+      "audit_owned_sessions_deleted": true,
+      "live_provider_requests": 0,
+      "warehouse_writes": 0
+    },
+    "recreated_services": [
+      "analytics-api"
+    ],
+    "other_services": {
+      "checked": 20,
+      "started_at_unchanged": true
+    },
+    "api_build": "passed",
+    "deadline_policy": "Unchanged 27-second planning / 29-second HTTP proposal boundary",
+    "source_oracle": {
+      "matched": 206,
+      "total": 206,
+      "read_only": true
+    },
+    "LIVE_PROVIDER_REQUESTS": 0,
+    "WAREHOUSE_WRITES": 0,
+    "qualification_limit": "No live-model accuracy or latency measured; scripted meanings and mocked HTTP adapters only"
+  },
+  "previous_release_2_9_5": {
+    "version": "2.9.5",
+    "date": "2026-10-08",
+    "backend_suite": {
+      "passed": 661,
+      "total": 661,
+      "seconds": 225.336,
+      "runner": "python -m tools.run_tests_v29",
+      "offline": true
+    },
+    "frontend_suite": {
+      "passed": 96,
+      "total": 96,
+      "typecheck": "passed",
+      "production_build": "passed",
+      "followup_status": "Code unchanged; prior 96-test, typecheck and build results retained"
+    },
+    "docker_build": {
+      "analytics-api": "passed",
+      "web-ui": "passed in initial review; unchanged frontend not rebuilt in API-only follow-up"
+    },
+    "other_services": {
+      "checked": 19,
+      "started_at_unchanged_count": 18,
+      "customer_chatbot_untouched": true,
+      "manual_restarts": 0,
+      "automatic_restarts_observed": [
+        "avengers_redis"
+      ],
+      "reason": "Redis restarted automatically during background save and large synthetic probe; 128 MiB container limit versus 153030832 logical used-memory bytes, resource pressure suspected, OOM not proven",
+      "scope": "Initial review history; current follow-up verifies all twenty other start times unchanged"
+    }
+  },
+  "latency_dashboard_followup": {
+    "version": "2.9.6",
+    "recorded_failure": {
+      "local_time": "2026-10-09 00:24",
+      "provider_timeouts_ms": [
+        6156.8,
+        6139.55,
+        6193.31
+      ],
+      "planning_latency_ms": 19144.24,
+      "provider_calls": 3
+    },
+    "manual_retry": {
+      "provider_failures": [
+        "HTTP 503",
+        "timeout"
+      ],
+      "planning_latency_ms": 13896.29,
+      "provider_calls": 3
+    },
+    "primary_http_total_seconds": 18,
+    "primary_http_read_seconds": 16,
+    "recovery_http_total_seconds": 8,
+    "shared_planner_seconds": 27,
+    "proposal_http_boundary_seconds": 29,
+    "max_provider_calls": 3,
+    "offline_transport_probes": [
+      "12-second primary succeeds on one call",
+      "16-second timeout then 5-second response succeeds in shared deadline"
+    ],
+    "optional_views": "Model meaning references requested requirement via supporting_for; server owns roles, parents, SQL and fingerprints; at most three supporting operations within eight total; approved before execution; optional work cannot satisfy explicit anchors",
+    "unknown_optional_filter_probe": "requested report still completes, five queries and exact saved verification; fixture-only",
+    "post_deploy_readonly_qualification": {
+      "version": "2.9.6",
+      "status": "passed",
+      "meaning_source": "Recorded successful intent plus explicit scripted supporting views; no live model qualification",
+      "cases": [
+        {
+          "case": "recorded",
+          "outcome": "SUCCESS",
+          "provider_calls": 1,
+          "queries": 5,
+          "charts": 3,
+          "chart_types": [
+            "bar",
+            "donut",
+            "multi_line"
+          ],
+          "quality_score": 90,
+          "saved_verification": true,
+          "total_ms": 927.34
+        },
+        {
+          "case": "expanded",
+          "outcome": "SUCCESS",
+          "provider_calls": 1,
+          "queries": 8,
+          "charts": 7,
+          "chart_types": [
+            "bar",
+            "donut",
+            "multi_line",
+            "scatter"
+          ],
+          "quality_score": 90,
+          "saved_verification": true,
+          "total_ms": 936.81
+        }
+      ],
+      "live_provider_requests": 0,
+      "warehouse_writes": 0,
+      "audit_owned_sessions_deleted": true
+    },
+    "frontend_bundle": {
+      "http_status": 200,
+      "asset": "/assets/index-B0uTtlJN.js",
+      "asset_http_status": 200,
+      "updated_dashboard_strings_present": true
+    },
+    "visual_inspection": {
+      "status": "not_completed",
+      "reason": "Computer-use surface denied Chrome access; no screenshot QA claimed",
+      "rendered_components": "passed"
+    },
+    "live_semantic_accuracy": "not_measured",
+    "live_provider_latency": "not_measured",
+    "LIVE_PROVIDER_REQUESTS": 0,
+    "WAREHOUSE_WRITES": 0,
+    "recreated_services": [
+      "analytics-api",
+      "web-ui"
+    ],
+    "other_start_times_unchanged": 19
+  }
 }

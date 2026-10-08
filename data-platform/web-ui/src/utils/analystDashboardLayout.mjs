@@ -7,7 +7,9 @@ export function reportHeading(report = {}) {
       ? `${ranking.direction === 'bottom' ? 'Thấp nhất' : 'Top'} ${ranking.limit} · ` : '';
     return prefix + (report.title || 'Báo cáo đã tinh chỉnh');
   }
-  return report.analysis_spec ? report.prompt || 'Dashboard phân tích' : report.title || 'Báo cáo phân tích dữ liệu';
+  const title = report.analysis_spec ? report.prompt || 'Dashboard phân tích' : report.title || 'Báo cáo phân tích dữ liệu';
+  if (title.length > 180 && report.domain_summary?.length) return 'Phân tích · ' + [...new Set(report.domain_summary.map(d => d.label))].join(' · ');
+  return title;
 }
 export function chartAccent(chart = {}) {
   const key = `${chart.metric || chart.query_id || ''}:${chart.x_field || ''}:${chart.story_section || chart.purpose || chart.chart_type || ''}`;
@@ -88,6 +90,41 @@ export function dashboardPrimaryCharts(charts = [], limit = 6) {
   return selected;
 }
 export function dashboardHighlights(report = {}) {
+  // Whole-scope values answer the question before local maxima. Never sum
+  // grouped averages, or turn a group's scalar into a whole-scope KPI.
+  const scalarCards = (report.evidence || []).filter(e => e.feature === 'scalar'
+    && Number.isFinite(e.values?.value) && !e.values?.entity
+    && !(report.analysis_explanation || []).find(o => o.query_id === e.scope_ref)?.dimensions?.length)
+    .map(e => {
+      const op = (report.analysis_explanation || []).find(o => o.query_id === e.scope_ref);
+      const metric = op?.metrics?.find(m => m.id === e.metric);
+      return { label: metric?.label || e.metric, value: e.values.value, unit: e.unit,
+        sub_text: metric?.business_filters?.length ? 'Điều kiện: ' + metric.business_filters.map(f => (Array.isArray(f.value) ? f.value : [f.value]).map(businessCategory).join(', ')).join(' · ') : op?.population_note || 'Toàn phạm vi đã chọn', evidence_id: e.id,
+        scope_ref: e.scope_ref, metric:e.metric, feature: 'scalar' };
+    });
+  if (scalarCards.length) {
+    const unique = [...new Map(scalarCards.map(c => {
+      const p = (report.query_plans || []).find(p => p.id === c.scope_ref);
+      const key = p?.metric_expressions?.[c.metric] ? JSON.stringify([p.source,p.joins,
+        p.metric_expressions[c.metric],p.dimensions,p.filters,p.time_column,p.period,p.granularity,p.ranking])
+        : `${c.scope_ref}:${c.label}`;
+      return [key,c];
+    })).values()];
+    const trend = (report.evidence || []).find(e => e.feature === 'change' && !Object.keys(e.scope?.partition || {}).length && trendComparison(report, e));
+    if (trend && unique.length < 4) {
+      const values = trendComparison(report, trend);
+      if (Number.isFinite(values.change_pct)) unique.push({label:'Biến động qua kỳ đầy đủ', value:values.change_pct,
+        unit:'%', sub_text:`${values.first_period.slice(0,10)} → ${values.last_period.slice(0,10)}`,
+        evidence_id:trend.id, scope_ref:trend.scope_ref, feature:'change'});
+    }
+    const concentration = (report.evidence || []).find(e => e.feature === 'concentration'
+      && e.scope?.selection === 'complete' && !Object.keys(e.scope?.partition || {}).length
+      && unique[0]?.metric === e.metric && Number.isFinite(e.values?.largest_share_pct));
+    if (concentration && unique.length < 4) unique.push({label:'Nhóm đóng góp lớn nhất',
+      value:concentration.values.largest_share_pct,unit:'%',sub_text:businessCategory(concentration.values.largest),
+      evidence_id:concentration.id,scope_ref:concentration.scope_ref,feature:'concentration'});
+    return unique.slice(0,4);
+  }
   const preferred = [], scopes = new Set();
   for (const e of report.evidence || []) {
     if (scopes.has(e.scope_ref)) continue;
