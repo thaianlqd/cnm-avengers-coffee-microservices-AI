@@ -59,7 +59,7 @@ class AnalysisPipeline:
 
     def diagnostics(self, catalog, validation=None):
         return {
-            "pipeline_version": "2.7" if self.planning_mode == "one_shot" else "2.3",
+            "pipeline_version": self.semantic_info.get("pipeline_version", "2.8" if self.planning_mode == "one_shot" else "2.3"),
             "schema_fingerprint": catalog.fingerprint,
             **deepcopy(self.semantic_info),
             "provider_call_count": self.semantic_info.get("provider_call_count", len(self.calls)),
@@ -123,6 +123,7 @@ class AnalysisPipeline:
             "domain": domain,
             "required_domain": domain if domain not in {"auto", "multi"} else None,
             "analysis_depth": getattr(request, "analysis_depth", "deep"),
+            "analysis_depth_explicit": "analysis_depth" in request.model_fields_set,
         }
         context.update(natural_input=request.natural_input)
         if request.natural_input:
@@ -208,9 +209,9 @@ class AnalysisPipeline:
         return context
 
     def agent(self, catalog, reference, proposal=False, previous=None, known_concepts=None):
-        from services.one_shot_planner import OneShotPlanner
+        from services.hybrid_analyst_planner import HybridAnalystPlanner
 
-        planner = OneShotPlanner if self.planning_mode == "one_shot" else DataAnalystAgent
+        planner = HybridAnalystPlanner if self.planning_mode == "one_shot" else DataAnalystAgent
         agent = planner(
             catalog,
             self.provider,
@@ -306,6 +307,17 @@ class AnalysisPipeline:
                 "population_relation": artifact.query.population_relation}
 
     def save_meaning(self, session, artifacts, catalog, reference, plan):
+        if self.semantic_info.get("semantic_intent"):
+            session.semantic_intent = deepcopy(self.semantic_info["semantic_intent"])
+            session.initial_semantic_intent = deepcopy(self.semantic_info.get("initial_semantic_intent", session.initial_semantic_intent))
+            session.semantic_history = deepcopy(self.semantic_info.get("semantic_history", session.semantic_history))
+            session.intent_fingerprint = self.semantic_info["semantic_intent_fingerprint"]
+            session.plan_fingerprint = self.semantic_info["resolved_plan_fingerprint"]
+            session.resolved_operations = deepcopy(self.semantic_info["resolved_operations"])
+            session.requirement_coverage = deepcopy(self.semantic_info["resolved_requirement_coverage"])
+            session.feature_bindings = deepcopy(self.semantic_info.get("derived_feature_bindings", []))
+            session.resolver_version = self.semantic_info["resolver_version"]
+            session.contract_version = "2.8"
         session.analysis_depth = self.semantic_info.get("analysis_depth", session.analysis_depth)
         main = next(iter(artifacts.values()))
         session.analysis_spec = main.grounded.analysis_spec.model_dump(mode="json")
@@ -322,7 +334,7 @@ class AnalysisPipeline:
         session.agent_reference_date = reference.isoformat()
         session.dashboard_plan = plan.model_dump(mode="json")
         evidence = (
-            analytical_features(artifacts, catalog)
+            analytical_features(artifacts, catalog, self.semantic_info.get("derived_feature_bindings"))
             if all(a.result is not None for a in artifacts.values())
             else []
         )
@@ -356,7 +368,7 @@ class AnalysisPipeline:
             previous, concepts = modules.prepare_context(self, module, catalog, reference, context)
         artifacts, plan = self.agent(catalog, reference, proposal=True, previous=previous, known_concepts=concepts).run(request.prompt, context)
         self.enforce_ui(artifacts, context)
-        session = create_session(request.prompt, request.domain or "auto")
+        session = create_session(request.prompt, request.domain or "auto", owner_id=self.owner_id)
         session.owner_id = self.owner_id
         session.natural_input = request.natural_input
         session.analysis_inputs = {"original_question": request.prompt, "analysis_context": request.analysis_context, "analysis_expectation": request.analysis_expectation}
@@ -371,6 +383,9 @@ class AnalysisPipeline:
         session.partial_scope = any(c["requested_or_supporting"] == "requested" and c["status"] != "planned" for c in session.analysis_components)
         meaning = self.interpretation(artifacts)
         proposal = {"analysis_components": session.analysis_components, "partial_scope": session.partial_scope,
+            "revision": session.revision, "semantic_intent_fingerprint": session.intent_fingerprint,
+            "resolved_plan_fingerprint": session.plan_fingerprint, "catalog_fingerprint": catalog.fingerprint,
+            "requirement_coverage": session.requirement_coverage,
             "title": meaning["subject"],
             "summary_intent": "Kiểm tra từng phần, chỉ số, bộ lọc và thời gian trước khi tạo báo cáo.",
             "interpretation": meaning,
@@ -423,6 +438,8 @@ class AnalysisPipeline:
             "diagnostics": self.diagnostics(catalog, {"proposal": "passed"}),
         }
         session.diagnostics = deepcopy(response["diagnostics"])
+        from services.session_service import save_session
+        save_session(session)
         return response
 
     def generate(self, request):
@@ -433,15 +450,27 @@ class AnalysisPipeline:
         if session:
             self.check_owner(session)
             with session.analysis_lock:
-                if self.planning_mode == "one_shot" and session.contract_version != "2.5":
+                if self.planning_mode == "one_shot" and session.contract_version not in {"2.5", "2.8"}:
                     raise AnalysisError("schema_changed", "Refresh the analysis proposal")
                 if session.proposed_request != self.request_signature(request):
                     raise AnalysisError("session", "Request changed after proposal")
                 if session.schema_fingerprint != catalog.fingerprint:
                     raise AnalysisError("schema_changed", "Refresh proposal")
+                if session.contract_version == "2.8":
+                    from services.analytical_resolver import intent_fingerprint, plan_fingerprint, verify_operation_bindings
+                    from services.analysis_intent import AnalysisIntentEnvelope
+                    if (request.proposal_revision != session.revision or request.intent_fingerprint != session.intent_fingerprint
+                        or request.plan_fingerprint != session.plan_fingerprint or request.catalog_fingerprint != catalog.fingerprint):
+                        raise AnalysisError("stale_approval", "Approval identities differ from current proposal")
+                    if (intent_fingerprint(AnalysisIntentEnvelope.model_validate(session.semantic_intent),date.fromisoformat(session.agent_reference_date),catalog) != session.intent_fingerprint
+                        or plan_fingerprint(session.resolved_operations,session.requirement_coverage,catalog.fingerprint) != session.plan_fingerprint):
+                        raise AnalysisError("stale_approval", "Stored proposal meaning changed")
+                    if not verify_operation_bindings(session.resolved_operations, session.agent_artifacts):
+                        raise AnalysisError("stale_approval", "Stored executable scope changed")
                 if session.partial_scope and not request.accept_partial_scope:
                     raise AnalysisError("approval_required", "Reduced requested scope needs explicit approval")
                 self.semantic_info.update(analysis_components=deepcopy(session.analysis_components), coverage_origin=session.coverage_origin)
+                self.restore_hybrid_meaning(session)
                 reference = date.fromisoformat(session.agent_reference_date)
                 agent = self.agent(catalog, reference, previous=session.agent_artifacts,
                     known_concepts=session.agent_state.get("resolved_concepts", []))
@@ -493,7 +522,7 @@ class AnalysisPipeline:
         context = self.ui_context(request, catalog, reference)
         artifacts, plan = self.agent(catalog, reference).run(request.prompt, context)
         self.enforce_ui(artifacts, context)
-        session = create_session(request.prompt, request.domain or "auto")
+        session = create_session(request.prompt, request.domain or "auto", owner_id=self.owner_id)
         session.proposed_request = self.request_signature(request)
         with session.analysis_lock:
             return self.report(artifacts, plan, catalog, session, reference)
@@ -509,7 +538,7 @@ class AnalysisPipeline:
             catalog = self.catalog()
             if catalog.fingerprint != session.schema_fingerprint:
                 raise AnalysisError("schema_changed", "Stored schema changed")
-            if self.planning_mode == "one_shot" and session.contract_version != "2.5":
+            if self.planning_mode == "one_shot" and session.contract_version not in {"2.5", "2.8"}:
                 raise AnalysisError("schema_changed", "Refresh the analysis proposal")
             reference = date.fromisoformat(session.agent_reference_date)
             if request.visual_changes:
@@ -522,6 +551,10 @@ class AnalysisPipeline:
             ).run(request.feedback, {
                 **session.ui_constraints,
                 "analysis_depth": session.analysis_depth,
+                "semantic_intent": session.semantic_intent,
+                "initial_semantic_intent": session.initial_semantic_intent,
+                "semantic_history": session.semantic_history,
+                "original_question": session.original_prompt,
                 "revision": session.revision,
                 "current_visuals": [{k: c.get(k) for k in ("id", "scope_ref", "chart_type", "metrics")}
                                     for c in session.report_response.get("charts", [])],
@@ -535,6 +568,8 @@ class AnalysisPipeline:
         from services.analyst_contract import DashboardVisual
 
         agent = self.agent(catalog, reference, previous=session.agent_artifacts)
+        self.restore_hybrid_meaning(session)
+        self.semantic_info.update(analysis_components=deepcopy(session.analysis_components),coverage_origin=session.coverage_origin)
         agent.queries.ui_context = deepcopy(session.ui_constraints)
         for old in session.agent_artifacts.values():
             args = old.query.model_dump(mode="json")
@@ -542,7 +577,7 @@ class AnalysisPipeline:
             agent.queries.run(agent.queries.prepare(args))  # Revalidate cached rows, no SQL.
         artifacts = agent.queries.artifacts
         plan = DashboardPlan.model_validate(session.dashboard_plan)
-        evidence = analytical_features(artifacts, catalog)
+        evidence = analytical_features(artifacts, catalog, self.semantic_info.get("derived_feature_bindings"))
         current = build_dashboard(artifacts, evidence, plan, self.budget.charts, self.budget.categories, self.budget.series)
         # Include validated defaults supplied by the dashboard when a prior
         # optional visual was ineligible. These are genuine server chart choices.
@@ -568,7 +603,7 @@ class AnalysisPipeline:
         return self.report(artifacts, plan, catalog, session, reference, refined=True)
 
     def report(self, artifacts, plan, catalog, session, reference, refined=False):
-        evidence = analytical_features(artifacts, catalog)
+        evidence = analytical_features(artifacts, catalog, self.semantic_info.get("derived_feature_bindings"))
         dashboard = build_dashboard(
             artifacts,
             evidence,
@@ -656,7 +691,7 @@ class AnalysisPipeline:
             "completion_status": (
                 "partial" if self.semantic_info.get("limitations") else "complete"
             ),
-            "pipeline_version": "2.7" if self.planning_mode == "one_shot" else "2.3",
+            "pipeline_version": self.semantic_info.get("pipeline_version", "2.8" if self.planning_mode == "one_shot" else "2.3"),
             "prompt": session.original_prompt,
             "module_provenance": session.module_provenance,
             "analysis_breadth": self.semantic_info.get("analysis_depth", session.analysis_depth),
@@ -741,6 +776,20 @@ class AnalysisPipeline:
             "coverage_origin": origin, "ui_constraints": session.ui_constraints,
             "reference_date": reference.isoformat(), "limitations": deepcopy(self.semantic_info.get("limitations", [])),
             "partial_scope_approved": session.partial_scope}
+        if self.semantic_info.get("semantic_intent"):
+            from services.analytical_resolver import digest
+            from services.analysis_quality_contract import VERSION as quality_version
+            response["quality_context"]["version"] = "2.8"
+            response["semantic_intent"] = deepcopy(self.semantic_info["semantic_intent"])
+            response["resolved_requirement_coverage"] = deepcopy(self.semantic_info["resolved_requirement_coverage"])
+            response["request_anchors"] = deepcopy(self.semantic_info.get("request_anchors", session.diagnostics.get("request_anchors", {})))
+            response["derived_feature_bindings"] = deepcopy(self.semantic_info.get("derived_feature_bindings", []))
+            response["provenance"] = {"user_request": session.original_prompt, "semantic_intent_fingerprint": self.semantic_info["semantic_intent_fingerprint"],
+                "resolved_plan_fingerprint": self.semantic_info["resolved_plan_fingerprint"], "catalog_fingerprint":catalog.fingerprint,
+                "resolver_version": self.semantic_info["resolver_version"], "quality_verifier_version":quality_version,
+                "result_set_fingerprint":digest(response["result_sets"]),"query_plans":response["query_plans"],
+                "initial_semantic_intent":deepcopy(self.semantic_info.get("initial_semantic_intent", session.initial_semantic_intent)),
+                "semantic_history":deepcopy(self.semantic_info.get("semantic_history", session.semantic_history))}
         safe_plan = plan.model_dump(mode="json")
         by_evidence = {e["id"]: e for e in evidence}
         safe_plan["claims"] = [c for c in safe_plan["claims"] if c["evidence_id"] in by_evidence
@@ -753,7 +802,11 @@ class AnalysisPipeline:
         if response["outcome"] == "PARTIAL_AVAILABLE":
             response["completion_status"] = "partial"
         started_quality = time.perf_counter()
+        self.semantic_info["failure_stage"] = "QUALITY_VERIFICATION"
         response["quality_assessment"] = assess_report(response, catalog, artifacts=artifacts)
+        if response["quality_context"]["version"] == "2.8" and response["quality_assessment"]["status"] == "not_scored":
+            raise AnalysisError("quality_verification","Report provenance failed independent verification")
+        self.semantic_info["failure_stage"] = None
         response["diagnostics"]["quality_score_compute_ms"] = round((time.perf_counter() - started_quality) * 1000, 2)
         self.save_meaning(session, artifacts, catalog, reference, plan)
         session.last_result_contract = response["result_contracts"]
@@ -767,7 +820,17 @@ class AnalysisPipeline:
             response["title"],
             response["description"],
         )
+        from services.session_service import save_session
+        save_session(session)
         return response
+
+    def restore_hybrid_meaning(self, session):
+        if session.semantic_intent:
+            self.semantic_info.update(semantic_intent=deepcopy(session.semantic_intent),semantic_intent_fingerprint=session.intent_fingerprint,
+                resolved_plan_fingerprint=session.plan_fingerprint,resolved_operations=deepcopy(session.resolved_operations),
+                resolved_requirement_coverage=deepcopy(session.requirement_coverage),derived_feature_bindings=deepcopy(session.feature_bindings),resolver_version=session.resolver_version,
+                request_anchors=deepcopy(session.diagnostics.get("request_anchors", {})),request_anchor_verification="passed",
+                initial_semantic_intent=deepcopy(session.initial_semantic_intent),semantic_history=deepcopy(session.semantic_history))
 
     def check_owner(self, session):
         if session.owner_id != self.owner_id:

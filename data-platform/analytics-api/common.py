@@ -62,6 +62,10 @@ class AiAnalysisScope(BaseModel):
 
 
 class AiTextToReportRequest(BaseModel):
+    proposal_revision: Optional[int] = None
+    intent_fingerprint: Optional[str] = None
+    plan_fingerprint: Optional[str] = None
+    catalog_fingerprint: Optional[str] = None
     prompt: str = Field(validation_alias=AliasChoices("question", "prompt"), min_length=1, max_length=8000)
     analysis_context: str = Field(default="", max_length=2000)
     analysis_expectation: str = Field(default="", max_length=1500)

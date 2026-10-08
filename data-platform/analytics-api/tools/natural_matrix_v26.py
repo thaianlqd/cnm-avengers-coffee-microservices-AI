@@ -9,7 +9,8 @@ from unittest.mock import Mock, patch
 ROOT=Path(__file__).resolve().parent.parent
 sys.path.insert(0,str(ROOT))
 from common import AiTextToReportRequest
-from services.analysis_pipeline import AnalysisPipeline, safe_failure
+from services.analysis_pipeline import safe_failure
+from tests.archive_planner import ArchivedGraphPipeline as AnalysisPipeline
 from services.analysis_catalog import AnalysisError
 from services.analysis_module_service import AnalysisModules
 from services.agent_provider import NativeAgentProvider

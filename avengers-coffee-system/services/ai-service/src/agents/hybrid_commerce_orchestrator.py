@@ -22,7 +22,10 @@ from src.agents.semantic_protocol import digest
 
 logger = logging.getLogger(__name__)
 SUCCESS = {'ok', 'success', 'already_processed', 'require_confirmation', 'needs_options',
-           'need_address_precision', 'need_location_selection', 'need_branch_selection', 'ambiguous'}
+           'need_address_precision', 'need_location_selection', 'need_branch_selection', 'ambiguous', 'need_city'}
+CHECKOUT_PROGRESS = {'SET_PAYMENT', 'SET_FULFILLMENT', 'SELECT_BRANCH', 'PROVIDE_LOCATION',
+    'SELECT_PROFILE_ADDRESS', 'SELECT_LOCATION_CANDIDATE', 'FINISH_CART', 'CHOOSE_VOUCHER',
+    'SKIP_VOUCHER', 'REMOVE_VOUCHER', 'EDIT_CART', 'CONFIGURE_PRODUCT', 'SELECT_PRODUCTS'}
 OPTION_FIELDS = {'size': 'size', 'toppings': 'toppings', 'ice': 'luong_da',
                  'sweetness': 'do_ngot', 'milk': 'loai_sua'}
 FULFILLMENT = {'delivery': 'GIAO_TAN_NOI', 'pickup': 'MANG_DI', 'dine_in': 'TAI_CHO'}
@@ -73,6 +76,10 @@ class CommerceDispatch:
             ref = {'kind': 'id', 'value': ref['value']}
         rows = self.turn.rows('orders')
         checkout = self.turn.state.get('checkout') or {}
+        if ref['kind'] == 'focus' and self.turn.focus.get('order', {}).get('order_id'):
+            rows.append(self.turn.focus['order'])
+        if ref['kind'] == 'last_created' and checkout.get('last_created_order_id'):
+            rows.append({'order_id': checkout['last_created_order_id']})
         for key in ('order_management_focus', 'order_management_action'):
             if (checkout.get(key) or {}).get('order_id'):
                 rows.append({'order_id': checkout[key]['order_id']})
@@ -424,6 +431,7 @@ def run_hybrid_turn(session_id, user_message, history=None, client_message_id=No
     dispatcher = CommerceDispatch(gateway, turn)
     requests, failure, blocks = 0, None, []
     cart_batch, location_completed = [], False
+    checkout_blocks, checkout_progressed = set(), False
     if selected_product_id is not None:
         matches = [{**r, 'display_index': r.get('display_index', i)} for i, r in enumerate(turn.rows('products'), 1)
                    if str(r['product_id']) == str(selected_product_id)]
@@ -446,6 +454,7 @@ def run_hybrid_turn(session_id, user_message, history=None, client_message_id=No
                 for item in bound:
                     cart_command = item['intent'] in {'SELECT_PRODUCTS', 'CONFIGURE_PRODUCT', 'EDIT_CART'}
                     if cart_batch and not cart_command:
+                        checkout_blocks.add(len(blocks))
                         blocks.append(render_cart_batch(artifacts, cart_batch))
                         cart_batch = []
                     before = business_state(session_id)
@@ -460,7 +469,11 @@ def run_hybrid_turn(session_id, user_message, history=None, client_message_id=No
                     if cart_command:
                         cart_batch.append((item, command_logs, result))
                     else:
+                        if item['intent'] in CHECKOUT_PROGRESS | {'LIST_PAYMENT_OPTIONS'}:
+                            checkout_blocks.add(len(blocks))
                         blocks.append(render_command(artifacts, item, command_logs, result))
+                    checkout_progressed = checkout_progressed or (item['intent'] in CHECKOUT_PROGRESS
+                        and result.get('status') in {'ok', 'already_processed'})
                     location_completed = location_completed or (item['intent'] in {
                         'PROVIDE_LOCATION', 'SELECT_PROFILE_ADDRESS', 'SELECT_LOCATION_CANDIDATE', 'SELECT_BRANCH'}
                         and result.get('status') == 'ok' and artifacts.business['checkout'].get('address_confirmed'))
@@ -473,7 +486,25 @@ def run_hybrid_turn(session_id, user_message, history=None, client_message_id=No
                         failure = {'failure_class': 'BUSINESS_POLICY', 'failure_code': result.get('status') or 'business_unavailable'}
                         break
                 if cart_batch:
+                    checkout_blocks.add(len(blocks))
                     blocks.append(render_cart_batch(artifacts, cart_batch))
+                if checkout_progressed and not failure and next_required_milestone(artifacts.business) == 'CHECKOUT_READY':
+                    # Server workflow continuation: prepare a review, never an
+                    # order. Reuse all existing quote, stock and destination gates.
+                    summary_item = {'intent': 'PREPARE_CHECKOUT', 'args': {}}
+                    start = len(artifacts.logs)
+                    result = dispatcher.execute(summary_item)
+                    if result.get('status') == 'require_confirmation':
+                        cart_manager.set_checkout_context(session_id, hybrid_summary_turn_id=client_message_id)
+                        blocks = [block for index, block in enumerate(blocks) if index not in checkout_blocks]
+                    artifacts.business = business_state(session_id)
+                    gateway.context['business'] = artifacts.business
+                    blocks.append(render_command(artifacts, summary_item, artifacts.logs[start:], result))
+                    logger.info('[WorkflowContinuation] %s', json.dumps({'operation': 'request_checkout',
+                        'trigger': 'checkout_ready', 'result_status': result.get('status'),
+                        'after_milestone': next_required_milestone(artifacts.business)}))
+                    if result.get('status') not in SUCCESS:
+                        failure = {'failure_class': 'BUSINESS_POLICY', 'failure_code': result.get('status') or 'business_unavailable'}
                 if location_completed and not failure and next_required_milestone(artifacts.business) == 'PAYMENT_SELECTION':
                     # Continue from the final turn state: a later SET_PAYMENT in
                     # this same envelope must not receive a stale payment prompt.
@@ -485,7 +516,9 @@ def run_hybrid_turn(session_id, user_message, history=None, client_message_id=No
         blocks.append('Dạ, mình có thể giúp bạn chọn món và đặt hàng. Bạn muốn mình hỗ trợ gì ạ?' if envelope['kind'] == 'social'
                       else 'Bạn nói rõ món hoặc lựa chọn muốn áp dụng giúp mình nhé.')
     if failure and failure.get('failure_class') != 'BUSINESS_POLICY':
-        if failure.get('failure_field') == 'pending_products' and turn.rows('pending_products'):
+        if failure.get('failure_field') == 'orders':
+            blocks.append('Mình chưa xác định được đơn bạn muốn xử lý. Bạn chọn số trong lịch sử đơn hoặc gửi mã đơn đầy đủ nhé.')
+        elif failure.get('failure_field') == 'pending_products' and turn.rows('pending_products'):
             blocks.append('Bạn muốn áp dụng tùy chọn cho món nào?\n\n' + '\n'.join(
                 f"{r.get('selection_index', i)}. **{r['product_name']}**" for i, r in enumerate(turn.rows('pending_products'), 1)))
         else:

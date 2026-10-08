@@ -157,7 +157,9 @@ class AnalysisCatalog:
     def _relationships(self):
         edges, seen = [], set()
 
-        def add(left, right, on, provenance, target_unique):
+        def add(left, right, on, provenance, target_unique, join_type='INNER'):
+            if join_type not in {'INNER','LEFT'}:
+                raise AnalysisError('metadata','Unsupported curated join type')
             if left not in self.tables or right not in self.tables or not target_unique:
                 return
             try:
@@ -185,6 +187,7 @@ class AnalysisCatalog:
                         "on": on,
                         "cardinality": "many_to_one",
                         "provenance": provenance,
+                        **({'join_type':'LEFT'} if join_type=='LEFT' else {}),
                     }
                 )
                 seen.add(key)
@@ -225,6 +228,7 @@ class AnalysisCatalog:
                     r["on"],
                     "curated_view_relationship",
                     bool(pk) and {c for n, c in refs if n == target} == set(pk),
+                    r.get('join_type','INNER'),
                 )
         return sorted(edges, key=lambda e: (e["from_table"], e["to_table"], e["on"]))
 

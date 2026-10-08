@@ -10,7 +10,8 @@ from common import AiTextToReportRequest
 from services.analysis_catalog import AnalysisCatalog, AnalysisError
 from services.analysis_contract import AnalysisSpec, TimeSpec
 from services.analysis_understanding import understand, hints, labelled_interpretation
-from services.analysis_pipeline import AnalysisPipeline, safe_failure
+from services.analysis_pipeline import safe_failure
+from tests.archive_planner import ArchivedGraphPipeline as AnalysisPipeline
 from services.time_resolution_service import resolve_time, parse_time
 from services.value_grounding_service import value_hints, dimension_values
 from tests.analysis_fixtures import physical_metadata, ranking_spec, ranked_rows, result

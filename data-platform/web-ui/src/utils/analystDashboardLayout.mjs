@@ -1,4 +1,14 @@
 const palette = ['#2563eb', '#0d9488', '#7c3aed', '#d97706', '#db2777', '#0891b2'];
+export function reportHeading(report = {}) {
+  if (report.provenance?.semantic_history?.length) {
+    const reqs = report.semantic_intent?.requirements || [];
+    const ranking = reqs.length === 1 ? reqs[0].ranking : null;
+    const prefix = ranking && Number.isInteger(ranking.limit)
+      ? `${ranking.direction === 'bottom' ? 'Thấp nhất' : 'Top'} ${ranking.limit} · ` : '';
+    return prefix + (report.title || 'Báo cáo đã tinh chỉnh');
+  }
+  return report.analysis_spec ? report.prompt || 'Dashboard phân tích' : report.title || 'Báo cáo phân tích dữ liệu';
+}
 export function chartAccent(chart = {}) {
   const key = `${chart.metric || chart.query_id || ''}:${chart.x_field || ''}:${chart.story_section || chart.purpose || chart.chart_type || ''}`;
   const hash = [...key].reduce((n, c) => (n * 31 + c.charCodeAt(0)) >>> 0, 0);
@@ -153,10 +163,17 @@ export function businessCategory(value) {
 }
 
 export function chartExplanation(chart = {}) {
-  const title = conciseChartTitle(chart).replace(/^Top \d+ · /, '').toLowerCase();
+  if (chart.value_transform === 'contribution_share') return chart.denominator_note || 'Tỷ trọng từng mục so với tổng cùng phạm vi đầy đủ; tổng của tập Top N có thể nhỏ hơn 100%.';
+  const title = conciseChartTitle(chart).replace(/^Top \d+ · /, '').replace(/ trong tập xếp hạng theo .*/i, '').toLowerCase();
   const dimension = (chart.x_label || 'nhóm').toLowerCase();
   const type = chart.chart_type;
-  if (chart.selection === 'Top N') return `Xếp hạng theo ${title}; chiều dài thanh thể hiện giá trị của từng ${dimension} trong tập Top N.`;
+  if (chart.selection === 'Top N') {
+    const ranking = (chart.ranking_metric_label || '').toLowerCase();
+    if (ranking && chart.ranking_metric !== chart.metric && !(chart.metrics || []).includes(chart.ranking_metric)) {
+      return `Hiển thị ${title} của tập Top ${chart.ranking_limit || chart.data?.length || ''} được chọn theo ${ranking}; giữ nguyên thứ tự theo ${ranking}, không xếp hạng lại theo chỉ số đang hiển thị.`;
+    }
+    return `Thứ tự theo ${ranking || title}; chiều dài thanh thể hiện giá trị của từng ${dimension} trong tập Top N.`;
+  }
   if (type === 'donut') return `Cơ cấu ${title} theo ${dimension}; tỷ trọng tính trên toàn bộ ${chart.population_count || chart.data?.length || ''} nhóm trong phạm vi đã chọn.`;
   if (['line', 'area', 'multi_line'].includes(type)) {
     const interval = { day: 'ngày', week: 'tuần', month: 'tháng', quarter: 'quý', year: 'năm' }[chart.granularity] || 'kỳ';

@@ -23,7 +23,8 @@
         },
         {
           "to_table": "silver.khuyen_mai",
-          "on": "silver.don_hang.ma_voucher = silver.khuyen_mai.ma_khuyen_mai"
+          "on": "silver.don_hang.ma_voucher = silver.khuyen_mai.ma_khuyen_mai",
+          "join_type": "LEFT"
         },
         {
           "to_table": "silver.giao_dich_thanh_toan",
@@ -2848,7 +2849,11 @@
           "doanh số khuyến mãi",
           "voucher_revenue",
           "Doanh thu đơn có khuyến mãi",
-          "voucher revenue"
+          "voucher revenue",
+          "doanh thu",
+          "doanh thu đơn có voucher",
+          "tổng doanh thu có voucher",
+          "doanh thu có voucher"
         ],
         "expression": "SUM(silver.don_hang.tong_tien)",
         "source": "silver.don_hang",
@@ -2898,6 +2903,12 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
+        ],
+        "analysis_limitations": [
+          {
+            "id": "voucher_effectiveness",
+            "label": "Số đơn, doanh thu và giảm giá chỉ mô tả việc dùng voucher. Chưa có chi phí đầy đủ hoặc nhóm đối chứng độc lập; không kết luận ROI hay tác động tăng doanh thu. Số đơn dùng voucher gồm mọi trạng thái; doanh thu và giảm giá chỉ gồm HOAN_THANH/DANG_GIAO."
+          }
         ]
       },
       "discount_amount": {
@@ -2908,7 +2919,8 @@
           "chiết khấu",
           "discount_amount",
           "Tổng tiền đã giảm giá",
-          "discount amount"
+          "discount amount",
+          "tổng tiền giảm giá"
         ],
         "expression": "SUM(silver.don_hang.so_tien_giam)",
         "source": "silver.don_hang",
@@ -2958,6 +2970,12 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
+        ],
+        "analysis_limitations": [
+          {
+            "id": "voucher_effectiveness",
+            "label": "Số đơn, doanh thu và giảm giá chỉ mô tả việc dùng voucher. Chưa có chi phí đầy đủ hoặc nhóm đối chứng độc lập; không kết luận ROI hay tác động tăng doanh thu. Số đơn dùng voucher gồm mọi trạng thái; doanh thu và giảm giá chỉ gồm HOAN_THANH/DANG_GIAO."
+          }
         ]
       },
       "voucher_order_count": {
@@ -2967,7 +2985,9 @@
           "lượt dùng",
           "voucher_order_count",
           "Số đơn áp dụng khuyến mãi",
-          "voucher order count"
+          "voucher order count",
+          "số đơn có sử dụng voucher",
+          "số đơn"
         ],
         "expression": "COUNT(silver.don_hang.ma_don_hang)",
         "source": "silver.don_hang",
@@ -3008,6 +3028,12 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
+        ],
+        "analysis_limitations": [
+          {
+            "id": "voucher_effectiveness",
+            "label": "Số đơn, doanh thu và giảm giá chỉ mô tả việc dùng voucher. Chưa có chi phí đầy đủ hoặc nhóm đối chứng độc lập; không kết luận ROI hay tác động tăng doanh thu. Số đơn dùng voucher gồm mọi trạng thái; doanh thu và giảm giá chỉ gồm HOAN_THANH/DANG_GIAO."
+          }
         ]
       },
       "quantity_sold": {
@@ -3025,7 +3051,8 @@
           "sản lượng cao",
           "best selling",
           "selling quantity",
-          "selling"
+          "selling",
+          "số lượng bán"
         ],
         "expression": "SUM(silver.chi_tiet_don_hang.so_luong)",
         "source": "silver.chi_tiet_don_hang",
@@ -3082,7 +3109,8 @@
           "tiền món",
           "item_revenue",
           "Doanh thu món",
-          "item revenue"
+          "item revenue",
+          "doanh thu"
         ],
         "expression": "SUM(silver.chi_tiet_don_hang.thanh_tien)",
         "source": "silver.chi_tiet_don_hang",
@@ -3137,7 +3165,8 @@
           "doanh thu món",
           "product_revenue",
           "Doanh thu sản phẩm",
-          "product revenue"
+          "product revenue",
+          "doanh thu"
         ],
         "expression": "SUM(silver.chi_tiet_don_hang.thanh_tien)",
         "source": "silver.chi_tiet_don_hang",
@@ -3192,7 +3221,8 @@
           "doanh thu chi nhánh",
           "store_revenue",
           "Doanh thu chi nhánh",
-          "store revenue"
+          "store revenue",
+          "doanh thu"
         ],
         "expression": "SUM(silver.don_hang.tong_tien)",
         "source": "silver.don_hang",
@@ -3635,6 +3665,10 @@
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Không cộng kết quả các nhóm; cần tính lại trên quần thể gốc.",
           "Không áp bộ lọc kỳ lịch sử hoặc suy ra xu hướng từ dữ liệu hiện trạng."
+        ],
+        "non_anchor_aliases": [
+          "đánh giá",
+          "sao"
         ]
       },
       "stock_quantity": {
@@ -4780,7 +4814,10 @@
         "business_name": "Khuyến mãi",
         "aliases": [
           "promotion",
-          "Khuyến mãi"
+          "Khuyến mãi",
+          "voucher",
+          "coupon",
+          "khuyến mại"
         ],
         "role": "dimension",
         "value_grounding": {
@@ -4788,11 +4825,18 @@
           "max_candidates": 8
         },
         "scope_selectable": true,
-        "business_meaning": "Khuyến mãi",
+        "business_meaning": "Tên chương trình đi cùng từng mã voucher; mã chưa khớp danh mục vẫn được giữ theo mã trên đơn. Không gồm đơn không có voucher.",
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "identity": "promotion_id",
+        "detail_identity": null,
+        "aggregate_expression": "COALESCE(silver.khuyen_mai.ten_khuyen_mai, silver.don_hang.ma_voucher)",
+        "required_non_null": [
+          "silver.don_hang.ma_voucher"
+        ],
+        "display_identity": true
       },
       "promotion_id": {
         "table": "silver.don_hang",
@@ -4800,7 +4844,9 @@
         "business_name": "Mã khuyến mãi",
         "aliases": [
           "promotion_id",
-          "Mã khuyến mãi"
+          "Mã khuyến mãi",
+          "mã voucher",
+          "mã giảm giá"
         ],
         "role": "dimension",
         "value_grounding": {
@@ -4811,7 +4857,10 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "required_non_null": [
+          "silver.don_hang.ma_voucher"
+        ]
       },
       "payment_gateway": {
         "table": "silver.giao_dich_thanh_toan",
@@ -10535,6 +10584,114 @@
             "Không dùng làm tỷ trọng, hiệu quả khuyến mãi hoặc nguyên nhân khi chưa có mẫu số và cohort tương thích."
           ]
         }
+      ]
+    },
+    "derived_features": {
+      "contribution_share": {
+        "aliases": [
+          "tỷ trọng đóng góp",
+          "đóng góp doanh thu",
+          "tỷ trọng doanh thu"
+        ],
+        "shape": "additive_metric_with_same_population_denominator"
+      },
+      "leader": {
+        "aliases": [
+          "dẫn đầu",
+          "đứng đầu"
+        ],
+        "shape": "ranking"
+      },
+      "top_gap": {
+        "aliases": [
+          "khoảng cách với món đứng thứ hai",
+          "khoảng cách với hạng hai",
+          "chênh lệch hạng 1 và hạng 2"
+        ],
+        "shape": "ranking_two_rows"
+      },
+      "group_gap": {
+        "aliases": [
+          "chênh lệch giữa các nhóm"
+        ],
+        "shape": "grouped_metric"
+      },
+      "change": {
+        "aliases": [
+          "mức thay đổi"
+        ],
+        "shape": "two_complete_time_buckets"
+      },
+      "change_pct": {
+        "aliases": [
+          "phần trăm thay đổi"
+        ],
+        "shape": "two_complete_time_buckets"
+      },
+      "concentration": {
+        "aliases": [
+          "tỷ trọng lớn nhất"
+        ],
+        "shape": "complete_additive_distribution"
+      },
+      "selected_total": {
+        "aliases": [
+          "tổng của top"
+        ],
+        "shape": "additive_ranking"
+      },
+      "relationship_strength": {
+        "aliases": [
+          "tương quan"
+        ],
+        "shape": "paired_numeric_metrics"
+      }
+    },
+    "unsupported_capabilities": {
+      "marketing_roi": {
+        "aliases": [
+          "ROI",
+          "marketing ROI"
+        ],
+        "reason": "definition_unavailable",
+        "limitation": "Chưa có chi phí marketing để tính ROI thực sự."
+      },
+      "order_completion_rate": {
+        "aliases": [
+          "tỷ lệ hoàn thành đơn",
+          "tỷ lệ hoàn thành"
+        ],
+        "reason": "definition_unavailable",
+        "limitation": "Danh mục hiện tại chưa có định nghĩa tỷ lệ hoàn thành đơn được duyệt; có thể đối chiếu số đơn theo trạng thái."
+      }
+    },
+    "equivalent_metric_groups": [
+      [
+        "item_revenue",
+        "product_revenue"
+      ]
+    ],
+    "granularity_aliases": {
+      "day": [
+        "theo ngày",
+        "hằng ngày",
+        "hàng ngày"
+      ],
+      "week": [
+        "theo tuần",
+        "hằng tuần",
+        "hàng tuần"
+      ],
+      "month": [
+        "theo tháng",
+        "hằng tháng",
+        "hàng tháng"
+      ],
+      "quarter": [
+        "theo quý"
+      ],
+      "year": [
+        "theo năm"
       ]
     }
   }

@@ -11,7 +11,8 @@ from pathlib import Path
 from datetime import date
 from unittest.mock import patch, Mock
 from services.analysis_catalog import AnalysisCatalog
-from services.analysis_pipeline import AnalysisPipeline, safe_failure
+from services.analysis_pipeline import safe_failure
+from tests.archive_planner import ArchivedGraphPipeline as AnalysisPipeline
 from common import AiTextToReportRequest
 from tests.analysis_fixtures import physical_metadata
 from tests.test_one_shot_v24 import scripted

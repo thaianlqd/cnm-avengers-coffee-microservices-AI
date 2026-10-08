@@ -705,7 +705,16 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
 
     quality = report_data.get("quality_assessment") or {}
     doc.add_heading("Mức độ kiểm chứng", level=2)
-    if quality.get("score") is not None and quality.get("status") != "not_scored":
+    if quality.get('measurement_mode') == 'evidence_checks':
+        if quality.get('score_method') and quality.get('score') is not None:
+            doc.add_paragraph(f"Điểm kiểm chứng tổng: {quality['score']:g}/100")
+            doc.add_paragraph(quality['score_method']['formula'])
+        doc.add_paragraph('Độ chính xác đối chứng: Chưa đo. Xác suất trả lời đúng: Chưa hiệu chuẩn.')
+        for check in quality.get('verification_checks', []):
+            if check['total']:
+                doc.add_paragraph(f"{check['label']}: {check['passed']}/{check['total']} đạt. {check['summary']}")
+        doc.add_paragraph(quality.get('accuracy_assessment', {}).get('reason', 'Chưa có đáp án đối chứng độc lập.'))
+    elif quality.get("score") is not None and quality.get("status") != "not_scored":
         doc.add_paragraph(f"{quality['score']}/100 · Bộ kiểm tra {quality.get('version', '2.7')}")
     else:
         doc.add_paragraph(quality.get("reason") or "Chưa đủ metadata để chấm theo V2.7.")

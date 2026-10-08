@@ -10,7 +10,7 @@ from time import perf_counter
 from unittest.mock import Mock, patch
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from common import AiTextToReportRequest
-from services.analysis_pipeline import AnalysisPipeline
+from tests.archive_planner import ArchivedGraphPipeline as AnalysisPipeline
 from tests.analysis_fixtures import physical_metadata
 from tests.test_one_shot_v24 import scripted
 

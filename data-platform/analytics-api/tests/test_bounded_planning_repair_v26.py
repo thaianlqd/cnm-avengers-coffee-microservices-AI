@@ -6,7 +6,7 @@ from copy import deepcopy
 from datetime import date
 from unittest.mock import Mock, patch
 from common import AiTextToReportRequest
-from services.analysis_pipeline import AnalysisPipeline
+from tests.archive_planner import ArchivedGraphPipeline as AnalysisPipeline
 from services.analysis_catalog import AnalysisError
 from services.provider_budget import ProviderBudget
 from tests.agent_fixtures import call, ScriptedProvider
@@ -84,7 +84,7 @@ class BoundedRepairTests(unittest.TestCase):
         b=ProviderBudget(max_calls=2);b.consume();b.consume()
         with self.assertRaises(AnalysisError):b.consume()
         self.assertEqual(b.used,2)
-        with self.assertRaises(AnalysisError):ProviderBudget(max_calls=3)
+        with self.assertRaises(AnalysisError):ProviderBudget(max_calls=4)
 
     def test_repair_cannot_silently_drop_a_requested_component(self):
         bad=plan(product(),{'id':'sales','lens_id':'product_sales','granularity':'fortnight'})

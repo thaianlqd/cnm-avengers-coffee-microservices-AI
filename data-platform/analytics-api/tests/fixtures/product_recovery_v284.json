@@ -1,0 +1,155 @@
+{
+  "note": "Recorded sanitized diagnostics. Full raw provider intents were not retained; tests reconstruct remaining fields explicitly.",
+  "records": [
+    {
+      "name": "failure_1",
+      "interpreted_shapes": [
+        {
+          "requirement_id": "req_top_products",
+          "analysis_kind": "ranking",
+          "dimension_count": 1,
+          "metric_ids": [
+            "item_revenue",
+            "quantity_sold"
+          ],
+          "dimension_ids": [
+            "product"
+          ]
+        },
+        {
+          "requirement_id": "req_category_structure",
+          "analysis_kind": "distribution",
+          "dimension_count": 1,
+          "metric_ids": [
+            "item_revenue"
+          ],
+          "dimension_ids": [
+            "category"
+          ]
+        },
+        {
+          "requirement_id": "req_product_trend",
+          "analysis_kind": "trend",
+          "dimension_count": 1,
+          "metric_ids": [
+            "item_revenue"
+          ],
+          "dimension_ids": [
+            "product"
+          ]
+        },
+        {
+          "requirement_id": "req_product_comparison",
+          "analysis_kind": "ranking",
+          "dimension_count": 1,
+          "metric_ids": [
+            "item_revenue"
+          ],
+          "dimension_ids": [
+            "product"
+          ]
+        }
+      ],
+      "root_issues": [
+        {
+          "requirement_id": null,
+          "field": "metric_ids",
+          "code": "explicit_metrics_missing",
+          "candidate_ids": [
+            "product_revenue"
+          ]
+        },
+        {
+          "requirement_id": null,
+          "field": "derived_features",
+          "code": "explicit_features_missing",
+          "candidate_ids": [
+            "leader"
+          ]
+        }
+      ],
+      "terminal_issues": [
+        {
+          "requirement_id": "req_top_products",
+          "field": "frozen",
+          "code": "accepted_requirement_changed"
+        }
+      ]
+    },
+    {
+      "name": "failure_2",
+      "interpreted_shapes": [
+        {
+          "requirement_id": "req_top_10_revenue_quantity",
+          "analysis_kind": "ranking",
+          "dimension_count": 1,
+          "metric_ids": [
+            "item_revenue",
+            "quantity_sold"
+          ],
+          "dimension_ids": [
+            "product"
+          ]
+        },
+        {
+          "requirement_id": "req_category_revenue_structure",
+          "analysis_kind": "distribution",
+          "dimension_count": 1,
+          "metric_ids": [
+            "item_revenue"
+          ],
+          "dimension_ids": [
+            "category"
+          ]
+        },
+        {
+          "requirement_id": "req_product_revenue_trend_weekly",
+          "analysis_kind": "trend",
+          "dimension_count": 1,
+          "metric_ids": [
+            "item_revenue"
+          ],
+          "dimension_ids": [
+            "product"
+          ]
+        },
+        {
+          "requirement_id": "req_compare_top_two_products",
+          "analysis_kind": "comparison",
+          "dimension_count": 1,
+          "metric_ids": [
+            "item_revenue"
+          ],
+          "dimension_ids": [
+            "product"
+          ]
+        }
+      ],
+      "root_issues": [
+        {
+          "requirement_id": null,
+          "field": "metric_ids",
+          "code": "explicit_metrics_missing",
+          "candidate_ids": [
+            "product_revenue"
+          ]
+        },
+        {
+          "requirement_id": null,
+          "field": "derived_features",
+          "code": "explicit_features_missing",
+          "candidate_ids": [
+            "leader"
+          ]
+        }
+      ],
+      "terminal_issues": [
+        {
+          "requirement_id": "req_top_10_revenue_quantity",
+          "field": "frozen",
+          "code": "accepted_requirement_changed"
+        }
+      ]
+    }
+  ]
+}

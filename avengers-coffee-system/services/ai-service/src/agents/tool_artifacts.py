@@ -377,6 +377,8 @@ class ToolArtifacts:
             self.focus['product'] = {**product, 'source': name}
         if name == 'get_order_details' and result.get('order_id'):
             self.focus['order'] = {'order_id': result['order_id']}
+        if name in {'cancel_order', 'update_order', 'reorder_order', 'confirm_order_change'} and result.get('order_id'):
+            self.focus['order'] = {'order_id': result['order_id']}
         if name == 'update_cart_item':
             line = next((r for r in (result.get('cart') or {}).get('items', [])
                          if str(r.get('cart_item_id')) == args['cart_item_id']), None)
@@ -437,6 +439,8 @@ class ToolArtifacts:
                     'product_name': row.get('product_name') or row['ten_san_pham'], 'source': name}
         if name == 'request_checkout' and result.get('status') == 'require_confirmation':
             self.checkout = result.get('order_summary')
+            self.ui['payment_options'] = []
+            self.visible['payment_options'] = []
         if name == 'confirm_checkout' and result.get('status') in {'ok', 'success', 'already_processed'}:
             self.visible = {}
             self.focus = {}

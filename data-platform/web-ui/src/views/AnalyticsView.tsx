@@ -6,6 +6,7 @@ import { AnalysisModules, AnalysisModuleSummary } from '../components/AnalysisMo
 import { AnalysisInputForm } from '../components/AnalysisInputForm';
 import { analysisInputPayload } from '../utils/analysisInput.mjs';
 import { analysisPlanLabel } from '../utils/analysisPresentation.mjs';
+import { reportHeading } from '../utils/analystDashboardLayout.mjs';
 import React, { useState, useEffect, useRef } from 'react';
 import { usePlatformStore } from '../store/usePlatformStore';
 import { 
@@ -203,7 +204,14 @@ export const AnalyticsView: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Lỗi đề xuất kế hoạch:', err);
-      showToast(err.message || 'Không thể tạo đề xuất phân tích', 'error');
+      const message = 'Chưa nhận được phản hồi từ máy chủ phân tích. Hãy kiểm tra kết nối và trạng thái dịch vụ; câu hỏi của bạn được giữ lại.';
+      setGeneratedReport({ status: 'error', outcome: 'SYSTEM_ERROR', message,
+        issue: { category: 'SYSTEM_UNAVAILABLE', title: 'Mất kết nối với máy chủ phân tích',
+          what_is_known: [], what_is_missing: [message],
+          resolution_guidance: 'Giữ nguyên câu hỏi và thử lại sau khi kết nối được khôi phục.',
+          suggested_actions: [{ type: 'retry', label: 'Thử lại' }] } });
+      setAiStep(3);
+      showToast(message, 'error');
     } finally {
       planningInFlight.current = false;
       setIsProposingPlan(false);
@@ -227,6 +235,10 @@ export const AnalyticsView: React.FC = () => {
           ...(aiPlan?.submittedInput || aiInput(promptToSend)),
           session_id: aiPlan?.prompt === promptToSend ? aiPlan?.session_id : null,
           accept_partial_scope: Boolean(aiPlan?.partial_scope),
+          proposal_revision: aiPlan?.revision,
+          intent_fingerprint: aiPlan?.semantic_intent_fingerprint,
+          plan_fingerprint: aiPlan?.resolved_plan_fingerprint,
+          catalog_fingerprint: aiPlan?.catalog_fingerprint,
         }),
       });
       if (!response.ok) {
@@ -580,6 +592,12 @@ export const AnalyticsView: React.FC = () => {
           status: 'success',
           outcome: generatedReport.outcome,
           analysis_components: generatedReport.analysis_components,
+          semantic_intent: generatedReport.semantic_intent,
+          resolved_requirement_coverage: generatedReport.resolved_requirement_coverage,
+          request_anchors: generatedReport.request_anchors,
+          derived_feature_bindings: generatedReport.derived_feature_bindings,
+          provenance: generatedReport.provenance,
+          sql_by_query: generatedReport.sql_by_query,
           quality_context: generatedReport.quality_context,
           quality_limitations: generatedReport.quality_limitations,
           dashboard_plan_input: generatedReport.dashboard_plan_input,
@@ -944,7 +962,7 @@ export const AnalyticsView: React.FC = () => {
     if (!rep) return null;
     return (
       <div className="space-y-6">
-        {pendingClarification && <AnalysisClarification response={pendingClarification} onChoice={(answer) => handleFollowUpRefine(`${pendingClarification.feedback}. ${answer}`, rep)} onEdit={() => { setFollowUpPrompt(pendingClarification.feedback || ''); setPendingClarification(null); }} />}
+        {pendingClarification && <div className="space-y-2"><AnalysisClarification response={pendingClarification} onChoice={(answer) => handleFollowUpRefine(`${pendingClarification.feedback}. ${answer}`, rep)} onEdit={() => { setFollowUpPrompt(pendingClarification.feedback || ''); setPendingClarification(null); }} /><p className="text-xs text-amber-800">Yêu cầu tinh chỉnh chưa được áp dụng. Bên dưới vẫn là báo cáo đã hoàn tất trước đó.</p></div>}
         {/* Report Header Bar - Spacious Responsive Layout */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4">
           {/* Tier 1: Meta, Status & Quick Feedback */}
@@ -1018,8 +1036,9 @@ export const AnalyticsView: React.FC = () => {
           {/* Tier 2: Wide Uncramped Title & Context */}
           <div className="space-y-1.5 max-w-5xl">
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug">
-              {rep.analysis_spec ? (rep.prompt || 'Dashboard phân tích') : rep.title || 'Báo Cáo Phân Tích Dữ Liệu Tự Động'}
+              {reportHeading(rep)}
             </h2>
+            {!!rep.provenance?.semantic_history?.length && <p className="text-xs text-slate-600">Đã áp dụng tinh chỉnh: {rep.provenance.semantic_history[rep.provenance.semantic_history.length - 1].feedback}</p>}
             <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
               {rep.analysis_spec ? 'Các góc nhìn từ dữ liệu trong phạm vi bạn đã chọn.' : rep.description || rep.interpreted_request || 'Bản phân tích chuyên sâu tự động lưu trữ trên hệ thống.'}
             </p>
@@ -2582,9 +2601,9 @@ export const AnalyticsView: React.FC = () => {
               {isProposingPlan && (
                 <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-xs">
                   <div className="w-6 h-6 rounded-full border-2 border-slate-900 border-t-transparent animate-spin mx-auto mb-3"></div>
-                  <h4 className="text-sm font-semibold text-slate-800">Đang khảo sát dữ liệu & lập kế hoạch báo cáo...</h4>
+                  <h4 className="text-sm font-semibold text-slate-800">Đang đọc yêu cầu và kiểm tra kế hoạch phân tích...</h4>
                   <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-                    Đối chiếu schema tầng Silver Lake, xác định các KPI trọng tâm và gợi ý các loại biểu đồ trực quan phù hợp.
+                    Hệ thống đang đối chiếu danh mục dữ liệu và tự sửa phần diễn giải chưa hợp lệ. Yêu cầu lớn có thể mất vài phút; bạn chỉ cần chờ lần xử lý này.
                   </p>
                 </div>
               )}

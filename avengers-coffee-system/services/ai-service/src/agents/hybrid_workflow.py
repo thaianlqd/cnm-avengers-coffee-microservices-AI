@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import json
 import logging
 import re
+import time
 from uuid import uuid4
 from src.agents.product_snapshot import ProductDisplaySnapshot
 from src.agents.semantic_protocol import digest
@@ -72,7 +73,14 @@ class TurnContext:
             [{'full_address': offer['address']}] if offer.get('address') else [])
         addresses = [{**r, 'address_id': digest(r.get('full_address'))[:24]} for r in addresses]
         products = ProductDisplaySnapshot.capture(visible, context.get('focus', {}).get('product'))
-        data = {'state': state, 'focus': context.get('focus') or {}, 'snapshots': {
+        focus = dict(context.get('focus') or {})
+        checkout = state.get('checkout') or {}
+        order_focus = checkout.get('order_management_action') or checkout.get('order_management_focus') or {}
+        if order_focus.get('order_id') and float(order_focus.get('expires_at') or 0) > time.time():
+            focus['order'] = {'order_id': order_focus['order_id']}
+        elif not focus.get('order') and not visible.get('orders') and checkout.get('last_created_order_id'):
+            focus['order'] = {'order_id': checkout['last_created_order_id']}
+        data = {'state': state, 'focus': focus, 'snapshots': {
             'products': products.rows(), 'pending_products': state.get('pending_products') or [],
             'cart_lines': state['cart']['items'], 'vouchers': visible.get('vouchers') or [],
             'branches': visible.get('branches') or [], 'location_candidates': visible.get('location_candidates') or [],
@@ -100,6 +108,8 @@ class TurnContext:
                 for i, row in enumerate(self.rows(domain), 1)]
         state = self.state
         return {'workflow': workflow_projection(state),
+            'order_references': {'focus': {'kind': 'focus'} if self.focus.get('order', {}).get('order_id') else None,
+                'last_created': {'kind': 'last_created'} if state.get('checkout', {}).get('last_created_order_id') else None},
             'visible_products': project('products', 'display_index'),
             'pending_products': project('pending_products', 'pending_index'),
             'cart_lines': project('cart_lines', 'cart_index'),
@@ -143,6 +153,9 @@ def ground(turn, domain, ref, *, rows=None, intent=None, user_message=''):
         if domain in {'products', 'pending_products'}:
             focus = turn.product_display_snapshot.focus or {}
         matches = [r for r in candidates if identity(domain, r) == identity(domain, focus) and identity(domain, focus)]
+    elif kind == 'last_created':
+        latest = turn.state.get('checkout', {}).get('last_created_order_id') if domain == 'orders' else None
+        matches = [r for r in candidates if latest and identity(domain, r) == latest]
     unique = {identity(domain, r): r for r in matches if identity(domain, r)}
     row = next(iter(unique.values())) if len(unique) == 1 else None
     snapshot = turn.product_display_snapshot if domain == 'products' else turn

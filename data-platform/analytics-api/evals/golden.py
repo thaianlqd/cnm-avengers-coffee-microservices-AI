@@ -89,7 +89,7 @@ def cases():
         ('wrong_lens','Tính toán số liệu không có định nghĩa.','SYSTEM_ERROR',{'decision_type':'plan','requested_operations':[{'id':'main','lens_id':'invented_lens'}]}),
         ('invalid_mapping','Kiểm tra lỗi ánh xạ yêu cầu.','SYSTEM_ERROR',{'decision_type':'plan','requested_operations':[{'id':'main','lens_id':'product_volume'}],'analysis_components':[dict(declared('main','products','product_volume'),operation_ids=['absent'])]})]
     for i,(id,question,outcome,decision) in enumerate(negative):
-        issue_category=('METRIC_UNAVAILABLE' if id in ('profit','roi') else 'UNSUPPORTED_ANALYSIS' if id=='forecast' else 'NEEDS_CLARIFICATION' if outcome=='NEEDS_INPUT' else 'HISTORICAL_DATA_UNAVAILABLE' if outcome=='INSUFFICIENT_DATA' else 'PLAN_FAILED')
+        issue_category=('METRIC_UNAVAILABLE' if id in ('profit','roi') else 'UNSUPPORTED_ANALYSIS' if id=='forecast' else 'NEEDS_CLARIFICATION' if outcome=='NEEDS_INPUT' else 'HISTORICAL_DATA_UNAVAILABLE' if outcome=='INSUFFICIENT_DATA' else 'SEMANTIC_INTERPRETATION_ERROR')
         values.append(dict(id=id,family=id,split='holdout' if i%3==0 else 'dev',difficulty='unsupported' if outcome in ('UNSUPPORTED','INSUFFICIENT_DATA') else 'ambiguous' if outcome=='NEEDS_INPUT' else 'adversarial',input={'question':question,'time':{'mode':'all_time'}},expected_outcome=outcome,expected_issue_category=issue_category,expected_operations=[],scripted_decision=decision))
     # Four explicit scoped contrasts test exact filter/time/ranking semantics.
     for i,(base,city) in enumerate([('product_volume','Hồ Chí Minh'),('product_sales','Hà Nội'),('sales_overview','Hồ Chí Minh'),('payment_value','Hà Nội')]):

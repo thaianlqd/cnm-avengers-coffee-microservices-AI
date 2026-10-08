@@ -285,10 +285,11 @@ def test_missing_checkout_fields_prompt_never_prepare_or_create(hybrid, monkeypa
     assert result['error'] == 'need_voucher_decision' and not result['checkout_payload'] and not hybrid.writes
 
 
-def test_payment_change_invalidates_summary(hybrid):
+def test_payment_change_invalidates_summary_even_if_refresh_stock_fails(hybrid):
     fresh_action(hybrid)
     result = send(hybrid, c('SET_PAYMENT', target={'kind':'name','value':'COD'}))
-    assert not result['error'] and not cart_manager.get_checkout_prefs(hybrid.sid).get('checkout_action_id')
+    assert result['error'] == 'stock_conflict' and not cart_manager.get_checkout_prefs(hybrid.sid).get('checkout_action_id')
+    assert not result['checkout_payload']
 
 
 @pytest.mark.parametrize('defect', ['unauthenticated','unverified','missing_turn'])

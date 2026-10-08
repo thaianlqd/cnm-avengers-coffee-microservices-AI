@@ -92,8 +92,8 @@ def test_complete_hybrid_journey_exact_failure_regressions_checkout_replay(journ
     summary=send(rt,c('PREPARE_CHECKOUT'))
     assert not summary['error'] and summary['checkout_payload'] and not rt.orders
     action=cart_manager.get_checkout_prefs(rt.sid)['checkout_action_id']
-    send(rt,c('SET_PAYMENT',target={'kind':'name','value':'COD'}))
-    assert not cart_manager.get_checkout_prefs(rt.sid).get('checkout_action_id') and not rt.orders
+    changed=send(rt,c('SET_PAYMENT',target={'kind':'name','value':'COD'}))
+    assert changed['checkout_payload'] and cart_manager.get_checkout_prefs(rt.sid)['checkout_action_id'] != action and not rt.orders
     send(rt,c('PREPARE_CHECKOUT'))
     assert cart_manager.get_checkout_prefs(rt.sid)['checkout_action_id'] != action and not rt.orders
     result=send(rt,c('CONFIRM_CHECKOUT'),client_message_id='confirm-final')
@@ -146,7 +146,9 @@ def test_long_25_turn_context_stability_with_read_interruptions(journey, monkeyp
         request=rt.provider.requests[-1]
         assert 'tool_calls' not in request['messages'][0]['content']
         assert result['provider_request_count'] == 1
-    assert len(rt.provider.requests) == 25 and len(rt.orders) == 1 and len(rt.summaries) == 2
+    # QR choice, voucher after cart edit and COD change each prepare a fresh
+    # review automatically; two explicit review reads reuse the current action.
+    assert len(rt.provider.requests) == 25 and len(rt.orders) == 1 and len(rt.summaries) == 5
 
 
 def test_saved_address_offer_requires_explicit_frozen_selection(journey, monkeypatch):

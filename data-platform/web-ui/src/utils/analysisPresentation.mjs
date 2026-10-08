@@ -1,5 +1,6 @@
 const titles = {
-  invalid_analysis_contract: 'Kế hoạch phân tích chưa hợp lệ',
+  invalid_analysis_contract: 'Hệ thống chưa hoàn tất diễn giải phân tích',
+  semantic_intent_invalid: 'Hệ thống chưa hoàn tất diễn giải phân tích',
   duplicate_invalid_tool_call: 'AI chưa sửa được kế hoạch phân tích',
   analysis_spec_invalid: 'Kế hoạch phân tích chưa hợp lệ',
   agent_budget: 'Chưa hoàn tất kế hoạch trong giới hạn xử lý',
@@ -11,6 +12,12 @@ const titles = {
   one_shot_context_budget_exceeded: 'Phạm vi yêu cầu quá lớn',
   dashboard_contract: 'Cách trình bày chưa phù hợp với dữ liệu',
 };
+
+export function analysisFailureActions(response = {}) {
+  if (response.status === 'proposal_ready' || response.status === 'success') return { edit: false, retry: false };
+  const systemError = response.outcome === 'SYSTEM_ERROR' || response.status === 'error';
+  return { edit: !systemError, retry: systemError && Boolean(response.issue?.suggested_actions?.some(a => a.type === 'retry')) };
+}
 
 export function analysisFailureTitle(response = {}) {
   const category = response.diagnostics?.error_category || response.clarification?.reason || '';

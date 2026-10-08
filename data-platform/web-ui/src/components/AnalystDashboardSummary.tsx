@@ -9,7 +9,7 @@ const ChartCard: React.FC<{ chart: any; compact?: boolean; span: string; editing
   const [type, setType] = useState(initialChartType(chart));
   useEffect(() => setType(initialChartType(chart)), [chart.id, chart.chart_type, chart.query_id]);
   const accent = chartAccent(chart);
-  const types = ['bar', 'horizontal_bar'].includes(type) ? ['horizontal_bar', 'bar'] : ['line', 'area'].includes(type) ? ['area', 'line'] : [];
+  const types = chart.value_transform ? [] : ['bar', 'horizontal_bar'].includes(type) ? ['horizontal_bar', 'bar'] : ['line', 'area'].includes(type) ? ['area', 'line'] : [];
   return <article data-dashboard-chart className={`${span} bg-white rounded-2xl border border-slate-200 p-5 min-w-0 w-full h-full flex flex-col`}>
     <div className="flex items-start justify-between gap-3 mb-5">
       <div className="min-w-0"><div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full shrink-0" style={{ background: accent }} /><h5 className="text-sm font-semibold text-slate-900">{conciseChartTitle(chart)}</h5></div>
@@ -26,6 +26,7 @@ const ChartCard: React.FC<{ chart: any; compact?: boolean; span: string; editing
     </div>
     <div className="min-h-[300px] flex-1 flex flex-col justify-center min-w-0"><AnalystChart chart={{ ...chart, chart_type: type, accent_color: accent }} /></div>
     {chart.time_note && <p className="text-[11px] leading-relaxed text-amber-700 mt-4">{chart.time_note}</p>}
+    {chart.value_transform === 'contribution_share' && chart.evidence_refs?.[0] && <a className="text-xs text-blue-600 mt-4" href={`#evidence-${encodeURIComponent(chart.evidence_refs[0])}`}>Đối chiếu tử số và mẫu số ↗</a>}
     {chart.grouped_categories > 0 && <p className="text-[11px] leading-relaxed text-slate-500 mt-4">6 nhóm lớn nhất và Khác ({chart.grouped_categories} nhóm). Tổng và tỷ trọng tính trên toàn bộ {chart.population_count} nhóm; xem từng nhóm trong bảng dữ liệu.</p>}
     {(chart.selection === 'Top N' || chart.selection === 'limited' || chart.selection === 'display_subset') && <p className="text-[11px] text-slate-500 mt-4 border-t border-slate-100 pt-3">
       {chart.selection === 'Top N' ? 'Tập Top N được chọn; không phải cơ cấu toàn bộ.' : chart.selection === 'limited' ? 'Kết quả có giới hạn số dòng.' : `${chart.displayed_count}/${chart.population_count} nhóm · Bảng kết quả giữ đầy đủ; số liệu phân tích dùng đầy đủ các nhóm.`}

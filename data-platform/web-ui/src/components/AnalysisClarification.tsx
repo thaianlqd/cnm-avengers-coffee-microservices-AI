@@ -1,6 +1,6 @@
 import React from 'react';
 import { AnalysisMeaning } from './AnalysisMeaning';
-import { analysisFailureTitle } from '../utils/analysisPresentation.mjs';
+import { analysisFailureTitle, analysisFailureActions } from '../utils/analysisPresentation.mjs';
 
 /** Normal users see business labels; internal IDs stay in API diagnostics. */
 export const AnalysisClarification: React.FC<{
@@ -18,12 +18,15 @@ export const AnalysisClarification: React.FC<{
   );
   const issue = response?.issue;
   const failed = response?.status === 'error';
+  const actions = analysisFailureActions(response);
   return (
     <section role={failed ? 'alert' : 'status'} className="rounded-2xl border border-amber-200 bg-amber-50 p-6 space-y-3">
       <h3 className="text-sm font-semibold text-slate-800">{issue?.title || analysisFailureTitle(response)}</h3>
       <p className="text-sm text-slate-700">{clarification?.user_message || response?.message || 'Hệ thống chưa thể diễn giải yêu cầu lúc này. Vui lòng thử lại.'}</p>
-      {issue?.what_is_known?.length > 0 && <div className="text-xs"><strong>Đã hiểu:</strong> {issue.what_is_known.join(' · ')}</div>}
-      {issue?.what_is_missing?.filter((text: string) => issue.category !== 'PLANNING_CAPACITY' || text !== response.message).map((text: string, index: number) => <p key={index} className="text-xs"><strong>{issue.category === 'PLANNING_CAPACITY' ? 'Thông tin:' : 'Cần bổ sung:'}</strong> {text}</p>)}
+      {issue?.what_is_known?.length > 0 && <div className="text-xs"><strong>Đã nhận diện:</strong> {issue.what_is_known.join(' · ')}</div>}
+      {issue?.what_is_missing?.filter((text: string) => text !== (clarification?.user_message || response.message)).map((text: string, index: number) => <p key={index} className="text-xs"><strong>{failed || response.outcome === 'SYSTEM_ERROR' || issue.category === 'PLANNING_CAPACITY' ? 'Thông tin:' : 'Cần bổ sung:'}</strong> {text}</p>)}
+      {issue?.recovery_summary && <p className="text-xs text-slate-600">{issue.recovery_summary}</p>}
+      {issue?.resolution_guidance && <p className="text-xs text-slate-700"><strong>Cách xử lý:</strong> {issue.resolution_guidance}</p>}
       {issue?.suggested_actions?.filter((action: any) => action.type === 'followup').map((action: any, index: number) => <button type="button" key={index} disabled={!onChoice} onClick={() => onChoice?.(action.followup)} className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs">{action.label}</button>)}
       {issue?.suggested_actions?.filter((action: any) => action.type === 'snapshot').map((action: any, index: number) => <button type="button" key={index} disabled={!onSnapshot} onClick={() => onSnapshot?.(action.followup)} className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs">{action.label}</button>)}
       {issue?.suggested_actions?.filter((action: any) => action.type === 'select_module').map((action: any, index: number) => <button type="button" key={index} disabled={!onModule} onClick={() => onModule?.({ module_id: action.module_id, name: action.label, compatibility: 'ready' })} className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs">{action.label}</button>)}
@@ -35,8 +38,8 @@ export const AnalysisClarification: React.FC<{
           {choice.label}{choice.unit ? ` (${choice.unit})` : ''}
         </button>
       ))}</div>}
-      {onEdit && <button type="button" onClick={onEdit} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs">Chỉnh sửa câu hỏi</button>}
-      {failed && onRetry && <button type="button" onClick={onRetry} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs">Thử lập lại kế hoạch</button>}
+      {actions.edit && onEdit && <button type="button" onClick={onEdit} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs">Chỉnh sửa câu hỏi</button>}
+      {actions.retry && onRetry && <button type="button" onClick={onRetry} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs">Thử lại khi hệ thống sẵn sàng</button>}
     </section>
   );
 };

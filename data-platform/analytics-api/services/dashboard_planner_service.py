@@ -2,6 +2,7 @@
 
 from services.analyst_contract import DashboardPlan, DashboardVisual
 from services.insight_service import number, trend_bucket_coverage
+from services.business_labels import dimension_labeler
 import hashlib
 import json
 
@@ -37,7 +38,9 @@ def defaults(artifacts):
             if chart_reason(candidate, a, 100, 16) is None:
                 visuals.append(candidate)
             continue
-        same_unit = len(a.plan.metrics) > 1 and len({a.grounded.metrics[m]["unit"] for m in a.plan.metrics}) == 1
+        same_unit = (len(a.plan.metrics) > 1
+            and len({a.grounded.metrics[m]["unit"] for m in a.plan.metrics}) == 1
+            and len({a.grounded.metrics[m].get("aggregation_semantics") == "average" for m in a.plan.metrics}) == 1)
         if same_unit and len(visible) == 1 and not a.plan.ranking and a.plan.kind != "trend":
             visuals.append(DashboardVisual(query_id=id, chart_type="grouped_bar", metrics=a.plan.metrics, x_field=visible[0], role=a.query.role, priority=80, purpose="comparison"))
             continue
@@ -190,12 +193,13 @@ def population_label(a):
 def category_preview(v, a, max_categories):
     """A labelled display subset; complete analytical rows remain authoritative."""
     visible = [d for d in a.plan.dimensions if not d.endswith("_id")] or list(a.plan.dimensions)
+    display=dimension_labeler(a.plan.dimensions,a.result['rows'],a.grounded.dimensions)
     return (
         a.plan.kind in {"aggregate", "distribution"}
         and not a.plan.ranking and not a.plan.explicit_limit
         and v.chart_type in {"bar", "horizontal_bar", "grouped_bar"}
         and len(visible) == 1 and v.x_field == visible[0] and not v.series_field
-        and len({str(r.get(v.x_field)) for r in a.result["rows"]}) > max_categories
+        and len({display(r,v.x_field) for r in a.result["rows"]}) > max_categories
     )
 
 
@@ -203,6 +207,7 @@ def chart_reason(v, a, max_categories, max_series):
     p = a.plan
     rows = a.result["rows"]
     fields = set(p.output_columns)
+    display=dimension_labeler(p.dimensions,rows,a.grounded.dimensions)
     if not rows:
         return "empty_result"
     if v.chart_type == "table":
@@ -223,7 +228,7 @@ def chart_reason(v, a, max_categories, max_series):
     units = {a.grounded.metrics[m]["unit"] for m in v.metrics}
     if len(units) > 1 and v.chart_type != "scatter":
         return "mixed_units_require_linked_views"
-    if len({str(r[v.x_field]) for r in rows}) > max_categories and v.chart_type not in {"donut", "scatter"} and not category_preview(v, a, max_categories):
+    if len({display(r,v.x_field) for r in rows}) > max_categories and v.chart_type not in {"donut", "scatter"} and not category_preview(v, a, max_categories):
         return "category_budget"
     visible = [d for d in p.dimensions if not d.endswith("_id")] or list(p.dimensions)
     if v.chart_type in ("line", "area", "multi_line"):
@@ -287,13 +292,14 @@ def chart_reason(v, a, max_categories, max_series):
         or sum(r[v.metrics[0]] for r in rows) <= 0
     ):
         return "invalid_part_to_whole"
-    if v.series_field and len({str(r[v.series_field]) for r in rows}) > max_series:
+    if v.series_field and len({display(r,v.series_field) for r in rows}) > max_series:
         return "series_budget"
     return None
 
 
 def render(v, a, index, max_categories=100):
     rows = a.result["rows"]
+    display=dimension_labeler(a.plan.dimensions,rows,a.grounded.dimensions)
     population_count = len(rows)
     metric = v.metrics[0]
     preview = category_preview(v, a, max_categories)
@@ -358,6 +364,9 @@ def render(v, a, index, max_categories=100):
         "business_name", ""
     )
     if a.plan.ranking:
+        output.update(ranking_metric=a.plan.ranking.metric,
+            ranking_metric_label=a.grounded.metrics[a.plan.ranking.metric]['business_name'],
+            ranking_direction=a.plan.ranking.direction,ranking_limit=a.plan.ranking.top_n)
         output["title"] = f"Top {a.plan.ranking.top_n} — " + output["title"]
         if metric != a.plan.ranking.metric:
             output["title"] += " trong tập xếp hạng theo " + a.grounded.metrics[a.plan.ranking.metric]["business_name"]
@@ -385,7 +394,7 @@ def render(v, a, index, max_categories=100):
                     "x": r[v.metrics[0]],
                     "y": r[v.metrics[1]],
                     "label": " / ".join(
-                        str(r[d]) for d in a.plan.dimensions if not d.endswith("_id")
+                        display(r,d) for d in a.plan.dimensions if not d.endswith("_id")
                     ),
                 }
                 for r in rows
@@ -396,7 +405,7 @@ def render(v, a, index, max_categories=100):
         )
     elif v.chart_type == "heatmap":
         output["data"] = [
-            {"x": str(r[v.x_field]), "y": str(r[v.series_field]), "value": r[metric]}
+            {"x": display(r,v.x_field), "y": display(r,v.series_field), "value": r[metric]}
             for r in rows
         ]
     elif (
@@ -404,7 +413,7 @@ def render(v, a, index, max_categories=100):
         or v.chart_type == "grouped_bar"
     ):
         names = (
-            list(dict.fromkeys(str(r[v.series_field]) for r in rows))
+            list(dict.fromkeys(display(r,v.series_field) for r in rows))
             if v.series_field
             else v.metrics
         )
@@ -412,10 +421,10 @@ def render(v, a, index, max_categories=100):
         indexed = {}
         for row in rows:
             record = indexed.setdefault(
-                str(row[v.x_field]), {"label": str(row[v.x_field])}
+                display(row,v.x_field), {"label": display(row,v.x_field)}
             )
             if v.series_field:
-                record[keys[str(row[v.series_field])]] = row[metric]
+                record[keys[display(row,v.series_field)]] = row[metric]
             else:
                 for m in v.metrics:
                     record[keys[m]] = row[m]
@@ -443,7 +452,7 @@ def render(v, a, index, max_categories=100):
     else:
         output["data"] = [
             {
-                "label": str(r[v.x_field]),
+                "label": display(r,v.x_field),
                 "value": r[metric],
                 "color": PALETTE[i % len(PALETTE)],
             }
@@ -590,6 +599,15 @@ def build_dashboard(
             charts.append(rendered)
             seen[key] = rendered
             covered.update((a.query.id, m) for m in v.metrics)
+    # Requested derived meaning gets a distinct verified view. Reuse the exact
+    # full-population denominator already executed; never add chart-only SQL.
+    from services.derived_chart_service import contribution_charts
+    for derived in contribution_charts(artifacts,evidence):
+        if len(charts)>=max_charts:
+            omitted.append(dict(query_id=derived['query_id'],chart_type=derived['chart_type'],role=derived['role'],priority=70,reason='chart_budget'))
+            continue
+        derived['id']=f'visual_{len(charts)+1}'
+        charts.append(derived)
     # Preserve every returned metric through a view or an explicit result table.
     for id, a in artifacts.items():
         tables.append(
@@ -643,9 +661,9 @@ def build_dashboard(
             if not profile:
                 continue
             lens = next((l for l in profile["analytical_lenses"] if l["id"] == a.query.lens_id), None)
-            section = sections["relationship"] if chart["chart_type"] == "scatter" else sections.get(a.query.operation, "Kết quả chi tiết")
+            section = sections['distribution'] if chart.get('value_transform')=='contribution_share' else sections["relationship"] if chart["chart_type"] == "scatter" else sections.get(a.query.operation, "Kết quả chi tiết")
             chart.update(domain_id=profile["domain_id"], domain_label=profile["business_label"], lens_id=a.query.lens_id, lens_label=lens["business_label"] if lens else None, story_section=section)
-            if lens:
+            if lens and not chart.get('value_transform'):
                 chart["purpose"] = lens["business_question"]
             group = next((g for g in domain_groups if g["domain_id"] == profile["domain_id"]), None)
             if group is None:

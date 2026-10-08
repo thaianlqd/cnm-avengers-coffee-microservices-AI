@@ -118,7 +118,12 @@ class AnalyticalQueries:
         self.normalizations = []
         self.parent_replacements = {}
 
+    def stage(self, name):
+        if self.diagnostics.get("pipeline_version") == "2.8":
+            self.diagnostics["failure_stage"] = name
+
     def prepare(self, arguments):
+        self.stage("PLAN_VALIDATION")
         q, self.normalizations = canonicalize(arguments, self.previous, self.parent_replacements)
         if self.enforce_discovery:
             self.semantic.require_query(q)
@@ -264,34 +269,41 @@ class AnalyticalQueries:
         )
         ground = self.catalog.ground(spec, self.reference)
         plan = build_plans(ground, self.catalog)[0]
+        verdict = validate_plan(plan, ground, self.catalog)
+        if not verdict.valid:
+            raise AnalysisError(verdict.category, "Analytical contract rejected")
+        self.stage("SQL_COMPILATION")
         sql = compile_sql(plan, ground, self.catalog)
-        for verdict in (
-            validate_plan(plan, ground, self.catalog),
-            validate_sql(sql, plan, ground, self.catalog),
-        ):
+        for verdict in (validate_sql(sql, plan, ground, self.catalog),):
             if not verdict.valid:
                 raise AnalysisError(verdict.category, "Analytical contract rejected")
         artifact = AnalysisArtifact(
             q, ground, plan, sql, signature(q, period, self.catalog.fingerprint)
         )
         self.pending[q.id] = artifact
+        self.stage(None)
         return artifact
 
     def check_result(self, result, artifact, source):
+        self.stage("RESULT_VALIDATION")
         verdict = validate_results(result, artifact.plan, artifact.grounded, self.catalog)
         if verdict.valid:
+            self.stage(None)
             return verdict
         codes = sorted({next((code for prefix, code in RESULT_RULES.items() if error.startswith(prefix)), "result_invalid") for error in verdict.errors})
         # Only controlled rule codes and shape counts. Never log SQL, provider
         # prose, operation IDs, filters, row values or exception text.
         diagnostic = {"source": source, "operation": artifact.plan.kind,
                       "row_count": len(result.get("rows", [])),
-                      "row_limit": artifact.plan.row_limit, "rules": codes}
+                      "row_limit": artifact.plan.row_limit, "rules": codes,
+                      "metric_ids": list(artifact.plan.metrics), "dimension_ids": list(artifact.plan.dimensions),
+                      "granularity": artifact.plan.granularity}
         failures = self.diagnostics.setdefault("result_failures", [])
         if len(failures) < 8:
             failures.append(diagnostic)
-        logger.warning("Result rejected source=%s operation=%s rows=%s limit=%s rules=%s",
-                       source, artifact.plan.kind, diagnostic["row_count"], artifact.plan.row_limit, ",".join(codes))
+        logger.warning("Result rejected source=%s operation=%s rows=%s limit=%s rules=%s dimensions=%s granularity=%s",
+                       source, artifact.plan.kind, diagnostic["row_count"], artifact.plan.row_limit, ",".join(codes),
+                       ",".join(artifact.plan.dimensions),artifact.plan.granularity)
         error = AnalysisError("result_contract", "Result does not satisfy the analytical contract")
         error.result_issues = codes
         if codes == ["population_limit"]:
@@ -312,6 +324,7 @@ class AnalyticalQueries:
         elif not self.proposal:
             self.diagnostics["db_query_count"] += 1
             try:
+                self.stage("SQL_EXECUTION")
                 result = self.executor(
                     artifact.sql, row_limit=artifact.plan.row_limit + 1
                 )

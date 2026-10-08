@@ -1,0 +1,16 @@
+{
+  "failure_stage": "SEMANTIC_INTENT",
+  "provider_status": "success",
+  "provider_call_count": 3,
+  "failure_requirement_id": "top_products_revenue_30d",
+  "failure_field": "goal",
+  "failure_code": "invalid_intent_shape",
+  "contract_issues": [
+    {
+      "requirement_id": "top_products_revenue_30d",
+      "field": "goal",
+      "code": "invalid_intent_shape"
+    }
+  ],
+  "db_query_count": 0
+}

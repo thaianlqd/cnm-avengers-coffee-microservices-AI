@@ -8,6 +8,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
     structured = getattr(error, "clarification", None)
     clarification_categories = {
         "clarification",
+        "not_analytical_request",
         "blueprint_ambiguous",
         "insufficient_data",
         "visualization_unavailable",
@@ -56,6 +57,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "duplicate_invalid_tool_call": "AI lặp lại một kế hoạch chưa hợp lệ; hệ thống đã dừng lượt sửa. Vui lòng lập lại kế hoạch.",
         "analysis_spec_invalid": "Kế hoạch phân tích chưa hợp lệ. Vui lòng lập lại kế hoạch.",
         "execution": "Truy vấn phân tích chưa thực thi thành công. Vui lòng thử lại sau.",
+        "quality_verification": "Nguồn gốc hoặc phạm vi báo cáo chưa vượt qua kiểm chứng độc lập. Hệ thống chưa tạo báo cáo hoàn chỉnh.",
         "result_contract": "Kết quả dữ liệu chưa vượt qua kiểm chứng nên chưa thể tạo báo cáo.",
         "unsupported_metric": "Chỉ số yêu cầu chưa có định nghĩa trong danh mục dữ liệu hiện tại.",
         "forecast_unsupported": "Dữ liệu và phương pháp hiện có chưa hỗ trợ dự báo. Bạn có thể yêu cầu xu hướng quan sát của các kỳ đã có dữ liệu.",
@@ -82,6 +84,10 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "schema_changed": "Cấu trúc dữ liệu đã thay đổi. Vui lòng duyệt lại phạm vi phân tích.",
         "unsupported": "Yêu cầu này chưa thể phân tích bằng các chỉ số và quan hệ dữ liệu hiện có.",
         "clarification": "Có một phần phạm vi phân tích cần xác nhận. Vui lòng làm rõ yêu cầu.",
+        "not_analytical_request": "Chưa có yêu cầu phân tích dữ liệu trong nội dung bạn nhập. Hãy nêu điều muốn tìm hiểu, ví dụ: Doanh thu theo chi nhánh trong 30 ngày gần nhất.",
+        "semantic_intent_invalid": "Hệ thống chưa hoàn tất diễn giải sau các lượt phục hồi nội bộ. Yêu cầu của bạn được giữ nguyên; đây là lỗi xử lý của hệ thống.",
+        "stale_approval": "Kế hoạch hoặc phiên bản đã thay đổi. Vui lòng duyệt lại đề xuất hiện tại.",
+        "session_storage": "Kho phiên phân tích chưa sẵn sàng. Hệ thống chưa thực thi kế hoạch.",
     }
     message = (
         structured["user_message"]
@@ -133,7 +139,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         ]
     )
     from services.analysis_issue_service import actionable_issue
-    issue = actionable_issue(error, message, structured)
+    issue = actionable_issue(error, message, structured, layer_diagnostics)
     from services.analysis_quality_service import not_scored
     outcome = ('INSUFFICIENT_DATA' if issue['category'] in {'HISTORICAL_DATA_UNAVAILABLE', 'INSUFFICIENT_DATA'}
                else 'UNSUPPORTED' if issue['category'] in {'METRIC_UNAVAILABLE', 'UNSUPPORTED_ANALYSIS'}
@@ -155,6 +161,10 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
             structured.get("known_interpretation") if structured else None
         ),
         "diagnostics": {
+            "failure_stage": (layer_diagnostics or {}).get("failure_stage") or (
+                "PROVIDER_FORMAT" if category == "provider_invalid_json" else "PROVIDER_TRANSPORT" if category.startswith("provider_")
+                else "RESULT_VALIDATION" if category == "result_contract" else "SQL_EXECUTION" if category == "execution"
+                else "SEMANTIC_INTENT" if category == "semantic_intent_invalid" else "PLAN_VALIDATION"),
             "provider_status": "failed" if category.startswith("provider_") else "success" if any(a.get("status") == "success" for a in provider_calls or []) else "not_started",
             "provider_error_category": category if category.startswith("provider_") else None,
             "agent_contract_status": "invalid" if category in {"invalid_analysis_contract", "duplicate_invalid_tool_call", "analysis_spec_invalid"} else "valid",

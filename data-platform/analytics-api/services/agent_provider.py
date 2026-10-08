@@ -153,6 +153,8 @@ def http_failure(response):
             failure.update(
                 error_category="provider_daily_quota", error_reason="daily_quota"
             )
+        elif scopes and all(scope["window"] == "minute" for scope in scopes) and 0 < failure.get("retry_after_seconds", 0) <= 2:
+            failure["retryable"] = True
     if status == 400:
         keywords = [
             word
@@ -364,7 +366,7 @@ class NativeAgentProvider:
                     {"role": "user", "parts": [{"text": message["content"]}]}
                 )
         self.cursor = len(messages)
-        return {
+        body = {
             "systemInstruction": {"parts": [{"text": system}]},
             "contents": deepcopy(self.gemini_contents),
             "tools": [
@@ -382,6 +384,11 @@ class NativeAgentProvider:
             "toolConfig": {"functionCallingConfig": {"mode": "ANY"}},
             "generationConfig": {"temperature": 0, "maxOutputTokens": 3500},
         }
+        if len(tools) == 1 and tools[0]["name"] in {"submit_analysis_intent", "submit_analysis_delta"} and os.getenv("DATA_ANALYST_INTENT_TRANSPORT", "json") == "json":
+            body.pop("tools")
+            body.pop("toolConfig")
+            body["generationConfig"].update(responseMimeType="application/json", responseJsonSchema=gemini_tool_schema(tools[0]))
+        return body
 
     @staticmethod
     def _groq_messages(system, messages):
@@ -474,6 +481,15 @@ class NativeAgentProvider:
         if not self.legacy_policy:
             call_budget = call_budget or self.default_budget
         attempts = []
+        # Interpretation can need longer than a chat turn. Keep retries under
+        # the existing per-turn budget and leave legacy transports unchanged.
+        timeout = 25
+        if len(tools)==1 and tools[0]['name'] in {'submit_analysis_intent','submit_analysis_delta'}:
+            try:
+                read_seconds=int(os.getenv('DATA_ANALYST_PROVIDER_READ_TIMEOUT_SECONDS','60'))
+            except ValueError:
+                read_seconds=60
+            timeout=(8,max(25,min(60,read_seconds)))
         if os.getenv("AI_OFFLINE", "").lower() in ("1", "true", "yes"):
             return {"calls": None, "attempts": [], "offline": True}
         if self.gemini_api_style not in {"native", "openai"}:
@@ -511,7 +527,7 @@ class NativeAgentProvider:
                     attempt["api_style"] = "openai"
                     attempt["tool_schema_chars"] = len(
                         json.dumps(
-                            payload["tools"], ensure_ascii=False, separators=(",", ":")
+                            payload.get("tools", payload.get("generationConfig", {}).get("responseJsonSchema", {})), ensure_ascii=False, separators=(",", ":")
                         )
                     )
                     if call_budget:
@@ -523,14 +539,14 @@ class NativeAgentProvider:
                             "Content-Type": "application/json",
                         },
                         json=payload,
-                        timeout=25,
+                        timeout=timeout,
                     )
                 elif provider == "gemini":
                     attempt["api_style"] = "native"
                     payload = self._gemini_body(system, messages, tools)
                     attempt["tool_schema_chars"] = len(
                         json.dumps(
-                            payload["tools"], ensure_ascii=False, separators=(",", ":")
+                            payload.get("tools", payload.get("generationConfig", {}).get("responseJsonSchema", {})), ensure_ascii=False, separators=(",", ":")
                         )
                     )
                     if call_budget:
@@ -539,7 +555,7 @@ class NativeAgentProvider:
                         f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
                         params={"key": key},
                         json=payload,
-                        timeout=25,
+                        timeout=timeout,
                     )
                 else:
                     if call_budget:
@@ -565,7 +581,7 @@ class NativeAgentProvider:
                             "temperature": 0,
                             "max_tokens": 3500,
                         },
-                        timeout=25,
+                        timeout=timeout,
                     )
                 if not response.ok:
                     attempt.update(http_failure(response))
@@ -583,6 +599,9 @@ class NativeAgentProvider:
                         for i, part in enumerate(parts)
                         if "functionCall" in part
                     ]
+                    if "responseJsonSchema" in payload.get("generationConfig", {}):
+                        content = "".join(p.get("text", "") for p in parts if not p.get("thought"))
+                        calls = [{"id":"semantic_json", "name":tools[0]["name"], "arguments":json.loads(content)}]
                     # Preserve signed function-call parts verbatim, never thought text.
                     signed = [deepcopy(p) for p in parts if "functionCall" in p]
                     self.gemini_call_ids.update(

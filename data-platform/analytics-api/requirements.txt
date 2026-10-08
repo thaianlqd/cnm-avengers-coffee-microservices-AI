@@ -9,3 +9,4 @@ matplotlib>=3.8.0
 
 # PostgreSQL AST parsing for the AI analysis contract (strictly pinned).
 sqlglot==26.33.0
+redis==5.2.1

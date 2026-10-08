@@ -10,8 +10,8 @@ class ProviderBudget:
     max_calls = 1
 
     def __init__(self, diagnostics=None, max_calls=1):
-        if max_calls not in (1, 2):
-            raise AnalysisError("provider_policy", "Planning permits at most two calls")
+        if max_calls not in (1, 2, 3):
+            raise AnalysisError("provider_policy", "Planning permits at most three calls")
         self.max_calls = max_calls
         self.diagnostics = diagnostics if diagnostics is not None else {}
         self.used = 0
@@ -54,13 +54,13 @@ class ProviderTurn:
 
 
 def validate_single_shot_policy():
-    """An optional second call repairs planning only; no hidden provider loops."""
-    maximum = os.getenv("DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN", "1").strip()
-    repair = os.getenv("DATA_ANALYST_ENABLE_CONTRACT_REPAIR", "0").strip().lower()
-    if maximum not in {"1", "2"} or repair not in {"0", "false", "no", "1", "true", "yes"}:
+    """Request-owned bounded interpretation/recovery; normal use is one call."""
+    maximum = os.getenv("DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN", "3").strip()
+    repair = os.getenv("DATA_ANALYST_ENABLE_CONTRACT_REPAIR", "1").strip().lower()
+    if maximum not in {"1", "2", "3"} or repair not in {"0", "false", "no", "1", "true", "yes"}:
         raise AnalysisError("provider_policy", "Invalid bounded planning allowance")
-    if (maximum == "2") != (repair in {"1", "true", "yes"}):
-        raise AnalysisError("provider_policy", "Two-call planning requires explicit repair policy")
+    if (maximum != "1") != (repair in {"1", "true", "yes"}):
+        raise AnalysisError("provider_policy", "Recovery allowance requires matching repair policy")
     for flag in ("MODEL_ESCALATION", "PROVIDER_FALLBACK", "POST_RESULT_SYNTHESIS"):
         if os.getenv("DATA_ANALYST_ENABLE_" + flag, "0").strip().lower() not in {"0", "false", "no"}:
             raise AnalysisError("provider_policy", "Automatic fallback and synthesis remain disabled")

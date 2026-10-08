@@ -139,7 +139,7 @@ test('result table paginates full rows and renders business labels safely', () =
 });
 
 for (const [category, title] of [
-  ['invalid_analysis_contract', 'Kế hoạch phân tích chưa hợp lệ'],
+  ['invalid_analysis_contract', 'Hệ thống chưa hoàn tất diễn giải phân tích'],
   ['duplicate_invalid_tool_call', 'AI chưa sửa được kế hoạch phân tích'],
   ['agent_budget', 'Chưa hoàn tất kế hoạch'],
   ['provider_auth', 'Dịch vụ AI chưa khả dụng'],
@@ -185,9 +185,9 @@ test('one-shot proposal distinguishes mandatory, optional and omitted work', () 
 
 test('manual retry renders only on errors and never invokes itself', () => {
   let calls = 0;
-  const props = { response: { status: 'error', diagnostics: { error_category: 'invalid_analysis_contract' } }, onRetry: () => calls++ };
-  assert.ok(render(AnalysisClarification, props).includes('Thử lập lại kế hoạch')); assert.equal(calls, 0);
-  assert.ok(!render(AnalysisClarification, { ...props, response: { status: 'needs_clarification' } }).includes('Thử lập lại kế hoạch'));
+  const props = { response: { status: 'error', issue: { suggested_actions: [{ type: 'retry' }] }, diagnostics: { error_category: 'invalid_analysis_contract' } }, onRetry: () => calls++ };
+  assert.ok(render(AnalysisClarification, props).includes('Thử lại khi hệ thống sẵn sàng')); assert.equal(calls, 0);
+  assert.ok(!render(AnalysisClarification, { ...props, response: { status: 'needs_clarification' } }).includes('Thử lại khi hệ thống sẵn sàng'));
 });
 
 test('chart presentation controls keep Top N caution and are disabled during refinement', () => {

@@ -40,7 +40,9 @@ def business_state(session_id, shadow=False):
         'cart_verified': bool(cart.get('authoritative')),
         'cart': {'items': lines, 'cart_version': cart.get('cart_version'),
                  'branch_id': cart.get('branch_id'), 'branch_name': cart.get('branch_name')},
-        'checkout': {key: deepcopy(prefs[key]) for key in PREF_FIELDS if key in prefs},
+        'checkout': {**{key: deepcopy(prefs[key]) for key in PREF_FIELDS if key in prefs},
+            'last_created_order_id': prefs.get('completed_order_id') or (
+                session.get('last_order_id') if shadow else cart_manager.get_cart(session_id).get('last_order_id'))},
         'confirmation_fresh': bool(not shadow and prefs.get('checkout_action_id')
             and prefs.get('summary_fingerprint') == cart_manager.cart_fingerprint(session_id)
             and float(prefs.get('checkout_action_expires_at') or 0) > time.time()),

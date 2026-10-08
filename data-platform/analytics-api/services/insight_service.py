@@ -6,6 +6,7 @@ import hashlib
 import json
 from collections import defaultdict
 from datetime import date, timedelta
+from services.business_labels import dimension_labeler
 
 
 def trend_bucket_coverage(value, granularity, period):
@@ -39,7 +40,7 @@ def fmt(value):
     )
 
 
-def analytical_features(artifacts, catalog=None):
+def analytical_features(artifacts, catalog=None, feature_bindings=None):
     evidence = []
 
     def add(a, metric, kind, feature, values, statement, partition=None):
@@ -79,6 +80,7 @@ def analytical_features(artifacts, catalog=None):
 
     for a in artifacts.values():
         rows = a.result["rows"]
+        display=dimension_labeler(a.plan.dimensions,rows,a.grounded.dimensions)
         if not rows:
             add(a, "", "empty", "empty", {}, "Không có dữ liệu trong phạm vi đã chọn.")
             continue
@@ -130,7 +132,7 @@ def analytical_features(artifacts, catalog=None):
                     )
                 if len(pairs) == 1 and a.plan.dimensions and a.plan.kind in {"aggregate", "distribution"} and not a.plan.ranking:
                     names = [d for d in a.plan.dimensions if not d.endswith("_id")]
-                    entity = " / ".join(str(pairs[0][0][d]) for d in names)
+                    entity = " / ".join(display(pairs[0][0],d) for d in names)
                     add(a, metric, "aggregate", "scalar", {"value": values[0], "entity": entity, "observed_groups": 1},
                         f"Nhóm duy nhất trả về {entity}: {label.lower()} là {fmt(values[0])} {unit} trong phạm vi đã chọn.", partition)
                 if len(pairs) == 1 and a.plan.kind == "trend":
@@ -148,7 +150,7 @@ def analytical_features(artifacts, catalog=None):
                         for d in a.plan.dimensions
                         if d not in keys and not d.endswith("_id")
                     ]
-                    entity = " / ".join(str(first[d]) for d in names) or "Hạng 1"
+                    entity = " / ".join(display(first,d) for d in names) or "Hạng 1"
                     add(
                         a,
                         metric,
@@ -284,7 +286,7 @@ def analytical_features(artifacts, catalog=None):
                     ] or a.plan.dimensions
 
                     def entity(pair):
-                        return " / ".join(str(pair[0][d]) for d in dimensions)
+                        return " / ".join(display(pair[0],d) for d in dimensions)
 
                     add(
                         a,
@@ -315,7 +317,7 @@ def analytical_features(artifacts, catalog=None):
                     largest = max(pairs, key=lambda p: p[1])
                     smallest = min(pairs, key=lambda p: p[1])
                     dims = [d for d in a.plan.dimensions if not d.endswith("_id")]
-                    entity = " / ".join(str(largest[0][d]) for d in dims)
+                    entity = " / ".join(display(largest[0],d) for d in dims)
                     add(
                         a,
                         metric,
@@ -425,7 +427,7 @@ def analytical_features(artifacts, catalog=None):
                 meta = a.grounded.metrics[metric]
                 for row in rows:
                     partition = {d: row[d] for d in a.plan.dimensions}
-                    entity = " / ".join(str(row[d]) for d in a.plan.dimensions if not d.endswith("_id")) or "Nhóm quan sát"
+                    entity = " / ".join(display(row,d) for d in a.plan.dimensions if not d.endswith("_id")) or "Nhóm quan sát"
                     gap = row[metric] - baseline
                     relative = gap / abs(baseline) * 100 if baseline else None
                     direction = signal["direction"]
@@ -436,6 +438,37 @@ def analytical_features(artifacts, catalog=None):
                     if judgment not in {"favorable", "needs_review"}:
                         statement += " Chênh lệch chưa xác định hiệu quả tốt/xấu vì chưa kiểm chứng quy mô hoạt động tương đương."
                     add(a, metric, "comparison", "peer_gap", {"entity": entity, "actual": row[metric], "baseline": baseline, "baseline_type": signal["comparison"], "gap": gap, "relative_gap_pct": relative, "direction": direction, "judgment": judgment, "peer_groups": len(rows), "comparable_exposure": signal["comparable_exposure"]}, statement, partition)
+    for binding in feature_bindings or []:
+        if binding.get("feature") != "contribution_share":
+            continue
+        a = artifacts.get(binding.get("query_id"))
+        denominator = artifacts.get(binding.get("denominator_query_id"))
+        if (not a or not denominator or denominator.plan.ranking or denominator.plan.explicit_limit
+            or denominator.grounded.period != a.grounded.period or denominator.query.filters != a.query.filters
+            or denominator.query.subject != a.query.subject or denominator.result.get("truncated")):
+            continue
+        keys = a.plan.ranking.per_group if a.plan.ranking else []
+        if denominator.query.group_by != keys:
+            continue
+        totals = {tuple(row[d] for d in keys): row for row in denominator.result["rows"]}
+        display=dimension_labeler(a.plan.dimensions,a.result['rows'],a.grounded.dimensions)
+        for metric in binding["metric_ids"]:
+            meta = a.grounded.metrics.get(metric)
+            if not meta or not meta.get("additive") or metric not in denominator.plan.metrics:
+                continue
+            for row in a.result["rows"]:
+                partition = {d:row[d] for d in keys}
+                total = totals.get(tuple(partition.values()), {}).get(metric)
+                value = row.get(metric)
+                if not number(total) or not number(value) or total <= 0 or value < 0 or value > total:
+                    continue
+                dims = {d:row[d] for d in a.plan.dimensions}
+                entity = " / ".join(display(row,d) for d in dims if not d.endswith("_id"))
+                add(a,metric,"distribution","contribution_share",
+                    {"value":value,"share_pct":value/total*100,"denominator":total,
+                     "denominator_scope":denominator.query.id,"denominator_selection":"complete",
+                     "entity":entity,"dimensions":dims},
+                    f"{entity}: {meta['business_name'].lower()} chiếm {fmt(value/total*100)}% tổng {fmt(total)} {meta['unit']} của cùng phạm vi đầy đủ đã kiểm chứng.",dims)
     return evidence
 
 

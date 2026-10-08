@@ -5,7 +5,7 @@ from copy import deepcopy
 from unittest.mock import Mock, patch
 from common import AiTextToReportRequest, AiReportRefineRequest
 from services.analysis_catalog import AnalysisCatalog, AnalysisError
-from services.analysis_pipeline import AnalysisPipeline
+from tests.archive_planner import ArchivedGraphPipeline as AnalysisPipeline
 from services.analyst_contract import AnalyticalToolInput, DashboardPlan
 from services.analytical_tool_contract import canonicalize, rejection_issues, invalid_signature
 from services.agent_provider import NativeAgentProvider
@@ -343,9 +343,15 @@ class V23Tests(unittest.TestCase):
         d = build_dashboard({"main": a}, analytical_features({"main": a}))
         self.assertEqual((d["charts"][0]["chart_type"], d["charts"][0]["y_unit"]), ("scatter", "điểm"))
         a, _ = fixture_artifact(query("orders", "revenue", metrics=["revenue", "aov"], group_by=["store"]))
-        self.assertEqual(build_dashboard({"main": a}, [])["charts"][0]["chart_type"], "grouped_bar")
+        charts=build_dashboard({"main": a}, [])["charts"]
+        self.assertTrue(all(c['chart_type']!='grouped_bar' for c in charts))
+        self.assertEqual({c['metric'] for c in charts if c['chart_type']!='scatter'}, {'revenue','aov'})
         a, _ = fixture_artifact(query("orders", "revenue", "trend", metrics=["revenue", "aov"]))
-        self.assertEqual(build_dashboard({"main": a}, [])["charts"][0]["chart_type"], "multi_line")
+        charts=build_dashboard({"main": a}, [])["charts"]
+        self.assertEqual({c['metric'] for c in charts}, {'revenue','aov'})
+        self.assertEqual({c['chart_type'] for c in charts}, {'area','line'})
+        a, _ = fixture_artifact(query("promotions", "voucher_revenue", metrics=["voucher_revenue", "discount_amount"], group_by=["city"]))
+        self.assertEqual(build_dashboard({"main": a}, [])["charts"][0]["chart_type"], "grouped_bar")
 
     def test_invalid_visual_fallback_keeps_every_metric(self):
         a, _ = fixture_artifact(ranking_query(metrics=["quantity_sold", "product_revenue"]))

@@ -1,0 +1,3854 @@
+{
+  "reference_accuracy": {
+    "status": "measured",
+    "matched_count": 206,
+    "reference_count": 206,
+    "accuracy_pct": 100.0,
+    "reference_source": "Independent read-only orders.don_hang, orders.voucher and identity.khuyen_mai, 2026-08-10..2026-10-08",
+    "reason": "Tỷ lệ assertion khớp đối chứng độc lập trong lần kiểm tra này; không phải xác suất AI trả lời đúng."
+  },
+  "reference_failures": [],
+  "live_provider_requests": 0,
+  "warehouse_writes": 0,
+  "source_summary": {
+    "voucher_orders": 1839,
+    "voucher_codes": 39,
+    "valid_revenue_codes": 35,
+    "voucher_revenue": 170733000.0,
+    "unmatched_orders": 0,
+    "program_codes": 37,
+    "unique_program_names": 12
+  },
+  "reports": [
+    {
+      "shape": "detail",
+      "provider_calls": 1,
+      "queries": 6,
+      "charts": 6,
+      "score": 90.0,
+      "checks": [
+        {
+          "id": "request_coverage",
+          "label": "Phạm vi yêu cầu",
+          "passed": 3,
+          "total": 3,
+          "status": "passed",
+          "summary": "3/3 phần yêu cầu đã thực hiện."
+        },
+        {
+          "id": "semantic_consistency",
+          "label": "Ngữ nghĩa & kế hoạch",
+          "passed": 1,
+          "total": 1,
+          "status": "passed",
+          "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+        },
+        {
+          "id": "result_integrity",
+          "label": "Kết quả dữ liệu",
+          "passed": 6,
+          "total": 6,
+          "status": "passed",
+          "summary": "6 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+        },
+        {
+          "id": "observed_values",
+          "label": "Giá trị dữ liệu quan sát",
+          "passed": 147,
+          "total": 147,
+          "status": "passed",
+          "summary": "147/147 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+        },
+        {
+          "id": "derived_features",
+          "label": "Phép tính được yêu cầu",
+          "passed": 3,
+          "total": 3,
+          "status": "passed",
+          "summary": "3/3 phép tính yêu cầu có đủ quan sát và bằng chứng."
+        },
+        {
+          "id": "evidence_grounding",
+          "label": "Bằng chứng",
+          "passed": 196,
+          "total": 196,
+          "status": "passed",
+          "summary": "196/196 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+        },
+        {
+          "id": "visualization_appropriateness",
+          "label": "Biểu đồ",
+          "passed": 12,
+          "total": 12,
+          "status": "passed",
+          "summary": "6/6 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+        },
+        {
+          "id": "limitation_disclosure",
+          "label": "Giới hạn dữ liệu",
+          "passed": 12,
+          "total": 12,
+          "status": "passed",
+          "summary": "12/12 giới hạn dữ liệu được công bố."
+        }
+      ]
+    },
+    {
+      "shape": "aggregate",
+      "provider_calls": 1,
+      "queries": 6,
+      "charts": 6,
+      "score": 90.0,
+      "checks": [
+        {
+          "id": "request_coverage",
+          "label": "Phạm vi yêu cầu",
+          "passed": 3,
+          "total": 3,
+          "status": "passed",
+          "summary": "3/3 phần yêu cầu đã thực hiện."
+        },
+        {
+          "id": "semantic_consistency",
+          "label": "Ngữ nghĩa & kế hoạch",
+          "passed": 1,
+          "total": 1,
+          "status": "passed",
+          "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+        },
+        {
+          "id": "result_integrity",
+          "label": "Kết quả dữ liệu",
+          "passed": 6,
+          "total": 6,
+          "status": "passed",
+          "summary": "6 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+        },
+        {
+          "id": "observed_values",
+          "label": "Giá trị dữ liệu quan sát",
+          "passed": 147,
+          "total": 147,
+          "status": "passed",
+          "summary": "147/147 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+        },
+        {
+          "id": "derived_features",
+          "label": "Phép tính được yêu cầu",
+          "passed": 3,
+          "total": 3,
+          "status": "passed",
+          "summary": "3/3 phép tính yêu cầu có đủ quan sát và bằng chứng."
+        },
+        {
+          "id": "evidence_grounding",
+          "label": "Bằng chứng",
+          "passed": 196,
+          "total": 196,
+          "status": "passed",
+          "summary": "196/196 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+        },
+        {
+          "id": "visualization_appropriateness",
+          "label": "Biểu đồ",
+          "passed": 12,
+          "total": 12,
+          "status": "passed",
+          "summary": "6/6 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+        },
+        {
+          "id": "limitation_disclosure",
+          "label": "Giới hạn dữ liệu",
+          "passed": 12,
+          "total": 12,
+          "status": "passed",
+          "summary": "12/12 giới hạn dữ liệu được công bố."
+        }
+      ]
+    }
+  ],
+  "assertions": [
+    {
+      "id": "detail:outcome",
+      "observed": "SUCCESS",
+      "expected": "SUCCESS"
+    },
+    {
+      "id": "detail:calls",
+      "observed": 1,
+      "expected": 1
+    },
+    {
+      "id": "detail:scope",
+      "observed": true,
+      "expected": true
+    },
+    {
+      "id": "detail:q_19dbacc04fec4b7d45d0205a:time",
+      "observed": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      },
+      "expected": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      }
+    },
+    {
+      "id": "detail:q_19dbacc04fec4b7d45d0205a:leader",
+      "observed": {
+        "code": "KS20_17QUPN",
+        "value": 6851000.0
+      },
+      "expected": {
+        "code": "KS20_17QUPN",
+        "value": 6851000.0
+      }
+    },
+    {
+      "id": "detail:q_ce218052b17fff93966223b7:time",
+      "observed": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      },
+      "expected": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      }
+    },
+    {
+      "id": "detail:q_ce218052b17fff93966223b7:leader",
+      "observed": {
+        "code": "KS20_17QUPN",
+        "value": 69
+      },
+      "expected": {
+        "code": "KS20_17QUPN",
+        "value": 69.0
+      }
+    },
+    {
+      "id": "detail:q_59733427020253f972d65ced:time",
+      "observed": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      },
+      "expected": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      }
+    },
+    {
+      "id": "detail:q_59733427020253f972d65ced:aov",
+      "observed": {
+        "BD_26_F80F": 98490.19607843137,
+        "UP_SV_1JDX": 92285.71428571429,
+        "UP_SV_5V3G": 100440.67796610169,
+        "UP_SV_LXEH": 83666.66666666667,
+        "UP_SV_N0R3": 105423.07692307692,
+        "UP_SV_TOFA": 67163.26530612246,
+        "UP_DM_O1L1": 89769.23076923077,
+        "UP_DM_PCPD": 90681.81818181818,
+        "UP_DM_WECT": 117333.33333333333,
+        "UP_PLATINUM_889Q": 85297.87234042553,
+        "UP_PLATINUM_B3E8": 81784.61538461539,
+        "UP_GD_0HCE": 99589.28571428571,
+        "UP_GD_RNWJ": 79087.71929824562,
+        "WHEEL_3Y27K": 101719.29824561403,
+        "WHEEL_ZQXMT": 80306.12244897959,
+        "WHEEL_2PY4K": 80122.80701754386,
+        "WHEEL_80QAE": 85666.66666666667,
+        "KS20_0885MO": 70738.09523809524,
+        "KS20_0JMVE4": 112375.0,
+        "KS20_17QUPN": 99289.85507246376,
+        "KS20_2MJW47": 106960.7843137255,
+        "KS20_4259MN": 112372.54901960785,
+        "KS20_9YIYUF": 91515.15151515152,
+        "KS20_BJF91L": 73934.4262295082,
+        "KS20_CPXSR0": 97488.88888888889,
+        "KS20_E1JEWH": 107240.0,
+        "KS20_EGWM5E": 102340.4255319149,
+        "KS20_G6DOVA": 96740.74074074074,
+        "KS20_IS3UMB": 82530.61224489796,
+        "KS20_JGR9BM": 92796.29629629629,
+        "KS20_P8405O": 105134.61538461539,
+        "KS20_PFDNMD": 95351.85185185185,
+        "KS20_ROIMKP": 85906.25,
+        "KS20_VGR9GT": 106961.53846153847,
+        "KS20_ZCLKN3": 77388.88888888889
+      },
+      "expected": {
+        "WHEEL_2PY4K": 80122.80701754386,
+        "UP_PLATINUM_B3E8": 81784.61538461539,
+        "UP_SV_TOFA": 67163.26530612246,
+        "KS20_4259MN": 112372.54901960785,
+        "KS20_IS3UMB": 82530.61224489796,
+        "KS20_2MJW47": 106960.7843137255,
+        "KS20_EGWM5E": 102340.4255319149,
+        "KS20_CPXSR0": 97488.88888888889,
+        "WHEEL_3Y27K": 101719.29824561403,
+        "UP_DM_O1L1": 89769.23076923077,
+        "KS20_ROIMKP": 85906.25,
+        "KS20_G6DOVA": 96740.74074074074,
+        "WHEEL_ZQXMT": 80306.12244897959,
+        "WHEEL_80QAE": 85666.66666666667,
+        "KS20_JGR9BM": 92796.29629629629,
+        "KS20_BJF91L": 73934.4262295082,
+        "KS20_0JMVE4": 112375.0,
+        "KS20_E1JEWH": 107240.0,
+        "UP_SV_5V3G": 100440.67796610169,
+        "UP_GD_RNWJ": 79087.71929824562,
+        "UP_GD_0HCE": 99589.28571428571,
+        "KS20_P8405O": 105134.61538461539,
+        "KS20_VGR9GT": 106961.53846153847,
+        "UP_SV_LXEH": 83666.66666666667,
+        "UP_DM_PCPD": 90681.81818181818,
+        "UP_SV_N0R3": 105423.07692307692,
+        "UP_DM_WECT": 117333.33333333333,
+        "KS20_9YIYUF": 91515.15151515152,
+        "KS20_ZCLKN3": 77388.88888888889,
+        "UP_PLATINUM_889Q": 85297.87234042553,
+        "KS20_17QUPN": 99289.85507246378,
+        "UP_SV_1JDX": 92285.71428571429,
+        "KS20_0885MO": 70738.09523809524,
+        "KS20_PFDNMD": 95351.85185185185,
+        "BD_26_F80F": 98490.19607843137
+      }
+    },
+    {
+      "id": "detail:q_59733427020253f972d65ced:labels",
+      "observed": true,
+      "expected": true
+    },
+    {
+      "id": "detail:q_61130d888cfb652f49e7a022:time",
+      "observed": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      },
+      "expected": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      }
+    },
+    {
+      "id": "detail:q_61130d888cfb652f49e7a022:denominator",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:q_d2adfcc122923d7ea26136f3:time",
+      "observed": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      },
+      "expected": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      }
+    },
+    {
+      "id": "detail:q_d2adfcc122923d7ea26136f3:voucher_order_count",
+      "observed": {
+        "DONG2026": 1,
+        "THU2026": 1,
+        "BD_26_F80F": 51,
+        "UP_SV_1JDX": 42,
+        "UP_SV_5V3G": 60,
+        "UP_SV_LXEH": 51,
+        "UP_SV_N0R3": 52,
+        "UP_SV_TA0N": 1,
+        "UP_SV_TOFA": 49,
+        "UP_DM_O1L1": 52,
+        "UP_DM_PCPD": 44,
+        "UP_DM_WECT": 54,
+        "UP_PLATINUM_889Q": 47,
+        "UP_PLATINUM_B3E8": 65,
+        "UP_PLATINUM_SEQY": 1,
+        "UP_GD_0HCE": 56,
+        "UP_GD_RNWJ": 57,
+        "WHEEL_3Y27K": 57,
+        "WHEEL_ZQXMT": 49,
+        "WHEEL_2PY4K": 57,
+        "WHEEL_80QAE": 51,
+        "KS20_0885MO": 42,
+        "KS20_0JMVE4": 56,
+        "KS20_17QUPN": 69,
+        "KS20_2MJW47": 52,
+        "KS20_4259MN": 51,
+        "KS20_9YIYUF": 66,
+        "KS20_BJF91L": 61,
+        "KS20_CPXSR0": 46,
+        "KS20_E1JEWH": 50,
+        "KS20_EGWM5E": 47,
+        "KS20_G6DOVA": 54,
+        "KS20_IS3UMB": 49,
+        "KS20_JGR9BM": 54,
+        "KS20_P8405O": 52,
+        "KS20_PFDNMD": 54,
+        "KS20_ROIMKP": 32,
+        "KS20_VGR9GT": 52,
+        "KS20_ZCLKN3": 54
+      },
+      "expected": {
+        "BD_26_F80F": 51,
+        "DONG2026": 1,
+        "WHEEL_2PY4K": 57,
+        "UP_PLATINUM_B3E8": 65,
+        "UP_SV_TOFA": 49,
+        "KS20_4259MN": 51,
+        "KS20_IS3UMB": 49,
+        "KS20_2MJW47": 52,
+        "KS20_EGWM5E": 47,
+        "UP_PLATINUM_SEQY": 1,
+        "KS20_CPXSR0": 46,
+        "THU2026": 1,
+        "WHEEL_3Y27K": 57,
+        "UP_DM_O1L1": 52,
+        "KS20_ROIMKP": 32,
+        "KS20_G6DOVA": 54,
+        "WHEEL_ZQXMT": 49,
+        "WHEEL_80QAE": 51,
+        "KS20_JGR9BM": 54,
+        "KS20_BJF91L": 61,
+        "UP_SV_TA0N": 1,
+        "KS20_0JMVE4": 56,
+        "KS20_E1JEWH": 50,
+        "UP_SV_5V3G": 60,
+        "UP_GD_RNWJ": 57,
+        "UP_GD_0HCE": 56,
+        "KS20_P8405O": 52,
+        "KS20_VGR9GT": 52,
+        "UP_SV_LXEH": 51,
+        "UP_DM_PCPD": 44,
+        "UP_SV_N0R3": 52,
+        "UP_DM_WECT": 54,
+        "KS20_9YIYUF": 66,
+        "KS20_ZCLKN3": 54,
+        "UP_PLATINUM_889Q": 47,
+        "KS20_17QUPN": 69,
+        "UP_SV_1JDX": 42,
+        "KS20_0885MO": 42,
+        "KS20_PFDNMD": 54
+      }
+    },
+    {
+      "id": "detail:q_d2adfcc122923d7ea26136f3:labels",
+      "observed": true,
+      "expected": true
+    },
+    {
+      "id": "detail:q_ef4db9f2b95b3c04188d451e:time",
+      "observed": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      },
+      "expected": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      }
+    },
+    {
+      "id": "detail:q_ef4db9f2b95b3c04188d451e:discount_amount",
+      "observed": {
+        "BD_26_F80F": 1405000.0,
+        "UP_SV_1JDX": 1220000.0,
+        "UP_SV_5V3G": 1760000.0,
+        "UP_SV_LXEH": 1440000.0,
+        "UP_SV_N0R3": 1400000.0,
+        "UP_SV_TOFA": 1450000.0,
+        "UP_DM_O1L1": 1690000.0,
+        "UP_DM_PCPD": 1275000.0,
+        "UP_DM_WECT": 1635000.0,
+        "UP_PLATINUM_889Q": 1445000.0,
+        "UP_PLATINUM_B3E8": 1860000.0,
+        "UP_GD_0HCE": 1845000.0,
+        "UP_GD_RNWJ": 1740000.0,
+        "WHEEL_3Y27K": 1585000.0,
+        "WHEEL_ZQXMT": 1365000.0,
+        "WHEEL_2PY4K": 1430000.0,
+        "WHEEL_80QAE": 1525000.0,
+        "KS20_0885MO": 1065000.0,
+        "KS20_0JMVE4": 1525000.0,
+        "KS20_17QUPN": 1925000.0,
+        "KS20_2MJW47": 1490000.0,
+        "KS20_4259MN": 1430000.0,
+        "KS20_9YIYUF": 1990000.0,
+        "KS20_BJF91L": 1605000.0,
+        "KS20_CPXSR0": 1170000.0,
+        "KS20_E1JEWH": 1265000.0,
+        "KS20_EGWM5E": 1610000.0,
+        "KS20_G6DOVA": 1700000.0,
+        "KS20_IS3UMB": 1455000.0,
+        "KS20_JGR9BM": 1490000.0,
+        "KS20_P8405O": 1380000.0,
+        "KS20_PFDNMD": 1725000.0,
+        "KS20_ROIMKP": 735000.0,
+        "KS20_VGR9GT": 1585000.0,
+        "KS20_ZCLKN3": 1655000.0
+      },
+      "expected": {
+        "WHEEL_2PY4K": 1430000.0,
+        "UP_PLATINUM_B3E8": 1860000.0,
+        "UP_SV_TOFA": 1450000.0,
+        "KS20_4259MN": 1430000.0,
+        "KS20_IS3UMB": 1455000.0,
+        "KS20_2MJW47": 1490000.0,
+        "KS20_EGWM5E": 1610000.0,
+        "KS20_CPXSR0": 1170000.0,
+        "WHEEL_3Y27K": 1585000.0,
+        "UP_DM_O1L1": 1690000.0,
+        "KS20_ROIMKP": 735000.0,
+        "KS20_G6DOVA": 1700000.0,
+        "WHEEL_ZQXMT": 1365000.0,
+        "WHEEL_80QAE": 1525000.0,
+        "KS20_JGR9BM": 1490000.0,
+        "KS20_BJF91L": 1605000.0,
+        "KS20_0JMVE4": 1525000.0,
+        "KS20_E1JEWH": 1265000.0,
+        "UP_SV_5V3G": 1760000.0,
+        "UP_GD_RNWJ": 1740000.0,
+        "UP_GD_0HCE": 1845000.0,
+        "KS20_P8405O": 1380000.0,
+        "KS20_VGR9GT": 1585000.0,
+        "UP_SV_LXEH": 1440000.0,
+        "UP_DM_PCPD": 1275000.0,
+        "UP_SV_N0R3": 1400000.0,
+        "UP_DM_WECT": 1635000.0,
+        "KS20_9YIYUF": 1990000.0,
+        "KS20_ZCLKN3": 1655000.0,
+        "UP_PLATINUM_889Q": 1445000.0,
+        "KS20_17QUPN": 1925000.0,
+        "UP_SV_1JDX": 1220000.0,
+        "KS20_0885MO": 1065000.0,
+        "KS20_PFDNMD": 1725000.0,
+        "BD_26_F80F": 1405000.0
+      }
+    },
+    {
+      "id": "detail:q_ef4db9f2b95b3c04188d451e:voucher_revenue",
+      "observed": {
+        "BD_26_F80F": 5023000.0,
+        "UP_SV_1JDX": 3876000.0,
+        "UP_SV_5V3G": 5926000.0,
+        "UP_SV_LXEH": 4267000.0,
+        "UP_SV_N0R3": 5482000.0,
+        "UP_SV_TOFA": 3291000.0,
+        "UP_DM_O1L1": 4668000.0,
+        "UP_DM_PCPD": 3990000.0,
+        "UP_DM_WECT": 6336000.0,
+        "UP_PLATINUM_889Q": 4009000.0,
+        "UP_PLATINUM_B3E8": 5316000.0,
+        "UP_GD_0HCE": 5577000.0,
+        "UP_GD_RNWJ": 4508000.0,
+        "WHEEL_3Y27K": 5798000.0,
+        "WHEEL_ZQXMT": 3935000.0,
+        "WHEEL_2PY4K": 4567000.0,
+        "WHEEL_80QAE": 4369000.0,
+        "KS20_0885MO": 2971000.0,
+        "KS20_0JMVE4": 6293000.0,
+        "KS20_17QUPN": 6851000.0,
+        "KS20_2MJW47": 5455000.0,
+        "KS20_4259MN": 5731000.0,
+        "KS20_9YIYUF": 6040000.0,
+        "KS20_BJF91L": 4510000.0,
+        "KS20_CPXSR0": 4387000.0,
+        "KS20_E1JEWH": 5362000.0,
+        "KS20_EGWM5E": 4810000.0,
+        "KS20_G6DOVA": 5224000.0,
+        "KS20_IS3UMB": 4044000.0,
+        "KS20_JGR9BM": 5011000.0,
+        "KS20_P8405O": 5467000.0,
+        "KS20_PFDNMD": 5149000.0,
+        "KS20_ROIMKP": 2749000.0,
+        "KS20_VGR9GT": 5562000.0,
+        "KS20_ZCLKN3": 4179000.0
+      },
+      "expected": {
+        "WHEEL_2PY4K": 4567000.0,
+        "UP_PLATINUM_B3E8": 5316000.0,
+        "UP_SV_TOFA": 3291000.0,
+        "KS20_4259MN": 5731000.0,
+        "KS20_IS3UMB": 4044000.0,
+        "KS20_2MJW47": 5455000.0,
+        "KS20_EGWM5E": 4810000.0,
+        "KS20_CPXSR0": 4387000.0,
+        "WHEEL_3Y27K": 5798000.0,
+        "UP_DM_O1L1": 4668000.0,
+        "KS20_ROIMKP": 2749000.0,
+        "KS20_G6DOVA": 5224000.0,
+        "WHEEL_ZQXMT": 3935000.0,
+        "WHEEL_80QAE": 4369000.0,
+        "KS20_JGR9BM": 5011000.0,
+        "KS20_BJF91L": 4510000.0,
+        "KS20_0JMVE4": 6293000.0,
+        "KS20_E1JEWH": 5362000.0,
+        "UP_SV_5V3G": 5926000.0,
+        "UP_GD_RNWJ": 4508000.0,
+        "UP_GD_0HCE": 5577000.0,
+        "KS20_P8405O": 5467000.0,
+        "KS20_VGR9GT": 5562000.0,
+        "UP_SV_LXEH": 4267000.0,
+        "UP_DM_PCPD": 3990000.0,
+        "UP_SV_N0R3": 5482000.0,
+        "UP_DM_WECT": 6336000.0,
+        "KS20_9YIYUF": 6040000.0,
+        "KS20_ZCLKN3": 4179000.0,
+        "UP_PLATINUM_889Q": 4009000.0,
+        "KS20_17QUPN": 6851000.0,
+        "UP_SV_1JDX": 3876000.0,
+        "KS20_0885MO": 2971000.0,
+        "KS20_PFDNMD": 5149000.0,
+        "BD_26_F80F": 5023000.0
+      }
+    },
+    {
+      "id": "detail:q_ef4db9f2b95b3c04188d451e:labels",
+      "observed": true,
+      "expected": true
+    },
+    {
+      "id": "detail:share_metrics",
+      "observed": [
+        "voucher_revenue"
+      ],
+      "expected": [
+        "voucher_revenue"
+      ]
+    },
+    {
+      "id": "detail:share_coverage",
+      "observed": [
+        "BD_26_F80F",
+        "KS20_0885MO",
+        "KS20_0JMVE4",
+        "KS20_17QUPN",
+        "KS20_2MJW47",
+        "KS20_4259MN",
+        "KS20_9YIYUF",
+        "KS20_BJF91L",
+        "KS20_CPXSR0",
+        "KS20_E1JEWH",
+        "KS20_EGWM5E",
+        "KS20_G6DOVA",
+        "KS20_IS3UMB",
+        "KS20_JGR9BM",
+        "KS20_P8405O",
+        "KS20_PFDNMD",
+        "KS20_ROIMKP",
+        "KS20_VGR9GT",
+        "KS20_ZCLKN3",
+        "UP_DM_O1L1",
+        "UP_DM_PCPD",
+        "UP_DM_WECT",
+        "UP_GD_0HCE",
+        "UP_GD_RNWJ",
+        "UP_PLATINUM_889Q",
+        "UP_PLATINUM_B3E8",
+        "UP_SV_1JDX",
+        "UP_SV_5V3G",
+        "UP_SV_LXEH",
+        "UP_SV_N0R3",
+        "UP_SV_TOFA",
+        "WHEEL_2PY4K",
+        "WHEEL_3Y27K",
+        "WHEEL_80QAE",
+        "WHEEL_ZQXMT"
+      ],
+      "expected": [
+        "BD_26_F80F",
+        "KS20_0885MO",
+        "KS20_0JMVE4",
+        "KS20_17QUPN",
+        "KS20_2MJW47",
+        "KS20_4259MN",
+        "KS20_9YIYUF",
+        "KS20_BJF91L",
+        "KS20_CPXSR0",
+        "KS20_E1JEWH",
+        "KS20_EGWM5E",
+        "KS20_G6DOVA",
+        "KS20_IS3UMB",
+        "KS20_JGR9BM",
+        "KS20_P8405O",
+        "KS20_PFDNMD",
+        "KS20_ROIMKP",
+        "KS20_VGR9GT",
+        "KS20_ZCLKN3",
+        "UP_DM_O1L1",
+        "UP_DM_PCPD",
+        "UP_DM_WECT",
+        "UP_GD_0HCE",
+        "UP_GD_RNWJ",
+        "UP_PLATINUM_889Q",
+        "UP_PLATINUM_B3E8",
+        "UP_SV_1JDX",
+        "UP_SV_5V3G",
+        "UP_SV_LXEH",
+        "UP_SV_N0R3",
+        "UP_SV_TOFA",
+        "WHEEL_2PY4K",
+        "WHEEL_3Y27K",
+        "WHEEL_80QAE",
+        "WHEEL_ZQXMT"
+      ]
+    },
+    {
+      "id": "detail:share:BD_26_F80F",
+      "observed": 2.942020581844166,
+      "expected": 2.942020581844166
+    },
+    {
+      "id": "detail:denominator:BD_26_F80F",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:UP_SV_1JDX",
+      "observed": 2.2702113826852455,
+      "expected": 2.2702113826852455
+    },
+    {
+      "id": "detail:denominator:UP_SV_1JDX",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:UP_SV_5V3G",
+      "observed": 3.4709165773459145,
+      "expected": 3.4709165773459145
+    },
+    {
+      "id": "detail:denominator:UP_SV_5V3G",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:UP_SV_LXEH",
+      "observed": 2.4992239344473535,
+      "expected": 2.4992239344473535
+    },
+    {
+      "id": "detail:denominator:UP_SV_LXEH",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:UP_SV_N0R3",
+      "observed": 3.2108614034779452,
+      "expected": 3.2108614034779452
+    },
+    {
+      "id": "detail:denominator:UP_SV_N0R3",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:UP_SV_TOFA",
+      "observed": 1.9275711198186642,
+      "expected": 1.9275711198186642
+    },
+    {
+      "id": "detail:denominator:UP_SV_TOFA",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:UP_DM_O1L1",
+      "observed": 2.7340935847200014,
+      "expected": 2.7340935847200014
+    },
+    {
+      "id": "detail:denominator:UP_DM_O1L1",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:UP_DM_PCPD",
+      "observed": 2.3369823057054,
+      "expected": 2.3369823057054
+    },
+    {
+      "id": "detail:denominator:UP_DM_PCPD",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:UP_DM_WECT",
+      "observed": 3.7110576162780484,
+      "expected": 3.7110576162780484
+    },
+    {
+      "id": "detail:denominator:UP_DM_WECT",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:UP_PLATINUM_889Q",
+      "observed": 2.3481107928754255,
+      "expected": 2.3481107928754255
+    },
+    {
+      "id": "detail:denominator:UP_PLATINUM_889Q",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:UP_PLATINUM_B3E8",
+      "observed": 3.1136335682029834,
+      "expected": 3.1136335682029834
+    },
+    {
+      "id": "detail:denominator:UP_PLATINUM_B3E8",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:UP_GD_0HCE",
+      "observed": 3.2665038393280734,
+      "expected": 3.2665038393280734
+    },
+    {
+      "id": "detail:denominator:UP_GD_0HCE",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:UP_GD_RNWJ",
+      "observed": 2.640380008551364,
+      "expected": 2.640380008551364
+    },
+    {
+      "id": "detail:denominator:UP_GD_RNWJ",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:WHEEL_3Y27K",
+      "observed": 3.3959457164110045,
+      "expected": 3.3959457164110045
+    },
+    {
+      "id": "detail:denominator:WHEEL_3Y27K",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:WHEEL_ZQXMT",
+      "observed": 2.3047682638974303,
+      "expected": 2.3047682638974303
+    },
+    {
+      "id": "detail:denominator:WHEEL_ZQXMT",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:WHEEL_2PY4K",
+      "observed": 2.674936889763549,
+      "expected": 2.674936889763549
+    },
+    {
+      "id": "detail:denominator:WHEEL_2PY4K",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:WHEEL_80QAE",
+      "observed": 2.55896633925486,
+      "expected": 2.55896633925486
+    },
+    {
+      "id": "detail:denominator:WHEEL_80QAE",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:KS20_0885MO",
+      "observed": 1.740143967481389,
+      "expected": 1.740143967481389
+    },
+    {
+      "id": "detail:denominator:KS20_0885MO",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:KS20_0JMVE4",
+      "observed": 3.6858720926827266,
+      "expected": 3.6858720926827266
+    },
+    {
+      "id": "detail:denominator:KS20_0JMVE4",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:KS20_17QUPN",
+      "observed": 4.012698189570851,
+      "expected": 4.012698189570851
+    },
+    {
+      "id": "detail:denominator:KS20_17QUPN",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:KS20_2MJW47",
+      "observed": 3.1950472374994874,
+      "expected": 3.1950472374994874
+    },
+    {
+      "id": "detail:denominator:KS20_2MJW47",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:KS20_4259MN",
+      "observed": 3.3567031563903873,
+      "expected": 3.3567031563903873
+    },
+    {
+      "id": "detail:denominator:KS20_4259MN",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:KS20_9YIYUF",
+      "observed": 3.5376875003660686,
+      "expected": 3.5376875003660686
+    },
+    {
+      "id": "detail:denominator:KS20_9YIYUF",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:KS20_BJF91L",
+      "observed": 2.641551428253472,
+      "expected": 2.641551428253472
+    },
+    {
+      "id": "detail:denominator:KS20_BJF91L",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:KS20_CPXSR0",
+      "observed": 2.5695091165738315,
+      "expected": 2.5695091165738315
+    },
+    {
+      "id": "detail:denominator:KS20_CPXSR0",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:KS20_E1JEWH",
+      "observed": 3.1405762213514667,
+      "expected": 3.1405762213514667
+    },
+    {
+      "id": "detail:denominator:KS20_E1JEWH",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:KS20_EGWM5E",
+      "observed": 2.8172643835696674,
+      "expected": 2.8172643835696674
+    },
+    {
+      "id": "detail:denominator:KS20_EGWM5E",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:KS20_G6DOVA",
+      "observed": 3.059748261906017,
+      "expected": 3.059748261906017
+    },
+    {
+      "id": "detail:denominator:KS20_G6DOVA",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:KS20_IS3UMB",
+      "observed": 2.368610637662315,
+      "expected": 2.368610637662315
+    },
+    {
+      "id": "detail:denominator:KS20_IS3UMB",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:KS20_JGR9BM",
+      "observed": 2.934992063631518,
+      "expected": 2.934992063631518
+    },
+    {
+      "id": "detail:denominator:KS20_JGR9BM",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:KS20_P8405O",
+      "observed": 3.2020757557121353,
+      "expected": 3.2020757557121353
+    },
+    {
+      "id": "detail:denominator:KS20_P8405O",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:KS20_PFDNMD",
+      "observed": 3.015820023076968,
+      "expected": 3.015820023076968
+    },
+    {
+      "id": "detail:denominator:KS20_PFDNMD",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:KS20_ROIMKP",
+      "observed": 1.6101163805474044,
+      "expected": 1.6101163805474044
+    },
+    {
+      "id": "detail:denominator:KS20_ROIMKP",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:KS20_VGR9GT",
+      "observed": 3.2577181915622635,
+      "expected": 3.2577181915622635
+    },
+    {
+      "id": "detail:denominator:KS20_VGR9GT",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share:KS20_ZCLKN3",
+      "observed": 2.447681467554603,
+      "expected": 2.447681467554603
+    },
+    {
+      "id": "detail:denominator:KS20_ZCLKN3",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "detail:share_sum",
+      "observed": 99.99999999999999,
+      "expected": 100
+    },
+    {
+      "id": "detail:chart_entities:visual_1",
+      "observed": [
+        "Voucher khảo sát 20% (KS20_17QUPN)"
+      ],
+      "expected": [
+        "Voucher khảo sát 20% (KS20_17QUPN)"
+      ]
+    },
+    {
+      "id": "detail:chart_entities:visual_2",
+      "observed": [
+        "Voucher khảo sát 20% (KS20_17QUPN)"
+      ],
+      "expected": [
+        "Voucher khảo sát 20% (KS20_17QUPN)"
+      ]
+    },
+    {
+      "id": "detail:chart_entities:visual_3",
+      "observed": [
+        "QUà thăng hạng Kim Cương (UP_DM_O1L1)",
+        "QUà thăng hạng Kim Cương (UP_DM_PCPD)",
+        "QUà thăng hạng Kim Cương (UP_DM_WECT)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_889Q)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_B3E8)",
+        "Quà sinh nhật (BD_26_F80F)",
+        "Quà thăng hạng Bạc (UP_SV_1JDX)",
+        "Quà thăng hạng Bạc (UP_SV_5V3G)",
+        "Quà thăng hạng Bạc (UP_SV_LXEH)",
+        "Quà thăng hạng Bạc (UP_SV_N0R3)",
+        "Quà thăng hạng Bạc (UP_SV_TOFA)",
+        "Quà thăng hạng Vàng (UP_GD_0HCE)",
+        "Quà thăng hạng Vàng (UP_GD_RNWJ)",
+        "Voucher Free 1 Topping (WHEEL_2PY4K)",
+        "Voucher Free 1 Topping (WHEEL_80QAE)",
+        "Voucher khảo sát 20% (KS20_0885MO)",
+        "Voucher khảo sát 20% (KS20_0JMVE4)",
+        "Voucher khảo sát 20% (KS20_17QUPN)",
+        "Voucher khảo sát 20% (KS20_2MJW47)",
+        "Voucher khảo sát 20% (KS20_4259MN)",
+        "Voucher khảo sát 20% (KS20_9YIYUF)",
+        "Voucher khảo sát 20% (KS20_BJF91L)",
+        "Voucher khảo sát 20% (KS20_CPXSR0)",
+        "Voucher khảo sát 20% (KS20_E1JEWH)",
+        "Voucher khảo sát 20% (KS20_EGWM5E)",
+        "Voucher khảo sát 20% (KS20_G6DOVA)",
+        "Voucher khảo sát 20% (KS20_IS3UMB)",
+        "Voucher khảo sát 20% (KS20_JGR9BM)",
+        "Voucher khảo sát 20% (KS20_P8405O)",
+        "Voucher khảo sát 20% (KS20_PFDNMD)",
+        "Voucher khảo sát 20% (KS20_ROIMKP)",
+        "Voucher khảo sát 20% (KS20_VGR9GT)",
+        "Voucher khảo sát 20% (KS20_ZCLKN3)",
+        "Vòng quay: Voucher 10K (WHEEL_3Y27K)",
+        "Vòng quay: Voucher 10K (WHEEL_ZQXMT)"
+      ],
+      "expected": [
+        "QUà thăng hạng Kim Cương (UP_DM_O1L1)",
+        "QUà thăng hạng Kim Cương (UP_DM_PCPD)",
+        "QUà thăng hạng Kim Cương (UP_DM_WECT)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_889Q)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_B3E8)",
+        "Quà sinh nhật (BD_26_F80F)",
+        "Quà thăng hạng Bạc (UP_SV_1JDX)",
+        "Quà thăng hạng Bạc (UP_SV_5V3G)",
+        "Quà thăng hạng Bạc (UP_SV_LXEH)",
+        "Quà thăng hạng Bạc (UP_SV_N0R3)",
+        "Quà thăng hạng Bạc (UP_SV_TOFA)",
+        "Quà thăng hạng Vàng (UP_GD_0HCE)",
+        "Quà thăng hạng Vàng (UP_GD_RNWJ)",
+        "Voucher Free 1 Topping (WHEEL_2PY4K)",
+        "Voucher Free 1 Topping (WHEEL_80QAE)",
+        "Voucher khảo sát 20% (KS20_0885MO)",
+        "Voucher khảo sát 20% (KS20_0JMVE4)",
+        "Voucher khảo sát 20% (KS20_17QUPN)",
+        "Voucher khảo sát 20% (KS20_2MJW47)",
+        "Voucher khảo sát 20% (KS20_4259MN)",
+        "Voucher khảo sát 20% (KS20_9YIYUF)",
+        "Voucher khảo sát 20% (KS20_BJF91L)",
+        "Voucher khảo sát 20% (KS20_CPXSR0)",
+        "Voucher khảo sát 20% (KS20_E1JEWH)",
+        "Voucher khảo sát 20% (KS20_EGWM5E)",
+        "Voucher khảo sát 20% (KS20_G6DOVA)",
+        "Voucher khảo sát 20% (KS20_IS3UMB)",
+        "Voucher khảo sát 20% (KS20_JGR9BM)",
+        "Voucher khảo sát 20% (KS20_P8405O)",
+        "Voucher khảo sát 20% (KS20_PFDNMD)",
+        "Voucher khảo sát 20% (KS20_ROIMKP)",
+        "Voucher khảo sát 20% (KS20_VGR9GT)",
+        "Voucher khảo sát 20% (KS20_ZCLKN3)",
+        "Vòng quay: Voucher 10K (WHEEL_3Y27K)",
+        "Vòng quay: Voucher 10K (WHEEL_ZQXMT)"
+      ]
+    },
+    {
+      "id": "detail:chart_entities:visual_4",
+      "observed": [
+        "QUà thăng hạng Kim Cương (UP_DM_O1L1)",
+        "QUà thăng hạng Kim Cương (UP_DM_PCPD)",
+        "QUà thăng hạng Kim Cương (UP_DM_WECT)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_889Q)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_B3E8)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_SEQY)",
+        "Quà sinh nhật (BD_26_F80F)",
+        "Quà thăng hạng Bạc (UP_SV_1JDX)",
+        "Quà thăng hạng Bạc (UP_SV_5V3G)",
+        "Quà thăng hạng Bạc (UP_SV_LXEH)",
+        "Quà thăng hạng Bạc (UP_SV_N0R3)",
+        "Quà thăng hạng Bạc (UP_SV_TA0N)",
+        "Quà thăng hạng Bạc (UP_SV_TOFA)",
+        "Quà thăng hạng Vàng (UP_GD_0HCE)",
+        "Quà thăng hạng Vàng (UP_GD_RNWJ)",
+        "Voucher Free 1 Topping (WHEEL_2PY4K)",
+        "Voucher Free 1 Topping (WHEEL_80QAE)",
+        "Voucher khảo sát 20% (KS20_0885MO)",
+        "Voucher khảo sát 20% (KS20_0JMVE4)",
+        "Voucher khảo sát 20% (KS20_17QUPN)",
+        "Voucher khảo sát 20% (KS20_2MJW47)",
+        "Voucher khảo sát 20% (KS20_4259MN)",
+        "Voucher khảo sát 20% (KS20_9YIYUF)",
+        "Voucher khảo sát 20% (KS20_BJF91L)",
+        "Voucher khảo sát 20% (KS20_CPXSR0)",
+        "Voucher khảo sát 20% (KS20_E1JEWH)",
+        "Voucher khảo sát 20% (KS20_EGWM5E)",
+        "Voucher khảo sát 20% (KS20_G6DOVA)",
+        "Voucher khảo sát 20% (KS20_IS3UMB)",
+        "Voucher khảo sát 20% (KS20_JGR9BM)",
+        "Voucher khảo sát 20% (KS20_P8405O)",
+        "Voucher khảo sát 20% (KS20_PFDNMD)",
+        "Voucher khảo sát 20% (KS20_ROIMKP)",
+        "Voucher khảo sát 20% (KS20_VGR9GT)",
+        "Voucher khảo sát 20% (KS20_ZCLKN3)",
+        "Vòng quay: Voucher 10K (WHEEL_3Y27K)",
+        "Vòng quay: Voucher 10K (WHEEL_ZQXMT)",
+        "khuyến mãi mùa thu (THU2026)",
+        "khuyến mãi mùa đông (DONG2026)"
+      ],
+      "expected": [
+        "QUà thăng hạng Kim Cương (UP_DM_O1L1)",
+        "QUà thăng hạng Kim Cương (UP_DM_PCPD)",
+        "QUà thăng hạng Kim Cương (UP_DM_WECT)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_889Q)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_B3E8)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_SEQY)",
+        "Quà sinh nhật (BD_26_F80F)",
+        "Quà thăng hạng Bạc (UP_SV_1JDX)",
+        "Quà thăng hạng Bạc (UP_SV_5V3G)",
+        "Quà thăng hạng Bạc (UP_SV_LXEH)",
+        "Quà thăng hạng Bạc (UP_SV_N0R3)",
+        "Quà thăng hạng Bạc (UP_SV_TA0N)",
+        "Quà thăng hạng Bạc (UP_SV_TOFA)",
+        "Quà thăng hạng Vàng (UP_GD_0HCE)",
+        "Quà thăng hạng Vàng (UP_GD_RNWJ)",
+        "Voucher Free 1 Topping (WHEEL_2PY4K)",
+        "Voucher Free 1 Topping (WHEEL_80QAE)",
+        "Voucher khảo sát 20% (KS20_0885MO)",
+        "Voucher khảo sát 20% (KS20_0JMVE4)",
+        "Voucher khảo sát 20% (KS20_17QUPN)",
+        "Voucher khảo sát 20% (KS20_2MJW47)",
+        "Voucher khảo sát 20% (KS20_4259MN)",
+        "Voucher khảo sát 20% (KS20_9YIYUF)",
+        "Voucher khảo sát 20% (KS20_BJF91L)",
+        "Voucher khảo sát 20% (KS20_CPXSR0)",
+        "Voucher khảo sát 20% (KS20_E1JEWH)",
+        "Voucher khảo sát 20% (KS20_EGWM5E)",
+        "Voucher khảo sát 20% (KS20_G6DOVA)",
+        "Voucher khảo sát 20% (KS20_IS3UMB)",
+        "Voucher khảo sát 20% (KS20_JGR9BM)",
+        "Voucher khảo sát 20% (KS20_P8405O)",
+        "Voucher khảo sát 20% (KS20_PFDNMD)",
+        "Voucher khảo sát 20% (KS20_ROIMKP)",
+        "Voucher khảo sát 20% (KS20_VGR9GT)",
+        "Voucher khảo sát 20% (KS20_ZCLKN3)",
+        "Vòng quay: Voucher 10K (WHEEL_3Y27K)",
+        "Vòng quay: Voucher 10K (WHEEL_ZQXMT)",
+        "khuyến mãi mùa thu (THU2026)",
+        "khuyến mãi mùa đông (DONG2026)"
+      ]
+    },
+    {
+      "id": "detail:chart_entities:visual_5",
+      "observed": [
+        "QUà thăng hạng Kim Cương (UP_DM_O1L1)",
+        "QUà thăng hạng Kim Cương (UP_DM_PCPD)",
+        "QUà thăng hạng Kim Cương (UP_DM_WECT)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_889Q)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_B3E8)",
+        "Quà sinh nhật (BD_26_F80F)",
+        "Quà thăng hạng Bạc (UP_SV_1JDX)",
+        "Quà thăng hạng Bạc (UP_SV_5V3G)",
+        "Quà thăng hạng Bạc (UP_SV_LXEH)",
+        "Quà thăng hạng Bạc (UP_SV_N0R3)",
+        "Quà thăng hạng Bạc (UP_SV_TOFA)",
+        "Quà thăng hạng Vàng (UP_GD_0HCE)",
+        "Quà thăng hạng Vàng (UP_GD_RNWJ)",
+        "Voucher Free 1 Topping (WHEEL_2PY4K)",
+        "Voucher Free 1 Topping (WHEEL_80QAE)",
+        "Voucher khảo sát 20% (KS20_0885MO)",
+        "Voucher khảo sát 20% (KS20_0JMVE4)",
+        "Voucher khảo sát 20% (KS20_17QUPN)",
+        "Voucher khảo sát 20% (KS20_2MJW47)",
+        "Voucher khảo sát 20% (KS20_4259MN)",
+        "Voucher khảo sát 20% (KS20_9YIYUF)",
+        "Voucher khảo sát 20% (KS20_BJF91L)",
+        "Voucher khảo sát 20% (KS20_CPXSR0)",
+        "Voucher khảo sát 20% (KS20_E1JEWH)",
+        "Voucher khảo sát 20% (KS20_EGWM5E)",
+        "Voucher khảo sát 20% (KS20_G6DOVA)",
+        "Voucher khảo sát 20% (KS20_IS3UMB)",
+        "Voucher khảo sát 20% (KS20_JGR9BM)",
+        "Voucher khảo sát 20% (KS20_P8405O)",
+        "Voucher khảo sát 20% (KS20_PFDNMD)",
+        "Voucher khảo sát 20% (KS20_ROIMKP)",
+        "Voucher khảo sát 20% (KS20_VGR9GT)",
+        "Voucher khảo sát 20% (KS20_ZCLKN3)",
+        "Vòng quay: Voucher 10K (WHEEL_3Y27K)",
+        "Vòng quay: Voucher 10K (WHEEL_ZQXMT)"
+      ],
+      "expected": [
+        "QUà thăng hạng Kim Cương (UP_DM_O1L1)",
+        "QUà thăng hạng Kim Cương (UP_DM_PCPD)",
+        "QUà thăng hạng Kim Cương (UP_DM_WECT)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_889Q)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_B3E8)",
+        "Quà sinh nhật (BD_26_F80F)",
+        "Quà thăng hạng Bạc (UP_SV_1JDX)",
+        "Quà thăng hạng Bạc (UP_SV_5V3G)",
+        "Quà thăng hạng Bạc (UP_SV_LXEH)",
+        "Quà thăng hạng Bạc (UP_SV_N0R3)",
+        "Quà thăng hạng Bạc (UP_SV_TOFA)",
+        "Quà thăng hạng Vàng (UP_GD_0HCE)",
+        "Quà thăng hạng Vàng (UP_GD_RNWJ)",
+        "Voucher Free 1 Topping (WHEEL_2PY4K)",
+        "Voucher Free 1 Topping (WHEEL_80QAE)",
+        "Voucher khảo sát 20% (KS20_0885MO)",
+        "Voucher khảo sát 20% (KS20_0JMVE4)",
+        "Voucher khảo sát 20% (KS20_17QUPN)",
+        "Voucher khảo sát 20% (KS20_2MJW47)",
+        "Voucher khảo sát 20% (KS20_4259MN)",
+        "Voucher khảo sát 20% (KS20_9YIYUF)",
+        "Voucher khảo sát 20% (KS20_BJF91L)",
+        "Voucher khảo sát 20% (KS20_CPXSR0)",
+        "Voucher khảo sát 20% (KS20_E1JEWH)",
+        "Voucher khảo sát 20% (KS20_EGWM5E)",
+        "Voucher khảo sát 20% (KS20_G6DOVA)",
+        "Voucher khảo sát 20% (KS20_IS3UMB)",
+        "Voucher khảo sát 20% (KS20_JGR9BM)",
+        "Voucher khảo sát 20% (KS20_P8405O)",
+        "Voucher khảo sát 20% (KS20_PFDNMD)",
+        "Voucher khảo sát 20% (KS20_ROIMKP)",
+        "Voucher khảo sát 20% (KS20_VGR9GT)",
+        "Voucher khảo sát 20% (KS20_ZCLKN3)",
+        "Vòng quay: Voucher 10K (WHEEL_3Y27K)",
+        "Vòng quay: Voucher 10K (WHEEL_ZQXMT)"
+      ]
+    },
+    {
+      "id": "detail:chart_entities:visual_6",
+      "observed": [
+        "QUà thăng hạng Kim Cương (UP_DM_O1L1)",
+        "QUà thăng hạng Kim Cương (UP_DM_PCPD)",
+        "QUà thăng hạng Kim Cương (UP_DM_WECT)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_889Q)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_B3E8)",
+        "Quà sinh nhật (BD_26_F80F)",
+        "Quà thăng hạng Bạc (UP_SV_1JDX)",
+        "Quà thăng hạng Bạc (UP_SV_5V3G)",
+        "Quà thăng hạng Bạc (UP_SV_LXEH)",
+        "Quà thăng hạng Bạc (UP_SV_N0R3)",
+        "Quà thăng hạng Bạc (UP_SV_TOFA)",
+        "Quà thăng hạng Vàng (UP_GD_0HCE)",
+        "Quà thăng hạng Vàng (UP_GD_RNWJ)",
+        "Voucher Free 1 Topping (WHEEL_2PY4K)",
+        "Voucher Free 1 Topping (WHEEL_80QAE)",
+        "Voucher khảo sát 20% (KS20_0885MO)",
+        "Voucher khảo sát 20% (KS20_0JMVE4)",
+        "Voucher khảo sát 20% (KS20_17QUPN)",
+        "Voucher khảo sát 20% (KS20_2MJW47)",
+        "Voucher khảo sát 20% (KS20_4259MN)",
+        "Voucher khảo sát 20% (KS20_9YIYUF)",
+        "Voucher khảo sát 20% (KS20_BJF91L)",
+        "Voucher khảo sát 20% (KS20_CPXSR0)",
+        "Voucher khảo sát 20% (KS20_E1JEWH)",
+        "Voucher khảo sát 20% (KS20_EGWM5E)",
+        "Voucher khảo sát 20% (KS20_G6DOVA)",
+        "Voucher khảo sát 20% (KS20_IS3UMB)",
+        "Voucher khảo sát 20% (KS20_JGR9BM)",
+        "Voucher khảo sát 20% (KS20_P8405O)",
+        "Voucher khảo sát 20% (KS20_PFDNMD)",
+        "Voucher khảo sát 20% (KS20_ROIMKP)",
+        "Voucher khảo sát 20% (KS20_VGR9GT)",
+        "Voucher khảo sát 20% (KS20_ZCLKN3)",
+        "Vòng quay: Voucher 10K (WHEEL_3Y27K)",
+        "Vòng quay: Voucher 10K (WHEEL_ZQXMT)"
+      ],
+      "expected": [
+        "QUà thăng hạng Kim Cương (UP_DM_O1L1)",
+        "QUà thăng hạng Kim Cương (UP_DM_PCPD)",
+        "QUà thăng hạng Kim Cương (UP_DM_WECT)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_889Q)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_B3E8)",
+        "Quà sinh nhật (BD_26_F80F)",
+        "Quà thăng hạng Bạc (UP_SV_1JDX)",
+        "Quà thăng hạng Bạc (UP_SV_5V3G)",
+        "Quà thăng hạng Bạc (UP_SV_LXEH)",
+        "Quà thăng hạng Bạc (UP_SV_N0R3)",
+        "Quà thăng hạng Bạc (UP_SV_TOFA)",
+        "Quà thăng hạng Vàng (UP_GD_0HCE)",
+        "Quà thăng hạng Vàng (UP_GD_RNWJ)",
+        "Voucher Free 1 Topping (WHEEL_2PY4K)",
+        "Voucher Free 1 Topping (WHEEL_80QAE)",
+        "Voucher khảo sát 20% (KS20_0885MO)",
+        "Voucher khảo sát 20% (KS20_0JMVE4)",
+        "Voucher khảo sát 20% (KS20_17QUPN)",
+        "Voucher khảo sát 20% (KS20_2MJW47)",
+        "Voucher khảo sát 20% (KS20_4259MN)",
+        "Voucher khảo sát 20% (KS20_9YIYUF)",
+        "Voucher khảo sát 20% (KS20_BJF91L)",
+        "Voucher khảo sát 20% (KS20_CPXSR0)",
+        "Voucher khảo sát 20% (KS20_E1JEWH)",
+        "Voucher khảo sát 20% (KS20_EGWM5E)",
+        "Voucher khảo sát 20% (KS20_G6DOVA)",
+        "Voucher khảo sát 20% (KS20_IS3UMB)",
+        "Voucher khảo sát 20% (KS20_JGR9BM)",
+        "Voucher khảo sát 20% (KS20_P8405O)",
+        "Voucher khảo sát 20% (KS20_PFDNMD)",
+        "Voucher khảo sát 20% (KS20_ROIMKP)",
+        "Voucher khảo sát 20% (KS20_VGR9GT)",
+        "Voucher khảo sát 20% (KS20_ZCLKN3)",
+        "Vòng quay: Voucher 10K (WHEEL_3Y27K)",
+        "Vòng quay: Voucher 10K (WHEEL_ZQXMT)"
+      ]
+    },
+    {
+      "id": "detail:leader_identity:voucher_revenue",
+      "observed": "Voucher khảo sát 20% (KS20_17QUPN)",
+      "expected": "Voucher khảo sát 20% (KS20_17QUPN)"
+    },
+    {
+      "id": "detail:leader_identity:voucher_order_count",
+      "observed": "Voucher khảo sát 20% (KS20_17QUPN)",
+      "expected": "Voucher khảo sát 20% (KS20_17QUPN)"
+    },
+    {
+      "id": "detail:saved_verifier",
+      "observed": {
+        "score": 90.0,
+        "grade": "good",
+        "status": "verified",
+        "components": [],
+        "completed": [
+          {
+            "id": "voucher_breakdown_60d",
+            "label": "Phần yêu cầu chưa được hỗ trợ",
+            "evidence_refs": [
+              "q_59733427020253f972d65ced:aov:group_comparison:6230060e3b"
+            ]
+          },
+          {
+            "id": "voucher_order_leader_60d",
+            "label": "Khuyến mãi và voucher",
+            "evidence_refs": [
+              "q_ce218052b17fff93966223b7:voucher_order_count:leader:6230060e3b",
+              "q_ce218052b17fff93966223b7:voucher_order_count:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "voucher_revenue_leader_60d",
+            "label": "Khuyến mãi và voucher",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          }
+        ],
+        "missing": [],
+        "unverified": [
+          {
+            "id": "independent_accuracy",
+            "label": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.",
+            "evidence_refs": []
+          }
+        ],
+        "limitations": [
+          {
+            "id": "dimension_population:promotion",
+            "label": "Khuyến mãi: Tên chương trình đi cùng từng mã voucher; mã chưa khớp danh mục vẫn được giữ theo mã trên đơn. Không gồm đơn không có voucher.",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "dimension_population:promotion_id",
+            "label": "Mã khuyến mãi: Mã khuyến mãi",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:voucher_revenue",
+            "label": "Doanh thu đơn có khuyến mãi: Tổng giá trị đơn HOAN_THANH/DANG_GIAO có mã voucher; mô tả tập đơn dùng voucher, chưa chứng minh hiệu quả tăng thêm.",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_limit:voucher_revenue:voucher_effectiveness",
+            "label": "Số đơn, doanh thu và giảm giá chỉ mô tả việc dùng voucher. Chưa có chi phí đầy đủ hoặc nhóm đối chứng độc lập; không kết luận ROI hay tác động tăng doanh thu. Số đơn dùng voucher gồm mọi trạng thái; doanh thu và giảm giá chỉ gồm HOAN_THANH/DANG_GIAO.",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "topn:q_19dbacc04fec4b7d45d0205a",
+            "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:voucher_order_count",
+            "label": "Số đơn áp dụng khuyến mãi: Đếm đơn có mã voucher ở mọi trạng thái; khác quần thể doanh thu đơn voucher hợp lệ.",
+            "evidence_refs": [
+              "q_ce218052b17fff93966223b7:voucher_order_count:leader:6230060e3b",
+              "q_ce218052b17fff93966223b7:voucher_order_count:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_limit:voucher_order_count:voucher_effectiveness",
+            "label": "Số đơn, doanh thu và giảm giá chỉ mô tả việc dùng voucher. Chưa có chi phí đầy đủ hoặc nhóm đối chứng độc lập; không kết luận ROI hay tác động tăng doanh thu. Số đơn dùng voucher gồm mọi trạng thái; doanh thu và giảm giá chỉ gồm HOAN_THANH/DANG_GIAO.",
+            "evidence_refs": [
+              "q_ce218052b17fff93966223b7:voucher_order_count:leader:6230060e3b",
+              "q_ce218052b17fff93966223b7:voucher_order_count:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "topn:q_ce218052b17fff93966223b7",
+            "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+            "evidence_refs": [
+              "q_ce218052b17fff93966223b7:voucher_order_count:leader:6230060e3b",
+              "q_ce218052b17fff93966223b7:voucher_order_count:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:aov",
+            "label": "Giá trị đơn trung bình: Tổng giá trị chia số đơn trong cùng tập HOAN_THANH/DANG_GIAO. Không cộng hoặc lấy trung bình các AOV nhóm.",
+            "evidence_refs": [
+              "q_59733427020253f972d65ced:aov:group_comparison:6230060e3b"
+            ]
+          },
+          {
+            "id": "nonadditive:q_59733427020253f972d65ced",
+            "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+            "evidence_refs": [
+              "q_59733427020253f972d65ced:aov:group_comparison:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:discount_amount",
+            "label": "Tổng tiền đã giảm giá: Tổng số tiền giảm trên đơn HOAN_THANH/DANG_GIAO có mã voucher; không phải chi phí đầy đủ của chiến dịch.",
+            "evidence_refs": [
+              "q_ef4db9f2b95b3c04188d451e:discount_amount:group_comparison:6230060e3b",
+              "q_ef4db9f2b95b3c04188d451e:voucher_revenue:group_comparison:6230060e3b",
+              "q_ef4db9f2b95b3c04188d451e:voucher_revenue:peer_gap:ab0df7aa98"
+            ]
+          },
+          {
+            "id": "metric_limit:discount_amount:voucher_effectiveness",
+            "label": "Số đơn, doanh thu và giảm giá chỉ mô tả việc dùng voucher. Chưa có chi phí đầy đủ hoặc nhóm đối chứng độc lập; không kết luận ROI hay tác động tăng doanh thu. Số đơn dùng voucher gồm mọi trạng thái; doanh thu và giảm giá chỉ gồm HOAN_THANH/DANG_GIAO.",
+            "evidence_refs": [
+              "q_ef4db9f2b95b3c04188d451e:discount_amount:group_comparison:6230060e3b",
+              "q_ef4db9f2b95b3c04188d451e:voucher_revenue:group_comparison:6230060e3b",
+              "q_ef4db9f2b95b3c04188d451e:voucher_revenue:peer_gap:ab0df7aa98"
+            ]
+          }
+        ],
+        "suggested_next_actions": [],
+        "coverage": {
+          "requested_count": 3,
+          "completed_count": 3,
+          "supporting_count": 0,
+          "omitted_count": 0
+        },
+        "generated_by": "deterministic_verifier",
+        "version": "2.8.5",
+        "reason": null,
+        "measurement_mode": "evidence_checks",
+        "verification_checks": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "passed": 3,
+            "total": 3,
+            "status": "passed",
+            "summary": "3/3 phần yêu cầu đã thực hiện."
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "passed": 1,
+            "total": 1,
+            "status": "passed",
+            "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "passed": 6,
+            "total": 6,
+            "status": "passed",
+            "summary": "6 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "passed": 147,
+            "total": 147,
+            "status": "passed",
+            "summary": "147/147 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "passed": 3,
+            "total": 3,
+            "status": "passed",
+            "summary": "3/3 phép tính yêu cầu có đủ quan sát và bằng chứng."
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "passed": 196,
+            "total": 196,
+            "status": "passed",
+            "summary": "196/196 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "passed": 12,
+            "total": 12,
+            "status": "passed",
+            "summary": "6/6 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "passed": 12,
+            "total": 12,
+            "status": "passed",
+            "summary": "12/12 giới hạn dữ liệu được công bố."
+          }
+        ],
+        "score_method": {
+          "id": "verification_evidence_v1",
+          "label": "Điểm kiểm chứng tổng",
+          "formula": "90 × trung bình có trọng số các kiểm tra áp dụng + 10 × tỷ lệ khớp đối chứng độc lập. Chưa đo đối chứng: chưa cộng 10 điểm; kiểm tra không áp dụng không bị trừ.",
+          "unmeasured_points": 10.0,
+          "interpretation": "Chỉ số mức độ kiểm chứng theo trọng số quy định; không phải độ chính xác hay xác suất AI trả lời đúng."
+        },
+        "score_breakdown": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "earned_points": 20.0,
+            "possible_points": 20.0,
+            "status": "passed"
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "earned_points": 15.0,
+            "possible_points": 15.0,
+            "status": "passed"
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "earned_points": 15.0,
+            "possible_points": 15.0,
+            "status": "passed"
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "earned_points": 5.0,
+            "possible_points": 5.0,
+            "status": "passed"
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "earned_points": 5.0,
+            "possible_points": 5.0,
+            "status": "passed"
+          },
+          {
+            "id": "independent_reference",
+            "label": "Đối chứng độc lập",
+            "earned_points": 0.0,
+            "possible_points": 10.0,
+            "status": "not_measured"
+          }
+        ],
+        "accuracy_assessment": {
+          "status": "not_measured",
+          "matched_count": null,
+          "reference_count": 0,
+          "accuracy_pct": null,
+          "reference_source": null,
+          "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+        },
+        "confidence_probability": null,
+        "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+      },
+      "expected": {
+        "score": 90.0,
+        "grade": "good",
+        "status": "verified",
+        "components": [],
+        "completed": [
+          {
+            "id": "voucher_breakdown_60d",
+            "label": "Phần yêu cầu chưa được hỗ trợ",
+            "evidence_refs": [
+              "q_59733427020253f972d65ced:aov:group_comparison:6230060e3b"
+            ]
+          },
+          {
+            "id": "voucher_order_leader_60d",
+            "label": "Khuyến mãi và voucher",
+            "evidence_refs": [
+              "q_ce218052b17fff93966223b7:voucher_order_count:leader:6230060e3b",
+              "q_ce218052b17fff93966223b7:voucher_order_count:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "voucher_revenue_leader_60d",
+            "label": "Khuyến mãi và voucher",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          }
+        ],
+        "missing": [],
+        "unverified": [
+          {
+            "id": "independent_accuracy",
+            "label": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.",
+            "evidence_refs": []
+          }
+        ],
+        "limitations": [
+          {
+            "id": "dimension_population:promotion",
+            "label": "Khuyến mãi: Tên chương trình đi cùng từng mã voucher; mã chưa khớp danh mục vẫn được giữ theo mã trên đơn. Không gồm đơn không có voucher.",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "dimension_population:promotion_id",
+            "label": "Mã khuyến mãi: Mã khuyến mãi",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:voucher_revenue",
+            "label": "Doanh thu đơn có khuyến mãi: Tổng giá trị đơn HOAN_THANH/DANG_GIAO có mã voucher; mô tả tập đơn dùng voucher, chưa chứng minh hiệu quả tăng thêm.",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_limit:voucher_revenue:voucher_effectiveness",
+            "label": "Số đơn, doanh thu và giảm giá chỉ mô tả việc dùng voucher. Chưa có chi phí đầy đủ hoặc nhóm đối chứng độc lập; không kết luận ROI hay tác động tăng doanh thu. Số đơn dùng voucher gồm mọi trạng thái; doanh thu và giảm giá chỉ gồm HOAN_THANH/DANG_GIAO.",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "topn:q_19dbacc04fec4b7d45d0205a",
+            "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:voucher_order_count",
+            "label": "Số đơn áp dụng khuyến mãi: Đếm đơn có mã voucher ở mọi trạng thái; khác quần thể doanh thu đơn voucher hợp lệ.",
+            "evidence_refs": [
+              "q_ce218052b17fff93966223b7:voucher_order_count:leader:6230060e3b",
+              "q_ce218052b17fff93966223b7:voucher_order_count:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_limit:voucher_order_count:voucher_effectiveness",
+            "label": "Số đơn, doanh thu và giảm giá chỉ mô tả việc dùng voucher. Chưa có chi phí đầy đủ hoặc nhóm đối chứng độc lập; không kết luận ROI hay tác động tăng doanh thu. Số đơn dùng voucher gồm mọi trạng thái; doanh thu và giảm giá chỉ gồm HOAN_THANH/DANG_GIAO.",
+            "evidence_refs": [
+              "q_ce218052b17fff93966223b7:voucher_order_count:leader:6230060e3b",
+              "q_ce218052b17fff93966223b7:voucher_order_count:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "topn:q_ce218052b17fff93966223b7",
+            "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+            "evidence_refs": [
+              "q_ce218052b17fff93966223b7:voucher_order_count:leader:6230060e3b",
+              "q_ce218052b17fff93966223b7:voucher_order_count:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:aov",
+            "label": "Giá trị đơn trung bình: Tổng giá trị chia số đơn trong cùng tập HOAN_THANH/DANG_GIAO. Không cộng hoặc lấy trung bình các AOV nhóm.",
+            "evidence_refs": [
+              "q_59733427020253f972d65ced:aov:group_comparison:6230060e3b"
+            ]
+          },
+          {
+            "id": "nonadditive:q_59733427020253f972d65ced",
+            "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+            "evidence_refs": [
+              "q_59733427020253f972d65ced:aov:group_comparison:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:discount_amount",
+            "label": "Tổng tiền đã giảm giá: Tổng số tiền giảm trên đơn HOAN_THANH/DANG_GIAO có mã voucher; không phải chi phí đầy đủ của chiến dịch.",
+            "evidence_refs": [
+              "q_ef4db9f2b95b3c04188d451e:discount_amount:group_comparison:6230060e3b",
+              "q_ef4db9f2b95b3c04188d451e:voucher_revenue:group_comparison:6230060e3b",
+              "q_ef4db9f2b95b3c04188d451e:voucher_revenue:peer_gap:ab0df7aa98"
+            ]
+          },
+          {
+            "id": "metric_limit:discount_amount:voucher_effectiveness",
+            "label": "Số đơn, doanh thu và giảm giá chỉ mô tả việc dùng voucher. Chưa có chi phí đầy đủ hoặc nhóm đối chứng độc lập; không kết luận ROI hay tác động tăng doanh thu. Số đơn dùng voucher gồm mọi trạng thái; doanh thu và giảm giá chỉ gồm HOAN_THANH/DANG_GIAO.",
+            "evidence_refs": [
+              "q_ef4db9f2b95b3c04188d451e:discount_amount:group_comparison:6230060e3b",
+              "q_ef4db9f2b95b3c04188d451e:voucher_revenue:group_comparison:6230060e3b",
+              "q_ef4db9f2b95b3c04188d451e:voucher_revenue:peer_gap:ab0df7aa98"
+            ]
+          }
+        ],
+        "suggested_next_actions": [],
+        "coverage": {
+          "requested_count": 3,
+          "completed_count": 3,
+          "supporting_count": 0,
+          "omitted_count": 0
+        },
+        "generated_by": "deterministic_verifier",
+        "version": "2.8.5",
+        "reason": null,
+        "measurement_mode": "evidence_checks",
+        "verification_checks": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "passed": 3,
+            "total": 3,
+            "status": "passed",
+            "summary": "3/3 phần yêu cầu đã thực hiện."
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "passed": 1,
+            "total": 1,
+            "status": "passed",
+            "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "passed": 6,
+            "total": 6,
+            "status": "passed",
+            "summary": "6 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "passed": 147,
+            "total": 147,
+            "status": "passed",
+            "summary": "147/147 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "passed": 3,
+            "total": 3,
+            "status": "passed",
+            "summary": "3/3 phép tính yêu cầu có đủ quan sát và bằng chứng."
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "passed": 196,
+            "total": 196,
+            "status": "passed",
+            "summary": "196/196 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "passed": 12,
+            "total": 12,
+            "status": "passed",
+            "summary": "6/6 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "passed": 12,
+            "total": 12,
+            "status": "passed",
+            "summary": "12/12 giới hạn dữ liệu được công bố."
+          }
+        ],
+        "score_method": {
+          "id": "verification_evidence_v1",
+          "label": "Điểm kiểm chứng tổng",
+          "formula": "90 × trung bình có trọng số các kiểm tra áp dụng + 10 × tỷ lệ khớp đối chứng độc lập. Chưa đo đối chứng: chưa cộng 10 điểm; kiểm tra không áp dụng không bị trừ.",
+          "unmeasured_points": 10.0,
+          "interpretation": "Chỉ số mức độ kiểm chứng theo trọng số quy định; không phải độ chính xác hay xác suất AI trả lời đúng."
+        },
+        "score_breakdown": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "earned_points": 20.0,
+            "possible_points": 20.0,
+            "status": "passed"
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "earned_points": 15.0,
+            "possible_points": 15.0,
+            "status": "passed"
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "earned_points": 15.0,
+            "possible_points": 15.0,
+            "status": "passed"
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "earned_points": 5.0,
+            "possible_points": 5.0,
+            "status": "passed"
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "earned_points": 5.0,
+            "possible_points": 5.0,
+            "status": "passed"
+          },
+          {
+            "id": "independent_reference",
+            "label": "Đối chứng độc lập",
+            "earned_points": 0.0,
+            "possible_points": 10.0,
+            "status": "not_measured"
+          }
+        ],
+        "accuracy_assessment": {
+          "status": "not_measured",
+          "matched_count": null,
+          "reference_count": 0,
+          "accuracy_pct": null,
+          "reference_source": null,
+          "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+        },
+        "confidence_probability": null,
+        "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+      }
+    },
+    {
+      "id": "detail:roi_guardrail",
+      "observed": true,
+      "expected": true
+    },
+    {
+      "id": "detail:accuracy_unknown",
+      "observed": "not_measured",
+      "expected": "not_measured"
+    },
+    {
+      "id": "aggregate:outcome",
+      "observed": "SUCCESS",
+      "expected": "SUCCESS"
+    },
+    {
+      "id": "aggregate:calls",
+      "observed": 1,
+      "expected": 1
+    },
+    {
+      "id": "aggregate:scope",
+      "observed": true,
+      "expected": true
+    },
+    {
+      "id": "aggregate:q_19dbacc04fec4b7d45d0205a:time",
+      "observed": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      },
+      "expected": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      }
+    },
+    {
+      "id": "aggregate:q_19dbacc04fec4b7d45d0205a:leader",
+      "observed": {
+        "code": "KS20_17QUPN",
+        "value": 6851000.0
+      },
+      "expected": {
+        "code": "KS20_17QUPN",
+        "value": 6851000.0
+      }
+    },
+    {
+      "id": "aggregate:q_ce218052b17fff93966223b7:time",
+      "observed": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      },
+      "expected": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      }
+    },
+    {
+      "id": "aggregate:q_ce218052b17fff93966223b7:leader",
+      "observed": {
+        "code": "KS20_17QUPN",
+        "value": 69
+      },
+      "expected": {
+        "code": "KS20_17QUPN",
+        "value": 69.0
+      }
+    },
+    {
+      "id": "aggregate:q_59733427020253f972d65ced:time",
+      "observed": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      },
+      "expected": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      }
+    },
+    {
+      "id": "aggregate:q_59733427020253f972d65ced:aov",
+      "observed": {
+        "BD_26_F80F": 98490.19607843137,
+        "UP_SV_1JDX": 92285.71428571429,
+        "UP_SV_5V3G": 100440.67796610169,
+        "UP_SV_LXEH": 83666.66666666667,
+        "UP_SV_N0R3": 105423.07692307692,
+        "UP_SV_TOFA": 67163.26530612246,
+        "UP_DM_O1L1": 89769.23076923077,
+        "UP_DM_PCPD": 90681.81818181818,
+        "UP_DM_WECT": 117333.33333333333,
+        "UP_PLATINUM_889Q": 85297.87234042553,
+        "UP_PLATINUM_B3E8": 81784.61538461539,
+        "UP_GD_0HCE": 99589.28571428571,
+        "UP_GD_RNWJ": 79087.71929824562,
+        "WHEEL_3Y27K": 101719.29824561403,
+        "WHEEL_ZQXMT": 80306.12244897959,
+        "WHEEL_2PY4K": 80122.80701754386,
+        "WHEEL_80QAE": 85666.66666666667,
+        "KS20_0885MO": 70738.09523809524,
+        "KS20_0JMVE4": 112375.0,
+        "KS20_17QUPN": 99289.85507246376,
+        "KS20_2MJW47": 106960.7843137255,
+        "KS20_4259MN": 112372.54901960785,
+        "KS20_9YIYUF": 91515.15151515152,
+        "KS20_BJF91L": 73934.4262295082,
+        "KS20_CPXSR0": 97488.88888888889,
+        "KS20_E1JEWH": 107240.0,
+        "KS20_EGWM5E": 102340.4255319149,
+        "KS20_G6DOVA": 96740.74074074074,
+        "KS20_IS3UMB": 82530.61224489796,
+        "KS20_JGR9BM": 92796.29629629629,
+        "KS20_P8405O": 105134.61538461539,
+        "KS20_PFDNMD": 95351.85185185185,
+        "KS20_ROIMKP": 85906.25,
+        "KS20_VGR9GT": 106961.53846153847,
+        "KS20_ZCLKN3": 77388.88888888889
+      },
+      "expected": {
+        "WHEEL_2PY4K": 80122.80701754386,
+        "UP_PLATINUM_B3E8": 81784.61538461539,
+        "UP_SV_TOFA": 67163.26530612246,
+        "KS20_4259MN": 112372.54901960785,
+        "KS20_IS3UMB": 82530.61224489796,
+        "KS20_2MJW47": 106960.7843137255,
+        "KS20_EGWM5E": 102340.4255319149,
+        "KS20_CPXSR0": 97488.88888888889,
+        "WHEEL_3Y27K": 101719.29824561403,
+        "UP_DM_O1L1": 89769.23076923077,
+        "KS20_ROIMKP": 85906.25,
+        "KS20_G6DOVA": 96740.74074074074,
+        "WHEEL_ZQXMT": 80306.12244897959,
+        "WHEEL_80QAE": 85666.66666666667,
+        "KS20_JGR9BM": 92796.29629629629,
+        "KS20_BJF91L": 73934.4262295082,
+        "KS20_0JMVE4": 112375.0,
+        "KS20_E1JEWH": 107240.0,
+        "UP_SV_5V3G": 100440.67796610169,
+        "UP_GD_RNWJ": 79087.71929824562,
+        "UP_GD_0HCE": 99589.28571428571,
+        "KS20_P8405O": 105134.61538461539,
+        "KS20_VGR9GT": 106961.53846153847,
+        "UP_SV_LXEH": 83666.66666666667,
+        "UP_DM_PCPD": 90681.81818181818,
+        "UP_SV_N0R3": 105423.07692307692,
+        "UP_DM_WECT": 117333.33333333333,
+        "KS20_9YIYUF": 91515.15151515152,
+        "KS20_ZCLKN3": 77388.88888888889,
+        "UP_PLATINUM_889Q": 85297.87234042553,
+        "KS20_17QUPN": 99289.85507246378,
+        "UP_SV_1JDX": 92285.71428571429,
+        "KS20_0885MO": 70738.09523809524,
+        "KS20_PFDNMD": 95351.85185185185,
+        "BD_26_F80F": 98490.19607843137
+      }
+    },
+    {
+      "id": "aggregate:q_59733427020253f972d65ced:labels",
+      "observed": true,
+      "expected": true
+    },
+    {
+      "id": "aggregate:q_61130d888cfb652f49e7a022:time",
+      "observed": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      },
+      "expected": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      }
+    },
+    {
+      "id": "aggregate:q_61130d888cfb652f49e7a022:denominator",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:q_d2adfcc122923d7ea26136f3:time",
+      "observed": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      },
+      "expected": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      }
+    },
+    {
+      "id": "aggregate:q_d2adfcc122923d7ea26136f3:voucher_order_count",
+      "observed": {
+        "DONG2026": 1,
+        "THU2026": 1,
+        "BD_26_F80F": 51,
+        "UP_SV_1JDX": 42,
+        "UP_SV_5V3G": 60,
+        "UP_SV_LXEH": 51,
+        "UP_SV_N0R3": 52,
+        "UP_SV_TA0N": 1,
+        "UP_SV_TOFA": 49,
+        "UP_DM_O1L1": 52,
+        "UP_DM_PCPD": 44,
+        "UP_DM_WECT": 54,
+        "UP_PLATINUM_889Q": 47,
+        "UP_PLATINUM_B3E8": 65,
+        "UP_PLATINUM_SEQY": 1,
+        "UP_GD_0HCE": 56,
+        "UP_GD_RNWJ": 57,
+        "WHEEL_3Y27K": 57,
+        "WHEEL_ZQXMT": 49,
+        "WHEEL_2PY4K": 57,
+        "WHEEL_80QAE": 51,
+        "KS20_0885MO": 42,
+        "KS20_0JMVE4": 56,
+        "KS20_17QUPN": 69,
+        "KS20_2MJW47": 52,
+        "KS20_4259MN": 51,
+        "KS20_9YIYUF": 66,
+        "KS20_BJF91L": 61,
+        "KS20_CPXSR0": 46,
+        "KS20_E1JEWH": 50,
+        "KS20_EGWM5E": 47,
+        "KS20_G6DOVA": 54,
+        "KS20_IS3UMB": 49,
+        "KS20_JGR9BM": 54,
+        "KS20_P8405O": 52,
+        "KS20_PFDNMD": 54,
+        "KS20_ROIMKP": 32,
+        "KS20_VGR9GT": 52,
+        "KS20_ZCLKN3": 54
+      },
+      "expected": {
+        "BD_26_F80F": 51,
+        "DONG2026": 1,
+        "WHEEL_2PY4K": 57,
+        "UP_PLATINUM_B3E8": 65,
+        "UP_SV_TOFA": 49,
+        "KS20_4259MN": 51,
+        "KS20_IS3UMB": 49,
+        "KS20_2MJW47": 52,
+        "KS20_EGWM5E": 47,
+        "UP_PLATINUM_SEQY": 1,
+        "KS20_CPXSR0": 46,
+        "THU2026": 1,
+        "WHEEL_3Y27K": 57,
+        "UP_DM_O1L1": 52,
+        "KS20_ROIMKP": 32,
+        "KS20_G6DOVA": 54,
+        "WHEEL_ZQXMT": 49,
+        "WHEEL_80QAE": 51,
+        "KS20_JGR9BM": 54,
+        "KS20_BJF91L": 61,
+        "UP_SV_TA0N": 1,
+        "KS20_0JMVE4": 56,
+        "KS20_E1JEWH": 50,
+        "UP_SV_5V3G": 60,
+        "UP_GD_RNWJ": 57,
+        "UP_GD_0HCE": 56,
+        "KS20_P8405O": 52,
+        "KS20_VGR9GT": 52,
+        "UP_SV_LXEH": 51,
+        "UP_DM_PCPD": 44,
+        "UP_SV_N0R3": 52,
+        "UP_DM_WECT": 54,
+        "KS20_9YIYUF": 66,
+        "KS20_ZCLKN3": 54,
+        "UP_PLATINUM_889Q": 47,
+        "KS20_17QUPN": 69,
+        "UP_SV_1JDX": 42,
+        "KS20_0885MO": 42,
+        "KS20_PFDNMD": 54
+      }
+    },
+    {
+      "id": "aggregate:q_d2adfcc122923d7ea26136f3:labels",
+      "observed": true,
+      "expected": true
+    },
+    {
+      "id": "aggregate:q_ef4db9f2b95b3c04188d451e:time",
+      "observed": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      },
+      "expected": {
+        "kind": "range",
+        "start": "2026-08-10",
+        "end": "2026-10-08"
+      }
+    },
+    {
+      "id": "aggregate:q_ef4db9f2b95b3c04188d451e:discount_amount",
+      "observed": {
+        "BD_26_F80F": 1405000.0,
+        "UP_SV_1JDX": 1220000.0,
+        "UP_SV_5V3G": 1760000.0,
+        "UP_SV_LXEH": 1440000.0,
+        "UP_SV_N0R3": 1400000.0,
+        "UP_SV_TOFA": 1450000.0,
+        "UP_DM_O1L1": 1690000.0,
+        "UP_DM_PCPD": 1275000.0,
+        "UP_DM_WECT": 1635000.0,
+        "UP_PLATINUM_889Q": 1445000.0,
+        "UP_PLATINUM_B3E8": 1860000.0,
+        "UP_GD_0HCE": 1845000.0,
+        "UP_GD_RNWJ": 1740000.0,
+        "WHEEL_3Y27K": 1585000.0,
+        "WHEEL_ZQXMT": 1365000.0,
+        "WHEEL_2PY4K": 1430000.0,
+        "WHEEL_80QAE": 1525000.0,
+        "KS20_0885MO": 1065000.0,
+        "KS20_0JMVE4": 1525000.0,
+        "KS20_17QUPN": 1925000.0,
+        "KS20_2MJW47": 1490000.0,
+        "KS20_4259MN": 1430000.0,
+        "KS20_9YIYUF": 1990000.0,
+        "KS20_BJF91L": 1605000.0,
+        "KS20_CPXSR0": 1170000.0,
+        "KS20_E1JEWH": 1265000.0,
+        "KS20_EGWM5E": 1610000.0,
+        "KS20_G6DOVA": 1700000.0,
+        "KS20_IS3UMB": 1455000.0,
+        "KS20_JGR9BM": 1490000.0,
+        "KS20_P8405O": 1380000.0,
+        "KS20_PFDNMD": 1725000.0,
+        "KS20_ROIMKP": 735000.0,
+        "KS20_VGR9GT": 1585000.0,
+        "KS20_ZCLKN3": 1655000.0
+      },
+      "expected": {
+        "WHEEL_2PY4K": 1430000.0,
+        "UP_PLATINUM_B3E8": 1860000.0,
+        "UP_SV_TOFA": 1450000.0,
+        "KS20_4259MN": 1430000.0,
+        "KS20_IS3UMB": 1455000.0,
+        "KS20_2MJW47": 1490000.0,
+        "KS20_EGWM5E": 1610000.0,
+        "KS20_CPXSR0": 1170000.0,
+        "WHEEL_3Y27K": 1585000.0,
+        "UP_DM_O1L1": 1690000.0,
+        "KS20_ROIMKP": 735000.0,
+        "KS20_G6DOVA": 1700000.0,
+        "WHEEL_ZQXMT": 1365000.0,
+        "WHEEL_80QAE": 1525000.0,
+        "KS20_JGR9BM": 1490000.0,
+        "KS20_BJF91L": 1605000.0,
+        "KS20_0JMVE4": 1525000.0,
+        "KS20_E1JEWH": 1265000.0,
+        "UP_SV_5V3G": 1760000.0,
+        "UP_GD_RNWJ": 1740000.0,
+        "UP_GD_0HCE": 1845000.0,
+        "KS20_P8405O": 1380000.0,
+        "KS20_VGR9GT": 1585000.0,
+        "UP_SV_LXEH": 1440000.0,
+        "UP_DM_PCPD": 1275000.0,
+        "UP_SV_N0R3": 1400000.0,
+        "UP_DM_WECT": 1635000.0,
+        "KS20_9YIYUF": 1990000.0,
+        "KS20_ZCLKN3": 1655000.0,
+        "UP_PLATINUM_889Q": 1445000.0,
+        "KS20_17QUPN": 1925000.0,
+        "UP_SV_1JDX": 1220000.0,
+        "KS20_0885MO": 1065000.0,
+        "KS20_PFDNMD": 1725000.0,
+        "BD_26_F80F": 1405000.0
+      }
+    },
+    {
+      "id": "aggregate:q_ef4db9f2b95b3c04188d451e:voucher_revenue",
+      "observed": {
+        "BD_26_F80F": 5023000.0,
+        "UP_SV_1JDX": 3876000.0,
+        "UP_SV_5V3G": 5926000.0,
+        "UP_SV_LXEH": 4267000.0,
+        "UP_SV_N0R3": 5482000.0,
+        "UP_SV_TOFA": 3291000.0,
+        "UP_DM_O1L1": 4668000.0,
+        "UP_DM_PCPD": 3990000.0,
+        "UP_DM_WECT": 6336000.0,
+        "UP_PLATINUM_889Q": 4009000.0,
+        "UP_PLATINUM_B3E8": 5316000.0,
+        "UP_GD_0HCE": 5577000.0,
+        "UP_GD_RNWJ": 4508000.0,
+        "WHEEL_3Y27K": 5798000.0,
+        "WHEEL_ZQXMT": 3935000.0,
+        "WHEEL_2PY4K": 4567000.0,
+        "WHEEL_80QAE": 4369000.0,
+        "KS20_0885MO": 2971000.0,
+        "KS20_0JMVE4": 6293000.0,
+        "KS20_17QUPN": 6851000.0,
+        "KS20_2MJW47": 5455000.0,
+        "KS20_4259MN": 5731000.0,
+        "KS20_9YIYUF": 6040000.0,
+        "KS20_BJF91L": 4510000.0,
+        "KS20_CPXSR0": 4387000.0,
+        "KS20_E1JEWH": 5362000.0,
+        "KS20_EGWM5E": 4810000.0,
+        "KS20_G6DOVA": 5224000.0,
+        "KS20_IS3UMB": 4044000.0,
+        "KS20_JGR9BM": 5011000.0,
+        "KS20_P8405O": 5467000.0,
+        "KS20_PFDNMD": 5149000.0,
+        "KS20_ROIMKP": 2749000.0,
+        "KS20_VGR9GT": 5562000.0,
+        "KS20_ZCLKN3": 4179000.0
+      },
+      "expected": {
+        "WHEEL_2PY4K": 4567000.0,
+        "UP_PLATINUM_B3E8": 5316000.0,
+        "UP_SV_TOFA": 3291000.0,
+        "KS20_4259MN": 5731000.0,
+        "KS20_IS3UMB": 4044000.0,
+        "KS20_2MJW47": 5455000.0,
+        "KS20_EGWM5E": 4810000.0,
+        "KS20_CPXSR0": 4387000.0,
+        "WHEEL_3Y27K": 5798000.0,
+        "UP_DM_O1L1": 4668000.0,
+        "KS20_ROIMKP": 2749000.0,
+        "KS20_G6DOVA": 5224000.0,
+        "WHEEL_ZQXMT": 3935000.0,
+        "WHEEL_80QAE": 4369000.0,
+        "KS20_JGR9BM": 5011000.0,
+        "KS20_BJF91L": 4510000.0,
+        "KS20_0JMVE4": 6293000.0,
+        "KS20_E1JEWH": 5362000.0,
+        "UP_SV_5V3G": 5926000.0,
+        "UP_GD_RNWJ": 4508000.0,
+        "UP_GD_0HCE": 5577000.0,
+        "KS20_P8405O": 5467000.0,
+        "KS20_VGR9GT": 5562000.0,
+        "UP_SV_LXEH": 4267000.0,
+        "UP_DM_PCPD": 3990000.0,
+        "UP_SV_N0R3": 5482000.0,
+        "UP_DM_WECT": 6336000.0,
+        "KS20_9YIYUF": 6040000.0,
+        "KS20_ZCLKN3": 4179000.0,
+        "UP_PLATINUM_889Q": 4009000.0,
+        "KS20_17QUPN": 6851000.0,
+        "UP_SV_1JDX": 3876000.0,
+        "KS20_0885MO": 2971000.0,
+        "KS20_PFDNMD": 5149000.0,
+        "BD_26_F80F": 5023000.0
+      }
+    },
+    {
+      "id": "aggregate:q_ef4db9f2b95b3c04188d451e:labels",
+      "observed": true,
+      "expected": true
+    },
+    {
+      "id": "aggregate:share_metrics",
+      "observed": [
+        "voucher_revenue"
+      ],
+      "expected": [
+        "voucher_revenue"
+      ]
+    },
+    {
+      "id": "aggregate:share_coverage",
+      "observed": [
+        "BD_26_F80F",
+        "KS20_0885MO",
+        "KS20_0JMVE4",
+        "KS20_17QUPN",
+        "KS20_2MJW47",
+        "KS20_4259MN",
+        "KS20_9YIYUF",
+        "KS20_BJF91L",
+        "KS20_CPXSR0",
+        "KS20_E1JEWH",
+        "KS20_EGWM5E",
+        "KS20_G6DOVA",
+        "KS20_IS3UMB",
+        "KS20_JGR9BM",
+        "KS20_P8405O",
+        "KS20_PFDNMD",
+        "KS20_ROIMKP",
+        "KS20_VGR9GT",
+        "KS20_ZCLKN3",
+        "UP_DM_O1L1",
+        "UP_DM_PCPD",
+        "UP_DM_WECT",
+        "UP_GD_0HCE",
+        "UP_GD_RNWJ",
+        "UP_PLATINUM_889Q",
+        "UP_PLATINUM_B3E8",
+        "UP_SV_1JDX",
+        "UP_SV_5V3G",
+        "UP_SV_LXEH",
+        "UP_SV_N0R3",
+        "UP_SV_TOFA",
+        "WHEEL_2PY4K",
+        "WHEEL_3Y27K",
+        "WHEEL_80QAE",
+        "WHEEL_ZQXMT"
+      ],
+      "expected": [
+        "BD_26_F80F",
+        "KS20_0885MO",
+        "KS20_0JMVE4",
+        "KS20_17QUPN",
+        "KS20_2MJW47",
+        "KS20_4259MN",
+        "KS20_9YIYUF",
+        "KS20_BJF91L",
+        "KS20_CPXSR0",
+        "KS20_E1JEWH",
+        "KS20_EGWM5E",
+        "KS20_G6DOVA",
+        "KS20_IS3UMB",
+        "KS20_JGR9BM",
+        "KS20_P8405O",
+        "KS20_PFDNMD",
+        "KS20_ROIMKP",
+        "KS20_VGR9GT",
+        "KS20_ZCLKN3",
+        "UP_DM_O1L1",
+        "UP_DM_PCPD",
+        "UP_DM_WECT",
+        "UP_GD_0HCE",
+        "UP_GD_RNWJ",
+        "UP_PLATINUM_889Q",
+        "UP_PLATINUM_B3E8",
+        "UP_SV_1JDX",
+        "UP_SV_5V3G",
+        "UP_SV_LXEH",
+        "UP_SV_N0R3",
+        "UP_SV_TOFA",
+        "WHEEL_2PY4K",
+        "WHEEL_3Y27K",
+        "WHEEL_80QAE",
+        "WHEEL_ZQXMT"
+      ]
+    },
+    {
+      "id": "aggregate:share:BD_26_F80F",
+      "observed": 2.942020581844166,
+      "expected": 2.942020581844166
+    },
+    {
+      "id": "aggregate:denominator:BD_26_F80F",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:UP_SV_1JDX",
+      "observed": 2.2702113826852455,
+      "expected": 2.2702113826852455
+    },
+    {
+      "id": "aggregate:denominator:UP_SV_1JDX",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:UP_SV_5V3G",
+      "observed": 3.4709165773459145,
+      "expected": 3.4709165773459145
+    },
+    {
+      "id": "aggregate:denominator:UP_SV_5V3G",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:UP_SV_LXEH",
+      "observed": 2.4992239344473535,
+      "expected": 2.4992239344473535
+    },
+    {
+      "id": "aggregate:denominator:UP_SV_LXEH",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:UP_SV_N0R3",
+      "observed": 3.2108614034779452,
+      "expected": 3.2108614034779452
+    },
+    {
+      "id": "aggregate:denominator:UP_SV_N0R3",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:UP_SV_TOFA",
+      "observed": 1.9275711198186642,
+      "expected": 1.9275711198186642
+    },
+    {
+      "id": "aggregate:denominator:UP_SV_TOFA",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:UP_DM_O1L1",
+      "observed": 2.7340935847200014,
+      "expected": 2.7340935847200014
+    },
+    {
+      "id": "aggregate:denominator:UP_DM_O1L1",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:UP_DM_PCPD",
+      "observed": 2.3369823057054,
+      "expected": 2.3369823057054
+    },
+    {
+      "id": "aggregate:denominator:UP_DM_PCPD",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:UP_DM_WECT",
+      "observed": 3.7110576162780484,
+      "expected": 3.7110576162780484
+    },
+    {
+      "id": "aggregate:denominator:UP_DM_WECT",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:UP_PLATINUM_889Q",
+      "observed": 2.3481107928754255,
+      "expected": 2.3481107928754255
+    },
+    {
+      "id": "aggregate:denominator:UP_PLATINUM_889Q",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:UP_PLATINUM_B3E8",
+      "observed": 3.1136335682029834,
+      "expected": 3.1136335682029834
+    },
+    {
+      "id": "aggregate:denominator:UP_PLATINUM_B3E8",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:UP_GD_0HCE",
+      "observed": 3.2665038393280734,
+      "expected": 3.2665038393280734
+    },
+    {
+      "id": "aggregate:denominator:UP_GD_0HCE",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:UP_GD_RNWJ",
+      "observed": 2.640380008551364,
+      "expected": 2.640380008551364
+    },
+    {
+      "id": "aggregate:denominator:UP_GD_RNWJ",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:WHEEL_3Y27K",
+      "observed": 3.3959457164110045,
+      "expected": 3.3959457164110045
+    },
+    {
+      "id": "aggregate:denominator:WHEEL_3Y27K",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:WHEEL_ZQXMT",
+      "observed": 2.3047682638974303,
+      "expected": 2.3047682638974303
+    },
+    {
+      "id": "aggregate:denominator:WHEEL_ZQXMT",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:WHEEL_2PY4K",
+      "observed": 2.674936889763549,
+      "expected": 2.674936889763549
+    },
+    {
+      "id": "aggregate:denominator:WHEEL_2PY4K",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:WHEEL_80QAE",
+      "observed": 2.55896633925486,
+      "expected": 2.55896633925486
+    },
+    {
+      "id": "aggregate:denominator:WHEEL_80QAE",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:KS20_0885MO",
+      "observed": 1.740143967481389,
+      "expected": 1.740143967481389
+    },
+    {
+      "id": "aggregate:denominator:KS20_0885MO",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:KS20_0JMVE4",
+      "observed": 3.6858720926827266,
+      "expected": 3.6858720926827266
+    },
+    {
+      "id": "aggregate:denominator:KS20_0JMVE4",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:KS20_17QUPN",
+      "observed": 4.012698189570851,
+      "expected": 4.012698189570851
+    },
+    {
+      "id": "aggregate:denominator:KS20_17QUPN",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:KS20_2MJW47",
+      "observed": 3.1950472374994874,
+      "expected": 3.1950472374994874
+    },
+    {
+      "id": "aggregate:denominator:KS20_2MJW47",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:KS20_4259MN",
+      "observed": 3.3567031563903873,
+      "expected": 3.3567031563903873
+    },
+    {
+      "id": "aggregate:denominator:KS20_4259MN",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:KS20_9YIYUF",
+      "observed": 3.5376875003660686,
+      "expected": 3.5376875003660686
+    },
+    {
+      "id": "aggregate:denominator:KS20_9YIYUF",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:KS20_BJF91L",
+      "observed": 2.641551428253472,
+      "expected": 2.641551428253472
+    },
+    {
+      "id": "aggregate:denominator:KS20_BJF91L",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:KS20_CPXSR0",
+      "observed": 2.5695091165738315,
+      "expected": 2.5695091165738315
+    },
+    {
+      "id": "aggregate:denominator:KS20_CPXSR0",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:KS20_E1JEWH",
+      "observed": 3.1405762213514667,
+      "expected": 3.1405762213514667
+    },
+    {
+      "id": "aggregate:denominator:KS20_E1JEWH",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:KS20_EGWM5E",
+      "observed": 2.8172643835696674,
+      "expected": 2.8172643835696674
+    },
+    {
+      "id": "aggregate:denominator:KS20_EGWM5E",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:KS20_G6DOVA",
+      "observed": 3.059748261906017,
+      "expected": 3.059748261906017
+    },
+    {
+      "id": "aggregate:denominator:KS20_G6DOVA",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:KS20_IS3UMB",
+      "observed": 2.368610637662315,
+      "expected": 2.368610637662315
+    },
+    {
+      "id": "aggregate:denominator:KS20_IS3UMB",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:KS20_JGR9BM",
+      "observed": 2.934992063631518,
+      "expected": 2.934992063631518
+    },
+    {
+      "id": "aggregate:denominator:KS20_JGR9BM",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:KS20_P8405O",
+      "observed": 3.2020757557121353,
+      "expected": 3.2020757557121353
+    },
+    {
+      "id": "aggregate:denominator:KS20_P8405O",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:KS20_PFDNMD",
+      "observed": 3.015820023076968,
+      "expected": 3.015820023076968
+    },
+    {
+      "id": "aggregate:denominator:KS20_PFDNMD",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:KS20_ROIMKP",
+      "observed": 1.6101163805474044,
+      "expected": 1.6101163805474044
+    },
+    {
+      "id": "aggregate:denominator:KS20_ROIMKP",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:KS20_VGR9GT",
+      "observed": 3.2577181915622635,
+      "expected": 3.2577181915622635
+    },
+    {
+      "id": "aggregate:denominator:KS20_VGR9GT",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share:KS20_ZCLKN3",
+      "observed": 2.447681467554603,
+      "expected": 2.447681467554603
+    },
+    {
+      "id": "aggregate:denominator:KS20_ZCLKN3",
+      "observed": 170733000.0,
+      "expected": 170733000.0
+    },
+    {
+      "id": "aggregate:share_sum",
+      "observed": 99.99999999999999,
+      "expected": 100
+    },
+    {
+      "id": "aggregate:chart_entities:visual_1",
+      "observed": [
+        "Voucher khảo sát 20% (KS20_17QUPN)"
+      ],
+      "expected": [
+        "Voucher khảo sát 20% (KS20_17QUPN)"
+      ]
+    },
+    {
+      "id": "aggregate:chart_entities:visual_2",
+      "observed": [
+        "Voucher khảo sát 20% (KS20_17QUPN)"
+      ],
+      "expected": [
+        "Voucher khảo sát 20% (KS20_17QUPN)"
+      ]
+    },
+    {
+      "id": "aggregate:chart_entities:visual_3",
+      "observed": [
+        "QUà thăng hạng Kim Cương (UP_DM_O1L1)",
+        "QUà thăng hạng Kim Cương (UP_DM_PCPD)",
+        "QUà thăng hạng Kim Cương (UP_DM_WECT)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_889Q)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_B3E8)",
+        "Quà sinh nhật (BD_26_F80F)",
+        "Quà thăng hạng Bạc (UP_SV_1JDX)",
+        "Quà thăng hạng Bạc (UP_SV_5V3G)",
+        "Quà thăng hạng Bạc (UP_SV_LXEH)",
+        "Quà thăng hạng Bạc (UP_SV_N0R3)",
+        "Quà thăng hạng Bạc (UP_SV_TOFA)",
+        "Quà thăng hạng Vàng (UP_GD_0HCE)",
+        "Quà thăng hạng Vàng (UP_GD_RNWJ)",
+        "Voucher Free 1 Topping (WHEEL_2PY4K)",
+        "Voucher Free 1 Topping (WHEEL_80QAE)",
+        "Voucher khảo sát 20% (KS20_0885MO)",
+        "Voucher khảo sát 20% (KS20_0JMVE4)",
+        "Voucher khảo sát 20% (KS20_17QUPN)",
+        "Voucher khảo sát 20% (KS20_2MJW47)",
+        "Voucher khảo sát 20% (KS20_4259MN)",
+        "Voucher khảo sát 20% (KS20_9YIYUF)",
+        "Voucher khảo sát 20% (KS20_BJF91L)",
+        "Voucher khảo sát 20% (KS20_CPXSR0)",
+        "Voucher khảo sát 20% (KS20_E1JEWH)",
+        "Voucher khảo sát 20% (KS20_EGWM5E)",
+        "Voucher khảo sát 20% (KS20_G6DOVA)",
+        "Voucher khảo sát 20% (KS20_IS3UMB)",
+        "Voucher khảo sát 20% (KS20_JGR9BM)",
+        "Voucher khảo sát 20% (KS20_P8405O)",
+        "Voucher khảo sát 20% (KS20_PFDNMD)",
+        "Voucher khảo sát 20% (KS20_ROIMKP)",
+        "Voucher khảo sát 20% (KS20_VGR9GT)",
+        "Voucher khảo sát 20% (KS20_ZCLKN3)",
+        "Vòng quay: Voucher 10K (WHEEL_3Y27K)",
+        "Vòng quay: Voucher 10K (WHEEL_ZQXMT)"
+      ],
+      "expected": [
+        "QUà thăng hạng Kim Cương (UP_DM_O1L1)",
+        "QUà thăng hạng Kim Cương (UP_DM_PCPD)",
+        "QUà thăng hạng Kim Cương (UP_DM_WECT)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_889Q)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_B3E8)",
+        "Quà sinh nhật (BD_26_F80F)",
+        "Quà thăng hạng Bạc (UP_SV_1JDX)",
+        "Quà thăng hạng Bạc (UP_SV_5V3G)",
+        "Quà thăng hạng Bạc (UP_SV_LXEH)",
+        "Quà thăng hạng Bạc (UP_SV_N0R3)",
+        "Quà thăng hạng Bạc (UP_SV_TOFA)",
+        "Quà thăng hạng Vàng (UP_GD_0HCE)",
+        "Quà thăng hạng Vàng (UP_GD_RNWJ)",
+        "Voucher Free 1 Topping (WHEEL_2PY4K)",
+        "Voucher Free 1 Topping (WHEEL_80QAE)",
+        "Voucher khảo sát 20% (KS20_0885MO)",
+        "Voucher khảo sát 20% (KS20_0JMVE4)",
+        "Voucher khảo sát 20% (KS20_17QUPN)",
+        "Voucher khảo sát 20% (KS20_2MJW47)",
+        "Voucher khảo sát 20% (KS20_4259MN)",
+        "Voucher khảo sát 20% (KS20_9YIYUF)",
+        "Voucher khảo sát 20% (KS20_BJF91L)",
+        "Voucher khảo sát 20% (KS20_CPXSR0)",
+        "Voucher khảo sát 20% (KS20_E1JEWH)",
+        "Voucher khảo sát 20% (KS20_EGWM5E)",
+        "Voucher khảo sát 20% (KS20_G6DOVA)",
+        "Voucher khảo sát 20% (KS20_IS3UMB)",
+        "Voucher khảo sát 20% (KS20_JGR9BM)",
+        "Voucher khảo sát 20% (KS20_P8405O)",
+        "Voucher khảo sát 20% (KS20_PFDNMD)",
+        "Voucher khảo sát 20% (KS20_ROIMKP)",
+        "Voucher khảo sát 20% (KS20_VGR9GT)",
+        "Voucher khảo sát 20% (KS20_ZCLKN3)",
+        "Vòng quay: Voucher 10K (WHEEL_3Y27K)",
+        "Vòng quay: Voucher 10K (WHEEL_ZQXMT)"
+      ]
+    },
+    {
+      "id": "aggregate:chart_entities:visual_4",
+      "observed": [
+        "QUà thăng hạng Kim Cương (UP_DM_O1L1)",
+        "QUà thăng hạng Kim Cương (UP_DM_PCPD)",
+        "QUà thăng hạng Kim Cương (UP_DM_WECT)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_889Q)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_B3E8)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_SEQY)",
+        "Quà sinh nhật (BD_26_F80F)",
+        "Quà thăng hạng Bạc (UP_SV_1JDX)",
+        "Quà thăng hạng Bạc (UP_SV_5V3G)",
+        "Quà thăng hạng Bạc (UP_SV_LXEH)",
+        "Quà thăng hạng Bạc (UP_SV_N0R3)",
+        "Quà thăng hạng Bạc (UP_SV_TA0N)",
+        "Quà thăng hạng Bạc (UP_SV_TOFA)",
+        "Quà thăng hạng Vàng (UP_GD_0HCE)",
+        "Quà thăng hạng Vàng (UP_GD_RNWJ)",
+        "Voucher Free 1 Topping (WHEEL_2PY4K)",
+        "Voucher Free 1 Topping (WHEEL_80QAE)",
+        "Voucher khảo sát 20% (KS20_0885MO)",
+        "Voucher khảo sát 20% (KS20_0JMVE4)",
+        "Voucher khảo sát 20% (KS20_17QUPN)",
+        "Voucher khảo sát 20% (KS20_2MJW47)",
+        "Voucher khảo sát 20% (KS20_4259MN)",
+        "Voucher khảo sát 20% (KS20_9YIYUF)",
+        "Voucher khảo sát 20% (KS20_BJF91L)",
+        "Voucher khảo sát 20% (KS20_CPXSR0)",
+        "Voucher khảo sát 20% (KS20_E1JEWH)",
+        "Voucher khảo sát 20% (KS20_EGWM5E)",
+        "Voucher khảo sát 20% (KS20_G6DOVA)",
+        "Voucher khảo sát 20% (KS20_IS3UMB)",
+        "Voucher khảo sát 20% (KS20_JGR9BM)",
+        "Voucher khảo sát 20% (KS20_P8405O)",
+        "Voucher khảo sát 20% (KS20_PFDNMD)",
+        "Voucher khảo sát 20% (KS20_ROIMKP)",
+        "Voucher khảo sát 20% (KS20_VGR9GT)",
+        "Voucher khảo sát 20% (KS20_ZCLKN3)",
+        "Vòng quay: Voucher 10K (WHEEL_3Y27K)",
+        "Vòng quay: Voucher 10K (WHEEL_ZQXMT)",
+        "khuyến mãi mùa thu (THU2026)",
+        "khuyến mãi mùa đông (DONG2026)"
+      ],
+      "expected": [
+        "QUà thăng hạng Kim Cương (UP_DM_O1L1)",
+        "QUà thăng hạng Kim Cương (UP_DM_PCPD)",
+        "QUà thăng hạng Kim Cương (UP_DM_WECT)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_889Q)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_B3E8)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_SEQY)",
+        "Quà sinh nhật (BD_26_F80F)",
+        "Quà thăng hạng Bạc (UP_SV_1JDX)",
+        "Quà thăng hạng Bạc (UP_SV_5V3G)",
+        "Quà thăng hạng Bạc (UP_SV_LXEH)",
+        "Quà thăng hạng Bạc (UP_SV_N0R3)",
+        "Quà thăng hạng Bạc (UP_SV_TA0N)",
+        "Quà thăng hạng Bạc (UP_SV_TOFA)",
+        "Quà thăng hạng Vàng (UP_GD_0HCE)",
+        "Quà thăng hạng Vàng (UP_GD_RNWJ)",
+        "Voucher Free 1 Topping (WHEEL_2PY4K)",
+        "Voucher Free 1 Topping (WHEEL_80QAE)",
+        "Voucher khảo sát 20% (KS20_0885MO)",
+        "Voucher khảo sát 20% (KS20_0JMVE4)",
+        "Voucher khảo sát 20% (KS20_17QUPN)",
+        "Voucher khảo sát 20% (KS20_2MJW47)",
+        "Voucher khảo sát 20% (KS20_4259MN)",
+        "Voucher khảo sát 20% (KS20_9YIYUF)",
+        "Voucher khảo sát 20% (KS20_BJF91L)",
+        "Voucher khảo sát 20% (KS20_CPXSR0)",
+        "Voucher khảo sát 20% (KS20_E1JEWH)",
+        "Voucher khảo sát 20% (KS20_EGWM5E)",
+        "Voucher khảo sát 20% (KS20_G6DOVA)",
+        "Voucher khảo sát 20% (KS20_IS3UMB)",
+        "Voucher khảo sát 20% (KS20_JGR9BM)",
+        "Voucher khảo sát 20% (KS20_P8405O)",
+        "Voucher khảo sát 20% (KS20_PFDNMD)",
+        "Voucher khảo sát 20% (KS20_ROIMKP)",
+        "Voucher khảo sát 20% (KS20_VGR9GT)",
+        "Voucher khảo sát 20% (KS20_ZCLKN3)",
+        "Vòng quay: Voucher 10K (WHEEL_3Y27K)",
+        "Vòng quay: Voucher 10K (WHEEL_ZQXMT)",
+        "khuyến mãi mùa thu (THU2026)",
+        "khuyến mãi mùa đông (DONG2026)"
+      ]
+    },
+    {
+      "id": "aggregate:chart_entities:visual_5",
+      "observed": [
+        "QUà thăng hạng Kim Cương (UP_DM_O1L1)",
+        "QUà thăng hạng Kim Cương (UP_DM_PCPD)",
+        "QUà thăng hạng Kim Cương (UP_DM_WECT)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_889Q)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_B3E8)",
+        "Quà sinh nhật (BD_26_F80F)",
+        "Quà thăng hạng Bạc (UP_SV_1JDX)",
+        "Quà thăng hạng Bạc (UP_SV_5V3G)",
+        "Quà thăng hạng Bạc (UP_SV_LXEH)",
+        "Quà thăng hạng Bạc (UP_SV_N0R3)",
+        "Quà thăng hạng Bạc (UP_SV_TOFA)",
+        "Quà thăng hạng Vàng (UP_GD_0HCE)",
+        "Quà thăng hạng Vàng (UP_GD_RNWJ)",
+        "Voucher Free 1 Topping (WHEEL_2PY4K)",
+        "Voucher Free 1 Topping (WHEEL_80QAE)",
+        "Voucher khảo sát 20% (KS20_0885MO)",
+        "Voucher khảo sát 20% (KS20_0JMVE4)",
+        "Voucher khảo sát 20% (KS20_17QUPN)",
+        "Voucher khảo sát 20% (KS20_2MJW47)",
+        "Voucher khảo sát 20% (KS20_4259MN)",
+        "Voucher khảo sát 20% (KS20_9YIYUF)",
+        "Voucher khảo sát 20% (KS20_BJF91L)",
+        "Voucher khảo sát 20% (KS20_CPXSR0)",
+        "Voucher khảo sát 20% (KS20_E1JEWH)",
+        "Voucher khảo sát 20% (KS20_EGWM5E)",
+        "Voucher khảo sát 20% (KS20_G6DOVA)",
+        "Voucher khảo sát 20% (KS20_IS3UMB)",
+        "Voucher khảo sát 20% (KS20_JGR9BM)",
+        "Voucher khảo sát 20% (KS20_P8405O)",
+        "Voucher khảo sát 20% (KS20_PFDNMD)",
+        "Voucher khảo sát 20% (KS20_ROIMKP)",
+        "Voucher khảo sát 20% (KS20_VGR9GT)",
+        "Voucher khảo sát 20% (KS20_ZCLKN3)",
+        "Vòng quay: Voucher 10K (WHEEL_3Y27K)",
+        "Vòng quay: Voucher 10K (WHEEL_ZQXMT)"
+      ],
+      "expected": [
+        "QUà thăng hạng Kim Cương (UP_DM_O1L1)",
+        "QUà thăng hạng Kim Cương (UP_DM_PCPD)",
+        "QUà thăng hạng Kim Cương (UP_DM_WECT)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_889Q)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_B3E8)",
+        "Quà sinh nhật (BD_26_F80F)",
+        "Quà thăng hạng Bạc (UP_SV_1JDX)",
+        "Quà thăng hạng Bạc (UP_SV_5V3G)",
+        "Quà thăng hạng Bạc (UP_SV_LXEH)",
+        "Quà thăng hạng Bạc (UP_SV_N0R3)",
+        "Quà thăng hạng Bạc (UP_SV_TOFA)",
+        "Quà thăng hạng Vàng (UP_GD_0HCE)",
+        "Quà thăng hạng Vàng (UP_GD_RNWJ)",
+        "Voucher Free 1 Topping (WHEEL_2PY4K)",
+        "Voucher Free 1 Topping (WHEEL_80QAE)",
+        "Voucher khảo sát 20% (KS20_0885MO)",
+        "Voucher khảo sát 20% (KS20_0JMVE4)",
+        "Voucher khảo sát 20% (KS20_17QUPN)",
+        "Voucher khảo sát 20% (KS20_2MJW47)",
+        "Voucher khảo sát 20% (KS20_4259MN)",
+        "Voucher khảo sát 20% (KS20_9YIYUF)",
+        "Voucher khảo sát 20% (KS20_BJF91L)",
+        "Voucher khảo sát 20% (KS20_CPXSR0)",
+        "Voucher khảo sát 20% (KS20_E1JEWH)",
+        "Voucher khảo sát 20% (KS20_EGWM5E)",
+        "Voucher khảo sát 20% (KS20_G6DOVA)",
+        "Voucher khảo sát 20% (KS20_IS3UMB)",
+        "Voucher khảo sát 20% (KS20_JGR9BM)",
+        "Voucher khảo sát 20% (KS20_P8405O)",
+        "Voucher khảo sát 20% (KS20_PFDNMD)",
+        "Voucher khảo sát 20% (KS20_ROIMKP)",
+        "Voucher khảo sát 20% (KS20_VGR9GT)",
+        "Voucher khảo sát 20% (KS20_ZCLKN3)",
+        "Vòng quay: Voucher 10K (WHEEL_3Y27K)",
+        "Vòng quay: Voucher 10K (WHEEL_ZQXMT)"
+      ]
+    },
+    {
+      "id": "aggregate:chart_entities:visual_6",
+      "observed": [
+        "QUà thăng hạng Kim Cương (UP_DM_O1L1)",
+        "QUà thăng hạng Kim Cương (UP_DM_PCPD)",
+        "QUà thăng hạng Kim Cương (UP_DM_WECT)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_889Q)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_B3E8)",
+        "Quà sinh nhật (BD_26_F80F)",
+        "Quà thăng hạng Bạc (UP_SV_1JDX)",
+        "Quà thăng hạng Bạc (UP_SV_5V3G)",
+        "Quà thăng hạng Bạc (UP_SV_LXEH)",
+        "Quà thăng hạng Bạc (UP_SV_N0R3)",
+        "Quà thăng hạng Bạc (UP_SV_TOFA)",
+        "Quà thăng hạng Vàng (UP_GD_0HCE)",
+        "Quà thăng hạng Vàng (UP_GD_RNWJ)",
+        "Voucher Free 1 Topping (WHEEL_2PY4K)",
+        "Voucher Free 1 Topping (WHEEL_80QAE)",
+        "Voucher khảo sát 20% (KS20_0885MO)",
+        "Voucher khảo sát 20% (KS20_0JMVE4)",
+        "Voucher khảo sát 20% (KS20_17QUPN)",
+        "Voucher khảo sát 20% (KS20_2MJW47)",
+        "Voucher khảo sát 20% (KS20_4259MN)",
+        "Voucher khảo sát 20% (KS20_9YIYUF)",
+        "Voucher khảo sát 20% (KS20_BJF91L)",
+        "Voucher khảo sát 20% (KS20_CPXSR0)",
+        "Voucher khảo sát 20% (KS20_E1JEWH)",
+        "Voucher khảo sát 20% (KS20_EGWM5E)",
+        "Voucher khảo sát 20% (KS20_G6DOVA)",
+        "Voucher khảo sát 20% (KS20_IS3UMB)",
+        "Voucher khảo sát 20% (KS20_JGR9BM)",
+        "Voucher khảo sát 20% (KS20_P8405O)",
+        "Voucher khảo sát 20% (KS20_PFDNMD)",
+        "Voucher khảo sát 20% (KS20_ROIMKP)",
+        "Voucher khảo sát 20% (KS20_VGR9GT)",
+        "Voucher khảo sát 20% (KS20_ZCLKN3)",
+        "Vòng quay: Voucher 10K (WHEEL_3Y27K)",
+        "Vòng quay: Voucher 10K (WHEEL_ZQXMT)"
+      ],
+      "expected": [
+        "QUà thăng hạng Kim Cương (UP_DM_O1L1)",
+        "QUà thăng hạng Kim Cương (UP_DM_PCPD)",
+        "QUà thăng hạng Kim Cương (UP_DM_WECT)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_889Q)",
+        "QUà thăng hạng Kim Cương (UP_PLATINUM_B3E8)",
+        "Quà sinh nhật (BD_26_F80F)",
+        "Quà thăng hạng Bạc (UP_SV_1JDX)",
+        "Quà thăng hạng Bạc (UP_SV_5V3G)",
+        "Quà thăng hạng Bạc (UP_SV_LXEH)",
+        "Quà thăng hạng Bạc (UP_SV_N0R3)",
+        "Quà thăng hạng Bạc (UP_SV_TOFA)",
+        "Quà thăng hạng Vàng (UP_GD_0HCE)",
+        "Quà thăng hạng Vàng (UP_GD_RNWJ)",
+        "Voucher Free 1 Topping (WHEEL_2PY4K)",
+        "Voucher Free 1 Topping (WHEEL_80QAE)",
+        "Voucher khảo sát 20% (KS20_0885MO)",
+        "Voucher khảo sát 20% (KS20_0JMVE4)",
+        "Voucher khảo sát 20% (KS20_17QUPN)",
+        "Voucher khảo sát 20% (KS20_2MJW47)",
+        "Voucher khảo sát 20% (KS20_4259MN)",
+        "Voucher khảo sát 20% (KS20_9YIYUF)",
+        "Voucher khảo sát 20% (KS20_BJF91L)",
+        "Voucher khảo sát 20% (KS20_CPXSR0)",
+        "Voucher khảo sát 20% (KS20_E1JEWH)",
+        "Voucher khảo sát 20% (KS20_EGWM5E)",
+        "Voucher khảo sát 20% (KS20_G6DOVA)",
+        "Voucher khảo sát 20% (KS20_IS3UMB)",
+        "Voucher khảo sát 20% (KS20_JGR9BM)",
+        "Voucher khảo sát 20% (KS20_P8405O)",
+        "Voucher khảo sát 20% (KS20_PFDNMD)",
+        "Voucher khảo sát 20% (KS20_ROIMKP)",
+        "Voucher khảo sát 20% (KS20_VGR9GT)",
+        "Voucher khảo sát 20% (KS20_ZCLKN3)",
+        "Vòng quay: Voucher 10K (WHEEL_3Y27K)",
+        "Vòng quay: Voucher 10K (WHEEL_ZQXMT)"
+      ]
+    },
+    {
+      "id": "aggregate:leader_identity:voucher_revenue",
+      "observed": "Voucher khảo sát 20% (KS20_17QUPN)",
+      "expected": "Voucher khảo sát 20% (KS20_17QUPN)"
+    },
+    {
+      "id": "aggregate:leader_identity:voucher_order_count",
+      "observed": "Voucher khảo sát 20% (KS20_17QUPN)",
+      "expected": "Voucher khảo sát 20% (KS20_17QUPN)"
+    },
+    {
+      "id": "aggregate:saved_verifier",
+      "observed": {
+        "score": 90.0,
+        "grade": "good",
+        "status": "verified",
+        "components": [],
+        "completed": [
+          {
+            "id": "voucher_breakdown_60d",
+            "label": "Phần yêu cầu chưa được hỗ trợ",
+            "evidence_refs": [
+              "q_59733427020253f972d65ced:aov:group_comparison:6230060e3b"
+            ]
+          },
+          {
+            "id": "voucher_order_leader_60d",
+            "label": "Khuyến mãi và voucher",
+            "evidence_refs": [
+              "q_ce218052b17fff93966223b7:voucher_order_count:leader:6230060e3b",
+              "q_ce218052b17fff93966223b7:voucher_order_count:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "voucher_revenue_leader_60d",
+            "label": "Khuyến mãi và voucher",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          }
+        ],
+        "missing": [],
+        "unverified": [
+          {
+            "id": "independent_accuracy",
+            "label": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.",
+            "evidence_refs": []
+          }
+        ],
+        "limitations": [
+          {
+            "id": "dimension_population:promotion",
+            "label": "Khuyến mãi: Tên chương trình đi cùng từng mã voucher; mã chưa khớp danh mục vẫn được giữ theo mã trên đơn. Không gồm đơn không có voucher.",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "dimension_population:promotion_id",
+            "label": "Mã khuyến mãi: Mã khuyến mãi",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:voucher_revenue",
+            "label": "Doanh thu đơn có khuyến mãi: Tổng giá trị đơn HOAN_THANH/DANG_GIAO có mã voucher; mô tả tập đơn dùng voucher, chưa chứng minh hiệu quả tăng thêm.",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_limit:voucher_revenue:voucher_effectiveness",
+            "label": "Số đơn, doanh thu và giảm giá chỉ mô tả việc dùng voucher. Chưa có chi phí đầy đủ hoặc nhóm đối chứng độc lập; không kết luận ROI hay tác động tăng doanh thu. Số đơn dùng voucher gồm mọi trạng thái; doanh thu và giảm giá chỉ gồm HOAN_THANH/DANG_GIAO.",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "topn:q_19dbacc04fec4b7d45d0205a",
+            "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:voucher_order_count",
+            "label": "Số đơn áp dụng khuyến mãi: Đếm đơn có mã voucher ở mọi trạng thái; khác quần thể doanh thu đơn voucher hợp lệ.",
+            "evidence_refs": [
+              "q_ce218052b17fff93966223b7:voucher_order_count:leader:6230060e3b",
+              "q_ce218052b17fff93966223b7:voucher_order_count:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_limit:voucher_order_count:voucher_effectiveness",
+            "label": "Số đơn, doanh thu và giảm giá chỉ mô tả việc dùng voucher. Chưa có chi phí đầy đủ hoặc nhóm đối chứng độc lập; không kết luận ROI hay tác động tăng doanh thu. Số đơn dùng voucher gồm mọi trạng thái; doanh thu và giảm giá chỉ gồm HOAN_THANH/DANG_GIAO.",
+            "evidence_refs": [
+              "q_ce218052b17fff93966223b7:voucher_order_count:leader:6230060e3b",
+              "q_ce218052b17fff93966223b7:voucher_order_count:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "topn:q_ce218052b17fff93966223b7",
+            "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+            "evidence_refs": [
+              "q_ce218052b17fff93966223b7:voucher_order_count:leader:6230060e3b",
+              "q_ce218052b17fff93966223b7:voucher_order_count:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:aov",
+            "label": "Giá trị đơn trung bình: Tổng giá trị chia số đơn trong cùng tập HOAN_THANH/DANG_GIAO. Không cộng hoặc lấy trung bình các AOV nhóm.",
+            "evidence_refs": [
+              "q_59733427020253f972d65ced:aov:group_comparison:6230060e3b"
+            ]
+          },
+          {
+            "id": "nonadditive:q_59733427020253f972d65ced",
+            "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+            "evidence_refs": [
+              "q_59733427020253f972d65ced:aov:group_comparison:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:discount_amount",
+            "label": "Tổng tiền đã giảm giá: Tổng số tiền giảm trên đơn HOAN_THANH/DANG_GIAO có mã voucher; không phải chi phí đầy đủ của chiến dịch.",
+            "evidence_refs": [
+              "q_ef4db9f2b95b3c04188d451e:discount_amount:group_comparison:6230060e3b",
+              "q_ef4db9f2b95b3c04188d451e:voucher_revenue:group_comparison:6230060e3b",
+              "q_ef4db9f2b95b3c04188d451e:voucher_revenue:peer_gap:ab0df7aa98"
+            ]
+          },
+          {
+            "id": "metric_limit:discount_amount:voucher_effectiveness",
+            "label": "Số đơn, doanh thu và giảm giá chỉ mô tả việc dùng voucher. Chưa có chi phí đầy đủ hoặc nhóm đối chứng độc lập; không kết luận ROI hay tác động tăng doanh thu. Số đơn dùng voucher gồm mọi trạng thái; doanh thu và giảm giá chỉ gồm HOAN_THANH/DANG_GIAO.",
+            "evidence_refs": [
+              "q_ef4db9f2b95b3c04188d451e:discount_amount:group_comparison:6230060e3b",
+              "q_ef4db9f2b95b3c04188d451e:voucher_revenue:group_comparison:6230060e3b",
+              "q_ef4db9f2b95b3c04188d451e:voucher_revenue:peer_gap:ab0df7aa98"
+            ]
+          }
+        ],
+        "suggested_next_actions": [],
+        "coverage": {
+          "requested_count": 3,
+          "completed_count": 3,
+          "supporting_count": 0,
+          "omitted_count": 0
+        },
+        "generated_by": "deterministic_verifier",
+        "version": "2.8.5",
+        "reason": null,
+        "measurement_mode": "evidence_checks",
+        "verification_checks": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "passed": 3,
+            "total": 3,
+            "status": "passed",
+            "summary": "3/3 phần yêu cầu đã thực hiện."
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "passed": 1,
+            "total": 1,
+            "status": "passed",
+            "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "passed": 6,
+            "total": 6,
+            "status": "passed",
+            "summary": "6 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "passed": 147,
+            "total": 147,
+            "status": "passed",
+            "summary": "147/147 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "passed": 3,
+            "total": 3,
+            "status": "passed",
+            "summary": "3/3 phép tính yêu cầu có đủ quan sát và bằng chứng."
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "passed": 196,
+            "total": 196,
+            "status": "passed",
+            "summary": "196/196 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "passed": 12,
+            "total": 12,
+            "status": "passed",
+            "summary": "6/6 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "passed": 12,
+            "total": 12,
+            "status": "passed",
+            "summary": "12/12 giới hạn dữ liệu được công bố."
+          }
+        ],
+        "score_method": {
+          "id": "verification_evidence_v1",
+          "label": "Điểm kiểm chứng tổng",
+          "formula": "90 × trung bình có trọng số các kiểm tra áp dụng + 10 × tỷ lệ khớp đối chứng độc lập. Chưa đo đối chứng: chưa cộng 10 điểm; kiểm tra không áp dụng không bị trừ.",
+          "unmeasured_points": 10.0,
+          "interpretation": "Chỉ số mức độ kiểm chứng theo trọng số quy định; không phải độ chính xác hay xác suất AI trả lời đúng."
+        },
+        "score_breakdown": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "earned_points": 20.0,
+            "possible_points": 20.0,
+            "status": "passed"
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "earned_points": 15.0,
+            "possible_points": 15.0,
+            "status": "passed"
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "earned_points": 15.0,
+            "possible_points": 15.0,
+            "status": "passed"
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "earned_points": 5.0,
+            "possible_points": 5.0,
+            "status": "passed"
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "earned_points": 5.0,
+            "possible_points": 5.0,
+            "status": "passed"
+          },
+          {
+            "id": "independent_reference",
+            "label": "Đối chứng độc lập",
+            "earned_points": 0.0,
+            "possible_points": 10.0,
+            "status": "not_measured"
+          }
+        ],
+        "accuracy_assessment": {
+          "status": "not_measured",
+          "matched_count": null,
+          "reference_count": 0,
+          "accuracy_pct": null,
+          "reference_source": null,
+          "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+        },
+        "confidence_probability": null,
+        "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+      },
+      "expected": {
+        "score": 90.0,
+        "grade": "good",
+        "status": "verified",
+        "components": [],
+        "completed": [
+          {
+            "id": "voucher_breakdown_60d",
+            "label": "Phần yêu cầu chưa được hỗ trợ",
+            "evidence_refs": [
+              "q_59733427020253f972d65ced:aov:group_comparison:6230060e3b"
+            ]
+          },
+          {
+            "id": "voucher_order_leader_60d",
+            "label": "Khuyến mãi và voucher",
+            "evidence_refs": [
+              "q_ce218052b17fff93966223b7:voucher_order_count:leader:6230060e3b",
+              "q_ce218052b17fff93966223b7:voucher_order_count:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "voucher_revenue_leader_60d",
+            "label": "Khuyến mãi và voucher",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          }
+        ],
+        "missing": [],
+        "unverified": [
+          {
+            "id": "independent_accuracy",
+            "label": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.",
+            "evidence_refs": []
+          }
+        ],
+        "limitations": [
+          {
+            "id": "dimension_population:promotion",
+            "label": "Khuyến mãi: Tên chương trình đi cùng từng mã voucher; mã chưa khớp danh mục vẫn được giữ theo mã trên đơn. Không gồm đơn không có voucher.",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "dimension_population:promotion_id",
+            "label": "Mã khuyến mãi: Mã khuyến mãi",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:voucher_revenue",
+            "label": "Doanh thu đơn có khuyến mãi: Tổng giá trị đơn HOAN_THANH/DANG_GIAO có mã voucher; mô tả tập đơn dùng voucher, chưa chứng minh hiệu quả tăng thêm.",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_limit:voucher_revenue:voucher_effectiveness",
+            "label": "Số đơn, doanh thu và giảm giá chỉ mô tả việc dùng voucher. Chưa có chi phí đầy đủ hoặc nhóm đối chứng độc lập; không kết luận ROI hay tác động tăng doanh thu. Số đơn dùng voucher gồm mọi trạng thái; doanh thu và giảm giá chỉ gồm HOAN_THANH/DANG_GIAO.",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "topn:q_19dbacc04fec4b7d45d0205a",
+            "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+            "evidence_refs": [
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:leader:6230060e3b",
+              "q_19dbacc04fec4b7d45d0205a:voucher_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:voucher_order_count",
+            "label": "Số đơn áp dụng khuyến mãi: Đếm đơn có mã voucher ở mọi trạng thái; khác quần thể doanh thu đơn voucher hợp lệ.",
+            "evidence_refs": [
+              "q_ce218052b17fff93966223b7:voucher_order_count:leader:6230060e3b",
+              "q_ce218052b17fff93966223b7:voucher_order_count:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_limit:voucher_order_count:voucher_effectiveness",
+            "label": "Số đơn, doanh thu và giảm giá chỉ mô tả việc dùng voucher. Chưa có chi phí đầy đủ hoặc nhóm đối chứng độc lập; không kết luận ROI hay tác động tăng doanh thu. Số đơn dùng voucher gồm mọi trạng thái; doanh thu và giảm giá chỉ gồm HOAN_THANH/DANG_GIAO.",
+            "evidence_refs": [
+              "q_ce218052b17fff93966223b7:voucher_order_count:leader:6230060e3b",
+              "q_ce218052b17fff93966223b7:voucher_order_count:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "topn:q_ce218052b17fff93966223b7",
+            "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+            "evidence_refs": [
+              "q_ce218052b17fff93966223b7:voucher_order_count:leader:6230060e3b",
+              "q_ce218052b17fff93966223b7:voucher_order_count:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:aov",
+            "label": "Giá trị đơn trung bình: Tổng giá trị chia số đơn trong cùng tập HOAN_THANH/DANG_GIAO. Không cộng hoặc lấy trung bình các AOV nhóm.",
+            "evidence_refs": [
+              "q_59733427020253f972d65ced:aov:group_comparison:6230060e3b"
+            ]
+          },
+          {
+            "id": "nonadditive:q_59733427020253f972d65ced",
+            "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+            "evidence_refs": [
+              "q_59733427020253f972d65ced:aov:group_comparison:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:discount_amount",
+            "label": "Tổng tiền đã giảm giá: Tổng số tiền giảm trên đơn HOAN_THANH/DANG_GIAO có mã voucher; không phải chi phí đầy đủ của chiến dịch.",
+            "evidence_refs": [
+              "q_ef4db9f2b95b3c04188d451e:discount_amount:group_comparison:6230060e3b",
+              "q_ef4db9f2b95b3c04188d451e:voucher_revenue:group_comparison:6230060e3b",
+              "q_ef4db9f2b95b3c04188d451e:voucher_revenue:peer_gap:ab0df7aa98"
+            ]
+          },
+          {
+            "id": "metric_limit:discount_amount:voucher_effectiveness",
+            "label": "Số đơn, doanh thu và giảm giá chỉ mô tả việc dùng voucher. Chưa có chi phí đầy đủ hoặc nhóm đối chứng độc lập; không kết luận ROI hay tác động tăng doanh thu. Số đơn dùng voucher gồm mọi trạng thái; doanh thu và giảm giá chỉ gồm HOAN_THANH/DANG_GIAO.",
+            "evidence_refs": [
+              "q_ef4db9f2b95b3c04188d451e:discount_amount:group_comparison:6230060e3b",
+              "q_ef4db9f2b95b3c04188d451e:voucher_revenue:group_comparison:6230060e3b",
+              "q_ef4db9f2b95b3c04188d451e:voucher_revenue:peer_gap:ab0df7aa98"
+            ]
+          }
+        ],
+        "suggested_next_actions": [],
+        "coverage": {
+          "requested_count": 3,
+          "completed_count": 3,
+          "supporting_count": 0,
+          "omitted_count": 0
+        },
+        "generated_by": "deterministic_verifier",
+        "version": "2.8.5",
+        "reason": null,
+        "measurement_mode": "evidence_checks",
+        "verification_checks": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "passed": 3,
+            "total": 3,
+            "status": "passed",
+            "summary": "3/3 phần yêu cầu đã thực hiện."
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "passed": 1,
+            "total": 1,
+            "status": "passed",
+            "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "passed": 6,
+            "total": 6,
+            "status": "passed",
+            "summary": "6 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "passed": 147,
+            "total": 147,
+            "status": "passed",
+            "summary": "147/147 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "passed": 3,
+            "total": 3,
+            "status": "passed",
+            "summary": "3/3 phép tính yêu cầu có đủ quan sát và bằng chứng."
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "passed": 196,
+            "total": 196,
+            "status": "passed",
+            "summary": "196/196 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "passed": 12,
+            "total": 12,
+            "status": "passed",
+            "summary": "6/6 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "passed": 12,
+            "total": 12,
+            "status": "passed",
+            "summary": "12/12 giới hạn dữ liệu được công bố."
+          }
+        ],
+        "score_method": {
+          "id": "verification_evidence_v1",
+          "label": "Điểm kiểm chứng tổng",
+          "formula": "90 × trung bình có trọng số các kiểm tra áp dụng + 10 × tỷ lệ khớp đối chứng độc lập. Chưa đo đối chứng: chưa cộng 10 điểm; kiểm tra không áp dụng không bị trừ.",
+          "unmeasured_points": 10.0,
+          "interpretation": "Chỉ số mức độ kiểm chứng theo trọng số quy định; không phải độ chính xác hay xác suất AI trả lời đúng."
+        },
+        "score_breakdown": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "earned_points": 20.0,
+            "possible_points": 20.0,
+            "status": "passed"
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "earned_points": 15.0,
+            "possible_points": 15.0,
+            "status": "passed"
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "earned_points": 15.0,
+            "possible_points": 15.0,
+            "status": "passed"
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "earned_points": 5.0,
+            "possible_points": 5.0,
+            "status": "passed"
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "earned_points": 5.0,
+            "possible_points": 5.0,
+            "status": "passed"
+          },
+          {
+            "id": "independent_reference",
+            "label": "Đối chứng độc lập",
+            "earned_points": 0.0,
+            "possible_points": 10.0,
+            "status": "not_measured"
+          }
+        ],
+        "accuracy_assessment": {
+          "status": "not_measured",
+          "matched_count": null,
+          "reference_count": 0,
+          "accuracy_pct": null,
+          "reference_source": null,
+          "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+        },
+        "confidence_probability": null,
+        "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+      }
+    },
+    {
+      "id": "aggregate:roi_guardrail",
+      "observed": true,
+      "expected": true
+    },
+    {
+      "id": "aggregate:accuracy_unknown",
+      "observed": "not_measured",
+      "expected": "not_measured"
+    }
+  ]
+}

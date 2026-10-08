@@ -1,0 +1,41 @@
+{
+  "verifier_version": "2.8.2",
+  "backend_tests": 580,
+  "backend_passed": 580,
+  "backend_seconds": 124.042,
+  "focused_tests": 30,
+  "focused_passed": 30,
+  "frontend_tests": 92,
+  "frontend_passed": 92,
+  "evaluation_cases": 110,
+  "evaluation_passed": 110,
+  "typecheck": "passed",
+  "docker_build": [
+    "analytics-api",
+    "web-ui"
+  ],
+  "restarted_services": [
+    "analytics-api",
+    "web-ui"
+  ],
+  "analytics_api_health": "healthy",
+  "web_ui_health": "healthy",
+  "api_health_http": 200,
+  "deployed_frontend_bundle": "index-CJbarMlB.js",
+  "new_frontend_assets_verified": true,
+  "top5_top2_reference_assertions": 26,
+  "top5_top2_reference_matched": 26,
+  "comparison_reference_assertions": 7,
+  "comparison_reference_matched": 7,
+  "runtime_score_method": "verification_evidence_v1",
+  "runtime_internal_max": 90,
+  "independent_points_unmeasured": 10,
+  "runtime_accuracy": "not_measured",
+  "runtime_confidence_probability": null,
+  "live_model_accuracy_measured": false,
+  "LIVE_PROVIDER_REQUESTS": 0,
+  "warehouse_mutations": 0,
+  "temporary_audit_sessions_deleted": true,
+  "raw_reported_semantic_envelope_available": false,
+  "historical_suite_configuration": "max_provider_calls=1,repair=0; hybrid tests configure their own max=3,repair=1"
+}

@@ -24,6 +24,8 @@ PENDING_REF = deepcopy(REF)
 PENDING_REF['properties']['kind']['enum'].append('pending_ordinal')
 CART_REF = deepcopy(REF)
 CART_REF['properties']['kind']['enum'].append('cart_ordinal')
+ORDER_REF = deepcopy(REF)
+ORDER_REF['properties']['kind']['enum'].append('last_created')
 OPTIONS = obj({'size': TEXT, 'toppings': {'type': 'array', 'items': TEXT, 'maxItems': 16},
     'ice': TEXT, 'sweetness': TEXT, 'milk': TEXT})
 SELECTION = deepcopy(REF)
@@ -71,12 +73,12 @@ COMMAND_ARGS = {
     'PREPARE_CHECKOUT': obj(),
     'CONFIRM_CHECKOUT': obj(),
     'LIST_ORDERS': obj({'count': COUNT}),
-    'READ_ORDER': obj({'target': REF}, ('target',)),
-    'PREPARE_ORDER_CHANGE': obj({'target': REF, 'action': enum('CANCEL', 'UPDATE'),
+    'READ_ORDER': obj({'target': ORDER_REF}, ('target',)),
+    'PREPARE_ORDER_CHANGE': obj({'target': ORDER_REF, 'action': enum('CANCEL', 'UPDATE'),
         'changes': array(ORDER_CHANGE), 'note': TEXT}, ('target', 'action')),
     'CONFIRM_ORDER_CHANGE': obj(),
     'DISCARD_ORDER_CHANGE': obj(),
-    'REORDER_ORDER': obj({'target': REF}, ('target',)),
+    'REORDER_ORDER': obj({'target': ORDER_REF}, ('target',)),
     'ASK_KNOWLEDGE': obj({'query': TEXT, 'domain': enum('faq', 'policy', 'product_description', 'company', 'branches',
         'brand', 'privacy', 'refund', 'contact', 'careers', 'franchise', 'ordering_policy', 'promotion_policy',
         'membership', 'gift_card', 'ingredient', 'product_faq'),
@@ -155,7 +157,7 @@ def validate_envelope(raw):
         # Reference conditional grammar is checked independently of key names.
         def refs(item, at):
             if isinstance(item, dict):
-                if 'kind' in item and 'kind' in REF['properties'] and item.get('kind') in PENDING_REF['properties']['kind']['enum'] + ['cart_ordinal']:
+                if 'kind' in item and 'kind' in REF['properties'] and item.get('kind') in PENDING_REF['properties']['kind']['enum'] + ['cart_ordinal', 'last_created']:
                     kind = item['kind']
                     ordinal = kind in {'ordinal', 'pending_ordinal', 'cart_ordinal'}
                     required = 'index' if ordinal else 'value' if kind in {'name', 'id'} else None

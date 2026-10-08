@@ -1,0 +1,355 @@
+{
+  "question": "Phân tích tình hình kinh doanh toàn hệ thống trong 90 ngày gần nhất: doanh thu, số đơn, giá trị đơn trung bình, diễn biến doanh thu theo tuần, doanh thu theo thành phố và chi nhánh. Chỉ ra nơi đóng góp lớn nhất, các khác biệt đáng chú ý và đề xuất hướng kiểm tra tiếp theo dựa trên số liệu.",
+  "failed_intent": {
+    "decision": "analyze",
+    "requirements": [
+      {
+        "id": "req_total_rev",
+        "goal": "Phân tích yêu cầu",
+        "domain_id": "orders",
+        "lens_hint": null,
+        "metric_ids": [
+          "revenue"
+        ],
+        "dimension_ids": [],
+        "analysis_kind": "aggregate",
+        "filters": [],
+        "time": {
+          "kind": "rolling",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-07-11",
+          "end": "2026-10-08",
+          "amount": 90,
+          "unit": "day"
+        },
+        "ranking": null,
+        "granularity": "day",
+        "derived_features": [
+          "selected_total"
+        ],
+        "availability": "requested",
+        "reason": null
+      },
+      {
+        "id": "req_city_dist",
+        "goal": "Phân tích yêu cầu",
+        "domain_id": "stores",
+        "lens_hint": null,
+        "metric_ids": [
+          "store_revenue"
+        ],
+        "dimension_ids": [
+          "city"
+        ],
+        "analysis_kind": "distribution",
+        "filters": [],
+        "time": {
+          "kind": "rolling",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-07-11",
+          "end": "2026-10-08",
+          "amount": 90,
+          "unit": "day"
+        },
+        "ranking": null,
+        "granularity": null,
+        "derived_features": [
+          "concentration",
+          "contribution_share"
+        ],
+        "availability": "requested",
+        "reason": null
+      },
+      {
+        "id": "req_store_rank",
+        "goal": "Phân tích yêu cầu",
+        "domain_id": "stores",
+        "lens_hint": null,
+        "metric_ids": [
+          "store_revenue"
+        ],
+        "dimension_ids": [
+          "store"
+        ],
+        "analysis_kind": "ranking",
+        "filters": [],
+        "time": {
+          "kind": "rolling",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-07-11",
+          "end": "2026-10-08",
+          "amount": 90,
+          "unit": "day"
+        },
+        "ranking": {
+          "direction": "top",
+          "limit": 10,
+          "metric_id": "store_revenue",
+          "per_group": []
+        },
+        "granularity": null,
+        "derived_features": [
+          "contribution_share",
+          "leader",
+          "top_gap"
+        ],
+        "availability": "requested",
+        "reason": null
+      },
+      {
+        "id": "req_trend_weekly",
+        "goal": "Phân tích yêu cầu",
+        "domain_id": "orders",
+        "lens_hint": null,
+        "metric_ids": [
+          "revenue"
+        ],
+        "dimension_ids": [
+          "order_created"
+        ],
+        "analysis_kind": "trend",
+        "filters": [],
+        "time": {
+          "kind": "rolling",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-07-11",
+          "end": "2026-10-08",
+          "amount": 90,
+          "unit": "day"
+        },
+        "ranking": null,
+        "granularity": "week",
+        "derived_features": [
+          "change_pct"
+        ],
+        "availability": "requested",
+        "reason": null
+      },
+      {
+        "id": "req_total_orders",
+        "goal": "Phân tích yêu cầu",
+        "domain_id": "orders",
+        "lens_hint": null,
+        "metric_ids": [
+          "order_count"
+        ],
+        "dimension_ids": [],
+        "analysis_kind": "aggregate",
+        "filters": [],
+        "time": {
+          "kind": "rolling",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-07-11",
+          "end": "2026-10-08",
+          "amount": 90,
+          "unit": "day"
+        },
+        "ranking": null,
+        "granularity": "day",
+        "derived_features": [
+          "selected_total"
+        ],
+        "availability": "requested",
+        "reason": null
+      },
+      {
+        "id": "req_total_aov",
+        "goal": "Phân tích yêu cầu",
+        "domain_id": "orders",
+        "lens_hint": null,
+        "metric_ids": [
+          "aov"
+        ],
+        "dimension_ids": [],
+        "analysis_kind": "aggregate",
+        "filters": [],
+        "time": {
+          "kind": "rolling",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-07-11",
+          "end": "2026-10-08",
+          "amount": 90,
+          "unit": "day"
+        },
+        "ranking": null,
+        "granularity": "day",
+        "derived_features": [
+          "selected_total"
+        ],
+        "availability": "requested",
+        "reason": null
+      }
+    ],
+    "clarification": null
+  },
+  "successful_intent": {
+    "decision": "analyze",
+    "requirements": [
+      {
+        "id": "system_summary_90d",
+        "goal": "Phân tích yêu cầu",
+        "domain_id": "orders",
+        "lens_hint": null,
+        "metric_ids": [
+          "aov",
+          "order_count",
+          "revenue"
+        ],
+        "dimension_ids": [],
+        "analysis_kind": "aggregate",
+        "filters": [],
+        "time": {
+          "kind": "rolling",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-07-11",
+          "end": "2026-10-08",
+          "amount": 90,
+          "unit": "day"
+        },
+        "ranking": null,
+        "granularity": "day",
+        "derived_features": [],
+        "availability": "requested",
+        "reason": null
+      },
+      {
+        "id": "revenue_trend_weekly",
+        "goal": "Phân tích yêu cầu",
+        "domain_id": "orders",
+        "lens_hint": null,
+        "metric_ids": [
+          "revenue"
+        ],
+        "dimension_ids": [],
+        "analysis_kind": "trend",
+        "filters": [],
+        "time": {
+          "kind": "rolling",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-07-11",
+          "end": "2026-10-08",
+          "amount": 90,
+          "unit": "day"
+        },
+        "ranking": null,
+        "granularity": "week",
+        "derived_features": [
+          "change"
+        ],
+        "availability": "requested",
+        "reason": null
+      },
+      {
+        "id": "revenue_by_store",
+        "goal": "Phân tích yêu cầu",
+        "domain_id": "orders",
+        "lens_hint": null,
+        "metric_ids": [
+          "revenue"
+        ],
+        "dimension_ids": [
+          "store"
+        ],
+        "analysis_kind": "ranking",
+        "filters": [],
+        "time": {
+          "kind": "rolling",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-07-11",
+          "end": "2026-10-08",
+          "amount": 90,
+          "unit": "day"
+        },
+        "ranking": {
+          "direction": "top",
+          "limit": 10,
+          "metric_id": "revenue",
+          "per_group": []
+        },
+        "granularity": "day",
+        "derived_features": [
+          "contribution_share",
+          "leader"
+        ],
+        "availability": "requested",
+        "reason": null
+      },
+      {
+        "id": "revenue_by_city",
+        "goal": "Phân tích yêu cầu",
+        "domain_id": "orders",
+        "lens_hint": null,
+        "metric_ids": [
+          "revenue"
+        ],
+        "dimension_ids": [
+          "city"
+        ],
+        "analysis_kind": "ranking",
+        "filters": [],
+        "time": {
+          "kind": "rolling",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-07-11",
+          "end": "2026-10-08",
+          "amount": 90,
+          "unit": "day"
+        },
+        "ranking": {
+          "direction": "top",
+          "limit": 10,
+          "metric_id": "revenue",
+          "per_group": []
+        },
+        "granularity": "day",
+        "derived_features": [
+          "contribution_share",
+          "leader"
+        ],
+        "availability": "requested",
+        "reason": null
+      }
+    ],
+    "clarification": null
+  }
+}

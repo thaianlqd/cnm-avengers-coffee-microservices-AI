@@ -8,11 +8,13 @@ allowing the LLM to access:
   - Full conversation history (user feedback + AI responses)
   - Compact data snapshots (top rows, KPIs, chart data)
 
-Storage: In-memory dict with TTL-based auto-cleanup.
-For production with multiple replicas, swap _sessions dict with Redis.
+Storage: Redis with TTL, atomic version checks and distributed locks in production.
+In-memory storage is an explicit development/offline option.
 """
 
 import logging
+import json
+import os
 import threading
 import time
 import uuid
@@ -63,6 +65,15 @@ class ReportSession:
     grounded_spec: Dict[str, Any] = field(default_factory=dict)
     query_plans: List[Dict[str, Any]] = field(default_factory=list)
     schema_fingerprint: str = ""
+    semantic_intent: Dict[str, Any] = field(default_factory=dict)
+    initial_semantic_intent: Dict[str, Any] = field(default_factory=dict)
+    semantic_history: List[Dict[str, Any]] = field(default_factory=list)
+    intent_fingerprint: str = ""
+    plan_fingerprint: str = ""
+    resolved_operations: List[Dict[str, Any]] = field(default_factory=list)
+    requirement_coverage: List[Dict[str, Any]] = field(default_factory=list)
+    feature_bindings: List[Dict[str, Any]] = field(default_factory=list)
+    resolver_version: str = ""
     last_result_contract: Dict[str, Any] = field(default_factory=dict)
     proposed_prompt: str = ""
     proposed_request: str = ""
@@ -249,8 +260,14 @@ def create_session(
     original_prompt: str,
     domain: str = "auto",
     time_label: str = "",
+    owner_id: Optional[str] = None,
 ) -> ReportSession:
     """Create a new report session and return it."""
+    if storage() is not None:
+        session = ReportSession(session_id=str(uuid.uuid4()), original_prompt=original_prompt, domain=domain, time_label=time_label, owner_id=owner_id)
+        storage().save(session, create=True)
+        session.analysis_lock = storage().session_lock(session.session_id, session._storage_version)
+        return session
     with _lock:
         # Periodic cleanup
         if len(_sessions) > MAX_SESSIONS * 0.8:
@@ -267,6 +284,7 @@ def create_session(
             original_prompt=original_prompt,
             domain=domain,
             time_label=time_label,
+            owner_id=owner_id,
         )
         _sessions[session_id] = session
         _timestamps[session_id] = time.monotonic()
@@ -276,6 +294,8 @@ def create_session(
 
 def get_session(session_id: str) -> Optional[ReportSession]:
     """Retrieve a session by ID, refreshing its TTL."""
+    if storage() is not None:
+        return storage().get(session_id)
     with _lock:
         _cleanup_expired()
         session = _sessions.get(session_id)
@@ -286,6 +306,9 @@ def get_session(session_id: str) -> Optional[ReportSession]:
 
 def delete_session(session_id: str):
     """Explicitly remove a session."""
+    if storage() is not None:
+        storage().delete(session_id)
+        return
     with _lock:
         _sessions.pop(session_id, None)
         _timestamps.pop(session_id, None)
@@ -293,9 +316,143 @@ def delete_session(session_id: str):
 
 def session_stats() -> Dict[str, Any]:
     """Return session store statistics for monitoring."""
+    if storage() is not None:
+        return {"storage":"redis", "multi_replica":True,"max_sessions":MAX_SESSIONS,"ttl_seconds":SESSION_TTL_SECONDS}
     with _lock:
         return {
             "active_sessions": len(_sessions),
             "max_sessions": MAX_SESSIONS,
             "ttl_seconds": SESSION_TTL_SECONDS,
+            "storage": "memory", "multi_replica": False,
         }
+
+
+def encode_session(session):
+    """JSON only: no pickle, provider continuation or serialized locks."""
+    from dataclasses import fields, asdict
+    data = {f.name:getattr(session,f.name) for f in fields(session) if f.name not in {"analysis_lock","agent_artifacts","conversation_turns"}}
+    data["conversation_turns"] = [asdict(t) for t in session.conversation_turns[-MAX_CONVERSATION_TURNS:]]
+    data["agent_artifacts"] = {id:{"query":a.query.model_dump(mode="json"),"grounded":a.grounded.model_dump(mode="json"),
+        "plan":a.plan.model_dump(mode="json"),"sql":a.sql,"signature":a.signature,"result":a.result,"contract":a.contract,
+        "reused":a.reused,"observed_at":a.observed_at} for id,a in session.agent_artifacts.items()}
+    body = json.dumps(data,ensure_ascii=False,separators=(",", ":"),default=str)
+    if len(body.encode()) > 4_000_000:
+        from services.analysis_catalog import AnalysisError
+        raise AnalysisError("session_capacity","Server session exceeds bounded storage size")
+    return body
+
+
+def decode_session(body):
+    from services.analysis_contract import GroundedAnalysisSpec, QueryPlan
+    from services.analyst_contract import AnalyticalQuery
+    from services.analytical_query_service import AnalysisArtifact
+    data = json.loads(body)
+    artifacts = data.pop("agent_artifacts",{})
+    turns = data.pop("conversation_turns",[])
+    session = ReportSession(**data)
+    session.conversation_turns = [ConversationTurn(**t) for t in turns]
+    session.agent_artifacts = {id:AnalysisArtifact(query=AnalyticalQuery.model_validate(a.pop("query")),
+        grounded=GroundedAnalysisSpec.model_validate(a.pop("grounded")),plan=QueryPlan.model_validate(a.pop("plan")),**a) for id,a in artifacts.items()}
+    return session
+
+
+class RedisSessionStore:
+    """TTL + bounded capacity + compare-and-set; distributed locks are transient."""
+    # Atomic creation/update/capacity. Logical revision and storage version are
+    # distinct: a proposal save need not bump the user-visible report revision.
+    SCRIPT = """
+local prior = redis.call('GET', KEYS[1])
+if prior then
+ local p = cjson.decode(prior)
+ if tonumber(p.version) ~= tonumber(ARGV[1]) then return -1 end
+ if p.owner ~= cjson.null and p.owner ~= ARGV[4] then return -2 end
+else
+ if tonumber(ARGV[1]) ~= 0 then return -1 end
+ redis.call('ZREMRANGEBYSCORE', KEYS[2], '-inf', ARGV[5])
+ if redis.call('ZCARD', KEYS[2]) >= tonumber(ARGV[6]) then return -3 end
+end
+redis.call('SET', KEYS[1], ARGV[2], 'EX', ARGV[3])
+redis.call('ZADD', KEYS[2], tonumber(ARGV[5])+tonumber(ARGV[3]), KEYS[1])
+return 1
+"""
+    def __init__(self, client):
+        self.client = client
+    def key(self,id):
+        # Redis cluster hash tag keeps CAS/capacity keys in the same slot.
+        return "analyst:{sessions}:"+id
+    def session_lock(self,id,version):
+        store = self
+        class Guard:
+            def __enter__(self):
+                from services.analysis_catalog import AnalysisError
+                self.lock = store.client.lock(store.key(id)+":lock",timeout=600,blocking_timeout=5)
+                self.lock.__enter__()
+                try:
+                    raw = store.client.get(store.key(id))
+                    if not raw or json.loads(raw)["version"] != version:
+                        raise AnalysisError("stale_approval","Session changed before lock acquisition")
+                except Exception:
+                    self.lock.__exit__(None,None,None)
+                    raise
+                return self
+            def __exit__(self,*args):
+                return self.lock.__exit__(*args)
+        return Guard()
+    def save(self,session,create=False):
+        from services.analysis_catalog import AnalysisError
+        expected = 0 if create else getattr(session,"_storage_version",0)
+        body = json.dumps({"version":expected+1,"owner":session.owner_id,"session":encode_session(session)},ensure_ascii=False)
+        try:
+            result = self.client.eval(self.SCRIPT,2,self.key(session.session_id),"analyst:{sessions}:index",expected,body,
+                SESSION_TTL_SECONDS,session.owner_id or "",int(time.time()),MAX_SESSIONS)
+        except Exception:
+            raise AnalysisError("session_storage","Durable session storage unavailable") from None
+        if result != 1:
+            raise AnalysisError("stale_approval" if result in {-1,-2} else "session_capacity","Atomic session update rejected")
+        session._storage_version = expected+1
+    def get(self,id):
+        from services.analysis_catalog import AnalysisError
+        try:
+            raw = self.client.get(self.key(id))
+        except Exception:
+            raise AnalysisError("session_storage","Durable session storage unavailable") from None
+        if not raw:
+            return None
+        data = json.loads(raw)
+        session = decode_session(data["session"])
+        session._storage_version=data["version"]
+        session.analysis_lock=self.session_lock(id,session._storage_version)
+        return session
+    def delete(self,id):
+        self.client.delete(self.key(id))
+        self.client.zrem("analyst:{sessions}:index",self.key(id))
+
+
+_durable_store = None
+
+
+def storage():
+    global _durable_store
+    from services.analysis_catalog import AnalysisError
+    mode = os.getenv("DATA_ANALYST_SESSION_STORE","memory")
+    if mode == "memory":
+        if os.getenv("DATA_ANALYST_ENV","development") == "production":
+            raise AnalysisError("session_storage","Production requires durable session storage")
+        return None
+    if mode != "redis":
+        raise AnalysisError("session_storage","Unknown session storage policy")
+    if _durable_store is None:
+        try:
+            import redis
+            url = os.getenv("DATA_ANALYST_REDIS_URL", "")
+            if not url:
+                raise ValueError("Missing URL")
+            _durable_store = RedisSessionStore(redis.Redis.from_url(url,decode_responses=True,socket_connect_timeout=2,socket_timeout=3))
+        except Exception:
+            raise AnalysisError("session_storage","Redis session configuration unavailable") from None
+    return _durable_store
+
+
+def save_session(session):
+    if storage() is not None:
+        storage().save(session)

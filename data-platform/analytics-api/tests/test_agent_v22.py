@@ -7,7 +7,8 @@ from copy import deepcopy
 from datetime import date
 from unittest.mock import Mock, patch
 from common import AiTextToReportRequest, AiReportRefineRequest
-from services.analysis_pipeline import AnalysisPipeline, safe_failure
+from services.analysis_pipeline import safe_failure
+from tests.archive_planner import ArchivedGraphPipeline as AnalysisPipeline
 from services.analysis_catalog import AnalysisCatalog, AnalysisError
 from services.data_analyst_agent import (
     DataAnalystAgent,

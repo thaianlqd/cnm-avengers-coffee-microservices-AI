@@ -8,7 +8,8 @@ from unittest.mock import Mock, patch
 from pydantic import ValidationError
 from common import AiTextToReportRequest, AiReportRefineRequest
 from services.analysis_catalog import AnalysisCatalog, AnalysisError
-from services.analysis_pipeline import AnalysisPipeline, safe_failure
+from services.analysis_pipeline import safe_failure
+from tests.archive_planner import ArchivedGraphPipeline as AnalysisPipeline
 from services.domain_intelligence_service import DomainIntelligence, DEPTH_POLICIES
 from services.semantic_manifest_service import build_manifest, manifest_references, compact
 from services.insight_service import analytical_features

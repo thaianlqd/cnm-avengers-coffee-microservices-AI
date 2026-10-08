@@ -16,7 +16,8 @@ from services.analysis_query import (
     validate_results,
 )
 from services.analysis_presentation import choose_visualizations, validate_chart
-from services.analysis_pipeline import AnalysisPipeline, safe_failure
+from services.analysis_pipeline import safe_failure
+from tests.archive_planner import ArchivedGraphPipeline as AnalysisPipeline
 from services.session_service import (
     get_session,
     create_session,

@@ -1,0 +1,81 @@
+{
+  "backend": {
+    "tests": 546,
+    "passed": 546,
+    "seconds": 118.467,
+    "mode": "offline; HTTP/provider and warehouse transports mocked/blocked"
+  },
+  "frontend": {
+    "tests": 84,
+    "passed": 84,
+    "typecheck": "passed",
+    "build": "passed"
+  },
+  "hybrid_targeted": {
+    "tests": 27,
+    "passed": 27,
+    "seconds": 27.872
+  },
+  "v28_evaluation": {
+    "cases": 110,
+    "passed": 110
+  },
+  "archived_v27": {
+    "cases": 104,
+    "passed": 104
+  },
+  "catalog": {
+    "metrics": 33,
+    "dimensions": 26,
+    "domains": 16,
+    "lenses": 38,
+    "errors": 0
+  },
+  "LIVE_PROVIDER_REQUESTS": 0,
+  "live_warehouse_mutations": 0,
+  "model_accuracy_measured": false,
+  "provider_latency_measured": false,
+  "total_context_chars": {
+    "observations": 110,
+    "median": 9382.0,
+    "p95": 12253
+  },
+  "repair_context_chars": {
+    "observations": 25,
+    "median": 6648,
+    "p95": 7479
+  },
+  "resolver_latency_ms": {
+    "observations": 110,
+    "median": 0.47,
+    "p95": 1.36
+  },
+  "compiler_latency_ms": {
+    "observations": 100,
+    "median": 24.16,
+    "p95": 44.48
+  },
+  "latency_ms": {
+    "observations": 110,
+    "median": 112.82,
+    "p95": 355.92
+  },
+  "deployment": {
+    "verified_at": "2026-10-08T14:21:38.874748+07:00",
+    "api_health_http": 200,
+    "web_proxy_api_health_http": 200,
+    "analytics_api": "healthy",
+    "web_ui": "healthy",
+    "pipeline_version": "2.8",
+    "planning_mode": "hybrid_verifiable",
+    "provider_call_budget": 3,
+    "session_storage": "redis",
+    "multi_replica": true,
+    "rebuilt_services": [
+      "analytics-api",
+      "web-ui"
+    ],
+    "other_services_restarted": false,
+    "LIVE_PROVIDER_REQUESTS": 0
+  }
+}

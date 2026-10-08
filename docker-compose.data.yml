@@ -344,12 +344,20 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
       # ── AI Analytics ──────────────────────────────────
-      # V2.6 bounded planning: one initial call and at most one targeted repair.
-      DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN: "2"
+      # V2.8 semantic interpretation + bounded targeted recovery, normal = 1.
+      DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN: "3"
       DATA_ANALYST_ENABLE_CONTRACT_REPAIR: "1"
       DATA_ANALYST_ENABLE_MODEL_ESCALATION: "0"
       DATA_ANALYST_ENABLE_PROVIDER_FALLBACK: "0"
       DATA_ANALYST_ENABLE_POST_RESULT_SYNTHESIS: "0"
+      DATA_ANALYST_RECOVERY_MODEL: ${DATA_ANALYST_RECOVERY_MODEL:-}
+      DATA_ANALYST_INTENT_TRANSPORT: ${DATA_ANALYST_INTENT_TRANSPORT:-json}
+      DATA_ANALYST_PROVIDER_READ_TIMEOUT_SECONDS: ${DATA_ANALYST_PROVIDER_READ_TIMEOUT_SECONDS:-60}
+      DATA_ANALYST_ENV: production
+      DATA_ANALYST_SESSION_STORE: redis
+      DATA_ANALYST_REDIS_URL: ${DATA_ANALYST_REDIS_URL:-redis://host.docker.internal:6379/2}
+      DATA_ANALYST_REPORT_SQL_MODE: ${DATA_ANALYST_REPORT_SQL_MODE:-disabled}
+      DATA_ANALYST_REPORT_ADMIN_TOKEN: ${DATA_ANALYST_REPORT_ADMIN_TOKEN:-}
       # Optional source access is metadata-only; analytical SQL always uses postgres-analytics.
       SOURCE_DB_HOST: ${DB_HOST:-aws-0-ap-southeast-1.pooler.supabase.com}
       SOURCE_DB_PORT: ${DB_PORT:-6543}

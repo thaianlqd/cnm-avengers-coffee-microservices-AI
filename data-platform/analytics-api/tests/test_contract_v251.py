@@ -8,7 +8,8 @@ from unittest.mock import Mock, patch
 from pydantic import ValidationError
 from common import AiTextToReportRequest, AiReportRefineRequest
 from services.analysis_catalog import AnalysisCatalog, AnalysisError
-from services.analysis_pipeline import AnalysisPipeline, safe_failure
+from services.analysis_pipeline import safe_failure
+from tests.archive_planner import ArchivedGraphPipeline as AnalysisPipeline
 from services.analysis_contract import Filter
 from services.analyst_decision import DecisionOperation, decision_tool
 from services.analytical_tool_contract import ToolContractError

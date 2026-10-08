@@ -170,7 +170,7 @@ class AnalysisModules:
         if pipeline.semantic_info.get("omitted_supporting_operation_count"):
             pipeline.semantic_info["limitations"].append({"reason":"omitted_supporting_operations","message":"Một phần phân tích hỗ trợ không phù hợp với kỳ hoặc phạm vi mới nên đã được bỏ qua."})
         artifacts = agent.queries.artifacts
-        session = create_session(d["original_question"])
+        session = create_session(d["original_question"], owner_id=pipeline.owner_id)
         session.analysis_components = deepcopy(d.get("analysis_components", []))
         session.coverage_origin = d.get("coverage_origin", "execution_only")
         session.partial_scope = any(c.get("status") != "planned" and c.get("requested_or_supporting") == "requested" for c in session.analysis_components)

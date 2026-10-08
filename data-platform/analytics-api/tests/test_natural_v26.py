@@ -8,7 +8,8 @@ from unittest.mock import Mock, patch
 from pydantic import ValidationError
 from fastapi import FastAPI
 from common import AiTextToReportRequest
-from services.analysis_pipeline import AnalysisPipeline, safe_failure
+from services.analysis_pipeline import safe_failure
+from tests.archive_planner import ArchivedGraphPipeline as AnalysisPipeline
 from services.analysis_catalog import AnalysisCatalog, AnalysisError
 from services.analysis_module_service import AnalysisModules
 from services.analysis_module_repository import PostgresModuleRepository
@@ -290,7 +291,7 @@ class NaturalV26Tests(unittest.TestCase):
     def test_actionable_safe_model_never_echoes_validation_sql_or_provider(self):
         e=AnalysisError("invalid_analysis_contract","SELECT password FROM users; provider secret")
         response=safe_failure(e)
-        self.assertEqual(response["issue"]["category"],"PLAN_FAILED")
+        self.assertEqual(response["issue"]["category"],"SEMANTIC_INTERPRETATION_ERROR")
         self.assertNotIn("password",json.dumps(response));self.assertTrue(response["issue"]["suggested_actions"])
 
     def test_body_budget_both_adapters_with_multiple_strong_domains(self):

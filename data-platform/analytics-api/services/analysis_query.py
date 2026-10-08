@@ -71,7 +71,8 @@ def build_plans(grounded, catalog):
         # Labels are not unique entity keys. Add authoritative identities when
         # needed so equal display names do not collapse distinct entities.
         for name in list(dimensions):
-            identity = catalog.registry["dimensions"][name].get("identity")
+            desc=catalog.registry['dimensions'][name]
+            identity = desc.get('detail_identity',desc.get('identity')) if comp.kind=='detail' else desc.get('identity')
             if identity and identity not in dimensions:
                 dimensions.append(identity)
         ranking = comp.ranking or (spec.ranking if comp.kind == "ranking" else None)
@@ -143,6 +144,12 @@ def build_plans(grounded, catalog):
                     raise AnalysisError("plan", f"Unknown dimension {d}")
                 catalog.check_column(desc["table"], desc["column"])
                 refs.append(desc["table"])
+                dim_expression=(desc.get('aggregate_expression') if metrics else None) or desc.get('expression')
+                if dim_expression:
+                    refs += [t for t,c in catalog.check_expression(dim_expression)]
+                if metrics:
+                    for col in desc.get('required_non_null',[]):
+                        refs += [t for t,c in catalog.check_expression(col)]
             time_columns = {grounded.metrics[m].get("time_column") for m in metrics}
             if len(time_columns) > 1:
                 raise AnalysisError(
@@ -317,7 +324,7 @@ def compile_sql(plan, grounded, catalog):
 
     def dimension(name):
         d = catalog.registry["dimensions"][name]
-        raw = d.get("expression") or d["table"] + "." + d["column"]
+        raw = (d.get('aggregate_expression') if plan.metrics else None) or d.get("expression") or d["table"] + "." + d["column"]
         return expression(raw)
 
     columns = []
@@ -356,7 +363,7 @@ def compile_sql(plan, grounded, catalog):
     )
     for j in plan.joins:
         query += (
-            " JOIN "
+            (" LEFT JOIN " if j.get('join_type')=='LEFT' else " JOIN ")
             + j["to_table"]
             + " AS "
             + aliases[j["to_table"]]
@@ -396,6 +403,10 @@ def compile_sql(plan, grounded, catalog):
             expression(col) + " IS NOT NULL"
             for col in grounded.metrics[mid].get("required_non_null", [])
         ]
+    if plan.metrics:
+        for dim in set(plan.dimensions+[f.dimension for f in plan.filters]):
+            predicates += [expression(col)+' IS NOT NULL'
+                for col in catalog.registry['dimensions'][dim].get('required_non_null',[])]
     if predicates:
         query += " WHERE " + " AND ".join("(" + p + ")" for p in predicates)
     if groups:

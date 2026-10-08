@@ -1,0 +1,856 @@
+[
+  {
+    "scenario": "A",
+    "question": "Top 5 món có doanh thu cao nhất trong 30 ngày gần nhất. Với mỗi món, cho tôi doanh thu, số lượng bán và tỷ trọng đóng góp doanh thu. Cuối cùng chỉ ra món dẫn đầu và khoảng cách với món đứng thứ hai.",
+    "proposal_outcome": "SUCCESS",
+    "report_outcome": "SUCCESS",
+    "provider_calls": 1,
+    "operations": 2,
+    "coverage": [
+      {
+        "requirement_id": "r1",
+        "state": "RESOLVED",
+        "reason": null,
+        "operation_ids": [
+          "q_9875415d35dd286a30d8619c",
+          "q_8b986b4e6ec9f9a6d85e7a9b"
+        ],
+        "derived_features": [
+          "contribution_share",
+          "leader",
+          "top_gap"
+        ],
+        "goal": "Phân tích doanh thu sản phẩm"
+      }
+    ],
+    "quality": {
+      "score": 90.0,
+      "grade": "good",
+      "status": "verified",
+      "components": [],
+      "completed": [
+        {
+          "id": "r1",
+          "label": "Sản phẩm",
+          "evidence_refs": [
+            "q_9875415d35dd286a30d8619c:product_revenue:leader:6230060e3b",
+            "q_9875415d35dd286a30d8619c:product_revenue:top_gap:6230060e3b",
+            "q_9875415d35dd286a30d8619c:product_revenue:selected_total:6230060e3b"
+          ]
+        }
+      ],
+      "missing": [],
+      "unverified": [
+        {
+          "id": "independent_accuracy",
+          "label": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.",
+          "evidence_refs": []
+        }
+      ],
+      "limitations": [
+        {
+          "id": "metric_population:product_revenue",
+          "label": "Doanh thu sản phẩm: Tổng thành tiền dòng sản phẩm thuộc đơn HOAN_THANH/DANG_GIAO; không mặc định đối soát bằng doanh thu cấp đơn.",
+          "evidence_refs": [
+            "q_9875415d35dd286a30d8619c:product_revenue:leader:6230060e3b",
+            "q_9875415d35dd286a30d8619c:product_revenue:top_gap:6230060e3b",
+            "q_9875415d35dd286a30d8619c:product_revenue:selected_total:6230060e3b"
+          ]
+        },
+        {
+          "id": "metric_population:quantity_sold",
+          "label": "Số lượng sản phẩm bán: Tổng số lượng trên dòng món thuộc đơn HOAN_THANH/DANG_GIAO; đếm số đơn vị bán, không phải số sản phẩm khác nhau.",
+          "evidence_refs": [
+            "q_9875415d35dd286a30d8619c:product_revenue:leader:6230060e3b",
+            "q_9875415d35dd286a30d8619c:product_revenue:top_gap:6230060e3b",
+            "q_9875415d35dd286a30d8619c:product_revenue:selected_total:6230060e3b"
+          ]
+        },
+        {
+          "id": "topn:q_9875415d35dd286a30d8619c",
+          "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+          "evidence_refs": [
+            "q_9875415d35dd286a30d8619c:product_revenue:leader:6230060e3b",
+            "q_9875415d35dd286a30d8619c:product_revenue:top_gap:6230060e3b",
+            "q_9875415d35dd286a30d8619c:product_revenue:selected_total:6230060e3b"
+          ]
+        }
+      ],
+      "suggested_next_actions": [],
+      "coverage": {
+        "requested_count": 1,
+        "completed_count": 1,
+        "supporting_count": 0,
+        "omitted_count": 0
+      },
+      "generated_by": "deterministic_verifier",
+      "version": "2.8.2",
+      "reason": null,
+      "measurement_mode": "evidence_checks",
+      "verification_checks": [
+        {
+          "id": "request_coverage",
+          "label": "Phạm vi yêu cầu",
+          "passed": 1,
+          "total": 1,
+          "status": "passed",
+          "summary": "1/1 phần yêu cầu đã thực hiện."
+        },
+        {
+          "id": "semantic_consistency",
+          "label": "Ngữ nghĩa & kế hoạch",
+          "passed": 1,
+          "total": 1,
+          "status": "passed",
+          "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+        },
+        {
+          "id": "result_integrity",
+          "label": "Kết quả dữ liệu",
+          "passed": 2,
+          "total": 2,
+          "status": "passed",
+          "summary": "2 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+        },
+        {
+          "id": "observed_values",
+          "label": "Giá trị dữ liệu quan sát",
+          "passed": 5,
+          "total": 5,
+          "status": "passed",
+          "summary": "5/5 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+        },
+        {
+          "id": "derived_features",
+          "label": "Phép tính được yêu cầu",
+          "passed": 3,
+          "total": 3,
+          "status": "passed",
+          "summary": "3/3 phép tính yêu cầu có đủ quan sát và bằng chứng."
+        },
+        {
+          "id": "evidence_grounding",
+          "label": "Bằng chứng",
+          "passed": 35,
+          "total": 35,
+          "status": "passed",
+          "summary": "35/35 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+        },
+        {
+          "id": "visualization_appropriateness",
+          "label": "Biểu đồ",
+          "passed": 5,
+          "total": 5,
+          "status": "passed",
+          "summary": "2/2 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+        },
+        {
+          "id": "limitation_disclosure",
+          "label": "Giới hạn dữ liệu",
+          "passed": 3,
+          "total": 3,
+          "status": "passed",
+          "summary": "3/3 giới hạn dữ liệu được công bố."
+        }
+      ],
+      "score_method": {
+        "id": "verification_evidence_v1",
+        "label": "Điểm kiểm chứng tổng",
+        "formula": "90 × trung bình có trọng số các kiểm tra áp dụng + 10 × tỷ lệ khớp đối chứng độc lập. Chưa đo đối chứng: chưa cộng 10 điểm; kiểm tra không áp dụng không bị trừ.",
+        "unmeasured_points": 10.0,
+        "interpretation": "Chỉ số mức độ kiểm chứng theo trọng số quy định; không phải độ chính xác hay xác suất AI trả lời đúng."
+      },
+      "score_breakdown": [
+        {
+          "id": "request_coverage",
+          "label": "Phạm vi yêu cầu",
+          "earned_points": 20.0,
+          "possible_points": 20.0,
+          "status": "passed"
+        },
+        {
+          "id": "semantic_consistency",
+          "label": "Ngữ nghĩa & kế hoạch",
+          "earned_points": 15.0,
+          "possible_points": 15.0,
+          "status": "passed"
+        },
+        {
+          "id": "result_integrity",
+          "label": "Kết quả dữ liệu",
+          "earned_points": 15.0,
+          "possible_points": 15.0,
+          "status": "passed"
+        },
+        {
+          "id": "observed_values",
+          "label": "Giá trị dữ liệu quan sát",
+          "earned_points": 10.0,
+          "possible_points": 10.0,
+          "status": "passed"
+        },
+        {
+          "id": "derived_features",
+          "label": "Phép tính được yêu cầu",
+          "earned_points": 10.0,
+          "possible_points": 10.0,
+          "status": "passed"
+        },
+        {
+          "id": "evidence_grounding",
+          "label": "Bằng chứng",
+          "earned_points": 10.0,
+          "possible_points": 10.0,
+          "status": "passed"
+        },
+        {
+          "id": "visualization_appropriateness",
+          "label": "Biểu đồ",
+          "earned_points": 5.0,
+          "possible_points": 5.0,
+          "status": "passed"
+        },
+        {
+          "id": "limitation_disclosure",
+          "label": "Giới hạn dữ liệu",
+          "earned_points": 5.0,
+          "possible_points": 5.0,
+          "status": "passed"
+        },
+        {
+          "id": "independent_reference",
+          "label": "Đối chứng độc lập",
+          "earned_points": 0.0,
+          "possible_points": 10.0,
+          "status": "not_measured"
+        }
+      ],
+      "accuracy_assessment": {
+        "status": "not_measured",
+        "matched_count": null,
+        "reference_count": 0,
+        "accuracy_pct": null,
+        "reference_source": null,
+        "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+      },
+      "confidence_probability": null,
+      "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+    },
+    "context_chars": 11791,
+    "schema_chars": 2688
+  },
+  {
+    "scenario": "B",
+    "question": "So sánh hoạt động kinh doanh giữa TP.HCM và Hà Nội trong 90 ngày gần nhất.\nTôi muốn xem doanh thu, số đơn, giá trị đơn trung bình, tỷ lệ hoàn thành đơn,\ncơ cấu phương thức thanh toán và Top 5 món bán chạy của từng thành phố.\nHãy chỉ ra khác biệt đáng chú ý nhất giữa hai thị trường.",
+    "proposal_outcome": "PARTIAL_AVAILABLE",
+    "report_outcome": "PARTIAL_AVAILABLE",
+    "provider_calls": 1,
+    "operations": 4,
+    "coverage": [
+      {
+        "requirement_id": "business",
+        "state": "RESOLVED",
+        "reason": null,
+        "operation_ids": [
+          "q_b242375ae8db4779974faba7",
+          "q_bf58bd7145fa69e8a2cb51dd"
+        ],
+        "derived_features": [
+          "group_gap"
+        ],
+        "goal": "Phân tích doanh thu sản phẩm"
+      },
+      {
+        "requirement_id": "completion",
+        "state": "UNSUPPORTED",
+        "reason": "definition_unavailable",
+        "operation_ids": [],
+        "derived_features": [],
+        "goal": "Tỷ lệ hoàn thành đơn"
+      },
+      {
+        "requirement_id": "payment",
+        "state": "RESOLVED",
+        "reason": null,
+        "operation_ids": [
+          "q_8c8d0b452fa7c39f8f5c98a5"
+        ],
+        "derived_features": [],
+        "goal": "Phân tích doanh thu sản phẩm"
+      },
+      {
+        "requirement_id": "top_products",
+        "state": "RESOLVED",
+        "reason": null,
+        "operation_ids": [
+          "q_18a9f0bbd422f8da31fcfaf1"
+        ],
+        "derived_features": [],
+        "goal": "Phân tích doanh thu sản phẩm"
+      }
+    ],
+    "quality": {
+      "score": 84.4,
+      "grade": "partial",
+      "status": "partially_verified",
+      "components": [],
+      "completed": [
+        {
+          "id": "business",
+          "label": "Đơn hàng và doanh thu",
+          "evidence_refs": [
+            "q_b242375ae8db4779974faba7:aov:group_comparison:6230060e3b",
+            "q_b242375ae8db4779974faba7:revenue:group_comparison:6230060e3b"
+          ]
+        },
+        {
+          "id": "payment",
+          "label": "Đơn hàng và doanh thu",
+          "evidence_refs": [
+            "q_8c8d0b452fa7c39f8f5c98a5:order_count:group_comparison:6230060e3b"
+          ]
+        },
+        {
+          "id": "top_products",
+          "label": "Dòng món trong đơn",
+          "evidence_refs": [
+            "q_18a9f0bbd422f8da31fcfaf1:quantity_sold:leader:3bbbe13c86",
+            "q_18a9f0bbd422f8da31fcfaf1:quantity_sold:selected_total:3bbbe13c86",
+            "q_18a9f0bbd422f8da31fcfaf1:quantity_sold:leader:6f56711fae"
+          ]
+        }
+      ],
+      "missing": [
+        {
+          "id": "completion",
+          "label": "Phần yêu cầu chưa được hỗ trợ: Chưa có định nghĩa hoặc dữ liệu để tính chỉ số yêu cầu.",
+          "evidence_refs": []
+        }
+      ],
+      "unverified": [
+        {
+          "id": "independent_accuracy",
+          "label": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.",
+          "evidence_refs": []
+        }
+      ],
+      "limitations": [
+        {
+          "id": "metric_population:quantity_sold",
+          "label": "Số lượng sản phẩm bán: Tổng số lượng trên dòng món thuộc đơn HOAN_THANH/DANG_GIAO; đếm số đơn vị bán, không phải số sản phẩm khác nhau.",
+          "evidence_refs": [
+            "q_18a9f0bbd422f8da31fcfaf1:quantity_sold:leader:3bbbe13c86",
+            "q_18a9f0bbd422f8da31fcfaf1:quantity_sold:selected_total:3bbbe13c86",
+            "q_18a9f0bbd422f8da31fcfaf1:quantity_sold:leader:6f56711fae"
+          ]
+        },
+        {
+          "id": "topn:q_18a9f0bbd422f8da31fcfaf1",
+          "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+          "evidence_refs": [
+            "q_18a9f0bbd422f8da31fcfaf1:quantity_sold:leader:3bbbe13c86",
+            "q_18a9f0bbd422f8da31fcfaf1:quantity_sold:selected_total:3bbbe13c86",
+            "q_18a9f0bbd422f8da31fcfaf1:quantity_sold:leader:6f56711fae"
+          ]
+        },
+        {
+          "id": "metric_population:order_count",
+          "label": "Số lượng đơn: Đếm mọi đơn theo ngày tạo, gồm cả đơn hủy; không dùng làm mẫu số AOV của tập đơn hợp lệ.",
+          "evidence_refs": [
+            "q_8c8d0b452fa7c39f8f5c98a5:order_count:group_comparison:6230060e3b"
+          ]
+        },
+        {
+          "id": "metric_population:aov",
+          "label": "Giá trị đơn trung bình: Tổng giá trị chia số đơn trong cùng tập HOAN_THANH/DANG_GIAO. Không cộng hoặc lấy trung bình các AOV nhóm.",
+          "evidence_refs": [
+            "q_b242375ae8db4779974faba7:aov:group_comparison:6230060e3b",
+            "q_b242375ae8db4779974faba7:revenue:group_comparison:6230060e3b"
+          ]
+        },
+        {
+          "id": "metric_population:revenue",
+          "label": "Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+          "evidence_refs": [
+            "q_b242375ae8db4779974faba7:aov:group_comparison:6230060e3b",
+            "q_b242375ae8db4779974faba7:revenue:group_comparison:6230060e3b"
+          ]
+        },
+        {
+          "id": "nonadditive:q_b242375ae8db4779974faba7",
+          "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+          "evidence_refs": [
+            "q_b242375ae8db4779974faba7:aov:group_comparison:6230060e3b",
+            "q_b242375ae8db4779974faba7:revenue:group_comparison:6230060e3b"
+          ]
+        },
+        {
+          "id": "omission:0",
+          "label": "Một góc nhìn dùng bảng dữ liệu đầy đủ vì cấu trúc chưa phù hợp biểu đồ.",
+          "evidence_refs": []
+        }
+      ],
+      "suggested_next_actions": [
+        {
+          "id": "review_visuals",
+          "label": "Xem bảng kết quả đầy đủ và chọn cách trình bày phù hợp với các chỉ số.",
+          "evidence_refs": [],
+          "action": "review_scope"
+        },
+        {
+          "id": "completion",
+          "label": "Chưa có định nghĩa hoặc dữ liệu để tính chỉ số yêu cầu.",
+          "evidence_refs": [],
+          "action": "define_metric"
+        }
+      ],
+      "coverage": {
+        "requested_count": 4,
+        "completed_count": 3,
+        "supporting_count": 0,
+        "omitted_count": 1
+      },
+      "generated_by": "deterministic_verifier",
+      "version": "2.8.2",
+      "reason": null,
+      "measurement_mode": "evidence_checks",
+      "verification_checks": [
+        {
+          "id": "request_coverage",
+          "label": "Phạm vi yêu cầu",
+          "passed": 3,
+          "total": 4,
+          "status": "partial",
+          "summary": "3/4 phần yêu cầu đã thực hiện."
+        },
+        {
+          "id": "semantic_consistency",
+          "label": "Ngữ nghĩa & kế hoạch",
+          "passed": 1,
+          "total": 1,
+          "status": "passed",
+          "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+        },
+        {
+          "id": "result_integrity",
+          "label": "Kết quả dữ liệu",
+          "passed": 4,
+          "total": 4,
+          "status": "passed",
+          "summary": "4 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+        },
+        {
+          "id": "observed_values",
+          "label": "Giá trị dữ liệu quan sát",
+          "passed": 11,
+          "total": 11,
+          "status": "passed",
+          "summary": "11/11 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+        },
+        {
+          "id": "derived_features",
+          "label": "Phép tính được yêu cầu",
+          "passed": 2,
+          "total": 2,
+          "status": "passed",
+          "summary": "2/2 phép tính yêu cầu có đủ quan sát và bằng chứng."
+        },
+        {
+          "id": "evidence_grounding",
+          "label": "Bằng chứng",
+          "passed": 42,
+          "total": 42,
+          "status": "passed",
+          "summary": "42/42 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+        },
+        {
+          "id": "visualization_appropriateness",
+          "label": "Biểu đồ",
+          "passed": 8,
+          "total": 9,
+          "status": "partial",
+          "summary": "4/5 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+        },
+        {
+          "id": "limitation_disclosure",
+          "label": "Giới hạn dữ liệu",
+          "passed": 7,
+          "total": 7,
+          "status": "passed",
+          "summary": "7/7 giới hạn dữ liệu được công bố."
+        }
+      ],
+      "score_method": {
+        "id": "verification_evidence_v1",
+        "label": "Điểm kiểm chứng tổng",
+        "formula": "90 × trung bình có trọng số các kiểm tra áp dụng + 10 × tỷ lệ khớp đối chứng độc lập. Chưa đo đối chứng: chưa cộng 10 điểm; kiểm tra không áp dụng không bị trừ.",
+        "unmeasured_points": 10.0,
+        "interpretation": "Chỉ số mức độ kiểm chứng theo trọng số quy định; không phải độ chính xác hay xác suất AI trả lời đúng."
+      },
+      "score_breakdown": [
+        {
+          "id": "request_coverage",
+          "label": "Phạm vi yêu cầu",
+          "earned_points": 15.0,
+          "possible_points": 20.0,
+          "status": "partial"
+        },
+        {
+          "id": "semantic_consistency",
+          "label": "Ngữ nghĩa & kế hoạch",
+          "earned_points": 15.0,
+          "possible_points": 15.0,
+          "status": "passed"
+        },
+        {
+          "id": "result_integrity",
+          "label": "Kết quả dữ liệu",
+          "earned_points": 15.0,
+          "possible_points": 15.0,
+          "status": "passed"
+        },
+        {
+          "id": "observed_values",
+          "label": "Giá trị dữ liệu quan sát",
+          "earned_points": 10.0,
+          "possible_points": 10.0,
+          "status": "passed"
+        },
+        {
+          "id": "derived_features",
+          "label": "Phép tính được yêu cầu",
+          "earned_points": 10.0,
+          "possible_points": 10.0,
+          "status": "passed"
+        },
+        {
+          "id": "evidence_grounding",
+          "label": "Bằng chứng",
+          "earned_points": 10.0,
+          "possible_points": 10.0,
+          "status": "passed"
+        },
+        {
+          "id": "visualization_appropriateness",
+          "label": "Biểu đồ",
+          "earned_points": 4.4444,
+          "possible_points": 5.0,
+          "status": "partial"
+        },
+        {
+          "id": "limitation_disclosure",
+          "label": "Giới hạn dữ liệu",
+          "earned_points": 5.0,
+          "possible_points": 5.0,
+          "status": "passed"
+        },
+        {
+          "id": "independent_reference",
+          "label": "Đối chứng độc lập",
+          "earned_points": 0.0,
+          "possible_points": 10.0,
+          "status": "not_measured"
+        }
+      ],
+      "accuracy_assessment": {
+        "status": "not_measured",
+        "matched_count": null,
+        "reference_count": 0,
+        "accuracy_pct": null,
+        "reference_source": null,
+        "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+      },
+      "confidence_probability": null,
+      "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+    },
+    "context_chars": 11739,
+    "schema_chars": 2688
+  },
+  {
+    "scenario": "C",
+    "question": "Đánh giá hiệu quả các voucher trong 60 ngày gần nhất.\nTôi muốn biết voucher nào được sử dụng nhiều nhất, voucher nào tạo ra nhiều\ndoanh thu nhất, giá trị giảm giá của từng voucher, số đơn có sử dụng voucher\nvà mức đóng góp của từng voucher vào tổng doanh thu có voucher.\nNếu dữ liệu không đủ để tính ROI thực sự thì phải nói rõ, không được tự suy\ndiễn chi phí marketing.",
+    "proposal_outcome": "PARTIAL_AVAILABLE",
+    "report_outcome": "PARTIAL_AVAILABLE",
+    "provider_calls": 1,
+    "operations": 3,
+    "coverage": [
+      {
+        "requirement_id": "roi",
+        "state": "UNSUPPORTED",
+        "reason": "definition_unavailable",
+        "operation_ids": [],
+        "derived_features": [],
+        "goal": "ROI thực sự"
+      },
+      {
+        "requirement_id": "voucher_usage",
+        "state": "RESOLVED",
+        "reason": null,
+        "operation_ids": [
+          "q_94ba243b90f5277d27fea223"
+        ],
+        "derived_features": [
+          "leader"
+        ],
+        "goal": "Phân tích doanh thu sản phẩm"
+      },
+      {
+        "requirement_id": "voucher_value",
+        "state": "RESOLVED",
+        "reason": null,
+        "operation_ids": [
+          "q_f83696b5622a880acfe33e7e",
+          "q_07dfbb022593c7000c47ed10"
+        ],
+        "derived_features": [
+          "contribution_share"
+        ],
+        "goal": "Phân tích doanh thu sản phẩm"
+      }
+    ],
+    "quality": {
+      "score": 83.3,
+      "grade": "partial",
+      "status": "partially_verified",
+      "components": [],
+      "completed": [
+        {
+          "id": "voucher_usage",
+          "label": "Khuyến mãi và voucher",
+          "evidence_refs": [
+            "q_94ba243b90f5277d27fea223:voucher_order_count:leader:6230060e3b",
+            "q_94ba243b90f5277d27fea223:voucher_order_count:top_gap:6230060e3b",
+            "q_94ba243b90f5277d27fea223:voucher_order_count:selected_total:6230060e3b"
+          ]
+        },
+        {
+          "id": "voucher_value",
+          "label": "Khuyến mãi và voucher",
+          "evidence_refs": [
+            "q_f83696b5622a880acfe33e7e:discount_amount:group_comparison:6230060e3b",
+            "q_f83696b5622a880acfe33e7e:voucher_revenue:group_comparison:6230060e3b",
+            "q_f83696b5622a880acfe33e7e:discount_amount:contribution_share:59726e4e61"
+          ]
+        }
+      ],
+      "missing": [
+        {
+          "id": "roi",
+          "label": "Phần yêu cầu chưa được hỗ trợ: Chưa có định nghĩa hoặc dữ liệu để tính chỉ số yêu cầu.",
+          "evidence_refs": []
+        }
+      ],
+      "unverified": [
+        {
+          "id": "independent_accuracy",
+          "label": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.",
+          "evidence_refs": []
+        }
+      ],
+      "limitations": [
+        {
+          "id": "metric_population:voucher_order_count",
+          "label": "Số đơn áp dụng khuyến mãi: Đếm đơn có mã voucher ở mọi trạng thái; khác quần thể doanh thu đơn voucher hợp lệ.",
+          "evidence_refs": [
+            "q_94ba243b90f5277d27fea223:voucher_order_count:leader:6230060e3b",
+            "q_94ba243b90f5277d27fea223:voucher_order_count:top_gap:6230060e3b",
+            "q_94ba243b90f5277d27fea223:voucher_order_count:selected_total:6230060e3b"
+          ]
+        },
+        {
+          "id": "topn:q_94ba243b90f5277d27fea223",
+          "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+          "evidence_refs": [
+            "q_94ba243b90f5277d27fea223:voucher_order_count:leader:6230060e3b",
+            "q_94ba243b90f5277d27fea223:voucher_order_count:top_gap:6230060e3b",
+            "q_94ba243b90f5277d27fea223:voucher_order_count:selected_total:6230060e3b"
+          ]
+        },
+        {
+          "id": "metric_population:discount_amount",
+          "label": "Tổng tiền đã giảm giá: Tổng số tiền giảm trên đơn HOAN_THANH/DANG_GIAO có mã voucher; không phải chi phí đầy đủ của chiến dịch.",
+          "evidence_refs": [
+            "q_07dfbb022593c7000c47ed10:discount_amount:scalar:6230060e3b",
+            "q_07dfbb022593c7000c47ed10:voucher_revenue:scalar:6230060e3b"
+          ]
+        },
+        {
+          "id": "metric_population:voucher_revenue",
+          "label": "Doanh thu đơn có khuyến mãi: Tổng giá trị đơn HOAN_THANH/DANG_GIAO có mã voucher; mô tả tập đơn dùng voucher, chưa chứng minh hiệu quả tăng thêm.",
+          "evidence_refs": [
+            "q_07dfbb022593c7000c47ed10:discount_amount:scalar:6230060e3b",
+            "q_07dfbb022593c7000c47ed10:voucher_revenue:scalar:6230060e3b"
+          ]
+        }
+      ],
+      "suggested_next_actions": [
+        {
+          "id": "roi",
+          "label": "Chưa có định nghĩa hoặc dữ liệu để tính chỉ số yêu cầu.",
+          "evidence_refs": [],
+          "action": "define_metric"
+        }
+      ],
+      "coverage": {
+        "requested_count": 3,
+        "completed_count": 2,
+        "supporting_count": 0,
+        "omitted_count": 1
+      },
+      "generated_by": "deterministic_verifier",
+      "version": "2.8.2",
+      "reason": null,
+      "measurement_mode": "evidence_checks",
+      "verification_checks": [
+        {
+          "id": "request_coverage",
+          "label": "Phạm vi yêu cầu",
+          "passed": 2,
+          "total": 3,
+          "status": "partial",
+          "summary": "2/3 phần yêu cầu đã thực hiện."
+        },
+        {
+          "id": "semantic_consistency",
+          "label": "Ngữ nghĩa & kế hoạch",
+          "passed": 1,
+          "total": 1,
+          "status": "passed",
+          "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+        },
+        {
+          "id": "result_integrity",
+          "label": "Kết quả dữ liệu",
+          "passed": 3,
+          "total": 3,
+          "status": "passed",
+          "summary": "3 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+        },
+        {
+          "id": "observed_values",
+          "label": "Giá trị dữ liệu quan sát",
+          "passed": 8,
+          "total": 8,
+          "status": "passed",
+          "summary": "8/8 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+        },
+        {
+          "id": "derived_features",
+          "label": "Phép tính được yêu cầu",
+          "passed": 2,
+          "total": 2,
+          "status": "passed",
+          "summary": "2/2 phép tính yêu cầu có đủ quan sát và bằng chứng."
+        },
+        {
+          "id": "evidence_grounding",
+          "label": "Bằng chứng",
+          "passed": 52,
+          "total": 52,
+          "status": "passed",
+          "summary": "52/52 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+        },
+        {
+          "id": "visualization_appropriateness",
+          "label": "Biểu đồ",
+          "passed": 7,
+          "total": 7,
+          "status": "passed",
+          "summary": "3/3 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+        },
+        {
+          "id": "limitation_disclosure",
+          "label": "Giới hạn dữ liệu",
+          "passed": 4,
+          "total": 4,
+          "status": "passed",
+          "summary": "4/4 giới hạn dữ liệu được công bố."
+        }
+      ],
+      "score_method": {
+        "id": "verification_evidence_v1",
+        "label": "Điểm kiểm chứng tổng",
+        "formula": "90 × trung bình có trọng số các kiểm tra áp dụng + 10 × tỷ lệ khớp đối chứng độc lập. Chưa đo đối chứng: chưa cộng 10 điểm; kiểm tra không áp dụng không bị trừ.",
+        "unmeasured_points": 10.0,
+        "interpretation": "Chỉ số mức độ kiểm chứng theo trọng số quy định; không phải độ chính xác hay xác suất AI trả lời đúng."
+      },
+      "score_breakdown": [
+        {
+          "id": "request_coverage",
+          "label": "Phạm vi yêu cầu",
+          "earned_points": 13.3333,
+          "possible_points": 20.0,
+          "status": "partial"
+        },
+        {
+          "id": "semantic_consistency",
+          "label": "Ngữ nghĩa & kế hoạch",
+          "earned_points": 15.0,
+          "possible_points": 15.0,
+          "status": "passed"
+        },
+        {
+          "id": "result_integrity",
+          "label": "Kết quả dữ liệu",
+          "earned_points": 15.0,
+          "possible_points": 15.0,
+          "status": "passed"
+        },
+        {
+          "id": "observed_values",
+          "label": "Giá trị dữ liệu quan sát",
+          "earned_points": 10.0,
+          "possible_points": 10.0,
+          "status": "passed"
+        },
+        {
+          "id": "derived_features",
+          "label": "Phép tính được yêu cầu",
+          "earned_points": 10.0,
+          "possible_points": 10.0,
+          "status": "passed"
+        },
+        {
+          "id": "evidence_grounding",
+          "label": "Bằng chứng",
+          "earned_points": 10.0,
+          "possible_points": 10.0,
+          "status": "passed"
+        },
+        {
+          "id": "visualization_appropriateness",
+          "label": "Biểu đồ",
+          "earned_points": 5.0,
+          "possible_points": 5.0,
+          "status": "passed"
+        },
+        {
+          "id": "limitation_disclosure",
+          "label": "Giới hạn dữ liệu",
+          "earned_points": 5.0,
+          "possible_points": 5.0,
+          "status": "passed"
+        },
+        {
+          "id": "independent_reference",
+          "label": "Đối chứng độc lập",
+          "earned_points": 0.0,
+          "possible_points": 10.0,
+          "status": "not_measured"
+        }
+      ],
+      "accuracy_assessment": {
+        "status": "not_measured",
+        "matched_count": null,
+        "reference_count": 0,
+        "accuracy_pct": null,
+        "reference_source": null,
+        "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+      },
+      "confidence_probability": null,
+      "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+    },
+    "context_chars": 12062,
+    "schema_chars": 2688
+  }
+]

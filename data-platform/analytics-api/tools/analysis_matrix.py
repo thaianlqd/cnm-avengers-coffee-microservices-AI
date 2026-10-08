@@ -20,6 +20,7 @@ from common import AiTextToReportRequest, AiReportRefineRequest
 from services.analysis_contract import AnalysisSpec, SpecPatch
 from services.analysis_understanding import merge_patch
 from services.analysis_pipeline import AnalysisPipeline, safe_failure
+from tests.archive_planner import ArchivedGraphPipeline
 from tests.analysis_fixtures import physical_metadata, result
 from tests.agent_fixtures import queries_from_spec, call
 
@@ -128,7 +129,7 @@ def run_case(case, live=False):
     pipeline = (
         AnalysisPipeline()
         if live
-        else AnalysisPipeline(
+        else ArchivedGraphPipeline(
             metadata_loader=metadata,
             provider=provider,
             executor=execute,

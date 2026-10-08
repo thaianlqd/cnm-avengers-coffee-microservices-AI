@@ -8,7 +8,8 @@ from unittest.mock import Mock, patch
 from common import AiTextToReportRequest
 from services.analysis_catalog import AnalysisCatalog, AnalysisError
 from services.analysis_contract import AnalysisSpec, MAX_ANALYTICAL_ROWS
-from services.analysis_pipeline import AnalysisPipeline, safe_failure
+from services.analysis_pipeline import safe_failure
+from tests.archive_planner import ArchivedGraphPipeline as AnalysisPipeline
 from services.analysis_query import build_plans, validate_results, validate_sql
 from services.analytical_blueprint_service import materialize, BlueprintIssue
 from services.domain_intelligence_service import DomainIntelligence

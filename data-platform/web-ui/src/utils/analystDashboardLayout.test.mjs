@@ -1,6 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { dashboardCharts, dashboardHighlights, initialChartType, chartAccent, compositionData, trendComparison, dashboardFindings, chartExplanation } from './analystDashboardLayout.mjs';
+import { dashboardCharts, dashboardHighlights, initialChartType, chartAccent, compositionData, trendComparison, dashboardFindings, chartExplanation, reportHeading } from './analystDashboardLayout.mjs';
+
+test('refined report title follows current Top 2 meaning instead of original Top 5 prompt', () => {
+  const report={analysis_spec:{},prompt:'Top 5 món',title:'Sản phẩm và thực đơn',semantic_intent:{requirements:[{ranking:{limit:2,direction:'top'}}]}};
+  assert.equal(reportHeading(report),'Top 5 món');
+  assert.equal(reportHeading({...report,provenance:{semantic_history:[{feedback:'Đổi thành Top 2'}]}}),'Top 2 · Sản phẩm và thực đơn');
+});
 
 test('identical displayed numbers alone never merge scopes or metric meanings', () => {
   const data = [{ label: 'A', value: 100 }];
@@ -64,6 +70,23 @@ test('chart explanations distinguish ranking, whole composition, preview and par
   assert.match(chartExplanation(trend), /điểm rỗng.*tuần chưa đủ ngày/);
   assert.match(chartExplanation({...trend, period:{}}), /mỗi điểm là một tuần/);
   assert.match(chartExplanation({chart_type:'scatter',x_label:'Giá',y_label:'Sản lượng'}), /không khẳng định nguyên nhân/);
+});
+
+test('quantity companion preserves revenue cohort and does not claim quantity ranking', () => {
+  const html=chartExplanation({title:'Top 5 — Số lượng sản phẩm bán trong tập xếp hạng theo Doanh thu sản phẩm',
+    selection:'Top N',metric:'quantity_sold',metrics:['quantity_sold'],ranking_metric:'product_revenue',
+    ranking_metric_label:'Doanh thu sản phẩm',ranking_limit:5,x_label:'Sản phẩm'});
+  assert.match(html,/tập Top 5 được chọn theo doanh thu sản phẩm/);
+  assert.match(html,/giữ nguyên thứ tự theo doanh thu sản phẩm/);
+  assert.match(html,/không xếp hạng lại/);
+  assert.doesNotMatch(html,/Xếp hạng theo số lượng/);
+});
+
+test('contribution view keeps full-scope percentage distinct from raw revenue', () => {
+  const raw={metric:'product_revenue',semantic_view_key:'raw',chart_type:'horizontal_bar',selection:'Top N',data:[{label:'A',value:7920000}]};
+  const share={...raw,semantic_view_key:'share',value_transform:'contribution_share',unit:'%',data:[{label:'A',value:2.18}],denominator_note:'Tỷ trọng theo tổng đầy đủ 362.895.000 VND.'};
+  assert.equal(dashboardCharts([raw,share]).charts.length,2);
+  assert.equal(chartExplanation(share),share.denominator_note);
 });
 
 test('business overview keeps a finding for every requested scope including the fifth trend', () => {

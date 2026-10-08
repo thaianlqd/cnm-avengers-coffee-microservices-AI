@@ -7,7 +7,8 @@ from datetime import date
 from unittest.mock import Mock, patch
 from common import AiTextToReportRequest
 from services.analysis_catalog import AnalysisCatalog, AnalysisError
-from services.analysis_pipeline import AnalysisPipeline, safe_failure
+from services.analysis_pipeline import safe_failure
+from tests.archive_planner import ArchivedGraphPipeline as AnalysisPipeline
 from services.domain_intelligence_service import DomainIntelligence
 from services.one_shot_context import wire_payload
 from tests.agent_fixtures import ScriptedProvider, call
