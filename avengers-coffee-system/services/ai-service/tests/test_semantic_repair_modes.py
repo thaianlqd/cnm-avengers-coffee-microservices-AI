@@ -11,8 +11,8 @@ from src.common import cart_manager
 
 
 def step(name, value):
-    return {'tool_calls': [{'id': 'fixture', 'type': 'function', 'function': {
-        'name': 'semantic_' + name, 'arguments': json.dumps(value)}}]}
+    from semantic_scripted_steps import step as provider_step
+    return provider_step(name, value)
 
 
 def metrics(caplog):

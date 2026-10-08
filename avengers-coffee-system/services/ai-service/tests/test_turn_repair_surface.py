@@ -37,7 +37,7 @@ def test_pending_product_normal_and_repair_surfaces_are_small_and_typed(runtime)
     repair, _ = g.tool_surface()
     names = {r['function']['name'] for r in repair}
     assert names == {'semantic_configure_product', 'semantic_use_product_defaults',
-        'semantic_ask_product_options', 'semantic_interrupt'}
+        'semantic_reset_product_defaults', 'semantic_ask_product_options', 'semantic_interrupt'}
     assert len(repair) < len(normal) < 25
     assert all(r['function']['name'].startswith('semantic_') for r in normal + repair)
     assert 'customer_actions' not in names and 'get_menu_categories' not in names

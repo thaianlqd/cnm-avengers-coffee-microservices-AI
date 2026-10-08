@@ -60,6 +60,9 @@ def error(message):
 
 
 def tool(name, args, signature=SIGNATURE_A, call_id='fixture-call-A'):
+    if name.startswith('semantic_'):
+        from semantic_scripted_steps import provider_pair
+        name, args = provider_pair(name, args)
     call = {'id': call_id, 'type': 'function', 'function': {
         'name': name, 'arguments': json.dumps(args, ensure_ascii=False)}}
     if signature:
@@ -307,6 +310,7 @@ def test_native_mime_error_retries_format_once_without_replaying_mutations(wire,
 def test_semantic_repair_uses_auto_same_key_and_signed_history(wire, monkeypatch, caplog):
     from src.agents import llm_tool_orchestrator
     monkeypatch.setattr(llm_tool_orchestrator, 'run_llm_tool_turn', wire.runtime.semantic_orchestrator)
+    cart_manager.set_pending_products(wire.runtime.sid, [wire.runtime.products[0]])
     message = 'Lấy món Alpha cỡ L nhé'
     proposal = {'commitment': 'SELECTED', 'reference': {'kind': 'id', 'value': '101'},
         'size': 'L', 'evidence': message}

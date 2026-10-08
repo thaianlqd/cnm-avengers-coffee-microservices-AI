@@ -145,3 +145,8 @@ def test_repeated_invalid_target_stops_at_existing_repair_budget(runtime):
     result = runtime.turn(message)
     assert result['error'] == 'semantic_repair_exhausted'
     assert len(runtime.provider.requests) == 2 and not runtime.writes
+
+
+# Historical migration probes use the private offline adapter explicitly.
+from test_semantic_control import private_migration_loop
+pytestmark = pytest.mark.usefixtures("private_migration_loop")

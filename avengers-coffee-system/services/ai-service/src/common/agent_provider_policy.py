@@ -8,6 +8,7 @@ import os
 import re
 import threading
 import time
+from dataclasses import dataclass, asdict
 from src.common.gemini_compat import compatibility_error, inference_messages, request_diagnostics
 
 logger = logging.getLogger(__name__)
@@ -16,6 +17,38 @@ _cooldowns = {}  # (provider, credential SHA-256, model) -> monotonic deadline
 _transient_cooldowns = {}  # (provider, model) -> (monotonic deadline, fixed reason); shared across keys
 _invalid_credentials = set()
 _next_slot = {}
+
+
+@dataclass(frozen=True)
+class ProviderCapabilities:
+    supports_required_tool_choice: bool
+    supports_named_tool_choice: bool
+    supports_parallel_tool_calls: bool
+    supports_response_format_with_tools: bool
+    evidence: str
+
+
+# Transport guarantees, not guesses about every deployed model. Gemini's
+# OpenAI-compatibility page documents auto only; native ANY is not proof that
+# this endpoint/model supports forcing. Unknown routes fail conservatively.
+PROVIDER_CAPABILITIES = {
+    'openai': ProviderCapabilities(True, True, True, True, 'official_chat_completions_reference'),
+    'groq': ProviderCapabilities(True, True, True, True, 'official_groq_chat_reference_model_dependent'),
+    'openrouter': ProviderCapabilities(True, True, True, True, 'official_openrouter_tools_model_dependent'),
+    'gemini': ProviderCapabilities(False, False, False, False, 'openai_compat_auto_documented_forcing_parallel_unverified'),
+    'cerebras': ProviderCapabilities(True, True, True, False, 'official_cerebras_chat_reference_format_with_tools_unverified'),
+}
+
+
+def tool_choice_for(provider, schemas, required):
+    caps = PROVIDER_CAPABILITIES[provider]
+    if not required:
+        return 'auto', 'automatic'
+    if len(schemas) == 1 and caps.supports_named_tool_choice:
+        return {'type': 'function', 'function': {'name': schemas[0]['function']['name']}}, 'named_forced'
+    if caps.supports_required_tool_choice:
+        return 'required', 'required_forced'
+    return 'auto', 'auto_fallback_forcing_unverified'
 
 
 def number(name, default, minimum, maximum):
@@ -208,6 +241,8 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
     if reported_tier not in used:
         used.append(reported_tier)
     budget = number('AI_AGENT_MAX_PROVIDER_ATTEMPTS_PER_ROUND', 4, 1, 12)
+    if turn_health.get('remaining_request_budget') is not None:
+        budget = min(budget, max(0, turn_health['remaining_request_budget']))
     timeout, round_wait = wait_limits()
     deadline = time.monotonic() + round_wait
     metrics['round_wait_budget_ms'] = round_wait * 1000
@@ -267,13 +302,13 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                 'temperature': 0.1, 'response_format': {'type': 'json_object'},
                 'timeout': min(timeout, route_deadline - time.monotonic(), deadline - time.monotonic())}
             if schemas:
-                kwargs.update(tools=schemas, tool_choice='required' if required else 'auto')
-                if (provider == 'gemini' and required and all(
-                        row.get('function', {}).get('name') == 'customer_actions'
-                        or row.get('function', {}).get('name', '').startswith('semantic_') for row in schemas)):
-                    kwargs['tool_choice'] = 'auto'
-                    mode = 'gemini_semantic_repair_auto'
-            if provider == 'gemini' and (mode == 'gemini_without_response_format' or schemas):
+                choice, choice_policy = tool_choice_for(provider, schemas, required)
+                kwargs.update(tools=schemas, tool_choice=choice)
+            else:
+                choice_policy = 'tools_disabled'
+            caps = PROVIDER_CAPABILITIES[provider]
+            if (schemas and not caps.supports_response_format_with_tools or
+                    provider == 'gemini' and mode == 'gemini_without_response_format'):
                 kwargs.pop('response_format', None)
             if provider == 'openrouter':
                 kwargs['allow_fallback'] = False  # No hidden unbudgeted requests.
@@ -284,6 +319,7 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                 blocked.add(group)
                 break
             attempts += 1
+            turn_health['total_attempts'] = turn_health.get('total_attempts', 0) + 1
             metrics['provider_attempt_count'] += 1
             counts = metrics.setdefault('provider_attempts_by_provider', {})
             counts[provider] = counts.get(provider, 0) + 1
@@ -300,6 +336,9 @@ def completion(messages, schemas, *, preferred, explicit_model, tier, max_tokens
                         'compatibility_mode': mode}
             metrics['provider_route_selected'] = selected
             diagnostic = {**shape, **selected, 'timeout_seconds': round(kwargs['timeout'], 3),
+                'request_reason': turn_health.get('request_reason', 'normal') if attempts == 1 else 'provider_failover_or_compatibility',
+                'tool_choice_policy': choice_policy, 'tool_choice_forced': choice_policy in {'named_forced', 'required_forced'},
+                'provider_capabilities': asdict(caps),
                 'round_deadline_remaining_ms': round(max(0, deadline-time.monotonic())*1000, 2),
                 'round_index': round_index, 'request_sequence': metrics['provider_attempt_count']}
             metrics['attempt_timeout_assigned_ms'] = round(kwargs['timeout']*1000, 2)

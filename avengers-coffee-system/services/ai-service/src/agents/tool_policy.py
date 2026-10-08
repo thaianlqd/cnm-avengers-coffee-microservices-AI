@@ -39,7 +39,7 @@ def denied(code, **details):
         'pending_quantity_conflict': 'Số lượng bạn chọn khác với số lượng món đang chờ trong giỏ. Bạn kiểm tra lại giúp mình nhé.'
     }
     msg = details.pop('message', None) or default_messages.get(code, 'Chưa thể thực hiện yêu cầu này an toàn. Bạn kiểm tra lựa chọn hoặc bổ sung thông tin nhé.')
-    return {'status': code, 'message': msg, **details}
+    return {'status': code, 'message': msg, 'failure_class': 'BUSINESS_POLICY', 'failure_code': code, **details}
 
 
 class GuardedToolGateway:
@@ -95,6 +95,9 @@ class GuardedToolGateway:
         self.product_display_snapshot = ProductDisplaySnapshot.capture(artifacts.visible, artifacts.focus.get('product'))
         context['turn_product_snapshot'] = self.product_display_snapshot.descriptor()
         self.turn_contract = TurnContract(primary_state_obligation=state_obligation(context), context=context)
+        from src.agents.semantic_protocol import TurnAuthorizations
+        self.turn_authorizations = TurnAuthorizations(self)
+        self.provider_selection_retry = None
         if semantic_mode:
             artifacts.turn_contract = self.turn_contract
         self.updated_products = set()
@@ -179,6 +182,9 @@ class GuardedToolGateway:
     def turn_state(self):
         contract = self.turn_contract
         return {'can_present': contract.can_present,
+            'simple_selection': not (contract.interrupt_count or contract.prerequisite_count) and (
+                contract.goal_family == 'PRODUCT_SELECTION' or
+                not contract.goal_family and contract.primary_state_obligation == 'PRODUCT_SELECTION'),
             'authoritative_tool_count': sum(row['tool'] in CAPABILITIES and
                 row['result'].get('recovery_kind') != 'model_repair' for row in self.artifacts.logs),
             'progress_result': contract.progress_result,
@@ -206,6 +212,7 @@ class GuardedToolGateway:
             self.turn_contract.drift_count += 1
         self.continuity_event(progress='NON_PROGRESS', reason=reason)
         return model_repair('semantic_drift', error_subtype='SEMANTIC_DRIFT', continuation_required=not preserve_contract,
+            failure_class='BUSINESS_POLICY',
             turn_contract_id=self.turn_contract.turn_contract_id,
             goal_family=self.turn_contract.goal_family, non_progress_reason=reason,
             allowed_repair_operations=sorted(self.turn_contract.allowed_operations()),
@@ -213,19 +220,30 @@ class GuardedToolGateway:
                 'Use only the allowed operation or a permitted semantic_interrupt; unrelated successful reads are not progress.')
 
     def semantic_calls(self, calls):
-        """Validate continuity for the WHOLE response before any execution/artifact."""
+        """PRIVATE migration adapter; production uses provider_calls()."""
         from src.agents.semantic_registry import (materialize_operation, operation_registry,
             INTERRUPT_NAME, validate_interrupt)
         self.refresh_turn_progress_facts()
         proposals, operations, payloads = [], [], []
         for call in calls:
+            parsed = True
             try:
                 payload = json.loads(call.function.arguments or '{}')
             except (TypeError, ValueError):
                 payload = None
+                parsed = False
+            from src.agents.semantic_protocol import validation_event
+            diagnostic_op = operation_registry().get(call.function.name)
+            validation_event(self, call.function.name, payload,
+                diagnostic_op.parameters() if diagnostic_op else {}, parsed=parsed)
             payloads.append(payload)
             operations.append(operation_registry().get(call.function.name))
             proposals.append(materialize_operation(call.function.name, payload))
+        return self._semantic_proposals(calls, proposals, operations, payloads)
+
+    def _semantic_proposals(self, calls, proposals, operations, payloads):
+        """One shared canonical plan/continuity executor for both adapters."""
+        from src.agents.semantic_registry import operation_registry, INTERRUPT_NAME, validate_interrupt
         if any(call.function.name == INTERRUPT_NAME for call in calls):
             if len(calls) != 1 or not validate_interrupt(payloads[0]):
                 result = self.continuity_denial('malformed_or_mixed_interrupt')
@@ -315,13 +333,15 @@ class GuardedToolGateway:
                 'action_status': row['status'], 'result': row.get('result')})
         return (output + [{'status': 'batch_member', 'changed': False}] * len(calls))[:len(calls)]
 
-    @staticmethod
-    def _valid_proposal(proposal, legacy_spec):
+    def _valid_proposal(self, proposal, legacy_spec):
         if proposal.get('operation'):
             from src.agents.semantic_registry import validate_operation, materialize_operation
             name, payload = proposal['operation'], proposal.get('semantic_payload')
+            canonical = {k: v for k, v in proposal.items() if k not in {'_turn_authorization_id', '_provider_operation'}}
+            if '_provider_operation' in proposal and not self.turn_authorizations.verify(proposal):
+                return False
             return (validate_operation(name, payload)
-                and proposal == materialize_operation(name, payload))
+                and canonical == materialize_operation(name, payload))
         from src.agents.semantic_control import TOOL_TARGETS
         selected = next((row['function']['parameters'] for row in tool_schemas({proposal.get('tool')})), None)
         if selected is None:
@@ -329,11 +349,175 @@ class GuardedToolGateway:
         spec = deepcopy(legacy_spec)
         selected = deepcopy(selected)
         target = TOOL_TARGETS.get(proposal.get('tool'), (None, None))[1]
-        # Canonical target requiredness is checked after grounding; no argument
-        # from a different executor is valid in this migration envelope.
         selected['required'] = [key for key in selected.get('required', []) if key != target]
         spec['properties']['args'] = selected
         return validate_args(proposal, spec)
+
+    def provider_tool_surface(self, final_only=False, repair_tool=None):
+        rows, executors = self.tool_surface(final_only, repair_tool)
+        if self.semantic_mode:
+            self.turn_authorizations.issue(rows)
+        return rows, executors
+
+    def protocol_denial(self, name, payload, spec, failure, *, stage='wire', rules=(), parsed=True):
+        from src.agents.semantic_protocol import validation_event, base_operation
+        from src.agents.semantic_registry import operation_registry
+        from src.agents.semantic_control import model_repair
+        event = validation_event(self, name, payload, spec, parsed=parsed, rules=rules, failure=failure, stage=stage)
+        op = operation_registry().get(base_operation(name))
+        allowed, _ = self.turn_contract.eligibility(op)
+        if allowed and op and name in getattr(self.turn_authorizations, 'schemas', {}):
+            self.turn_contract.observe_operation(op, standalone=True)
+            self.turn_contract.repair_target_operation = self.turn_contract.bound_operation = op.function_name
+            self.enter_turn_repair('SEMANTIC_PROTOCOL_REPAIR')
+            self.provider_repair_operation = name
+        result = model_repair('invalid_semantic_arguments', failure_code=event['failure_code'],
+            failure_field=event['failure_field'], failure_json_pointer=event['failure_json_pointer'],
+            validation_stage=stage, failure_class='SEMANTIC_GROUNDING' if stage == 'grounding' else 'SEMANTIC_WIRE_PROTOCOL',
+            repair_function=name, repair_parameters=spec,
+            repair_hint=f'Call {name} again. Correct {event["failure_json_pointer"] or "/"}: {event["failure_code"]}. '
+                'Preserve operation, selection count, resolved canonical targets and siblings. Do not invent missing choices.')
+        self.semantic_repair_pending = True
+        self.artifacts.collect('customer_actions', {}, result)
+        return result
+
+    def provider_calls(self, calls):
+        """Minimal advertised wire -> server authorization -> existing plan.
+
+        No proposal is journaled or executed before the entire response validates;
+        every selection is canonically grounded before the first draft stages.
+        """
+        from src.agents.semantic_protocol import (base_operation, BATCH_SELECT, VARIANTS,
+            normalize_arguments, first_failure, validation_event, public_protocol_result)
+        from src.agents.semantic_registry import operation_registry, materialize_operation, INTERRUPT_NAME
+        from src.agents.semantic_control import ground_action, TOOL_TARGETS
+        from types import SimpleNamespace
+        ledger = self.turn_authorizations
+        proposals, operations, payloads, expanded_calls = [], [], [], []
+        validated, selection_targets, faults = [], [], []
+        def reject(name, payload, spec, failure, **extra):
+            result = self.protocol_denial(name, payload, spec, failure, **extra)
+            return [result] + [{'status': 'batch_member', 'changed': False}] * max(0, len(calls) - 1)
+        if not 1 <= len(calls) <= 16:
+            return reject('semantic_protocol', None, {}, ('invalid_argument_shape', ''))
+        response_key = (ledger.sequence, tuple(call.id for call in calls))
+        if not ledger.surface or response_key in ledger.response_ids:
+            return reject(calls[0].function.name, None, {}, ('current_turn_authorization_missing', ''))
+        ledger.response_ids.add(response_key)
+        for call in calls:
+            name = call.function.name
+            function = ledger.schemas.get(name)
+            if not function and not self.turn_contract.constrained:
+                # Retain existing normal-mode registered consultations. This
+                # compatibility exception never admits a WRITE or selection,
+                # and repair always requires the exact advertised operation.
+                from src.agents.semantic_protocol import provider_schemas
+                read_op = operation_registry().get(name)
+                if read_op and read_op.access == 'READ' and read_op.executor in self.allowed and read_op.exposed(self.context):
+                    function = provider_schemas([read_op])[0]['function']
+            if not function:
+                return reject(name, None, {}, ('operation_not_exposed', ''))
+            spec = function['parameters']
+            payload, rules, parsed = normalize_arguments(call.function.arguments, spec, name)
+            failure = first_failure(payload, spec) if parsed else ('invalid_json', '')
+            op = operation_registry().get(base_operation(name))
+            if not failure and op and op.require_any_fields and not any(k in payload for k in op.require_any_fields):
+                failure = ('missing_required_field', '/' + '|'.join(op.require_any_fields))
+            if failure:
+                # Preserve complete canonical targets available in a malformed batch.
+                if name == BATCH_SELECT and isinstance(payload, dict) and isinstance(payload.get('selections'), list):
+                    self._freeze_selection_retry(payload['selections'])
+                if name == BATCH_SELECT or name == INTERRUPT_NAME:
+                    return reject(name, payload, spec, failure, rules=rules, parsed=parsed)
+                # The existing compound journal retains malformed nonselection
+                # members and their valid siblings, without executing any row.
+                faults.append((call, name, payload, spec, failure, rules, parsed))
+                validation_event(self, name, payload, spec, rules=rules, parsed=parsed, failure=failure)
+            else:
+                validation_event(self, name, payload, spec, rules=rules)
+            validated.append((call, payload, op))
+        for call, payload, op in validated:
+            name = call.function.name
+            if name == INTERRUPT_NAME:
+                proposals.append(materialize_operation(name, payload))
+                operations.append(None); payloads.append(payload); expanded_calls.append(call)
+                continue
+            selections = payload['selections'] if name == BATCH_SELECT else [payload]
+            for index, value in enumerate(selections):
+                internal = deepcopy(value)
+                invalid = any(f[0] is call for f in faults)
+                if op.access != 'READ' and isinstance(internal, dict):
+                    internal.update(commitment=VARIANTS.get(name, (None, op.server_commitment))[1], evidence='')
+                    # Private contract validation needs a nonempty placeholder;
+                    # it is never compared to customer text in the authorized lane.
+                    internal['evidence'] = '[server-authorized]'
+                action = materialize_operation(op.function_name, internal)
+                if invalid:
+                    action['invalid_wire_action'] = True
+                ledger.bind(action, name)
+                if name == BATCH_SELECT:
+                    grounded, target, error = ground_action(self, action)
+                    if error or not target:
+                        self._freeze_selection_retry(selections)
+                        return reject(name, payload, ledger.schemas[name]['parameters'],
+                            ('canonical_target_unresolved', f'/selections/{index}/reference'), stage='grounding')
+                    canonical_id = str(grounded['product_id'])
+                    if canonical_id in selection_targets:
+                        self._freeze_selection_retry(selections)
+                        return reject(name, payload, ledger.schemas[name]['parameters'],
+                            ('duplicate_canonical_target', f'/selections/{index}/reference'), stage='grounding')
+                    selection_targets.append(canonical_id)
+                    ledger.product_targets[action['_turn_authorization_id']] = (
+                        canonical_id, deepcopy(target), self.product_display_snapshot.fingerprint)
+                proposals.append(action); operations.append(op); payloads.append(internal)
+                expanded_calls.append(SimpleNamespace(function=SimpleNamespace(name=op.function_name)))
+        if selection_targets and self.provider_selection_retry:
+            expected = self.provider_selection_retry
+            if len(selection_targets) != len(expected) or any(old is not None and old != new for old, new in zip(expected, selection_targets)):
+                return reject(BATCH_SELECT, None, ledger.schemas[BATCH_SELECT]['parameters'], ('canonical_target_changed', '/selections'), stage='grounding')
+        # Re-grounding inside the existing plan checks the same immutable entry
+        # snapshot. Its bound_product_id/fingerprint fields freeze every target.
+        results = self._semantic_proposals(expanded_calls, proposals, operations, payloads)
+        if faults and results and results[0].get('recovery_kind') == 'model_repair':
+            _, name, payload, spec, failure, rules, parsed = faults[0]
+            results[0].update(self.protocol_denial(name, payload, spec, failure, rules=rules, parsed=parsed))
+        if results and results[0].get('recovery_kind') != 'model_repair':
+            self.provider_selection_retry = None
+            if self.turn_contract.repair_mode == 'SEMANTIC_PROTOCOL_REPAIR':
+                self.repair_in_progress = True
+                if self.turn_contract.progress_result == 'COMPLETED' and all(op and op.access == 'READ' for op in operations):
+                    results[0]['repaired_read_completed'] = True
+                    results[0]['repaired_action_id'] = self.semantic_plan.actions[-1]['action_id']
+        clean = public_protocol_result(results)
+        if clean and clean[0].get('recovery_kind') == 'model_repair':
+            failed = (self.semantic_plan.failed or {}).get('proposal', {}) if self.semantic_plan else {}
+            provider_name = failed.get('_provider_operation')
+            if provider_name in ledger.schemas:
+                clean[0].update(repair_function=provider_name,
+                    repair_parameters=ledger.schemas[provider_name]['parameters'],
+                    repair_hint=f'Call {provider_name} again. Correct '
+                        f'{clean[0].get("failure_json_pointer") or "/"}: '
+                        f'{clean[0].get("failure_code") or "invalid_semantic_arguments"}. '
+                        'Use only its advertised fields. Preserve goal, canonical targets, count and siblings.')
+                self.provider_repair_operation = provider_name
+        # A batch function has one provider result, even with 16 canonical actions.
+        return (clean + [{'status': 'batch_member', 'changed': False}] * len(calls))[:len(calls)]
+
+    def _freeze_selection_retry(self, selections):
+        if self.provider_selection_retry is not None:
+            return
+        from src.agents.semantic_registry import materialize_operation, validate_operation
+        from src.agents.semantic_control import ground_action
+        frozen = []
+        for selection in selections:
+            if not isinstance(selection, dict):
+                frozen.append(None); continue
+            value = {**selection, 'commitment': 'SELECTED', 'evidence': '[server-authorized]'}
+            if not validate_operation('semantic_select_product', value):
+                frozen.append(None); continue
+            args, target, error = ground_action(self, materialize_operation('semantic_select_product', value))
+            frozen.append(str(args['product_id']) if not error and target else None)
+        self.provider_selection_retry = frozen
 
     def dispatch_model(self, name, args):
         """Direct reads are questions; every state change needs typed evidence."""
@@ -657,6 +841,15 @@ class GuardedToolGateway:
         from src.agents.semantic_control import TOOL_TARGETS
         ref = action.get('reference') or {}
         evidence = action.get('evidence')
+        if result.get('recovery_kind') == 'model_repair' and action.get('operation'):
+            from src.agents.semantic_protocol import validation_event
+            from src.agents.semantic_registry import operation_registry
+            op = operation_registry().get(action['operation'])
+            if op:
+                validation_event(self, action.get('_provider_operation', action['operation']),
+                    {k: v for k, v in (action.get('semantic_payload') or {}).items() if k not in {'commitment', 'evidence'}},
+                    op.provider_parameters(), failure=(result.get('failure_code', result['status']),
+                        result.get('failure_json_pointer') or ''), stage=result.get('validation_stage', 'business'))
         logger.info('[SemanticAction] %s', json.dumps({
             'tool': action['tool'], 'access': CAPABILITIES[action['tool']].access if action['tool'] in CAPABILITIES else 'UNKNOWN',
             'commitment': action['commitment'], 'reference_namespace': ref.get('namespace') or ('LOCATION' if action['tool'] == 'resolve_location' and (not ref or ref.get('kind') == 'literal') else TOOL_TARGETS.get(action['tool'], (None,))[0]),
@@ -670,6 +863,16 @@ class GuardedToolGateway:
     def execute_semantic(self, action):
         from src.agents.semantic_control import validate_commitment, ground_action, failure
         capability = CAPABILITIES.get(action['tool'])
+        authorized = False
+        if '_provider_operation' in action or '_turn_authorization_id' in action:
+            authorized = self.turn_authorizations.verify(action)
+            if not authorized:
+                from src.agents.semantic_control import model_repair
+                result = model_repair('current_turn_authorization_missing',
+                    failure_code='current_turn_authorization_missing', failure_class='BUSINESS_POLICY')
+                self.artifacts.collect(action['tool'], {}, result)
+                self._semantic_diagnostic(action, result)
+                return result
         if action.get('operation'):
             from src.agents.semantic_registry import operation_registry
             operation = operation_registry().get(action['operation'])
@@ -690,10 +893,10 @@ class GuardedToolGateway:
             result = denied('semantic_action_budget_exceeded')
             self.artifacts.collect(action['tool'], {}, result)
             return result
-        error = validate_commitment(action, capability.access, self.user_message) if capability else failure('semantic_evidence_required')
+        error = validate_commitment(action, capability.access, self.user_message, authorized=authorized) if capability else failure('semantic_evidence_required')
         # get_product_options can stage a draft, even though its facts are READ.
         if not error and action['tool'] == 'get_product_options' and action['commitment'] in {'SELECTED', 'AFFIRMED', 'CORRECTION'}:
-            error = validate_commitment(action, 'WRITE', self.user_message)
+            error = validate_commitment(action, 'WRITE', self.user_message, authorized=authorized)
             state = self.context['business']
             if not error and (not (state.get('authenticated') or state.get('guest_session_id')) or not self.client_message_id):
                 error = denied('authentication_or_turn_required')
@@ -708,6 +911,8 @@ class GuardedToolGateway:
             return error
         previous = self.active_semantic
         self.active_semantic = {**action, 'args': args, 'canonical_target': row}
+        if authorized:
+            self.turn_authorizations.verify(action, consume=True)
         if action.get('facet'):
             self.artifacts.safety_facet = action['facet'] if action['facet'] in {'ingredient', 'allergen'} else None
         try:
@@ -759,20 +964,29 @@ class GuardedToolGateway:
             self.normal_surface_count = len(normal) + 1
             operations = (repair_operations_for_contract(self.turn_contract, self.context, self.allowed)
                 if self.turn_contract.constrained else normal)
-            rows = [op.schema() for op in operations]
+            from src.agents.semantic_protocol import provider_schemas
+            rows = provider_schemas(operations)
+            locked = getattr(self, 'provider_repair_operation', None)
+            if self.turn_contract.constrained and locked:
+                from src.agents.semantic_protocol import base_operation
+                rows = [r for r in rows if base_operation(r['function']['name']) != base_operation(locked)
+                    or r['function']['name'] == locked]
             # Interrupt is control-only and is never mapped to a business executor.
             if (not self.turn_contract.writes_already_committed and self.turn_contract.interrupt_count < 1
-                    and not self.turn_contract.selection_snapshot_locked and not (self.semantic_plan and self.semantic_plan.pending)):
+                    and not self.turn_contract.repair_target and not self.turn_contract.selection_snapshot_locked
+                    and not (self.semantic_plan and self.semantic_plan.pending)):
                 rows.append(interrupt_schema())
             self.repair_surface_count = len(rows) if self.turn_contract.constrained else 0
         executors = self.executors()
         if self.semantic_mode and not final_only:
-            from src.agents.semantic_registry import materialize_operation, INTERRUPT_NAME
+            executors = {}  # Private migration/business methods are never model executors.
+            from src.agents.semantic_registry import INTERRUPT_NAME
+            from types import SimpleNamespace
             for row in rows:
                 name = row['function']['name']
                 if name != INTERRUPT_NAME:
-                    executors[name] = lambda payload, session_id, n=name: self.customer_actions(
-                        {'actions': [materialize_operation(n, payload)]})
+                    executors[name] = lambda payload, session_id, n=name: self.provider_calls([
+                        SimpleNamespace(id='executor', function=SimpleNamespace(name=n, arguments=payload))])[0]
         return rows, executors
 
     def cache_key(self, name, args):
@@ -2136,14 +2350,14 @@ class GuardedToolGateway:
         kind = ref.get('kind')
         if ref.get('namespace') != 'PAYMENT':
             return model_repair('payment_choice_evidence_required', repair_hint='Use PAYMENT reference tied to the current chosen method, not delivery/location evidence.')
-        if kind in {'name', 'id'}:
+        if kind in {'name', 'id'} and not proposal.get('_provider_operation'):
             value = normalize_text(ref.get('value'))
             if not value or (' ' + value + ' ') not in (' ' + evidence + ' '):
                 return model_repair('payment_choice_evidence_required')
         elif kind == 'ordinal':
             if not self.artifacts.visible.get('payment_options'):
                 return model_repair('payment_choice_not_presented')
-        else:
+        elif kind not in {'name', 'id'}:
             pending = cart_manager.get_checkout_prefs(self.session_id).get('pending_payment_choice') or {}
             if pending.get('code') != args['payment_method'] or pending.get('owner_turn') == self.client_message_id:
                 return model_repair('payment_acknowledgment_unowned')
@@ -2213,7 +2427,8 @@ class GuardedToolGateway:
             if args['location'] != prefs['confirmed_destination']['display_address']:
                 evidence = normalize_text((self.active_semantic or {}).get('evidence'))
                 literal_value = normalize_text(args['location'])
-                if (ref.get('namespace') != 'PROFILE_ADDRESS' and evidence not in literal_value
+                if (not (self.active_semantic or {}).get('_provider_operation')
+                        and ref.get('namespace') != 'PROFILE_ADDRESS' and evidence not in literal_value
                         and literal_value not in evidence):
                     return denied('confirmed_destination_change_required', message='Bạn nói rõ địa chỉ mới muốn thay địa điểm đã xác nhận nhé.')
                 cart_manager.set_checkout_context(self.session_id, confirmed_destination=None,

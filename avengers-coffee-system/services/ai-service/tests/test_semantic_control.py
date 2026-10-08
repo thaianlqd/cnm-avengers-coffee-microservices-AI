@@ -15,12 +15,48 @@ from src.agents.semantic_control import customer_actions_schema, ground_referenc
 from src.common import cart_manager
 from src.function_calling.tools import cart_tools, product_tools, voucher_tools, TOOL_EXECUTORS
 
+pytestmark = pytest.mark.usefixtures('private_migration_loop')
+
 
 @pytest.fixture
 def runtime(compatibility_runtime, monkeypatch):
     from src.agents import llm_tool_orchestrator
     monkeypatch.setattr(llm_tool_orchestrator, 'run_llm_tool_turn', compatibility_runtime.semantic_orchestrator)
     return compatibility_runtime
+
+
+@pytest.fixture
+def private_migration_loop(monkeypatch):
+    """Explicit offline-only adapter for historical customer_actions probes.
+
+    Production no longer dispatches unadvertised migration/business functions.
+    These characterization probes still exercise the PRIVATE adapter and all
+    business guards. Public wire qualification uses runtime without this fixture.
+    """
+    from src.common import groq_service
+    original = groq_service.groq_agent_chat
+    def chat(*args, **kwargs):
+        batch = kwargs.get('semantic_batch_executor')
+        if batch:
+            g = batch.__self__
+            def private_batch(calls):
+                if any(call.function.name.startswith('semantic_') for call in calls):
+                    return batch(calls)
+                results = []
+                for call in calls:
+                    try:
+                        value = json.loads(call.function.arguments)
+                    except (ValueError, TypeError):
+                        value = None
+                    results.append(g.customer_actions(value) if call.function.name == 'customer_actions'
+                        else g.dispatch_model(call.function.name, value))
+                return results
+            kwargs['semantic_batch_executor'] = private_batch
+            state = kwargs.get('turn_state_provider')
+            if state:
+                kwargs['turn_state_provider'] = lambda: {**state(), 'simple_selection': False}
+        return original(*args, **kwargs)
+    monkeypatch.setattr(groq_service, 'groq_agent_chat', chat)
 
 
 def gateway_for(runtime, message='Một cách diễn đạt chưa có trong bộ luật cũ'):

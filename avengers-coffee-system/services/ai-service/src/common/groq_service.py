@@ -491,6 +491,18 @@ def groq_agent_chat(
     provider_turn_health = {}
     repair_mode = RepairMode.NONE
 
+    def wire_failure_details(default_code):
+        result = next((row['result'] for row in reversed(tool_calls_log)
+            if isinstance(row.get('result'), dict) and row['result'].get('failure_code')), {})
+        return {key: result.get(key) for key in ('failure_field', 'failure_json_pointer')} | {
+            'failure_code': result.get('failure_code', default_code),
+            'failure_class': result.get('failure_class', 'SEMANTIC_WIRE_PROTOCOL')}
+
+    def envelope_failure_details(issue):
+        return {'failure_class': 'PROVIDER_ENVELOPE_PROTOCOL',
+            'failure_code': 'missing_envelope' if str(issue).startswith('FORMAT_REQUIRED:') else 'authoritative_action_missing',
+            'failure_field': None, 'failure_json_pointer': '', 'validation_stage': 'provider_envelope'}
+
     def enter_repair(mode):
         nonlocal repair_mode
         repair_mode = mode
@@ -537,6 +549,18 @@ def groq_agent_chat(
         t0 = time.perf_counter()
         protocol_repair_round = bool(provider_turn_health.get('semantic_repair_pending'))
         if guarded:
+            simple_selection = bool(turn_state_provider and turn_state_provider().get('simple_selection'))
+            attempts_so_far = provider_turn_health.get('total_attempts', 0)
+            if simple_selection and attempts_so_far >= 2:
+                return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
+                    'error': 'semantic_repair_exhausted', 'error_class': 'MODEL_PROTOCOL',
+                    **wire_failure_details('selection_request_budget_exhausted')}
+            provider_turn_health['remaining_request_budget'] = 2 - attempts_so_far if simple_selection else None
+            provider_turn_health['request_reason'] = (
+                'semantic_wire_repair' if protocol_repair_round else
+                'provider_envelope_repair' if repair_mode == RepairMode.PRE_TOOL_RESPONSE_REPAIR else
+                'final_envelope_repair' if repair_mode == RepairMode.POST_TOOL_FINAL_ENVELOPE_REPAIR else
+                'contract_continuation' if round_idx else 'normal')
             from src.common.agent_provider_policy import completion
             if tool_surface_provider:
                 tools, tool_executors = tool_surface_provider(force_tools_disabled, required_repair_tool)
@@ -562,7 +586,9 @@ def groq_agent_chat(
             tier = model_tier_provider(round_idx, semantic_repairs, mutation_succeeded) if model_tier_provider else 'standard'
             resp, client, model, error = completion(current_messages, tools,
                 preferred=requested_provider or 'auto', explicit_model=agent_model, tier=tier,
-                max_tokens=max_tokens, required=force_tool_required, metrics=metrics,
+                max_tokens=max_tokens, required=force_tool_required or (
+                    repair_mode == RepairMode.PRE_TOOL_RESPONSE_REPAIR and len(tools or []) == 1
+                    and tools[0]['function']['name'] == 'semantic_select_products'), metrics=metrics,
                 compact_messages=context_compactor, turn_health=provider_turn_health, round_index=round_idx)
             success, last_err = resp is not None, error or ''
         else:
@@ -694,8 +720,7 @@ def groq_agent_chat(
             terminal_success = False
             confirmation_denied_stop = False
             batch_results = None
-            if guarded and semantic_batch_executor and any(
-                    str(tc.function.name).startswith('semantic_') for tc in assistant_msg.tool_calls):
+            if guarded and semantic_batch_executor:
                 # No member executes until the gateway has validated and frozen
                 # the entire response, including malformed/unknown siblings.
                 if len(assistant_msg.tool_calls) > 16 or len(tool_calls_log) + len(assistant_msg.tool_calls) > max_tool_rounds * 4:
@@ -859,11 +884,14 @@ def groq_agent_chat(
                 # normal selection/configuration step; the repair count stays
                 # unchanged and any second protocol fault is still terminal.
                 return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
-                        'error': 'semantic_repair_exhausted', 'error_class': 'MODEL_PROTOCOL'}
+                        'error': 'semantic_repair_exhausted', 'error_class': 'MODEL_PROTOCOL',
+                        **wire_failure_details('repair_goal_incomplete')}
             if protocol_repair_requested:
-                if protocol_repairs >= 1:
+                selection_budget = bool(turn_state_provider and turn_state_provider().get('simple_selection'))
+                if protocol_repairs >= 1 or selection_budget and dialogue_format_repairs + pre_tool_evidence_repairs >= 1:
                     return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
-                            'error': 'semantic_repair_exhausted', 'error_class': 'MODEL_PROTOCOL'}
+                            'error': 'semantic_repair_exhausted', 'error_class': 'MODEL_PROTOCOL',
+                            **wire_failure_details('semantic_repair_exhausted')}
                 protocol_repairs += 1
                 enter_repair(RepairMode.SEMANTIC_PROTOCOL_REPAIR)
                 provider_turn_health['semantic_repair_pending'] = True
@@ -944,8 +972,11 @@ def groq_agent_chat(
         # Prose actions have no execution authority. Semantic production
         # repairs use only advertised typed functions, never customer_actions.
         if guarded and provider_turn_health.get('semantic_repair_pending'):
+            if final_response_validator:
+                final_response_validator((assistant_msg.content or '').strip())
             return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
-                    'error': 'semantic_repair_exhausted', 'error_class': 'MODEL_PROTOCOL'}
+                    'error': 'semantic_repair_exhausted', 'error_class': 'MODEL_PROTOCOL',
+                    **wire_failure_details('repair_tool_missing')}
 
         # ── Case 2: Groq trả về text → kết thúc ──────────────────────────
         reply_text = (assistant_msg.content or "").strip()
@@ -959,7 +990,8 @@ def groq_agent_chat(
             if guarded and no_authority and str(issue).startswith('FORMAT_REQUIRED:'):
                 if dialogue_format_repairs or round_idx >= max_tool_rounds:
                     return {'reply': '', 'tool_calls_log': [], 'checkout_payload': None,
-                            'error': 'response_evidence_required', 'error_class': 'MODEL_PROTOCOL'}
+                            'error': 'response_evidence_required', 'error_class': 'MODEL_PROTOCOL',
+                            **envelope_failure_details(issue)}
                 dialogue_format_repairs += 1
                 enter_repair(RepairMode.PRE_TOOL_RESPONSE_REPAIR)
                 # No tool has executed: a corrected final OR a permitted
@@ -971,7 +1003,8 @@ def groq_agent_chat(
                 continue
             if repair_mode == RepairMode.PRE_TOOL_RESPONSE_REPAIR:
                 if (str(issue).startswith('TOOL_REQUIRED:') and round_idx < max_tool_rounds
-                        and pre_tool_evidence_repairs < 1):
+                        and pre_tool_evidence_repairs < 1 and not (
+                            turn_state_provider and turn_state_provider().get('simple_selection'))):
                     pre_tool_evidence_repairs += 1
                     if not turn_repair_controller:
                         enter_repair(RepairMode.NONE)
@@ -979,7 +1012,8 @@ def groq_agent_chat(
                     current_messages.append({'role': 'system', 'content': issue})
                     continue
                 return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
-                        'error': 'response_evidence_required', 'error_class': 'MODEL_PROTOCOL'}
+                        'error': 'response_evidence_required', 'error_class': 'MODEL_PROTOCOL',
+                        **envelope_failure_details(issue)}
             if (guarded and not no_authority and final_response_repair_allowed and final_response_repair_allowed(issue)
                     and (not turn_state_provider or turn_state_provider()['can_present'])):
                 if not final_envelope_repairs:
@@ -993,10 +1027,12 @@ def groq_agent_chat(
                     current_messages.append({'role': 'system', 'content': issue})
                     continue
                 return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
-                        'error': 'response_evidence_required', 'error_class': 'MODEL_PROTOCOL'}
+                        'error': 'response_evidence_required', 'error_class': 'MODEL_PROTOCOL',
+                        **envelope_failure_details(issue)}
             if repair_mode == RepairMode.POST_TOOL_FINAL_ENVELOPE_REPAIR:
                 return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
-                        'error': 'response_evidence_required', 'error_class': 'MODEL_PROTOCOL'}
+                        'error': 'response_evidence_required', 'error_class': 'MODEL_PROTOCOL',
+                        **envelope_failure_details(issue)}
             if round_idx < max_tool_rounds and not force_tools_disabled:
                 semantic_repairs += 1
                 force_tool_required = str(issue).startswith('TOOL_REQUIRED:')
@@ -1007,7 +1043,8 @@ def groq_agent_chat(
                 current_messages.append({'role': 'system', 'content': issue})
                 continue
             return {'reply': '', 'tool_calls_log': tool_calls_log, 'checkout_payload': checkout_payload,
-                    'error': 'response_evidence_required', 'error_class': 'MODEL_PROTOCOL'}
+                    'error': 'response_evidence_required', 'error_class': 'MODEL_PROTOCOL',
+                    **envelope_failure_details(issue)}
         logger.info("[Groq Agent] Final reply after %d tool rounds, len=%d", round_idx, len(reply_text))
         return {
             "reply": reply_text,

@@ -102,6 +102,7 @@ class SemanticOperation:
     terminal_for_goal: bool = False
     repair_prerequisites: tuple = ()
     repair_compatible_goals: tuple = ()
+    server_commitment: str = 'QUESTION'
 
     def exposed(self, context):
         return exposure_facts(context)[self.exposure_policy]
@@ -111,8 +112,7 @@ class SemanticOperation:
         return 'semantic_' + self.name.lower()
 
     def parameters(self):
-        # A READ function already declares its nonmutating meaning; no model
-        # commitment/evidence negotiation is needed. Writes quote current evidence.
+        # PRIVATE migration contract. Production exposes provider_parameters().
         props = deepcopy(self.fields)
         required = list(self.required)
         if self.access != 'READ':
@@ -124,6 +124,14 @@ class SemanticOperation:
             if self.target_required:
                 required.append('reference')
         return closed(props, required)
+
+    def provider_parameters(self):
+        spec = self.parameters()
+        for field in ('commitment', 'evidence'):
+            spec['properties'].pop(field, None)
+            if field in spec['required']:
+                spec['required'].remove(field)
+        return spec
 
     def schema(self):
         return {'type': 'function', 'function': {'name': self.function_name,
@@ -224,6 +232,11 @@ def operation_registry():
             terminal_for_goal=PROGRESS_POLICIES[name].terminal_for_goal,
             repair_prerequisites=tuple('semantic_' + n.lower() for n in PROGRESS_POLICIES[name].prerequisites),
             repair_compatible_goals=(PROGRESS_POLICIES[name].goal_family,))
+        from dataclasses import replace
+        op = replace(op, server_commitment=('QUESTION' if actual_access == 'READ' else
+            'AFFIRMED' if actual_access == 'FINAL_WRITE' else
+            'REJECTED' if name in {'DISCARD_PRODUCT_SELECTION', 'SKIP_VOUCHER', 'REMOVE_VOUCHER', 'DISCARD_ORDER_CHANGE'} else
+            'CORRECTION' if name in {'CONFIGURE_PRODUCT', 'UPDATE_CART_LINE'} else 'SELECTED'))
         registry[op.function_name] = op
 
     discovery = {'scope': SCOPE, 'product_family': {'type': 'string'}, 'requested_count': COUNT,

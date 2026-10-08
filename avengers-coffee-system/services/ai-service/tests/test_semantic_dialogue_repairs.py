@@ -144,3 +144,8 @@ def test_format_failure_is_bounded_without_business_tools(runtime):
     assert result['error'] == 'response_evidence_required'
     assert len(runtime.provider.requests) == 2 and not result['tool_calls_log']
     assert not runtime.reads and not runtime.writes
+
+
+# Historical migration probes use the private offline adapter explicitly.
+from test_semantic_control import private_migration_loop
+pytestmark = pytest.mark.usefixtures("private_migration_loop")

@@ -43,7 +43,7 @@ def test_voucher_fresh_eligibility_and_skip(runtime,monkeypatch):
     assert len(calls)==2
 
 
-def test_finish_cart_opens_voucher_then_choices_then_checkout_summary(semantic_runtime,monkeypatch):
+def test_finish_cart_opens_voucher_then_choices_then_checkout_summary(semantic_runtime,monkeypatch,private_migration_loop):
     runtime = semantic_runtime
     def send(message, operations):
         g = gateway_for(runtime, message)
@@ -196,7 +196,7 @@ def test_top_k_capped_and_context_no_full_catalog(runtime):
     assert len(runtime.provider.requests[0]['messages'])==2
 
 
-def test_multi_selection_options_change_mind_and_replacement(semantic_runtime):
+def test_multi_selection_options_change_mind_and_replacement(semantic_runtime, private_migration_loop):
     runtime = semantic_runtime
     def send(message, operations):
         g = gateway_for(runtime, message)
@@ -464,3 +464,5 @@ def exercise_scripted_gateway_without_language_shortcuts(monkeypatch):
     # production semantic mode never executes that router either.
     from src.agents import llm_tool_orchestrator
     monkeypatch.setattr(llm_tool_orchestrator, '_legacy_language_control', lambda *a: None)
+
+from test_semantic_control import private_migration_loop

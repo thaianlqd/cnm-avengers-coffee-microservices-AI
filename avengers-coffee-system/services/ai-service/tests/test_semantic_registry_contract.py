@@ -133,7 +133,8 @@ def test_missing_scope_is_protocol_fault_before_authority(runtime, name):
 def test_surface_only_semantic_functions(runtime):
     gateway = gateway_for(runtime)
     schemas, _ = gateway.tool_surface()
-    assert schemas and all(row['function']['name'] in {*REGISTRY, 'semantic_interrupt'} for row in schemas)
+    from src.agents.semantic_protocol import base_operation
+    assert schemas and all(base_operation(row['function']['name']) in {*REGISTRY, 'semantic_interrupt'} for row in schemas)
     assert sum(row['function']['name'] == 'semantic_interrupt' for row in schemas) == 1
     assert not any(row['function']['name'] == 'customer_actions' for row in schemas)
     assert not any('tool' in row['function']['parameters']['properties'] or

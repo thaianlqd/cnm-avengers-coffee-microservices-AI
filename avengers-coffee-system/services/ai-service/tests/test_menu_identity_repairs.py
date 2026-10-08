@@ -149,3 +149,8 @@ def test_corrected_empty_catalog_read_finishes_without_false_protocol_error(runt
                               'mutation_claims': [], 'evidence_quotes': []})}]
     result = runtime.turn(g.user_message)
     assert result['error'] is None and not result['ui_payload']['products'] and not runtime.writes
+
+
+# Historical migration probes use the private offline adapter explicitly.
+from test_semantic_control import private_migration_loop
+pytestmark = pytest.mark.usefixtures("private_migration_loop")

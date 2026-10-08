@@ -33,7 +33,7 @@ def test_existing_product_snapshot_suppresses_selection_rediscovery_and_option_p
     schemas, _ = g.tool_surface()
     assert g.turn_contract.goal_family == 'PRODUCT_SELECTION'
     assert g.turn_contract.goal_owner_operation == 'semantic_select_product'
-    assert {s['function']['name'] for s in schemas} == {'semantic_select_product'}
+    assert {s['function']['name'] for s in schemas} == {'semantic_select_products'}
     visible, focus = deepcopy(g.artifacts.visible), deepcopy(g.artifacts.focus)
     result = g.semantic_calls(calls(('semantic_discover_products', {'scope': 'food', 'planned_discovery_reads': 1})))[0]
     assert result['non_progress_reason'] == 'unneeded_prerequisite'

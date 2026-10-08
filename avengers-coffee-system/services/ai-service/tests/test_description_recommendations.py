@@ -195,3 +195,8 @@ def test_internal_identity_filter_is_bound_and_preserves_active_menu_scope(monke
     assert 'sp.ma_san_pham::text = ANY(:product_ids)' in query and untrusted_id not in query
     assert params['product_ids'] == [untrusted_id] and 'sp.trang_thai = TRUE' in query
     assert 'paths.root_name = ANY(:roots)' in query
+
+
+# Historical migration probes use the private offline adapter explicitly.
+from test_semantic_control import private_migration_loop
+pytestmark = pytest.mark.usefixtures("private_migration_loop")

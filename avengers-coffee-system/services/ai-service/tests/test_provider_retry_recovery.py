@@ -188,3 +188,8 @@ def test_new_no_tool_failure_still_reconciles_lost_completion_write(monkeypatch)
     assert send().error == 'network_timeout'
     assert calls == [1] and len(messages) == 2
     assert '_turn_status' not in responses['turn-1']
+
+
+# Historical migration probes use the private offline adapter explicitly.
+from test_semantic_control import private_migration_loop
+pytestmark = pytest.mark.usefixtures("private_migration_loop")

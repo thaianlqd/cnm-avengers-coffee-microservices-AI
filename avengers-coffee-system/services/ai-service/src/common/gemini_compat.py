@@ -45,7 +45,9 @@ def request_diagnostics(kwargs, compatibility_mode='canonical'):
         'schema_fingerprint': digest(tools),
         'has_response_format': bool(kwargs.get('response_format')),
         'response_format_type': 'json_object' if kwargs.get('response_format') == {'type': 'json_object'} else 'other' if kwargs.get('response_format') else 'none',
-        'tool_choice': kwargs.get('tool_choice') if kwargs.get('tool_choice') in {'auto', 'required', 'none'} else 'other' if kwargs.get('tool_choice') else 'none',
+        'tool_choice': (kwargs.get('tool_choice') if isinstance(kwargs.get('tool_choice'), str)
+            and kwargs['tool_choice'] in {'auto', 'required', 'none'} else
+            'named_function' if isinstance(kwargs.get('tool_choice'), dict) else 'other' if kwargs.get('tool_choice') else 'none'),
         'has_assistant_tool_calls': bool(calls), 'assistant_tool_call_count': len(calls),
         'tool_calls_per_message': [len(row.get('tool_calls') or []) for row in messages],
         'history_tool_set_fingerprint': digest(sorted(str(call.get('function', {}).get('name')) for call in calls)),

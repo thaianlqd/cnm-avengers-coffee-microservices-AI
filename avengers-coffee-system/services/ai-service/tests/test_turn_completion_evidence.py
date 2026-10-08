@@ -185,3 +185,8 @@ def test_read_projection_exposes_draft_separate_from_committed_cart(runtime):
     assert 'option_schema' not in projected['pending_products'][0]
     assert projected['completion']['mutated'] is False
     assert projected['completion']['pending_configuration'] is True
+
+
+# Historical migration probes use the private offline adapter explicitly.
+from test_semantic_control import private_migration_loop
+pytestmark = pytest.mark.usefixtures("private_migration_loop")

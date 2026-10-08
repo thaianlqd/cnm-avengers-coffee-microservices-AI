@@ -45,10 +45,10 @@ def test_pre_tool_wrong_valid_read_then_configuration_recovers_without_repeat(ru
     assert all(r['tool'] not in {'get_menu_categories', 'get_order_history', 'get_payment_options'} for r in result['tool_calls_log'])
     assert not result['ui_payload']['products'] and not result['ui_payload']['branches']
     surface = {r['function']['name'] for r in runtime.provider.requests[count + 1]['tools']}
-    assert surface == {'semantic_configure_product', 'semantic_use_product_defaults', 'semantic_interrupt'}
+    assert surface == {'semantic_configure_product', 'semantic_use_product_defaults', 'semantic_reset_product_defaults', 'semantic_interrupt'}
     assert metrics(caplog)['turn_progress'] == 'COMPLETED'
     assert metrics(caplog)['protocol_repair_count'] == 1
-    assert 'operation_outside_turn_contract' in caplog.text
+    assert 'operation_not_exposed' in caplog.text
     before = len(runtime.provider.requests)
     assert runtime.turn('Fixture configuration', client_message_id='continuity-once') == result
     assert len(runtime.provider.requests) == before and len(runtime.writes) == 1

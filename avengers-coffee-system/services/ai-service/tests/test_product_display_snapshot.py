@@ -31,9 +31,9 @@ def select(message, index, **extra):
 
 def selection_step(message, indexes):
     return {
-        'tool_calls': [{'id': 'select-'+str(index), 'type': 'function', 'function': {
-            'name': 'semantic_select_product', 'arguments': json.dumps(select(message,index))}}
-            for index in indexes]}
+        'tool_calls': [{'id': 'select-batch', 'type': 'function', 'function': {
+            'name': 'semantic_select_products', 'arguments': json.dumps({'selections': [
+                {'reference': {'kind': 'ordinal', 'index': index}} for index in indexes]})}}]}
 
 
 @pytest.mark.parametrize('count', [1,2,3])
@@ -56,7 +56,7 @@ def test_existing_snapshot_multi_selection_is_one_inference_or_two_with_format_r
     assert 'ProductSnapshotGrounding' in caplog.text
     if malformed:
         names = {r['function']['name'] for r in rt.provider.requests[1]['tools']}
-        assert names == {'semantic_select_product'}
+        assert names == {'semantic_select_products'}
     assert rt.turn(message, client_message_id='snapshot-selection') == result
     assert len(rt.provider.requests) == 1 + malformed
 
@@ -119,8 +119,9 @@ def test_malformed_existing_selection_cannot_escape_into_same_or_new_discovery(f
     rt.provider.steps = [{'content': '{broken'}, step('interrupt', {'target_domain': bad_domain}),
         selection_step(message, (1,2))]
     result = rt.turn(message)
-    assert result['error'] is None and len(rt.provider.requests) == 3
-    assert [p['product_id'] for p in cart_manager.get_checkout_prefs(rt.sid)['pending_products']] == ['101','102']
+    # One envelope correction exhausts the simple-selection repair budget.
+    assert result['error'] == 'semantic_repair_exhausted' and len(rt.provider.requests) == 2
+    assert not cart_manager.get_checkout_prefs(rt.sid).get('pending_products')
     assert ConversationMemory(rt.redis).load(rt.sid)['visible_snapshots']['products'] == before
     assert not rt.reads and not rt.writes and not result['ui_payload']['products']
 

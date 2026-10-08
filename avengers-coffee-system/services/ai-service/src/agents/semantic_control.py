@@ -64,6 +64,10 @@ def canonical_option_arguments(tool, args):
 
 
 def model_repair(code, **details):
+    details.setdefault('failure_code', code)
+    details.setdefault('failure_field', details.get('field') or details.get('target_field'))
+    details.setdefault('failure_json_pointer', '/' + details['failure_field'] if details['failure_field'] else '')
+    details.setdefault('failure_class', 'SEMANTIC_WIRE_PROTOCOL')
     return {'status': code, 'changed': False, 'recovery_kind': 'model_repair', 'error_class': 'MODEL_PROTOCOL',
         'message': 'Mình chưa thực hiện phần yêu cầu này; hệ thống đang kiểm tra lại đề xuất.', **details}
 
@@ -160,10 +164,11 @@ def failure(code, namespace=None, count=0):
     if namespace in labels and code in {'ambiguous_reference', 'unknown_reference', 'reference_conflict'}:
         message = f"Mình chưa xác định được đúng **{labels[namespace]}** bạn muốn chọn. Bạn cho mình tên hoặc số trong danh sách nhé."
     return {'status': code, 'message': message,
-            'unresolved_namespace': namespace, 'ambiguity_count': count, 'recovery_kind': 'clarify'}
+            'unresolved_namespace': namespace, 'ambiguity_count': count, 'recovery_kind': 'clarify',
+            'failure_class': 'SEMANTIC_GROUNDING', 'failure_code': code}
 
 
-def validate_commitment(action, access, message):
+def validate_commitment(action, access, message, *, authorized=False):
     commitment = action['commitment']
     if action.get('operation'):
         from src.agents.semantic_registry import operation_registry
@@ -186,7 +191,7 @@ def validate_commitment(action, access, message):
     if commitment not in allowed:
         return failure('semantic_commitment_required')
     evidence = action.get('evidence')
-    if not isinstance(evidence, str) or not evidence.strip() or evidence not in message:
+    if not authorized and (not isinstance(evidence, str) or not evidence.strip() or evidence not in message):
         return model_repair('missing_current_evidence', repair_hint='Quote the exact current customer span for this action; do not paraphrase or use history.')
     if action['tool'] in {'set_fulfillment_choice', 'set_payment_choice'}:
         facet = 'payment' if action['tool'] == 'set_payment_choice' else 'fulfillment'
@@ -198,7 +203,7 @@ def validate_commitment(action, access, message):
             return model_repair('missing_option_intent', repair_hint='Distinguish product SELECT from CONFIGURE and explicitly requested DEFAULTS.')
         if intent == 'DEFAULTS':
             defaults_evidence = action.get('defaults_evidence')
-            if not isinstance(defaults_evidence, str) or not defaults_evidence.strip() or defaults_evidence not in message:
+            if not authorized and (not isinstance(defaults_evidence, str) or not defaults_evidence.strip() or defaults_evidence not in message):
                 return model_repair('defaults_evidence_required', repair_hint='Defaults require a current customer request for defaults; otherwise SELECT/CONFIGURE without use_defaults.')
         elif action['args'].get('use_defaults'):
             return model_repair('defaults_not_authorized', repair_hint='Product selection is not default authorization. SELECT stages choices; CONFIGURE supplies actual values.')
@@ -386,6 +391,16 @@ def ground_action(gateway, action):
         args['use_defaults'] = True
     target = TOOL_TARGETS.get(action['tool'])
     reference = action.get('reference')
+    ledger = getattr(gateway, 'turn_authorizations', None)
+    frozen = ledger.product_targets.get(action.get('_turn_authorization_id')) if ledger else None
+    if frozen and ledger.verify(action):
+        product_id, row, fingerprint = frozen
+        snapshot = gateway.product_display_snapshot
+        if (snapshot.fingerprint != fingerprint or
+                (gateway.context.get('turn_product_snapshot') or {}).get('snapshot_id') != snapshot.snapshot_id):
+            return None, None, model_repair('product_snapshot_integrity', error_subtype='SNAPSHOT_MISMATCH')
+        args['product_id'] = product_id
+        return args, deepcopy(row), None
     if action['tool'] == 'resolve_location' and reference:
         namespace = reference.get('namespace', 'LOCATION' if reference['kind'] == 'literal' else 'PROFILE_ADDRESS')
         if namespace == 'LOCATION':
@@ -476,7 +491,7 @@ def ground_action(gateway, action):
         return None, None, error
     canonical = (row.get('product_name') if field in {'product_name', 'product_name_query'} else
                  identity(row, NAMESPACES[namespace][1]))
-    if namespace == 'FULFILLMENT':
+    if namespace == 'FULFILLMENT' and not action.get('_provider_operation'):
         # Literal canonical business labels are identity evidence. If quoted,
         # they cannot authorize a different enum. Implicit/paraphrased meaning
         # still belongs to the model; no phrase dictionary or choice inference.

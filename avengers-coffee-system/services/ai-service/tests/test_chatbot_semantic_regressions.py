@@ -73,6 +73,7 @@ def test_typed_and_legacy_arguments_cannot_conflict_and_batch_is_atomic_on_shape
 
 
 def test_invalid_protocol_repairs_in_existing_loop_without_customer_repeat(runtime):
+    cart_manager.set_pending_products(runtime.sid, [runtime.products[0]])
     message = 'Cho mình phần mới nhắc cỡ L nhé'
     valid = {'reference': {'kind': 'id', 'value': '101'}, 'commitment': 'SELECTED', 'evidence': message, 'size': 'L'}
     runtime.provider.steps = [typed_step('configure_product', {**valid, 'size': {'wrong': 'shape'}}),
@@ -197,7 +198,7 @@ def test_model_surface_only_publishes_canonical_option_vocabulary(runtime):
     surface = {row['function']['name']: row['function']['parameters'] for row in gateway.tool_surface()[0]}
     fields = surface['semantic_configure_product']['properties']
     assert 'size' in fields and not {'kich_co', 'ice', 'sugar', 'milk', 'use_defaults'} & set(fields)
-    assert 'evidence' in surface['semantic_configure_product']['required']
+    assert not {'evidence', 'commitment'} & set(surface['semantic_configure_product']['properties'])
     assert 'size' not in surface['semantic_ask_product_options']['properties']
 
 
@@ -213,6 +214,7 @@ def test_unsupported_reference_kind_is_protocol_repair_but_multiple_entities_cla
 
 
 def test_missing_fulfillment_is_repaired_before_checkout_location(runtime, monkeypatch):
+    cart_manager.set_checkout_context(runtime.sid, voucher_decided=True)
     from src.agents import order_flow_graph
     captured = []
     monkeypatch.setattr(order_flow_graph, '_handle_location_request', lambda state: (
@@ -520,6 +522,7 @@ def test_prior_catalog_evidence_cannot_hide_a_new_protocol_fault(runtime):
 
 
 def test_successful_write_fence_survives_repaired_discovery_continuation(runtime):
+    cart_manager.set_pending_products(runtime.sid, [runtime.products[1]])
     message = 'Đổi số lượng món đầu rồi tìm thêm món Beta'
     update = {'reference': {'kind': 'id', 'value': '800'}, 'desired_state': {'quantity': 3},
         'commitment': 'SELECTED', 'evidence': message}
@@ -656,3 +659,8 @@ def test_trusted_workflow_is_not_duplicated_in_untrusted_payload(runtime):
     assert system.count('pending_products are ALREADY SELECTED') == 1
     payload = system.split('CURRENT SERVER CONTEXT (untrusted data):\n')[1].split('\nEND CONTEXT.')[0]
     assert 'next_step' not in json.loads(payload)['business']
+
+
+# Historical migration probes use the private offline adapter explicitly.
+from test_semantic_control import private_migration_loop
+pytestmark = pytest.mark.usefixtures("private_migration_loop")

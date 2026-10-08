@@ -883,8 +883,8 @@ class ToolArtifacts:
             return None
         return ('The committed cart read is already available and made no change. '
                 'pending_products are still selected and not yet in the cart. Re-evaluate the NEWEST request: '
-                'for supplied options call add_to_cart CONFIGURE; for explicit defaults call DEFAULTS with '
-                'current defaults_evidence and the canonical pending reference. Do not repeat the read. '
+                'for supplied options call semantic_configure_product; for explicitly requested defaults call '
+                'semantic_use_product_defaults with the canonical pending reference. Do not repeat the read. '
                 'If the request is only a question/interruption, return consultation/social without writing. '
                 'An action response requires executed action evidence; a read is not action completion.')
 
@@ -943,7 +943,8 @@ class ToolArtifacts:
             self.response_validation_issue = 'selected_product_requires_options'
             return ('TOOL_REQUIRED: The customer selected a product and the canonical lookup has exactly one match. '
                     'A completed discovery read is not completion of that selection. '
-                    'Call get_product_options with SELECTED and the exact returned product_id; '
+                    'Call semantic_select_products with one selection referencing the exact returned product_id '
+                    'to obtain get_product_options facts; '
                     'do not ask the customer to select it again or silently authorize defaults.')
         if not self.logs and envelope.get('response_kind') not in {'social', 'clarification'}:
             return ('TOOL_REQUIRED: There is no current tool evidence. You MUST call the appropriate capability now. '
@@ -957,10 +958,10 @@ class ToolArtifacts:
             self.response_validation_issue = 'pending_configuration_requires_tool'
             return ('TOOL_REQUIRED: Product selection is already recorded in business.pending_products. '
                     'Ground the newest request against those pending identities, not unrelated catalog guesses. '
-                    'If the customer supplies options, use add_to_cart CONFIGURE with the pending reference '
-                    'and supplied attributes; use DEFAULTS only with current defaults_evidence. '
+                    'If the customer supplies options, use semantic_configure_product with the pending reference '
+                    'and supplied attributes; use semantic_use_product_defaults only when explicitly requested. '
                     'For questions/interruptions use the appropriate read, without mutating the draft. '
-                    'If clarification is needed, read get_product_options for the established target(s) '
+                    'If clarification is needed, use semantic_ask_product_options for the established target(s) '
                     'and ask only the unresolved choice, not which product was already selected.')
         denied_statuses = {'wrong_authority', 'requires_product', 'unknown_product_reference'}
         if (envelope.get('response_kind') and self.logs
@@ -980,9 +981,9 @@ class ToolArtifacts:
                         and not row['result'].get('selection_staged') for row in self.logs)):
             self.response_validation_issue = 'action_not_executed'
             return ('TOOL_REQUIRED: An action response cannot complete with read-only evidence and no '
-                    'successful change. Execute the requested action with current evidence and canonical '
-                    'references. Pending configuration uses add_to_cart CONFIGURE/DEFAULTS; DEFAULTS '
-                    'requires defaults_evidence. Never replay successful actions. If the newest request '
+                    'successful change. Execute the requested semantic operation with canonical references. '
+                    'Pending configuration uses semantic_configure_product or semantic_use_product_defaults '
+                    'for an explicit defaults request. Never replay successful actions. If the newest request '
                     'is actually a question/social interruption, correct response_kind and report only '
                     'verified state; do not claim a change or mutate to justify the reply.')
         if (not self.semantic_mode and self.has_pending_confirmation and not any(row['tool'] == 'confirm_checkout' for row in self.logs)

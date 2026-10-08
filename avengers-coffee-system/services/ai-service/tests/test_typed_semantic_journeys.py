@@ -20,6 +20,7 @@ ADDRESS = '17 Đường Hoa, Phường 3, Quận 7, Thành phố Hồ Chí Minh'
 
 
 def send(rt, message, *proposals, allow_error=False, client_message_id=None):
+    from semantic_scripted_steps import provider_pair
     calls = []
     for name, fields in proposals:
         name = 'semantic_' + name.lower()
@@ -27,8 +28,26 @@ def send(rt, message, *proposals, allow_error=False, client_message_id=None):
         if REGISTRY[name].access != 'READ':
             data.setdefault('commitment', 'SELECTED')
             data.setdefault('evidence', message)
-        calls.append((name, data))
+        name, data = provider_pair(name, data)
+        if name == 'semantic_select_products' and calls and calls[-1][0] == name:
+            calls[-1][1]['selections'].extend(data['selections'])
+        else:
+            calls.append((name, data))
     rt.provider.plan(calls)
+    # Scripts explicitly choose a domain switch when the normal state surface
+    # does not expose their goal; no production text routing is involved.
+    from test_semantic_control import gateway_for
+    from src.agents.semantic_protocol import base_operation
+    from semantic_scripted_steps import step
+    probe = gateway_for(rt, message)
+    exposed = {r['function']['name'] for r in probe.tool_surface()[0]}
+    if calls and calls[0][0] not in exposed and REGISTRY[base_operation(calls[0][0])].access != 'READ':
+        op = REGISTRY[base_operation(calls[-1][0])]
+        if len(calls) > 1:
+            final = rt.provider.steps[-1]
+            rt.provider.steps = [step('interrupt', {'target_domain': op.goal_family})] + [step(n, data) for n, data in calls] + [final]
+        else:
+            rt.provider.steps.insert(0, step('interrupt', {'target_domain': op.goal_family}))
     rt.provider.steps[-1] = {'content': json.dumps({'response_kind': 'consultation',
         'reply': 'Dạ, mình gửi thông tin đã xác minh.', 'mutation_claims': [], 'evidence_quotes': []})}
     result = rt.turn(message, **({'client_message_id': client_message_id} if client_message_id else {}))
@@ -254,7 +273,7 @@ def test_journey_j_social_and_faq_interruptions_preserve_pending_product(runtime
 def test_journey_k_protocol_repair_signed_continuation_and_no_write_replay(runtime):
     runtime.provider.base_url = 'https://generativelanguage.googleapis.com/v1beta/openai/'
     message = 'Sửa dòng đầu thành ba ly'
-    bad = {'commitment': 'CORRECTION', 'evidence': message, 'reference': {'kind': 'ordinal', 'index': 1},
+    bad = {'reference': {'kind': 'ordinal', 'index': 1},
            'desired_state': {'quantity': 3}, 'payment_method': 'VNPAY'}
     good = {k: v for k, v in bad.items() if k != 'payment_method'}
     runtime.provider.plan([('semantic_update_cart_line', good)])

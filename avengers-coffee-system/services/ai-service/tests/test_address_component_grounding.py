@@ -121,3 +121,8 @@ def test_partial_delivery_address_survives_model_history_compaction(runtime):
     view, _ = model_projection({**g.context, 'recent': [{'role': 'user', 'content': 'x' * 20000}]})
     assert view['business']['checkout']['partial_delivery_address'] == partial
     assert 'LOCATION' in view['business']['next_step']
+
+
+# Historical migration probes use the private offline adapter explicitly.
+from test_semantic_control import private_migration_loop
+pytestmark = pytest.mark.usefixtures("private_migration_loop")
