@@ -308,10 +308,10 @@ def test_semantic_repair_uses_auto_same_key_and_signed_history(wire, monkeypatch
     from src.agents import llm_tool_orchestrator
     monkeypatch.setattr(llm_tool_orchestrator, 'run_llm_tool_turn', wire.runtime.semantic_orchestrator)
     message = 'Lấy món Alpha cỡ L nhé'
-    proposal = {'commitment': 'SELECTED', 'args': {'product_id': '101', 'size': 'L'},
-        'option_intent': 'CONFIGURE', 'evidence': message}
-    wire.steps.extend([tool('customer_actions', {'actions': [proposal]}),
-        tool('customer_actions', {'actions': [{**proposal, 'tool': 'add_to_cart'}]}, SIGNATURE_B)])
+    proposal = {'commitment': 'SELECTED', 'reference': {'kind': 'id', 'value': '101'},
+        'size': 'L', 'evidence': message}
+    wire.steps.extend([tool('semantic_configure_product', {**proposal, 'foreign': True}),
+        tool('semantic_configure_product', proposal, SIGNATURE_B)])
     result = wire.runtime.turn(message)
     assert result['error'] is None and len(wire.runtime.writes) == 1
     assert len(wire.sent) == 2 and len(set(wire.slots)) == 1
@@ -336,13 +336,21 @@ def test_actions_in_final_json_are_unexecuted_until_tool_repair_and_siblings_sur
     def corrected(payload):
         assert not wire.runtime.writes  # The prose claim had no authority.
         assert 'server retains' in json.dumps(payload['messages'], ensure_ascii=False).lower()
-        return tool('customer_actions', {'actions': [remove]})
-    wire.steps.extend([{'content': '```json\n' + json.dumps(misplaced, ensure_ascii=False) + '\n```'}, corrected])
+        assert 'Call customer_actions' not in json.dumps(payload['messages'])
+        first = tool('semantic_remove_cart_line', {'commitment': 'AFFIRMED', 'evidence': remove['evidence'],
+            'reference': {'kind': 'ordinal', 'index': 2}})
+        second = tool('semantic_update_cart_line', {'commitment': 'AFFIRMED', 'evidence': update['evidence'],
+            'reference': {'kind': 'ordinal', 'index': 1}, 'desired_state': {'quantity': 3}})
+        second['tool_calls'][0]['id'] = 'sibling'
+        first['tool_calls'] += second['tool_calls']
+        return first
+    wire.steps.extend([{'content': '```json\n' + json.dumps(misplaced, ensure_ascii=False) + '\n```'},
+        tool('semantic_interrupt', {'target_domain': 'CART_EDIT'}), corrected])
     result = wire.runtime.turn(message)
-    assert result['error'] is None and len(wire.sent) == 2
+    assert result['error'] is None and len(wire.sent) == 3
     assert len(wire.runtime.writes) == 2
     assert cart_manager.get_cart(wire.runtime.sid)['items'][0]['quantity'] == 3
-    assert turn_metrics(caplog)['protocol_repair_count'] == 1
+    assert turn_metrics(caplog)['dialogue_format_repair_count'] == 1
 
 
 @pytest.mark.parametrize('after_write', [False, True])

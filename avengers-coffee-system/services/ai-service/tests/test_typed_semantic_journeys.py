@@ -278,12 +278,12 @@ def test_recommendation_to_family_discovery_selection_and_configuration(runtime,
         'scope': 'drink', 'concepts': ['thanh mát', 'chua nhẹ'], 'planned_discovery_reads': 1}))
     assert [p['product_id'] for p in recommended['ui_payload']['products']] == ['101']
     from test_semantic_repair_modes import step
-    runtime.provider.steps = ([{'content': '{broken'}] if malformed_first else []) + [step('discover_products', {
+    runtime.provider.steps = ([{'content': '{broken'}, step('interrupt', {'target_domain': 'DISCOVERY'})] if malformed_first else []) + [step('discover_products', {
         'scope': 'all', 'product_family': 'Beta', 'planned_discovery_reads': 1})]
     request_before = len(runtime.provider.requests)
     found = runtime.turn('Synthetic change of mind to Beta family')
     assert found['error'] is None and [p['product_id'] for p in found['ui_payload']['products']] == ['102']
-    assert len(runtime.provider.requests) - request_before == 1 + malformed_first
+    assert len(runtime.provider.requests) - request_before == 1 + 2 * malformed_first
     assert runtime.provider.requests[-1]['tools']
     discovery = next(row for row in found['tool_calls_log'] if row['tool'] == 'filter_catalog')
     assert discovery['args']['search_text'].casefold() == 'beta' and discovery['args']['category'] == 'all'

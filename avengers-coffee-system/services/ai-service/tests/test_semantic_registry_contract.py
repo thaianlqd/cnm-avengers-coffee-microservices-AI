@@ -133,7 +133,8 @@ def test_missing_scope_is_protocol_fault_before_authority(runtime, name):
 def test_surface_only_semantic_functions(runtime):
     gateway = gateway_for(runtime)
     schemas, _ = gateway.tool_surface()
-    assert schemas and all(row['function']['name'] in REGISTRY for row in schemas)
+    assert schemas and all(row['function']['name'] in {*REGISTRY, 'semantic_interrupt'} for row in schemas)
+    assert sum(row['function']['name'] == 'semantic_interrupt' for row in schemas) == 1
     assert not any(row['function']['name'] == 'customer_actions' for row in schemas)
     assert not any('tool' in row['function']['parameters']['properties'] or
         'args' in row['function']['parameters']['properties'] for row in schemas)
@@ -204,7 +205,7 @@ def test_invalid_typed_patch_keeps_separately_valid_entry_target(runtime):
     action_id = row['action_id']
     conflict = gateway.semantic_calls(calls(('semantic_update_cart_line',
         {**original, 'reference': {'kind': 'ordinal', 'index': 1}})))[0]
-    assert not runtime.writes and conflict['results'][0]['result']['status'] == 'repair_target_conflict'
+    assert not runtime.writes and conflict['status'] == 'semantic_drift' and conflict['non_progress_reason'] == 'canonical_target_changed'
     gateway.semantic_calls(calls(('semantic_update_cart_line', original)))
     assert len(runtime.writes) == 1 and runtime.writes[0][1] == '801'
     assert gateway.semantic_plan.actions[0]['action_id'] == action_id
@@ -220,7 +221,7 @@ def test_malformed_typed_proposals_cannot_rebind_other_domain_targets(runtime, n
     gateway.semantic_calls(calls((name, {**value, **foreign})))
     assert gateway.semantic_plan.actions[0]['bound_target'][2] == original
     result = gateway.semantic_calls(calls((name, {**value, 'reference': {'kind': 'id', 'value': replacement}})))[0]
-    assert result['results'][0]['result']['status'] == 'repair_target_conflict'
+    assert result['status'] == 'semantic_drift' and result['non_progress_reason'] == 'canonical_target_changed'
     assert not runtime.writes and not cart_manager.get_checkout_prefs(runtime.sid).get('pending_products')
     assert not cart_manager.get_checkout_prefs(runtime.sid).get('payment_method')
 

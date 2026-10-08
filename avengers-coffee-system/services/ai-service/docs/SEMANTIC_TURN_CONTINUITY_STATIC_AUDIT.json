@@ -1,0 +1,4852 @@
+{
+  "STARTING_HEAD": "1e6ca05c2c37536b25a7767154757eff558087f1",
+  "LIVE_PROVIDER_REQUESTS": 0,
+  "business_operations": 48,
+  "control_operations": 1,
+  "normal_companion_goals": {
+    "PRODUCT_CONFIGURATION": [
+      "PRODUCT_SELECTION",
+      "CART_EDIT",
+      "GENERIC_CONSULTATION"
+    ],
+    "CART_EDIT": [
+      "PRODUCT_SELECTION",
+      "GENERIC_CONSULTATION"
+    ],
+    "VOUCHER": [
+      "CART_EDIT"
+    ],
+    "FULFILLMENT": [
+      "LOCATION",
+      "PAYMENT"
+    ],
+    "LOCATION": [
+      "FULFILLMENT",
+      "PAYMENT"
+    ],
+    "PAYMENT": [
+      "CART_EDIT",
+      "FULFILLMENT",
+      "LOCATION"
+    ],
+    "CHECKOUT": [
+      "CART_EDIT",
+      "FULFILLMENT",
+      "LOCATION",
+      "PAYMENT"
+    ],
+    "ORDER_CHANGE": [
+      "ORDER_READ"
+    ]
+  },
+  "states": [
+    {
+      "state": "BROWSING",
+      "state_obligation": null,
+      "repair_goal": "GENERIC_CONSULTATION",
+      "before_normal": {
+        "operation_count": 20,
+        "schema_chars": 9985,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_ask_product_review",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_find_nearby_branches",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order"
+        ]
+      },
+      "before_pre_tool_repair": {
+        "operation_count": 20,
+        "schema_chars": 9985,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_ask_product_review",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_find_nearby_branches",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order"
+        ]
+      },
+      "normal": {
+        "operation_count": 21,
+        "schema_chars": 10657,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_ask_product_review",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_find_nearby_branches",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order",
+          "semantic_interrupt"
+        ]
+      },
+      "pre_tool_repair": {
+        "operation_count": 1,
+        "schema_chars": 672,
+        "operations": [
+          "semantic_interrupt"
+        ]
+      },
+      "normal_justification": {
+        "semantic_discover_products": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_recommend_by_preference": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_rank_by_sales": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_rank_by_price": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_discover_new_products": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_rank_by_rating": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_read_menu": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_select_product": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_ask_product_options": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_ask_product_review": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_ask_knowledge": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_read_cart": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_read_profile_addresses": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_resolve_new_location": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_find_nearby_branches": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_read_branch_ratings": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_ask_branch_review": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_read_order_history": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_read_order": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_track_order": "State policy permits this domain and no stronger unfinished obligation exists."
+      },
+      "interrupt_justification": "Control only, no business executor, one conditional continuation; preserves drafts.",
+      "exact_protocol_repair": {
+        "semantic_discover_products": {
+          "operation_count": 1,
+          "schema_chars": 1057,
+          "operations": [
+            "semantic_discover_products"
+          ]
+        },
+        "semantic_recommend_by_preference": {
+          "operation_count": 1,
+          "schema_chars": 729,
+          "operations": [
+            "semantic_recommend_by_preference"
+          ]
+        },
+        "semantic_rank_by_sales": {
+          "operation_count": 1,
+          "schema_chars": 620,
+          "operations": [
+            "semantic_rank_by_sales"
+          ]
+        },
+        "semantic_rank_by_price": {
+          "operation_count": 1,
+          "schema_chars": 577,
+          "operations": [
+            "semantic_rank_by_price"
+          ]
+        },
+        "semantic_discover_new_products": {
+          "operation_count": 1,
+          "schema_chars": 510,
+          "operations": [
+            "semantic_discover_new_products"
+          ]
+        },
+        "semantic_rank_by_rating": {
+          "operation_count": 1,
+          "schema_chars": 496,
+          "operations": [
+            "semantic_rank_by_rating"
+          ]
+        },
+        "semantic_read_menu": {
+          "operation_count": 1,
+          "schema_chars": 193,
+          "operations": [
+            "semantic_read_menu"
+          ]
+        },
+        "semantic_select_product": {
+          "operation_count": 3,
+          "schema_chars": 2488,
+          "operations": [
+            "semantic_discover_products",
+            "semantic_select_product",
+            "semantic_ask_product_options"
+          ]
+        },
+        "semantic_ask_product_options": {
+          "operation_count": 1,
+          "schema_chars": 596,
+          "operations": [
+            "semantic_ask_product_options"
+          ]
+        },
+        "semantic_ask_product_review": {
+          "operation_count": 1,
+          "schema_chars": 552,
+          "operations": [
+            "semantic_ask_product_review"
+          ]
+        },
+        "semantic_ask_knowledge": {
+          "operation_count": 1,
+          "schema_chars": 486,
+          "operations": [
+            "semantic_ask_knowledge"
+          ]
+        },
+        "semantic_read_cart": {
+          "operation_count": 1,
+          "schema_chars": 193,
+          "operations": [
+            "semantic_read_cart"
+          ]
+        },
+        "semantic_read_profile_addresses": {
+          "operation_count": 1,
+          "schema_chars": 219,
+          "operations": [
+            "semantic_read_profile_addresses"
+          ]
+        },
+        "semantic_resolve_new_location": {
+          "operation_count": 2,
+          "schema_chars": 1398,
+          "operations": [
+            "semantic_set_fulfillment",
+            "semantic_resolve_new_location"
+          ]
+        },
+        "semantic_find_nearby_branches": {
+          "operation_count": 1,
+          "schema_chars": 255,
+          "operations": [
+            "semantic_find_nearby_branches"
+          ]
+        },
+        "semantic_read_branch_ratings": {
+          "operation_count": 1,
+          "schema_chars": 213,
+          "operations": [
+            "semantic_read_branch_ratings"
+          ]
+        },
+        "semantic_ask_branch_review": {
+          "operation_count": 1,
+          "schema_chars": 494,
+          "operations": [
+            "semantic_ask_branch_review"
+          ]
+        },
+        "semantic_read_order_history": {
+          "operation_count": 1,
+          "schema_chars": 268,
+          "operations": [
+            "semantic_read_order_history"
+          ]
+        },
+        "semantic_read_order": {
+          "operation_count": 1,
+          "schema_chars": 490,
+          "operations": [
+            "semantic_read_order"
+          ]
+        },
+        "semantic_track_order": {
+          "operation_count": 1,
+          "schema_chars": 492,
+          "operations": [
+            "semantic_track_order"
+          ]
+        }
+      }
+    },
+    {
+      "state": "PRODUCT_SELECTED",
+      "state_obligation": "PRODUCT_CONFIGURATION",
+      "repair_goal": "PRODUCT_CONFIGURATION",
+      "before_normal": {
+        "operation_count": 25,
+        "schema_chars": 13980,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_configure_product",
+          "semantic_use_product_defaults",
+          "semantic_discard_product_selection",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_review",
+          "semantic_ask_product_price",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_find_nearby_branches",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order"
+        ]
+      },
+      "before_pre_tool_repair": {
+        "operation_count": 25,
+        "schema_chars": 13980,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_configure_product",
+          "semantic_use_product_defaults",
+          "semantic_discard_product_selection",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_review",
+          "semantic_ask_product_price",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_find_nearby_branches",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order"
+        ]
+      },
+      "normal": {
+        "operation_count": 9,
+        "schema_chars": 6291,
+        "operations": [
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_configure_product",
+          "semantic_use_product_defaults",
+          "semantic_discard_product_selection",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_price",
+          "semantic_read_cart",
+          "semantic_interrupt"
+        ]
+      },
+      "pre_tool_repair": {
+        "operation_count": 4,
+        "schema_chars": 3088,
+        "operations": [
+          "semantic_ask_product_options",
+          "semantic_configure_product",
+          "semantic_use_product_defaults",
+          "semantic_interrupt"
+        ]
+      },
+      "normal_justification": {
+        "semantic_select_product": "PRODUCT_SELECTION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_ask_product_options": "PRODUCT_CONFIGURATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_configure_product": "PRODUCT_CONFIGURATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_use_product_defaults": "PRODUCT_CONFIGURATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_discard_product_selection": "PRODUCT_SELECTION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_ask_product_fact": "GENERIC_CONSULTATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_ask_product_price": "GENERIC_CONSULTATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_read_cart": "CART_EDIT is the unfinished domain or a registered local business companion; executor authorization also required."
+      },
+      "interrupt_justification": "Control only, no business executor, one conditional continuation; preserves drafts.",
+      "exact_protocol_repair": {
+        "semantic_select_product": {
+          "operation_count": 3,
+          "schema_chars": 2488,
+          "operations": [
+            "semantic_discover_products",
+            "semantic_select_product",
+            "semantic_ask_product_options"
+          ]
+        },
+        "semantic_ask_product_options": {
+          "operation_count": 1,
+          "schema_chars": 596,
+          "operations": [
+            "semantic_ask_product_options"
+          ]
+        },
+        "semantic_configure_product": {
+          "operation_count": 2,
+          "schema_chars": 1659,
+          "operations": [
+            "semantic_ask_product_options",
+            "semantic_configure_product"
+          ]
+        },
+        "semantic_use_product_defaults": {
+          "operation_count": 2,
+          "schema_chars": 1353,
+          "operations": [
+            "semantic_ask_product_options",
+            "semantic_use_product_defaults"
+          ]
+        },
+        "semantic_discard_product_selection": {
+          "operation_count": 1,
+          "schema_chars": 734,
+          "operations": [
+            "semantic_discard_product_selection"
+          ]
+        },
+        "semantic_ask_product_fact": {
+          "operation_count": 1,
+          "schema_chars": 675,
+          "operations": [
+            "semantic_ask_product_fact"
+          ]
+        },
+        "semantic_ask_product_price": {
+          "operation_count": 1,
+          "schema_chars": 766,
+          "operations": [
+            "semantic_ask_product_price"
+          ]
+        },
+        "semantic_read_cart": {
+          "operation_count": 1,
+          "schema_chars": 193,
+          "operations": [
+            "semantic_read_cart"
+          ]
+        }
+      }
+    },
+    {
+      "state": "PRODUCT_CONFIGURATION",
+      "state_obligation": "PRODUCT_CONFIGURATION",
+      "repair_goal": "PRODUCT_CONFIGURATION",
+      "before_normal": {
+        "operation_count": 25,
+        "schema_chars": 13980,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_configure_product",
+          "semantic_use_product_defaults",
+          "semantic_discard_product_selection",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_review",
+          "semantic_ask_product_price",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_find_nearby_branches",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order"
+        ]
+      },
+      "before_pre_tool_repair": {
+        "operation_count": 25,
+        "schema_chars": 13980,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_configure_product",
+          "semantic_use_product_defaults",
+          "semantic_discard_product_selection",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_review",
+          "semantic_ask_product_price",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_find_nearby_branches",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order"
+        ]
+      },
+      "normal": {
+        "operation_count": 9,
+        "schema_chars": 6291,
+        "operations": [
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_configure_product",
+          "semantic_use_product_defaults",
+          "semantic_discard_product_selection",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_price",
+          "semantic_read_cart",
+          "semantic_interrupt"
+        ]
+      },
+      "pre_tool_repair": {
+        "operation_count": 4,
+        "schema_chars": 3088,
+        "operations": [
+          "semantic_ask_product_options",
+          "semantic_configure_product",
+          "semantic_use_product_defaults",
+          "semantic_interrupt"
+        ]
+      },
+      "normal_justification": {
+        "semantic_select_product": "PRODUCT_SELECTION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_ask_product_options": "PRODUCT_CONFIGURATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_configure_product": "PRODUCT_CONFIGURATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_use_product_defaults": "PRODUCT_CONFIGURATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_discard_product_selection": "PRODUCT_SELECTION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_ask_product_fact": "GENERIC_CONSULTATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_ask_product_price": "GENERIC_CONSULTATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_read_cart": "CART_EDIT is the unfinished domain or a registered local business companion; executor authorization also required."
+      },
+      "interrupt_justification": "Control only, no business executor, one conditional continuation; preserves drafts.",
+      "exact_protocol_repair": {
+        "semantic_select_product": {
+          "operation_count": 3,
+          "schema_chars": 2488,
+          "operations": [
+            "semantic_discover_products",
+            "semantic_select_product",
+            "semantic_ask_product_options"
+          ]
+        },
+        "semantic_ask_product_options": {
+          "operation_count": 1,
+          "schema_chars": 596,
+          "operations": [
+            "semantic_ask_product_options"
+          ]
+        },
+        "semantic_configure_product": {
+          "operation_count": 2,
+          "schema_chars": 1659,
+          "operations": [
+            "semantic_ask_product_options",
+            "semantic_configure_product"
+          ]
+        },
+        "semantic_use_product_defaults": {
+          "operation_count": 2,
+          "schema_chars": 1353,
+          "operations": [
+            "semantic_ask_product_options",
+            "semantic_use_product_defaults"
+          ]
+        },
+        "semantic_discard_product_selection": {
+          "operation_count": 1,
+          "schema_chars": 734,
+          "operations": [
+            "semantic_discard_product_selection"
+          ]
+        },
+        "semantic_ask_product_fact": {
+          "operation_count": 1,
+          "schema_chars": 675,
+          "operations": [
+            "semantic_ask_product_fact"
+          ]
+        },
+        "semantic_ask_product_price": {
+          "operation_count": 1,
+          "schema_chars": 766,
+          "operations": [
+            "semantic_ask_product_price"
+          ]
+        },
+        "semantic_read_cart": {
+          "operation_count": 1,
+          "schema_chars": 193,
+          "operations": [
+            "semantic_read_cart"
+          ]
+        }
+      }
+    },
+    {
+      "state": "CART",
+      "state_obligation": null,
+      "repair_goal": "GENERIC_CONSULTATION",
+      "before_normal": {
+        "operation_count": 30,
+        "schema_chars": 15446,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_review",
+          "semantic_ask_product_price",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_cart_total",
+          "semantic_update_cart_line",
+          "semantic_remove_cart_line",
+          "semantic_finish_cart",
+          "semantic_read_eligible_vouchers",
+          "semantic_read_payment_options",
+          "semantic_set_payment",
+          "semantic_set_fulfillment",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_find_nearby_branches",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order"
+        ]
+      },
+      "before_pre_tool_repair": {
+        "operation_count": 30,
+        "schema_chars": 15446,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_review",
+          "semantic_ask_product_price",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_cart_total",
+          "semantic_update_cart_line",
+          "semantic_remove_cart_line",
+          "semantic_finish_cart",
+          "semantic_read_eligible_vouchers",
+          "semantic_read_payment_options",
+          "semantic_set_payment",
+          "semantic_set_fulfillment",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_find_nearby_branches",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order"
+        ]
+      },
+      "normal": {
+        "operation_count": 31,
+        "schema_chars": 16118,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_review",
+          "semantic_ask_product_price",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_cart_total",
+          "semantic_update_cart_line",
+          "semantic_remove_cart_line",
+          "semantic_finish_cart",
+          "semantic_read_eligible_vouchers",
+          "semantic_read_payment_options",
+          "semantic_set_payment",
+          "semantic_set_fulfillment",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_find_nearby_branches",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order",
+          "semantic_interrupt"
+        ]
+      },
+      "pre_tool_repair": {
+        "operation_count": 3,
+        "schema_chars": 2113,
+        "operations": [
+          "semantic_ask_product_fact",
+          "semantic_ask_product_price",
+          "semantic_interrupt"
+        ]
+      },
+      "normal_justification": {
+        "semantic_discover_products": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_recommend_by_preference": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_rank_by_sales": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_rank_by_price": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_discover_new_products": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_rank_by_rating": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_read_menu": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_select_product": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_ask_product_options": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_ask_product_fact": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_ask_product_review": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_ask_product_price": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_ask_knowledge": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_read_cart": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_read_cart_total": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_update_cart_line": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_remove_cart_line": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_finish_cart": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_read_eligible_vouchers": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_read_payment_options": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_set_payment": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_set_fulfillment": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_read_profile_addresses": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_resolve_new_location": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_find_nearby_branches": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_read_branch_ratings": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_ask_branch_review": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_read_order_history": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_read_order": "State policy permits this domain and no stronger unfinished obligation exists.",
+        "semantic_track_order": "State policy permits this domain and no stronger unfinished obligation exists."
+      },
+      "interrupt_justification": "Control only, no business executor, one conditional continuation; preserves drafts.",
+      "exact_protocol_repair": {
+        "semantic_discover_products": {
+          "operation_count": 1,
+          "schema_chars": 1057,
+          "operations": [
+            "semantic_discover_products"
+          ]
+        },
+        "semantic_recommend_by_preference": {
+          "operation_count": 1,
+          "schema_chars": 729,
+          "operations": [
+            "semantic_recommend_by_preference"
+          ]
+        },
+        "semantic_rank_by_sales": {
+          "operation_count": 1,
+          "schema_chars": 620,
+          "operations": [
+            "semantic_rank_by_sales"
+          ]
+        },
+        "semantic_rank_by_price": {
+          "operation_count": 1,
+          "schema_chars": 577,
+          "operations": [
+            "semantic_rank_by_price"
+          ]
+        },
+        "semantic_discover_new_products": {
+          "operation_count": 1,
+          "schema_chars": 510,
+          "operations": [
+            "semantic_discover_new_products"
+          ]
+        },
+        "semantic_rank_by_rating": {
+          "operation_count": 1,
+          "schema_chars": 496,
+          "operations": [
+            "semantic_rank_by_rating"
+          ]
+        },
+        "semantic_read_menu": {
+          "operation_count": 1,
+          "schema_chars": 193,
+          "operations": [
+            "semantic_read_menu"
+          ]
+        },
+        "semantic_select_product": {
+          "operation_count": 3,
+          "schema_chars": 2488,
+          "operations": [
+            "semantic_discover_products",
+            "semantic_select_product",
+            "semantic_ask_product_options"
+          ]
+        },
+        "semantic_ask_product_options": {
+          "operation_count": 1,
+          "schema_chars": 596,
+          "operations": [
+            "semantic_ask_product_options"
+          ]
+        },
+        "semantic_ask_product_fact": {
+          "operation_count": 1,
+          "schema_chars": 675,
+          "operations": [
+            "semantic_ask_product_fact"
+          ]
+        },
+        "semantic_ask_product_review": {
+          "operation_count": 1,
+          "schema_chars": 552,
+          "operations": [
+            "semantic_ask_product_review"
+          ]
+        },
+        "semantic_ask_product_price": {
+          "operation_count": 1,
+          "schema_chars": 766,
+          "operations": [
+            "semantic_ask_product_price"
+          ]
+        },
+        "semantic_ask_knowledge": {
+          "operation_count": 1,
+          "schema_chars": 486,
+          "operations": [
+            "semantic_ask_knowledge"
+          ]
+        },
+        "semantic_read_cart": {
+          "operation_count": 1,
+          "schema_chars": 193,
+          "operations": [
+            "semantic_read_cart"
+          ]
+        },
+        "semantic_read_cart_total": {
+          "operation_count": 1,
+          "schema_chars": 205,
+          "operations": [
+            "semantic_read_cart_total"
+          ]
+        },
+        "semantic_update_cart_line": {
+          "operation_count": 3,
+          "schema_chars": 1784,
+          "operations": [
+            "semantic_ask_product_options",
+            "semantic_read_cart",
+            "semantic_update_cart_line"
+          ]
+        },
+        "semantic_remove_cart_line": {
+          "operation_count": 2,
+          "schema_chars": 904,
+          "operations": [
+            "semantic_read_cart",
+            "semantic_remove_cart_line"
+          ]
+        },
+        "semantic_finish_cart": {
+          "operation_count": 2,
+          "schema_chars": 542,
+          "operations": [
+            "semantic_read_cart",
+            "semantic_finish_cart"
+          ]
+        },
+        "semantic_read_eligible_vouchers": {
+          "operation_count": 1,
+          "schema_chars": 219,
+          "operations": [
+            "semantic_read_eligible_vouchers"
+          ]
+        },
+        "semantic_read_payment_options": {
+          "operation_count": 1,
+          "schema_chars": 215,
+          "operations": [
+            "semantic_read_payment_options"
+          ]
+        },
+        "semantic_set_payment": {
+          "operation_count": 2,
+          "schema_chars": 853,
+          "operations": [
+            "semantic_read_payment_options",
+            "semantic_set_payment"
+          ]
+        },
+        "semantic_set_fulfillment": {
+          "operation_count": 1,
+          "schema_chars": 688,
+          "operations": [
+            "semantic_set_fulfillment"
+          ]
+        },
+        "semantic_read_profile_addresses": {
+          "operation_count": 1,
+          "schema_chars": 219,
+          "operations": [
+            "semantic_read_profile_addresses"
+          ]
+        },
+        "semantic_resolve_new_location": {
+          "operation_count": 2,
+          "schema_chars": 1398,
+          "operations": [
+            "semantic_set_fulfillment",
+            "semantic_resolve_new_location"
+          ]
+        },
+        "semantic_find_nearby_branches": {
+          "operation_count": 1,
+          "schema_chars": 255,
+          "operations": [
+            "semantic_find_nearby_branches"
+          ]
+        },
+        "semantic_read_branch_ratings": {
+          "operation_count": 1,
+          "schema_chars": 213,
+          "operations": [
+            "semantic_read_branch_ratings"
+          ]
+        },
+        "semantic_ask_branch_review": {
+          "operation_count": 1,
+          "schema_chars": 494,
+          "operations": [
+            "semantic_ask_branch_review"
+          ]
+        },
+        "semantic_read_order_history": {
+          "operation_count": 1,
+          "schema_chars": 268,
+          "operations": [
+            "semantic_read_order_history"
+          ]
+        },
+        "semantic_read_order": {
+          "operation_count": 1,
+          "schema_chars": 490,
+          "operations": [
+            "semantic_read_order"
+          ]
+        },
+        "semantic_track_order": {
+          "operation_count": 1,
+          "schema_chars": 492,
+          "operations": [
+            "semantic_track_order"
+          ]
+        }
+      }
+    },
+    {
+      "state": "VOUCHER",
+      "state_obligation": "VOUCHER",
+      "repair_goal": "VOUCHER",
+      "before_normal": {
+        "operation_count": 31,
+        "schema_chars": 16112,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_review",
+          "semantic_ask_product_price",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_cart_total",
+          "semantic_update_cart_line",
+          "semantic_remove_cart_line",
+          "semantic_read_eligible_vouchers",
+          "semantic_choose_voucher",
+          "semantic_skip_voucher",
+          "semantic_read_payment_options",
+          "semantic_set_payment",
+          "semantic_set_fulfillment",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_find_nearby_branches",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order"
+        ]
+      },
+      "before_pre_tool_repair": {
+        "operation_count": 31,
+        "schema_chars": 16112,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_review",
+          "semantic_ask_product_price",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_cart_total",
+          "semantic_update_cart_line",
+          "semantic_remove_cart_line",
+          "semantic_read_eligible_vouchers",
+          "semantic_choose_voucher",
+          "semantic_skip_voucher",
+          "semantic_read_payment_options",
+          "semantic_set_payment",
+          "semantic_set_fulfillment",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_find_nearby_branches",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order"
+        ]
+      },
+      "normal": {
+        "operation_count": 8,
+        "schema_chars": 4010,
+        "operations": [
+          "semantic_read_cart",
+          "semantic_read_cart_total",
+          "semantic_update_cart_line",
+          "semantic_remove_cart_line",
+          "semantic_read_eligible_vouchers",
+          "semantic_choose_voucher",
+          "semantic_skip_voucher",
+          "semantic_interrupt"
+        ]
+      },
+      "pre_tool_repair": {
+        "operation_count": 5,
+        "schema_chars": 2099,
+        "operations": [
+          "semantic_read_cart",
+          "semantic_read_eligible_vouchers",
+          "semantic_choose_voucher",
+          "semantic_skip_voucher",
+          "semantic_interrupt"
+        ]
+      },
+      "normal_justification": {
+        "semantic_read_cart": "CART_EDIT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_read_cart_total": "CART_EDIT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_update_cart_line": "CART_EDIT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_remove_cart_line": "CART_EDIT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_read_eligible_vouchers": "VOUCHER is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_choose_voucher": "VOUCHER is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_skip_voucher": "VOUCHER is the unfinished domain or a registered local business companion; executor authorization also required."
+      },
+      "interrupt_justification": "Control only, no business executor, one conditional continuation; preserves drafts.",
+      "exact_protocol_repair": {
+        "semantic_read_cart": {
+          "operation_count": 1,
+          "schema_chars": 193,
+          "operations": [
+            "semantic_read_cart"
+          ]
+        },
+        "semantic_read_cart_total": {
+          "operation_count": 1,
+          "schema_chars": 205,
+          "operations": [
+            "semantic_read_cart_total"
+          ]
+        },
+        "semantic_update_cart_line": {
+          "operation_count": 3,
+          "schema_chars": 1784,
+          "operations": [
+            "semantic_ask_product_options",
+            "semantic_read_cart",
+            "semantic_update_cart_line"
+          ]
+        },
+        "semantic_remove_cart_line": {
+          "operation_count": 2,
+          "schema_chars": 904,
+          "operations": [
+            "semantic_read_cart",
+            "semantic_remove_cart_line"
+          ]
+        },
+        "semantic_read_eligible_vouchers": {
+          "operation_count": 1,
+          "schema_chars": 219,
+          "operations": [
+            "semantic_read_eligible_vouchers"
+          ]
+        },
+        "semantic_choose_voucher": {
+          "operation_count": 2,
+          "schema_chars": 871,
+          "operations": [
+            "semantic_read_eligible_vouchers",
+            "semantic_choose_voucher"
+          ]
+        },
+        "semantic_skip_voucher": {
+          "operation_count": 1,
+          "schema_chars": 363,
+          "operations": [
+            "semantic_skip_voucher"
+          ]
+        }
+      }
+    },
+    {
+      "state": "FULFILLMENT",
+      "state_obligation": "FULFILLMENT",
+      "repair_goal": "FULFILLMENT",
+      "before_normal": {
+        "operation_count": 30,
+        "schema_chars": 15446,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_review",
+          "semantic_ask_product_price",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_cart_total",
+          "semantic_update_cart_line",
+          "semantic_remove_cart_line",
+          "semantic_finish_cart",
+          "semantic_read_eligible_vouchers",
+          "semantic_read_payment_options",
+          "semantic_set_payment",
+          "semantic_set_fulfillment",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_find_nearby_branches",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order"
+        ]
+      },
+      "before_pre_tool_repair": {
+        "operation_count": 30,
+        "schema_chars": 15446,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_review",
+          "semantic_ask_product_price",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_cart_total",
+          "semantic_update_cart_line",
+          "semantic_remove_cart_line",
+          "semantic_finish_cart",
+          "semantic_read_eligible_vouchers",
+          "semantic_read_payment_options",
+          "semantic_set_payment",
+          "semantic_set_fulfillment",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_find_nearby_branches",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order"
+        ]
+      },
+      "normal": {
+        "operation_count": 7,
+        "schema_chars": 3397,
+        "operations": [
+          "semantic_read_payment_options",
+          "semantic_set_payment",
+          "semantic_set_fulfillment",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_find_nearby_branches",
+          "semantic_interrupt"
+        ]
+      },
+      "pre_tool_repair": {
+        "operation_count": 2,
+        "schema_chars": 1360,
+        "operations": [
+          "semantic_set_fulfillment",
+          "semantic_interrupt"
+        ]
+      },
+      "normal_justification": {
+        "semantic_read_payment_options": "PAYMENT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_set_payment": "PAYMENT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_set_fulfillment": "FULFILLMENT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_read_profile_addresses": "LOCATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_resolve_new_location": "LOCATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_find_nearby_branches": "LOCATION is the unfinished domain or a registered local business companion; executor authorization also required."
+      },
+      "interrupt_justification": "Control only, no business executor, one conditional continuation; preserves drafts.",
+      "exact_protocol_repair": {
+        "semantic_read_payment_options": {
+          "operation_count": 1,
+          "schema_chars": 215,
+          "operations": [
+            "semantic_read_payment_options"
+          ]
+        },
+        "semantic_set_payment": {
+          "operation_count": 2,
+          "schema_chars": 853,
+          "operations": [
+            "semantic_read_payment_options",
+            "semantic_set_payment"
+          ]
+        },
+        "semantic_set_fulfillment": {
+          "operation_count": 1,
+          "schema_chars": 688,
+          "operations": [
+            "semantic_set_fulfillment"
+          ]
+        },
+        "semantic_read_profile_addresses": {
+          "operation_count": 1,
+          "schema_chars": 219,
+          "operations": [
+            "semantic_read_profile_addresses"
+          ]
+        },
+        "semantic_resolve_new_location": {
+          "operation_count": 2,
+          "schema_chars": 1398,
+          "operations": [
+            "semantic_set_fulfillment",
+            "semantic_resolve_new_location"
+          ]
+        },
+        "semantic_find_nearby_branches": {
+          "operation_count": 1,
+          "schema_chars": 255,
+          "operations": [
+            "semantic_find_nearby_branches"
+          ]
+        }
+      }
+    },
+    {
+      "state": "LOCATION",
+      "state_obligation": "LOCATION",
+      "repair_goal": "LOCATION",
+      "before_normal": {
+        "operation_count": 33,
+        "schema_chars": 17075,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_review",
+          "semantic_ask_product_price",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_cart_total",
+          "semantic_update_cart_line",
+          "semantic_remove_cart_line",
+          "semantic_finish_cart",
+          "semantic_read_eligible_vouchers",
+          "semantic_read_payment_options",
+          "semantic_set_payment",
+          "semantic_set_fulfillment",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_select_location_candidate",
+          "semantic_find_nearby_branches",
+          "semantic_select_branch",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_compare_branch_reviews",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order"
+        ]
+      },
+      "before_pre_tool_repair": {
+        "operation_count": 33,
+        "schema_chars": 17075,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_review",
+          "semantic_ask_product_price",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_cart_total",
+          "semantic_update_cart_line",
+          "semantic_remove_cart_line",
+          "semantic_finish_cart",
+          "semantic_read_eligible_vouchers",
+          "semantic_read_payment_options",
+          "semantic_set_payment",
+          "semantic_set_fulfillment",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_select_location_candidate",
+          "semantic_find_nearby_branches",
+          "semantic_select_branch",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_compare_branch_reviews",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order"
+        ]
+      },
+      "normal": {
+        "operation_count": 9,
+        "schema_chars": 4705,
+        "operations": [
+          "semantic_read_payment_options",
+          "semantic_set_payment",
+          "semantic_set_fulfillment",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_select_location_candidate",
+          "semantic_find_nearby_branches",
+          "semantic_select_branch",
+          "semantic_interrupt"
+        ]
+      },
+      "pre_tool_repair": {
+        "operation_count": 7,
+        "schema_chars": 3852,
+        "operations": [
+          "semantic_set_fulfillment",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_select_location_candidate",
+          "semantic_find_nearby_branches",
+          "semantic_select_branch",
+          "semantic_interrupt"
+        ]
+      },
+      "normal_justification": {
+        "semantic_read_payment_options": "PAYMENT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_set_payment": "PAYMENT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_set_fulfillment": "FULFILLMENT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_read_profile_addresses": "LOCATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_resolve_new_location": "LOCATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_select_location_candidate": "LOCATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_find_nearby_branches": "LOCATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_select_branch": "LOCATION is the unfinished domain or a registered local business companion; executor authorization also required."
+      },
+      "interrupt_justification": "Control only, no business executor, one conditional continuation; preserves drafts.",
+      "exact_protocol_repair": {
+        "semantic_read_payment_options": {
+          "operation_count": 1,
+          "schema_chars": 215,
+          "operations": [
+            "semantic_read_payment_options"
+          ]
+        },
+        "semantic_set_payment": {
+          "operation_count": 2,
+          "schema_chars": 853,
+          "operations": [
+            "semantic_read_payment_options",
+            "semantic_set_payment"
+          ]
+        },
+        "semantic_set_fulfillment": {
+          "operation_count": 1,
+          "schema_chars": 688,
+          "operations": [
+            "semantic_set_fulfillment"
+          ]
+        },
+        "semantic_read_profile_addresses": {
+          "operation_count": 1,
+          "schema_chars": 219,
+          "operations": [
+            "semantic_read_profile_addresses"
+          ]
+        },
+        "semantic_resolve_new_location": {
+          "operation_count": 2,
+          "schema_chars": 1398,
+          "operations": [
+            "semantic_set_fulfillment",
+            "semantic_resolve_new_location"
+          ]
+        },
+        "semantic_select_location_candidate": {
+          "operation_count": 2,
+          "schema_chars": 921,
+          "operations": [
+            "semantic_select_location_candidate",
+            "semantic_find_nearby_branches"
+          ]
+        },
+        "semantic_find_nearby_branches": {
+          "operation_count": 1,
+          "schema_chars": 255,
+          "operations": [
+            "semantic_find_nearby_branches"
+          ]
+        },
+        "semantic_select_branch": {
+          "operation_count": 3,
+          "schema_chars": 1098,
+          "operations": [
+            "semantic_find_nearby_branches",
+            "semantic_read_branches",
+            "semantic_select_branch"
+          ]
+        }
+      }
+    },
+    {
+      "state": "PAYMENT",
+      "state_obligation": "PAYMENT",
+      "repair_goal": "PAYMENT",
+      "before_normal": {
+        "operation_count": 32,
+        "schema_chars": 16409,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_review",
+          "semantic_ask_product_price",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_cart_total",
+          "semantic_update_cart_line",
+          "semantic_remove_cart_line",
+          "semantic_finish_cart",
+          "semantic_read_eligible_vouchers",
+          "semantic_read_payment_options",
+          "semantic_set_payment",
+          "semantic_set_fulfillment",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_find_nearby_branches",
+          "semantic_select_branch",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_compare_branch_reviews",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order"
+        ]
+      },
+      "before_pre_tool_repair": {
+        "operation_count": 32,
+        "schema_chars": 16409,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_review",
+          "semantic_ask_product_price",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_cart_total",
+          "semantic_update_cart_line",
+          "semantic_remove_cart_line",
+          "semantic_finish_cart",
+          "semantic_read_eligible_vouchers",
+          "semantic_read_payment_options",
+          "semantic_set_payment",
+          "semantic_set_fulfillment",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_find_nearby_branches",
+          "semantic_select_branch",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_compare_branch_reviews",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order"
+        ]
+      },
+      "normal": {
+        "operation_count": 12,
+        "schema_chars": 6143,
+        "operations": [
+          "semantic_read_cart",
+          "semantic_read_cart_total",
+          "semantic_update_cart_line",
+          "semantic_remove_cart_line",
+          "semantic_read_payment_options",
+          "semantic_set_payment",
+          "semantic_set_fulfillment",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_find_nearby_branches",
+          "semantic_select_branch",
+          "semantic_interrupt"
+        ]
+      },
+      "pre_tool_repair": {
+        "operation_count": 3,
+        "schema_chars": 1525,
+        "operations": [
+          "semantic_read_payment_options",
+          "semantic_set_payment",
+          "semantic_interrupt"
+        ]
+      },
+      "normal_justification": {
+        "semantic_read_cart": "CART_EDIT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_read_cart_total": "CART_EDIT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_update_cart_line": "CART_EDIT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_remove_cart_line": "CART_EDIT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_read_payment_options": "PAYMENT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_set_payment": "PAYMENT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_set_fulfillment": "FULFILLMENT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_read_profile_addresses": "LOCATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_resolve_new_location": "LOCATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_find_nearby_branches": "LOCATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_select_branch": "LOCATION is the unfinished domain or a registered local business companion; executor authorization also required."
+      },
+      "interrupt_justification": "Control only, no business executor, one conditional continuation; preserves drafts.",
+      "exact_protocol_repair": {
+        "semantic_read_cart": {
+          "operation_count": 1,
+          "schema_chars": 193,
+          "operations": [
+            "semantic_read_cart"
+          ]
+        },
+        "semantic_read_cart_total": {
+          "operation_count": 1,
+          "schema_chars": 205,
+          "operations": [
+            "semantic_read_cart_total"
+          ]
+        },
+        "semantic_update_cart_line": {
+          "operation_count": 3,
+          "schema_chars": 1784,
+          "operations": [
+            "semantic_ask_product_options",
+            "semantic_read_cart",
+            "semantic_update_cart_line"
+          ]
+        },
+        "semantic_remove_cart_line": {
+          "operation_count": 2,
+          "schema_chars": 904,
+          "operations": [
+            "semantic_read_cart",
+            "semantic_remove_cart_line"
+          ]
+        },
+        "semantic_read_payment_options": {
+          "operation_count": 1,
+          "schema_chars": 215,
+          "operations": [
+            "semantic_read_payment_options"
+          ]
+        },
+        "semantic_set_payment": {
+          "operation_count": 2,
+          "schema_chars": 853,
+          "operations": [
+            "semantic_read_payment_options",
+            "semantic_set_payment"
+          ]
+        },
+        "semantic_set_fulfillment": {
+          "operation_count": 1,
+          "schema_chars": 688,
+          "operations": [
+            "semantic_set_fulfillment"
+          ]
+        },
+        "semantic_read_profile_addresses": {
+          "operation_count": 1,
+          "schema_chars": 219,
+          "operations": [
+            "semantic_read_profile_addresses"
+          ]
+        },
+        "semantic_resolve_new_location": {
+          "operation_count": 2,
+          "schema_chars": 1398,
+          "operations": [
+            "semantic_set_fulfillment",
+            "semantic_resolve_new_location"
+          ]
+        },
+        "semantic_find_nearby_branches": {
+          "operation_count": 1,
+          "schema_chars": 255,
+          "operations": [
+            "semantic_find_nearby_branches"
+          ]
+        },
+        "semantic_select_branch": {
+          "operation_count": 3,
+          "schema_chars": 1098,
+          "operations": [
+            "semantic_find_nearby_branches",
+            "semantic_read_branches",
+            "semantic_select_branch"
+          ]
+        }
+      }
+    },
+    {
+      "state": "CHECKOUT_SUMMARY",
+      "state_obligation": "CHECKOUT",
+      "repair_goal": "CHECKOUT",
+      "before_normal": {
+        "operation_count": 35,
+        "schema_chars": 17805,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_review",
+          "semantic_ask_product_price",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_cart_total",
+          "semantic_update_cart_line",
+          "semantic_remove_cart_line",
+          "semantic_finish_cart",
+          "semantic_read_eligible_vouchers",
+          "semantic_read_payment_options",
+          "semantic_set_payment",
+          "semantic_set_fulfillment",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_select_location_candidate",
+          "semantic_find_nearby_branches",
+          "semantic_select_branch",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_compare_branch_reviews",
+          "semantic_prepare_checkout",
+          "semantic_confirm_checkout",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order"
+        ]
+      },
+      "before_pre_tool_repair": {
+        "operation_count": 35,
+        "schema_chars": 17805,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_review",
+          "semantic_ask_product_price",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_cart_total",
+          "semantic_update_cart_line",
+          "semantic_remove_cart_line",
+          "semantic_finish_cart",
+          "semantic_read_eligible_vouchers",
+          "semantic_read_payment_options",
+          "semantic_set_payment",
+          "semantic_set_fulfillment",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_select_location_candidate",
+          "semantic_find_nearby_branches",
+          "semantic_select_branch",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_compare_branch_reviews",
+          "semantic_prepare_checkout",
+          "semantic_confirm_checkout",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order"
+        ]
+      },
+      "normal": {
+        "operation_count": 15,
+        "schema_chars": 7539,
+        "operations": [
+          "semantic_read_cart",
+          "semantic_read_cart_total",
+          "semantic_update_cart_line",
+          "semantic_remove_cart_line",
+          "semantic_read_payment_options",
+          "semantic_set_payment",
+          "semantic_set_fulfillment",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_select_location_candidate",
+          "semantic_find_nearby_branches",
+          "semantic_select_branch",
+          "semantic_prepare_checkout",
+          "semantic_confirm_checkout",
+          "semantic_interrupt"
+        ]
+      },
+      "pre_tool_repair": {
+        "operation_count": 3,
+        "schema_chars": 1402,
+        "operations": [
+          "semantic_prepare_checkout",
+          "semantic_confirm_checkout",
+          "semantic_interrupt"
+        ]
+      },
+      "normal_justification": {
+        "semantic_read_cart": "CART_EDIT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_read_cart_total": "CART_EDIT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_update_cart_line": "CART_EDIT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_remove_cart_line": "CART_EDIT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_read_payment_options": "PAYMENT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_set_payment": "PAYMENT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_set_fulfillment": "FULFILLMENT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_read_profile_addresses": "LOCATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_resolve_new_location": "LOCATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_select_location_candidate": "LOCATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_find_nearby_branches": "LOCATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_select_branch": "LOCATION is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_prepare_checkout": "CHECKOUT is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_confirm_checkout": "CHECKOUT is the unfinished domain or a registered local business companion; executor authorization also required."
+      },
+      "interrupt_justification": "Control only, no business executor, one conditional continuation; preserves drafts.",
+      "exact_protocol_repair": {
+        "semantic_read_cart": {
+          "operation_count": 1,
+          "schema_chars": 193,
+          "operations": [
+            "semantic_read_cart"
+          ]
+        },
+        "semantic_read_cart_total": {
+          "operation_count": 1,
+          "schema_chars": 205,
+          "operations": [
+            "semantic_read_cart_total"
+          ]
+        },
+        "semantic_update_cart_line": {
+          "operation_count": 3,
+          "schema_chars": 1784,
+          "operations": [
+            "semantic_ask_product_options",
+            "semantic_read_cart",
+            "semantic_update_cart_line"
+          ]
+        },
+        "semantic_remove_cart_line": {
+          "operation_count": 2,
+          "schema_chars": 904,
+          "operations": [
+            "semantic_read_cart",
+            "semantic_remove_cart_line"
+          ]
+        },
+        "semantic_read_payment_options": {
+          "operation_count": 1,
+          "schema_chars": 215,
+          "operations": [
+            "semantic_read_payment_options"
+          ]
+        },
+        "semantic_set_payment": {
+          "operation_count": 2,
+          "schema_chars": 853,
+          "operations": [
+            "semantic_read_payment_options",
+            "semantic_set_payment"
+          ]
+        },
+        "semantic_set_fulfillment": {
+          "operation_count": 1,
+          "schema_chars": 688,
+          "operations": [
+            "semantic_set_fulfillment"
+          ]
+        },
+        "semantic_read_profile_addresses": {
+          "operation_count": 1,
+          "schema_chars": 219,
+          "operations": [
+            "semantic_read_profile_addresses"
+          ]
+        },
+        "semantic_resolve_new_location": {
+          "operation_count": 2,
+          "schema_chars": 1398,
+          "operations": [
+            "semantic_set_fulfillment",
+            "semantic_resolve_new_location"
+          ]
+        },
+        "semantic_select_location_candidate": {
+          "operation_count": 2,
+          "schema_chars": 921,
+          "operations": [
+            "semantic_select_location_candidate",
+            "semantic_find_nearby_branches"
+          ]
+        },
+        "semantic_find_nearby_branches": {
+          "operation_count": 1,
+          "schema_chars": 255,
+          "operations": [
+            "semantic_find_nearby_branches"
+          ]
+        },
+        "semantic_select_branch": {
+          "operation_count": 3,
+          "schema_chars": 1098,
+          "operations": [
+            "semantic_find_nearby_branches",
+            "semantic_read_branches",
+            "semantic_select_branch"
+          ]
+        },
+        "semantic_prepare_checkout": {
+          "operation_count": 1,
+          "schema_chars": 397,
+          "operations": [
+            "semantic_prepare_checkout"
+          ]
+        },
+        "semantic_confirm_checkout": {
+          "operation_count": 1,
+          "schema_chars": 333,
+          "operations": [
+            "semantic_confirm_checkout"
+          ]
+        }
+      }
+    },
+    {
+      "state": "ORDER_MANAGEMENT",
+      "state_obligation": "ORDER_CHANGE",
+      "repair_goal": "ORDER_CHANGE",
+      "before_normal": {
+        "operation_count": 35,
+        "schema_chars": 19619,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_review",
+          "semantic_ask_product_price",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_cart_total",
+          "semantic_update_cart_line",
+          "semantic_remove_cart_line",
+          "semantic_finish_cart",
+          "semantic_read_eligible_vouchers",
+          "semantic_read_payment_options",
+          "semantic_set_payment",
+          "semantic_set_fulfillment",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_find_nearby_branches",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order",
+          "semantic_prepare_order_cancel",
+          "semantic_prepare_order_update",
+          "semantic_prepare_reorder",
+          "semantic_confirm_order_change",
+          "semantic_discard_order_change"
+        ]
+      },
+      "before_pre_tool_repair": {
+        "operation_count": 35,
+        "schema_chars": 19619,
+        "operations": [
+          "semantic_discover_products",
+          "semantic_recommend_by_preference",
+          "semantic_rank_by_sales",
+          "semantic_rank_by_price",
+          "semantic_discover_new_products",
+          "semantic_rank_by_rating",
+          "semantic_read_menu",
+          "semantic_select_product",
+          "semantic_ask_product_options",
+          "semantic_ask_product_fact",
+          "semantic_ask_product_review",
+          "semantic_ask_product_price",
+          "semantic_ask_knowledge",
+          "semantic_read_cart",
+          "semantic_read_cart_total",
+          "semantic_update_cart_line",
+          "semantic_remove_cart_line",
+          "semantic_finish_cart",
+          "semantic_read_eligible_vouchers",
+          "semantic_read_payment_options",
+          "semantic_set_payment",
+          "semantic_set_fulfillment",
+          "semantic_read_profile_addresses",
+          "semantic_resolve_new_location",
+          "semantic_find_nearby_branches",
+          "semantic_read_branch_ratings",
+          "semantic_ask_branch_review",
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order",
+          "semantic_prepare_order_cancel",
+          "semantic_prepare_order_update",
+          "semantic_prepare_reorder",
+          "semantic_confirm_order_change",
+          "semantic_discard_order_change"
+        ]
+      },
+      "normal": {
+        "operation_count": 9,
+        "schema_chars": 6095,
+        "operations": [
+          "semantic_read_order_history",
+          "semantic_read_order",
+          "semantic_track_order",
+          "semantic_prepare_order_cancel",
+          "semantic_prepare_order_update",
+          "semantic_prepare_reorder",
+          "semantic_confirm_order_change",
+          "semantic_discard_order_change",
+          "semantic_interrupt"
+        ]
+      },
+      "pre_tool_repair": {
+        "operation_count": 9,
+        "schema_chars": 6697,
+        "operations": [
+          "semantic_ask_product_options",
+          "semantic_ask_product_price",
+          "semantic_read_order",
+          "semantic_prepare_order_cancel",
+          "semantic_prepare_order_update",
+          "semantic_prepare_reorder",
+          "semantic_confirm_order_change",
+          "semantic_discard_order_change",
+          "semantic_interrupt"
+        ]
+      },
+      "normal_justification": {
+        "semantic_read_order_history": "ORDER_READ is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_read_order": "ORDER_READ is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_track_order": "ORDER_READ is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_prepare_order_cancel": "ORDER_CHANGE is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_prepare_order_update": "ORDER_CHANGE is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_prepare_reorder": "ORDER_CHANGE is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_confirm_order_change": "ORDER_CHANGE is the unfinished domain or a registered local business companion; executor authorization also required.",
+        "semantic_discard_order_change": "ORDER_CHANGE is the unfinished domain or a registered local business companion; executor authorization also required."
+      },
+      "interrupt_justification": "Control only, no business executor, one conditional continuation; preserves drafts.",
+      "exact_protocol_repair": {
+        "semantic_read_order_history": {
+          "operation_count": 1,
+          "schema_chars": 268,
+          "operations": [
+            "semantic_read_order_history"
+          ]
+        },
+        "semantic_read_order": {
+          "operation_count": 1,
+          "schema_chars": 490,
+          "operations": [
+            "semantic_read_order"
+          ]
+        },
+        "semantic_track_order": {
+          "operation_count": 1,
+          "schema_chars": 492,
+          "operations": [
+            "semantic_track_order"
+          ]
+        },
+        "semantic_prepare_order_cancel": {
+          "operation_count": 2,
+          "schema_chars": 1186,
+          "operations": [
+            "semantic_read_order",
+            "semantic_prepare_order_cancel"
+          ]
+        },
+        "semantic_prepare_order_update": {
+          "operation_count": 4,
+          "schema_chars": 3953,
+          "operations": [
+            "semantic_ask_product_options",
+            "semantic_ask_product_price",
+            "semantic_read_order",
+            "semantic_prepare_order_update"
+          ]
+        },
+        "semantic_prepare_reorder": {
+          "operation_count": 4,
+          "schema_chars": 2508,
+          "operations": [
+            "semantic_ask_product_options",
+            "semantic_ask_product_price",
+            "semantic_read_order",
+            "semantic_prepare_reorder"
+          ]
+        },
+        "semantic_confirm_order_change": {
+          "operation_count": 1,
+          "schema_chars": 341,
+          "operations": [
+            "semantic_confirm_order_change"
+          ]
+        },
+        "semantic_discard_order_change": {
+          "operation_count": 1,
+          "schema_chars": 379,
+          "operations": [
+            "semantic_discard_order_change"
+          ]
+        }
+      }
+    }
+  ],
+  "registry": [
+    {
+      "name": "DISCOVER_PRODUCTS",
+      "executor": "filter_catalog",
+      "access": "READ",
+      "namespace": "MENU_CATEGORY",
+      "facet": "discovery",
+      "fields": {
+        "min_price": {
+          "type": "number"
+        },
+        "max_price": {
+          "type": "number"
+        },
+        "min_price_inclusive": {
+          "type": "boolean"
+        },
+        "max_price_inclusive": {
+          "type": "boolean"
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "drink",
+            "food",
+            "all"
+          ]
+        },
+        "product_family": {
+          "type": "string"
+        },
+        "requested_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        },
+        "exclude_previous": {
+          "type": "boolean"
+        },
+        "planned_discovery_reads": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        }
+      },
+      "required": [
+        "scope"
+      ],
+      "target_required": false,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [
+        [
+          "sort_by",
+          "menu"
+        ]
+      ],
+      "renames": [
+        [
+          "scope",
+          "category"
+        ],
+        [
+          "product_family",
+          "search_text"
+        ],
+        [
+          "requested_count",
+          "limit"
+        ]
+      ],
+      "option_intent": null,
+      "description": "Find named products/families in Menu with neutral name/ID ordering; optional category reference filters only. Never selects or ranks by price.",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "DISCOVERY",
+      "progress_role": "PRIMARY",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "DISCOVERY"
+      ],
+      "function_name": "semantic_discover_products"
+    },
+    {
+      "name": "RECOMMEND_BY_PREFERENCE",
+      "executor": "get_recommendations",
+      "access": "READ",
+      "namespace": null,
+      "facet": "preference",
+      "fields": {
+        "scope": {
+          "type": "string",
+          "enum": [
+            "drink",
+            "food",
+            "all"
+          ]
+        },
+        "product_family": {
+          "type": "string"
+        },
+        "requested_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        },
+        "exclude_previous": {
+          "type": "boolean"
+        },
+        "planned_discovery_reads": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        },
+        "concepts": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          }
+        }
+      },
+      "required": [
+        "scope",
+        "concepts"
+      ],
+      "target_required": false,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [
+        [
+          "criteria",
+          "preferences"
+        ]
+      ],
+      "renames": [
+        [
+          "scope",
+          "category"
+        ],
+        [
+          "product_family",
+          "search_text"
+        ],
+        [
+          "requested_count",
+          "top_k"
+        ],
+        [
+          "concepts",
+          "preference_concepts"
+        ]
+      ],
+      "option_intent": null,
+      "description": "Recommend using approved description evidence for every supplied preference concept; no sales fallback.",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [
+        [
+          "preference_concepts",
+          "preference_query"
+        ]
+      ],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "DISCOVERY",
+      "progress_role": "PRIMARY",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "DISCOVERY"
+      ],
+      "function_name": "semantic_recommend_by_preference"
+    },
+    {
+      "name": "RANK_BY_SALES",
+      "executor": "filter_catalog",
+      "access": "READ",
+      "namespace": null,
+      "facet": "rank_by_sales",
+      "fields": {
+        "period": {
+          "type": "string",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year",
+            "all"
+          ]
+        },
+        "period_anchor": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "drink",
+            "food",
+            "all"
+          ]
+        },
+        "product_family": {
+          "type": "string"
+        },
+        "requested_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        },
+        "exclude_previous": {
+          "type": "boolean"
+        },
+        "planned_discovery_reads": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        }
+      },
+      "required": [
+        "scope",
+        "period"
+      ],
+      "target_required": false,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [
+        [
+          "sort_by",
+          "sold_desc"
+        ]
+      ],
+      "renames": [
+        [
+          "scope",
+          "category"
+        ],
+        [
+          "product_family",
+          "search_text"
+        ],
+        [
+          "requested_count",
+          "limit"
+        ]
+      ],
+      "option_intent": null,
+      "description": "Rank by sales",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "DISCOVERY",
+      "progress_role": "PRIMARY",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "DISCOVERY"
+      ],
+      "function_name": "semantic_rank_by_sales"
+    },
+    {
+      "name": "RANK_BY_PRICE",
+      "executor": "filter_catalog",
+      "access": "READ",
+      "namespace": null,
+      "facet": "rank_by_price",
+      "fields": {
+        "scope": {
+          "type": "string",
+          "enum": [
+            "drink",
+            "food",
+            "all"
+          ]
+        },
+        "product_family": {
+          "type": "string"
+        },
+        "requested_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        },
+        "exclude_previous": {
+          "type": "boolean"
+        },
+        "planned_discovery_reads": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "ascending",
+            "descending"
+          ]
+        }
+      },
+      "required": [
+        "scope",
+        "direction"
+      ],
+      "target_required": false,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [],
+      "renames": [
+        [
+          "scope",
+          "category"
+        ],
+        [
+          "product_family",
+          "search_text"
+        ],
+        [
+          "requested_count",
+          "limit"
+        ]
+      ],
+      "option_intent": null,
+      "description": "Rank by price",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [
+        [
+          "direction",
+          "sort_by",
+          [
+            [
+              "ascending",
+              "price_asc"
+            ],
+            [
+              "descending",
+              "price_desc"
+            ]
+          ]
+        ]
+      ],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "DISCOVERY",
+      "progress_role": "PRIMARY",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "DISCOVERY"
+      ],
+      "function_name": "semantic_rank_by_price"
+    },
+    {
+      "name": "DISCOVER_NEW_PRODUCTS",
+      "executor": "filter_catalog",
+      "access": "READ",
+      "namespace": null,
+      "facet": "discover_new_products",
+      "fields": {
+        "scope": {
+          "type": "string",
+          "enum": [
+            "drink",
+            "food",
+            "all"
+          ]
+        },
+        "product_family": {
+          "type": "string"
+        },
+        "requested_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        },
+        "exclude_previous": {
+          "type": "boolean"
+        },
+        "planned_discovery_reads": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        }
+      },
+      "required": [
+        "scope"
+      ],
+      "target_required": false,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [
+        [
+          "sort_by",
+          "new"
+        ]
+      ],
+      "renames": [
+        [
+          "scope",
+          "category"
+        ],
+        [
+          "product_family",
+          "search_text"
+        ],
+        [
+          "requested_count",
+          "limit"
+        ]
+      ],
+      "option_intent": null,
+      "description": "Discover new products",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "DISCOVERY",
+      "progress_role": "PRIMARY",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "DISCOVERY"
+      ],
+      "function_name": "semantic_discover_new_products"
+    },
+    {
+      "name": "RANK_BY_RATING",
+      "executor": "get_recommendations",
+      "access": "READ",
+      "namespace": null,
+      "facet": "rank_by_rating",
+      "fields": {
+        "scope": {
+          "type": "string",
+          "enum": [
+            "drink",
+            "food",
+            "all"
+          ]
+        },
+        "product_family": {
+          "type": "string"
+        },
+        "requested_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        },
+        "exclude_previous": {
+          "type": "boolean"
+        },
+        "planned_discovery_reads": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        }
+      },
+      "required": [
+        "scope"
+      ],
+      "target_required": false,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [
+        [
+          "criteria",
+          "rating"
+        ]
+      ],
+      "renames": [
+        [
+          "scope",
+          "category"
+        ],
+        [
+          "product_family",
+          "search_text"
+        ],
+        [
+          "requested_count",
+          "top_k"
+        ]
+      ],
+      "option_intent": null,
+      "description": "Rank by rating",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "DISCOVERY",
+      "progress_role": "PRIMARY",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "DISCOVERY"
+      ],
+      "function_name": "semantic_rank_by_rating"
+    },
+    {
+      "name": "READ_MENU",
+      "executor": "get_menu_categories",
+      "access": "READ",
+      "namespace": null,
+      "facet": "menu",
+      "fields": {},
+      "required": [],
+      "target_required": false,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Read menu",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "DISCOVERY",
+      "progress_role": "PRIMARY",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "DISCOVERY"
+      ],
+      "function_name": "semantic_read_menu"
+    },
+    {
+      "name": "SELECT_PRODUCT",
+      "executor": "get_product_options",
+      "access": "WRITE",
+      "namespace": "PRODUCT",
+      "facet": "product_selection",
+      "fields": {
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 999
+        }
+      },
+      "required": [],
+      "target_required": true,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": "SELECT",
+      "description": "Choose a canonical product and stage it; inspect Menu choices without committing cart.",
+      "omissions": "Quantity omitted: retain quantity for the same selected draft, otherwise one unit. Options are not default-authorized by selection.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "exposure_policy": "draft_selection",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [
+        [
+          "quantity",
+          "selection_quantity"
+        ]
+      ],
+      "require_any_fields": [],
+      "goal_family": "PRODUCT_SELECTION",
+      "progress_role": "PRIMARY",
+      "state_effect": "pending_product",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_discover_products",
+        "semantic_ask_product_options"
+      ],
+      "repair_compatible_goals": [
+        "PRODUCT_SELECTION"
+      ],
+      "function_name": "semantic_select_product"
+    },
+    {
+      "name": "ASK_PRODUCT_OPTIONS",
+      "executor": "get_product_options",
+      "access": "READ",
+      "namespace": "PRODUCT",
+      "facet": "product_options",
+      "fields": {},
+      "required": [],
+      "target_required": true,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Read Menu option groups only. Never select, configure or add.",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "PRODUCT_CONFIGURATION",
+      "progress_role": "PREREQUISITE",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": false,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "PRODUCT_CONFIGURATION"
+      ],
+      "function_name": "semantic_ask_product_options"
+    },
+    {
+      "name": "CONFIGURE_PRODUCT",
+      "executor": "add_to_cart",
+      "access": "WRITE",
+      "namespace": "PRODUCT",
+      "facet": "product_configuration",
+      "fields": {
+        "quantity": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "size": {
+          "type": "string"
+        },
+        "luong_da": {
+          "type": "string"
+        },
+        "do_ngot": {
+          "type": "string"
+        },
+        "loai_sua": {
+          "type": "string"
+        },
+        "toppings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 16
+        }
+      },
+      "required": [],
+      "target_required": false,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": "CONFIGURE",
+      "description": "Apply only options supplied or corrected now to the selected product. Omitted values retain prior choices; Menu validates options.",
+      "omissions": "Omitted target means the unique selected pending product only. Supply only options corrected now; retain prior choices and quantity. Menu owns optional defaults.",
+      "preconditions": "canonical active product; complete valid options; provider price",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": "pending",
+      "implicit_reference_precondition": "unique_selected_pending_product",
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton",
+        "pending"
+      ],
+      "exposure_policy": "pending_product",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [
+        "quantity",
+        "size",
+        "luong_da",
+        "do_ngot",
+        "loai_sua",
+        "toppings"
+      ],
+      "goal_family": "PRODUCT_CONFIGURATION",
+      "progress_role": "PRIMARY",
+      "state_effect": "configured_cart",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_ask_product_options"
+      ],
+      "repair_compatible_goals": [
+        "PRODUCT_CONFIGURATION"
+      ],
+      "function_name": "semantic_configure_product"
+    },
+    {
+      "name": "USE_PRODUCT_DEFAULTS",
+      "executor": "add_to_cart",
+      "access": "WRITE",
+      "namespace": "PRODUCT",
+      "facet": "product_defaults",
+      "fields": {},
+      "required": [],
+      "target_required": false,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION"
+      ],
+      "fixed_args": [
+        [
+          "use_defaults",
+          true
+        ]
+      ],
+      "renames": [],
+      "option_intent": "DEFAULTS",
+      "description": "Explicitly accept canonical Menu defaults for the selected product.",
+      "omissions": "Omitted target means the unique pending product; Menu owns defaults. CORRECTION resets draft options.",
+      "preconditions": "canonical active product; complete valid options; provider price",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": "pending",
+      "implicit_reference_precondition": "unique_selected_pending_product",
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton",
+        "pending"
+      ],
+      "exposure_policy": "pending_product",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [
+        [
+          "evidence",
+          "defaults_evidence"
+        ]
+      ],
+      "require_any_fields": [],
+      "goal_family": "PRODUCT_CONFIGURATION",
+      "progress_role": "PRIMARY",
+      "state_effect": "configured_cart",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_ask_product_options"
+      ],
+      "repair_compatible_goals": [
+        "PRODUCT_CONFIGURATION"
+      ],
+      "function_name": "semantic_use_product_defaults"
+    },
+    {
+      "name": "DISCARD_PRODUCT_SELECTION",
+      "executor": "discard_pending_product",
+      "access": "WRITE",
+      "namespace": "PRODUCT",
+      "facet": "discard_product_selection",
+      "fields": {},
+      "required": [],
+      "target_required": true,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION",
+        "REJECTED"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Discard product selection",
+      "omissions": "Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.",
+      "preconditions": "exact canonical staged product; no committed cart mutation",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "exposure_policy": "pending_product",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "PRODUCT_SELECTION",
+      "progress_role": "PRIMARY",
+      "state_effect": "pending_product",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "PRODUCT_SELECTION"
+      ],
+      "function_name": "semantic_discard_product_selection"
+    },
+    {
+      "name": "ASK_PRODUCT_FACT",
+      "executor": "get_product_description",
+      "access": "READ",
+      "namespace": "PRODUCT",
+      "facet": "product_fact",
+      "fields": {
+        "query": {
+          "type": "string"
+        },
+        "facet": {
+          "type": "string",
+          "enum": [
+            "description",
+            "taste",
+            "ingredient",
+            "allergen"
+          ]
+        }
+      },
+      "required": [
+        "facet"
+      ],
+      "target_required": true,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Ask product fact",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "GENERIC_CONSULTATION",
+      "progress_role": "CONSULTATION",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "GENERIC_CONSULTATION"
+      ],
+      "function_name": "semantic_ask_product_fact"
+    },
+    {
+      "name": "ASK_PRODUCT_REVIEW",
+      "executor": "get_product_insights",
+      "access": "READ",
+      "namespace": "PRODUCT",
+      "facet": "review",
+      "fields": {},
+      "required": [],
+      "target_required": true,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Ask product review",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "REVIEW",
+      "progress_role": "CONSULTATION",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "REVIEW"
+      ],
+      "function_name": "semantic_ask_product_review"
+    },
+    {
+      "name": "ASK_PRODUCT_PRICE",
+      "executor": "check_price_and_stock",
+      "access": "READ",
+      "namespace": "PRODUCT",
+      "facet": "price",
+      "fields": {
+        "size": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "integer"
+        },
+        "toppings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "luong_da": {
+          "type": "string"
+        },
+        "do_ngot": {
+          "type": "string"
+        },
+        "loai_sua": {
+          "type": "string"
+        }
+      },
+      "required": [],
+      "target_required": true,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Ask product price",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "GENERIC_CONSULTATION",
+      "progress_role": "CONSULTATION",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "GENERIC_CONSULTATION"
+      ],
+      "function_name": "semantic_ask_product_price"
+    },
+    {
+      "name": "ASK_KNOWLEDGE",
+      "executor": "search_knowledge_base",
+      "access": "READ",
+      "namespace": null,
+      "facet": "knowledge",
+      "fields": {
+        "query": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string",
+          "enum": [
+            "brand",
+            "careers",
+            "company",
+            "contact",
+            "faq",
+            "franchise",
+            "gift_card",
+            "ingredient",
+            "membership",
+            "ordering_policy",
+            "privacy",
+            "product_description",
+            "product_faq",
+            "promotion_policy",
+            "refund"
+          ]
+        }
+      },
+      "required": [
+        "query",
+        "domain"
+      ],
+      "target_required": false,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Ask knowledge",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "RAG_KNOWLEDGE",
+      "progress_role": "CONSULTATION",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "RAG_KNOWLEDGE"
+      ],
+      "function_name": "semantic_ask_knowledge"
+    },
+    {
+      "name": "READ_CART",
+      "executor": "get_cart",
+      "access": "READ",
+      "namespace": null,
+      "facet": "read_cart",
+      "fields": {},
+      "required": [],
+      "target_required": false,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Read cart",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "CART_EDIT",
+      "progress_role": "CONSULTATION",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "CART_EDIT"
+      ],
+      "function_name": "semantic_read_cart"
+    },
+    {
+      "name": "READ_CART_TOTAL",
+      "executor": "get_cart_quote",
+      "access": "READ",
+      "namespace": null,
+      "facet": "read_cart_total",
+      "fields": {},
+      "required": [],
+      "target_required": false,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Read cart total",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "CART_EDIT",
+      "progress_role": "CONSULTATION",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "CART_EDIT"
+      ],
+      "function_name": "semantic_read_cart_total"
+    },
+    {
+      "name": "UPDATE_CART_LINE",
+      "executor": "update_cart_item",
+      "access": "WRITE",
+      "namespace": "CART_LINE",
+      "facet": "update_cart_line",
+      "fields": {
+        "desired_state": {
+          "type": "object",
+          "properties": {
+            "quantity": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "size": {
+              "type": "string"
+            },
+            "luong_da": {
+              "type": "string"
+            },
+            "do_ngot": {
+              "type": "string"
+            },
+            "loai_sua": {
+              "type": "string"
+            },
+            "toppings": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 16
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "desired_state"
+      ],
+      "target_required": true,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Update cart line",
+      "omissions": "Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.",
+      "preconditions": "owned current exact line; validated absolute option/quantity patch",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "CART_EDIT",
+      "progress_role": "PRIMARY",
+      "state_effect": "configured_cart",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_read_cart",
+        "semantic_ask_product_options"
+      ],
+      "repair_compatible_goals": [
+        "CART_EDIT"
+      ],
+      "function_name": "semantic_update_cart_line"
+    },
+    {
+      "name": "REMOVE_CART_LINE",
+      "executor": "remove_cart_item",
+      "access": "WRITE",
+      "namespace": "CART_LINE",
+      "facet": "remove_cart_line",
+      "fields": {
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 999
+        }
+      },
+      "required": [],
+      "target_required": true,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Remove cart line",
+      "omissions": "Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.",
+      "preconditions": "owned current exact line",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "CART_EDIT",
+      "progress_role": "PRIMARY",
+      "state_effect": "configured_cart",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_read_cart"
+      ],
+      "repair_compatible_goals": [
+        "CART_EDIT"
+      ],
+      "function_name": "semantic_remove_cart_line"
+    },
+    {
+      "name": "FINISH_CART",
+      "executor": "finish_cart",
+      "access": "WRITE",
+      "namespace": null,
+      "facet": "finish_cart",
+      "fields": {},
+      "required": [],
+      "target_required": false,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Finish cart",
+      "omissions": "Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.",
+      "preconditions": "nonempty authoritative cart; no unfinished selected products",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "VOUCHER",
+      "progress_role": "PRIMARY",
+      "state_effect": "voucher_gate",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_read_cart"
+      ],
+      "repair_compatible_goals": [
+        "VOUCHER"
+      ],
+      "function_name": "semantic_finish_cart"
+    },
+    {
+      "name": "READ_ELIGIBLE_VOUCHERS",
+      "executor": "get_applicable_vouchers",
+      "access": "READ",
+      "namespace": null,
+      "facet": "read_eligible_vouchers",
+      "fields": {},
+      "required": [],
+      "target_required": false,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Read eligible vouchers",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "VOUCHER",
+      "progress_role": "PREREQUISITE",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": false,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "VOUCHER"
+      ],
+      "function_name": "semantic_read_eligible_vouchers"
+    },
+    {
+      "name": "CHOOSE_VOUCHER",
+      "executor": "apply_voucher",
+      "access": "WRITE",
+      "namespace": "VOUCHER",
+      "facet": "choose_voucher",
+      "fields": {},
+      "required": [],
+      "target_required": true,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Choose voucher",
+      "omissions": "Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.",
+      "preconditions": "fresh eligible code; current cart",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton",
+        "best"
+      ],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "VOUCHER",
+      "progress_role": "PRIMARY",
+      "state_effect": "voucher_decision",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_read_eligible_vouchers"
+      ],
+      "repair_compatible_goals": [
+        "VOUCHER"
+      ],
+      "function_name": "semantic_choose_voucher"
+    },
+    {
+      "name": "SKIP_VOUCHER",
+      "executor": "skip_voucher",
+      "access": "WRITE",
+      "namespace": null,
+      "facet": "skip_voucher",
+      "fields": {},
+      "required": [],
+      "target_required": false,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION",
+        "REJECTED"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Skip voucher",
+      "omissions": "Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.",
+      "preconditions": "authenticated nonempty cart; explicit customer decision",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "VOUCHER",
+      "progress_role": "PRIMARY",
+      "state_effect": "voucher_decision",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "VOUCHER"
+      ],
+      "function_name": "semantic_skip_voucher"
+    },
+    {
+      "name": "REMOVE_VOUCHER",
+      "executor": "remove_voucher",
+      "access": "WRITE",
+      "namespace": null,
+      "facet": "remove_voucher",
+      "fields": {},
+      "required": [],
+      "target_required": false,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION",
+        "REJECTED"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Remove voucher",
+      "omissions": "Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.",
+      "preconditions": "authenticated current cart",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "VOUCHER",
+      "progress_role": "PRIMARY",
+      "state_effect": "voucher_decision",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "VOUCHER"
+      ],
+      "function_name": "semantic_remove_voucher"
+    },
+    {
+      "name": "READ_PAYMENT_OPTIONS",
+      "executor": "get_payment_options",
+      "access": "READ",
+      "namespace": null,
+      "facet": "read_payment_options",
+      "fields": {},
+      "required": [],
+      "target_required": false,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Read payment options",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "PAYMENT",
+      "progress_role": "PREREQUISITE",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": false,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "PAYMENT"
+      ],
+      "function_name": "semantic_read_payment_options"
+    },
+    {
+      "name": "SET_PAYMENT",
+      "executor": "set_payment_choice",
+      "access": "WRITE",
+      "namespace": "PAYMENT",
+      "facet": "payment",
+      "fields": {},
+      "required": [],
+      "target_required": true,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Set payment",
+      "omissions": "Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.",
+      "preconditions": "explicit payment facet and canonical current choice",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "PAYMENT",
+      "progress_role": "PRIMARY",
+      "state_effect": "payment_method",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_read_payment_options"
+      ],
+      "repair_compatible_goals": [
+        "PAYMENT"
+      ],
+      "function_name": "semantic_set_payment"
+    },
+    {
+      "name": "SET_FULFILLMENT",
+      "executor": "set_fulfillment_choice",
+      "access": "WRITE",
+      "namespace": "FULFILLMENT",
+      "facet": "fulfillment",
+      "fields": {
+        "supplied_location": {
+          "type": "boolean"
+        }
+      },
+      "required": [],
+      "target_required": true,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Set fulfillment",
+      "omissions": "Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.",
+      "preconditions": "explicit fulfillment facet only; no payment fields",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "FULFILLMENT",
+      "progress_role": "PRIMARY",
+      "state_effect": "delivery_type",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "FULFILLMENT"
+      ],
+      "function_name": "semantic_set_fulfillment"
+    },
+    {
+      "name": "READ_PROFILE_ADDRESSES",
+      "executor": "get_user_profile",
+      "access": "READ",
+      "namespace": null,
+      "facet": "read_profile_addresses",
+      "fields": {},
+      "required": [],
+      "target_required": false,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Read profile addresses",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "LOCATION",
+      "progress_role": "PREREQUISITE",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": false,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "LOCATION"
+      ],
+      "function_name": "semantic_read_profile_addresses"
+    },
+    {
+      "name": "RESOLVE_NEW_LOCATION",
+      "executor": "resolve_location",
+      "access": "WRITE",
+      "namespace": "LOCATION",
+      "facet": "resolve_new_location",
+      "fields": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "area",
+            "address",
+            "poi"
+          ]
+        },
+        "for_checkout": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "kind",
+        "for_checkout"
+      ],
+      "target_required": true,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Resolve new location",
+      "omissions": "Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.",
+      "preconditions": "literal address/area; canonical provider resolution",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "literal"
+      ],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "LOCATION",
+      "progress_role": "PRIMARY",
+      "state_effect": "location_state",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_set_fulfillment"
+      ],
+      "repair_compatible_goals": [
+        "LOCATION"
+      ],
+      "function_name": "semantic_resolve_new_location"
+    },
+    {
+      "name": "SELECT_PROFILE_ADDRESS",
+      "executor": "resolve_location",
+      "access": "WRITE",
+      "namespace": "PROFILE_ADDRESS",
+      "facet": "select_profile_address",
+      "fields": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "area",
+            "address",
+            "poi"
+          ]
+        },
+        "for_checkout": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "kind",
+        "for_checkout"
+      ],
+      "target_required": true,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION",
+        "REJECTED"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Select profile address",
+      "omissions": "Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.",
+      "preconditions": "literal address/area; canonical provider resolution",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "exposure_policy": "saved_addresses",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "LOCATION",
+      "progress_role": "PRIMARY",
+      "state_effect": "location_state",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_read_profile_addresses",
+        "semantic_set_fulfillment"
+      ],
+      "repair_compatible_goals": [
+        "LOCATION"
+      ],
+      "function_name": "semantic_select_profile_address"
+    },
+    {
+      "name": "SELECT_LOCATION_CANDIDATE",
+      "executor": "select_location_candidate",
+      "access": "WRITE",
+      "namespace": "LOCATION_CANDIDATE",
+      "facet": "select_location_candidate",
+      "fields": {},
+      "required": [],
+      "target_required": true,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Select location candidate",
+      "omissions": "Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.",
+      "preconditions": "current provider candidate; immutable coordinates/address",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "exposure_policy": "location_candidates",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "LOCATION",
+      "progress_role": "PRIMARY",
+      "state_effect": "location_state",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_find_nearby_branches"
+      ],
+      "repair_compatible_goals": [
+        "LOCATION"
+      ],
+      "function_name": "semantic_select_location_candidate"
+    },
+    {
+      "name": "FIND_NEARBY_BRANCHES",
+      "executor": "find_nearest_branch",
+      "access": "READ",
+      "namespace": null,
+      "facet": "find_nearby_branches",
+      "fields": {
+        "location": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "location"
+      ],
+      "target_required": false,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Find nearby branches",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "LOCATION",
+      "progress_role": "CONSULTATION",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "LOCATION"
+      ],
+      "function_name": "semantic_find_nearby_branches"
+    },
+    {
+      "name": "READ_BRANCHES",
+      "executor": "ask_branch",
+      "access": "READ",
+      "namespace": null,
+      "facet": "read_branches",
+      "fields": {},
+      "required": [],
+      "target_required": false,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Read branches",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "LOCATION",
+      "progress_role": "PREREQUISITE",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": false,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "LOCATION"
+      ],
+      "function_name": "semantic_read_branches"
+    },
+    {
+      "name": "SELECT_BRANCH",
+      "executor": "set_session_branch",
+      "access": "WRITE",
+      "namespace": "BRANCH",
+      "facet": "select_branch",
+      "fields": {},
+      "required": [],
+      "target_required": true,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Select branch",
+      "omissions": "Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.",
+      "preconditions": "current candidate; verified compatibility; customer choice",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "exposure_policy": "branch_candidates",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "LOCATION",
+      "progress_role": "PRIMARY",
+      "state_effect": "branch_id",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_read_branches",
+        "semantic_find_nearby_branches"
+      ],
+      "repair_compatible_goals": [
+        "LOCATION"
+      ],
+      "function_name": "semantic_select_branch"
+    },
+    {
+      "name": "READ_BRANCH_RATINGS",
+      "executor": "get_top_rated_stores",
+      "access": "READ",
+      "namespace": null,
+      "facet": "read_branch_ratings",
+      "fields": {},
+      "required": [],
+      "target_required": false,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Read branch ratings",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "REVIEW",
+      "progress_role": "CONSULTATION",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "REVIEW"
+      ],
+      "function_name": "semantic_read_branch_ratings"
+    },
+    {
+      "name": "ASK_BRANCH_REVIEW",
+      "executor": "get_store_reviews",
+      "access": "READ",
+      "namespace": "BRANCH",
+      "facet": "ask_branch_review",
+      "fields": {},
+      "required": [],
+      "target_required": true,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Ask branch review",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton"
+      ],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "REVIEW",
+      "progress_role": "CONSULTATION",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "REVIEW"
+      ],
+      "function_name": "semantic_ask_branch_review"
+    },
+    {
+      "name": "COMPARE_BRANCH_REVIEWS",
+      "executor": "compare_branch_reviews",
+      "access": "READ",
+      "namespace": null,
+      "facet": "compare_branch_reviews",
+      "fields": {
+        "branch_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "branch_ids"
+      ],
+      "target_required": false,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Compare branch reviews",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "REVIEW",
+      "progress_role": "CONSULTATION",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "REVIEW"
+      ],
+      "function_name": "semantic_compare_branch_reviews"
+    },
+    {
+      "name": "PREPARE_CHECKOUT",
+      "executor": "request_checkout",
+      "access": "WRITE",
+      "namespace": null,
+      "facet": "prepare_checkout",
+      "fields": {
+        "reuse_summary": {
+          "type": "boolean"
+        }
+      },
+      "required": [],
+      "target_required": false,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Prepare checkout",
+      "omissions": "Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.",
+      "preconditions": "fresh cart; voucher decided; choices/address/branch complete",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "CHECKOUT",
+      "progress_role": "PRIMARY",
+      "state_effect": "checkout_summary",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "CHECKOUT"
+      ],
+      "function_name": "semantic_prepare_checkout"
+    },
+    {
+      "name": "CONFIRM_CHECKOUT",
+      "executor": "confirm_checkout",
+      "access": "FINAL_WRITE",
+      "namespace": null,
+      "facet": "confirm_checkout",
+      "fields": {},
+      "required": [],
+      "target_required": false,
+      "allowed_commitments": [
+        "AFFIRMED"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Confirm checkout",
+      "omissions": "Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.",
+      "preconditions": "prior fresh action; current explicit final confirmation; same fingerprint",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "CHECKOUT",
+      "progress_role": "FINALIZATION",
+      "state_effect": "confirmed_checkout",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "CHECKOUT"
+      ],
+      "function_name": "semantic_confirm_checkout"
+    },
+    {
+      "name": "READ_ORDER_HISTORY",
+      "executor": "get_order_history",
+      "access": "READ",
+      "namespace": null,
+      "facet": "read_order_history",
+      "fields": {
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        }
+      },
+      "required": [],
+      "target_required": false,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Read order history",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "ORDER_READ",
+      "progress_role": "CONSULTATION",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "ORDER_READ"
+      ],
+      "function_name": "semantic_read_order_history"
+    },
+    {
+      "name": "READ_ORDER",
+      "executor": "get_order_details",
+      "access": "READ",
+      "namespace": "ORDER",
+      "facet": "read_order",
+      "fields": {},
+      "required": [],
+      "target_required": true,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Read order",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton",
+        "recent"
+      ],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "ORDER_READ",
+      "progress_role": "CONSULTATION",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "ORDER_READ"
+      ],
+      "function_name": "semantic_read_order"
+    },
+    {
+      "name": "TRACK_ORDER",
+      "executor": "track_order_status",
+      "access": "READ",
+      "namespace": "ORDER",
+      "facet": "track_order",
+      "fields": {},
+      "required": [],
+      "target_required": true,
+      "allowed_commitments": [
+        "QUESTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Track order",
+      "omissions": "Optional read pagination uses bounded business limits; optional filters leave only the explicitly chosen scope unrestricted.",
+      "preconditions": "server-owned session; validated schema",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton",
+        "recent"
+      ],
+      "exposure_policy": "always",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "ORDER_READ",
+      "progress_role": "CONSULTATION",
+      "state_effect": "read_evidence",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "ORDER_READ"
+      ],
+      "function_name": "semantic_track_order"
+    },
+    {
+      "name": "PREPARE_ORDER_CANCEL",
+      "executor": "cancel_order",
+      "access": "WRITE",
+      "namespace": "ORDER",
+      "facet": "prepare_order_cancel",
+      "fields": {
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [],
+      "target_required": true,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Prepare order cancel",
+      "omissions": "Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.",
+      "preconditions": "owned existing order; preview cancellation under current service policy",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton",
+        "recent"
+      ],
+      "exposure_policy": "owned_order",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "ORDER_CHANGE",
+      "progress_role": "PRIMARY",
+      "state_effect": "order_preview",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_read_order"
+      ],
+      "repair_compatible_goals": [
+        "ORDER_CHANGE"
+      ],
+      "function_name": "semantic_prepare_order_cancel"
+    },
+    {
+      "name": "PREPARE_ORDER_UPDATE",
+      "executor": "update_order",
+      "access": "WRITE",
+      "namespace": "ORDER",
+      "facet": "prepare_order_update",
+      "fields": {
+        "changes": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "properties": {
+              "order_line_id": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "quantity": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 999
+              },
+              "product_id": {
+                "type": "string"
+              },
+              "product_name": {
+                "type": "string"
+              },
+              "size": {
+                "type": "string"
+              },
+              "luong_da": {
+                "type": "string"
+              },
+              "do_ngot": {
+                "type": "string"
+              },
+              "loai_sua": {
+                "type": "string"
+              },
+              "toppings": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 16
+              },
+              "options": {
+                "type": "object",
+                "properties": {
+                  "size": {
+                    "type": "string"
+                  },
+                  "luong_da": {
+                    "type": "string"
+                  },
+                  "do_ngot": {
+                    "type": "string"
+                  },
+                  "loai_sua": {
+                    "type": "string"
+                  },
+                  "toppings": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "maxItems": 16
+                  }
+                },
+                "additionalProperties": false
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "order_line_id"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "add_items": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "type": "object",
+            "properties": {
+              "product_id": {
+                "type": "string"
+              },
+              "quantity": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 999
+              },
+              "size": {
+                "type": "string"
+              },
+              "luong_da": {
+                "type": "string"
+              },
+              "do_ngot": {
+                "type": "string"
+              },
+              "loai_sua": {
+                "type": "string"
+              },
+              "toppings": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 16
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "product_id",
+              "quantity"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "delivery_address": {
+          "type": "string"
+        },
+        "delivery_slot": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "required": [],
+      "target_required": true,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Prepare order update",
+      "omissions": "Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.",
+      "preconditions": "owned editable COD/paid wallet order before preparation; total cannot decrease; preview any wallet difference; preserve other items/options",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton",
+        "recent"
+      ],
+      "exposure_policy": "owned_order",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "ORDER_CHANGE",
+      "progress_role": "PRIMARY",
+      "state_effect": "order_preview",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_read_order",
+        "semantic_ask_product_options",
+        "semantic_ask_product_price"
+      ],
+      "repair_compatible_goals": [
+        "ORDER_CHANGE"
+      ],
+      "function_name": "semantic_prepare_order_update"
+    },
+    {
+      "name": "PREPARE_REORDER",
+      "executor": "reorder_order",
+      "access": "WRITE",
+      "namespace": "ORDER",
+      "facet": "prepare_reorder",
+      "fields": {},
+      "required": [],
+      "target_required": true,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Prepare reorder",
+      "omissions": "Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.",
+      "preconditions": "owned past order; preview current sellable items/options/prices; append to cart",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [
+        "id",
+        "name",
+        "ordinal",
+        "focus",
+        "singleton",
+        "recent"
+      ],
+      "exposure_policy": "owned_order",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "ORDER_CHANGE",
+      "progress_role": "PRIMARY",
+      "state_effect": "order_preview",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_read_order",
+        "semantic_ask_product_options",
+        "semantic_ask_product_price"
+      ],
+      "repair_compatible_goals": [
+        "ORDER_CHANGE"
+      ],
+      "function_name": "semantic_prepare_reorder"
+    },
+    {
+      "name": "CONFIRM_ORDER_CHANGE",
+      "executor": "confirm_order_change",
+      "access": "FINAL_WRITE",
+      "namespace": null,
+      "facet": "confirm_order_change",
+      "fields": {},
+      "required": [],
+      "target_required": false,
+      "allowed_commitments": [
+        "AFFIRMED"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Confirm order change",
+      "omissions": "Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.",
+      "preconditions": "prior-turn server-owned preview; current explicit confirmation; unchanged order/prices",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "order_preview",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "ORDER_CHANGE",
+      "progress_role": "FINALIZATION",
+      "state_effect": "order_change",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "ORDER_CHANGE"
+      ],
+      "function_name": "semantic_confirm_order_change"
+    },
+    {
+      "name": "DISCARD_ORDER_CHANGE",
+      "executor": "discard_order_change",
+      "access": "WRITE",
+      "namespace": null,
+      "facet": "discard_order_change",
+      "fields": {},
+      "required": [],
+      "target_required": false,
+      "allowed_commitments": [
+        "SELECTED",
+        "AFFIRMED",
+        "CORRECTION",
+        "REJECTED"
+      ],
+      "fixed_args": [],
+      "renames": [],
+      "option_intent": null,
+      "description": "Discard order change",
+      "omissions": "Omitted optional fields preserve authoritative state. No implicit payment, fulfillment, voucher, address or branch choice.",
+      "preconditions": "discard only pending preview; no existing order mutation",
+      "repair_classification": "model_repair",
+      "implicit_reference_kind": null,
+      "implicit_reference_precondition": null,
+      "allowed_reference_kinds": [],
+      "exposure_policy": "order_draft",
+      "joined_args": [],
+      "value_mappings": [],
+      "metadata_mappings": [],
+      "require_any_fields": [],
+      "goal_family": "ORDER_CHANGE",
+      "progress_role": "FINALIZATION",
+      "state_effect": "order_change",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [],
+      "repair_compatible_goals": [
+        "ORDER_CHANGE"
+      ],
+      "function_name": "semantic_discard_order_change"
+    }
+  ]
+}

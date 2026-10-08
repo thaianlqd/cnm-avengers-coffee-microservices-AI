@@ -90,6 +90,10 @@ class GuardedToolGateway:
         self.semantic_repair_count = 0
         self.repair_in_progress = False
         self.completed_semantic_targets = {}
+        from src.agents.turn_contract import TurnContract, state_obligation
+        self.turn_contract = TurnContract(primary_state_obligation=state_obligation(context))
+        if semantic_mode:
+            artifacts.turn_contract = self.turn_contract
         self.updated_products = set()
         self.entry_cart_lines = deepcopy(context['business']['cart'].get('items') or [])
         self.entry_products = deepcopy(artifacts.visible.get('products') or [])
@@ -153,28 +157,137 @@ class GuardedToolGateway:
             result['customer_actions'] = lambda args, session_id: self.customer_actions(args)
         return result
 
-    def semantic_calls(self, calls):
-        """Collect the WHOLE assistant response before any semantic execution.
+    def enter_turn_repair(self, mode):
+        self.turn_contract.enter_repair(mode, self.context, self.semantic_plan)
 
-        All wire proposals, including malformed siblings, enter one journal.
-        Results retain the original tool-call IDs in the provider loop.
-        """
-        from src.agents.semantic_registry import materialize_operation
-        proposals = []
+    def turn_state(self):
+        contract = self.turn_contract
+        return {'can_present': contract.can_present,
+            'authoritative_tool_count': sum(row['tool'] in CAPABILITIES and
+                row['result'].get('recovery_kind') != 'model_repair' for row in self.artifacts.logs),
+            'progress_result': contract.progress_result,
+            'continuation_required': contract.constrained and not contract.can_present}
+
+    def continuity_event(self, op=None, progress=None, reason=None, domain=None):
+        c = self.turn_contract
+        logger.info('[TurnContinuity] %s', json.dumps({
+            'turn_contract_id': c.turn_contract_id, 'goal_family': c.goal_family,
+            'repair_mode': c.repair_mode, 'normal_surface_count': getattr(self, 'normal_surface_count', 0),
+            'repair_surface_count': getattr(self, 'repair_surface_count', 0),
+            'allowed_repair_operations': sorted(c.allowed_operations()) if c.constrained else [],
+            'operation_proposed': op.function_name if op else None,
+            'operation_progress_role': op.progress_role if op else ('INTERRUPT' if domain else None),
+            'operation_allowed_for_goal': c.eligibility(op)[0] if op else bool(domain),
+            'progress_result': progress or c.progress_result, 'non_progress_reason': reason,
+            'safe_interrupt_domain': domain, 'turn_completion_reason': c.turn_completion_reason}))
+
+    def continuity_denial(self, reason):
+        from src.agents.semantic_control import model_repair
+        self.turn_contract.progress_result = 'NON_PROGRESS'
+        self.turn_contract.drift_count += 1
+        self.continuity_event(progress='NON_PROGRESS', reason=reason)
+        return model_repair('semantic_drift', error_subtype='SEMANTIC_DRIFT', continuation_required=True,
+            turn_contract_id=self.turn_contract.turn_contract_id,
+            goal_family=self.turn_contract.goal_family, non_progress_reason=reason,
+            allowed_repair_operations=sorted(self.turn_contract.allowed_operations()),
+            repair_hint='Preserve the same turn goal, failed operation/facet/target and siblings. '
+                'Use only the allowed operation or a permitted semantic_interrupt; unrelated successful reads are not progress.')
+
+    def semantic_calls(self, calls):
+        """Validate continuity for the WHOLE response before any execution/artifact."""
+        from src.agents.semantic_registry import (materialize_operation, operation_registry,
+            INTERRUPT_NAME, validate_interrupt)
+        proposals, operations, payloads = [], [], []
         for call in calls:
             try:
                 payload = json.loads(call.function.arguments or '{}')
             except (TypeError, ValueError):
                 payload = None
+            payloads.append(payload)
+            operations.append(operation_registry().get(call.function.name))
             proposals.append(materialize_operation(call.function.name, payload))
+        if any(call.function.name == INTERRUPT_NAME for call in calls):
+            if len(calls) != 1 or not validate_interrupt(payloads[0]):
+                result = self.continuity_denial('malformed_or_mixed_interrupt')
+            else:
+                ok, reason = self.turn_contract.interrupt(payloads[0]['target_domain'], self.semantic_plan)
+                if ok:
+                    self.continuity_event(progress='INTERRUPT_PENDING', domain=payloads[0]['target_domain'])
+                    result = {'status': 'interrupt_continuation_required', 'changed': False, 'read_only': True,
+                        'continuation_required': True, 'target_domain': payloads[0]['target_domain'],
+                        'turn_contract_id': self.turn_contract.turn_contract_id}
+                else:
+                    result = self.continuity_denial(reason)
+            return [result] + [{'status': 'batch_member', 'changed': False}] * (len(calls) - 1)
+        contract = self.turn_contract
+        for op, proposal in zip(operations, proposals):
+            allowed, reason = contract.eligibility(op, proposal)
+            # Invalid wire payloads still enter the existing journal for exact
+            # same-operation repair. A valid unrelated operation never does.
+            if (allowed and contract.constrained and contract.must_preserve_target and op
+                    and op.namespace == contract.must_preserve_target[0]
+                    and not proposal.get('invalid_wire_action')):
+                from src.agents.semantic_control import ground_action, identity, NAMESPACES
+                grounded, target, error = ground_action(self, proposal)
+                namespace, field, frozen = contract.must_preserve_target
+                if not error and target:
+                    candidate = (grounded.get(field) if field in grounded else
+                        identity(target, NAMESPACES[namespace][1]))
+                    if str(candidate) != str(frozen):
+                        allowed, reason = False, 'canonical_target_changed'
+            if contract.constrained and not allowed:
+                self.continuity_event(op, 'NON_PROGRESS', reason)
+                result = self.continuity_denial(reason)
+                return [result] + [{'status': 'batch_member', 'changed': False}] * (len(calls) - 1)
+        if contract.scoped_domain and contract.progress_result == 'INTERRUPT_PENDING' and len(calls) == 1 and operations[0]:
+            # The explicit switch opens a domain; the next typed operation
+            # establishes whether this is a question or a state-changing goal.
+            contract.bound_operation = operations[0].function_name
+        if contract.constrained:
+            prerequisites = [op for op in operations if op and contract.is_prerequisite(op)]
+            if prerequisites and (len(calls) != 1 or contract.prerequisite_count >= 1):
+                result = self.continuity_denial('prerequisite_budget_or_mixed_actions')
+                return [result] + [{'status': 'batch_member', 'changed': False}] * (len(calls) - 1)
+            if prerequisites:
+                contract.prerequisite_count += 1
+        if not contract.goal_family and operations[0]:
+            contract.goal_family = operations[0].goal_family
+        before = deepcopy(self.context['business'])
         result = self.customer_actions({'actions': proposals})
         failed = (self.semantic_plan.failed or {}).get('proposal') if self.semantic_plan else None
         if failed and failed.get('operation'):
-            from src.agents.semantic_registry import operation_registry
             op = operation_registry().get(failed['operation'])
             if op:
                 result.update(repair_function=op.function_name, repair_parameters=op.parameters(),
                     repair_hint=op.repair_hint())
+        if result.get('recovery_kind') == 'model_repair':
+            contract.enter_repair('SEMANTIC_PROTOCOL_REPAIR', self.context, self.semantic_plan)
+        else:
+            from src.agents.turn_contract import validate_turn_progress
+            # The journal contains one row per operation and preserves siblings.
+            evaluated, progress_events = [], []
+            for op, proposal in zip(operations, proposals):
+                if op:
+                    row = next((row for row in reversed(self.semantic_plan.actions)
+                        if row['proposal'].get('operation') == op.function_name and row.get('result')), None)
+                    actual = row['result'] if row else (result.get('results') or [{}])[-1].get('result', {})
+                    progress, reason = validate_turn_progress(contract, op, actual,
+                        self.semantic_plan, before, self.context['business'], self.artifacts)
+                    evaluated.append(progress)
+                    progress_events.append((op, progress, reason))
+            if evaluated:
+                contract.progress_result = evaluated[-1]
+                contract.turn_completion_reason = ('goal_authority_and_plan_complete' if contract.progress_result == 'COMPLETED'
+                    else 'authoritative_business_clarification' if contract.progress_result == 'BLOCKED' else None)
+            for op, progress, reason in progress_events:
+                self.continuity_event(op, progress, reason if progress == 'NON_PROGRESS' else None)
+        contract.writes_already_committed = sum(row['status'] in {'SUCCEEDED', 'ALREADY_PROCESSED'}
+            and (operation_registry().get(row.get('operation')) and
+                operation_registry()[row['operation']].access != 'READ')
+            and (row.get('result') or {}).get('changed') is not False
+            for row in self.semantic_plan.actions) if self.semantic_plan else 0
+        result['turn_progress'] = contract.progress_result
+        result['continuation_required'] = contract.constrained and not contract.can_present
         output = [result]
         for row in self.semantic_plan.actions[1:] if self.semantic_plan else []:
             output.append({'status': 'batch_member', 'changed': False,
@@ -205,6 +318,8 @@ class GuardedToolGateway:
     def dispatch_model(self, name, args):
         """Direct reads are questions; every state change needs typed evidence."""
         capability = CAPABILITIES.get(name)
+        if self.semantic_mode and self.turn_contract.constrained:
+            return self.continuity_denial('unadvertised_business_function_during_repair')
         if capability and capability.access == 'READ':
             return self.execute_semantic({'tool': name, 'commitment': 'QUESTION', 'args': args})
         from src.agents.semantic_control import failure
@@ -298,6 +413,16 @@ class GuardedToolGateway:
     def customer_actions(self, args):
         from src.agents.semantic_control import customer_actions_schema, model_repair
         from src.agents.semantic_plan import SemanticPlan
+        if (self.semantic_mode and self.turn_contract.constrained and isinstance(args, dict)
+                and any(not isinstance(a, dict) or not a.get('operation') for a in args.get('actions', []))):
+            return self.continuity_denial('legacy_actions_not_typed_repair')
+        if self.semantic_mode and self.turn_contract.constrained and isinstance(args, dict):
+            from src.agents.semantic_registry import operation_registry
+            for proposal in args.get('actions', []):
+                op = operation_registry().get(proposal.get('operation')) if isinstance(proposal, dict) else None
+                allowed, reason = self.turn_contract.eligibility(op, proposal)
+                if not allowed:
+                    return self.continuity_denial(reason)
         spec = customer_actions_schema(CAPABILITIES)['function']['parameters']['properties']['actions']['items']
         replayed_results = []
         repaired_read_completed = False
@@ -329,14 +454,22 @@ class GuardedToolGateway:
                     else:
                         fresh.append(proposal)
                 actions = fresh
+                from src.agents.semantic_registry import operation_registry
+                failed_op = operation_registry().get(self.semantic_plan.failed.get('operation'))
+                exact_prerequisites = set(failed_op.repair_prerequisites) if failed_op else set()
+                internal_legacy = not failed_op and not self.turn_contract.constrained
                 if (actions and self.semantic_plan.failed['tool'] in CAPABILITIES
-                        and all(self._valid_proposal(a, spec) and CAPABILITIES[a['tool']].access == 'READ' for a in actions)
+                        and all(self._valid_proposal(a, spec)
+                            and (a.get('operation') in exact_prerequisites or
+                                internal_legacy and CAPABILITIES[a['tool']].access == 'READ') for a in actions)
                         and self.semantic_plan.failed['tool'] not in {a['tool'] for a in actions}):
-                    if CAPABILITIES[self.semantic_plan.failed['tool']].access == 'READ':
+                    if not failed_op and CAPABILITIES[self.semantic_plan.failed['tool']].access == 'READ':
                         raise ValueError('repair same failed read before changing authority')
                     results = [{'tool': a['tool'], 'result': self.model_result(self.execute_semantic(a), a['tool'])} for a in actions]
                     self.artifacts.semantic_plan_read_progress = True
-                    return {'status': 'ok', 'changed': False, 'read_only': True, 'results': results,
+                    changed = any(row['result'].get('changed') for row in results)
+                    return {'status': 'ok', 'changed': changed,
+                        'read_only': all(CAPABILITIES[a['tool']].access == 'READ' for a in actions), 'results': results,
                         'remaining_actions': len(self.semantic_plan.pending), 'plan_id': self.semantic_plan.plan_id,
                         'failed_action': deepcopy(self.semantic_plan.failed['proposal']),
                         'continuation_hint': 'Read completed. Repair the same failed action; server still retains its siblings.'}
@@ -583,26 +716,25 @@ class GuardedToolGateway:
         rows = tool_schemas(self.allowed)
         self.schemas = {r['function']['name']: r['function']['parameters'] for r in rows}
         if self.semantic_mode and not final_only:
-            from src.agents.semantic_registry import operations_for_context, operation_registry
-            operations = operations_for_context(self.context, self.allowed)
-            failed = self.semantic_plan.failed if self.semantic_plan else None
-            failed_op = operation_registry().get((failed or {}).get('operation') or
-                ((failed or {}).get('proposal') or {}).get('operation'))
-            if failed_op:
-                # Registry-owned repair meanings; safe prerequisite reads may
-                # establish identity, but cannot replace the failed action.
-                operations = [op for op in operations if op.function_name == failed_op.function_name
-                    or op.access in failed_op.repair_prerequisite_access]
-                if failed_op.executor in self.allowed and failed_op not in operations:
-                    operations.append(failed_op)
+            from src.agents.turn_contract import normal_operations_for_context, repair_operations_for_contract
+            from src.agents.semantic_registry import interrupt_schema
+            normal = normal_operations_for_context(self.context, self.allowed)
+            self.normal_surface_count = len(normal) + 1
+            operations = (repair_operations_for_contract(self.turn_contract, self.context, self.allowed)
+                if self.turn_contract.constrained else normal)
             rows = [op.schema() for op in operations]
+            # Interrupt is control-only and is never mapped to a business executor.
+            if not self.turn_contract.writes_already_committed and not (self.semantic_plan and self.semantic_plan.pending):
+                rows.append(interrupt_schema())
+            self.repair_surface_count = len(rows) if self.turn_contract.constrained else 0
         executors = self.executors()
         if self.semantic_mode and not final_only:
-            from src.agents.semantic_registry import materialize_operation
+            from src.agents.semantic_registry import materialize_operation, INTERRUPT_NAME
             for row in rows:
                 name = row['function']['name']
-                executors[name] = lambda payload, session_id, n=name: self.customer_actions(
-                    {'actions': [materialize_operation(n, payload)]})
+                if name != INTERRUPT_NAME:
+                    executors[name] = lambda payload, session_id, n=name: self.customer_actions(
+                        {'actions': [materialize_operation(n, payload)]})
         return rows, executors
 
     def cache_key(self, name, args):

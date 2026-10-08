@@ -120,9 +120,11 @@ def test_ambiguous_map_then_number_in_id_repairs_in_same_turn_without_regeocodin
     invalid = action(g, 'select_location_candidate', {'candidate_id': '1'}, commitment='AFFIRMED')
     valid = action(g, 'select_location_candidate', commitment='AFFIRMED',
         reference={'namespace': 'LOCATION_CANDIDATE', 'kind': 'ordinal', 'index': 1})
-    runtime.provider.plan([('customer_actions', {'actions': [valid]})])
-    runtime.provider.steps.insert(0, {'tool_calls': [{'id': 'bad-id', 'type': 'function', 'function': {
-        'name': 'customer_actions', 'arguments': json.dumps({'actions': [invalid]}, ensure_ascii=False)}}]})
+    from semantic_scripted_steps import step as typed_step
+    runtime.provider.steps = [typed_step('select_location_candidate', {
+        'reference': {'kind': 'id', 'value': '1'}, 'commitment': 'AFFIRMED', 'evidence': message}),
+        typed_step('select_location_candidate', {
+        'reference': {'kind': 'ordinal', 'index': 1}, 'commitment': 'AFFIRMED', 'evidence': message})]
     request_start = len(runtime.provider.requests)
     result = runtime.turn(message, client_message_id='map-selection')
     assert result['error'] is None and len(runtime.provider.requests) - request_start == 2

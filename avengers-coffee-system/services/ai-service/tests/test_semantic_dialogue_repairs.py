@@ -44,11 +44,14 @@ def test_social_final_is_not_overwritten_by_incidental_cart_read(runtime):
 def test_format_repaired_business_question_still_requires_authority(runtime):
     text = 'Cho mình xem các thức uống hiện tại'
     g = gateway_for(runtime, text)
+    from test_semantic_repair_modes import step
     runtime.provider.steps = [{'content': 'Mình đang đọc yêu cầu.'}, final('consultation', 'Có các món trong menu.'),
-        tool(g, 'filter_catalog', {'category': 'drink', 'search_text': '', 'limit': 2, 'planned_discovery_reads': 1})]
+        step('interrupt', {'target_domain': 'DISCOVERY'}),
+        step('discover_products', {'scope': 'drink', 'requested_count': 2, 'planned_discovery_reads': 1})]
     result = runtime.turn(text)
     assert result['error'] is None and result['ui_payload']['products']
     assert len(runtime.reads) == 1 and not runtime.writes
+    assert len(runtime.provider.requests) == 4
     assert runtime.provider.requests[1].get('tools')
     assert runtime.provider.requests[2].get('tools')
 

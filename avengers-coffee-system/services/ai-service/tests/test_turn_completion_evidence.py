@@ -74,13 +74,14 @@ def test_repeated_cart_read_keeps_one_bounded_pending_dispatch_opportunity(runti
 def test_reported_no_tool_repeat_read_and_unstructured_success_can_still_dispatch(runtime):
     stage(runtime)
     g = gateway_for(runtime, 'theo mặc định cho tôi đi bạn')
-    read = tool_step(g, 'get_cart', commitment='QUESTION')
+    from semantic_scripted_steps import step as typed_step
     prose = {'content': 'Dạ, tôi đã thiết lập theo mặc định cho bạn rồi nhé.'}
-    runtime.provider.steps = [deepcopy(prose), read, deepcopy(read), prose,
-        tool_step(g, 'add_to_cart', option_intent='DEFAULTS', defaults_evidence=g.user_message,
-                  reference={'namespace': 'PRODUCT', 'kind': 'pending'})]
+    read = typed_step('ask_product_options', {'reference': {'kind': 'id', 'value': '101'}})
+    runtime.provider.steps = [prose, read, deepcopy(read),
+        typed_step('use_product_defaults', {'commitment': 'SELECTED', 'evidence': g.user_message,
+            'reference': {'kind': 'pending'}})]
     result = runtime.turn(g.user_message)
-    assert result['error'] is None and len(runtime.provider.requests) == 5
+    assert result['error'] is None and len(runtime.provider.requests) == 4
     assert runtime.provider.requests[-1].get('tools')
     assert len(runtime.writes) == 1 and '×1' in result['reply']
 

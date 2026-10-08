@@ -6,6 +6,7 @@ registry. Business schemas are a second, independent authority boundary.
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import lru_cache
+from src.agents.semantic_progress import PROGRESS_POLICIES, GOAL_FAMILIES, PROGRESS_ROLES
 
 COMMITMENTS = ('SELECTED', 'AFFIRMED', 'REJECTED', 'NEGATED', 'QUESTION',
                'HYPOTHETICAL', 'CONDITIONAL', 'CORRECTION', 'UNKNOWN')
@@ -94,7 +95,12 @@ class SemanticOperation:
     value_mappings: tuple = ()
     metadata_mappings: tuple = ()
     require_any_fields: tuple = ()
-    repair_prerequisite_access: tuple = ()
+    goal_family: str = ''
+    progress_role: str = ''
+    state_effect: str = ''
+    terminal_for_goal: bool = False
+    repair_prerequisites: tuple = ()
+    repair_compatible_goals: tuple = ()
 
     def exposed(self, context):
         return exposure_facts(context)[self.exposure_policy]
@@ -211,7 +217,12 @@ def operation_registry():
             allowed_reference_kinds=tuple(reference_kinds or (COMMON_REFERENCES if namespace == 'PRODUCT' and not implicit else NAMESPACE_REFERENCES.get(namespace, ()))),
             exposure_policy=exposure, joined_args=tuple(joined), value_mappings=tuple(values),
             metadata_mappings=tuple(metadata), require_any_fields=tuple(require_any),
-            repair_prerequisite_access=('READ',) if actual_access != 'READ' else ())
+            goal_family=PROGRESS_POLICIES[name].goal_family,
+            progress_role=PROGRESS_POLICIES[name].progress_role,
+            state_effect=PROGRESS_POLICIES[name].state_effect,
+            terminal_for_goal=PROGRESS_POLICIES[name].terminal_for_goal,
+            repair_prerequisites=tuple('semantic_' + n.lower() for n in PROGRESS_POLICIES[name].prerequisites),
+            repair_compatible_goals=(PROGRESS_POLICIES[name].goal_family,))
         registry[op.function_name] = op
 
     discovery = {'scope': SCOPE, 'product_family': {'type': 'string'}, 'requested_count': COUNT,
@@ -315,6 +326,7 @@ def operation_registry():
             fields=fields, facet={'SET_PAYMENT': 'payment', 'SET_FULFILLMENT': 'fulfillment'}.get(name),
             access='FINAL_WRITE' if name in {'CONFIRM_CHECKOUT', 'CONFIRM_ORDER_CHANGE'} else None,
             decline=name in {'SKIP_VOUCHER', 'REMOVE_VOUCHER', 'DISCARD_ORDER_CHANGE', 'SELECT_PROFILE_ADDRESS'})
+    assert {op.name for op in registry.values()} == set(PROGRESS_POLICIES), 'Missing explicit operation progress metadata'
     validate_registry(registry)
     return registry
 
@@ -322,6 +334,10 @@ def operation_registry():
 def validate_registry(registry):
     """Reject undocumented implicit behavior before advertising any schema."""
     for op in registry.values():
+        assert op.goal_family in GOAL_FAMILIES and op.progress_role in PROGRESS_ROLES and op.state_effect, op.name
+        assert op.repair_compatible_goals == (op.goal_family,), op.name
+        assert all(n.removeprefix('semantic_').upper() in PROGRESS_POLICIES for n in op.repair_prerequisites), op.name
+        assert op.function_name not in op.repair_prerequisites, op.name
         assert set(op.allowed_reference_kinds) <= set(NAMESPACE_REFERENCES.get(op.namespace, ())), op.name
         assert op.exposure_policy in exposure_facts({}), op.name
         if op.implicit_reference_kind is not None:
@@ -409,3 +425,16 @@ def materialize_operation(name, payload):
         if field in payload:
             action[field] = payload[field]
     return action
+
+
+INTERRUPT_NAME = 'semantic_interrupt'
+
+
+def interrupt_schema():
+    return {'type': 'function', 'function': {'name': INTERRUPT_NAME,
+        'description': 'Safely switch semantic domain for THIS user turn. No business side effect or completion. Preserve drafts; next inference must call a function in target_domain. Cannot abandon an unfinished execution plan.',
+        'parameters': closed({'target_domain': {'type': 'string', 'enum': list(GOAL_FAMILIES)}}, ('target_domain',))}}
+
+
+def validate_interrupt(payload):
+    return _strict(payload, interrupt_schema()['function']['parameters'])

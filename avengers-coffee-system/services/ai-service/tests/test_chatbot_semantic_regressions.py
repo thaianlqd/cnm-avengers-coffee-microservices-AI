@@ -4,6 +4,7 @@ import json
 import pytest
 
 from test_semantic_control import runtime, compatibility_runtime, gateway_for, action
+from semantic_scripted_steps import step as typed_step
 from src.common import cart_manager
 from src.function_calling.tools import product_tools, TOOL_EXECUTORS
 
@@ -73,16 +74,13 @@ def test_typed_and_legacy_arguments_cannot_conflict_and_batch_is_atomic_on_shape
 
 def test_invalid_protocol_repairs_in_existing_loop_without_customer_repeat(runtime):
     message = 'Cho mình phần mới nhắc cỡ L nhé'
-    valid = {'tool': 'add_to_cart', 'commitment': 'SELECTED', 'evidence': message,
-             'option_intent': 'CONFIGURE', 'args': {'product_id': '101', 'kich_co': 'L'}}
-    runtime.provider.plan([('customer_actions', {'actions': [valid]})])
-    malformed = deepcopy(runtime.provider.steps[0])
-    malformed['tool_calls'][0]['function']['arguments'] = json.dumps({'actions': [{**valid, 'args': 'not an object'}]})
-    runtime.provider.steps.insert(0, malformed)
+    valid = {'reference': {'kind': 'id', 'value': '101'}, 'commitment': 'SELECTED', 'evidence': message, 'size': 'L'}
+    runtime.provider.steps = [typed_step('configure_product', {**valid, 'size': {'wrong': 'shape'}}),
+        typed_step('configure_product', valid)]
     result = runtime.turn(message)
     assert len(runtime.writes) == 1 and runtime.writes[0][1]['size'] == 'L'
-    assert len(runtime.provider.requests) == 2  # denied proposal, targeted repair, authoritative rendering
-    assert runtime.provider.requests[1]['tool_choice'] == 'auto'  # Gemini nested-contract compatibility
+    assert len(runtime.provider.requests) == 2
+    assert runtime.provider.requests[1]['tool_choice'] == 'auto'
     assert 'chọn giúp' not in result['reply']
 
 
@@ -221,18 +219,16 @@ def test_missing_fulfillment_is_repaired_before_checkout_location(runtime, monke
         captured.append(state) or {'reply': 'Bạn bổ sung địa chỉ cụ thể nhé.', 'tool_calls_log': [
             {'tool': 'find_nearest_branch', 'result': {'status': 'needs_location'}}]}))
     message = 'Nhờ đem tới điểm mình vừa nói nhé'
-    location = {'tool': 'resolve_location', 'commitment': 'SELECTED', 'evidence': message,
-        'args': {'location': 'Điểm mới', 'kind': 'poi', 'for_checkout': True}}
-    repair = {'actions': [{'tool': 'set_fulfillment_choice', 'facet': 'fulfillment', 'commitment': 'SELECTED', 'evidence': message,
-        'supplied_location': True, 'args': {'delivery_type': 'GIAO_TAN_NOI'}}, location]}
-    runtime.provider.plan([('customer_actions', repair)])
-    first = deepcopy(runtime.provider.steps[0])
-    first['tool_calls'][0]['function']['arguments'] = json.dumps({'actions': [location]})
-    runtime.provider.steps.insert(0, first)
+    location = {'reference': {'kind': 'literal', 'value': 'Điểm mới'}, 'kind': 'poi', 'for_checkout': True,
+        'commitment': 'SELECTED', 'evidence': message}
+    runtime.provider.steps = [typed_step('resolve_new_location', location),
+        typed_step('set_fulfillment', {'reference': {'kind': 'id', 'value': 'GIAO_TAN_NOI'}, 'supplied_location': True,
+            'commitment': 'SELECTED', 'evidence': message}),
+        typed_step('resolve_new_location', location)]
     result = runtime.turn(message)
     assert len(captured) == 1 and not captured[0]['force_read_only_location']
     assert cart_manager.get_checkout_prefs(runtime.sid)['delivery_type'] == 'GIAO_TAN_NOI'
-    assert len(runtime.provider.requests) == 2 and 'địa chỉ cụ thể' in result['reply']
+    assert len(runtime.provider.requests) == 3 and 'địa chỉ cụ thể' in result['reply']
 
 
 def test_repair_never_replays_a_successful_target_even_with_changed_args(runtime):
@@ -430,9 +426,8 @@ def test_pending_product_identity_clarification_is_repaired_before_customer_sees
     option_authority(monkeypatch)
     cart_manager.set_pending_products(runtime.sid, [runtime.products[1]])
     message = 'Cỡ L, ít đá và ít ngọt'
-    runtime.provider.plan([('customer_actions', {'actions': [{
-        'tool': 'add_to_cart', 'commitment': 'SELECTED', 'option_intent': 'CONFIGURE',
-        'evidence': message, 'args': {'size': 'L', 'luong_da': 'Ít đá', 'do_ngot': 'Ít ngọt'}}]})])
+    runtime.provider.steps = [typed_step('configure_product', {
+        'commitment': 'SELECTED', 'evidence': message, 'size': 'L', 'luong_da': 'Ít đá', 'do_ngot': 'Ít ngọt'})]
     runtime.provider.steps.insert(0, {'content': json.dumps({
         'response_kind': 'clarification', 'reply': 'Bạn muốn uống món nào?',
         'mutation_claims': [], 'evidence_quotes': []})})
@@ -470,13 +465,9 @@ def test_repaired_product_family_discovery_shows_choices_and_keeps_existing_cart
         category='food', final_price=99000, is_active=True) for i, name in enumerate(('Lava', 'Đậu', 'Matcha'))])
     before = deepcopy(cart_manager.get_cart(runtime.sid)['items'])
     message = 'Mình muốn mua thêm bánh mùa lễ'
-    proposal = {'tool': 'filter_catalog', 'commitment': commitment, 'evidence': message,
-        'args': {'category': 'food', 'search_text': 'Bánh mùa lễ', **plan}}
-    runtime.provider.plan([('customer_actions', {'actions': [proposal]})])
-    bad = deepcopy(runtime.provider.steps[0])
-    bad['tool_calls'][0]['function']['arguments'] = json.dumps({'actions': [{
-        key: value for key, value in proposal.items() if key != 'tool'}]})
-    runtime.provider.steps.insert(0, bad)
+    proposal = {'scope': 'food', 'product_family': 'Bánh mùa lễ', 'planned_discovery_reads': 1}
+    runtime.provider.steps = [typed_step('discover_products', {**proposal, 'scope': 'invalid'}),
+        typed_step('discover_products', proposal)]
     result = runtime.turn(message)
     assert result['error'] is None
     assert len(runtime.provider.requests) == 2 and len(runtime.reads) == 1
@@ -489,16 +480,10 @@ def test_repaired_product_family_discovery_shows_choices_and_keeps_existing_cart
 
 def test_repaired_exact_product_lookup_continues_to_options_without_another_repair(runtime):
     message = 'Mình chọn Alpha nhé'
-    read = {'tool': 'filter_catalog', 'commitment': 'SELECTED', 'evidence': message,
-        'args': {'category': 'all', 'search_text': 'Alpha'}}
-    stage = {'tool': 'get_product_options', 'commitment': 'SELECTED', 'evidence': message,
-        'args': {'product_id': '101'}}
-    runtime.provider.plan([('customer_actions', {'actions': [stage]})])
-    repaired = deepcopy(runtime.provider.steps[0])
-    repaired['tool_calls'][0]['function']['arguments'] = json.dumps({'actions': [read]})
-    bad = deepcopy(repaired)
-    bad['tool_calls'][0]['function']['arguments'] = json.dumps({'actions': [{**read, 'args': 'wrong shape'}]})
-    runtime.provider.steps[:0] = [bad, repaired]
+    selection = {'reference': {'kind': 'name', 'value': 'Alpha'}, 'commitment': 'SELECTED', 'evidence': message}
+    runtime.provider.steps = [typed_step('select_product', {**selection, 'reference': {'kind': 'invalid'}}),
+        typed_step('discover_products', {'scope': 'all', 'product_family': 'Alpha', 'planned_discovery_reads': 1}),
+        typed_step('select_product', selection)]
     result = runtime.turn(message)
     assert result['error'] is None and len(runtime.provider.requests) == 3
     assert 'bắt buộc' in result['reply'] and 'Bạn muốn chọn món nào' not in result['reply']
@@ -508,16 +493,13 @@ def test_repaired_exact_product_lookup_continues_to_options_without_another_repa
 
 def test_successful_repair_read_does_not_reset_protocol_repair_budget(runtime):
     message = 'Mình chọn Alpha nhé'
-    read = {'tool': 'filter_catalog', 'commitment': 'SELECTED', 'evidence': message,
-        'args': {'category': 'all', 'search_text': 'Alpha'}}
-    runtime.provider.plan([('customer_actions', {'actions': [read]})])
-    good = deepcopy(runtime.provider.steps[0])
-    bad = deepcopy(good)
-    bad['tool_calls'][0]['function']['arguments'] = json.dumps({'actions': [{**read, 'args': 'wrong shape'}]})
-    runtime.provider.steps = [bad, good, deepcopy(bad)]
+    bad = typed_step('select_product', {'reference': {'kind': 'invalid'}, 'commitment': 'SELECTED', 'evidence': message})
+    runtime.provider.steps = [bad,
+        typed_step('discover_products', {'scope': 'all', 'product_family': 'Alpha', 'planned_discovery_reads': 1}), deepcopy(bad)]
     result = runtime.turn(message)
     assert result['error'] == 'semantic_repair_exhausted'
     assert len(runtime.provider.requests) == 3 and not runtime.writes
+    assert not result['ui_payload']['products']
 
 
 def test_prior_catalog_evidence_cannot_hide_a_new_protocol_fault(runtime):
@@ -530,26 +512,21 @@ def test_prior_catalog_evidence_cannot_hide_a_new_protocol_fault(runtime):
 
 
 def test_successful_write_fence_survives_repaired_discovery_continuation(runtime):
-    message = 'Đổi số lượng món đầu rồi tìm thêm món Alpha'
-    gateway = gateway_for(runtime, message)
-    update = action(gateway, 'update_cart_item', {'cart_item_id': '800', 'desired_state': {'quantity': 3}})
-    bad = action(gateway, 'add_to_cart', {'product_id': '102', 'size': 'L', 'kich_co': 'M'})
-    read = action(gateway, 'filter_catalog', {'category': 'all', 'search_text': 'Alpha'}, commitment='SELECTED')
-    changed_update = action(gateway, 'update_cart_item', {'cart_item_id': '800', 'desired_state': {'quantity': 8}})
-    add = action(gateway, 'add_to_cart', {'product_id': '102', 'size': 'L'})
-    runtime.provider.plan([('customer_actions', {'actions': [update, bad]})])
-    first = deepcopy(runtime.provider.steps[0])
-    repaired = deepcopy(first)
-    repaired['tool_calls'][0]['function']['arguments'] = json.dumps({'actions': [read]})
-    continuation = deepcopy(first)
-    continuation['tool_calls'][0]['function']['arguments'] = json.dumps({'actions': [changed_update, add]})
-    runtime.provider.steps = [first, repaired, continuation]
+    message = 'Đổi số lượng món đầu rồi tìm thêm món Beta'
+    update = {'reference': {'kind': 'id', 'value': '800'}, 'desired_state': {'quantity': 3},
+        'commitment': 'SELECTED', 'evidence': message}
+    add = {'reference': {'kind': 'id', 'value': '102'}, 'size': 'L', 'commitment': 'SELECTED', 'evidence': message}
+    first = typed_step('update_cart_line', update)
+    second = typed_step('configure_product', {**add, 'size': ['wrong shape']})
+    second['tool_calls'][0]['id'] = 'second'
+    first['tool_calls'] += second['tool_calls']
+    runtime.provider.steps = [first, typed_step('ask_product_options', {'reference': {'kind': 'id', 'value': '102'}}),
+        typed_step('configure_product', add)]
     result = runtime.turn(message)
     assert result['error'] is None and len(runtime.provider.requests) == 3
     assert len(runtime.writes) == 2 and [row[0] for row in runtime.writes] == ['update', 'add']
     assert cart_manager.get_cart(runtime.sid)['items'][0]['quantity'] == 3
-    skipped = [row for row in result['tool_calls_log'] if row['tool'] == 'update_cart_item']
-    assert skipped[-1]['result']['status'] == 'already_processed'
+    assert len([row for row in result['tool_calls_log'] if row['tool'] == 'update_cart_item']) == 1
 
 
 def test_partial_write_survives_repair_exhaustion_and_is_visible(runtime):

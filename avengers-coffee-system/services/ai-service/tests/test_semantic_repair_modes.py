@@ -22,11 +22,11 @@ def metrics(caplog):
 
 def test_pre_tool_malformed_business_can_execute_semantic_in_same_turn(runtime, caplog):
     caplog.set_level(logging.INFO)
-    runtime.provider.steps = [{'content': '{broken'}, step('discover_products', {
+    runtime.provider.steps = [{'content': '{broken'}, step('interrupt', {'target_domain': 'DISCOVERY'}), step('discover_products', {
         'scope': 'drink', 'product_family': 'Beta', 'planned_discovery_reads': 1})]
     result = runtime.turn('Synthetic family discovery')
     assert result['error'] is None and [p['product_id'] for p in result['ui_payload']['products']] == ['102']
-    assert len(runtime.provider.requests) == 2 and len(runtime.reads) == 1 and not runtime.writes
+    assert len(runtime.provider.requests) == 3 and len(runtime.reads) == 1 and not runtime.writes
     assert runtime.provider.requests[1]['tools'] and runtime.provider.requests[1]['tool_choice'] == 'auto'
     assert metrics(caplog)['dialogue_format_repair_count'] == 1
     assert 'PRE_TOOL_RESPONSE_REPAIR' in metrics(caplog)['repair_modes']

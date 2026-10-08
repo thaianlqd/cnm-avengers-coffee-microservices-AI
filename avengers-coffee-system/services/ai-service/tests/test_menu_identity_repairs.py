@@ -4,6 +4,7 @@ import json
 import pytest
 from test_semantic_control import compatibility_runtime, runtime, gateway_for, action
 from test_provider_outage_presentation import offline
+from semantic_scripted_steps import step as typed_step
 from src.function_calling import tools
 from src.function_calling.tools import product_tools
 from src.rag import rag_service
@@ -57,7 +58,7 @@ def test_corrected_menu_read_completes_protocol_repair(runtime, monkeypatch):
         {'status': 'ok', 'menu_categories': [{'category_id': 'new', 'category_name': 'New category'}]})
     g = gateway_for(runtime, 'Show the menu please')
     a = action(g, 'get_menu_categories', commitment='QUESTION')
-    runtime.provider.steps = [step({'actions': [a], 'extra': 'invalid'}), step({'actions': [a]})]
+    runtime.provider.steps = [typed_step('read_menu', {'extra': 'invalid'}), typed_step('read_menu', {})]
     result = runtime.turn(g.user_message)
     assert result['error'] is None and 'New category' in result['reply']
     assert len(runtime.provider.requests) == 2 and not runtime.writes
@@ -142,7 +143,8 @@ def test_corrected_empty_catalog_read_finishes_without_false_protocol_error(runt
         {'status': 'not_found', 'products': [], 'message': 'Không có món khớp bộ lọc.'})
     g = gateway_for(runtime, 'Find this family')
     good = action(g, 'filter_catalog', {'search_text': 'absent', 'category': 'drink'}, commitment='QUESTION')
-    runtime.provider.steps = [step({'actions': [good], 'invalid': True}), step({'actions': [good]}),
+    runtime.provider.steps = [typed_step('discover_products', {'scope': 'drink', 'product_family': 'absent', 'invalid': True}),
+        typed_step('discover_products', {'scope': 'drink', 'product_family': 'absent', 'planned_discovery_reads': 1}),
         {'content': json.dumps({'response_kind': 'consultation', 'reply': 'Không có món khớp bộ lọc.',
                               'mutation_claims': [], 'evidence_quotes': []})}]
     result = runtime.turn(g.user_message)

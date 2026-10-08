@@ -254,6 +254,9 @@ class ToolArtifacts:
             self.focus.pop('product', None)
 
     def finalize_display(self):
+        if self.continuity_open():
+            self.quarantine_presentation()
+            return
         """Presentation barrier: candidate authority alone never publishes a multi-read pool."""
         if any(row['tool'] == 'confirm_checkout' and row['result'].get('status') in {'ok', 'success', 'already_processed'}
                for row in self.logs):
@@ -449,7 +452,28 @@ class ToolArtifacts:
             'last_tool_summary': [{'tool': row['tool'], 'status': row['result'].get('status'),
                 'count': len(row['result'].get('products') or row['result'].get('results') or [])} for row in self.logs[-8:]]}
 
+    def continuity_open(self):
+        contract = getattr(self, 'turn_contract', None)
+        return bool(contract and not contract.can_present)
+
+    def quarantine_presentation(self):
+        if self.continuity_open():
+            for key in self.ui:
+                if key != 'cart':
+                    self.ui[key] = []
+
     def factual_fallback(self):
+        if self.continuity_open():
+            self.quarantine_presentation()
+            committed = next((row['result'] for row in reversed(self.logs)
+                if row['tool'] in {'add_to_cart', 'update_cart_item', 'remove_cart_item'}
+                and row['result'].get('status') in {'ok', 'already_processed'}
+                and isinstance(row['result'].get('cart'), dict)), None)
+            message = 'Trợ lý chưa xử lý xong yêu cầu do lỗi diễn giải. Các thay đổi đã xác nhận vẫn được giữ nguyên.'
+            if committed:
+                from src.agents.customer_flow_presentation import cart_review
+                return cart_review(committed) + '\n\n' + message
+            return message
         self.used_factual_fallback = True  # Turn-local observability, never business state.
         self.finalize_display()
         flow_reply = self.customer_flow_reply()
@@ -572,6 +596,8 @@ class ToolArtifacts:
         return '\n\n'.join(lines)
 
     def customer_flow_reply(self):
+        if self.continuity_open():
+            return None
         if (self.semantic_mode and self.validated_response_kind == 'social'
                 and self.logs and all(row['tool'] in {'get_cart', 'get_cart_quote'}
                     and row['result'].get('status') in {'ok', 'empty_cart'} for row in self.logs)):
@@ -675,6 +701,8 @@ class ToolArtifacts:
 
     def discovery_product_reply(self, allow_cart_mutations=False, repaired_protocol=False):
         """A catalog row is not evidence for taste, ingredients or popularity."""
+        if self.continuity_open():
+            return None
         logs = self.discovery_presentation_logs(repaired_protocol)
         if self.semantic_mode and any(row['result'].get('selection_staged') for row in self.logs):
             return None  # Selection/configuration takes precedence over incidental discovery.
@@ -762,6 +790,8 @@ class ToolArtifacts:
 
     def completed_customer_step(self, repair_in_progress=False):
         """A customer-choice boundary has enough authoritative evidence to render now."""
+        if self.continuity_open():
+            return None
         if self.semantic_mode and self.semantic_batch_pending:
             return None
         if not self.logs:
@@ -854,6 +884,15 @@ class ToolArtifacts:
     def response_issue(self, raw):
         self.response_validation_issue = None
         issue = self._response_issue(raw)
+        if not issue and self.continuity_open():
+            envelope = json.loads(raw)
+            contract = self.turn_contract
+            if (envelope.get('response_kind') == 'social' and not self.logs and not contract.bound_operation
+                    and (contract.goal_family == 'SOCIAL' or not contract.primary_state_obligation
+                        and not contract.scoped_domain)):
+                contract.progress_result, contract.turn_completion_reason = 'COMPLETED', 'valid_social_response'
+            else:
+                issue = 'TOOL_REQUIRED: Complete the same server turn contract using an allowed semantic operation; a prerequisite or unrelated read is not completion. Use semantic_interrupt only for a genuine domain switch.'
         if issue:
             if self.response_validation_issue is None:
                 self.response_validation_issue = 'missing_tool_evidence' if issue.startswith('TOOL_REQUIRED:') else 'missing_envelope'
