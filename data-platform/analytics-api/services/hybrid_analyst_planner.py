@@ -101,10 +101,12 @@ class HybridAnalystPlanner(OneShotPlanner):
                         r["metrics"][m].get("business_definition", ""),r["metrics"][m].get("population_definition", ""),
                         index.metrics[m]['dimensions']] for m in metrics],
             "equivalent_metrics":[sorted(group) for group in {tuple(sorted(equivalents[m])) for m in metrics if len(equivalents[m])>1}],
+            "distinct_metric_concepts":[g for g in r.get('metric_concept_groups',[]) if set(g).intersection(metrics)],
             "shape_rules":{"trend":"Set granularity; group only independent business axes, not raw timestamps.",
                 "detail":"Only raw row projections, without metric_ids. A table of SUM/COUNT/AVG by voucher/product/etc is aggregate, not detail.",
                 "ranking":"Set ranking.limit and ranking.metric_id. Additional displayed metrics do not change the ordering criterion.",
-                "features":"Include each requested calculation. Set feature_metrics to its requested metric targets, e.g. contribution_share:[voucher_revenue] in a table also displaying count, discount, aov. Averages cannot be summed into shares. leader/top_gap target the ranking criterion.",
+                "features":"Include requested calculations. Set feature_metrics, e.g. contribution_share:[voucher_revenue] with count/discount/aov displayed. Averages cannot form shares. leader/top_gap need ranking.metric_id; separate leader metrics need separate ranking requirements. Wrong feature shape is repairable, not unavailable data.",
+                "metric_definitions":"Honor request_anchors IDs. Concept neighbors are not equivalents: aov SUM/COUNT(*) vs store_aov AVG ignores NULL.",
                 "constraints":"Do not turn a prohibition such as không kết luận ROI into a requirement to calculate ROI. Preserve it as a conclusion constraint. Only a positive request for an unavailable calculation needs an unavailable requirement.",
                 "clarification":"Use not_analytical_request for greetings/nonsense without an analytical goal. missing_fields must name genuinely missing metric_ids, dimension_ids, time, filters or analysis_goal. Do not request fields already explicit in the question."},
             "dimensions":[[d,r["dimensions"][d]["business_name"]] for d in dims],
@@ -223,7 +225,8 @@ class HybridAnalystPlanner(OneShotPlanner):
                         if getattr(baseline,field) != getattr(new,field):
                             raise ResolutionIssues([{"requirement_id":id,"field":field,"code":"untargeted_field_changed"}])
                 continue
-            before=requirement_meaning(old[id]);after=requirement_meaning(new)
+            resolver=AnalyticalResolver(self.catalog,self.reference)
+            before=requirement_meaning(resolver.normalize(old[id]));after=requirement_meaning(resolver.normalize(new))
             fields=set(targets.get(id,set()))
             if global_features and set(old[id].derived_features) <= set(new.derived_features) and (
                 set(new.derived_features)-set(old[id].derived_features)) <= global_features:
@@ -235,6 +238,14 @@ class HybridAnalystPlanner(OneShotPlanner):
             for field in before.keys() | after.keys():
                 if field not in fields and before.get(field)!=after.get(field):
                     raise ResolutionIssues([{"requirement_id":id,"field":field,"code":"untargeted_field_changed"}])
+            for issue in issues:
+                if issue.get('requirement_id')==id and issue['code']=='explicit_metric_definition_mismatch' and not set(issue['protected_metric_ids'])<=set(new.metric_ids):
+                    raise ResolutionIssues([{'requirement_id':id,'field':'metric_ids','code':'accepted_metric_removed'}])
+                if issue.get('requirement_id')==id and issue['code']=='feature_shape_conflict':
+                    protected=issue['protected_features']
+                    if not set(protected)<=set(new.derived_features) or any(
+                            old[id].feature_metrics.get(f)!=new.feature_metrics.get(f) for f in protected):
+                        raise ResolutionIssues([{'requirement_id':id,'field':'derived_features','code':'accepted_feature_changed'}])
             old[id]=new
         for id in targets:
             if id is not None and id not in updates:

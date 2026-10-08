@@ -10,7 +10,7 @@ from services.analysis_intent import AnalysisIntentEnvelope,IntentRequirement
 from services.analytical_resolver import AnalyticalResolver,ResolutionIssues,compatibility_index
 from services.request_anchors import request_anchors,complete_unique_grouping
 from services.analysis_quality_service import verify_saved_report
-from services.analysis_contract import MAX_ANALYTICAL_ROWS
+from services.analysis_contract import max_analytical_rows
 from services.analysis_query import validate_results
 from tests import test_hybrid_v28 as fixture
 from tests.agent_fixtures import ScriptedProvider,call
@@ -138,9 +138,9 @@ class OverviewTests(unittest.TestCase):
     def test_execution_overflow_is_separate_from_old_inline_row_limit(self):
         from tests.test_agent_v22 import fixture_artifact,query
         a,_=fixture_artifact(query('orders','revenue','trend',granularity='week',time={'kind':'relative','mode':'all_time'}))
-        self.assertEqual(a.plan.row_limit,MAX_ANALYTICAL_ROWS)
-        self.assertGreater(MAX_ANALYTICAL_ROWS,2000)
-        rows=[dict(period=(datetime(1980,1,7)+timedelta(weeks=i)).isoformat(),revenue=1) for i in range(MAX_ANALYTICAL_ROWS+1)]
+        self.assertEqual(a.plan.row_limit,max_analytical_rows())
+        self.assertGreater(max_analytical_rows(),2000)
+        rows=[dict(period=(datetime(1980,1,7)+timedelta(weeks=i)).isoformat(),revenue=1) for i in range(max_analytical_rows()+1)]
         result=dict(columns=['period','revenue'],rows=rows,truncated=False)
         verdict=validate_results(result,a.plan,a.grounded,self.catalog)
         self.assertFalse(verdict.valid)

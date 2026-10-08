@@ -162,6 +162,18 @@ def verify_anchors(anchors, requirements, reference, catalog):
                                 for f in anchor['candidate_ids'])]
                     if len(eligible) == 1:
                         issue['requirement_id'] = eligible[0].id
+                if kind == 'metrics':
+                    # Concept neighbors identify REPAIR targets, never execution
+                    # equivalence. AVG and SUM/COUNT retain distinct NULL rules.
+                    neighbors = {m for group in catalog.registry.get('metric_concept_groups', [])
+                                 if set(group).intersection(anchor['candidate_ids']) for m in group}
+                    eligible = [r for r in requested if neighbors.intersection(r.metric_ids)]
+                    if eligible:
+                        for r in eligible:
+                            issues.append({**issue,'requirement_id':r.id,
+                                'code':'explicit_metric_definition_mismatch',
+                                'protected_metric_ids':sorted(set(r.metric_ids)-neighbors)})
+                        continue
                 if issue not in issues:
                     issues.append(issue)
     for rank in anchors["rankings"]:

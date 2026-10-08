@@ -1,22 +1,112 @@
 {
-  "version": "2.9.0",
+  "version": "2.9.1",
   "date": "2026-10-08",
-  "starting_head": "354e3aad443f546b7fa97b234904d15b48cc0da2",
-  "backend_suite": {"passed": 623, "total": 623, "seconds": 186.952, "runner": "python -m tools.run_tests_v29", "offline": true},
-  "frontend_suite": {"passed": 94, "total": 94, "typecheck": "passed", "production_build": "passed"},
-  "docker_build": {"analytics-api": "passed", "web-ui": "passed"},
-  "recreated_services": ["analytics-api", "web-ui"],
-  "other_services": {"checked": 19, "started_at_unchanged": true, "customer_chatbot_untouched": true},
-  "container_health": {"avengers_analytics_api": "healthy", "avengers_analytics_web": "healthy"},
-  "api_health": {"status": "ok", "service": "avengers-analytics-api", "version": "2.9.0", "provider_budget": 3, "session_backend": "redis", "artifact_backend": "redis", "execution_rows": 50000},
-  "web_proxy_health": {"status": "ok", "version": "2.9.0", "provider_budget": 3, "session_backend": "redis", "artifact_backend": "redis"},
+  "original_v29_starting_head": "354e3aad443f546b7fa97b234904d15b48cc0da2",
+  "v29_implementation_commit": "830470c5ff5a375b6ebd12c9af000667cb539276",
+  "starting_head": "830470c5ff5a375b6ebd12c9af000667cb539276",
+  "verified_current_head": "830470c5ff5a375b6ebd12c9af000667cb539276",
+  "final_fix_commit": null,
+  "final_fix_commit_status": "Uncommitted final review fixes; user may commit/push",
+  "backend_suite": {
+    "passed": 635,
+    "total": 635,
+    "seconds": 233.787,
+    "runner": "python -m tools.run_tests_v29",
+    "offline": true
+  },
+  "frontend_suite": {
+    "passed": 96,
+    "total": 96,
+    "typecheck": "passed",
+    "production_build": "passed"
+  },
+  "offline_evaluation": {
+    "passed": 110,
+    "total": 110,
+    "capacity_tests": 8,
+    "capacity_failures": 0
+  },
+  "docker_build": {
+    "analytics-api": "passed",
+    "web-ui": "passed"
+  },
+  "recreated_services": [
+    "analytics-api",
+    "web-ui"
+  ],
+  "other_services": {
+    "checked": 19,
+    "started_at_unchanged_count": 18,
+    "customer_chatbot_untouched": true,
+    "manual_restarts": 0,
+    "automatic_restarts_observed": [
+      "avengers_redis"
+    ],
+    "reason": "Redis restarted automatically during background save and large synthetic probe; 128 MiB container limit versus 153030832 logical used-memory bytes, resource pressure suspected, OOM not proven"
+  },
+  "container_health": {
+    "avengers_analytics_api": "healthy",
+    "avengers_analytics_web": "healthy"
+  },
+  "api_health": {
+    "status": "ok",
+    "check": "liveness",
+    "service": "avengers-analytics-api",
+    "version": "2.9.1",
+    "provider_budget": 3,
+    "session_backend": "redis",
+    "artifact_backend": "redis",
+    "execution_rows": 50000
+  },
+  "web_proxy_health": {
+    "status": "ok",
+    "check": "liveness",
+    "service": "avengers-analytics-api",
+    "version": "2.9.1",
+    "provider_budget": 3,
+    "session_backend": "redis",
+    "artifact_backend": "redis",
+    "execution_rows": 50000
+  },
+  "api_readiness": {
+    "status": "ready",
+    "service": "avengers-analytics-api",
+    "version": "2.9.1",
+    "session_backend": "redis",
+    "artifact_backend": "redis",
+    "backend_configuration_valid": true,
+    "redis_required": true,
+    "redis_available": true,
+    "catalog_ready": true,
+    "warehouse_required": true,
+    "warehouse_available": true
+  },
+  "web_proxy_readiness": {
+    "status": "ready",
+    "service": "avengers-analytics-api",
+    "version": "2.9.1",
+    "session_backend": "redis",
+    "artifact_backend": "redis",
+    "backend_configuration_valid": true,
+    "redis_required": true,
+    "redis_available": true,
+    "catalog_ready": true,
+    "warehouse_required": true,
+    "warehouse_available": true
+  },
+  "negative_readiness_probe": {
+    "http_status": 503,
+    "redis_available": false,
+    "liveness_status": "ok",
+    "stopped_redis": false
+  },
   "frontend_http_status": 200,
   "redis_runtime_probe": {
     "status": "passed",
-    "full_rows": 5000,
-    "artifact_bytes": 7351754,
-    "session_bytes": 232185,
-    "response_bytes": 835815,
+    "full_rows": 200,
+    "artifact_bytes": 17353,
+    "session_bytes": 146256,
+    "response_bytes": 217548,
     "quality_score": 90.0,
     "full_saved_verification": true,
     "pagination": true,
@@ -24,8 +114,18 @@
     "cross_owner_denied": true,
     "stale_cas_denied": true,
     "scripted_provider_calls": 1,
-    "audit_owned_session_deleted": true
+    "decoded_cache_reuse": true,
+    "cache_does_not_mask_outage": true,
+    "audit_owned_session_deleted": true,
+    "live_provider_requests": 0,
+    "warehouse_writes": 0
   },
+  "large_real_redis_probe": {
+    "status": "failed_dependency",
+    "full_rows": 5000,
+    "reason": "Redis closed connections and restarted automatically; large artifact tests pass offline, this deployment is not qualified for this live stress load"
+  },
+  "pagination_strategy": "OPTION_A_VERIFIED_FULL_BLOB_WITH_BOUNDED_DECODED_CACHE",
   "LIVE_PROVIDER_REQUESTS": 0,
   "WAREHOUSE_WRITES": 0
 }

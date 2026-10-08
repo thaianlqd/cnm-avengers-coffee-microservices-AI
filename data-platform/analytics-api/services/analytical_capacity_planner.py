@@ -44,12 +44,16 @@ def period_count(period, granularity):
     if not period.get('start') or not period.get('end'):
         return None
     start, end = (date.fromisoformat(period[k][:10]) for k in ('start', 'end'))
+    if end < start:
+        raise ValueError('Period end precedes start')
     if granularity == 'day':
         return (end-start).days + 1
     if granularity == 'week':
         return ((end-start).days + start.weekday()) // 7 + 1
     months = (end.year-start.year)*12 + end.month-start.month
-    return months+1 if granularity == 'month' else months//3+2 if granularity == 'quarter' else end.year-start.year+1
+    if granularity == 'quarter':
+        return end.year*4+(end.month-1)//3 - (start.year*4+(start.month-1)//3) + 1
+    return months+1 if granularity == 'month' else end.year-start.year+1
 
 
 class AnalyticalCapacityPlanner:

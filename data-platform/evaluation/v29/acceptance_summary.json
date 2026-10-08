@@ -5,24 +5,34 @@
   "measurement_scope": "OFFLINE_SCRIPTED_SERVER_QUALIFICATION",
   "reliability": {
     "first_click_success_rate": {
+      "status": "measured",
       "numerator": 100,
       "denominator": 100,
       "rate": 1.0
     },
     "primary_call_success_rate": {
+      "status": "measured",
       "numerator": 75,
       "denominator": 100,
       "rate": 0.75
     },
+    "second_attempt_recovery_rate": {
+      "status": "measured",
+      "numerator": 25,
+      "denominator": 25,
+      "rate": 1.0
+    },
     "repair_recovery_rate": {
+      "status": "measured",
       "numerator": 25,
       "denominator": 25,
       "rate": 1.0
     },
     "third_attempt_recovery_rate": {
+      "status": "not_exercised",
       "numerator": 0,
-      "denominator": 25,
-      "rate": 0.0
+      "denominator": 0,
+      "rate": null
     },
     "semantic_intent_accuracy": {
       "status": "not_measured",

@@ -45,7 +45,7 @@ export function presentationChart(chart, report = {}) {
   // Older reports may contain a bar for a complete composition. Evidence must
   // certify the full total; never reinterpret a Top N or a display subset.
   const rows = chart.data || [], total = rows.reduce((sum, r) => sum + r.value, 0);
-  if (['bar', 'horizontal_bar'].includes(chart.chart_type) && chart.selection === 'complete' && e && rows.length >= 2 && rows.every(r => Number.isFinite(r.value) && r.value >= 0) && Math.abs(total - e.values.total) < 1e-6) {
+  if (['bar', 'horizontal_bar'].includes(chart.chart_type) && (!chart.purpose || chart.purpose === 'distribution') && chart.selection === 'complete' && e && rows.length >= 2 && rows.every(r => Number.isFinite(r.value) && r.value >= 0) && Math.abs(total - e.values.total) < 1e-6) {
     out = { ...out, chart_type: 'donut', ...compositionData(rows, chart.x_field === 'category' ? 'danh mục' : 'nhóm'), purpose: 'Cơ cấu trong phạm vi đã chọn' };
   }
   if (['line', 'area', 'multi_line'].includes(chart.chart_type) && rows.some(r => bucketCoverage(r.label, out.granularity, out.period)?.partial)) {
@@ -73,6 +73,19 @@ export function dashboardCharts(charts = [], report = {}) {
   const sectionOrder = { 'So sánh và xếp hạng': 0, 'Quy mô và đối chiếu': 1, 'Cơ cấu đóng góp': 2, 'Diễn biến theo thời gian': 3 };
   unique.sort((a, b) => Number(a.role === 'supporting') - Number(b.role === 'supporting') || (order[a.purpose] ?? sectionOrder[a.story_section] ?? 4) - (order[b.purpose] ?? sectionOrder[b.story_section] ?? 4));
   return { charts: unique, duplicateCount: charts.length - unique.length };
+}
+
+export function dashboardPrimaryCharts(charts = [], limit = 6) {
+  const family = c => ['line', 'area', 'multi_line'].includes(c.chart_type) ? 'trend'
+    : ['bar', 'horizontal_bar', 'grouped_bar'].includes(c.chart_type) ? 'comparison' : c.chart_type;
+  const selected = [], families = new Set();
+  // Pick existing validated views. Do not convert chart types or data merely
+  // to fill a variety quota; remaining views stay accessible on demand.
+  for (const c of charts) if (!families.has(family(c)) && selected.length < limit) {
+    selected.push(c); families.add(family(c));
+  }
+  for (const c of charts) if (!selected.includes(c) && selected.length < limit) selected.push(c);
+  return selected;
 }
 export function dashboardHighlights(report = {}) {
   const preferred = [], scopes = new Set();

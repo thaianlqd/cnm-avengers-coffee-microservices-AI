@@ -17,11 +17,12 @@ STAGES = ['semantic_retrieval','semantic_interpretation','semantic_coverage','re
 def rates(cases, rows):
     supported = [r for c,r in zip(cases,rows) if c['expected']=='proposal_ready']
     successful = [r for r in supported if r['passed'] and r['status']=='proposal_ready' and r['provider_calls']<=3]
-    fraction = lambda n,d: dict(numerator=n,denominator=d,rate=n/d if d else None)
+    fraction = lambda n,d: dict(status='measured' if d else 'not_exercised',numerator=n,denominator=d,rate=n/d if d else None)
+    second=fraction(sum(r['provider_calls']==2 for r in successful),sum(r['provider_calls']>=2 for r in supported))
     return dict(first_click_success_rate=fraction(len(successful),len(supported)),
         primary_call_success_rate=fraction(sum(r['provider_calls']==1 for r in successful),len(supported)),
-        repair_recovery_rate=fraction(sum(r['provider_calls']==2 for r in successful),sum(r['provider_calls']>1 for r in supported)),
-        third_attempt_recovery_rate=fraction(sum(r['provider_calls']==3 for r in successful),sum(r['provider_calls']>1 for r in supported)),
+        second_attempt_recovery_rate=second, repair_recovery_rate=second,
+        third_attempt_recovery_rate=fraction(sum(r['provider_calls']==3 for r in successful),sum(r['provider_calls']>=3 for r in supported)),
         semantic_intent_accuracy=dict(status='not_measured',reason='Scripted providers; live labeled semantic qualification required'),
         reference_value_accuracy=dict(status='fixture_checks_only',reason='Independent Python arithmetic on synthetic data; source oracle reported separately'))
 

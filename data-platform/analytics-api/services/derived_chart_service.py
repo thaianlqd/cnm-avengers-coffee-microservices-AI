@@ -50,7 +50,8 @@ def contribution_charts(artifacts, evidence):
         suffix=f" · Top {a.plan.ranking.top_n}" if a.plan.ranking else ''
         if partition:suffix+=' · '+' / '.join(str(v) for k,v in partition)
         identity=json.dumps([a.signature,denominator.signature,metric,'contribution_share',partition],sort_keys=True,default=str)
-        output.append(dict(chart_type='horizontal_bar',chart_type_label='Tỷ trọng trong toàn phạm vi',
+        complete_composition = selection=='complete' and 2<=len(rows)<=8 and isclose(sum(r['value'] for r in rows),100,abs_tol=1e-8)
+        output.append(dict(chart_type='donut' if complete_composition else 'horizontal_bar',chart_type_label='Tỷ trọng trong toàn phạm vi',
             title='Tỷ trọng '+label.lower()+suffix,metric=metric,metrics=[metric],unit='%',
             query_id=ref,scope_ref=ref,x_field=visible[0],x_label=a.grounded.dimensions[visible[0]]['business_name'],series_field=None,
             role=a.query.role,priority=70,purpose='distribution',selection=selection,layout='standard',

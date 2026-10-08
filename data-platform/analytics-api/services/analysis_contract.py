@@ -240,9 +240,9 @@ class GroundedAnalysisSpec(Contract):
 # limits remain capped at 100; they are separate from this completeness budget.
 from services.analytical_capacity_planner import AnalyticalCapacityContract
 
-# Compatibility alias for callers; this is EXECUTION capacity, never a display
-# or session budget. Compilation and runtime validation consult the contract.
-MAX_ANALYTICAL_ROWS = AnalyticalCapacityContract().execution_rows
+def max_analytical_rows():
+    """Runtime execution capacity; never freeze environment policy at import."""
+    return AnalyticalCapacityContract.from_env().execution_rows
 
 
 class QueryPlan(Contract):

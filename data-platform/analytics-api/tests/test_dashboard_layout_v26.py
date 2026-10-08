@@ -18,7 +18,7 @@ class DashboardLayoutTests(unittest.TestCase):
         cases = [
             (query('orders', 'revenue', 'trend', granularity='week'), 'area'),
             (query('orders', 'aov', 'trend', granularity='week'), 'line'),
-            (query('orders', 'revenue', 'aggregate', group_by=['order_type']), 'donut'),
+            (query('orders', 'revenue', 'aggregate', group_by=['order_type']), 'bar'),
             (query('orders', 'aov', 'aggregate', group_by=['store']), 'bar'),
             (ranking_query(), 'horizontal_bar'),
         ]

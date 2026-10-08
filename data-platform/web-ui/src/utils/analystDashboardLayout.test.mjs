@@ -1,6 +1,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { dashboardCharts, dashboardHighlights, initialChartType, chartAccent, compositionData, trendComparison, dashboardFindings, chartExplanation, reportHeading } from './analystDashboardLayout.mjs';
+import { dashboardCharts, dashboardPrimaryCharts, dashboardHighlights, initialChartType, chartAccent, compositionData, trendComparison, dashboardFindings, chartExplanation, reportHeading } from './analystDashboardLayout.mjs';
+
+test('comparison retains columns even with concentration evidence', () => {
+  const chart={scope_ref:'q',metric:'revenue',purpose:'comparison',chart_type:'bar',selection:'complete',data:[{label:'A',value:1},{label:'B',value:2}]};
+  const evidence=[{scope_ref:'q',metric:'revenue',feature:'concentration',scope:{selection:'complete'},values:{total:3}}];
+  assert.equal(dashboardCharts([chart],{evidence}).charts[0].chart_type,'bar');
+});
+
+test('main dashboard prioritizes existing validated families and retains detail views', () => {
+  const charts=[...Array.from({length:7},(_,i)=>({id:i,chart_type:'bar',data:[i]})),{id:7,chart_type:'line',data:[1]},{id:8,chart_type:'donut',data:[2]}];
+  const primary=dashboardPrimaryCharts(charts);
+  assert.equal(primary.length,6);assert.ok(primary.includes(charts[7]));assert.ok(primary.includes(charts[8]));
+  assert.equal(charts.length,9);assert.ok(primary.every(c=>charts.includes(c)));
+});
 
 test('refined report title follows current Top 2 meaning instead of original Top 5 prompt', () => {
   const report={analysis_spec:{},prompt:'Top 5 món',title:'Sản phẩm và thực đơn',semantic_intent:{requirements:[{ranking:{limit:2,direction:'top'}}]}};

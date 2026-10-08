@@ -10,6 +10,7 @@ import threading
 import time
 import uuid
 from copy import deepcopy
+from collections import OrderedDict
 from datetime import datetime, timezone
 
 from services.analysis_catalog import AnalysisError
@@ -31,6 +32,10 @@ class ResultArtifactStore:
         self._items = {}
         self._queries = {}
         self._lock = threading.RLock()
+        self._decoded = OrderedDict()
+        self._decoded_budget = 32_000_000
+        self._decoded_entries = 8
+        self.decode_count = 0
 
     def put(self, result, *, query_fingerprint, plan_fingerprint, schema_fingerprint, provenance=None):
         body = serialized(result)
@@ -86,6 +91,15 @@ class ResultArtifactStore:
             return None
 
     def get(self, reference):
+        return deepcopy(self._verified(reference))
+
+    def _verified(self, reference):
+        # Full Redis GET remains mandatory: eviction, outage and changed bytes
+        # cannot be hidden by a local cache. Serialize expensive decode work.
+        with self._lock:
+            return self._read_verified(reference)
+
+    def _read_verified(self, reference):
         id = reference['artifact_id']
         try:
             if self.client:
@@ -96,8 +110,17 @@ class ResultArtifactStore:
                     if expiry <= time.time():
                         body = None
             if not body:
+                self._decoded.pop(id, None)
                 raise AnalysisError('artifact_expired', 'Result expired; refresh the approved analysis')
+            now = time.time()
+            wire_hash = hashlib.sha256(body.encode() if isinstance(body,str) else body).hexdigest()
+            cached = self._decoded.get(id)
+            if cached and cached[0] > now and cached[1] == wire_hash and cached[2] == reference:
+                self._decoded.move_to_end(id)
+                return cached[3]
+            self._decoded.pop(id, None)
             envelope = json.loads(body)
+            self.decode_count += 1
             metadata, result = envelope['metadata'], envelope['result']
             if reference != metadata:
                 raise AnalysisError('artifact_integrity', 'Artifact metadata mismatch')
@@ -108,6 +131,16 @@ class ResultArtifactStore:
                 raise AnalysisError('artifact_integrity', 'Artifact content mismatch')
             if datetime.fromisoformat(metadata['expires_at']).timestamp() <= time.time():
                 raise AnalysisError('artifact_expired', 'Result expired; refresh the approved analysis')
+            # Conservative accounting includes row/object overhead. Cache is an
+            # optional optimization, never storage or artifact authority.
+            charge = metadata['byte_size']*4 + metadata['row_count']*512
+            self._decoded = OrderedDict((k,v) for k,v in self._decoded.items() if v[0] > now)
+            if charge <= self._decoded_budget:
+                while self._decoded and (len(self._decoded)>=self._decoded_entries or
+                        sum(v[4] for v in self._decoded.values())+charge>self._decoded_budget):
+                    self._decoded.popitem(last=False)
+                self._decoded[id] = (min(now+60,datetime.fromisoformat(metadata['expires_at']).timestamp()),
+                    wire_hash,deepcopy(metadata),result,charge)
             return result
         except AnalysisError:
             raise
@@ -117,7 +150,7 @@ class ResultArtifactStore:
     def page(self, reference, offset=0, limit=50, filters=None):
         if offset < 0 or not 1 <= limit <= self.contract.drilldown_rows:
             raise AnalysisError('artifact_page', 'Invalid page bounds')
-        result = self.get(reference)
+        result = self._verified(reference)
         filters = filters or {}
         if not set(filters) <= set(reference.get('provenance', {}).get('dimensions', [])):
             raise AnalysisError('query_scope', 'Drilldown may only select approved dimensions')
@@ -126,7 +159,7 @@ class ResultArtifactStore:
                 try:return actual==float(expected)
                 except ValueError:return False
             return actual==expected
-        rows = [r for r in result['rows'] if all(matches(r.get(k),v) for k,v in filters.items())]
+        rows = [r for r in result['rows'] if all(matches(r.get(k),v) for k,v in filters.items())] if filters else result['rows']
         page = deepcopy(rows[offset:offset+limit])
         while page and len(serialized(page)) > self.contract.response_bytes // 2:
             page.pop()
@@ -135,6 +168,7 @@ class ResultArtifactStore:
         return dict(columns=result['columns'], rows=page, total_rows=len(rows), offset=offset,
                     next_offset=offset+len(page) if offset+len(page) < len(rows) else None,
                     artifact_id=reference['artifact_id'], computation_scope='APPROVED_QUERY_POPULATION',
+                    artifact_bytes=reference['byte_size'], pagination_strategy='VERIFIED_FULL_BLOB',
                     schema_fingerprint=reference['schema_fingerprint'], plan_fingerprint=reference['plan_fingerprint'])
 
 

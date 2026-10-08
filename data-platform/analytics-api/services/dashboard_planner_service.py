@@ -49,7 +49,7 @@ def defaults(artifacts):
             continue
         for metric in a.plan.metrics:
             composition = (
-                a.plan.kind in {"aggregate", "distribution"}
+                a.plan.kind == "distribution"
                 and len(visible) == 1
                 and not a.plan.ranking
                 and not a.plan.explicit_limit

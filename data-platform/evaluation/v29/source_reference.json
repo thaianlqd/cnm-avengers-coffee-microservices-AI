@@ -198,6 +198,5 @@
         }
       ]
     }
-  ],
-  "measurement_scope": "READ_ONLY_SOURCE_ORACLE_WITH_REDIS_ARTIFACTS"
+  ]
 }

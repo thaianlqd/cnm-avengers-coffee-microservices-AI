@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch
 
 from common import AiTextToReportRequest
 from services.analysis_catalog import AnalysisCatalog, AnalysisError
-from services.analysis_contract import AnalysisSpec, MAX_ANALYTICAL_ROWS
+from services.analysis_contract import AnalysisSpec, max_analytical_rows
 from services.analysis_pipeline import safe_failure
 from tests.archive_planner import ArchivedGraphPipeline as AnalysisPipeline
 from services.analysis_query import build_plans, validate_results, validate_sql
@@ -92,8 +92,8 @@ class ResultReliabilityTests(unittest.TestCase):
 
     def test_population_boundary_and_strict_top_n_detail_and_explicit_limits(self):
         _, _, a = self.artifact("product_sales")
-        rows = [{"product": f"Product {i}", "product_id": i, "product_revenue": Decimal(i)} for i in range(MAX_ANALYTICAL_ROWS)]
-        self.assertEqual(a.plan.row_limit, MAX_ANALYTICAL_ROWS)
+        rows = [{"product": f"Product {i}", "product_id": i, "product_revenue": Decimal(i)} for i in range(max_analytical_rows())]
+        self.assertEqual(a.plan.row_limit, max_analytical_rows())
         self.assertTrue(validate_results(result(rows), a.plan, a.grounded, self.catalog).valid)
         self.assertFalse(validate_results(result(rows + [{"product": "Overflow", "product_id": -1, "product_revenue": 1}]), a.plan, a.grounded, self.catalog).valid)
         self.assertFalse(validate_results({**result(rows), "truncated": True}, a.plan, a.grounded, self.catalog).valid)
@@ -106,7 +106,7 @@ class ResultReliabilityTests(unittest.TestCase):
         g = self.catalog.ground(spec, date(2026, 10, 7))
         self.assertEqual(build_plans(g, self.catalog)[0].row_limit, 100)
         self.assertTrue(validate_sql(a.sql, a.plan, a.grounded, self.catalog).valid)
-        self.assertFalse(validate_sql(a.sql.replace(f"LIMIT {MAX_ANALYTICAL_ROWS+1}", f"LIMIT {MAX_ANALYTICAL_ROWS}"), a.plan, a.grounded, self.catalog).valid)
+        self.assertFalse(validate_sql(a.sql.replace(f"LIMIT {max_analytical_rows()+1}", f"LIMIT {max_analytical_rows()}"), a.plan, a.grounded, self.catalog).valid)
 
     def test_hour_expression_is_not_timestamp_but_raw_timestamp_stays_checked(self):
         _, _, a = self.artifact("hourly_load")
@@ -142,7 +142,7 @@ class ResultReliabilityTests(unittest.TestCase):
 
     def test_large_population_remains_actionable_and_bad_rows_never_become_charts(self):
         p, queries, a = self.artifact("product_sales")
-        rows = [{"product": str(i), "product_id": i, "product_revenue": 1} for i in range(MAX_ANALYTICAL_ROWS + 1)]
+        rows = [{"product": str(i), "product_id": i, "product_revenue": 1} for i in range(max_analytical_rows() + 1)]
         p.executor.return_value = result(rows)
         with self.assertRaises(AnalysisError) as caught: queries.run(a)
         failure = safe_failure(caught.exception, layer_diagnostics=p.semantic_info)

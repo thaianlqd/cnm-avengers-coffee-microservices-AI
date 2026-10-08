@@ -10671,6 +10671,7 @@
         "product_revenue"
       ]
     ],
+    "metric_concept_groups": [["aov", "store_aov"]],
     "granularity_aliases": {
       "day": [
         "theo ngày",

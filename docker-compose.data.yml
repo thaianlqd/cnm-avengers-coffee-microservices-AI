@@ -375,9 +375,9 @@ services:
     volumes:
       - ./data-platform/analytics-api:/app
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS --max-time 7 http://localhost:8000/api/readiness >/dev/null || exit 1"]
       interval: 10s
-      timeout: 5s
+      timeout: 8s
       retries: 12
       start_period: 15s
     networks:

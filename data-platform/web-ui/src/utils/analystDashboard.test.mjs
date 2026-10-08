@@ -219,11 +219,11 @@ test('large evidence collections are collapsed and bounded to one page', () => {
   assert.ok(!html.includes('Bằng chứng 1199')); assert.ok(!html.includes('Calcul 8<'));
 });
 
-test('dashboard opens with up to eight charts and keeps all result tables in disclosure', () => {
+test('dashboard opens with up to six primary views and keeps all result tables in disclosure', () => {
   const { AnalystDashboard } = compile('../components/AnalystDashboardSummary.tsx');
   const html = render(AnalystDashboard, { report: { charts: Array.from({ length: 9 }, (_, i) => ({ id: `c${i}`, title: `Chart ${i}`, chart_type: 'bar', data: [{ label: 'A', value: i }] })), result_sets: { all: { columns: ['value'], rows: [{ value: 1 }] } } } });
-  assert.equal((html.match(/<article/g) || []).length, 8);
-  assert.ok(html.includes('Xem thêm 1 biểu đồ')); assert.ok(html.includes('Bảng dữ liệu')); assert.ok(html.includes('Diễn giải đầy đủ'));
+  assert.equal((html.match(/<article/g) || []).length, 6);
+  assert.ok(html.includes('Xem thêm 3 góc nhìn chi tiết')); assert.ok(html.includes('Bảng dữ liệu')); assert.ok(html.includes('Diễn giải đầy đủ'));
   assert.ok(!html.includes('open=""'));
 });
 

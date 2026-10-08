@@ -288,8 +288,16 @@ class AnalyticalResolver:
                 selected=([req.ranking.metric_id] if req.ranking and feature in ranked_features|{'contribution_share'}
                           else [m for m in req.metric_ids if feature not in additive_features or self.catalog.registry['metrics'][m].get('additive')])
             targets[feature]=set(selected)
-            if (req.analysis_kind not in required_shapes[feature] or feature=='scalar' and req.dimension_ids
-                or not selected
+            if req.analysis_kind not in required_shapes[feature] or feature=='scalar' and req.dimension_ids:
+                # A malformed semantic feature is repairable interpretation,
+                # not proof that the requested business metrics are unavailable.
+                raise ResolutionIssues([self.issue(req,'derived_features','feature_shape_conflict',
+                    feature=feature,expected_shapes=sorted(required_shapes[feature]),
+                    protected_features=sorted(set(req.derived_features)-{feature})),
+                    self.issue(req,'feature_metrics','feature_shape_binding_conflict',feature=feature),
+                    {'requirement_id':None,'field':'derived_features','code':'feature_requirement_decomposition',
+                     'candidate_ids':[feature],'metric_ids':req.feature_metrics.get(feature,req.metric_ids)}])
+            if (not selected
                 or feature in ranked_features and set(selected)!={req.ranking.metric_id}
                 or feature in additive_features and any(not self.catalog.registry['metrics'][m].get('additive') for m in selected)):
                 return req, [], "UNSUPPORTED", "definition_unavailable", []

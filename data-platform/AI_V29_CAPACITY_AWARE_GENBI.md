@@ -2,10 +2,14 @@
 
 Implementation and qualification date: 2026-10-08 (Asia/Ho_Chi_Minh).
 
-`STARTING_HEAD = 354e3aad443f546b7fa97b234904d15b48cc0da2`, branch
-`branch_thaian`. Initial worktree and index were clean. No reset, checkout,
-commit, customer chatbot edit, source credential rotation, or warehouse write
-was performed. The final worktree contains this uncommitted Data Platform upgrade.
+Original V2.9 `STARTING_HEAD = 354e3aad443f546b7fa97b234904d15b48cc0da2`.
+`V2.9 IMPLEMENTATION COMMIT = 830470c5ff5a375b6ebd12c9af000667cb539276`
+(`feat: cap nhat ai data`), branch `branch_thaian`.
+This final-review pass started from and verified that same implementation HEAD;
+the initial worktree and index were clean. The implementation is committed; only
+the new final-review fixes are uncommitted. `FINAL_FIX_COMMIT` is pending the
+user's commit/push. This agent performed no commit, push, reset, customer chatbot
+edit, credential rotation, or warehouse write.
 
 ## Audit and migration
 
@@ -38,7 +42,7 @@ The security plane remains the existing catalog table/column allowlists,
 sensitive-column rejection, strict SQL AST equality, server compiler,
 read-only transaction and timeout. No executable tool graph or SQL is added to
 the model contract. Existing V2.8/V2.8.5 contract/version names remain compatible;
-runtime health separately identifies capacity release 2.9.0.
+runtime health separately identifies final-review release 2.9.1.
 
 Migration changes the storage representation around these existing foundations.
 Old inline artifacts externalize on their next session save. New artifacts are
@@ -309,16 +313,24 @@ checks read full artifacts; saved verification checks the original transported
 preview. The oracle covers these assertions and does not establish universal AI
 accuracy. It created only audit-owned development sessions and no warehouse writes.
 
-Final qualification passed **623/623 backend tests**, **94/94 frontend tests**,
+Final qualification passed **635/635 backend tests**, **96/96 frontend tests**,
 TypeScript checks, Vite production build, and both Docker builds. Only
-`analytics-api` and `web-ui` were recreated; both are healthy at version 2.9.0.
-Start times of all nineteen other containers remained unchanged.
+`analytics-api` and `web-ui` were explicitly recreated; both are healthy at version
+2.9.1. Eighteen other container start times remained unchanged. Redis automatically
+restarted twice during this pass (background save, then the large synthetic probe);
+it was not stopped or restarted by an agent command. Its normal readiness is now
+restored. Redis's 128 MiB container limit versus about 153 MB logical used memory
+suggests resource pressure; an OOM cause is not established by the available logs.
 
-The real Redis runtime probe retained **5,000 rows / 7,351,754 artifact bytes**
-with **232,185 session bytes** and **835,815 response bytes**. Full saved-report
+The final bounded real Redis runtime probe retained **200 rows / 17,353 artifact
+bytes**, with **146,256 session bytes** and **217,548 response bytes**. Full saved-report
 verification, approved-result pagination, dimension drilldown, cross-owner denial,
-and stale Redis CAS denial passed. The API and web proxy report Redis for both
-stores and a three-call provider ceiling; frontend HTTP returned 200.
+stale Redis CAS denial, decoded-cache reuse, and fail-closed behavior during an
+isolated client outage passed. A 5,000-row real Redis stress probe failed when
+Redis closed connections and restarted; this deployment is not qualified for that
+live stress load. Large artifact verification remains covered by passing offline
+fixtures. The API and web proxy report ready, Redis for both stores and a three-call
+provider ceiling; frontend HTTP returned 200.
 The probe used scripted meaning and synthetic results, blocked provider/warehouse
 transports, and deleted its own session afterward.
 
@@ -342,6 +354,107 @@ lets retired graph fixtures select their documented historical one-call policy;
 hybrid fixtures explicitly select the production three-call ceiling. Historical
 tests now assert artifact population counts, capacity table/series presentation,
 strict tamper rejection and the current independent execution bound.
+
+## V2.9 Final Review Fixes
+
+1. **Starting history:** original V2.9 STARTING_HEAD is
+   `354e3aad443f546b7fa97b234904d15b48cc0da2`; implementation commit and this
+   final-review STARTING_HEAD are `830470c5ff5a375b6ebd12c9af000667cb539276`.
+2. **Verified current HEAD:** `830470c5ff5a375b6ebd12c9af000667cb539276`.
+   FINAL_FIX_COMMIT remains pending; no agent commit/push occurred.
+3. **Capacity cleanup:** the import-time integer was removed in favor of
+   `max_analytical_rows()` reading `from_env()`. Repository search found no Python
+   callers of `MAX_ANALYTICAL_ROWS`; its remaining occurrence describes historical
+   behavior above. The old alias was a latent risk, not the active planner's source.
+4. **Runtime consistency:** regression cases independently set 20,000, 50,000 and
+   100,000 execution rows and assert accessor, capacity planner, query row limit and
+   compiled `LIMIT cap + 1` overflow sentinel agree.
+5. **Calendar quarters:** `end.year*4 + (end.month-1)//3 -
+   (start.year*4 + (start.month-1)//3) + 1`. Reversed ranges raise `ValueError`.
+   Q1, Q4, boundaries, cross-year, two full years and a single day pass;
+   existing valid day/week/month/year counts are preserved.
+6. **Readiness:** `/health`, `/api/health` and `/liveness` are process checks with
+   no dependency I/O. `/api/readiness` validates both backend modes and capacity
+   configuration, checks Redis when required, and initializes/validates the catalog.
+   Production also checks required warehouse connectivity using read-only `SELECT 1`.
+   Warehouse connect timeout is two seconds and statement timeout one second;
+   successful physical catalog initialization is cached for sixty seconds.
+   Development memory mode does not require Redis or warehouse. MinIO is optional
+   for this full-blob implementation. Compose API health now uses readiness.
+7. **Redis failure:** one-second connect/socket timeouts bound PING. Required
+   Redis down yields HTTP 503 / `not_ready`; process liveness remains `ok`.
+   Unit tests and an isolated process pointed at a closed Redis port prove this
+   without intentionally stopping the running Redis service.
+8. **Pagination choice: Option A.** Immutable full Redis blobs remain authoritative;
+   default result capacity is 64,000,000 bytes per artifact. Pages disclose
+   `artifact_bytes` and `pagination_strategy=VERIFIED_FULL_BLOB`. Each read still
+   fetches and SHA-256 hashes the complete wire blob: network/integrity cost is
+   O(blob bytes), not O(page size). A process-local LRU avoids repeated JSON decode
+   for eligible blobs: eight entries, thirty-two-million-byte estimated accounting
+   budget, sixty-second maximum lifetime bounded by artifact expiry. Accounting is
+   `4*serialized_bytes + 512*row_count`, not an exact Python RSS guarantee. Oversize
+   entries bypass the cache. Decode is serialized; cached data is private and public
+   results are copied. Every hit requires current storage bytes and matching metadata;
+   outage, eviction, expiry and mutation cannot be hidden. Filters still scan O(rows).
+   Chunked/indexed storage is a V3 limitation, not a claimed current capability.
+9. **Recovery cohorts:** primary successes use all supported cases; second-call
+   successes use cases that reached call 2; third-call successes use cases that
+   reached call 3. An empty cohort is `not_exercised`, 0/0, `rate=null`.
+   First-click means one user submission with up to three internal provider calls.
+   The current 110-case scripted evaluation passes: 100/100 supported first-click,
+   75/100 primary, 25/25 second, and third not exercised. Separate tests exercise
+   third-call success and failure. Live semantic accuracy remains unmeasured.
+10. **Current tests:** 635/635 backend (233.787 seconds), 96/96 frontend,
+    110/110 golden cases and eight capacity cases; typecheck passes. Tests retain
+    strict approval/owner/metric/feature/integrity/score regressions. Expected chart
+    presentation assertions were migrated for the intentional dashboard change.
+11. **Build:** Vite and Docker builds pass; only Analytics API and UI were explicitly
+    recreated. Customer chatbot files and processes are unchanged.
+12. **Runtime verification:** API and web proxy liveness HTTP 200 / version 2.9.1;
+    readiness HTTP 200 with Redis, catalog and warehouse true; UI HTTP 200;
+    both analytics containers healthy. Real Redis pagination/owner/CAS/cache checks
+    pass for 200 synthetic rows. Independent read-only voucher oracle: 206/206.
+    The larger live Redis probe failed; see the deployment resource limitation above.
+13. **LIVE_PROVIDER_REQUESTS = 0.** Scripted providers only; no measured live-model
+    one-shot guarantee is inferred from fixture success.
+14. **WAREHOUSE_WRITES = 0.** No bootstrap, reset, ETL sync or analytical mutation.
+15. **Remaining limits:** full-blob reads/filter scans and temporary decoded memory
+    remain bounded, not streaming. Redis deployment memory needs separate review.
+    Verification score remains deterministic checks, not AI correctness probability;
+    UI retains “Điểm kiểm chứng tổng” and “Xác suất trả lời đúng: Chưa hiệu chuẩn”.
+
+### Observed scenario 3/4 and dashboard follow-up
+
+Store logs at 11:55:21 UTC selected `store_aov`, whereas request anchors required
+`aov`. Their formulas retain different NULL semantics (`AVG(tong_tien)` versus
+`SUM(tong_tien)/COUNT(*)`); they are not execution equivalents. The former global
+missing-metric issue left the requirements frozen and rejected the model's attempted
+fix. Catalog concept groups now identify targeted repair fields and protect all
+other accepted metrics. The scripted reproduction succeeds on internal call 2.
+
+Voucher logs at 11:54:29 and 11:54:43 UTC returned `unsupported_metric` after one
+call, before SQL. The pasted result shows available voucher metrics and a single
+aggregate-shaped requirement. A misplaced derived feature is a plausible cause,
+but the raw failed model intent was not captured, so this cause is an inference.
+Feature-shape conflicts now trigger structured bounded repair instead of claiming
+the metrics are unavailable. Valid accepted features/bindings stay protected;
+genuinely unsupported/non-additive shares still fail closed. A malformed voucher
+aggregate-plus-leader fixture repairs into separate valid requirements on call 2.
+Prompt guidance uses catalog IDs and valid feature shapes; no sentence-specific
+routing, model SQL or increase to the three-call budget was introduced.
+
+Comparisons render as columns/bars; composition uses donut only with a complete
+valid population (two through eight groups), and trends retain line/area views.
+Semantic chart deduplication remains active. The initial dashboard selects up to
+six existing validated views with different chart families first; “Xem thêm” exposes
+the remaining distinct views. Chart types/data are not invented for visual variety.
+
+Retest on `http://localhost:8501`: hard-refresh, start a new question using the
+original scenario 3 or 4 text, submit once and wait for bounded internal recovery.
+Inspect `diagnostics.provider_call_count` (at most 3), requirement coverage and the
+proposal metrics before approving the report. Check the initial chart mix, expand
+the remaining views and verify shares use full denominators. Existing approvals
+bind catalog fingerprints; create a new proposal after this catalog update.
 
 ## Remaining limits and manual qualification
 
