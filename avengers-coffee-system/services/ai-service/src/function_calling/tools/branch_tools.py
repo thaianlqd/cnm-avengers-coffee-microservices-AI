@@ -126,12 +126,12 @@ TOOL_FIND_NEAREST_BRANCH = {
 
 def execute_find_nearest_branch(location: str = "", session_id: str = "", target_branches: list = None,
                                 resolved_location: dict = None, cart_items: list = None,
-                                location_purpose: str = None) -> Dict[str, Any]:
+                                location_purpose: str = None, semantic_location_kind: str = None) -> Dict[str, Any]:
     """Tìm chi nhánh gần nhất dựa trên geocoding và khoảng cách Haversine."""
     try:
         from src.agents.location_parser import parse_location
         candidate = location or (cart_manager.get_checkout_prefs(session_id).get("location_address") if session_id else "")
-        if parse_location(candidate or "").kind in {"reference", "reference_question", "change_reference"}:
+        if not semantic_location_kind and parse_location(candidate or "").kind in {"reference", "reference_question", "change_reference"}:
             return {"status": "need_location", "message":
                     "Mình chưa có địa chỉ nào đang được tham chiếu. Bạn cho mình khu vực hoặc địa chỉ nhé."}
         hours_check = _check_business_hours()
@@ -147,9 +147,9 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
 
         prefs = cart_manager.get_checkout_prefs(session_id) if session_id else {}
         from src.agents.location_parser import clean_location_clause
-        target_address = clean_location_clause(location if location else str(prefs.get("location_address") or ""))
+        target_address = (location or str(prefs.get("location_address") or "")) if semantic_location_kind else clean_location_clause(location if location else str(prefs.get("location_address") or ""))
         parsed_location = parse_location(target_address)
-        location_kind = parsed_location.kind
+        location_kind = semantic_location_kind or parsed_location.kind
         user_lat, user_lon = None, None
         distance_basis = "unavailable"
         location_estimate = None
@@ -177,7 +177,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
             from src.function_calling.helpers import _norm
             generic_words = {"toi", "gan", "day", "nao", "nhat", "nha", "dia", "chi", "mac", "dinh", "cua", "hien", "tai"}
             norm_loc = _norm(location).lower().replace(",", " ") if location else ""
-            is_generic = all(w in generic_words for w in norm_loc.split()) if norm_loc else not bool(target_address)
+            is_generic = (not bool(target_address)) if semantic_location_kind else (all(w in generic_words for w in norm_loc.split()) if norm_loc else not bool(target_address))
 
             if (not target_address or is_generic) and prefs.get("delivery_type") in {"MANG_DI", "TAI_CHO"}:
                 return {

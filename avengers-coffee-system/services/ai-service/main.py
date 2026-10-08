@@ -135,7 +135,8 @@ async def lifespan(app: FastAPI):
     from src.common.agent_provider_policy import enabled
     logger.info(
         "[AIStartup] chat_orchestrator_mode=%s agent_provider=%s agent_model=%s redis_available=%s",
-        os.getenv("AI_CHAT_ORCHESTRATOR_MODE", "legacy").strip().lower(),
+        "hybrid_commerce" if os.getenv("AI_AGENT_ARCHITECTURE", "hybrid").strip().lower() == "hybrid"
+        else os.getenv("AI_CHAT_ORCHESTRATOR_MODE", "legacy").strip().lower(),
         os.getenv("AI_AGENT_PROVIDER", "auto").strip().lower(),
         os.getenv("AI_AGENT_MODEL", "").strip() or ("tier_policy" if enabled() else "provider_default"),
         str(redis_available()).lower(),
@@ -1999,7 +2000,9 @@ def health():
         "groq_available": groq_is_available(),
         "groq_model": "dynamic_fallback",
         "stt_model": "whisper-large-v3-turbo",
-        "chat_orchestrator_mode": os.getenv("AI_CHAT_ORCHESTRATOR_MODE", "legacy").strip().lower(),
+        "chat_orchestrator_mode": "hybrid_commerce" if os.getenv("AI_AGENT_ARCHITECTURE", "hybrid").strip().lower() == "hybrid"
+        else os.getenv("AI_CHAT_ORCHESTRATOR_MODE", "legacy").strip().lower(),
+        "agent_architecture": os.getenv("AI_AGENT_ARCHITECTURE", "hybrid").strip().lower(),
         "agent_provider": os.getenv("AI_AGENT_PROVIDER", "auto").strip().lower(),
         "agent_model": os.getenv("AI_AGENT_MODEL", "").strip() or ("tier_policy" if enabled() else "provider_default"),
         "agent_model_tiering": enabled(),

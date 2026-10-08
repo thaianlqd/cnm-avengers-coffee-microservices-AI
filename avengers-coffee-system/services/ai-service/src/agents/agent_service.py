@@ -2179,6 +2179,12 @@ def run_agent(
 ) -> Dict[str, Any]:
     """Choose one orchestrator before a turn; never fall back after a write."""
     import os
+    architecture = os.getenv('AI_AGENT_ARCHITECTURE', 'hybrid').strip().lower()
+    if architecture == 'hybrid':
+        from src.agents.hybrid_commerce_orchestrator import run_hybrid_turn
+        return run_hybrid_turn(session_id, user_message, history, client_message_id, selected_product_id)
+    if architecture != 'semantic_legacy':
+        raise ValueError('Invalid AI_AGENT_ARCHITECTURE')
     # Deployments select a mode explicitly. Keep the unconfigured library
     # fallback compatible for direct callers and rollback-oriented unit tests.
     mode = os.getenv('AI_CHAT_ORCHESTRATOR_MODE', 'legacy').strip().lower()

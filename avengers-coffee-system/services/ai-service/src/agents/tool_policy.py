@@ -44,7 +44,8 @@ def denied(code, **details):
 
 class GuardedToolGateway:
     def __init__(self, session_id, user_message, context, artifacts, client_message_id=None, shadow=False,
-                 allowed_capabilities=None, semantic_mode=False):
+                 allowed_capabilities=None, semantic_mode=False, deterministic_business=False):
+        self.deterministic_business = deterministic_business
         self.semantic_mode = semantic_mode
         self.active_semantic = None
         self.semantic_tool_count = 0
@@ -90,15 +91,17 @@ class GuardedToolGateway:
         self.semantic_repair_count = 0
         self.repair_in_progress = False
         self.completed_semantic_targets = {}
-        from src.agents.turn_contract import TurnContract, state_obligation
         from src.agents.product_snapshot import ProductDisplaySnapshot
         self.product_display_snapshot = ProductDisplaySnapshot.capture(artifacts.visible, artifacts.focus.get('product'))
         context['turn_product_snapshot'] = self.product_display_snapshot.descriptor()
-        self.turn_contract = TurnContract(primary_state_obligation=state_obligation(context), context=context)
-        from src.agents.semantic_protocol import TurnAuthorizations
-        self.turn_authorizations = TurnAuthorizations(self)
+        self.turn_contract = self.turn_authorizations = None
+        if not deterministic_business:
+            from src.agents.turn_contract import TurnContract, state_obligation
+            from src.agents.semantic_protocol import TurnAuthorizations
+            self.turn_contract = TurnContract(primary_state_obligation=state_obligation(context), context=context)
+            self.turn_authorizations = TurnAuthorizations(self)
         self.provider_selection_retry = None
-        if semantic_mode:
+        if semantic_mode and not deterministic_business:
             artifacts.turn_contract = self.turn_contract
         self.updated_products = set()
         self.entry_cart_lines = deepcopy(context['business']['cart'].get('items') or [])
@@ -1236,7 +1239,7 @@ class GuardedToolGateway:
         if name in {'set_checkout_choices', 'set_fulfillment_choice', 'set_payment_choice'} and result.get('changed') is False:
             return result  # Preferences are unchanged; no new price/wallet read is needed.
         result = dict(result)
-        if name == 'add_to_cart' and self.entry_cart_lines and not any(
+        if not self.deterministic_business and name == 'add_to_cart' and self.entry_cart_lines and not any(
                 row.get('role') == 'assistant' and 'gio hang cua ban' in normalize_text(row.get('content'))
                 for row in self.context.get('recent') or []):
             result['previous_cart_products'] = list(dict.fromkeys(
@@ -1374,7 +1377,9 @@ class GuardedToolGateway:
             res = details(self.session_id, args['order_id'])
             if res.get('status') == 'ok' and res.get('can_update'):
                 from src.common import cart_manager
-                cart_manager.set_checkout_context(self.session_id, order_management_action=None, order_management_focus={
+                cart_manager.set_checkout_context(self.session_id, order_management_action=(
+                    cart_manager.get_checkout_prefs(self.session_id).get('order_management_action')
+                    if self.deterministic_business else None), order_management_focus={
                     'kind': 'update_order',
                     'order_id': res['order_id'],
                     'expires_at': time.time() + 1800,
@@ -1906,6 +1911,13 @@ class GuardedToolGateway:
                      if str(r.get('cart_item_id') or r.get('line_id')) == line_id), None)
 
     def _cart_line_for_product(self, product_id):
+        if self.deterministic_business:
+            target = (self.active_semantic or {}).get('canonical_target') or {}
+            if str(target.get('product_id')) == str(product_id) and target.get('cart_item_id'):
+                return self._cart_line(str(target['cart_item_id']))
+            rows = [row for row in self.context['business']['cart']['items']
+                    if str(row.get('product_id')) == str(product_id)]
+            return rows[0] if len(rows) == 1 else None
         active_clause = getattr(self, 'active_edit_clause', self.user_message)
         from src.agents.cart_edit_evidence import clause_targets
         targets = clause_targets(active_clause, self.entry_cart_lines)
@@ -2350,7 +2362,7 @@ class GuardedToolGateway:
         kind = ref.get('kind')
         if ref.get('namespace') != 'PAYMENT':
             return model_repair('payment_choice_evidence_required', repair_hint='Use PAYMENT reference tied to the current chosen method, not delivery/location evidence.')
-        if kind in {'name', 'id'} and not proposal.get('_provider_operation'):
+        if kind in {'name', 'id'} and not (self.deterministic_business or proposal.get('_provider_operation')):
             value = normalize_text(ref.get('value'))
             if not value or (' ' + value + ' ') not in (' ' + evidence + ' '):
                 return model_repair('payment_choice_evidence_required')
@@ -2402,6 +2414,9 @@ class GuardedToolGateway:
         return {'status': 'offered', **offer}
 
     def _resolve_location(self, args):
+        if self.deterministic_business:
+            from src.agents.hybrid_location import resolve
+            return resolve(self, args)
         target = (self.active_semantic or {}).get('canonical_target') or {}
         if self.semantic_mode and target.get('candidate_id') and not getattr(self, '_selected_location', None):
             return self._select_location_candidate({'candidate_id': target['candidate_id']})
@@ -2427,7 +2442,7 @@ class GuardedToolGateway:
             if args['location'] != prefs['confirmed_destination']['display_address']:
                 evidence = normalize_text((self.active_semantic or {}).get('evidence'))
                 literal_value = normalize_text(args['location'])
-                if (not (self.active_semantic or {}).get('_provider_operation')
+                if (not (self.deterministic_business or (self.active_semantic or {}).get('_provider_operation'))
                         and ref.get('namespace') != 'PROFILE_ADDRESS' and evidence not in literal_value
                         and literal_value not in evidence):
                     return denied('confirmed_destination_change_required', message='Bạn nói rõ địa chỉ mới muốn thay địa điểm đã xác nhận nhé.')
@@ -2571,6 +2586,9 @@ class GuardedToolGateway:
             'message': result['reply'], **({'order_summary': summary} if summary else {})}
 
     def _select_location_candidate(self, args):
+        if self.deterministic_business:
+            from src.agents.hybrid_location import select
+            return select(self, args['candidate_id'])
         candidate = next((r for r in self.artifacts.visible.get('location_candidates', []) if r.get('candidate_id') == args['candidate_id']), None)
         if not candidate:
             return denied('unknown_location_candidate')
@@ -2640,7 +2658,7 @@ class GuardedToolGateway:
 
     def _request_checkout(self, args):
         prefs = cart_manager.get_checkout_prefs(self.session_id)
-        from src.agents.confirmed_destination import drift
+        from src.agents.confirmed_destination import drift, matches_address
         if drift(prefs):
             logger.warning('[LocationState] address_drift_rejected=true')
             return denied('confirmed_destination_drift', message='Địa chỉ tóm tắt chưa khớp địa điểm bạn đã xác nhận. Mình chưa tạo tóm tắt hoặc đặt đơn.')
@@ -2659,7 +2677,7 @@ class GuardedToolGateway:
         result = cart_tools.execute_request_checkout(self.session_id, reuse_summary=bool(fresh) or args.get('reuse_summary', False))
         destination = prefs.get('confirmed_destination')
         if (destination and result.get('status') == 'require_confirmation'
-                and (result.get('order_summary') or {}).get('delivery_address') != destination['display_address']):
+                and not matches_address(destination, (result.get('order_summary') or {}).get('delivery_address'))):
             self._invalidate_summary()
             logger.warning('[LocationState] summary_address_drift_rejected=true')
             return denied('confirmed_destination_drift', message='Tóm tắt chưa khớp địa điểm đã xác nhận. Mình chưa đặt đơn.')
@@ -2677,6 +2695,8 @@ class GuardedToolGateway:
         reason = None
         if not self.entry_action:
             reason = 'no_prior_action'
+        elif self.deterministic_business and prefs.get('hybrid_summary_turn_id') == self.client_message_id:
+            reason = 'same_turn_summary'
         elif self.entry_action != prefs.get('checkout_action_id'):
             reason = 'action_mismatch'
         elif current != self.entry_fingerprint:

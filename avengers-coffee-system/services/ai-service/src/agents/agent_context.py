@@ -48,7 +48,7 @@ def business_state(session_id, shadow=False):
         'pending_products': deepcopy(prefs.get('pending_products') or [])}
 
 
-def build_context(session_id, memory, history=None, selected_product_id=None, shadow=False):
+def build_context(session_id, memory, history=None, selected_product_id=None, shadow=False, *, project=True):
     state = business_state(session_id, shadow)
     # Durable canonical hints are useful when Redis is unavailable, but they
     # carry no authority for a write. Gateway refreshes every proposed target.
@@ -77,7 +77,7 @@ def build_context(session_id, memory, history=None, selected_product_id=None, sh
     recent = recent[-2*model_turns:] if model_turns else []
     context = {'business': state, 'visible': visible, 'focus': focus,
                'selected_product_id': selected_product_id, 'recent': recent}
-    return bound_context(context)
+    return bound_context(context) if project else (context, None)
 
 
 MODEL_ENTITY_FIELDS = {

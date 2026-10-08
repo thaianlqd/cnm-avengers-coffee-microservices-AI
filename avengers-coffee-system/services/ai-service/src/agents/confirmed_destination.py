@@ -30,4 +30,15 @@ def drift(prefs):
     if prefs.get('delivery_type') != 'GIAO_TAN_NOI' or not destination:
         return False
     return (not prefs.get('address_confirmed') or destination.get('fingerprint') != fingerprint(destination)
-        or prefs.get('delivery_address') != destination.get('display_address'))
+        or not matches_address(destination, prefs.get('delivery_address')))
+
+
+def matches_address(destination, address):
+    """Compare using the same structural normalization as checkout persistence.
+
+    Keep the provider label and its fingerprint immutable. Comma spacing,
+    repeated suffixes and administrative ordering do not change the destination.
+    """
+    from src.agents.location_parser import canonical_address
+    expected = canonical_address(destination.get('display_address'))
+    return bool(expected) and canonical_address(address) == expected
