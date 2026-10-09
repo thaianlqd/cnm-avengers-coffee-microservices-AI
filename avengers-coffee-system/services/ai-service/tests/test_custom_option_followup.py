@@ -27,8 +27,7 @@ def choose_first_product(runtime, quantity=1):
     cart_manager.replace_items_from_order_cart(runtime.sid, [])
     ConversationMemory(runtime.redis).save(runtime.sid, {**empty_memory(),
         'visible_snapshots': {'products': runtime.products}})
-    runtime.provider.steps = [calls(('get_product_options', {'product_id': '101'})),
-        calls(('add_to_cart', {'product_id': '101', 'quantity': quantity, 'use_defaults': True}))]
+    runtime.provider.steps = [calls(('add_to_cart', {'product_id': '101', 'quantity': quantity, 'use_defaults': True}))]
     result = runtime.turn('tôi muốn mua món số 1 á bạn' + (f', {quantity} ly' if quantity != 1 else ''))
     assert result['tool_calls_log'][-1]['result']['status'] == 'defaults_not_authorized'
     assert not runtime.writes
@@ -57,7 +56,7 @@ def test_custom_choice_shows_menu_without_applying_model_guesses(runtime, phrase
     assert 'tên món hoặc số' not in result['reply']
     assert not runtime.writes and not cart_manager.get_cart(runtime.sid)['items']
     staged = cart_manager.get_checkout_prefs(runtime.sid)['pending_products'][0]
-    assert staged['quantity'] == 2 and 'size' not in staged and 'toppings' not in staged
+    assert staged['quantity'] == 2 and 'size' not in staged and staged.get('toppings', []) == []
     assert ConversationMemory(runtime.redis).load(runtime.sid)['focus']['product']['source'] == 'customer_selected_options'
     runtime.provider.steps = [calls(('add_to_cart', {'product_id': '101', 'quantity': 2, 'size': 'L'}))]
     completed = runtime.turn('size L nhé')
@@ -111,3 +110,12 @@ def test_choice_question_keeps_explicit_options_and_rejects_model_guesses(runtim
     result = runtime.turn('tự chọn')
     assert 'Size' in result['reply'] and not runtime.writes
     assert cart_manager.get_checkout_prefs(runtime.sid)['pending_products'][0]['size'] == 'L'
+
+
+@pytest.fixture(autouse=True)
+def exercise_scripted_gateway_without_language_shortcuts(monkeypatch):
+    # This module qualifies explicit provider proposals and gateway denials.
+    # The legacy phrase router must not preempt the proposal under test;
+    # production semantic mode never executes that router either.
+    from src.agents import llm_tool_orchestrator
+    monkeypatch.setattr(llm_tool_orchestrator, '_legacy_language_control', lambda *a: None)

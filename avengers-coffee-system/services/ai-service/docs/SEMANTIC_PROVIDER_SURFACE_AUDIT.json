@@ -1,0 +1,2633 @@
+{
+  "live_provider_requests": 0,
+  "encoding": "UTF-8 JSON, compact separators, sorted keys, ensure_ascii=False; chars not bytes",
+  "state_measurement": "Normal semantic operation surfaces plus initially eligible interrupt; runtime repair/locks narrow further.",
+  "old_select_product_schema": {
+    "type": "function",
+    "function": {
+      "name": "semantic_select_product",
+      "description": "Choose a canonical product and stage it; inspect Menu choices without committing cart.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "commitment": {
+            "type": "string",
+            "enum": [
+              "SELECTED",
+              "AFFIRMED",
+              "CORRECTION"
+            ]
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 999
+          },
+          "reference": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "id",
+                  "name",
+                  "ordinal",
+                  "focus",
+                  "singleton"
+                ]
+              },
+              "value": {
+                "type": "string",
+                "minLength": 1
+              },
+              "index": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "scope": {
+                "type": "string",
+                "enum": [
+                  "drink",
+                  "food"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "commitment",
+          "evidence",
+          "reference"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "new_select_products_schema": {
+    "type": "function",
+    "function": {
+      "name": "semantic_select_products",
+      "description": "Select one or more products in ONE call. Resolve references from the current displayed list. Never configure or add to cart.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "selections": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 16,
+            "items": {
+              "type": "object",
+              "properties": {
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 999
+                },
+                "reference": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "id",
+                        "name",
+                        "ordinal",
+                        "focus",
+                        "singleton"
+                      ]
+                    },
+                    "value": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "index": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "scope": {
+                      "type": "string",
+                      "enum": [
+                        "drink",
+                        "food"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "reference"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "selections"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "states": [
+    {
+      "state": "browsing",
+      "before_functions": 21,
+      "after_functions": 21,
+      "before_chars": 9972,
+      "after_chars": 9880,
+      "provider_functions": [
+        "semantic_discover_products",
+        "semantic_recommend_by_preference",
+        "semantic_rank_by_sales",
+        "semantic_rank_by_price",
+        "semantic_discover_new_products",
+        "semantic_rank_by_rating",
+        "semantic_read_menu",
+        "semantic_select_products",
+        "semantic_ask_product_options",
+        "semantic_ask_product_review",
+        "semantic_ask_knowledge",
+        "semantic_read_cart",
+        "semantic_read_profile_addresses",
+        "semantic_resolve_new_location",
+        "semantic_find_nearby_branches",
+        "semantic_read_branch_ratings",
+        "semantic_ask_branch_review",
+        "semantic_read_order_history",
+        "semantic_read_order",
+        "semantic_track_order",
+        "semantic_interrupt"
+      ]
+    },
+    {
+      "state": "products",
+      "before_functions": 15,
+      "after_functions": 15,
+      "before_chars": 8056,
+      "after_chars": 8106,
+      "provider_functions": [
+        "semantic_discover_products",
+        "semantic_recommend_by_preference",
+        "semantic_rank_by_sales",
+        "semantic_rank_by_price",
+        "semantic_discover_new_products",
+        "semantic_rank_by_rating",
+        "semantic_read_menu",
+        "semantic_select_products",
+        "semantic_ask_product_fact",
+        "semantic_ask_product_review",
+        "semantic_ask_product_price",
+        "semantic_read_cart",
+        "semantic_read_branch_ratings",
+        "semantic_ask_branch_review",
+        "semantic_interrupt"
+      ]
+    },
+    {
+      "state": "pending_product",
+      "before_functions": 9,
+      "after_functions": 10,
+      "before_chars": 5953,
+      "after_chars": 6107,
+      "provider_functions": [
+        "semantic_select_products",
+        "semantic_ask_product_options",
+        "semantic_configure_product",
+        "semantic_use_product_defaults",
+        "semantic_reset_product_defaults",
+        "semantic_discard_product_selection",
+        "semantic_ask_product_fact",
+        "semantic_ask_product_price",
+        "semantic_read_cart",
+        "semantic_interrupt"
+      ]
+    },
+    {
+      "state": "cart",
+      "before_functions": 18,
+      "after_functions": 18,
+      "before_chars": 9800,
+      "after_chars": 9566,
+      "provider_functions": [
+        "semantic_discover_products",
+        "semantic_recommend_by_preference",
+        "semantic_rank_by_sales",
+        "semantic_rank_by_price",
+        "semantic_discover_new_products",
+        "semantic_rank_by_rating",
+        "semantic_read_menu",
+        "semantic_select_products",
+        "semantic_ask_product_fact",
+        "semantic_ask_product_review",
+        "semantic_ask_product_price",
+        "semantic_read_cart",
+        "semantic_read_cart_total",
+        "semantic_update_cart_line",
+        "semantic_remove_cart_line",
+        "semantic_read_branch_ratings",
+        "semantic_ask_branch_review",
+        "semantic_interrupt"
+      ]
+    },
+    {
+      "state": "voucher",
+      "before_functions": 8,
+      "after_functions": 8,
+      "before_chars": 3861,
+      "after_chars": 3284,
+      "provider_functions": [
+        "semantic_read_cart",
+        "semantic_read_cart_total",
+        "semantic_update_cart_line",
+        "semantic_remove_cart_line",
+        "semantic_read_eligible_vouchers",
+        "semantic_choose_voucher",
+        "semantic_skip_voucher",
+        "semantic_interrupt"
+      ]
+    },
+    {
+      "state": "location",
+      "before_functions": 9,
+      "after_functions": 9,
+      "before_chars": 4504,
+      "after_chars": 3794,
+      "provider_functions": [
+        "semantic_read_payment_options",
+        "semantic_set_payment",
+        "semantic_set_fulfillment",
+        "semantic_read_profile_addresses",
+        "semantic_resolve_new_location",
+        "semantic_select_location_candidate",
+        "semantic_find_nearby_branches",
+        "semantic_select_branch",
+        "semantic_interrupt"
+      ]
+    },
+    {
+      "state": "payment_needed",
+      "before_functions": 9,
+      "after_functions": 9,
+      "before_chars": 4504,
+      "after_chars": 3794,
+      "provider_functions": [
+        "semantic_read_payment_options",
+        "semantic_set_payment",
+        "semantic_set_fulfillment",
+        "semantic_read_profile_addresses",
+        "semantic_resolve_new_location",
+        "semantic_select_location_candidate",
+        "semantic_find_nearby_branches",
+        "semantic_select_branch",
+        "semantic_interrupt"
+      ]
+    },
+    {
+      "state": "summary",
+      "before_functions": 15,
+      "after_functions": 15,
+      "before_chars": 7098,
+      "after_chars": 5847,
+      "provider_functions": [
+        "semantic_read_cart",
+        "semantic_read_cart_total",
+        "semantic_update_cart_line",
+        "semantic_remove_cart_line",
+        "semantic_read_payment_options",
+        "semantic_set_payment",
+        "semantic_set_fulfillment",
+        "semantic_read_profile_addresses",
+        "semantic_resolve_new_location",
+        "semantic_select_location_candidate",
+        "semantic_find_nearby_branches",
+        "semantic_select_branch",
+        "semantic_prepare_checkout",
+        "semantic_confirm_checkout",
+        "semantic_interrupt"
+      ]
+    },
+    {
+      "state": "order_change",
+      "before_functions": 9,
+      "after_functions": 9,
+      "before_chars": 5758,
+      "after_chars": 5065,
+      "provider_functions": [
+        "semantic_read_order_history",
+        "semantic_read_order",
+        "semantic_track_order",
+        "semantic_prepare_order_cancel",
+        "semantic_prepare_order_update",
+        "semantic_prepare_reorder",
+        "semantic_confirm_order_change",
+        "semantic_discard_order_change",
+        "semantic_interrupt"
+      ]
+    }
+  ],
+  "operations": [
+    {
+      "function": "semantic_discover_products",
+      "goal": "DISCOVERY",
+      "access": "READ",
+      "required_provider_fields": [
+        "scope"
+      ],
+      "all_provider_fields": [
+        "min_price",
+        "max_price",
+        "min_price_inclusive",
+        "max_price_inclusive",
+        "scope",
+        "product_family",
+        "requested_count",
+        "exclude_previous",
+        "planned_discovery_reads",
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 975,
+      "nested_object_count": 2,
+      "old_schema_chars": 975,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "browsing",
+        "products",
+        "cart"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_recommend_by_preference",
+      "goal": "DISCOVERY",
+      "access": "READ",
+      "required_provider_fields": [
+        "scope",
+        "concepts"
+      ],
+      "all_provider_fields": [
+        "scope",
+        "product_family",
+        "requested_count",
+        "exclude_previous",
+        "planned_discovery_reads",
+        "concepts"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": null,
+      "schema_chars": 671,
+      "nested_object_count": 1,
+      "old_schema_chars": 671,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "browsing",
+        "products",
+        "cart"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_rank_by_sales",
+      "goal": "DISCOVERY",
+      "access": "READ",
+      "required_provider_fields": [
+        "scope",
+        "period"
+      ],
+      "all_provider_fields": [
+        "period",
+        "period_anchor",
+        "scope",
+        "product_family",
+        "requested_count",
+        "exclude_previous",
+        "planned_discovery_reads"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": null,
+      "schema_chars": 564,
+      "nested_object_count": 1,
+      "old_schema_chars": 564,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "browsing",
+        "products",
+        "cart"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_rank_by_price",
+      "goal": "DISCOVERY",
+      "access": "READ",
+      "required_provider_fields": [
+        "scope",
+        "direction"
+      ],
+      "all_provider_fields": [
+        "scope",
+        "product_family",
+        "requested_count",
+        "exclude_previous",
+        "planned_discovery_reads",
+        "direction"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": null,
+      "schema_chars": 527,
+      "nested_object_count": 1,
+      "old_schema_chars": 527,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "browsing",
+        "products",
+        "cart"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_discover_new_products",
+      "goal": "DISCOVERY",
+      "access": "READ",
+      "required_provider_fields": [
+        "scope"
+      ],
+      "all_provider_fields": [
+        "scope",
+        "product_family",
+        "requested_count",
+        "exclude_previous",
+        "planned_discovery_reads"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": null,
+      "schema_chars": 467,
+      "nested_object_count": 1,
+      "old_schema_chars": 467,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "browsing",
+        "products",
+        "cart"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_rank_by_rating",
+      "goal": "DISCOVERY",
+      "access": "READ",
+      "required_provider_fields": [
+        "scope"
+      ],
+      "all_provider_fields": [
+        "scope",
+        "product_family",
+        "requested_count",
+        "exclude_previous",
+        "planned_discovery_reads"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": null,
+      "schema_chars": 453,
+      "nested_object_count": 1,
+      "old_schema_chars": 453,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "browsing",
+        "products",
+        "cart"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_read_menu",
+      "goal": "DISCOVERY",
+      "access": "READ",
+      "required_provider_fields": [],
+      "all_provider_fields": [],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": null,
+      "schema_chars": 176,
+      "nested_object_count": 1,
+      "old_schema_chars": 176,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "browsing",
+        "products",
+        "cart"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_select_products",
+      "goal": "PRODUCT_SELECTION",
+      "access": "WRITE",
+      "required_provider_fields": [
+        "selections"
+      ],
+      "all_provider_fields": [
+        "selections"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "SELECTED",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "drink",
+              "food"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 815,
+      "nested_object_count": 3,
+      "old_schema_chars": 765,
+      "exposure_policy": "draft_selection",
+      "representative_state_exposure": [
+        "browsing",
+        "products",
+        "pending_product",
+        "cart"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_ask_product_options",
+      "goal": "PRODUCT_CONFIGURATION",
+      "access": "READ",
+      "required_provider_fields": [
+        "reference"
+      ],
+      "all_provider_fields": [
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "drink",
+              "food"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 547,
+      "nested_object_count": 2,
+      "old_schema_chars": 547,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "browsing",
+        "pending_product"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_configure_product",
+      "goal": "PRODUCT_CONFIGURATION",
+      "access": "WRITE",
+      "required_provider_fields": [],
+      "all_provider_fields": [
+        "quantity",
+        "size",
+        "luong_da",
+        "do_ngot",
+        "loai_sua",
+        "toppings",
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "CORRECTION",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton",
+              "pending"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "drink",
+              "food"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 834,
+      "nested_object_count": 2,
+      "old_schema_chars": 975,
+      "exposure_policy": "pending_product",
+      "representative_state_exposure": [
+        "pending_product"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_use_product_defaults",
+      "goal": "PRODUCT_CONFIGURATION",
+      "access": "WRITE",
+      "required_provider_fields": [],
+      "all_provider_fields": [
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "SELECTED",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton",
+              "pending"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "drink",
+              "food"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 553,
+      "nested_object_count": 2,
+      "old_schema_chars": 694,
+      "exposure_policy": "pending_product",
+      "representative_state_exposure": [
+        "pending_product"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_reset_product_defaults",
+      "goal": "PRODUCT_CONFIGURATION",
+      "access": "WRITE",
+      "required_provider_fields": [],
+      "all_provider_fields": [
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "CORRECTION",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton",
+              "pending"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "drink",
+              "food"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 538,
+      "nested_object_count": 2,
+      "old_schema_chars": 694,
+      "exposure_policy": "pending_product",
+      "representative_state_exposure": [
+        "pending_product"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": "explicit meaning variant: semantic_use_product_defaults"
+    },
+    {
+      "function": "semantic_discard_product_selection",
+      "goal": "PRODUCT_SELECTION",
+      "access": "WRITE",
+      "required_provider_fields": [
+        "reference"
+      ],
+      "all_provider_fields": [
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "REJECTED",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "drink",
+              "food"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 517,
+      "nested_object_count": 2,
+      "old_schema_chars": 670,
+      "exposure_policy": "pending_product",
+      "representative_state_exposure": [
+        "pending_product"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_ask_product_fact",
+      "goal": "GENERIC_CONSULTATION",
+      "access": "READ",
+      "required_provider_fields": [
+        "facet",
+        "reference"
+      ],
+      "all_provider_fields": [
+        "query",
+        "facet",
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "drink",
+              "food"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 614,
+      "nested_object_count": 2,
+      "old_schema_chars": 614,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "products",
+        "pending_product",
+        "cart"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_ask_product_review",
+      "goal": "REVIEW",
+      "access": "READ",
+      "required_provider_fields": [
+        "reference"
+      ],
+      "all_provider_fields": [
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "drink",
+              "food"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 503,
+      "nested_object_count": 2,
+      "old_schema_chars": 503,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "browsing",
+        "products",
+        "cart"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_ask_product_price",
+      "goal": "GENERIC_CONSULTATION",
+      "access": "READ",
+      "required_provider_fields": [
+        "reference"
+      ],
+      "all_provider_fields": [
+        "size",
+        "quantity",
+        "toppings",
+        "luong_da",
+        "do_ngot",
+        "loai_sua",
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "drink",
+              "food"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 696,
+      "nested_object_count": 2,
+      "old_schema_chars": 696,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "products",
+        "pending_product",
+        "cart"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_ask_knowledge",
+      "goal": "RAG_KNOWLEDGE",
+      "access": "READ",
+      "required_provider_fields": [
+        "query",
+        "domain"
+      ],
+      "all_provider_fields": [
+        "query",
+        "domain"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": null,
+      "schema_chars": 447,
+      "nested_object_count": 1,
+      "old_schema_chars": 447,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "browsing"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_read_cart",
+      "goal": "CART_EDIT",
+      "access": "READ",
+      "required_provider_fields": [],
+      "all_provider_fields": [],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": null,
+      "schema_chars": 176,
+      "nested_object_count": 1,
+      "old_schema_chars": 176,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "browsing",
+        "products",
+        "pending_product",
+        "cart",
+        "voucher",
+        "summary"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_read_cart_total",
+      "goal": "CART_EDIT",
+      "access": "READ",
+      "required_provider_fields": [],
+      "all_provider_fields": [],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": null,
+      "schema_chars": 188,
+      "nested_object_count": 1,
+      "old_schema_chars": 188,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "cart",
+        "voucher",
+        "summary"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_update_cart_line",
+      "goal": "CART_EDIT",
+      "access": "WRITE",
+      "required_provider_fields": [
+        "desired_state",
+        "reference"
+      ],
+      "all_provider_fields": [
+        "desired_state",
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "CORRECTION",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 764,
+      "nested_object_count": 3,
+      "old_schema_chars": 906,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "cart",
+        "voucher",
+        "summary"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_remove_cart_line",
+      "goal": "CART_EDIT",
+      "access": "WRITE",
+      "required_provider_fields": [
+        "reference"
+      ],
+      "all_provider_fields": [
+        "quantity",
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "SELECTED",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 505,
+      "nested_object_count": 2,
+      "old_schema_chars": 647,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "cart",
+        "voucher",
+        "summary"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_finish_cart",
+      "goal": "VOUCHER",
+      "access": "WRITE",
+      "required_provider_fields": [],
+      "all_provider_fields": [],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "SELECTED",
+      "reference_shape": null,
+      "schema_chars": 180,
+      "nested_object_count": 1,
+      "old_schema_chars": 320,
+      "exposure_policy": "always",
+      "representative_state_exposure": [],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_read_eligible_vouchers",
+      "goal": "VOUCHER",
+      "access": "READ",
+      "required_provider_fields": [],
+      "all_provider_fields": [],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": null,
+      "schema_chars": 202,
+      "nested_object_count": 1,
+      "old_schema_chars": 202,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "voucher"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_choose_voucher",
+      "goal": "VOUCHER",
+      "access": "WRITE",
+      "required_provider_fields": [
+        "reference"
+      ],
+      "all_provider_fields": [
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "SELECTED",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton",
+              "best"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 452,
+      "nested_object_count": 2,
+      "old_schema_chars": 594,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "voucher"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_skip_voucher",
+      "goal": "VOUCHER",
+      "access": "WRITE",
+      "required_provider_fields": [],
+      "all_provider_fields": [],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "REJECTED",
+      "reference_shape": null,
+      "schema_chars": 182,
+      "nested_object_count": 1,
+      "old_schema_chars": 333,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "voucher"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_remove_voucher",
+      "goal": "VOUCHER",
+      "access": "WRITE",
+      "required_provider_fields": [],
+      "all_provider_fields": [],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "REJECTED",
+      "reference_shape": null,
+      "schema_chars": 186,
+      "nested_object_count": 1,
+      "old_schema_chars": 337,
+      "exposure_policy": "always",
+      "representative_state_exposure": [],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_read_payment_options",
+      "goal": "PAYMENT",
+      "access": "READ",
+      "required_provider_fields": [],
+      "all_provider_fields": [],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": null,
+      "schema_chars": 198,
+      "nested_object_count": 1,
+      "old_schema_chars": 198,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "location",
+        "payment_needed",
+        "summary"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_set_payment",
+      "goal": "PAYMENT",
+      "access": "WRITE",
+      "required_provider_fields": [
+        "reference"
+      ],
+      "all_provider_fields": [
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "SELECTED",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 439,
+      "nested_object_count": 2,
+      "old_schema_chars": 581,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "location",
+        "payment_needed",
+        "summary"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_set_fulfillment",
+      "goal": "FULFILLMENT",
+      "access": "WRITE",
+      "required_provider_fields": [
+        "reference"
+      ],
+      "all_provider_fields": [
+        "supplied_location",
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "SELECTED",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 486,
+      "nested_object_count": 2,
+      "old_schema_chars": 628,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "location",
+        "payment_needed",
+        "summary"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_read_profile_addresses",
+      "goal": "LOCATION",
+      "access": "READ",
+      "required_provider_fields": [],
+      "all_provider_fields": [],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": null,
+      "schema_chars": 202,
+      "nested_object_count": 1,
+      "old_schema_chars": 202,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "browsing",
+        "location",
+        "payment_needed",
+        "summary"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_resolve_new_location",
+      "goal": "LOCATION",
+      "access": "WRITE",
+      "required_provider_fields": [
+        "kind",
+        "for_checkout",
+        "reference"
+      ],
+      "all_provider_fields": [
+        "kind",
+        "for_checkout",
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "SELECTED",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "literal"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "kind",
+          "value"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 507,
+      "nested_object_count": 2,
+      "old_schema_chars": 649,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "browsing",
+        "location",
+        "payment_needed",
+        "summary"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_select_profile_address",
+      "goal": "LOCATION",
+      "access": "WRITE",
+      "required_provider_fields": [
+        "kind",
+        "for_checkout",
+        "reference"
+      ],
+      "all_provider_fields": [
+        "kind",
+        "for_checkout",
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "SELECTED",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 574,
+      "nested_object_count": 2,
+      "old_schema_chars": 727,
+      "exposure_policy": "saved_addresses",
+      "representative_state_exposure": [],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_decline_profile_address",
+      "goal": "LOCATION",
+      "access": "WRITE",
+      "required_provider_fields": [
+        "kind",
+        "for_checkout",
+        "reference"
+      ],
+      "all_provider_fields": [
+        "kind",
+        "for_checkout",
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "REJECTED",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 598,
+      "nested_object_count": 2,
+      "old_schema_chars": 727,
+      "exposure_policy": "saved_addresses",
+      "representative_state_exposure": [],
+      "redundant_authority_fields": [],
+      "overlap": "explicit meaning variant: semantic_select_profile_address"
+    },
+    {
+      "function": "semantic_change_profile_address",
+      "goal": "LOCATION",
+      "access": "WRITE",
+      "required_provider_fields": [
+        "kind",
+        "for_checkout",
+        "reference"
+      ],
+      "all_provider_fields": [
+        "kind",
+        "for_checkout",
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "CORRECTION",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 618,
+      "nested_object_count": 2,
+      "old_schema_chars": 727,
+      "exposure_policy": "saved_addresses",
+      "representative_state_exposure": [],
+      "redundant_authority_fields": [],
+      "overlap": "explicit meaning variant: semantic_select_profile_address"
+    },
+    {
+      "function": "semantic_select_location_candidate",
+      "goal": "LOCATION",
+      "access": "WRITE",
+      "required_provider_fields": [
+        "reference"
+      ],
+      "all_provider_fields": [
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "SELECTED",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 467,
+      "nested_object_count": 2,
+      "old_schema_chars": 609,
+      "exposure_policy": "location_candidates",
+      "representative_state_exposure": [
+        "location",
+        "payment_needed",
+        "summary"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_find_nearby_branches",
+      "goal": "LOCATION",
+      "access": "READ",
+      "required_provider_fields": [
+        "location"
+      ],
+      "all_provider_fields": [
+        "location"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": null,
+      "schema_chars": 236,
+      "nested_object_count": 1,
+      "old_schema_chars": 236,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "browsing",
+        "location",
+        "payment_needed",
+        "summary"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_read_branches",
+      "goal": "LOCATION",
+      "access": "READ",
+      "required_provider_fields": [],
+      "all_provider_fields": [],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": null,
+      "schema_chars": 184,
+      "nested_object_count": 1,
+      "old_schema_chars": 184,
+      "exposure_policy": "always",
+      "representative_state_exposure": [],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_select_branch",
+      "goal": "LOCATION",
+      "access": "WRITE",
+      "required_provider_fields": [
+        "reference"
+      ],
+      "all_provider_fields": [
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "SELECTED",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 443,
+      "nested_object_count": 2,
+      "old_schema_chars": 585,
+      "exposure_policy": "branch_candidates",
+      "representative_state_exposure": [
+        "location",
+        "payment_needed",
+        "summary"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_read_branch_ratings",
+      "goal": "REVIEW",
+      "access": "READ",
+      "required_provider_fields": [],
+      "all_provider_fields": [],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": null,
+      "schema_chars": 196,
+      "nested_object_count": 1,
+      "old_schema_chars": 196,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "browsing",
+        "products",
+        "cart"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_ask_branch_review",
+      "goal": "REVIEW",
+      "access": "READ",
+      "required_provider_fields": [
+        "reference"
+      ],
+      "all_provider_fields": [
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 451,
+      "nested_object_count": 2,
+      "old_schema_chars": 451,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "browsing",
+        "products",
+        "cart"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_compare_branch_reviews",
+      "goal": "REVIEW",
+      "access": "READ",
+      "required_provider_fields": [
+        "branch_ids"
+      ],
+      "all_provider_fields": [
+        "branch_ids"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": null,
+      "schema_chars": 295,
+      "nested_object_count": 1,
+      "old_schema_chars": 295,
+      "exposure_policy": "always",
+      "representative_state_exposure": [],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_prepare_checkout",
+      "goal": "CHECKOUT",
+      "access": "WRITE",
+      "required_provider_fields": [],
+      "all_provider_fields": [
+        "reuse_summary"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "SELECTED",
+      "reference_shape": null,
+      "schema_chars": 224,
+      "nested_object_count": 1,
+      "old_schema_chars": 365,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "summary"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_confirm_checkout",
+      "goal": "CHECKOUT",
+      "access": "FINAL_WRITE",
+      "required_provider_fields": [],
+      "all_provider_fields": [],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "AFFIRMED",
+      "reference_shape": null,
+      "schema_chars": 190,
+      "nested_object_count": 1,
+      "old_schema_chars": 306,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "summary"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_read_order_history",
+      "goal": "ORDER_READ",
+      "access": "READ",
+      "required_provider_fields": [],
+      "all_provider_fields": [
+        "limit"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": null,
+      "schema_chars": 245,
+      "nested_object_count": 1,
+      "old_schema_chars": 245,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "browsing",
+        "order_change"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_read_order",
+      "goal": "ORDER_READ",
+      "access": "READ",
+      "required_provider_fields": [
+        "reference"
+      ],
+      "all_provider_fields": [
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton",
+              "recent"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 446,
+      "nested_object_count": 2,
+      "old_schema_chars": 446,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "browsing",
+        "order_change"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_track_order",
+      "goal": "ORDER_READ",
+      "access": "READ",
+      "required_provider_fields": [
+        "reference"
+      ],
+      "all_provider_fields": [
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": "QUESTION",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton",
+              "recent"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 448,
+      "nested_object_count": 2,
+      "old_schema_chars": 448,
+      "exposure_policy": "always",
+      "representative_state_exposure": [
+        "browsing",
+        "order_change"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_prepare_order_cancel",
+      "goal": "ORDER_CHANGE",
+      "access": "WRITE",
+      "required_provider_fields": [
+        "reference"
+      ],
+      "all_provider_fields": [
+        "reason",
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "SELECTED",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton",
+              "recent"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 493,
+      "nested_object_count": 2,
+      "old_schema_chars": 635,
+      "exposure_policy": "owned_order",
+      "representative_state_exposure": [
+        "order_change"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_prepare_order_update",
+      "goal": "ORDER_CHANGE",
+      "access": "WRITE",
+      "required_provider_fields": [
+        "reference"
+      ],
+      "all_provider_fields": [
+        "changes",
+        "add_items",
+        "delivery_address",
+        "delivery_slot",
+        "note",
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "SELECTED",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton",
+              "recent"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 1765,
+      "nested_object_count": 5,
+      "old_schema_chars": 1907,
+      "exposure_policy": "owned_order",
+      "representative_state_exposure": [
+        "order_change"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_prepare_reorder",
+      "goal": "ORDER_CHANGE",
+      "access": "WRITE",
+      "required_provider_fields": [
+        "reference"
+      ],
+      "all_provider_fields": [
+        "reference"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "SELECTED",
+      "reference_shape": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "id",
+              "name",
+              "ordinal",
+              "focus",
+              "singleton",
+              "recent"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "schema_chars": 456,
+      "nested_object_count": 2,
+      "old_schema_chars": 598,
+      "exposure_policy": "owned_order",
+      "representative_state_exposure": [
+        "order_change"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_confirm_order_change",
+      "goal": "ORDER_CHANGE",
+      "access": "FINAL_WRITE",
+      "required_provider_fields": [],
+      "all_provider_fields": [],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "AFFIRMED",
+      "reference_shape": null,
+      "schema_chars": 198,
+      "nested_object_count": 1,
+      "old_schema_chars": 314,
+      "exposure_policy": "order_preview",
+      "representative_state_exposure": [
+        "order_change"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_discard_order_change",
+      "goal": "ORDER_CHANGE",
+      "access": "WRITE",
+      "required_provider_fields": [],
+      "all_provider_fields": [],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state",
+        "commitment",
+        "evidence_not_required"
+      ],
+      "server_commitment": "REJECTED",
+      "reference_shape": null,
+      "schema_chars": 198,
+      "nested_object_count": 1,
+      "old_schema_chars": 349,
+      "exposure_policy": "order_draft",
+      "representative_state_exposure": [
+        "order_change"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    },
+    {
+      "function": "semantic_interrupt",
+      "goal": "CONTROL",
+      "access": "CONTROL",
+      "required_provider_fields": [
+        "target_domain"
+      ],
+      "all_provider_fields": [
+        "target_domain"
+      ],
+      "server_owned_fields": [
+        "TurnAuthorization",
+        "canonical_identity",
+        "business_state"
+      ],
+      "server_commitment": null,
+      "reference_shape": null,
+      "schema_chars": 806,
+      "nested_object_count": 1,
+      "old_schema_chars": null,
+      "exposure_policy": "one interrupt; no locked snapshot, repair target or committed write",
+      "representative_state_exposure": [
+        "browsing",
+        "products",
+        "pending_product",
+        "cart",
+        "voucher",
+        "location",
+        "payment_needed",
+        "summary",
+        "order_change"
+      ],
+      "redundant_authority_fields": [],
+      "overlap": null
+    }
+  ]
+}

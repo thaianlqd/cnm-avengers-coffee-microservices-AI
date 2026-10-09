@@ -1,0 +1,16 @@
+{
+  "LIVE_PROVIDER_REQUESTS": 0,
+  "warehouse_mutations": 0,
+  "metadata": "deployed catalog",
+  "execution": "read-only warehouse",
+  "storage": "production Redis",
+  "proposal_status": "proposal_ready",
+  "planning_calls": 1,
+  "repair_calls": 0,
+  "operations": 2,
+  "report_outcome": "SUCCESS",
+  "quality_status": "verified",
+  "quality_score": 100,
+  "db_queries": 2,
+  "temporary_session_deleted": true
+}

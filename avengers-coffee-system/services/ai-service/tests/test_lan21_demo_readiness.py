@@ -112,7 +112,7 @@ def test_unsupported_consultation_forces_one_authoritative_tool_repair(runtime):
         final_step('Mình đã tìm được món phù hợp.', 'consultation')]
     result = runtime.turn('gợi ý món ăn')
     assert result['tool_calls_log'][0]['tool'] == 'filter_catalog'
-    assert runtime.provider.requests[1]['tool_choice'] == 'required'
+    assert runtime.provider.requests[1]['tool_choice'] == 'auto'  # Gemini forcing is explicitly unverified
 
 
 def test_current_broad_catalog_request_cannot_inherit_old_category(runtime):
@@ -204,7 +204,9 @@ def test_current_exact_product_name_can_recover_outside_visible_snapshot(runtime
     assert len(runtime.writes) == 1 and runtime.writes[0][1]['product_id'] == '102'
 
 
-def test_pending_quantity_conflict_is_denied_then_corrected_once(runtime):
+def test_pending_quantity_conflict_is_denied_then_corrected_once(runtime, monkeypatch):
+    from src.agents import llm_tool_orchestrator
+    monkeypatch.setattr(llm_tool_orchestrator, '_legacy_language_control', lambda *a: None)
     cart_manager.replace_items_from_order_cart(runtime.sid, [])
     cart_manager.set_pending_products(runtime.sid, [{'product_id': '101',
         'product_name': 'Cà Phê Alpha', 'quantity': 2}], merge=False)
@@ -237,7 +239,7 @@ def test_cart_edit_cannot_recover_by_switching_to_add(runtime):
         'cart_reference_conflict', 'ok']  # Invalid add proposal is rejected before execution.
     assert 'add_to_cart' not in {row['function']['name'] for row in runtime.provider.requests[1]['tools']}
     assert len(runtime.writes) == 1 and runtime.writes[0][0] == 'update'
-    assert runtime.provider.requests[1]['tool_choice'] == 'required'
+    assert runtime.provider.requests[1]['tool_choice'] == 'auto'  # Gemini forcing is explicitly unverified
 
 
 def test_successful_required_repair_forces_final_without_another_tool(runtime):

@@ -1,0 +1,1130 @@
+{
+  "note": "Supported definitions/operators in the current catalog. Physical availability is fixture-derived; no live warehouse or NLP accuracy claim.",
+  "schema_fingerprint": "9cf072c31cc8578e6b3b181ec7de29c9e97c1756bc53666cf0f9abe7f5b7bfc9",
+  "counts": {
+    "subjects": 16,
+    "metrics": 32,
+    "dimensions": 26
+  },
+  "subjects": [
+    {
+      "id": "orders",
+      "label": "Đơn hàng và doanh thu",
+      "grain": "order",
+      "metrics": [
+        "revenue",
+        "order_count",
+        "aov"
+      ]
+    },
+    {
+      "id": "promotions",
+      "label": "Chương trình khuyến mãi và Voucher",
+      "grain": "order",
+      "metrics": [
+        "voucher_revenue",
+        "discount_amount",
+        "voucher_order_count"
+      ]
+    },
+    {
+      "id": "order_items",
+      "label": "Chi tiết món trong đơn",
+      "grain": "order_line",
+      "metrics": [
+        "quantity_sold",
+        "item_revenue"
+      ]
+    },
+    {
+      "id": "products",
+      "label": "Sản phẩm và thực đơn",
+      "grain": "order_line",
+      "metrics": [
+        "quantity_sold",
+        "product_revenue"
+      ]
+    },
+    {
+      "id": "stores",
+      "label": "Chi nhánh và điểm bán",
+      "grain": "order",
+      "metrics": [
+        "store_revenue",
+        "store_order_count",
+        "store_aov"
+      ]
+    },
+    {
+      "id": "customers",
+      "label": "Khách hàng và hội viên",
+      "grain": "customer",
+      "metrics": [
+        "customer_count",
+        "total_spent"
+      ]
+    },
+    {
+      "id": "payments",
+      "label": "Thanh toán và cổng tiền tệ",
+      "grain": "payment",
+      "metrics": [
+        "payment_count",
+        "payment_revenue"
+      ]
+    },
+    {
+      "id": "delivery",
+      "label": "Giao hàng và tài xế shipper",
+      "grain": "driver_snapshot",
+      "metrics": [
+        "total_deliveries",
+        "driver_rating"
+      ]
+    },
+    {
+      "id": "inventory",
+      "label": "Tồn kho nguyên vật liệu",
+      "grain": "store_product_snapshot",
+      "metrics": [
+        "stock_quantity",
+        "low_stock_count"
+      ]
+    },
+    {
+      "id": "product_reviews",
+      "label": "Đánh giá chất lượng sản phẩm",
+      "grain": "review",
+      "metrics": [
+        "avg_product_rating",
+        "review_count"
+      ]
+    },
+    {
+      "id": "store_reviews",
+      "label": "Đánh giá dịch vụ và không gian chi nhánh",
+      "grain": "review",
+      "metrics": [
+        "avg_store_rating",
+        "store_review_count"
+      ]
+    },
+    {
+      "id": "staff_shifts",
+      "label": "Ca làm việc và chấm công nhân viên",
+      "grain": "shift",
+      "metrics": [
+        "shift_count",
+        "late_count"
+      ]
+    },
+    {
+      "id": "cashier_reconciliation",
+      "label": "Đối soát ca thu ngân và chênh lệch tiền mặt",
+      "grain": "cash_shift",
+      "metrics": [
+        "total_cash_difference",
+        "system_cash_revenue",
+        "reconciled_shifts"
+      ]
+    },
+    {
+      "id": "customer_surveys",
+      "label": "Khảo sát ý kiến khách hàng",
+      "grain": "survey_response",
+      "metrics": [
+        "survey_response_count"
+      ]
+    },
+    {
+      "id": "wishlist_favorites",
+      "label": "Món uống yêu thích của khách hàng",
+      "grain": "favorite",
+      "metrics": [
+        "favorite_count"
+      ]
+    },
+    {
+      "id": "hourly",
+      "label": "Khung giờ và thời điểm",
+      "grain": "order",
+      "metrics": [
+        "hourly_orders"
+      ]
+    }
+  ],
+  "metrics": [
+    {
+      "id": "revenue",
+      "label": "Doanh thu",
+      "unit": "VND",
+      "grain": "order",
+      "subjects": [
+        "orders"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "city",
+        "customer_id",
+        "customer_role",
+        "hour",
+        "lifetime_spend",
+        "loyalty_points",
+        "order_amount",
+        "order_created",
+        "order_id",
+        "order_status",
+        "order_type",
+        "payment_method",
+        "payment_status",
+        "promotion",
+        "promotion_id",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "order_count",
+      "label": "Số lượng đơn",
+      "unit": "đơn",
+      "grain": "order",
+      "subjects": [
+        "orders"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "city",
+        "customer_id",
+        "customer_role",
+        "hour",
+        "lifetime_spend",
+        "loyalty_points",
+        "order_amount",
+        "order_created",
+        "order_id",
+        "order_status",
+        "order_type",
+        "payment_method",
+        "payment_status",
+        "promotion",
+        "promotion_id",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "aov",
+      "label": "Giá trị đơn trung bình",
+      "unit": "VND",
+      "grain": "order",
+      "subjects": [
+        "orders"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "city",
+        "customer_id",
+        "customer_role",
+        "hour",
+        "lifetime_spend",
+        "loyalty_points",
+        "order_amount",
+        "order_created",
+        "order_id",
+        "order_status",
+        "order_type",
+        "payment_method",
+        "payment_status",
+        "promotion",
+        "promotion_id",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "voucher_revenue",
+      "label": "Doanh thu đơn có khuyến mãi",
+      "unit": "VND",
+      "grain": "order",
+      "subjects": [
+        "promotions"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "city",
+        "customer_id",
+        "customer_role",
+        "hour",
+        "lifetime_spend",
+        "loyalty_points",
+        "order_amount",
+        "order_created",
+        "order_id",
+        "order_status",
+        "order_type",
+        "payment_method",
+        "payment_status",
+        "promotion",
+        "promotion_id",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "discount_amount",
+      "label": "Tổng tiền đã giảm giá",
+      "unit": "VND",
+      "grain": "order",
+      "subjects": [
+        "promotions"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "city",
+        "customer_id",
+        "customer_role",
+        "hour",
+        "lifetime_spend",
+        "loyalty_points",
+        "order_amount",
+        "order_created",
+        "order_id",
+        "order_status",
+        "order_type",
+        "payment_method",
+        "payment_status",
+        "promotion",
+        "promotion_id",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "voucher_order_count",
+      "label": "Số đơn áp dụng khuyến mãi",
+      "unit": "đơn",
+      "grain": "order",
+      "subjects": [
+        "promotions"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "city",
+        "customer_id",
+        "customer_role",
+        "hour",
+        "lifetime_spend",
+        "loyalty_points",
+        "order_amount",
+        "order_created",
+        "order_id",
+        "order_status",
+        "order_type",
+        "payment_method",
+        "payment_status",
+        "promotion",
+        "promotion_id",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "quantity_sold",
+      "label": "Số lượng ly bán",
+      "unit": "ly",
+      "grain": "order_line",
+      "subjects": [
+        "order_items",
+        "products"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "category",
+        "city",
+        "customer_id",
+        "customer_role",
+        "hour",
+        "lifetime_spend",
+        "loyalty_points",
+        "order_amount",
+        "order_created",
+        "order_id",
+        "order_status",
+        "order_type",
+        "payment_method",
+        "payment_status",
+        "product",
+        "product_id",
+        "promotion",
+        "promotion_id",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "item_revenue",
+      "label": "Doanh thu món",
+      "unit": "VND",
+      "grain": "order_line",
+      "subjects": [
+        "order_items"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "category",
+        "city",
+        "customer_id",
+        "customer_role",
+        "hour",
+        "lifetime_spend",
+        "loyalty_points",
+        "order_amount",
+        "order_created",
+        "order_id",
+        "order_status",
+        "order_type",
+        "payment_method",
+        "payment_status",
+        "product",
+        "product_id",
+        "promotion",
+        "promotion_id",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "product_revenue",
+      "label": "Doanh thu sản phẩm",
+      "unit": "VND",
+      "grain": "order_line",
+      "subjects": [
+        "products"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "category",
+        "city",
+        "customer_id",
+        "customer_role",
+        "hour",
+        "lifetime_spend",
+        "loyalty_points",
+        "order_amount",
+        "order_created",
+        "order_id",
+        "order_status",
+        "order_type",
+        "payment_method",
+        "payment_status",
+        "product",
+        "product_id",
+        "promotion",
+        "promotion_id",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "store_revenue",
+      "label": "Doanh thu chi nhánh",
+      "unit": "VND",
+      "grain": "order",
+      "subjects": [
+        "stores"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "city",
+        "customer_id",
+        "customer_role",
+        "hour",
+        "lifetime_spend",
+        "loyalty_points",
+        "order_amount",
+        "order_created",
+        "order_id",
+        "order_status",
+        "order_type",
+        "payment_method",
+        "payment_status",
+        "promotion",
+        "promotion_id",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "store_order_count",
+      "label": "Số đơn chi nhánh",
+      "unit": "đơn",
+      "grain": "order",
+      "subjects": [
+        "stores"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "city",
+        "customer_id",
+        "customer_role",
+        "hour",
+        "lifetime_spend",
+        "loyalty_points",
+        "order_amount",
+        "order_created",
+        "order_id",
+        "order_status",
+        "order_type",
+        "payment_method",
+        "payment_status",
+        "promotion",
+        "promotion_id",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "store_aov",
+      "label": "AOV chi nhánh",
+      "unit": "VND",
+      "grain": "order",
+      "subjects": [
+        "stores"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "city",
+        "customer_id",
+        "customer_role",
+        "hour",
+        "lifetime_spend",
+        "loyalty_points",
+        "order_amount",
+        "order_created",
+        "order_id",
+        "order_status",
+        "order_type",
+        "payment_method",
+        "payment_status",
+        "promotion",
+        "promotion_id",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "customer_count",
+      "label": "Số khách",
+      "unit": "khách",
+      "grain": "customer",
+      "subjects": [
+        "customers"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "customer_id",
+        "customer_role",
+        "lifetime_spend",
+        "loyalty_points"
+      ]
+    },
+    {
+      "id": "total_spent",
+      "label": "Tổng chi tiêu tích lũy",
+      "unit": "VND",
+      "grain": "customer",
+      "subjects": [
+        "customers"
+      ],
+      "has_time": false,
+      "compatible_dimensions": [
+        "customer_id",
+        "customer_role",
+        "lifetime_spend",
+        "loyalty_points"
+      ]
+    },
+    {
+      "id": "payment_count",
+      "label": "Số giao dịch",
+      "unit": "lượt",
+      "grain": "payment",
+      "subjects": [
+        "payments"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "city",
+        "customer_id",
+        "customer_role",
+        "hour",
+        "lifetime_spend",
+        "loyalty_points",
+        "order_amount",
+        "order_created",
+        "order_id",
+        "order_status",
+        "order_type",
+        "payment_gateway",
+        "payment_method",
+        "payment_status",
+        "promotion",
+        "promotion_id",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "payment_revenue",
+      "label": "Doanh thu thanh toán",
+      "unit": "VND",
+      "grain": "payment",
+      "subjects": [
+        "payments"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "city",
+        "customer_id",
+        "customer_role",
+        "hour",
+        "lifetime_spend",
+        "loyalty_points",
+        "order_amount",
+        "order_created",
+        "order_id",
+        "order_status",
+        "order_type",
+        "payment_gateway",
+        "payment_method",
+        "payment_status",
+        "promotion",
+        "promotion_id",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "total_deliveries",
+      "label": "Tổng chuyến giao",
+      "unit": "lượt",
+      "grain": "driver_snapshot",
+      "subjects": [
+        "delivery"
+      ],
+      "has_time": false,
+      "compatible_dimensions": [
+        "driver_id"
+      ]
+    },
+    {
+      "id": "driver_rating",
+      "label": "Điểm đánh giá trung bình",
+      "unit": "điểm",
+      "grain": "driver_snapshot",
+      "subjects": [
+        "delivery"
+      ],
+      "has_time": false,
+      "compatible_dimensions": [
+        "driver_id"
+      ]
+    },
+    {
+      "id": "stock_quantity",
+      "label": "Số lượng tồn kho",
+      "unit": "đơn vị",
+      "grain": "store_product_snapshot",
+      "subjects": [
+        "inventory"
+      ],
+      "has_time": false,
+      "compatible_dimensions": [
+        "category",
+        "city",
+        "product",
+        "product_id",
+        "stock_quantity_detail",
+        "store",
+        "store_id",
+        "warning_threshold"
+      ]
+    },
+    {
+      "id": "low_stock_count",
+      "label": "Số món dưới định mức",
+      "unit": "lượt",
+      "grain": "store_product_snapshot",
+      "subjects": [
+        "inventory"
+      ],
+      "has_time": false,
+      "compatible_dimensions": [
+        "category",
+        "city",
+        "product",
+        "product_id",
+        "stock_quantity_detail",
+        "store",
+        "store_id",
+        "warning_threshold"
+      ]
+    },
+    {
+      "id": "avg_product_rating",
+      "label": "Điểm đánh giá trung bình",
+      "unit": "điểm",
+      "grain": "review",
+      "subjects": [
+        "product_reviews"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "category",
+        "city",
+        "customer_id",
+        "customer_role",
+        "hour",
+        "lifetime_spend",
+        "loyalty_points",
+        "order_amount",
+        "order_created",
+        "order_id",
+        "order_status",
+        "order_type",
+        "payment_method",
+        "payment_status",
+        "product",
+        "product_id",
+        "promotion",
+        "promotion_id",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "review_count",
+      "label": "Số lượt đánh giá",
+      "unit": "lượt",
+      "grain": "review",
+      "subjects": [
+        "product_reviews"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "category",
+        "city",
+        "customer_id",
+        "customer_role",
+        "hour",
+        "lifetime_spend",
+        "loyalty_points",
+        "order_amount",
+        "order_created",
+        "order_id",
+        "order_status",
+        "order_type",
+        "payment_method",
+        "payment_status",
+        "product",
+        "product_id",
+        "promotion",
+        "promotion_id",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "avg_store_rating",
+      "label": "Điểm phục vụ trung bình",
+      "unit": "điểm",
+      "grain": "review",
+      "subjects": [
+        "store_reviews"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "city",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "store_review_count",
+      "label": "Số lượt đánh giá quán",
+      "unit": "lượt",
+      "grain": "review",
+      "subjects": [
+        "store_reviews"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "city",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "shift_count",
+      "label": "Tổng số ca làm",
+      "unit": "lượt",
+      "grain": "shift",
+      "subjects": [
+        "staff_shifts"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "attendance_status",
+        "city",
+        "shift_name",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "late_count",
+      "label": "Số ca đi trễ",
+      "unit": "lượt",
+      "grain": "shift",
+      "subjects": [
+        "staff_shifts"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "attendance_status",
+        "city",
+        "shift_name",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "total_cash_difference",
+      "label": "Tổng tiền chênh lệch",
+      "unit": "VND",
+      "grain": "cash_shift",
+      "subjects": [
+        "cashier_reconciliation"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "city",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "system_cash_revenue",
+      "label": "Doanh thu tiền mặt hệ thống",
+      "unit": "VND",
+      "grain": "cash_shift",
+      "subjects": [
+        "cashier_reconciliation"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "city",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "reconciled_shifts",
+      "label": "Số ca đã đối soát",
+      "unit": "lượt",
+      "grain": "cash_shift",
+      "subjects": [
+        "cashier_reconciliation"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "city",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "survey_response_count",
+      "label": "Số lượt phản hồi khảo sát",
+      "unit": "lượt",
+      "grain": "survey_response",
+      "subjects": [
+        "customer_surveys"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "city",
+        "store",
+        "store_id"
+      ]
+    },
+    {
+      "id": "favorite_count",
+      "label": "Số lượt thả tim yêu thích",
+      "unit": "lượt",
+      "grain": "favorite",
+      "subjects": [
+        "wishlist_favorites"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "category",
+        "customer_id",
+        "customer_role",
+        "lifetime_spend",
+        "loyalty_points",
+        "product",
+        "product_id"
+      ]
+    },
+    {
+      "id": "hourly_orders",
+      "label": "Số đơn theo giờ",
+      "unit": "đơn",
+      "grain": "order",
+      "subjects": [
+        "hourly"
+      ],
+      "has_time": true,
+      "compatible_dimensions": [
+        "city",
+        "customer_id",
+        "customer_role",
+        "hour",
+        "lifetime_spend",
+        "loyalty_points",
+        "order_amount",
+        "order_created",
+        "order_id",
+        "order_status",
+        "order_type",
+        "payment_method",
+        "payment_status",
+        "promotion",
+        "promotion_id",
+        "store",
+        "store_id"
+      ]
+    }
+  ],
+  "dimensions": [
+    {
+      "id": "product",
+      "label": "Sản phẩm",
+      "value_policy": "lookup"
+    },
+    {
+      "id": "product_id",
+      "label": "Mã sản phẩm",
+      "value_policy": "lookup"
+    },
+    {
+      "id": "category",
+      "label": "Danh mục",
+      "value_policy": "lookup"
+    },
+    {
+      "id": "store",
+      "label": "Chi nhánh",
+      "value_policy": "lookup"
+    },
+    {
+      "id": "store_id",
+      "label": "Mã chi nhánh",
+      "value_policy": "lookup"
+    },
+    {
+      "id": "city",
+      "label": "Thành phố",
+      "value_policy": "enum"
+    },
+    {
+      "id": "customer_id",
+      "label": "Mã khách hàng",
+      "value_policy": "lookup"
+    },
+    {
+      "id": "customer_role",
+      "label": "Vai trò",
+      "value_policy": "lookup"
+    },
+    {
+      "id": "loyalty_points",
+      "label": "Điểm thành viên",
+      "value_policy": "literal"
+    },
+    {
+      "id": "lifetime_spend",
+      "label": "Chi tiêu tích lũy",
+      "value_policy": "literal"
+    },
+    {
+      "id": "order_id",
+      "label": "Mã đơn",
+      "value_policy": "lookup"
+    },
+    {
+      "id": "order_status",
+      "label": "Trạng thái đơn",
+      "value_policy": "enum"
+    },
+    {
+      "id": "payment_method",
+      "label": "Phương thức thanh toán",
+      "value_policy": "enum"
+    },
+    {
+      "id": "payment_status",
+      "label": "Trạng thái thanh toán",
+      "value_policy": "lookup"
+    },
+    {
+      "id": "order_amount",
+      "label": "Giá trị đơn",
+      "value_policy": "literal"
+    },
+    {
+      "id": "order_created",
+      "label": "Ngày tạo đơn",
+      "value_policy": "lookup"
+    },
+    {
+      "id": "promotion",
+      "label": "Khuyến mãi",
+      "value_policy": "lookup"
+    },
+    {
+      "id": "promotion_id",
+      "label": "Mã khuyến mãi",
+      "value_policy": "lookup"
+    },
+    {
+      "id": "payment_gateway",
+      "label": "Cổng thanh toán",
+      "value_policy": "lookup"
+    },
+    {
+      "id": "driver_id",
+      "label": "Mã người giao",
+      "value_policy": "lookup"
+    },
+    {
+      "id": "shift_name",
+      "label": "Ca làm",
+      "value_policy": "lookup"
+    },
+    {
+      "id": "attendance_status",
+      "label": "Trạng thái chấm công",
+      "value_policy": "enum"
+    },
+    {
+      "id": "stock_quantity_detail",
+      "label": "Số lượng tồn",
+      "value_policy": "literal"
+    },
+    {
+      "id": "warning_threshold",
+      "label": "Mức cảnh báo",
+      "value_policy": "literal"
+    },
+    {
+      "id": "hour",
+      "label": "Giờ",
+      "value_policy": "lookup"
+    },
+    {
+      "id": "order_type",
+      "label": "Hình thức nhận hàng",
+      "value_policy": "enum"
+    }
+  ],
+  "analysis_operators": [
+    "ranking",
+    "aggregate",
+    "trend",
+    "distribution",
+    "comparison",
+    "detail",
+    "composite",
+    "heatmap"
+  ],
+  "relative_time_modes": [
+    "current_day",
+    "previous_day",
+    "current_week",
+    "previous_week",
+    "current_month",
+    "previous_month",
+    "current_quarter",
+    "previous_quarter",
+    "current_year",
+    "previous_year",
+    "custom",
+    "all_time"
+  ],
+  "intermediate_time_kinds": [
+    "relative",
+    "month",
+    "quarter",
+    "year",
+    "day",
+    "range",
+    "rolling"
+  ],
+  "time_syntax": [
+    {
+      "kind": "day",
+      "unit": null
+    },
+    {
+      "kind": "day",
+      "unit": null
+    },
+    {
+      "kind": "rolling",
+      "unit": "day"
+    },
+    {
+      "kind": "rolling",
+      "unit": "month"
+    },
+    {
+      "kind": "rolling",
+      "unit": "day"
+    },
+    {
+      "kind": "rolling",
+      "unit": "month"
+    },
+    {
+      "kind": "month",
+      "unit": null
+    },
+    {
+      "kind": "quarter",
+      "unit": null
+    },
+    {
+      "kind": "year",
+      "unit": null
+    }
+  ],
+  "granularities": [
+    "day",
+    "week",
+    "month",
+    "quarter",
+    "year"
+  ],
+  "chart_types": [
+    "bar",
+    "horizontal_bar",
+    "line",
+    "area",
+    "multi_line",
+    "donut",
+    "heatmap",
+    "table"
+  ]
+}

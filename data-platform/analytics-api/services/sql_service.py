@@ -1,3 +1,4 @@
+from __future__ import annotations
 import re
 import time
 from dataclasses import dataclass
@@ -16,7 +17,7 @@ SQL_WORDS = {
     "ALL", "AND", "AS", "ASC", "BETWEEN", "BY", "CASE", "CURRENT_DATE",
     "CURRENT_TIMESTAMP", "DESC", "DISTINCT", "ELSE", "END", "EPOCH",
     "FALSE", "FILTER", "FROM", "GROUP", "HAVING", "HOUR", "IN", "INTERVAL",
-    "IS", "LIMIT", "NOT", "NULL", "NULLS", "ON", "OR", "ORDER", "OVER",
+    "IS", "LIMIT", "NOT", "NULL", "NULLS", "FIRST", "LAST", "AT", "TIME", "ZONE", "ON", "OR", "ORDER", "OVER",
     "PARTITION", "ROWS", "THEN", "TRUE", "WHEN", "WHERE", "WITH",
 }
 TABLE_ALIAS_STOP_WORDS = SQL_WORDS | {
@@ -456,3 +457,44 @@ def dry_run_sql(sql: str, timeout_ms: int = 4000) -> Tuple[bool, str]:
         conn.rollback()
         conn.close()
 
+
+
+def validate_sql_ast_security(sql: str, allowed_tables: Mapping[str, Set[str]]) -> str:
+    """Additional V2 guard: bind columns in every clause and constrain functions.
+
+    SQLGlot parsing is not itself a security validator. This intentionally small
+    function surface covers the server compiler's supported analytical operators.
+    """
+    import sqlglot
+    from sqlglot import exp
+    from sqlglot.optimizer.scope import Scope, traverse_scope
+    from services.metadata_service import is_sensitive_column
+    clean = validate_read_only_sql(sql)
+    trees = sqlglot.parse(clean, read='postgres')
+    if len(trees) != 1 or not isinstance(trees[0], exp.Select):
+        raise SqlSafetyError('Only one SELECT/CTE is allowed')
+    tree = trees[0]
+    functions = {'AND','OR','NOT','SUM','COUNT','AVG','MIN','MAX','ROUND','NULLIF','COALESCE','ROW_NUMBER','TIMESTAMP_TRUNC','DATE_TRUNC','EXTRACT','CAST','AT_TIME_ZONE'}
+    for fn in tree.find_all(exp.Func):
+        name = fn.name.upper() if isinstance(fn, exp.Anonymous) else fn.sql_name()
+        if name not in functions:
+            raise SqlSafetyError('Function is outside the analytical allowlist')
+    for scope in traverse_scope(tree):
+        sources = scope.selected_sources
+        bound = {}
+        for alias, (_, source) in sources.items():
+            if isinstance(source, exp.Table):
+                name = source.db+'.'+source.name
+                if name not in allowed_tables: raise SqlSafetyError('Table is outside the analytical allowlist')
+                bound[alias] = allowed_tables[name]
+            elif isinstance(source, Scope): bound[alias] = set(source.expression.named_selects)
+            else: raise SqlSafetyError('Unsupported SQL source')
+        aliases = {projection.alias for projection in scope.expression.selects if projection.alias}
+        for col in scope.columns:
+            if is_sensitive_column(col.name): raise SqlSafetyError('Sensitive field in SQL clause')
+            if col.table:
+                if col.table not in bound or col.name not in bound[col.table]:raise SqlSafetyError('Unbound SQL column')
+            else:
+                matches = sum(col.name in columns for columns in bound.values())
+                if matches != 1 and not (matches == 0 and col.name in aliases):raise SqlSafetyError('Unknown or ambiguous SQL column')
+    return clean

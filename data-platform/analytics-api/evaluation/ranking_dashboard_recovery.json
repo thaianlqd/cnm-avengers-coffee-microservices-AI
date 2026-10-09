@@ -1,0 +1,70 @@
+{
+  "measurement_scope": "OBSERVED_FAILURE_REPLAY_AND_OFFLINE_REGRESSION_WITH_LOCAL_DEPLOYMENT_SMOKE",
+  "backend": {
+    "passed": 703,
+    "failed": 0,
+    "duration_seconds": 311.285
+  },
+  "frontend": {
+    "passed": 107,
+    "failed": 0
+  },
+  "typecheck": "passed",
+  "observed_replay": {
+    "before_charts": 0,
+    "after_charts": 2,
+    "requested_metrics": 2
+  },
+  "new_regressions": 16,
+  "offline_evaluation": {
+    "passed": 110,
+    "failed": 0,
+    "capacity_tests": 8,
+    "capacity_failures": 0
+  },
+  "additional_regression_fixed": "Shared denominators counted twice in supporting operation admission",
+  "docker_build": [
+    "analytics-api",
+    "web-ui"
+  ],
+  "deployment": {
+    "services_updated": [
+      "analytics-api",
+      "web-ui"
+    ],
+    "health": [
+      "/avengers_analytics_api healthy",
+      "/avengers_analytics_web healthy"
+    ],
+    "customer_services_verified_unchanged": 9,
+    "smoke": {
+      "readiness": {
+        "status": "ready",
+        "version": "2.10.0",
+        "warehouse_available": true,
+        "catalog_ready": true,
+        "redis_available": true
+      },
+      "frontend_proxy_status": "ready",
+      "startup_warehouse_ddl_enabled": "false",
+      "compiled_frontend_checks": {
+        "ranking_note": true,
+        "rank_position": true,
+        "Chưa có biểu đồ phù hợp được kiểm chứng": true
+      }
+    }
+  },
+  "LIVE_PROVIDER_REQUESTS": 0,
+  "WAREHOUSE_WRITES": 0,
+  "live_model_accuracy_measured": false,
+  "source_hashes": {
+    "analytics-api/services/analytical_resolver.py": "f270815332e8c88127d80c9cbf70d601a8122110bfd318b1613d6ce6ef140303",
+    "analytics-api/services/request_anchors.py": "6ae7ab6e058e849e60bd7a234e640cf4af748457abe4a8fe7b8380e67d2c0c4a",
+    "analytics-api/services/dashboard_planner_service.py": "907ee08811d3533164598c896ca833008ab04902a9ce35195ae37a32a1803b4a",
+    "analytics-api/services/hybrid_analyst_planner.py": "f5cf50c0abd6580248f2f9e279d50956f53a4170da9c114a6f6b7e2560796461",
+    "analytics-api/services/analysis_quality_service.py": "0ee77fb3fd6d9df2b85d2730a388dc362c9f8bba6e883c76deb40ab56c76dd30",
+    "web-ui/src/components/AnalystDashboardSummary.tsx": "18aa8b9e7c79c01ab2cc670d5a47e7c9bfbba55271f8a74fa8537ac06bbfcb91",
+    "web-ui/src/components/Charts.tsx": "1d8c24c34a8cbf49de7423fd579a2aa54b4570ad8e69556a453fec099cc29348",
+    "web-ui/src/utils/analystDashboardLayout.mjs": "6ca31803be335c3683176b28493e9836dfe5c4d22a8de12885c555fbde33a3c1"
+  }
+}

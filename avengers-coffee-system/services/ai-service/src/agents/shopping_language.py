@@ -20,6 +20,7 @@ def normalize_shopping(value: Any) -> str:
     raw = unicodedata.normalize("NFD", str(value or "").casefold())
     plain = "".join(char for char in raw if unicodedata.category(char) != "Mn").replace("đ", "d")
     text = re.sub(r"\s+", " ", re.sub(r"[^\w#]+", " ", plain)).strip()
+    text = re.sub(r"\b(?:b(?:o|ot|oot|ott)p+ing|bo(?:topping|toping))\b", "bo topping", text)
     return re.sub(r"\b(?:k|ko)\b", "khong", text)
 
 
@@ -63,8 +64,8 @@ _FAMILIES = (
     ("tea", "drink", "trà", "Trà", ("tra", "tea")),
     ("pizza", "food", "Pizza", "Pizza & Pasta", ("pizza",)),
     ("pasta", "food", "Pizza", "Pizza & Pasta", ("pasta",)),
-    ("food", "food", None, "Menu bánh và đồ ăn", ("banh", "do an", "thuc an", "mon an")),
-    ("drink", "drink", None, "Menu nước", ("nuoc", "do uong", "thuc uong")),
+    ("food", "food", None, "Menu bánh và đồ ăn", ("banh", "do an", "thuc an", "mon an", "an")),
+    ("drink", "drink", None, "Menu nước", ("nuoc", "do uong", "thuc uong", "uong", "giai nhiet", "giai khat")),
 )
 _FAMILY_PHRASES = frozenset(phrase for row in _FAMILIES for phrase in row[4])
 _DISCOURSE_FRAME_WORDS = frozenset(
@@ -96,6 +97,14 @@ def explicit_shopping_quantity(message: str) -> Optional[int]:
     plain = "".join(char for char in raw if unicodedata.category(char) != "Mn").replace("đ", "d")
     text = re.sub(r"\s+", " ", re.sub(r"[^\w#-]+", " ", plain)).strip()
     number = r"(-?\d+|mot|hai|ba|bon|tu|nam|sau|bay|tam|chin|muoi)"
+    # Collective item count phrases like "cả 2 món", "cả 2 ly", "2 món mặc định", "theo mặc định cả 2 món"
+    # describe the scope of products being configured or referred to, NOT an individual item quantity.
+    if re.search(r"\b(?:ca|tat ca)\s+" + number + r"\s*(?:cai|ly|phan|mon)?\b", text):
+        return None
+    if re.search(r"\b" + number + r"\s+mon\s+(?:mac dinh|theo mac dinh|deu|nay|tren|di|nhe|nha)\b", text):
+        return None
+    if re.search(r"\b(?:mac dinh|theo mac dinh)\s+(?:ca\s+)?" + number + r"\s+mon\b", text):
+        return None
     match = (re.search(r"\b(?:so luong|sl)\s*(?:la\s*)?" + number + r"\b", text)
              or re.search(r"(?<!\w)" + number + r"\s*(?:cai|ly|phan|mon)\b", text)
              or re.search(r"\bthem\s+" + number + r"\b", text))
@@ -123,7 +132,7 @@ def _family(text: str) -> Optional[tuple[str, str, Optional[str], str]]:
     _, _, family, category, search, label = max(hits, key=lambda row: (row[0], -row[1]))
     if family == "matcha" and re.search(r"\bbanh\b", text):
         return "matcha", "food", "matcha", "Bánh Matcha"
-    if family == "matcha" and re.search(r"\b(?:nuoc|do uong|tra)\b", text):
+    if family == "matcha" and re.search(r"\b(?:nuoc|do uong|tra|uong)\b", text):
         return "matcha", "drink", "matcha", "Matcha"
     return family, category, search, label
 
@@ -138,7 +147,7 @@ def requested_discovery_family(message: str) -> Optional[dict]:
     """Keep an explicit matcha cake scope; mixed or alternative requests stay separate."""
     text = normalize_shopping(message)
     if (not re.search(r'\bmatcha\b', text) or not re.search(r'\b(?:banh|do an)\b', text)
-            or re.search(r'\b(?:nuoc|do uong|thuc uong|ca phe|tra|ly)\b', text)
+            or re.search(r'\b(?:nuoc|do uong|thuc uong|ca phe|tra|ly|uong)\b', text)
             or re.search(r'\b(?:khong|chua|dung)\s+(?:(?:muon|lay|mua|vi)\s+)*matcha\b', text)
             or re.search(r'\b(?:hoac|hay|banh khac|loai khac)\b', text)
             or re.search(r'\bmatcha\s+(?:va|voi)\s+(?!toi\b|minh\b|ban\b|xem\b)\w+', text)):
@@ -295,18 +304,24 @@ def interpret_shopping(
             "quantity": quantity, "quantity_valid": quantity > 0}
     if not text:
         return ShoppingInterpretation(**base)
-    if re.search(
-        r"\b(?:voucher|ma giam gia|thanh toan|checkout|chot don|dat don|"
-        r"giao hang|lay tai quan|chi nhanh|dia chi|lich su don|don hang|"
-        r"xoa mon|bo mon|sua topping|doi so luong|tang so luong|giam so luong)\b",
+    cart_mutation = bool(re.search(
+        r"\b(?:xoa mon|bo mon|sua topping|doi so luong|tang so luong|giam so luong)\b",
         text,
-    ):
+    ))
+    non_shopping_intent = bool(re.search(
+        r"\b(?:voucher|ma giam gia|thanh toan|checkout|chot don|dat don|"
+        r"giao hang|lay tai quan|chi nhanh|dia chi|lich su don|don hang)\b",
+        text,
+    ))
+    if cart_mutation or (non_shopping_intent and not ordinal_requested):
         return ShoppingInterpretation(**base, act="NOT_APPLICABLE")
     negative = bool(re.search(
         r"\b(?:khong\s+(?:lay|mua|them|chon)|dung\s+(?:them|mua|lay)|"
         r"bo\s+(?:mon|cai|san pham|qua|topping|size)|huy)\b", text))
+    non_product_co = bool(re.search(r"\bco\s+duoc\s+khong\b|\bco\s+(?:cua\s+hang|chi\s+nhanh|quan|dia\s+chi)\b", text))
+    co_inquiry = bool(re.search(r"\bco\b.*\b(?:khong|nao|gi)\b", text) and not non_product_co)
     info = bool(re.search(r"\b(?:gia|bao nhieu|review|danh gia|nhan xet|ngon|vi|topping|size|thanh phan|the nao)\b", text)
-                or re.search(r"\bco\b.*\b(?:khong|nao|gi)\b", text)
+                or co_inquiry
                 or re.search(r"\b(?:xem|tim|goi y|menu|thuc don)\b", text))
     selection_style = bool(re.search(
         r"\b(?:mua|lay|them|chon|dat)\b|\b(?:cho|lam)\s+(?:toi|minh)\b", text,
@@ -361,9 +376,6 @@ def interpret_shopping(
     if negative:
         return ShoppingInterpretation(**base, act="NEGATE_PRODUCT", entity_type=entity,
                                       targets=targets, reference_source=source, ambiguity=ambiguity)
-    if targets and (info or re.search(r"\b(?:co|con)\b.*\b(?:khong|nao|gi)\b", text)):
-        return ShoppingInterpretation(**base, act="PRODUCT_INFO", entity_type=entity,
-                                      targets=targets, reference_source=source)
     if ambiguity:
         return ShoppingInterpretation(**base, act="AMBIGUOUS", entity_type="PRODUCT",
                                       ambiguity=ambiguity,
@@ -371,9 +383,16 @@ def interpret_shopping(
                                       family=family[0] if family else None,
                                       search_text=family[2] if family else None,
                                       label=family[3] if family else None)
-    if targets and _selects_target(text, targets, source):
+    explicit_info = bool(re.search(
+        r"\b(?:gia|bao nhieu|review|danh gia|nhan xet|ngon|vi|topping|size|thanh phan|"
+        r"the nao|chi tiet|mo ta|hoi|co\s+(?:nhung\s+)?gi)\b", text
+    ) or re.search(r"\b(?:xem|tim|goi y|menu|thuc don)\b", text))
+    if targets and _selects_target(text, targets, source) and not explicit_info:
         return ShoppingInterpretation(**base, act="ADD_ITEM", read_only=False,
                                       entity_type=entity, targets=targets, reference_source=source)
+    if targets and (info or (re.search(r"\b(?:co|con)\b.*\b(?:khong|nao|gi)\b", text) and not non_product_co)):
+        return ShoppingInterpretation(**base, act="PRODUCT_INFO", entity_type=entity,
+                                      targets=targets, reference_source=source)
     if targets:
         return ShoppingInterpretation(**base, act="PRODUCT_INFO", entity_type=entity,
                                       targets=targets, reference_source=source)

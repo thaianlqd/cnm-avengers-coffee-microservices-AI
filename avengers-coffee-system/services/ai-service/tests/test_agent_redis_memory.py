@@ -37,7 +37,7 @@ def test_bounded_history_snapshots_focus_and_no_authoritative_cart(monkeypatch):
 def test_snapshot_refresh_and_compact_all_namespaces(kind,row):
     store=ConversationMemory(FakeRedis())
     store.save('s',{**empty_memory(),'visible_snapshots':{kind:[row]*100}})
-    assert len(store.load('s')['visible_snapshots'][kind])==5
+    assert len(store.load('s')['visible_snapshots'][kind]) == (100 if kind == 'vouchers' else 5)
     store.save('s',{**empty_memory(),'visible_snapshots':{kind:[]}})
     assert store.load('s')['visible_snapshots'][kind]==[]
 

@@ -78,7 +78,7 @@ def test_global_defaults_ignore_model_guessed_paid_extras(shop):
     result = send(shop, 'theo mặc định', ('add_to_cart', {'product_id': '101', 'use_defaults': True,
         'size': 'Nhỏ', 'toppings': ['Foam Caramel']}))
     assert result['tool_calls_log'][0]['result']['status'] == 'ok'
-    assert shop.writes[0][1]['size'] == 'Lớn'  # First authoritative Menu option, not model guess.
+    assert shop.writes[0][1]['size'] == 'Vừa'  # Canonical standard Menu size, not model guess.
     assert shop.writes[0][1]['toppings'] == []
 
 

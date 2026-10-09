@@ -3,7 +3,7 @@ import unicodedata
 import urllib.parse
 from datetime import datetime
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from psycopg2.extras import Json
 from db import get_db_conn
@@ -67,6 +67,11 @@ def list_saved_reports(
 
 @router.post("/saved")
 def create_saved_report(payload: SavedReportCreate):
+    from services.report_sql_policy import validate_saved_payload
+    try:
+        validate_saved_payload(payload)
+    except Exception:
+        raise HTTPException(400, "SQL báo cáo chưa vượt qua chính sách phân tích và trường nhạy cảm.") from None
     try:
         report_id = f"rpt_{uuid.uuid4().hex[:12]}"
         with get_db_conn() as conn:
@@ -144,7 +149,9 @@ def delete_saved_report(report_id: str):
 @router.post("/saved/{report_id}/execute")
 @router.get("/saved/{report_id}/run")
 @router.post("/saved/{report_id}/run")
-def run_saved_report(report_id: str):
+def run_saved_report(report_id: str, request: Request = None):
+    from services.report_sql_policy import require_sql_admin, validate_report_sql
+    require_sql_admin(request)
     try:
         with get_db_conn() as conn:
             with conn.cursor() as cur:
@@ -158,6 +165,7 @@ def run_saved_report(report_id: str):
                     raise HTTPException(status_code=404, detail="Không tìm thấy báo cáo yêu cầu")
 
                 sql = report["sql_query"]
+        validate_report_sql(sql)
         result = execute_read_only(sql, row_limit=500)
         return {
             "report_id": report["id"],
@@ -181,11 +189,14 @@ def run_saved_report(report_id: str):
 
 
 @router.post("/preview")
-def preview_report_query(payload: dict):
+def preview_report_query(payload: dict, request: Request = None):
+    from services.report_sql_policy import require_sql_admin, validate_report_sql
+    require_sql_admin(request)
     sql = payload.get("sql_query", "").strip()
     if not sql:
         raise HTTPException(status_code=400, detail="Vui lòng cung cấp câu lệnh truy vấn dữ liệu")
     try:
+        validate_report_sql(sql)
         result = execute_read_only(sql, row_limit=500)
         return {
             "rows": result["rows"],
@@ -250,6 +261,13 @@ def export_report_docx(payload: dict):
     if not report_data:
         raise HTTPException(status_code=400, detail="Không có dữ liệu báo cáo để xuất file DOCX")
     
+    report_data = _verified_export(report_data)
+    if payload.get("save_to_db", True):
+        from services.report_sql_policy import validate_saved_payload
+        try:
+            validate_saved_payload(SavedReportCreate(title=report_data.get("title") or "Báo cáo",sql_query=report_data.get("sql_query") or "",module_config=report_data))
+        except Exception:
+            raise HTTPException(400, "SQL của báo cáo chưa vượt qua chính sách lưu trữ.") from None
     title = report_data.get("title") or "Bao_Cao_Phan_Tich_AI"
     content_disposition = _make_content_disposition(title, timestamp=True)
 
@@ -315,6 +333,7 @@ def download_saved_report_docx(report_id: str):
                 title = report["title"] or "Bao_Cao_Phan_Tich_AI"
                 content_disposition = _make_content_disposition(title, timestamp=False)
 
+                report_data = _verified_export(report_data)
                 buffer = generate_report_docx(report_data)
                 return StreamingResponse(
                     buffer,
@@ -325,3 +344,15 @@ def download_saved_report_docx(report_id: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi xuất báo cáo DOCX: {str(e)}")
+
+
+def _verified_export(report_data):
+    from services.analysis_quality_service import verify_saved_report, not_scored
+    from services.analysis_catalog import AnalysisCatalog
+    from services.metadata_service import get_local_metadata
+    data = dict(report_data)
+    try:
+        data['quality_assessment'] = verify_saved_report(data, AnalysisCatalog(get_local_metadata()))
+    except Exception:
+        data['quality_assessment'] = not_scored('Danh mục chưa sẵn sàng để kiểm chứng lại báo cáo.')
+    return data

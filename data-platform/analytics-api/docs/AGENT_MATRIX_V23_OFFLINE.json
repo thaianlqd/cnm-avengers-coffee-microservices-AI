@@ -1,0 +1,418 @@
+{
+  "mode": "offline_scripted_tools_synthetic_metadata_and_rows",
+  "note": "Contracts and costs only. No live language, provider compatibility, warehouse accuracy or token-price claim.",
+  "passed": 24,
+  "total": 24,
+  "real_provider_calls": 0,
+  "embedding_calls": 0,
+  "live_warehouse_queries": 0,
+  "warehouse_mutations": 0,
+  "budgets": {
+    "rounds": 6,
+    "operations": 8,
+    "db_queries": 12,
+    "charts": 8,
+    "categories": 100,
+    "series": 16,
+    "tool_result_chars": 6000,
+    "preview_rows": 4,
+    "context_chars": 48000,
+    "tools_per_round": 8,
+    "value_lookups": 4,
+    "contract_repairs": 2,
+    "supporting_operations": 3
+  },
+  "costs": [
+    {
+      "scenario": "normalized_ranking_proposal",
+      "status": "proposal_ready",
+      "rounds": 2,
+      "semantic_calls": 1,
+      "analytical_calls": 1,
+      "db_calls_mocked": 0,
+      "value_lookups_mocked": 0,
+      "repairs": 0,
+      "rejections": 0,
+      "normalizations": 1,
+      "queries": 1,
+      "charts": 0,
+      "system_chars": 2502,
+      "schema_chars_by_round": [
+        3056,
+        9119
+      ],
+      "context_chars_by_round": [
+        379,
+        1714
+      ],
+      "semantic_context_chars_by_round": [
+        0,
+        1126
+      ],
+      "tool_result_chars_by_round": [
+        1126,
+        427
+      ],
+      "result_projection_chars_by_round": [
+        0,
+        280
+      ],
+      "tokens": null,
+      "real_provider_calls": 0,
+      "live_warehouse_queries": 0
+    },
+    {
+      "scenario": "normalized_ranking_approval",
+      "status": "success",
+      "rounds": 0,
+      "semantic_calls": 0,
+      "analytical_calls": 0,
+      "db_calls_mocked": 1,
+      "value_lookups_mocked": 0,
+      "repairs": 0,
+      "rejections": 0,
+      "normalizations": 0,
+      "queries": 1,
+      "charts": 1,
+      "system_chars": 2502,
+      "schema_chars_by_round": [],
+      "context_chars_by_round": [],
+      "semantic_context_chars_by_round": [],
+      "tool_result_chars_by_round": [],
+      "result_projection_chars_by_round": [],
+      "tokens": null,
+      "real_provider_calls": 0,
+      "live_warehouse_queries": 0
+    },
+    {
+      "scenario": "bounded_investigation_proposal",
+      "status": "proposal_ready",
+      "rounds": 2,
+      "semantic_calls": 2,
+      "analytical_calls": 4,
+      "db_calls_mocked": 0,
+      "value_lookups_mocked": 0,
+      "repairs": 0,
+      "rejections": 0,
+      "normalizations": 0,
+      "queries": 4,
+      "charts": 0,
+      "system_chars": 2502,
+      "schema_chars_by_round": [
+        3056,
+        9119
+      ],
+      "context_chars_by_round": [
+        379,
+        2044
+      ],
+      "semantic_context_chars_by_round": [
+        0,
+        1286
+      ],
+      "tool_result_chars_by_round": [
+        1286,
+        1462
+      ],
+      "result_projection_chars_by_round": [
+        0,
+        1126
+      ],
+      "tokens": null,
+      "real_provider_calls": 0,
+      "live_warehouse_queries": 0
+    },
+    {
+      "scenario": "bounded_investigation_approval",
+      "status": "success",
+      "rounds": 0,
+      "semantic_calls": 0,
+      "analytical_calls": 0,
+      "db_calls_mocked": 4,
+      "value_lookups_mocked": 0,
+      "repairs": 0,
+      "rejections": 0,
+      "normalizations": 0,
+      "queries": 4,
+      "charts": 4,
+      "system_chars": 2502,
+      "schema_chars_by_round": [],
+      "context_chars_by_round": [],
+      "semantic_context_chars_by_round": [],
+      "tool_result_chars_by_round": [],
+      "result_projection_chars_by_round": [],
+      "tokens": null,
+      "real_provider_calls": 0,
+      "live_warehouse_queries": 0
+    },
+    {
+      "scenario": "rich_composite_proposal",
+      "status": "proposal_ready",
+      "rounds": 2,
+      "semantic_calls": 6,
+      "analytical_calls": 6,
+      "db_calls_mocked": 0,
+      "value_lookups_mocked": 0,
+      "repairs": 0,
+      "rejections": 0,
+      "normalizations": 0,
+      "queries": 6,
+      "charts": 0,
+      "system_chars": 2502,
+      "schema_chars_by_round": [
+        3056,
+        9119
+      ],
+      "context_chars_by_round": [
+        379,
+        10810
+      ],
+      "semantic_context_chars_by_round": [
+        0,
+        9402
+      ],
+      "tool_result_chars_by_round": [
+        9402,
+        2355
+      ],
+      "result_projection_chars_by_round": [
+        0,
+        1893
+      ],
+      "tokens": null,
+      "real_provider_calls": 0,
+      "live_warehouse_queries": 0
+    },
+    {
+      "scenario": "rich_composite_approval",
+      "status": "success",
+      "rounds": 0,
+      "semantic_calls": 0,
+      "analytical_calls": 0,
+      "db_calls_mocked": 6,
+      "value_lookups_mocked": 0,
+      "repairs": 0,
+      "rejections": 0,
+      "normalizations": 0,
+      "queries": 6,
+      "charts": 7,
+      "system_chars": 2502,
+      "schema_chars_by_round": [],
+      "context_chars_by_round": [],
+      "semantic_context_chars_by_round": [],
+      "tool_result_chars_by_round": [],
+      "result_projection_chars_by_round": [],
+      "tokens": null,
+      "real_provider_calls": 0,
+      "live_warehouse_queries": 0
+    },
+    {
+      "scenario": "contract_repair_proposal",
+      "status": "proposal_ready",
+      "rounds": 3,
+      "semantic_calls": 1,
+      "analytical_calls": 2,
+      "db_calls_mocked": 0,
+      "value_lookups_mocked": 0,
+      "repairs": 1,
+      "rejections": 1,
+      "normalizations": 1,
+      "queries": 1,
+      "charts": 0,
+      "system_chars": 2502,
+      "schema_chars_by_round": [
+        3056,
+        9119,
+        9119
+      ],
+      "context_chars_by_round": [
+        379,
+        1714,
+        2235
+      ],
+      "semantic_context_chars_by_round": [
+        0,
+        1126,
+        1126
+      ],
+      "tool_result_chars_by_round": [
+        1126,
+        197,
+        427
+      ],
+      "result_projection_chars_by_round": [
+        0,
+        0,
+        280
+      ],
+      "tokens": null,
+      "real_provider_calls": 0,
+      "live_warehouse_queries": 0
+    },
+    {
+      "scenario": "contract_repair_approval",
+      "status": "success",
+      "rounds": 0,
+      "semantic_calls": 0,
+      "analytical_calls": 0,
+      "db_calls_mocked": 1,
+      "value_lookups_mocked": 0,
+      "repairs": 0,
+      "rejections": 0,
+      "normalizations": 0,
+      "queries": 1,
+      "charts": 1,
+      "system_chars": 2502,
+      "schema_chars_by_round": [],
+      "context_chars_by_round": [],
+      "semantic_context_chars_by_round": [],
+      "tool_result_chars_by_round": [],
+      "result_projection_chars_by_round": [],
+      "tokens": null,
+      "real_provider_calls": 0,
+      "live_warehouse_queries": 0
+    },
+    {
+      "scenario": "add_metric_refinement",
+      "status": "success",
+      "rounds": 1,
+      "semantic_calls": 0,
+      "analytical_calls": 1,
+      "db_calls_mocked": 1,
+      "value_lookups_mocked": 0,
+      "repairs": 0,
+      "rejections": 0,
+      "normalizations": 0,
+      "queries": 1,
+      "charts": 2,
+      "system_chars": 2502,
+      "schema_chars_by_round": [
+        9119
+      ],
+      "context_chars_by_round": [
+        3263
+      ],
+      "semantic_context_chars_by_round": [
+        0
+      ],
+      "tool_result_chars_by_round": [
+        3043
+      ],
+      "result_projection_chars_by_round": [
+        2896
+      ],
+      "tokens": null,
+      "real_provider_calls": 0,
+      "live_warehouse_queries": 0
+    },
+    {
+      "scenario": "add_weekly_trend_refinement",
+      "status": "success",
+      "rounds": 1,
+      "semantic_calls": 0,
+      "analytical_calls": 1,
+      "db_calls_mocked": 1,
+      "value_lookups_mocked": 0,
+      "repairs": 0,
+      "rejections": 0,
+      "normalizations": 0,
+      "queries": 2,
+      "charts": 3,
+      "system_chars": 2502,
+      "schema_chars_by_round": [
+        9119
+      ],
+      "context_chars_by_round": [
+        4000
+      ],
+      "semantic_context_chars_by_round": [
+        0
+      ],
+      "tool_result_chars_by_round": [
+        2049
+      ],
+      "result_projection_chars_by_round": [
+        1902
+      ],
+      "tokens": null,
+      "real_provider_calls": 0,
+      "live_warehouse_queries": 0
+    },
+    {
+      "scenario": "view_only_refinement",
+      "status": "success",
+      "rounds": 1,
+      "semantic_calls": 0,
+      "analytical_calls": 0,
+      "db_calls_mocked": 0,
+      "value_lookups_mocked": 0,
+      "repairs": 0,
+      "rejections": 0,
+      "normalizations": 0,
+      "queries": 2,
+      "charts": 3,
+      "system_chars": 2502,
+      "schema_chars_by_round": [
+        9119
+      ],
+      "context_chars_by_round": [
+        6215
+      ],
+      "semantic_context_chars_by_round": [
+        0
+      ],
+      "tool_result_chars_by_round": [
+        84
+      ],
+      "result_projection_chars_by_round": [
+        0
+      ],
+      "tokens": null,
+      "real_provider_calls": 0,
+      "live_warehouse_queries": 0
+    },
+    {
+      "scenario": "duplicate_invalid_failure",
+      "status": "duplicate_invalid_tool_call",
+      "rounds": 3,
+      "semantic_calls": 1,
+      "analytical_calls": 2,
+      "db_calls_mocked": 0,
+      "value_lookups_mocked": 0,
+      "repairs": 1,
+      "rejections": 2,
+      "normalizations": 0,
+      "queries": 0,
+      "charts": 0,
+      "system_chars": 2502,
+      "schema_chars_by_round": [
+        3056,
+        9119,
+        9119
+      ],
+      "context_chars_by_round": [
+        379,
+        1714,
+        2243
+      ],
+      "semantic_context_chars_by_round": [
+        0,
+        1126,
+        1126
+      ],
+      "tool_result_chars_by_round": [
+        1126,
+        197,
+        197
+      ],
+      "result_projection_chars_by_round": [
+        0,
+        0,
+        0
+      ],
+      "tokens": null,
+      "real_provider_calls": 0,
+      "live_warehouse_queries": 0
+    }
+  ]
+}

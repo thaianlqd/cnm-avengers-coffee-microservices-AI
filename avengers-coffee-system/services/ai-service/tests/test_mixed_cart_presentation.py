@@ -84,7 +84,7 @@ def test_quantity_only_success_is_reported_as_partial_with_missing_topping(cart)
     cart.provider.steps = [calls(deepcopy(EDITS[1])), content()]
     result = cart.turn(MESSAGE)
     assert 'một phần yêu cầu' in result['reply']
-    assert '**Còn chưa thực hiện:**' in result['reply'] and '**Bạc Xỉu Nóng**' in result['reply']
+    assert '**Còn chưa thực hiện được:**' in result['reply'] and '**Bạc Xỉu Nóng**' in result['reply']
     assert len(cart.writes) == 1
 
 

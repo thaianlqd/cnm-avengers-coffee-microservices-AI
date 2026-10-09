@@ -1,0 +1,11 @@
+{
+  "redis_ping": true,
+  "cross_replica_restore": true,
+  "ttl_verified": true,
+  "atomic_cas_verified": true,
+  "stale_lock_verified": true,
+  "owner_immutable": true,
+  "temporary_session_deleted": true,
+  "provider_calls": 0,
+  "warehouse_mutations": 0
+}

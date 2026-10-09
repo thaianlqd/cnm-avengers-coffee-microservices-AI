@@ -1,4 +1,108 @@
+import { businessCategory, categoryColor, compositionData, bucketCoverage, conciseChartTitle } from '../utils/analystDashboardLayout.mjs';
+import { formatChartValue } from '../utils/aiChartConfig.mjs';
 import React, { useState } from 'react';
+
+const axisValue = (value: number) => {
+  const magnitude = Math.abs(value);
+  const scale = magnitude >= 1e9 ? [1e9, 'tỷ'] : magnitude >= 1e6 ? [1e6, 'triệu'] : magnitude >= 1e3 ? [1e3, 'nghìn'] : [1, ''];
+  return `${(value / Number(scale[0])).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} ${scale[1]}`.trim();
+};
+const tickIndices = (count: number, maximum = 5) => [...new Set(Array.from({ length: Math.min(count, maximum) }, (_, i) => Math.round(i * (count - 1) / Math.max(1, Math.min(count, maximum) - 1))))];
+const timeTick = (label: string, crossYear: boolean) => /^\d{4}-\d{2}-\d{2}/.test(String(label)) ? `${label.slice(8, 10)}/${label.slice(5, 7)}${crossYear ? '/' + label.slice(2, 4) : ''}` : String(label).slice(0, 12);
+
+/** Signed grouped/stacked series. Missing observations remain missing. */
+export const SeriesBarChart: React.FC<{ data: any[]; series: any[]; stacked?: boolean; percentage?: boolean; unit?: string }> = ({ data, series, stacked = false, percentage = false, unit = '' }) => {
+  const [hidden, setHidden] = useState<Record<string, boolean>>({});
+  const active = series.filter(s => !hidden[s.key]);
+  if (!data.length) return <p>Không có dữ liệu trong phạm vi này.</p>;
+  const values = data.flatMap(row => active.map(s => row[s.key]).filter(Number.isFinite));
+  const sums = data.map(row => active.reduce((sum, s) => sum + (Number.isFinite(row[s.key]) ? row[s.key] : 0), 0));
+  const low = Math.min(0, ...values), high = percentage ? 100 : Math.max(0, ...(stacked ? sums : values));
+  const span = high - low || 1, y = (value: number) => 245 - (value - low) / span * 215;
+  const slot = 540 / data.length;
+  return <div className="w-full min-w-0">
+    <div className="flex flex-wrap gap-2 text-xs mb-3">{(series.length > 1 ? series : []).map(s => <button key={s.key} onClick={() => setHidden({ ...hidden, [s.key]: !hidden[s.key] })} aria-pressed={!hidden[s.key]} style={{ color: s.color }}>{s.label}</button>)}</div>
+    <svg viewBox="0 0 620 300" role="img" aria-label={stacked ? 'Biểu đồ cột chồng' : 'Biểu đồ cột nhóm'} className="w-full">
+      <line x1="55" x2="600" y1={y(0)} y2={y(0)} stroke="#94a3b8" />
+      {[low, (low + high) / 2, high].map((v, i) => <g key={i}><line x1="55" x2="600" y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="4 5" /><text x="50" y={y(v)} textAnchor="end" fontSize="11" fill="#64748b">{axisValue(v)}</text></g>)}
+      {data.map((row, i) => { let offset = 0; return <g key={i}>{active.map((s, j) => {
+        const v = row[s.key]; if (!Number.isFinite(v)) return null;
+        const start = stacked ? offset : 0; if (stacked) offset += v;
+        const width = slot * .8 / (stacked ? 1 : Math.max(active.length, 1));
+        const x = 60 + i * slot + (stacked ? 0 : j * width);
+        return <rect key={s.key} x={x} y={Math.min(y(start), y(start + v))} width={Math.max(1, width - 2)} height={Math.abs(y(start + v) - y(start))} rx={3} fill={active.length === 1 ? row.color || s.color || '#2563eb' : s.color || '#2563eb'}><title>{`${row.label}: ${s.label} — ${formatChartValue(v, unit ? ` ${unit}` : '')}`}</title></rect>;
+      })}<text x={60 + i * slot + slot * .4} y="276" fontSize="11" fill="#64748b" textAnchor="middle">{tickIndices(data.length, 6).includes(i) ? String(row.label).slice(0, 12) : ''}</text></g>; })}
+    </svg>
+  </div>;
+};
+
+export const ScatterChart: React.FC<{ data: any[]; xLabel?: string; yLabel?: string; xUnit?: string; yUnit?: string }> = ({ data, xLabel = '', yLabel = '', xUnit = '', yUnit = '' }) => {
+  const rows = data.filter(r => Number.isFinite(r.x) && Number.isFinite(r.y));
+  if (!rows.length) return <p>Không có quan sát ghép cặp.</p>;
+  const xs = rows.map(r => r.x), ys = rows.map(r => r.y);
+  const minX = Math.min(0, ...xs), minY = Math.min(0, ...ys), spanX = Math.max(...xs) - minX || 1, spanY = Math.max(...ys) - minY || 1;
+  const x = (v: number) => 78 + (v - minX) / spanX * 495, y = (v: number) => 242 - (v - minY) / spanY * 200;
+  return <svg viewBox="0 0 620 310" role="img" aria-label="Biểu đồ phân tán — liên hệ quan sát" className="w-full">
+    {[0, .5, 1].map((fraction, i) => <g key={i}>
+      <line x1="78" x2="573" y1={y(minY + fraction * spanY)} y2={y(minY + fraction * spanY)} stroke="#e2e8f0" strokeDasharray="4 5" />
+      <text x="70" y={y(minY + fraction * spanY) + 4} textAnchor="end" fontSize="11" fill="#64748b">{axisValue(minY + fraction * spanY)}</text>
+      <text x={x(minX + fraction * spanX)} y="264" textAnchor="middle" fontSize="11" fill="#64748b">{axisValue(minX + fraction * spanX)}</text>
+    </g>)}
+    <path d="M 78 42 V 242 H 573" fill="none" stroke="#94a3b8" />
+    {rows.map((r, i) => <circle key={i} cx={x(r.x)} cy={y(r.y)} r={rows.length > 100 ? 3 : 5} fill="#0891b2" opacity={rows.length > 100 ? .45 : .75}><title>{`${r.label}: ${formatChartValue(r.x, ` ${xUnit}`)} / ${formatChartValue(r.y, ` ${yUnit}`)}`}</title></circle>)}
+    <text x="325" y="298" textAnchor="middle" fontSize="12" fill="#475569">{xLabel} ({xUnit})</text><text x="78" y="20" fontSize="12" fill="#475569">{yLabel} ({yUnit})</text>
+  </svg>;
+};
+
+export const AnalystHorizontalBars: React.FC<{ data: any[]; unit: string; color: string; ranking?: boolean }> = ({ data, unit, color, ranking }) => {
+  const [page, setPage] = useState(1);
+  const pageSize = 10, pages = Math.max(1, Math.ceil(data.length / pageSize)), activePage = Math.min(page, pages);
+  const low = Math.min(0, ...data.map(r => r.value).filter(Number.isFinite)), high = Math.max(0, ...data.map(r => r.value).filter(Number.isFinite));
+  const span = high - low || 1, origin = -low / span * 100;
+  return <div className="min-h-[260px]">
+    <div className="space-y-3">{data.slice((activePage - 1) * pageSize, activePage * pageSize).map((row: any, i: number) => <div key={i} className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)_4rem] gap-3 items-center text-xs min-h-[20px]" title={`${row.label}: ${formatChartValue(row.value, unit ? ` ${unit}` : '')}`}>
+      <div className="text-slate-600 leading-relaxed break-words">{ranking && <span className="text-slate-400 mr-2">{row.rank_position ?? (activePage - 1) * pageSize + i + 1}.</span>}{row.label}</div>
+      <div className="relative h-2.5 rounded-full bg-slate-100"><span className="absolute inset-y-0 rounded-full" style={{ left: `${row.value < 0 ? origin + row.value / span * 100 : origin}%`, width: `${Math.abs(row.value) / span * 100}%`, background: row.color || color }} />{low < 0 && <span className="absolute -top-1 h-4 border-l border-slate-400" style={{ left: `${origin}%` }} />}</div>
+      <span className="text-slate-700 font-medium tabular-nums text-right">{unit === '%' ? `${row.value.toLocaleString('vi-VN', { maximumFractionDigits: 2 })}%` : axisValue(row.value)}</span>
+    </div>)}</div>
+    {pages > 1 && <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400"><span>{(activePage - 1) * pageSize + 1}–{Math.min(activePage * pageSize, data.length)}/{data.length} nhóm hiển thị</span><div className="flex gap-3"><button aria-label="Nhóm trước" disabled={activePage === 1} onClick={() => setPage(activePage - 1)} className="disabled:opacity-25 text-slate-600">←</button><button aria-label="Nhóm tiếp theo" disabled={activePage === pages} onClick={() => setPage(activePage + 1)} className="disabled:opacity-25 text-slate-600">→</button></div></div>}
+  </div>;
+};
+
+export const AnalystChart: React.FC<{ chart: any }> = ({ chart }) => {
+  const data = (chart.data || []).map((r: any, i: number) => ({ ...r, color: r.color || categoryColor(r.label, i), label: r.label == null ? r.label : businessCategory(r.label) })), unit = chart.unit || '', color = chart.accent_color || '#2563eb';
+  if (['grouped_bar', 'stacked_bar', 'stacked_100'].includes(chart.chart_type)) return <SeriesBarChart data={data} series={chart.series || []} stacked={chart.chart_type !== 'grouped_bar'} percentage={chart.chart_type === 'stacked_100'} unit={unit} />;
+  if (chart.chart_type === 'scatter') return <ScatterChart data={data} xLabel={chart.x_label} yLabel={chart.y_label} xUnit={unit} yUnit={chart.y_unit} />;
+  if (chart.chart_type === 'heatmap') return <HeatmapChart data={data} valueSuffix={unit ? ` ${unit}` : ''} xLabel={chart.x_label || 'Chiều phân tích'} yLabel={chart.series_label || 'Nhóm phân tích'} />;
+  if (chart.chart_type === 'multi_line') return <SeriesLineChart data={data} series={chart.series || []} unit={unit} granularity={chart.granularity} period={chart.period} />;
+  if (chart.chart_type === 'donut') return <DonutChart data={chart.grouped_categories ? data : compositionData(data).data} centerLabel="Tổng trong phạm vi" valueSuffix={unit ? ` ${unit}` : ''} size={170} />;
+  if (chart.chart_type === 'horizontal_bar') return <AnalystHorizontalBars data={data} unit={unit} color={color} ranking={chart.selection === 'Top N'} />;
+  if (['line', 'area'].includes(chart.chart_type)) return <SeriesLineChart data={data.map((r: any) => ({ label: r.label, series_1: r.value }))} series={[{ key: 'series_1', label: conciseChartTitle(chart), color }]} unit={unit} area={chart.chart_type === 'area'} granularity={chart.granularity} period={chart.period} />;
+  return <SeriesBarChart data={data.map((r: any) => ({ label: r.label, series_1: r.value, color: r.color || color }))} series={[{ key: 'series_1', label: conciseChartTitle(chart), color }]} unit={unit} />;
+};
+
+export const SeriesLineChart: React.FC<{ data: any[]; series: any[]; unit?: string; area?: boolean; granularity?: string; period?: any }> = ({ data, series, unit = '', area = false, granularity, period }) => {
+  const [hidden, setHidden] = useState<Record<string, boolean>>({});
+  const active = series.filter(s => !hidden[s.key]);
+  const values = data.flatMap(row => active.map(s => row[s.key]).filter(Number.isFinite));
+  if (!data.length) return <p>Không có dữ liệu trong phạm vi này.</p>;
+  const low = Math.min(0, ...values), high = Math.max(0, ...values), span = high - low || 1;
+  const x = (i: number) => 60 + i * 530 / Math.max(1, data.length - 1), y = (v: number) => 245 - (v - low) / span * 215;
+  const coverage = data.map(r => bucketCoverage(r.label, granularity, period));
+  const periodNote = (i: number) => coverage[i]?.partial ? ` · Kỳ chưa đủ ngày: ${[coverage[i].start, period?.start].filter(Boolean).sort().slice(-1)[0]} → ${[coverage[i].end, period?.end].filter(Boolean).sort()[0]}` : '';
+  return <div className="w-full"><div className="flex flex-wrap gap-2 text-xs mb-3">{(series.length > 1 ? series : []).map(s => <button key={s.key} aria-pressed={!hidden[s.key]} onClick={() => setHidden({ ...hidden, [s.key]: !hidden[s.key] })} style={{ color: s.color }}>{s.label}</button>)}</div>
+    <svg viewBox="0 0 620 305" role="img" aria-label="Biểu đồ theo thời gian" className="w-full">
+      {[low, (low + high) / 2, high].map((v, i) => <g key={i}><line x1="55" x2="595" y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="4 5" /><text x="50" y={y(v)} textAnchor="end" fontSize="11" fill="#64748b">{axisValue(v)}</text></g>)}
+      {active.map(s => { let connected = false; const path = data.map((r, i) => { if (!Number.isFinite(r[s.key])) { connected = false; return ''; } const point = `${connected ? 'L' : 'M'} ${x(i)} ${y(r[s.key])}`; connected = true; return point; }).join(' ');
+        const segments: number[][] = []; let segment: number[] = [];
+        data.forEach((r, i) => { if (Number.isFinite(r[s.key])) segment.push(i); else if (segment.length) { segments.push(segment); segment = []; } });
+        if (segment.length) segments.push(segment);
+        return <g key={s.key}>{area && segments.map((indices, i) => <path key={i} d={`M ${x(indices[0])} ${y(0)} ${indices.map(index => `L ${x(index)} ${y(data[index][s.key])}`).join(' ')} L ${x(indices[indices.length - 1])} ${y(0)} Z`} fill={s.color || '#6366f1'} opacity=".12" />)}<path d={path} fill="none" stroke={s.color || '#6366f1'} strokeWidth="2" />{data.map((r, i) => Number.isFinite(r[s.key]) ? <circle key={i} cx={x(i)} cy={y(r[s.key])} r={coverage[i]?.partial ? 4 : 3} fill={coverage[i]?.partial ? 'white' : s.color || '#6366f1'} stroke={s.color || '#6366f1'} strokeWidth="1.5"><title>{`${r.label}: ${s.label} — ${formatChartValue(r[s.key], unit ? ` ${unit}` : '')}${periodNote(i)}`}</title></circle> : null)}</g>;
+      })}
+      {tickIndices(data.length).map(i => <text key={i} x={x(i)} y="278" fontSize="11" fill="#64748b" textAnchor={i === 0 ? 'start' : i === data.length - 1 ? 'end' : 'middle'}><title>{data[i].label}{periodNote(i)}</title>{timeTick(data[i].label, String(data[0].label).slice(0, 4) !== String(data[data.length - 1].label).slice(0, 4))}{coverage[i]?.partial ? '*' : ''}</text>)}
+    </svg>
+  </div>;
+};
 
 // ─── 1. SMOOTH AREA / LINE CHART ───
 export interface AreaChartDataPoint {
@@ -279,6 +383,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({
   data,
   centerLabel = 'Tổng doanh thu',
   centerValue = '',
+  valueSuffix = ' đ',
   size = 135,
 }) => {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
@@ -298,12 +403,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({
 
   let currentOffset = 0;
 
-  const formatShortAmount = (val: number) => {
-    if (val >= 1_000_000_000) return `${(val / 1_000_000_000).toFixed(1)}B đ`;
-    if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}M đ`;
-    if (val >= 1_000) return `${(val / 1_000).toFixed(0)}k đ`;
-    return `${val} đ`;
-  };
+  const formatShortAmount = (val: number) => formatChartValue(val, valueSuffix);
 
   const displayCenterValue = centerValue || (
     total >= 1_000_000_000 
@@ -475,20 +575,7 @@ export const BarChart: React.FC<BarChartProps> = ({
     return Math.round(val).toString();
   };
 
-  const formatTooltipValue = (val: number) => {
-    if (valueSuffix === 'Tr' || valueSuffix === 'triệu') {
-      if (val >= 1000) {
-        return `${(val / 1000).toFixed(2)} tỷ VNĐ`;
-      }
-      return `${val.toLocaleString('vi-VN')} triệu VNĐ`;
-    }
-    if (valueSuffix === 'ly' || valueSuffix === 'đơn') {
-      return `${val.toLocaleString('vi-VN')} ${valueSuffix}`;
-    }
-    if (val >= 1_000_000_000) return `${(val / 1_000_000_000).toFixed(2)} tỷ đ`;
-    if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}M đ`;
-    return `${val.toLocaleString('vi-VN')} ${valueSuffix}`.trim();
-  };
+  const formatTooltipValue = (val: number) => formatChartValue(val, valueSuffix);
 
   const slotWidth = chartWidth / data.length;
   const hasSecondary = data.some(d => d.secondaryValue !== undefined);
@@ -764,6 +851,8 @@ interface HeatmapChartProps {
   valuePrefix?: string;
   valueSuffix?: string;
   colorScheme?: 'indigo' | 'emerald' | 'amber' | 'blue';
+  xLabel?: string;
+  yLabel?: string;
 }
 
 const DEFAULT_DAYS = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ Nhật'];
@@ -777,11 +866,13 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
   data = [],
   valuePrefix = '',
   valueSuffix = ' đơn',
+  xLabel = 'Giờ',
+  yLabel = 'Thứ',
 }) => {
   const [hoveredCell, setHoveredCell] = useState<{ x: string; y: string; val: number } | null>(null);
 
   // Normalize incoming data into 2D map: y -> x -> value
-  const matrix: Record<string, Record<string, number>> = {};
+  const matrix: Record<string, Record<string, number>> = Object.create(null);
   const ySet = new Set<string>();
   const xSet = new Set<string>();
 
@@ -826,7 +917,7 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
     if (xVal && yVal) {
       ySet.add(yVal);
       xSet.add(xVal);
-      if (!matrix[yVal]) matrix[yVal] = {};
+      if (!matrix[yVal]) matrix[yVal] = Object.create(null);
       matrix[yVal][xVal] = (matrix[yVal][xVal] || 0) + numVal;
     }
   });
@@ -834,13 +925,15 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
   // Determine active rows & cols
   const yCategories = ySet.size > 0
     ? DEFAULT_DAYS.filter(d => ySet.has(d)).concat(Array.from(ySet).filter(d => !DEFAULT_DAYS.includes(d)))
-    : DEFAULT_DAYS;
+    : [];
 
   const xCategories = xSet.size > 0
     ? (Array.from(xSet).some(x => DEFAULT_HOURS.includes(x))
         ? DEFAULT_HOURS.filter(h => xSet.has(h)).concat(Array.from(xSet).filter(h => !DEFAULT_HOURS.includes(h)))
         : Array.from(xSet))
-    : DEFAULT_HOURS;
+    : [];
+
+  if (!xCategories.length || !yCategories.length) return <div className="text-xs text-slate-400 p-4">Chưa có dữ liệu ma trận</div>;
 
   // Compute maximum value for color interpolation
   let maxVal = 1;
@@ -868,7 +961,7 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
         <div className="min-w-[620px]">
           {/* Header row: Hour columns */}
           <div className="flex items-center mb-1 text-[11px] font-medium text-slate-400">
-            <div className="w-16 shrink-0 text-left pl-1">Thứ / Giờ</div>
+            <div className="w-16 shrink-0 text-left pl-1">{yLabel} / {xLabel}</div>
             <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${xCategories.length}, minmax(0, 1fr))` }}>
               {xCategories.map(x => (
                 <div key={x} className="text-center truncate px-0.5" title={x}>
@@ -887,18 +980,19 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
                 </div>
                 <div className="flex-1 grid gap-1" style={{ gridTemplateColumns: `repeat(${xCategories.length}, minmax(0, 1fr))` }}>
                   {xCategories.map(x => {
-                    const val = matrix[y]?.[x] || 0;
+                    const missing = matrix[y]?.[x] === undefined;
+                    const val = matrix[y]?.[x] ?? 0;
                     const isHovered = hoveredCell?.x === x && hoveredCell?.y === y;
                     return (
                       <div
                         key={x}
-                        onMouseEnter={() => setHoveredCell({ x, y, val })}
+                        onMouseEnter={() => setHoveredCell(missing ? null : { x, y, val })}
                         onMouseLeave={() => setHoveredCell(null)}
                         className={`h-7 rounded-md border flex items-center justify-center text-[10px] cursor-pointer transition-all duration-150 ${getCellBg(val)} ${
                           isHovered ? 'ring-2 ring-indigo-500 scale-105 z-10' : ''
                         }`}
                       >
-                        {val > 0 ? (val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val) : '·'}
+                        {missing ? '—' : val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}
                       </div>
                     );
                   })}
@@ -926,7 +1020,7 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
 
         {hoveredCell ? (
           <div className="text-[11px] font-medium text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg">
-            <span className="text-indigo-600 font-semibold">{hoveredCell.y} lúc {hoveredCell.x}:</span>{' '}
+            <span className="text-indigo-600 font-semibold">{hoveredCell.y} / {hoveredCell.x}:</span>{' '}
             <span className="font-bold">{valuePrefix}{hoveredCell.val.toLocaleString('vi-VN')}{valueSuffix}</span>
           </div>
         ) : (
@@ -944,6 +1038,7 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
 export interface MultiLineChartProps {
   data: Array<Record<string, any>>;
   seriesKeys?: string[];
+  seriesLabels?: Record<string, string>;
   height?: number;
   valuePrefix?: string;
   valueSuffix?: string;
@@ -964,6 +1059,7 @@ const MULTI_SERIES_PALETTE = [
 export const MultiLineChart: React.FC<MultiLineChartProps> = ({
   data = [],
   seriesKeys: propSeriesKeys,
+  seriesLabels = {},
   height = 300,
   valuePrefix = '',
   valueSuffix = '',
@@ -1122,7 +1218,7 @@ export const MultiLineChart: React.FC<MultiLineChartProps> = ({
                   className="w-2.5 h-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: isOff ? '#94a3b8' : color }}
                 />
-                <span className="font-semibold">{s}</span>
+                <span className="font-semibold">{seriesLabels[s] || s}</span>
                 <span className="text-[10px] text-slate-400 font-mono">
                   ({total >= 1_000_000 ? `${(total / 1_000_000).toFixed(1)}M` : total.toLocaleString('vi-VN')})
                 </span>
@@ -1175,11 +1271,18 @@ export const MultiLineChart: React.FC<MultiLineChartProps> = ({
           {activeSeries.map(s => {
             const seriesIdx = seriesList.indexOf(s);
             const color = MULTI_SERIES_PALETTE[seriesIdx % MULTI_SERIES_PALETTE.length];
-            const pts = normalizedData.map((d, i) => ({
-              x: getX(i),
-              y: getY(Number(d[s] || 0)),
-            }));
-            const linePath = createSpline(pts);
+            const segments: Array<Array<{ x: number; y: number; index: number }>> = [];
+            let current: Array<{ x: number; y: number; index: number }> = [];
+            normalizedData.forEach((d, i) => {
+              if (typeof d[s] === 'number' && Number.isFinite(d[s])) {
+                current.push({ x: getX(i), y: getY(d[s]), index: i });
+              } else if (current.length) {
+                segments.push(current); current = [];
+              }
+            });
+            if (current.length) segments.push(current);
+            const pts = segments.flat();
+            const linePath = segments.map(createSpline).join(' ');
 
             return (
               <g key={s}>
@@ -1196,7 +1299,7 @@ export const MultiLineChart: React.FC<MultiLineChartProps> = ({
 
                 {/* Data point dots */}
                 {pts.map((pt, pIdx) => {
-                  const isHovered = hoverIndex === pIdx;
+                  const isHovered = hoverIndex === pt.index;
                   return (
                     <circle
                       key={pIdx}
@@ -1287,6 +1390,7 @@ export const MultiLineChart: React.FC<MultiLineChartProps> = ({
 
             <div className="space-y-1 pt-0.5">
               {activeSeries
+                .filter(s => typeof normalizedData[hoverIndex][s] === 'number' && Number.isFinite(normalizedData[hoverIndex][s]))
                 .map(s => ({
                   name: s,
                   val: Number(normalizedData[hoverIndex][s] || 0),
@@ -1297,7 +1401,7 @@ export const MultiLineChart: React.FC<MultiLineChartProps> = ({
                   <div key={item.name} className="flex items-center justify-between gap-3 text-[11px]">
                     <div className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                      <span className="text-slate-300 font-medium truncate max-w-[100px]">{item.name}</span>
+                      <span className="text-slate-300 font-medium truncate max-w-[100px]">{seriesLabels[item.name] || item.name}</span>
                     </div>
                     <span className="font-mono font-bold text-white">
                       {valuePrefix}{item.val.toLocaleString('vi-VN')}{valueSuffix}
@@ -1311,5 +1415,3 @@ export const MultiLineChart: React.FC<MultiLineChartProps> = ({
     </div>
   );
 };
-
-

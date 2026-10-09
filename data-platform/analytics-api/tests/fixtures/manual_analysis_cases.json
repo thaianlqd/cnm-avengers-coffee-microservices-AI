@@ -1,0 +1,4390 @@
+[
+  {
+    "id": "simple_top5",
+    "prompt": "Top 5 món bán chạy nhất tại Hà Nội tháng này",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "top_n": 5,
+        "direction": "DESC"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "small_top3",
+    "prompt": "Top 3 sản phẩm bán chạy nhất tại Hà Nội tháng này",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "top_n": 3
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "explicit_month",
+    "prompt": "Top 5 món ở Hà Nội tháng 10 năm 2026 theo số lượng",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-10-01",
+        "end": "2026-10-31"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "top_n": 5,
+        "direction": "DESC"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "comparison_5_3",
+    "prompt": "So sánh top 5 món ở Hà Nội với top 3 món ở Cần Thơ quý trước theo số lượng, kèm doanh thu",
+    "expected_spec": {
+      "analysis_kind": "comparison",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold",
+        "product_revenue"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [],
+      "time_range": {
+        "mode": "previous_quarter"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "top_n": 5,
+        "direction": "DESC"
+      },
+      "comparison_groups": [
+        {
+          "name": "Hà Nội",
+          "filters": [
+            {
+              "dimension": "city",
+              "value": "Hà Nội"
+            }
+          ],
+          "top_n": 5
+        },
+        {
+          "name": "Cần Thơ",
+          "filters": [
+            {
+              "dimension": "city",
+              "value": "Cần Thơ"
+            }
+          ],
+          "top_n": 3
+        }
+      ]
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50,
+          "product_revenue": 1500000
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45,
+          "product_revenue": 1350000
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40,
+          "product_revenue": 1200000
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35,
+          "product_revenue": 1050000
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30,
+          "product_revenue": 900000
+        }
+      ],
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50,
+          "product_revenue": 1250000
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45,
+          "product_revenue": 1125000
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40,
+          "product_revenue": 1000000
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "per_group",
+    "prompt": "Top 2 món bán chạy trong từng thành phố tháng này",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product",
+        "city"
+      ],
+      "filters": [],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "top_n": 2,
+        "per_group": [
+          "city"
+        ]
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50,
+          "city": "Hà Nội",
+          "rank_position": 1
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45,
+          "city": "Hà Nội",
+          "rank_position": 2
+        },
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50,
+          "city": "Cần Thơ",
+          "rank_position": 1
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45,
+          "city": "Cần Thơ",
+          "rank_position": 2
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "ascending_stores",
+    "prompt": "Xếp hạng top 3 chi nhánh có doanh thu thấp nhất năm 2026",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "stores",
+      "metrics": [
+        "store_revenue"
+      ],
+      "dimensions": [
+        "store"
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-01-01",
+        "end": "2026-12-31"
+      },
+      "ranking": {
+        "metric": "store_revenue",
+        "direction": "ASC",
+        "top_n": 3
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "store": "Fixture store 0",
+          "store_id": "0",
+          "store_revenue": 1000
+        },
+        {
+          "store": "Fixture store 1",
+          "store_id": "1",
+          "store_revenue": 2000
+        },
+        {
+          "store": "Fixture store 2",
+          "store_id": "2",
+          "store_revenue": 3000
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "count_scalar",
+    "prompt": "Số đơn hàng tháng này",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "order_count"
+      ],
+      "time_range": {
+        "mode": "current_month"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "order_count": 23
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "revenue_scalar",
+    "prompt": "Doanh thu tháng này",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ],
+      "time_range": {
+        "mode": "current_month"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "revenue": 750000
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "true_composition",
+    "prompt": "Cơ cấu số đơn theo phương thức thanh toán tháng này",
+    "expected_spec": {
+      "analysis_kind": "distribution",
+      "subject": "orders",
+      "metrics": [
+        "order_count"
+      ],
+      "dimensions": [
+        "payment_method"
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "requested_visualizations": [
+        "donut"
+      ]
+    },
+    "fixture_results": [
+      [
+        {
+          "payment_method": "CHUYEN_KHOAN",
+          "order_count": 7
+        },
+        {
+          "payment_method": "TIEN_MAT",
+          "order_count": 3
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "daily_trend",
+    "prompt": "Xu hướng doanh thu mỗi ngày trong tháng 10 năm 2026",
+    "expected_spec": {
+      "analysis_kind": "trend",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-10-01",
+        "end": "2026-10-31"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "period": "2026-10-01",
+          "revenue": 1000
+        },
+        {
+          "period": "2026-10-02",
+          "revenue": 1200
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "category_multiline",
+    "prompt": "Xu hướng số lượng bán theo danh mục trong tháng 10 năm 2026",
+    "expected_spec": {
+      "analysis_kind": "trend",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "category"
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-10-01",
+        "end": "2026-10-31"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "period": "2026-10-01",
+          "category": "Fixture A",
+          "quantity_sold": 10
+        },
+        {
+          "period": "2026-10-01",
+          "category": "Fixture B",
+          "quantity_sold": 7
+        },
+        {
+          "period": "2026-10-02",
+          "category": "Fixture A",
+          "quantity_sold": 12
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "heatmap",
+    "prompt": "Ma trận sản lượng theo danh mục và thành phố",
+    "expected_spec": {
+      "analysis_kind": "heatmap",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "category",
+        "city"
+      ]
+    },
+    "fixture_results": [
+      [
+        {
+          "category": "Fixture A",
+          "city": "Hà Nội",
+          "quantity_sold": 20
+        },
+        {
+          "category": "Fixture B",
+          "city": "Cần Thơ",
+          "quantity_sold": 15
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "ranking_with_trend",
+    "prompt": "Top 5 món bán chạy ở Hà Nội tháng này kèm xu hướng doanh thu theo ngày",
+    "expected_spec": {
+      "analysis_kind": "composite",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "ranking": null,
+      "components": [
+        {
+          "id": "ranking",
+          "kind": "ranking",
+          "metrics": [
+            "quantity_sold"
+          ],
+          "dimensions": [
+            "product"
+          ],
+          "ranking": {
+            "metric": "quantity_sold",
+            "top_n": 5
+          }
+        },
+        {
+          "id": "trend",
+          "kind": "trend",
+          "metrics": [
+            "product_revenue"
+          ],
+          "dimensions": []
+        }
+      ]
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ],
+      [
+        {
+          "period": "2026-10-01",
+          "product_revenue": 1500
+        },
+        {
+          "period": "2026-10-02",
+          "product_revenue": 1800
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "safe_customer_detail",
+    "prompt": "Danh sách mã khách hàng và điểm loyalty, tổng chi tiêu",
+    "expected_spec": {
+      "analysis_kind": "detail",
+      "subject": "customers",
+      "detail_level": "detail"
+    },
+    "fixture_results": [
+      [
+        {
+          "customer_id": "fixture-id",
+          "customer_role": "CUSTOMER",
+          "loyalty_points": 25,
+          "lifetime_spend": 750000
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "inventory_snapshot",
+    "prompt": "Số lượng tồn kho hiện tại theo sản phẩm",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "inventory",
+      "metrics": [
+        "stock_quantity"
+      ],
+      "dimensions": [
+        "product"
+      ]
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture stock",
+          "product_id": "1",
+          "stock_quantity": 12
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "promotion_scope",
+    "prompt": "Doanh thu khuyến mãi tại Hà Nội tháng này",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "promotions",
+      "metrics": [
+        "voucher_revenue"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "time_range": {
+        "mode": "current_month"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "voucher_revenue": 100000
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "ratings",
+    "prompt": "Top 3 chi nhánh theo điểm phục vụ tháng này",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "store_reviews",
+      "metrics": [
+        "avg_store_rating"
+      ],
+      "dimensions": [
+        "store"
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "ranking": {
+        "metric": "avg_store_rating",
+        "top_n": 3
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "store": "Fixture A",
+          "store_id": "1",
+          "avg_store_rating": 4.75
+        },
+        {
+          "store": "Fixture B",
+          "store_id": "2",
+          "avg_store_rating": 4.25
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "cancellations",
+    "prompt": "Số đơn đã hủy tháng này",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "order_count"
+      ],
+      "filters": [
+        {
+          "dimension": "order_status",
+          "value": "DA_HUY"
+        }
+      ],
+      "time_range": {
+        "mode": "current_month"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "order_count": 3
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "empty",
+    "prompt": "Top 5 món bán chạy nhất tại Hà Nội tháng này",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "top_n": 5,
+        "direction": "DESC"
+      }
+    },
+    "fixture_results": [
+      []
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "ambiguous_best",
+    "prompt": "Cho tôi chi nhánh tốt nhất",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "stores",
+      "ranking": {
+        "metric": "store_revenue",
+        "top_n": 1
+      },
+      "ambiguities": [
+        "best metric undefined"
+      ],
+      "confidence": 0.5
+    },
+    "fixture_results": [],
+    "expected_status": "needs_clarification"
+  },
+  {
+    "id": "unsupported_history",
+    "prompt": "Tổng chi tiêu tích lũy khách hàng tháng này",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "customers",
+      "metrics": [
+        "total_spent"
+      ],
+      "time_range": {
+        "mode": "current_month"
+      }
+    },
+    "fixture_results": [],
+    "expected_status": "needs_clarification"
+  },
+  {
+    "id": "pii_request",
+    "prompt": "Danh sách khách hàng gồm email",
+    "expected_spec": {
+      "analysis_kind": "detail",
+      "subject": "customers",
+      "detail_columns": [
+        "email"
+      ]
+    },
+    "fixture_results": [],
+    "expected_status": "needs_clarification"
+  },
+  {
+    "id": "adversarial_six_rows",
+    "prompt": "Top 5 món bán chạy nhất tại Hà Nội tháng này",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "top_n": 5,
+        "direction": "DESC"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        },
+        {
+          "product": "Overflow",
+          "product_id": "6",
+          "quantity_sold": 1
+        }
+      ]
+    ],
+    "expected_status": "error",
+    "expected_execution_count": 1
+  },
+  {
+    "id": "english",
+    "prompt": "Top 5 products by quantity sold in Hanoi this month",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "top_n": 5,
+        "direction": "DESC"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "mixed_terms",
+    "prompt": "Top 5 products theo quantity_sold tại HN tháng này",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "top_n": 5,
+        "direction": "DESC"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "telex_typo",
+    "prompt": "top 5 san rphaamr ban chay tai HN thang nay",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "top_n": 5,
+        "direction": "DESC"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "fulfillment_composition",
+    "prompt": "Cơ cấu số đơn theo hình thức nhận hàng tháng này",
+    "expected_spec": {
+      "analysis_kind": "distribution",
+      "subject": "orders",
+      "metrics": [
+        "order_count"
+      ],
+      "dimensions": [
+        "order_type"
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "requested_visualizations": [
+        "donut"
+      ]
+    },
+    "fixture_results": [
+      [
+        {
+          "order_type": "MANG_DI",
+          "order_count": 12
+        },
+        {
+          "order_type": "DUNG_TAI_CHO",
+          "order_count": 18
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "customer_segmentation",
+    "prompt": "Phân nhóm số khách hàng theo điểm loyalty",
+    "expected_spec": {
+      "analysis_kind": "distribution",
+      "subject": "customers",
+      "metrics": [
+        "customer_count"
+      ],
+      "dimensions": [
+        "loyalty_points"
+      ]
+    },
+    "fixture_results": [
+      [
+        {
+          "loyalty_points": 0,
+          "customer_count": 20
+        },
+        {
+          "loyalty_points": 25,
+          "customer_count": 3
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "shift_analysis",
+    "prompt": "Số ca làm theo tên ca và chi nhánh trong tháng 10 năm 2026",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "staff_shifts",
+      "metrics": [
+        "shift_count"
+      ],
+      "dimensions": [
+        "shift_name",
+        "store"
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-10-01",
+        "end": "2026-10-31"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "shift_name": "Fixture morning",
+          "store": "Fixture A",
+          "store_id": "1",
+          "shift_count": 7
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "branch_comparison",
+    "prompt": "So sánh doanh thu chi nhánh mã SITE_A với SITE_B tháng này",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "stores",
+      "metrics": [
+        "store_revenue"
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "comparison_groups": [
+        {
+          "name": "SITE_A",
+          "filters": [
+            {
+              "dimension": "store_id",
+              "value": "SITE_A"
+            }
+          ]
+        },
+        {
+          "name": "SITE_B",
+          "filters": [
+            {
+              "dimension": "store_id",
+              "value": "SITE_B"
+            }
+          ]
+        }
+      ]
+    },
+    "fixture_results": [
+      [
+        {
+          "store_revenue": 100000
+        }
+      ],
+      [
+        {
+          "store_revenue": 150000
+        }
+      ]
+    ],
+    "expected_status": "success",
+    "fixture_values": {
+      "store_id": [
+        "SITE_A",
+        "SITE_B"
+      ]
+    }
+  },
+  {
+    "id": "complex_weekly_comparison",
+    "prompt": "Top 5 sản phẩm theo số lượng ở Hà Nội và top 3 ở Cần Thơ quý trước, đồng thời so sánh doanh thu và xu hướng theo tuần.",
+    "expected_spec": {
+      "analysis_kind": "composite",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold",
+        "product_revenue"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [],
+      "time_range": {
+        "mode": "previous_quarter"
+      },
+      "ranking": null,
+      "comparison_groups": [
+        {
+          "name": "Hà Nội",
+          "filters": [
+            {
+              "dimension": "city",
+              "value": "Hà Nội"
+            }
+          ],
+          "top_n": 5
+        },
+        {
+          "name": "Cần Thơ",
+          "filters": [
+            {
+              "dimension": "city",
+              "value": "Cần Thơ"
+            }
+          ],
+          "top_n": 3
+        }
+      ],
+      "granularity": "week",
+      "components": [
+        {
+          "id": "ranking",
+          "kind": "ranking",
+          "metrics": [
+            "quantity_sold",
+            "product_revenue"
+          ],
+          "dimensions": [
+            "product"
+          ],
+          "ranking": {
+            "metric": "quantity_sold",
+            "top_n": 5
+          }
+        },
+        {
+          "id": "trend",
+          "kind": "trend",
+          "metrics": [
+            "product_revenue"
+          ]
+        }
+      ]
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50,
+          "product_revenue": 1500000
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45,
+          "product_revenue": 1350000
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40,
+          "product_revenue": 1200000
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35,
+          "product_revenue": 1050000
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30,
+          "product_revenue": 900000
+        }
+      ],
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50,
+          "product_revenue": 1500000
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45,
+          "product_revenue": 1350000
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40,
+          "product_revenue": 1200000
+        }
+      ],
+      [
+        {
+          "period": "2026-07-06",
+          "product_revenue": 1000
+        },
+        {
+          "period": "2026-07-13",
+          "product_revenue": 2000
+        }
+      ],
+      [
+        {
+          "period": "2026-07-06",
+          "product_revenue": 1000
+        },
+        {
+          "period": "2026-07-13",
+          "product_revenue": 2000
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "refine_top_n",
+    "prompt": "Top 5 món bán chạy nhất tại Hà Nội tháng này",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "top_n": 5,
+        "direction": "DESC"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "expected_status": "success",
+    "refinement": {
+      "feedback": "Đổi thành top 3",
+      "patch": {
+        "operations": [
+          {
+            "path": "/ranking/top_n",
+            "value": 3
+          }
+        ]
+      },
+      "fixture_results": [
+        [
+          {
+            "product": "Fixture product 1",
+            "product_id": "1",
+            "quantity_sold": 50
+          },
+          {
+            "product": "Fixture product 2",
+            "product_id": "2",
+            "quantity_sold": 45
+          },
+          {
+            "product": "Fixture product 3",
+            "product_id": "3",
+            "quantity_sold": 40
+          }
+        ]
+      ]
+    }
+  },
+  {
+    "id": "refine_chart",
+    "prompt": "Top 5 món bán chạy nhất tại Hà Nội tháng này",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "top_n": 5,
+        "direction": "DESC"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "expected_status": "success",
+    "refinement": {
+      "feedback": "Đổi sang biểu đồ cột",
+      "patch": {
+        "operations": [
+          {
+            "path": "/requested_visualizations",
+            "value": [
+              "bar"
+            ]
+          }
+        ]
+      },
+      "fixture_results": []
+    }
+  },
+  {
+    "id": "refine_add_heatmap",
+    "prompt": "Top 5 món bán chạy nhất tại Hà Nội tháng này",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "top_n": 5,
+        "direction": "DESC"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "expected_status": "success",
+    "refinement": {
+      "feedback": "Thêm heatmap",
+      "patch": {
+        "operations": [
+          {
+            "path": "/requested_visualizations",
+            "value": [
+              "heatmap"
+            ]
+          }
+        ]
+      },
+      "fixture_results": []
+    }
+  },
+  {
+    "id": "refine_remove_city",
+    "prompt": "Top 5 món bán chạy nhất tại Hà Nội tháng này",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "top_n": 5,
+        "direction": "DESC"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "expected_status": "success",
+    "refinement": {
+      "feedback": "Bỏ lọc thành phố",
+      "patch": {
+        "operations": [
+          {
+            "path": "/filters",
+            "value": []
+          }
+        ]
+      },
+      "fixture_results": [
+        [
+          {
+            "product": "Fixture product 1",
+            "product_id": "1",
+            "quantity_sold": 50
+          },
+          {
+            "product": "Fixture product 2",
+            "product_id": "2",
+            "quantity_sold": 45
+          },
+          {
+            "product": "Fixture product 3",
+            "product_id": "3",
+            "quantity_sold": 40
+          },
+          {
+            "product": "Fixture product 4",
+            "product_id": "4",
+            "quantity_sold": 35
+          },
+          {
+            "product": "Fixture product 5",
+            "product_id": "5",
+            "quantity_sold": 30
+          }
+        ]
+      ]
+    }
+  },
+  {
+    "id": "refine_metric",
+    "prompt": "Top 5 món bán chạy nhất tại Hà Nội tháng này",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "top_n": 5,
+        "direction": "DESC"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "expected_status": "success",
+    "refinement": {
+      "feedback": "Đổi sang doanh thu món",
+      "patch": {
+        "operations": [
+          {
+            "path": "/metrics",
+            "value": [
+              "product_revenue"
+            ]
+          },
+          {
+            "path": "/ranking/metric",
+            "value": "product_revenue"
+          }
+        ]
+      },
+      "fixture_results": [
+        [
+          {
+            "product": "Fixture product 1",
+            "product_id": "1",
+            "product_revenue": 1500000
+          },
+          {
+            "product": "Fixture product 2",
+            "product_id": "2",
+            "product_revenue": 1350000
+          },
+          {
+            "product": "Fixture product 3",
+            "product_id": "3",
+            "product_revenue": 1200000
+          },
+          {
+            "product": "Fixture product 4",
+            "product_id": "4",
+            "product_revenue": 1050000
+          },
+          {
+            "product": "Fixture product 5",
+            "product_id": "5",
+            "product_revenue": 900000
+          }
+        ]
+      ]
+    }
+  },
+  {
+    "id": "refine_dates",
+    "prompt": "Top 5 món bán chạy nhất tại Hà Nội tháng này",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "top_n": 5,
+        "direction": "DESC"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "expected_status": "success",
+    "refinement": {
+      "feedback": "Đổi thời gian thành tháng 9 năm 2026",
+      "patch": {
+        "operations": [
+          {
+            "path": "/time_range",
+            "value": {
+              "mode": "custom",
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "timezone": "Asia/Ho_Chi_Minh"
+            }
+          }
+        ]
+      },
+      "fixture_results": [
+        [
+          {
+            "product": "Fixture product 1",
+            "product_id": "1",
+            "quantity_sold": 50
+          },
+          {
+            "product": "Fixture product 2",
+            "product_id": "2",
+            "quantity_sold": 45
+          },
+          {
+            "product": "Fixture product 3",
+            "product_id": "3",
+            "quantity_sold": 40
+          },
+          {
+            "product": "Fixture product 4",
+            "product_id": "4",
+            "quantity_sold": 35
+          },
+          {
+            "product": "Fixture product 5",
+            "product_id": "5",
+            "quantity_sold": 30
+          }
+        ]
+      ]
+    }
+  },
+  {
+    "id": "refine_add_city",
+    "prompt": "Top 5 món bán chạy nhất tại Hà Nội tháng này",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "top_n": 5,
+        "direction": "DESC"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "expected_status": "success",
+    "refinement": {
+      "feedback": "Thêm TP.HCM để so sánh",
+      "patch": {
+        "operations": [
+          {
+            "path": "/analysis_kind",
+            "value": "comparison"
+          },
+          {
+            "path": "/filters",
+            "value": []
+          },
+          {
+            "path": "/comparison_groups",
+            "value": [
+              {
+                "name": "Hà Nội",
+                "filters": [
+                  {
+                    "dimension": "city",
+                    "value": "Hà Nội"
+                  }
+                ],
+                "top_n": 5
+              },
+              {
+                "name": "Hồ Chí Minh",
+                "filters": [
+                  {
+                    "dimension": "city",
+                    "value": "Hồ Chí Minh"
+                  }
+                ],
+                "top_n": 5
+              }
+            ]
+          }
+        ]
+      },
+      "fixture_results": [
+        [
+          {
+            "product": "Fixture product 1",
+            "product_id": "1",
+            "quantity_sold": 50
+          },
+          {
+            "product": "Fixture product 2",
+            "product_id": "2",
+            "quantity_sold": 45
+          },
+          {
+            "product": "Fixture product 3",
+            "product_id": "3",
+            "quantity_sold": 40
+          },
+          {
+            "product": "Fixture product 4",
+            "product_id": "4",
+            "quantity_sold": 35
+          },
+          {
+            "product": "Fixture product 5",
+            "product_id": "5",
+            "quantity_sold": 30
+          }
+        ],
+        [
+          {
+            "product": "Fixture product 1",
+            "product_id": "1",
+            "quantity_sold": 50
+          },
+          {
+            "product": "Fixture product 2",
+            "product_id": "2",
+            "quantity_sold": 45
+          },
+          {
+            "product": "Fixture product 3",
+            "product_id": "3",
+            "quantity_sold": 40
+          },
+          {
+            "product": "Fixture product 4",
+            "product_id": "4",
+            "quantity_sold": 35
+          },
+          {
+            "product": "Fixture product 5",
+            "product_id": "5",
+            "quantity_sold": 30
+          }
+        ]
+      ]
+    }
+  },
+  {
+    "id": "refine_detail",
+    "prompt": "Top 5 món bán chạy nhất tại Hà Nội tháng này",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "top_n": 5,
+        "direction": "DESC"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "expected_status": "success",
+    "refinement": {
+      "feedback": "Chỉ hiển thị bảng chi tiết của kết quả xếp hạng, bỏ biểu đồ",
+      "patch": {
+        "operations": [
+          {
+            "path": "/requested_output",
+            "value": [
+              "table"
+            ]
+          },
+          {
+            "path": "/requested_visualizations",
+            "value": [
+              "table"
+            ]
+          }
+        ]
+      },
+      "fixture_results": []
+    }
+  },
+  {
+    "id": "real_partial_month",
+    "prompt": "top 5 món bán chạy nhất tại thành phố hồ chí minh tháng 9",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hồ Chí Minh"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "direction": "DESC",
+        "top_n": 5
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ]
+  },
+  {
+    "id": "quantity_paraphrase",
+    "prompt": "5 món được mua nhiều nhất ở HCM trong tháng 9",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hồ Chí Minh"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "direction": "DESC",
+        "top_n": 5
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ]
+  },
+  {
+    "id": "quantity_output",
+    "prompt": "5 sản phẩm có sản lượng cao nhất tại TP HCM tháng 9, cần bảng",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hồ Chí Minh"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "direction": "DESC",
+        "top_n": 5
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ]
+  },
+  {
+    "id": "quantity_english",
+    "prompt": "best 5 selling products in HCM month 9, provide report",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hồ Chí Minh"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "direction": "DESC",
+        "top_n": 5
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ]
+  },
+  {
+    "id": "quantity_mixed",
+    "prompt": "top 5 products theo số lượng tại HCM tháng 9, kèm report",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hồ Chí Minh"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "direction": "DESC",
+        "top_n": 5
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ]
+  },
+  {
+    "id": "quantity_no_accents",
+    "prompt": "top 5 mon ban chay nhat tai thanh pho ho chi minh thang 9",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hồ Chí Minh"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "direction": "DESC",
+        "top_n": 5
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ]
+  },
+  {
+    "id": "quantity_typo",
+    "prompt": "Top 5 sản phảm theo số lượng tại HCM tháng 9, kèm bảng",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hồ Chí Minh"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "direction": "DESC",
+        "top_n": 5
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ]
+  },
+  {
+    "id": "city_variant_1",
+    "prompt": "Top 5 món theo số lượng tại HCM tháng 9",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hồ Chí Minh"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "direction": "DESC",
+        "top_n": 5
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ]
+  },
+  {
+    "id": "city_variant_2",
+    "prompt": "Top 5 món theo số lượng tại TPHCM tháng 9",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hồ Chí Minh"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "direction": "DESC",
+        "top_n": 5
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ]
+  },
+  {
+    "id": "city_variant_3",
+    "prompt": "Top 5 món theo số lượng tại TP HCM tháng 9",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hồ Chí Minh"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "direction": "DESC",
+        "top_n": 5
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ]
+  },
+  {
+    "id": "city_variant_4",
+    "prompt": "Top 5 món theo số lượng tại TP.HCM tháng 9",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hồ Chí Minh"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "direction": "DESC",
+        "top_n": 5
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ]
+  },
+  {
+    "id": "city_variant_5",
+    "prompt": "Top 5 món theo số lượng tại Hồ Chí Minh tháng 9",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hồ Chí Minh"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "direction": "DESC",
+        "top_n": 5
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ]
+  },
+  {
+    "id": "city_variant_6",
+    "prompt": "Top 5 món theo số lượng tại Sài Gòn tháng 9",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hồ Chí Minh"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "direction": "DESC",
+        "top_n": 5
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ]
+  },
+  {
+    "id": "partial_month_past",
+    "prompt": "doanh thu tháng 8",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-08-01",
+        "end": "2026-08-31"
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ]
+  },
+  {
+    "id": "partial_month_previous_year",
+    "prompt": "doanh thu tháng 9",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2025-09-01",
+        "end": "2025-09-30"
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ],
+    "reference_date": "2026-02-10"
+  },
+  {
+    "id": "explicit_prior_year",
+    "prompt": "doanh thu tháng 9 năm 2025",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2025-09-01",
+        "end": "2025-09-30"
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ]
+  },
+  {
+    "id": "partial_quarter",
+    "prompt": "doanh thu quý 3",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-07-01",
+        "end": "2026-09-30"
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ]
+  },
+  {
+    "id": "partial_quarter_previous_year",
+    "prompt": "doanh thu quý 3",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2025-07-01",
+        "end": "2025-09-30"
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ],
+    "reference_date": "2026-02-10"
+  },
+  {
+    "id": "partial_day",
+    "prompt": "doanh thu ngày 15/9",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-15",
+        "end": "2026-09-15"
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ]
+  },
+  {
+    "id": "local_day",
+    "prompt": "doanh thu 15/09/2026",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-15",
+        "end": "2026-09-15"
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ]
+  },
+  {
+    "id": "local_date_range",
+    "prompt": "doanh thu từ 01/09/2026 đến 30/09/2026",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ]
+  },
+  {
+    "id": "iso_date_range",
+    "prompt": "doanh thu từ 2026-09-01 đến 2026-09-30",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ]
+  },
+  {
+    "id": "rolling_30_days",
+    "prompt": "doanh thu 30 ngày gần nhất",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-07",
+        "end": "2026-10-06"
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ]
+  },
+  {
+    "id": "rolling_7_days",
+    "prompt": "doanh thu 7 ngày vừa qua",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-30",
+        "end": "2026-10-06"
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ]
+  },
+  {
+    "id": "rolling_12_months",
+    "prompt": "doanh thu 12 tháng gần đây",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2025-10-07",
+        "end": "2026-10-06"
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ]
+  },
+  {
+    "id": "rolling_months_vuaqua",
+    "prompt": "doanh thu 12 tháng vừa qua",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2025-10-07",
+        "end": "2026-10-06"
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ]
+  },
+  {
+    "id": "rolling_english",
+    "prompt": "revenue past 12 months",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2025-10-07",
+        "end": "2026-10-06"
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ]
+  },
+  {
+    "id": "relative_yesterday",
+    "prompt": "doanh thu hôm qua",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ],
+      "time_range": {
+        "mode": "previous_day"
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ]
+  },
+  {
+    "id": "relative_week",
+    "prompt": "doanh thu tuần trước",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ],
+      "time_range": {
+        "mode": "previous_week"
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ]
+  },
+  {
+    "id": "relative_year",
+    "prompt": "doanh thu năm nay",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ],
+      "time_range": {
+        "mode": "current_year"
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ]
+  },
+  {
+    "id": "invalid_month",
+    "prompt": "doanh thu tháng 13",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ]
+    },
+    "expected_status": "needs_clarification",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ],
+    "expected_category": "time_range_invalid"
+  },
+  {
+    "id": "conflicting_months",
+    "prompt": "doanh thu tháng 8 và tháng 9",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ]
+    },
+    "expected_status": "needs_clarification",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ],
+    "expected_category": "time_range_ambiguous"
+  },
+  {
+    "id": "invalid_local_day",
+    "prompt": "doanh thu ngày 31/02/2026",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ]
+    },
+    "expected_status": "needs_clarification",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ],
+    "expected_category": "time_range_invalid"
+  },
+  {
+    "id": "unsupported_forecast",
+    "prompt": "dự báo doanh thu tháng 9",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "orders",
+      "metrics": [
+        "revenue"
+      ]
+    },
+    "expected_status": "needs_clarification",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ],
+    "expected_category": "forecast_unsupported"
+  },
+  {
+    "id": "unknown_metric",
+    "prompt": "Lợi nhuận ròng từng món là bao nhiêu?",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "products",
+      "metrics": [
+        "unsupported_profit"
+      ]
+    },
+    "expected_status": "needs_clarification",
+    "fixture_results": [
+      [
+        {
+          "revenue": 125000
+        }
+      ]
+    ],
+    "expected_category": "unsupported_metric"
+  },
+  {
+    "id": "unknown_city",
+    "prompt": "Top 5 món theo số lượng tại Unknown City tháng 9, có báo cáo",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Unknown City"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "direction": "DESC",
+        "top_n": 5
+      }
+    },
+    "expected_status": "needs_clarification",
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "expected_category": "filter_value_unknown"
+  },
+  {
+    "id": "unknown_category",
+    "prompt": "Top 5 món thuộc danh mục Unknown Category theo số lượng tháng 9, cần báo cáo",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "category",
+          "value": "Unknown Category"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "direction": "DESC",
+        "top_n": 5
+      }
+    },
+    "expected_status": "needs_clarification",
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "expected_category": "filter_value_unknown"
+  },
+  {
+    "id": "provider_bad_json",
+    "prompt": "Top 5 món bán chạy ở HCM tháng 9, cùng một bảng phân tích",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hồ Chí Minh"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "direction": "DESC",
+        "top_n": 5
+      }
+    },
+    "expected_status": "error",
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "provider_response": {
+      "data": "not-json",
+      "attempts": []
+    },
+    "expected_category": "provider_invalid_json"
+  },
+  {
+    "id": "provider_offline",
+    "prompt": "Top 5 món bán chạy ở HCM tháng 9, cùng một bảng phân tích",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hồ Chí Minh"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "direction": "DESC",
+        "top_n": 5
+      }
+    },
+    "expected_status": "error",
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "provider_response": {
+      "data": null,
+      "attempts": []
+    },
+    "expected_category": "provider_unavailable"
+  },
+  {
+    "id": "new_catalog_city",
+    "prompt": "Top 5 món theo số lượng tại New Observatory tháng 9",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "New Observatory"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "direction": "DESC",
+        "top_n": 5
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "fixture_values": {
+      "city": [
+        "New Observatory"
+      ]
+    }
+  },
+  {
+    "id": "quoted_category",
+    "prompt": "Top 5 món thuộc danh mục \"Synthetic Category\" theo số lượng tháng 9, cần bảng",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "category",
+          "value": "Synthetic Category"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "direction": "DESC",
+        "top_n": 5
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "fixture_values": {
+      "category": [
+        "Synthetic Category"
+      ]
+    }
+  },
+  {
+    "id": "new_catalog_branch",
+    "prompt": "Doanh thu chi nhánh \"New Branch\" tháng 9",
+    "expected_spec": {
+      "analysis_kind": "aggregate",
+      "subject": "stores",
+      "metrics": [
+        "store_revenue"
+      ],
+      "filters": [
+        {
+          "dimension": "store",
+          "value": "New Branch"
+        }
+      ],
+      "time_range": {
+        "mode": "custom",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      }
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "store_revenue": 125000
+        }
+      ]
+    ],
+    "fixture_values": {
+      "store": [
+        "New Branch"
+      ]
+    }
+  },
+  {
+    "id": "deep_three_components",
+    "prompt": "Top 5 sản phẩm theo số lượng ở Hà Nội và top 3 ở Cần Thơ quý trước, đồng thời so sánh doanh thu và xu hướng theo tuần.",
+    "expected_spec": {
+      "analysis_kind": "composite",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold",
+        "product_revenue"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [],
+      "time_range": {
+        "mode": "previous_quarter"
+      },
+      "ranking": null,
+      "comparison_groups": [
+        {
+          "name": "Hà Nội",
+          "filters": [
+            {
+              "dimension": "city",
+              "value": "Hà Nội"
+            }
+          ],
+          "top_n": 5
+        },
+        {
+          "name": "Cần Thơ",
+          "filters": [
+            {
+              "dimension": "city",
+              "value": "Cần Thơ"
+            }
+          ],
+          "top_n": 3
+        }
+      ],
+      "granularity": "week",
+      "components": [
+        {
+          "id": "ranking",
+          "kind": "ranking",
+          "metrics": [
+            "quantity_sold"
+          ],
+          "dimensions": [
+            "product"
+          ],
+          "ranking": {
+            "metric": "quantity_sold",
+            "top_n": 5
+          }
+        },
+        {
+          "id": "comparison",
+          "kind": "aggregate",
+          "metrics": [
+            "product_revenue"
+          ]
+        },
+        {
+          "id": "trend",
+          "kind": "trend",
+          "metrics": [
+            "product_revenue"
+          ]
+        }
+      ]
+    },
+    "expected_status": "success",
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ],
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        }
+      ],
+      [
+        {
+          "product_revenue": 125000
+        }
+      ],
+      [
+        {
+          "product_revenue": 90000
+        }
+      ],
+      [
+        {
+          "period": "2026-09-07",
+          "product_revenue": 125000
+        }
+      ],
+      [
+        {
+          "period": "2026-09-07",
+          "product_revenue": 90000
+        }
+      ]
+    ]
+  },
+  {
+    "id": "refine_partial_month",
+    "prompt": "Top 5 món bán chạy nhất tại Hà Nội tháng này",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "top_n": 5,
+        "direction": "DESC"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "expected_status": "success",
+    "refinement": {
+      "feedback": "Chuyển sang tháng 9",
+      "patch": {
+        "operations": [
+          {
+            "path": "/time_range",
+            "value": {
+              "mode": "custom",
+              "start": "2026-09-01",
+              "end": "2026-09-30"
+            }
+          }
+        ]
+      },
+      "fixture_results": [
+        [
+          {
+            "product": "Fixture product 1",
+            "product_id": "1",
+            "quantity_sold": 50
+          },
+          {
+            "product": "Fixture product 2",
+            "product_id": "2",
+            "quantity_sold": 45
+          },
+          {
+            "product": "Fixture product 3",
+            "product_id": "3",
+            "quantity_sold": 40
+          },
+          {
+            "product": "Fixture product 4",
+            "product_id": "4",
+            "quantity_sold": 35
+          },
+          {
+            "product": "Fixture product 5",
+            "product_id": "5",
+            "quantity_sold": 30
+          }
+        ]
+      ]
+    }
+  },
+  {
+    "id": "refine_rolling_months",
+    "prompt": "Top 5 món bán chạy nhất tại Hà Nội tháng này",
+    "expected_spec": {
+      "analysis_kind": "ranking",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [
+        "product"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "value": "Hà Nội"
+        }
+      ],
+      "time_range": {
+        "mode": "current_month"
+      },
+      "ranking": {
+        "metric": "quantity_sold",
+        "top_n": 5,
+        "direction": "DESC"
+      }
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ]
+    ],
+    "expected_status": "success",
+    "refinement": {
+      "feedback": "Chuyển sang 12 tháng vừa qua",
+      "patch": {
+        "operations": [
+          {
+            "path": "/time_range",
+            "value": {
+              "mode": "custom",
+              "start": "2025-10-07",
+              "end": "2026-10-06"
+            }
+          }
+        ]
+      },
+      "fixture_results": [
+        [
+          {
+            "product": "Fixture product 1",
+            "product_id": "1",
+            "quantity_sold": 50
+          },
+          {
+            "product": "Fixture product 2",
+            "product_id": "2",
+            "quantity_sold": 45
+          },
+          {
+            "product": "Fixture product 3",
+            "product_id": "3",
+            "quantity_sold": 40
+          },
+          {
+            "product": "Fixture product 4",
+            "product_id": "4",
+            "quantity_sold": 35
+          },
+          {
+            "product": "Fixture product 5",
+            "product_id": "5",
+            "quantity_sold": 30
+          }
+        ]
+      ]
+    }
+  },
+  {
+    "id": "component_distinct_population",
+    "prompt": "Top 5 sản phẩm bán chạy ở Hà Nội quý trước, so sánh doanh thu với TP.HCM và cho tôi xu hướng theo tuần.",
+    "expected_spec": {
+      "analysis_kind": "composite",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "dimensions": [],
+      "time_range": {
+        "mode": "previous_quarter"
+      },
+      "granularity": "week",
+      "comparison_groups": [
+        {
+          "name": "Hà Nội",
+          "filters": [
+            {
+              "dimension": "city",
+              "value": "Hà Nội"
+            }
+          ]
+        },
+        {
+          "name": "Hồ Chí Minh",
+          "filters": [
+            {
+              "dimension": "city",
+              "value": "Hồ Chí Minh"
+            }
+          ]
+        }
+      ],
+      "components": [
+        {
+          "id": "ranking",
+          "kind": "ranking",
+          "metrics": [
+            "quantity_sold"
+          ],
+          "dimensions": [
+            "product"
+          ],
+          "filters": [
+            {
+              "dimension": "city",
+              "value": "Hà Nội"
+            }
+          ],
+          "comparison_groups": [],
+          "ranking": {
+            "metric": "quantity_sold",
+            "top_n": 5
+          }
+        },
+        {
+          "id": "comparison",
+          "kind": "aggregate",
+          "metrics": [
+            "product_revenue"
+          ],
+          "dimensions": []
+        },
+        {
+          "id": "trend",
+          "kind": "trend",
+          "metrics": [
+            "product_revenue"
+          ],
+          "dimensions": []
+        }
+      ]
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ],
+      [
+        {
+          "product_revenue": 1500
+        }
+      ],
+      [
+        {
+          "product_revenue": 1600
+        }
+      ],
+      [
+        {
+          "period": "2026-07-06",
+          "product_revenue": 1500
+        }
+      ],
+      [
+        {
+          "period": "2026-07-06",
+          "product_revenue": 1600
+        }
+      ]
+    ],
+    "expected_status": "success"
+  },
+  {
+    "id": "multiple_subject_components",
+    "prompt": "Top 5 sản phẩm theo số lượng, đồng thời tổng doanh thu đơn hàng.",
+    "expected_spec": {
+      "analysis_kind": "composite",
+      "subject": "products",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "time_range": {
+        "mode": "all_time"
+      },
+      "components": [
+        {
+          "id": "ranking",
+          "kind": "ranking",
+          "metrics": [
+            "quantity_sold"
+          ],
+          "dimensions": [
+            "product"
+          ],
+          "ranking": {
+            "metric": "quantity_sold",
+            "top_n": 5
+          }
+        },
+        {
+          "id": "orders",
+          "subject": "orders",
+          "kind": "aggregate",
+          "metrics": [
+            "revenue"
+          ],
+          "dimensions": []
+        }
+      ]
+    },
+    "fixture_results": [
+      [
+        {
+          "product": "Fixture product 1",
+          "product_id": "1",
+          "quantity_sold": 50
+        },
+        {
+          "product": "Fixture product 2",
+          "product_id": "2",
+          "quantity_sold": 45
+        },
+        {
+          "product": "Fixture product 3",
+          "product_id": "3",
+          "quantity_sold": 40
+        },
+        {
+          "product": "Fixture product 4",
+          "product_id": "4",
+          "quantity_sold": 35
+        },
+        {
+          "product": "Fixture product 5",
+          "product_id": "5",
+          "quantity_sold": 30
+        }
+      ],
+      [
+        {
+          "revenue": 1500
+        }
+      ]
+    ],
+    "expected_status": "success"
+  }
+]

@@ -1,0 +1,41 @@
+{
+  "verifier_version": "2.8.3",
+  "backend_tests": 590,
+  "backend_passed": 590,
+  "backend_seconds": 130.481,
+  "overview_tests": 10,
+  "overview_passed": 10,
+  "hybrid_refinement_comparison_tests": 61,
+  "hybrid_refinement_comparison_passed": 61,
+  "frontend_tests": 92,
+  "frontend_passed": 92,
+  "evaluation_cases": 110,
+  "evaluation_passed": 110,
+  "docker_build": [
+    "analytics-api",
+    "web-ui"
+  ],
+  "restarted_services": [
+    "analytics-api"
+  ],
+  "analytics_api_health": "healthy",
+  "web_ui_health": "healthy",
+  "api_health_http": 200,
+  "observed_failed_session_replayed": true,
+  "raw_first_rejected_interpretation_available": false,
+  "repeated_exact_failed_shape_proposals": 5,
+  "provider_calls_each_replayed_proposal": 1,
+  "source_order_instants": 11408,
+  "source_weekly_buckets": 13,
+  "independent_assertions": 28,
+  "independent_matched": 28,
+  "original_row_limit_preserved": 2000,
+  "fixture_bulk_orders": 2010,
+  "fixture_weekly_buckets": 5,
+  "runtime_accuracy": "not_measured",
+  "runtime_confidence_probability": null,
+  "LIVE_PROVIDER_REQUESTS": 0,
+  "warehouse_mutations": 0,
+  "temporary_audit_sessions_deleted": true,
+  "live_model_accuracy_measured": false
+}

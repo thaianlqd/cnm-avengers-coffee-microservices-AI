@@ -2,6 +2,15 @@ import os
 import pytest
 
 @pytest.fixture(autouse=True)
+def legacy_architecture_characterization(monkeypatch):
+    """Existing 5514 tests characterize the retained architecture explicitly.
+
+    Hybrid tests override/unset this flag; production defaults to Hybrid.
+    No legacy test is deleted, skipped, or silently routed by a failure.
+    """
+    monkeypatch.setenv('AI_AGENT_ARCHITECTURE', 'semantic_legacy')
+
+@pytest.fixture(autouse=True)
 def disable_turn_log(monkeypatch):
     monkeypatch.setenv("TURN_LOG_ENABLED", "false")
 

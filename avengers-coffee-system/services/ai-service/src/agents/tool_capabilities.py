@@ -14,6 +14,9 @@ class Capability:
 
 
 READS = {
+    'get_products_reviews': ('reviews', 'scoped_product_reviews'),
+    'get_store_info': ('identity', 'branches/hours'),
+    'get_menu_categories': ('menu', 'menu_categories'),
     'compare_branch_reviews': ('reviews', 'scoped_branch_reviews'),
     'filter_catalog': ('menu', 'products'), 'get_recommendations': ('menu', 'products'),
     'get_product_options': ('menu', 'options'), 'check_price_and_stock': ('menu/inventory', 'products'),
@@ -38,6 +41,8 @@ WRITES = {
     'discard_pending_product': ('order/draft', 'exact canonical staged product; no committed cart mutation'),
     'set_session_branch': ('identity/inventory', 'current candidate; verified compatibility; customer choice'),
     'set_checkout_choices': ('order', 'supported fulfillment/payment; invalidate dependent summary'),
+    'set_fulfillment_choice': ('order', 'explicit fulfillment facet only; no payment fields'),
+    'set_payment_choice': ('order', 'explicit payment facet and canonical current choice'),
     'resolve_location': ('geo', 'literal address/area; canonical provider resolution'),
     'select_location_candidate': ('geo/order', 'current provider candidate; immutable coordinates/address'),
     'request_checkout': ('order', 'fresh cart; voucher decided; choices/address/branch complete'),
@@ -50,7 +55,7 @@ WRITES = {
 }
 CAPABILITIES = {name: Capability('READ', owner, 'server-owned session; validated schema', result)
                 for name, (owner, result) in READS.items()}
-CAPABILITIES.update({name: Capability('FINAL_WRITE' if name == 'confirm_checkout' else 'WRITE',
+CAPABILITIES.update({name: Capability('FINAL_WRITE' if name in {'confirm_checkout', 'confirm_order_change'} else 'WRITE',
     owner, preconditions, 'business_result') for name, (owner, preconditions) in WRITES.items()})
 # Audit every old executor, including deliberately unexposed capabilities.
 EXCLUDED = {'get_user_preferences': 'long-term preference inference is outside this session BPM',
@@ -70,6 +75,11 @@ STRING = {'type': 'string'}
 OPTION_PROPERTIES = {key: STRING for key in ('size', 'kich_co', 'luong_da', 'ice', 'do_ngot', 'sugar', 'loai_sua', 'milk')}
 OPTION_PROPERTIES['toppings'] = {'type': 'array', 'items': STRING, 'maxItems': 16}
 CUSTOM_SCHEMAS = {
+    'get_products_reviews': schema('get_products_reviews', {'product_ids': {'type':'array', 'items':STRING, 'minItems':1, 'maxItems':16}}, ('product_ids',)),
+    'get_store_info': schema('get_store_info', {'branch_id': STRING, 'search_text': STRING, 'area': STRING,
+        'limit': {'type':'integer', 'minimum':1, 'maximum':5}},
+        description='Read active canonical branches and published hours for an informational question, independent of cart/checkout. Kiosks have no published hours in this source.'),
+    'get_menu_categories': schema('get_menu_categories', description='Read menu categories before showing products for a generic menu request.'),
     'compare_branch_reviews': schema('compare_branch_reviews', {
         'branch_ids': {'type': 'array', 'minItems': 1, 'maxItems': 5, 'items': STRING}}, ('branch_ids',),
         'Compare approved ratings and recent comments of exact displayed branch IDs only. Never expand these branches to a global ranking.'),
@@ -83,6 +93,7 @@ CUSTOM_SCHEMAS = {
         'desired_state': {'type': 'object', 'properties': {'quantity': {'type': 'integer', 'minimum': 1},
             **OPTION_PROPERTIES}, 'additionalProperties': False}}, ('cart_item_id', 'desired_state')),
     'remove_cart_item': schema('remove_cart_item', {'cart_item_id': STRING,
+        'quantity': {'type': 'integer', 'minimum': 1, 'maximum': 999},
         'cart_line_ordinal': {'type': 'integer', 'minimum': 1}}, ('cart_item_id',)),
     'get_product_options': schema('get_product_options', {'product_id': STRING}, ('product_id',), 'Read current canonical option values before choosing/configuring a product.'),
     'get_cart_quote': schema('get_cart_quote'), 'get_payment_options': schema('get_payment_options'),
@@ -91,6 +102,10 @@ CUSTOM_SCHEMAS = {
     'set_checkout_choices': schema('set_checkout_choices', {
         'delivery_type': {'type': 'string', 'enum': ['GIAO_TAN_NOI', 'MANG_DI', 'TAI_CHO']},
         'payment_method': {'type': 'string', 'enum': ['VNPAY', 'NGAN_HANG_QR', 'VI_DIEN_TU', 'THANH_TOAN_KHI_NHAN_HANG']}}),
+    'set_fulfillment_choice': schema('set_fulfillment_choice', {
+        'delivery_type': {'type': 'string', 'enum': ['GIAO_TAN_NOI', 'MANG_DI', 'TAI_CHO']}}, ('delivery_type',)),
+    'set_payment_choice': schema('set_payment_choice', {
+        'payment_method': {'type': 'string', 'enum': ['VNPAY', 'NGAN_HANG_QR', 'VI_DIEN_TU', 'THANH_TOAN_KHI_NHAN_HANG']}}, ('payment_method',)),
     'set_session_branch': schema('set_session_branch', {'branch_id': STRING}, ('branch_id',)),
     'resolve_location': schema('resolve_location', {'location': STRING,
         'kind': {'type': 'string', 'enum': ['area', 'address', 'poi']},
@@ -103,10 +118,10 @@ CUSTOM_SCHEMAS = {
         'edit_request': {**STRING, 'description': 'Exact current customer message for guided item selection. Do not combine with other changes.'},
         'changes': {'type': 'array', 'maxItems': 32, 'items': {'type': 'object', 'properties': {
             'order_line_id': {'type': 'integer', 'minimum': 1}, 'quantity': {'type': 'integer', 'minimum': 0, 'maximum': 999},
-            'product_id': STRING, 'product_name': STRING, **OPTION_PROPERTIES, 'note': STRING}, 'required': ['order_line_id'], 'additionalProperties': True}},
+            'product_id': STRING, 'product_name': STRING, **OPTION_PROPERTIES, 'options': {'type': 'object', 'properties': OPTION_PROPERTIES, 'additionalProperties': False}, 'note': STRING}, 'required': ['order_line_id'], 'additionalProperties': False}},
         'add_items': {'type': 'array', 'maxItems': 16, 'items': {'type': 'object', 'properties': {
             'product_id': STRING, 'quantity': {'type': 'integer', 'minimum': 1, 'maximum': 999},
-            **OPTION_PROPERTIES, 'note': STRING}, 'required': ['product_id', 'quantity'], 'additionalProperties': True}},
+            **OPTION_PROPERTIES, 'note': STRING}, 'required': ['product_id', 'quantity'], 'additionalProperties': False}},
         'delivery_address': STRING, 'delivery_slot': STRING, 'note': STRING}, ('order_id',)),
     'reorder_order': schema('reorder_order', {'order_id': STRING}, ('order_id',)),
     'confirm_order_change': schema('confirm_order_change'),
@@ -120,7 +135,7 @@ PURPOSES = {
     'search_knowledge_base': 'Read approved static knowledge: product taste/description/ingredients/FAQ, policies, brand and contacts. Use exact canonical entity_id for product questions. Never prices, stock, live vouchers, payment choices or order status.',
     'check_price_and_stock': 'Read CURRENT authoritative price and stock for a canonical product name and configured options.',
     'get_cart': 'Read the CURRENT authoritative cart, exact ordered line IDs, quantities and options.',
-    'get_recommendations': 'criteria=hot ranks completed paid quantities with period and period_anchor; criteria=new reads Menu marked new. Never use price ordering for sales ranking. Discover open-ended current product candidates for a family/category when the customer wants suggestions. No cart mutation, ranking guarantee or single-product facts.',
+    'get_recommendations': 'Explicit criteria required. preferences + preference_query searches approved product descriptions for needs/taste/occasion, then validates current Menu identity/price/scope. Convert the need into concise description-search concepts; do not put taste concepts in search_text (product family only). bestsellers means completed paid sales ranking ONLY when popularity is requested; new/rating/price for those requests. Social remarks need no tool. Never substitute sales for suitability; no evidence means clarify, no bestseller fallback.',
     'get_payment_options': 'Read supported current payment options and wallet eligibility.',
     'get_cart_quote': 'Read price totals only. It cannot show/re-render an order confirmation summary or canonical confirmation UI.',
     'request_checkout': 'Prepare or re-render the final order summary and canonical confirmation UI. For a request to show/review the pending order again, call this with reuse_summary=true; get_cart plus get_cart_quote is insufficient. A summary is not an order.',
@@ -130,7 +145,7 @@ PURPOSES = {
     'skip_voucher': 'Skip only on an explicit customer request to skip/decline vouchers. Generic OK/cart completion is not permission to skip.',
     'set_checkout_choices': 'Record only explicitly selected fulfillment/payment. A new fulfillment reads saved profile locations and offers them for customer confirmation on a later turn. Do not resolve the offer immediately; acknowledge both choices when provided together.',
     'update_cart_item': 'Edit one exact current cart line with an absolute patch. For ordinal references include cart_line_ordinal matching its CURRENT cart display_index. Product-list ordinals are a separate namespace. Do not edit another row because the requested row already has that value.',
-    'remove_cart_item': 'Remove one exact current cart line. For ordinal references include cart_line_ordinal matching CURRENT cart display_index, not product-list rank.',
+    'remove_cart_item': 'Remove one exact current cart line. Optional quantity subtracts only that many units. For ordinal references include cart_line_ordinal matching CURRENT cart display_index, not product-list rank.',
     'get_order_history': 'Read the authenticated customer\'s most recent placed orders, newest first, with current order/payment statuses and dates. Includes pending, cancelled and completed orders. limit is the requested count (default 5, maximum 20). Not the current draft cart or checkout summary.',
     'get_order_details': 'Read full current existing owned order, status, payment, exact order_line_id, sizes/toppings/options, address and revision. Read before editing; order_line_id is NOT a cart line or product ordinal.',
     'cancel_order': 'Prepare cancellation preview for an owned order_id, optional literal customer reason. Never cancels immediately. Requires later confirmation. If no exact ID read order history and ask the customer to select; never guess.',
@@ -181,21 +196,25 @@ def capabilities_for_context(context, *, entry_action=None, final_only=False, re
 
     # Secondary profile/completed-order capabilities remain in
     # CAPABILITIES and tool_schemas(), outside the default ordering surface.
-    allowed = {'filter_catalog', 'get_recommendations', 'search_knowledge_base', 'get_cart'}
-    if context.get('branch_review_request'):
+    allowed = {'get_menu_categories', 'filter_catalog', 'get_recommendations', 'search_knowledge_base', 'get_cart', 'get_product_insights'}
+    if context.get('semantic_control'):
+        allowed.add('get_product_options')  # Typed named references can ground through Menu without prior display.
+    if context.get('semantic_control') or context.get('branch_review_request'):
         allowed.update({'get_store_reviews', 'get_top_rated_stores'})
         if visible.get('branches'):
             allowed.add('compare_branch_reviews')
-        if context.get('displayed_review_selection') is not None:
+        if not context.get('semantic_control') and context.get('displayed_review_selection') is not None:
             allowed.difference_update({'search_knowledge_base', 'get_top_rated_stores'})
-    if context.get('recent_order_read'):
+    if context.get('semantic_control') or context.get('recent_order_read'):
         allowed.add('get_order_history')  # Executor asks guests to log in; actor is session-owned.
-    if state.get('authenticated') and context.get('order_management'):
-        kind = context.get('order_management_kind')
+    if state.get('authenticated') and (context.get('semantic_control') or context.get('order_management')):
+        kind = None if context.get('semantic_control') else context.get('order_management_kind')
         allowed.update({'get_order_history', 'get_order_details', 'track_order_status'})
-        if not context.get('recent_order_read'):
+        order_context = bool(visible.get('orders') or checkout.get('order_management_focus')
+                             or checkout.get('order_management_action'))
+        if (order_context if context.get('semantic_control') else not context.get('recent_order_read')):
             allowed.update({kind} if kind in {'cancel_order', 'update_order', 'reorder_order'} else {'cancel_order', 'update_order', 'reorder_order'})
-        if kind != 'cancel_order':
+        if (order_context if context.get('semantic_control') else kind != 'cancel_order'):
             allowed.update({'get_product_options', 'check_price_and_stock'})
         if checkout.get('order_management_action'):
             allowed.update({'confirm_order_change', 'discard_order_change'})
@@ -205,18 +224,18 @@ def capabilities_for_context(context, *, entry_action=None, final_only=False, re
         allowed.update({'get_product_options', 'get_product_insights', 'check_price_and_stock'})
         # During cart/checkout consultation, search_knowledge_base already
         # serves approved product taste/description/ingredient evidence.
-        if not cart or staged:
+        if context.get('semantic_control') or not cart or staged:
             allowed.add('get_product_description')
     # Resolve handles both read-only location consultation and explicit draft
     # checkout locations for authenticated users. Avoid publishing both geo
     # adapters throughout cart checkout; guests keep the read-only adapter.
-    if not cart or not mutable:
+    if context.get('semantic_control') or not cart or not mutable:
         allowed.add('find_nearest_branch')
     if cart:
         allowed.add('get_cart_quote')
-        if voucher_gate or voucher_decided:
+        if context.get('semantic_control') or voucher_gate or voucher_decided:
             allowed.add('get_applicable_vouchers')
-        if checkout_started:
+        if context.get('semantic_control') or checkout_started:
             allowed.add('get_payment_options')
     pickup = checkout.get('delivery_type') in {'MANG_DI', 'TAI_CHO'}
     if cart and pickup and not checkout.get('profile_location_offer'):
@@ -226,10 +245,14 @@ def capabilities_for_context(context, *, entry_action=None, final_only=False, re
             (pickup and not cart_state.get('branch_id')) or (delivery and (
                 not checkout.get('delivery_address') or not checkout.get('address_confirmed'))))):
         allowed.add('get_user_profile')
+    if context.get('semantic_control') and state.get('authenticated'):
+        allowed.add('get_user_profile')  # Read saved addresses without selecting one.
     if mutable:
         allowed.add('resolve_location')  # Canonical location consultation too.
         if visible.get('location_candidates'):
             allowed.add('select_location_candidate')
+        if visible.get('branches') and not checkout.get('profile_location_offer'):
+            allowed.add('set_session_branch')
         if state.get('cart_verified'):
             if product_context:
                 allowed.add('add_to_cart')  # Changes of mind stay legal in every draft stage.
@@ -237,6 +260,9 @@ def capabilities_for_context(context, *, entry_action=None, final_only=False, re
                 allowed.add('discard_pending_product')
             if cart:
                 allowed.update({'update_cart_item', 'remove_cart_item', 'set_checkout_choices'})
+                if context.get('semantic_control'):
+                    allowed.discard('set_checkout_choices')
+                    allowed.update({'set_fulfillment_choice', 'set_payment_choice'})
                 unfinished = bool(staged or checkout.get('pending_product_reference'))
                 if not unfinished and (
                         stage not in {'VOUCHER', 'CART_READY', 'PAYMENT', 'SUMMARY'}
@@ -294,7 +320,6 @@ def tool_schemas(allowed=None):
         for prop in params.get('properties', {}).values():
             prop.pop('description', None)
         if name == 'filter_catalog':
-            params['required'] = ['search_text']
             params['properties']['search_text']['description'] = 'Narrower requested product family/name; empty string for unrestricted category.'
         if name in {'filter_catalog', 'get_recommendations'}:
             params['properties']['planned_discovery_reads'] = {'type': 'integer', 'minimum': 1, 'maximum': 16,
@@ -329,7 +354,7 @@ def validate_args(value, spec):
             return False
         return all(validate_args(v, props[k]) for k, v in value.items() if k in props)
     if kind == 'array':
-        return len(value) <= spec.get('maxItems', 16) and all(validate_args(v, spec.get('items', {})) for v in value)
+        return spec.get('minItems', 0) <= len(value) <= spec.get('maxItems', 16) and all(validate_args(v, spec.get('items', {})) for v in value)
     if kind == 'string':
         return len(value) <= 2000
     if kind in {'number', 'integer'}:

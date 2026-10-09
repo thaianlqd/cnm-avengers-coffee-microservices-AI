@@ -8,7 +8,8 @@ from typing import Any, Dict, List, Optional, Tuple
 def _norm(value: Any) -> str:
     raw = unicodedata.normalize("NFD", str(value or "").lower())
     folded = "".join(c for c in raw if unicodedata.category(c) != "Mn").replace("đ", "d")
-    return re.sub(r"\s+", " ", folded).strip()
+    text = re.sub(r"\s+", " ", folded).strip()
+    return re.sub(r"\b(?:b(?:o|ot|oot|ott)p+ing|bo(?:topping|toping))\b", "bo topping", text)
 
 
 def option_field(name: str) -> Optional[str]:
@@ -28,7 +29,7 @@ def option_field(name: str) -> Optional[str]:
 
 _FIELD_ALIASES = {
     "size": r"(?:size|kich thuoc|kich co)",
-    "toppings": r"(?:topping|toping|do kem)",
+    "toppings": r"(?:topping|toppig|toping|do kem)",
     "luong_da": r"(?:luong da|da|ice)",
     "do_ngot": r"(?:do ngot|ngot|duong|sweet)",
     "loai_sua": r"(?:loai sua|sua|milk)",
@@ -59,9 +60,30 @@ def uses_global_option_defaults(message: str) -> bool:
     ))
 
 
-def declines_toppings(message: str) -> bool:
+def specific_removed_toppings(message: str, allowed_toppings: List[str]) -> List[str]:
+    """Identify specific toppings the customer wants removed/omitted."""
     text = _norm(message)
-    return bool(re.search(r'\b(?:khong|ko|k|bo)(?:\s+can)?(?:\s+them)?\s+(?:topping|toping|do kem)\b', text))
+    removed = []
+    for topping in allowed_toppings:
+        folded = _norm(topping)
+        pattern = r'\b(?:bo|xoa|go|khong\s+(?:lay|them|dung|cho)|dung\s+(?:lay|them|cho))\s+(?:topping\s+)?' + re.escape(folded) + r'\b'
+        if re.search(pattern, text):
+            removed.append(topping)
+    return removed
+
+
+def declines_toppings(message: str, allowed_toppings: Optional[List[str]] = None) -> bool:
+    text = _norm(message)
+    if allowed_toppings and specific_removed_toppings(message, allowed_toppings):
+        return False
+    if re.search(r'\b(?:bo\s+(?:het|tat ca)|khong\s+(?:can|lay|dung|them)\s+(?:tat ca\s+)?topping)\b', text):
+        return True
+    m = re.search(r'\b(?:khong|ko|k|bo)(?:\s+can)?(?:\s+them)?\s+(?:topping|toppig|toping|do kem)(?P<tail>.*)$', text)
+    if not m:
+        return False
+    tail = m.group('tail').strip()
+    filler = re.fullmatch(r'(?:di|nhe|nha|a|thoi|ban|b|oi|cho\s+toi|giup\s+toi|cho\s+minh|giup\s+minh|\s)*', tail)
+    return bool(filler)
 
 
 def requests_custom_options(message: str) -> bool:
@@ -90,6 +112,36 @@ def resolve_option_default(group: Dict[str, Any], product_data: Optional[Dict[st
     source = product_data or {}
     name = str(group.get("name") or "")
     field = option_field(name)
+
+    # Standard default heuristics for Vietnamese beverage orders
+    if field == "luong_da":
+        for v in values:
+            if _norm(v) == _norm("Bình thường"):
+                return v
+    if field == "do_ngot":
+        for v in values:
+            if _norm(v) == _norm("Bình thường"):
+                return v
+    if field == "size":
+        gia_ban = source.get("gia_ban")
+        sizes_dict = source.get("sizes")
+        if gia_ban is not None and isinstance(sizes_dict, dict):
+            try:
+                base_price = float(gia_ban)
+                for s_name, s_price in sizes_dict.items():
+                    if s_name in values:
+                        try:
+                            if float(s_price) == base_price:
+                                return s_name
+                        except (ValueError, TypeError):
+                            pass
+            except (ValueError, TypeError):
+                pass
+        for preferred in ("Vừa", "Nhỏ", "Lớn"):
+            for v in values:
+                if _norm(v) == _norm(preferred):
+                    return v
+
     candidates = []
     dynamic = source.get("bien_the")
     if isinstance(dynamic, dict):
@@ -183,17 +235,22 @@ def validate_explicit_multi_value_group(
     """
     if not group.get("multiple") or option_field(group.get("name", "")) != "toppings":
         return None
-    if re.search(r"\b(?:không|khong)\s+(?:topping|toping)|\b(?:bỏ|bo)\s+(?:topping|toping)\b",
-                 message, flags=re.IGNORECASE):
+    if declines_toppings(message, list(group.get("values") or [])):
         return None
-    marker = re.search(r"\b(?:topping|toping|đồ\s+kèm|do\s+kem)\b", message, flags=re.IGNORECASE)
+    marker = re.search(r"\b(?:topping|toppig|toping|đồ\s+kèm|do\s+kem)\b", message, flags=re.IGNORECASE)
     allowed_by_key = {_norm(value): value for value in group.get("values") or []}
     if marker:
         requested = message[marker.end():]
     elif allow_implicit and any(re.search(
         r"(?<!\w)" + re.escape(key) + r"(?!\w)", _norm(message)
     ) for key in allowed_by_key):
-        requested = message
+        folded = _norm(message)
+        spans = [m.span() for k in allowed_by_key for m in re.finditer(r'(?<!\w)' + re.escape(k) + r'(?!\w)', folded)]
+        if spans:
+            first_start = min(s[0] for s in spans)
+            requested = message[first_start:]
+        else:
+            return None
     else:
         return None
 
@@ -233,6 +290,10 @@ def validate_explicit_multi_value_group(
                   if not any(start <= match.start() < end for start, end in protected)]
     if boundaries:
         requested = requested[:min(boundaries)].strip(' ,')
+        # A conjunction before the next option belongs to that boundary, not
+        # to the final topping label ("Foam Dừa và ít đá").
+        requested = re.sub(r'\s+(?:và|va|với|voi)\s*$', '', requested,
+                           flags=re.IGNORECASE)
 
     candidates = []
     for raw in re.split(r"\s*(?:,|&|\+)\s*|\s+(?:và|va|với|voi)\s+", requested,

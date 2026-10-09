@@ -12,7 +12,8 @@ PREF_FIELDS = ('delivery_type', 'payment_method', 'delivery_address', 'address_c
     'checkout_action_id', 'checkout_action_expires_at', 'summary_fingerprint', 'flow_stage',
     'location_address', 'summary_amounts', 'completed_order_id', 'stock_conflicts', 'checkout_submission',
     'voucher_offer_pending', 'pending_product_reference', 'profile_location_offer', 'profile_location_checked_for',
-    'pending_cart_option_edit', 'order_management_action', 'order_management_focus')
+    'pending_cart_option_edit', 'order_management_action', 'order_management_focus', 'partial_delivery_address',
+    'confirmed_destination', 'location_state', 'branch_destination_fingerprint')
 LINE_FIELDS = ('cart_item_id', 'line_id', 'product_id', 'product_name', 'quantity', 'size',
                'toppings', 'luong_da', 'do_ngot', 'loai_sua', 'unit_price', 'line_total')
 
@@ -39,28 +40,51 @@ def business_state(session_id, shadow=False):
         'cart_verified': bool(cart.get('authoritative')),
         'cart': {'items': lines, 'cart_version': cart.get('cart_version'),
                  'branch_id': cart.get('branch_id'), 'branch_name': cart.get('branch_name')},
-        'checkout': {key: deepcopy(prefs[key]) for key in PREF_FIELDS if key in prefs},
+        'checkout': {**{key: deepcopy(prefs[key]) for key in PREF_FIELDS if key in prefs},
+            'last_created_order_id': prefs.get('completed_order_id') or (
+                session.get('last_order_id') if shadow else cart_manager.get_cart(session_id).get('last_order_id'))},
         'confirmation_fresh': bool(not shadow and prefs.get('checkout_action_id')
             and prefs.get('summary_fingerprint') == cart_manager.cart_fingerprint(session_id)
             and float(prefs.get('checkout_action_expires_at') or 0) > time.time()),
         'pending': deepcopy(prefs.get('pending_action')),
+        'discovery_state': deepcopy(prefs.get('hybrid_discovery_state') or {}),
         'pending_products': deepcopy(prefs.get('pending_products') or [])}
 
 
-def build_context(session_id, memory, history=None, selected_product_id=None, shadow=False):
+def build_context(session_id, memory, history=None, selected_product_id=None, shadow=False, *, project=True):
     state = business_state(session_id, shadow)
     # Durable canonical hints are useful when Redis is unavailable, but they
     # carry no authority for a write. Gateway refreshes every proposed target.
     prefs = ((cart_manager._SESSION_CARTS.get(session_id) or {}).get('checkout_prefs') or {}) if shadow else cart_manager.get_checkout_prefs(session_id)
     visible = dict(memory.get('visible_snapshots') or {})
+    product_display = dict(memory.get('product_display') or {})
+    durable_display = prefs.get('hybrid_product_display') or {}
+    if not product_display and durable_display:
+        product_display = dict(durable_display.get('metadata') or {})
+        visible.update(durable_display.get('visible') or {})
+    last_order = state['checkout'].get('last_created_order_id')
+    reset_products = bool(product_display and product_display.get('last_order_id') != last_order)
+    if reset_products:
+        for kind in ('products', 'drink_products', 'food_products'):
+            visible[kind] = []
+        product_display = {}
     fallbacks = {'products': prefs.get('last_product_suggestions'), 'branches': prefs.get('branch_candidates'),
         'vouchers': prefs.get('voucher_candidates'),
         'location_candidates': (prefs.get('location_candidate_snapshot') or {}).get('candidates')}
+    from src.agents.tool_artifacts import candidate_id
+    fallbacks['location_candidates'] = [{**row, 'candidate_id': row.get('candidate_id') or candidate_id(row)}
+        for row in fallbacks.get('location_candidates') or []]
+    if prefs.get('location_candidate_snapshot') or prefs.get('confirmed_destination'):
+        visible['location_candidates'] = snapshot('location_candidates', fallbacks['location_candidates'])
     for kind, rows in fallbacks.items():
+        if kind == 'products' and (reset_products or product_display):
+            continue
         if not visible.get(kind):
             visible[kind] = snapshot(kind, rows)
     focus = dict(memory.get('focus') or {})
-    if not focus.get('product') and prefs.get('last_product_focus'):
+    if reset_products:
+        focus.pop('product', None)
+    if not reset_products and not focus.get('product') and prefs.get('last_product_focus'):
         focus['product'] = compact(prefs['last_product_focus'])
     recent = memory.get('recent_turns') or history or []
     sensitive = bool(state['pending'] or state['pending_products'] or focus or selected_product_id)
@@ -69,9 +93,9 @@ def build_context(session_id, memory, history=None, selected_product_id=None, sh
     recent = [{'role': row['role'], 'content': safe_text(row.get('content'), 700)}
               for row in recent if row.get('role') in {'user', 'assistant'}]
     recent = recent[-2*model_turns:] if model_turns else []
-    context = {'business': state, 'visible': visible, 'focus': focus,
+    context = {'business': state, 'visible': visible, 'focus': focus, 'product_display': product_display,
                'selected_product_id': selected_product_id, 'recent': recent}
-    return bound_context(context)
+    return bound_context(context) if project else (context, None)
 
 
 MODEL_ENTITY_FIELDS = {
@@ -85,6 +109,10 @@ MODEL_ENTITY_FIELDS = {
                  'loai_giam_gia', 'dieu_kien_ap_dung', 'so_tien_giam_du_kien', 'display_index'),
     'payment_options': ('code', 'value', 'label', 'enabled', 'reason', 'display_index'),
 }
+
+MODEL_ENTITY_FIELDS["drink_products"] = MODEL_ENTITY_FIELDS["products"]
+MODEL_ENTITY_FIELDS["food_products"] = MODEL_ENTITY_FIELDS["products"]
+MODEL_ENTITY_FIELDS["menu_categories"] = ("category_id", "category_name", "menu_bucket", "display_index")
 
 
 def model_snapshot(kind, rows):
@@ -111,6 +139,13 @@ def model_cart(cart):
                    'display_index': index} for index, row in enumerate(cart.get('items') or [], 1)]}
 
 
+def model_pending_products(rows, *, include_schema=True):
+    return [{key: reference_value(row[key]) for key in
+             (*LINE_FIELDS, 'option_schema', 'missing_fields', 'selection_index')
+             if key in row and (include_schema or key != 'option_schema')}
+            for row in rows or []]
+
+
 def model_projection(context, emergency=False):
     """Project a COPY. Budgeting cannot erase gateway authority/candidates."""
     state = context['business']
@@ -120,7 +155,8 @@ def model_projection(context, emergency=False):
         'checkout': {key: compact(checkout[key]) for key in ('flow_stage', 'delivery_type',
             'payment_method', 'delivery_address', 'address_confirmed', 'voucher_code',
             'voucher_decided', 'voucher_revalidation_required', 'checkout_requested',
-            'profile_location_offer', 'profile_location_checked_for', 'pending_cart_option_edit', 'order_management_focus') if key in checkout},
+            'profile_location_offer', 'profile_location_checked_for', 'pending_cart_option_edit', 'order_management_focus',
+            'partial_delivery_address') if key in checkout},
         'order_change_preview': {key: compact(checkout['order_management_action'][key]) for key in ('kind', 'order_id', 'expires_at') if key in checkout['order_management_action']} if checkout.get('order_management_action') else None,
         'summary_fresh': state.get('confirmation_fresh', False),
         'checkout_missing': missing_checkout_fields(state),
@@ -129,8 +165,7 @@ def model_projection(context, emergency=False):
                     'params': {key: compact(value) for key, value in
                         ((state.get('pending') or {}).get('params') or {}).items()
                         if key in {'product_id', 'cart_item_id', 'count', 'missing_fields'}}},
-        'pending_products': [{key: reference_value(row[key]) for key in (*LINE_FIELDS, 'option_schema', 'missing_fields')
-                              if key in row} for row in state.get('pending_products') or []]},
+        'pending_products': model_pending_products(state.get('pending_products'))},
         'visible': {kind: model_snapshot(kind, rows) for kind, rows in context.get('visible', {}).items()},
         'focus': compact(context.get('focus') or {}),
         'order_reference': compact(context.get('order_reference')),
@@ -154,7 +189,7 @@ def model_projection(context, emergency=False):
     active_kind = {'select_voucher': 'vouchers', 'select_branch': 'branches',
               'select_location_candidate': 'location_candidates', 'fill_options': 'products',
               'select_payment': 'payment_options'}.get(owner)
-    active = {active_kind, 'products'}
+    active = {active_kind, 'products', 'drink_products', 'food_products', 'menu_categories'}
     # Keep every candidate namespace needed by an exposed legal selection,
     # including selection after a read-only interruption without a new pending owner.
     from src.agents.tool_capabilities import capabilities_for_context

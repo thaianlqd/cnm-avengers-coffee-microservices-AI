@@ -35,6 +35,25 @@ export class CartService {
       .trim();
   }
 
+  private canonicalOptions(dto: any) {
+    // Standard fields own their choices, including explicit empty toppings.
+    // Older AI/web payloads also copied those choices into custom_attributes;
+    // a PATCH must not keep charging for a removed copy there.
+    const aliases: Record<string, string> = {
+      size: 'size', 'kich thuoc': 'size', 'kich co': 'size',
+      topping: 'toppings', toppings: 'toppings',
+      'luong da': 'luong_da', ice: 'luong_da',
+      'do ngot': 'do_ngot', sweetness: 'do_ngot',
+      'loai sua': 'loai_sua', milk: 'loai_sua',
+    };
+    const custom = Object.fromEntries(Object.entries(dto?.custom_attributes || {})
+      .filter(([key]) => {
+        const field = aliases[this.normalizeValue(key)];
+        return !field || dto?.[field] === undefined || dto?.[field] === null;
+      }));
+    return { ...dto, custom_attributes: custom };
+  }
+
   private cartSchema() {
     const schema = process.env.DB_SCHEMA || 'orders';
     if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(schema)) {
@@ -328,7 +347,7 @@ export class CartService {
       do_ngot: normalizeConfigurationValue(item.do_ngot || ''),
       loai_sua: normalizeConfigurationValue(item.loai_sua || ''),
       custom_attributes: normalizeConfigurationValue(
-        item.custom_attributes || {},
+        this.canonicalOptions(item).custom_attributes,
       ),
     });
     return createHash('sha256').update(canonical).digest('hex');
@@ -397,6 +416,7 @@ export class CartService {
   }
 
   private async resolveAuthoritativeProduct(dto: any) {
+    dto = this.canonicalOptions(dto);
     const productId = Number(dto?.ma_san_pham);
     if (!Number.isInteger(productId) || productId <= 0) {
       throw new BadRequestException('Ma san pham khong hop le');
@@ -420,7 +440,7 @@ export class CartService {
       [productId],
     );
 
-    const selectedValues: unknown[] = [...(dto?.toppings || []), dto?.loai_sua];
+    const selectedValues: unknown[] = [...(dto?.toppings || []), dto?.loai_sua, dto?.luong_da, dto?.do_ngot];
     for (const value of Object.values(dto?.custom_attributes || {})) {
       if (Array.isArray(value)) selectedValues.push(...value);
       else selectedValues.push(value);
@@ -520,6 +540,7 @@ export class CartService {
   }
 
   private async themVaoGiỏNoIdempotency(dto: any, manager?: any) {
+    dto = this.canonicalOptions(dto);
     const cartRepo = manager ? manager.getRepository(CartItem) : this.cartRepo;
     const quantity = Number(dto?.so_luong ?? 1);
     // ADD is never a decrement operation. Quantity changes (including a
@@ -783,7 +804,7 @@ export class CartService {
         if (!Number.isInteger(quantity) || quantity < 1) {
           throw new BadRequestException('Số lượng phải là số nguyên lớn hơn 0');
         }
-        const desired = {
+        const desired = this.canonicalOptions({
           ma_san_pham:
             dto?.product_id ?? dto?.ma_san_pham ?? source.ma_san_pham,
           size: dto?.size ?? source.size ?? 'Nhỏ',
@@ -793,7 +814,7 @@ export class CartService {
           loai_sua: dto?.loai_sua ?? source.loai_sua ?? '',
           custom_attributes:
             dto?.custom_attributes ?? source.custom_attributes ?? {},
-        };
+        });
         const authoritative = await this.resolveAuthoritativeProduct(desired);
         const next = {
           ...desired,

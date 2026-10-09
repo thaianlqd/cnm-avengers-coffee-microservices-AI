@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import text
 
 from src.function_calling.helpers import _get_engine
+from src.common.provider_retry import retry_ready
 
 
 _INIT_LOCK = threading.Lock()
@@ -121,8 +122,9 @@ def claim_turn(conversation_id: str, session_id: str, client_message_id: str,
             if (previous.get("_request_message") != message or
                     previous.get("_selected_product_id") != selected_product_id):
                 return {"status": "conflict"}
-            return {"status": previous.get("_turn_status") if previous.get("_turn_status") in UNRESOLVED_STATUSES else "completed",
-                    "response": dict(previous)}
+            if not retry_ready(previous):
+                return {"status": previous.get("_turn_status") if previous.get("_turn_status") in UNRESOLVED_STATUSES else "completed",
+                        "response": dict(previous)}
         blocking = next(((turn_id, record) for turn_id, record in responses.items()
                          if isinstance(record, dict) and record.get("_turn_status") in UNRESOLVED_STATUSES), None)
         if blocking:

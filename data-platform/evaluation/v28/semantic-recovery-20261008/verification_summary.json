@@ -1,0 +1,51 @@
+{
+  "version": "2.8.4",
+  "backend": {
+    "passed": 604,
+    "total": 604,
+    "seconds": 149.003
+  },
+  "frontend": {
+    "passed": 93,
+    "total": 93
+  },
+  "focused_recovery": {
+    "passed": 14,
+    "total": 14
+  },
+  "evaluation": {
+    "passed": 110,
+    "total": 110
+  },
+  "independent_source_audit": {
+    "matched": 80,
+    "total": 80,
+    "deployed_matched": 80
+  },
+  "LIVE_PROVIDER_REQUESTS": 0,
+  "warehouse_mutations": 0,
+  "services_rebuilt": [
+    "analytics-api",
+    "web-ui"
+  ],
+  "services_healthy": [
+    "analytics-api",
+    "web-ui"
+  ],
+  "health_via_web_proxy": "ok",
+  "interpretation_read_timeout_seconds": 60,
+  "provider_call_budget": 3,
+  "proxy_read_timeout_seconds": 240,
+  "source_report_engineering_score": 89.5,
+  "source_report_chart_count": 5,
+  "source_report_full_product_week_rows": 944,
+  "limitations": [
+    "Live-model reliability and latency were not measured.",
+    "Raw provider envelopes for reported failures were not retained; diagnostics were recorded and remaining fields explicitly reconstructed.",
+    "The product trend exceeds the existing 16-series renderer limit; all 944 facts remain in the data table and visualization score is reduced."
+  ],
+  "temporary_redis_sessions_deleted": true,
+  "committed": false,
+  "web_bundle": "index-IFRgSlyM.js",
+  "deployed_evaluation_passed": 110
+}

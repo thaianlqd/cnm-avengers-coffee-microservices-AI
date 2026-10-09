@@ -39,7 +39,7 @@ services:
       SOURCE_DB_HOST: ${DB_HOST:-aws-0-ap-southeast-1.pooler.supabase.com}
       SOURCE_DB_PORT: ${DB_PORT:-6543}
       SOURCE_DB_USER: ${DB_USER:-postgres.seneuycwihbyqjdtcdvu}
-      SOURCE_DB_PASSWORD: ${DB_PASSWORD:-afSMTJmSkNwOEmAT}
+      SOURCE_DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD; rotate any previously committed source credential}
       SOURCE_DB_NAME: ${DB_NAME:-postgres}
       SOURCE_DB_SSLMODE: ${PGSSLMODE:-require}
       # Target: postgres-analytics (local)
@@ -326,7 +326,11 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+    env_file:
+      - ./data-platform/.env
     environment:
+      ANALYTICS_INITIALIZE_WAREHOUSE_ON_STARTUP: "false"
+      DATA_ANALYST_ALLOWED_ORIGINS: ${DATA_ANALYST_ALLOWED_ORIGINS:-}
       PORT: 8000
       # ── Database (Analytics DB riêng) ──────────────────
       DB_HOST: postgres-analytics
@@ -340,15 +344,30 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
       # ── AI Analytics ──────────────────────────────────
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-      GROQ_API_KEY: ${GROQ_API_KEY}
-      GEMINI_API_KEY: ${GEMINI_API_KEY}
-      GEMINI_MODELS: ${GEMINI_MODELS:-gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-3.8-flash}
+      # V2.8 semantic interpretation + bounded targeted recovery, normal = 1.
+      DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN: "3"
+      DATA_ANALYST_ENABLE_CONTRACT_REPAIR: "1"
+      DATA_ANALYST_ENABLE_MODEL_ESCALATION: "0"
+      DATA_ANALYST_ENABLE_PROVIDER_FALLBACK: "0"
+      DATA_ANALYST_ENABLE_POST_RESULT_SYNTHESIS: "0"
+      DATA_ANALYST_RECOVERY_MODEL: ${DATA_ANALYST_RECOVERY_MODEL:-}
+      DATA_ANALYST_INTENT_TRANSPORT: ${DATA_ANALYST_INTENT_TRANSPORT:-json}
+      DATA_ANALYST_PROVIDER_READ_TIMEOUT_SECONDS: ${DATA_ANALYST_PROVIDER_READ_TIMEOUT_SECONDS:-60}
+      DATA_ANALYST_ENV: production
+      DATA_ANALYST_SESSION_STORE: redis
+      DATA_ANALYST_ARTIFACT_STORE: redis
+      DATA_ANALYST_CAPACITY_EXECUTION_ROWS: "50000"
+      DATA_ANALYST_CAPACITY_CHART_POINTS: "500"
+      DATA_ANALYST_CAPACITY_RESPONSE_BYTES: "1000000"
+      DATA_ANALYST_CAPACITY_SESSION_BYTES: "1000000"
+      DATA_ANALYST_REDIS_URL: ${DATA_ANALYST_REDIS_URL:-redis://host.docker.internal:6379/2}
+      DATA_ANALYST_REPORT_SQL_MODE: ${DATA_ANALYST_REPORT_SQL_MODE:-disabled}
+      DATA_ANALYST_REPORT_ADMIN_TOKEN: ${DATA_ANALYST_REPORT_ADMIN_TOKEN:-}
       # Optional source access is metadata-only; analytical SQL always uses postgres-analytics.
       SOURCE_DB_HOST: ${DB_HOST:-aws-0-ap-southeast-1.pooler.supabase.com}
       SOURCE_DB_PORT: ${DB_PORT:-6543}
       SOURCE_DB_USER: ${DB_USER:-postgres.seneuycwihbyqjdtcdvu}
-      SOURCE_DB_PASSWORD: ${DB_PASSWORD:-afSMTJmSkNwOEmAT}
+      SOURCE_DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD; rotate any previously committed source credential}
       SOURCE_DB_NAME: ${DB_NAME:-postgres}
       SOURCE_DB_SSLMODE: ${PGSSLMODE:-require}
     ports:
@@ -356,9 +375,9 @@ services:
     volumes:
       - ./data-platform/analytics-api:/app
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS --max-time 7 http://localhost:8000/api/readiness >/dev/null || exit 1"]
       interval: 10s
-      timeout: 5s
+      timeout: 8s
       retries: 12
       start_period: 15s
     networks:

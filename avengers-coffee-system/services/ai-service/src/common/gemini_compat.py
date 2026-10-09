@@ -45,7 +45,9 @@ def request_diagnostics(kwargs, compatibility_mode='canonical'):
         'schema_fingerprint': digest(tools),
         'has_response_format': bool(kwargs.get('response_format')),
         'response_format_type': 'json_object' if kwargs.get('response_format') == {'type': 'json_object'} else 'other' if kwargs.get('response_format') else 'none',
-        'tool_choice': kwargs.get('tool_choice') if kwargs.get('tool_choice') in {'auto', 'required', 'none'} else 'other' if kwargs.get('tool_choice') else 'none',
+        'tool_choice': (kwargs.get('tool_choice') if isinstance(kwargs.get('tool_choice'), str)
+            and kwargs['tool_choice'] in {'auto', 'required', 'none'} else
+            'named_function' if isinstance(kwargs.get('tool_choice'), dict) else 'other' if kwargs.get('tool_choice') else 'none'),
         'has_assistant_tool_calls': bool(calls), 'assistant_tool_call_count': len(calls),
         'tool_calls_per_message': [len(row.get('tool_calls') or []) for row in messages],
         'history_tool_set_fingerprint': digest(sorted(str(call.get('function', {}).get('name')) for call in calls)),
@@ -74,8 +76,7 @@ def compatibility_error(exc):
         return 'tool_continuation_incompatible', 'tool_calls'
     complaint = re.search(r'unsupported|not supported|incompatible|not allowed|cannot|invalid|reject', text)
     if complaint and (re.search(r'\bresponse[_ ]format\b|response[_ ]?mime[_ ]?type|responsemimetype|response mime type', text)
-                      or ('application/json' in text and re.search(r'function calling|tool use|tools', text))
-                      or 'invalid argument' in text or 'invalid_argument' in text):
+                      or ('application/json' in text and re.search(r'function calling|tool use|tools', text))):
         return 'response_format_incompatible', 'response_format'
     if complaint and re.search(r'\btool[_ ]choice\b', text):
         return 'tool_choice_incompatible', 'tool_choice'

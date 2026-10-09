@@ -1,0 +1,903 @@
+{
+  "STARTING_HEAD": "1f562b107e64f765584b7cb5b1d1c92acf664283",
+  "LIVE_PROVIDER_REQUESTS": 0,
+  "business_operation_count": 48,
+  "goal_family_count": 15,
+  "prerequisite_edge_count": 23,
+  "same_domain_interrupts": [
+    {
+      "goal": "SOCIAL",
+      "accepted": false,
+      "reason": "same_domain_interrupt",
+      "state_unchanged": true
+    },
+    {
+      "goal": "DISCOVERY",
+      "accepted": false,
+      "reason": "same_domain_interrupt",
+      "state_unchanged": true
+    },
+    {
+      "goal": "PRODUCT_SELECTION",
+      "accepted": false,
+      "reason": "same_domain_interrupt",
+      "state_unchanged": true
+    },
+    {
+      "goal": "PRODUCT_CONFIGURATION",
+      "accepted": false,
+      "reason": "same_domain_interrupt",
+      "state_unchanged": true
+    },
+    {
+      "goal": "CART_EDIT",
+      "accepted": false,
+      "reason": "same_domain_interrupt",
+      "state_unchanged": true
+    },
+    {
+      "goal": "VOUCHER",
+      "accepted": false,
+      "reason": "same_domain_interrupt",
+      "state_unchanged": true
+    },
+    {
+      "goal": "FULFILLMENT",
+      "accepted": false,
+      "reason": "same_domain_interrupt",
+      "state_unchanged": true
+    },
+    {
+      "goal": "LOCATION",
+      "accepted": false,
+      "reason": "same_domain_interrupt",
+      "state_unchanged": true
+    },
+    {
+      "goal": "PAYMENT",
+      "accepted": false,
+      "reason": "same_domain_interrupt",
+      "state_unchanged": true
+    },
+    {
+      "goal": "CHECKOUT",
+      "accepted": false,
+      "reason": "same_domain_interrupt",
+      "state_unchanged": true
+    },
+    {
+      "goal": "ORDER_READ",
+      "accepted": false,
+      "reason": "same_domain_interrupt",
+      "state_unchanged": true
+    },
+    {
+      "goal": "ORDER_CHANGE",
+      "accepted": false,
+      "reason": "same_domain_interrupt",
+      "state_unchanged": true
+    },
+    {
+      "goal": "RAG_KNOWLEDGE",
+      "accepted": false,
+      "reason": "same_domain_interrupt",
+      "state_unchanged": true
+    },
+    {
+      "goal": "REVIEW",
+      "accepted": false,
+      "reason": "same_domain_interrupt",
+      "state_unchanged": true
+    },
+    {
+      "goal": "GENERIC_CONSULTATION",
+      "accepted": false,
+      "reason": "same_domain_interrupt",
+      "state_unchanged": true
+    }
+  ],
+  "registry": [
+    {
+      "function_name": "semantic_discover_products",
+      "goal_family": "DISCOVERY",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_recommend_by_preference",
+      "goal_family": "DISCOVERY",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_rank_by_sales",
+      "goal_family": "DISCOVERY",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_rank_by_price",
+      "goal_family": "DISCOVERY",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_discover_new_products",
+      "goal_family": "DISCOVERY",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_rank_by_rating",
+      "goal_family": "DISCOVERY",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_read_menu",
+      "goal_family": "DISCOVERY",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_select_product",
+      "goal_family": "PRODUCT_SELECTION",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_discover_products",
+        "semantic_ask_product_options"
+      ]
+    },
+    {
+      "function_name": "semantic_ask_product_options",
+      "goal_family": "PRODUCT_CONFIGURATION",
+      "progress_role": "PREREQUISITE",
+      "terminal_for_goal": false,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_configure_product",
+      "goal_family": "PRODUCT_CONFIGURATION",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_ask_product_options"
+      ]
+    },
+    {
+      "function_name": "semantic_use_product_defaults",
+      "goal_family": "PRODUCT_CONFIGURATION",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_ask_product_options"
+      ]
+    },
+    {
+      "function_name": "semantic_discard_product_selection",
+      "goal_family": "PRODUCT_SELECTION",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_ask_product_fact",
+      "goal_family": "GENERIC_CONSULTATION",
+      "progress_role": "CONSULTATION",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_ask_product_review",
+      "goal_family": "REVIEW",
+      "progress_role": "CONSULTATION",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_ask_product_price",
+      "goal_family": "GENERIC_CONSULTATION",
+      "progress_role": "CONSULTATION",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_ask_knowledge",
+      "goal_family": "RAG_KNOWLEDGE",
+      "progress_role": "CONSULTATION",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_read_cart",
+      "goal_family": "CART_EDIT",
+      "progress_role": "CONSULTATION",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_read_cart_total",
+      "goal_family": "CART_EDIT",
+      "progress_role": "CONSULTATION",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_update_cart_line",
+      "goal_family": "CART_EDIT",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_read_cart",
+        "semantic_ask_product_options"
+      ]
+    },
+    {
+      "function_name": "semantic_remove_cart_line",
+      "goal_family": "CART_EDIT",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_read_cart"
+      ]
+    },
+    {
+      "function_name": "semantic_finish_cart",
+      "goal_family": "VOUCHER",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_read_cart"
+      ]
+    },
+    {
+      "function_name": "semantic_read_eligible_vouchers",
+      "goal_family": "VOUCHER",
+      "progress_role": "PREREQUISITE",
+      "terminal_for_goal": false,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_choose_voucher",
+      "goal_family": "VOUCHER",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_read_eligible_vouchers"
+      ]
+    },
+    {
+      "function_name": "semantic_skip_voucher",
+      "goal_family": "VOUCHER",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_remove_voucher",
+      "goal_family": "VOUCHER",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_read_payment_options",
+      "goal_family": "PAYMENT",
+      "progress_role": "PREREQUISITE",
+      "terminal_for_goal": false,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_set_payment",
+      "goal_family": "PAYMENT",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_read_payment_options"
+      ]
+    },
+    {
+      "function_name": "semantic_set_fulfillment",
+      "goal_family": "FULFILLMENT",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_read_profile_addresses",
+      "goal_family": "LOCATION",
+      "progress_role": "PREREQUISITE",
+      "terminal_for_goal": false,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_resolve_new_location",
+      "goal_family": "LOCATION",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_set_fulfillment"
+      ]
+    },
+    {
+      "function_name": "semantic_select_profile_address",
+      "goal_family": "LOCATION",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_read_profile_addresses",
+        "semantic_set_fulfillment"
+      ]
+    },
+    {
+      "function_name": "semantic_select_location_candidate",
+      "goal_family": "LOCATION",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_find_nearby_branches"
+      ]
+    },
+    {
+      "function_name": "semantic_find_nearby_branches",
+      "goal_family": "LOCATION",
+      "progress_role": "CONSULTATION",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_read_branches",
+      "goal_family": "LOCATION",
+      "progress_role": "PREREQUISITE",
+      "terminal_for_goal": false,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_select_branch",
+      "goal_family": "LOCATION",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_read_branches",
+        "semantic_find_nearby_branches"
+      ]
+    },
+    {
+      "function_name": "semantic_read_branch_ratings",
+      "goal_family": "REVIEW",
+      "progress_role": "CONSULTATION",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_ask_branch_review",
+      "goal_family": "REVIEW",
+      "progress_role": "CONSULTATION",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_compare_branch_reviews",
+      "goal_family": "REVIEW",
+      "progress_role": "CONSULTATION",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_prepare_checkout",
+      "goal_family": "CHECKOUT",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_confirm_checkout",
+      "goal_family": "CHECKOUT",
+      "progress_role": "FINALIZATION",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_read_order_history",
+      "goal_family": "ORDER_READ",
+      "progress_role": "CONSULTATION",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_read_order",
+      "goal_family": "ORDER_READ",
+      "progress_role": "CONSULTATION",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_track_order",
+      "goal_family": "ORDER_READ",
+      "progress_role": "CONSULTATION",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_prepare_order_cancel",
+      "goal_family": "ORDER_CHANGE",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_read_order"
+      ]
+    },
+    {
+      "function_name": "semantic_prepare_order_update",
+      "goal_family": "ORDER_CHANGE",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_read_order",
+        "semantic_ask_product_options",
+        "semantic_ask_product_price"
+      ]
+    },
+    {
+      "function_name": "semantic_prepare_reorder",
+      "goal_family": "ORDER_CHANGE",
+      "progress_role": "PRIMARY",
+      "terminal_for_goal": true,
+      "repair_prerequisites": [
+        "semantic_read_order",
+        "semantic_ask_product_options",
+        "semantic_ask_product_price"
+      ]
+    },
+    {
+      "function_name": "semantic_confirm_order_change",
+      "goal_family": "ORDER_CHANGE",
+      "progress_role": "FINALIZATION",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    },
+    {
+      "function_name": "semantic_discard_order_change",
+      "goal_family": "ORDER_CHANGE",
+      "progress_role": "FINALIZATION",
+      "terminal_for_goal": true,
+      "repair_prerequisites": []
+    }
+  ],
+  "prerequisite_policies": [
+    {
+      "owner_operation": "semantic_select_product",
+      "operation": "semantic_discover_products",
+      "predicate": "missing_product_candidates",
+      "reason": "Obtain unresolved canonical Menu candidates."
+    },
+    {
+      "owner_operation": "semantic_select_product",
+      "operation": "semantic_ask_product_options",
+      "predicate": "missing_product_options",
+      "reason": "Obtain undisplayed canonical product options."
+    },
+    {
+      "owner_operation": "semantic_configure_product",
+      "operation": "semantic_ask_product_options",
+      "predicate": "missing_product_options",
+      "reason": "Obtain missing canonical option groups."
+    },
+    {
+      "owner_operation": "semantic_use_product_defaults",
+      "operation": "semantic_ask_product_options",
+      "predicate": "missing_product_options",
+      "reason": "Obtain missing Menu default choices."
+    },
+    {
+      "owner_operation": "semantic_update_cart_line",
+      "operation": "semantic_read_cart",
+      "predicate": "missing_cart_snapshot",
+      "reason": "Obtain the authoritative cart lines."
+    },
+    {
+      "owner_operation": "semantic_update_cart_line",
+      "operation": "semantic_ask_product_options",
+      "predicate": "missing_cart_product_options",
+      "reason": "Obtain option groups for the edited cart product."
+    },
+    {
+      "owner_operation": "semantic_remove_cart_line",
+      "operation": "semantic_read_cart",
+      "predicate": "missing_cart_snapshot",
+      "reason": "Obtain authoritative removal targets."
+    },
+    {
+      "owner_operation": "semantic_finish_cart",
+      "operation": "semantic_read_cart",
+      "predicate": "missing_cart_snapshot",
+      "reason": "Obtain the configured cart before its voucher gate."
+    },
+    {
+      "owner_operation": "semantic_choose_voucher",
+      "operation": "semantic_read_eligible_vouchers",
+      "predicate": "missing_voucher_candidates",
+      "reason": "Obtain current eligible voucher choices."
+    },
+    {
+      "owner_operation": "semantic_set_payment",
+      "operation": "semantic_read_payment_options",
+      "predicate": "missing_payment_candidates",
+      "reason": "Obtain canonical payment choices."
+    },
+    {
+      "owner_operation": "semantic_resolve_new_location",
+      "operation": "semantic_set_fulfillment",
+      "predicate": "missing_fulfillment",
+      "reason": "Establish explicit fulfillment before checkout destination."
+    },
+    {
+      "owner_operation": "semantic_select_profile_address",
+      "operation": "semantic_read_profile_addresses",
+      "predicate": "missing_profile_addresses",
+      "reason": "Obtain the current saved-address offer."
+    },
+    {
+      "owner_operation": "semantic_select_profile_address",
+      "operation": "semantic_set_fulfillment",
+      "predicate": "missing_fulfillment",
+      "reason": "Establish explicit fulfillment before saved destination."
+    },
+    {
+      "owner_operation": "semantic_select_location_candidate",
+      "operation": "semantic_find_nearby_branches",
+      "predicate": "missing_location_candidates",
+      "reason": "Obtain missing geocoded candidates."
+    },
+    {
+      "owner_operation": "semantic_select_branch",
+      "operation": "semantic_read_branches",
+      "predicate": "missing_branch_candidates",
+      "reason": "Obtain canonical branch candidates."
+    },
+    {
+      "owner_operation": "semantic_select_branch",
+      "operation": "semantic_find_nearby_branches",
+      "predicate": "missing_branch_candidates",
+      "reason": "Obtain compatible nearby branches."
+    },
+    {
+      "owner_operation": "semantic_prepare_order_cancel",
+      "operation": "semantic_read_order",
+      "predicate": "missing_owned_order_details",
+      "reason": "Obtain owned order details before cancellation preview."
+    },
+    {
+      "owner_operation": "semantic_prepare_order_update",
+      "operation": "semantic_read_order",
+      "predicate": "missing_owned_order_details",
+      "reason": "Obtain owned order lines before update preview."
+    },
+    {
+      "owner_operation": "semantic_prepare_order_update",
+      "operation": "semantic_ask_product_options",
+      "predicate": "missing_product_options",
+      "reason": "Obtain Menu options for order changes."
+    },
+    {
+      "owner_operation": "semantic_prepare_order_update",
+      "operation": "semantic_ask_product_price",
+      "predicate": "missing_product_price",
+      "reason": "Obtain current Menu prices for order changes."
+    },
+    {
+      "owner_operation": "semantic_prepare_reorder",
+      "operation": "semantic_read_order",
+      "predicate": "missing_owned_order_details",
+      "reason": "Obtain owned source-order details."
+    },
+    {
+      "owner_operation": "semantic_prepare_reorder",
+      "operation": "semantic_ask_product_options",
+      "predicate": "missing_product_options",
+      "reason": "Obtain Menu options for reordered products."
+    },
+    {
+      "owner_operation": "semantic_prepare_reorder",
+      "operation": "semantic_ask_product_price",
+      "predicate": "missing_product_price",
+      "reason": "Obtain current Menu reorder prices."
+    }
+  ],
+  "surfaces": [
+    {
+      "state": "browsing",
+      "goal_family": "GENERIC_CONSULTATION",
+      "goal_owner_operation": null,
+      "repair_target_operation": null,
+      "normal_operations": [
+        "semantic_discover_products",
+        "semantic_recommend_by_preference",
+        "semantic_rank_by_sales",
+        "semantic_rank_by_price",
+        "semantic_discover_new_products",
+        "semantic_rank_by_rating",
+        "semantic_read_menu",
+        "semantic_select_product",
+        "semantic_ask_product_options",
+        "semantic_ask_product_review",
+        "semantic_ask_knowledge",
+        "semantic_read_cart",
+        "semantic_read_profile_addresses",
+        "semantic_resolve_new_location",
+        "semantic_find_nearby_branches",
+        "semantic_read_branch_ratings",
+        "semantic_ask_branch_review",
+        "semantic_read_order_history",
+        "semantic_read_order",
+        "semantic_track_order"
+      ],
+      "repair_operations": [],
+      "needed_prerequisites": [],
+      "interrupt_available": true
+    },
+    {
+      "state": "products",
+      "goal_family": "PRODUCT_SELECTION",
+      "goal_owner_operation": "semantic_select_product",
+      "repair_target_operation": null,
+      "normal_operations": [
+        "semantic_discover_products",
+        "semantic_recommend_by_preference",
+        "semantic_rank_by_sales",
+        "semantic_rank_by_price",
+        "semantic_discover_new_products",
+        "semantic_rank_by_rating",
+        "semantic_read_menu",
+        "semantic_select_product",
+        "semantic_ask_product_fact",
+        "semantic_ask_product_review",
+        "semantic_ask_product_price",
+        "semantic_read_cart",
+        "semantic_read_branch_ratings",
+        "semantic_ask_branch_review"
+      ],
+      "repair_operations": [
+        "semantic_select_product"
+      ],
+      "needed_prerequisites": [],
+      "interrupt_available": false
+    },
+    {
+      "state": "pending_product",
+      "goal_family": "PRODUCT_CONFIGURATION",
+      "goal_owner_operation": null,
+      "repair_target_operation": null,
+      "normal_operations": [
+        "semantic_select_product",
+        "semantic_ask_product_options",
+        "semantic_configure_product",
+        "semantic_use_product_defaults",
+        "semantic_discard_product_selection",
+        "semantic_ask_product_fact",
+        "semantic_ask_product_price",
+        "semantic_read_cart"
+      ],
+      "repair_operations": [
+        "semantic_ask_product_options",
+        "semantic_configure_product",
+        "semantic_use_product_defaults"
+      ],
+      "needed_prerequisites": [
+        "semantic_ask_product_options"
+      ],
+      "interrupt_available": true
+    },
+    {
+      "state": "cart",
+      "goal_family": "PRODUCT_SELECTION",
+      "goal_owner_operation": "semantic_select_product",
+      "repair_target_operation": null,
+      "normal_operations": [
+        "semantic_discover_products",
+        "semantic_recommend_by_preference",
+        "semantic_rank_by_sales",
+        "semantic_rank_by_price",
+        "semantic_discover_new_products",
+        "semantic_rank_by_rating",
+        "semantic_read_menu",
+        "semantic_select_product",
+        "semantic_ask_product_fact",
+        "semantic_ask_product_review",
+        "semantic_ask_product_price",
+        "semantic_read_cart",
+        "semantic_read_cart_total",
+        "semantic_update_cart_line",
+        "semantic_remove_cart_line",
+        "semantic_read_branch_ratings",
+        "semantic_ask_branch_review"
+      ],
+      "repair_operations": [
+        "semantic_select_product"
+      ],
+      "needed_prerequisites": [],
+      "interrupt_available": false
+    },
+    {
+      "state": "voucher",
+      "goal_family": "VOUCHER",
+      "goal_owner_operation": null,
+      "repair_target_operation": null,
+      "normal_operations": [
+        "semantic_read_cart",
+        "semantic_read_cart_total",
+        "semantic_update_cart_line",
+        "semantic_remove_cart_line",
+        "semantic_read_eligible_vouchers",
+        "semantic_choose_voucher",
+        "semantic_skip_voucher"
+      ],
+      "repair_operations": [
+        "semantic_choose_voucher",
+        "semantic_skip_voucher"
+      ],
+      "needed_prerequisites": [],
+      "interrupt_available": true
+    },
+    {
+      "state": "location",
+      "goal_family": "LOCATION",
+      "goal_owner_operation": null,
+      "repair_target_operation": null,
+      "normal_operations": [
+        "semantic_read_payment_options",
+        "semantic_set_payment",
+        "semantic_set_fulfillment",
+        "semantic_read_profile_addresses",
+        "semantic_resolve_new_location",
+        "semantic_select_location_candidate",
+        "semantic_find_nearby_branches",
+        "semantic_select_branch"
+      ],
+      "repair_operations": [
+        "semantic_read_profile_addresses",
+        "semantic_resolve_new_location",
+        "semantic_select_location_candidate",
+        "semantic_select_branch"
+      ],
+      "needed_prerequisites": [
+        "semantic_read_profile_addresses"
+      ],
+      "interrupt_available": true
+    },
+    {
+      "state": "payment_needed",
+      "goal_family": "PAYMENT",
+      "goal_owner_operation": null,
+      "repair_target_operation": null,
+      "normal_operations": [
+        "semantic_read_cart",
+        "semantic_read_cart_total",
+        "semantic_update_cart_line",
+        "semantic_remove_cart_line",
+        "semantic_read_payment_options",
+        "semantic_set_payment",
+        "semantic_set_fulfillment",
+        "semantic_read_profile_addresses",
+        "semantic_resolve_new_location",
+        "semantic_find_nearby_branches",
+        "semantic_select_branch"
+      ],
+      "repair_operations": [
+        "semantic_read_payment_options",
+        "semantic_set_payment"
+      ],
+      "needed_prerequisites": [
+        "semantic_read_payment_options"
+      ],
+      "interrupt_available": true
+    },
+    {
+      "state": "summary",
+      "goal_family": "CHECKOUT",
+      "goal_owner_operation": null,
+      "repair_target_operation": null,
+      "normal_operations": [
+        "semantic_read_cart",
+        "semantic_read_cart_total",
+        "semantic_update_cart_line",
+        "semantic_remove_cart_line",
+        "semantic_read_payment_options",
+        "semantic_set_payment",
+        "semantic_set_fulfillment",
+        "semantic_read_profile_addresses",
+        "semantic_resolve_new_location",
+        "semantic_select_location_candidate",
+        "semantic_find_nearby_branches",
+        "semantic_select_branch",
+        "semantic_prepare_checkout",
+        "semantic_confirm_checkout"
+      ],
+      "repair_operations": [
+        "semantic_prepare_checkout",
+        "semantic_confirm_checkout"
+      ],
+      "needed_prerequisites": [],
+      "interrupt_available": true
+    },
+    {
+      "state": "order_change",
+      "goal_family": "ORDER_CHANGE",
+      "goal_owner_operation": null,
+      "repair_target_operation": null,
+      "normal_operations": [
+        "semantic_read_order_history",
+        "semantic_read_order",
+        "semantic_track_order",
+        "semantic_prepare_order_cancel",
+        "semantic_prepare_order_update",
+        "semantic_prepare_reorder",
+        "semantic_confirm_order_change",
+        "semantic_discard_order_change"
+      ],
+      "repair_operations": [
+        "semantic_ask_product_options",
+        "semantic_ask_product_price",
+        "semantic_prepare_order_cancel",
+        "semantic_prepare_order_update",
+        "semantic_prepare_reorder",
+        "semantic_confirm_order_change",
+        "semantic_discard_order_change"
+      ],
+      "needed_prerequisites": [
+        "semantic_ask_product_options",
+        "semantic_ask_product_price"
+      ],
+      "interrupt_available": true
+    },
+    {
+      "state": "fulfillment_needed",
+      "goal_family": "FULFILLMENT",
+      "goal_owner_operation": null,
+      "repair_target_operation": null,
+      "normal_operations": [
+        "semantic_read_payment_options",
+        "semantic_set_payment",
+        "semantic_set_fulfillment",
+        "semantic_read_profile_addresses",
+        "semantic_resolve_new_location",
+        "semantic_find_nearby_branches"
+      ],
+      "repair_operations": [
+        "semantic_set_fulfillment"
+      ],
+      "needed_prerequisites": [],
+      "interrupt_available": true
+    },
+    {
+      "state": "pending_product_known_options",
+      "goal_family": "PRODUCT_CONFIGURATION",
+      "goal_owner_operation": null,
+      "repair_target_operation": null,
+      "normal_operations": [
+        "semantic_select_product",
+        "semantic_ask_product_options",
+        "semantic_configure_product",
+        "semantic_use_product_defaults",
+        "semantic_discard_product_selection",
+        "semantic_ask_product_fact",
+        "semantic_ask_product_price",
+        "semantic_read_cart"
+      ],
+      "repair_operations": [
+        "semantic_configure_product",
+        "semantic_use_product_defaults"
+      ],
+      "needed_prerequisites": [],
+      "interrupt_available": true
+    }
+  ]
+}

@@ -1,0 +1,148 @@
+{
+  "scope": "Observed original-grain rows replay, not corrected source totals",
+  "old_chart_count": 0,
+  "new_chart_count": 2,
+  "original_grouping": [
+    "order_status",
+    "product"
+  ],
+  "corrected_draft_grouping": [
+    "product"
+  ],
+  "normalizations": [
+    {
+      "requirement_id": "req_1",
+      "field": "dimension_ids",
+      "rule": "population_disclosure_is_not_grouping",
+      "removed_dimensions": [
+        "order_status"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "valid": true,
+      "reason": null,
+      "query_id": "q_ef5cee196dd1b69fa8b9b0f0",
+      "scope_refs": [
+        "q_ef5cee196dd1b69fa8b9b0f0"
+      ],
+      "metrics": [
+        "quantity_sold"
+      ],
+      "covered_pairs": [
+        [
+          "q_ef5cee196dd1b69fa8b9b0f0",
+          "quantity_sold"
+        ]
+      ]
+    },
+    {
+      "valid": true,
+      "reason": null,
+      "query_id": "q_ef5cee196dd1b69fa8b9b0f0",
+      "scope_refs": [
+        "q_ef5cee196dd1b69fa8b9b0f0"
+      ],
+      "metrics": [
+        "product_revenue"
+      ],
+      "covered_pairs": [
+        [
+          "q_ef5cee196dd1b69fa8b9b0f0",
+          "product_revenue"
+        ]
+      ]
+    }
+  ],
+  "charts": [
+    {
+      "chart_type": "horizontal_bar",
+      "metric": "quantity_sold",
+      "metrics": [
+        "quantity_sold"
+      ],
+      "unit": "sản phẩm",
+      "category_fields": [
+        "order_status",
+        "product"
+      ],
+      "ranking_metric": "quantity_sold",
+      "ranking_direction": "DESC",
+      "ranking_limit": 5,
+      "ranking_per_group": [],
+      "data": [
+        {
+          "label": "Trạng thái đơn: HOAN_THANH · Sản phẩm: Americano Phúc Bồn Tử",
+          "value": 85,
+          "color": "#6366f1"
+        },
+        {
+          "label": "Trạng thái đơn: HOAN_THANH · Sản phẩm: 1 Lít Matcha Latte Tây Bắc",
+          "value": 81,
+          "color": "#10b981"
+        },
+        {
+          "label": "Trạng thái đơn: HOAN_THANH · Sản phẩm: Cappuccino Đá",
+          "value": 78,
+          "color": "#f59e0b"
+        },
+        {
+          "label": "Trạng thái đơn: HOAN_THANH · Sản phẩm: Trà Đào Cam Sả - Đá",
+          "value": 76,
+          "color": "#ec4899"
+        },
+        {
+          "label": "Trạng thái đơn: HOAN_THANH · Sản phẩm: Bánh Trung Thu Matcha",
+          "value": 75,
+          "color": "#06b6d4"
+        }
+      ]
+    },
+    {
+      "chart_type": "horizontal_bar",
+      "metric": "product_revenue",
+      "metrics": [
+        "product_revenue"
+      ],
+      "unit": "VND",
+      "category_fields": [
+        "order_status",
+        "product"
+      ],
+      "ranking_metric": "quantity_sold",
+      "ranking_direction": "DESC",
+      "ranking_limit": 5,
+      "ranking_per_group": [],
+      "data": [
+        {
+          "label": "Trạng thái đơn: HOAN_THANH · Sản phẩm: Americano Phúc Bồn Tử",
+          "value": 5525000.0,
+          "color": "#6366f1"
+        },
+        {
+          "label": "Trạng thái đơn: HOAN_THANH · Sản phẩm: 1 Lít Matcha Latte Tây Bắc",
+          "value": 7695000.0,
+          "color": "#10b981"
+        },
+        {
+          "label": "Trạng thái đơn: HOAN_THANH · Sản phẩm: Cappuccino Đá",
+          "value": 5070000.0,
+          "color": "#f59e0b"
+        },
+        {
+          "label": "Trạng thái đơn: HOAN_THANH · Sản phẩm: Trà Đào Cam Sả - Đá",
+          "value": 4484000.0,
+          "color": "#ec4899"
+        },
+        {
+          "label": "Trạng thái đơn: HOAN_THANH · Sản phẩm: Bánh Trung Thu Matcha",
+          "value": 7425000.0,
+          "color": "#06b6d4"
+        }
+      ]
+    }
+  ],
+  "LIVE_PROVIDER_REQUESTS": 0,
+  "WAREHOUSE_QUERIES": 0
+}

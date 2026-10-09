@@ -148,6 +148,44 @@ describe('CartService idempotent cart mutations', () => {
     };
   };
 
+  it.each([{ toppings:[] }, { toppings:['Foam'] }])('replaces legacy duplicated toppings in price and persisted options: %j', async ({ toppings }) => {
+    const { service, rows, metadata } = createMetadataAwareService();
+    const baseQuery = (service as any).dataSource.query;
+    (service as any).dataSource.query = jest.fn(async (sql, params) => {
+      if (sql.includes('FROM menu.san_pham')) return [{ ma_san_pham: 1, ten_san_pham: 'Americano', gia_ban: 65000, trang_thai: true }];
+      if (sql.includes('menu.bien_the_san_pham')) return [
+        { ten_thuoc_tinh:'Kích thước', gia_tri:'Lớn', phu_thu:75000 },
+        { ten_thuoc_tinh:'Topping', gia_tri:'Hạt Sen', phu_thu:10000 },
+        { ten_thuoc_tinh:'Topping', gia_tri:'Foam', phu_thu:15000 },
+        { ten_thuoc_tinh:'Extra', gia_tri:'Special', phu_thu:2000 },
+      ];
+      return baseQuery(sql, params);
+    });
+    rows.push({ id:701, ma_nguoi_dung:'customer-topping', ma_san_pham:1, ten_san_pham:'Americano',
+      so_luong:1, gia_ban:87000, size:'Lớn', toppings:['Hạt Sen'],
+      custom_attributes:{ 'Topping':['Hạt Sen'], 'Kích thước':'Lớn', Extra:'Special' } });
+    const patch = { toppings };
+    const first = await service.capNhatMucGio(701,patch,'customer-topping','remove-sen-1');
+    const retry = await service.capNhatMucGio(701,patch,'customer-topping','remove-sen-1');
+    const price = toppings.length ? 92000 : 77000;
+    expect(rows[0]).toMatchObject({ toppings, gia_ban:price, custom_attributes:{ Extra:'Special' } });
+    expect(rows[0].custom_attributes.Topping).toBeUndefined();
+    expect(first.items[0]).toMatchObject({ unit_price:price, toppings });
+    expect(retry).toMatchObject({ already_processed:true, cart_version:1 });
+    expect(metadata.get('customer-topping').cart_version).toBe(1);
+  });
+
+  it('adds an explicit empty topping without charging its legacy custom copy', async () => {
+    const { service, rows } = createMetadataAwareService();
+    (service as any).dataSource.query = jest.fn(async (sql) => sql.includes('FROM menu.san_pham')
+      ? [{ ma_san_pham:1, ten_san_pham:'Americano', gia_ban:65000, trang_thai:true }]
+      : [{ ten_thuoc_tinh:'Kích thước', gia_tri:'Lớn', phu_thu:75000 },
+         { ten_thuoc_tinh:'Topping', gia_tri:'Hạt Sen', phu_thu:10000 }]);
+    await (service as any).themVaoGiỏNoIdempotency({ ma_nguoi_dung:'customer-add',ma_san_pham:1,
+      size:'Lớn',toppings:[],custom_attributes:{ Topping:['Hạt Sen'] } });
+    expect(rows[0]).toMatchObject({ gia_ban:75000,toppings:[],custom_attributes:{} });
+  });
+
   it('persists one add and returns its stored result for the same operation id', async () => {
     const { service } = createMetadataAwareService();
     const write = jest.fn(async () => ({

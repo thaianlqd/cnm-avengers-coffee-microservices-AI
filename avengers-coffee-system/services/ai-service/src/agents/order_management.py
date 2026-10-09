@@ -229,7 +229,7 @@ def order_history_reply(result, requested_count):
 
         policy = edit_policy(order)
         can_edit = policy['allowed']
-        can_cancel = (status in {'MOI_TAO', 'DA_XAC_NHAN'} and p_method in {'VI_DIEN_TU', 'VI_AVENGERS'})
+        can_cancel = status in {'MOI_TAO', 'DA_XAC_NHAN'}
         if status == 'DA_HUY':
             note = 'Đơn đã huỷ'
         elif can_edit and can_cancel:
@@ -237,7 +237,7 @@ def order_history_reply(result, requested_count):
         elif can_edit and not can_cancel:
             note = 'Có thể sửa món'
         elif not can_edit and can_cancel:
-            note = f"Không thể sửa ({policy.get('reason') or 'Không khả dụng'}), có thể huỷ đơn qua Ví"
+            note = f"Không thể sửa ({policy.get('reason') or 'Không khả dụng'}), có thể huỷ đơn"
         else:
             note = f"Không thể sửa ({policy.get('reason') or 'Không khả dụng'})"
         lines.append(f"   *Lưu ý: {note}*")
@@ -425,7 +425,9 @@ def details(session_id, order_id):
     return {**result, 'order_id': order_id, 'order_status': order['trang_thai_don_hang'],
         'payment_method': order['phuong_thuc_thanh_toan'], 'total_price': order['tong_tien'],
         'items': items,
-        'can_cancel': order['trang_thai_don_hang'] in {'MOI_TAO', 'DA_XAC_NHAN'} and order.get('phuong_thuc_thanh_toan') in {'VI_DIEN_TU', 'VI_AVENGERS'},
+        # The owned order-service cancellation endpoint permits all payment
+        # methods before preparation and applies refunds itself when eligible.
+        'can_cancel': order['trang_thai_don_hang'] in {'MOI_TAO', 'DA_XAC_NHAN'},
         'can_update': policy['allowed'], 'update_policy': policy}
 
 
@@ -477,7 +479,12 @@ def preview_message(kind, order_id, data):
     return f'Dạ, bạn xem trước thay đổi đơn **{order_id}**:\n\n' + '\n'.join(lines) + f"\n\nĐịa chỉ: {data.get('delivery_address') or ''}\nKhung giờ: {data.get('delivery_slot') or 'Chưa chọn'}\nGhi chú: {data.get('note') or 'Không có'}\nTạm tính: **{money(data['subtotal'])}**\nGiảm giá ({data.get('voucher_code') or 'Không áp dụng'}): **{money(data['discount_amount'])}**\nPhí giao giữ theo đơn: **{money(data['delivery_fee'])}**\n**Tổng mới: {money(data['final_total'])}**" + settlement + '\n\nBạn **xác nhận sửa đơn** theo thông tin trên nhé?'
 
 
-def prepare(session_id, kind, args, turn_id):
+def prepare(session_id, kind, args, turn_id, *, canonical_line_ids=False):
+    if kind == 'update_order':
+        from src.agents.tool_capabilities import CUSTOM_SCHEMAS, validate_args
+        if not validate_args(args, CUSTOM_SCHEMAS['update_order']['function']['parameters']):
+            return {'status': 'invalid_arguments', 'changed': False, 'recovery_kind': 'model_repair',
+                'message': 'Mình chưa tạo bản xem trước do lỗi diễn giải yêu cầu.'}
     # Selecting another order/action abandons the old quote even if the new order is locked.
     prefs = cart_manager.get_checkout_prefs(session_id)
     stale = {field: None for field in ('order_management_action', 'order_management_focus')
@@ -489,8 +496,9 @@ def prepare(session_id, kind, args, turn_id):
     if current.get('status') != 'ok':
         return current
     if kind == 'cancel_order' and not current['can_cancel']:
-        if current['order_status'] in {'MOI_TAO', 'DA_XAC_NHAN'} and current.get('payment_method') != 'VI_DIEN_TU':
-            return {'status': 'rejected', 'message': 'Dạ, hệ thống chỉ hỗ trợ huỷ đơn đối với đơn thanh toán qua Ví điện tử (tiền hoàn về ví ngay lập tức). Đơn COD/tiền mặt hoặc cổng thanh toán khác không hỗ trợ huỷ qua chat; bạn vui lòng liên hệ hotline/cửa hàng nếu cần hỗ trợ nhé.'}
+        if current['order_status'] == 'DA_HUY':
+            return {'status': 'already_processed', 'changed': False, 'order_id': current['order_id'],
+                'message': 'Đơn này đã huỷ rồi ạ. Bạn có thể yêu cầu đặt lại để mình kiểm tra món và giá hiện tại.'}
         return {'status': 'rejected', 'message': f"Đơn đang ở trạng thái **{current['order_status']}**. Khách chỉ huỷ được khi đơn mới tạo hoặc đã xác nhận, trước khi chuẩn bị/giao ạ."}
     if kind == 'update_order' and not current['can_update']:
         if current['order_status'] == 'DA_HUY':
@@ -524,7 +532,7 @@ def prepare(session_id, kind, args, turn_id):
         for change in changes:
             raw_id = change.get('order_line_id')
             row = next((r for r in rows if r.get('id') == raw_id or str(r.get('id')) == str(raw_id)), None)
-            if not row and current.get('items'):
+            if not row and current.get('items') and not canonical_line_ids:
                 matched_item = next((item for item in current['items']
                                      if item.get('display_index') == raw_id or str(item.get('display_index')) == str(raw_id)), None)
                 if matched_item:
@@ -541,12 +549,12 @@ def prepare(session_id, kind, args, turn_id):
                 if key not in {'order_line_id', 'product_name'}:
                     if key == 'options' and isinstance(value, dict):
                         for ok, ov in value.items():
-                            row[field_map.get(ok, ok)] = ov
+                            row[field_map[ok]] = ov
                     else:
-                        row[field_map.get(key, key)] = value
+                        row[field_map[key]] = value
         rows = [r for r in rows if r['so_luong'] > 0]
         for added in args.get('add_items') or []:
-            rows.append({field_map.get(k, k): v for k, v in added.items()})
+            rows.append({field_map[k]: v for k, v in added.items()})
         if not rows:
             return {'status': 'empty_order', 'message': 'Đơn cần còn ít nhất một món. Bạn muốn huỷ đơn thì nói huỷ đơn nhé.'}
         payload = {'items': rows, 'expected_revision': current['revision']}
@@ -570,7 +578,7 @@ def prepare(session_id, kind, args, turn_id):
     return {'status': 'require_confirmation', 'changed': False, 'order_id': current['order_id'], 'message': message}
 
 
-def confirm(session_id, message, turn_id, entry_action):
+def confirm(session_id, message, turn_id, entry_action, *, semantic_commitment=None):
     action = cart_manager.get_checkout_prefs(session_id).get('order_management_action')
     if not action or not entry_action or action != entry_action or action['created_turn_id'] == turn_id:
         return {'status': 'preview_required', 'message': 'Mình cần gửi lại phần xem trước để bạn xác nhận trên lượt tiếp theo nhé.'}
@@ -580,7 +588,7 @@ def confirm(session_id, message, turn_id, entry_action):
     target = ORDER_ID.search(message.lower())
     if target and target.group() != action['order_id']:
         return {'status': 'confirmation_required', 'message': 'Mã đơn bạn xác nhận khác phần xem trước. Bạn chọn lại đơn nhé.'}
-    if not confirmation_allowed(message, action):
+    if (semantic_commitment != 'AFFIRMED' if semantic_commitment is not None else not confirmation_allowed(message, action)):
         return {'status': 'confirmation_required', 'message': 'Bạn xác nhận đúng thay đổi vừa xem, hay muốn chỉnh lại ạ?'}
     kind, oid, payload = action['kind'], action['order_id'], action['payload']
     if kind == 'cancel_order':

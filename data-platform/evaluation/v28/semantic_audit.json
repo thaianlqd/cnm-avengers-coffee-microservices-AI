@@ -1,0 +1,516 @@
+{
+  "version": "2.7.1",
+  "source": "synthetic_physical_metadata",
+  "domain_count": 16,
+  "lens_count": 38,
+  "metric_count": 33,
+  "dimension_count": 26,
+  "relationship_count": 35,
+  "unavailable_domains": [],
+  "domains": [
+    {
+      "id": "orders",
+      "metrics": 4,
+      "dimensions": 6,
+      "lenses": [
+        {
+          "id": "sales_overview",
+          "status": "valid",
+          "operation": "aggregate",
+          "metrics": [
+            "revenue",
+            "aov",
+            "purchasing_customer_count"
+          ],
+          "history": true,
+          "examples": 2
+        },
+        {
+          "id": "order_volume",
+          "status": "valid",
+          "operation": "aggregate",
+          "metrics": [
+            "order_count"
+          ],
+          "history": true,
+          "examples": 2
+        },
+        {
+          "id": "sales_trend",
+          "status": "valid",
+          "operation": "trend",
+          "metrics": [
+            "revenue"
+          ],
+          "history": true,
+          "examples": 2
+        },
+        {
+          "id": "buying_customers",
+          "status": "valid",
+          "operation": "aggregate",
+          "metrics": [
+            "purchasing_customer_count"
+          ],
+          "history": true,
+          "examples": 2
+        },
+        {
+          "id": "channel_mix",
+          "status": "valid",
+          "operation": "distribution",
+          "metrics": [
+            "revenue"
+          ],
+          "history": true,
+          "examples": 2
+        }
+      ]
+    },
+    {
+      "id": "order_items",
+      "metrics": 2,
+      "dimensions": 4,
+      "lenses": [
+        {
+          "id": "item_volume",
+          "status": "valid",
+          "operation": "ranking",
+          "metrics": [
+            "quantity_sold"
+          ],
+          "history": true,
+          "examples": 2
+        },
+        {
+          "id": "item_sales",
+          "status": "valid",
+          "operation": "aggregate",
+          "metrics": [
+            "item_revenue"
+          ],
+          "history": true,
+          "examples": 2
+        }
+      ]
+    },
+    {
+      "id": "products",
+      "metrics": 2,
+      "dimensions": 4,
+      "lenses": [
+        {
+          "id": "product_volume",
+          "status": "valid",
+          "operation": "ranking",
+          "metrics": [
+            "quantity_sold"
+          ],
+          "history": true,
+          "examples": 2
+        },
+        {
+          "id": "product_sales",
+          "status": "valid",
+          "operation": "aggregate",
+          "metrics": [
+            "product_revenue"
+          ],
+          "history": true,
+          "examples": 2
+        },
+        {
+          "id": "product_trend",
+          "status": "valid",
+          "operation": "trend",
+          "metrics": [
+            "quantity_sold"
+          ],
+          "history": true,
+          "examples": 2
+        },
+        {
+          "id": "category_mix",
+          "status": "valid",
+          "operation": "distribution",
+          "metrics": [
+            "quantity_sold"
+          ],
+          "history": true,
+          "examples": 2
+        }
+      ]
+    },
+    {
+      "id": "stores",
+      "metrics": 4,
+      "dimensions": 2,
+      "lenses": [
+        {
+          "id": "store_performance",
+          "status": "valid",
+          "operation": "aggregate",
+          "metrics": [
+            "store_revenue",
+            "store_aov",
+            "purchasing_customer_count"
+          ],
+          "history": true,
+          "examples": 2
+        },
+        {
+          "id": "store_volume",
+          "status": "valid",
+          "operation": "aggregate",
+          "metrics": [
+            "store_order_count"
+          ],
+          "history": true,
+          "examples": 2
+        },
+        {
+          "id": "store_trend",
+          "status": "valid",
+          "operation": "trend",
+          "metrics": [
+            "store_revenue"
+          ],
+          "history": true,
+          "examples": 2
+        }
+      ]
+    },
+    {
+      "id": "customers",
+      "metrics": 2,
+      "dimensions": 2,
+      "lenses": [
+        {
+          "id": "registrations",
+          "status": "valid",
+          "operation": "distribution",
+          "metrics": [
+            "customer_count"
+          ],
+          "history": true,
+          "examples": 2
+        },
+        {
+          "id": "registration_trend",
+          "status": "valid",
+          "operation": "trend",
+          "metrics": [
+            "customer_count"
+          ],
+          "history": true,
+          "examples": 2
+        },
+        {
+          "id": "spend_snapshot",
+          "status": "valid",
+          "operation": "aggregate",
+          "metrics": [
+            "total_spent"
+          ],
+          "history": false,
+          "examples": 2
+        }
+      ]
+    },
+    {
+      "id": "promotions",
+      "metrics": 3,
+      "dimensions": 3,
+      "lenses": [
+        {
+          "id": "voucher_usage",
+          "status": "valid",
+          "operation": "ranking",
+          "metrics": [
+            "voucher_order_count"
+          ],
+          "history": true,
+          "examples": 2
+        },
+        {
+          "id": "voucher_revenue",
+          "status": "valid",
+          "operation": "aggregate",
+          "metrics": [
+            "voucher_revenue"
+          ],
+          "history": true,
+          "examples": 2
+        },
+        {
+          "id": "discount_amount",
+          "status": "valid",
+          "operation": "aggregate",
+          "metrics": [
+            "discount_amount"
+          ],
+          "history": true,
+          "examples": 2
+        },
+        {
+          "id": "voucher_trend",
+          "status": "valid",
+          "operation": "trend",
+          "metrics": [
+            "voucher_order_count"
+          ],
+          "history": true,
+          "examples": 2
+        }
+      ]
+    },
+    {
+      "id": "payments",
+      "metrics": 2,
+      "dimensions": 2,
+      "lenses": [
+        {
+          "id": "payment_mix",
+          "status": "valid",
+          "operation": "distribution",
+          "metrics": [
+            "payment_count"
+          ],
+          "history": true,
+          "examples": 2
+        },
+        {
+          "id": "payment_value",
+          "status": "valid",
+          "operation": "aggregate",
+          "metrics": [
+            "payment_revenue"
+          ],
+          "history": true,
+          "examples": 2
+        },
+        {
+          "id": "payment_trend",
+          "status": "valid",
+          "operation": "trend",
+          "metrics": [
+            "payment_count",
+            "payment_revenue"
+          ],
+          "history": true,
+          "examples": 2
+        }
+      ]
+    },
+    {
+      "id": "delivery",
+      "metrics": 2,
+      "dimensions": 1,
+      "lenses": [
+        {
+          "id": "delivery_volume",
+          "status": "valid",
+          "operation": "ranking",
+          "metrics": [
+            "total_deliveries"
+          ],
+          "history": false,
+          "examples": 2
+        },
+        {
+          "id": "shipper_rating",
+          "status": "valid",
+          "operation": "ranking",
+          "metrics": [
+            "driver_rating"
+          ],
+          "history": false,
+          "examples": 2
+        },
+        {
+          "id": "shipper_relationship",
+          "status": "valid",
+          "operation": "relationship",
+          "metrics": [
+            "total_deliveries",
+            "driver_rating"
+          ],
+          "history": false,
+          "examples": 2
+        }
+      ]
+    },
+    {
+      "id": "inventory",
+      "metrics": 2,
+      "dimensions": 4,
+      "lenses": [
+        {
+          "id": "inventory_positions",
+          "status": "valid",
+          "operation": "aggregate",
+          "metrics": [
+            "stock_quantity"
+          ],
+          "history": false,
+          "examples": 2
+        },
+        {
+          "id": "inventory_alerts",
+          "status": "valid",
+          "operation": "aggregate",
+          "metrics": [
+            "low_stock_count"
+          ],
+          "history": false,
+          "examples": 2
+        }
+      ]
+    },
+    {
+      "id": "product_reviews",
+      "metrics": 2,
+      "dimensions": 2,
+      "lenses": [
+        {
+          "id": "product_feedback",
+          "status": "valid",
+          "operation": "aggregate",
+          "metrics": [
+            "avg_product_rating",
+            "review_count"
+          ],
+          "history": true,
+          "examples": 2
+        }
+      ]
+    },
+    {
+      "id": "store_reviews",
+      "metrics": 2,
+      "dimensions": 2,
+      "lenses": [
+        {
+          "id": "store_feedback",
+          "status": "valid",
+          "operation": "aggregate",
+          "metrics": [
+            "avg_store_rating",
+            "store_review_count"
+          ],
+          "history": true,
+          "examples": 2
+        }
+      ]
+    },
+    {
+      "id": "staff_shifts",
+      "metrics": 2,
+      "dimensions": 4,
+      "lenses": [
+        {
+          "id": "shift_volume",
+          "status": "valid",
+          "operation": "aggregate",
+          "metrics": [
+            "shift_count"
+          ],
+          "history": true,
+          "examples": 2
+        },
+        {
+          "id": "attendance",
+          "status": "valid",
+          "operation": "aggregate",
+          "metrics": [
+            "late_count"
+          ],
+          "history": true,
+          "examples": 2
+        }
+      ]
+    },
+    {
+      "id": "cashier_reconciliation",
+      "metrics": 3,
+      "dimensions": 2,
+      "lenses": [
+        {
+          "id": "cash_difference",
+          "status": "valid",
+          "operation": "aggregate",
+          "metrics": [
+            "total_cash_difference"
+          ],
+          "history": true,
+          "examples": 2
+        },
+        {
+          "id": "cash_activity",
+          "status": "valid",
+          "operation": "aggregate",
+          "metrics": [
+            "system_cash_revenue",
+            "reconciled_shifts"
+          ],
+          "history": true,
+          "examples": 2
+        }
+      ]
+    },
+    {
+      "id": "customer_surveys",
+      "metrics": 1,
+      "dimensions": 2,
+      "lenses": [
+        {
+          "id": "survey_volume",
+          "status": "valid",
+          "operation": "aggregate",
+          "metrics": [
+            "survey_response_count"
+          ],
+          "history": true,
+          "examples": 2
+        }
+      ]
+    },
+    {
+      "id": "wishlist_favorites",
+      "metrics": 1,
+      "dimensions": 2,
+      "lenses": [
+        {
+          "id": "favorite_interest",
+          "status": "valid",
+          "operation": "ranking",
+          "metrics": [
+            "favorite_count"
+          ],
+          "history": true,
+          "examples": 2
+        }
+      ]
+    },
+    {
+      "id": "hourly",
+      "metrics": 1,
+      "dimensions": 3,
+      "lenses": [
+        {
+          "id": "hourly_load",
+          "status": "valid",
+          "operation": "distribution",
+          "metrics": [
+            "hourly_orders"
+          ],
+          "history": true,
+          "examples": 2
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "provider_calls": 0,
+  "live_db_mutations": 0
+}

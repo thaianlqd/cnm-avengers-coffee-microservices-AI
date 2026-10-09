@@ -1,4 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { AnalystDashboard, AnalystDashboardSummary, AnalystViews, AnalystResultTable, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence, AnalystPlanningSummary } from '../components/AnalystDashboardSummary';
+import { AnalysisQualityScore } from '../components/AnalysisQualityScore';
+import { AnalysisClarification } from '../components/AnalysisClarification';
+import { AnalysisMeaning } from '../components/AnalysisMeaning';
+import { AnalysisModules, AnalysisModuleSummary } from '../components/AnalysisModules';
+import { AnalysisInputForm } from '../components/AnalysisInputForm';
+import { analysisInputPayload } from '../utils/analysisInput.mjs';
+import { analysisPlanLabel } from '../utils/analysisPresentation.mjs';
+import { reportHeading } from '../utils/analystDashboardLayout.mjs';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePlatformStore } from '../store/usePlatformStore';
 import { 
   SmoothAreaChart, 
@@ -6,7 +15,7 @@ import {
   BarChart, 
   HorizontalBarChart,
   HeatmapChart,
-  MultiLineChart 
+  MultiLineChart,
 } from '../components/Charts';
 import { AnalyticsSubTab } from '../types';
 import { resolveAiChartPresentation } from '../utils/aiChartConfig.mjs';
@@ -52,13 +61,30 @@ export const AnalyticsView: React.FC = () => {
   // ─── AI ASSISTANT 3-STEP REPORT WORKFLOW STATE ───
   const [aiStep, setAiStep] = useState<1 | 2 | 3>(1);
   const [aiPrompt, setAiPrompt] = useState('');
+  const [aiAnalysisContext, setAiAnalysisContext] = useState('');
+  const [aiAnalysisExpectation, setAiAnalysisExpectation] = useState('');
+  const [activeModule, setActiveModule] = useState<AnalysisModuleSummary | null>(null);
   const [aiTimeRange, setAiTimeRange] = useState('auto');
   const [aiDomain, setAiDomain] = useState('auto');
+  const [aiAnalysisDepth, setAiAnalysisDepth] = useState('deep');
+  const [aiCapabilities, setAiCapabilities] = useState<any>(null);
+  const [aiScope, setAiScope] = useState<any>({ mode: 'auto', filters: [] });
+  const [aiStart, setAiStart] = useState('');
+  const [aiEnd, setAiEnd] = useState('');
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch('/api/ai/capabilities', { signal: controller.signal }).then(r => r.ok ? r.json() : null).then(setAiCapabilities).catch(() => {});
+    return () => controller.abort();
+  }, []);
+  const aiInput = (prompt: string) => analysisInputPayload({ question: prompt, context: aiAnalysisContext, expectation: aiAnalysisExpectation, moduleId: activeModule?.module_id, time: aiTimeRange, start: aiStart, end: aiEnd });
   const [aiStatus, setAiStatus] = useState<any | null>(null);
 
   // Step 1: Pre-analysis proposal state
+  const [pendingClarification, setPendingClarification] = useState<any | null>(null);
   const [aiPlan, setAiPlan] = useState<any | null>(null);
   const [isProposingPlan, setIsProposingPlan] = useState(false);
+  const planningInFlight = useRef(false);
+  const refinementInFlight = useRef(false);
 
   // Step 2: Visual preview report state
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
@@ -91,71 +117,9 @@ export const AnalyticsView: React.FC = () => {
   };
 
   // Helper to sanitize any raw SQL query or expressions leaked into KPI values
-  const sanitizeKpiDisplayValue = (val: any, fallbackRow?: any, card?: any): string => {
-    if (val === null || val === undefined) return '—';
-    if (typeof val === 'object') {
-      if (Array.isArray(val)) {
-        return val.map(v => typeof v === 'object' ? JSON.stringify(v) : String(v)).join(', ');
-      }
-      const parts = Object.entries(val).map(([k, v]) => {
-        const cleanK = k.replace(/_/g, ' ');
-        const cleanV = typeof v === 'number' ? v.toLocaleString('vi-VN') : String(v);
-        return `${cleanK}: ${cleanV}`;
-      });
-      return parts.length > 0 ? parts.join(' • ') : '—';
-    }
-    let s = String(val).trim();
-    if (s === '[object Object]') return '—';
-    if (s.startsWith('(') && s.endsWith(')')) {
-      s = s.slice(1, -1).trim();
-    }
-    const isSql = /^\(?\s*SELECT\b/i.test(s) || s.toUpperCase().includes('FROM SILVER.') || s.length > 55;
-    const placeholderPhrases = [
-      'xem kết quả', 'xem ket qua', 'kết quả', 'ket qua',
-      'chờ kết quả', 'cho ket qua', 'đang tính', 'tự động tính',
-      'chưa có', 'xem chi tiết', 'chờ phân tích', 'placeholder',
-      'chi tiết từng đơn', 'chi tiet tung don', 'từng đơn', 'tung don',
-      'danh sách', 'danh sach', 'chi tiết', 'chi tiet',
-      'tbd', 'undefined', 'n/a', 'none', 'null'
-    ];
-    const sLower = s.toLowerCase();
-    const isPlaceholder = (s.startsWith('<') && s.endsWith('>')) || s.includes('<') || placeholderPhrases.some(p => sLower.includes(p));
-    
-    if (isSql || isPlaceholder) {
-      if (fallbackRow && typeof fallbackRow === 'object') {
-        const entries = Object.entries(fallbackRow);
-        const nameEntry = entries.find(([k]) => /ten|name|san_pham|mon|chi_nhanh/i.test(k));
-        if (nameEntry && nameEntry[1] !== undefined && nameEntry[1] !== null) {
-          const nameVal = String(nameEntry[1]);
-          if (!placeholderPhrases.some(p => nameVal.toLowerCase().includes(p))) {
-            return nameVal;
-          }
-        }
-        // Extract numeric column from row if available
-        const numEntry = entries.find(([k, v]) => typeof v === 'number' && !/id|stt|hang/i.test(k));
-        if (numEntry && typeof numEntry[1] === 'number') {
-          return numEntry[1].toLocaleString('vi-VN');
-        }
-        const firstEntry = entries[0];
-        if (firstEntry && firstEntry[1] !== undefined && firstEntry[1] !== null) {
-          const firstVal = firstEntry[1];
-          if (!placeholderPhrases.some(p => String(firstVal).toLowerCase().includes(p))) {
-            return typeof firstVal === 'number' ? firstVal.toLocaleString('vi-VN') : String(firstVal);
-          }
-        }
-      }
-      const lbl = (card?.label || '').toLowerCase();
-      const u = (card?.unit || '').toLowerCase();
-      if (lbl.includes('đánh giá') || lbl.includes('sao') || lbl.includes('rating') || u.includes('sao')) return '4.8';
-      if (lbl.includes('tỷ lệ') || u.includes('%')) return '98.5%';
-      if (lbl.includes('chi nhánh') || lbl.includes('cửa hàng')) return 'Chi nhánh dẫn đầu';
-      if (lbl.includes('món') || lbl.includes('sản phẩm')) return 'Món bán chạy nhất';
-      return '—';
-    }
-    if (!isNaN(Number(s)) && s !== '') {
-      return Number(s).toLocaleString('vi-VN');
-    }
-    return s;
+  const sanitizeKpiDisplayValue = (val: any, _fallbackRow?: any, _card?: any): string => {
+    if (typeof val === 'number' && Number.isFinite(val)) return val.toLocaleString('vi-VN');
+    return '—';
   };
 
   const aiPromptTemplates = [
@@ -187,6 +151,7 @@ export const AnalyticsView: React.FC = () => {
 
   // Helper to reset and start a fresh question
   const handleResetToNewPrompt = () => {
+    setPendingClarification(null);
     setAiPrompt('');
     setAiPlan(null);
     setGeneratedReport(null);
@@ -207,38 +172,48 @@ export const AnalyticsView: React.FC = () => {
     if (customPrompt) {
       setAiPrompt(customPrompt);
     }
+    if (planningInFlight.current) return;
+    let submittedInput: any;
+    try { submittedInput = aiInput(promptToSend); } catch (error: any) { showToast(error.message, 'info'); return; }
+    planningInFlight.current = true;
     setIsProposingPlan(true);
+    setGeneratedReport(null);
     setAiPlan(null);
     setAiStep(2); // Immediately advance to Step 2 so user sees progress
     try {
       const response = await fetch('/api/ai/propose-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: promptToSend,
-          context: '',
-          time_range: { mode: aiTimeRange, start: null, end: null },
-          domain: aiDomain,
-        }),
+        body: JSON.stringify(submittedInput),
       });
       if (!response.ok) {
         throw new Error('Lỗi phản hồi từ máy chủ AI khi đề xuất kế hoạch');
       }
       const data = await response.json();
-      if (data.status === 'needs_clarification') {
+      if (['needs_clarification', 'error'].includes(data.status)) {
         setGeneratedReport(data);
         setAiStep(3);
-        showToast('Trợ lý cần bạn làm rõ yêu cầu phân tích', 'info');
-      } else {
+        showToast(data.message || 'Yêu cầu cần được xem lại', data.status === 'error' ? 'error' : 'info');
+      } else if (data.status === 'proposal_ready') {
         const planObj = data.proposal || data;
-        setAiPlan({ ...planObj, prompt: data.prompt || promptToSend });
+        setAiPlan({ ...planObj, submittedInput, prompt: data.prompt || promptToSend, session_id: data.session_id, interpretation: data.interpretation, analysis_spec: data.analysis_spec, diagnostics: data.diagnostics });
         setAiStep(2);
         showToast('Trợ lý AI đã đề xuất kế hoạch báo cáo. Vui lòng duyệt trước khi thực thi!', 'info');
+      } else {
+        throw new Error(data.message || 'Kế hoạch chưa vượt qua kiểm chứng');
       }
     } catch (err: any) {
       console.error('Lỗi đề xuất kế hoạch:', err);
-      showToast(err.message || 'Không thể tạo đề xuất phân tích', 'error');
+      const message = 'Chưa nhận được phản hồi từ máy chủ phân tích. Hãy kiểm tra kết nối và trạng thái dịch vụ; câu hỏi của bạn được giữ lại.';
+      setGeneratedReport({ status: 'error', outcome: 'SYSTEM_ERROR', message,
+        issue: { category: 'SYSTEM_UNAVAILABLE', title: 'Mất kết nối với máy chủ phân tích',
+          what_is_known: [], what_is_missing: [message],
+          resolution_guidance: 'Giữ nguyên câu hỏi và thử lại sau khi kết nối được khôi phục.',
+          suggested_actions: [{ type: 'retry', label: 'Thử lại' }] } });
+      setAiStep(3);
+      showToast(message, 'error');
     } finally {
+      planningInFlight.current = false;
       setIsProposingPlan(false);
     }
   };
@@ -257,10 +232,13 @@ export const AnalyticsView: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: promptToSend,
-          context: '',
-          time_range: { mode: aiTimeRange, start: null, end: null },
-          domain: aiDomain,
+          ...(aiPlan?.submittedInput || aiInput(promptToSend)),
+          session_id: aiPlan?.prompt === promptToSend ? aiPlan?.session_id : null,
+          accept_partial_scope: Boolean(aiPlan?.partial_scope),
+          proposal_revision: aiPlan?.revision,
+          intent_fingerprint: aiPlan?.semantic_intent_fingerprint,
+          plan_fingerprint: aiPlan?.resolved_plan_fingerprint,
+          catalog_fingerprint: aiPlan?.catalog_fingerprint,
         }),
       });
       if (!response.ok) {
@@ -269,9 +247,9 @@ export const AnalyticsView: React.FC = () => {
       const data = await response.json();
       setGeneratedReport(data);
       setAiStep(3);
-      if (data.status === 'needs_clarification') {
-        showToast('Trợ lý cần bạn làm rõ yêu cầu phân tích', 'info');
-      } else {
+      if (['needs_clarification', 'error'].includes(data.status)) {
+        showToast(data.message || 'Yêu cầu cần được xem lại', data.status === 'error' ? 'error' : 'info');
+      } else if (data.status === 'success') {
         const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
         setChatHistory(prev => [{ prompt: promptToSend, report: data, time: timeStr }, ...prev.filter(p => p.prompt !== promptToSend)].slice(0, 8));
         setReportVersions([
@@ -287,6 +265,8 @@ export const AnalyticsView: React.FC = () => {
           }
         ]);
         showToast('Phân tích dữ liệu thành công! Bản xem trực quan đã sẵn sàng.', 'success');
+      } else {
+        throw new Error(data.message || 'Dữ liệu chưa vượt qua kiểm chứng');
       }
     } catch (err: any) {
       console.error('Lỗi sinh báo cáo AI:', err);
@@ -298,7 +278,7 @@ export const AnalyticsView: React.FC = () => {
   };
 
   // ── Follow-up / Refine report iteratively based on user feedback ──
-  const handleFollowUpRefine = async (refinementText?: string, targetRep?: any) => {
+  const handleFollowUpRefine = async (refinementText?: string, targetRep?: any, visualChanges?: Array<{ chart_id: string; chart_type: string }>) => {
     const repToRefine = targetRep || generatedReport || viewingSavedReport;
     const text = (refinementText || followUpPrompt).trim();
     if (!text) {
@@ -310,25 +290,22 @@ export const AnalyticsView: React.FC = () => {
       return;
     }
 
+    if (refinementInFlight.current) return;
     const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     const userMsg = { id: `user-${Date.now()}`, sender: 'user' as const, text, time: timeStr };
     setRefinementChat(prev => [...prev, userMsg]);
     setFollowUpPrompt('');
+    refinementInFlight.current = true;
     setIsRefining(true);
 
     try {
-      const historyPayload = refinementChat.map(c => ({
-        role: c.sender === 'user' ? 'user' : 'assistant',
-        content: c.text
-      }));
-
       const response = await fetch('/api/ai/refine-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          current_report: repToRefine,
+          current_report: { revision: repToRefine.revision },
           feedback: text,
-          conversation_history: historyPayload,
+          visual_changes: visualChanges || [],
           domain: aiDomain,
           session_id: repToRefine?.session_id || null,
         }),
@@ -337,8 +314,10 @@ export const AnalyticsView: React.FC = () => {
         throw new Error('Lỗi khi tinh chỉnh báo cáo từ máy chủ AI');
       }
       const data = await response.json();
-      if (data.status === 'needs_clarification') {
-        const replyText = data.assistant_reply || 'Trợ lý cần bạn làm rõ thêm yêu cầu tinh chỉnh.';
+      if (!['success', 'needs_clarification', 'error'].includes(data.status)) throw new Error(data.message || 'Bản sửa chưa vượt qua kiểm chứng');
+      if (['needs_clarification', 'error'].includes(data.status)) {
+        setPendingClarification({ ...data, feedback: text });
+        const replyText = data.assistant_reply || data.message || 'Trợ lý cần bạn làm rõ thêm yêu cầu tinh chỉnh.';
         setRefinementChat(prev => [...prev, {
           id: `ai-${Date.now()}`,
           sender: 'assistant',
@@ -346,7 +325,8 @@ export const AnalyticsView: React.FC = () => {
           time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
         }]);
         showToast(replyText, 'info');
-      } else {
+      } else if (data.status === 'success') {
+        setPendingClarification(null);
         setGeneratedReport(data);
         if (viewingSavedReport) {
           setViewingSavedReport(data);
@@ -377,10 +357,11 @@ export const AnalyticsView: React.FC = () => {
       setRefinementChat(prev => [...prev, {
         id: `ai-err-${Date.now()}`,
         sender: 'assistant',
-        text: `⚠️ Gặp sự cố khi tinh chỉnh: ${err.message || 'Lỗi không xác định'}. Vui lòng thử lại với yêu cầu ngắn gọn hơn.`,
+        text: `⚠️ Gặp sự cố khi tinh chỉnh: ${err.message || 'Lỗi không xác định'}. Vui lòng thử lại.`,
         time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
       }]);
     } finally {
+      refinementInFlight.current = false;
       setIsRefining(false);
     }
   };
@@ -398,6 +379,7 @@ export const AnalyticsView: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          revision: currentRep.revision,
           session_id: currentRep.session_id || null,
           prompt: currentRep.prompt || '',
           rating,
@@ -513,7 +495,7 @@ export const AnalyticsView: React.FC = () => {
     }
   };
 
-  const handleLoadSavedReportToView = (report: any) => {
+  const handleLoadSavedReportToView = async (report: any) => {
     let config = report.module_config;
     if (typeof config === 'string') {
       try {
@@ -551,6 +533,12 @@ export const AnalyticsView: React.FC = () => {
     if (typeof reportData.sql === 'string' && reportData.sql.startsWith('{')) {
       try { reportData.sql = JSON.parse(reportData.sql); } catch (e) {}
     }
+    // Always recompute from saved rows and current metadata; never trust a stored score.
+    reportData.quality_assessment = { status: 'not_scored', reason: 'Chưa thể kiểm chứng lại báo cáo lưu trữ.' };
+    try {
+      const res = await fetch('/api/ai/verify-report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(reportData) });
+      if (res.ok) reportData.quality_assessment = (await res.json()).quality_assessment;
+    } catch {}
     setViewingSavedReport(reportData);
     const viewTime = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     setReportVersions([
@@ -601,6 +589,39 @@ export const AnalyticsView: React.FC = () => {
         ai_summary: Array.isArray(generatedReport.ai_insights) ? generatedReport.ai_insights.join(' | ') : '',
         created_by: 'Trợ lý AI Data Platform',
         module_config: {
+          status: 'success',
+          outcome: generatedReport.outcome,
+          analysis_components: generatedReport.analysis_components,
+          semantic_intent: generatedReport.semantic_intent,
+          resolved_requirement_coverage: generatedReport.resolved_requirement_coverage,
+          request_anchors: generatedReport.request_anchors,
+          derived_feature_bindings: generatedReport.derived_feature_bindings,
+          provenance: generatedReport.provenance,
+          sql_by_query: generatedReport.sql_by_query,
+          quality_context: generatedReport.quality_context,
+          quality_limitations: generatedReport.quality_limitations,
+          dashboard_plan_input: generatedReport.dashboard_plan_input,
+          quality_assessment: generatedReport.quality_assessment,
+          pipeline_version: generatedReport.pipeline_version,
+          analysis_spec: generatedReport.analysis_spec,
+          interpretation: generatedReport.interpretation,
+          domain_summary: generatedReport.domain_summary,
+          analytical_queries: generatedReport.analytical_queries,
+          analysis_explanation: generatedReport.analysis_explanation,
+          dashboard_plan: generatedReport.dashboard_plan,
+          dashboard_description: generatedReport.dashboard_description,
+          completion_status: generatedReport.completion_status,
+          grounded_analysis_spec: generatedReport.grounded_analysis_spec,
+          query_plans: generatedReport.query_plans,
+          schema_fingerprint: generatedReport.schema_fingerprint,
+          result_contracts: generatedReport.result_contracts,
+          result_sets: generatedReport.result_sets,
+          capacity: generatedReport.capacity,
+          evidence_ref: generatedReport.evidence_ref,
+          visualization_specs: generatedReport.visualization_specs,
+          diagnostics: generatedReport.diagnostics,
+          session_id: generatedReport.session_id,
+          revision: generatedReport.revision,
           prompt: generatedReport.prompt,
           context: generatedReport.context,
           interpreted_request: generatedReport.interpreted_request,
@@ -688,7 +709,7 @@ export const AnalyticsView: React.FC = () => {
     } else if (activeTab === 'saved_reports') {
       fetchSavedReports();
     }
-  }, [activeTab]);
+  }, [activeTab, isProposingPlan, isGeneratingAi]);
 
   // Common Palette
   const palette = ['#059669', '#0284c7', '#d97706', '#dc2626', '#8b5cf6', '#64748b'];
@@ -943,6 +964,7 @@ export const AnalyticsView: React.FC = () => {
     if (!rep) return null;
     return (
       <div className="space-y-6">
+        {pendingClarification && <div className="space-y-2"><AnalysisClarification response={pendingClarification} onChoice={(answer) => handleFollowUpRefine(`${pendingClarification.feedback}. ${answer}`, rep)} onEdit={() => { setFollowUpPrompt(pendingClarification.feedback || ''); setPendingClarification(null); }} /><p className="text-xs text-amber-800">Yêu cầu tinh chỉnh chưa được áp dụng. Bên dưới vẫn là báo cáo đã hoàn tất trước đó.</p></div>}
         {/* Report Header Bar - Spacious Responsive Layout */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4">
           {/* Tier 1: Meta, Status & Quick Feedback */}
@@ -967,7 +989,7 @@ export const AnalyticsView: React.FC = () => {
               ) : (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Báo cáo hoàn tất
+                  {rep.completion_status === 'partial' ? 'Kết quả đã kiểm chứng · chưa đủ toàn bộ kế hoạch' : 'Báo cáo hoàn tất'}
                 </span>
               )}
               <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
@@ -1016,10 +1038,11 @@ export const AnalyticsView: React.FC = () => {
           {/* Tier 2: Wide Uncramped Title & Context */}
           <div className="space-y-1.5 max-w-5xl">
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug">
-              {rep.title || 'Báo Cáo Phân Tích Dữ Liệu Tự Động'}
+              {reportHeading(rep)}
             </h2>
+            {!!rep.provenance?.semantic_history?.length && <p className="text-xs text-slate-600">Đã áp dụng tinh chỉnh: {rep.provenance.semantic_history[rep.provenance.semantic_history.length - 1].feedback}</p>}
             <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-              {rep.description || rep.interpreted_request || 'Bản phân tích chuyên sâu tự động lưu trữ trên hệ thống.'}
+              {rep.analysis_spec ? 'Các góc nhìn từ dữ liệu trong phạm vi bạn đã chọn.' : rep.description || rep.interpreted_request || 'Bản phân tích chuyên sâu tự động lưu trữ trên hệ thống.'}
             </p>
           </div>
 
@@ -1111,6 +1134,12 @@ export const AnalyticsView: React.FC = () => {
           </div>
         </div>
 
+        {rep.analysis_spec ? <>
+          {rep.prompt && reportHeading(rep) !== rep.prompt && <details className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600"><summary className="cursor-pointer font-medium">Câu hỏi phân tích đầy đủ</summary><p className="mt-3 leading-relaxed">{rep.prompt}</p></details>}
+          <AnalysisMeaning interpretation={rep.interpretation} compact />
+          {showSqlCode && (rep.sql || rep.sql_query) && <pre className="bg-slate-900 text-slate-200 p-4 rounded-xl text-xs overflow-auto">{rep.sql ? Object.entries(rep.sql).map(([name, sql]) => `-- ${name}\n${sql}`).join('\n\n') : rep.sql_query}</pre>}
+          <AnalystDashboard report={rep} editing={isRefining} onChartTypeChange={rep.session_id ? (id, type) => handleFollowUpRefine('Đổi cách trình bày biểu đồ', rep, [{ chart_id: id, chart_type: type }]) : undefined} />
+        </> : <>
         {/* SECTION: Data Warnings / Sanity Alerts (Phase 3.3) */}
         {rep.data_warnings && rep.data_warnings.length > 0 && (
           <div className="bg-amber-50/90 border border-amber-200/90 rounded-2xl p-4 shadow-2xs flex items-start gap-3 text-amber-900">
@@ -1134,7 +1163,7 @@ export const AnalyticsView: React.FC = () => {
             Tóm tắt điều hành
           </div>
           <div className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal whitespace-pre-line">
-            {rep.executive_summary || 'Hệ thống đã hoàn tất phân tích toàn diện tập dữ liệu chỉ định trên kho dữ liệu Silver Lake của Avengers Coffee.'}
+            {rep.executive_summary || 'Chưa có tóm tắt được hỗ trợ bởi bằng chứng.'}
           </div>
         </div>
 
@@ -1172,9 +1201,7 @@ export const AnalyticsView: React.FC = () => {
             <h3 className="text-base font-bold text-slate-800 tracking-tight">
               1. Dashboard tự động sinh
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Dashboard được AI Agent tự chọn theo câu hỏi phân tích: KPI tăng trưởng, so sánh danh mục, cơ cấu và vùng insight.
-            </p>
+            <AnalystDashboardSummary report={rep} />
           </div>
 
           {/* KPI Cards Row */}
@@ -1206,7 +1233,7 @@ export const AnalyticsView: React.FC = () => {
                 );
               })}
             </div>
-          ) : rep.kpis && (
+          ) : !rep.analysis_spec && rep.kpis && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs">
                 <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
@@ -1252,7 +1279,7 @@ export const AnalyticsView: React.FC = () => {
                   Tỷ lệ hoàn thành đơn
                 </div>
                 <div className="text-xl sm:text-2xl font-black text-emerald-600 mt-1">
-                  {rep.kpis.completion_rate ? `${Number(rep.kpis.completion_rate)}%` : '98.5%'}
+                  {rep.kpis.completion_rate != null ? `${Number(rep.kpis.completion_rate)}%` : '—'}
                 </div>
                 <div className="text-xs text-emerald-600 font-medium mt-1">
                   Đạt tiêu chuẩn vận hành
@@ -1261,117 +1288,15 @@ export const AnalyticsView: React.FC = () => {
             </div>
           )}
 
-          {/* Dynamic Visual Charts Grid */}
-          {rep.charts && rep.charts.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-              {rep.charts.map((chart: any, cIdx: number) => {
-                const totalCharts = rep.charts.length;
-                const isHeatmap = chart.chart_type === 'heatmap';
-                const isMultiLine = chart.chart_type === 'multi_line' || chart.chart_type === 'multiline';
-                const spanClass = (chart.col_span === 12 || isHeatmap || isMultiLine || totalCharts === 1 || (totalCharts === 3 && cIdx === 0) || (totalCharts === 5 && cIdx === 2))
-                  ? 'col-span-1 lg:col-span-2'
-                  : 'col-span-1';
-
-                const chartTypeBadge = isHeatmap
-                  ? 'Heatmap 2D'
-                  : isMultiLine
-                    ? 'Đa đường (Theo loại)'
-                    : chart.chart_type === 'donut'
-                      ? 'Cơ cấu'
-                      : chart.chart_type === 'horizontal_bar'
-                        ? 'Xếp hạng'
-                        : chart.chart_type === 'bar'
-                          ? 'Cột'
-                          : 'Xu hướng';
-
-                return (
-                  <div key={chart.id || cIdx} className={`${spanClass} bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between min-h-[380px]`}>
-                    <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-semibold text-slate-900">
-                            {chart.title}
-                          </h4>
-                          <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full border ${
-                            isHeatmap
-                              ? 'bg-amber-50 text-amber-700 border-amber-200/70'
-                              : isMultiLine
-                                ? 'bg-sky-50 text-sky-700 border-sky-200/70'
-                                : 'bg-slate-100 text-slate-600 border-slate-200'
-                          }`}>
-                            {chartTypeBadge}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-400 mt-0.5">
-                          {chart.purpose || 'Trực quan hóa dữ liệu'}
-                        </p>
-                      </div>
-                      {chart.unit && (
-                        <span className="text-[11px] font-mono text-slate-400">
-                          Đơn vị: {chart.unit}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex-1 w-full pt-2 flex items-center justify-center">
-                      {isHeatmap ? (
-                        <HeatmapChart
-                          data={chart.data || []}
-                          valueSuffix={chart.unit ? ` ${chart.unit}` : ' đơn'}
-                        />
-                      ) : isMultiLine ? (
-                        <MultiLineChart
-                          data={chart.data || []}
-                          seriesKeys={chart.series_keys}
-                          valueSuffix={chart.unit ? ` ${chart.unit}` : ''}
-                        />
-                      ) : chart.chart_type === 'horizontal_bar' ? (
-                        <HorizontalBarChart
-                          data={(chart.data || []).map((d: any, idx: number) => ({
-                            label: d.label || d.name || 'Mục',
-                            value: Number(d.value || 0),
-                            rank: idx + 1,
-                            color: palette[idx % palette.length],
-                          }))}
-                          valueSuffix={chart.unit ? ` ${chart.unit}` : ''}
-                        />
-                      ) : chart.chart_type === 'donut' ? (
-                        <DonutChart
-                          data={(chart.data || []).map((d: any, idx: number) => ({
-                            label: d.label || d.name || 'Mục',
-                            value: Number(d.value || 0),
-                            color: palette[idx % palette.length],
-                          }))}
-                          centerLabel="Cơ cấu"
-                          valueSuffix={chart.unit ? ` ${chart.unit}` : ''}
-                          size={135}
-                        />
-                      ) : chart.chart_type === 'bar' ? (
-                        <BarChart
-                          data={(chart.data || []).map((d: any) => ({
-                            label: String(d.label || d.name || '').slice(-14),
-                            value: Number(d.value || 0),
-                          }))}
-                          height={280}
-                          valueSuffix={chart.unit ? ` ${chart.unit}` : ''}
-                        />
-                      ) : (
-                        <SmoothAreaChart
-                          data={(chart.data || []).map((d: any) => ({
-                            label: String(d.label || d.name || '').slice(-8).replace('/', '-'),
-                            value: Number(d.value || 0),
-                          }))}
-                          height={280}
-                          valueSuffix={chart.unit ? ` ${chart.unit}` : ''}
-                        />
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : null}
+          <AnalystViews charts={rep.charts || []} editing={isRefining} onChartTypeChange={rep.session_id ? (id, type) => handleFollowUpRefine('Đổi cách trình bày biểu đồ', rep, [{ chart_id: id, chart_type: type }]) : undefined} />
         </div>
+
+        <AnalysisQualityScore assessment={rep.quality_assessment} />
+
+        {rep.result_sets && Object.entries(rep.result_sets).slice(1).map(([queryId, data]: [string, any]) => (
+          <AnalystResultTable key={queryId} result={data} sessionId={rep.session_id} queryId={queryId} title={rep.analysis_explanation?.find((op: any) => op.query_id === queryId)?.subject} />
+        ))}
+        <AnalystEvidence report={rep} />
 
         {/* SECTION 2: Các phát hiện chính */}
         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
@@ -1380,7 +1305,7 @@ export const AnalyticsView: React.FC = () => {
               2. Các phát hiện chính
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Các tín hiệu định lượng nổi bật được trích xuất từ dữ liệu kèm theo nhận định đánh giá từ AI Agent.
+              Các tín hiệu định lượng nổi bật được tính từ kết quả đã kiểm chứng, kèm phạm vi và bằng chứng.
             </p>
           </div>
 
@@ -1400,7 +1325,7 @@ export const AnalyticsView: React.FC = () => {
                     return (
                       <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
                         <td className="px-4 py-3 font-semibold text-slate-800">
-                          {item.finding || item.name || `Phát hiện ${idx + 1}`}
+                          {typeof item === 'string' ? item : item.finding || item.name || `Phát hiện ${idx + 1}`}
                         </td>
                         <td className="px-4 py-3 font-mono font-bold text-emerald-700 whitespace-nowrap">
                           {displayVal}
@@ -1411,6 +1336,8 @@ export const AnalyticsView: React.FC = () => {
                       </tr>
                     );
                   })
+                ) : rep.analysis_spec ? (
+                  <tr><td colSpan={3} className="px-4 py-3 text-slate-500">Chưa có phát hiện đủ bằng chứng.</td></tr>
                 ) : (
                   <>
                     <tr className="hover:bg-slate-50/60 transition-colors">
@@ -1434,7 +1361,7 @@ export const AnalyticsView: React.FC = () => {
                     <tr className="hover:bg-slate-50/60 transition-colors">
                       <td className="px-4 py-3 font-semibold text-slate-800">Hiệu suất vận hành</td>
                       <td className="px-4 py-3 font-mono font-bold text-emerald-700 whitespace-nowrap">
-                        {rep.kpis?.completion_rate ? `${rep.kpis.completion_rate}%` : '98.5%'}
+                        {rep.kpis?.completion_rate != null ? `${rep.kpis.completion_rate}%` : '—'}
                       </td>
                       <td className="px-4 py-3 text-slate-600 leading-relaxed">
                         Tỷ lệ hoàn thành đơn cao, quy trình pha chế và giao hàng đáp ứng cam kết dịch vụ.
@@ -1448,7 +1375,8 @@ export const AnalyticsView: React.FC = () => {
         </div>
 
         {/* SECTION 3: Phân tích Dữ liệu Chi tiết */}
-        {rep.table_data && (
+        {rep.table_data?.artifact_ref && <AnalystResultTable result={rep.table_data} title={rep.table_data.title} sessionId={rep.session_id} queryId={rep.table_data.query_id} />}
+        {rep.table_data && !rep.table_data.artifact_ref && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
@@ -1475,7 +1403,7 @@ export const AnalyticsView: React.FC = () => {
                   )}
                 </div>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  Tổng cộng {rep.table_data.rows?.length || 0} bản ghi dữ liệu hợp lệ trích xuất từ tầng Silver
+                  Hiển thị {rep.table_data.rows?.length || 0}/{rep.table_data.total_rows ?? rep.table_data.rows?.length ?? 0} nhóm · Chỉ số phân tích dùng toàn bộ phạm vi
                 </p>
               </div>
 
@@ -1507,7 +1435,7 @@ export const AnalyticsView: React.FC = () => {
                   <tr>
                     {(rep.table_data.columns || []).map((col: string, idx: number) => (
                       <th key={idx} className="px-4 py-2.5 whitespace-nowrap">
-                        {col}
+                        {rep.table_data.column_labels?.[col] || col}
                       </th>
                     ))}
                   </tr>
@@ -1545,19 +1473,19 @@ export const AnalyticsView: React.FC = () => {
         )}
 
         {/* SECTION 4: Insight được AI Agent suy luận */}
-        {rep.ai_insights && Array.isArray(rep.ai_insights) && rep.ai_insights.length > 0 && (
+        {rep.ai_insights && Array.isArray(rep.ai_insights) && rep.ai_insights.some((insight: any) => typeof insight !== 'string' || !(rep.key_findings || []).some((f: any) => f.finding === insight)) && (
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
             <div className="border-b border-slate-100 pb-2">
               <h3 className="text-base font-bold text-slate-800 tracking-tight">
-                4. Insight được AI Agent suy luận
+                4. Nhận định bổ sung
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Đánh giá sâu về nguyên nhân cốt lõi, tương quan dữ liệu và hàm ý kinh doanh cho chuỗi Avengers Coffee.
+                Các nhận định bổ sung gắn với kết quả kiểm chứng; cần phân tích thêm để kết luận nguyên nhân.
               </p>
             </div>
 
             <div className="space-y-3.5">
-              {rep.ai_insights.map((insight: any, idx: number) => {
+              {rep.ai_insights.filter((insight: any) => typeof insight !== 'string' || !(rep.key_findings || []).some((f: any) => f.finding === insight)).map((insight: any, idx: number) => {
                 const numStr = String(idx + 1).padStart(2, '0');
                 let title = `Nhận định chiến lược ${numStr}`;
                 let content = typeof insight === 'object' && insight !== null
@@ -1590,51 +1518,16 @@ export const AnalyticsView: React.FC = () => {
           </div>
         )}
 
-        {/* SECTION 5 & 6: Kết luận tự động & Khuyến nghị */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-2">
-            <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
-              5. Kết luận phân tích
-            </h3>
-            <p className="text-xs text-slate-600 leading-relaxed pt-1">
-              {rep.conclusions || rep.executive_summary || 'Các chỉ số ghi nhận xu hướng ổn định, dữ liệu đồng bộ chính xác giữa tầng Silver Lake và hệ thống vận hành chuỗi.'}
-            </p>
-          </div>
+        <AnalystOptionalNarrative report={rep} />
 
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-2">
-            <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
-              6. Khuyến nghị vận hành
-            </h3>
-            {rep.recommendations?.length > 0 ? (
-              <ul className="text-xs text-slate-600 space-y-2 pt-1">
-                {rep.recommendations.map((rec: any, rIdx: number) => {
-                  const text = typeof rec === 'object' && rec !== null
-                    ? ((rec as any).recommendation || (rec as any).text || Object.values(rec)[0] || '')
-                    : String(rec);
-                  return (
-                    <li key={rIdx} className="leading-relaxed flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 shrink-0"></span>
-                      <span>{text}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <p className="text-xs text-slate-500 pt-1">
-                Tiếp tục theo dõi các chỉ số AOV, tỷ lệ hoàn tất đơn và phân bổ doanh thu chi nhánh theo tuần.
-              </p>
-            )}
-          </div>
-        </div>
+        </>}
 
         {/* Góp ý chỉnh sửa báo cáo */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+        <details className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs">
+          <summary className="cursor-pointer text-sm font-semibold text-slate-700">Điều chỉnh phân tích</summary>
           <div className="mb-3">
-            <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
-              Góp ý chỉnh sửa báo cáo
-            </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Nhập yêu cầu nếu bạn muốn AI điều chỉnh lại số liệu, loại biểu đồ hoặc nội dung báo cáo.
+              Nhập yêu cầu để đổi phạm vi, cách nhóm hoặc cách trình bày.
             </p>
           </div>
 
@@ -1703,7 +1596,7 @@ export const AnalyticsView: React.FC = () => {
               ))}
             </div>
           )}
-        </div>
+        </details>
 
         {/* Footnote */}
         <div className="text-[11px] text-slate-400 text-center py-2 border-t border-slate-100">
@@ -2583,6 +2476,7 @@ export const AnalyticsView: React.FC = () => {
           {/* ──────────────────────────────────────────────────────────── */}
           {/* ── BƯỚC 1: ĐẶT CÂU HỎI & CHỌN GỢI Ý PHÂN TÍCH ── */}
           {/* ──────────────────────────────────────────────────────────── */}
+          <AnalysisModules active={activeModule} report={generatedReport} disabled={isProposingPlan || isGeneratingAi || isRefining} rerunTime={aiTimeRange === 'custom' ? (aiStart && aiEnd && aiStart <= aiEnd ? { mode: 'custom', start: aiStart, end: aiEnd } : null) : { mode: aiTimeRange }} onSelect={setActiveModule} onUpdate={inputs => { setAiPrompt(inputs.original_question || ''); setAiAnalysisContext(inputs.analysis_context || ''); setAiAnalysisExpectation(inputs.analysis_expectation || ''); }} onEdit={() => setAiStep(1)} onReport={data => { setGeneratedReport(data); setAiStep(3); if (data.status === 'success') { setReportVersions([{ version: data.revision || 1, label: 'Chạy lại bài toán', report: data, time: new Date().toLocaleTimeString('vi-VN') }]); setActiveVersionIndex(0); setRefinementChat([]); } }} />
           {aiStep === 1 && (
             <div className="space-y-6">
               <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
@@ -2596,9 +2490,10 @@ export const AnalyticsView: React.FC = () => {
                       Truy vấn ngôn ngữ tự nhiên và tự động lập kế hoạch báo cáo chuyên sâu
                     </p>
                   </div>
-                  <div className="flex items-center space-x-2 text-xs text-slate-500 self-start sm:self-auto">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span className="text-[11px] font-medium">Hệ thống AI sẵn sàng</span>
+                  <div role="status" className="text-[11px] text-slate-500 self-start sm:self-auto space-y-1">
+                    <p>Kho dữ liệu: {aiStatus?.system_readiness?.warehouse_available === true ? 'Sẵn sàng' : aiStatus?.system_readiness?.warehouse_available === false ? 'Chưa sẵn sàng' : 'Chưa kiểm tra'}</p>
+                    <p>Semantic catalog: {aiStatus?.system_readiness?.catalog_ready ? 'Sẵn sàng' : 'Chưa sẵn sàng'}</p>
+                    <p>AI provider: {({ available: 'Sẵn sàng', degraded: 'Không ổn định', unavailable: 'Chưa khả dụng', unknown: 'Chưa kiểm tra' } as any)[aiStatus?.provider_status?.state || 'unknown']}</p>
                   </div>
                 </div>
 
@@ -2626,57 +2521,8 @@ export const AnalyticsView: React.FC = () => {
 
                 {/* Smart Omnibox Chat Input */}
                 <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 focus-within:bg-white focus-within:border-slate-400 focus-within:ring-2 focus-within:ring-slate-200/60 transition-all">
-                  <textarea
-                    value={aiPrompt}
-                    onChange={(e) => setAiPrompt(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        if (!isProposingPlan && !isGeneratingAi && aiPrompt.trim()) {
-                          handleProposePlan();
-                        }
-                      }
-                    }}
-                    placeholder="Nhập câu hỏi phân tích (ví dụ: Đánh giá tăng trưởng doanh thu theo khu vực, hoặc Top 5 món bán chạy nhất)..."
-                    rows={3}
-                    className="w-full text-xs sm:text-sm bg-transparent outline-none text-slate-800 font-normal resize-none placeholder-slate-400 leading-relaxed"
-                  />
-
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-slate-200/60 mt-3">
-                    {/* Filters */}
-                    <div className="flex flex-wrap items-center gap-2.5">
-                      <div className="flex items-center bg-white border border-slate-200/90 rounded-xl px-3 py-1.5 text-xs text-slate-600 shadow-2xs">
-                        <span className="text-[11px] text-slate-400 mr-2 font-medium">Thời gian:</span>
-                        <select
-                          value={aiTimeRange}
-                          onChange={(e) => setAiTimeRange(e.target.value)}
-                          className="bg-transparent text-xs font-medium text-slate-700 outline-none cursor-pointer"
-                        >
-                          <option value="auto">Tự động nhận diện</option>
-                          <option value="today">Hôm nay</option>
-                          <option value="7d">7 ngày qua</option>
-                          <option value="30d">30 ngày qua</option>
-                        </select>
-                      </div>
-
-                      <div className="flex items-center bg-white border border-slate-200/90 rounded-xl px-3 py-1.5 text-xs text-slate-600 shadow-2xs">
-                        <span className="text-[11px] text-slate-400 mr-2 font-medium">Phạm vi:</span>
-                        <select
-                          value={aiDomain}
-                          onChange={(e) => setAiDomain(e.target.value)}
-                          className="bg-transparent text-xs font-medium text-slate-700 outline-none cursor-pointer"
-                        >
-                          <option value="auto">Toàn hệ thống (Silver)</option>
-                          <option value="products">Sản phẩm & Thực đơn</option>
-                          <option value="orders">Doanh thu & Đơn hàng</option>
-                          <option value="stores">Chi nhánh cửa hàng</option>
-                          <option value="customers">Khách hàng & Hội viên</option>
-                          <option value="payments">Giao dịch thanh toán</option>
-                          <option value="delivery">Tài xế giao hàng</option>
-                        </select>
-                      </div>
-                    </div>
-
+                  <AnalysisInputForm prompt={aiPrompt} time={aiTimeRange} context={aiAnalysisContext} expectation={aiAnalysisExpectation} start={aiStart} end={aiEnd} disabled={isProposingPlan || isGeneratingAi} onPrompt={setAiPrompt} onTime={setAiTimeRange} onContext={setAiAnalysisContext} onExpectation={setAiAnalysisExpectation} onStart={setAiStart} onEnd={setAiEnd} onSubmit={() => handleProposePlan()} />
+                  <div className="flex justify-end gap-3 pt-3 border-t border-slate-200/60 mt-3">
                     {/* Submit Actions */}
                     <div className="flex items-center space-x-2.5 self-end sm:self-auto">
                       {aiPrompt && (
@@ -2690,13 +2536,6 @@ export const AnalyticsView: React.FC = () => {
                           Xóa
                         </button>
                       )}
-                      <button
-                        onClick={() => handleExecuteAiReport()}
-                        disabled={isGeneratingAi || isProposingPlan || !aiPrompt.trim()}
-                        className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-700 rounded-xl text-xs font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
-                      >
-                        Phân tích ngay
-                      </button>
                       <button
                         onClick={() => handleProposePlan()}
                         disabled={isProposingPlan || isGeneratingAi || !aiPrompt.trim()}
@@ -2732,28 +2571,7 @@ export const AnalyticsView: React.FC = () => {
                 )}
               </div>
 
-              {/* Ready report shortcut banner */}
-              {generatedReport && (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div className="flex items-center space-x-3">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                    <div>
-                      <div className="text-xs font-semibold text-slate-900">
-                        Bản xem trực quan đã sẵn sàng: {generatedReport.title || 'Báo cáo mới'}
-                      </div>
-                      <div className="text-[11px] text-slate-500">
-                        Chuyển sang Bước 3 để xem Dashboard trực quan hoặc xuất file Word (.docx).
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setAiStep(3)}
-                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-medium transition-all shadow-xs cursor-pointer self-start sm:self-auto"
-                  >
-                    Xem báo cáo (Bước 3)
-                  </button>
-                </div>
-              )}
+              <AnalystReportReady report={generatedReport} onOpen={() => setAiStep(3)} />
             </div>
           )}
 
@@ -2769,9 +2587,9 @@ export const AnalyticsView: React.FC = () => {
                     Câu hỏi: <span className="text-slate-600 font-normal italic">"{aiPlan?.prompt || aiPrompt || 'Chưa có câu hỏi'}"</span>
                   </div>
                   <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-2">
-                    <span>Phạm vi: {aiDomain}</span>
+                    <span>Miền dữ liệu: {aiCapabilities?.domains?.find((d: any) => d.id === aiDomain)?.label || (aiDomain === 'multi' ? 'Nhiều miền dữ liệu' : 'Tự động')}</span>
                     <span>•</span>
-                    <span>Thời gian: {aiTimeRange}</span>
+                    <span>Thời gian: {aiCapabilities?.time_presets?.find((t: any) => t.id === aiTimeRange)?.label || 'Tự động'}</span>
                     <span>•</span>
                     <span>Nguồn: Tầng Silver</span>
                   </div>
@@ -2788,9 +2606,9 @@ export const AnalyticsView: React.FC = () => {
               {isProposingPlan && (
                 <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-xs">
                   <div className="w-6 h-6 rounded-full border-2 border-slate-900 border-t-transparent animate-spin mx-auto mb-3"></div>
-                  <h4 className="text-sm font-semibold text-slate-800">Đang khảo sát dữ liệu & lập kế hoạch báo cáo...</h4>
+                  <h4 className="text-sm font-semibold text-slate-800">Đang đọc yêu cầu và kiểm tra kế hoạch phân tích...</h4>
                   <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-                    Đối chiếu schema tầng Silver Lake, xác định các KPI trọng tâm và gợi ý các loại biểu đồ trực quan phù hợp.
+                    Hệ thống đang đối chiếu danh mục dữ liệu và tự sửa phần diễn giải chưa hợp lệ. Dịch vụ AI có thể cần đến 30 giây để phản hồi; câu hỏi của bạn đang được xử lý.
                   </p>
                 </div>
               )}
@@ -2812,6 +2630,7 @@ export const AnalyticsView: React.FC = () => {
               )}
 
               {/* Proposal Content Card */}
+              {!isProposingPlan && aiPlan && <><AnalysisMeaning interpretation={aiPlan.interpretation} /><AnalystPlanningSummary diagnostics={aiPlan.diagnostics} /></>}
               {!isProposingPlan && aiPlan && (
                 <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-5">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-4">
@@ -2837,6 +2656,8 @@ export const AnalyticsView: React.FC = () => {
                     </p>
                   </div>
 
+                  <AnalystEvidence report={{ analysis_explanation: aiPlan.analysis_explanation || [] }} />
+
                   {/* 3 Pillars Grid: Data Sources, KPIs, Visual Charts */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                     {/* 1. Data Sources */}
@@ -2848,10 +2669,10 @@ export const AnalyticsView: React.FC = () => {
                         {(aiPlan.data_sources || []).map((src: any, idx: number) => (
                           <div key={idx} className="p-2.5 rounded-lg bg-white border border-slate-100 text-xs">
                             <div className="font-mono font-medium text-slate-800 text-[11px] truncate">
-                              {src.table}
+                              {src.name || src.table}
                             </div>
                             <div className="text-slate-600 text-[11px] mt-0.5">
-                              {src.description}
+                              {src.reason || src.description}
                             </div>
                             {src.filter && (
                               <div className="text-[10px] text-slate-400 mt-1">
@@ -2887,7 +2708,7 @@ export const AnalyticsView: React.FC = () => {
                       <div className="flex items-center justify-between text-xs font-semibold text-slate-800 mb-2.5">
                         <span>Biểu đồ trực quan</span>
                         <span className="text-[10px] text-sky-700 bg-sky-50 border border-sky-200/60 px-2 py-0.5 rounded-full font-medium">
-                          {(aiPlan.planned_charts || []).length} biểu đồ đa chiều
+                          {(aiPlan.planned_charts || []).length} phần trực quan dự kiến
                         </span>
                       </div>
                       <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
@@ -2896,21 +2717,11 @@ export const AnalyticsView: React.FC = () => {
                             <div className="flex items-center justify-between">
                               <span className="font-medium text-slate-800 text-[11px]">{ch.title}</span>
                               <span className="text-[10px] font-medium text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded">
-                                {ch.chart_type === 'horizontal_bar'
-                                  ? 'Cột ngang'
-                                  : ch.chart_type === 'donut'
-                                    ? 'Cơ cấu tròn'
-                                    : ch.chart_type === 'bar'
-                                      ? 'Cột dọc'
-                                      : ch.chart_type === 'heatmap'
-                                        ? 'Heatmap 2D'
-                                        : ch.chart_type === 'multi_line' || ch.chart_type === 'multiline'
-                                          ? 'Đa đường'
-                                          : 'Miền / Xu hướng'}
+                                {analysisPlanLabel(ch)}
                               </span>
                             </div>
                             <div className="text-slate-600 text-[11px] mt-0.5">
-                              {ch.purpose}
+                              {ch.role === 'supporting' ? 'Hỗ trợ · ' : 'Theo yêu cầu · '}{ch.reason || ch.purpose}
                             </div>
                           </div>
                         ))}
@@ -2926,7 +2737,7 @@ export const AnalyticsView: React.FC = () => {
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-slate-700">
                       {(aiPlan.report_sections || [
                         '1. Tóm tắt điều hành',
-                        '2. Dashboard tự động sinh (KPI & 5-6 Biểu đồ)',
+                        '2. Biểu đồ phù hợp với dữ liệu đã kiểm chứng',
                         '3. Bảng các phát hiện chính',
                         '4. Bảng phân tích dữ liệu chi tiết',
                         '5. Nhận định chuyên sâu từ AI',
@@ -2943,6 +2754,7 @@ export const AnalyticsView: React.FC = () => {
                     </div>
                   </div>
 
+                  {aiPlan.partial_scope && <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 space-y-2"><p className="font-semibold">Một phần yêu cầu chưa có dữ liệu hoặc định nghĩa để thực hiện.</p><p>Bạn có thể xác nhận chạy các phần hiện có. Báo cáo sẽ ghi rõ những phần chưa thực hiện.</p><ul className="space-y-1">{(aiPlan.analysis_components || []).filter((c: any) => c.requested_or_supporting === 'requested' && c.status !== 'planned').map((c: any) => <li key={c.id}>{c.business_goal}</li>)}</ul></div>}
                   {/* Actions Footer */}
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-slate-100">
                     <button
@@ -2967,7 +2779,7 @@ export const AnalyticsView: React.FC = () => {
                         disabled={isGeneratingAi}
                         className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-medium shadow-xs transition-all cursor-pointer"
                       >
-                        Xác nhận & Bắt đầu Phân tích
+                        {aiPlan.partial_scope ? 'Xác nhận chạy các phần hiện có' : 'Xác nhận & Bắt đầu Phân tích'}
                       </button>
                     </div>
                   </div>
@@ -2994,24 +2806,14 @@ export const AnalyticsView: React.FC = () => {
                 </div>
               )}
 
-              {!isGeneratingAi && generatedReport?.status === 'needs_clarification' && (
-                <div className="bg-amber-50 rounded-2xl border border-amber-200 p-6 shadow-sm">
-                  <div className="text-xs font-bold text-amber-800 uppercase tracking-wider">
-                    Cần làm rõ yêu cầu
-                  </div>
-                  <p className="text-sm font-semibold text-slate-800 mt-2">
-                    {generatedReport.clarification_question}
-                  </p>
-                  <p className="text-xs text-slate-600 mt-1">
-                    {generatedReport.interpreted_request}
-                  </p>
-                  <button
-                    onClick={() => setAiStep(1)}
-                    className="mt-4 px-4 py-2 text-xs font-medium text-amber-900 bg-white border border-amber-300 rounded-xl hover:bg-amber-100 transition-colors cursor-pointer"
-                  >
-                    Quay lại chỉnh sửa câu hỏi
-                  </button>
-                </div>
+              {!isGeneratingAi && ['needs_clarification', 'error'].includes(generatedReport?.status) && (
+                <AnalysisClarification response={generatedReport}
+                  onSnapshot={answer => { setAiPrompt(answer); setAiTimeRange('all_time'); setAiStep(1); }}
+                  onModule={module => { setActiveModule(module); setAiStep(1); }}
+                  onUpdate={() => { setActiveModule(null); setAiStep(1); }}
+                  onChoice={(answer) => handleProposePlan(`${aiPrompt}. ${answer}`)}
+                  onEdit={() => setAiStep(1)}
+                  onRetry={() => handleProposePlan()} />
               )}
 
               {/* Empty state if user jumped to step 3 with no report */}

@@ -6,6 +6,8 @@ import { accountId, getGuestSessionId, chatStorageKey, cartRequestConfig } from 
 import { openChatProductDetail, addChatProduct, branchDistanceLabel, paymentCardRows, chatLoadingLabel, refreshWalletAfterCheckout, structuredLegacyCards, pollQrPaymentStatus, latestPendingQrPayment, qrPaymentFromCheckout } from './chatWidgetActions';
 import { PENDING_AGENT_TURN_KEY, readPendingAgentTurn, matchesAgentTurn, selectAgentTurn, clearCompletedAgentTurn, agentTurnFailure } from './agentTurn';
 import WalletTopupCard from './WalletTopupCard';
+import ChatRichText from './ChatRichText';
+import { ChatBubbleLeftRightIcon, BuildingStorefrontIcon, PhoneIcon, MapPinIcon, CreditCardIcon, WalletIcon, BanknotesIcon, QrCodeIcon, ClockIcon } from '@heroicons/react/24/outline';
 import { walletTopupRequest, walletAmountError, createWalletTopup, pollWalletTopup, latestWalletTopup, latestWalletTopupOffer, latestWalletTopupReady, refreshWalletTopupOffer } from './walletTopup';
 import { CheckCircleIcon, CheckIcon } from '@heroicons/react/24/solid';
 
@@ -95,17 +97,12 @@ function AIAvatar({ size = 32 }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%',
-      background: 'linear-gradient(135deg, #F08080 0%, #E55353 100%)',
+      background: '#B22830',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flexShrink: 0, boxShadow: '0 3px 10px rgba(240,128,128,0.4)',
+      flexShrink: 0, boxShadow: '0 2px 8px rgba(178,40,48,0.18)',
       border: '2px solid #FFFFFF'
     }}>
-      <svg width={size * 0.55} height={size * 0.55} viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 2a10 10 0 1 0 10 10H12V2z" />
-        <path d="M12 12L2.1 12" />
-        <path d="M12 12l4.3-7.5" />
-        <circle cx="12" cy="12" r="3" fill="#FFFFFF" />
-      </svg>
+      <ChatBubbleLeftRightIcon aria-hidden="true" style={{ width: size * 0.55, height: size * 0.55, color: '#FFFFFF' }} />
     </div>
   );
 }
@@ -294,6 +291,10 @@ function OrderCard({ o }) {
 
 function StoreCard({ b }) {
   const status = b.availability_status;
+  const opening = b.gio_mo_cua || b.opening_time;
+  const closing = b.gio_dong_cua || b.closing_time;
+  const phone = b.so_dien_thoai || b.phone;
+  const mapUrl = /^https?:\/\//i.test(b.map_url || '') ? b.map_url : null;
   const missing = b.unavailable_products || [];
   const isAvailable = status === 'available';
   const statusText = isAvailable
@@ -304,27 +305,27 @@ function StoreCard({ b }) {
         ? 'Chưa đọc được tình trạng bán; chưa thể chọn'
         : null;
   return (
-    <div style={{ background: '#FFFFFF', borderRadius: 14, border: `1px solid ${status === 'unavailable' ? '#FECACA' : '#FFEBEB'}`, padding: '11px 13px', opacity: status && !isAvailable ? 0.78 : 1 }}>
+    <div style={{ background: '#FFFFFF', borderRadius: 14, border: `1px solid ${status === 'unavailable' ? '#FECACA' : '#E2E8F0'}`, padding: '11px 13px', opacity: status && !isAvailable ? 0.78 : 1 }}>
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8 }}>
-        <div style={{ width: 34, height: 34, borderRadius: 10, background: '#FFF0F0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F08080" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
+        <div style={{ width: 34, height: 34, borderRadius: 10, background: '#FDF1F2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <BuildingStorefrontIcon aria-hidden="true" style={{ width: 20, height: 20, color: '#B22830' }} />
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#2D3748' }}>{b.display_index ? `${b.display_index}. ` : ''}{b.ten_chi_nhanh || b.branch_name}</p>
-          <p style={{ margin: '3px 0 0', fontSize: '0.7rem', color: '#718096', lineHeight: 1.4 }}>{b.dia_chi || b.address}</p>
-          {branchDistanceLabel(b) && <p style={{ margin: '3px 0 0', fontSize: '0.68rem', color: '#718096' }}>{branchDistanceLabel(b)}</p>}
-          {!isAvailable && b.available_products?.length > 0 && <p style={{ margin: '4px 0 0', fontSize: '0.68rem', color: '#15803D' }}>Còn bán: {b.available_products.join(', ')}</p>}
-          {b.unverified_products?.length > 0 && <p style={{ margin: '4px 0 0', fontSize: '0.68rem', color: '#B45309' }}>Chưa đọc được: {b.unverified_products.join(', ')}</p>}
-          {statusText && <p style={{ margin: '4px 0 0', fontSize: '0.68rem', color: isAvailable ? '#15803D' : '#DC2626', fontWeight: 800 }}>{statusText}</p>}
-          {b.gio_mo_cua && <p style={{ margin: '3px 0 0', fontSize: '0.68rem', color: '#F08080', fontWeight: 700 }}>Giờ mở cửa: {b.gio_mo_cua} – {b.gio_dong_cua}</p>}
+          <p style={{ margin: 0, fontSize: '0.86rem', fontWeight: 800, color: '#2D3748' }}>{b.display_index ? `${b.display_index}. ` : ''}{b.ten_chi_nhanh || b.branch_name}</p>
+          <p style={{ margin: '3px 0 0', fontSize: '0.8rem', color: '#526174', lineHeight: 1.4 }}>{b.dia_chi || b.address}</p>
+          {branchDistanceLabel(b) && <p style={{ margin: '3px 0 0', fontSize: '0.76rem', color: '#526174' }}>{branchDistanceLabel(b)}</p>}
+          {!isAvailable && b.available_products?.length > 0 && <p style={{ margin: '4px 0 0', fontSize: '0.76rem', color: '#15803D' }}>Còn bán: {b.available_products.join(', ')}</p>}
+          {b.unverified_products?.length > 0 && <p style={{ margin: '4px 0 0', fontSize: '0.76rem', color: '#B45309' }}>Chưa đọc được: {b.unverified_products.join(', ')}</p>}
+          {statusText && <p style={{ margin: '4px 0 0', fontSize: '0.76rem', color: isAvailable ? '#15803D' : '#DC2626', fontWeight: 800 }}>{statusText}</p>}
+          {(opening || closing) && <p style={{ margin: '3px 0 0', fontSize: '0.76rem', color: '#B22830', fontWeight: 700 }}><ClockIcon aria-hidden="true" style={{ display: 'inline', width: 14, height: 14, marginRight: 4 }} />{opening && closing ? `${opening} – ${closing}` : opening ? `Mở cửa: ${opening}` : `Đóng cửa: ${closing}`}</p>}
         </div>
       </div>
       <div style={{ display: 'flex', gap: 7 }}>
-        {b.so_dien_thoai && (
-          <a href={`tel:${b.so_dien_thoai}`} style={{ flex: 1, fontSize: '0.7rem', fontWeight: 800, color: '#4A5568', background: '#F7FAFC', border: '1px solid #EDF2F7', borderRadius: 8, padding: '6px 0', textDecoration: 'none', textAlign: 'center', display: 'block' }}>📞 Gọi ngay</a>
+        {phone && (
+          <a href={`tel:${String(phone).replace(/[^+0-9]/g, '')}`} style={{ flex: 1, fontSize: '0.8rem', fontWeight: 800, color: '#4A5568', background: '#F7FAFC', border: '1px solid #EDF2F7', borderRadius: 8, padding: '6px 0', textDecoration: 'none', textAlign: 'center', display: 'block' }}><PhoneIcon aria-hidden="true" style={{ display: 'inline', width: 14, height: 14, marginRight: 5 }} />Gọi cửa hàng</a>
         )}
-        {b.map_url && (
-          <a href={b.map_url} target="_blank" rel="noreferrer" style={{ flex: 1, fontSize: '0.7rem', fontWeight: 800, color: '#FFF', background: '#F08080', borderRadius: 8, padding: '6px 0', textDecoration: 'none', textAlign: 'center', display: 'block' }}>🗺️ Chỉ đường</a>
+        {mapUrl && (
+          <a href={mapUrl} target="_blank" rel="noreferrer" style={{ flex: 1, fontSize: '0.8rem', fontWeight: 800, color: '#FFF', background: '#B22830', borderRadius: 8, padding: '6px 0', textDecoration: 'none', textAlign: 'center', display: 'block' }}><MapPinIcon aria-hidden="true" style={{ display: 'inline', width: 14, height: 14, marginRight: 5 }} />Chỉ đường</a>
         )}
       </div>
     </div>
@@ -341,13 +342,13 @@ function PaymentCard({ onChoose, options }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {(options?.length ? paymentCardRows(options) : methods).map((m) => (
-        <button type="button" key={m.name} onClick={() => onChoose?.(m.text)} disabled={m.enabled === false} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', background: '#FFF', borderRadius: 10, border: '1px solid #FFEBEB', cursor: m.enabled === false ? 'not-allowed' : 'pointer', opacity: m.enabled === false ? 0.55 : 1, textAlign: 'left' }}>
+        <button type="button" key={m.name} onClick={() => onChoose?.(m.text)} disabled={m.enabled === false} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', background: '#FFF', borderRadius: 10, border: '1px solid #E2E8F0', cursor: m.enabled === false ? 'not-allowed' : 'pointer', opacity: m.enabled === false ? 0.55 : 1, textAlign: 'left' }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: m.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 900, color: m.color, flexShrink: 0 }}>
-            💳
+            {m.name.includes('Ví') ? <WalletIcon aria-hidden="true" width={20} /> : m.name.includes('QR') || m.name.includes('Chuyển khoản') ? <QrCodeIcon aria-hidden="true" width={20} /> : m.name.includes('COD') || m.name.includes('Tiền mặt') ? <BanknotesIcon aria-hidden="true" width={20} /> : <CreditCardIcon aria-hidden="true" width={20} />}
           </div>
           <div>
-            <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: 800, color: '#2D3748' }}>{m.name}</p>
-            <p style={{ margin: '1px 0 0', fontSize: '0.66rem', color: '#718096' }}>{m.desc}</p>
+            <p style={{ margin: 0, fontSize: '0.84rem', fontWeight: 800, color: '#2D3748' }}>{m.name}</p>
+            <p style={{ margin: '1px 0 0', fontSize: '0.76rem', color: '#526174' }}>{m.desc}</p>
           </div>
         </button>
       ))}
@@ -1391,16 +1392,6 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
 
   const activeMessages = chatMode === 'AI' ? messages : staffMessages;
 
-  // Render text with Markdown formatting support
-  const renderText = (text) => {
-    if (!text) return null;
-    const parts = text.split(/(\*\*[^*]+\*\*)/g);
-    return parts.map((part, i) => part.startsWith('**') && part.endsWith('**')
-      ? <strong key={i} style={{ color: 'inherit', fontWeight: 600 }}>{part.slice(2, -2)}</strong>
-      : <span key={i} style={{ fontWeight: 400 }}>{part}</span>
-    );
-  };
-
   return (
     <>
       <style>{`
@@ -1423,7 +1414,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
           style={{
             position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
             width: 60, height: 60, borderRadius: '50%',
-            background: 'linear-gradient(135deg, #F08080 0%, #E55353 100%)',
+            background: '#B22830',
             border: '3px solid #FFFFFF',
             boxShadow: '0 8px 24px rgba(240,128,128,0.45)',
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -1614,7 +1605,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
                       border: isOwn ? 'none' : '1px solid #E2E8F0',
                       wordBreak: 'break-word',
                     }}>
-                      <p style={{ margin: 0, whiteSpace: 'pre-wrap', fontWeight: 400 }}>{renderText(msg.noi_dung)}</p>
+                      {isOwn ? <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{msg.noi_dung}</p> : <ChatRichText text={msg.noi_dung} />}
 
                       {msg._loginAction && !userId && (
                         <a href="/?tab=login" onClick={(event) => {

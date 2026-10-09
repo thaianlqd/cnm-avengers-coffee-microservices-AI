@@ -60,6 +60,9 @@ def error(message):
 
 
 def tool(name, args, signature=SIGNATURE_A, call_id='fixture-call-A'):
+    if name.startswith('semantic_'):
+        from semantic_scripted_steps import provider_pair
+        name, args = provider_pair(name, args)
     call = {'id': call_id, 'type': 'function', 'function': {
         'name': name, 'arguments': json.dumps(args, ensure_ascii=False)}}
     if signature:
@@ -93,6 +96,8 @@ def wire(offline, runtime, monkeypatch, caplog):
         slots.append(headers['Authorization'])
         assert steps, 'Unexpected HTTP attempt (still fake; never forwarded)'
         step = steps.pop(0)
+        if isinstance(step, Exception):
+            raise step  # Scripted HTTP failure; never forwarded to a socket.
         if callable(step):
             step = step(json)
         return step if isinstance(step, HTTPResponse) else HTTPResponse(data={
@@ -123,9 +128,9 @@ def test_real_serializer_preserves_signed_continuation_and_dynamic_surface(wire,
     result = wire.runtime.turn('Cho xem menu.')
     assert result['error'] is None
     assert len(wire.runtime.reads) == 1 and not wire.runtime.writes
-    assert len(wire.sent[0]['tools']) == 6 and len(wire.sent[1]['tools']) == 11
+    assert len(wire.sent[0]['tools']) == 8 and len(wire.sent[1]['tools']) == 12
     added = {r['function']['name'] for r in wire.sent[1]['tools']} - {r['function']['name'] for r in wire.sent[0]['tools']}
-    assert added == {'get_product_options', 'get_product_insights', 'check_price_and_stock', 'get_product_description', 'add_to_cart'}
+    assert added == {'get_product_options', 'check_price_and_stock', 'get_product_description', 'add_to_cart'}
     for payload in wire.sent[1:]:
         calls = [c for m in payload['messages'] for c in m.get('tool_calls', [])]
         responses = [m for m in payload['messages'] if m['role'] == 'tool']
@@ -140,18 +145,18 @@ def test_real_serializer_preserves_signed_continuation_and_dynamic_surface(wire,
     assert metrics['request_count'] == 2 + another_tool
     assert SIGNATURE_A not in caplog.text and SIGNATURE_B not in caplog.text
     assert SIGNATURE_A not in json.dumps(result) and SIGNATURE_A not in json.dumps(wire.runtime.redis.data)
-    assert all(p['response_format'] == {'type': 'json_object'} for p in wire.sent)
+    assert all('response_format' not in p for p in wire.sent if p.get('tools'))
 
 
 def test_recognized_format_retry_preserves_read_result_and_one_key(wire, caplog):
     browsing(wire)
-    wire.steps.extend([tool('filter_catalog', {'search_text': '', 'limit': 2}),
+    wire.steps.extend([tool('filter_catalog', {'search_text': '', 'limit': 2, 'planned_discovery_reads': 1}),
         error('response_format is not supported with tools'), envelope(ids=['101', '102'])])
     result = wire.runtime.turn('Cho xem menu.')
     assert result['error'] is None and len(wire.runtime.reads) == 1
     original, retry = wire.sent[1:]
-    assert original['messages'] == retry['messages'] and original['tools'] == retry['tools']
-    assert original['tool_choice'] == retry['tool_choice'] == 'auto'
+    assert original['messages'] == retry['messages'] and not original.get('tools') and not retry.get('tools')
+    assert original.get('tool_choice') == retry.get('tool_choice')
     assert 'response_format' in original and 'response_format' not in retry
     assert wire.slots[1] == wire.slots[2]
     metrics = turn_metrics(caplog)
@@ -166,7 +171,7 @@ def test_recognized_format_retry_preserves_read_result_and_one_key(wire, caplog)
     ('opaque unknown complaint private-body-marker', 1, 'unknown_incompatible_request'),
     ('Function call is missing a thought_signature private-body-marker', 1, 'tool_continuation_incompatible'),
     ('Invalid tools parameters additionalProperties private-body-marker', 1, 'tool_schema_incompatible'),
-    ('response_format not supported private-body-marker', 2, 'response_format_incompatible'),
+    ('response_format not supported private-body-marker', 1, 'response_format_incompatible'),
 ])
 def test_400_stops_without_rotating_all_accounts_or_unbounded_retry(wire, caplog, message, count, category):
     wire.steps.extend([error(message), error(message)])
@@ -292,7 +297,7 @@ def test_safe_error_categories(message, category, field):
 
 def test_native_mime_error_retries_format_once_without_replaying_mutations(wire, caplog):
     browsing(wire)
-    wire.steps.extend([tool('filter_catalog', {'search_text': '', 'limit': 2}),
+    wire.steps.extend([tool('filter_catalog', {'search_text': '', 'limit': 2, 'planned_discovery_reads': 1}),
         error("Function calling with a response mime type: 'application/json' is unsupported"), envelope(ids=['101', '102'])])
     result = wire.runtime.turn('Cho xem menu.')
     assert result['error'] is None and len(wire.runtime.reads) == 1
@@ -300,3 +305,105 @@ def test_native_mime_error_retries_format_once_without_replaying_mutations(wire,
     assert wire.sent[1]['max_tokens'] == wire.sent[2]['max_tokens']
     assert 'response_format' in wire.sent[1] and 'response_format' not in wire.sent[2]
     assert wire.slots[-1] == wire.slots[-2] and not wire.runtime.writes
+
+
+def test_semantic_repair_uses_auto_same_key_and_signed_history(wire, monkeypatch, caplog):
+    from src.agents import llm_tool_orchestrator
+    monkeypatch.setattr(llm_tool_orchestrator, 'run_llm_tool_turn', wire.runtime.semantic_orchestrator)
+    cart_manager.set_pending_products(wire.runtime.sid, [wire.runtime.products[0]])
+    message = 'Lấy món Alpha cỡ L nhé'
+    proposal = {'commitment': 'SELECTED', 'reference': {'kind': 'id', 'value': '101'},
+        'size': 'L', 'evidence': message}
+    wire.steps.extend([tool('semantic_configure_product', {**proposal, 'foreign': True}),
+        tool('semantic_configure_product', proposal, SIGNATURE_B)])
+    result = wire.runtime.turn(message)
+    assert result['error'] is None and len(wire.runtime.writes) == 1
+    assert len(wire.sent) == 2 and len(set(wire.slots)) == 1
+    assert all(payload['tool_choice'] == 'auto' and 'response_format' not in payload for payload in wire.sent)
+    prior_call = wire.sent[1]['messages'][2]['tool_calls'][0]
+    assert prior_call['extra_content']['google']['thought_signature'] == SIGNATURE_A
+    assert turn_metrics(caplog)['protocol_repair_count'] == 1
+    assert SIGNATURE_A not in caplog.text and SIGNATURE_A not in json.dumps(result)
+
+
+def test_actions_in_final_json_are_unexecuted_until_tool_repair_and_siblings_survive(wire, monkeypatch, caplog):
+    from src.agents import llm_tool_orchestrator
+    monkeypatch.setattr(llm_tool_orchestrator, 'run_llm_tool_turn', wire.runtime.semantic_orchestrator)
+    message = 'Bỏ dòng thứ hai; ly đầu lấy ba phần.'
+    remove = {'tool': 'remove_cart_item', 'args': {}, 'commitment': 'AFFIRMED',
+        'evidence': 'Bỏ dòng thứ hai', 'reference': {'namespace': 'CART_LINE', 'kind': 'ordinal', 'index': 2}}
+    update = {'tool': 'update_cart_item', 'args': {'desired_state': {'quantity': 3}},
+        'commitment': 'AFFIRMED', 'evidence': 'ly đầu lấy ba phần',
+        'reference': {'namespace': 'CART_LINE', 'kind': 'ordinal', 'index': 1}}
+    misplaced = {'reply': 'Đã xong', 'mutation_claims': ['remove_cart_item', 'update_cart_item'],
+        'response_kind': 'action', 'evidence_quotes': [], 'actions': [remove, update]}
+    def corrected(payload):
+        assert not wire.runtime.writes  # The prose claim had no authority.
+        assert 'server retains' in json.dumps(payload['messages'], ensure_ascii=False).lower()
+        assert 'Call customer_actions' not in json.dumps(payload['messages'])
+        first = tool('semantic_remove_cart_line', {'commitment': 'AFFIRMED', 'evidence': remove['evidence'],
+            'reference': {'kind': 'ordinal', 'index': 2}})
+        second = tool('semantic_update_cart_line', {'commitment': 'AFFIRMED', 'evidence': update['evidence'],
+            'reference': {'kind': 'ordinal', 'index': 1}, 'desired_state': {'quantity': 3}})
+        second['tool_calls'][0]['id'] = 'sibling'
+        first['tool_calls'] += second['tool_calls']
+        return first
+    wire.steps.extend([tool('semantic_interrupt', {'target_domain': 'CART_EDIT'}),
+        {'content': '```json\n' + json.dumps(misplaced, ensure_ascii=False) + '\n```'}, corrected])
+    result = wire.runtime.turn(message)
+    assert result['error'] is None and len(wire.sent) == 3
+    assert len(wire.runtime.writes) == 2
+    assert cart_manager.get_cart(wire.runtime.sid)['items'][0]['quantity'] == 3
+    assert turn_metrics(caplog)['dialogue_format_repair_count'] == 1
+
+
+@pytest.mark.parametrize('after_write', [False, True])
+def test_network_failover_preserves_canonical_results_strips_only_google_metadata_and_never_replays(wire, monkeypatch, caplog, after_write):
+    from src.agents import llm_tool_orchestrator
+    monkeypatch.setattr(llm_tool_orchestrator, '_legacy_language_control', lambda *a: None)
+    monkeypatch.setenv('OPENAI_API_KEY', 'offline-emergency-openai')
+    monkeypatch.setenv('AI_AGENT_FALLBACK_PROVIDERS', 'openai')
+    monkeypatch.setattr(groq_service, 'OpenAIClient', OPENAI_CLIENT)
+    if after_write:
+        message = 'Sửa món thứ 1 thành 2 ly.'
+        wire.steps.append(tool('update_cart_item', {'cart_item_id': '800', 'cart_line_ordinal': 1,
+            'desired_state': {'quantity': 2}}, call_id='committed-write-call'))
+    else:
+        browsing(wire)
+        message = 'Cho xem menu.'
+        wire.steps.append(tool('filter_catalog', {'search_text': '', 'limit': 2}))
+    wire.steps.extend([requests.exceptions.ReadTimeout('scripted timeout'),
+                      envelope(['update_cart_item'] if after_write else (), ids=None if after_write else ['101', '102'])])
+    result = wire.runtime.turn(message, client_message_id='cross-provider-replay')
+    replay = wire.runtime.turn(message, client_message_id='cross-provider-replay')
+    assert result == replay and result['error'] is None and len(wire.sent) == 3
+    gemini_final, alternate = wire.sent[1:]
+    assert alternate['messages'] == inference_messages(gemini_final['messages'], 'openai')
+    assert any(c.get('extra_content') for m in gemini_final['messages'] for c in m.get('tool_calls', []))
+    assert all('extra_content' not in c for m in alternate['messages'] for c in m.get('tool_calls', []))
+    calls = [c for m in alternate['messages'] for c in m.get('tool_calls', [])]
+    results = [m for m in alternate['messages'] if m['role'] == 'tool']
+    assert [c['id'] for c in calls] == [r['tool_call_id'] for r in results]
+    assert results == [m for m in gemini_final['messages'] if m['role'] == 'tool']
+    assert len(wire.runtime.writes) == int(after_write)
+    if after_write:
+        assert cart_manager.get_cart(wire.runtime.sid)['items'][0]['quantity'] == 2
+        assert 'AI đang tạm thời không phản hồi' not in result['reply']
+    metrics = turn_metrics(caplog)
+    assert metrics['provider_attempt_count'] == 3 and metrics['provider_failure_count'] == 1
+    assert metrics['request_count'] == 2 and metrics['fallback_count'] == 1
+    assert metrics['provider_attempts_by_provider'] == {'gemini': 2, 'openai': 1}
+    assert metrics['failover_success'] and metrics['failover_provider'] == 'openai'
+    assert SIGNATURE_A not in caplog.text and 'offline-emergency-openai' not in caplog.text
+
+
+def test_before_tool_network_failover_does_not_execute_business_tools(wire, monkeypatch, caplog):
+    monkeypatch.setenv('OPENAI_API_KEY', 'offline-emergency-openai')
+    monkeypatch.setenv('AI_AGENT_FALLBACK_PROVIDERS', 'openai')
+    monkeypatch.setattr(groq_service, 'OpenAIClient', OPENAI_CLIENT)
+    wire.steps.extend([requests.exceptions.ReadTimeout('scripted timeout'), {'content': json.dumps({
+        'response_kind': 'social', 'reply': 'Xin chào bạn!', 'mutation_claims': [], 'evidence_quotes': []})}])
+    result = wire.runtime.turn('Xin chào bạn', client_message_id='before-tool-failover')
+    assert result['error'] is None and not wire.runtime.reads and not wire.runtime.writes
+    assert len(wire.sent) == 2 and wire.sent[0]['messages'] == wire.sent[1]['messages']
+    assert turn_metrics(caplog)['provider_attempts_by_provider'] == {'gemini': 1, 'openai': 1}

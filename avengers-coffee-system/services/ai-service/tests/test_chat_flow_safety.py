@@ -906,7 +906,7 @@ def test_inventory_requires_a_row_and_enough_quantity():
         def __init__(self, row):
             self.row = row
 
-        def fetchone(self):
+        def fetchall(self):
             return self.row
 
     class FakeConnection:
@@ -921,8 +921,8 @@ def test_inventory_requires_a_row_and_enough_quantity():
 
         def execute(self, _statement, params):
             if "menu.san_pham" in str(_statement):
-                return FakeResult((True,))
-            return FakeResult(self.rows.get(params["product_id"]))
+                return FakeResult([(str(pid), True) for pid in params["product_ids"]])
+            return FakeResult([(bid, str(pid), row[0]) for bid in params["branch_ids"] for pid, row in self.rows.items()])
 
     class FakeEngine:
         def __init__(self, rows):
@@ -1072,10 +1072,10 @@ def test_pickup_lists_five_nearest_and_marks_d9_matcha_unavailable(monkeypatch):
 
     def fake_validate(_engine, cart, _schema):
         if cart.get("branch_id") == "HC_HCM_D9_TAN_PHU_704":
-            return {"unavailable": ["Bánh Trung Thu Matcha"], "unverified": []}
-        return {"unavailable": [], "unverified": []}
+            return {"unavailable": ["Bánh Trung Thu Matcha"], "unverified": [], "is_fully_available": False}
+        return {"unavailable": [], "unverified": [], "is_fully_available": True}
 
-    monkeypatch.setattr(branch_tools, "validate_cart_at_branch", fake_validate)
+    monkeypatch.setattr(branch_tools, "availability_for_branches", lambda engine, bids, items, schema: {bid: fake_validate(engine, {"branch_id": bid}, schema) for bid in bids})
     result = branch_tools.execute_find_nearest_branch("42/3 Nguyễn Hữu Tiến", session_id=session)
 
     assert result["status"] == "need_branch_selection"

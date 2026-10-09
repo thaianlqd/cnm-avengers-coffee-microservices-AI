@@ -1,0 +1,766 @@
+[
+  {
+    "fixture_id": "prose_without_envelope",
+    "source": "synthetic sanitized structural reproduction, no live capture",
+    "provider": "gemini_openai_compat",
+    "function_name": "semantic_select_products",
+    "argument_shape": [
+      {
+        "content": "Synthetic prose"
+      },
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 3}}]}"
+            }
+          }
+        ]
+      }
+    ],
+    "observed_failure_code": "missing_envelope",
+    "normalization_rules_applied": [],
+    "expected_server_behavior": {
+      "requests": 2,
+      "selected_ids": [
+        "101",
+        "103"
+      ],
+      "error": null
+    }
+  },
+  {
+    "fixture_id": "no_final_or_tool",
+    "source": "synthetic sanitized structural reproduction, no live capture",
+    "provider": "gemini_openai_compat",
+    "function_name": "semantic_select_products",
+    "argument_shape": [
+      {
+        "content": null
+      },
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 3}}]}"
+            }
+          }
+        ]
+      }
+    ],
+    "observed_failure_code": "missing_envelope",
+    "normalization_rules_applied": [],
+    "expected_server_behavior": {
+      "requests": 2,
+      "selected_ids": [
+        "101",
+        "103"
+      ],
+      "error": null
+    }
+  },
+  {
+    "fixture_id": "invalid_json",
+    "source": "synthetic sanitized structural reproduction, no live capture",
+    "provider": "gemini_openai_compat",
+    "function_name": "semantic_select_products",
+    "argument_shape": [
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{broken"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 3}}]}"
+            }
+          }
+        ]
+      }
+    ],
+    "observed_failure_code": "invalid_json",
+    "normalization_rules_applied": [],
+    "expected_server_behavior": {
+      "requests": 2,
+      "selected_ids": [
+        "101",
+        "103"
+      ],
+      "error": null
+    }
+  },
+  {
+    "fixture_id": "wrong_argument_shape",
+    "source": "synthetic sanitized structural reproduction, no live capture",
+    "provider": "gemini_openai_compat",
+    "function_name": "semantic_select_products",
+    "argument_shape": [
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "[]"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 3}}]}"
+            }
+          }
+        ]
+      }
+    ],
+    "observed_failure_code": "invalid_argument_shape",
+    "normalization_rules_applied": [],
+    "expected_server_behavior": {
+      "requests": 2,
+      "selected_ids": [
+        "101",
+        "103"
+      ],
+      "error": null
+    }
+  },
+  {
+    "fixture_id": "canonical_string_ordinal",
+    "source": "synthetic sanitized structural reproduction, no live capture",
+    "provider": "gemini_openai_compat",
+    "function_name": "semantic_select_products",
+    "argument_shape": [
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": \"1\"}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": \"3\"}}]}"
+            }
+          }
+        ]
+      }
+    ],
+    "observed_failure_code": null,
+    "normalization_rules_applied": [
+      "json_object",
+      "canonical_integer"
+    ],
+    "expected_server_behavior": {
+      "requests": 1,
+      "selected_ids": [
+        "101",
+        "103"
+      ],
+      "error": null
+    }
+  },
+  {
+    "fixture_id": "one_selection",
+    "source": "synthetic sanitized structural reproduction, no live capture",
+    "provider": "gemini_openai_compat",
+    "function_name": "semantic_select_products",
+    "argument_shape": [
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}]}"
+            }
+          }
+        ]
+      }
+    ],
+    "observed_failure_code": null,
+    "normalization_rules_applied": [
+      "json_object"
+    ],
+    "expected_server_behavior": {
+      "requests": 1,
+      "selected_ids": [
+        "101"
+      ],
+      "error": null
+    }
+  },
+  {
+    "fixture_id": "multi_selection",
+    "source": "synthetic sanitized structural reproduction, no live capture",
+    "provider": "gemini_openai_compat",
+    "function_name": "semantic_select_products",
+    "argument_shape": [
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 3}}]}"
+            }
+          }
+        ]
+      }
+    ],
+    "observed_failure_code": null,
+    "normalization_rules_applied": [
+      "json_object"
+    ],
+    "expected_server_behavior": {
+      "requests": 1,
+      "selected_ids": [
+        "101",
+        "103"
+      ],
+      "error": null
+    }
+  },
+  {
+    "fixture_id": "three_selections",
+    "source": "synthetic sanitized structural reproduction, no live capture",
+    "provider": "gemini_openai_compat",
+    "function_name": "semantic_select_products",
+    "argument_shape": [
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 2}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 3}}]}"
+            }
+          }
+        ]
+      }
+    ],
+    "observed_failure_code": null,
+    "normalization_rules_applied": [
+      "json_object"
+    ],
+    "expected_server_behavior": {
+      "requests": 1,
+      "selected_ids": [
+        "101",
+        "102",
+        "103"
+      ],
+      "error": null
+    }
+  },
+  {
+    "fixture_id": "singleton_object",
+    "source": "synthetic sanitized structural reproduction, no live capture",
+    "provider": "gemini_openai_compat",
+    "function_name": "semantic_select_products",
+    "argument_shape": [
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": {\"reference\": {\"kind\": \"ordinal\", \"index\": \"3\"}}}"
+            }
+          }
+        ]
+      }
+    ],
+    "observed_failure_code": null,
+    "normalization_rules_applied": [
+      "json_object",
+      "selection_singleton",
+      "canonical_integer"
+    ],
+    "expected_server_behavior": {
+      "requests": 1,
+      "selected_ids": [
+        "103"
+      ],
+      "error": null
+    }
+  },
+  {
+    "fixture_id": "duplicate_targets",
+    "source": "synthetic sanitized structural reproduction, no live capture",
+    "provider": "gemini_openai_compat",
+    "function_name": "semantic_select_products",
+    "argument_shape": [
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}]}"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}]}"
+            }
+          }
+        ]
+      }
+    ],
+    "observed_failure_code": "duplicate_canonical_target",
+    "normalization_rules_applied": [],
+    "expected_server_behavior": {
+      "requests": 2,
+      "selected_ids": [],
+      "error": "semantic_repair_exhausted"
+    }
+  },
+  {
+    "fixture_id": "unknown_field",
+    "source": "synthetic sanitized structural reproduction, no live capture",
+    "provider": "gemini_openai_compat",
+    "function_name": "semantic_select_products",
+    "argument_shape": [
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 3}}], \"foreign\": true}"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 3}}]}"
+            }
+          }
+        ]
+      }
+    ],
+    "observed_failure_code": "unknown_field",
+    "normalization_rules_applied": [],
+    "expected_server_behavior": {
+      "requests": 2,
+      "selected_ids": [
+        "101",
+        "103"
+      ],
+      "error": null
+    }
+  },
+  {
+    "fixture_id": "missing_second_reference",
+    "source": "synthetic sanitized structural reproduction, no live capture",
+    "provider": "gemini_openai_compat",
+    "function_name": "semantic_select_products",
+    "argument_shape": [
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {}]}"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 3}}]}"
+            }
+          }
+        ]
+      }
+    ],
+    "observed_failure_code": "missing_required_field",
+    "normalization_rules_applied": [],
+    "expected_server_behavior": {
+      "requests": 2,
+      "selected_ids": [
+        "101",
+        "103"
+      ],
+      "error": null
+    }
+  },
+  {
+    "fixture_id": "invalid_reference_kind",
+    "source": "synthetic sanitized structural reproduction, no live capture",
+    "provider": "gemini_openai_compat",
+    "function_name": "semantic_select_products",
+    "argument_shape": [
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"unknown\"}}]}"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 3}}]}"
+            }
+          }
+        ]
+      }
+    ],
+    "observed_failure_code": "invalid_reference_kind",
+    "normalization_rules_applied": [],
+    "expected_server_behavior": {
+      "requests": 2,
+      "selected_ids": [
+        "101",
+        "103"
+      ],
+      "error": null
+    }
+  },
+  {
+    "fixture_id": "mixed_invalid_grounding",
+    "source": "synthetic sanitized structural reproduction, no live capture",
+    "provider": "gemini_openai_compat",
+    "function_name": "semantic_select_products",
+    "argument_shape": [
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 99}}]}"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 99}}]}"
+            }
+          }
+        ]
+      }
+    ],
+    "observed_failure_code": "canonical_target_unresolved",
+    "normalization_rules_applied": [],
+    "expected_server_behavior": {
+      "requests": 2,
+      "selected_ids": [],
+      "error": "semantic_repair_exhausted"
+    }
+  },
+  {
+    "fixture_id": "legacy_multiple_calls",
+    "source": "synthetic sanitized structural reproduction, no live capture",
+    "provider": "gemini_openai_compat",
+    "function_name": "semantic_select_products",
+    "argument_shape": [
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_product",
+              "arguments": "{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}"
+            }
+          },
+          {
+            "id": "other",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_product",
+              "arguments": "{\"reference\": {\"kind\": \"ordinal\", \"index\": 3}}"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 3}}]}"
+            }
+          }
+        ]
+      }
+    ],
+    "observed_failure_code": "operation_not_exposed",
+    "normalization_rules_applied": [],
+    "expected_server_behavior": {
+      "requests": 2,
+      "selected_ids": [
+        "101",
+        "103"
+      ],
+      "error": null
+    }
+  },
+  {
+    "fixture_id": "repeated_bad_repair",
+    "source": "synthetic sanitized structural reproduction, no live capture",
+    "provider": "gemini_openai_compat",
+    "function_name": "semantic_select_products",
+    "argument_shape": [
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{}]}"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{}]}"
+            }
+          }
+        ]
+      }
+    ],
+    "observed_failure_code": "missing_required_field",
+    "normalization_rules_applied": [],
+    "expected_server_behavior": {
+      "requests": 2,
+      "selected_ids": [],
+      "error": "semantic_repair_exhausted"
+    }
+  },
+  {
+    "fixture_id": "envelope_then_bad_wire",
+    "source": "synthetic sanitized structural reproduction, no live capture",
+    "provider": "gemini_openai_compat",
+    "function_name": "semantic_select_products",
+    "argument_shape": [
+      {
+        "content": "Synthetic prose"
+      },
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{}]}"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 3}}]}"
+            }
+          }
+        ]
+      }
+    ],
+    "observed_failure_code": "missing_required_field",
+    "normalization_rules_applied": [],
+    "expected_server_behavior": {
+      "requests": 2,
+      "selected_ids": [],
+      "error": "semantic_repair_exhausted"
+    }
+  },
+  {
+    "fixture_id": "malformed_final_after_selection",
+    "source": "synthetic sanitized structural reproduction, no live capture",
+    "provider": "gemini_openai_compat",
+    "function_name": "semantic_select_products",
+    "argument_shape": [
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 3}}]}"
+            }
+          }
+        ]
+      },
+      {
+        "content": "{broken"
+      }
+    ],
+    "observed_failure_code": null,
+    "normalization_rules_applied": [],
+    "expected_server_behavior": {
+      "requests": 1,
+      "selected_ids": [
+        "101",
+        "103"
+      ],
+      "error": null
+    }
+  },
+  {
+    "fixture_id": "forged_authorization",
+    "source": "synthetic sanitized structural reproduction, no live capture",
+    "provider": "gemini_openai_compat",
+    "function_name": "semantic_select_products",
+    "argument_shape": [
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 3}}], \"_turn_authorization_id\": \"synthetic-forgery\"}"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 3}}]}"
+            }
+          }
+        ]
+      }
+    ],
+    "observed_failure_code": "unknown_field",
+    "normalization_rules_applied": [],
+    "expected_server_behavior": {
+      "requests": 2,
+      "selected_ids": [
+        "101",
+        "103"
+      ],
+      "error": null
+    }
+  },
+  {
+    "fixture_id": "duplicate_json_key",
+    "source": "synthetic sanitized structural reproduction, no live capture",
+    "provider": "gemini_openai_compat",
+    "function_name": "semantic_select_products",
+    "argument_shape": [
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\":[],\"selections\":[]}"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "id": "fixture",
+            "type": "function",
+            "function": {
+              "name": "semantic_select_products",
+              "arguments": "{\"selections\": [{\"reference\": {\"kind\": \"ordinal\", \"index\": 1}}, {\"reference\": {\"kind\": \"ordinal\", \"index\": 3}}]}"
+            }
+          }
+        ]
+      }
+    ],
+    "observed_failure_code": "invalid_json",
+    "normalization_rules_applied": [],
+    "expected_server_behavior": {
+      "requests": 2,
+      "selected_ids": [
+        "101",
+        "103"
+      ],
+      "error": null
+    }
+  }
+]

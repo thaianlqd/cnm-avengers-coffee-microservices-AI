@@ -77,6 +77,18 @@ def edit_clauses(message, lines=()):
     return clauses
 
 
+def removal_quantity(clause):
+    """A unit count after bỏ/xóa means subtract, while bỏ hết means delete line."""
+    text = normalize_shopping(clause)
+    if re.search(r'\b(?:het|tat ca|ca dong|ca mon)\b', text):
+        return None
+    match = re.search(r'\b(?:bo|xoa|go|giam)\s+(\d+|mot|hai|ba|bon|nam)\s+(?:ly|cai|phan|banh|nuoc)\b', text)
+    if not match:
+        return None
+    amount = int(match[1]) if match[1].isdigit() else {'mot': 1, 'hai': 2, 'ba': 3, 'bon': 4, 'nam': 5}[match[1]]
+    return amount if amount > 0 else None
+
+
 def clause_operation(clause):
     verb = re.search(_EDIT_VERB, clause)
     if re.search(r'\b(?:bo|xoa|go)\s+(?:topping|toping|do kem)\b', clause):

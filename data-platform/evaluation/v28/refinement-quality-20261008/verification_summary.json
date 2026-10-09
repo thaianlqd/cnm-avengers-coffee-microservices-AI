@@ -1,0 +1,34 @@
+{
+  "verifier_version": "2.8.1",
+  "backend_tests": 566,
+  "backend_passed": 566,
+  "backend_seconds": 123.124,
+  "focused_tests": 67,
+  "focused_passed": 67,
+  "frontend_tests": 89,
+  "frontend_passed": 89,
+  "evaluation_cases": 110,
+  "evaluation_passed": 110,
+  "typecheck": "passed",
+  "docker_build": [
+    "analytics-api",
+    "web-ui"
+  ],
+  "restarted_services": [
+    "analytics-api",
+    "web-ui"
+  ],
+  "analytics_api_health": "healthy",
+  "web_ui_health": "healthy",
+  "api_health_http": 200,
+  "new_frontend_assets_verified": true,
+  "warehouse_reference_assertions": 22,
+  "warehouse_reference_matched": 22,
+  "runtime_accuracy": "not_measured",
+  "runtime_confidence_probability": null,
+  "live_model_accuracy_measured": false,
+  "LIVE_PROVIDER_REQUESTS": 0,
+  "warehouse_mutations": 0,
+  "temporary_audit_sessions_deleted": true,
+  "raw_reported_delta_available": false
+}

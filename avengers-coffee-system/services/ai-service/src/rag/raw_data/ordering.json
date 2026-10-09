@@ -18,20 +18,23 @@
   {
     "id": "ordering_policy_003",
     "title": "Chính sách Đổi trả và Hoàn tiền (Refund Policy)",
-    "content": "Tài liệu đổi trả đề cập sản phẩm hư hỏng khi vận chuyển, giao sai món hoặc vấn đề chất lượng cần được xác minh. Khách cần cung cấp thông tin đơn hàng và hình ảnh mô tả vấn đề cho bộ phận chăm sóc khách hàng. Yêu cầu được xem xét sau khi xác minh; tư vấn không tự phê duyệt hay thực hiện hoàn tiền.",
-    "source": "raw_data/ordering.json (curated static excerpt)",
+    "content": "Trường hợp được xem xét:\n- Sản phẩm bị hư hỏng, không còn nguyên vẹn trong quá trình vận chuyển.\n- Sản phẩm có vấn đề về chất lượng sau khi được kiểm tra và xác thực phản ánh là chính xác.\n\nThời hạn gửi yêu cầu:\n- Với thức uống và bánh ngọt: gửi yêu cầu trong ngày nhận hàng, trước khi kết thúc ca làm việc cuối ngày của cửa hàng.\n- Với các sản phẩm còn lại: gửi yêu cầu trong 24 giờ kể từ khi nhận hàng.\n\nCác trường hợp chưa được hỗ trợ:\n- Lý do cảm quan, không hài lòng, thay đổi quyết định mua hàng hoặc thông tin phản ánh chưa chính xác.\n\nCách gửi yêu cầu:\n- Liên hệ hotline 1900 1755 hoặc email customerservice@highlandscoffee.com.vn.\n- Cung cấp thông tin đơn hàng và mô tả vấn đề gặp phải. Bộ phận hỗ trợ phản hồi trong 24 giờ làm việc.\n\nPhạm vi áp dụng:\n- Chính sách trên trang web áp dụng cho đơn đặt qua order.highlandscoffee.com.vn. Với đơn mua trực tiếp, cần tham khảo chính sách riêng của cửa hàng.",
+    "source": "web-customer/src/pages/ChinhSachDatHang/index.jsx (sections 2, 5 and scope note)",
     "domain": "refund",
     "entity_type": null,
     "entity_id": null,
     "tags": [
+      "chính sách trả hàng",
       "hoàn tiền",
-      "đổi trả",
+      "hoàn trả",
       "refund",
-      "hoàn trả"
+      "thời hạn đổi trả",
+      "trả hàng",
+      "đổi trả"
     ],
     "volatility": "static",
     "authority": "knowledge",
-    "updated_at": null
+    "updated_at": "2026-10-08"
   },
   {
     "id": "promotion_policy_001",

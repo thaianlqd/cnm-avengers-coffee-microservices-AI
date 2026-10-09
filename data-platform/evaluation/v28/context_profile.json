@@ -1,0 +1,29 @@
+[
+  {
+    "scenario": "A",
+    "old_total_body_chars": 22812,
+    "new_total_body_chars": 11657,
+    "old_decision_schema_chars": 6405,
+    "new_decision_schema_chars": 2702,
+    "body_reduction_pct": 48.9,
+    "schema_reduction_pct": 57.81
+  },
+  {
+    "scenario": "B",
+    "old_total_body_chars": 22902,
+    "new_total_body_chars": 11605,
+    "old_decision_schema_chars": 6405,
+    "new_decision_schema_chars": 2702,
+    "body_reduction_pct": 49.33,
+    "schema_reduction_pct": 57.81
+  },
+  {
+    "scenario": "C",
+    "old_total_body_chars": 22905,
+    "new_total_body_chars": 11928,
+    "old_decision_schema_chars": 6405,
+    "new_decision_schema_chars": 2702,
+    "body_reduction_pct": 47.92,
+    "schema_reduction_pct": 57.81
+  }
+]

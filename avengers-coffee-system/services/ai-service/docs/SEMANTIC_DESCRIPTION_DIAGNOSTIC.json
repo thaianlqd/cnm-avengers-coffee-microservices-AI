@@ -1,0 +1,133 @@
+{
+  "query": "hôm nay trời hơi nóng bên bạn có món nào mát và vị ngọt tí không nhỉ",
+  "concepts": [
+    "mát lạnh",
+    "ngọt nhẹ"
+  ],
+  "threshold": 0.3,
+  "backend": "tfidf_word_char",
+  "approved_count": 117,
+  "rejected_count": 0,
+  "candidates": [
+    {
+      "product_id": "54",
+      "description": "Latte Bạc Xỉu là sự kết hợp giữa Espresso, sữa tươi béo ngậy và cà phê phin đậm đà, tạo ra một hương vị vừa ngọt nhẹ, vừa đậm đà, dễ uống và mát lạnh.",
+      "old_score": 0.0305,
+      "score": 0.8339,
+      "concept_coverage": [
+        1.0,
+        1.0
+      ],
+      "accepted": true,
+      "reason": "approved_evidence_candidate_requires_current_menu_validation"
+    },
+    {
+      "product_id": "58",
+      "description": "Latte Almond là sự kết hợp giữa Espresso đậm đà, sữa tươi béo ngậy, và syrup hạnh nhân thơm lừng, mang đến một hương vị ngọt nhẹ, béo ngậy và mát lạnh. Thức uống này tạo nên sự hòa quyện tuyệt vời giữa cà phê và vị hạnh nhân đặc trưng, đem lại cảm giác dễ chịu và độc đáo.",
+      "old_score": 0.0657,
+      "score": 0.8248,
+      "concept_coverage": [
+        1.0,
+        1.0
+      ],
+      "accepted": true,
+      "reason": "approved_evidence_candidate_requires_current_menu_validation"
+    },
+    {
+      "product_id": "57",
+      "description": "Latte Hazelnut là sự kết hợp giữa Espresso đậm đà, sữa tươi béo ngậy, và syrup hạt phỉ ngọt nhẹ, mang đến một hương vị thơm lừng, béo ngậy và mát lạnh. Thức uống này mang đến sự hòa quyện hoàn hảo giữa cà phê và hương vị hạt phỉ, tạo nên một trải nghiệm dễ chịu và thơm ngon.",
+      "old_score": 0.0543,
+      "score": 0.8244,
+      "concept_coverage": [
+        1.0,
+        1.0
+      ],
+      "accepted": true,
+      "reason": "approved_evidence_candidate_requires_current_menu_validation"
+    },
+    {
+      "product_id": "56",
+      "description": "Latte Đá là sự kết hợp hoàn hảo giữa espresso đậm đà và sữa tươi béo ngậy, tạo ra một hương vị dịu nhẹ, không quá đắng nhưng vẫn giữ được sự đậm đà của cà phê. Khi thêm đá lạnh, Latte Đá mang lại cảm giác mát lạnh, dễ uống, rất thích hợp cho những ngày nóng. Hương vị của sữa tươi hòa quyện với cà phê tạo nên một thức uống thơm ngon, thanh mát nhưng vẫn đầy đủ độ béo và sự ngọt nhẹ.",
+      "old_score": 0.0604,
+      "score": 0.8239,
+      "concept_coverage": [
+        1.0,
+        1.0
+      ],
+      "accepted": true,
+      "reason": "approved_evidence_candidate_requires_current_menu_validation"
+    },
+    {
+      "product_id": "49",
+      "description": "Hương vị béo mịn, ngọt ngậy thêm cà phê thơm và đắng nhẹ, creamy mát lạnh",
+      "old_score": 0.0287,
+      "score": 0.6105,
+      "concept_coverage": [
+        1.0,
+        0.6667
+      ],
+      "accepted": true,
+      "reason": "approved_evidence_candidate_requires_current_menu_validation"
+    },
+    {
+      "product_id": "55",
+      "description": "Latte Caramel Cold Foam là sự kết hợp giữa espresso đậm đà, lớp bọt sữa mịn màng và caramel ngọt dịu phủ trên mặt, mang đến hương vị cân bằng giữa đắng nhẹ của cà phê và vị ngọt béo đặc trưng. Lớp cold foam tan chậm, mát lạnh trong từng ngụm, để lại hậu vị thơm caramel kéo dài.",
+      "old_score": 0.0489,
+      "score": 0.6007,
+      "concept_coverage": [
+        1.0,
+        0.6667
+      ],
+      "accepted": true,
+      "reason": "approved_evidence_candidate_requires_current_menu_validation"
+    },
+    {
+      "product_id": "51",
+      "description": "Frappe Matcha kết hợp trà xanh matcha xay mịn với sữa và đá xay, mang lại một thức uống mát lạnh với hương vị thanh nhẹ đặc trưng của trà xanh. Sự kết hợp này mang đến cảm giác thư giãn, dễ chịu nhưng vẫn có chút đắng nhẹ của matcha, hoàn hảo cho những ai muốn thưởng thức một món đồ uống không quá ngọt.",
+      "old_score": 0.0921,
+      "score": 0.6006,
+      "concept_coverage": [
+        1.0,
+        0.6667
+      ],
+      "accepted": true,
+      "reason": "approved_evidence_candidate_requires_current_menu_validation"
+    },
+    {
+      "product_id": "1",
+      "description": "Americano Chanh Leo là bản giao hưởng hoàn hảo giữa cà phê đậm đà và vị chua thanh, thơm lừng của chanh leo tươi. Một lựa chọn sảng khoái, đánh bay cơn khát tức thì.",
+      "old_score": 0.0306,
+      "score": 0.0,
+      "concept_coverage": [
+        0.0,
+        0.0
+      ],
+      "accepted": false,
+      "reason": "below_threshold_or_missing_concept"
+    },
+    {
+      "product_id": "10",
+      "description": "Nhâm nhi Butter Croissant Mama thơm lừng, nướng mới mỗi ngày. Vỏ bánh xốp giòn, nhân mềm mịn đậm vị, cực kỳ hoàn hảo khi thưởng thức cùng một ly cà phê hay trà ấm.",
+      "old_score": 0.0301,
+      "score": 0.0,
+      "concept_coverage": [
+        0.0,
+        0.0
+      ],
+      "accepted": false,
+      "reason": "below_threshold_or_missing_concept"
+    },
+    {
+      "product_id": "100",
+      "description": "Tận hưởng sự thanh mát từ Trà Shan Vải Hibiscus. Nền trà hảo hạng kết hợp cùng nguyên liệu tươi mới, mang đến hương thơm nhẹ nhàng và vị ngọt thanh tao, giúp thư giãn tinh thần hiệu quả.",
+      "old_score": 0.0409,
+      "score": 0.0,
+      "concept_coverage": [
+        0.3333,
+        0.6667
+      ],
+      "accepted": false,
+      "reason": "below_threshold_or_missing_concept"
+    }
+  ]
+}

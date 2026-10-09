@@ -1,0 +1,28 @@
+{
+  "backend_tests": 550,
+  "backend_passed": 550,
+  "backend_seconds": 119.243,
+  "frontend_tests": 85,
+  "frontend_passed": 85,
+  "focused_v28_tests": 31,
+  "evaluation_cases": 110,
+  "evaluation_passed": 110,
+  "typecheck": "passed",
+  "web_build": "passed",
+  "docker_build": [
+    "analytics-api",
+    "web-ui"
+  ],
+  "restarted_services": [
+    "analytics-api",
+    "web-ui"
+  ],
+  "api_health_http": 200,
+  "analytics_api_health": "healthy",
+  "web_ui_health": "healthy",
+  "live_provider_requests": 0,
+  "warehouse_mutations": 0,
+  "deployed_warehouse_smoke": "SUCCESS; verified quality 100; one scripted interpretation; zero repairs; two read-only SQL queries",
+  "reported_raw_goal_available": false,
+  "reproduced_goal_failure": "description exceeds original 120-character limit"
+}

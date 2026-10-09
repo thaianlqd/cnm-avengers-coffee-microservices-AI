@@ -1,0 +1,5187 @@
+[
+  {
+    "id": "compound_00",
+    "group": "compound",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ],
+    "expected_operations": 1
+  },
+  {
+    "id": "compound_01",
+    "group": "compound",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "revenue",
+              "aov"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "revenue",
+      "aov"
+    ],
+    "expected_operations": 1
+  },
+  {
+    "id": "compound_02",
+    "group": "compound",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "revenue",
+              "order_count",
+              "aov"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "revenue",
+      "order_count",
+      "aov"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "compound_03",
+    "group": "compound",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "stock_quantity",
+              "low_stock_count"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "stock_quantity",
+      "low_stock_count"
+    ],
+    "expected_operations": 1
+  },
+  {
+    "id": "compound_04",
+    "group": "compound",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "voucher_revenue",
+              "discount_amount",
+              "voucher_order_count"
+            ],
+            "dimension_ids": [
+              "promotion"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "voucher_revenue",
+      "discount_amount",
+      "voucher_order_count"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "compound_05",
+    "group": "compound",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ],
+    "expected_operations": 1
+  },
+  {
+    "id": "compound_06",
+    "group": "compound",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "revenue",
+              "aov"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "revenue",
+      "aov"
+    ],
+    "expected_operations": 1
+  },
+  {
+    "id": "compound_07",
+    "group": "compound",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "revenue",
+              "order_count",
+              "aov"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "revenue",
+      "order_count",
+      "aov"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "compound_08",
+    "group": "compound",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "stock_quantity",
+              "low_stock_count"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "stock_quantity",
+      "low_stock_count"
+    ],
+    "expected_operations": 1
+  },
+  {
+    "id": "compound_09",
+    "group": "compound",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "voucher_revenue",
+              "discount_amount",
+              "voucher_order_count"
+            ],
+            "dimension_ids": [
+              "promotion"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "voucher_revenue",
+      "discount_amount",
+      "voucher_order_count"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "compound_10",
+    "group": "compound",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ],
+    "expected_operations": 1
+  },
+  {
+    "id": "compound_11",
+    "group": "compound",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "revenue",
+              "aov"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "revenue",
+      "aov"
+    ],
+    "expected_operations": 1
+  },
+  {
+    "id": "compound_12",
+    "group": "compound",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "revenue",
+              "order_count",
+              "aov"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "revenue",
+      "order_count",
+      "aov"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "compound_13",
+    "group": "compound",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "stock_quantity",
+              "low_stock_count"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "stock_quantity",
+      "low_stock_count"
+    ],
+    "expected_operations": 1
+  },
+  {
+    "id": "compound_14",
+    "group": "compound",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "voucher_revenue",
+              "discount_amount",
+              "voucher_order_count"
+            ],
+            "dimension_ids": [
+              "promotion"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "voucher_revenue",
+      "discount_amount",
+      "voucher_order_count"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "compound_15",
+    "group": "compound",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ],
+    "expected_operations": 1
+  },
+  {
+    "id": "compound_16",
+    "group": "compound",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "revenue",
+              "aov"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "revenue",
+      "aov"
+    ],
+    "expected_operations": 1
+  },
+  {
+    "id": "compound_17",
+    "group": "compound",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "revenue",
+              "order_count",
+              "aov"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "revenue",
+      "order_count",
+      "aov"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "compound_18",
+    "group": "compound",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "stock_quantity",
+              "low_stock_count"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "stock_quantity",
+      "low_stock_count"
+    ],
+    "expected_operations": 1
+  },
+  {
+    "id": "compound_19",
+    "group": "compound",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "voucher_revenue",
+              "discount_amount",
+              "voucher_order_count"
+            ],
+            "dimension_ids": [
+              "promotion"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "voucher_revenue",
+      "discount_amount",
+      "voucher_order_count"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "multi_domain_00",
+    "group": "multi_domain",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "revenue",
+      "quantity_sold"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "multi_domain_01",
+    "group": "multi_domain",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "voucher_revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "quantity_sold",
+      "voucher_revenue"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "multi_domain_02",
+    "group": "multi_domain",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "voucher_revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "payment_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "voucher_revenue",
+      "payment_count"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "multi_domain_03",
+    "group": "multi_domain",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "payment_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "stock_quantity"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "payment_count",
+      "stock_quantity"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "multi_domain_04",
+    "group": "multi_domain",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "stock_quantity"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "customer_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "stock_quantity",
+      "customer_count"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "multi_domain_05",
+    "group": "multi_domain",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "customer_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "total_deliveries"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "customer_count",
+      "total_deliveries"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "multi_domain_06",
+    "group": "multi_domain",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "total_deliveries"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "review_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "total_deliveries",
+      "review_count"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "multi_domain_07",
+    "group": "multi_domain",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "review_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "store_review_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "review_count",
+      "store_review_count"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "multi_domain_08",
+    "group": "multi_domain",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "store_review_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "shift_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "store_review_count",
+      "shift_count"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "multi_domain_09",
+    "group": "multi_domain",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "shift_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "total_cash_difference"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "shift_count",
+      "total_cash_difference"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "multi_domain_10",
+    "group": "multi_domain",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "total_cash_difference"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "survey_response_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "total_cash_difference",
+      "survey_response_count"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "multi_domain_11",
+    "group": "multi_domain",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "survey_response_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "favorite_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "survey_response_count",
+      "favorite_count"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "multi_domain_12",
+    "group": "multi_domain",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "favorite_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "hourly_orders"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "favorite_count",
+      "hourly_orders"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "multi_domain_13",
+    "group": "multi_domain",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "hourly_orders"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "store_revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "hourly_orders",
+      "store_revenue"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "multi_domain_14",
+    "group": "multi_domain",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "store_revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "store_revenue",
+      "revenue"
+    ],
+    "expected_operations": 2
+  },
+  {
+    "id": "derived_feature_00",
+    "group": "derived_feature",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "leader"
+            ],
+            "granularity": null
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "product_revenue"
+    ]
+  },
+  {
+    "id": "derived_feature_01",
+    "group": "derived_feature",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 6,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "top_gap"
+            ],
+            "granularity": null
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "product_revenue"
+    ]
+  },
+  {
+    "id": "derived_feature_02",
+    "group": "derived_feature",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 7,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "selected_total"
+            ],
+            "granularity": null
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "product_revenue"
+    ]
+  },
+  {
+    "id": "derived_feature_03",
+    "group": "derived_feature",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 8,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "contribution_share"
+            ],
+            "granularity": null
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "product_revenue"
+    ]
+  },
+  {
+    "id": "derived_feature_04",
+    "group": "derived_feature",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "distribution",
+            "ranking": null,
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "concentration"
+            ],
+            "granularity": null
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "product_revenue"
+    ]
+  },
+  {
+    "id": "derived_feature_05",
+    "group": "derived_feature",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "trend",
+            "ranking": null,
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "change"
+            ],
+            "granularity": "week"
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "product_revenue"
+    ]
+  },
+  {
+    "id": "derived_feature_06",
+    "group": "derived_feature",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "trend",
+            "ranking": null,
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "change_pct"
+            ],
+            "granularity": "week"
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "product_revenue"
+    ]
+  },
+  {
+    "id": "derived_feature_07",
+    "group": "derived_feature",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "group_gap"
+            ],
+            "granularity": null
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "product_revenue"
+    ]
+  },
+  {
+    "id": "derived_feature_08",
+    "group": "derived_feature",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "relationship",
+            "ranking": null,
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "relationship_strength"
+            ],
+            "granularity": null
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "derived_feature_09",
+    "group": "derived_feature",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 14,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "contribution_share"
+            ],
+            "granularity": null
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_metrics": [
+      "product_revenue"
+    ]
+  },
+  {
+    "id": "lens_conflict_00",
+    "group": "lens_conflict",
+    "question": "Top 5 món có doanh thu cao nhất trong 30 ngày gần nhất. Với mỗi món, cho tôi doanh thu, số lượng bán và tỷ trọng đóng góp doanh thu. Cuối cùng chỉ ra món dẫn đầu và khoảng cách với món đứng thứ hai.",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "contribution_share",
+              "leader",
+              "top_gap"
+            ],
+            "lens_hint": "item_sales"
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_operations": 2,
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "lens_conflict_01",
+    "group": "lens_conflict",
+    "question": "Top 5 món có doanh thu cao nhất trong 30 ngày gần nhất. Với mỗi món, cho tôi doanh thu, số lượng bán và tỷ trọng đóng góp doanh thu. Cuối cùng chỉ ra món dẫn đầu và khoảng cách với món đứng thứ hai.",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "contribution_share",
+              "leader",
+              "top_gap"
+            ],
+            "lens_hint": "product_volume"
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_operations": 2,
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "lens_conflict_02",
+    "group": "lens_conflict",
+    "question": "Top 5 món có doanh thu cao nhất trong 30 ngày gần nhất. Với mỗi món, cho tôi doanh thu, số lượng bán và tỷ trọng đóng góp doanh thu. Cuối cùng chỉ ra món dẫn đầu và khoảng cách với món đứng thứ hai.",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "contribution_share",
+              "leader",
+              "top_gap"
+            ],
+            "lens_hint": "voucher_usage"
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_operations": 2,
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "lens_conflict_03",
+    "group": "lens_conflict",
+    "question": "Top 5 món có doanh thu cao nhất trong 30 ngày gần nhất. Với mỗi món, cho tôi doanh thu, số lượng bán và tỷ trọng đóng góp doanh thu. Cuối cùng chỉ ra món dẫn đầu và khoảng cách với món đứng thứ hai.",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "contribution_share",
+              "leader",
+              "top_gap"
+            ],
+            "lens_hint": "payment_mix"
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_operations": 2,
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "lens_conflict_04",
+    "group": "lens_conflict",
+    "question": "Top 5 món có doanh thu cao nhất trong 30 ngày gần nhất. Với mỗi món, cho tôi doanh thu, số lượng bán và tỷ trọng đóng góp doanh thu. Cuối cùng chỉ ra món dẫn đầu và khoảng cách với món đứng thứ hai.",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "contribution_share",
+              "leader",
+              "top_gap"
+            ],
+            "lens_hint": "sales_overview"
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_operations": 2,
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "lens_conflict_05",
+    "group": "lens_conflict",
+    "question": "Top 5 món có doanh thu cao nhất trong 30 ngày gần nhất. Với mỗi món, cho tôi doanh thu, số lượng bán và tỷ trọng đóng góp doanh thu. Cuối cùng chỉ ra món dẫn đầu và khoảng cách với món đứng thứ hai.",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "contribution_share",
+              "leader",
+              "top_gap"
+            ],
+            "lens_hint": "category_mix"
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_operations": 2,
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "lens_conflict_06",
+    "group": "lens_conflict",
+    "question": "Top 5 món có doanh thu cao nhất trong 30 ngày gần nhất. Với mỗi món, cho tôi doanh thu, số lượng bán và tỷ trọng đóng góp doanh thu. Cuối cùng chỉ ra món dẫn đầu và khoảng cách với món đứng thứ hai.",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "contribution_share",
+              "leader",
+              "top_gap"
+            ],
+            "lens_hint": "delivery_volume"
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_operations": 2,
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "lens_conflict_07",
+    "group": "lens_conflict",
+    "question": "Top 5 món có doanh thu cao nhất trong 30 ngày gần nhất. Với mỗi món, cho tôi doanh thu, số lượng bán và tỷ trọng đóng góp doanh thu. Cuối cùng chỉ ra món dẫn đầu và khoảng cách với món đứng thứ hai.",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "contribution_share",
+              "leader",
+              "top_gap"
+            ],
+            "lens_hint": "store_performance"
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_operations": 2,
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "lens_conflict_08",
+    "group": "lens_conflict",
+    "question": "Top 5 món có doanh thu cao nhất trong 30 ngày gần nhất. Với mỗi món, cho tôi doanh thu, số lượng bán và tỷ trọng đóng góp doanh thu. Cuối cùng chỉ ra món dẫn đầu và khoảng cách với món đứng thứ hai.",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "contribution_share",
+              "leader",
+              "top_gap"
+            ],
+            "lens_hint": "unknown_hint"
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_operations": 2,
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "lens_conflict_09",
+    "group": "lens_conflict",
+    "question": "Top 5 món có doanh thu cao nhất trong 30 ngày gần nhất. Với mỗi món, cho tôi doanh thu, số lượng bán và tỷ trọng đóng góp doanh thu. Cuối cùng chỉ ra món dẫn đầu và khoảng cách với món đứng thứ hai.",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "contribution_share",
+              "leader",
+              "top_gap"
+            ],
+            "lens_hint": null
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_operations": 2,
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "omitted_component_00",
+    "group": "omitted_component",
+    "question": "Số lượng bán và doanh thu sản phẩm",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 1,
+              "metric_id": "quantity_sold"
+            },
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "quantity_sold",
+      "product_revenue"
+    ]
+  },
+  {
+    "id": "omitted_component_01",
+    "group": "omitted_component",
+    "question": "Số lượng bán và doanh thu sản phẩm",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 2,
+              "metric_id": "quantity_sold"
+            },
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "quantity_sold",
+      "product_revenue"
+    ]
+  },
+  {
+    "id": "omitted_component_02",
+    "group": "omitted_component",
+    "question": "Số lượng bán và doanh thu sản phẩm",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 3,
+              "metric_id": "quantity_sold"
+            },
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "quantity_sold",
+      "product_revenue"
+    ]
+  },
+  {
+    "id": "omitted_component_03",
+    "group": "omitted_component",
+    "question": "Số lượng bán và doanh thu sản phẩm",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 4,
+              "metric_id": "quantity_sold"
+            },
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "quantity_sold",
+      "product_revenue"
+    ]
+  },
+  {
+    "id": "omitted_component_04",
+    "group": "omitted_component",
+    "question": "Số lượng bán và doanh thu sản phẩm",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "quantity_sold"
+            },
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "quantity_sold",
+      "product_revenue"
+    ]
+  },
+  {
+    "id": "omitted_component_05",
+    "group": "omitted_component",
+    "question": "Số lượng bán và doanh thu sản phẩm",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 6,
+              "metric_id": "quantity_sold"
+            },
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "quantity_sold",
+      "product_revenue"
+    ]
+  },
+  {
+    "id": "omitted_component_06",
+    "group": "omitted_component",
+    "question": "Số lượng bán và doanh thu sản phẩm",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 7,
+              "metric_id": "quantity_sold"
+            },
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "quantity_sold",
+      "product_revenue"
+    ]
+  },
+  {
+    "id": "omitted_component_07",
+    "group": "omitted_component",
+    "question": "Số lượng bán và doanh thu sản phẩm",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 8,
+              "metric_id": "quantity_sold"
+            },
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "quantity_sold",
+      "product_revenue"
+    ]
+  },
+  {
+    "id": "omitted_component_08",
+    "group": "omitted_component",
+    "question": "Số lượng bán và doanh thu sản phẩm",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 9,
+              "metric_id": "quantity_sold"
+            },
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "quantity_sold",
+      "product_revenue"
+    ]
+  },
+  {
+    "id": "omitted_component_09",
+    "group": "omitted_component",
+    "question": "Số lượng bán và doanh thu sản phẩm",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 10,
+              "metric_id": "quantity_sold"
+            },
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "quantity_sold",
+      "product_revenue"
+    ]
+  },
+  {
+    "id": "repair_preservation_00",
+    "group": "repair_preservation",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "unknown_metric"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 1,
+              "metric_id": "quantity_sold"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 1,
+              "metric_id": "quantity_sold"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "revenue",
+      "quantity_sold"
+    ],
+    "frozen": [
+      "r1"
+    ]
+  },
+  {
+    "id": "repair_preservation_01",
+    "group": "repair_preservation",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "unknown_metric"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 2,
+              "metric_id": "quantity_sold"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 2,
+              "metric_id": "quantity_sold"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "revenue",
+      "quantity_sold"
+    ],
+    "frozen": [
+      "r1"
+    ]
+  },
+  {
+    "id": "repair_preservation_02",
+    "group": "repair_preservation",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "unknown_metric"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 3,
+              "metric_id": "quantity_sold"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 3,
+              "metric_id": "quantity_sold"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "revenue",
+      "quantity_sold"
+    ],
+    "frozen": [
+      "r1"
+    ]
+  },
+  {
+    "id": "repair_preservation_03",
+    "group": "repair_preservation",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "unknown_metric"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 4,
+              "metric_id": "quantity_sold"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 4,
+              "metric_id": "quantity_sold"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "revenue",
+      "quantity_sold"
+    ],
+    "frozen": [
+      "r1"
+    ]
+  },
+  {
+    "id": "repair_preservation_04",
+    "group": "repair_preservation",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "unknown_metric"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "quantity_sold"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "quantity_sold"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "revenue",
+      "quantity_sold"
+    ],
+    "frozen": [
+      "r1"
+    ]
+  },
+  {
+    "id": "repair_preservation_05",
+    "group": "repair_preservation",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "unknown_metric"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 6,
+              "metric_id": "quantity_sold"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 6,
+              "metric_id": "quantity_sold"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "revenue",
+      "quantity_sold"
+    ],
+    "frozen": [
+      "r1"
+    ]
+  },
+  {
+    "id": "repair_preservation_06",
+    "group": "repair_preservation",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "unknown_metric"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 7,
+              "metric_id": "quantity_sold"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 7,
+              "metric_id": "quantity_sold"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "revenue",
+      "quantity_sold"
+    ],
+    "frozen": [
+      "r1"
+    ]
+  },
+  {
+    "id": "repair_preservation_07",
+    "group": "repair_preservation",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "unknown_metric"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 8,
+              "metric_id": "quantity_sold"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 8,
+              "metric_id": "quantity_sold"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "revenue",
+      "quantity_sold"
+    ],
+    "frozen": [
+      "r1"
+    ]
+  },
+  {
+    "id": "repair_preservation_08",
+    "group": "repair_preservation",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "unknown_metric"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 9,
+              "metric_id": "quantity_sold"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 9,
+              "metric_id": "quantity_sold"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "revenue",
+      "quantity_sold"
+    ],
+    "frozen": [
+      "r1"
+    ]
+  },
+  {
+    "id": "repair_preservation_09",
+    "group": "repair_preservation",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": null,
+            "derived_features": []
+          },
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "unknown_metric"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 10,
+              "metric_id": "quantity_sold"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r2",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 10,
+              "metric_id": "quantity_sold"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "revenue",
+      "quantity_sold"
+    ],
+    "frozen": [
+      "r1"
+    ]
+  },
+  {
+    "id": "structured_scope_00",
+    "group": "structured_scope",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "value": "TP.HCM"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "time": {
+      "mode": "today"
+    },
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "structured_scope_01",
+    "group": "structured_scope",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "value": "TP.HCM"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "time": {
+      "mode": "7d"
+    },
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "structured_scope_02",
+    "group": "structured_scope",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "value": "TP.HCM"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "time": {
+      "mode": "30d"
+    },
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "structured_scope_03",
+    "group": "structured_scope",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "value": "TP.HCM"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "time": {
+      "mode": "current_month"
+    },
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "structured_scope_04",
+    "group": "structured_scope",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "value": "TP.HCM"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "time": {
+      "mode": "previous_month"
+    },
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "structured_scope_05",
+    "group": "structured_scope",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "value": "TP.HCM"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "time": {
+      "mode": "current_quarter"
+    },
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "structured_scope_06",
+    "group": "structured_scope",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "value": "TP.HCM"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "time": {
+      "mode": "previous_quarter"
+    },
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "structured_scope_07",
+    "group": "structured_scope",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "value": "TP.HCM"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "time": {
+      "mode": "current_year"
+    },
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "structured_scope_08",
+    "group": "structured_scope",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "value": "TP.HCM"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "time": {
+      "mode": "previous_year"
+    },
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "structured_scope_09",
+    "group": "structured_scope",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [],
+            "filters": [
+              {
+                "dimension": "city",
+                "value": "TP.HCM"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "time": {
+      "mode": "all_time"
+    },
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "unsupported_data_00",
+    "group": "unsupported_data",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [],
+            "dimension_ids": [],
+            "analysis_kind": null,
+            "ranking": null,
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [],
+            "availability": "unsupported",
+            "reason": "definition_unavailable"
+          }
+        ]
+      }
+    ],
+    "expected": "needs_clarification",
+    "expected_outcome": "UNSUPPORTED"
+  },
+  {
+    "id": "unsupported_data_01",
+    "group": "unsupported_data",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [],
+            "dimension_ids": [],
+            "analysis_kind": null,
+            "ranking": null,
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [],
+            "availability": "unsupported",
+            "reason": "definition_unavailable"
+          }
+        ]
+      }
+    ],
+    "expected": "needs_clarification",
+    "expected_outcome": "UNSUPPORTED"
+  },
+  {
+    "id": "unsupported_data_02",
+    "group": "unsupported_data",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [],
+            "dimension_ids": [],
+            "analysis_kind": null,
+            "ranking": null,
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [],
+            "availability": "unsupported",
+            "reason": "definition_unavailable"
+          }
+        ]
+      }
+    ],
+    "expected": "needs_clarification",
+    "expected_outcome": "UNSUPPORTED"
+  },
+  {
+    "id": "unsupported_data_03",
+    "group": "unsupported_data",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [],
+            "dimension_ids": [],
+            "analysis_kind": null,
+            "ranking": null,
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [],
+            "availability": "unsupported",
+            "reason": "definition_unavailable"
+          }
+        ]
+      }
+    ],
+    "expected": "needs_clarification",
+    "expected_outcome": "UNSUPPORTED"
+  },
+  {
+    "id": "unsupported_data_04",
+    "group": "unsupported_data",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [],
+            "dimension_ids": [],
+            "analysis_kind": null,
+            "ranking": null,
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [],
+            "availability": "unsupported",
+            "reason": "definition_unavailable"
+          }
+        ]
+      }
+    ],
+    "expected": "needs_clarification",
+    "expected_outcome": "UNSUPPORTED"
+  },
+  {
+    "id": "unsupported_data_05",
+    "group": "unsupported_data",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "stock_quantity"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "needs_clarification",
+    "expected_outcome": "INSUFFICIENT_DATA"
+  },
+  {
+    "id": "unsupported_data_06",
+    "group": "unsupported_data",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "low_stock_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "needs_clarification",
+    "expected_outcome": "INSUFFICIENT_DATA"
+  },
+  {
+    "id": "unsupported_data_07",
+    "group": "unsupported_data",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "total_spent"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "needs_clarification",
+    "expected_outcome": "INSUFFICIENT_DATA"
+  },
+  {
+    "id": "unsupported_data_08",
+    "group": "unsupported_data",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "total_deliveries"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "needs_clarification",
+    "expected_outcome": "INSUFFICIENT_DATA"
+  },
+  {
+    "id": "unsupported_data_09",
+    "group": "unsupported_data",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "driver_rating"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "ranking": null,
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "needs_clarification",
+    "expected_outcome": "INSUFFICIENT_DATA"
+  },
+  {
+    "id": "refinement_delta_00",
+    "group": "refinement_delta",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "delta": {
+      "changes": [
+        {
+          "action": "update",
+          "requirement_id": "r1",
+          "changes": {
+            "ranking": {
+              "limit": 1,
+              "metric_id": "product_revenue"
+            }
+          }
+        }
+      ]
+    },
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "refinement_delta_01",
+    "group": "refinement_delta",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "delta": {
+      "changes": [
+        {
+          "action": "update",
+          "requirement_id": "r1",
+          "changes": {
+            "ranking": {
+              "limit": 2,
+              "metric_id": "product_revenue"
+            }
+          }
+        }
+      ]
+    },
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "refinement_delta_02",
+    "group": "refinement_delta",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "delta": {
+      "changes": [
+        {
+          "action": "update",
+          "requirement_id": "r1",
+          "changes": {
+            "ranking": {
+              "limit": 3,
+              "metric_id": "product_revenue"
+            }
+          }
+        }
+      ]
+    },
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "refinement_delta_03",
+    "group": "refinement_delta",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "delta": {
+      "changes": [
+        {
+          "action": "update",
+          "requirement_id": "r1",
+          "changes": {
+            "ranking": {
+              "limit": 4,
+              "metric_id": "product_revenue"
+            }
+          }
+        }
+      ]
+    },
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "refinement_delta_04",
+    "group": "refinement_delta",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "delta": {
+      "changes": [
+        {
+          "action": "update",
+          "requirement_id": "r1",
+          "changes": {
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            }
+          }
+        }
+      ]
+    },
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "refinement_delta_05",
+    "group": "refinement_delta",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "delta": {
+      "changes": [
+        {
+          "action": "update",
+          "requirement_id": "r1",
+          "changes": {
+            "ranking": {
+              "limit": 6,
+              "metric_id": "product_revenue"
+            }
+          }
+        }
+      ]
+    },
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "refinement_delta_06",
+    "group": "refinement_delta",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "delta": {
+      "changes": [
+        {
+          "action": "update",
+          "requirement_id": "r1",
+          "changes": {
+            "ranking": {
+              "limit": 7,
+              "metric_id": "product_revenue"
+            }
+          }
+        }
+      ]
+    },
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "refinement_delta_07",
+    "group": "refinement_delta",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "delta": {
+      "changes": [
+        {
+          "action": "update",
+          "requirement_id": "r1",
+          "changes": {
+            "ranking": {
+              "limit": 8,
+              "metric_id": "product_revenue"
+            }
+          }
+        }
+      ]
+    },
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "refinement_delta_08",
+    "group": "refinement_delta",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "delta": {
+      "changes": [
+        {
+          "action": "update",
+          "requirement_id": "r1",
+          "changes": {
+            "ranking": {
+              "limit": 9,
+              "metric_id": "product_revenue"
+            }
+          }
+        }
+      ]
+    },
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "refinement_delta_09",
+    "group": "refinement_delta",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": []
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "delta": {
+      "changes": [
+        {
+          "action": "update",
+          "requirement_id": "r1",
+          "changes": {
+            "ranking": {
+              "limit": 10,
+              "metric_id": "product_revenue"
+            }
+          }
+        }
+      ]
+    },
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "malformed_envelope_00",
+    "group": "malformed_envelope",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {},
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "contribution_share",
+              "leader",
+              "top_gap"
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "malformed_envelope_01",
+    "group": "malformed_envelope",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": "bad"
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "contribution_share",
+              "leader",
+              "top_gap"
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "malformed_envelope_02",
+    "group": "malformed_envelope",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1"
+          }
+        ]
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "contribution_share",
+              "leader",
+              "top_gap"
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "malformed_envelope_03",
+    "group": "malformed_envelope",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "analyze",
+        "requirements": []
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "contribution_share",
+              "leader",
+              "top_gap"
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  },
+  {
+    "id": "malformed_envelope_04",
+    "group": "malformed_envelope",
+    "question": "Phân tích theo lựa chọn đã nêu",
+    "provider_envelopes": [
+      {
+        "decision": "plan",
+        "requirements": []
+      },
+      {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "r1",
+            "goal": "Phân tích doanh thu sản phẩm",
+            "domain_id": "products",
+            "metric_ids": [
+              "product_revenue",
+              "quantity_sold"
+            ],
+            "dimension_ids": [
+              "product"
+            ],
+            "analysis_kind": "ranking",
+            "ranking": {
+              "limit": 5,
+              "metric_id": "product_revenue"
+            },
+            "time": {
+              "kind": "rolling",
+              "amount": 30,
+              "unit": "day"
+            },
+            "derived_features": [
+              "contribution_share",
+              "leader",
+              "top_gap"
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": "proposal_ready",
+    "expected_calls": 2,
+    "expected_metrics": [
+      "product_revenue",
+      "quantity_sold"
+    ]
+  }
+]

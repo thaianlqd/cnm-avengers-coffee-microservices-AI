@@ -1,0 +1,257 @@
+{
+    "outcome": "SYSTEM_ERROR",
+    "quality_assessment": {
+        "score": null,
+        "grade": "needs_attention",
+        "status": "not_scored",
+        "components": [],
+        "completed": [],
+        "missing": [],
+        "unverified": [],
+        "limitations": [],
+        "suggested_next_actions": [],
+        "coverage": {
+            "requested_count": 0,
+            "completed_count": 0,
+            "supporting_count": 0,
+            "omitted_count": 0
+        },
+        "generated_by": "deterministic_verifier",
+        "version": "2.8.1",
+        "reason": "Hệ thống chưa hoàn tất diễn giải sau các lượt phục hồi nội bộ. Yêu cầu của bạn được giữ nguyên; đây là lỗi xử lý của hệ thống.",
+        "measurement_mode": "legacy_weighted_checks",
+        "verification_checks": [],
+        "accuracy_assessment": {
+            "status": "not_measured",
+            "matched_count": null,
+            "reference_count": 0,
+            "accuracy_pct": null,
+            "reference_source": null,
+            "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+        },
+        "confidence_probability": null,
+        "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+    },
+    "issue": {
+        "category": "SEMANTIC_INTERPRETATION_ERROR",
+        "title": "Hệ thống chưa hoàn tất diễn giải phân tích",
+        "what_is_known": [],
+        "what_is_missing": [
+            "Hệ thống chưa hoàn tất diễn giải sau các lượt phục hồi nội bộ. Yêu cầu của bạn được giữ nguyên; đây là lỗi xử lý của hệ thống."
+        ],
+        "suggested_actions": [
+            {
+                "type": "retry",
+                "label": "Lập lại kế hoạch",
+                "followup": null
+            }
+        ]
+    },
+    "status": "error",
+    "question": "Hệ thống chưa hoàn tất diễn giải sau các lượt phục hồi nội bộ. Yêu cầu của bạn được giữ nguyên; đây là lỗi xử lý của hệ thống.",
+    "message": "Hệ thống chưa hoàn tất diễn giải sau các lượt phục hồi nội bộ. Yêu cầu của bạn được giữ nguyên; đây là lỗi xử lý của hệ thống.",
+    "assistant_reply": "Hệ thống chưa hoàn tất diễn giải sau các lượt phục hồi nội bộ. Yêu cầu của bạn được giữ nguyên; đây là lỗi xử lý của hệ thống.",
+    "options": [],
+    "clarification": null,
+    "interpretation": null,
+    "diagnostics": {
+        "failure_stage": "SEMANTIC_INTENT",
+        "provider_status": "success",
+        "provider_error_category": null,
+        "agent_contract_status": "invalid",
+        "agent_contract_error": "semantic_intent_invalid",
+        "semantic_status": "not_started",
+        "execution_status": "not_started",
+        "result_status": "not_started",
+        "planning_mode": "hybrid_verifiable",
+        "pipeline_version": "2.8",
+        "provider_calls": [
+            {
+                "provider": "gemini",
+                "model": "gemini-3.5-flash-lite",
+                "status": "success",
+                "tokens": {
+                    "input": 3031,
+                    "output": 146
+                },
+                "api_style": "openai",
+                "tool_schema_chars": 2856,
+                "latency_ms": 1671.45
+            },
+            {
+                "provider": "gemini",
+                "model": "gemini-3.5-flash-lite",
+                "status": "success",
+                "tokens": {
+                    "input": 2072,
+                    "output": 193
+                },
+                "api_style": "openai",
+                "tool_schema_chars": 2856,
+                "latency_ms": 1734.35
+            },
+            {
+                "provider": "gemini",
+                "model": "gemini-3.5-flash-lite",
+                "status": "success",
+                "tokens": {
+                    "input": 2072,
+                    "output": 153
+                },
+                "api_style": "openai",
+                "tool_schema_chars": 2856,
+                "latency_ms": 2190.92
+            }
+        ],
+        "terminal_error": "semantic_intent_invalid",
+        "db_query_count": 0,
+        "value_lookup_count": 0,
+        "contract_repair_count": 2,
+        "contract_rejection_count": 3,
+        "contract_normalization_count": 0,
+        "contract_normalizations": [],
+        "model_escalation_count": 0,
+        "provider_fallback_count": 0,
+        "post_result_provider_call_count": 0,
+        "semantic_tool_calls": 0,
+        "analytical_tool_calls": 0,
+        "analytical_cache_hits": 0,
+        "agent_rounds": 3,
+        "cost_rounds": [],
+        "tool_trace": [],
+        "limitations": [],
+        "omitted_supporting_operations": [],
+        "omitted_supporting_operation_count": 0,
+        "requested_operation_count": 0,
+        "supporting_operation_count": 0,
+        "input_tokens": 7175,
+        "output_tokens": 492,
+        "cumulative_planning_input_tokens": null,
+        "cumulative_planning_output_tokens": null,
+        "provider_call_budget": 3,
+        "provider_call_count": 3,
+        "provider_attempt_count": 3,
+        "provider_call_budget_block_count": 0,
+        "primary_call_count": 1,
+        "semantic_repair_count": 1,
+        "targeted_resolution_count": 1,
+        "transport_retry_count": 0,
+        "failure_requirement_id": null,
+        "failure_field": "clarification",
+        "failure_code": "clarification_required",
+        "request_anchors": {
+            "metrics": [
+                {
+                    "phrase": "doanh thu",
+                    "candidate_ids": [
+                        "item_revenue",
+                        "payment_revenue",
+                        "product_revenue",
+                        "revenue",
+                        "store_revenue",
+                        "voucher_revenue"
+                    ],
+                    "start": 8,
+                    "end": 17
+                },
+                {
+                    "phrase": "so don",
+                    "candidate_ids": [
+                        "order_count",
+                        "store_order_count",
+                        "voucher_order_count"
+                    ],
+                    "start": 18,
+                    "end": 24
+                },
+                {
+                    "phrase": "gia tri don trung binh",
+                    "candidate_ids": [
+                        "aov"
+                    ],
+                    "start": 28,
+                    "end": 50
+                }
+            ],
+            "dimensions": [],
+            "features": [],
+            "capabilities": [],
+            "values": [
+                {
+                    "dimension": "city",
+                    "value": "Hà Nội"
+                },
+                {
+                    "dimension": "city",
+                    "value": "Hồ Chí Minh"
+                }
+            ],
+            "rankings": [],
+            "times": [
+                {
+                    "kind": "rolling",
+                    "amount": 90,
+                    "unit": "day"
+                }
+            ],
+            "ui": {
+                "required_domain": null,
+                "required_period": null
+            }
+        },
+        "required_domain_pack_ids": [
+            "orders"
+        ],
+        "supporting_domain_pack_ids": [
+            "hourly",
+            "order_items"
+        ],
+        "detailed_domain_ids": [
+            "orders",
+            "hourly",
+            "order_items"
+        ],
+        "pruned_optional_domain_ids": [],
+        "retrieval_confidence": "high",
+        "retrieval_candidate_count": 7,
+        "global_domain_count": 16,
+        "context_char_budget": 24000,
+        "total_context_chars": 11162,
+        "primary_context_chars": 11162,
+        "provider_body_chars": {
+            "native": 11023,
+            "compat": 11162
+        },
+        "decision_schema_chars": 2825,
+        "schema_chars": 2675,
+        "provider_body_headroom_chars": 12838,
+        "system_chars": 990,
+        "coverage_contract_chars": 0,
+        "contract_issues": [
+            {
+                "requirement_id": null,
+                "field": "clarification",
+                "code": "clarification_required"
+            }
+        ],
+        "resolver_action": "targeted_repair",
+        "repaired_contract_issues": [
+            {
+                "requirement_id": "req_1",
+                "field": "dimension_ids",
+                "code": "two_dimensions_required"
+            }
+        ],
+        "repair_context_chars": 7308,
+        "planning_latency_ms": 5651.17,
+        "agent_round_count": 3,
+        "repair_round_count": 2,
+        "error_category": "semantic_intent_invalid",
+        "missing_fields": [],
+        "ambiguity_count": 0,
+        "embedding_call_count": 0
+    },
+    "charts": [],
+    "clarification_question": "Hệ thống chưa hoàn tất diễn giải sau các lượt phục hồi nội bộ. Yêu cầu của bạn được giữ nguyên; đây là lỗi xử lý của hệ thống.",
+    "interpreted_request": "Hệ thống chưa hoàn tất diễn giải sau các lượt phục hồi nội bộ. Yêu cầu của bạn được giữ nguyên; đây là lỗi xử lý của hệ thống."
+}

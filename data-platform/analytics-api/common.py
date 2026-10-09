@@ -1,6 +1,7 @@
 from typing import Optional, List, Dict, Any, Literal
 from datetime import date, datetime, timedelta
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field, model_validator, AliasChoices
+from services.analysis_contract import Filter
 
 
 class SqlQueryRequest(BaseModel):
@@ -35,21 +36,71 @@ class ReportExportLogCreate(BaseModel):
 
 
 class AiTimeRange(BaseModel):
-    mode: Literal["auto", "today", "7d", "30d", "custom"] = "auto"
+    mode: Literal["auto", "today", "7d", "30d", "current_month", "previous_month", "current_quarter", "previous_quarter", "current_year", "previous_year", "all_time", "custom"] = "auto"
     start: Optional[date] = None
     end: Optional[date] = None
 
+    @model_validator(mode="after")
+    def bounds(self):
+        if self.mode == "custom" and (not self.start or not self.end or self.start > self.end):
+            raise ValueError("Custom time requires ordered dates")
+        if self.mode != "custom" and (self.start or self.end):
+            raise ValueError("Dates are only valid for custom time")
+        return self
+
+
+class AiAnalysisScope(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    mode: Literal["auto", "all", "selected"] = "auto"
+    filters: List[Filter] = Field(default_factory=list, max_length=12)
+
+    @model_validator(mode="after")
+    def selection(self):
+        if (self.mode == "selected") != bool(self.filters):
+            raise ValueError("Only selected scope carries filters")
+        return self
+
 
 class AiTextToReportRequest(BaseModel):
-    prompt: str
+    refresh: bool = False
+    proposal_revision: Optional[int] = None
+    intent_fingerprint: Optional[str] = None
+    plan_fingerprint: Optional[str] = None
+    catalog_fingerprint: Optional[str] = None
+    prompt: str = Field(validation_alias=AliasChoices("question", "prompt"), min_length=1, max_length=8000)
+    analysis_context: str = Field(default="", max_length=2000)
+    analysis_expectation: str = Field(default="", max_length=1500)
+    analysis_module_id: Optional[str] = Field(default=None, pattern=r"^am_[a-f0-9]{24}$")
+    analysis_module_name: Optional[str] = Field(default=None, min_length=1, max_length=120)
+    natural_input: bool = Field(default=False, exclude=True)
+    accept_partial_scope: bool = False
+    analysis_depth: Literal["deep", "focused", "comprehensive"] = "deep"
+    analysis_scope: Optional[AiAnalysisScope] = None
+    reference_date: Optional[date] = None
     context: Optional[str] = ""
-    time_range: Optional[AiTimeRange] = None
-    domain: Optional[Literal["auto", "orders", "stores", "products", "customers", "payments", "delivery"]] = "auto"
+    time_range: Optional[AiTimeRange] = Field(default=None, validation_alias=AliasChoices("time", "time_range"))
+    domain: Optional[str] = Field(default="auto", pattern=r"^[a-z][a-z0-9_]{0,63}$")
     # Session ID for tracking conversation across report generation and refinement turns.
     session_id: Optional[str] = None
     # Legacy filters remain accepted for older clients.
     date_range: Optional[str] = None
     branch: Optional[str] = "all"
+
+    @model_validator(mode="before")
+    @classmethod
+    def natural_boundary(cls, raw):
+        if not isinstance(raw, dict):
+            return raw
+        data = dict(raw)
+        for new, old in (("question", "prompt"), ("time", "time_range")):
+            if new in data and old in data and data[new] != data[old]:
+                raise ValueError("Conflicting request aliases")
+        data["natural_input"] = any(k in data for k in ("question", "analysis_context", "analysis_expectation", "analysis_module_id", "analysis_module_name"))
+        if data["natural_input"] and "time" not in data and "time_range" not in data:
+            data["time_range"] = {"mode": "auto"}
+        if not str(data.get("question", data.get("prompt", ""))).strip():
+            raise ValueError("Question is required")
+        return data
 
 
 class AiSummarizeRequest(BaseModel):
@@ -58,9 +109,16 @@ class AiSummarizeRequest(BaseModel):
     columns: Optional[List[str]] = []
 
 
+class AiVisualChange(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    chart_id: str = Field(min_length=1, max_length=64)
+    chart_type: Literal["bar", "horizontal_bar", "line", "area", "multi_line", "donut", "heatmap", "grouped_bar", "stacked_bar", "stacked_100", "scatter", "table"]
+
+
 class AiReportRefineRequest(BaseModel):
     current_report: Dict[str, Any]
-    feedback: str
+    feedback: str = ""
+    visual_changes: List[AiVisualChange] = Field(default_factory=list, max_length=8)
     conversation_history: Optional[List[Dict[str, str]]] = []
     domain: Optional[str] = "auto"
     # Session ID to retrieve server-side conversation memory.
@@ -68,6 +126,7 @@ class AiReportRefineRequest(BaseModel):
 
 
 class AiFeedbackRequest(BaseModel):
+    revision: Optional[int] = None
     session_id: Optional[str] = None
     prompt: str
     rating: Literal["positive", "negative"]

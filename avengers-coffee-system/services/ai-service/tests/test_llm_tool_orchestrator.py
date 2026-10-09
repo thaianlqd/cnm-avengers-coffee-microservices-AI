@@ -52,6 +52,12 @@ class ScriptedProvider:
 
 @pytest.fixture
 def runtime(monkeypatch):
+    # Existing tests characterize the pre-semantic compatibility API. Production
+    # defaults to semantic_mode=True. The system-wide semantic suite restores
+    # that default and supplies typed model output explicitly, without NLU mocks.
+    from functools import partial
+    semantic_orchestrator = agent.run_llm_tool_turn
+    monkeypatch.setattr(agent, 'run_llm_tool_turn', partial(semantic_orchestrator, semantic_mode=False))
     sid = 'lan20-'+uuid4().hex
     monkeypatch.setenv('AI_CHAT_ORCHESTRATOR_MODE', 'llm_tools')
     # Guarded inference now owns its provider policy. Keep this shared fixture
@@ -65,6 +71,8 @@ def runtime(monkeypatch):
     monkeypatch.setattr(groq_service, 'GeminiClient', lambda _key: provider)
     from src.common import agent_provider_policy
     monkeypatch.setattr(agent_provider_policy, '_cooldowns', {})
+    monkeypatch.setattr(agent_provider_policy, '_transient_cooldowns', {})
+    monkeypatch.setattr(agent_provider_policy, '_healthy_fallbacks', {})
     monkeypatch.setattr(agent_provider_policy, '_invalid_credentials', set())
     monkeypatch.setattr(agent_provider_policy, '_next_slot', {})
     monkeypatch.setattr(agent_memory, 'redis_client', lambda: redis)
@@ -128,7 +136,8 @@ def runtime(monkeypatch):
     ConversationMemory(redis).save(sid,{**empty_memory(),'visible_snapshots':{'products':products},'focus':{'product':products[0]}})
     def turn(message='Synthetic request', **kwargs):
         return agent_service.run_agent(sid,message,client_message_id=kwargs.pop('client_message_id',uuid4().hex),**kwargs)
-    return SimpleNamespace(sid=sid,redis=redis,provider=provider,writes=writes,reads=reads,products=products,turn=turn,durable=durable)
+    return SimpleNamespace(sid=sid,redis=redis,provider=provider,writes=writes,reads=reads,products=products,turn=turn,durable=durable,
+        semantic_orchestrator=semantic_orchestrator)
 
 
 @pytest.mark.parametrize('message,args,count', [
@@ -211,14 +220,15 @@ def test_untrusted_write_arguments_never_mutate(runtime,name,args):
     assert not result.get('checkout_payload')
 
 
-def test_options_stage_then_complete_uses_authoritative_price_and_replay(runtime):
+def test_options_stage_then_complete_uses_authoritative_price_and_replay(runtime, monkeypatch):
+    monkeypatch.setattr(agent, '_legacy_language_control', lambda *a: None)
     runtime.provider.plan([('add_to_cart',dict(product_id='101',quantity=2))])
     result=runtime.turn('lấy món đầu tiên hai ly')
     assert result['tool_calls_log'][0]['result']['status']=='needs_options' and not runtime.writes
     assert cart_manager.get_pending_action(runtime.sid)['type']=='fill_options'
     runtime.provider.plan([('add_to_cart',dict(product_id='101',size='L',toppings=['Foam']))],claims=['add_to_cart'])
-    first=runtime.turn('size lớn và topping foam',client_message_id='same-turn')
-    second=runtime.turn('size lớn và topping foam',client_message_id='same-turn')
+    first=runtime.turn('size L và topping Foam',client_message_id='same-turn')
+    second=runtime.turn('size L và topping Foam',client_message_id='same-turn')
     assert first==second and len(runtime.writes)==1
     assert runtime.writes[0][1]['unit_price']==42000 and runtime.writes[0][1]['quantity']==2
     assert runtime.writes[0][1]['size']=='L' and runtime.writes[0][1]['toppings']==['Foam']

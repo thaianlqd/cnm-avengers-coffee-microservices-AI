@@ -1,4 +1,6 @@
 from typing import Dict, Any, List
+from .store_information_tools import execute_get_store_info
+from .product_review_tools import execute_get_products_reviews
 
 from .branch_tools import (
     TOOL_ASK_BRANCH, execute_ask_branch,
@@ -12,7 +14,7 @@ from .product_tools import (
     TOOL_CHECK_PRICE_AND_STOCK, execute_check_price_and_stock,
     TOOL_GET_PRODUCT_INSIGHTS, execute_get_product_insights,
     TOOL_GET_RECOMMENDATIONS, execute_get_recommendations,
-    TOOL_FILTER_CATALOG, execute_filter_catalog,
+    TOOL_FILTER_CATALOG, execute_filter_catalog, execute_get_menu_categories,
 )
 from .cart_tools import (
     TOOL_ADD_TO_CART, execute_add_to_cart,
@@ -72,6 +74,8 @@ ALL_TOOL_SCHEMAS: List[Dict[str, Any]] = [
 # Dispatch map: tool_name -> executor function
 # Backend injection for session_id via lambda args, session_id
 TOOL_EXECUTORS = {
+    "get_products_reviews": lambda args, session_id: execute_get_products_reviews(**args),
+    "get_store_info": lambda args, session_id: execute_get_store_info(**args),
     "ask_branch": lambda args, session_id: execute_ask_branch(session_id=session_id),
     "find_nearest_branch": lambda args, session_id: execute_find_nearest_branch(session_id=session_id, **args),
     "set_session_branch": lambda args, session_id: execute_set_session_branch(session_id=session_id, **args),
@@ -88,6 +92,7 @@ TOOL_EXECUTORS = {
     "confirm_checkout": lambda args, session_id: execute_confirm_checkout(session_id=session_id, **args),
     "search_knowledge_base": lambda args, session_id: execute_search_knowledge_base(session_id=session_id, **args),
     "get_recommendations": lambda args, session_id: execute_get_recommendations(**args),
+    "get_menu_categories": lambda args, session_id: execute_get_menu_categories(),
     "filter_catalog": lambda args, session_id: execute_filter_catalog(**args),
     "track_order_status": lambda args, session_id: execute_track_order_status(session_id=session_id, **args),
     "get_order_history": lambda args, session_id: execute_get_order_history(session_id=session_id, **args),

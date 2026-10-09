@@ -371,10 +371,10 @@ def test_menu_two_products_options_then_cart_voucher_checkout_boundary(flow, mon
     assert {item['product_name'] for item in pending} == {'Bánh Cà Phê', 'Nước 3'}
     assert 'Foam dừa' in selected['reply']
     assert not selected['checkout_payload']
-    options = turn(flow, option_message)
+    options = turn(flow, "Bánh Cà Phê theo mặc định, Nước 3 size vừa, " + option_message)
     assert not options['checkout_payload']
     cart = cart_manager.get_cart(flow)
-    assert {item['product_name'] for item in cart['items']} == {'Bánh Cà Phê', 'Nước 3'}
+    assert {item['product_name'] for item in cart['items']} == {'Bánh Cà Phê', 'Nước 3'}, options
     assert cart['subtotal'] == 313000
     drink = next(item for item in cart['items'] if item['product_name'] == 'Nước 3')
     assert drink['toppings'] == expected_toppings

@@ -793,6 +793,7 @@ def _confirm_saved_location(
     message: str,
     history: Optional[List[Dict[str, str]]] = None,
     resolved_location: Optional[Dict[str, Any]] = None,
+    semantic_authorized: bool = False,
 ) -> Optional[Dict[str, Any]]:
     prefs = cart_manager.get_checkout_prefs(session_id)
     from src.function_calling.tools.user_tools import _clean_profile_address
@@ -802,14 +803,14 @@ def _confirm_saved_location(
     normalized = _normalize_chat_text(message)
 
     # Do not treat product choices or options as address confirmations
-    if re.search(
+    if not semantic_authorized and re.search(
         r"\b(?:nuoc|do uong|banh|do an|mon|ly|phan|chai|size|it da|da rieng|luong da|duong|topping)\b",
         normalized,
     ):
         return None
 
     from src.agents.location_parser import parse_location
-    confirms = _is_plain_confirmation(message) or parse_location(message).kind == "reference"
+    confirms = semantic_authorized or _is_plain_confirmation(message) or parse_location(message).kind == "reference"
     if not confirms:
         return None
 
@@ -2178,6 +2179,12 @@ def run_agent(
 ) -> Dict[str, Any]:
     """Choose one orchestrator before a turn; never fall back after a write."""
     import os
+    architecture = os.getenv('AI_AGENT_ARCHITECTURE', 'hybrid').strip().lower()
+    if architecture == 'hybrid':
+        from src.agents.hybrid_commerce_orchestrator import run_hybrid_turn
+        return run_hybrid_turn(session_id, user_message, history, client_message_id, selected_product_id)
+    if architecture != 'semantic_legacy':
+        raise ValueError('Invalid AI_AGENT_ARCHITECTURE')
     # Deployments select a mode explicitly. Keep the unconfigured library
     # fallback compatible for direct callers and rollback-oriented unit tests.
     mode = os.getenv('AI_CHAT_ORCHESTRATOR_MODE', 'legacy').strip().lower()

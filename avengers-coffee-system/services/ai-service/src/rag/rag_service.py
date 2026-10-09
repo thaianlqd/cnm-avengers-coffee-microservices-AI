@@ -78,7 +78,7 @@ class RAGService:
     def is_loaded(self):
         return self._index is not None
 
-    def lookup(self, query, top_k=None, min_score=None, **filters):
+    def lookup(self, query, top_k=None, min_score=None, preference_concepts=None, **filters):
         started = time.monotonic()
         fingerprint = hashlib.sha256(str(query).encode()).hexdigest()[:12]
         index, candidates = self._index, []
@@ -100,13 +100,24 @@ class RAGService:
                 if all(value is None or (doc.get(key) in value if isinstance(value, (list, tuple, set, frozenset))
                                         else doc.get(key) == str(value)) for key, value in filters.items()):
                     candidates.append(i)
-            scores = index.retriever.scores(query)
+            if preference_concepts is not None:
+                if (filters.get('domain') != 'product_description' or filters.get('source') != 'menu.san_pham.mo_ta'
+                        or not isinstance(preference_concepts, list) or not 1 <= len(preference_concepts) <= 4
+                        or any(not isinstance(c, str) or not c.strip() or len(c) > 80 for c in preference_concepts)):
+                    raise ValueError('invalid preference concepts')
+                scores, coverage = index.retriever.concept_scores(preference_concepts)
+                response['scoring_basis'] = 'description_concept_coverage'
+            else:
+                scores = index.retriever.scores(query)
             ranked = sorted(candidates, key=lambda i: (-float(scores[i]), index.docs[i]['id']))
             response['results'] = [{**index.docs[i], 'score': round(float(scores[i]), 4)}
                                    for i in ranked[:limit] if float(scores[i]) >= threshold]
             if response['results']:
                 response['status'] = 'ok'
             response['candidate_count'] = len(candidates)
+            response['score_diagnostics'] = [{'id': index.docs[i]['id'], 'score': round(float(scores[i]), 4),
+                'accepted': float(scores[i]) >= threshold,
+                'reason': 'accepted' if float(scores[i]) >= threshold else 'below_threshold_or_missing_concept'} for i in ranked[:5]]
             return response
         except Exception as exc:
             response.update(status='error', results=[])

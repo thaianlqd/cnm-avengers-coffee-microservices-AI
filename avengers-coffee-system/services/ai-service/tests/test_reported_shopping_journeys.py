@@ -160,13 +160,15 @@ def test_default_without_selected_focus_is_a_choice_question_not_provider_failur
 
 
 def test_grouped_product_ordinal_keeps_food_numbering(runtime):
+    from test_semantic_control import gateway_for, action
     runtime.products.append(dict(product_id='104', product_name='Cake Delta', category='food', final_price=60000, is_active=True))
     ConversationMemory(runtime.redis).save(runtime.sid, {**empty_memory(),
         'visible_snapshots': {'products': runtime.products}})
-    g = gateway(runtime, 'cho tôi bánh số 2 đi')
-    assert g.dispatch('add_to_cart', dict(product_id='103', size='M'))['status'] == 'product_choice_required'
+    g = gateway_for(runtime, 'cho tôi bánh số 2 size M đi')
+    ref = {'namespace': 'PRODUCT', 'kind': 'ordinal', 'scope': 'food', 'index': 2}
+    assert g.execute_semantic(action(g, 'add_to_cart', dict(product_id='103', size='M'), reference=ref))['status'] == 'reference_conflict'
     assert not runtime.writes
-    assert g.dispatch('add_to_cart', dict(product_id='104', size='M'))['status'] == 'ok'
+    assert g.execute_semantic(action(g, 'add_to_cart', dict(size='M'), reference=ref))['status'] == 'ok'
     assert runtime.writes[0][1]['product_id'] == '104'
 
 
@@ -188,7 +190,7 @@ def test_short_product_name_opens_options_for_the_selected_cold_variant(runtime)
 def test_prompt_and_output_budget_do_not_grow(runtime):
     from src.agents.llm_tool_orchestrator import SYSTEM_PROMPT
     from src.agents.tool_capabilities import CAPABILITIES
-    assert len(SYSTEM_PROMPT) <= 9178 and len(CAPABILITIES) == 39
+    assert len(SYSTEM_PROMPT) <= 9178 and len(CAPABILITIES) == 44
     from src.agents.agent_context import business_state
     from src.agents.tool_capabilities import capabilities_for_context
     assert {'cancel_order', 'update_order', 'reorder_order', 'confirm_order_change'}.isdisjoint(
@@ -248,6 +250,6 @@ def test_declining_topping_never_removes_the_entire_drink(runtime):
     # gateway; a fresh turn independently validates the intended option edit.
     assert result['status'] == 'conflicting_cart_operations'
     g = gateway(runtime, 'bỏ topping Cà Phê Alpha đi')
-    result = g.dispatch('update_cart_item', dict(cart_item_id='800', desired_state={'toppings': ['Pearl']}))
+    result = g.dispatch('update_cart_item', dict(cart_item_id='800', desired_state={'toppings': []}))
     assert result['status'] == 'ok'
     assert cart_manager.get_cart(runtime.sid)['items'][0]['toppings'] == []

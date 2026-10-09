@@ -1,0 +1,1451 @@
+{
+  "LIVE_PROVIDER_REQUESTS": 0,
+  "warehouse_mutations": 0,
+  "planning": "recorded provider meaning replayed without live AI",
+  "storage": "production Redis",
+  "reference_date": "2026-10-08",
+  "temporary_sessions_deleted": true,
+  "source": {
+    "totals": {
+      "order_count": 11925,
+      "revenue": 1283914000.0,
+      "aov": 112456.33704125427,
+      "raw_order_instants": 11408
+    },
+    "weekly": [
+      {
+        "period": "2026-07-06",
+        "revenue": 41755000.0
+      },
+      {
+        "period": "2026-07-13",
+        "revenue": 120240000.0
+      },
+      {
+        "period": "2026-07-20",
+        "revenue": 122706000.0
+      },
+      {
+        "period": "2026-07-27",
+        "revenue": 118121000.0
+      },
+      {
+        "period": "2026-08-03",
+        "revenue": 99330000.0
+      },
+      {
+        "period": "2026-08-10",
+        "revenue": 104142000.0
+      },
+      {
+        "period": "2026-08-17",
+        "revenue": 101850000.0
+      },
+      {
+        "period": "2026-08-24",
+        "revenue": 102472000.0
+      },
+      {
+        "period": "2026-08-31",
+        "revenue": 108360000.0
+      },
+      {
+        "period": "2026-09-07",
+        "revenue": 102293000.0
+      },
+      {
+        "period": "2026-09-14",
+        "revenue": 105239000.0
+      },
+      {
+        "period": "2026-09-21",
+        "revenue": 100161000.0
+      },
+      {
+        "period": "2026-09-28",
+        "revenue": 57245000.0
+      }
+    ],
+    "cities": [
+      {
+        "city": "An Giang",
+        "revenue": 3800000.0
+      },
+      {
+        "city": "Bắc Giang",
+        "revenue": 5238000.0
+      },
+      {
+        "city": "Bạc Liêu",
+        "revenue": 463000.0
+      },
+      {
+        "city": "Bắc Ninh",
+        "revenue": 18360000.0
+      },
+      {
+        "city": "Bà Rịa - Vũng Tàu",
+        "revenue": 22042000.0
+      },
+      {
+        "city": "Bến Tre",
+        "revenue": 2849000.0
+      },
+      {
+        "city": "Bình Định",
+        "revenue": 10416000.0
+      },
+      {
+        "city": "Bình Dương",
+        "revenue": 35894000.0
+      },
+      {
+        "city": "Bình Phước",
+        "revenue": 6832000.0
+      },
+      {
+        "city": "Bình Thuận",
+        "revenue": 4690000.0
+      },
+      {
+        "city": "Cà Mau",
+        "revenue": 3304000.0
+      },
+      {
+        "city": "Cần Thơ",
+        "revenue": 29066000.0
+      },
+      {
+        "city": "Đắk Lắk",
+        "revenue": 7459000.0
+      },
+      {
+        "city": "Đà Nẵng",
+        "revenue": 78217000.0
+      },
+      {
+        "city": "Điện Biên",
+        "revenue": 1480000.0
+      },
+      {
+        "city": "Đồng Nai",
+        "revenue": 29442000.0
+      },
+      {
+        "city": "Đồng Tháp",
+        "revenue": 2052000.0
+      },
+      {
+        "city": "Gia Lai",
+        "revenue": 1016000.0
+      },
+      {
+        "city": "Hải Dương",
+        "revenue": 6179000.0
+      },
+      {
+        "city": "Hải Phòng",
+        "revenue": 51560000.0
+      },
+      {
+        "city": "Hà Nam",
+        "revenue": 3501000.0
+      },
+      {
+        "city": "Hà Nội",
+        "revenue": 271938000.0
+      },
+      {
+        "city": "Hà Tĩnh",
+        "revenue": 893000.0
+      },
+      {
+        "city": "Hậu Giang",
+        "revenue": 3700000.0
+      },
+      {
+        "city": "Hòa Bình",
+        "revenue": 3059000.0
+      },
+      {
+        "city": "Hồ Chí Minh",
+        "revenue": 454128000.0
+      },
+      {
+        "city": "Hưng Yên",
+        "revenue": 9930000.0
+      },
+      {
+        "city": "Khánh Hòa",
+        "revenue": 34201000.0
+      },
+      {
+        "city": "Kiên Giang",
+        "revenue": 18521000.0
+      },
+      {
+        "city": "Lâm Đồng",
+        "revenue": 7646000.0
+      },
+      {
+        "city": "Lạng Sơn",
+        "revenue": 1835000.0
+      },
+      {
+        "city": "Lào Cai",
+        "revenue": 3687000.0
+      },
+      {
+        "city": "Long An",
+        "revenue": 3769000.0
+      },
+      {
+        "city": "Nam Định",
+        "revenue": 2603000.0
+      },
+      {
+        "city": "Nghệ An",
+        "revenue": 11900000.0
+      },
+      {
+        "city": "Ninh Bình",
+        "revenue": 11562000.0
+      },
+      {
+        "city": "Ninh Thuận",
+        "revenue": 572000.0
+      },
+      {
+        "city": "Phú Thọ",
+        "revenue": 10152000.0
+      },
+      {
+        "city": "Phú Yên",
+        "revenue": 3803000.0
+      },
+      {
+        "city": "Quảng Bình",
+        "revenue": 5767000.0
+      },
+      {
+        "city": "Quảng Nam",
+        "revenue": 4326000.0
+      },
+      {
+        "city": "Quảng Ngãi",
+        "revenue": 4437000.0
+      },
+      {
+        "city": "Quảng Ninh",
+        "revenue": 21359000.0
+      },
+      {
+        "city": "Quảng Trị",
+        "revenue": 1028000.0
+      },
+      {
+        "city": "Sóc Trăng",
+        "revenue": 819000.0
+      },
+      {
+        "city": "Tây Ninh",
+        "revenue": 5484000.0
+      },
+      {
+        "city": "Thái Bình",
+        "revenue": 3932000.0
+      },
+      {
+        "city": "Thái Nguyên",
+        "revenue": 3099000.0
+      },
+      {
+        "city": "Thanh Hóa",
+        "revenue": 15473000.0
+      },
+      {
+        "city": "Thừa Thiên - Huế",
+        "revenue": 20106000.0
+      },
+      {
+        "city": "Tiền Giang",
+        "revenue": 5708000.0
+      },
+      {
+        "city": "Trà Vinh",
+        "revenue": 932000.0
+      },
+      {
+        "city": "Tuyên Quang",
+        "revenue": 2698000.0
+      },
+      {
+        "city": "Vĩnh Long",
+        "revenue": 5986000.0
+      },
+      {
+        "city": "Vĩnh Phúc",
+        "revenue": 5001000.0
+      }
+    ],
+    "stores": [
+      {
+        "store_id": "HC_KHONG__KIOSK_SAN_BAY_PHU__506",
+        "store": "Highlands Coffee Kiosk Sân Bay Phù Cát",
+        "revenue": 2798000.0
+      },
+      {
+        "store_id": "KVT003",
+        "store": "Avengers Coffee - ĐH Tôn Đức Thắng",
+        "revenue": 2528000.0
+      },
+      {
+        "store_id": "HC_HN_CHO_DAU_MOI_NAM_HA_1153",
+        "store": "Highlands Coffee Cho Dau Moi Nam Ha Noi",
+        "revenue": 2495000.0
+      },
+      {
+        "store_id": "HC_HN_URBAN_AREA_GIA_LAM_516",
+        "store": "Highlands Coffee Urban Area Gia Lâm",
+        "revenue": 2489000.0
+      },
+      {
+        "store_id": "HC_KHONG__ECOPARK_3_HUNG_YEN_779",
+        "store": "Highlands Coffee Ecopark 3 Hung Yen",
+        "revenue": 2464000.0
+      },
+      {
+        "store_id": "HC_DN_ONG_ICH_KHIEM_2_DN_914",
+        "store": "Highlands Coffee Ong Ich Khiem 2 DNG",
+        "revenue": 2422000.0
+      },
+      {
+        "store_id": "HC_QN_BIG_C_HA_LONG_27",
+        "store": "Highlands Coffee Big C Hạ Long",
+        "revenue": 2396000.0
+      },
+      {
+        "store_id": "HC_HN_TRAN_NGUYEN_DANG_77",
+        "store": "Highlands Coffee Tran Nguyen Dang",
+        "revenue": 2320000.0
+      },
+      {
+        "store_id": "HC_KHONG__HUU_NGHI_LAC_VIET__1320",
+        "store": "Highlands Coffee  Huu Nghi Lac Viet Hospital Vinh Phuc",
+        "revenue": 2292000.0
+      },
+      {
+        "store_id": "HC_HCM_721_HUYNH_TAN_PHAT_237",
+        "store": "721 Huỳnh Tấn Phát",
+        "revenue": 2285000.0
+      }
+    ]
+  },
+  "audit": {
+    "assessment": {
+      "status": "measured",
+      "matched_count": 28,
+      "reference_count": 28,
+      "accuracy_pct": 100.0,
+      "reference_source": "Hand-authored read-only SQL on raw orders.don_hang and identity.chi_nhanh; full system KPIs, weekly buckets, city totals and store rankings",
+      "reason": "Tỷ lệ assertion khớp đối chứng độc lập trong lần kiểm tra này; không phải xác suất AI trả lời đúng."
+    },
+    "assertions": [
+      {
+        "id": "failed_intent:outcome",
+        "matched": true
+      },
+      {
+        "id": "failed_intent:coverage",
+        "matched": true
+      },
+      {
+        "id": "failed_intent:revenue",
+        "matched": true
+      },
+      {
+        "id": "failed_intent:order_count",
+        "matched": true
+      },
+      {
+        "id": "failed_intent:aov",
+        "matched": true
+      },
+      {
+        "id": "failed_intent:weekly",
+        "matched": true
+      },
+      {
+        "id": "failed_intent:trend_axes",
+        "matched": true
+      },
+      {
+        "id": "failed_intent:granularity",
+        "matched": true
+      },
+      {
+        "id": "failed_intent:store_top10",
+        "matched": true
+      },
+      {
+        "id": "failed_intent:city",
+        "matched": true
+      },
+      {
+        "id": "failed_intent:denominators",
+        "matched": true
+      },
+      {
+        "id": "failed_intent:internal_score",
+        "matched": true
+      },
+      {
+        "id": "failed_intent:single_interpretation",
+        "matched": true
+      },
+      {
+        "id": "failed_intent:restored_verification",
+        "matched": true
+      },
+      {
+        "id": "successful_intent:outcome",
+        "matched": true
+      },
+      {
+        "id": "successful_intent:coverage",
+        "matched": true
+      },
+      {
+        "id": "successful_intent:revenue",
+        "matched": true
+      },
+      {
+        "id": "successful_intent:order_count",
+        "matched": true
+      },
+      {
+        "id": "successful_intent:aov",
+        "matched": true
+      },
+      {
+        "id": "successful_intent:weekly",
+        "matched": true
+      },
+      {
+        "id": "successful_intent:trend_axes",
+        "matched": true
+      },
+      {
+        "id": "successful_intent:granularity",
+        "matched": true
+      },
+      {
+        "id": "successful_intent:city",
+        "matched": true
+      },
+      {
+        "id": "successful_intent:store_top10",
+        "matched": true
+      },
+      {
+        "id": "successful_intent:denominators",
+        "matched": true
+      },
+      {
+        "id": "successful_intent:internal_score",
+        "matched": true
+      },
+      {
+        "id": "successful_intent:single_interpretation",
+        "matched": true
+      },
+      {
+        "id": "successful_intent:restored_verification",
+        "matched": true
+      }
+    ],
+    "numeric_tolerance": {
+      "absolute": 0.01,
+      "relative": 1e-09
+    }
+  },
+  "reports": [
+    {
+      "name": "failed_intent",
+      "outcome": "SUCCESS",
+      "provider_calls": 1,
+      "materialized_operations": 8,
+      "executed_queries": 7,
+      "weekly_rows": 13,
+      "semantic_normalizations": [
+        {
+          "requirement_id": "req_trend_weekly",
+          "field": "dimension_ids",
+          "rule": "catalog_semantic_normalization",
+          "value": []
+        },
+        {
+          "requirement_id": "req_total_aov",
+          "field": "derived_features",
+          "rule": "catalog_semantic_normalization",
+          "value": [
+            "scalar"
+          ]
+        },
+        {
+          "requirement_id": "req_total_rev",
+          "field": "derived_features",
+          "rule": "catalog_semantic_normalization",
+          "value": [
+            "scalar"
+          ]
+        },
+        {
+          "requirement_id": "req_total_orders",
+          "field": "derived_features",
+          "rule": "catalog_semantic_normalization",
+          "value": [
+            "scalar"
+          ]
+        }
+      ],
+      "semantic_intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "req_trend_weekly",
+            "goal": "Phân tích yêu cầu",
+            "domain_id": "orders",
+            "lens_hint": null,
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "trend",
+            "filters": [],
+            "time": {
+              "kind": "rolling",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-07-11",
+              "end": "2026-10-08",
+              "amount": 90,
+              "unit": "day"
+            },
+            "ranking": null,
+            "granularity": "week",
+            "derived_features": [
+              "change_pct"
+            ],
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "req_city_dist",
+            "goal": "Phân tích yêu cầu",
+            "domain_id": "stores",
+            "lens_hint": null,
+            "metric_ids": [
+              "store_revenue"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "distribution",
+            "filters": [],
+            "time": {
+              "kind": "rolling",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-07-11",
+              "end": "2026-10-08",
+              "amount": 90,
+              "unit": "day"
+            },
+            "ranking": null,
+            "granularity": null,
+            "derived_features": [
+              "concentration",
+              "contribution_share"
+            ],
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "req_store_rank",
+            "goal": "Phân tích yêu cầu",
+            "domain_id": "stores",
+            "lens_hint": null,
+            "metric_ids": [
+              "store_revenue"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "analysis_kind": "ranking",
+            "filters": [],
+            "time": {
+              "kind": "rolling",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-07-11",
+              "end": "2026-10-08",
+              "amount": 90,
+              "unit": "day"
+            },
+            "ranking": {
+              "direction": "top",
+              "limit": 10,
+              "metric_id": "store_revenue",
+              "per_group": []
+            },
+            "granularity": null,
+            "derived_features": [
+              "contribution_share",
+              "leader",
+              "top_gap"
+            ],
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "req_total_aov",
+            "goal": "Phân tích yêu cầu",
+            "domain_id": "orders",
+            "lens_hint": null,
+            "metric_ids": [
+              "aov"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "filters": [],
+            "time": {
+              "kind": "rolling",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-07-11",
+              "end": "2026-10-08",
+              "amount": 90,
+              "unit": "day"
+            },
+            "ranking": null,
+            "granularity": "day",
+            "derived_features": [
+              "scalar"
+            ],
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "req_total_rev",
+            "goal": "Phân tích yêu cầu",
+            "domain_id": "orders",
+            "lens_hint": null,
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "filters": [],
+            "time": {
+              "kind": "rolling",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-07-11",
+              "end": "2026-10-08",
+              "amount": 90,
+              "unit": "day"
+            },
+            "ranking": null,
+            "granularity": "day",
+            "derived_features": [
+              "scalar"
+            ],
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "req_total_orders",
+            "goal": "Phân tích yêu cầu",
+            "domain_id": "orders",
+            "lens_hint": null,
+            "metric_ids": [
+              "order_count"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "filters": [],
+            "time": {
+              "kind": "rolling",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-07-11",
+              "end": "2026-10-08",
+              "amount": 90,
+              "unit": "day"
+            },
+            "ranking": null,
+            "granularity": "day",
+            "derived_features": [
+              "scalar"
+            ],
+            "availability": "requested",
+            "reason": null
+          }
+        ],
+        "clarification": null
+      },
+      "quality": {
+        "score": 90.0,
+        "grade": "good",
+        "status": "verified",
+        "components": [],
+        "completed": [
+          {
+            "id": "req_city_dist",
+            "label": "Chi nhánh và điểm bán",
+            "evidence_refs": [
+              "q_b5d0211562ba02ba2e987461:store_revenue:concentration:6230060e3b",
+              "q_b5d0211562ba02ba2e987461:store_revenue:contribution_share:2a66956353",
+              "q_b5d0211562ba02ba2e987461:store_revenue:contribution_share:0b867fe963"
+            ]
+          },
+          {
+            "id": "req_store_rank",
+            "label": "Chi nhánh và điểm bán",
+            "evidence_refs": [
+              "q_dfe43b06e76483142172a599:store_revenue:leader:6230060e3b",
+              "q_dfe43b06e76483142172a599:store_revenue:top_gap:6230060e3b",
+              "q_dfe43b06e76483142172a599:store_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "req_total_aov",
+            "label": "Đơn hàng và doanh thu",
+            "evidence_refs": [
+              "q_fc0ef04a14150928e585011d:aov:scalar:6230060e3b"
+            ]
+          },
+          {
+            "id": "req_total_orders",
+            "label": "Đơn hàng và doanh thu",
+            "evidence_refs": [
+              "q_28705d98fa72f9ae76b52189:order_count:scalar:6230060e3b"
+            ]
+          },
+          {
+            "id": "req_total_rev",
+            "label": "Đơn hàng và doanh thu",
+            "evidence_refs": [
+              "q_118973f5add08797a2a63f6f:revenue:scalar:6230060e3b"
+            ]
+          },
+          {
+            "id": "req_trend_weekly",
+            "label": "Đơn hàng và doanh thu",
+            "evidence_refs": [
+              "q_d644c7c97e286afd13413aa8:revenue:change:6230060e3b",
+              "q_d644c7c97e286afd13413aa8:revenue:extrema:6230060e3b"
+            ]
+          }
+        ],
+        "missing": [],
+        "unverified": [
+          {
+            "id": "causes",
+            "label": "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+            "evidence_refs": []
+          },
+          {
+            "id": "independent_accuracy",
+            "label": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.",
+            "evidence_refs": []
+          }
+        ],
+        "limitations": [
+          {
+            "id": "metric_population:store_revenue",
+            "label": "Doanh thu chi nhánh: Tổng giá trị đơn HOAN_THANH/DANG_GIAO theo điểm bán, theo ngày tạo đơn.",
+            "evidence_refs": [
+              "q_dfe43b06e76483142172a599:store_revenue:leader:6230060e3b",
+              "q_dfe43b06e76483142172a599:store_revenue:top_gap:6230060e3b",
+              "q_dfe43b06e76483142172a599:store_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "topn:q_dfe43b06e76483142172a599",
+            "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+            "evidence_refs": [
+              "q_dfe43b06e76483142172a599:store_revenue:leader:6230060e3b",
+              "q_dfe43b06e76483142172a599:store_revenue:top_gap:6230060e3b",
+              "q_dfe43b06e76483142172a599:store_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:revenue",
+            "label": "Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+            "evidence_refs": [
+              "q_118973f5add08797a2a63f6f:revenue:scalar:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:order_count",
+            "label": "Số lượng đơn: Đếm mọi đơn theo ngày tạo, gồm cả đơn hủy; không dùng làm mẫu số AOV của tập đơn hợp lệ.",
+            "evidence_refs": [
+              "q_28705d98fa72f9ae76b52189:order_count:scalar:6230060e3b"
+            ]
+          },
+          {
+            "id": "partial_period:q_d644c7c97e286afd13413aa8",
+            "label": "Kỳ biên chưa đủ ngày; chỉ so sánh biến động giữa các kỳ đầy đủ.",
+            "evidence_refs": [
+              "q_d644c7c97e286afd13413aa8:revenue:change:6230060e3b",
+              "q_d644c7c97e286afd13413aa8:revenue:extrema:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:aov",
+            "label": "Giá trị đơn trung bình: Tổng giá trị chia số đơn trong cùng tập HOAN_THANH/DANG_GIAO. Không cộng hoặc lấy trung bình các AOV nhóm.",
+            "evidence_refs": [
+              "q_fc0ef04a14150928e585011d:aov:scalar:6230060e3b"
+            ]
+          },
+          {
+            "id": "nonadditive:q_fc0ef04a14150928e585011d",
+            "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+            "evidence_refs": [
+              "q_fc0ef04a14150928e585011d:aov:scalar:6230060e3b"
+            ]
+          }
+        ],
+        "suggested_next_actions": [
+          {
+            "id": "partial_period:q_d644c7c97e286afd13413aa8",
+            "label": "Đối chiếu các kỳ đầy đủ có cùng độ dài.",
+            "evidence_refs": [
+              "q_d644c7c97e286afd13413aa8:revenue:change:6230060e3b",
+              "q_d644c7c97e286afd13413aa8:revenue:extrema:6230060e3b"
+            ],
+            "action": "compare_complete_periods"
+          }
+        ],
+        "coverage": {
+          "requested_count": 6,
+          "completed_count": 6,
+          "supporting_count": 0,
+          "omitted_count": 0
+        },
+        "generated_by": "deterministic_verifier",
+        "version": "2.8.3",
+        "reason": null,
+        "measurement_mode": "evidence_checks",
+        "verification_checks": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "passed": 6,
+            "total": 6,
+            "status": "passed",
+            "summary": "6/6 phần yêu cầu đã thực hiện."
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "passed": 1,
+            "total": 1,
+            "status": "passed",
+            "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "passed": 8,
+            "total": 8,
+            "status": "passed",
+            "summary": "8 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "passed": 83,
+            "total": 83,
+            "status": "passed",
+            "summary": "83/83 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "passed": 9,
+            "total": 9,
+            "status": "passed",
+            "summary": "9/9 phép tính yêu cầu có đủ quan sát và bằng chứng."
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "passed": 125,
+            "total": 125,
+            "status": "passed",
+            "summary": "125/125 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "passed": 8,
+            "total": 8,
+            "status": "passed",
+            "summary": "3/3 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "passed": 7,
+            "total": 7,
+            "status": "passed",
+            "summary": "7/7 giới hạn dữ liệu được công bố."
+          }
+        ],
+        "score_method": {
+          "id": "verification_evidence_v1",
+          "label": "Điểm kiểm chứng tổng",
+          "formula": "90 × trung bình có trọng số các kiểm tra áp dụng + 10 × tỷ lệ khớp đối chứng độc lập. Chưa đo đối chứng: chưa cộng 10 điểm; kiểm tra không áp dụng không bị trừ.",
+          "unmeasured_points": 10.0,
+          "interpretation": "Chỉ số mức độ kiểm chứng theo trọng số quy định; không phải độ chính xác hay xác suất AI trả lời đúng."
+        },
+        "score_breakdown": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "earned_points": 20.0,
+            "possible_points": 20.0,
+            "status": "passed"
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "earned_points": 15.0,
+            "possible_points": 15.0,
+            "status": "passed"
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "earned_points": 15.0,
+            "possible_points": 15.0,
+            "status": "passed"
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "earned_points": 5.0,
+            "possible_points": 5.0,
+            "status": "passed"
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "earned_points": 5.0,
+            "possible_points": 5.0,
+            "status": "passed"
+          },
+          {
+            "id": "independent_reference",
+            "label": "Đối chứng độc lập",
+            "earned_points": 0.0,
+            "possible_points": 10.0,
+            "status": "not_measured"
+          }
+        ],
+        "accuracy_assessment": {
+          "status": "not_measured",
+          "matched_count": null,
+          "reference_count": 0,
+          "accuracy_pct": null,
+          "reference_source": null,
+          "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+        },
+        "confidence_probability": null,
+        "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+      }
+    },
+    {
+      "name": "successful_intent",
+      "outcome": "SUCCESS",
+      "provider_calls": 1,
+      "materialized_operations": 7,
+      "executed_queries": 6,
+      "weekly_rows": 13,
+      "semantic_normalizations": [],
+      "semantic_intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "system_summary_90d",
+            "goal": "Phân tích yêu cầu",
+            "domain_id": "orders",
+            "lens_hint": null,
+            "metric_ids": [
+              "aov",
+              "order_count",
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "filters": [],
+            "time": {
+              "kind": "rolling",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-07-11",
+              "end": "2026-10-08",
+              "amount": 90,
+              "unit": "day"
+            },
+            "ranking": null,
+            "granularity": "day",
+            "derived_features": [],
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "revenue_trend_weekly",
+            "goal": "Phân tích yêu cầu",
+            "domain_id": "orders",
+            "lens_hint": null,
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "trend",
+            "filters": [],
+            "time": {
+              "kind": "rolling",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-07-11",
+              "end": "2026-10-08",
+              "amount": 90,
+              "unit": "day"
+            },
+            "ranking": null,
+            "granularity": "week",
+            "derived_features": [
+              "change"
+            ],
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "revenue_by_store",
+            "goal": "Phân tích yêu cầu",
+            "domain_id": "orders",
+            "lens_hint": null,
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "analysis_kind": "ranking",
+            "filters": [],
+            "time": {
+              "kind": "rolling",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-07-11",
+              "end": "2026-10-08",
+              "amount": 90,
+              "unit": "day"
+            },
+            "ranking": {
+              "direction": "top",
+              "limit": 10,
+              "metric_id": "revenue",
+              "per_group": []
+            },
+            "granularity": "day",
+            "derived_features": [
+              "contribution_share",
+              "leader"
+            ],
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "revenue_by_city",
+            "goal": "Phân tích yêu cầu",
+            "domain_id": "orders",
+            "lens_hint": null,
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "ranking",
+            "filters": [],
+            "time": {
+              "kind": "rolling",
+              "mode": null,
+              "year": null,
+              "month": null,
+              "quarter": null,
+              "day": null,
+              "start": "2026-07-11",
+              "end": "2026-10-08",
+              "amount": 90,
+              "unit": "day"
+            },
+            "ranking": {
+              "direction": "top",
+              "limit": 10,
+              "metric_id": "revenue",
+              "per_group": []
+            },
+            "granularity": "day",
+            "derived_features": [
+              "contribution_share",
+              "leader"
+            ],
+            "availability": "requested",
+            "reason": null
+          }
+        ],
+        "clarification": null
+      },
+      "quality": {
+        "score": 90.0,
+        "grade": "good",
+        "status": "verified",
+        "components": [],
+        "completed": [
+          {
+            "id": "revenue_by_city",
+            "label": "Đơn hàng và doanh thu",
+            "evidence_refs": [
+              "q_2873adfc5cd0a18f701f1862:revenue:leader:6230060e3b",
+              "q_2873adfc5cd0a18f701f1862:revenue:top_gap:6230060e3b",
+              "q_2873adfc5cd0a18f701f1862:revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "revenue_by_store",
+            "label": "Đơn hàng và doanh thu",
+            "evidence_refs": [
+              "q_a9c1d4d371ff2ec45818b862:revenue:leader:6230060e3b",
+              "q_a9c1d4d371ff2ec45818b862:revenue:top_gap:6230060e3b",
+              "q_a9c1d4d371ff2ec45818b862:revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "revenue_trend_weekly",
+            "label": "Đơn hàng và doanh thu",
+            "evidence_refs": [
+              "q_422154790c09ef8ad490ec2d:revenue:change:6230060e3b",
+              "q_422154790c09ef8ad490ec2d:revenue:extrema:6230060e3b"
+            ]
+          },
+          {
+            "id": "system_summary_90d",
+            "label": "Đơn hàng và doanh thu",
+            "evidence_refs": [
+              "q_8995acecfadf49c319ef15fa:aov:scalar:6230060e3b",
+              "q_8995acecfadf49c319ef15fa:revenue:scalar:6230060e3b"
+            ]
+          }
+        ],
+        "missing": [],
+        "unverified": [
+          {
+            "id": "causes",
+            "label": "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+            "evidence_refs": []
+          },
+          {
+            "id": "independent_accuracy",
+            "label": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.",
+            "evidence_refs": []
+          }
+        ],
+        "limitations": [
+          {
+            "id": "metric_population:revenue",
+            "label": "Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+            "evidence_refs": [
+              "q_2873adfc5cd0a18f701f1862:revenue:leader:6230060e3b",
+              "q_2873adfc5cd0a18f701f1862:revenue:top_gap:6230060e3b",
+              "q_2873adfc5cd0a18f701f1862:revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "topn:q_2873adfc5cd0a18f701f1862",
+            "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+            "evidence_refs": [
+              "q_2873adfc5cd0a18f701f1862:revenue:leader:6230060e3b",
+              "q_2873adfc5cd0a18f701f1862:revenue:top_gap:6230060e3b",
+              "q_2873adfc5cd0a18f701f1862:revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "topn:q_a9c1d4d371ff2ec45818b862",
+            "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+            "evidence_refs": [
+              "q_a9c1d4d371ff2ec45818b862:revenue:leader:6230060e3b",
+              "q_a9c1d4d371ff2ec45818b862:revenue:top_gap:6230060e3b",
+              "q_a9c1d4d371ff2ec45818b862:revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "partial_period:q_422154790c09ef8ad490ec2d",
+            "label": "Kỳ biên chưa đủ ngày; chỉ so sánh biến động giữa các kỳ đầy đủ.",
+            "evidence_refs": [
+              "q_422154790c09ef8ad490ec2d:revenue:change:6230060e3b",
+              "q_422154790c09ef8ad490ec2d:revenue:extrema:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:aov",
+            "label": "Giá trị đơn trung bình: Tổng giá trị chia số đơn trong cùng tập HOAN_THANH/DANG_GIAO. Không cộng hoặc lấy trung bình các AOV nhóm.",
+            "evidence_refs": [
+              "q_8995acecfadf49c319ef15fa:aov:scalar:6230060e3b",
+              "q_8995acecfadf49c319ef15fa:revenue:scalar:6230060e3b"
+            ]
+          },
+          {
+            "id": "nonadditive:q_8995acecfadf49c319ef15fa",
+            "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+            "evidence_refs": [
+              "q_8995acecfadf49c319ef15fa:aov:scalar:6230060e3b",
+              "q_8995acecfadf49c319ef15fa:revenue:scalar:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:order_count",
+            "label": "Số lượng đơn: Đếm mọi đơn theo ngày tạo, gồm cả đơn hủy; không dùng làm mẫu số AOV của tập đơn hợp lệ.",
+            "evidence_refs": [
+              "q_b8efddc48c7f1339e61e0bdd:order_count:scalar:6230060e3b"
+            ]
+          }
+        ],
+        "suggested_next_actions": [
+          {
+            "id": "partial_period:q_422154790c09ef8ad490ec2d",
+            "label": "Đối chiếu các kỳ đầy đủ có cùng độ dài.",
+            "evidence_refs": [
+              "q_422154790c09ef8ad490ec2d:revenue:change:6230060e3b",
+              "q_422154790c09ef8ad490ec2d:revenue:extrema:6230060e3b"
+            ],
+            "action": "compare_complete_periods"
+          }
+        ],
+        "coverage": {
+          "requested_count": 4,
+          "completed_count": 4,
+          "supporting_count": 0,
+          "omitted_count": 0
+        },
+        "generated_by": "deterministic_verifier",
+        "version": "2.8.3",
+        "reason": null,
+        "measurement_mode": "evidence_checks",
+        "verification_checks": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "passed": 4,
+            "total": 4,
+            "status": "passed",
+            "summary": "4/4 phần yêu cầu đã thực hiện."
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "passed": 1,
+            "total": 1,
+            "status": "passed",
+            "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "passed": 7,
+            "total": 7,
+            "status": "passed",
+            "summary": "7 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "passed": 38,
+            "total": 38,
+            "status": "passed",
+            "summary": "38/38 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "passed": 5,
+            "total": 5,
+            "status": "passed",
+            "summary": "5/5 phép tính yêu cầu có đủ quan sát và bằng chứng."
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "passed": 83,
+            "total": 83,
+            "status": "passed",
+            "summary": "83/83 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "passed": 8,
+            "total": 8,
+            "status": "passed",
+            "summary": "3/3 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "passed": 7,
+            "total": 7,
+            "status": "passed",
+            "summary": "7/7 giới hạn dữ liệu được công bố."
+          }
+        ],
+        "score_method": {
+          "id": "verification_evidence_v1",
+          "label": "Điểm kiểm chứng tổng",
+          "formula": "90 × trung bình có trọng số các kiểm tra áp dụng + 10 × tỷ lệ khớp đối chứng độc lập. Chưa đo đối chứng: chưa cộng 10 điểm; kiểm tra không áp dụng không bị trừ.",
+          "unmeasured_points": 10.0,
+          "interpretation": "Chỉ số mức độ kiểm chứng theo trọng số quy định; không phải độ chính xác hay xác suất AI trả lời đúng."
+        },
+        "score_breakdown": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "earned_points": 20.0,
+            "possible_points": 20.0,
+            "status": "passed"
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "earned_points": 15.0,
+            "possible_points": 15.0,
+            "status": "passed"
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "earned_points": 15.0,
+            "possible_points": 15.0,
+            "status": "passed"
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "earned_points": 5.0,
+            "possible_points": 5.0,
+            "status": "passed"
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "earned_points": 5.0,
+            "possible_points": 5.0,
+            "status": "passed"
+          },
+          {
+            "id": "independent_reference",
+            "label": "Đối chứng độc lập",
+            "earned_points": 0.0,
+            "possible_points": 10.0,
+            "status": "not_measured"
+          }
+        ],
+        "accuracy_assessment": {
+          "status": "not_measured",
+          "matched_count": null,
+          "reference_count": 0,
+          "accuracy_pct": null,
+          "reference_source": null,
+          "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+        },
+        "confidence_probability": null,
+        "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+      }
+    }
+  ],
+  "reference_failures": []
+}

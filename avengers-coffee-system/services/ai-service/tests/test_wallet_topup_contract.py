@@ -58,6 +58,8 @@ def test_unverified_balance_never_offers_a_payment_or_topup(wallet, balance):
 
 
 def test_guarded_wallet_denial_renders_recovery_in_one_fake_model_request(runtime, wallet, monkeypatch):
+    from src.agents import llm_tool_orchestrator
+    monkeypatch.setattr(llm_tool_orchestrator, '_legacy_language_control', lambda *a: None)
     monkeypatch.setattr(cart_tools, 'execute_get_cart_quote', lambda sid:
         dict(status='ok', quote={'final_total': 231300}, cart=cart_manager.get_cart(sid)))
     runtime.provider.steps = [calls(('set_checkout_choices', dict(payment_method='VI_DIEN_TU', delivery_type='TAI_CHO')))]

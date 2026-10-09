@@ -11,13 +11,15 @@ MAX_DELIVERY_RADIUS_KM = 5.0  # Existing customer delivery radius.
 
 def _availability_fields(result):
     return {
-        "availability_status": ("unavailable" if result["unavailable"] else
-                                "unknown" if result["unverified"] else "available"),
-        "available_products": result["available"],
-        "unavailable_products": result["unavailable"],
-        "unverified_products": result["unverified"],
-        "product_availability": result["product_statuses"],
-        "is_fully_available": result["is_fully_available"],
+        "availability_status": ("unavailable" if result.get("unavailable") else
+                                "available" if result.get("is_fully_available") is True
+                                    and not result.get("unverified") else "unknown"),
+        "available_products": result.get("available") or [],
+        "unavailable_products": result.get("unavailable") or [],
+        "unverified_products": result.get("unverified") or [],
+        "product_availability": result.get("product_statuses") or [],
+        "is_fully_available": result.get("is_fully_available") is True
+            and not result.get("unavailable") and not result.get("unverified"),
     }
 
 
@@ -124,12 +126,12 @@ TOOL_FIND_NEAREST_BRANCH = {
 
 def execute_find_nearest_branch(location: str = "", session_id: str = "", target_branches: list = None,
                                 resolved_location: dict = None, cart_items: list = None,
-                                location_purpose: str = None) -> Dict[str, Any]:
+                                location_purpose: str = None, semantic_location_kind: str = None) -> Dict[str, Any]:
     """Tìm chi nhánh gần nhất dựa trên geocoding và khoảng cách Haversine."""
     try:
         from src.agents.location_parser import parse_location
         candidate = location or (cart_manager.get_checkout_prefs(session_id).get("location_address") if session_id else "")
-        if parse_location(candidate or "").kind in {"reference", "reference_question", "change_reference"}:
+        if not semantic_location_kind and parse_location(candidate or "").kind in {"reference", "reference_question", "change_reference"}:
             return {"status": "need_location", "message":
                     "Mình chưa có địa chỉ nào đang được tham chiếu. Bạn cho mình khu vực hoặc địa chỉ nhé."}
         hours_check = _check_business_hours()
@@ -145,12 +147,13 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
 
         prefs = cart_manager.get_checkout_prefs(session_id) if session_id else {}
         from src.agents.location_parser import clean_location_clause
-        target_address = clean_location_clause(location if location else str(prefs.get("location_address") or ""))
+        target_address = (location or str(prefs.get("location_address") or "")) if semantic_location_kind else clean_location_clause(location if location else str(prefs.get("location_address") or ""))
         parsed_location = parse_location(target_address)
-        location_kind = parsed_location.kind
+        location_kind = semantic_location_kind or parsed_location.kind
         user_lat, user_lon = None, None
         distance_basis = "unavailable"
         location_estimate = None
+        resolved_location_record = None
         selected_location = resolved_location or (
             prefs.get("selected_location_candidate") if session_id else None
         )
@@ -168,12 +171,13 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                 ).strip()
                 location_kind = "poi"
                 distance_basis = "provider_candidate"
+                resolved_location_record = dict(selected_location)
 
         with engine.connect() as conn:
             from src.function_calling.helpers import _norm
             generic_words = {"toi", "gan", "day", "nao", "nhat", "nha", "dia", "chi", "mac", "dinh", "cua", "hien", "tai"}
             norm_loc = _norm(location).lower().replace(",", " ") if location else ""
-            is_generic = all(w in generic_words for w in norm_loc.split()) if norm_loc else not bool(target_address)
+            is_generic = (not bool(target_address)) if semantic_location_kind else (all(w in generic_words for w in norm_loc.split()) if norm_loc else not bool(target_address))
 
             if (not target_address or is_generic) and prefs.get("delivery_type") in {"MANG_DI", "TAI_CHO"}:
                 return {
@@ -218,7 +222,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
             if user_lat is None or user_lon is None:
                 resolution = None
                 structured_address = location_kind == "address" and "," in target_address
-                if location_kind == "poi" or structured_address:
+                if location_kind in {"poi", "area", "admin_area"} or structured_address:
                     resolution = resolve_location(
                         target_address, location_kind, getattr(parsed_location, "admin_hints", ()))
                     if (resolution.status == "rejected" and location_kind == "address"
@@ -231,6 +235,12 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                             resolution = estimate
                             location_estimate = estimate.normalized_label
                     coords = ((resolution.lat, resolution.lng) if resolution.status == "ok" else None)
+                    if resolution.status == 'ok':
+                        resolved_location_record = {'display_address': target_address,
+                            'normalized_label': resolution.normalized_label or target_address,
+                            'lat': resolution.lat, 'lng': resolution.lng,
+                            'provider_ref_id': getattr(resolution, 'provider_ref_id', None),
+                            'admin_components': getattr(resolution, 'administrative_components', None) or {}}
                     if resolution.status == "ambiguous":
                         location_candidates = list(getattr(resolution, "candidates", ()) or ())
                         listed = "\n".join(
@@ -257,6 +267,9 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                             "message": "Mình chưa tìm thấy địa điểm này trên bản đồ. Bạn kiểm tra lại tên hoặc cho mình thêm khu vực nhé.",
                         }
                     if resolution.status == "rejected":
+                        reasons = list(getattr(resolution, 'rejection_reasons', ()) or ())
+                        logger.info('[LocationValidation] kind=%s status=rejected reasons=%s',
+                                    location_kind, reasons)
                         location_candidates = list(getattr(resolution, "candidates", ()) or ())
                         listed = "\n".join(
                             f"{index}. {row.get('normalized_label') or 'Địa điểm'}"
@@ -266,6 +279,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
                         )
                         return {
                             "status": "rejected", "normalized_location": target_address,
+                            "rejection_reasons": reasons,
                             "location_candidates": location_candidates,
                             "message": ("Mình tìm thấy một số địa điểm tên gần giống, nhưng khu vực chưa khớp hoàn toàn:\n"
                                         + listed + "\nBạn có phải một trong các địa điểm này không?" if listed else
@@ -441,6 +455,7 @@ def execute_find_nearest_branch(location: str = "", session_id: str = "", target
             "branches": top_branches,
             "availability_branches": annotated_branches if delivery_type == "GIAO_TAN_NOI" else top_branches,
             "normalized_location": target_address,
+            **({'resolved_location': resolved_location_record} if resolved_location_record else {}),
             "location_provider_ref_id": (
                 selected_location.get("provider_ref_id") if selected_location else None
             ),

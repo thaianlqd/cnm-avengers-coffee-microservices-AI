@@ -5,6 +5,7 @@ import pytest
 
 from test_llm_tool_orchestrator import runtime
 from test_checkout_guarded_contract import gateway
+from test_semantic_control import gateway_for, action
 from src.agents.agent_memory import ConversationMemory, empty_memory
 from src.function_calling import tools
 from src.function_calling.tools import product_tools
@@ -31,10 +32,11 @@ def test_existing_leaf_category_snapshot_accepts_bakery_ordinal(runtime, message
     rows = [{k: v for k, v in row.items() if k != 'parent_category'} for row in menu_rows(runtime)]
     ConversationMemory(runtime.redis).save(runtime.sid, {**empty_memory(),
         'visible_snapshots': {'products': rows}})
-    g = gateway(runtime, message)
-    assert g.dispatch('add_to_cart', dict(product_id='103', size='M'))['status'] == 'product_choice_required'
+    g = gateway_for(runtime, message + ', size M')
+    ref = {'namespace': 'PRODUCT', 'kind': 'ordinal', 'scope': 'food', 'index': 1}
+    assert g.execute_semantic(action(g, 'add_to_cart', dict(product_id='103', size='M'), reference=ref))['status'] == 'reference_conflict'
     assert not runtime.writes
-    assert g.dispatch('add_to_cart', dict(product_id='101', size='M'))['status'] == 'ok'
+    assert g.execute_semantic(action(g, 'add_to_cart', dict(size='M'), reference=ref))['status'] == 'ok'
     assert runtime.writes[0][1]['product_id'] == '101'
 
 
@@ -65,23 +67,30 @@ def test_mixed_recommendations_keep_groups_through_display_memory_and_selection(
     added = runtime.turn('cho tôi bánh số 1 đi bạn')
     assert added['tool_calls_log'][-1]['result']['status'] == 'ok'
     assert runtime.writes[0][1]['product_id'] == '101'
-    assert added['error'] is None and len(runtime.provider.requests) == 4
+    assert added['error'] is None and len(runtime.provider.requests) == 2
     assert all(request['max_tokens'] == 600 for request in runtime.provider.requests)
 
 
-@pytest.mark.parametrize('message,product_id', [
-    ('cho tôi nước số 1 đi bạn', '103'), ('cho tôi món số 3 đi bạn', '103'),
-    ('cho mình bánh số 2 á', '102')])
-def test_category_and_global_ordinals_resolve_the_displayed_id(runtime, message, product_id):
+@pytest.mark.parametrize('message,product_id,scope,index', [
+    ('cho tôi nước số 1 đi bạn', '103', 'drink', 1), ('cho tôi món số 3 đi bạn', '103', None, 3),
+    ('cho mình bánh số 2 á', '102', 'food', 2)])
+def test_category_and_global_ordinals_resolve_the_displayed_id(runtime, message, product_id, scope, index):
     rows = menu_rows(runtime)
     ConversationMemory(runtime.redis).save(runtime.sid, {**empty_memory(),
         'visible_snapshots': {'products': rows}})
-    result = gateway(runtime, message).dispatch('add_to_cart', dict(product_id=product_id, size='M'))
+    g = gateway_for(runtime, message + ', size M')
+    ref = {'namespace': 'PRODUCT', 'kind': 'ordinal', 'index': index, **({'scope': scope} if scope else {})}
+    result = g.execute_semantic(action(g, 'add_to_cart', dict(size='M'), reference=ref))
     assert result['status'] == 'ok'
     assert runtime.writes[0][1]['product_id'] == product_id
 
 
-def test_default_retry_after_provider_timeout_retains_the_selected_product(runtime):
+def test_default_retry_after_provider_timeout_retains_the_selected_product(runtime, monkeypatch):
+    from src.agents import llm_tool_orchestrator
+    from src.common import agent_provider_policy as policy
+    clock = [100.0]
+    monkeypatch.setattr(policy.time, 'monotonic', lambda: clock[0])
+    monkeypatch.setattr(llm_tool_orchestrator, '_legacy_language_control', lambda *a: None)
     runtime.products[0]['product_name'] = 'Cà Phê Sữa Nóng'
     runtime.provider.plan([('get_product_options', dict(product_id='101'))])
     runtime.turn('cho tôi Cà Phê Sữa Nóng đi bạn')
@@ -89,6 +98,11 @@ def test_default_retry_after_provider_timeout_retains_the_selected_product(runti
     failed = runtime.turn('theo mặc định đi bạn ơi')
     assert failed['error'] and not runtime.writes
     assert ConversationMemory(runtime.redis).load(runtime.sid)['focus']['product']['product_id'] == '101'
+    attempts = len(runtime.provider.requests)
+    cooling = runtime.turn('theo mặc định đi bạn ơi')
+    assert cooling['error'] == 'network_timeout' and len(runtime.provider.requests) == attempts
+    assert not runtime.writes
+    clock[0] += 31  # Retry after actual transient recovery, not through another key.
     runtime.provider.plan([('add_to_cart', dict(product_id='101', use_defaults=True))])
     added = runtime.turn('theo mặc định đi bạn ơi')
     assert added['error'] is None and len(runtime.writes) == 1

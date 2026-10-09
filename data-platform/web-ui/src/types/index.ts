@@ -104,3 +104,28 @@ export interface JobItem {
   rows_processed: number;
   status: string;
 }
+
+export interface PipelinesData { jobs: JobItem[]; }
+
+export interface RealtimeEvent {
+  id: number;
+  topic: string;
+  event_key?: string;
+  event_type: string;
+  payload: Record<string, unknown>;
+  received_at: string;
+}
+
+export interface SystemUser {
+  id: number | string;
+  username: string;
+  full_name: string;
+  role: string;
+  status: string;
+  email: string;
+  last_login?: string;
+}
+
+export interface SystemRole { role: string; users_count: number; description: string; }
+
+export interface SystemLog { time: string; user: string; action: string; status: string; duration_seconds: number; }

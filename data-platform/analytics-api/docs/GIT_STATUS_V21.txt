@@ -1,0 +1,30 @@
+ M data-platform/analytics-api/common.py
+ M data-platform/analytics-api/metadata/semantic_catalog.json
+ M data-platform/analytics-api/routers/ai.py
+ M data-platform/analytics-api/services/analysis_catalog.py
+ M data-platform/analytics-api/services/analysis_contract.py
+ M data-platform/analytics-api/services/analysis_pipeline.py
+ M data-platform/analytics-api/services/analysis_query.py
+ M data-platform/analytics-api/services/analysis_understanding.py
+ M data-platform/analytics-api/services/llm_service.py
+ M data-platform/analytics-api/services/metadata_service.py
+ M data-platform/analytics-api/services/session_service.py
+ M data-platform/analytics-api/services/vector_rag_service.py
+ M data-platform/analytics-api/services/verified_analysis_service.py
+ M data-platform/analytics-api/tests/fixtures/manual_analysis_cases.json
+ M data-platform/analytics-api/tests/test_analysis_contract.py
+ M data-platform/analytics-api/tools/analysis_matrix.py
+ M data-platform/web-ui/package.json
+ M data-platform/web-ui/src/components/AnalysisMeaning.tsx
+ M data-platform/web-ui/src/views/AnalyticsView.tsx
+?? data-platform/analytics-api/docs/AI_V21_IMPLEMENTATION.md
+?? data-platform/analytics-api/docs/GIT_STATUS_V21.txt
+?? data-platform/analytics-api/docs/MANUAL_MATRIX_V21_OFFLINE.json
+?? data-platform/analytics-api/docs/SEMANTIC_COVERAGE_V21.json
+?? data-platform/analytics-api/docs/UNDERSTANDING_V21_BEFORE_AFTER.json
+?? data-platform/analytics-api/services/time_resolution_service.py
+?? data-platform/analytics-api/services/value_grounding_service.py
+?? data-platform/analytics-api/tests/test_understanding_v21.py
+?? data-platform/analytics-api/tools/analysis_coverage.py
+?? data-platform/web-ui/src/components/AnalysisClarification.tsx
+?? data-platform/web-ui/src/utils/analysisClarification.test.mjs

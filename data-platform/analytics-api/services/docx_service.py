@@ -703,6 +703,27 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
 
     doc.add_paragraph().paragraph_format.space_after = Pt(10)
 
+    quality = report_data.get("quality_assessment") or {}
+    doc.add_heading("Mức độ kiểm chứng", level=2)
+    if quality.get('measurement_mode') == 'evidence_checks':
+        if quality.get('score_method') and quality.get('score') is not None:
+            doc.add_paragraph(f"Điểm kiểm chứng tổng: {quality['score']:g}/100")
+            doc.add_paragraph(quality['score_method']['formula'])
+        doc.add_paragraph('Độ chính xác đối chứng: Chưa đo. Xác suất trả lời đúng: Chưa hiệu chuẩn.')
+        for check in quality.get('verification_checks', []):
+            if check['total']:
+                doc.add_paragraph(f"{check['label']}: {check['passed']}/{check['total']} đạt. {check['summary']}")
+        doc.add_paragraph(quality.get('accuracy_assessment', {}).get('reason', 'Chưa có đáp án đối chứng độc lập.'))
+    elif quality.get("score") is not None and quality.get("status") != "not_scored":
+        doc.add_paragraph(f"{quality['score']}/100 · Bộ kiểm tra {quality.get('version', '2.7')}")
+    else:
+        doc.add_paragraph(quality.get("reason") or "Chưa đủ metadata để chấm theo V2.7.")
+    doc.add_paragraph("Điểm kiểm chứng đối chiếu phạm vi, số liệu và bằng chứng; không phải xác suất AI trả lời đúng.")
+    for key, label in (("completed", "Đã thực hiện"), ("missing", "Chưa thực hiện"), ("unverified", "Chưa thể xác minh"), ("limitations", "Giới hạn dữ liệu"), ("suggested_next_actions", "Bước tiếp theo")):
+        values = quality.get(key, [])
+        if values:
+            doc.add_paragraph(label + ": " + "; ".join(v["label"] for v in values[:8]))
+
     # 5. Section II: CÁC CHỈ SỐ HIỆU SUẤT CỐT LÕI (KEY METRICS)
     h_sec2 = doc.add_paragraph()
     h_sec2.paragraph_format.space_before = Pt(8)

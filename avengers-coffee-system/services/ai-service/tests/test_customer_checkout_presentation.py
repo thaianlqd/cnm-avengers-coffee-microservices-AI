@@ -15,6 +15,9 @@ from src.function_calling.tools import cart_tools, product_tools, voucher_tools,
 
 @pytest.fixture
 def shop(runtime, monkeypatch):
+    # Exercise the scripted tool protocol rather than the legacy phrase shortcut.
+    from src.agents import llm_tool_orchestrator
+    monkeypatch.setattr(llm_tool_orchestrator, '_legacy_language_control', lambda *a: None)
     cart_manager.replace_items_from_order_cart(runtime.sid, [])
     product = dict(product_id='101', product_name='Caramel Macchiato Đá', final_price=75000)
     groups = [
@@ -54,6 +57,10 @@ def shop(runtime, monkeypatch):
             dict(code='VI_DIEN_TU', label='Ví Avengers', enabled=True, balance=940000)]))
     ConversationMemory(runtime.redis).save(runtime.sid, {**empty_memory(),
         'visible_snapshots': {'products': [product]}, 'focus': {'product': product}})
+    # These option/checkout tests start AFTER product selection. A visible
+    # suggestion/focus alone is deliberately not authority to configure it.
+    cart_manager.set_pending_products(runtime.sid, [{**product, 'quantity': 1, 'option_schema': deepcopy(groups)}])
+    cart_manager.set_pending_action(runtime.sid, 'fill_options', {'count': 1})
     runtime.config = dict(product_id='101', size='Lớn', luong_da='Ít đá',
         do_ngot='Ít ngọt', loai_sua='Sữa Tươi - CMD')
     runtime.vouchers = vouchers

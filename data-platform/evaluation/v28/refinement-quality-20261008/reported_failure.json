@@ -1,0 +1,23 @@
+{
+  "outcome": "SYSTEM_ERROR",
+  "feedback": "Đổi thành Top 2, giữ nguyên thời gian và phạm vi.",
+  "provider_call_count": 3,
+  "provider_status": "success",
+  "db_query_count": 0,
+  "initial_issues": [
+    {
+      "requirement_id": "req_1",
+      "field": "changes",
+      "code": "duplicate_delta"
+    }
+  ],
+  "terminal_issues": [
+    {
+      "requirement_id": "req_1",
+      "field": "metric_ids",
+      "code": "metric_required"
+    }
+  ],
+  "raw_delta_available": false,
+  "diagnosed_recovery_bug": "Repeated requirement updates rejected; full-envelope recovery discarded the baseline metric selection."
+}

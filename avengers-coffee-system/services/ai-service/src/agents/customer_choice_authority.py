@@ -10,6 +10,13 @@ def voucher_choice(message, offered):
         return None
     if re.search(r'\b(?:khong|ko|chua|dung)\s+(?:chon|dung|ap|ap dung)\b', text):
         return None
+    if len(offered) == 1:
+        if re.search(r'\b(?:ma do|ma nay|ma day|ma kia|ma tren)\b', text):
+            return str(offered[0].get('ma_voucher') or offered[0].get('voucher_code') or '').upper() or None
+        if re.search(r'\b(?:chon|ap|ap dung|dung|lay)\b', text) and re.search(r'\b(?:ma|voucher|luon)\b', text):
+            return str(offered[0].get('ma_voucher') or offered[0].get('voucher_code') or '').upper() or None
+        if re.fullmatch(r'(?:(?:oke|ok|da|vang|duoc|roi)\s+)?(?:ap|ap dung|dung|chon|lay)(?:\s+(?:cho\s+)?(?:toi|minh))?(?:\s+(?:ma nay|ma do|ma|luon|di|nhe|nha|a))*', text):
+            return str(offered[0].get('ma_voucher') or offered[0].get('voucher_code') or '').upper() or None
     if re.search(r'\b(?:tot nhat|giam nhieu nhat|loi nhat)\b', text):
         return 'BEST'
     ref = parse_selection_reference(message, active_namespace='VOUCHER')

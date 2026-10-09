@@ -1,4 +1,5 @@
 import os
+import logging
 import re
 import threading
 import time
@@ -11,6 +12,8 @@ import psycopg2.extras
 
 from db import get_db_conn
 
+
+logger = logging.getLogger("ai-metadata")
 
 LOCAL_TTL_SECONDS = int(os.getenv("METADATA_LOCAL_TTL_SECONDS", "600"))
 SOURCE_TTL_SECONDS = int(os.getenv("METADATA_SOURCE_TTL_SECONDS", "2700"))
@@ -29,6 +32,7 @@ PII_EXACT = {
     "dia_chi", "dia_chi_day_du", "dia_chi_giao_hang", "delivery_address",
     "mat_khau", "mat_khau_hash", "password", "password_hash", "auth_pass",
     "access_token", "refresh_token", "token", "secret", "session_id",
+    "staff_name", "staff_username", "ten_nhan_vien", "bien_so_xe",
     "reset_password_code_hash", "ma_tham_chieu", "du_lieu_tho",
 }
 PII_FRAGMENTS = ("password", "token", "secret", "email", "phone", "dien_thoai", "dia_chi")
@@ -116,7 +120,8 @@ def _introspect(connection_factory: Callable[[], Any], schemas: Optional[List[st
                 SELECT n.nspname AS schema_name, c.relname AS object_name,
                        a.attname AS column_name, format_type(a.atttypid, a.atttypmod) AS data_type,
                        NOT a.attnotnull AS nullable, a.attnum AS ordinal_position,
-                       col_description(c.oid, a.attnum) AS comment
+                       col_description(c.oid, a.attnum) AS comment,
+                       ARRAY(SELECT enumlabel FROM pg_enum WHERE enumtypid = a.atttypid ORDER BY enumsortorder) AS enum_values
                 FROM pg_attribute a
                 JOIN pg_class c ON c.oid = a.attrelid
                 JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -218,6 +223,7 @@ def _introspect(connection_factory: Callable[[], Any], schemas: Optional[List[st
                 "foreign_key": None,
                 "sensitive": is_sensitive_column(row["column_name"]),
                 "comment": row.get("comment"),
+                "enum_values": row.get("enum_values") or [],
             })
     for row in key_rows:
         target = by_name.get(f"{row['schema_name']}.{row['object_name']}")
@@ -270,7 +276,7 @@ def _cached(name: str, ttl: int, loader: Callable[[], Dict[str, Any]], force: bo
     except Exception:
         with _lock:
             entry = _cache.get(name)
-            if entry:
+            if entry and not force:
                 return entry["value"]
         raise
     with _lock:
@@ -281,14 +287,6 @@ def _cached(name: str, ttl: int, loader: Callable[[], Dict[str, Any]], force: bo
 def get_local_metadata(force: bool = False) -> Dict[str, Any]:
     meta = _cached("local", LOCAL_TTL_SECONDS, lambda: _introspect(get_db_conn), force)
     table_map = meta.get("table_map", {})
-    # Self-healing: If silver views are missing but source tables exist, initialize views and refresh cache
-    if "silver.don_hang" not in table_map and "orders.don_hang" in table_map:
-        try:
-            from db import init_warehouse_views
-            if init_warehouse_views():
-                meta = _cached("local", LOCAL_TTL_SECONDS, lambda: _introspect(get_db_conn), force=True)
-        except Exception:
-            pass
     return meta
 
 
@@ -341,3 +339,25 @@ def cache_status() -> Dict[str, Any]:
         "tables": local["value"].get("table_count", 0) if local else 0,
         "source_configured": _source_configured(),
     }
+
+
+def lookup_dimension_values(table, column, search, limit=8):
+    """Explicit entity lookup only: safe identifiers, bounded rows/time, read-only."""
+    from psycopg2 import sql
+    if not re.fullmatch(r"silver\.[a-z][a-z0-9_]*", table) or not re.fullmatch(r"[a-z][a-z0-9_]*", column) or is_sensitive_column(column):
+        raise ValueError("Unsafe dimension lookup")
+    if not isinstance(search, str) or not 2 <= len(search.strip()) <= 80:
+        return []
+    needle = search.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    conn = get_db_conn()
+    try:
+        conn.set_session(readonly=True, autocommit=False)
+        with conn.cursor() as cur:
+            cur.execute("SET LOCAL statement_timeout = 1500")
+            cur.execute(sql.SQL("SELECT DISTINCT {column} AS value FROM {table} WHERE {column}::text ILIKE %s ORDER BY {column} LIMIT %s").format(
+                column=sql.Identifier(column), table=sql.Identifier(*table.split("."))),
+                ("%" + needle + "%", min(max(int(limit), 1), 8)))
+            return [row["value"] for row in cur.fetchall() if row["value"] is not None]
+    finally:
+        conn.rollback()
+        conn.close()

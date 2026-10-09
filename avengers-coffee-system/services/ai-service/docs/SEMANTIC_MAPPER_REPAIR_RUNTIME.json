@@ -1,0 +1,13 @@
+{
+  "health_http_status": 200,
+  "source_hashes_match": true,
+  "source_sha256": {
+    "src/agents/semantic_registry.py": "0e685355761fe24c4cd0809cba714247f9bc895813f3ebef7164bd5f6f9bbe80",
+    "src/agents/semantic_control.py": "b46fb28379b9672a4bd11df6536f2b76e9a920ddc870e6a63b882b8550ab4882",
+    "src/agents/tool_policy.py": "3aff007ca4f3871f9604c86fb5cc88475de1e6b35f5c32f75ecfb27b10414951",
+    "src/agents/llm_tool_orchestrator.py": "34422d70afdd92289933f93e41c38822f1d222c8f3c0272586bf6c35801cfe4d",
+    "src/common/groq_service.py": "97486c69683441f1c8202a6d0207449604d53c98664f7c8674e2623fa5ca4dee",
+    "src/function_calling/tools/product_tools.py": "f2ecc40efc601fa73579f2447a739458e2cb157e3b75266f9afe635307e9fb0d"
+  },
+  "live_provider_requests": 0
+}

@@ -63,7 +63,8 @@ def review_reply(result):
             lines.append(f'{n}. **{name}** — chưa có đánh giá được duyệt; chưa đủ dữ liệu để xếp hạng.')
         comments = row.get('reviews') or []
         for comment in comments[:3]:
-            value = safe_text(comment.get('comment'), 400)
+            from src.agents.product_information_presentation import literal, review_text
+            value = literal(review_text(comment.get('comment')), 400)
             if value:
                 lines.append(f'   Nhận xét gần đây ({comment["rating"]}/5): “{value}”')
         if count and not comments:

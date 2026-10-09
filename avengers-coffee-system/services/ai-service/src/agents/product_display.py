@@ -19,11 +19,12 @@ def product_bucket(row):
     return _map_db_category_to_bucket(row.get('category'), row.get('parent_category'))
 
 
-def numbered_products(rows):
+def numbered_products(rows, grouped=False):
     counts, result = {}, []
     for index, row in enumerate(rows, 1):
         bucket = product_bucket(row)
         counts[bucket] = counts.get(bucket, 0) + 1
-        result.append({**row, 'menu_bucket': bucket, 'display_index': index,
+        result.append({**row, 'menu_bucket': bucket, 'display_index': counts[bucket] if grouped else index,
+                       'global_display_index': index,
                        'group_display_index': counts[bucket]})
     return result

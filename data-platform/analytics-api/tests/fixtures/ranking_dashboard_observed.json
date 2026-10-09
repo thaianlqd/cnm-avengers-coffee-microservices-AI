@@ -1,0 +1,150 @@
+{
+  "source": "Sanitized replay of observed dashboard failure; no provider call",
+  "question": "Trong 30 ngày gần nhất, xếp hạng 5 sản phẩm bán chạy nhất theo số lượng bán. Với từng sản phẩm, hiển thị số lượng bán và doanh thu sản phẩm. Nêu rõ trạng thái đơn được tính.",
+  "reference_date": "2026-10-09",
+  "intent": {
+    "decision": "analyze",
+    "requirements": [
+      {
+        "id": "req_1",
+        "goal": "Xếp hạng 5 sản phẩm bán chạy nhất theo số lượng bán trong 30 ngày gần nhất, hiển thị số lượng bán và doanh thu sản phẩm kèm trạng thái đơn được tính",
+        "domain_id": "products",
+        "lens_hint": null,
+        "supporting_for": null,
+        "metric_ids": [
+          "product_revenue",
+          "quantity_sold"
+        ],
+        "dimension_ids": [
+          "order_status",
+          "product"
+        ],
+        "analysis_kind": "ranking",
+        "filters": [],
+        "time": {
+          "kind": "rolling",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-09-10",
+          "end": "2026-10-09",
+          "amount": 30,
+          "unit": "day"
+        },
+        "ranking": {
+          "direction": "top",
+          "limit": 5,
+          "metric_id": "quantity_sold",
+          "per_group": []
+        },
+        "granularity": null,
+        "derived_features": [
+          "selected_total"
+        ],
+        "feature_metrics": {},
+        "availability": "requested",
+        "reason": null
+      }
+    ],
+    "clarification": null
+  },
+  "artifacts": [
+    {
+      "query": {
+        "id": "q_ef5cee196dd1b69fa8b9b0f0",
+        "metrics": [
+          "product_revenue",
+          "quantity_sold"
+        ],
+        "group_by": [
+          "order_status",
+          "product"
+        ],
+        "filters": [],
+        "project": [],
+        "time": {
+          "kind": "range",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-09-10",
+          "end": "2026-10-09",
+          "amount": null,
+          "unit": null
+        },
+        "order_by": [],
+        "limit": 100,
+        "role": "requested",
+        "parent_id": null,
+        "purpose": "answer",
+        "lens_id": null,
+        "population_relation": "same",
+        "replaces": null,
+        "changed_fields": [],
+        "subject": "products",
+        "operation": "ranking",
+        "ranking": {
+          "metric": "quantity_sold",
+          "direction": "DESC",
+          "top_n": 5,
+          "per_group": []
+        },
+        "granularity": "day"
+      },
+      "result": {
+        "columns": [
+          "order_status",
+          "product",
+          "product_id",
+          "product_revenue",
+          "quantity_sold"
+        ],
+        "count": 5,
+        "duration_ms": 57.22,
+        "rows": [
+          {
+            "order_status": "HOAN_THANH",
+            "product": "Americano Phúc Bồn Tử",
+            "product_id": 5,
+            "product_revenue": 5525000.0,
+            "quantity_sold": 85
+          },
+          {
+            "order_status": "HOAN_THANH",
+            "product": "1 Lít Matcha Latte Tây Bắc",
+            "product_id": 61,
+            "product_revenue": 7695000.0,
+            "quantity_sold": 81
+          },
+          {
+            "order_status": "HOAN_THANH",
+            "product": "Cappuccino Đá",
+            "product_id": 44,
+            "product_revenue": 5070000.0,
+            "quantity_sold": 78
+          },
+          {
+            "order_status": "HOAN_THANH",
+            "product": "Trà Đào Cam Sả - Đá",
+            "product_id": 110,
+            "product_revenue": 4484000.0,
+            "quantity_sold": 76
+          },
+          {
+            "order_status": "HOAN_THANH",
+            "product": "Bánh Trung Thu Matcha",
+            "product_id": 120,
+            "product_revenue": 7425000.0,
+            "quantity_sold": 75
+          }
+        ],
+        "truncated": false
+      }
+    }
+  ],
+  "old_chart_count": 0
+}

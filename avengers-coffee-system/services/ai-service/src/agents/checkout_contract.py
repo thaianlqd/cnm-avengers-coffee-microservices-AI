@@ -31,7 +31,15 @@ def checkout_next_step(state):
     """Compact state-derived planning hint; it never authorizes a customer choice."""
     prefs = state.get('checkout') or {}
     if state.get('pending_products'):
-        return 'OPTIONS: ask missing fields only; preserve staged values and quantity.'
+        return ('OPTIONS: pending_products are ALREADY SELECTED even if cart.items is empty. '
+                'Use semantic_configure_product with only supplied options and reference kind=pending. '
+                'Explicit defaults use semantic_use_product_defaults. Ask only missing required fields. '
+                'Questions use semantic_ask_product_options and remain read-only.')
+    if prefs.get('delivery_type') == 'GIAO_TAN_NOI' and prefs.get('partial_delivery_address'):
+        return ('LOCATION: checkout.partial_delivery_address retains the customer-supplied address. '
+                'A location follow-up completes/corrects that draft via semantic_resolve_new_location(for_checkout=true); '
+                'retain supplied house/street/locality components, ask only missing precision. '
+                'Do not invent a city, saved address or provider coordinate. Questions remain read-only.')
     if prefs.get('voucher_offer_pending') or prefs.get('voucher_revalidation_required'):
         return 'VOUCHER: show eligible offers and wait. Only apply/skip on a CURRENT explicit voucher choice; generic OK finishes cart only.'
     if not prefs.get('voucher_decided'):

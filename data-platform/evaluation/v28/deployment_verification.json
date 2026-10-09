@@ -1,0 +1,18 @@
+{
+  "verified_at": "2026-10-08T14:21:38.874748+07:00",
+  "api_health_http": 200,
+  "web_proxy_api_health_http": 200,
+  "analytics_api": "healthy",
+  "web_ui": "healthy",
+  "pipeline_version": "2.8",
+  "planning_mode": "hybrid_verifiable",
+  "provider_call_budget": 3,
+  "session_storage": "redis",
+  "multi_replica": true,
+  "rebuilt_services": [
+    "analytics-api",
+    "web-ui"
+  ],
+  "other_services_restarted": false,
+  "LIVE_PROVIDER_REQUESTS": 0
+}

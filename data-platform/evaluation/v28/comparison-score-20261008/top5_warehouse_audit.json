@@ -1,0 +1,989 @@
+{
+  "LIVE_PROVIDER_REQUESTS": 0,
+  "warehouse_mutations": 0,
+  "planning": "scripted semantic intent",
+  "storage": "production Redis",
+  "reference_date": "2026-10-08",
+  "source_total_revenue": 362895000.0,
+  "source_top5_quantity": 371,
+  "source_top5": [
+    {
+      "product_id": 120,
+      "product_revenue": 7920000.0,
+      "quantity_sold": 80,
+      "product": "Bánh Trung Thu Matcha"
+    },
+    {
+      "product_id": 61,
+      "product_revenue": 7885000.0,
+      "quantity_sold": 83,
+      "product": "1 Lít Matcha Latte Tây Bắc"
+    },
+    {
+      "product_id": 121,
+      "product_revenue": 7326000.0,
+      "quantity_sold": 74,
+      "product": "Bánh Trung Thu Đậu Xanh"
+    },
+    {
+      "product_id": 122,
+      "product_revenue": 6902000.0,
+      "quantity_sold": 58,
+      "product": "Bánh Trung Thu Thập Cẩm Bát Bửu"
+    },
+    {
+      "product_id": 52,
+      "product_revenue": 6764000.0,
+      "quantity_sold": 76,
+      "product": "Mocha Frappe"
+    }
+  ],
+  "refinement_provider_calls": 1,
+  "audit": {
+    "assessment": {
+      "status": "measured",
+      "matched_count": 26,
+      "reference_count": 26,
+      "accuracy_pct": 100.0,
+      "reference_source": "Hand-authored SQL on orders/menu source tables; line revenue recomputed as unit price × quantity",
+      "reason": "Tỷ lệ assertion khớp đối chứng độc lập trong lần kiểm tra này; không phải xác suất AI trả lời đúng."
+    },
+    "assertions": [
+      {
+        "id": "top5:ranking",
+        "matched": true
+      },
+      {
+        "id": "top5:window",
+        "matched": true
+      },
+      {
+        "id": "top5:share_count",
+        "matched": true
+      },
+      {
+        "id": "top5:denominator:0",
+        "matched": true
+      },
+      {
+        "id": "top5:share:0",
+        "matched": true
+      },
+      {
+        "id": "top5:denominator:1",
+        "matched": true
+      },
+      {
+        "id": "top5:share:1",
+        "matched": true
+      },
+      {
+        "id": "top5:denominator:2",
+        "matched": true
+      },
+      {
+        "id": "top5:share:2",
+        "matched": true
+      },
+      {
+        "id": "top5:denominator:3",
+        "matched": true
+      },
+      {
+        "id": "top5:share:3",
+        "matched": true
+      },
+      {
+        "id": "top5:denominator:4",
+        "matched": true
+      },
+      {
+        "id": "top5:share:4",
+        "matched": true
+      },
+      {
+        "id": "top5:gap",
+        "matched": true
+      },
+      {
+        "id": "top5:chart_count",
+        "matched": true
+      },
+      {
+        "id": "top5:share_chart",
+        "matched": true
+      },
+      {
+        "id": "top2:ranking",
+        "matched": true
+      },
+      {
+        "id": "top2:window",
+        "matched": true
+      },
+      {
+        "id": "top2:share_count",
+        "matched": true
+      },
+      {
+        "id": "top2:denominator:0",
+        "matched": true
+      },
+      {
+        "id": "top2:share:0",
+        "matched": true
+      },
+      {
+        "id": "top2:denominator:1",
+        "matched": true
+      },
+      {
+        "id": "top2:share:1",
+        "matched": true
+      },
+      {
+        "id": "top2:gap",
+        "matched": true
+      },
+      {
+        "id": "top2:chart_count",
+        "matched": true
+      },
+      {
+        "id": "top2:share_chart",
+        "matched": true
+      }
+    ],
+    "numeric_tolerance": {
+      "absolute": 0.01,
+      "relative": 1e-09
+    }
+  },
+  "reports": [
+    {
+      "name": "top5",
+      "revision": 1,
+      "rows": [
+        {
+          "product_id": 120,
+          "product": "Bánh Trung Thu Matcha",
+          "product_revenue": 7920000.0,
+          "quantity_sold": 80
+        },
+        {
+          "product_id": 61,
+          "product": "1 Lít Matcha Latte Tây Bắc",
+          "product_revenue": 7885000.0,
+          "quantity_sold": 83
+        },
+        {
+          "product_id": 121,
+          "product": "Bánh Trung Thu Đậu Xanh",
+          "product_revenue": 7326000.0,
+          "quantity_sold": 74
+        },
+        {
+          "product_id": 122,
+          "product": "Bánh Trung Thu Thập Cẩm Bát Bửu",
+          "product_revenue": 6902000.0,
+          "quantity_sold": 58
+        },
+        {
+          "product_id": 52,
+          "product": "Mocha Frappe",
+          "product_revenue": 6764000.0,
+          "quantity_sold": 76
+        }
+      ],
+      "charts": [
+        {
+          "id": "visual_1",
+          "chart_type": "horizontal_bar",
+          "scope_ref": "q_9875415d35dd286a30d8619c",
+          "query_id": "q_9875415d35dd286a30d8619c",
+          "metric": "product_revenue",
+          "metrics": [
+            "product_revenue"
+          ],
+          "unit": "VND",
+          "x_field": "product",
+          "series_field": null,
+          "title": "Top 5 — Doanh thu sản phẩm — Sản phẩm và thực đơn",
+          "purpose": "Xếp hạng trong phạm vi đã chọn",
+          "role": "requested",
+          "priority": 80,
+          "cardinality": 5,
+          "chart_type_label": "Cột ngang",
+          "x_label": "Sản phẩm",
+          "semantic_view_key": "acb05c9eac6895adf123f13a8cea1aad1fba7ae191fc9bb3e7e61b8b61929d14",
+          "series_label": "",
+          "ranking_metric": "product_revenue",
+          "ranking_metric_label": "Doanh thu sản phẩm",
+          "ranking_direction": "DESC",
+          "ranking_limit": 5,
+          "selection": "Top N",
+          "layout": "standard",
+          "data": [
+            {
+              "label": "Bánh Trung Thu Matcha",
+              "value": 7920000.0,
+              "color": "#6366f1"
+            },
+            {
+              "label": "1 Lít Matcha Latte Tây Bắc",
+              "value": 7885000.0,
+              "color": "#10b981"
+            },
+            {
+              "label": "Bánh Trung Thu Đậu Xanh",
+              "value": 7326000.0,
+              "color": "#f59e0b"
+            },
+            {
+              "label": "Bánh Trung Thu Thập Cẩm Bát Bửu",
+              "value": 6902000.0,
+              "color": "#ec4899"
+            },
+            {
+              "label": "Mocha Frappe",
+              "value": 6764000.0,
+              "color": "#06b6d4"
+            }
+          ],
+          "domain_id": "products",
+          "domain_label": "Sản phẩm",
+          "lens_id": null,
+          "lens_label": null,
+          "story_section": "So sánh và xếp hạng"
+        },
+        {
+          "id": "visual_2",
+          "chart_type": "horizontal_bar",
+          "scope_ref": "q_9875415d35dd286a30d8619c",
+          "query_id": "q_9875415d35dd286a30d8619c",
+          "metric": "quantity_sold",
+          "metrics": [
+            "quantity_sold"
+          ],
+          "unit": "sản phẩm",
+          "x_field": "product",
+          "series_field": null,
+          "title": "Top 5 — Số lượng sản phẩm bán trong tập xếp hạng theo Doanh thu sản phẩm — Sản phẩm và thực đơn",
+          "purpose": "Xếp hạng trong phạm vi đã chọn",
+          "role": "requested",
+          "priority": 80,
+          "cardinality": 5,
+          "chart_type_label": "Cột ngang",
+          "x_label": "Sản phẩm",
+          "semantic_view_key": "7a850a1f292041937edda097ea80432effcebc6595ed3391da5724d95269ab21",
+          "series_label": "",
+          "ranking_metric": "product_revenue",
+          "ranking_metric_label": "Doanh thu sản phẩm",
+          "ranking_direction": "DESC",
+          "ranking_limit": 5,
+          "selection": "Top N",
+          "layout": "standard",
+          "data": [
+            {
+              "label": "Bánh Trung Thu Matcha",
+              "value": 80,
+              "color": "#6366f1"
+            },
+            {
+              "label": "1 Lít Matcha Latte Tây Bắc",
+              "value": 83,
+              "color": "#10b981"
+            },
+            {
+              "label": "Bánh Trung Thu Đậu Xanh",
+              "value": 74,
+              "color": "#f59e0b"
+            },
+            {
+              "label": "Bánh Trung Thu Thập Cẩm Bát Bửu",
+              "value": 58,
+              "color": "#ec4899"
+            },
+            {
+              "label": "Mocha Frappe",
+              "value": 76,
+              "color": "#06b6d4"
+            }
+          ],
+          "domain_id": "products",
+          "domain_label": "Sản phẩm",
+          "lens_id": null,
+          "lens_label": null,
+          "story_section": "So sánh và xếp hạng"
+        },
+        {
+          "chart_type": "horizontal_bar",
+          "chart_type_label": "Tỷ trọng trong toàn phạm vi",
+          "title": "Tỷ trọng doanh thu sản phẩm · Top 5",
+          "metric": "product_revenue",
+          "metrics": [
+            "product_revenue"
+          ],
+          "unit": "%",
+          "query_id": "q_9875415d35dd286a30d8619c",
+          "scope_ref": "q_9875415d35dd286a30d8619c",
+          "x_field": "product",
+          "x_label": "Sản phẩm",
+          "series_field": null,
+          "role": "requested",
+          "priority": 70,
+          "purpose": "distribution",
+          "selection": "Top N",
+          "layout": "standard",
+          "value_transform": "contribution_share",
+          "denominator_scope_ref": "q_8b986b4e6ec9f9a6d85e7a9b",
+          "denominator_selection": "complete",
+          "numerator_unit": "VND",
+          "data": [
+            {
+              "label": "Bánh Trung Thu Matcha",
+              "value": 2.1824494688546276,
+              "numerator": 7920000.0,
+              "denominator": 362895000.0,
+              "evidence_id": "q_9875415d35dd286a30d8619c:product_revenue:contribution_share:2af01b9870"
+            },
+            {
+              "label": "1 Lít Matcha Latte Tây Bắc",
+              "value": 2.17280480579782,
+              "numerator": 7885000.0,
+              "denominator": 362895000.0,
+              "evidence_id": "q_9875415d35dd286a30d8619c:product_revenue:contribution_share:e76079f156"
+            },
+            {
+              "label": "Bánh Trung Thu Đậu Xanh",
+              "value": 2.0187657586905305,
+              "numerator": 7326000.0,
+              "denominator": 362895000.0,
+              "evidence_id": "q_9875415d35dd286a30d8619c:product_revenue:contribution_share:afefd3dfd7"
+            },
+            {
+              "label": "Bánh Trung Thu Thập Cẩm Bát Bửu",
+              "value": 1.901927554802353,
+              "numerator": 6902000.0,
+              "denominator": 362895000.0,
+              "evidence_id": "q_9875415d35dd286a30d8619c:product_revenue:contribution_share:0585d8c135"
+            },
+            {
+              "label": "Mocha Frappe",
+              "value": 1.8639000261783711,
+              "numerator": 6764000.0,
+              "denominator": 362895000.0,
+              "evidence_id": "q_9875415d35dd286a30d8619c:product_revenue:contribution_share:5292bb8d25"
+            }
+          ],
+          "partition": {},
+          "evidence_refs": [
+            "q_9875415d35dd286a30d8619c:product_revenue:contribution_share:2af01b9870",
+            "q_9875415d35dd286a30d8619c:product_revenue:contribution_share:e76079f156",
+            "q_9875415d35dd286a30d8619c:product_revenue:contribution_share:afefd3dfd7",
+            "q_9875415d35dd286a30d8619c:product_revenue:contribution_share:0585d8c135",
+            "q_9875415d35dd286a30d8619c:product_revenue:contribution_share:5292bb8d25"
+          ],
+          "semantic_view_key": "0457bd58e05e5a3406fba35706a41650c1dc754f34d26827c986aa616a6ceae1",
+          "denominator_note": "Mỗi tỷ trọng = giá trị của mục / tổng cùng phạm vi đầy đủ × 100; không dùng tổng Top N làm mẫu số.",
+          "id": "visual_3",
+          "domain_id": "products",
+          "domain_label": "Sản phẩm",
+          "lens_id": null,
+          "lens_label": null,
+          "story_section": "Cơ cấu đóng góp"
+        }
+      ],
+      "quality": {
+        "score": 90.0,
+        "grade": "good",
+        "status": "verified",
+        "components": [],
+        "completed": [
+          {
+            "id": "r1",
+            "label": "Sản phẩm",
+            "evidence_refs": [
+              "q_9875415d35dd286a30d8619c:product_revenue:leader:6230060e3b",
+              "q_9875415d35dd286a30d8619c:product_revenue:top_gap:6230060e3b",
+              "q_9875415d35dd286a30d8619c:product_revenue:selected_total:6230060e3b"
+            ]
+          }
+        ],
+        "missing": [],
+        "unverified": [
+          {
+            "id": "independent_accuracy",
+            "label": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.",
+            "evidence_refs": []
+          }
+        ],
+        "limitations": [
+          {
+            "id": "metric_population:product_revenue",
+            "label": "Doanh thu sản phẩm: Tổng thành tiền dòng sản phẩm thuộc đơn HOAN_THANH/DANG_GIAO; không mặc định đối soát bằng doanh thu cấp đơn.",
+            "evidence_refs": [
+              "q_9875415d35dd286a30d8619c:product_revenue:leader:6230060e3b",
+              "q_9875415d35dd286a30d8619c:product_revenue:top_gap:6230060e3b",
+              "q_9875415d35dd286a30d8619c:product_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:quantity_sold",
+            "label": "Số lượng sản phẩm bán: Tổng số lượng trên dòng món thuộc đơn HOAN_THANH/DANG_GIAO; đếm số đơn vị bán, không phải số sản phẩm khác nhau.",
+            "evidence_refs": [
+              "q_9875415d35dd286a30d8619c:product_revenue:leader:6230060e3b",
+              "q_9875415d35dd286a30d8619c:product_revenue:top_gap:6230060e3b",
+              "q_9875415d35dd286a30d8619c:product_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "topn:q_9875415d35dd286a30d8619c",
+            "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+            "evidence_refs": [
+              "q_9875415d35dd286a30d8619c:product_revenue:leader:6230060e3b",
+              "q_9875415d35dd286a30d8619c:product_revenue:top_gap:6230060e3b",
+              "q_9875415d35dd286a30d8619c:product_revenue:selected_total:6230060e3b"
+            ]
+          }
+        ],
+        "suggested_next_actions": [],
+        "coverage": {
+          "requested_count": 1,
+          "completed_count": 1,
+          "supporting_count": 0,
+          "omitted_count": 0
+        },
+        "generated_by": "deterministic_verifier",
+        "version": "2.8.2",
+        "reason": null,
+        "measurement_mode": "evidence_checks",
+        "verification_checks": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "passed": 1,
+            "total": 1,
+            "status": "passed",
+            "summary": "1/1 phần yêu cầu đã thực hiện."
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "passed": 1,
+            "total": 1,
+            "status": "passed",
+            "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "passed": 2,
+            "total": 2,
+            "status": "passed",
+            "summary": "2 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "passed": 11,
+            "total": 11,
+            "status": "passed",
+            "summary": "11/11 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "passed": 3,
+            "total": 3,
+            "status": "passed",
+            "summary": "3/3 phép tính yêu cầu có đủ quan sát và bằng chứng."
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "passed": 47,
+            "total": 47,
+            "status": "passed",
+            "summary": "47/47 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "passed": 5,
+            "total": 5,
+            "status": "passed",
+            "summary": "2/2 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "passed": 3,
+            "total": 3,
+            "status": "passed",
+            "summary": "3/3 giới hạn dữ liệu được công bố."
+          }
+        ],
+        "score_method": {
+          "id": "verification_evidence_v1",
+          "label": "Điểm kiểm chứng tổng",
+          "formula": "90 × trung bình có trọng số các kiểm tra áp dụng + 10 × tỷ lệ khớp đối chứng độc lập. Chưa đo đối chứng: chưa cộng 10 điểm; kiểm tra không áp dụng không bị trừ.",
+          "unmeasured_points": 10.0,
+          "interpretation": "Chỉ số mức độ kiểm chứng theo trọng số quy định; không phải độ chính xác hay xác suất AI trả lời đúng."
+        },
+        "score_breakdown": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "earned_points": 20.0,
+            "possible_points": 20.0,
+            "status": "passed"
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "earned_points": 15.0,
+            "possible_points": 15.0,
+            "status": "passed"
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "earned_points": 15.0,
+            "possible_points": 15.0,
+            "status": "passed"
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "earned_points": 5.0,
+            "possible_points": 5.0,
+            "status": "passed"
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "earned_points": 5.0,
+            "possible_points": 5.0,
+            "status": "passed"
+          },
+          {
+            "id": "independent_reference",
+            "label": "Đối chứng độc lập",
+            "earned_points": 0.0,
+            "possible_points": 10.0,
+            "status": "not_measured"
+          }
+        ],
+        "accuracy_assessment": {
+          "status": "not_measured",
+          "matched_count": null,
+          "reference_count": 0,
+          "accuracy_pct": null,
+          "reference_source": null,
+          "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+        },
+        "confidence_probability": null,
+        "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+      }
+    },
+    {
+      "name": "top2",
+      "revision": 2,
+      "rows": [
+        {
+          "product_id": 120,
+          "product": "Bánh Trung Thu Matcha",
+          "product_revenue": 7920000.0,
+          "quantity_sold": 80
+        },
+        {
+          "product_id": 61,
+          "product": "1 Lít Matcha Latte Tây Bắc",
+          "product_revenue": 7885000.0,
+          "quantity_sold": 83
+        }
+      ],
+      "charts": [
+        {
+          "id": "visual_1",
+          "chart_type": "horizontal_bar",
+          "scope_ref": "q_76aa3662d7e7c235f174d2a5",
+          "query_id": "q_76aa3662d7e7c235f174d2a5",
+          "metric": "product_revenue",
+          "metrics": [
+            "product_revenue"
+          ],
+          "unit": "VND",
+          "x_field": "product",
+          "series_field": null,
+          "title": "Top 2 — Doanh thu sản phẩm — Sản phẩm và thực đơn",
+          "purpose": "Xếp hạng trong phạm vi đã chọn",
+          "role": "requested",
+          "priority": 80,
+          "cardinality": 2,
+          "chart_type_label": "Cột ngang",
+          "x_label": "Sản phẩm",
+          "semantic_view_key": "5c792bbbf09864ce4262d1765a7c67e7f774abdc18c13469e92b9f9afa141265",
+          "series_label": "",
+          "ranking_metric": "product_revenue",
+          "ranking_metric_label": "Doanh thu sản phẩm",
+          "ranking_direction": "DESC",
+          "ranking_limit": 2,
+          "selection": "Top N",
+          "layout": "standard",
+          "data": [
+            {
+              "label": "Bánh Trung Thu Matcha",
+              "value": 7920000.0,
+              "color": "#6366f1"
+            },
+            {
+              "label": "1 Lít Matcha Latte Tây Bắc",
+              "value": 7885000.0,
+              "color": "#10b981"
+            }
+          ],
+          "domain_id": "products",
+          "domain_label": "Sản phẩm",
+          "lens_id": null,
+          "lens_label": null,
+          "story_section": "So sánh và xếp hạng"
+        },
+        {
+          "id": "visual_2",
+          "chart_type": "horizontal_bar",
+          "scope_ref": "q_76aa3662d7e7c235f174d2a5",
+          "query_id": "q_76aa3662d7e7c235f174d2a5",
+          "metric": "quantity_sold",
+          "metrics": [
+            "quantity_sold"
+          ],
+          "unit": "sản phẩm",
+          "x_field": "product",
+          "series_field": null,
+          "title": "Top 2 — Số lượng sản phẩm bán trong tập xếp hạng theo Doanh thu sản phẩm — Sản phẩm và thực đơn",
+          "purpose": "Xếp hạng trong phạm vi đã chọn",
+          "role": "requested",
+          "priority": 80,
+          "cardinality": 2,
+          "chart_type_label": "Cột ngang",
+          "x_label": "Sản phẩm",
+          "semantic_view_key": "7257460766cc2ace96f1c99b529170fadcace17b501b8bdf0d8218ca9abe1fb7",
+          "series_label": "",
+          "ranking_metric": "product_revenue",
+          "ranking_metric_label": "Doanh thu sản phẩm",
+          "ranking_direction": "DESC",
+          "ranking_limit": 2,
+          "selection": "Top N",
+          "layout": "standard",
+          "data": [
+            {
+              "label": "Bánh Trung Thu Matcha",
+              "value": 80,
+              "color": "#6366f1"
+            },
+            {
+              "label": "1 Lít Matcha Latte Tây Bắc",
+              "value": 83,
+              "color": "#10b981"
+            }
+          ],
+          "domain_id": "products",
+          "domain_label": "Sản phẩm",
+          "lens_id": null,
+          "lens_label": null,
+          "story_section": "So sánh và xếp hạng"
+        },
+        {
+          "chart_type": "horizontal_bar",
+          "chart_type_label": "Tỷ trọng trong toàn phạm vi",
+          "title": "Tỷ trọng doanh thu sản phẩm · Top 2",
+          "metric": "product_revenue",
+          "metrics": [
+            "product_revenue"
+          ],
+          "unit": "%",
+          "query_id": "q_76aa3662d7e7c235f174d2a5",
+          "scope_ref": "q_76aa3662d7e7c235f174d2a5",
+          "x_field": "product",
+          "x_label": "Sản phẩm",
+          "series_field": null,
+          "role": "requested",
+          "priority": 70,
+          "purpose": "distribution",
+          "selection": "Top N",
+          "layout": "standard",
+          "value_transform": "contribution_share",
+          "denominator_scope_ref": "q_eb04601c54f73c4797953b8d",
+          "denominator_selection": "complete",
+          "numerator_unit": "VND",
+          "data": [
+            {
+              "label": "Bánh Trung Thu Matcha",
+              "value": 2.1824494688546276,
+              "numerator": 7920000.0,
+              "denominator": 362895000.0,
+              "evidence_id": "q_76aa3662d7e7c235f174d2a5:product_revenue:contribution_share:2af01b9870"
+            },
+            {
+              "label": "1 Lít Matcha Latte Tây Bắc",
+              "value": 2.17280480579782,
+              "numerator": 7885000.0,
+              "denominator": 362895000.0,
+              "evidence_id": "q_76aa3662d7e7c235f174d2a5:product_revenue:contribution_share:e76079f156"
+            }
+          ],
+          "partition": {},
+          "evidence_refs": [
+            "q_76aa3662d7e7c235f174d2a5:product_revenue:contribution_share:2af01b9870",
+            "q_76aa3662d7e7c235f174d2a5:product_revenue:contribution_share:e76079f156"
+          ],
+          "semantic_view_key": "bac3d6a7e444c99b410da422239321f2d4ff20dd1be66d62f41e9a749bb230e5",
+          "denominator_note": "Mỗi tỷ trọng = giá trị của mục / tổng cùng phạm vi đầy đủ × 100; không dùng tổng Top N làm mẫu số.",
+          "id": "visual_3",
+          "domain_id": "products",
+          "domain_label": "Sản phẩm",
+          "lens_id": null,
+          "lens_label": null,
+          "story_section": "Cơ cấu đóng góp"
+        }
+      ],
+      "quality": {
+        "score": 90.0,
+        "grade": "good",
+        "status": "verified",
+        "components": [],
+        "completed": [
+          {
+            "id": "r1",
+            "label": "Sản phẩm",
+            "evidence_refs": [
+              "q_76aa3662d7e7c235f174d2a5:product_revenue:leader:6230060e3b",
+              "q_76aa3662d7e7c235f174d2a5:product_revenue:top_gap:6230060e3b",
+              "q_76aa3662d7e7c235f174d2a5:product_revenue:selected_total:6230060e3b"
+            ]
+          }
+        ],
+        "missing": [],
+        "unverified": [
+          {
+            "id": "independent_accuracy",
+            "label": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.",
+            "evidence_refs": []
+          }
+        ],
+        "limitations": [
+          {
+            "id": "metric_population:product_revenue",
+            "label": "Doanh thu sản phẩm: Tổng thành tiền dòng sản phẩm thuộc đơn HOAN_THANH/DANG_GIAO; không mặc định đối soát bằng doanh thu cấp đơn.",
+            "evidence_refs": [
+              "q_76aa3662d7e7c235f174d2a5:product_revenue:leader:6230060e3b",
+              "q_76aa3662d7e7c235f174d2a5:product_revenue:top_gap:6230060e3b",
+              "q_76aa3662d7e7c235f174d2a5:product_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:quantity_sold",
+            "label": "Số lượng sản phẩm bán: Tổng số lượng trên dòng món thuộc đơn HOAN_THANH/DANG_GIAO; đếm số đơn vị bán, không phải số sản phẩm khác nhau.",
+            "evidence_refs": [
+              "q_76aa3662d7e7c235f174d2a5:product_revenue:leader:6230060e3b",
+              "q_76aa3662d7e7c235f174d2a5:product_revenue:top_gap:6230060e3b",
+              "q_76aa3662d7e7c235f174d2a5:product_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "topn:q_76aa3662d7e7c235f174d2a5",
+            "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+            "evidence_refs": [
+              "q_76aa3662d7e7c235f174d2a5:product_revenue:leader:6230060e3b",
+              "q_76aa3662d7e7c235f174d2a5:product_revenue:top_gap:6230060e3b",
+              "q_76aa3662d7e7c235f174d2a5:product_revenue:selected_total:6230060e3b"
+            ]
+          }
+        ],
+        "suggested_next_actions": [],
+        "coverage": {
+          "requested_count": 1,
+          "completed_count": 1,
+          "supporting_count": 0,
+          "omitted_count": 0
+        },
+        "generated_by": "deterministic_verifier",
+        "version": "2.8.2",
+        "reason": null,
+        "measurement_mode": "evidence_checks",
+        "verification_checks": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "passed": 1,
+            "total": 1,
+            "status": "passed",
+            "summary": "1/1 phần yêu cầu đã thực hiện."
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "passed": 1,
+            "total": 1,
+            "status": "passed",
+            "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "passed": 2,
+            "total": 2,
+            "status": "passed",
+            "summary": "2 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "passed": 5,
+            "total": 5,
+            "status": "passed",
+            "summary": "5/5 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "passed": 3,
+            "total": 3,
+            "status": "passed",
+            "summary": "3/3 phép tính yêu cầu có đủ quan sát và bằng chứng."
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "passed": 35,
+            "total": 35,
+            "status": "passed",
+            "summary": "35/35 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "passed": 5,
+            "total": 5,
+            "status": "passed",
+            "summary": "2/2 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "passed": 3,
+            "total": 3,
+            "status": "passed",
+            "summary": "3/3 giới hạn dữ liệu được công bố."
+          }
+        ],
+        "score_method": {
+          "id": "verification_evidence_v1",
+          "label": "Điểm kiểm chứng tổng",
+          "formula": "90 × trung bình có trọng số các kiểm tra áp dụng + 10 × tỷ lệ khớp đối chứng độc lập. Chưa đo đối chứng: chưa cộng 10 điểm; kiểm tra không áp dụng không bị trừ.",
+          "unmeasured_points": 10.0,
+          "interpretation": "Chỉ số mức độ kiểm chứng theo trọng số quy định; không phải độ chính xác hay xác suất AI trả lời đúng."
+        },
+        "score_breakdown": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "earned_points": 20.0,
+            "possible_points": 20.0,
+            "status": "passed"
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "earned_points": 15.0,
+            "possible_points": 15.0,
+            "status": "passed"
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "earned_points": 15.0,
+            "possible_points": 15.0,
+            "status": "passed"
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "earned_points": 5.0,
+            "possible_points": 5.0,
+            "status": "passed"
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "earned_points": 5.0,
+            "possible_points": 5.0,
+            "status": "passed"
+          },
+          {
+            "id": "independent_reference",
+            "label": "Đối chứng độc lập",
+            "earned_points": 0.0,
+            "possible_points": 10.0,
+            "status": "not_measured"
+          }
+        ],
+        "accuracy_assessment": {
+          "status": "not_measured",
+          "matched_count": null,
+          "reference_count": 0,
+          "accuracy_pct": null,
+          "reference_source": null,
+          "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+        },
+        "confidence_probability": null,
+        "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+      }
+    }
+  ],
+  "temporary_session_deleted": true
+}

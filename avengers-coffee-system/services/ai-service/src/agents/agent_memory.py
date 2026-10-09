@@ -39,10 +39,15 @@ ENTITY_FIELDS = {
                  'dieu_kien_ap_dung', 'so_tien_giam_du_kien', 'display_index'),
     'branches': ('branch_id', 'branch_name', 'ma_chi_nhanh', 'ten_chi_nhanh', 'dia_chi',
                  'khoang_cach_km', 'availability_status', 'unavailable_products', 'unverified_products', 'display_index'),
-    'location_candidates': ('candidate_id', 'normalized_label', 'display_address', 'lat', 'lng',
+    'location_candidates': ('candidate_id', 'provider_ref_id', 'normalized_label', 'display_address', 'lat', 'lng',
                             'admin_components', 'provider', 'display_index'),
     'payment_options': ('code', 'value', 'label', 'enabled', 'reason', 'display_index'),
 }
+
+ENTITY_FIELDS["drink_products"] = ENTITY_FIELDS["products"]
+ENTITY_FIELDS["food_products"] = ENTITY_FIELDS["products"]
+ENTITY_FIELDS["menu_categories"] = ("category_id", "category_name", "menu_bucket", "display_index",
+    "category_label", "parent_category_name", "has_children")
 
 
 def compact(value, depth=0):
@@ -62,7 +67,7 @@ def compact(value, depth=0):
 def snapshot(kind, rows):
     # Voucher ordinals must describe every eligible offer shown to the customer.
     # The overall memory/context budget still applies; never silently cap at five.
-    count = len(rows or []) if kind == 'vouchers' else (20 if kind == 'orders' else 16 if kind == 'products' else 5)
+    count = len(rows or []) if kind in {'vouchers', 'menu_categories'} else (20 if kind == 'orders' else 16 if kind in {'products', 'drink_products', 'food_products', 'menu_categories'} else 5)
     return [{key: compact(row[key]) for key in ENTITY_FIELDS[kind] if key in row}
             for row in (rows or [])[:count] if isinstance(row, dict)]
 
@@ -111,6 +116,7 @@ class ConversationMemory:
     def bounded(data):
         result = empty_memory()
         result['version'] = int(data.get('version') or 1)
+        result['product_display'] = compact(data.get('product_display') or {})
         result['recent_turns'] = [{'role': row['role'], 'content': safe_text(row.get('content'))}
             for row in data.get('recent_turns', []) if isinstance(row, dict)
             and row.get('role') in {'user', 'assistant'}][-2*limit('AI_AGENT_RECENT_TURNS', 8, 1, 8):]
@@ -120,10 +126,11 @@ class ConversationMemory:
         focus = data.get('focus') or {}
         for kind, fields in {'product': ('product_id', 'product_name', 'source'),
                              'order': ('order_id',),
-                             'cart_line': ('line_id', 'product_id', 'product_name'),
+                             'menu_category': ('category_id', 'category_name', 'menu_bucket'),
+                             'cart_line': ('cart_item_id', 'line_id', 'product_id', 'product_name'),
                              'branch': ('branch_id', 'branch_name'),
                              'voucher': ('voucher_code',),
-                             'location': ('normalized_label', 'display_address')}.items():
+                             'location': ('candidate_id', 'normalized_label', 'display_address')}.items():
             if isinstance(focus.get(kind), dict):
                 result['focus'][kind] = {k: compact(focus[kind][k]) for k in fields if k in focus[kind]}
         result['last_tool_summary'] = [{k: compact(row[k]) for k in ('tool', 'status', 'count') if k in row}
@@ -136,6 +143,12 @@ class ConversationMemory:
         while size() > budget and result['recent_turns']:
             result['recent_turns'].pop(0)
         while size() > budget and any(result['visible_snapshots'].values()):
+            if result['product_display'] and any(result['visible_snapshots'].get(kind) for kind in ('products', 'drink_products', 'food_products')):
+                # Never retain a partially truncated reference collection.
+                for kind in ('products', 'drink_products', 'food_products'):
+                    result['visible_snapshots'][kind] = []
+                result['product_display'] = {}
+                continue
             kind = max(result['visible_snapshots'], key=lambda k: len(json.dumps(result['visible_snapshots'][k], ensure_ascii=False)))
             result['visible_snapshots'][kind].pop()
         return result
@@ -145,7 +158,7 @@ class ConversationMemory:
             bounded = self.bounded(data)
             bounded['version'] += 1
             (self.client or redis_client()).set(self.key(session_id), json.dumps(bounded, ensure_ascii=False),
-                ex=limit('AI_AGENT_MEMORY_TTL', 1800, 1, 86400))
+                ex=limit('AI_AGENT_MEMORY_TTL', 7200, 1, 86400))
             return True
         except Exception as exc:
             self.available = False

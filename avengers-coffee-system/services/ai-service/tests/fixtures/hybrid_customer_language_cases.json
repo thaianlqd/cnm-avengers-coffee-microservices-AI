@@ -1,0 +1,1504 @@
+{
+  "version": 1,
+  "language": "vi",
+  "LIVE_PROVIDER_REQUESTS": 0,
+  "live_semantic_accuracy": "NOT MEASURED",
+  "label_policy": "Golden meanings label intent/reference/quantity; offline validation is not language accuracy. Equivalent live meanings require human review.",
+  "contexts": {
+    "mixed": {
+      "description": "Three drinks and three foods, locally numbered 1..3; no unique focus"
+    },
+    "drink_only": {
+      "description": "Only three drinks numbered globally"
+    },
+    "two_visible": {
+      "description": "Exactly one drink and one food visible"
+    },
+    "retained": {
+      "description": "Current foods with a valid prior drink collection retained"
+    },
+    "focus_food": {
+      "description": "Mixed view with unique focus on food 1"
+    },
+    "browse": {
+      "description": "Prior successful coffee browse with price, sales and period constraints"
+    },
+    "pending": {
+      "description": "Two independently numbered pending products"
+    },
+    "orders": {
+      "description": "Two owned order history entries and latest/focus handles"
+    },
+    "checkout_summary": {
+      "description": "Fresh prepared checkout summary requiring separate confirmation"
+    },
+    "empty_food": {
+      "description": "Explicitly refreshed empty food collection; drinks still visible"
+    }
+  },
+  "catalog": [
+    {
+      "product_id": "eval-D1",
+      "product_name": "Matcha",
+      "menu_bucket": "drink",
+      "category": "drink"
+    },
+    {
+      "product_id": "eval-D2",
+      "product_name": "Americano",
+      "menu_bucket": "drink",
+      "category": "drink"
+    },
+    {
+      "product_id": "eval-D3",
+      "product_name": "Latte",
+      "menu_bucket": "drink",
+      "category": "drink"
+    },
+    {
+      "product_id": "eval-F1",
+      "product_name": "Bánh Chuối",
+      "menu_bucket": "food",
+      "category": "food"
+    },
+    {
+      "product_id": "eval-F2",
+      "product_name": "Bánh Mì",
+      "menu_bucket": "food",
+      "category": "food"
+    },
+    {
+      "product_id": "eval-F3",
+      "product_name": "Tiramisu",
+      "menu_bucket": "food",
+      "category": "food"
+    }
+  ],
+  "cases": [
+    {
+      "case_id": "vi-001",
+      "category": "quantity_attachment",
+      "text": "cho tôi nước số 1 và bánh số 1 2 cái",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "SELECT_PRODUCTS",
+            "args": {
+              "mode": "EXPLICIT",
+              "references": [
+                {
+                  "kind": "group_ordinal",
+                  "group": "drink",
+                  "index": 1
+                },
+                {
+                  "kind": "group_ordinal",
+                  "group": "food",
+                  "index": 1,
+                  "quantity": 2
+                }
+              ]
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [
+        {
+          "domain": "products",
+          "path": "/commands/0/args/references/0",
+          "canonical_key": "eval-D1"
+        },
+        {
+          "domain": "products",
+          "path": "/commands/0/args/references/1",
+          "canonical_key": "eval-F1"
+        }
+      ],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-002",
+      "category": "quantity_attachment",
+      "text": "cho tôi nước số 1 và bánh số 1 2 cái nhé b",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "SELECT_PRODUCTS",
+            "args": {
+              "mode": "EXPLICIT",
+              "references": [
+                {
+                  "kind": "group_ordinal",
+                  "group": "drink",
+                  "index": 1
+                },
+                {
+                  "kind": "group_ordinal",
+                  "group": "food",
+                  "index": 1,
+                  "quantity": 2
+                }
+              ]
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [
+        {
+          "domain": "products",
+          "path": "/commands/0/args/references/0",
+          "canonical_key": "eval-D1"
+        },
+        {
+          "domain": "products",
+          "path": "/commands/0/args/references/1",
+          "canonical_key": "eval-F1"
+        }
+      ],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-003",
+      "category": "group_ordinal",
+      "text": "lấy nước số 2 với bánh số 3",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "SELECT_PRODUCTS",
+            "args": {
+              "mode": "EXPLICIT",
+              "references": [
+                {
+                  "kind": "group_ordinal",
+                  "group": "drink",
+                  "index": 2
+                },
+                {
+                  "kind": "group_ordinal",
+                  "group": "food",
+                  "index": 3
+                }
+              ]
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-004",
+      "category": "group_ordinal",
+      "text": "cho tôi cái đầu tiên bên nước",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "SELECT_PRODUCTS",
+            "args": {
+              "mode": "EXPLICIT",
+              "references": [
+                {
+                  "kind": "group_ordinal",
+                  "group": "drink",
+                  "index": 1
+                }
+              ]
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-005",
+      "category": "quantity_attachment",
+      "text": "bánh đầu tiên 2 cái nhé",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "SELECT_PRODUCTS",
+            "args": {
+              "mode": "EXPLICIT",
+              "references": [
+                {
+                  "kind": "group_ordinal",
+                  "group": "food",
+                  "index": 1,
+                  "quantity": 2
+                }
+              ]
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-006",
+      "category": "quantity_attachment",
+      "text": "2 cái bánh số 1 và 1 nước số 2",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "SELECT_PRODUCTS",
+            "args": {
+              "mode": "EXPLICIT",
+              "references": [
+                {
+                  "kind": "group_ordinal",
+                  "group": "food",
+                  "index": 1,
+                  "quantity": 2
+                },
+                {
+                  "kind": "group_ordinal",
+                  "group": "drink",
+                  "index": 2,
+                  "quantity": 1
+                }
+              ]
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-007",
+      "category": "multiple_groups",
+      "text": "lấy cả nước số 1 và bánh số 1",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "SELECT_PRODUCTS",
+            "args": {
+              "mode": "EXPLICIT",
+              "references": [
+                {
+                  "kind": "group_ordinal",
+                  "group": "drink",
+                  "index": 1
+                },
+                {
+                  "kind": "group_ordinal",
+                  "group": "food",
+                  "index": 1
+                }
+              ]
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-008",
+      "category": "pronouns_deictics",
+      "text": "cho tôi hai món vừa nói",
+      "context": "mixed",
+      "expected": {
+        "kind": "clarification",
+        "commands": [],
+        "message": "Bạn muốn chọn hai món nào?"
+      },
+      "expected_groundings": [],
+      "expected_outcome": "necessary_clarification"
+    },
+    {
+      "case_id": "vi-009",
+      "category": "pronouns_deictics",
+      "text": "cái bánh lúc nãy",
+      "context": "focus_food",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "SELECT_PRODUCTS",
+            "args": {
+              "mode": "EXPLICIT",
+              "references": [
+                {
+                  "kind": "focus"
+                }
+              ]
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-010",
+      "category": "pronouns_deictics",
+      "text": "món nước đầu tiên hồi nãy",
+      "context": "retained",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "SELECT_PRODUCTS",
+            "args": {
+              "mode": "EXPLICIT",
+              "references": [
+                {
+                  "kind": "group_ordinal",
+                  "group": "drink",
+                  "index": 1
+                }
+              ]
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-011",
+      "category": "plain_ambiguous_ordinal",
+      "text": "lấy số 1",
+      "context": "mixed",
+      "expected": {
+        "kind": "clarification",
+        "commands": [],
+        "message": "Bạn chọn nước hay bánh số 1?"
+      },
+      "expected_groundings": [],
+      "expected_outcome": "necessary_clarification"
+    },
+    {
+      "case_id": "vi-012",
+      "category": "single_ordinal",
+      "text": "lấy số 1",
+      "context": "drink_only",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "SELECT_PRODUCTS",
+            "args": {
+              "mode": "EXPLICIT",
+              "references": [
+                {
+                  "kind": "ordinal",
+                  "index": 1
+                }
+              ]
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-013",
+      "category": "cart_references",
+      "text": "lấy món số 1 trong giỏ",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "READ_CART",
+            "args": {}
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-014",
+      "category": "pending_references",
+      "text": "món đang chỉnh số 2 cho size L",
+      "context": "pending",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "CONFIGURE_PRODUCT",
+            "args": {
+              "target": {
+                "kind": "pending_ordinal",
+                "index": 2
+              },
+              "options": {
+                "size": "L"
+              }
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-015",
+      "category": "cart_references",
+      "text": "bỏ món số 1 trong giỏ",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "EDIT_CART",
+            "args": {
+              "changes": [
+                {
+                  "action": "REMOVE",
+                  "target": {
+                    "kind": "cart_ordinal",
+                    "index": 1
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-016",
+      "category": "multiple_groups",
+      "text": "cho tôi xem nước với bánh",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "DISCOVER_PRODUCTS",
+            "args": {
+              "scope": "all",
+              "requested_groups": [
+                "drink",
+                "food"
+              ]
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-017",
+      "category": "discovery_refinement",
+      "text": "thêm bánh nữa",
+      "context": "browse",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "REFINE_DISCOVERY",
+            "args": {
+              "add_groups": [
+                "food"
+              ]
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-018",
+      "category": "discovery_refinement",
+      "text": "chỉ xem nước thôi",
+      "context": "browse",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "REFINE_DISCOVERY",
+            "args": {
+              "set": {
+                "scope": "drink"
+              }
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-019",
+      "category": "discovery_refinement",
+      "text": "bỏ giới hạn giá",
+      "context": "browse",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "REFINE_DISCOVERY",
+            "args": {
+              "clear": [
+                "min_price",
+                "max_price"
+              ]
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-020",
+      "category": "discovery_refinement",
+      "text": "cho 3 món thôi",
+      "context": "browse",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "REFINE_DISCOVERY",
+            "args": {
+              "set": {
+                "count": 3
+              }
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-021",
+      "category": "discovery_refinement",
+      "text": "rẻ hơn một chút",
+      "context": "browse",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "REFINE_DISCOVERY",
+            "args": {
+              "set": {
+                "basis": "price",
+                "direction": "ascending"
+              }
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-022",
+      "category": "all_visible",
+      "text": "lấy tất cả món đang hiện",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "SELECT_PRODUCTS",
+            "args": {
+              "mode": "ALL_VISIBLE"
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-023",
+      "category": "all_visible",
+      "text": "cho tôi cả hai món đi",
+      "context": "two_visible",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "SELECT_PRODUCTS",
+            "args": {
+              "mode": "ALL_VISIBLE"
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-024",
+      "category": "pronouns_deictics",
+      "text": "lấy cái này",
+      "context": "focus_food",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "SELECT_PRODUCTS",
+            "args": {
+              "mode": "EXPLICIT",
+              "references": [
+                {
+                  "kind": "focus"
+                }
+              ]
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-025",
+      "category": "pronouns_deictics",
+      "text": "món kia cho tôi hai cái",
+      "context": "mixed",
+      "expected": {
+        "kind": "clarification",
+        "commands": [],
+        "message": "Bạn muốn chọn món nào?"
+      },
+      "expected_groundings": [],
+      "expected_outcome": "necessary_clarification"
+    },
+    {
+      "case_id": "vi-026",
+      "category": "corrections",
+      "text": "à đổi dòng 2 trong giỏ thành 3 ly nhé",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "EDIT_CART",
+            "args": {
+              "changes": [
+                {
+                  "action": "SET_QUANTITY",
+                  "target": {
+                    "kind": "cart_ordinal",
+                    "index": 2
+                  },
+                  "quantity": 3
+                }
+              ]
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-027",
+      "category": "corrections",
+      "text": "món đang chỉnh đầu tiên đổi lại size M, bỏ topping",
+      "context": "pending",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "CONFIGURE_PRODUCT",
+            "args": {
+              "target": {
+                "kind": "pending_ordinal",
+                "index": 1
+              },
+              "options": {
+                "size": "M",
+                "toppings": []
+              }
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-028",
+      "category": "voucher_references",
+      "text": "dùng voucher số 2",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "CHOOSE_VOUCHER",
+            "args": {
+              "target": {
+                "kind": "ordinal",
+                "index": 2
+              }
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-029",
+      "category": "voucher_references",
+      "text": "không dùng ưu đãi nữa",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "SKIP_VOUCHER",
+            "args": {}
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-030",
+      "category": "payment_references",
+      "text": "tôi chọn cách thanh toán thứ 2",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "SET_PAYMENT",
+            "args": {
+              "target": {
+                "kind": "ordinal",
+                "index": 2
+              }
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-031",
+      "category": "payment_references",
+      "text": "uống tại chỗ, thanh toán tiền mặt",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "SET_FULFILLMENT",
+            "args": {
+              "mode": "dine_in"
+            }
+          },
+          {
+            "intent": "SET_PAYMENT",
+            "args": {
+              "target": {
+                "kind": "name",
+                "value": "COD"
+              }
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-032",
+      "category": "order_references",
+      "text": "cho xem đơn số 1",
+      "context": "orders",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "READ_ORDER",
+            "args": {
+              "target": {
+                "kind": "ordinal",
+                "index": 1
+              }
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-033",
+      "category": "order_references",
+      "text": "huỷ đơn vừa đặt giúp tôi",
+      "context": "orders",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "PREPARE_ORDER_CHANGE",
+            "args": {
+              "target": {
+                "kind": "last_created"
+              },
+              "action": "CANCEL"
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "owned_preview_only"
+    },
+    {
+      "case_id": "vi-034",
+      "category": "order_references",
+      "text": "đặt lại đơn đó",
+      "context": "orders",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "REORDER_ORDER",
+            "args": {
+              "target": {
+                "kind": "focus"
+              }
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "owned_preview_only"
+    },
+    {
+      "case_id": "vi-035",
+      "category": "checkout_confirmation",
+      "text": "xác nhận đặt đơn này",
+      "context": "checkout_summary",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "CONFIRM_CHECKOUT",
+            "args": {}
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "existing_fresh_summary_gate"
+    },
+    {
+      "case_id": "vi-036",
+      "category": "checkout_confirmation",
+      "text": "đơn gồm những gì vậy?",
+      "context": "checkout_summary",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "READ_CART",
+            "args": {}
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "read_only"
+    },
+    {
+      "case_id": "vi-037",
+      "category": "social",
+      "text": "hello bạn",
+      "context": "mixed",
+      "expected": {
+        "kind": "social",
+        "commands": [],
+        "message": "Xin chào!"
+      },
+      "expected_groundings": [],
+      "expected_outcome": "read_only"
+    },
+    {
+      "case_id": "vi-038",
+      "category": "clarification",
+      "text": "chọn cái đó đi",
+      "context": "mixed",
+      "expected": {
+        "kind": "clarification",
+        "commands": [],
+        "message": "Bạn chọn món nào?"
+      },
+      "expected_groundings": [],
+      "expected_outcome": "necessary_clarification"
+    },
+    {
+      "case_id": "vi-039",
+      "category": "read_product_info",
+      "text": "bánh số 1 có đậu phộng không?",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "READ_PRODUCT_INFO",
+            "args": {
+              "target": {
+                "kind": "group_ordinal",
+                "group": "food",
+                "index": 1
+              },
+              "facet": "allergen"
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "approved_evidence_only"
+    },
+    {
+      "case_id": "vi-040",
+      "category": "read_product_info",
+      "text": "nước thứ hai có thành phần gì?",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "READ_PRODUCT_INFO",
+            "args": {
+              "target": {
+                "kind": "group_ordinal",
+                "group": "drink",
+                "index": 2
+              },
+              "facet": "ingredient"
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "approved_evidence_only"
+    },
+    {
+      "case_id": "vi-041",
+      "category": "read_product_info",
+      "text": "giá bánh số 2 bao nhiêu?",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "READ_PRODUCT_INFO",
+            "args": {
+              "target": {
+                "kind": "group_ordinal",
+                "group": "food",
+                "index": 2
+              },
+              "facet": "price"
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "authoritative_price_read"
+    },
+    {
+      "case_id": "vi-042",
+      "category": "multiple_groups",
+      "text": "cho 2 nước với 3 bánh để xem",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "DISCOVER_PRODUCTS",
+            "args": {
+              "scope": "all",
+              "requested_groups": [
+                "drink",
+                "food"
+              ],
+              "group_counts": {
+                "drink": 2,
+                "food": 3
+              }
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-043",
+      "category": "discovery_refinement",
+      "text": "đồ ăn thôi, giữ tiêu chí cũ",
+      "context": "browse",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "REFINE_DISCOVERY",
+            "args": {
+              "set": {
+                "scope": "food"
+              }
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-044",
+      "category": "discovery_refinement",
+      "text": "đừng lọc theo tên cà phê nữa",
+      "context": "browse",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "REFINE_DISCOVERY",
+            "args": {
+              "clear": [
+                "query"
+              ]
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-045",
+      "category": "pending_references",
+      "text": "món thứ hai dùng công thức mặc định của menu",
+      "context": "pending",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "CONFIGURE_PRODUCT",
+            "args": {
+              "target": {
+                "kind": "pending_ordinal",
+                "index": 2
+              },
+              "use_defaults": true
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-046",
+      "category": "pending_references",
+      "text": "bỏ món đang chỉnh đầu tiên",
+      "context": "pending",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "DISCARD_PENDING_PRODUCT",
+            "args": {
+              "target": {
+                "kind": "pending_ordinal",
+                "index": 1
+              }
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-047",
+      "category": "cart_references",
+      "text": "bỏ nước số 1 trong menu",
+      "context": "mixed",
+      "expected": {
+        "kind": "clarification",
+        "commands": [],
+        "message": "Bạn muốn bỏ món đang chỉnh hay dòng trong giỏ?"
+      },
+      "expected_groundings": [],
+      "expected_outcome": "necessary_clarification"
+    },
+    {
+      "case_id": "vi-048",
+      "category": "group_ordinal",
+      "text": "bánh số 1 lúc nãy hai cái",
+      "context": "retained",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "SELECT_PRODUCTS",
+            "args": {
+              "mode": "EXPLICIT",
+              "references": [
+                {
+                  "kind": "group_ordinal",
+                  "group": "food",
+                  "index": 1,
+                  "quantity": 2
+                }
+              ]
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-049",
+      "category": "clarification",
+      "text": "lấy bánh số 1",
+      "context": "empty_food",
+      "expected": {
+        "kind": "clarification",
+        "commands": [],
+        "message": "Danh sách bánh hiện chưa có món. Bạn muốn xem lại bánh không?"
+      },
+      "expected_groundings": [],
+      "expected_outcome": "necessary_clarification"
+    },
+    {
+      "case_id": "vi-050",
+      "category": "location_references",
+      "text": "chọn địa chỉ lưu số 1",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "SELECT_PROFILE_ADDRESS",
+            "args": {
+              "target": {
+                "kind": "ordinal",
+                "index": 1
+              }
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-051",
+      "category": "location_references",
+      "text": "địa điểm tìm được số 2 nhé",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "SELECT_LOCATION_CANDIDATE",
+            "args": {
+              "target": {
+                "kind": "ordinal",
+                "index": 2
+              }
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-052",
+      "category": "branch_references",
+      "text": "chọn cửa hàng số 2",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "SELECT_BRANCH",
+            "args": {
+              "target": {
+                "kind": "ordinal",
+                "index": 2
+              }
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "safe_action_or_draft"
+    },
+    {
+      "case_id": "vi-053",
+      "category": "menu_category_navigation",
+      "text": "hello cho tôi xem menu quán đi bạn",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "READ_MENU",
+            "args": {}
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "canonical_menu_read_only"
+    },
+    {
+      "case_id": "vi-054",
+      "category": "menu_category_navigation",
+      "text": "cho tôi xem danh mục trà đi bạn",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "READ_MENU",
+            "args": {
+              "target": {
+                "kind": "name",
+                "value": "Trà"
+              }
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "canonical_menu_read_only"
+    },
+    {
+      "case_id": "vi-055",
+      "category": "menu_category_navigation",
+      "text": "danh mục cà phê gồm những loại nào",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "READ_MENU",
+            "args": {
+              "target": {
+                "kind": "name",
+                "value": "Cà Phê"
+              }
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "canonical_menu_read_only"
+    },
+    {
+      "case_id": "vi-056",
+      "category": "menu_category_navigation",
+      "text": "cho tôi xem các món trong danh mục Matcha",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "DISCOVER_PRODUCTS",
+            "args": {
+              "scope": "all",
+              "menu_category": {
+                "kind": "name",
+                "value": "Matcha"
+              }
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "canonical_menu_read_only"
+    },
+    {
+      "case_id": "vi-057",
+      "category": "menu_category_navigation",
+      "text": "cho xem danh mục bánh ngọt",
+      "context": "mixed",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "READ_MENU",
+            "args": {
+              "target": {
+                "kind": "name",
+                "value": "Bánh Ngọt"
+              }
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [],
+      "expected_outcome": "canonical_menu_read_only"
+    },
+    {
+      "case_id": "vi-058",
+      "category": "product_information_followup",
+      "text": "đánh giá của khách về món bánh này như nào vậy",
+      "context": "focus_food",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "READ_PRODUCT_INFO",
+            "args": {
+              "target": {
+                "kind": "focus"
+              },
+              "facet": "reviews"
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [
+        {
+          "domain": "products",
+          "path": "/commands/0/args/target",
+          "canonical_key": "eval-F1"
+        }
+      ],
+      "expected_outcome": "read_only_evidence"
+    },
+    {
+      "case_id": "vi-059",
+      "category": "product_information_followup",
+      "text": "chi tiết đánh giá của khách đi bạn tôi muốn xem kỹ",
+      "context": "focus_food",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "READ_PRODUCT_INFO",
+            "args": {
+              "target": {
+                "kind": "focus"
+              },
+              "facet": "reviews"
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [
+        {
+          "domain": "products",
+          "path": "/commands/0/args/target",
+          "canonical_key": "eval-F1"
+        }
+      ],
+      "expected_outcome": "read_only_evidence"
+    },
+    {
+      "case_id": "vi-060",
+      "category": "product_information_followup",
+      "text": "vị của nó như nào vậy bạn?",
+      "context": "focus_food",
+      "expected": {
+        "kind": "commands",
+        "commands": [
+          {
+            "intent": "READ_PRODUCT_INFO",
+            "args": {
+              "target": {
+                "kind": "focus"
+              },
+              "facet": "description"
+            }
+          }
+        ],
+        "message": null
+      },
+      "expected_groundings": [
+        {
+          "domain": "products",
+          "path": "/commands/0/args/target",
+          "canonical_key": "eval-F1"
+        }
+      ],
+      "expected_outcome": "read_only_evidence"
+    }
+  ]
+}

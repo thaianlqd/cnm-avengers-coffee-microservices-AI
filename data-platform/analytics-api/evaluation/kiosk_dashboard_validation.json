@@ -1,0 +1,64 @@
+{
+  "validated_at": "2026-10-09T05:20:33.389109+00:00",
+  "scope": "data-platform analytics only",
+  "status": "PASS_AFTER_TARGETED_FIXTURE_RECHECK",
+  "backend": {
+    "total_test_cases": 721,
+    "full_suite": {
+      "executed": 721,
+      "passed": 720,
+      "failed": 1,
+      "log": "/private/tmp/kiosk-full-final.log",
+      "failure": "Added boundary-test fixture selected one provider call while leaving contract repair enabled; invalid provider policy correctly rejected before planning."
+    },
+    "correction": "Boundary fixture now disables contract repair when selecting one provider call. Production code was unchanged after the full suite.",
+    "final_affected_group_recheck": {
+      "executed": 52,
+      "passed": 52,
+      "failed": 0,
+      "log": "/private/tmp/kiosk-targeted-current.log"
+    },
+    "current_cases_covered_across_runs": 721,
+    "unresolved_failures": 0
+  },
+  "frontend": {
+    "executed": 109,
+    "passed": 109,
+    "failed": 0,
+    "typecheck": "PASS",
+    "build": "PASS"
+  },
+  "git_diff_check": "PASS",
+  "live_warehouse": {
+    "measurement_scope": "SCRIPTED_INTENT_LIVE_READ_ONLY_WAREHOUSE",
+    "LIVE_PROVIDER_REQUESTS": 0,
+    "WAREHOUSE_WRITES": 0,
+    "ranking_independent_sql_matched": true,
+    "ranking_row_count": 10,
+    "query_count": 7,
+    "chart_count": 6,
+    "kpi_count": 8
+  },
+  "deployment": {
+    "services": [
+      "analytics-api",
+      "web-ui"
+    ],
+    "api_health": "ok",
+    "api_readiness": "ready",
+    "redis_available": true,
+    "catalog_ready": true,
+    "warehouse_available": true,
+    "analytics_api_started_at": "2026-10-09T05:17:59.433848335Z",
+    "analytics_web_started_at": "2026-10-09T05:18:05.29134288Z",
+    "customer_ai_started_at_before": "2026-10-09T03:59:56.168679043Z",
+    "customer_ai_started_at_after": "2026-10-09T03:59:56.168679043Z",
+    "customer_ai_restarted": false
+  },
+  "additional_paid_ai_requests": 0,
+  "limitations": [
+    "Warehouse audit used scripted intent, not a live AI interpretation.",
+    "The verification index remains an internal evidence score; it is not calibrated accuracy.",
+    "Reports based on the previous catalog must be proposed again."
+  ]
+}

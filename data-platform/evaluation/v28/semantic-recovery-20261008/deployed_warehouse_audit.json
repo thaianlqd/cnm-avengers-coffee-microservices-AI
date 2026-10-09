@@ -1,0 +1,5728 @@
+{
+  "LIVE_PROVIDER_REQUESTS": 0,
+  "warehouse_mutations": 0,
+  "temporary_sessions_deleted": true,
+  "interpretation": "Recorded diagnostic shapes with explicitly reconstructed scope and scripted partial feature recovery; not a live-model reliability estimate",
+  "source": {
+    "totals": {
+      "revenue": 827396000.0,
+      "quantity": 15990.0
+    },
+    "top10": [
+      {
+        "product_id": 120,
+        "revenue": 16632000.0,
+        "quantity": 168,
+        "product": "Bánh Trung Thu Matcha",
+        "category": "Bánh Trung Thu"
+      },
+      {
+        "product_id": 122,
+        "revenue": 16184000.0,
+        "quantity": 136,
+        "product": "Bánh Trung Thu Thập Cẩm Bát Bửu",
+        "category": "Bánh Trung Thu"
+      },
+      {
+        "product_id": 119,
+        "revenue": 14355000.0,
+        "quantity": 145,
+        "product": "Bánh Trung Thu Cà Phê Lava",
+        "category": "Bánh Trung Thu"
+      },
+      {
+        "product_id": 61,
+        "revenue": 14345000.0,
+        "quantity": 151,
+        "product": "1 Lít Matcha Latte Tây Bắc",
+        "category": "Matcha"
+      },
+      {
+        "product_id": 121,
+        "revenue": 13860000.0,
+        "quantity": 140,
+        "product": "Bánh Trung Thu Đậu Xanh",
+        "category": "Bánh Trung Thu"
+      },
+      {
+        "product_id": 52,
+        "revenue": 13083000.0,
+        "quantity": 147,
+        "product": "Mocha Frappe",
+        "category": "Frappe"
+      },
+      {
+        "product_id": 62,
+        "revenue": 12600000.0,
+        "quantity": 120,
+        "product": "1 Lít Matcha Latte Tây Bắc Sữa Yến Mạch",
+        "category": "Matcha"
+      },
+      {
+        "product_id": 53,
+        "revenue": 12549000.0,
+        "quantity": 141,
+        "product": "Pistachio Frappe",
+        "category": "Frappe"
+      },
+      {
+        "product_id": 49,
+        "revenue": 12282000.0,
+        "quantity": 138,
+        "product": "Cheesecake Frappe",
+        "category": "Frappe"
+      },
+      {
+        "product_id": 70,
+        "revenue": 11115000.0,
+        "quantity": 171,
+        "product": "Matcha Latte Đào Dưa Lưới",
+        "category": "Matcha"
+      }
+    ],
+    "categories": {
+      "Topping": 15840000.0,
+      "Americano": 82327000.0,
+      "Matcha": 122605000.0,
+      "Frappe": 52707000.0,
+      "Pizza & Pasta": 73149000.0,
+      "Trà Sữa": 69117000.0,
+      "Latte": 62315000.0,
+      "Ưu đãi riêng bạn": 20247000.0,
+      "Bánh Ngọt": 52037000.0,
+      "Trà Shan": 23855000.0,
+      "Bánh Mặn": 57457000.0,
+      "Espresso": 49560000.0,
+      "Cà Phê Phin": 45823000.0,
+      "Bánh Trung Thu": 61031000.0,
+      "Merchandise": 6750000.0,
+      "Cold Brew": 17000000.0,
+      "Trà Trái Cây": 15576000.0
+    },
+    "weekly": [
+      {
+        "period": "2026-08-10",
+        "product_id": 1,
+        "revenue": 1105000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 2,
+        "revenue": 990000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 3,
+        "revenue": 1430000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 4,
+        "revenue": 935000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 5,
+        "revenue": 910000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 6,
+        "revenue": 1040000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 7,
+        "revenue": 1863000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 8,
+        "revenue": 1587000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 9,
+        "revenue": 464000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 10,
+        "revenue": 875000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 11,
+        "revenue": 286000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 12,
+        "revenue": 308000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 13,
+        "revenue": 304000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 14,
+        "revenue": 900000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 15,
+        "revenue": 770000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 16,
+        "revenue": 1239000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 17,
+        "revenue": 1475000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 18,
+        "revenue": 495000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 19,
+        "revenue": 702000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 20,
+        "revenue": 990000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 21,
+        "revenue": 595000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 22,
+        "revenue": 351000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 23,
+        "revenue": 1029000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 24,
+        "revenue": 399000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 25,
+        "revenue": 190000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 26,
+        "revenue": 380000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 27,
+        "revenue": 304000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 28,
+        "revenue": 266000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 29,
+        "revenue": 507000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 30,
+        "revenue": 490000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 31,
+        "revenue": 600000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 32,
+        "revenue": 348000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 33,
+        "revenue": 1105000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 34,
+        "revenue": 1155000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 35,
+        "revenue": 585000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 36,
+        "revenue": 980000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 37,
+        "revenue": 735000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 38,
+        "revenue": 546000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 39,
+        "revenue": 741000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 40,
+        "revenue": 975000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 41,
+        "revenue": 663000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 42,
+        "revenue": 624000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 43,
+        "revenue": 1495000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 44,
+        "revenue": 1235000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 45,
+        "revenue": 1275000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 46,
+        "revenue": 1200000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 47,
+        "revenue": 1155000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 48,
+        "revenue": 660000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 49,
+        "revenue": 2581000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 50,
+        "revenue": 975000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 51,
+        "revenue": 897000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 52,
+        "revenue": 712000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 53,
+        "revenue": 1958000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 54,
+        "revenue": 826000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 55,
+        "revenue": 552000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 56,
+        "revenue": 1040000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 57,
+        "revenue": 1416000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 58,
+        "revenue": 2001000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 59,
+        "revenue": 1300000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 60,
+        "revenue": 1173000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 61,
+        "revenue": 1805000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 62,
+        "revenue": 1890000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 63,
+        "revenue": 1755000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 64,
+        "revenue": 1170000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 65,
+        "revenue": 975000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 66,
+        "revenue": 325000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 67,
+        "revenue": 1155000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 68,
+        "revenue": 880000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 69,
+        "revenue": 1235000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 70,
+        "revenue": 1235000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 71,
+        "revenue": 1105000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 72,
+        "revenue": 1105000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 73,
+        "revenue": 1430000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 74,
+        "revenue": 1000000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 75,
+        "revenue": 980000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 76,
+        "revenue": 1127000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 77,
+        "revenue": 882000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 78,
+        "revenue": 1470000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 79,
+        "revenue": 767000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 80,
+        "revenue": 180000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 81,
+        "revenue": 1593000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 82,
+        "revenue": 869000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 83,
+        "revenue": 1380000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 84,
+        "revenue": 1173000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 85,
+        "revenue": 270000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 86,
+        "revenue": 180000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 87,
+        "revenue": 250000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 88,
+        "revenue": 70000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 89,
+        "revenue": 50000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 90,
+        "revenue": 55000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 91,
+        "revenue": 300000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 92,
+        "revenue": 240000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 93,
+        "revenue": 150000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 94,
+        "revenue": 100000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 95,
+        "revenue": 260000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 96,
+        "revenue": 240000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 97,
+        "revenue": 120000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 98,
+        "revenue": 1105000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 99,
+        "revenue": 1690000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 100,
+        "revenue": 910000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 101,
+        "revenue": 1062000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 102,
+        "revenue": 1062000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 103,
+        "revenue": 1105000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 104,
+        "revenue": 1495000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 105,
+        "revenue": 990000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 106,
+        "revenue": 990000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 107,
+        "revenue": 1170000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 108,
+        "revenue": 1298000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 109,
+        "revenue": 590000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 110,
+        "revenue": 885000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 111,
+        "revenue": 1615000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 112,
+        "revenue": 1580000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 113,
+        "revenue": 700000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 116,
+        "revenue": 455000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 119,
+        "revenue": 1584000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 120,
+        "revenue": 1683000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 121,
+        "revenue": 1584000.0
+      },
+      {
+        "period": "2026-08-10",
+        "product_id": 122,
+        "revenue": 1904000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 1,
+        "revenue": 325000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 2,
+        "revenue": 770000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 3,
+        "revenue": 845000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 4,
+        "revenue": 2035000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 5,
+        "revenue": 1560000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 6,
+        "revenue": 1105000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 7,
+        "revenue": 1380000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 8,
+        "revenue": 1173000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 9,
+        "revenue": 725000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 10,
+        "revenue": 525000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 11,
+        "revenue": 462000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 12,
+        "revenue": 550000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 13,
+        "revenue": 380000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 14,
+        "revenue": 765000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 15,
+        "revenue": 825000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 16,
+        "revenue": 1062000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 17,
+        "revenue": 1003000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 18,
+        "revenue": 810000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 19,
+        "revenue": 390000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 20,
+        "revenue": 1155000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 21,
+        "revenue": 700000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 22,
+        "revenue": 507000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 23,
+        "revenue": 735000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 24,
+        "revenue": 342000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 25,
+        "revenue": 323000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 26,
+        "revenue": 323000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 27,
+        "revenue": 171000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 28,
+        "revenue": 342000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 29,
+        "revenue": 936000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 30,
+        "revenue": 840000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 31,
+        "revenue": 260000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 32,
+        "revenue": 667000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 33,
+        "revenue": 1300000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 34,
+        "revenue": 935000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 35,
+        "revenue": 819000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 36,
+        "revenue": 1078000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 37,
+        "revenue": 882000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 38,
+        "revenue": 585000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 39,
+        "revenue": 663000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 40,
+        "revenue": 858000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 41,
+        "revenue": 858000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 42,
+        "revenue": 468000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 43,
+        "revenue": 1170000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 44,
+        "revenue": 780000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 45,
+        "revenue": 1125000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 46,
+        "revenue": 900000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 47,
+        "revenue": 715000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 48,
+        "revenue": 1485000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 49,
+        "revenue": 1513000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 50,
+        "revenue": 1365000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 51,
+        "revenue": 1518000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 52,
+        "revenue": 1780000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 53,
+        "revenue": 1424000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 54,
+        "revenue": 885000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 55,
+        "revenue": 1380000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 56,
+        "revenue": 780000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 57,
+        "revenue": 1180000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 58,
+        "revenue": 1104000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 59,
+        "revenue": 1235000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 60,
+        "revenue": 1380000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 61,
+        "revenue": 1900000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 62,
+        "revenue": 945000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 63,
+        "revenue": 1365000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 64,
+        "revenue": 520000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 65,
+        "revenue": 1040000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 66,
+        "revenue": 1820000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 67,
+        "revenue": 1595000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 68,
+        "revenue": 715000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 69,
+        "revenue": 1625000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 70,
+        "revenue": 1560000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 71,
+        "revenue": 845000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 72,
+        "revenue": 585000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 73,
+        "revenue": 910000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 74,
+        "revenue": 750000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 75,
+        "revenue": 686000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 76,
+        "revenue": 1029000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 77,
+        "revenue": 735000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 78,
+        "revenue": 784000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 79,
+        "revenue": 1180000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 80,
+        "revenue": 160000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 81,
+        "revenue": 590000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 82,
+        "revenue": 1580000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 83,
+        "revenue": 1380000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 84,
+        "revenue": 1311000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 85,
+        "revenue": 190000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 86,
+        "revenue": 220000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 87,
+        "revenue": 220000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 88,
+        "revenue": 40000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 89,
+        "revenue": 90000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 90,
+        "revenue": 115000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 91,
+        "revenue": 190000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 92,
+        "revenue": 270000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 93,
+        "revenue": 150000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 94,
+        "revenue": 200000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 95,
+        "revenue": 130000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 96,
+        "revenue": 270000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 97,
+        "revenue": 230000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 98,
+        "revenue": 1625000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 99,
+        "revenue": 1430000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 100,
+        "revenue": 1040000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 101,
+        "revenue": 767000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 102,
+        "revenue": 1121000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 103,
+        "revenue": 975000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 104,
+        "revenue": 715000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 105,
+        "revenue": 825000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 106,
+        "revenue": 1760000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 107,
+        "revenue": 1170000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 108,
+        "revenue": 1003000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 109,
+        "revenue": 1062000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 110,
+        "revenue": 826000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 111,
+        "revenue": 1235000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 112,
+        "revenue": 1975000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 113,
+        "revenue": 455000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 116,
+        "revenue": 490000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 119,
+        "revenue": 1683000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 120,
+        "revenue": 1683000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 121,
+        "revenue": 1782000.0
+      },
+      {
+        "period": "2026-08-17",
+        "product_id": 122,
+        "revenue": 2737000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 1,
+        "revenue": 1625000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 2,
+        "revenue": 935000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 3,
+        "revenue": 1690000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 4,
+        "revenue": 660000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 5,
+        "revenue": 1755000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 6,
+        "revenue": 1300000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 7,
+        "revenue": 690000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 8,
+        "revenue": 828000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 9,
+        "revenue": 493000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 10,
+        "revenue": 455000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 11,
+        "revenue": 352000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 12,
+        "revenue": 396000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 13,
+        "revenue": 323000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 14,
+        "revenue": 765000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 15,
+        "revenue": 770000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 16,
+        "revenue": 1239000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 17,
+        "revenue": 1239000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 18,
+        "revenue": 810000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 19,
+        "revenue": 741000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 20,
+        "revenue": 990000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 21,
+        "revenue": 420000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 22,
+        "revenue": 468000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 23,
+        "revenue": 1323000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 24,
+        "revenue": 399000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 25,
+        "revenue": 380000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 26,
+        "revenue": 551000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 27,
+        "revenue": 133000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 28,
+        "revenue": 323000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 29,
+        "revenue": 975000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 30,
+        "revenue": 210000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 31,
+        "revenue": 300000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 32,
+        "revenue": 580000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 33,
+        "revenue": 845000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 34,
+        "revenue": 825000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 35,
+        "revenue": 936000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 36,
+        "revenue": 686000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 37,
+        "revenue": 882000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 38,
+        "revenue": 897000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 39,
+        "revenue": 429000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 40,
+        "revenue": 1170000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 41,
+        "revenue": 1092000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 42,
+        "revenue": 351000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 43,
+        "revenue": 910000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 44,
+        "revenue": 975000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 45,
+        "revenue": 675000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 46,
+        "revenue": 1725000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 47,
+        "revenue": 880000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 48,
+        "revenue": 1430000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 49,
+        "revenue": 1869000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 50,
+        "revenue": 1365000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 51,
+        "revenue": 1035000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 52,
+        "revenue": 1602000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 53,
+        "revenue": 2225000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 54,
+        "revenue": 590000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 55,
+        "revenue": 966000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 56,
+        "revenue": 845000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 57,
+        "revenue": 1416000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 58,
+        "revenue": 897000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 59,
+        "revenue": 1040000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 60,
+        "revenue": 1518000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 61,
+        "revenue": 1520000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 62,
+        "revenue": 1470000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 63,
+        "revenue": 1105000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 64,
+        "revenue": 1105000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 65,
+        "revenue": 1040000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 66,
+        "revenue": 975000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 67,
+        "revenue": 990000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 68,
+        "revenue": 715000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 69,
+        "revenue": 975000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 70,
+        "revenue": 1365000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 71,
+        "revenue": 1235000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 72,
+        "revenue": 975000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 73,
+        "revenue": 1430000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 74,
+        "revenue": 750000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 75,
+        "revenue": 980000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 76,
+        "revenue": 588000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 77,
+        "revenue": 882000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 78,
+        "revenue": 931000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 79,
+        "revenue": 1239000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 80,
+        "revenue": 180000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 81,
+        "revenue": 649000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 82,
+        "revenue": 1422000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 83,
+        "revenue": 1104000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 84,
+        "revenue": 966000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 85,
+        "revenue": 160000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 86,
+        "revenue": 230000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 87,
+        "revenue": 250000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 88,
+        "revenue": 55000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 89,
+        "revenue": 70000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 90,
+        "revenue": 85000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 91,
+        "revenue": 140000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 92,
+        "revenue": 160000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 93,
+        "revenue": 210000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 94,
+        "revenue": 170000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 95,
+        "revenue": 210000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 96,
+        "revenue": 120000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 97,
+        "revenue": 200000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 98,
+        "revenue": 650000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 99,
+        "revenue": 1105000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 100,
+        "revenue": 845000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 101,
+        "revenue": 1593000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 102,
+        "revenue": 1062000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 103,
+        "revenue": 1365000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 104,
+        "revenue": 1170000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 105,
+        "revenue": 1485000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 106,
+        "revenue": 880000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 107,
+        "revenue": 1755000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 108,
+        "revenue": 885000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 109,
+        "revenue": 1121000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 110,
+        "revenue": 1711000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 111,
+        "revenue": 1235000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 112,
+        "revenue": 1185000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 113,
+        "revenue": 595000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 116,
+        "revenue": 560000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 119,
+        "revenue": 2277000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 120,
+        "revenue": 2277000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 121,
+        "revenue": 1683000.0
+      },
+      {
+        "period": "2026-08-24",
+        "product_id": 122,
+        "revenue": 1904000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 1,
+        "revenue": 1495000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 2,
+        "revenue": 825000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 3,
+        "revenue": 1365000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 4,
+        "revenue": 1870000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 5,
+        "revenue": 585000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 6,
+        "revenue": 1690000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 7,
+        "revenue": 1656000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 8,
+        "revenue": 1242000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 9,
+        "revenue": 522000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 10,
+        "revenue": 315000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 11,
+        "revenue": 396000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 12,
+        "revenue": 374000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 13,
+        "revenue": 228000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 14,
+        "revenue": 630000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 15,
+        "revenue": 935000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 16,
+        "revenue": 1062000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 17,
+        "revenue": 1062000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 18,
+        "revenue": 855000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 19,
+        "revenue": 663000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 20,
+        "revenue": 880000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 21,
+        "revenue": 665000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 22,
+        "revenue": 858000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 23,
+        "revenue": 1176000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 24,
+        "revenue": 456000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 25,
+        "revenue": 266000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 26,
+        "revenue": 228000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 27,
+        "revenue": 304000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 28,
+        "revenue": 323000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 29,
+        "revenue": 897000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 30,
+        "revenue": 455000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 31,
+        "revenue": 280000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 32,
+        "revenue": 696000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 33,
+        "revenue": 1105000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 34,
+        "revenue": 1595000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 35,
+        "revenue": 780000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 36,
+        "revenue": 1078000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 37,
+        "revenue": 980000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 38,
+        "revenue": 936000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 39,
+        "revenue": 585000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 40,
+        "revenue": 468000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 41,
+        "revenue": 936000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 42,
+        "revenue": 741000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 43,
+        "revenue": 585000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 44,
+        "revenue": 910000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 45,
+        "revenue": 1350000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 46,
+        "revenue": 1050000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 47,
+        "revenue": 1045000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 48,
+        "revenue": 825000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 49,
+        "revenue": 2670000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 50,
+        "revenue": 910000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 51,
+        "revenue": 621000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 52,
+        "revenue": 1691000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 53,
+        "revenue": 2314000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 54,
+        "revenue": 708000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 55,
+        "revenue": 1311000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 56,
+        "revenue": 1365000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 57,
+        "revenue": 1003000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 58,
+        "revenue": 2001000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 59,
+        "revenue": 1170000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 60,
+        "revenue": 1656000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 61,
+        "revenue": 1045000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 62,
+        "revenue": 1995000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 63,
+        "revenue": 1430000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 64,
+        "revenue": 1495000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 65,
+        "revenue": 1365000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 66,
+        "revenue": 845000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 67,
+        "revenue": 1045000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 68,
+        "revenue": 1045000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 69,
+        "revenue": 1560000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 70,
+        "revenue": 2145000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 71,
+        "revenue": 1235000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 72,
+        "revenue": 1105000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 73,
+        "revenue": 1300000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 74,
+        "revenue": 700000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 75,
+        "revenue": 637000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 76,
+        "revenue": 686000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 77,
+        "revenue": 784000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 78,
+        "revenue": 490000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 79,
+        "revenue": 1711000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 80,
+        "revenue": 140000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 81,
+        "revenue": 1062000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 82,
+        "revenue": 1580000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 83,
+        "revenue": 1311000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 84,
+        "revenue": 2208000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 85,
+        "revenue": 170000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 86,
+        "revenue": 100000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 87,
+        "revenue": 320000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 88,
+        "revenue": 55000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 89,
+        "revenue": 105000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 90,
+        "revenue": 100000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 91,
+        "revenue": 180000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 92,
+        "revenue": 190000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 93,
+        "revenue": 140000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 94,
+        "revenue": 140000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 95,
+        "revenue": 180000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 96,
+        "revenue": 210000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 97,
+        "revenue": 150000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 98,
+        "revenue": 1170000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 99,
+        "revenue": 520000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 100,
+        "revenue": 520000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 101,
+        "revenue": 1062000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 102,
+        "revenue": 1239000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 103,
+        "revenue": 1755000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 104,
+        "revenue": 1300000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 105,
+        "revenue": 1265000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 106,
+        "revenue": 990000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 107,
+        "revenue": 1430000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 108,
+        "revenue": 1357000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 109,
+        "revenue": 590000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 110,
+        "revenue": 826000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 111,
+        "revenue": 1615000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 112,
+        "revenue": 790000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 113,
+        "revenue": 560000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 116,
+        "revenue": 595000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 119,
+        "revenue": 1881000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 120,
+        "revenue": 2772000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 121,
+        "revenue": 1485000.0
+      },
+      {
+        "period": "2026-08-31",
+        "product_id": 122,
+        "revenue": 1904000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 1,
+        "revenue": 1365000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 2,
+        "revenue": 440000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 3,
+        "revenue": 845000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 4,
+        "revenue": 880000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 5,
+        "revenue": 1690000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 6,
+        "revenue": 1690000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 7,
+        "revenue": 1242000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 8,
+        "revenue": 1311000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 9,
+        "revenue": 551000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 10,
+        "revenue": 980000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 11,
+        "revenue": 330000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 12,
+        "revenue": 462000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 13,
+        "revenue": 304000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 14,
+        "revenue": 675000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 15,
+        "revenue": 1430000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 16,
+        "revenue": 767000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 17,
+        "revenue": 767000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 18,
+        "revenue": 990000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 19,
+        "revenue": 663000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 20,
+        "revenue": 880000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 21,
+        "revenue": 735000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 22,
+        "revenue": 507000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 23,
+        "revenue": 588000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 24,
+        "revenue": 342000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 25,
+        "revenue": 323000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 26,
+        "revenue": 285000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 27,
+        "revenue": 285000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 28,
+        "revenue": 190000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 29,
+        "revenue": 1053000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 30,
+        "revenue": 595000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 31,
+        "revenue": 420000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 32,
+        "revenue": 232000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 33,
+        "revenue": 1430000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 34,
+        "revenue": 880000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 35,
+        "revenue": 741000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 36,
+        "revenue": 490000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 37,
+        "revenue": 735000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 38,
+        "revenue": 1053000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 39,
+        "revenue": 546000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 40,
+        "revenue": 624000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 41,
+        "revenue": 663000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 42,
+        "revenue": 780000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 43,
+        "revenue": 585000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 44,
+        "revenue": 1430000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 45,
+        "revenue": 1050000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 46,
+        "revenue": 675000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 47,
+        "revenue": 1155000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 48,
+        "revenue": 1485000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 49,
+        "revenue": 1157000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 50,
+        "revenue": 845000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 51,
+        "revenue": 1242000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 52,
+        "revenue": 1958000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 53,
+        "revenue": 1335000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 54,
+        "revenue": 1770000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 55,
+        "revenue": 1380000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 56,
+        "revenue": 1235000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 57,
+        "revenue": 885000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 58,
+        "revenue": 1380000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 59,
+        "revenue": 1235000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 60,
+        "revenue": 1449000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 61,
+        "revenue": 2280000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 62,
+        "revenue": 1575000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 63,
+        "revenue": 845000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 64,
+        "revenue": 1430000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 65,
+        "revenue": 1300000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 66,
+        "revenue": 650000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 67,
+        "revenue": 935000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 68,
+        "revenue": 990000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 69,
+        "revenue": 975000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 70,
+        "revenue": 1365000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 71,
+        "revenue": 910000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 72,
+        "revenue": 715000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 73,
+        "revenue": 1625000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 74,
+        "revenue": 500000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 75,
+        "revenue": 735000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 76,
+        "revenue": 1029000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 77,
+        "revenue": 1127000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 78,
+        "revenue": 833000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 79,
+        "revenue": 1298000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 80,
+        "revenue": 180000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 81,
+        "revenue": 708000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 82,
+        "revenue": 711000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 83,
+        "revenue": 966000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 84,
+        "revenue": 1104000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 85,
+        "revenue": 220000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 86,
+        "revenue": 180000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 87,
+        "revenue": 130000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 88,
+        "revenue": 70000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 89,
+        "revenue": 115000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 90,
+        "revenue": 85000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 91,
+        "revenue": 160000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 92,
+        "revenue": 140000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 93,
+        "revenue": 160000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 94,
+        "revenue": 230000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 95,
+        "revenue": 280000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 96,
+        "revenue": 160000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 97,
+        "revenue": 150000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 98,
+        "revenue": 910000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 99,
+        "revenue": 845000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 100,
+        "revenue": 845000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 101,
+        "revenue": 649000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 102,
+        "revenue": 1357000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 103,
+        "revenue": 1300000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 104,
+        "revenue": 2340000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 105,
+        "revenue": 1155000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 106,
+        "revenue": 770000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 107,
+        "revenue": 1430000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 108,
+        "revenue": 885000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 109,
+        "revenue": 1298000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 110,
+        "revenue": 885000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 111,
+        "revenue": 1425000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 112,
+        "revenue": 1106000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 113,
+        "revenue": 735000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 116,
+        "revenue": 525000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 119,
+        "revenue": 1881000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 120,
+        "revenue": 2376000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 121,
+        "revenue": 1881000.0
+      },
+      {
+        "period": "2026-09-07",
+        "product_id": 122,
+        "revenue": 2023000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 1,
+        "revenue": 715000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 2,
+        "revenue": 1375000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 3,
+        "revenue": 1040000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 4,
+        "revenue": 825000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 5,
+        "revenue": 2210000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 6,
+        "revenue": 1040000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 7,
+        "revenue": 1104000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 8,
+        "revenue": 2415000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 9,
+        "revenue": 319000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 10,
+        "revenue": 665000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 11,
+        "revenue": 374000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 12,
+        "revenue": 616000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 13,
+        "revenue": 323000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 14,
+        "revenue": 540000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 15,
+        "revenue": 1485000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 16,
+        "revenue": 1770000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 17,
+        "revenue": 944000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 18,
+        "revenue": 765000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 19,
+        "revenue": 702000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 20,
+        "revenue": 440000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 21,
+        "revenue": 630000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 22,
+        "revenue": 819000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 23,
+        "revenue": 1029000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 24,
+        "revenue": 304000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 25,
+        "revenue": 342000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 26,
+        "revenue": 342000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 27,
+        "revenue": 361000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 28,
+        "revenue": 361000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 29,
+        "revenue": 702000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 30,
+        "revenue": 490000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 31,
+        "revenue": 360000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 32,
+        "revenue": 435000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 33,
+        "revenue": 1495000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 34,
+        "revenue": 1540000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 35,
+        "revenue": 741000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 36,
+        "revenue": 637000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 37,
+        "revenue": 1274000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 38,
+        "revenue": 1326000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 39,
+        "revenue": 936000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 40,
+        "revenue": 741000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 41,
+        "revenue": 663000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 42,
+        "revenue": 390000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 43,
+        "revenue": 1040000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 44,
+        "revenue": 1235000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 45,
+        "revenue": 1275000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 46,
+        "revenue": 1725000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 47,
+        "revenue": 605000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 48,
+        "revenue": 990000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 49,
+        "revenue": 1157000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 50,
+        "revenue": 455000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 51,
+        "revenue": 414000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 52,
+        "revenue": 1691000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 53,
+        "revenue": 1335000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 54,
+        "revenue": 413000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 55,
+        "revenue": 1035000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 56,
+        "revenue": 1430000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 57,
+        "revenue": 590000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 58,
+        "revenue": 1518000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 59,
+        "revenue": 2015000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 60,
+        "revenue": 1173000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 61,
+        "revenue": 2945000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 62,
+        "revenue": 1995000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 63,
+        "revenue": 1105000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 64,
+        "revenue": 1625000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 65,
+        "revenue": 1040000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 66,
+        "revenue": 1170000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 67,
+        "revenue": 1430000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 68,
+        "revenue": 495000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 69,
+        "revenue": 780000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 70,
+        "revenue": 1690000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 71,
+        "revenue": 1235000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 72,
+        "revenue": 975000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 73,
+        "revenue": 845000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 74,
+        "revenue": 850000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 75,
+        "revenue": 1372000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 76,
+        "revenue": 686000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 77,
+        "revenue": 931000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 78,
+        "revenue": 980000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 79,
+        "revenue": 1121000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 80,
+        "revenue": 180000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 81,
+        "revenue": 826000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 82,
+        "revenue": 1896000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 83,
+        "revenue": 1794000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 84,
+        "revenue": 1449000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 85,
+        "revenue": 120000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 86,
+        "revenue": 160000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 87,
+        "revenue": 90000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 88,
+        "revenue": 95000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 89,
+        "revenue": 60000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 90,
+        "revenue": 95000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 91,
+        "revenue": 90000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 92,
+        "revenue": 260000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 93,
+        "revenue": 160000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 94,
+        "revenue": 150000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 95,
+        "revenue": 130000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 96,
+        "revenue": 150000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 97,
+        "revenue": 190000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 98,
+        "revenue": 1170000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 99,
+        "revenue": 910000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 100,
+        "revenue": 1235000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 101,
+        "revenue": 1121000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 102,
+        "revenue": 1239000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 103,
+        "revenue": 1560000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 104,
+        "revenue": 910000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 105,
+        "revenue": 605000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 106,
+        "revenue": 715000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 107,
+        "revenue": 780000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 108,
+        "revenue": 1121000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 109,
+        "revenue": 1180000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 110,
+        "revenue": 1652000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 111,
+        "revenue": 1045000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 112,
+        "revenue": 474000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 113,
+        "revenue": 630000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 116,
+        "revenue": 630000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 119,
+        "revenue": 2475000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 120,
+        "revenue": 2574000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 121,
+        "revenue": 1188000.0
+      },
+      {
+        "period": "2026-09-14",
+        "product_id": 122,
+        "revenue": 2023000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 1,
+        "revenue": 1495000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 2,
+        "revenue": 550000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 3,
+        "revenue": 650000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 4,
+        "revenue": 1210000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 5,
+        "revenue": 1300000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 6,
+        "revenue": 1755000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 7,
+        "revenue": 690000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 8,
+        "revenue": 1173000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 9,
+        "revenue": 406000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 10,
+        "revenue": 560000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 11,
+        "revenue": 550000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 12,
+        "revenue": 440000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 13,
+        "revenue": 228000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 14,
+        "revenue": 585000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 15,
+        "revenue": 550000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 16,
+        "revenue": 1180000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 17,
+        "revenue": 1180000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 18,
+        "revenue": 450000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 19,
+        "revenue": 351000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 20,
+        "revenue": 935000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 21,
+        "revenue": 560000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 22,
+        "revenue": 702000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 23,
+        "revenue": 392000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 24,
+        "revenue": 380000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 25,
+        "revenue": 361000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 26,
+        "revenue": 513000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 27,
+        "revenue": 323000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 28,
+        "revenue": 323000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 29,
+        "revenue": 624000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 30,
+        "revenue": 840000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 31,
+        "revenue": 400000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 32,
+        "revenue": 406000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 33,
+        "revenue": 1235000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 34,
+        "revenue": 880000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 35,
+        "revenue": 1014000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 36,
+        "revenue": 980000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 37,
+        "revenue": 882000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 38,
+        "revenue": 468000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 39,
+        "revenue": 741000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 40,
+        "revenue": 468000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 41,
+        "revenue": 624000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 42,
+        "revenue": 468000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 43,
+        "revenue": 975000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 44,
+        "revenue": 1820000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 45,
+        "revenue": 1350000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 46,
+        "revenue": 1200000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 47,
+        "revenue": 550000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 48,
+        "revenue": 660000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 49,
+        "revenue": 1068000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 50,
+        "revenue": 910000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 51,
+        "revenue": 1173000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 52,
+        "revenue": 1869000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 53,
+        "revenue": 1157000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 54,
+        "revenue": 1062000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 55,
+        "revenue": 897000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 56,
+        "revenue": 780000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 57,
+        "revenue": 1003000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 58,
+        "revenue": 897000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 59,
+        "revenue": 1300000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 60,
+        "revenue": 1587000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 61,
+        "revenue": 2090000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 62,
+        "revenue": 630000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 63,
+        "revenue": 1170000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 64,
+        "revenue": 1430000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 65,
+        "revenue": 650000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 66,
+        "revenue": 1105000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 67,
+        "revenue": 1045000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 68,
+        "revenue": 1045000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 69,
+        "revenue": 1235000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 70,
+        "revenue": 1235000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 71,
+        "revenue": 1885000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 72,
+        "revenue": 1560000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 73,
+        "revenue": 910000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 74,
+        "revenue": 1350000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 75,
+        "revenue": 735000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 76,
+        "revenue": 931000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 77,
+        "revenue": 1176000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 78,
+        "revenue": 980000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 79,
+        "revenue": 1003000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 80,
+        "revenue": 210000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 81,
+        "revenue": 1121000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 82,
+        "revenue": 1027000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 83,
+        "revenue": 966000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 84,
+        "revenue": 966000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 85,
+        "revenue": 210000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 86,
+        "revenue": 160000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 87,
+        "revenue": 260000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 88,
+        "revenue": 55000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 89,
+        "revenue": 100000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 90,
+        "revenue": 50000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 91,
+        "revenue": 140000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 92,
+        "revenue": 240000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 93,
+        "revenue": 150000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 94,
+        "revenue": 300000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 95,
+        "revenue": 210000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 96,
+        "revenue": 100000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 97,
+        "revenue": 200000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 98,
+        "revenue": 1300000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 99,
+        "revenue": 845000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 100,
+        "revenue": 1495000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 101,
+        "revenue": 1239000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 102,
+        "revenue": 826000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 103,
+        "revenue": 1560000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 104,
+        "revenue": 1300000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 105,
+        "revenue": 1265000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 106,
+        "revenue": 770000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 107,
+        "revenue": 975000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 108,
+        "revenue": 590000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 109,
+        "revenue": 531000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 110,
+        "revenue": 1593000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 111,
+        "revenue": 1710000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 112,
+        "revenue": 1264000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 113,
+        "revenue": 455000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 116,
+        "revenue": 700000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 119,
+        "revenue": 1584000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 120,
+        "revenue": 2475000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 121,
+        "revenue": 2178000.0
+      },
+      {
+        "period": "2026-09-21",
+        "product_id": 122,
+        "revenue": 2856000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 1,
+        "revenue": 325000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 2,
+        "revenue": 495000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 3,
+        "revenue": 845000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 4,
+        "revenue": 550000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 5,
+        "revenue": 1040000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 6,
+        "revenue": 455000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 7,
+        "revenue": 759000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 8,
+        "revenue": 414000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 9,
+        "revenue": 232000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 10,
+        "revenue": 385000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 11,
+        "revenue": 352000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 12,
+        "revenue": 220000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 13,
+        "revenue": 114000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 14,
+        "revenue": 495000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 15,
+        "revenue": 440000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 16,
+        "revenue": 413000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 17,
+        "revenue": 944000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 18,
+        "revenue": 630000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 19,
+        "revenue": 390000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 20,
+        "revenue": 440000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 21,
+        "revenue": 315000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 22,
+        "revenue": 390000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 23,
+        "revenue": 441000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 24,
+        "revenue": 114000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 25,
+        "revenue": 133000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 26,
+        "revenue": 304000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 27,
+        "revenue": 95000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 28,
+        "revenue": 209000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 29,
+        "revenue": 468000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 30,
+        "revenue": 420000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 31,
+        "revenue": 120000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 32,
+        "revenue": 493000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 33,
+        "revenue": 455000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 34,
+        "revenue": 220000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 35,
+        "revenue": 195000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 36,
+        "revenue": 245000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 37,
+        "revenue": 441000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 38,
+        "revenue": 351000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 39,
+        "revenue": 468000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 40,
+        "revenue": 351000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 41,
+        "revenue": 468000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 42,
+        "revenue": 312000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 43,
+        "revenue": 455000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 44,
+        "revenue": 845000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 45,
+        "revenue": 825000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 46,
+        "revenue": 975000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 47,
+        "revenue": 495000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 48,
+        "revenue": 605000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 49,
+        "revenue": 267000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 50,
+        "revenue": 585000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 51,
+        "revenue": 483000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 52,
+        "revenue": 1780000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 53,
+        "revenue": 801000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 54,
+        "revenue": 413000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 55,
+        "revenue": 1035000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 56,
+        "revenue": 650000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 57,
+        "revenue": 354000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 58,
+        "revenue": 828000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 59,
+        "revenue": 780000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 60,
+        "revenue": 483000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 61,
+        "revenue": 760000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 62,
+        "revenue": 2100000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 63,
+        "revenue": 585000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 64,
+        "revenue": 715000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 65,
+        "revenue": 520000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 66,
+        "revenue": 585000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 67,
+        "revenue": 550000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 68,
+        "revenue": 495000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 69,
+        "revenue": 1040000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 70,
+        "revenue": 520000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 71,
+        "revenue": 520000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 72,
+        "revenue": 715000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 73,
+        "revenue": 585000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 74,
+        "revenue": 850000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 75,
+        "revenue": 392000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 76,
+        "revenue": 539000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 77,
+        "revenue": 441000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 78,
+        "revenue": 637000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 79,
+        "revenue": 295000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 80,
+        "revenue": 170000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 81,
+        "revenue": 413000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 82,
+        "revenue": 711000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 83,
+        "revenue": 621000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 84,
+        "revenue": 483000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 85,
+        "revenue": 90000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 86,
+        "revenue": 50000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 87,
+        "revenue": 60000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 88,
+        "revenue": 40000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 89,
+        "revenue": 90000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 90,
+        "revenue": 75000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 91,
+        "revenue": 160000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 92,
+        "revenue": 40000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 93,
+        "revenue": 120000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 94,
+        "revenue": 80000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 95,
+        "revenue": 70000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 96,
+        "revenue": 120000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 97,
+        "revenue": 140000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 98,
+        "revenue": 455000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 99,
+        "revenue": 520000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 100,
+        "revenue": 715000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 101,
+        "revenue": 590000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 102,
+        "revenue": 354000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 103,
+        "revenue": 390000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 104,
+        "revenue": 650000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 105,
+        "revenue": 330000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 106,
+        "revenue": 935000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 107,
+        "revenue": 715000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 108,
+        "revenue": 590000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 109,
+        "revenue": 177000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 110,
+        "revenue": 649000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 111,
+        "revenue": 1045000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 112,
+        "revenue": 948000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 113,
+        "revenue": 630000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 116,
+        "revenue": 455000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 119,
+        "revenue": 990000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 120,
+        "revenue": 792000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 121,
+        "revenue": 2079000.0
+      },
+      {
+        "period": "2026-09-28",
+        "product_id": 122,
+        "revenue": 833000.0
+      }
+    ]
+  },
+  "audit": {
+    "assessment": {
+      "status": "measured",
+      "matched_count": 80,
+      "reference_count": 80,
+      "accuracy_pct": 100.0,
+      "reference_source": "Independent read-only SQL on raw orders.chi_tiet_don_hang, orders.don_hang, menu.san_pham and menu.danh_muc; price × quantity, raw category aggregation and product/week facts",
+      "reason": "Tỷ lệ assertion khớp đối chứng độc lập trong lần kiểm tra này; không phải xác suất AI trả lời đúng."
+    },
+    "assertions": [
+      {
+        "id": "failure_1:outcome",
+        "matched": true
+      },
+      {
+        "id": "failure_1:internal_recovery",
+        "matched": true
+      },
+      {
+        "id": "failure_1:coverage",
+        "matched": true
+      },
+      {
+        "id": "failure_1:window:q_41a5af23f6cc5fa99d41e671",
+        "matched": true
+      },
+      {
+        "id": "failure_1:ranking:q_41a5af23f6cc5fa99d41e671",
+        "matched": true
+      },
+      {
+        "id": "failure_1:window:q_8b7594aeb8f47fa774c61302",
+        "matched": true
+      },
+      {
+        "id": "failure_1:ranking:q_8b7594aeb8f47fa774c61302",
+        "matched": true
+      },
+      {
+        "id": "failure_1:window:q_8356ad83066f1b29c89c9497",
+        "matched": true
+      },
+      {
+        "id": "failure_1:weekly",
+        "matched": true
+      },
+      {
+        "id": "failure_1:cadence",
+        "matched": true
+      },
+      {
+        "id": "failure_1:window:q_ab8a91395b498a9e3c63ab46",
+        "matched": true
+      },
+      {
+        "id": "failure_1:denominator:q_ab8a91395b498a9e3c63ab46:item_revenue",
+        "matched": true
+      },
+      {
+        "id": "failure_1:window:q_e8ffa608aa03f1bf65bbd724",
+        "matched": true
+      },
+      {
+        "id": "failure_1:category",
+        "matched": true
+      },
+      {
+        "id": "failure_1:leader_gap:1",
+        "matched": true
+      },
+      {
+        "id": "failure_1:leader_gap:4",
+        "matched": true
+      },
+      {
+        "id": "failure_1:share_denominator:245",
+        "matched": true
+      },
+      {
+        "id": "failure_1:share_math:245",
+        "matched": true
+      },
+      {
+        "id": "failure_1:share_denominator:246",
+        "matched": true
+      },
+      {
+        "id": "failure_1:share_math:246",
+        "matched": true
+      },
+      {
+        "id": "failure_1:share_denominator:247",
+        "matched": true
+      },
+      {
+        "id": "failure_1:share_math:247",
+        "matched": true
+      },
+      {
+        "id": "failure_1:share_denominator:248",
+        "matched": true
+      },
+      {
+        "id": "failure_1:share_math:248",
+        "matched": true
+      },
+      {
+        "id": "failure_1:share_denominator:249",
+        "matched": true
+      },
+      {
+        "id": "failure_1:share_math:249",
+        "matched": true
+      },
+      {
+        "id": "failure_1:share_denominator:250",
+        "matched": true
+      },
+      {
+        "id": "failure_1:share_math:250",
+        "matched": true
+      },
+      {
+        "id": "failure_1:share_denominator:251",
+        "matched": true
+      },
+      {
+        "id": "failure_1:share_math:251",
+        "matched": true
+      },
+      {
+        "id": "failure_1:share_denominator:252",
+        "matched": true
+      },
+      {
+        "id": "failure_1:share_math:252",
+        "matched": true
+      },
+      {
+        "id": "failure_1:share_denominator:253",
+        "matched": true
+      },
+      {
+        "id": "failure_1:share_math:253",
+        "matched": true
+      },
+      {
+        "id": "failure_1:share_denominator:254",
+        "matched": true
+      },
+      {
+        "id": "failure_1:share_math:254",
+        "matched": true
+      },
+      {
+        "id": "failure_1:saved_verifier",
+        "matched": true
+      },
+      {
+        "id": "failure_1:visual_check",
+        "matched": true
+      },
+      {
+        "id": "failure_1:engineering_score",
+        "matched": true
+      },
+      {
+        "id": "failure_1:honest_unmeasured_accuracy",
+        "matched": true
+      },
+      {
+        "id": "failure_2:outcome",
+        "matched": true
+      },
+      {
+        "id": "failure_2:internal_recovery",
+        "matched": true
+      },
+      {
+        "id": "failure_2:coverage",
+        "matched": true
+      },
+      {
+        "id": "failure_2:window:q_41a5af23f6cc5fa99d41e671",
+        "matched": true
+      },
+      {
+        "id": "failure_2:ranking:q_41a5af23f6cc5fa99d41e671",
+        "matched": true
+      },
+      {
+        "id": "failure_2:window:q_8b7594aeb8f47fa774c61302",
+        "matched": true
+      },
+      {
+        "id": "failure_2:ranking:q_8b7594aeb8f47fa774c61302",
+        "matched": true
+      },
+      {
+        "id": "failure_2:window:q_8356ad83066f1b29c89c9497",
+        "matched": true
+      },
+      {
+        "id": "failure_2:weekly",
+        "matched": true
+      },
+      {
+        "id": "failure_2:cadence",
+        "matched": true
+      },
+      {
+        "id": "failure_2:window:q_ab8a91395b498a9e3c63ab46",
+        "matched": true
+      },
+      {
+        "id": "failure_2:denominator:q_ab8a91395b498a9e3c63ab46:item_revenue",
+        "matched": true
+      },
+      {
+        "id": "failure_2:window:q_e8ffa608aa03f1bf65bbd724",
+        "matched": true
+      },
+      {
+        "id": "failure_2:category",
+        "matched": true
+      },
+      {
+        "id": "failure_2:leader_gap:1",
+        "matched": true
+      },
+      {
+        "id": "failure_2:leader_gap:4",
+        "matched": true
+      },
+      {
+        "id": "failure_2:share_denominator:245",
+        "matched": true
+      },
+      {
+        "id": "failure_2:share_math:245",
+        "matched": true
+      },
+      {
+        "id": "failure_2:share_denominator:246",
+        "matched": true
+      },
+      {
+        "id": "failure_2:share_math:246",
+        "matched": true
+      },
+      {
+        "id": "failure_2:share_denominator:247",
+        "matched": true
+      },
+      {
+        "id": "failure_2:share_math:247",
+        "matched": true
+      },
+      {
+        "id": "failure_2:share_denominator:248",
+        "matched": true
+      },
+      {
+        "id": "failure_2:share_math:248",
+        "matched": true
+      },
+      {
+        "id": "failure_2:share_denominator:249",
+        "matched": true
+      },
+      {
+        "id": "failure_2:share_math:249",
+        "matched": true
+      },
+      {
+        "id": "failure_2:share_denominator:250",
+        "matched": true
+      },
+      {
+        "id": "failure_2:share_math:250",
+        "matched": true
+      },
+      {
+        "id": "failure_2:share_denominator:251",
+        "matched": true
+      },
+      {
+        "id": "failure_2:share_math:251",
+        "matched": true
+      },
+      {
+        "id": "failure_2:share_denominator:252",
+        "matched": true
+      },
+      {
+        "id": "failure_2:share_math:252",
+        "matched": true
+      },
+      {
+        "id": "failure_2:share_denominator:253",
+        "matched": true
+      },
+      {
+        "id": "failure_2:share_math:253",
+        "matched": true
+      },
+      {
+        "id": "failure_2:share_denominator:254",
+        "matched": true
+      },
+      {
+        "id": "failure_2:share_math:254",
+        "matched": true
+      },
+      {
+        "id": "failure_2:saved_verifier",
+        "matched": true
+      },
+      {
+        "id": "failure_2:visual_check",
+        "matched": true
+      },
+      {
+        "id": "failure_2:engineering_score",
+        "matched": true
+      },
+      {
+        "id": "failure_2:honest_unmeasured_accuracy",
+        "matched": true
+      }
+    ],
+    "numeric_tolerance": {
+      "absolute": 0.01,
+      "relative": 1e-09
+    }
+  },
+  "reports": [
+    {
+      "name": "failure_1",
+      "outcome": "SUCCESS",
+      "provider_calls": 2,
+      "query_count": 5,
+      "chart_count": 5,
+      "weekly_rows": 944,
+      "root_contract_issues": [
+        {
+          "requirement_id": null,
+          "field": "derived_features",
+          "code": "explicit_features_missing",
+          "candidate_ids": [
+            "leader"
+          ]
+        }
+      ],
+      "quality": {
+        "score": 89.5,
+        "grade": "partial",
+        "status": "partially_verified",
+        "components": [],
+        "completed": [
+          {
+            "id": "req_category_structure",
+            "label": "Dòng món trong đơn",
+            "evidence_refs": [
+              "q_e8ffa608aa03f1bf65bbd724:item_revenue:concentration:6230060e3b"
+            ]
+          },
+          {
+            "id": "req_product_comparison",
+            "label": "Dòng món trong đơn",
+            "evidence_refs": [
+              "q_41a5af23f6cc5fa99d41e671:item_revenue:leader:6230060e3b",
+              "q_41a5af23f6cc5fa99d41e671:item_revenue:top_gap:6230060e3b",
+              "q_41a5af23f6cc5fa99d41e671:item_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "req_product_trend",
+            "label": "Dòng món trong đơn",
+            "evidence_refs": [
+              "q_8356ad83066f1b29c89c9497:item_revenue:change:e76079f156",
+              "q_8356ad83066f1b29c89c9497:item_revenue:extrema:e76079f156",
+              "q_8356ad83066f1b29c89c9497:item_revenue:change:91dcc00703"
+            ]
+          },
+          {
+            "id": "req_top_products",
+            "label": "Dòng món trong đơn",
+            "evidence_refs": [
+              "q_8b7594aeb8f47fa774c61302:item_revenue:leader:6230060e3b",
+              "q_8b7594aeb8f47fa774c61302:item_revenue:top_gap:6230060e3b",
+              "q_8b7594aeb8f47fa774c61302:item_revenue:selected_total:6230060e3b"
+            ]
+          }
+        ],
+        "missing": [],
+        "unverified": [
+          {
+            "id": "causes",
+            "label": "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+            "evidence_refs": []
+          },
+          {
+            "id": "independent_accuracy",
+            "label": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.",
+            "evidence_refs": []
+          }
+        ],
+        "limitations": [
+          {
+            "id": "metric_population:item_revenue",
+            "label": "Doanh thu món: Tổng thành tiền dòng món thuộc đơn HOAN_THANH/DANG_GIAO; không mặc định bằng tổng tiền đơn.",
+            "evidence_refs": [
+              "q_41a5af23f6cc5fa99d41e671:item_revenue:leader:6230060e3b",
+              "q_41a5af23f6cc5fa99d41e671:item_revenue:top_gap:6230060e3b",
+              "q_41a5af23f6cc5fa99d41e671:item_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "topn:q_41a5af23f6cc5fa99d41e671",
+            "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+            "evidence_refs": [
+              "q_41a5af23f6cc5fa99d41e671:item_revenue:leader:6230060e3b",
+              "q_41a5af23f6cc5fa99d41e671:item_revenue:top_gap:6230060e3b",
+              "q_41a5af23f6cc5fa99d41e671:item_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:quantity_sold",
+            "label": "Số lượng sản phẩm bán: Tổng số lượng trên dòng món thuộc đơn HOAN_THANH/DANG_GIAO; đếm số đơn vị bán, không phải số sản phẩm khác nhau.",
+            "evidence_refs": [
+              "q_8b7594aeb8f47fa774c61302:item_revenue:leader:6230060e3b",
+              "q_8b7594aeb8f47fa774c61302:item_revenue:top_gap:6230060e3b",
+              "q_8b7594aeb8f47fa774c61302:item_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "topn:q_8b7594aeb8f47fa774c61302",
+            "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+            "evidence_refs": [
+              "q_8b7594aeb8f47fa774c61302:item_revenue:leader:6230060e3b",
+              "q_8b7594aeb8f47fa774c61302:item_revenue:top_gap:6230060e3b",
+              "q_8b7594aeb8f47fa774c61302:item_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "omission:0",
+            "label": "Một góc nhìn dùng bảng dữ liệu đầy đủ vì cấu trúc chưa phù hợp biểu đồ.",
+            "evidence_refs": []
+          }
+        ],
+        "suggested_next_actions": [
+          {
+            "id": "review_visuals",
+            "label": "Xem bảng kết quả đầy đủ và chọn cách trình bày phù hợp với các chỉ số.",
+            "evidence_refs": [],
+            "action": "review_scope"
+          }
+        ],
+        "coverage": {
+          "requested_count": 4,
+          "completed_count": 4,
+          "supporting_count": 0,
+          "omitted_count": 0
+        },
+        "generated_by": "deterministic_verifier",
+        "version": "2.8.4",
+        "reason": null,
+        "measurement_mode": "evidence_checks",
+        "verification_checks": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "passed": 4,
+            "total": 4,
+            "status": "passed",
+            "summary": "4/4 phần yêu cầu đã thực hiện."
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "passed": 1,
+            "total": 1,
+            "status": "passed",
+            "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "passed": 5,
+            "total": 5,
+            "status": "passed",
+            "summary": "5 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "passed": 984,
+            "total": 984,
+            "status": "passed",
+            "summary": "984/984 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "passed": 3,
+            "total": 3,
+            "status": "passed",
+            "summary": "3/3 phép tính yêu cầu có đủ quan sát và bằng chứng."
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "passed": 307,
+            "total": 307,
+            "status": "passed",
+            "summary": "307/307 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "passed": 9,
+            "total": 10,
+            "status": "partial",
+            "summary": "4/5 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "passed": 5,
+            "total": 5,
+            "status": "passed",
+            "summary": "5/5 giới hạn dữ liệu được công bố."
+          }
+        ],
+        "score_method": {
+          "id": "verification_evidence_v1",
+          "label": "Điểm kiểm chứng tổng",
+          "formula": "90 × trung bình có trọng số các kiểm tra áp dụng + 10 × tỷ lệ khớp đối chứng độc lập. Chưa đo đối chứng: chưa cộng 10 điểm; kiểm tra không áp dụng không bị trừ.",
+          "unmeasured_points": 10.0,
+          "interpretation": "Chỉ số mức độ kiểm chứng theo trọng số quy định; không phải độ chính xác hay xác suất AI trả lời đúng."
+        },
+        "score_breakdown": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "earned_points": 20.0,
+            "possible_points": 20.0,
+            "status": "passed"
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "earned_points": 15.0,
+            "possible_points": 15.0,
+            "status": "passed"
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "earned_points": 15.0,
+            "possible_points": 15.0,
+            "status": "passed"
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "earned_points": 4.5,
+            "possible_points": 5.0,
+            "status": "partial"
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "earned_points": 5.0,
+            "possible_points": 5.0,
+            "status": "passed"
+          },
+          {
+            "id": "independent_reference",
+            "label": "Đối chứng độc lập",
+            "earned_points": 0.0,
+            "possible_points": 10.0,
+            "status": "not_measured"
+          }
+        ],
+        "accuracy_assessment": {
+          "status": "not_measured",
+          "matched_count": null,
+          "reference_count": 0,
+          "accuracy_pct": null,
+          "reference_source": null,
+          "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+        },
+        "confidence_probability": null,
+        "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+      }
+    },
+    {
+      "name": "failure_2",
+      "outcome": "SUCCESS",
+      "provider_calls": 2,
+      "query_count": 5,
+      "chart_count": 5,
+      "weekly_rows": 944,
+      "root_contract_issues": [
+        {
+          "requirement_id": null,
+          "field": "derived_features",
+          "code": "explicit_features_missing",
+          "candidate_ids": [
+            "leader"
+          ]
+        }
+      ],
+      "quality": {
+        "score": 89.5,
+        "grade": "partial",
+        "status": "partially_verified",
+        "components": [],
+        "completed": [
+          {
+            "id": "req_category_revenue_structure",
+            "label": "Dòng món trong đơn",
+            "evidence_refs": [
+              "q_e8ffa608aa03f1bf65bbd724:item_revenue:concentration:6230060e3b"
+            ]
+          },
+          {
+            "id": "req_compare_top_two_products",
+            "label": "Dòng món trong đơn",
+            "evidence_refs": [
+              "q_41a5af23f6cc5fa99d41e671:item_revenue:leader:6230060e3b",
+              "q_41a5af23f6cc5fa99d41e671:item_revenue:top_gap:6230060e3b",
+              "q_41a5af23f6cc5fa99d41e671:item_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "req_product_revenue_trend_weekly",
+            "label": "Dòng món trong đơn",
+            "evidence_refs": [
+              "q_8356ad83066f1b29c89c9497:item_revenue:change:e76079f156",
+              "q_8356ad83066f1b29c89c9497:item_revenue:extrema:e76079f156",
+              "q_8356ad83066f1b29c89c9497:item_revenue:change:91dcc00703"
+            ]
+          },
+          {
+            "id": "req_top_10_revenue_quantity",
+            "label": "Dòng món trong đơn",
+            "evidence_refs": [
+              "q_8b7594aeb8f47fa774c61302:item_revenue:leader:6230060e3b",
+              "q_8b7594aeb8f47fa774c61302:item_revenue:top_gap:6230060e3b",
+              "q_8b7594aeb8f47fa774c61302:item_revenue:selected_total:6230060e3b"
+            ]
+          }
+        ],
+        "missing": [],
+        "unverified": [
+          {
+            "id": "causes",
+            "label": "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+            "evidence_refs": []
+          },
+          {
+            "id": "independent_accuracy",
+            "label": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.",
+            "evidence_refs": []
+          }
+        ],
+        "limitations": [
+          {
+            "id": "metric_population:item_revenue",
+            "label": "Doanh thu món: Tổng thành tiền dòng món thuộc đơn HOAN_THANH/DANG_GIAO; không mặc định bằng tổng tiền đơn.",
+            "evidence_refs": [
+              "q_41a5af23f6cc5fa99d41e671:item_revenue:leader:6230060e3b",
+              "q_41a5af23f6cc5fa99d41e671:item_revenue:top_gap:6230060e3b",
+              "q_41a5af23f6cc5fa99d41e671:item_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "topn:q_41a5af23f6cc5fa99d41e671",
+            "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+            "evidence_refs": [
+              "q_41a5af23f6cc5fa99d41e671:item_revenue:leader:6230060e3b",
+              "q_41a5af23f6cc5fa99d41e671:item_revenue:top_gap:6230060e3b",
+              "q_41a5af23f6cc5fa99d41e671:item_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:quantity_sold",
+            "label": "Số lượng sản phẩm bán: Tổng số lượng trên dòng món thuộc đơn HOAN_THANH/DANG_GIAO; đếm số đơn vị bán, không phải số sản phẩm khác nhau.",
+            "evidence_refs": [
+              "q_8b7594aeb8f47fa774c61302:item_revenue:leader:6230060e3b",
+              "q_8b7594aeb8f47fa774c61302:item_revenue:top_gap:6230060e3b",
+              "q_8b7594aeb8f47fa774c61302:item_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "topn:q_8b7594aeb8f47fa774c61302",
+            "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+            "evidence_refs": [
+              "q_8b7594aeb8f47fa774c61302:item_revenue:leader:6230060e3b",
+              "q_8b7594aeb8f47fa774c61302:item_revenue:top_gap:6230060e3b",
+              "q_8b7594aeb8f47fa774c61302:item_revenue:selected_total:6230060e3b"
+            ]
+          },
+          {
+            "id": "omission:0",
+            "label": "Một góc nhìn dùng bảng dữ liệu đầy đủ vì cấu trúc chưa phù hợp biểu đồ.",
+            "evidence_refs": []
+          }
+        ],
+        "suggested_next_actions": [
+          {
+            "id": "review_visuals",
+            "label": "Xem bảng kết quả đầy đủ và chọn cách trình bày phù hợp với các chỉ số.",
+            "evidence_refs": [],
+            "action": "review_scope"
+          }
+        ],
+        "coverage": {
+          "requested_count": 4,
+          "completed_count": 4,
+          "supporting_count": 0,
+          "omitted_count": 0
+        },
+        "generated_by": "deterministic_verifier",
+        "version": "2.8.4",
+        "reason": null,
+        "measurement_mode": "evidence_checks",
+        "verification_checks": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "passed": 4,
+            "total": 4,
+            "status": "passed",
+            "summary": "4/4 phần yêu cầu đã thực hiện."
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "passed": 1,
+            "total": 1,
+            "status": "passed",
+            "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "passed": 5,
+            "total": 5,
+            "status": "passed",
+            "summary": "5 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "passed": 984,
+            "total": 984,
+            "status": "passed",
+            "summary": "984/984 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "passed": 3,
+            "total": 3,
+            "status": "passed",
+            "summary": "3/3 phép tính yêu cầu có đủ quan sát và bằng chứng."
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "passed": 307,
+            "total": 307,
+            "status": "passed",
+            "summary": "307/307 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "passed": 9,
+            "total": 10,
+            "status": "partial",
+            "summary": "4/5 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "passed": 5,
+            "total": 5,
+            "status": "passed",
+            "summary": "5/5 giới hạn dữ liệu được công bố."
+          }
+        ],
+        "score_method": {
+          "id": "verification_evidence_v1",
+          "label": "Điểm kiểm chứng tổng",
+          "formula": "90 × trung bình có trọng số các kiểm tra áp dụng + 10 × tỷ lệ khớp đối chứng độc lập. Chưa đo đối chứng: chưa cộng 10 điểm; kiểm tra không áp dụng không bị trừ.",
+          "unmeasured_points": 10.0,
+          "interpretation": "Chỉ số mức độ kiểm chứng theo trọng số quy định; không phải độ chính xác hay xác suất AI trả lời đúng."
+        },
+        "score_breakdown": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "earned_points": 20.0,
+            "possible_points": 20.0,
+            "status": "passed"
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "earned_points": 15.0,
+            "possible_points": 15.0,
+            "status": "passed"
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "earned_points": 15.0,
+            "possible_points": 15.0,
+            "status": "passed"
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "earned_points": 10.0,
+            "possible_points": 10.0,
+            "status": "passed"
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "earned_points": 4.5,
+            "possible_points": 5.0,
+            "status": "partial"
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "earned_points": 5.0,
+            "possible_points": 5.0,
+            "status": "passed"
+          },
+          {
+            "id": "independent_reference",
+            "label": "Đối chứng độc lập",
+            "earned_points": 0.0,
+            "possible_points": 10.0,
+            "status": "not_measured"
+          }
+        ],
+        "accuracy_assessment": {
+          "status": "not_measured",
+          "matched_count": null,
+          "reference_count": 0,
+          "accuracy_pct": null,
+          "reference_source": null,
+          "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+        },
+        "confidence_probability": null,
+        "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+      }
+    }
+  ],
+  "reference_failures": []
+}

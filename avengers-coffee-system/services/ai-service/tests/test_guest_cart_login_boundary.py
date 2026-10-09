@@ -18,6 +18,8 @@ from src.function_calling.tools import cart_tools
 
 @pytest.fixture
 def guest(runtime, monkeypatch):
+    from src.agents import llm_tool_orchestrator
+    monkeypatch.setattr(llm_tool_orchestrator, '_legacy_language_control', lambda *a: None)
     runtime.sid = f'anon-{uuid4()}:conversation:{uuid4()}'
     monkeypatch.setattr(cart_tools, 'is_authenticated_cart_session', lambda _: False)
     cart_manager.replace_items_from_order_cart(runtime.sid, [])
@@ -28,7 +30,7 @@ def guest(runtime, monkeypatch):
 
 def test_guest_can_configure_add_edit_remove_and_get_polite_cart_review(guest):
     guest.provider.plan([('add_to_cart', {'product_id': '101', 'quantity': 2, 'size': 'L', 'toppings': ['Pearl']})])
-    result = guest.turn('cho tôi hai ly Alpha size L và Pearl')
+    result = guest.turn('cho tôi hai ly Cà Phê Alpha size L và Pearl')
     assert [row[0] for row in guest.writes] == ['add']
     assert len(guest.provider.requests) <= 2
     assert '**Giỏ hàng của bạn:**' in result['reply']
@@ -46,7 +48,7 @@ def test_guest_can_configure_add_edit_remove_and_get_polite_cart_review(guest):
 
 def test_guest_checkout_login_gate_stops_without_an_extra_model_request(guest):
     guest.provider.plan([('add_to_cart', {'product_id': '101', 'size': 'M', 'toppings': []})])
-    guest.turn('cho tôi Alpha size M')
+    guest.turn('cho tôi Cà Phê Alpha size M')
     before = deepcopy(cart_manager.get_cart(guest.sid)['items'])
     n = len(guest.provider.requests)
     guest.provider.plan([('finish_cart', {})])

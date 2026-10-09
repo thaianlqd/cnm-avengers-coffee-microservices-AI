@@ -19,9 +19,35 @@ def _fold_location(value: str) -> str:
     return re.sub(r'\s+', ' ', ''.join(c for c in raw if unicodedata.category(c) != 'Mn')).strip()
 
 
+_HOUSE_NUMBER = r'(?:[A-Za-z]{1,3}\d{1,5}|\d{1,5}[A-Za-z]?)(?:[/.-]\d{1,5}[A-Za-z]?)?'
+_ADDRESS_COMPONENTS = r'(?:số\s+)?(?P<house>' + _HOUSE_NUMBER + r')\s+(?P<street>.+)$'
+_ADDRESS_HEAD = re.compile('^' + _ADDRESS_COMPONENTS, re.IGNORECASE)
+_EMBEDDED_ADDRESS_HEAD = re.compile(r'(?<!\w)' + _ADDRESS_COMPONENTS, re.IGNORECASE)
+
+
+def _address_head(value: str, *, embedded=False) -> tuple[Optional[str], str]:
+    """Split a typed address field, not a customer utterance or a POI name."""
+    first = str(value or '').split(',', 1)[0].strip()
+    match = _EMBEDDED_ADDRESS_HEAD.search(first) if embedded else _ADDRESS_HEAD.fullmatch(first)
+    return (match.group('house'), match.group('street').strip()) if match else (None, first)
+
+
+def _street_identity(street: str) -> str:
+    # A road designator is formatting. Numbers in the actual street name stay.
+    return re.sub(r'^duong\s+', '', _fold_location(street))
+
+
+def _resolved_streets(place: dict) -> set[str]:
+    if place.get('street'):
+        return {_street_identity(place['street'])} - {''}
+    streets = {_street_identity(_address_head(place.get(key) or '')[1])
+               for key in ('address', 'formatted_address', 'display', 'name')}
+    return streets - {''}
+
+
 def _locality_parts(address: str) -> list[str]:
     parts = [part.strip() for part in address.split(',') if part.strip()]
-    if parts and re.match(r'^\d+[a-z]?(?:[/.-]\d+[a-z]?)?\s', _fold_location(parts[0])):
+    if parts and _address_head(parts[0])[0]:
         parts = parts[1:]
     result = []
     for part in parts:
@@ -64,6 +90,7 @@ class LocationResolution:
     candidate_error_count: int = 0
     candidates: Tuple[dict, ...] = ()
     provider_ref_id: Optional[str] = None
+    rejection_reasons: Tuple[str, ...] = ()
 
 
 _ADMIN_PREFIX = re.compile(
@@ -107,6 +134,9 @@ def _admin_fields(place: dict) -> dict[str, list[str]]:
 
 def _admin_constraints(query: str, admin_hints: tuple[str, ...] = ()) -> dict[str, tuple[str, ...]]:
     """Return explicit administrative constraints grouped by semantic level."""
+    if not admin_hints:
+        from src.agents.location_parser import parse_location
+        admin_hints = getattr(parse_location(query), "admin_hints", ())
     source = list(admin_hints) or [part.strip() for part in str(query or "").split(",")]
     constraints: dict[str, list[str]] = {"ward": [], "district": [], "city": []}
     for component in source:
@@ -176,35 +206,37 @@ def _poi_name_matches(query: str, candidate: dict, place: dict) -> bool:
 
 
 def _address_matches(query: str, candidate: dict, place: dict) -> bool:
+    return not _address_validation_issues(query, place)
+
+
+def _address_validation_issues(query: str, place: dict) -> Tuple[str, ...]:
+    """Exact resolved-place evidence; search echoes cannot prove an address."""
     parts = [part.strip() for part in str(query or "").split(",") if part.strip()]
     if not parts:
-        return False
-    house_pattern = re.compile(r"^(\d{1,5}[A-Za-z]?(?:[/.-]\d{1,5}[A-Za-z]?)?)\s+", re.IGNORECASE)
-    requested_house = house_pattern.match(parts[0])
-    street = house_pattern.sub("", parts[0]).strip()
-    street_folded = _fold_location(street)
-    street_sources = " ".join(str(source.get(key) or "") for source in (place, candidate)
-                              for key in ("street", "address", "formatted_address", "display", "name"))
-    if not street_folded or street_folded not in _fold_location(street_sources):
-        return False
+        return ('street_unverified',)
+    requested_house, street = _address_head(parts[0])
+    issues = []
+    if not _street_identity(street) or _street_identity(street) not in _resolved_streets(place):
+        issues.append('street_unverified')
     if requested_house:
         # Search snippets can echo the query even when place detail disagrees,
         # so exact-address confidence comes only from resolved place evidence.
-        provider_houses = []
-        for key in ("house_number", "address", "formatted_address", "display", "name"):
-            value = str(place.get(key) or "").strip()
-            match = house_pattern.match(value)
-            if match:
-                provider_houses.append(match.group(1))
-        normalize_house = lambda value: re.sub(r"[^0-9a-z/.-]", "", _fold_location(value))
-        requested_number = normalize_house(requested_house.group(1))
-        if not provider_houses or requested_number not in {normalize_house(value) for value in provider_houses}:
-            return False
+        explicit_house = str(place.get('house_number') or '').strip()
+        provider_houses = ([explicit_house] if explicit_house else
+            [_address_head(place.get(key) or '')[0]
+             for key in ('address', 'formatted_address', 'display', 'name')])
+        provider_norm = {_fold_location(value) for value in provider_houses
+                         if value and re.fullmatch(_HOUSE_NUMBER, value, re.IGNORECASE)}
+        requested_number = _fold_location(requested_house)
+        if requested_number not in provider_norm:
+            requested_base = requested_number.split('/')[0] if '/' in requested_number else None
+            if not requested_base or requested_base not in provider_norm:
+                issues.append('house_number_unverified')
     admin_values = [value for values in _admin_fields(place).values() for value in values]
     for component in parts[1:]:
         if not any(_name_equivalent(component, canonical) for canonical in admin_values):
-            return False
-    return True
+            issues.append('administrative_component_unverified')
+    return tuple(dict.fromkeys(issues))
 
 
 def _label(candidate: dict, place: dict) -> Optional[str]:
@@ -262,14 +294,8 @@ def _bounded_candidates(rows: list[dict], limit: int = 5) -> Tuple[dict, ...]:
 
 def _address_core_matches(query: str, candidate: dict, place: dict) -> bool:
     """Recognize a relevant address preview without weakening full validation."""
-    first = next((part.strip() for part in str(query or "").split(",") if part.strip()), "")
-    house_pattern = re.compile(r"^(\d{1,5}[A-Za-z]?(?:[/.-]\d{1,5}[A-Za-z]?)?)\s+", re.IGNORECASE)
-    street = house_pattern.sub("", first).strip()
-    if not street:
-        return False
-    evidence = " ".join(str(source.get(key) or "") for source in (place, candidate)
-                        for key in ("street", "address", "formatted_address", "display", "name"))
-    return _fold_location(street) in _fold_location(evidence)
+    _, street = _address_head(query)
+    return bool(_street_identity(street)) and _street_identity(street) in _resolved_streets(place)
 
 
 def resolve_location(query: str, kind: str = "admin_area",
@@ -299,6 +325,7 @@ def resolve_location(query: str, kind: str = "admin_area",
             accepted = []
             rejected_previews = []
             rejected = 0
+            rejection_reasons = set()
             candidate_errors = 0
             successful_details = 0
             requested_locality = _locality_parts(query)
@@ -329,7 +356,13 @@ def resolve_location(query: str, kind: str = "admin_area",
                     matches = semantic_match and hints_ok
                 elif match_type == "address":
                     semantic_match = _address_core_matches(query, candidate, place)
-                    matches = _address_matches(query, candidate, place) and hints_ok
+                    address_issues = _address_validation_issues(query, place)
+                    rejection_reasons.update(address_issues)
+                    if not hints_ok:
+                        rejection_reasons.add('administrative_hint_unverified')
+                    if None in coords:
+                        rejection_reasons.add('coordinates_unavailable')
+                    matches = not address_issues and hints_ok
                 else:
                     semantic_match = False
                     matches = (
@@ -347,6 +380,14 @@ def resolve_location(query: str, kind: str = "admin_area",
                             rejected_previews.append(preview)
 
             count = len(candidates)
+            if match_type == "admin_area" and len(accepted) > 1:
+                admin_only = [
+                    (c, p) for c, p in accepted
+                    if any(str(c.get("ref_id", "")).startswith(prefix) for prefix in ("vm:WARD:", "vm:DIST:", "vm:CITY:", "vm:PROV:", "vm:ADMIN:"))
+                    or not str(c.get("ref_id", "")).startswith(("vm:POI:", "vmg:POI:"))
+                ]
+                if admin_only:
+                    accepted = admin_only
             if len(accepted) > 1:
                 previews = _bounded_candidates([
                     preview for candidate, place in accepted
@@ -391,7 +432,8 @@ def resolve_location(query: str, kind: str = "admin_area",
                                           provider_candidate_count=count,
                                           rejected_candidate_count=rejected,
                                           candidate_error_count=candidate_errors,
-                                          candidates=_bounded_candidates(rejected_previews))
+                                          candidates=_bounded_candidates(rejected_previews),
+                                          rejection_reasons=tuple(sorted(rejection_reasons)))
             candidate, place = accepted[0]
             admin = {key: values[0] for key, values in _admin_fields(place).items() if values}
             logger.info("[LocationResolve] kind=%s provider_candidates=%d accepted=1 rejected=%d status=ok basis=provider_place",
@@ -419,8 +461,8 @@ def nearby_address_origin(query: str, resolution: LocationResolution) -> Optiona
     if not constraints.get("city") or not (constraints.get("ward") or constraints.get("district")):
         return None
     parts = [part.strip() for part in query.split(',') if part.strip()]
-    street = re.sub(r"^\d{1,5}[A-Za-z]?(?:[/.-]\d{1,5}[A-Za-z]?)?\s+", "", parts[0])
-    street_key = re.sub(r"^duong\s+", "", _fold_location(street))
+    _, street = _address_head(parts[0])
+    street_key = _street_identity(street)
     if not street_key:
         return None
     points = set()
@@ -430,10 +472,8 @@ def nearby_address_origin(query: str, resolution: LocationResolution) -> Optiona
         if row.get("match_basis") != "address" or not _admin_constraints_match(
                 constraints, row.get("admin_components") or {}):
             continue
-        address = _fold_location(row.get("display_address") or "").split(',', 1)[0].strip()
-        street_pattern = (r"(?:^|(?<!\w)\d{1,5}[a-z]?(?:[/.-]\d{1,5}[a-z]?)?\s+)"
-                          r"(?:duong\s+)?" + re.escape(street_key) + r"$")
-        if not re.search(street_pattern, address):
+        _, candidate_street = _address_head(row.get('display_address') or '', embedded=True)
+        if _street_identity(candidate_street) != street_key:
             continue
         try:
             lat, lng = float(row['lat']), float(row['lng'])

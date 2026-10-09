@@ -1,0 +1,18 @@
+[
+  {
+    "id": "whole_revenue",
+    "question": "Doanh thu toàn hệ thống trong 30 ngày gần nhất",
+    "domain_id": "orders",
+    "confirmation": "offline_compiler_and_independent_fixture_arithmetic",
+    "intent": {"decision": "analyze", "requirements": [{"id": "revenue", "metric_ids": ["revenue"], "analysis_kind": "aggregate", "time": {"kind": "rolling", "amount": 30, "unit": "day"}, "derived_features": ["scalar"]}]},
+    "expectation": {"computation_scope": "full", "metric_ids": ["revenue"]}
+  },
+  {
+    "id": "voucher_share",
+    "question": "Tỷ trọng doanh thu của từng mã voucher",
+    "domain_id": "promotions",
+    "confirmation": "offline_identity_and_full_denominator_regression",
+    "intent": {"decision": "analyze", "requirements": [{"id": "voucher", "metric_ids": ["voucher_revenue"], "dimension_ids": ["promotion"], "analysis_kind": "aggregate", "derived_features": ["contribution_share"]}]},
+    "expectation": {"identity": "promotion_id", "denominator_scope": "full_voucher_population"}
+  }
+]

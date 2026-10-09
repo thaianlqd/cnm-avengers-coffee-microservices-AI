@@ -6,11 +6,6 @@ from src.rag.documents import PRODUCT_DOMAINS, normalize_text
 
 logger = logging.getLogger(__name__)
 INSUFFICIENT_MESSAGE = 'Tài liệu nội bộ chưa có đủ thông tin để trả lời câu hỏi này. Bạn có thể hỏi nhân viên để xác minh nhé.'
-# Treat instruction-shaped evidence as untrusted; do not send it to generation or echo it.
-_UNSAFE_EVIDENCE = re.compile(
-    r'ignore\s+(?:all\s+)?(?:previous|system)\s+instructions|bo qua.*(?:chi dan|huong dan).*truoc|'
-    r'system\s*prompt|api[_ ]?key|access[_ ]?token|password|(?:reveal|expose).*secret', re.I)
-
 TOOL_SEARCH_KNOWLEDGE_BASE = {
     'type': 'function', 'function': {
         'name': 'search_knowledge_base',
@@ -26,9 +21,21 @@ TOOL_SEARCH_KNOWLEDGE_BASE = {
         }, 'required': ['query']}}}
 
 
+def safe_knowledge_results(documents):
+    """Shared evidence sanitation for consultation and description discovery."""
+    from src.rag.untrusted_data import safe_evidence_text
+    return [d for d in documents if safe_evidence_text(d['content'])]
+
+
 def execute_search_knowledge_base(query, domain=None, entity_type=None, entity_id=None, source=None, session_id=None,
-                                  selected_product_id=None, reference_out=None):
-    route = knowledge_route(query)
+                                  selected_product_id=None, reference_out=None, *, semantic_route=None):
+    # Internal gateway route, never an exposed model argument. Retrieval,
+    # approved-source filters and evidence sanitation remain authoritative.
+    route = semantic_route if semantic_route is not None else knowledge_route(query)
+    if semantic_route is not None:
+        from src.rag.documents import STATIC_DOMAINS, SLOW_DOMAINS
+        if route.get('owner') != 'rag' or domain not in STATIC_DOMAINS | SLOW_DOMAINS:
+            return {'status': 'authority_required', 'results': [], 'message': INSUFFICIENT_MESSAGE}
     if route['owner'] not in {'rag', 'conversation'}:
         return {'status': 'authority_required', 'owner': route['owner'], 'results': [],
                 'message': 'Thông tin này cần tra cứu từ dịch vụ nghiệp vụ hiện tại.'}
@@ -61,11 +68,7 @@ def execute_search_knowledge_base(query, domain=None, entity_type=None, entity_i
         terms = KNOWLEDGE_TOPICS.get(filters['domain'], ()) if isinstance(filters['domain'], str) else ()
         expanded_query = query + (' ' + ' '.join(terms) if terms else '')
         result = get_rag_service().lookup(expanded_query, **filters)
-        from src.function_calling.tools import ALL_TOOL_SCHEMAS
-        internal_names = [t['function']['name'] for t in ALL_TOOL_SCHEMAS]
-        safe_results = [d for d in result['results']
-                        if not _UNSAFE_EVIDENCE.search(normalize_text(d['content']))
-                        and not any(re.search(r'(?<!\w)' + re.escape(name) + r'(?!\w)', d['content']) for name in internal_names)]
+        safe_results = safe_knowledge_results(result['results'])
         result['results'] = safe_results
         if result['status'] == 'ok' and not safe_results:
             result['status'] = 'not_found'

@@ -1,0 +1,110 @@
+{
+  "decision": "analyze",
+  "requirements": [
+    {
+      "id": "summary_aggregate",
+      "goal": "Phân tích yêu cầu",
+      "domain_id": null,
+      "lens_hint": null,
+      "metric_ids": [
+        "aov",
+        "order_count",
+        "revenue"
+      ],
+      "dimension_ids": [],
+      "analysis_kind": "aggregate",
+      "filters": [],
+      "time": {
+        "kind": "rolling",
+        "mode": null,
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": null,
+        "end": null,
+        "amount": 45,
+        "unit": "day"
+      },
+      "ranking": null,
+      "granularity": null,
+      "derived_features": [
+        "scalar"
+      ],
+      "feature_metrics": {},
+      "availability": "requested",
+      "reason": null
+    },
+    {
+      "id": "revenue_trend",
+      "goal": "Phân tích yêu cầu",
+      "domain_id": null,
+      "lens_hint": null,
+      "metric_ids": [
+        "revenue"
+      ],
+      "dimension_ids": [
+        "order_type"
+      ],
+      "analysis_kind": "trend",
+      "filters": [],
+      "time": {
+        "kind": "rolling",
+        "mode": null,
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": null,
+        "end": null,
+        "amount": 45,
+        "unit": "day"
+      },
+      "ranking": null,
+      "granularity": "week",
+      "derived_features": [],
+      "feature_metrics": {},
+      "availability": "requested",
+      "reason": null
+    },
+    {
+      "id": "revenue_by_order_type",
+      "goal": "Phân tích yêu cầu",
+      "domain_id": null,
+      "lens_hint": null,
+      "metric_ids": [
+        "revenue"
+      ],
+      "dimension_ids": [
+        "order_type"
+      ],
+      "analysis_kind": "aggregate",
+      "filters": [],
+      "time": {
+        "kind": "rolling",
+        "mode": null,
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": null,
+        "end": null,
+        "amount": 45,
+        "unit": "day"
+      },
+      "ranking": null,
+      "granularity": null,
+      "derived_features": [
+        "contribution_share"
+      ],
+      "feature_metrics": {
+        "contribution_share": [
+          "revenue"
+        ]
+      },
+      "availability": "requested",
+      "reason": null
+    }
+  ],
+  "clarification": null
+}

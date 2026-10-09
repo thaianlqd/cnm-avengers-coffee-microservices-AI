@@ -46,6 +46,29 @@ def cart_review(result):
     return '\n'.join(lines)
 
 
+def selection_options_reply(products):
+    """Each canonical selected draft keeps its own required option boundary."""
+    blocks = ['Mình đã ghi nhận các món dưới đây; **chưa vào giỏ** vì còn chờ tùy chọn:']
+    for index, product in enumerate(products, 1):
+        blocks.append(f"Món đang chọn {product.get('selection_index') or index} ×{product.get('quantity') or 1}:\n" +
+            options_prompt({'product': product, 'option_groups': product.get('option_schema') or [],
+                'missing': product.get('missing_fields') or []}))
+    return '\n\n'.join(blocks)
+
+
+def cart_read_reply(result, state):
+    """Committed lines and uncommitted selections are distinct customer facts."""
+    blocks = [cart_review(result)]
+    pending = state.get('pending_products') or []
+    if pending:
+        blocks.append('Các món đang chọn dưới đây **chưa vào giỏ**, đang chờ hoàn tất tùy chọn:')
+        for index, product in enumerate(pending, 1):
+            blocks.append(f"Món đang chọn {product.get('selection_index') or index} ×{product.get('quantity') or 1}:\n" +
+                options_prompt({'product': product, 'option_groups': product.get('option_schema') or [],
+                                'missing': product.get('missing_fields') or []}))
+    return '\n\n'.join(blocks)
+
+
 def checkout_choices(state, payment_options=()):
     prefs = state.get('checkout') or {}
     blocks = []
@@ -101,8 +124,6 @@ def options_prompt(result):
     lines = [f'Dạ, bạn chọn giúp mình các tùy chọn cho **{name}** nhé:']
     for group in groups:
         field = option_field(group['name'])
-        if missing and field not in missing:
-            continue
         suffix = (' (tùy chọn, có thể chọn nhiều; bỏ qua thì không thêm)' if field == 'toppings' and not group['required']
                   else ' (bắt buộc)' if group['required'] and not group.get('fixed') else ' (mặc định)' if group.get('fixed') else ' (tùy chọn)')
         lines.append(f"- **{group['name']}**{suffix}: " + ', '.join(group['values']))
@@ -204,15 +225,24 @@ def branch_choices(result):
 
 def customer_flow_reply(logs, state, discovery_reply=None):
     """Render only a tool-owned milestone; interruptions with no milestone stay LLM-owned."""
+    unresolved = logs[-1]['result'] if logs and logs[-1]['result'].get('recovery_kind') == 'clarify' else None
+    if unresolved:
+        committed_cart = next((row['result'] for row in reversed(logs[:-1])
+            if row['tool'] in {'add_to_cart', 'update_cart_item', 'remove_cart_item'}
+            and row['result'].get('status') in {'ok', 'already_processed'}
+            and row['result'].get('cart')), None)
+        if committed_cart:
+            return cart_review(committed_cart) + '\n\n' + unresolved['message']
+        return unresolved['message']
     login_gate = next((row['result'] for row in reversed(logs) if row['result'].get('status') == 'login_required'), None)
     if login_gate:
         return login_gate['message']
     milestones = {'add_to_cart', 'update_cart_item', 'remove_cart_item', 'finish_cart',
                   'apply_voucher', 'skip_voucher', 'remove_voucher', 'get_product_options',
-                  'set_checkout_choices', 'request_checkout', 'confirm_checkout', 'resolve_location',
+                  'set_checkout_choices', 'set_fulfillment_choice', 'set_payment_choice', 'request_checkout', 'confirm_checkout', 'resolve_location',
                   'select_location_candidate', 'find_nearest_branch', 'ask_branch', 'set_session_branch'}
     relevant = [row for row in logs if row['tool'] in milestones
-                and not (row['tool'] == 'set_checkout_choices' and row['result'].get('changed') is False)]
+                and not (row['tool'] in {'set_checkout_choices', 'set_fulfillment_choice', 'set_payment_choice'} and row['result'].get('changed') is False)]
     if not relevant:
         return None
     row = relevant[-1]
@@ -227,7 +257,7 @@ def customer_flow_reply(logs, state, discovery_reply=None):
             return customer_flow_reply(logs[:logs.index(earlier[-1])+1], state)
         return result['message']
     if result.get('status') in {'defaults_not_authorized', 'profile_location_confirmation_required', 'needs_new_location', 'login_required',
-                             'product_choice_required', 'cart_change_not_requested', 'invalid_option', 'wallet_unavailable', 'insufficient_wallet'}:
+                             'product_choice_required', 'ambiguous_product_options', 'cart_change_not_requested', 'invalid_option', 'wallet_unavailable', 'insufficient_wallet'}:
         return result['message']
     if result.get('status') == 'require_confirmation' and result.get('order_summary'):
         return checkout_summary(result['order_summary'])
@@ -246,6 +276,8 @@ def customer_flow_reply(logs, state, discovery_reply=None):
         return location_choices(result)
     if result.get('status') in {'branch_unavailable_or_unknown', 'customer_branch_selection_required'}:
         return result.get('message')
+    if name in {'resolve_location', 'select_location_candidate'} and result.get('message'):
+        return result['message']
     if name in {'request_checkout', 'confirm_checkout'}:
         return None
     if name in {'add_to_cart', 'get_product_options'} and result.get('status') == 'needs_options':
@@ -254,7 +286,25 @@ def customer_flow_reply(logs, state, discovery_reply=None):
         return None
     if name == 'get_product_options':
         return options_prompt(result) if result.get('option_groups') or result.get('options') else None
-    if name == 'set_checkout_choices':
+    if name == 'set_session_branch':
+        bname = result.get('branch_name') or ''
+        cart = (state.get('cart') or {}).get('items') or []
+        deliv = (state.get('checkout') or {}).get('delivery_type')
+        if not cart:
+            if deliv == 'MANG_DI':
+                return f"Dạ, mình đã chọn quán **{bname}** cho đơn đến lấy tại quán rồi nhé!\n\nBạn muốn xem menu món nước hay bánh của quán để chọn món ạ?"
+            if deliv == 'TAI_CHO':
+                return f"Dạ, mình đã chọn quán **{bname}** cho đơn dùng tại chỗ rồi nhé!\n\nBạn muốn xem menu món nước hay bánh của quán để chọn món ạ?"
+            return (f"Dạ, mình đã chọn quán **{bname}** cho bạn rồi nhé!\n\n"
+                    f"Bạn muốn **đến lấy tại quán (mang đi)** hay **dùng tại chỗ** ạ? "
+                    f"Bạn có thể chọn hình thức nhận và xem menu món nước hoặc bánh của quán để chọn món nhé.")
+        lead = (f"Dạ, mình đã chọn quán **{bname}** cho đơn đến lấy tại quán của bạn rồi ạ." if deliv == 'MANG_DI'
+                else f"Dạ, mình đã chọn quán **{bname}** cho đơn dùng tại chỗ của bạn rồi ạ." if deliv == 'TAI_CHO'
+                else f"Dạ, mình đã chọn quán **{bname}** cho đơn hàng của bạn rồi ạ.")
+        tail = ("Bạn muốn **đến lấy tại quán (mang đi)** hay **dùng tại chỗ** để mình chuẩn bị đơn nhé?" if not deliv
+                else checkout_choices(state, result.get('payment_options') or []) if (state.get('checkout') or {}).get('voucher_decided') and result.get('quote_status') in {None, 'ok'} else None)
+        return '\n\n'.join(part for part in (lead, cart_review(state), tail) if part)
+    if name in {'set_checkout_choices', 'set_fulfillment_choice', 'set_payment_choice'}:
         choices = result.get('choices') or {}
         labels = dict(zip(FULFILLMENT_OPTIONS, FULFILLMENT_LABELS))
         lead = 'Dạ, mình đã ghi nhận lựa chọn của bạn ạ.'
@@ -267,11 +317,26 @@ def customer_flow_reply(logs, state, discovery_reply=None):
         if (result.get('profile_location') or {}).get('status') == 'unavailable':
             lead += '\nMình chưa đọc được địa chỉ hồ sơ lúc này; bạn cho mình địa chỉ hoặc khu vực đang ở nhé.'
         tail = checkout_choices(state, result.get('payment_options') or [])
-        return lead + '\n\n' + tail if tail else None
+        return lead + '\n\n' + tail if tail else lead + '\n\nBạn có thể xem lại tóm tắt đơn hàng trước khi xác nhận nhé.'
     if name in {'add_to_cart', 'update_cart_item', 'remove_cart_item'}:
         lead = {'add_to_cart': 'Dạ, mình đã thêm món vào giỏ của bạn ạ.',
                 'update_cart_item': 'Dạ, mình đã cập nhật món theo yêu cầu của bạn ạ.',
                 'remove_cart_item': 'Dạ, mình đã xóa món bạn chọn khỏi giỏ ạ.'}[name]
+        branch_log = next((entry for entry in logs if entry['tool'] == 'set_session_branch' and entry['result'].get('status') == 'ok'), None)
+        if branch_log and name == 'add_to_cart':
+            bname = branch_log['result'].get('branch_name') or (state.get('cart') or {}).get('branch_name') or ''
+            deliv = (state.get('checkout') or {}).get('delivery_type')
+            if deliv == 'MANG_DI':
+                lead = f"Dạ, mình đã chọn quán **{bname}** cho đơn đến lấy tại quán và thêm món vào giỏ của bạn rồi ạ."
+            elif deliv == 'TAI_CHO':
+                lead = f"Dạ, mình đã chọn quán **{bname}** cho đơn dùng tại chỗ và thêm món vào giỏ của bạn rồi ạ."
+            else:
+                lead = (f"Dạ, mình đã chọn quán **{bname}** và thêm món vào giỏ của bạn rồi nhé!\n\n"
+                        f"Bạn muốn **đến lấy tại quán (mang đi)** hay **dùng tại chỗ** để mình chuẩn bị đơn nhé?")
+        if result.get('remaining_quantity') is not None:
+            lead = f"Dạ, mình đã bớt **{result['removed_quantity']}** sản phẩm ở dòng bạn chọn; còn **{result['remaining_quantity']}** trong giỏ ạ."
+        if name == 'add_to_cart' and result.get('changed') is False and result.get('message'):
+            lead = result['message']
         if result.get('previous_cart_products'):
             lead += '\n\nGiỏ của bạn đã có các món lưu từ trước: **' + ', '.join(result['previous_cart_products']) + '**.'
         return lead + '\n\n' + cart_review(result) + ('\n\n' + discovery_reply if discovery_reply else

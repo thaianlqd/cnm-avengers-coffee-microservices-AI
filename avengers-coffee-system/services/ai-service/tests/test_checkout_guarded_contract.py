@@ -77,7 +77,8 @@ def summary_fake(runtime, monkeypatch):
         action = cart_manager.get_checkout_prefs(sid)['checkout_action_id']
         cart_manager.set_pending_action(sid, 'confirm_checkout', {'action_id': action})
         return {'status': 'require_confirmation', 'message': 'Bạn xem bản tóm tắt rồi xác nhận ở lượt tiếp theo nhé.',
-            'order_summary': {'action_id': action, 'items': cart_manager.get_cart(sid)['items'], 'final_total': 70000}}
+            'order_summary': {'action_id': action, 'items': cart_manager.get_cart(sid)['items'], 'final_total': 70000,
+                'delivery_address': cart_manager.get_checkout_prefs(sid).get('delivery_address')}}
     monkeypatch.setattr(cart_tools, 'execute_request_checkout', prepare)
     return calls
 
@@ -104,7 +105,7 @@ def calls(*operations):
 def test_inventory_schema_and_action_projection(runtime):
     action = setup_checkout(runtime)
     g = gateway(runtime)
-    assert (len(CAPABILITIES), len(READS), len(WRITES)) == (39, 20, 19)
+    assert (len(CAPABILITIES), len(READS), len(WRITES)) == (44, 23, 21)
     params = next(row['function']['parameters'] for row in tool_schemas() if row['function']['name'] == 'confirm_checkout')
     assert params == {'type': 'object', 'properties': {}, 'required': [], 'additionalProperties': False}
     assert action not in model_projection(g.context)[1]
@@ -449,8 +450,12 @@ def test_real_pickup_location_bridge_and_later_branch_summary(runtime, monkeypat
     runtime.provider.steps = [calls(('set_session_branch', {'branch_id': 'branch-near'})),
         calls(('request_checkout', {})), content('Bạn xem và xác nhận bản tóm tắt nhé.')]
     result = runtime.turn('Chọn chi nhánh 1')
-    assert changed == ['branch-near'] and len(summaries) == 1 and len(geo) == 1
-    assert result['checkout_payload']['action_id'] and len(runtime.provider.requests) == 2
+    assert changed == ['branch-near'] and not summaries and len(geo) == 1
+    assert not result['checkout_payload'] and len(runtime.provider.requests) == 1
+    runtime.provider.steps = [calls(('request_checkout', {}))]
+    summary = runtime.turn('Xem bản tóm tắt đơn')
+    assert summary['checkout_payload']['action_id'] and len(summaries) == 1
+    assert len(runtime.provider.requests) == 2
 
 
 def test_real_delivery_ambiguous_candidate_bridge_preserves_summary_and_coordinates(runtime, monkeypatch):
@@ -623,3 +628,12 @@ def test_total_display_selection_can_use_either_read_beyond_initial_ui_budget(ru
     assert artifacts.response_issue(raw) is None
     artifacts.validate_reply(raw)
     assert [row['product_id'] for row in artifacts.ui['products']] == ['0', '31']
+
+
+@pytest.fixture(autouse=True)
+def exercise_scripted_gateway_without_language_shortcuts(monkeypatch):
+    # This module qualifies explicit provider proposals and gateway denials.
+    # The legacy phrase router must not preempt the proposal under test;
+    # production semantic mode never executes that router either.
+    from src.agents import llm_tool_orchestrator
+    monkeypatch.setattr(llm_tool_orchestrator, '_legacy_language_control', lambda *a: None)

@@ -424,7 +424,7 @@ def test_branch_ranking_prefers_exact_locality_using_real_branch_tool(monkeypatc
     monkeypatch.setattr(branch_tools, "_check_business_hours", lambda: None)
     monkeypatch.setattr(branch_tools, "validate_cart_at_branch",
                         lambda *_args: {"unavailable": [], "unverified": []})
-    monkeypatch.setattr(geo, "geocode_address", lambda _location: (10.77, 106.70))
+    monkeypatch.setattr(geo, "resolve_location", lambda *a: geo.LocationResolution("ok", lat=10.77, lng=106.70))
 
     result = branch_tools.execute_find_nearest_branch(
         location="Quận Gò Vấp, Thành phố Hồ Chí Minh", session_id=session)

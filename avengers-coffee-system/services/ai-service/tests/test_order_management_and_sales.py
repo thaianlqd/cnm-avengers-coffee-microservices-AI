@@ -81,7 +81,7 @@ def test_edit_patches_preserve_other_lines_and_all_toppings(runtime, service):
 @pytest.mark.parametrize('status,method,kind', [
     ('DANG_CHUAN_BI', 'VI_DIEN_TU', 'cancel_order'),
     ('HOAN_THANH', 'VI_DIEN_TU', 'cancel_order'),
-    ('MOI_TAO', 'THANH_TOAN_KHI_NHAN_HANG', 'cancel_order'),
+    ('DANG_CHUAN_BI', 'THANH_TOAN_KHI_NHAN_HANG', 'cancel_order'),
     ('DANG_CHUAN_BI', 'THANH_TOAN_KHI_NHAN_HANG', 'update_order'),
     ('MOI_TAO', 'NGAN_HANG_QR', 'update_order'),
 ])

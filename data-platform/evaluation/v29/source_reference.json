@@ -1,0 +1,202 @@
+{
+  "reference_accuracy": {
+    "status": "measured",
+    "matched_count": 206,
+    "reference_count": 206,
+    "accuracy_pct": 100.0,
+    "reference_source": "Independent read-only orders.don_hang, orders.voucher and identity.khuyen_mai, 2026-08-10..2026-10-08",
+    "reason": "Tỷ lệ assertion khớp đối chứng độc lập trong lần kiểm tra này; không phải xác suất AI trả lời đúng."
+  },
+  "reference_failures": [],
+  "live_provider_requests": 0,
+  "warehouse_writes": 0,
+  "source_summary": {
+    "voucher_orders": 1840,
+    "voucher_codes": 39,
+    "valid_revenue_codes": 35,
+    "voucher_revenue": 170733000.0,
+    "unmatched_orders": 0,
+    "program_codes": 38,
+    "unique_program_names": 12
+  },
+  "reports": [
+    {
+      "shape": "detail",
+      "provider_calls": 1,
+      "queries": 6,
+      "charts": 6,
+      "score": 90.0,
+      "checks": [
+        {
+          "id": "request_coverage",
+          "label": "Phạm vi yêu cầu",
+          "passed": 3,
+          "total": 3,
+          "status": "passed",
+          "summary": "3/3 phần yêu cầu đã thực hiện."
+        },
+        {
+          "id": "semantic_consistency",
+          "label": "Ngữ nghĩa & kế hoạch",
+          "passed": 1,
+          "total": 1,
+          "status": "passed",
+          "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+        },
+        {
+          "id": "result_integrity",
+          "label": "Kết quả dữ liệu",
+          "passed": 6,
+          "total": 6,
+          "status": "passed",
+          "summary": "6 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+        },
+        {
+          "id": "observed_values",
+          "label": "Giá trị dữ liệu quan sát",
+          "passed": 147,
+          "total": 147,
+          "status": "passed",
+          "summary": "147/147 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+        },
+        {
+          "id": "derived_features",
+          "label": "Phép tính được yêu cầu",
+          "passed": 3,
+          "total": 3,
+          "status": "passed",
+          "summary": "3/3 phép tính yêu cầu có đủ quan sát và bằng chứng."
+        },
+        {
+          "id": "evidence_grounding",
+          "label": "Bằng chứng",
+          "passed": 196,
+          "total": 196,
+          "status": "passed",
+          "summary": "196/196 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+        },
+        {
+          "id": "visualization_appropriateness",
+          "label": "Biểu đồ",
+          "passed": 12,
+          "total": 12,
+          "status": "passed",
+          "summary": "6/6 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+        },
+        {
+          "id": "limitation_disclosure",
+          "label": "Giới hạn dữ liệu",
+          "passed": 12,
+          "total": 12,
+          "status": "passed",
+          "summary": "12/12 giới hạn dữ liệu được công bố."
+        },
+        {
+          "id": "population_correctness",
+          "label": "Quần thể và mẫu số",
+          "passed": 7,
+          "total": 7,
+          "status": "passed",
+          "summary": "Kiểm tra toàn bộ kết quả không bị cắt; phần hiển thị là tiền tố có gắn tổng số nhóm. Tỷ trọng được tính lại với truy vấn mẫu số đầy đủ."
+        },
+        {
+          "id": "provenance_completeness",
+          "label": "Nguồn gốc kết quả",
+          "passed": 6,
+          "total": 6,
+          "status": "passed",
+          "summary": "Hash nội dung, truy vấn, kế hoạch và danh mục khớp kết quả đầy đủ; không xác nhận dữ liệu nguồn độc lập."
+        }
+      ]
+    },
+    {
+      "shape": "aggregate",
+      "provider_calls": 1,
+      "queries": 6,
+      "charts": 6,
+      "score": 90.0,
+      "checks": [
+        {
+          "id": "request_coverage",
+          "label": "Phạm vi yêu cầu",
+          "passed": 3,
+          "total": 3,
+          "status": "passed",
+          "summary": "3/3 phần yêu cầu đã thực hiện."
+        },
+        {
+          "id": "semantic_consistency",
+          "label": "Ngữ nghĩa & kế hoạch",
+          "passed": 1,
+          "total": 1,
+          "status": "passed",
+          "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+        },
+        {
+          "id": "result_integrity",
+          "label": "Kết quả dữ liệu",
+          "passed": 6,
+          "total": 6,
+          "status": "passed",
+          "summary": "6 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+        },
+        {
+          "id": "observed_values",
+          "label": "Giá trị dữ liệu quan sát",
+          "passed": 147,
+          "total": 147,
+          "status": "passed",
+          "summary": "147/147 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+        },
+        {
+          "id": "derived_features",
+          "label": "Phép tính được yêu cầu",
+          "passed": 3,
+          "total": 3,
+          "status": "passed",
+          "summary": "3/3 phép tính yêu cầu có đủ quan sát và bằng chứng."
+        },
+        {
+          "id": "evidence_grounding",
+          "label": "Bằng chứng",
+          "passed": 196,
+          "total": 196,
+          "status": "passed",
+          "summary": "196/196 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+        },
+        {
+          "id": "visualization_appropriateness",
+          "label": "Biểu đồ",
+          "passed": 12,
+          "total": 12,
+          "status": "passed",
+          "summary": "6/6 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+        },
+        {
+          "id": "limitation_disclosure",
+          "label": "Giới hạn dữ liệu",
+          "passed": 12,
+          "total": 12,
+          "status": "passed",
+          "summary": "12/12 giới hạn dữ liệu được công bố."
+        },
+        {
+          "id": "population_correctness",
+          "label": "Quần thể và mẫu số",
+          "passed": 7,
+          "total": 7,
+          "status": "passed",
+          "summary": "Kiểm tra toàn bộ kết quả không bị cắt; phần hiển thị là tiền tố có gắn tổng số nhóm. Tỷ trọng được tính lại với truy vấn mẫu số đầy đủ."
+        },
+        {
+          "id": "provenance_completeness",
+          "label": "Nguồn gốc kết quả",
+          "passed": 6,
+          "total": 6,
+          "status": "passed",
+          "summary": "Hash nội dung, truy vấn, kế hoạch và danh mục khớp kết quả đầy đủ; không xác nhận dữ liệu nguồn độc lập."
+        }
+      ]
+    }
+  ]
+}
