@@ -32,6 +32,49 @@ router = APIRouter(prefix="/api/ai", tags=["AI Data Assistant"])
 logger = logging.getLogger("ai-analytics")
 
 
+@router.post('/analysis-jobs', status_code=202)
+def submit_analysis_job(payload: AiTextToReportRequest, request: Request, response: Response):
+    import os
+    from services.analysis_job_service import analysis_jobs
+    if os.getenv('DATA_ANALYST_ONE_CLICK_ENABLED', '1') != '1':
+        raise HTTPException(503, 'Phân tích một lần bấm đang tạm dừng.')
+    try:
+        return analysis_jobs().submit(payload, browser_owner(request, response),
+            request.headers.get('Idempotency-Key', ''))
+    except AnalysisError as error:
+        code = 429 if error.category == 'job_busy' else 409 if error.category == 'idempotency_conflict' else 503 if error.category == 'job_storage' else 400
+        raise HTTPException(code, safe_failure(error)['message']) from None
+
+
+@router.get('/analysis-jobs/{job_id}')
+def analysis_job_status(job_id: str, request: Request, response: Response):
+    from services.analysis_job_service import analysis_jobs
+    try:
+        return analysis_jobs().status(job_id, browser_owner(request, response))
+    except AnalysisError as error:
+        raise HTTPException(503 if error.category == 'job_storage' else 404,
+            safe_failure(error)['message']) from None
+
+
+@router.post('/analysis-jobs/cancel-by-key')
+def cancel_analysis_key(request: Request, response: Response):
+    from services.analysis_job_service import analysis_jobs
+    try:
+        return analysis_jobs().cancel_key(request.headers.get('Idempotency-Key',''),browser_owner(request,response))
+    except AnalysisError as error:
+        raise HTTPException(503 if error.category=='job_storage' else 400,safe_failure(error)['message']) from None
+
+
+@router.post('/analysis-jobs/{job_id}/cancel')
+def cancel_analysis_job(job_id: str, request: Request, response: Response):
+    from services.analysis_job_service import analysis_jobs
+    try:
+        return analysis_jobs().cancel(job_id, browser_owner(request, response))
+    except AnalysisError as error:
+        raise HTTPException(503 if error.category == 'job_storage' else 404,
+            safe_failure(error)['message']) from None
+
+
 @router.get('/sessions/{session_id}/results/{query_id}')
 def result_page(session_id: str, query_id: str, request: Request, response: Response,
                 offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=200),
@@ -101,16 +144,21 @@ def ai_status():
     providers = provider_configuration()
     metadata = cache_status()
     from services.provider_health_service import provider_health
-    from services.readiness_service import readiness
+    from services.readiness_service import readiness, VERSION
+    import os
     local = readiness()
     return {
         "status": local['status'],
         "system_readiness": local,
         "provider_status": provider_health(),
         "pipeline_version": "2.8",
-        "reliability_version": '2.10.0',
+        "reliability_version": VERSION,
         "planning_mode": "hybrid_verifiable",
         "provider_call_budget": validate_single_shot_policy(),
+        "one_click": {"enabled": os.getenv('DATA_ANALYST_ONE_CLICK_ENABLED','1') == '1',
+            "job_deadline_seconds": 45, "workers_per_replica": 4,
+            "max_active_jobs": 12, "query_concurrency_per_job": 2,
+            "plan_cache_seconds": 300, "minimum_views": 4, "target_views": 5},
         "providers": providers,
         "metadata": metadata,
         "sessions": session_stats(),

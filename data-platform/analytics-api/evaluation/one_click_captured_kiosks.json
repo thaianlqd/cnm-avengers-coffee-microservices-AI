@@ -1,0 +1,238 @@
+{
+  "requirements": [
+    {
+      "filters": [
+        {
+          "dimension": "store_type",
+          "value": [
+            "KIOSK_NHUONG_QUYEN",
+            "KIOSK_VE_TINH"
+          ],
+          "operator": "in"
+        },
+        {
+          "dimension": "store_type",
+          "operator": "lt",
+          "value": "CHI_NHANH_CHINH"
+        }
+      ],
+      "goal": "Tổng doanh thu, số đơn và giá trị đơn trung bình toàn phạm vi kiosk nhượng quyền và vệ tinh (trừ chi nhánh chính) trong 30 ngày qua",
+      "metric_ids": [
+        "store_revenue",
+        "store_order_count",
+        "aov"
+      ],
+      "derived_features": [
+        "scalar",
+        "selected_total"
+      ],
+      "time": {
+        "kind": "rolling",
+        "unit": "day",
+        "amount": 30
+      },
+      "id": "overall_kpi",
+      "feature_metrics": {
+        "scalar": [
+          "store_revenue",
+          "store_order_count",
+          "aov"
+        ],
+        "selected_total": [
+          "store_revenue",
+          "store_order_count"
+        ]
+      },
+      "analysis_kind": "aggregate",
+      "availability": "requested"
+    },
+    {
+      "ranking": {
+        "direction": "top",
+        "metric_id": "store_revenue",
+        "limit": 10
+      },
+      "filters": [
+        {
+          "value": [
+            "KIOSK_NHUONG_QUYEN",
+            "KIOSK_VE_TINH"
+          ],
+          "dimension": "store_type",
+          "operator": "in"
+        }
+      ],
+      "id": "top_10_stores_revenue",
+      "feature_metrics": {
+        "top_gap": [
+          "store_revenue"
+        ],
+        "leader": [
+          "store_revenue"
+        ]
+      },
+      "availability": "requested",
+      "time": {
+        "amount": 30,
+        "kind": "rolling",
+        "unit": "day"
+      },
+      "derived_features": [
+        "leader",
+        "top_gap"
+      ],
+      "analysis_kind": "ranking",
+      "goal": "Top 10 kiosk theo doanh thu chi nhánh trong 30 ngày qua",
+      "metric_ids": [
+        "store_revenue"
+      ]
+    },
+    {
+      "goal": "Top 10 kiosk theo số đơn trong 30 ngày qua",
+      "id": "top_10_stores_orders",
+      "time": {
+        "amount": 30,
+        "unit": "day",
+        "kind": "rolling"
+      },
+      "metric_ids": [
+        "store_order_count"
+      ],
+      "availability": "requested",
+      "feature_metrics": {
+        "leader": [
+          "store_order_count"
+        ],
+        "top_gap": [
+          "store_order_count"
+        ]
+      },
+      "analysis_kind": "ranking",
+      "ranking": {
+        "limit": 10,
+        "direction": "top",
+        "metric_id": "store_order_count"
+      },
+      "derived_features": [
+        "leader",
+        "top_gap"
+      ],
+      "filters": [
+        {
+          "dimension": "store_type",
+          "value": [
+            "KIOSK_NHUONG_QUYEN",
+            "KIOSK_VE_TINH"
+          ],
+          "operator": "in"
+        }
+      ]
+    },
+    {
+      "id": "revenue_trend_by_week",
+      "goal": "Doanh thu chi nhánh theo tuần trong 30 ngày qua",
+      "feature_metrics": {
+        "change": [
+          "store_revenue"
+        ]
+      },
+      "analysis_kind": "trend",
+      "metric_ids": [
+        "store_revenue"
+      ],
+      "availability": "requested",
+      "time": {
+        "amount": 30,
+        "kind": "rolling",
+        "unit": "day"
+      },
+      "granularity": "week",
+      "derived_features": [
+        "change"
+      ],
+      "filters": [
+        {
+          "operator": "in",
+          "dimension": "store_type",
+          "value": [
+            "KIOSK_NHUONG_QUYEN",
+            "KIOSK_VE_TINH"
+          ]
+        }
+      ]
+    },
+    {
+      "filters": [
+        {
+          "operator": "in",
+          "dimension": "store_type",
+          "value": [
+            "KIOSK_NHUONG_QUYEN",
+            "KIOSK_VE_TINH"
+          ]
+        }
+      ],
+      "id": "revenue_by_city",
+      "derived_features": [
+        "concentration",
+        "contribution_share"
+      ],
+      "time": {
+        "amount": 30,
+        "kind": "rolling",
+        "unit": "day"
+      },
+      "availability": "requested",
+      "feature_metrics": {
+        "concentration": [
+          "store_revenue"
+        ],
+        "contribution_share": [
+          "store_revenue"
+        ]
+      },
+      "goal": "Doanh thu chi nhánh theo thành phố trong 30 ngày qua",
+      "analysis_kind": "aggregate",
+      "metric_ids": [
+        "store_revenue"
+      ]
+    },
+    {
+      "availability": "requested",
+      "time": {
+        "amount": 30,
+        "kind": "rolling",
+        "unit": "day"
+      },
+      "derived_features": [
+        "concentration",
+        "contribution_share"
+      ],
+      "filters": [
+        {
+          "value": [
+            "KIOSK_NHUONG_QUYEN",
+            "KIOSK_VE_TINH"
+          ],
+          "dimension": "store_type",
+          "operator": "in"
+        }
+      ],
+      "goal": "Doanh thu chi nhánh theo loại điểm bán trong 30 ngày qua",
+      "analysis_kind": "aggregate",
+      "metric_ids": [
+        "store_revenue"
+      ],
+      "id": "revenue_by_store_type",
+      "feature_metrics": {
+        "contribution_share": [
+          "store_revenue"
+        ],
+        "concentration": [
+          "store_revenue"
+        ]
+      }
+    }
+  ],
+  "decision": "analyze"
+}

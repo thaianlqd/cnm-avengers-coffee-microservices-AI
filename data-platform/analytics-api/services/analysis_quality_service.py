@@ -249,6 +249,10 @@ def assess_report(report, catalog, *, artifacts=None):
             provenance = report.get('provenance',{})
             anchors, replayed = refinement_anchors(provenance['user_request'],provenance['initial_semantic_intent'],
                 provenance.get('semantic_history', []),catalog,context.get('ui_constraints',{}),reference)
+            if 'executed_supporting_ids' in context.get('ui_constraints', {}):
+                # Replay the immutable requested meaning, then reproduce the
+                # deterministic server policy for optional work that completed.
+                replayed = AnalyticalResolver(catalog,reference,context['ui_constraints']).resolve(replayed)['intent']
             if intent_fingerprint(replayed,reference,catalog) != intent_fingerprint(intent,reference,catalog):
                 return not_scored('Lịch sử thay đổi ngữ nghĩa chưa vượt qua kiểm chứng.')
             if (verify_anchors(anchors,intent.requirements,reference,catalog)
@@ -284,7 +288,8 @@ def assess_report(report, catalog, *, artifacts=None):
     def component_label(c):
         p = DomainIntelligence(catalog).available().get(c['domain_id'])
         lens = next((l for l in p['analytical_lenses'] if l['id'] == c['lens_id']), None) if p else None
-        return lens['business_label'] if lens else p['business_label'] if p else 'Phần yêu cầu chưa được hỗ trợ'
+        return (lens['business_label'] if lens else p['business_label'] if p else
+                c['business_goal'] if c['status']=='planned' else 'Phần yêu cầu chưa được hỗ trợ')
     completed_items = [item(c['id'], component_label(c), next(iter(c['operation_ids']), None)) for c in done]
     missing_items = [item(c['id'], component_label(c)+': '+REASONS.get(c['reason'], 'Chưa thực hiện.')) for c in missing]
     claims = []

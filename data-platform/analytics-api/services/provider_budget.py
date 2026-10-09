@@ -8,6 +8,7 @@ from services.analysis_catalog import AnalysisError
 
 request_deadline = ContextVar('analysis_request_deadline', default=None)
 request_cancelled = ContextVar('analysis_request_cancelled', default=None)
+request_observer = ContextVar('analysis_request_observer', default=None)
 HTTP_DEADLINE_SECONDS = 29
 PLANNING_SECONDS = 28
 DETERMINISTIC_RESERVE = 3
@@ -102,6 +103,9 @@ class ProviderBudget:
                 if context_chars > maximum:
                     self.diagnostics["terminal_error"] = "one_shot_context_budget_exceeded"
                     raise AnalysisError("one_shot_context_budget_exceeded", "Transport context exceeds allowance")
+            observer = request_observer.get()
+            if observer is not None:
+                observer('provider_reserved', {})
             self.used += 1
             self.diagnostics.update(provider_call_count=self.used, provider_attempt_count=self.used)
 

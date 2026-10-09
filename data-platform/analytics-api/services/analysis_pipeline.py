@@ -36,6 +36,14 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "forecast_unsupported",
     }
     messages = {
+        'job_busy': 'Hệ thống đang xử lý tối đa số bài toán đồng thời. Vui lòng thử lại sau; chưa có lượt gọi AI cho yêu cầu này.',
+        'job_storage': 'Kho trạng thái tác vụ chưa sẵn sàng. Hệ thống không tự gửi lại AI khi chưa xác định trạng thái trước đó.',
+        'job_not_found': 'Không tìm thấy tác vụ thuộc trình duyệt này hoặc tác vụ đã hết hạn.',
+        'job_expired': 'Tác vụ đã hết hạn; hệ thống không tự chạy lại và tiêu thêm lượt gọi AI.',
+        'job_timeout': 'Tác vụ chưa hoàn tất trong giới hạn thời gian. Xem mã tác vụ để kiểm tra phần xử lý chưa hoàn tất.',
+        'job_cancelled': 'Tác vụ đã dừng. Kết quả xử lý sau khi dừng không được công bố.',
+        'idempotency_conflict': 'Mã tác vụ đã gắn với một câu hỏi khác. Hãy bắt đầu câu hỏi mới.',
+        'invalid_job_key': 'Yêu cầu chưa có mã tác vụ hợp lệ.',
         'resolver_internal': 'Máy chủ gặp lỗi xử lý kế hoạch phân tích. Câu hỏi được giữ nguyên; hệ thống chưa chạy truy vấn báo cáo. Cần kiểm tra lỗi bộ phân giải trên máy chủ.',
         'planning_timeout': 'Hệ thống chưa hoàn tất lập kế hoạch trong giới hạn 30 giây. Đây là lỗi xử lý hoặc thời gian phản hồi của hệ thống; câu hỏi được giữ nguyên và chưa cần bổ sung thông tin.',
         'capacity_requires_choice': 'Phạm vi và nhịp thời gian yêu cầu vượt dung lượng thực thi. Chọn khoảng thời gian ngắn hơn, ít nhóm hơn hoặc nhịp tuần/tháng; hệ thống chưa thay đổi yêu cầu của bạn.',

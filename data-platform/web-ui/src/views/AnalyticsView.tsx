@@ -7,6 +7,7 @@ import { AnalysisInputForm } from '../components/AnalysisInputForm';
 import { analysisInputPayload } from '../utils/analysisInput.mjs';
 import { analysisPlanLabel } from '../utils/analysisPresentation.mjs';
 import { reportHeading } from '../utils/analystDashboardLayout.mjs';
+import { runAnalysisJob, jobStorageKey, jobStages } from '../utils/analysisJobs.mjs';
 import React, { useState, useEffect, useRef } from 'react';
 import { usePlatformStore } from '../store/usePlatformStore';
 import { 
@@ -89,6 +90,10 @@ export const AnalyticsView: React.FC = () => {
   // Step 2: Visual preview report state
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [generatedReport, setGeneratedReport] = useState<any | null>(null);
+  const [jobStage, setJobStage] = useState('accepted');
+  const pendingJob = useRef<any>(null);
+  const jobController = useRef<AbortController | null>(null);
+  const jobEpoch = useRef(0);
   const [showSqlCode, setShowSqlCode] = useState(false);
   const [tableSearch, setTableSearch] = useState('');
   const [chatHistory, setChatHistory] = useState<Array<{ prompt: string; report: any; time: string }>>([]);
@@ -151,6 +156,15 @@ export const AnalyticsView: React.FC = () => {
 
   // Helper to reset and start a fresh question
   const handleResetToNewPrompt = () => {
+    jobEpoch.current += 1;
+    jobController.current?.abort();
+    if (pendingJob.current?.job_id) fetch(`/api/ai/analysis-jobs/${pendingJob.current.job_id}/cancel`, { method: 'POST' }).catch(() => {});
+    else if (pendingJob.current?.key) fetch('/api/ai/analysis-jobs/cancel-by-key', {
+      method: 'POST', headers: { 'Idempotency-Key': pendingJob.current.key } }).catch(() => {});
+    pendingJob.current = null;
+    sessionStorage.removeItem(jobStorageKey);
+    planningInFlight.current = false;
+    setIsGeneratingAi(false);
     setPendingClarification(null);
     setAiPrompt('');
     setAiPlan(null);
@@ -162,7 +176,78 @@ export const AnalyticsView: React.FC = () => {
     setAiStep(1);
   };
 
-  // ── Step 1: Request pre-analysis proposal from AI ──
+  const handleOneClick = async (customPrompt?: string, recovered?: any) => {
+    if (!recovered && aiStatus?.one_click?.enabled === false) {
+      handleProposePlan(customPrompt); return;
+    }
+    if (planningInFlight.current) return;
+    const prompt = (customPrompt || aiPrompt).trim();
+    if (!prompt && !recovered) return;
+    let record: any;
+    try { record = recovered || { key: crypto.randomUUID(), input: aiInput(prompt) }; }
+    catch (error: any) { showToast(error.message, 'info'); return; }
+    const epoch = ++jobEpoch.current;
+    const controller = new AbortController();
+    jobController.current = controller;
+    planningInFlight.current = true;
+    setAiPrompt(record.input.question || record.input.prompt || prompt);
+    setGeneratedReport(null); setAiPlan(null); setAiStep(3); setIsGeneratingAi(true);
+    setJobStage('accepted');
+    try {
+      const job = await runAnalysisJob(record, { signal: controller.signal,
+        onUpdate: value => { if (epoch === jobEpoch.current) setJobStage(value.state); },
+        onCheckpoint: value => {
+          pendingJob.current = value;
+          sessionStorage.setItem(jobStorageKey, JSON.stringify(value));
+        } });
+      if (epoch !== jobEpoch.current) return;
+      pendingJob.current = null; sessionStorage.removeItem(jobStorageKey);
+      const data = job.result;
+      if (job.state === 'partial_available') {
+        setAiPlan({ ...data.proposal, submittedInput: record.input,
+          prompt: record.input.question || record.input.prompt, session_id: data.session_id });
+        setAiStep(2);
+        showToast('Một phần yêu cầu chưa khả dụng. Xem phạm vi trước khi tiếp tục.', 'info');
+      } else {
+        setGeneratedReport(data);
+        if (data?.status === 'success') {
+          const time = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+          const question = record.input.question || record.input.prompt;
+          setChatHistory(previous => [{ prompt: question, report: data, time }, ...previous.filter(p => p.prompt !== question)].slice(0,8));
+          setReportVersions([{ version: 1, label: 'Báo cáo ban đầu', report: data, time }]);
+          setActiveVersionIndex(0); setRefinementChat([]);
+          showToast('Báo cáo đã sẵn sàng.', 'success');
+        } else showToast(data?.message || 'Tác vụ chưa hoàn tất.', 'info');
+      }
+    } catch (error: any) {
+      if (controller.signal.aborted || epoch !== jobEpoch.current) return;
+      const message = 'Chưa nhận được trạng thái tác vụ. Kết nối lại để tiếp tục tác vụ hiện tại.';
+      setGeneratedReport({ status: 'error', outcome: 'SYSTEM_ERROR', message,
+        issue: { category: 'JOB_CONNECTION', title: 'Chưa kết nối được với tác vụ',
+          what_is_known: [], what_is_missing: [error.message], resolution_guidance: message,
+          suggested_actions: [{ type: 'retry', label: 'Kết nối lại tác vụ' }] } });
+    } finally {
+      if (epoch === jobEpoch.current) {
+        planningInFlight.current = false; setIsGeneratingAi(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    try {
+      const record = JSON.parse(sessionStorage.getItem(jobStorageKey) || 'null');
+      if (record?.key && record?.input) {
+        setAiAnalysisContext(record.input.analysis_context || '');
+        setAiAnalysisExpectation(record.input.analysis_expectation || '');
+        setAiTimeRange(record.input.time?.mode || 'auto');
+        setAiStart(record.input.time?.start || ''); setAiEnd(record.input.time?.end || '');
+        handleOneClick(undefined, record);
+      }
+    } catch { sessionStorage.removeItem(jobStorageKey); }
+    return () => { jobEpoch.current += 1; jobController.current?.abort(); planningInFlight.current = false; };
+  }, []);
+
+  // Optional plan preview; the default action completes the whole job.
   const handleProposePlan = async (customPrompt?: string) => {
     const promptToSend = (customPrompt || aiPrompt).trim();
     if (!promptToSend) {
@@ -2508,7 +2593,7 @@ export const AnalyticsView: React.FC = () => {
                         key={idx}
                         onClick={() => {
                           setAiPrompt(tpl.prompt);
-                          handleProposePlan(tpl.prompt);
+                          handleOneClick(tpl.prompt);
                         }}
                         disabled={isProposingPlan || isGeneratingAi}
                         className="px-3.5 py-1.5 rounded-xl text-xs font-medium bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer text-slate-700 disabled:opacity-50"
@@ -2519,9 +2604,10 @@ export const AnalyticsView: React.FC = () => {
                   </div>
                 </div>
 
+                <button onClick={() => handleProposePlan()} disabled={isProposingPlan || isGeneratingAi || !aiPrompt.trim()} className="text-xs text-slate-500 underline disabled:opacity-50">Xem kế hoạch trước</button>
                 {/* Smart Omnibox Chat Input */}
                 <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 focus-within:bg-white focus-within:border-slate-400 focus-within:ring-2 focus-within:ring-slate-200/60 transition-all">
-                  <AnalysisInputForm prompt={aiPrompt} time={aiTimeRange} context={aiAnalysisContext} expectation={aiAnalysisExpectation} start={aiStart} end={aiEnd} disabled={isProposingPlan || isGeneratingAi} onPrompt={setAiPrompt} onTime={setAiTimeRange} onContext={setAiAnalysisContext} onExpectation={setAiAnalysisExpectation} onStart={setAiStart} onEnd={setAiEnd} onSubmit={() => handleProposePlan()} />
+                  <AnalysisInputForm prompt={aiPrompt} time={aiTimeRange} context={aiAnalysisContext} expectation={aiAnalysisExpectation} start={aiStart} end={aiEnd} disabled={isProposingPlan || isGeneratingAi} onPrompt={setAiPrompt} onTime={setAiTimeRange} onContext={setAiAnalysisContext} onExpectation={setAiAnalysisExpectation} onStart={setAiStart} onEnd={setAiEnd} onSubmit={() => handleOneClick()} />
                   <div className="flex justify-end gap-3 pt-3 border-t border-slate-200/60 mt-3">
                     {/* Submit Actions */}
                     <div className="flex items-center space-x-2.5 self-end sm:self-auto">
@@ -2537,11 +2623,11 @@ export const AnalyticsView: React.FC = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => handleProposePlan()}
+                        onClick={() => handleOneClick()}
                         disabled={isProposingPlan || isGeneratingAi || !aiPrompt.trim()}
                         className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-medium shadow-xs transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                       >
-                        Lập kế hoạch phân tích
+                        Phân tích
                       </button>
                     </div>
                   </div>
@@ -2798,10 +2884,10 @@ export const AnalyticsView: React.FC = () => {
                 <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-sm">
                   <div className="w-12 h-12 rounded-full border-3 border-emerald-600 border-t-transparent animate-spin mx-auto mb-4"></div>
                   <h4 className="text-sm font-bold text-slate-800">
-                    Trí tuệ nhân tạo đang phân tích & xây dựng báo cáo...
+                    {jobStages[jobStage] || 'Đang hoàn tất báo cáo'}
                   </h4>
                   <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-                    Đang thực thi các truy vấn SQL tầng Silver, trích xuất KPI, tính toán trực quan và tổng hợp nhận định chuyên sâu
+                    Hệ thống tự kiểm tra yêu cầu, lấy dữ liệu và dựng báo cáo. Bạn có thể tải lại trang để tiếp tục theo dõi tác vụ.
                   </p>
                 </div>
               )}
@@ -2811,11 +2897,12 @@ export const AnalyticsView: React.FC = () => {
                   onSnapshot={answer => { setAiPrompt(answer); setAiTimeRange('all_time'); setAiStep(1); }}
                   onModule={module => { setActiveModule(module); setAiStep(1); }}
                   onUpdate={() => { setActiveModule(null); setAiStep(1); }}
-                  onChoice={(answer) => handleProposePlan(`${aiPrompt}. ${answer}`)}
+                  onChoice={(answer) => handleOneClick(`${aiPrompt}. ${answer}`)}
                   onEdit={() => setAiStep(1)}
-                  onRetry={() => handleProposePlan()} />
+                  onRetry={() => handleOneClick(undefined, pendingJob.current || undefined)} />
               )}
 
+              {isGeneratingAi && <button onClick={handleResetToNewPrompt} className="text-sm text-slate-600 underline">Dừng phân tích</button>}
               {/* Empty state if user jumped to step 3 with no report */}
               {!isGeneratingAi && !generatedReport && (
                 <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-xs">

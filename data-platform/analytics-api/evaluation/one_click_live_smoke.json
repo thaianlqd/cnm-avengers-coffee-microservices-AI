@@ -1,0 +1,131 @@
+{
+  "method": "real_Gemini_and_warehouse_smoke_not_accuracy_estimate",
+  "authorized_total_cap": 24,
+  "conservative_total_sends_consumed": 23,
+  "scope": "Latest successful voucher qualification, deployed native UI kiosk test and final cashier qualification. Earlier failed attempts count in consumption; none are erased.",
+  "latest_successes": [
+    {
+      "job_id": "aj_190f0a4d380745119b4deae4b174e762",
+      "case": "kiosks",
+      "method": "independent_read_only_SQL_on_real_warehouse",
+      "actual_provider_calls": 2,
+      "charts": 5,
+      "job_total_ms": 8535.19,
+      "total_oracle_match": {
+        "store_revenue": true,
+        "order_count": true,
+        "aov": true
+      },
+      "top10_oracle_match": {
+        "store_revenue": true,
+        "store_order_count": true
+      }
+    },
+    {
+      "case": "vouchers",
+      "job_id": "aj_805641726f6542c7a9b7c1c04c1d8e3b",
+      "state": "completed",
+      "latency_ms": 5426.63,
+      "calls": 2,
+      "charts": 6,
+      "query_count": 8,
+      "stage_timings_ms": {
+        "queue": 6.18,
+        "accepted": 211.19,
+        "planning": 3009.75,
+        "repairing": 1472.27,
+        "validating": 162.89,
+        "executing": 272.9,
+        "verifying": 258.2
+      },
+      "outcome": "SUCCESS",
+      "error_category": null,
+      "oracle_match": {
+        "voucher_order_count": true,
+        "voucher_revenue": true,
+        "discount_amount": true
+      },
+      "warm": {
+        "state": "completed",
+        "calls": 0,
+        "latency_ms": 670.94,
+        "query_count": 0
+      }
+    },
+    {
+      "case": "cashier_shifts",
+      "job_id": "aj_4f70597d97fd4476bfa47f77f17baf8a",
+      "state": "completed",
+      "latency_ms": 12376.8,
+      "calls": 1,
+      "charts": 8,
+      "query_count": 7,
+      "stage_timings_ms": {
+        "queue": 13.73,
+        "accepted": 336.47,
+        "planning": 11404.89,
+        "validating": 134.23,
+        "executing": 170.9,
+        "verifying": 258.0
+      },
+      "outcome": "SUCCESS",
+      "error_category": null,
+      "oracle_match": {
+        "shift_count": true,
+        "late_count": true,
+        "reconciled_shifts": true,
+        "system_cash_revenue": true,
+        "total_cash_difference": true
+      },
+      "warm": {
+        "state": "completed",
+        "calls": 0,
+        "latency_ms": 570.32,
+        "query_count": 0
+      }
+    }
+  ],
+  "remaining_unspent": 1,
+  "earlier_failures_in_this_resume": [
+    {
+      "case": "kiosks",
+      "job_id": "aj_7276743256e5488ca74ca7beb934bd79",
+      "state": "failed",
+      "latency_ms": 13786.71,
+      "calls": 3,
+      "charts": 0,
+      "query_count": 0,
+      "stage_timings_ms": {
+        "queue": 13.07,
+        "accepted": 409.05,
+        "planning": 9648.84,
+        "repairing": 1827.99
+      },
+      "outcome": "SYSTEM_ERROR",
+      "error_category": "semantic_intent_invalid"
+    }
+  ],
+  "provider_reported_token_observations": [
+    {
+      "case": "kiosks_ui",
+      "input_tokens": 7970,
+      "output_tokens": 1100,
+      "cumulative_planning_input_tokens": null,
+      "cumulative_planning_output_tokens": null
+    },
+    {
+      "case": "vouchers",
+      "input_tokens": 7561,
+      "output_tokens": 1093,
+      "cumulative_planning_input_tokens": null,
+      "cumulative_planning_output_tokens": null
+    },
+    {
+      "case": "cashier_shifts",
+      "input_tokens": 3749,
+      "output_tokens": 458,
+      "cumulative_planning_input_tokens": null,
+      "cumulative_planning_output_tokens": null
+    }
+  ]
+}

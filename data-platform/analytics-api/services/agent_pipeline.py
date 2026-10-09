@@ -539,16 +539,25 @@ class AnalysisPipeline:
                     for key in ("omitted_supporting_operations", "omitted_supporting_operation_count", "limitations"):
                         self.semantic_info[key] = deepcopy(session.diagnostics.get(key, self.semantic_info[key]))
                 try:
+                    prepared = {}
                     for id, old in session.agent_artifacts.items():
                         args = old.query.model_dump(mode="json")
                         args.update(replaces=None, changed_fields=[])
                         try:
-                            agent.queries.run(agent.queries.prepare(args))
+                            prepared[id] = agent.queries.prepare(args)
                         except AnalysisError as exc:
                             if self.planning_mode != "one_shot" or old.query.role == "requested":
                                 raise
                             agent.omit(exc)
                             self.semantic_info["limitations"].append({"reason": "supporting_execution", "message": "Một kết quả hỗ trợ chưa vượt qua kiểm chứng nên đã được bỏ qua."})
+                    active, omitted = agent.queries.run_batch(prepared, allow_supporting_failure=True)
+                    for id,error in omitted.items():
+                        agent.omit(error)
+                        self.semantic_info['limitations'].append(dict(reason='supporting_execution',
+                            operation_id=id, message='Một góc nhìn hỗ trợ chưa thực thi được.'))
+                    agent.queries.artifacts = active
+                    if omitted and session.contract_version == '2.8':
+                        self.reconcile_optional_execution(session, active, catalog, reference)
                 except AnalysisError as exc:
                     self.semantic_info.update(terminal_error=exc.category)
                     if exc.category in ("execution", "result_contract"):
@@ -647,7 +656,41 @@ class AnalysisPipeline:
         self.semantic_info.update(agent_contract_status="valid", refinement_mode="structured_visual", result_reuse=True)
         return self.report(artifacts, plan, catalog, session, reference, refined=True)
 
+    def reconcile_optional_execution(self, session, artifacts, catalog, reference):
+        """Keep requested meaning; never replace failed support with unrun SQL."""
+        from services.analysis_intent import AnalysisIntentEnvelope
+        from services.analytical_resolver import AnalyticalResolver, verify_operation_bindings
+        coverage = self.semantic_info['resolved_requirement_coverage']
+        supporting = {c['id'] for c in self.semantic_info['analysis_components']
+            if c['requested_or_supporting'] == 'supporting'}
+        completed = [c['requirement_id'] for c in coverage
+            if c['requirement_id'] in supporting
+            and c['operation_ids'] and set(c['operation_ids']) <= set(artifacts)]
+        # A split optional requirement is atomic: remove its successful sibling
+        # too when the complete requirement did not execute.
+        retained = {id for c in coverage
+            if c['requirement_id'] not in supporting or c['requirement_id'] in completed
+            for id in c['operation_ids']}
+        for id in list(artifacts):
+            if id not in retained:
+                del artifacts[id]
+        session.ui_constraints['executed_supporting_ids'] = completed
+        resolved = AnalyticalResolver(catalog,reference,session.ui_constraints).resolve(
+            AnalysisIntentEnvelope.model_validate(self.semantic_info['semantic_intent']))
+        if not verify_operation_bindings(resolved['operations'], artifacts):
+            raise AnalysisError('quality_verification', 'Optional execution cannot preserve requested scope')
+        self.semantic_info.update(semantic_intent=resolved['intent'].model_dump(mode='json'),
+            semantic_intent_fingerprint=resolved['intent_fingerprint'],
+            resolved_plan_fingerprint=resolved['plan_fingerprint'],
+            resolved_operations=resolved['operations'],resolved_requirement_coverage=resolved['coverage'],
+            analysis_components=resolved['components'],derived_feature_bindings=resolved['feature_bindings'],
+            optional_execution_partial=True)
+
     def report(self, artifacts, plan, catalog, session, reference, refined=False):
+        from services.provider_budget import request_observer
+        observer = request_observer.get()
+        if observer:
+            observer('verifying', {})
         evidence = analytical_features(artifacts, catalog, self.semantic_info.get("derived_feature_bindings"))
         dashboard = build_dashboard(
             artifacts,
@@ -871,6 +914,8 @@ class AnalysisPipeline:
         response["outcome"] = "PARTIAL_AVAILABLE" if any(c["requested_or_supporting"] == "requested" and c["status"] != "planned" for c in components) else "SUCCESS"
         if response["outcome"] == "PARTIAL_AVAILABLE":
             response["completion_status"] = "partial"
+        if self.semantic_info.get('optional_execution_partial'):
+            response.update(outcome='PARTIAL_AVAILABLE', completion_status='partial')
         started_quality = time.perf_counter()
         from services.analysis_response_service import bound_response, session_report_summary
         bound_response(response, capacity_contract)

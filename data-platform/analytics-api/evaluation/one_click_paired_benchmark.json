@@ -1,0 +1,107 @@
+{
+  "method": "identical_explicit_intent_real_warehouse_fresh_SQL_warmed_metadata_scripted_provider",
+  "baseline": {
+    "phase": "baseline",
+    "case": "products",
+    "method": "scripted_provider_real_warehouse_cold_pipeline",
+    "excluded_initialization_runs": 1,
+    "sample_size": 5,
+    "actual_external_sends": 0,
+    "p50_ms": 663.56,
+    "p95_ms": 698.29,
+    "samples": [
+      {
+        "latency_ms": 613.51,
+        "charts": 8,
+        "queries": 5,
+        "scripted_interpretations": 1,
+        "observations_sha256": "862c4cd3083c7ec23c155ed9fed4a40d62b53cfcfee763456c90b5693124b46f"
+      },
+      {
+        "latency_ms": 663.56,
+        "charts": 8,
+        "queries": 5,
+        "scripted_interpretations": 1,
+        "observations_sha256": "862c4cd3083c7ec23c155ed9fed4a40d62b53cfcfee763456c90b5693124b46f"
+      },
+      {
+        "latency_ms": 639.91,
+        "charts": 8,
+        "queries": 5,
+        "scripted_interpretations": 1,
+        "observations_sha256": "862c4cd3083c7ec23c155ed9fed4a40d62b53cfcfee763456c90b5693124b46f"
+      },
+      {
+        "latency_ms": 674.48,
+        "charts": 8,
+        "queries": 5,
+        "scripted_interpretations": 1,
+        "observations_sha256": "862c4cd3083c7ec23c155ed9fed4a40d62b53cfcfee763456c90b5693124b46f"
+      },
+      {
+        "latency_ms": 698.29,
+        "charts": 8,
+        "queries": 5,
+        "scripted_interpretations": 1,
+        "observations_sha256": "862c4cd3083c7ec23c155ed9fed4a40d62b53cfcfee763456c90b5693124b46f"
+      }
+    ]
+  },
+  "candidate": {
+    "phase": "candidate",
+    "case": "products",
+    "method": "scripted_provider_real_warehouse_cold_pipeline",
+    "excluded_initialization_runs": 1,
+    "sample_size": 5,
+    "actual_external_sends": 0,
+    "p50_ms": 609.83,
+    "p95_ms": 659.12,
+    "samples": [
+      {
+        "latency_ms": 659.12,
+        "charts": 8,
+        "queries": 5,
+        "scripted_interpretations": 1,
+        "observations_sha256": "862c4cd3083c7ec23c155ed9fed4a40d62b53cfcfee763456c90b5693124b46f"
+      },
+      {
+        "latency_ms": 600.32,
+        "charts": 8,
+        "queries": 5,
+        "scripted_interpretations": 1,
+        "observations_sha256": "862c4cd3083c7ec23c155ed9fed4a40d62b53cfcfee763456c90b5693124b46f"
+      },
+      {
+        "latency_ms": 597.74,
+        "charts": 8,
+        "queries": 5,
+        "scripted_interpretations": 1,
+        "observations_sha256": "862c4cd3083c7ec23c155ed9fed4a40d62b53cfcfee763456c90b5693124b46f"
+      },
+      {
+        "latency_ms": 632.34,
+        "charts": 8,
+        "queries": 5,
+        "scripted_interpretations": 1,
+        "observations_sha256": "862c4cd3083c7ec23c155ed9fed4a40d62b53cfcfee763456c90b5693124b46f"
+      },
+      {
+        "latency_ms": 609.83,
+        "charts": 8,
+        "queries": 5,
+        "scripted_interpretations": 1,
+        "observations_sha256": "862c4cd3083c7ec23c155ed9fed4a40d62b53cfcfee763456c90b5693124b46f"
+      }
+    ]
+  },
+  "full_observations_identical": true,
+  "p50_improvement_pct": 8.1,
+  "p95_improvement_pct": 5.61,
+  "target_30pct": "not_met",
+  "general_live_p95": "not_measured",
+  "caveats": [
+    "5 measured samples per image, sequential nonrandom order, no live AI calls",
+    "One initialization run excluded; SQL forced fresh in every measured sample",
+    "No claim of 30% general end-to-end improvement or 98% model success"
+  ]
+}

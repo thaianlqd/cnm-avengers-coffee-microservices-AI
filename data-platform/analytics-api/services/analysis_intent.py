@@ -146,6 +146,33 @@ def remove_inactive_feature_bindings(intent):
     return result,changes
 
 
+def normalize_whole_scope_features(intent):
+    """Canonicalize whole-scope totals and deduplicate proven scalar work."""
+    result,changes=intent.model_copy(deep=True),[]
+    for req in result.requirements:
+        if req.availability!='requested':continue
+        if req.analysis_kind=='aggregate' and not req.dimension_ids and not req.ranking and 'selected_total' in req.derived_features:
+            req.derived_features=sorted((set(req.derived_features)-{'selected_total'})|{'scalar'})
+            req.feature_metrics.pop('selected_total',None)
+            changes.append(dict(requirement_id=req.id,field='derived_features',rule='whole_scope_total_is_scalar'))
+    for req in result.requirements:
+        if req.availability!='requested' or 'scalar' not in req.derived_features or not (
+                req.ranking or req.dimension_ids or req.analysis_kind=='trend'):continue
+        targets=req.feature_metrics.get('scalar',req.metric_ids)
+        def same_scope(other):
+            return (other.availability=='requested' and other.analysis_kind=='aggregate' and not other.ranking and
+                not other.dimension_ids and 'scalar' in other.derived_features and
+                set(targets)<=set(other.feature_metrics.get('scalar',other.metric_ids)) and
+                req.time==other.time and
+                sorted(f.model_dump_json() for f in req.filters)==sorted(f.model_dump_json() for f in other.filters))
+        existing=next((r for r in result.requirements if r.id!=req.id and same_scope(r)),None)
+        if targets and existing:
+            req.derived_features.remove('scalar');req.feature_metrics.pop('scalar',None)
+            changes.append(dict(requirement_id=req.id,field='derived_features',
+                rule='existing_identical_scalar_scope',scalar_requirement_id=existing.id))
+    return result,changes
+
+
 def decompose_scalar_draft(intent):
     """Separate an explicitly declared whole-scope KPI from its grouped view.
 
@@ -209,7 +236,29 @@ def repair_tool(issues, previous=None):
             additions = [f'repair_add_{n}' for n in range(1, 33)
                          if f'repair_add_{n}' not in existing][:max(0, 16-len(existing))]
             item = tool['parameters']['properties']['requirements']['items']
-            item['properties']['id']['enum'] = sorted(targets) + additions
+            from copy import deepcopy
+            added = deepcopy(item)
+            added['properties']['id']['enum'] = additions
+            added['required'] = sorted(set(added.get('required', [])) | {'id', 'analysis_kind', 'metric_ids'})
+            alternatives = [added] if additions else []
+            for target in sorted(targets):
+                fields = {'id'} | {i['field'] for i in issues if i.get('requirement_id') == target}
+                changed = deepcopy(item)
+                changed['properties'] = {k:v for k,v in changed['properties'].items() if k in fields}
+                changed['properties']['id']['enum'] = [target]
+                changed['required'] = ['id']; changed['additionalProperties'] = False
+                alternatives.append(changed)
+            # Define each field's type once. Branches restrict allowed keys and
+            # mandatory shape without duplicating the full time/ranking grammar.
+            # The server merge guard independently enforces frozen values.
+            item['properties']['id']['enum'] = additions + sorted(targets)
+            item['required'] = ['id']
+            item['anyOf'] = []
+            for alternative in alternatives:
+                keys = alternative['properties']
+                item['anyOf'].append(dict(type='object', additionalProperties=False,
+                    required=alternative['required'], properties={k:(v if k=='id' else {}) for k,v in keys.items()}))
+            tool['parameters']['properties']['requirements']['items'] = item
             tool['description'] = ('Repair named targets with id and corrected fields only. '
                 'Missing work must use a new repair_add ID; never resend frozen requirements. '
                 'New requirements need complete meaning, including the original time scope.')
@@ -221,6 +270,13 @@ def repair_tool(issues, previous=None):
     item['properties'] = {k:v for k,v in item['properties'].items() if k in fields}
     item['required'] = ['id']
     item['properties']['id']['enum'] = sorted(targets)
+    # Require diagnosed fields per target. Id-only patches previously consumed
+    # the remaining calls without correcting any meaning.
+    item['anyOf']=[dict(type='object',additionalProperties=False,
+        required=sorted({'id'}|{i['field'] for i in issues if i.get('requirement_id')==target}),
+        properties={k:({'type':'string','enum':[target]} if k=='id' else {})
+            for k in {'id'}|{i['field'] for i in issues if i.get('requirement_id')==target}})
+        for target in sorted(targets)]
     for field in ('domain_id','lens_hint','analysis_kind','time','ranking','granularity','reason'):
         if field in item['properties']:
             item['properties'][field]['nullable'] = True

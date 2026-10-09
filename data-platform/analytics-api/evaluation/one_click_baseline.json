@@ -1,0 +1,16 @@
+{
+  "status": "baseline_frozen",
+  "git_head": "70919080b8c94e97af01a1971716b818fb522c92",
+  "source_hashes": {
+    "data-platform/analytics-api/evals/golden.py": "08223d97fed4939772a42361ab6058a58d74fecb23e939e1dc9d64e0f9126388",
+    "data-platform/analytics-api/metadata/semantic_catalog.json": "ef82027e99804090352e8886f23dc8944c671bea552afd6a34cd40416cc12e67",
+    "data-platform/web-ui/src/views/AnalyticsView.tsx": "e2a75aae6dd960f8bf7e95735783431cc3fa52fff3246ea11a1126f2d8897bbe"
+  },
+  "live_provider_calls": 0,
+  "reported_failure": {
+    "request_id": "2ec6f18ba90f41ffbe6a1e338d5cecde",
+    "provider_calls": 3,
+    "db_queries": 0,
+    "terminal_issue": "analysis_kind_required"
+  }
+}

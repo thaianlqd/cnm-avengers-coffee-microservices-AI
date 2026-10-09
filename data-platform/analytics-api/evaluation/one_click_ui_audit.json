@@ -1,0 +1,17 @@
+{
+  "job_id": "aj_190f0a4d380745119b4deae4b174e762",
+  "case": "kiosks",
+  "method": "independent_read_only_SQL_on_real_warehouse",
+  "actual_provider_calls": 2,
+  "charts": 5,
+  "job_total_ms": 8535.19,
+  "total_oracle_match": {
+    "store_revenue": true,
+    "order_count": true,
+    "aov": true
+  },
+  "top10_oracle_match": {
+    "store_revenue": true,
+    "store_order_count": true
+  }
+}

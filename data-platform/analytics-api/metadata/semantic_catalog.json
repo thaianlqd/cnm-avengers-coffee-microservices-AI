@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 9,
   "description": "Semantic Knowledge Catalog & Comprehensive Data Dictionary cho Avengers Coffee AI — Toàn bộ CSDL Tầng Silver (19 bảng/view)",
   "silver_tables": {
     "silver.don_hang": {
@@ -2689,7 +2689,7 @@
           "tiền bán",
           "revenue",
           "Doanh thu",
-          "revenue"
+          "doanh thu đơn hàng"
         ],
         "expression": "SUM(silver.don_hang.tong_tien)",
         "source": "silver.don_hang",
@@ -2783,6 +2783,9 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
+        ],
+        "non_anchor_aliases": [
+          "đơn hàng"
         ]
       },
       "aov": {
@@ -2920,7 +2923,8 @@
           "discount_amount",
           "Tổng tiền đã giảm giá",
           "discount amount",
-          "tổng tiền giảm giá"
+          "tổng tiền giảm giá",
+          "tổng giảm giá"
         ],
         "expression": "SUM(silver.don_hang.so_tien_giam)",
         "source": "silver.don_hang",
@@ -4007,7 +4011,10 @@
           "đi trễ",
           "late_count",
           "Số ca đi trễ",
-          "late count"
+          "late count",
+          "đi muộn",
+          "số ca đi muộn",
+          "số ca đi trễ"
         ],
         "expression": "COUNT(*) FILTER (WHERE silver.ca_lam_viec_nhan_vien.trang_thai_cham_cong = 'DI_TRE')",
         "source": "silver.ca_lam_viec_nhan_vien",
@@ -4044,7 +4051,16 @@
         ],
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả."
-        ]
+        ],
+        "coverage_equivalent": {
+          "metric_id": "shift_count",
+          "filters": [
+            {
+              "dimension": "attendance_status",
+              "value": "DI_TRE"
+            }
+          ]
+        }
       },
       "total_cash_difference": {
         "business_name": "Tổng tiền chênh lệch",
@@ -4053,7 +4069,11 @@
           "lệch tiền",
           "total_cash_difference",
           "Tổng tiền chênh lệch",
-          "total cash difference"
+          "total cash difference",
+          "chênh lệch tiền mặt",
+          "chênh lệch tiền",
+          "chênh lệch quỹ",
+          "chênh lệch đối soát"
         ],
         "expression": "SUM(silver.ca_doi_soat.chenh_lech)",
         "source": "silver.ca_doi_soat",
@@ -4091,6 +4111,10 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
+        ],
+        "non_anchor_aliases": [
+          "chênh lệch",
+          "lệch tiền"
         ]
       },
       "system_cash_revenue": {
@@ -4137,6 +4161,9 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
+        ],
+        "non_anchor_aliases": [
+          "tiền mặt"
         ]
       },
       "reconciled_shifts": {
@@ -4477,7 +4504,12 @@
             "store"
           ]
         ],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "ranking_entity_aliases": [
+          "kiosk",
+          "kisok",
+          "kiốt"
+        ]
       },
       "store_id": {
         "table": "silver.chi_nhanh",
@@ -4752,7 +4784,15 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "enumerated"
+        "cardinality_hint": "enumerated",
+        "non_filter_phrases": [
+          "đối soát tiền mặt",
+          "chênh lệch tiền mặt",
+          "doanh thu tiền mặt hệ thống",
+          "tiền mặt thực tế",
+          "kiểm đếm tiền mặt",
+          "tiền mặt kỳ vọng"
+        ]
       },
       "payment_status": {
         "table": "silver.don_hang",
@@ -10852,6 +10892,15 @@
       "minimum_views": 4,
       "target_views": 5,
       "default_depth": "deep"
-    }
+    },
+    "ranking_partition_qualifiers": [
+      "trong mỗi",
+      "trong từng",
+      "cho mỗi",
+      "cho từng",
+      "mỗi danh mục",
+      "mỗi thành phố",
+      "mỗi chi nhánh"
+    ]
   }
 }

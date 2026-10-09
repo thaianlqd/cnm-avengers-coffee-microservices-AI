@@ -1,0 +1,158 @@
+{
+  "method": "replay_or_scripted_provider_with_real_PostgreSQL_and_Redis",
+  "actual_external_provider_sends": 0,
+  "cases": [
+    {
+      "case": "kiosks",
+      "job_id": "aj_568ae3fa45434652bd647fc700500efe",
+      "state": "completed",
+      "latency_ms": 1503.55,
+      "calls": 2,
+      "charts": 8,
+      "query_count": 8,
+      "stage_timings_ms": {
+        "queue": 9.01,
+        "accepted": 350.26,
+        "planning": 25.01,
+        "repairing": 32.9,
+        "validating": 185.8,
+        "executing": 317.42,
+        "verifying": 506.86
+      },
+      "outcome": "SUCCESS",
+      "error_category": null,
+      "oracle_match": {
+        "store_revenue": true,
+        "order_count": true,
+        "aov": true
+      },
+      "warm": {
+        "state": "completed",
+        "calls": 0,
+        "latency_ms": 785.74,
+        "query_count": 0
+      }
+    },
+    {
+      "case": "products",
+      "job_id": "aj_bf949be1674c478fae9c84045db88bcc",
+      "state": "completed",
+      "latency_ms": 809.05,
+      "calls": 1,
+      "charts": 8,
+      "query_count": 5,
+      "stage_timings_ms": {
+        "queue": 7.61,
+        "accepted": 154.98,
+        "planning": 18.02,
+        "validating": 113.88,
+        "executing": 237.58,
+        "verifying": 215.94
+      },
+      "outcome": "SUCCESS",
+      "error_category": null,
+      "oracle_match": {
+        "quantity_sold": true,
+        "product_revenue": true
+      },
+      "warm": {
+        "state": "completed",
+        "calls": 0,
+        "latency_ms": 550.0,
+        "query_count": 0
+      }
+    },
+    {
+      "case": "payments",
+      "job_id": "aj_4587d4ac73ff4c5da4cdac3d5cb10616",
+      "state": "completed",
+      "latency_ms": 804.63,
+      "calls": 1,
+      "charts": 8,
+      "query_count": 7,
+      "stage_timings_ms": {
+        "queue": 6.3,
+        "accepted": 170.51,
+        "planning": 18.18,
+        "validating": 119.23,
+        "executing": 199.93,
+        "verifying": 237.73
+      },
+      "outcome": "SUCCESS",
+      "error_category": null,
+      "oracle_match": {
+        "payment_count": true,
+        "payment_revenue": true
+      },
+      "warm": {
+        "state": "completed",
+        "calls": 0,
+        "latency_ms": 587.52,
+        "query_count": 0
+      }
+    },
+    {
+      "case": "vouchers",
+      "job_id": "aj_e5bfe834ab99485db1c02e807235e01e",
+      "state": "completed",
+      "latency_ms": 928.17,
+      "calls": 2,
+      "charts": 5,
+      "query_count": 7,
+      "stage_timings_ms": {
+        "queue": 5.92,
+        "accepted": 162.31,
+        "planning": 26.65,
+        "repairing": 23.36,
+        "validating": 145.68,
+        "executing": 260.47,
+        "verifying": 226.04
+      },
+      "outcome": "SUCCESS",
+      "error_category": null,
+      "oracle_match": {
+        "voucher_order_count": true,
+        "voucher_revenue": true,
+        "discount_amount": true
+      },
+      "warm": {
+        "state": "completed",
+        "calls": 0,
+        "latency_ms": 604.14,
+        "query_count": 0
+      }
+    },
+    {
+      "case": "cashier_shifts",
+      "job_id": "aj_2fbd3e37187248fcad653a5e5fbc0e37",
+      "state": "completed",
+      "latency_ms": 1047.32,
+      "calls": 1,
+      "charts": 8,
+      "query_count": 7,
+      "stage_timings_ms": {
+        "queue": 6.81,
+        "accepted": 238.91,
+        "planning": 19.07,
+        "validating": 232.25,
+        "executing": 192.02,
+        "verifying": 247.84
+      },
+      "outcome": "SUCCESS",
+      "error_category": null,
+      "oracle_match": {
+        "shift_count": true,
+        "late_count": true,
+        "reconciled_shifts": true,
+        "system_cash_revenue": true,
+        "total_cash_difference": true
+      },
+      "warm": {
+        "state": "completed",
+        "calls": 0,
+        "latency_ms": 575.62,
+        "query_count": 0
+      }
+    }
+  ]
+}

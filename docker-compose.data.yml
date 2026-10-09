@@ -346,6 +346,7 @@ services:
       # ── AI Analytics ──────────────────────────────────
       # V2.8 semantic interpretation + bounded targeted recovery, normal = 1.
       DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN: "3"
+      DATA_ANALYST_ONE_CLICK_ENABLED: ${DATA_ANALYST_ONE_CLICK_ENABLED:-1}
       DATA_ANALYST_ENABLE_CONTRACT_REPAIR: "1"
       DATA_ANALYST_ENABLE_MODEL_ESCALATION: "0"
       DATA_ANALYST_ENABLE_PROVIDER_FALLBACK: "0"
