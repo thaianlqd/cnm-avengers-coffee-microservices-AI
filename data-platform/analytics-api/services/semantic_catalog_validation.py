@@ -25,10 +25,28 @@ def validate_catalog(overlay):
                 raise ValueError('Broken metric dimensions')
             if any(f['dimension'] not in dims for f in metric.get('business_filters',[])):
                 raise ValueError('Broken population filters')
+            coverage = metric.get('coverage_equivalent')
+            if coverage:
+                base = metrics[coverage['metric_id']]
+                filters = coverage['filters']
+                if (len(filters) != 1 or metric.get('aggregation_semantics') != 'conditional_count'
+                    or base['expression'] != 'COUNT(*)' or any(metric.get(k) != base.get(k)
+                        for k in ('source','grain','time_column','business_filters','required_non_null'))):
+                    raise ValueError('Invalid conditional metric equivalence')
+                d = dims[filters[0]['dimension']]; value = filters[0]['value']
+                expected = "COUNT(*) FILTER (WHERE " + d['table'] + '.' + d['column'] + " = '" + str(value).replace("'", "''") + "')"
+                if d['table'] != base['source'] or value not in d.get('enum', []) or metric['expression'] != expected:
+                    raise ValueError('Unproven conditional metric equivalence')
             for expression in [metric['expression'],metric.get('time_column'),*metric.get('required_non_null',[])]:
                 if expression and any(t not in tables for t,c in referenced_columns(expression)):
                     raise ValueError('Unapproved expression source')
         for dim in dims.values():
+            phrases = dim.get('non_filter_phrases', [])
+            if not isinstance(phrases, list) or len(phrases)>64 or any(not isinstance(p,str) or not 3<=len(p)<=200 for p in phrases):
+                raise ValueError('Invalid descriptive value phrases')
+            aliases=dim.get('ranking_entity_aliases',[])
+            if not isinstance(aliases,list) or len(aliases)>32 or any(not isinstance(a,str) or not 3<=len(a)<=100 for a in aliases):
+                raise ValueError('Invalid ranked entity aliases')
             if dim['table'] not in tables or dim.get('identity') and dim['identity'] not in dims:
                 raise ValueError('Broken dimension references')
             for group in dim.get('value_groups',[]):

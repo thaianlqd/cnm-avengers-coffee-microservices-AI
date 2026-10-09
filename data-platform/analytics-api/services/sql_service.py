@@ -5,6 +5,22 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping, Set, Tuple
 
 from db import get_db_conn
+from contextlib import contextmanager
+
+
+@contextmanager
+def analytical_connection():
+    from services.query_execution_batch import snapshot_id, connection
+    if snapshot_id.get():
+        with connection() as conn:
+            yield conn
+    else:
+        conn = get_db_conn()
+        try:
+            yield conn
+        finally:
+            conn.rollback()
+            conn.close()
 
 
 FORBIDDEN_KEYWORDS = {
@@ -402,62 +418,56 @@ def validate_ai_query_scope(sql: str, allowed_tables: Mapping[str, Set[str]]) ->
 
 
 def execute_read_only(sql: str, row_limit: int = 500, timeout_ms: int = 12000) -> Dict[str, Any]:
+    from services.query_execution_batch import begin
+    from services.provider_budget import check_request_deadline
+    check_request_deadline()
     safe_sql = validate_read_only_sql(sql)
-    conn = get_db_conn()
     started = time.perf_counter()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("SET TRANSACTION READ ONLY")
-            cur.execute("SET LOCAL statement_timeout = %s", (int(timeout_ms),))
-            cur.execute("SET LOCAL search_path TO gold, orders, menu, identity, inventory, analytics, public")
-            cur.execute(safe_sql)
-            rows = cur.fetchmany(row_limit + 1) if cur.description else []
-            truncated = len(rows) > row_limit
-            rows = rows[:row_limit]
-            columns = [description[0] for description in cur.description] if cur.description else []
-            return {
-                "columns": columns,
-                "rows": [dict(row) for row in rows],
-                "count": len(rows),
-                "truncated": truncated,
-                "duration_ms": round((time.perf_counter() - started) * 1000, 2),
-                "sql": safe_sql,
-            }
-    except SqlSafetyError:
-        raise
-    except Exception as exc:
-        sqlstate = getattr(exc, "pgcode", None)
-        raise QueryExecutionError(str(exc).strip(), sqlstate) from exc
-    finally:
-        conn.rollback()
-        conn.close()
+    with analytical_connection() as conn:
+        try:
+            begin(conn, timeout_ms)
+            with conn.cursor() as cur:
+                cur.execute("SET LOCAL search_path TO gold, orders, menu, identity, inventory, analytics, public")
+                cur.execute(safe_sql)
+                rows = cur.fetchmany(row_limit + 1) if cur.description else []
+                truncated = len(rows) > row_limit
+                rows = rows[:row_limit]
+                columns = [description[0] for description in cur.description] if cur.description else []
+                check_request_deadline()
+                return {"columns": columns, "rows": [dict(row) for row in rows],
+                    "count": len(rows), "truncated": truncated,
+                    "duration_ms": round((time.perf_counter() - started) * 1000, 2), "sql": safe_sql}
+        except SqlSafetyError:
+            raise
+        except Exception as exc:
+            from services.analysis_catalog import AnalysisError
+            if isinstance(exc, AnalysisError):
+                raise
+            raise QueryExecutionError(str(exc).strip(), getattr(exc, "pgcode", None)) from exc
 
 
 def dry_run_sql(sql: str, timeout_ms: int = 4000) -> Tuple[bool, str]:
-    """
-    Executes EXPLAIN on the given SQL statement in a read-only transaction.
-    Returns (True, "OK") if the query passes syntax & catalog validation,
-    or (False, error_message) if it fails.
-    """
+    """EXPLAIN under the same read-only snapshot and remaining deadline."""
+    from services.query_execution_batch import begin
+    from services.provider_budget import check_request_deadline
+    check_request_deadline()
     try:
         safe_sql = validate_read_only_sql(sql)
     except SqlSafetyError as exc:
         return False, str(exc)
-    conn = get_db_conn()
     try:
-        with conn.cursor() as cur:
-            cur.execute("SET TRANSACTION READ ONLY")
-            cur.execute("SET LOCAL statement_timeout = %s", (int(timeout_ms),))
-            cur.execute("SET LOCAL search_path TO gold, orders, menu, identity, inventory, analytics, public")
-            cur.execute(f"EXPLAIN {safe_sql}")
-            return True, "OK"
+        with analytical_connection() as conn:
+            begin(conn, timeout_ms)
+            with conn.cursor() as cur:
+                cur.execute("SET LOCAL search_path TO gold, orders, menu, identity, inventory, analytics, public")
+                cur.execute(f"EXPLAIN {safe_sql}")
+                check_request_deadline()
+                return True, "OK"
     except Exception as exc:
+        from services.analysis_catalog import AnalysisError
+        if isinstance(exc, AnalysisError):
+            raise
         return False, str(exc).strip()
-    finally:
-        conn.rollback()
-        conn.close()
-
-
 
 def validate_sql_ast_security(sql: str, allowed_tables: Mapping[str, Set[str]]) -> str:
     """Additional V2 guard: bind columns in every clause and constrain functions.

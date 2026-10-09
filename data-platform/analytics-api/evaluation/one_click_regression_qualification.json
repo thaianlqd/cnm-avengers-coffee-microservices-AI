@@ -1,0 +1,31 @@
+{
+  "version": "2.13.0",
+  "backend": {
+    "passed": 754,
+    "elapsed_seconds": 348.434,
+    "offline": true,
+    "network": "none",
+    "credentials": "empty",
+    "log_sha256": "ae08cbd934db6a082401c08ced7ea2ad96c3474dcf84bf92376536fbd419400b"
+  },
+  "frontend": {
+    "passed": 115,
+    "failed": 0,
+    "typecheck": "passed",
+    "build": "passed"
+  },
+  "final_presentation_regression": "passed; completed KPI has supported label and saved-report verification agrees",
+  "snapshot": "passed in disposable isolated PostgreSQL16",
+  "rollback": "previous image passed one offline hybrid context regression; source archive retained; full production rollback not performed",
+  "source_sha256": {
+    "data-platform/analytics-api/services/analysis_job_service.py": "cd5cbbaec6138518cc2978ce5fc4ce7d9fc0c027225d47ead70018852e611de3",
+    "data-platform/analytics-api/services/query_execution_batch.py": "7b0d3610cc24ad50417670b4f3952e41e3d71925dd6272075db54433e0b93302",
+    "data-platform/analytics-api/services/request_anchors.py": "b1aa116f8f2ed41d31fc13b44d9b4d25b09160fcd77b9b400a8cd8feee61105a",
+    "data-platform/analytics-api/services/hybrid_analyst_planner.py": "7707bad6cad095b04ca9ea15448a93ce74c550f383392d78c43bd6ce058461e9",
+    "data-platform/analytics-api/services/analysis_intent.py": "bd4070e8cd552619f1bd070d4cc54149380fec533863751c27bec2f6bd0c5e50",
+    "data-platform/analytics-api/services/analytical_resolver.py": "80943c2ab09cbb57f9077d6c97b0ea01ba7c728f9cb76cc8fae9a80dad14c98b",
+    "data-platform/analytics-api/services/analysis_quality_service.py": "c158c53c12348ea79c61fba07a477fbdb7a3b746d2f974bd1230e241bc16fb61",
+    "data-platform/analytics-api/metadata/semantic_catalog.json": "c157789d4c675ce0bf01d06bce086dff53ea21f973b1c1968b9805d3d0669b6e",
+    "data-platform/web-ui/src/views/AnalyticsView.tsx": "ffe6dab44bf1aadf4cd45e1fe75db910c1f5f266e7d1d9e2feff97226140adc6"
+  }
+}

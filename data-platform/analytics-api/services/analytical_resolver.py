@@ -179,6 +179,7 @@ class AnalyticalResolver:
         # total/average. selected_total describes a Top N cohort, not this KPI.
         if req.analysis_kind=='aggregate' and not req.dimension_ids and 'selected_total' in req.derived_features:
             req.derived_features=sorted((set(req.derived_features)-{'selected_total'})|{'scalar'})
+            req.feature_metrics.pop('selected_total',None)
         # UI time outranks question time, by the documented precedence rule.
         period = self.ui.get("required_period")
         if period:
@@ -319,6 +320,9 @@ class AnalyticalResolver:
                 selected=([req.ranking.metric_id] if req.ranking and feature in ranked_features|{'contribution_share'}
                           else [m for m in req.metric_ids if feature not in additive_features or self.catalog.registry['metrics'][m].get('additive')])
             targets[feature]=set(selected)
+            if feature in ranked_features and req.ranking and set(selected)!={req.ranking.metric_id}:
+                feature_issues.append(self.issue(req,'feature_metrics','ranking_feature_target_mismatch',
+                    feature=feature,allowed_metric_ids=[req.ranking.metric_id]))
             if feature in conflicting_shapes:
                 # A malformed semantic feature is repairable interpretation,
                 # not proof that the requested business metrics are unavailable.
@@ -450,6 +454,9 @@ class AnalyticalResolver:
             support_limit=6 if self.ui.get('minimum_visuals') else 3
             capacity=min(8,AnalyticalCapacityContract.from_env().operations)
             for candidate in supporting_candidates(self,baseline['intent'].requirements):
+                if ('executed_supporting_ids' in self.ui and
+                    candidate.id not in self.ui['executed_supporting_ids']):
+                    continue
                 if candidate.id in self.ui.get('omitted_supporting_ids',[]):
                     continue
                 if len(requested)+len(selected)>=16 or added>=support_limit:

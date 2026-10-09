@@ -1,0 +1,1 @@
+{"unguarded_race_reproduced": true, "view_recursively_locked": true, "guarded_read_count": 2, "read_only_transaction": true, "locks_released": true}

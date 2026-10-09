@@ -1,0 +1,196 @@
+{
+  "requirements": [
+    {
+      "id": "req_1",
+      "domain_id": "promotions",
+      "analysis_kind": "aggregate",
+      "filters": [
+        {
+          "operator": "in",
+          "dimension": "order_status",
+          "value": [
+            "HOAN_THANH",
+            "DANG_GIAO"
+          ]
+        }
+      ],
+      "goal": "Tổng số đơn dùng voucher, doanh thu voucher và tổng giảm giá toàn hệ thống",
+      "availability": "requested",
+      "time": {
+        "unit": "day",
+        "kind": "rolling",
+        "amount": 60
+      },
+      "metric_ids": [
+        "voucher_order_count",
+        "voucher_revenue",
+        "discount_amount"
+      ]
+    },
+    {
+      "availability": "requested",
+      "domain_id": "promotions",
+      "ranking": {
+        "limit": 10,
+        "metric_id": "voucher_order_count",
+        "direction": "top",
+        "per_group": [
+          "promotion",
+          "promotion_id"
+        ]
+      },
+      "goal": "Top 10 voucher theo số đơn dùng voucher",
+      "time": {
+        "unit": "day",
+        "kind": "rolling",
+        "amount": 60
+      },
+      "filters": [
+        {
+          "dimension": "order_status",
+          "operator": "in",
+          "value": [
+            "HOAN_THANH",
+            "DANG_GIAO"
+          ]
+        }
+      ],
+      "id": "req_2",
+      "analysis_kind": "ranking",
+      "metric_ids": [
+        "voucher_order_count"
+      ],
+      "derived_features": [
+        "selected_total"
+      ]
+    },
+    {
+      "derived_features": [
+        "selected_total"
+      ],
+      "goal": "Top 10 voucher theo doanh thu voucher",
+      "availability": "requested",
+      "time": {
+        "kind": "rolling",
+        "unit": "day",
+        "amount": 60
+      },
+      "ranking": {
+        "direction": "top",
+        "metric_id": "voucher_revenue",
+        "limit": 10,
+        "per_group": [
+          "promotion",
+          "promotion_id"
+        ]
+      },
+      "domain_id": "promotions",
+      "metric_ids": [
+        "voucher_revenue"
+      ],
+      "id": "req_3",
+      "filters": [
+        {
+          "operator": "in",
+          "value": [
+            "HOAN_THANH",
+            "DANG_GIAO"
+          ],
+          "dimension": "order_status"
+        }
+      ],
+      "analysis_kind": "ranking"
+    },
+    {
+      "filters": [
+        {
+          "value": [
+            "HOAN_THANH",
+            "DANG_GIAO"
+          ],
+          "operator": "in",
+          "dimension": "order_status"
+        }
+      ],
+      "analysis_kind": "trend",
+      "availability": "requested",
+      "granularity": "week",
+      "metric_ids": [
+        "voucher_revenue"
+      ],
+      "time": {
+        "unit": "day",
+        "kind": "rolling",
+        "amount": 60
+      },
+      "goal": "Doanh thu voucher theo tuần",
+      "dimension_ids": [
+        "promotion",
+        "promotion_id"
+      ],
+      "domain_id": "promotions",
+      "id": "req_4"
+    },
+    {
+      "filters": [
+        {
+          "operator": "in",
+          "dimension": "order_status",
+          "value": [
+            "HOAN_THANH",
+            "DANG_GIAO"
+          ]
+        }
+      ],
+      "analysis_kind": "trend",
+      "granularity": "week",
+      "time": {
+        "kind": "rolling",
+        "unit": "day",
+        "amount": 60
+      },
+      "domain_id": "promotions",
+      "goal": "Tổng giảm giá theo tuần",
+      "metric_ids": [
+        "discount_amount"
+      ],
+      "dimension_ids": [
+        "promotion",
+        "promotion_id"
+      ],
+      "availability": "requested",
+      "id": "req_5"
+    },
+    {
+      "analysis_kind": "distribution",
+      "filters": [
+        {
+          "operator": "in",
+          "dimension": "order_status",
+          "value": [
+            "HOAN_THANH",
+            "DANG_GIAO"
+          ]
+        }
+      ],
+      "metric_ids": [
+        "voucher_revenue"
+      ],
+      "domain_id": "promotions",
+      "time": {
+        "amount": 60,
+        "kind": "rolling",
+        "unit": "day"
+      },
+      "dimension_ids": [
+        "city",
+        "promotion",
+        "promotion_id"
+      ],
+      "id": "req_6",
+      "goal": "Doanh thu voucher theo thành phố",
+      "availability": "requested"
+    }
+  ],
+  "decision": "analyze"
+}

@@ -1,0 +1,2504 @@
+{
+  "destination": "https://generativelanguage.googleapis.com",
+  "actual_external_sends": 0,
+  "max_total_external_sends": 12,
+  "contains": [
+    "authored questions",
+    "semantic catalog definitions and identifiers",
+    "time and scope constraints",
+    "structured output grammar"
+  ],
+  "excludes": [
+    "API keys",
+    "credentials",
+    "SQL results",
+    "customer transaction rows"
+  ],
+  "primary_requests": [
+    {
+      "case": "kiosks",
+      "system": "Extract Vietnamese business analytical meaning into one intent envelope. Each requirement states a distinct user goal once. Use semantic metric/dimension IDs in the candidate packet or vocabulary. lens_hint is optional advice. No SQL, subjects, executable IDs, parents, query roles, coverage mappings, charts or reasoning. Preserve protected input facts: explicit metrics, filters, time, ranking and derived features. Question is authoritative; context/expectation guide business focus/presentation and never override it. Structured UI time/scope outrank question; omitted time means all_time. Separate incompatible populations as business requirements without substituting meaning. Unsupported definitions (ROI without costs, forecasts) remain explicit unavailable requirements with controlled reasons. A clarification names only genuinely missing business meaning. Top N is not a complete population; contribution_share uses a server-verified denominator. No invented values, causes or history. IDs label user requirements only. Return requested work only; the server selects supporting analysis from metadata. Population-definition disclosures do not imply grouping. An average cannot have additive share. Separate whole-scope scalar KPIs from grouped views/trends. Explicit ranking criterion stays unchanged when companion metrics are displayed. A user instruction not to conclude ROI/causality is a guardrail, not a request to calculate ROI. For a feature applying to one of several displayed metrics, use feature_metrics. A table of catalog aggregations is aggregate, not raw detail. Greetings or text without an analytical goal use clarification reason not_analytical_request and missing_fields:[analysis_goal].",
+      "messages": [
+        {
+          "role": "user",
+          "content": "{\"question\":\"Trong 30 ngày gần nhất, đánh giá toàn bộ kiosk nhượng quyền và kiosk vệ tinh, loại trừ chi nhánh chính. Hiển thị tổng doanh thu chi nhánh, số đơn và giá trị đơn trung bình. Trình bày 5 góc nhìn: Top 10 kiosk theo doanh thu chi nhánh; Top 10 kiosk theo số đơn; doanh thu chi nhánh theo tuần; doanh thu chi nhánh theo thành phố; doanh thu chi nhánh theo loại điểm bán. Nêu rõ trạng thái đơn được tính, tổng toàn phạm vi và tổng Top 10.\",\"reference_date\":\"2026-10-09\",\"timezone\":\"Asia/Ho_Chi_Minh\",\"ui\":{\"user_context\":\"\",\"domain\":\"auto\",\"required_domain\":null,\"analysis_depth\":\"deep\",\"analysis_depth_explicit\":false,\"natural_input\":true,\"analysis_context\":\"\",\"analysis_expectation\":\"\",\"required_period\":null},\"semantic_candidate_packet\":{\"version\":1,\"protected_input_facts\":{\"metrics\":[{\"phrase\":\"so don\",\"candidate_ids\":[\"order_count\",\"store_order_count\",\"voucher_order_count\"],\"start\":135,\"end\":141},{\"phrase\":\"so don\",\"candidate_ids\":[\"order_count\",\"store_order_count\",\"voucher_order_count\"],\"start\":245,\"end\":251},{\"phrase\":\"gia tri don trung binh\",\"candidate_ids\":[\"aov\"],\"start\":145,\"end\":167},{\"phrase\":\"doanh thu chi nhanh\",\"candidate_ids\":[\"store_revenue\"],\"start\":115,\"end\":134},{\"phrase\":\"doanh thu chi nhanh\",\"candidate_ids\":[\"store_revenue\"],\"start\":207,\"end\":226},{\"phrase\":\"doanh thu chi nhanh\",\"candidate_ids\":[\"store_revenue\"],\"start\":252,\"end\":271},{\"phrase\":\"doanh thu chi nhanh\",\"candidate_ids\":[\"store_revenue\"],\"start\":282,\"end\":301},{\"phrase\":\"doanh thu chi nhanh\",\"candidate_ids\":[\"store_revenue\"],\"start\":317,\"end\":336}],\"dimensions\":[{\"phrase\":\"chi nhanh\",\"candidate_ids\":[\"store\"],\"start\":85,\"end\":94},{\"phrase\":\"thanh pho\",\"candidate_ids\":[\"city\"],\"start\":307,\"end\":316},{\"phrase\":\"loai diem ban\",\"candidate_ids\":[\"store_type\"],\"start\":342,\"end\":355}],\"population_scopes\":[{\"phrase\":\"neu ro trang thai don\",\"candidate_ids\":[\"order_status\"],\"start\":356,\"end\":377}],\"values\":[{\"dimension\":\"store_type\",\"value\":\"KIOSK_NHUONG_QUYEN\"},{\"dimension\":\"store_type\",\"value\":\"KIOSK_VE_TINH\"}],\"excluded_values\":[{\"dimension\":\"store_type\",\"value\":\"CHI_NHANH_CHINH\"}],\"analysis_breadth\":\"deep\",\"rankings\":[{\"direction\":\"top\",\"limit\":10,\"metric_id\":\"store_revenue\"},{\"direction\":\"top\",\"limit\":10},{\"direction\":\"top\",\"limit\":10}],\"times\":[{\"kind\":\"rolling\",\"amount\":30,\"unit\":\"day\"}],\"clause_bindings\":[{\"metric_candidates\":[\"store_revenue\"],\"dimension_id\":\"city\"},{\"metric_candidates\":[\"store_revenue\"],\"dimension_id\":\"store_type\"}],\"granularities\":[{\"phrase\":\"theo tuan\",\"candidate_ids\":[\"week\"],\"start\":272,\"end\":281}],\"ui\":{\"required_domain\":null,\"required_period\":null}},\"time\":{\"kind\":\"rolling\",\"amount\":30,\"unit\":\"day\"},\"explicit_metric_ids\":[\"aov\",\"order_count\",\"store_order_count\",\"store_revenue\",\"voucher_order_count\"],\"explicit_dimension_ids\":[\"city\",\"order_status\",\"store\",\"store_type\"],\"metrics\":[{\"id\":\"aov\",\"label\":\"Giá trị đơn trung bình\",\"unit\":\"VND\",\"definition\":\"Tổng giá trị chia số đơn trong cùng tập HOAN_THANH/DANG_GIAO. Không cộng hoặc lấy trung bình các AOV nhóm.\",\"population\":\"Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']\",\"business_filters\":[{\"dimension\":\"order_status\",\"operator\":\"in\",\"value\":[\"HOAN_THANH\",\"DANG_GIAO\"]}],\"additive\":false,\"historical\":true,\"compatible_subjects\":[\"orders\"],\"compatible_dimensions\":[\"city\",\"order_status\",\"store\",\"store_type\"]},{\"id\":\"order_count\",\"label\":\"Số lượng đơn\",\"unit\":\"đơn\",\"definition\":\"Đếm mọi đơn theo ngày tạo, gồm cả đơn hủy; không dùng làm mẫu số AOV của tập đơn hợp lệ.\",\"population\":\"Toàn bộ bản ghi của đối tượng\",\"business_filters\":[],\"additive\":true,\"historical\":true,\"compatible_subjects\":[\"orders\"],\"compatible_dimensions\":[\"city\",\"order_status\",\"store\",\"store_type\"]},{\"id\":\"store_order_count\",\"label\":\"Số đơn chi nhánh\",\"unit\":\"đơn\",\"definition\":\"Đếm mọi đơn của điểm bán, gồm cả đơn hủy; không thay thế số đơn hợp lệ khi tính AOV.\",\"population\":\"Toàn bộ bản ghi của đối tượng\",\"business_filters\":[],\"additive\":true,\"historical\":true,\"compatible_subjects\":[\"stores\"],\"compatible_dimensions\":[\"city\",\"order_status\",\"store\",\"store_type\"]},{\"id\":\"store_revenue\",\"label\":\"Doanh thu chi nhánh\",\"unit\":\"VND\",\"definition\":\"Tổng giá trị đơn HOAN_THANH/DANG_GIAO theo điểm bán, theo ngày tạo đơn.\",\"population\":\"Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']\",\"business_filters\":[{\"dimension\":\"order_status\",\"operator\":\"in\",\"value\":[\"HOAN_THANH\",\"DANG_GIAO\"]}],\"additive\":true,\"historical\":true,\"compatible_subjects\":[\"stores\"],\"compatible_dimensions\":[\"city\",\"order_status\",\"store\",\"store_type\"]},{\"id\":\"voucher_order_count\",\"label\":\"Số đơn áp dụng khuyến mãi\",\"unit\":\"đơn\",\"definition\":\"Đếm đơn có mã voucher ở mọi trạng thái; khác quần thể doanh thu đơn voucher hợp lệ.\",\"population\":\"có voucher\",\"business_filters\":[],\"additive\":true,\"historical\":true,\"compatible_subjects\":[\"promotions\"],\"compatible_dimensions\":[\"city\",\"order_status\",\"store\",\"store_type\"]}],\"dimensions\":[{\"id\":\"city\",\"label\":\"Thành phố\",\"values\":[\"Hồ Chí Minh\",\"Hà Nội\",\"Đà Nẵng\",\"Cần Thơ\",\"Hải Phòng\",\"Nghệ An\",\"Bắc Ninh\",\"Lâm Đồng\",\"Bình Dương\",\"Đồng Nai\",\"Khánh Hòa\",\"Quảng Ninh\",\"Thừa Thiên - Huế\",\"Bà Rịa - Vũng Tàu\",\"Thanh Hóa\",\"Kiên Giang\"]},{\"id\":\"order_status\",\"label\":\"Trạng thái đơn\",\"values\":[\"HOAN_THANH\",\"DANG_GIAO\",\"CHO_THANH_TOAN\",\"DA_XAC_NHAN\",\"MOI_TAO\",\"DA_HUY\"]},{\"id\":\"store\",\"label\":\"Chi nhánh\",\"values\":[]},{\"id\":\"store_type\",\"label\":\"Loại điểm bán\",\"values\":[\"CHI_NHANH_CHINH\",\"KIOSK_NHUONG_QUYEN\",\"KIOSK_VE_TINH\"]}],\"equivalent_metrics\":[],\"candidate_domains\":[\"orders\",\"promotions\",\"stores\"],\"candidate_subjects\":[\"orders\",\"promotions\",\"stores\"],\"supported_analysis_shapes\":[\"aggregate\",\"ranking\",\"trend\",\"comparison\",\"distribution\",\"cross_tab\",\"relationship\",\"detail\"],\"lens_summaries\":[{\"id\":\"order_volume\",\"label\":\"Lượng đơn và trạng thái\",\"metrics\":[\"order_count\"]},{\"id\":\"voucher_usage\",\"label\":\"Số đơn dùng voucher\",\"metrics\":[\"voucher_order_count\"]},{\"id\":\"voucher_trend\",\"label\":\"Diễn biến sử dụng voucher\",\"metrics\":[\"voucher_order_count\"]},{\"id\":\"store_volume\",\"label\":\"Lượng đơn chi nhánh\",\"metrics\":[\"store_order_count\"]},{\"id\":\"store_trend\",\"label\":\"Diễn biến chi nhánh\",\"metrics\":[\"store_revenue\"]}],\"business_caveats\":{\"distinct_populations\":\"Check each metric's population and clock; no inferred reconciliation/share.\",\"no_causal_interpretation\":\"Observed differences/associations do not establish causes.\",\"non_additive\":\"Do not sum averages or distinct people across groups/periods.\"},\"unresolved_meaning\":[{\"kind\":\"metrics\",\"candidate_ids\":[\"order_count\",\"store_order_count\",\"voucher_order_count\"]},{\"kind\":\"metrics\",\"candidate_ids\":[\"order_count\",\"store_order_count\",\"voucher_order_count\"]}]},\"features\":{\"contribution_share\":\"additive_metric_with_same_population_denominator\",\"leader\":\"ranking\",\"top_gap\":\"ranking_two_rows\",\"group_gap\":\"grouped_metric\",\"change\":\"two_complete_time_buckets\",\"change_pct\":\"two_complete_time_buckets\",\"concentration\":\"complete_additive_distribution\",\"selected_total\":\"additive_ranking\",\"relationship_strength\":\"paired_numeric_metrics\"},\"unavailable_definitions\":{\"marketing_roi\":{\"aliases\":[\"ROI\",\"marketing ROI\"],\"reason\":\"definition_unavailable\",\"limitation\":\"Chưa có chi phí marketing để tính ROI thực sự.\"},\"order_completion_rate\":{\"aliases\":[\"tỷ lệ hoàn thành đơn\",\"tỷ lệ hoàn thành\"],\"reason\":\"definition_unavailable\",\"limitation\":\"Danh mục hiện tại chưa có định nghĩa tỷ lệ hoàn thành đơn được duyệt; có thể đối chiếu số đơn theo trạng thái.\"}},\"domains\":{\"packs\":[]}}"
+        }
+      ],
+      "tools": [
+        {
+          "name": "submit_analysis_intent",
+          "description": "Return analytical meaning once. No SQL, executable IDs, coverage mappings or charts.",
+          "parameters": {
+            "properties": {
+              "decision": {
+                "enum": [
+                  "analyze",
+                  "clarification",
+                  "unsupported"
+                ],
+                "type": "string"
+              },
+              "requirements": {
+                "items": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "goal": {
+                      "description": "Display label <=120 chars preferred; not executable meaning.",
+                      "type": "string"
+                    },
+                    "domain_id": {
+                      "type": "string"
+                    },
+                    "lens_hint": {
+                      "type": "string"
+                    },
+                    "supporting_for": {
+                      "type": "string"
+                    },
+                    "metric_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "dimension_ids": {
+                      "description": "Business grouping axes only; trend period comes from granularity, not a raw timestamp.",
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "analysis_kind": {
+                      "enum": [
+                        "comparison",
+                        "aggregate",
+                        "ranking",
+                        "trend",
+                        "distribution",
+                        "detail",
+                        "cross_tab",
+                        "relationship"
+                      ],
+                      "type": "string"
+                    },
+                    "filters": {
+                      "items": {
+                        "properties": {
+                          "dimension": {
+                            "type": "string"
+                          },
+                          "operator": {
+                            "enum": [
+                              "eq",
+                              "in",
+                              "gt",
+                              "gte",
+                              "lt",
+                              "lte"
+                            ],
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "array",
+                                "items": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "boolean"
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "dimension",
+                          "value"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "time": {
+                      "description": "Omit when unspecified (all_time). Supply exactly one complete time kind.",
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "relative"
+                              ]
+                            },
+                            "mode": {
+                              "type": "string",
+                              "enum": [
+                                "current_day",
+                                "previous_day",
+                                "current_week",
+                                "previous_week",
+                                "current_month",
+                                "previous_month",
+                                "current_quarter",
+                                "previous_quarter",
+                                "current_year",
+                                "previous_year",
+                                "all_time"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "mode"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "month"
+                              ]
+                            },
+                            "month": {
+                              "type": "integer"
+                            },
+                            "year": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "month"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "quarter"
+                              ]
+                            },
+                            "quarter": {
+                              "type": "integer"
+                            },
+                            "year": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "quarter"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "year"
+                              ]
+                            },
+                            "year": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "year"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "day"
+                              ]
+                            },
+                            "month": {
+                              "type": "integer"
+                            },
+                            "day": {
+                              "type": "integer"
+                            },
+                            "year": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "month",
+                            "day"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "range"
+                              ]
+                            },
+                            "start": {
+                              "type": "string",
+                              "description": "ISO date (YYYY-MM-DD)."
+                            },
+                            "end": {
+                              "type": "string",
+                              "description": "ISO date (YYYY-MM-DD)."
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "start",
+                            "end"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "rolling"
+                              ]
+                            },
+                            "amount": {
+                              "type": "integer"
+                            },
+                            "unit": {
+                              "enum": [
+                                "day",
+                                "month"
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "amount",
+                            "unit"
+                          ]
+                        }
+                      ]
+                    },
+                    "ranking": {
+                      "properties": {
+                        "direction": {
+                          "enum": [
+                            "top",
+                            "bottom"
+                          ],
+                          "type": "string"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "metric_id": {
+                          "type": "string"
+                        },
+                        "per_group": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": [
+                        "limit"
+                      ],
+                      "type": "object"
+                    },
+                    "granularity": {
+                      "enum": [
+                        "day",
+                        "week",
+                        "month",
+                        "quarter",
+                        "year"
+                      ],
+                      "type": "string"
+                    },
+                    "derived_features": {
+                      "description": "scalar: ungrouped KPI. selected_total: sum a Top N cohort, never an average.",
+                      "items": {
+                        "enum": [
+                          "scalar",
+                          "contribution_share",
+                          "leader",
+                          "top_gap",
+                          "group_gap",
+                          "change",
+                          "change_pct",
+                          "concentration",
+                          "selected_total",
+                          "relationship_strength"
+                        ],
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "feature_metrics": {
+                      "type": "object",
+                      "description": "Targets only ACTIVE derived_features within metric_ids. Omit inactive entries and unnecessary maps.",
+                      "properties": {
+                        "scalar": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "contribution_share": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "leader": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "top_gap": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "group_gap": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "change": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "change_pct": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "concentration": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "selected_total": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "relationship_strength": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        }
+                      }
+                    },
+                    "availability": {
+                      "enum": [
+                        "requested",
+                        "needs_input",
+                        "unsupported",
+                        "insufficient_data"
+                      ],
+                      "type": "string"
+                    },
+                    "reason": {
+                      "enum": [
+                        "historical_data_unavailable",
+                        "metric_unavailable",
+                        "definition_unavailable",
+                        "ambiguous_criterion"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "clarification": {
+                "properties": {
+                  "reason": {
+                    "enum": [
+                      "metric_ambiguous",
+                      "subject_ambiguous",
+                      "time_range_ambiguous",
+                      "filter_value_unknown",
+                      "unsupported_metric",
+                      "clarification",
+                      "not_analytical_request"
+                    ],
+                    "type": "string"
+                  },
+                  "missing_fields": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "reason"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "decision"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    {
+      "case": "products",
+      "system": "Extract Vietnamese business analytical meaning into one intent envelope. Each requirement states a distinct user goal once. Use semantic metric/dimension IDs in the candidate packet or vocabulary. lens_hint is optional advice. No SQL, subjects, executable IDs, parents, query roles, coverage mappings, charts or reasoning. Preserve protected input facts: explicit metrics, filters, time, ranking and derived features. Question is authoritative; context/expectation guide business focus/presentation and never override it. Structured UI time/scope outrank question; omitted time means all_time. Separate incompatible populations as business requirements without substituting meaning. Unsupported definitions (ROI without costs, forecasts) remain explicit unavailable requirements with controlled reasons. A clarification names only genuinely missing business meaning. Top N is not a complete population; contribution_share uses a server-verified denominator. No invented values, causes or history. IDs label user requirements only. Return requested work only; the server selects supporting analysis from metadata. Population-definition disclosures do not imply grouping. An average cannot have additive share. Separate whole-scope scalar KPIs from grouped views/trends. Explicit ranking criterion stays unchanged when companion metrics are displayed. A user instruction not to conclude ROI/causality is a guardrail, not a request to calculate ROI. For a feature applying to one of several displayed metrics, use feature_metrics. A table of catalog aggregations is aggregate, not raw detail. Greetings or text without an analytical goal use clarification reason not_analytical_request and missing_fields:[analysis_goal].",
+      "messages": [
+        {
+          "role": "user",
+          "content": "{\"question\":\"Trong 30 ngày gần nhất, phân tích danh mục sản phẩm toàn hệ thống. Hiển thị tổng số lượng sản phẩm bán và doanh thu sản phẩm. Top 10 sản phẩm theo số lượng sản phẩm bán, kèm doanh thu sản phẩm; Top 10 sản phẩm theo doanh thu sản phẩm, kèm số lượng sản phẩm bán; số lượng sản phẩm bán theo danh mục; doanh thu sản phẩm theo danh mục; doanh thu sản phẩm theo tuần. Nêu rõ trạng thái đơn được tính và phân biệt tổng Top 10 với toàn bộ sản phẩm.\",\"reference_date\":\"2026-10-09\",\"timezone\":\"Asia/Ho_Chi_Minh\",\"ui\":{\"user_context\":\"\",\"domain\":\"auto\",\"required_domain\":null,\"analysis_depth\":\"deep\",\"analysis_depth_explicit\":false,\"natural_input\":true,\"analysis_context\":\"\",\"analysis_expectation\":\"\",\"required_period\":null},\"semantic_candidate_packet\":{\"version\":1,\"protected_input_facts\":{\"metrics\":[{\"phrase\":\"so luong san pham ban\",\"candidate_ids\":[\"quantity_sold\"],\"start\":79,\"end\":100},{\"phrase\":\"so luong san pham ban\",\"candidate_ids\":[\"quantity_sold\"],\"start\":144,\"end\":165},{\"phrase\":\"so luong san pham ban\",\"candidate_ids\":[\"quantity_sold\"],\"start\":233,\"end\":254},{\"phrase\":\"so luong san pham ban\",\"candidate_ids\":[\"quantity_sold\"],\"start\":255,\"end\":276},{\"phrase\":\"doanh thu san pham\",\"candidate_ids\":[\"product_revenue\"],\"start\":104,\"end\":122},{\"phrase\":\"doanh thu san pham\",\"candidate_ids\":[\"product_revenue\"],\"start\":170,\"end\":188},{\"phrase\":\"doanh thu san pham\",\"candidate_ids\":[\"product_revenue\"],\"start\":210,\"end\":228},{\"phrase\":\"doanh thu san pham\",\"candidate_ids\":[\"product_revenue\"],\"start\":291,\"end\":309},{\"phrase\":\"doanh thu san pham\",\"candidate_ids\":[\"product_revenue\"],\"start\":324,\"end\":342}],\"dimensions\":[{\"phrase\":\"san pham\",\"candidate_ids\":[\"product\"],\"start\":42,\"end\":50},{\"phrase\":\"san pham\",\"candidate_ids\":[\"product\"],\"start\":130,\"end\":138},{\"phrase\":\"san pham\",\"candidate_ids\":[\"product\"],\"start\":196,\"end\":204},{\"phrase\":\"san pham\",\"candidate_ids\":[\"product\"],\"start\":422,\"end\":430},{\"phrase\":\"danh muc\",\"candidate_ids\":[\"category\"],\"start\":33,\"end\":41},{\"phrase\":\"danh muc\",\"candidate_ids\":[\"category\"],\"start\":282,\"end\":290},{\"phrase\":\"danh muc\",\"candidate_ids\":[\"category\"],\"start\":315,\"end\":323}],\"population_scopes\":[{\"phrase\":\"neu ro trang thai don\",\"candidate_ids\":[\"order_status\"],\"start\":353,\"end\":374}],\"rankings\":[{\"direction\":\"top\",\"limit\":10,\"metric_id\":\"quantity_sold\"},{\"direction\":\"top\",\"limit\":10,\"metric_id\":\"product_revenue\"},{\"direction\":\"top\",\"limit\":10}],\"times\":[{\"kind\":\"rolling\",\"amount\":30,\"unit\":\"day\"}],\"clause_bindings\":[{\"metric_candidates\":[\"quantity_sold\"],\"dimension_id\":\"category\"},{\"metric_candidates\":[\"product_revenue\"],\"dimension_id\":\"category\"}],\"granularities\":[{\"phrase\":\"theo tuan\",\"candidate_ids\":[\"week\"],\"start\":343,\"end\":352}],\"ui\":{\"required_domain\":null,\"required_period\":null}},\"time\":{\"kind\":\"rolling\",\"amount\":30,\"unit\":\"day\"},\"explicit_metric_ids\":[\"product_revenue\",\"quantity_sold\"],\"explicit_dimension_ids\":[\"category\",\"order_status\",\"product\"],\"metrics\":[{\"id\":\"product_revenue\",\"label\":\"Doanh thu sản phẩm\",\"unit\":\"VND\",\"definition\":\"Tổng thành tiền dòng sản phẩm thuộc đơn HOAN_THANH/DANG_GIAO; không mặc định đối soát bằng doanh thu cấp đơn.\",\"population\":\"Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']\",\"business_filters\":[{\"dimension\":\"order_status\",\"operator\":\"in\",\"value\":[\"HOAN_THANH\",\"DANG_GIAO\"]}],\"additive\":true,\"historical\":true,\"compatible_subjects\":[\"products\"],\"compatible_dimensions\":[\"category\",\"order_status\",\"product\"]},{\"id\":\"quantity_sold\",\"label\":\"Số lượng sản phẩm bán\",\"unit\":\"sản phẩm\",\"definition\":\"Tổng số lượng trên dòng món thuộc đơn HOAN_THANH/DANG_GIAO; đếm số đơn vị bán, không phải số sản phẩm khác nhau.\",\"population\":\"Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']\",\"business_filters\":[{\"dimension\":\"order_status\",\"operator\":\"in\",\"value\":[\"HOAN_THANH\",\"DANG_GIAO\"]}],\"additive\":true,\"historical\":true,\"compatible_subjects\":[\"order_items\",\"products\"],\"compatible_dimensions\":[\"category\",\"order_status\",\"product\"]}],\"dimensions\":[{\"id\":\"category\",\"label\":\"Danh mục\",\"values\":[]},{\"id\":\"order_status\",\"label\":\"Trạng thái đơn\",\"values\":[\"HOAN_THANH\",\"DANG_GIAO\",\"CHO_THANH_TOAN\",\"DA_XAC_NHAN\",\"MOI_TAO\",\"DA_HUY\"]},{\"id\":\"product\",\"label\":\"Sản phẩm\",\"values\":[]}],\"equivalent_metrics\":[[\"item_revenue\",\"product_revenue\"]],\"candidate_domains\":[\"order_items\",\"orders\",\"products\"],\"candidate_subjects\":[\"order_items\",\"products\"],\"supported_analysis_shapes\":[\"aggregate\",\"ranking\",\"trend\",\"comparison\",\"distribution\",\"cross_tab\",\"relationship\",\"detail\"],\"lens_summaries\":[{\"id\":\"item_volume\",\"label\":\"Sản lượng món\",\"metrics\":[\"quantity_sold\"]},{\"id\":\"product_volume\",\"label\":\"Sản phẩm bán chạy\",\"metrics\":[\"quantity_sold\"]},{\"id\":\"product_sales\",\"label\":\"Doanh thu sản phẩm\",\"metrics\":[\"product_revenue\"]},{\"id\":\"product_trend\",\"label\":\"Diễn biến sản lượng\",\"metrics\":[\"quantity_sold\"]},{\"id\":\"category_mix\",\"label\":\"Cơ cấu danh mục\",\"metrics\":[\"quantity_sold\"]}],\"business_caveats\":{\"distinct_populations\":\"Check each metric's population and clock; no inferred reconciliation/share.\",\"no_causal_interpretation\":\"Observed differences/associations do not establish causes.\",\"non_additive\":\"Do not sum averages or distinct people across groups/periods.\"},\"unresolved_meaning\":[]},\"features\":{\"contribution_share\":\"additive_metric_with_same_population_denominator\",\"leader\":\"ranking\",\"top_gap\":\"ranking_two_rows\",\"group_gap\":\"grouped_metric\",\"change\":\"two_complete_time_buckets\",\"change_pct\":\"two_complete_time_buckets\",\"concentration\":\"complete_additive_distribution\",\"selected_total\":\"additive_ranking\",\"relationship_strength\":\"paired_numeric_metrics\"},\"unavailable_definitions\":{\"marketing_roi\":{\"aliases\":[\"ROI\",\"marketing ROI\"],\"reason\":\"definition_unavailable\",\"limitation\":\"Chưa có chi phí marketing để tính ROI thực sự.\"},\"order_completion_rate\":{\"aliases\":[\"tỷ lệ hoàn thành đơn\",\"tỷ lệ hoàn thành\"],\"reason\":\"definition_unavailable\",\"limitation\":\"Danh mục hiện tại chưa có định nghĩa tỷ lệ hoàn thành đơn được duyệt; có thể đối chiếu số đơn theo trạng thái.\"}},\"domains\":{\"packs\":[]}}"
+        }
+      ],
+      "tools": [
+        {
+          "name": "submit_analysis_intent",
+          "description": "Return analytical meaning once. No SQL, executable IDs, coverage mappings or charts.",
+          "parameters": {
+            "properties": {
+              "decision": {
+                "enum": [
+                  "analyze",
+                  "clarification",
+                  "unsupported"
+                ],
+                "type": "string"
+              },
+              "requirements": {
+                "items": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "goal": {
+                      "description": "Display label <=120 chars preferred; not executable meaning.",
+                      "type": "string"
+                    },
+                    "domain_id": {
+                      "type": "string"
+                    },
+                    "lens_hint": {
+                      "type": "string"
+                    },
+                    "supporting_for": {
+                      "type": "string"
+                    },
+                    "metric_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "dimension_ids": {
+                      "description": "Business grouping axes only; trend period comes from granularity, not a raw timestamp.",
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "analysis_kind": {
+                      "enum": [
+                        "comparison",
+                        "aggregate",
+                        "ranking",
+                        "trend",
+                        "distribution",
+                        "detail",
+                        "cross_tab",
+                        "relationship"
+                      ],
+                      "type": "string"
+                    },
+                    "filters": {
+                      "items": {
+                        "properties": {
+                          "dimension": {
+                            "type": "string"
+                          },
+                          "operator": {
+                            "enum": [
+                              "eq",
+                              "in",
+                              "gt",
+                              "gte",
+                              "lt",
+                              "lte"
+                            ],
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "array",
+                                "items": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "boolean"
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "dimension",
+                          "value"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "time": {
+                      "description": "Omit when unspecified (all_time). Supply exactly one complete time kind.",
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "relative"
+                              ]
+                            },
+                            "mode": {
+                              "type": "string",
+                              "enum": [
+                                "current_day",
+                                "previous_day",
+                                "current_week",
+                                "previous_week",
+                                "current_month",
+                                "previous_month",
+                                "current_quarter",
+                                "previous_quarter",
+                                "current_year",
+                                "previous_year",
+                                "all_time"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "mode"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "month"
+                              ]
+                            },
+                            "month": {
+                              "type": "integer"
+                            },
+                            "year": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "month"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "quarter"
+                              ]
+                            },
+                            "quarter": {
+                              "type": "integer"
+                            },
+                            "year": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "quarter"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "year"
+                              ]
+                            },
+                            "year": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "year"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "day"
+                              ]
+                            },
+                            "month": {
+                              "type": "integer"
+                            },
+                            "day": {
+                              "type": "integer"
+                            },
+                            "year": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "month",
+                            "day"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "range"
+                              ]
+                            },
+                            "start": {
+                              "type": "string",
+                              "description": "ISO date (YYYY-MM-DD)."
+                            },
+                            "end": {
+                              "type": "string",
+                              "description": "ISO date (YYYY-MM-DD)."
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "start",
+                            "end"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "rolling"
+                              ]
+                            },
+                            "amount": {
+                              "type": "integer"
+                            },
+                            "unit": {
+                              "enum": [
+                                "day",
+                                "month"
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "amount",
+                            "unit"
+                          ]
+                        }
+                      ]
+                    },
+                    "ranking": {
+                      "properties": {
+                        "direction": {
+                          "enum": [
+                            "top",
+                            "bottom"
+                          ],
+                          "type": "string"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "metric_id": {
+                          "type": "string"
+                        },
+                        "per_group": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": [
+                        "limit"
+                      ],
+                      "type": "object"
+                    },
+                    "granularity": {
+                      "enum": [
+                        "day",
+                        "week",
+                        "month",
+                        "quarter",
+                        "year"
+                      ],
+                      "type": "string"
+                    },
+                    "derived_features": {
+                      "description": "scalar: ungrouped KPI. selected_total: sum a Top N cohort, never an average.",
+                      "items": {
+                        "enum": [
+                          "scalar",
+                          "contribution_share",
+                          "leader",
+                          "top_gap",
+                          "group_gap",
+                          "change",
+                          "change_pct",
+                          "concentration",
+                          "selected_total",
+                          "relationship_strength"
+                        ],
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "feature_metrics": {
+                      "type": "object",
+                      "description": "Targets only ACTIVE derived_features within metric_ids. Omit inactive entries and unnecessary maps.",
+                      "properties": {
+                        "scalar": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "contribution_share": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "leader": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "top_gap": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "group_gap": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "change": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "change_pct": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "concentration": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "selected_total": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "relationship_strength": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        }
+                      }
+                    },
+                    "availability": {
+                      "enum": [
+                        "requested",
+                        "needs_input",
+                        "unsupported",
+                        "insufficient_data"
+                      ],
+                      "type": "string"
+                    },
+                    "reason": {
+                      "enum": [
+                        "historical_data_unavailable",
+                        "metric_unavailable",
+                        "definition_unavailable",
+                        "ambiguous_criterion"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "clarification": {
+                "properties": {
+                  "reason": {
+                    "enum": [
+                      "metric_ambiguous",
+                      "subject_ambiguous",
+                      "time_range_ambiguous",
+                      "filter_value_unknown",
+                      "unsupported_metric",
+                      "clarification",
+                      "not_analytical_request"
+                    ],
+                    "type": "string"
+                  },
+                  "missing_fields": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "reason"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "decision"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    {
+      "case": "payments",
+      "system": "Extract Vietnamese business analytical meaning into one intent envelope. Each requirement states a distinct user goal once. Use semantic metric/dimension IDs in the candidate packet or vocabulary. lens_hint is optional advice. No SQL, subjects, executable IDs, parents, query roles, coverage mappings, charts or reasoning. Preserve protected input facts: explicit metrics, filters, time, ranking and derived features. Question is authoritative; context/expectation guide business focus/presentation and never override it. Structured UI time/scope outrank question; omitted time means all_time. Separate incompatible populations as business requirements without substituting meaning. Unsupported definitions (ROI without costs, forecasts) remain explicit unavailable requirements with controlled reasons. A clarification names only genuinely missing business meaning. Top N is not a complete population; contribution_share uses a server-verified denominator. No invented values, causes or history. IDs label user requirements only. Return requested work only; the server selects supporting analysis from metadata. Population-definition disclosures do not imply grouping. An average cannot have additive share. Separate whole-scope scalar KPIs from grouped views/trends. Explicit ranking criterion stays unchanged when companion metrics are displayed. A user instruction not to conclude ROI/causality is a guardrail, not a request to calculate ROI. For a feature applying to one of several displayed metrics, use feature_metrics. A table of catalog aggregations is aggregate, not raw detail. Greetings or text without an analytical goal use clarification reason not_analytical_request and missing_fields:[analysis_goal].",
+      "messages": [
+        {
+          "role": "user",
+          "content": "{\"question\":\"Trong 30 ngày gần nhất, phân tích giao dịch thanh toán toàn hệ thống. Hiển thị tổng số giao dịch và tổng số tiền giao dịch. Số giao dịch theo cổng thanh toán; tổng số tiền giao dịch theo cổng thanh toán; số giao dịch theo trạng thái giao dịch; số giao dịch theo ngày; tổng số tiền giao dịch theo ngày. Bổ sung tổng doanh thu đơn hàng để tham khảo. Nêu rõ trạng thái và ngày ghi nhận từng nguồn; không kết luận chênh lệch giữa giao dịch và đơn hàng là thất thoát.\",\"reference_date\":\"2026-10-09\",\"timezone\":\"Asia/Ho_Chi_Minh\",\"ui\":{\"user_context\":\"\",\"domain\":\"auto\",\"required_domain\":null,\"analysis_depth\":\"deep\",\"analysis_depth_explicit\":false,\"natural_input\":true,\"analysis_context\":\"\",\"analysis_expectation\":\"\",\"required_period\":null},\"semantic_candidate_packet\":{\"version\":1,\"protected_input_facts\":{\"metrics\":[{\"phrase\":\"doanh thu don hang\",\"candidate_ids\":[\"revenue\"],\"start\":307,\"end\":325},{\"phrase\":\"so giao dich\",\"candidate_ids\":[\"payment_count\"],\"start\":82,\"end\":94},{\"phrase\":\"so giao dich\",\"candidate_ids\":[\"payment_count\"],\"start\":121,\"end\":133},{\"phrase\":\"so giao dich\",\"candidate_ids\":[\"payment_count\"],\"start\":199,\"end\":211},{\"phrase\":\"so giao dich\",\"candidate_ids\":[\"payment_count\"],\"start\":238,\"end\":250},{\"phrase\":\"tong so tien giao dich\",\"candidate_ids\":[\"payment_revenue\"],\"start\":98,\"end\":120},{\"phrase\":\"tong so tien giao dich\",\"candidate_ids\":[\"payment_revenue\"],\"start\":155,\"end\":177},{\"phrase\":\"tong so tien giao dich\",\"candidate_ids\":[\"payment_revenue\"],\"start\":261,\"end\":283}],\"dimensions\":[{\"phrase\":\"cong thanh toan\",\"candidate_ids\":[\"payment_gateway\"],\"start\":139,\"end\":154},{\"phrase\":\"cong thanh toan\",\"candidate_ids\":[\"payment_gateway\"],\"start\":183,\"end\":198},{\"phrase\":\"trang thai giao dich\",\"candidate_ids\":[\"payment_transaction_status\"],\"start\":217,\"end\":237}],\"times\":[{\"kind\":\"rolling\",\"amount\":30,\"unit\":\"day\"}],\"clause_bindings\":[{\"metric_candidates\":[\"payment_count\"],\"dimension_id\":\"payment_gateway\"},{\"metric_candidates\":[\"payment_revenue\"],\"dimension_id\":\"payment_gateway\"},{\"metric_candidates\":[\"payment_count\"],\"dimension_id\":\"payment_transaction_status\"}],\"granularities\":[{\"phrase\":\"theo ngay\",\"candidate_ids\":[\"day\"],\"start\":251,\"end\":260},{\"phrase\":\"theo ngay\",\"candidate_ids\":[\"day\"],\"start\":284,\"end\":293}],\"ui\":{\"required_domain\":null,\"required_period\":null}},\"time\":{\"kind\":\"rolling\",\"amount\":30,\"unit\":\"day\"},\"explicit_metric_ids\":[\"payment_count\",\"payment_revenue\",\"revenue\"],\"explicit_dimension_ids\":[\"payment_gateway\",\"payment_transaction_status\"],\"metrics\":[{\"id\":\"payment_count\",\"label\":\"Số giao dịch\",\"unit\":\"lượt\",\"definition\":\"Đếm mọi giao dịch theo ngày tạo giao dịch, gồm mọi trạng thái; không mặc định bằng số đơn thanh toán thành công.\",\"population\":\"Toàn bộ bản ghi của đối tượng\",\"business_filters\":[],\"additive\":true,\"historical\":true,\"compatible_subjects\":[\"payments\"],\"compatible_dimensions\":[\"order_status\",\"payment_gateway\",\"payment_transaction_status\"]},{\"id\":\"payment_revenue\",\"label\":\"Doanh thu thanh toán\",\"unit\":\"VND\",\"definition\":\"Tổng số tiền giao dịch theo ngày tạo giao dịch, gồm mọi trạng thái; không mặc định là doanh thu thuần hoặc dòng tiền thành công.\",\"population\":\"Mọi giao dịch thanh toán, gồm mọi trạng thái; thời gian theo ngày tạo giao dịch. Không đồng nhất với doanh thu đơn hàng.\",\"business_filters\":[],\"additive\":true,\"historical\":true,\"compatible_subjects\":[\"payments\"],\"compatible_dimensions\":[\"order_status\",\"payment_gateway\",\"payment_transaction_status\"]},{\"id\":\"revenue\",\"label\":\"Doanh thu\",\"unit\":\"VND\",\"definition\":\"Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.\",\"population\":\"Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']\",\"business_filters\":[{\"dimension\":\"order_status\",\"operator\":\"in\",\"value\":[\"HOAN_THANH\",\"DANG_GIAO\"]}],\"additive\":true,\"historical\":true,\"compatible_subjects\":[\"orders\"],\"compatible_dimensions\":[\"order_status\"]}],\"dimensions\":[{\"id\":\"order_status\",\"label\":\"Trạng thái đơn\",\"values\":[\"HOAN_THANH\",\"DANG_GIAO\",\"CHO_THANH_TOAN\",\"DA_XAC_NHAN\",\"MOI_TAO\",\"DA_HUY\"]},{\"id\":\"payment_gateway\",\"label\":\"Cổng thanh toán\",\"values\":[]},{\"id\":\"payment_transaction_status\",\"label\":\"Trạng thái giao dịch\",\"values\":[]}],\"equivalent_metrics\":[],\"candidate_domains\":[\"cashier_reconciliation\",\"orders\",\"payments\"],\"candidate_subjects\":[\"orders\",\"payments\"],\"supported_analysis_shapes\":[\"aggregate\",\"ranking\",\"trend\",\"comparison\",\"distribution\",\"cross_tab\",\"relationship\",\"detail\"],\"lens_summaries\":[{\"id\":\"sales_trend\",\"label\":\"Diễn biến bán hàng\",\"metrics\":[\"revenue\"]},{\"id\":\"channel_mix\",\"label\":\"Cơ cấu kênh bán\",\"metrics\":[\"revenue\"]},{\"id\":\"payment_mix\",\"label\":\"Cơ cấu giao dịch\",\"metrics\":[\"payment_count\"]},{\"id\":\"payment_value\",\"label\":\"Giá trị giao dịch\",\"metrics\":[\"payment_revenue\"]},{\"id\":\"payment_trend\",\"label\":\"Diễn biến thanh toán\",\"metrics\":[\"payment_count\",\"payment_revenue\"]}],\"business_caveats\":{\"distinct_populations\":\"Check each metric's population and clock; no inferred reconciliation/share.\",\"no_causal_interpretation\":\"Observed differences/associations do not establish causes.\",\"non_additive\":\"Do not sum averages or distinct people across groups/periods.\"},\"unresolved_meaning\":[]},\"features\":{\"contribution_share\":\"additive_metric_with_same_population_denominator\",\"leader\":\"ranking\",\"top_gap\":\"ranking_two_rows\",\"group_gap\":\"grouped_metric\",\"change\":\"two_complete_time_buckets\",\"change_pct\":\"two_complete_time_buckets\",\"concentration\":\"complete_additive_distribution\",\"selected_total\":\"additive_ranking\",\"relationship_strength\":\"paired_numeric_metrics\"},\"unavailable_definitions\":{\"marketing_roi\":{\"aliases\":[\"ROI\",\"marketing ROI\"],\"reason\":\"definition_unavailable\",\"limitation\":\"Chưa có chi phí marketing để tính ROI thực sự.\"},\"order_completion_rate\":{\"aliases\":[\"tỷ lệ hoàn thành đơn\",\"tỷ lệ hoàn thành\"],\"reason\":\"definition_unavailable\",\"limitation\":\"Danh mục hiện tại chưa có định nghĩa tỷ lệ hoàn thành đơn được duyệt; có thể đối chiếu số đơn theo trạng thái.\"}},\"domains\":{\"packs\":[]}}"
+        }
+      ],
+      "tools": [
+        {
+          "name": "submit_analysis_intent",
+          "description": "Return analytical meaning once. No SQL, executable IDs, coverage mappings or charts.",
+          "parameters": {
+            "properties": {
+              "decision": {
+                "enum": [
+                  "analyze",
+                  "clarification",
+                  "unsupported"
+                ],
+                "type": "string"
+              },
+              "requirements": {
+                "items": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "goal": {
+                      "description": "Display label <=120 chars preferred; not executable meaning.",
+                      "type": "string"
+                    },
+                    "domain_id": {
+                      "type": "string"
+                    },
+                    "lens_hint": {
+                      "type": "string"
+                    },
+                    "supporting_for": {
+                      "type": "string"
+                    },
+                    "metric_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "dimension_ids": {
+                      "description": "Business grouping axes only; trend period comes from granularity, not a raw timestamp.",
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "analysis_kind": {
+                      "enum": [
+                        "comparison",
+                        "aggregate",
+                        "ranking",
+                        "trend",
+                        "distribution",
+                        "detail",
+                        "cross_tab",
+                        "relationship"
+                      ],
+                      "type": "string"
+                    },
+                    "filters": {
+                      "items": {
+                        "properties": {
+                          "dimension": {
+                            "type": "string"
+                          },
+                          "operator": {
+                            "enum": [
+                              "eq",
+                              "in",
+                              "gt",
+                              "gte",
+                              "lt",
+                              "lte"
+                            ],
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "array",
+                                "items": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "boolean"
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "dimension",
+                          "value"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "time": {
+                      "description": "Omit when unspecified (all_time). Supply exactly one complete time kind.",
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "relative"
+                              ]
+                            },
+                            "mode": {
+                              "type": "string",
+                              "enum": [
+                                "current_day",
+                                "previous_day",
+                                "current_week",
+                                "previous_week",
+                                "current_month",
+                                "previous_month",
+                                "current_quarter",
+                                "previous_quarter",
+                                "current_year",
+                                "previous_year",
+                                "all_time"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "mode"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "month"
+                              ]
+                            },
+                            "month": {
+                              "type": "integer"
+                            },
+                            "year": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "month"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "quarter"
+                              ]
+                            },
+                            "quarter": {
+                              "type": "integer"
+                            },
+                            "year": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "quarter"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "year"
+                              ]
+                            },
+                            "year": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "year"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "day"
+                              ]
+                            },
+                            "month": {
+                              "type": "integer"
+                            },
+                            "day": {
+                              "type": "integer"
+                            },
+                            "year": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "month",
+                            "day"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "range"
+                              ]
+                            },
+                            "start": {
+                              "type": "string",
+                              "description": "ISO date (YYYY-MM-DD)."
+                            },
+                            "end": {
+                              "type": "string",
+                              "description": "ISO date (YYYY-MM-DD)."
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "start",
+                            "end"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "rolling"
+                              ]
+                            },
+                            "amount": {
+                              "type": "integer"
+                            },
+                            "unit": {
+                              "enum": [
+                                "day",
+                                "month"
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "amount",
+                            "unit"
+                          ]
+                        }
+                      ]
+                    },
+                    "ranking": {
+                      "properties": {
+                        "direction": {
+                          "enum": [
+                            "top",
+                            "bottom"
+                          ],
+                          "type": "string"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "metric_id": {
+                          "type": "string"
+                        },
+                        "per_group": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": [
+                        "limit"
+                      ],
+                      "type": "object"
+                    },
+                    "granularity": {
+                      "enum": [
+                        "day",
+                        "week",
+                        "month",
+                        "quarter",
+                        "year"
+                      ],
+                      "type": "string"
+                    },
+                    "derived_features": {
+                      "description": "scalar: ungrouped KPI. selected_total: sum a Top N cohort, never an average.",
+                      "items": {
+                        "enum": [
+                          "scalar",
+                          "contribution_share",
+                          "leader",
+                          "top_gap",
+                          "group_gap",
+                          "change",
+                          "change_pct",
+                          "concentration",
+                          "selected_total",
+                          "relationship_strength"
+                        ],
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "feature_metrics": {
+                      "type": "object",
+                      "description": "Targets only ACTIVE derived_features within metric_ids. Omit inactive entries and unnecessary maps.",
+                      "properties": {
+                        "scalar": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "contribution_share": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "leader": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "top_gap": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "group_gap": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "change": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "change_pct": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "concentration": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "selected_total": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "relationship_strength": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        }
+                      }
+                    },
+                    "availability": {
+                      "enum": [
+                        "requested",
+                        "needs_input",
+                        "unsupported",
+                        "insufficient_data"
+                      ],
+                      "type": "string"
+                    },
+                    "reason": {
+                      "enum": [
+                        "historical_data_unavailable",
+                        "metric_unavailable",
+                        "definition_unavailable",
+                        "ambiguous_criterion"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "clarification": {
+                "properties": {
+                  "reason": {
+                    "enum": [
+                      "metric_ambiguous",
+                      "subject_ambiguous",
+                      "time_range_ambiguous",
+                      "filter_value_unknown",
+                      "unsupported_metric",
+                      "clarification",
+                      "not_analytical_request"
+                    ],
+                    "type": "string"
+                  },
+                  "missing_fields": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "reason"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "decision"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    {
+      "case": "vouchers",
+      "system": "Extract Vietnamese business analytical meaning into one intent envelope. Each requirement states a distinct user goal once. Use semantic metric/dimension IDs in the candidate packet or vocabulary. lens_hint is optional advice. No SQL, subjects, executable IDs, parents, query roles, coverage mappings, charts or reasoning. Preserve protected input facts: explicit metrics, filters, time, ranking and derived features. Question is authoritative; context/expectation guide business focus/presentation and never override it. Structured UI time/scope outrank question; omitted time means all_time. Separate incompatible populations as business requirements without substituting meaning. Unsupported definitions (ROI without costs, forecasts) remain explicit unavailable requirements with controlled reasons. A clarification names only genuinely missing business meaning. Top N is not a complete population; contribution_share uses a server-verified denominator. No invented values, causes or history. IDs label user requirements only. Return requested work only; the server selects supporting analysis from metadata. Population-definition disclosures do not imply grouping. An average cannot have additive share. Separate whole-scope scalar KPIs from grouped views/trends. Explicit ranking criterion stays unchanged when companion metrics are displayed. A user instruction not to conclude ROI/causality is a guardrail, not a request to calculate ROI. For a feature applying to one of several displayed metrics, use feature_metrics. A table of catalog aggregations is aggregate, not raw detail. Greetings or text without an analytical goal use clarification reason not_analytical_request and missing_fields:[analysis_goal].",
+      "messages": [
+        {
+          "role": "user",
+          "content": "{\"question\":\"Trong 60 ngày gần nhất, phân tích việc sử dụng voucher toàn hệ thống. Hiển thị số đơn dùng voucher, doanh thu voucher và tổng giảm giá. Top 10 voucher theo số đơn dùng voucher; Top 10 voucher theo doanh thu voucher; doanh thu voucher theo tuần; tổng giảm giá theo tuần; doanh thu voucher theo thành phố. Hiển thị mã voucher để phân biệt trùng tên, nêu rõ trạng thái đơn dùng cho từng chỉ số. Không suy ra lợi nhuận hay tác động nhân quả của voucher.\",\"reference_date\":\"2026-10-09\",\"timezone\":\"Asia/Ho_Chi_Minh\",\"ui\":{\"user_context\":\"\",\"domain\":\"auto\",\"required_domain\":null,\"analysis_depth\":\"deep\",\"analysis_depth_explicit\":false,\"natural_input\":true,\"analysis_context\":\"\",\"analysis_expectation\":\"\",\"required_period\":null},\"semantic_candidate_packet\":{\"version\":1,\"protected_input_facts\":{\"metrics\":[{\"phrase\":\"doanh thu voucher\",\"candidate_ids\":[\"voucher_revenue\"],\"start\":97,\"end\":114},{\"phrase\":\"doanh thu voucher\",\"candidate_ids\":[\"voucher_revenue\"],\"start\":192,\"end\":209},{\"phrase\":\"doanh thu voucher\",\"candidate_ids\":[\"voucher_revenue\"],\"start\":210,\"end\":227},{\"phrase\":\"doanh thu voucher\",\"candidate_ids\":[\"voucher_revenue\"],\"start\":262,\"end\":279},{\"phrase\":\"tong giam gia\",\"candidate_ids\":[\"discount_amount\"],\"start\":118,\"end\":131},{\"phrase\":\"tong giam gia\",\"candidate_ids\":[\"discount_amount\"],\"start\":238,\"end\":251},{\"phrase\":\"so don dung voucher\",\"candidate_ids\":[\"voucher_order_count\"],\"start\":77,\"end\":96},{\"phrase\":\"so don dung voucher\",\"candidate_ids\":[\"voucher_order_count\"],\"start\":152,\"end\":171}],\"dimensions\":[{\"phrase\":\"thanh pho\",\"candidate_ids\":[\"city\"],\"start\":285,\"end\":294},{\"phrase\":\"voucher\",\"candidate_ids\":[\"promotion\"],\"start\":46,\"end\":53},{\"phrase\":\"voucher\",\"candidate_ids\":[\"promotion\"],\"start\":139,\"end\":146},{\"phrase\":\"voucher\",\"candidate_ids\":[\"promotion\"],\"start\":179,\"end\":186},{\"phrase\":\"voucher\",\"candidate_ids\":[\"promotion\"],\"start\":430,\"end\":437},{\"phrase\":\"ma voucher\",\"candidate_ids\":[\"promotion_id\"],\"start\":304,\"end\":314}],\"population_scopes\":[{\"phrase\":\"neu ro trang thai don\",\"candidate_ids\":[\"order_status\"],\"start\":338,\"end\":359}],\"rankings\":[{\"direction\":\"top\",\"limit\":10,\"metric_id\":\"voucher_order_count\"},{\"direction\":\"top\",\"limit\":10,\"metric_id\":\"voucher_revenue\"}],\"times\":[{\"kind\":\"rolling\",\"amount\":60,\"unit\":\"day\"}],\"clause_bindings\":[{\"metric_candidates\":[\"voucher_revenue\"],\"dimension_id\":\"city\"}],\"granularities\":[{\"phrase\":\"theo tuan\",\"candidate_ids\":[\"week\"],\"start\":228,\"end\":237},{\"phrase\":\"theo tuan\",\"candidate_ids\":[\"week\"],\"start\":252,\"end\":261}],\"ui\":{\"required_domain\":null,\"required_period\":null}},\"time\":{\"kind\":\"rolling\",\"amount\":60,\"unit\":\"day\"},\"explicit_metric_ids\":[\"discount_amount\",\"voucher_order_count\",\"voucher_revenue\"],\"explicit_dimension_ids\":[\"city\",\"order_status\",\"promotion\",\"promotion_id\"],\"metrics\":[{\"id\":\"discount_amount\",\"label\":\"Tổng tiền đã giảm giá\",\"unit\":\"VND\",\"definition\":\"Tổng số tiền giảm trên đơn HOAN_THANH/DANG_GIAO có mã voucher; không phải chi phí đầy đủ của chiến dịch.\",\"population\":\"Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']; có voucher\",\"business_filters\":[{\"dimension\":\"order_status\",\"operator\":\"in\",\"value\":[\"HOAN_THANH\",\"DANG_GIAO\"]}],\"additive\":true,\"historical\":true,\"compatible_subjects\":[\"promotions\"],\"compatible_dimensions\":[\"city\",\"order_status\",\"promotion\",\"promotion_id\"]},{\"id\":\"voucher_order_count\",\"label\":\"Số đơn áp dụng khuyến mãi\",\"unit\":\"đơn\",\"definition\":\"Đếm đơn có mã voucher ở mọi trạng thái; khác quần thể doanh thu đơn voucher hợp lệ.\",\"population\":\"có voucher\",\"business_filters\":[],\"additive\":true,\"historical\":true,\"compatible_subjects\":[\"promotions\"],\"compatible_dimensions\":[\"city\",\"order_status\",\"promotion\",\"promotion_id\"]},{\"id\":\"voucher_revenue\",\"label\":\"Doanh thu đơn có khuyến mãi\",\"unit\":\"VND\",\"definition\":\"Tổng giá trị đơn HOAN_THANH/DANG_GIAO có mã voucher; mô tả tập đơn dùng voucher, chưa chứng minh hiệu quả tăng thêm.\",\"population\":\"Trạng thái đơn: ['HOAN_THANH', 'DANG_GIAO']; có voucher\",\"business_filters\":[{\"dimension\":\"order_status\",\"operator\":\"in\",\"value\":[\"HOAN_THANH\",\"DANG_GIAO\"]}],\"additive\":true,\"historical\":true,\"compatible_subjects\":[\"promotions\"],\"compatible_dimensions\":[\"city\",\"order_status\",\"promotion\",\"promotion_id\"]}],\"dimensions\":[{\"id\":\"city\",\"label\":\"Thành phố\",\"values\":[\"Hồ Chí Minh\",\"Hà Nội\",\"Đà Nẵng\",\"Cần Thơ\",\"Hải Phòng\",\"Nghệ An\",\"Bắc Ninh\",\"Lâm Đồng\",\"Bình Dương\",\"Đồng Nai\",\"Khánh Hòa\",\"Quảng Ninh\",\"Thừa Thiên - Huế\",\"Bà Rịa - Vũng Tàu\",\"Thanh Hóa\",\"Kiên Giang\"]},{\"id\":\"order_status\",\"label\":\"Trạng thái đơn\",\"values\":[\"HOAN_THANH\",\"DANG_GIAO\",\"CHO_THANH_TOAN\",\"DA_XAC_NHAN\",\"MOI_TAO\",\"DA_HUY\"]},{\"id\":\"promotion\",\"label\":\"Khuyến mãi\",\"values\":[]},{\"id\":\"promotion_id\",\"label\":\"Mã khuyến mãi\",\"values\":[]}],\"equivalent_metrics\":[],\"candidate_domains\":[\"orders\",\"promotions\"],\"candidate_subjects\":[\"promotions\"],\"supported_analysis_shapes\":[\"aggregate\",\"ranking\",\"trend\",\"comparison\",\"distribution\",\"cross_tab\",\"relationship\",\"detail\"],\"lens_summaries\":[{\"id\":\"voucher_usage\",\"label\":\"Số đơn dùng voucher\",\"metrics\":[\"voucher_order_count\"]},{\"id\":\"voucher_revenue\",\"label\":\"Doanh thu tập đơn voucher\",\"metrics\":[\"voucher_revenue\"]},{\"id\":\"discount_amount\",\"label\":\"Số tiền giảm\",\"metrics\":[\"discount_amount\"]},{\"id\":\"voucher_trend\",\"label\":\"Diễn biến sử dụng voucher\",\"metrics\":[\"voucher_order_count\"]}],\"business_caveats\":{\"distinct_populations\":\"Check each metric's population and clock; no inferred reconciliation/share.\",\"no_causal_interpretation\":\"Observed differences/associations do not establish causes.\",\"non_additive\":\"Do not sum averages or distinct people across groups/periods.\"},\"unresolved_meaning\":[]},\"features\":{\"contribution_share\":\"additive_metric_with_same_population_denominator\",\"leader\":\"ranking\",\"top_gap\":\"ranking_two_rows\",\"group_gap\":\"grouped_metric\",\"change\":\"two_complete_time_buckets\",\"change_pct\":\"two_complete_time_buckets\",\"concentration\":\"complete_additive_distribution\",\"selected_total\":\"additive_ranking\",\"relationship_strength\":\"paired_numeric_metrics\"},\"unavailable_definitions\":{\"marketing_roi\":{\"aliases\":[\"ROI\",\"marketing ROI\"],\"reason\":\"definition_unavailable\",\"limitation\":\"Chưa có chi phí marketing để tính ROI thực sự.\"},\"order_completion_rate\":{\"aliases\":[\"tỷ lệ hoàn thành đơn\",\"tỷ lệ hoàn thành\"],\"reason\":\"definition_unavailable\",\"limitation\":\"Danh mục hiện tại chưa có định nghĩa tỷ lệ hoàn thành đơn được duyệt; có thể đối chiếu số đơn theo trạng thái.\"}},\"domains\":{\"packs\":[]}}"
+        }
+      ],
+      "tools": [
+        {
+          "name": "submit_analysis_intent",
+          "description": "Return analytical meaning once. No SQL, executable IDs, coverage mappings or charts.",
+          "parameters": {
+            "properties": {
+              "decision": {
+                "enum": [
+                  "analyze",
+                  "clarification",
+                  "unsupported"
+                ],
+                "type": "string"
+              },
+              "requirements": {
+                "items": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "goal": {
+                      "description": "Display label <=120 chars preferred; not executable meaning.",
+                      "type": "string"
+                    },
+                    "domain_id": {
+                      "type": "string"
+                    },
+                    "lens_hint": {
+                      "type": "string"
+                    },
+                    "supporting_for": {
+                      "type": "string"
+                    },
+                    "metric_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "dimension_ids": {
+                      "description": "Business grouping axes only; trend period comes from granularity, not a raw timestamp.",
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "analysis_kind": {
+                      "enum": [
+                        "comparison",
+                        "aggregate",
+                        "ranking",
+                        "trend",
+                        "distribution",
+                        "detail",
+                        "cross_tab",
+                        "relationship"
+                      ],
+                      "type": "string"
+                    },
+                    "filters": {
+                      "items": {
+                        "properties": {
+                          "dimension": {
+                            "type": "string"
+                          },
+                          "operator": {
+                            "enum": [
+                              "eq",
+                              "in",
+                              "gt",
+                              "gte",
+                              "lt",
+                              "lte"
+                            ],
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "array",
+                                "items": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "boolean"
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "dimension",
+                          "value"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "time": {
+                      "description": "Omit when unspecified (all_time). Supply exactly one complete time kind.",
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "relative"
+                              ]
+                            },
+                            "mode": {
+                              "type": "string",
+                              "enum": [
+                                "current_day",
+                                "previous_day",
+                                "current_week",
+                                "previous_week",
+                                "current_month",
+                                "previous_month",
+                                "current_quarter",
+                                "previous_quarter",
+                                "current_year",
+                                "previous_year",
+                                "all_time"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "mode"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "month"
+                              ]
+                            },
+                            "month": {
+                              "type": "integer"
+                            },
+                            "year": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "month"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "quarter"
+                              ]
+                            },
+                            "quarter": {
+                              "type": "integer"
+                            },
+                            "year": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "quarter"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "year"
+                              ]
+                            },
+                            "year": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "year"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "day"
+                              ]
+                            },
+                            "month": {
+                              "type": "integer"
+                            },
+                            "day": {
+                              "type": "integer"
+                            },
+                            "year": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "month",
+                            "day"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "range"
+                              ]
+                            },
+                            "start": {
+                              "type": "string",
+                              "description": "ISO date (YYYY-MM-DD)."
+                            },
+                            "end": {
+                              "type": "string",
+                              "description": "ISO date (YYYY-MM-DD)."
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "start",
+                            "end"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "rolling"
+                              ]
+                            },
+                            "amount": {
+                              "type": "integer"
+                            },
+                            "unit": {
+                              "enum": [
+                                "day",
+                                "month"
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "amount",
+                            "unit"
+                          ]
+                        }
+                      ]
+                    },
+                    "ranking": {
+                      "properties": {
+                        "direction": {
+                          "enum": [
+                            "top",
+                            "bottom"
+                          ],
+                          "type": "string"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "metric_id": {
+                          "type": "string"
+                        },
+                        "per_group": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": [
+                        "limit"
+                      ],
+                      "type": "object"
+                    },
+                    "granularity": {
+                      "enum": [
+                        "day",
+                        "week",
+                        "month",
+                        "quarter",
+                        "year"
+                      ],
+                      "type": "string"
+                    },
+                    "derived_features": {
+                      "description": "scalar: ungrouped KPI. selected_total: sum a Top N cohort, never an average.",
+                      "items": {
+                        "enum": [
+                          "scalar",
+                          "contribution_share",
+                          "leader",
+                          "top_gap",
+                          "group_gap",
+                          "change",
+                          "change_pct",
+                          "concentration",
+                          "selected_total",
+                          "relationship_strength"
+                        ],
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "feature_metrics": {
+                      "type": "object",
+                      "description": "Targets only ACTIVE derived_features within metric_ids. Omit inactive entries and unnecessary maps.",
+                      "properties": {
+                        "scalar": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "contribution_share": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "leader": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "top_gap": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "group_gap": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "change": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "change_pct": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "concentration": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "selected_total": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "relationship_strength": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        }
+                      }
+                    },
+                    "availability": {
+                      "enum": [
+                        "requested",
+                        "needs_input",
+                        "unsupported",
+                        "insufficient_data"
+                      ],
+                      "type": "string"
+                    },
+                    "reason": {
+                      "enum": [
+                        "historical_data_unavailable",
+                        "metric_unavailable",
+                        "definition_unavailable",
+                        "ambiguous_criterion"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "clarification": {
+                "properties": {
+                  "reason": {
+                    "enum": [
+                      "metric_ambiguous",
+                      "subject_ambiguous",
+                      "time_range_ambiguous",
+                      "filter_value_unknown",
+                      "unsupported_metric",
+                      "clarification",
+                      "not_analytical_request"
+                    ],
+                    "type": "string"
+                  },
+                  "missing_fields": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "reason"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "decision"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    {
+      "case": "cashier_shifts",
+      "system": "Extract Vietnamese business analytical meaning into one intent envelope. Each requirement states a distinct user goal once. Use semantic metric/dimension IDs in the candidate packet or vocabulary. lens_hint is optional advice. No SQL, subjects, executable IDs, parents, query roles, coverage mappings, charts or reasoning. Preserve protected input facts: explicit metrics, filters, time, ranking and derived features. Question is authoritative; context/expectation guide business focus/presentation and never override it. Structured UI time/scope outrank question; omitted time means all_time. Separate incompatible populations as business requirements without substituting meaning. Unsupported definitions (ROI without costs, forecasts) remain explicit unavailable requirements with controlled reasons. A clarification names only genuinely missing business meaning. Top N is not a complete population; contribution_share uses a server-verified denominator. No invented values, causes or history. IDs label user requirements only. Return requested work only; the server selects supporting analysis from metadata. Population-definition disclosures do not imply grouping. An average cannot have additive share. Separate whole-scope scalar KPIs from grouped views/trends. Explicit ranking criterion stays unchanged when companion metrics are displayed. A user instruction not to conclude ROI/causality is a guardrail, not a request to calculate ROI. For a feature applying to one of several displayed metrics, use feature_metrics. A table of catalog aggregations is aggregate, not raw detail. Greetings or text without an analytical goal use clarification reason not_analytical_request and missing_fields:[analysis_goal].",
+      "messages": [
+        {
+          "role": "user",
+          "content": "{\"question\":\"Trong 30 ngày gần nhất, phân tích vận hành ca làm và đối soát tiền mặt tại toàn hệ thống. Hiển thị tổng số ca làm, số ca đi muộn, số ca đã đối soát, doanh thu tiền mặt hệ thống và tổng tiền chênh lệch. Số ca làm theo tên ca; số ca đi muộn theo chi nhánh; số ca làm theo trạng thái chấm công; tổng tiền chênh lệch theo chi nhánh; tổng tiền chênh lệch theo tuần. Giữ nguyên dấu âm và dương của chênh lệch tiền mặt, giải thích ý nghĩa theo định nghĩa dữ liệu. Công bố ngày ghi nhận của ca làm và đối soát. Không tự quy kết nguyên nhân hoặc trách nhiệm nhân viên.\",\"reference_date\":\"2026-10-09\",\"timezone\":\"Asia/Ho_Chi_Minh\",\"ui\":{\"user_context\":\"\",\"domain\":\"auto\",\"required_domain\":null,\"analysis_depth\":\"deep\",\"analysis_depth_explicit\":false,\"natural_input\":true,\"analysis_context\":\"\",\"analysis_expectation\":\"\",\"required_period\":null},\"semantic_candidate_packet\":{\"version\":1,\"protected_input_facts\":{\"metrics\":[{\"phrase\":\"tong so ca lam\",\"candidate_ids\":[\"shift_count\"],\"start\":97,\"end\":111},{\"phrase\":\"so ca\",\"candidate_ids\":[\"shift_count\"],\"start\":196,\"end\":201},{\"phrase\":\"so ca\",\"candidate_ids\":[\"shift_count\"],\"start\":247,\"end\":252},{\"phrase\":\"so ca di muon\",\"candidate_ids\":[\"late_count\"],\"start\":112,\"end\":125},{\"phrase\":\"so ca di muon\",\"candidate_ids\":[\"late_count\"],\"start\":218,\"end\":231},{\"phrase\":\"tong tien chenh lech\",\"candidate_ids\":[\"total_cash_difference\"],\"start\":175,\"end\":195},{\"phrase\":\"tong tien chenh lech\",\"candidate_ids\":[\"total_cash_difference\"],\"start\":283,\"end\":303},{\"phrase\":\"tong tien chenh lech\",\"candidate_ids\":[\"total_cash_difference\"],\"start\":319,\"end\":339},{\"phrase\":\"chenh lech tien mat\",\"candidate_ids\":[\"total_cash_difference\"],\"start\":381,\"end\":400},{\"phrase\":\"doanh thu tien mat he thong\",\"candidate_ids\":[\"system_cash_revenue\"],\"start\":144,\"end\":171},{\"phrase\":\"so ca da doi soat\",\"candidate_ids\":[\"reconciled_shifts\"],\"start\":126,\"end\":143}],\"dimensions\":[{\"phrase\":\"chi nhanh\",\"candidate_ids\":[\"store\"],\"start\":237,\"end\":246},{\"phrase\":\"chi nhanh\",\"candidate_ids\":[\"store\"],\"start\":309,\"end\":318},{\"phrase\":\"ca lam\",\"candidate_ids\":[\"shift_name\"],\"start\":42,\"end\":48},{\"phrase\":\"ca lam\",\"candidate_ids\":[\"shift_name\"],\"start\":199,\"end\":205},{\"phrase\":\"ca lam\",\"candidate_ids\":[\"shift_name\"],\"start\":250,\"end\":256},{\"phrase\":\"ca lam\",\"candidate_ids\":[\"shift_name\"],\"start\":470,\"end\":476},{\"phrase\":\"trang thai cham cong\",\"candidate_ids\":[\"attendance_status\"],\"start\":262,\"end\":282}],\"times\":[{\"kind\":\"rolling\",\"amount\":30,\"unit\":\"day\"}],\"clause_bindings\":[{\"metric_candidates\":[\"late_count\"],\"dimension_id\":\"store\"},{\"metric_candidates\":[\"shift_count\"],\"dimension_id\":\"attendance_status\"},{\"metric_candidates\":[\"total_cash_difference\"],\"dimension_id\":\"store\"}],\"granularities\":[{\"phrase\":\"theo tuan\",\"candidate_ids\":[\"week\"],\"start\":340,\"end\":349}],\"ui\":{\"required_domain\":null,\"required_period\":null}},\"time\":{\"kind\":\"rolling\",\"amount\":30,\"unit\":\"day\"},\"explicit_metric_ids\":[\"late_count\",\"reconciled_shifts\",\"shift_count\",\"system_cash_revenue\",\"total_cash_difference\"],\"explicit_dimension_ids\":[\"attendance_status\",\"shift_name\",\"store\"],\"metrics\":[{\"id\":\"late_count\",\"label\":\"Số ca đi trễ\",\"unit\":\"lượt\",\"definition\":\"Đếm ca có trạng thái chấm công DI_TRE theo ngày làm việc; chưa chuẩn hóa theo tổng ca nên không gọi là tỷ lệ đi trễ.\",\"population\":\"Toàn bộ bản ghi của đối tượng\",\"business_filters\":[],\"additive\":true,\"historical\":true,\"compatible_subjects\":[\"staff_shifts\"],\"compatible_dimensions\":[\"attendance_status\",\"shift_name\",\"store\"]},{\"id\":\"reconciled_shifts\",\"label\":\"Số ca đã đối soát\",\"unit\":\"lượt\",\"definition\":\"Đếm ca đối soát theo ngày tạo ca, không suy ra tất cả ca đã được phê duyệt.\",\"population\":\"Toàn bộ bản ghi của đối tượng\",\"business_filters\":[],\"additive\":true,\"historical\":true,\"compatible_subjects\":[\"cashier_reconciliation\"],\"compatible_dimensions\":[\"store\"]},{\"id\":\"shift_count\",\"label\":\"Tổng số ca làm\",\"unit\":\"lượt\",\"definition\":\"Đếm bản ghi ca nhân viên theo ngày làm việc; không phải số nhân viên duy nhất hoặc giờ công.\",\"population\":\"Toàn bộ bản ghi của đối tượng\",\"business_filters\":[],\"additive\":true,\"historical\":true,\"compatible_subjects\":[\"staff_shifts\"],\"compatible_dimensions\":[\"attendance_status\",\"shift_name\",\"store\"]},{\"id\":\"system_cash_revenue\",\"label\":\"Doanh thu tiền mặt hệ thống\",\"unit\":\"VND\",\"definition\":\"Tổng trường tiền mặt hệ thống theo ngày tạo ca đối soát; khác quần thể doanh thu đơn hàng.\",\"population\":\"Toàn bộ bản ghi của đối tượng\",\"business_filters\":[],\"additive\":true,\"historical\":true,\"compatible_subjects\":[\"cashier_reconciliation\"],\"compatible_dimensions\":[\"store\"]},{\"id\":\"total_cash_difference\",\"label\":\"Tổng tiền chênh lệch\",\"unit\":\"VND\",\"definition\":\"Tổng chênh lệch tiền mặt có dấu theo ngày tạo ca đối soát; số âm và dương có thể bù nhau, không phải tổng độ lệch tuyệt đối.\",\"population\":\"Toàn bộ bản ghi của đối tượng\",\"business_filters\":[],\"additive\":true,\"historical\":true,\"compatible_subjects\":[\"cashier_reconciliation\"],\"compatible_dimensions\":[\"store\"]}],\"dimensions\":[{\"id\":\"attendance_status\",\"label\":\"Trạng thái chấm công\",\"values\":[\"DUNG_GIO\",\"DI_TRE\",\"VE_SOM\",\"VANG_MAT\",\"ASSIGNED\"]},{\"id\":\"shift_name\",\"label\":\"Ca làm\",\"values\":[]},{\"id\":\"store\",\"label\":\"Chi nhánh\",\"values\":[]}],\"equivalent_metrics\":[],\"candidate_domains\":[\"cashier_reconciliation\",\"order_items\",\"staff_shifts\",\"stores\"],\"candidate_subjects\":[\"cashier_reconciliation\",\"staff_shifts\"],\"supported_analysis_shapes\":[\"aggregate\",\"ranking\",\"trend\",\"comparison\",\"distribution\",\"cross_tab\",\"relationship\",\"detail\"],\"lens_summaries\":[{\"id\":\"cash_difference\",\"label\":\"Chênh lệch tiền có dấu\",\"metrics\":[\"total_cash_difference\"]},{\"id\":\"cash_activity\",\"label\":\"Quy mô đối soát\",\"metrics\":[\"system_cash_revenue\",\"reconciled_shifts\"]},{\"id\":\"shift_volume\",\"label\":\"Quy mô ca làm\",\"metrics\":[\"shift_count\"]},{\"id\":\"attendance\",\"label\":\"Chấm công\",\"metrics\":[\"late_count\"]}],\"business_caveats\":{\"distinct_populations\":\"Check each metric's population and clock; no inferred reconciliation/share.\",\"no_causal_interpretation\":\"Observed differences/associations do not establish causes.\",\"non_additive\":\"Do not sum averages or distinct people across groups/periods.\"},\"unresolved_meaning\":[]},\"features\":{\"contribution_share\":\"additive_metric_with_same_population_denominator\",\"leader\":\"ranking\",\"top_gap\":\"ranking_two_rows\",\"group_gap\":\"grouped_metric\",\"change\":\"two_complete_time_buckets\",\"change_pct\":\"two_complete_time_buckets\",\"concentration\":\"complete_additive_distribution\",\"selected_total\":\"additive_ranking\",\"relationship_strength\":\"paired_numeric_metrics\"},\"unavailable_definitions\":{\"marketing_roi\":{\"aliases\":[\"ROI\",\"marketing ROI\"],\"reason\":\"definition_unavailable\",\"limitation\":\"Chưa có chi phí marketing để tính ROI thực sự.\"},\"order_completion_rate\":{\"aliases\":[\"tỷ lệ hoàn thành đơn\",\"tỷ lệ hoàn thành\"],\"reason\":\"definition_unavailable\",\"limitation\":\"Danh mục hiện tại chưa có định nghĩa tỷ lệ hoàn thành đơn được duyệt; có thể đối chiếu số đơn theo trạng thái.\"}},\"domains\":{\"packs\":[]}}"
+        }
+      ],
+      "tools": [
+        {
+          "name": "submit_analysis_intent",
+          "description": "Return analytical meaning once. No SQL, executable IDs, coverage mappings or charts.",
+          "parameters": {
+            "properties": {
+              "decision": {
+                "enum": [
+                  "analyze",
+                  "clarification",
+                  "unsupported"
+                ],
+                "type": "string"
+              },
+              "requirements": {
+                "items": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "goal": {
+                      "description": "Display label <=120 chars preferred; not executable meaning.",
+                      "type": "string"
+                    },
+                    "domain_id": {
+                      "type": "string"
+                    },
+                    "lens_hint": {
+                      "type": "string"
+                    },
+                    "supporting_for": {
+                      "type": "string"
+                    },
+                    "metric_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "dimension_ids": {
+                      "description": "Business grouping axes only; trend period comes from granularity, not a raw timestamp.",
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "analysis_kind": {
+                      "enum": [
+                        "comparison",
+                        "aggregate",
+                        "ranking",
+                        "trend",
+                        "distribution",
+                        "detail",
+                        "cross_tab",
+                        "relationship"
+                      ],
+                      "type": "string"
+                    },
+                    "filters": {
+                      "items": {
+                        "properties": {
+                          "dimension": {
+                            "type": "string"
+                          },
+                          "operator": {
+                            "enum": [
+                              "eq",
+                              "in",
+                              "gt",
+                              "gte",
+                              "lt",
+                              "lte"
+                            ],
+                            "type": "string"
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "array",
+                                "items": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "boolean"
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "dimension",
+                          "value"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "time": {
+                      "description": "Omit when unspecified (all_time). Supply exactly one complete time kind.",
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "relative"
+                              ]
+                            },
+                            "mode": {
+                              "type": "string",
+                              "enum": [
+                                "current_day",
+                                "previous_day",
+                                "current_week",
+                                "previous_week",
+                                "current_month",
+                                "previous_month",
+                                "current_quarter",
+                                "previous_quarter",
+                                "current_year",
+                                "previous_year",
+                                "all_time"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "mode"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "month"
+                              ]
+                            },
+                            "month": {
+                              "type": "integer"
+                            },
+                            "year": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "month"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "quarter"
+                              ]
+                            },
+                            "quarter": {
+                              "type": "integer"
+                            },
+                            "year": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "quarter"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "year"
+                              ]
+                            },
+                            "year": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "year"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "day"
+                              ]
+                            },
+                            "month": {
+                              "type": "integer"
+                            },
+                            "day": {
+                              "type": "integer"
+                            },
+                            "year": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "month",
+                            "day"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "range"
+                              ]
+                            },
+                            "start": {
+                              "type": "string",
+                              "description": "ISO date (YYYY-MM-DD)."
+                            },
+                            "end": {
+                              "type": "string",
+                              "description": "ISO date (YYYY-MM-DD)."
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "start",
+                            "end"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "rolling"
+                              ]
+                            },
+                            "amount": {
+                              "type": "integer"
+                            },
+                            "unit": {
+                              "enum": [
+                                "day",
+                                "month"
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "amount",
+                            "unit"
+                          ]
+                        }
+                      ]
+                    },
+                    "ranking": {
+                      "properties": {
+                        "direction": {
+                          "enum": [
+                            "top",
+                            "bottom"
+                          ],
+                          "type": "string"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "metric_id": {
+                          "type": "string"
+                        },
+                        "per_group": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": [
+                        "limit"
+                      ],
+                      "type": "object"
+                    },
+                    "granularity": {
+                      "enum": [
+                        "day",
+                        "week",
+                        "month",
+                        "quarter",
+                        "year"
+                      ],
+                      "type": "string"
+                    },
+                    "derived_features": {
+                      "description": "scalar: ungrouped KPI. selected_total: sum a Top N cohort, never an average.",
+                      "items": {
+                        "enum": [
+                          "scalar",
+                          "contribution_share",
+                          "leader",
+                          "top_gap",
+                          "group_gap",
+                          "change",
+                          "change_pct",
+                          "concentration",
+                          "selected_total",
+                          "relationship_strength"
+                        ],
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "feature_metrics": {
+                      "type": "object",
+                      "description": "Targets only ACTIVE derived_features within metric_ids. Omit inactive entries and unnecessary maps.",
+                      "properties": {
+                        "scalar": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "contribution_share": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "leader": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "top_gap": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "group_gap": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "change": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "change_pct": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "concentration": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "selected_total": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        },
+                        "relationship_strength": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "maxItems": 6
+                        }
+                      }
+                    },
+                    "availability": {
+                      "enum": [
+                        "requested",
+                        "needs_input",
+                        "unsupported",
+                        "insufficient_data"
+                      ],
+                      "type": "string"
+                    },
+                    "reason": {
+                      "enum": [
+                        "historical_data_unavailable",
+                        "metric_unavailable",
+                        "definition_unavailable",
+                        "ambiguous_criterion"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "clarification": {
+                "properties": {
+                  "reason": {
+                    "enum": [
+                      "metric_ambiguous",
+                      "subject_ambiguous",
+                      "time_range_ambiguous",
+                      "filter_value_unknown",
+                      "unsupported_metric",
+                      "clarification",
+                      "not_analytical_request"
+                    ],
+                    "type": "string"
+                  },
+                  "missing_fields": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "reason"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "decision"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    }
+  ]
+}

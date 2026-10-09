@@ -159,7 +159,9 @@ class ReliabilityTests(f.unittest.TestCase):
         self.assertTrue({'product','order_status'}<=set(packet['explicit_dimension_ids']))
         self.assertTrue({'products','order_items'}<=set(packet['candidate_domains']))
         self.assertEqual(packet['time'],{'kind':'rolling','amount':30,'unit':'day'})
-        self.assertEqual(packet['protected_input_facts']['rankings'],[{'direction':'top','limit':5,'metric_id':'quantity_sold'}])
+        self.assertEqual(packet['protected_input_facts']['rankings'],[{'direction':'top','limit':5,
+            'metric_candidates':['quantity_sold'],'metric_id':'quantity_sold',
+            'dimension_id':'product','partition_requested':False}])
         self.assertFalse(set(packet['candidate_domains']) & {'payments','inventory','customers','promotions'})
         self.assertNotIn('global_metric_directory',payload)
         self.assertLess(r['diagnostics']['primary_context_chars'],17602*.75)

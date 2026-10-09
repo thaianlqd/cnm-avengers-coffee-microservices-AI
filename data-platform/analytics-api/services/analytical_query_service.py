@@ -397,13 +397,117 @@ class AnalyticalQueries:
             artifact.result_ref = artifact_store().put(artifact.result, query_fingerprint=artifact.signature,
                 plan_fingerprint=fingerprint(artifact.plan.model_dump(mode='json')), schema_fingerprint=self.catalog.fingerprint,
                 provenance=dict(dimensions=artifact.plan.dimensions, subject=artifact.query.subject,
-                                time=artifact.plan.period, observed_at=artifact.observed_at))
+                                time=artifact.plan.period, observed_at=artifact.observed_at,
+                                data_snapshot=self.diagnostics.get('data_snapshot')))
             logger.info('[Execution] rows=%s bytes=%s artifact_id=%s cache_hit=%s',
                 artifact.result_ref['row_count'], artifact.result_ref['byte_size'], artifact.result_ref['artifact_id'], artifact.reused)
         self.stage(None)
         self.artifacts[artifact.query.id] = artifact
         self.cache[artifact.signature] = artifact
         return artifact
+
+    def run_batch(self, prepared, allow_supporting_failure=False):
+        """Isolate worker state and merge after bounded, snapshot-consistent SQL.
+
+        Fixture adapters retain their sequential protocol. Production uses two
+        connections per job and one exported snapshot; mixed-age caches cannot
+        supply a denominator for newly executed numerators.
+        """
+        import time
+        from copy import copy
+        from contextlib import nullcontext
+        from contextvars import copy_context
+        from concurrent.futures import ThreadPoolExecutor
+        from types import FunctionType
+        from uuid import uuid4
+        from services.sql_service import execute_read_only
+        from services.query_execution_batch import report_snapshot
+        from services.result_artifact_store import artifact_store
+        from services.analytical_capacity_planner import AnalyticalCapacityContract
+        from services.provider_budget import check_request_deadline
+        production = self.executor is execute_read_only and isinstance(self.executor, FunctionType)
+        started = time.perf_counter()
+        result, errors = {}, {}
+        if self.proposal or not production:
+            for id, artifact in prepared.items():
+                check_request_deadline()
+                try:
+                    result[id] = self.run(artifact)
+                except AnalysisError as error:
+                    if not allow_supporting_failure or artifact.query.role == 'requested':
+                        raise
+                    errors[id] = error
+            return result, errors
+        freshness = AnalyticalCapacityContract.from_env().cache_freshness
+        refs = []
+        for artifact in prepared.values():
+            reference = artifact.result_ref or artifact_store().find(artifact.signature, self.catalog.fingerprint)
+            observed = (reference or {}).get('provenance', {}).get('observed_at')
+            fresh = observed and (datetime.now(timezone.utc)-datetime.fromisoformat(observed)).total_seconds() <= freshness
+            refs.append(reference if fresh else None)
+        cohorts = {r.get('provenance', {}).get('data_snapshot') for r in refs if r}
+        cached = not self.diagnostics.get('force_refresh') and all(refs) and len(cohorts) == 1 and None not in cohorts
+        baseline = dict(self.diagnostics)
+        self.diagnostics['snapshot_cache_hit'] = bool(cached)
+        self.diagnostics['data_snapshot'] = next(iter(cohorts)) if cached else uuid4().hex
+        # Parsing the server-compiled SELECT is only dependency inventory, never
+        # model authorization. Compiler/AST scope checks already passed prepare.
+        import sqlglot
+        from sqlglot import exp
+        tables = {node.db + '.' + node.name for artifact in prepared.values()
+            for node in sqlglot.parse_one(artifact.sql,read='postgres').find_all(exp.Table) if node.db}
+        with (nullcontext() if cached else report_snapshot(tables)):
+            def run_one(artifact):
+                isolated = copy(self)
+                isolated.diagnostics = deepcopy(baseline)
+                isolated.diagnostics.update(force_refresh=not cached,
+                    data_snapshot=self.diagnostics.get('data_snapshot'))
+                isolated.artifacts = {}
+                isolated.cache = dict(self.cache)
+                try:
+                    value = isolated.run(artifact)
+                    return value, None, isolated.diagnostics
+                except AnalysisError as error:
+                    return None, error, isolated.diagnostics
+            # Run each unique physical query once, then rebind duplicate plans.
+            unique, duplicates, signatures = {}, {}, {}
+            for id, artifact in prepared.items():
+                if artifact.signature in signatures:
+                    duplicates[id] = signatures[artifact.signature]
+                else:
+                    unique[id] = artifact; signatures[artifact.signature] = id
+            with ThreadPoolExecutor(max_workers=2, thread_name_prefix='analysis-sql') as executor:
+                futures = {id:executor.submit(copy_context().run, run_one, artifact)
+                    for id,artifact in unique.items()}
+                for id, future in futures.items():
+                    value, error, diagnostics = future.result()
+                    for counter in ('db_query_count', 'dry_run_count', 'analytical_cache_hits'):
+                        self.diagnostics[counter] = self.diagnostics.get(counter, 0) + diagnostics.get(counter,0)-baseline.get(counter,0)
+                    if error:
+                        errors[id] = error
+                    else:
+                        result[id] = value
+                        self.cache[value.signature] = value
+            for id, original in duplicates.items():
+                if original in errors:
+                    errors[id] = errors[original]
+                else:
+                    # Revalidate and create a plan-bound immutable reference.
+                    force = self.diagnostics.get('force_refresh')
+                    self.diagnostics['force_refresh'] = False
+                    try:
+                        result[id] = self.run(prepared[id])
+                    finally:
+                        self.diagnostics['force_refresh'] = force
+        self.diagnostics['sql_batch_ms'] = round((time.perf_counter()-started)*1000,2)
+        self.diagnostics['query_concurrency'] = 2
+        for id,error in errors.items():
+            if not allow_supporting_failure or prepared[id].query.role == 'requested':
+                self.stage('RESULT_VALIDATION' if error.category == 'result_contract' else 'SQL_EXECUTION')
+                raise error
+        check_request_deadline()
+        self.artifacts.update(result)
+        return result, errors
 
     def restore(self, id):
         if id not in self.artifacts and id in self.previous:

@@ -202,7 +202,7 @@ class RecoveryTests(fixture.unittest.TestCase):
 
     def test_explicit_weekly_cadence_cannot_be_changed_by_unrelated_refinement(self):
         from services.request_anchors import refinement_anchors
-        intent=fixture.envelope(fixture.requirement(metric_ids=['product_revenue'],dimension_ids=['product'],
+        intent=fixture.envelope(fixture.requirement(metric_ids=['product_revenue'],dimension_ids=[],
             analysis_kind='trend',ranking=None,granularity='week',derived_features=[]))
         question='Doanh thu sản phẩm theo tuần trong 30 ngày gần nhất'
         for feedback in ['Giữ nguyên phạm vi','Đổi sang theo tháng']:

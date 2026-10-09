@@ -29,6 +29,6 @@ export const AnalysisInputForm: React.FC<{
   </div>
   <div data-analysis-input="expectation"><label htmlFor="analysis-expectation" className="text-xs font-semibold">Mong muốn phân tích <span className="font-normal">(không bắt buộc)</span></label>
     <textarea id="analysis-expectation" maxLength={1500} value={p.expectation} onChange={e => p.onExpectation(e.target.value)} rows={2} placeholder="Ví dụ: nhiều góc nhìn, chỉ ra điểm cần chú ý và biểu đồ phù hợp…" className={`${fieldClass} mt-1`} />
-    <p className="text-xs text-slate-500 mt-1">Chỉ cần câu hỏi để bắt đầu. AI đề xuất phạm vi và cách phân tích để bạn duyệt.</p>
+    <p className="text-xs text-slate-500 mt-1">Nhấn Phân tích để nhận báo cáo. Hệ thống hỏi lại khi cần thêm thông tin hoặc xác nhận phần phạm vi còn thiếu.</p>
   </div>
 </fieldset>;

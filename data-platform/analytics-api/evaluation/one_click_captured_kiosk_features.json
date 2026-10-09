@@ -1,0 +1,256 @@
+{
+  "requirements": [
+    {
+      "time": {
+        "mode": "previous_month",
+        "kind": "relative"
+      },
+      "availability": "requested",
+      "id": "req_total",
+      "feature_metrics": {
+        "scalar": [
+          "store_revenue",
+          "store_order_count",
+          "aov"
+        ],
+        "selected_total": [
+          "store_revenue"
+        ]
+      },
+      "analysis_kind": "aggregate",
+      "metric_ids": [
+        "store_revenue",
+        "store_order_count",
+        "aov"
+      ],
+      "derived_features": [
+        "scalar",
+        "selected_total"
+      ],
+      "goal": "Tổng toàn phạm vi kiosk nhượng quyền và kiosk vệ tinh",
+      "filters": [
+        {
+          "value": [
+            "KIOSK_NHUONG_QUYEN",
+            "KIOSK_VE_TINH"
+          ],
+          "operator": "in",
+          "dimension": "store_type"
+        }
+      ]
+    },
+    {
+      "time": {
+        "mode": "previous_month",
+        "kind": "relative"
+      },
+      "ranking": {
+        "direction": "top",
+        "metric_id": "store_revenue",
+        "limit": 10
+      },
+      "feature_metrics": {
+        "scalar": [
+          "store_revenue",
+          "store_order_count",
+          "aov"
+        ],
+        "selected_total": [
+          "store_revenue"
+        ]
+      },
+      "availability": "requested",
+      "derived_features": [
+        "scalar",
+        "selected_total",
+        "leader",
+        "top_gap"
+      ],
+      "metric_ids": [
+        "store_revenue",
+        "store_order_count",
+        "aov"
+      ],
+      "dimension_ids": [
+        "store"
+      ],
+      "filters": [
+        {
+          "value": [
+            "KIOSK_NHUONG_QUYEN",
+            "KIOSK_VE_TINH"
+          ],
+          "operator": "in",
+          "dimension": "store_type"
+        }
+      ],
+      "analysis_kind": "ranking",
+      "goal": "Top 10 kiosk theo doanh thu chi nhánh",
+      "id": "req_top_store_rev"
+    },
+    {
+      "dimension_ids": [
+        "store"
+      ],
+      "metric_ids": [
+        "store_revenue",
+        "store_order_count",
+        "aov"
+      ],
+      "goal": "Top 10 kiosk theo số đơn",
+      "analysis_kind": "ranking",
+      "ranking": {
+        "metric_id": "store_order_count",
+        "limit": 10,
+        "direction": "top"
+      },
+      "filters": [
+        {
+          "dimension": "store_type",
+          "operator": "in",
+          "value": [
+            "KIOSK_NHUONG_QUYEN",
+            "KIOSK_VE_TINH"
+          ]
+        }
+      ],
+      "availability": "requested",
+      "feature_metrics": {
+        "selected_total": [
+          "store_revenue"
+        ],
+        "scalar": [
+          "store_revenue",
+          "store_order_count",
+          "aov"
+        ]
+      },
+      "time": {
+        "kind": "relative",
+        "mode": "previous_month"
+      },
+      "id": "req_top_store_ord",
+      "derived_features": [
+        "scalar",
+        "selected_total",
+        "leader",
+        "top_gap"
+      ]
+    },
+    {
+      "feature_metrics": {
+        "scalar": [
+          "store_revenue",
+          "store_order_count",
+          "aov"
+        ]
+      },
+      "granularity": "week",
+      "id": "req_trend_week",
+      "metric_ids": [
+        "store_revenue",
+        "store_order_count",
+        "aov"
+      ],
+      "goal": "Doanh thu chi nhánh theo tuần",
+      "availability": "requested",
+      "analysis_kind": "trend",
+      "derived_features": [
+        "scalar"
+      ],
+      "time": {
+        "mode": "previous_month",
+        "kind": "relative"
+      },
+      "filters": [
+        {
+          "value": [
+            "KIOSK_NHUONG_QUYEN",
+            "KIOSK_VE_TINH"
+          ],
+          "operator": "in",
+          "dimension": "store_type"
+        }
+      ]
+    },
+    {
+      "goal": "Doanh thu chi nhánh theo thành phố",
+      "filters": [
+        {
+          "dimension": "store_type",
+          "value": [
+            "KIOSK_NHUONG_QUYEN",
+            "KIOSK_VE_TINH"
+          ],
+          "operator": "in"
+        }
+      ],
+      "id": "req_city",
+      "derived_features": [
+        "scalar"
+      ],
+      "analysis_kind": "aggregate",
+      "feature_metrics": {
+        "scalar": [
+          "store_revenue",
+          "store_order_count",
+          "aov"
+        ]
+      },
+      "ranking": {
+        "direction": "top",
+        "limit": 50
+      },
+      "availability": "requested",
+      "metric_ids": [
+        "store_revenue",
+        "store_order_count",
+        "aov"
+      ],
+      "time": {
+        "kind": "relative",
+        "mode": "previous_month"
+      }
+    },
+    {
+      "filters": [
+        {
+          "operator": "in",
+          "dimension": "store_type",
+          "value": [
+            "KIOSK_NHUONG_QUYEN",
+            "KIOSK_VE_TINH"
+          ]
+        }
+      ],
+      "analysis_kind": "aggregate",
+      "availability": "requested",
+      "feature_metrics": {
+        "scalar": [
+          "store_revenue",
+          "store_order_count",
+          "aov"
+        ]
+      },
+      "metric_ids": [
+        "store_revenue",
+        "store_order_count",
+        "aov"
+      ],
+      "goal": "Doanh thu chi nhánh theo loại điểm bán",
+      "time": {
+        "kind": "relative",
+        "mode": "previous_month"
+      },
+      "id": "req_store_type",
+      "ranking": {
+        "limit": 50,
+        "direction": "top"
+      },
+      "derived_features": [
+        "scalar"
+      ]
+    }
+  ],
+  "decision": "analyze"
+}

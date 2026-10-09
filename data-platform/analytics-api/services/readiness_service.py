@@ -4,7 +4,7 @@ import os
 import time
 from contextlib import contextmanager
 
-VERSION = '2.10.0'
+VERSION = '2.13.0'
 _catalog_cache = (0, False)
 
 
