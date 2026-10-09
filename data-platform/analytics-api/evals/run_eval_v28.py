@@ -50,8 +50,10 @@ def run_case(case):
     if case.get('expected_outcome') and report.get('outcome')!=case['expected_outcome']:failures.append('business_outcome')
     if provider.call_count!=case.get('expected_calls',1):failures.append('provider_count')
     queries=report.get('proposal',{}).get('analytical_queries',[])
-    if case.get('expected_metrics') and {m for q in queries for m in q['metrics']}!=set(case['expected_metrics']):failures.append('metric_meaning')
-    if case.get('expected_operations') is not None and len(queries)!=case['expected_operations']:failures.append('minimal_operations')
+    requested_queries=[q for q in queries if q.get('role','requested')=='requested']
+    if case.get('expected_metrics') and {m for q in requested_queries for m in q['metrics']}!=set(case['expected_metrics']):failures.append('metric_meaning')
+    if case.get('expected_operations') is not None and len(requested_queries)!=case['expected_operations']:failures.append('minimal_operations')
+    if len(queries)>8 or sum(q.get('role')=='supporting' for q in queries)>3:failures.append('bounded_supporting_expansion')
     if case.get('frozen'):
         payload=json.loads(provider.requests[1]['messages'][0]['content'])
         if payload.get('frozen_requirement_ids')!=case['frozen']:failures.append('repair_freezing')

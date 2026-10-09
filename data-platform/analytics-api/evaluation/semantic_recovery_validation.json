@@ -1,0 +1,46 @@
+{
+  "scope": "Data Platform semantic recovery and dashboard reliability",
+  "date": "2026-10-09",
+  "backend": {
+    "test_count": 713,
+    "status": "passed",
+    "network": "none",
+    "AI_OFFLINE": true,
+    "log_sha256": "83d5fd4277331cbaf42c8e274121b8668e62bb55533c2727785c391123573e77"
+  },
+  "frontend": {
+    "test_count": 107,
+    "status": "passed",
+    "typecheck": "passed"
+  },
+  "new_regressions": 10,
+  "fixture_report": "branch question passed proposal, approval, independent fixture SQL, chart generation and saved quality verification",
+  "live": {
+    "submissions": 2,
+    "provider_calls": 4,
+    "submission_limit": 2,
+    "provider_call_limit": 6,
+    "final_status": "proposal_ready",
+    "final_latency_ms": 3740.61,
+    "final_scope_consistent": true,
+    "report_sql_queries": 0,
+    "warehouse_writes": 0
+  },
+  "deployment": {
+    "services": [
+      "analytics-api",
+      "web-ui"
+    ],
+    "api_readiness_http": 200,
+    "api_readiness": "ready",
+    "api_health": "healthy",
+    "web_health": "healthy",
+    "customer_ai_started_at_before": "2026-10-09T03:59:56.168679043Z",
+    "customer_ai_started_at_after": "2026-10-09T03:59:56.168679043Z"
+  },
+  "limitations": [
+    "Live verification covers proposals for one question, not broad language accuracy or source warehouse correctness.",
+    "The first live run exposed mixed scopes; the final run is consistent after enforcing server default time.",
+    "Each live submission used a bounded semantic repair."
+  ]
+}

@@ -93,7 +93,16 @@ def chart_checks(charts, artifacts, evidence=()):
                                  if c.get('query_id', c.get('scope_ref')) == ref and set(c.get('scope_refs', [])) == set(scopes))
                             if v.compare_query_ids else render(v, a, 0))
                 for key in ('data', 'metrics', 'unit', 'selection', 'series', 'series_keys', 'y_unit',
-                            'ranking_metric','ranking_metric_label','ranking_direction','ranking_limit'):
+                            'ranking_metric','ranking_metric_label','ranking_direction','ranking_limit',
+                            'ranking_per_group','ranking_note','category_fields','x_label'):
+                    # Older one-axis charts already encode their entire grain
+                    # in x_field. New tuple/partition metadata is mandatory only
+                    # where omitting it could conceal additional meaning.
+                    if key not in chart and (
+                        key == 'category_fields' and len(expected.get(key, [])) == 1
+                        or key == 'ranking_per_group' and not expected.get(key)
+                    ):
+                        continue
                     if chart.get(key) != expected.get(key):
                         reason = 'chart_data_mismatch'
                         break
@@ -164,6 +173,12 @@ def report_limitations(artifacts, charts, catalog, omissions=()):
         if id not in {i['id'] for i in items}:
             items.append({'id': id, 'label': label, 'scope_ref': ref})
     for id, a in artifacts.items():
+        for f in a.query.filters:
+            definition=catalog.registry['dimensions'][f.dimension]
+            if definition.get('population_selector'):
+                values=f.value if isinstance(f.value,list) else [f.value]
+                labels=definition.get('value_labels',{})
+                add('population_filter:'+f.dimension,definition['business_name']+': '+', '.join(str(labels.get(v,v)) for v in values)+'. Áp dụng cho toàn bộ các góc nhìn trong phạm vi này.',id)
         for dim in a.plan.dimensions:
             definition=catalog.registry['dimensions'][dim]
             if definition.get('required_non_null'):
@@ -390,6 +405,19 @@ def assess_report(report, catalog, *, artifacts=None):
             check('visualization_appropriateness',LABELS['visualization_appropriateness'],visual_pass,visual_total,summaries[4]),
             check('limitation_disclosure',LABELS['limitation_disclosure'],disclosed_count,len(facts),summaries[5]),
         ]
+        # Recompute depth from protected request facts, not the displayed count
+        # or a saved success flag. One requested metric cannot prove a broad
+        # evaluation was fully delivered.
+        ui=context.get('ui_constraints',{})
+        from services.analysis_expansion_service import dashboard_policy
+        minimum = max(dashboard_policy(catalog)['minimum_views'], ui.get('minimum_visuals',0))
+        if minimum:
+            valid_views=sum(c['valid'] for c in charts)
+            measurements.append(check('analysis_depth_coverage','Độ đầy đủ góc nhìn',min(valid_views,minimum),minimum,
+                f'{valid_views}/{minimum} góc nhìn độc lập được kiểm chứng; mọi báo cáo phân tích cần đủ góc nhìn.'))
+            if valid_views<minimum:
+                unverified.append(item('insufficient_views',f'Chưa đủ góc nhìn: {valid_views}/{minimum}. Các bảng dữ liệu không thay thế biểu đồ còn thiếu.'))
+                actions.append({**item('complete_views','Bổ sung góc nhìn đúng phạm vi hoặc công bố dữ liệu chưa hỗ trợ.'),'action':'review_scope'})
         if report.get('capacity'):
             from services.result_artifact_store import fingerprint
             population = []

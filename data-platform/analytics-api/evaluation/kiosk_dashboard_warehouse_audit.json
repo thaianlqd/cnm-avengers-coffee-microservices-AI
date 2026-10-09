@@ -1,0 +1,676 @@
+{
+  "measurement_scope": "SCRIPTED_INTENT_LIVE_READ_ONLY_WAREHOUSE",
+  "LIVE_PROVIDER_REQUESTS": 0,
+  "WAREHOUSE_WRITES": 0,
+  "question": "Đánh giá doanh thu và xếp hạng hiệu suất các chi nhánh các kisok",
+  "status": "SUCCESS",
+  "warehouse_outlet_types": [
+    {
+      "loai_diem_ban": "KIOSK_NHUONG_QUYEN",
+      "count": 50
+    },
+    {
+      "loai_diem_ban": "KIOSK_VE_TINH",
+      "count": 10
+    },
+    {
+      "loai_diem_ban": "CHI_NHANH_CHINH",
+      "count": 1155
+    }
+  ],
+  "ranking_independent_sql_matched": true,
+  "ranking_row_count": 10,
+  "query_count": 7,
+  "chart_count": 6,
+  "kpi_count": 8,
+  "quality": {
+    "score": 90.0,
+    "grade": "good",
+    "status": "verified",
+    "components": [],
+    "completed": [
+      {
+        "id": "r1",
+        "label": "Chi nhánh và điểm bán",
+        "evidence_refs": [
+          "q_420761a346e8d06e8cdd51d6:store_revenue:leader:6230060e3b",
+          "q_420761a346e8d06e8cdd51d6:store_revenue:top_gap:6230060e3b",
+          "q_420761a346e8d06e8cdd51d6:store_revenue:selected_total:6230060e3b"
+        ]
+      }
+    ],
+    "missing": [],
+    "unverified": [
+      {
+        "id": "causes",
+        "label": "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+        "evidence_refs": []
+      },
+      {
+        "id": "independent_accuracy",
+        "label": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.",
+        "evidence_refs": []
+      }
+    ],
+    "limitations": [
+      {
+        "id": "population_filter:store_type",
+        "label": "Loại điểm bán: Kiosk nhượng quyền, Kiosk vệ tinh. Áp dụng cho toàn bộ các góc nhìn trong phạm vi này.",
+        "evidence_refs": [
+          "q_420761a346e8d06e8cdd51d6:store_revenue:leader:6230060e3b",
+          "q_420761a346e8d06e8cdd51d6:store_revenue:top_gap:6230060e3b",
+          "q_420761a346e8d06e8cdd51d6:store_revenue:selected_total:6230060e3b"
+        ]
+      },
+      {
+        "id": "metric_population:store_revenue",
+        "label": "Doanh thu chi nhánh: Tổng giá trị đơn HOAN_THANH/DANG_GIAO theo điểm bán, theo ngày tạo đơn.",
+        "evidence_refs": [
+          "q_420761a346e8d06e8cdd51d6:store_revenue:leader:6230060e3b",
+          "q_420761a346e8d06e8cdd51d6:store_revenue:top_gap:6230060e3b",
+          "q_420761a346e8d06e8cdd51d6:store_revenue:selected_total:6230060e3b"
+        ]
+      },
+      {
+        "id": "topn:q_420761a346e8d06e8cdd51d6",
+        "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+        "evidence_refs": [
+          "q_420761a346e8d06e8cdd51d6:store_revenue:leader:6230060e3b",
+          "q_420761a346e8d06e8cdd51d6:store_revenue:top_gap:6230060e3b",
+          "q_420761a346e8d06e8cdd51d6:store_revenue:selected_total:6230060e3b"
+        ]
+      },
+      {
+        "id": "metric_population:revenue",
+        "label": "Doanh thu: Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+        "evidence_refs": [
+          "q_19f8794f0e534955001b7384:revenue:concentration:6230060e3b"
+        ]
+      },
+      {
+        "id": "related:q_19f8794f0e534955001b7384",
+        "label": "Tập dữ liệu liên quan có quần thể riêng; không suy ra tỷ trọng hoặc nhân quả với phần chính.",
+        "evidence_refs": [
+          "q_19f8794f0e534955001b7384:revenue:concentration:6230060e3b"
+        ]
+      },
+      {
+        "id": "metric_population:order_count",
+        "label": "Số lượng đơn: Đếm mọi đơn theo ngày tạo, gồm cả đơn hủy; không dùng làm mẫu số AOV của tập đơn hợp lệ.",
+        "evidence_refs": [
+          "q_2750eea5340cbb4c271ea3f6:order_count:group_comparison:6230060e3b"
+        ]
+      },
+      {
+        "id": "related:q_2750eea5340cbb4c271ea3f6",
+        "label": "Tập dữ liệu liên quan có quần thể riêng; không suy ra tỷ trọng hoặc nhân quả với phần chính.",
+        "evidence_refs": [
+          "q_2750eea5340cbb4c271ea3f6:order_count:group_comparison:6230060e3b"
+        ]
+      },
+      {
+        "id": "metric_population:purchasing_customer_count",
+        "label": "Số khách mua hàng: Đếm người dùng duy nhất có đơn HOAN_THANH/DANG_GIAO trong phạm vi; cùng khách có thể mua ở nhiều điểm bán, không cộng khách giữa nhóm.",
+        "evidence_refs": [
+          "q_432ce257e5742cd68a861f44:purchasing_customer_count:scalar:6230060e3b",
+          "q_432ce257e5742cd68a861f44:store_aov:scalar:6230060e3b",
+          "q_432ce257e5742cd68a861f44:store_revenue:scalar:6230060e3b"
+        ]
+      },
+      {
+        "id": "metric_population:store_aov",
+        "label": "AOV chi nhánh: Trung bình giá trị đơn HOAN_THANH/DANG_GIAO của điểm bán; cần trọng số số đơn hợp lệ để gộp giữa các điểm bán.",
+        "evidence_refs": [
+          "q_432ce257e5742cd68a861f44:purchasing_customer_count:scalar:6230060e3b",
+          "q_432ce257e5742cd68a861f44:store_aov:scalar:6230060e3b",
+          "q_432ce257e5742cd68a861f44:store_revenue:scalar:6230060e3b"
+        ]
+      },
+      {
+        "id": "related:q_432ce257e5742cd68a861f44",
+        "label": "Tập dữ liệu liên quan có quần thể riêng; không suy ra tỷ trọng hoặc nhân quả với phần chính.",
+        "evidence_refs": [
+          "q_432ce257e5742cd68a861f44:purchasing_customer_count:scalar:6230060e3b",
+          "q_432ce257e5742cd68a861f44:store_aov:scalar:6230060e3b",
+          "q_432ce257e5742cd68a861f44:store_revenue:scalar:6230060e3b"
+        ]
+      },
+      {
+        "id": "nonadditive:q_432ce257e5742cd68a861f44",
+        "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+        "evidence_refs": [
+          "q_432ce257e5742cd68a861f44:purchasing_customer_count:scalar:6230060e3b",
+          "q_432ce257e5742cd68a861f44:store_aov:scalar:6230060e3b",
+          "q_432ce257e5742cd68a861f44:store_revenue:scalar:6230060e3b"
+        ]
+      },
+      {
+        "id": "related:q_60ec5d28d604463fd3e427e4",
+        "label": "Tập dữ liệu liên quan có quần thể riêng; không suy ra tỷ trọng hoặc nhân quả với phần chính.",
+        "evidence_refs": [
+          "q_60ec5d28d604463fd3e427e4:purchasing_customer_count:group_comparison:6230060e3b"
+        ]
+      },
+      {
+        "id": "nonadditive:q_60ec5d28d604463fd3e427e4",
+        "label": "Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.",
+        "evidence_refs": [
+          "q_60ec5d28d604463fd3e427e4:purchasing_customer_count:group_comparison:6230060e3b"
+        ]
+      },
+      {
+        "id": "related:q_933efb174238a7c9bd35d518",
+        "label": "Tập dữ liệu liên quan có quần thể riêng; không suy ra tỷ trọng hoặc nhân quả với phần chính.",
+        "evidence_refs": [
+          "q_933efb174238a7c9bd35d518:store_revenue:concentration:6230060e3b"
+        ]
+      },
+      {
+        "id": "related:q_e2333d15e2c97d5a4c05d1dc",
+        "label": "Tập dữ liệu liên quan có quần thể riêng; không suy ra tỷ trọng hoặc nhân quả với phần chính.",
+        "evidence_refs": [
+          "q_e2333d15e2c97d5a4c05d1dc:store_revenue:change:6230060e3b",
+          "q_e2333d15e2c97d5a4c05d1dc:store_revenue:extrema:6230060e3b"
+        ]
+      }
+    ],
+    "suggested_next_actions": [],
+    "coverage": {
+      "requested_count": 1,
+      "completed_count": 1,
+      "supporting_count": 6,
+      "omitted_count": 0
+    },
+    "generated_by": "deterministic_verifier",
+    "version": "2.8.5",
+    "reason": null,
+    "measurement_mode": "evidence_checks",
+    "verification_checks": [
+      {
+        "id": "request_coverage",
+        "label": "Phạm vi yêu cầu",
+        "passed": 1,
+        "total": 1,
+        "status": "passed",
+        "summary": "1/1 phần yêu cầu đã thực hiện."
+      },
+      {
+        "id": "semantic_consistency",
+        "label": "Ngữ nghĩa & kế hoạch",
+        "passed": 1,
+        "total": 1,
+        "status": "passed",
+        "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+      },
+      {
+        "id": "result_integrity",
+        "label": "Kết quả dữ liệu",
+        "passed": 7,
+        "total": 7,
+        "status": "passed",
+        "summary": "7 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+      },
+      {
+        "id": "observed_values",
+        "label": "Giá trị dữ liệu quan sát",
+        "passed": 71,
+        "total": 71,
+        "status": "passed",
+        "summary": "71/71 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+      },
+      {
+        "id": "derived_features",
+        "label": "Phép tính được yêu cầu",
+        "passed": 1,
+        "total": 1,
+        "status": "passed",
+        "summary": "1/1 phép tính yêu cầu có đủ quan sát và bằng chứng."
+      },
+      {
+        "id": "evidence_grounding",
+        "label": "Bằng chứng",
+        "passed": 60,
+        "total": 60,
+        "status": "passed",
+        "summary": "60/60 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+      },
+      {
+        "id": "visualization_appropriateness",
+        "label": "Biểu đồ",
+        "passed": 7,
+        "total": 7,
+        "status": "passed",
+        "summary": "1/1 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+      },
+      {
+        "id": "limitation_disclosure",
+        "label": "Giới hạn dữ liệu",
+        "passed": 15,
+        "total": 15,
+        "status": "passed",
+        "summary": "15/15 giới hạn dữ liệu được công bố."
+      },
+      {
+        "id": "analysis_depth_coverage",
+        "label": "Độ đầy đủ góc nhìn",
+        "passed": 4,
+        "total": 4,
+        "status": "passed",
+        "summary": "6/4 góc nhìn độc lập được kiểm chứng; yêu cầu đánh giá tổng quan cần đủ góc nhìn."
+      },
+      {
+        "id": "population_correctness",
+        "label": "Quần thể và mẫu số",
+        "passed": 7,
+        "total": 7,
+        "status": "passed",
+        "summary": "Kiểm tra toàn bộ kết quả không bị cắt; phần hiển thị là tiền tố có gắn tổng số nhóm. Tỷ trọng được tính lại với truy vấn mẫu số đầy đủ."
+      },
+      {
+        "id": "provenance_completeness",
+        "label": "Nguồn gốc kết quả",
+        "passed": 7,
+        "total": 7,
+        "status": "passed",
+        "summary": "Hash nội dung, truy vấn, kế hoạch và danh mục khớp kết quả đầy đủ; không xác nhận dữ liệu nguồn độc lập."
+      }
+    ],
+    "score_method": {
+      "id": "verification_evidence_v3",
+      "label": "Điểm kiểm chứng tổng",
+      "formula": "90 × trung bình có trọng số các kiểm tra áp dụng + 10 × tỷ lệ khớp đối chứng độc lập. Chưa đo đối chứng: chưa cộng 10 điểm; kiểm tra không áp dụng không bị trừ.",
+      "unmeasured_points": 10.0,
+      "interpretation": "Chỉ số mức độ kiểm chứng theo trọng số quy định; không phải độ chính xác hay xác suất AI trả lời đúng."
+    },
+    "score_breakdown": [
+      {
+        "id": "request_coverage",
+        "label": "Phạm vi yêu cầu",
+        "earned_points": 8.5714,
+        "possible_points": 8.5714,
+        "status": "passed"
+      },
+      {
+        "id": "semantic_consistency",
+        "label": "Ngữ nghĩa & kế hoạch",
+        "earned_points": 12.8571,
+        "possible_points": 12.8571,
+        "status": "passed"
+      },
+      {
+        "id": "result_integrity",
+        "label": "Kết quả dữ liệu",
+        "earned_points": 12.8571,
+        "possible_points": 12.8571,
+        "status": "passed"
+      },
+      {
+        "id": "observed_values",
+        "label": "Giá trị dữ liệu quan sát",
+        "earned_points": 8.5714,
+        "possible_points": 8.5714,
+        "status": "passed"
+      },
+      {
+        "id": "derived_features",
+        "label": "Phép tính được yêu cầu",
+        "earned_points": 8.5714,
+        "possible_points": 8.5714,
+        "status": "passed"
+      },
+      {
+        "id": "evidence_grounding",
+        "label": "Bằng chứng",
+        "earned_points": 8.5714,
+        "possible_points": 8.5714,
+        "status": "passed"
+      },
+      {
+        "id": "visualization_appropriateness",
+        "label": "Biểu đồ",
+        "earned_points": 4.2857,
+        "possible_points": 4.2857,
+        "status": "passed"
+      },
+      {
+        "id": "limitation_disclosure",
+        "label": "Giới hạn dữ liệu",
+        "earned_points": 4.2857,
+        "possible_points": 4.2857,
+        "status": "passed"
+      },
+      {
+        "id": "population_correctness",
+        "label": "Quần thể và mẫu số",
+        "earned_points": 4.2857,
+        "possible_points": 4.2857,
+        "status": "passed"
+      },
+      {
+        "id": "provenance_completeness",
+        "label": "Nguồn gốc kết quả",
+        "earned_points": 4.2857,
+        "possible_points": 4.2857,
+        "status": "passed"
+      },
+      {
+        "id": "analysis_depth_coverage",
+        "label": "Độ đầy đủ góc nhìn",
+        "earned_points": 12.8571,
+        "possible_points": 12.8571,
+        "status": "passed"
+      },
+      {
+        "id": "independent_reference",
+        "label": "Đối chứng độc lập",
+        "earned_points": 0.0,
+        "possible_points": 10.0,
+        "status": "not_measured"
+      }
+    ],
+    "accuracy_assessment": {
+      "status": "not_measured",
+      "matched_count": null,
+      "reference_count": 0,
+      "accuracy_pct": null,
+      "reference_source": null,
+      "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+    },
+    "confidence_probability": null,
+    "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+  },
+  "charts": [
+    {
+      "id": "visual_1",
+      "title": "Top 10 — Doanh thu chi nhánh — Loại điểm bán: KIOSK_NHUONG_QUYEN, KIOSK_VE_TINH",
+      "chart_type": "horizontal_bar",
+      "purpose": "Tín hiệu doanh thu chi nhánh trong phạm vi đã chọn?",
+      "metric": "store_revenue",
+      "x_field": "store",
+      "role": "requested",
+      "semantic_view_key": "79b6db17a21e91c56e1b19ce7a26a802d39c820ead29852af43319718a63ccdc"
+    },
+    {
+      "id": "visual_2",
+      "title": "Số lượng đơn — Loại điểm bán: KIOSK_NHUONG_QUYEN, KIOSK_VE_TINH",
+      "chart_type": "bar",
+      "purpose": "Lượng đơn và trạng thái trong phạm vi đã chọn?",
+      "metric": "order_count",
+      "x_field": "city",
+      "role": "supporting",
+      "semantic_view_key": "cbe23e3751e265f9acecd87c474806755ecde10f94125db89f6109ef5e62ad4f"
+    },
+    {
+      "id": "visual_3",
+      "title": "Số khách mua hàng — Loại điểm bán: KIOSK_NHUONG_QUYEN, KIOSK_VE_TINH",
+      "chart_type": "bar",
+      "purpose": "Khách mua trong kỳ trong phạm vi đã chọn?",
+      "metric": "purchasing_customer_count",
+      "x_field": "city",
+      "role": "supporting",
+      "semantic_view_key": "7e1c4bddbe3e15c7f634722b20c582ba6006018e6720cc319a79175c0e57e43d"
+    },
+    {
+      "id": "visual_4",
+      "title": "Doanh thu chi nhánh theo tuần — Loại điểm bán: KIOSK_NHUONG_QUYEN, KIOSK_VE_TINH",
+      "chart_type": "area",
+      "purpose": "Tín hiệu doanh thu chi nhánh trong phạm vi đã chọn?",
+      "metric": "store_revenue",
+      "x_field": "period",
+      "role": "supporting",
+      "semantic_view_key": "d04cf7df074cc36029ed919a1e45885577a3f5a7002ed06a2f16333a0e8ef398"
+    },
+    {
+      "id": "visual_5",
+      "title": "Doanh thu — Loại điểm bán: KIOSK_NHUONG_QUYEN, KIOSK_VE_TINH",
+      "chart_type": "donut",
+      "purpose": "Cơ cấu kênh bán trong phạm vi đã chọn?",
+      "metric": "revenue",
+      "x_field": "order_type",
+      "role": "supporting",
+      "semantic_view_key": "02d5e581add05789322ae8f57c2a0e433b30e64938c9830da0e04017c684cbe1"
+    },
+    {
+      "id": "visual_6",
+      "title": "Doanh thu chi nhánh — Loại điểm bán: KIOSK_NHUONG_QUYEN, KIOSK_VE_TINH",
+      "chart_type": "donut",
+      "purpose": "Diễn biến chi nhánh trong phạm vi đã chọn?",
+      "metric": "store_revenue",
+      "x_field": "city",
+      "role": "supporting",
+      "semantic_view_key": "a86513869fd2baf195307752706ead2241b4dd6f2b82ca3872a92d22095f5e71"
+    }
+  ],
+  "queries": [
+    {
+      "id": "q_420761a346e8d06e8cdd51d6",
+      "subject": "stores",
+      "operation": "ranking",
+      "metrics": [
+        "store_revenue"
+      ],
+      "group_by": [
+        "store"
+      ],
+      "filters": [
+        {
+          "dimension": "store_type",
+          "operator": "in",
+          "value": [
+            "KIOSK_NHUONG_QUYEN",
+            "KIOSK_VE_TINH"
+          ]
+        }
+      ],
+      "time": {
+        "kind": "relative",
+        "mode": "all_time",
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": null,
+        "end": null,
+        "amount": null,
+        "unit": null
+      }
+    },
+    {
+      "id": "q_19f8794f0e534955001b7384",
+      "subject": "orders",
+      "operation": "distribution",
+      "metrics": [
+        "revenue"
+      ],
+      "group_by": [
+        "order_type"
+      ],
+      "filters": [
+        {
+          "dimension": "store_type",
+          "operator": "in",
+          "value": [
+            "KIOSK_NHUONG_QUYEN",
+            "KIOSK_VE_TINH"
+          ]
+        }
+      ],
+      "time": {
+        "kind": "relative",
+        "mode": "all_time",
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": null,
+        "end": null,
+        "amount": null,
+        "unit": null
+      }
+    },
+    {
+      "id": "q_2750eea5340cbb4c271ea3f6",
+      "subject": "orders",
+      "operation": "aggregate",
+      "metrics": [
+        "order_count"
+      ],
+      "group_by": [
+        "city"
+      ],
+      "filters": [
+        {
+          "dimension": "store_type",
+          "operator": "in",
+          "value": [
+            "KIOSK_NHUONG_QUYEN",
+            "KIOSK_VE_TINH"
+          ]
+        }
+      ],
+      "time": {
+        "kind": "relative",
+        "mode": "all_time",
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": null,
+        "end": null,
+        "amount": null,
+        "unit": null
+      }
+    },
+    {
+      "id": "q_432ce257e5742cd68a861f44",
+      "subject": "stores",
+      "operation": "aggregate",
+      "metrics": [
+        "purchasing_customer_count",
+        "store_aov",
+        "store_revenue"
+      ],
+      "group_by": [],
+      "filters": [
+        {
+          "dimension": "store_type",
+          "operator": "in",
+          "value": [
+            "KIOSK_NHUONG_QUYEN",
+            "KIOSK_VE_TINH"
+          ]
+        }
+      ],
+      "time": {
+        "kind": "relative",
+        "mode": "all_time",
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": null,
+        "end": null,
+        "amount": null,
+        "unit": null
+      }
+    },
+    {
+      "id": "q_60ec5d28d604463fd3e427e4",
+      "subject": "orders",
+      "operation": "aggregate",
+      "metrics": [
+        "purchasing_customer_count"
+      ],
+      "group_by": [
+        "city"
+      ],
+      "filters": [
+        {
+          "dimension": "store_type",
+          "operator": "in",
+          "value": [
+            "KIOSK_NHUONG_QUYEN",
+            "KIOSK_VE_TINH"
+          ]
+        }
+      ],
+      "time": {
+        "kind": "relative",
+        "mode": "all_time",
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": null,
+        "end": null,
+        "amount": null,
+        "unit": null
+      }
+    },
+    {
+      "id": "q_933efb174238a7c9bd35d518",
+      "subject": "stores",
+      "operation": "distribution",
+      "metrics": [
+        "store_revenue"
+      ],
+      "group_by": [
+        "city"
+      ],
+      "filters": [
+        {
+          "dimension": "store_type",
+          "operator": "in",
+          "value": [
+            "KIOSK_NHUONG_QUYEN",
+            "KIOSK_VE_TINH"
+          ]
+        }
+      ],
+      "time": {
+        "kind": "relative",
+        "mode": "all_time",
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": null,
+        "end": null,
+        "amount": null,
+        "unit": null
+      }
+    },
+    {
+      "id": "q_e2333d15e2c97d5a4c05d1dc",
+      "subject": "stores",
+      "operation": "trend",
+      "metrics": [
+        "store_revenue"
+      ],
+      "group_by": [],
+      "filters": [
+        {
+          "dimension": "store_type",
+          "operator": "in",
+          "value": [
+            "KIOSK_NHUONG_QUYEN",
+            "KIOSK_VE_TINH"
+          ]
+        }
+      ],
+      "time": {
+        "kind": "relative",
+        "mode": "all_time",
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": null,
+        "end": null,
+        "amount": null,
+        "unit": null
+      }
+    }
+  ],
+  "limitation": "Scripted intent verifies resolver, SQL, scope and charts on live data; it does not measure provider language interpretation."
+}

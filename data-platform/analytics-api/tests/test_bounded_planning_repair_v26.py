@@ -187,3 +187,17 @@ class BoundedRepairTests(unittest.TestCase):
         self.assertLessEqual(r['diagnostics']['total_context_chars'],24000)
         self.assertLess(r['diagnostics']['repair_context_chars'],r['diagnostics']['total_context_chars'])
         self.assertEqual(r['diagnostics']['repaired_contract_issues'][0]['code'],'lens_operation_incompatible')
+
+    def test_directory_lens_cannot_authorize_an_unrelated_omitted_metric(self):
+        operation={'id':'stores','lens_id':'store_performance','metrics':['favorite_count']}
+        provider=ScriptedProvider([call('submit_analyst_decision',plan(operation))])
+        p=self.pipeline(provider)
+        req=AiTextToReportRequest(question='Đánh giá tình hình kinh doanh và chỉ ra các điểm cần chú ý.',
+                                time={'mode':'previous_quarter'},reference_date=date(2026,10,7))
+        with patch.dict(os.environ,{'DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN':'1',
+                                    'DATA_ANALYST_ENABLE_CONTRACT_REPAIR':'0'}):
+            with self.assertRaises(AnalysisError) as caught:
+                p.propose(req)
+        self.assertEqual(caught.exception.category,'invalid_analysis_contract')
+        self.assertEqual(provider.call_count,1)
+        p.executor.assert_not_called()

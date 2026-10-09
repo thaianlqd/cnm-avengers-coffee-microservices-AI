@@ -89,7 +89,7 @@ class RefinementQualityTests(unittest.TestCase):
         self.assertEqual(p.provider.call_count,2)
         self.assertTrue(all(r['tools'][0]['name']=='submit_analysis_delta' for r in p.provider.requests))
         repair = json.loads(p.provider.requests[1]['messages'][0]['content'])
-        self.assertEqual(repair['current_intent'],report['semantic_intent'])
+        self.assertEqual(AnalysisIntentEnvelope.model_validate(repair['current_intent']).model_dump(mode='json'),report['semantic_intent'])
         self.assertEqual(repair['rejected_delta'],conflict)
         self.assertEqual(refined['semantic_intent']['requirements'][0]['metric_ids'],['product_revenue','quantity_sold'])
         self.assertEqual(refined['semantic_intent']['requirements'][0]['ranking']['limit'],2)

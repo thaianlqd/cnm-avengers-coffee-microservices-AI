@@ -709,7 +709,7 @@ export const AnalyticsView: React.FC = () => {
     } else if (activeTab === 'saved_reports') {
       fetchSavedReports();
     }
-  }, [activeTab]);
+  }, [activeTab, isProposingPlan, isGeneratingAi]);
 
   // Common Palette
   const palette = ['#059669', '#0284c7', '#d97706', '#dc2626', '#8b5cf6', '#64748b'];
@@ -2490,9 +2490,10 @@ export const AnalyticsView: React.FC = () => {
                       Truy vấn ngôn ngữ tự nhiên và tự động lập kế hoạch báo cáo chuyên sâu
                     </p>
                   </div>
-                  <div className="flex items-center space-x-2 text-xs text-slate-500 self-start sm:self-auto">
-                    <span className={`w-2 h-2 rounded-full ${generatedReport?.status === 'error' ? 'bg-amber-500' : 'bg-blue-500'}`}></span>
-                    <span className="text-[11px] font-medium">{generatedReport?.status === 'error' ? 'Phân tích đang gặp lỗi' : 'Sẵn sàng nhận câu hỏi'}</span>
+                  <div role="status" className="text-[11px] text-slate-500 self-start sm:self-auto space-y-1">
+                    <p>Kho dữ liệu: {aiStatus?.system_readiness?.warehouse_available === true ? 'Sẵn sàng' : aiStatus?.system_readiness?.warehouse_available === false ? 'Chưa sẵn sàng' : 'Chưa kiểm tra'}</p>
+                    <p>Semantic catalog: {aiStatus?.system_readiness?.catalog_ready ? 'Sẵn sàng' : 'Chưa sẵn sàng'}</p>
+                    <p>AI provider: {({ available: 'Sẵn sàng', degraded: 'Không ổn định', unavailable: 'Chưa khả dụng', unknown: 'Chưa kiểm tra' } as any)[aiStatus?.provider_status?.state || 'unknown']}</p>
                   </div>
                 </div>
 
@@ -2607,7 +2608,7 @@ export const AnalyticsView: React.FC = () => {
                   <div className="w-6 h-6 rounded-full border-2 border-slate-900 border-t-transparent animate-spin mx-auto mb-3"></div>
                   <h4 className="text-sm font-semibold text-slate-800">Đang đọc yêu cầu và kiểm tra kế hoạch phân tích...</h4>
                   <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-                    Hệ thống đang đối chiếu danh mục dữ liệu và tự sửa phần diễn giải chưa hợp lệ. Yêu cầu lớn có thể mất vài phút; bạn chỉ cần chờ lần xử lý này.
+                    Hệ thống đang đối chiếu danh mục dữ liệu và tự sửa phần diễn giải chưa hợp lệ. Dịch vụ AI có thể cần đến 30 giây để phản hồi; câu hỏi của bạn đang được xử lý.
                   </p>
                 </div>
               )}

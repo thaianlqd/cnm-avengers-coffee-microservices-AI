@@ -67,7 +67,8 @@ class HybridTests(unittest.TestCase):
         for variant in variants:
             p=self.pipeline(scripted(variant));proposal=p.propose(self.request());q=proposal['proposal']['analytical_queries']
             self.assertEqual(p.provider.call_count,1);p.executor.assert_not_called()
-            self.assertEqual(len(q),2) # one ranking + exact full denominator
+            self.assertEqual(sum(x['role']=='requested' for x in q),2) # ranking + exact full denominator
+            self.assertLessEqual(len(q),8)
             self.assertEqual(q[0]['subject'],'products');self.assertEqual(q[0]['metrics'],['product_revenue','quantity_sold'])
             self.assertEqual(q[0]['ranking']['top_n'],5);self.assertEqual(q[0]['time']['start'],'2026-09-09')
             self.assertEqual(proposal['diagnostics']['request_anchor_verification'],'passed')
@@ -95,7 +96,7 @@ class HybridTests(unittest.TestCase):
         self.assertEqual(provider.call_count,2);self.assertEqual(r['diagnostics']['semantic_repair_count'],1)
         context=json.loads(provider.requests[1]['messages'][0]['content'])
         self.assertEqual(context['frozen_requirement_ids'],['r1']);self.assertEqual(context['affected_requirements'],[])
-        self.assertEqual(len(r['proposal']['analysis_components']),2)
+        self.assertEqual(sum(c['requested_or_supporting']=='requested' for c in r['proposal']['analysis_components']),2)
         self.assertTrue(any(i['code']=='explicit_metrics_missing' for i in context['validation_issues']))
 
     def test_wrong_but_schema_valid_metric_never_full_success(self):
@@ -112,9 +113,9 @@ class HybridTests(unittest.TestCase):
         fixed=requirement(id='r2',derived_features=[])
         changed={**valid,'time':{'kind':'relative','mode':'all_time'}}
         p=self.pipeline(scripted(envelope(valid,bad),envelope(changed,fixed),envelope(fixed)))
-        r=p.propose(self.request('Phân tích đã chọn'))
+        r=p.propose(self.request('Phân tích đã chọn trong 30 ngày gần nhất'))
         self.assertEqual(p.provider.call_count,3)
-        intent=r['diagnostics']['semantic_intent'];self.assertEqual(len(intent['requirements']),1) # equivalent duplicate meaning
+        intent=r['diagnostics']['semantic_intent'];self.assertEqual(sum(not x['supporting_for'] for x in intent['requirements']),2) # requested mappings survive dashboard enrichment
         self.assertEqual(intent['requirements'][0]['time']['amount'],30)
         second=json.loads(p.provider.requests[1]['messages'][0]['content'])
         self.assertEqual(second['frozen_requirement_ids'],['r1'])
@@ -126,7 +127,7 @@ class HybridTests(unittest.TestCase):
             # be targeted, and unrelated time/filter facts remain immutable.
             good={**bad,'metric_ids':['product_revenue','quantity_sold'],**change}
             p=self.pipeline(scripted(envelope(bad),envelope(good),envelope(good)))
-            with self.assertRaises(AnalysisError):p.propose(self.request('Theo lựa chọn'))
+            with self.assertRaises(AnalysisError):p.propose(self.request('Theo lựa chọn trong 30 ngày gần nhất'))
             self.assertEqual(p.provider.call_count,3);p.executor.assert_not_called()
 
     def test_malformed_sibling_preserves_good_requirements(self):
@@ -135,7 +136,7 @@ class HybridTests(unittest.TestCase):
         repaired={**b,'granularity':None}
         p=self.pipeline(scripted(envelope(a,b),envelope(repaired)))
         r=p.propose(self.request('Theo lựa chọn'))
-        self.assertEqual(p.provider.call_count,2);self.assertEqual(len(r['proposal']['analysis_components']),2)
+        self.assertEqual(p.provider.call_count,2);self.assertEqual(sum(c['requested_or_supporting']=='requested' for c in r['proposal']['analysis_components']),2)
         context=json.loads(p.provider.requests[1]['messages'][0]['content'])
         self.assertIn('r1',context['frozen_requirement_ids'])
 
@@ -145,7 +146,7 @@ class HybridTests(unittest.TestCase):
             p=self.pipeline(scripted(envelope(requirement(),analysis_breadth=breadth)))
             r=p.propose(self.request(time={'mode':'previous_month'}))
             self.assertEqual(r['proposal']['analytical_queries'][0]['time']['start'],'2026-09-01')
-            self.assertEqual(r['diagnostics']['analysis_breadth'],'focused')
+            self.assertEqual(r['diagnostics']['analysis_breadth'],'deep')
             fingerprints.append(r['proposal']['resolved_plan_fingerprint'])
         self.assertEqual(len(set(fingerprints)),1)
 
@@ -231,12 +232,12 @@ class HybridTests(unittest.TestCase):
                 agent.semantic.discovered.update(index.references)
                 for op in resolved['operations']:agent.queries.prepare(op)
 
-    def test_three_attempt_transport_budget_and_nonretryable_auth(self):
+    def test_early_transport_retry_is_once_and_auth_is_terminal(self):
         success={'calls':[call('submit_analysis_intent',envelope())],'attempts':[]}
-        for code,status,count in [('provider_timeout',None,3),('provider_connection',None,3),('provider_http',503,3),('provider_auth',401,1),('provider_access_denied',403,1),('provider_daily_quota',429,1),('provider_rate_limited',429,1)]:
-            failure={'calls':None,'attempts':[{'error_category':code,'http_status':status}]}
-            provider=Mock(side_effect=[failure,failure,success]);p=self.pipeline(provider)
-            if count==3:
+        for code,status,count in [('provider_timeout',None,2),('provider_connection',None,2),('provider_http',503,2),('provider_auth',401,1),('provider_access_denied',403,1),('provider_daily_quota',429,1),('provider_rate_limited',429,1)]:
+            failure={'calls':None,'attempts':[{'error_category':code,'http_status':status,'latency_ms':100}]}
+            provider=Mock(side_effect=[failure,success]);p=self.pipeline(provider)
+            if count==2:
                 self.assertEqual(p.propose(self.request())['status'],'proposal_ready')
             else:
                 with self.assertRaises(AnalysisError):p.propose(self.request())
@@ -248,7 +249,9 @@ class HybridTests(unittest.TestCase):
     def test_context_and_schema_reduction(self):
         from services.analyst_decision import decision_tool
         from services.semantic_manifest_service import compact
-        self.assertLess(len(compact(intent_tool())),len(compact(decision_tool(natural=True,refinement=False)))*0.65)
+        # Complete per-kind time grammar costs more than the former incomplete
+        # flat object. Keep the semantic contract bounded below executable input.
+        self.assertLess(len(compact(intent_tool())),len(compact(decision_tool(natural=True,refinement=False)))*0.80)
         p=self.pipeline();r=p.propose(self.request())
         self.assertLess(r['diagnostics']['total_context_chars'],18000)
         self.assertNotIn('blueprint',json.dumps(p.provider.requests[0]['messages']))
@@ -406,7 +409,7 @@ class HybridTests(unittest.TestCase):
             self.assertEqual(p.provider.call_count,1)
             self.assertEqual(proposal['diagnostics']['contract_rejection_count'],0)
             self.assertEqual(proposal['diagnostics']['contract_repair_count'],0)
-            self.assertEqual(len(proposal['proposal']['analytical_queries']),2)
+            self.assertEqual(sum(q['role']=='requested' for q in proposal['proposal']['analytical_queries']),2)
             self.assertLessEqual(len(proposal['proposal']['analysis_components'][0]['business_goal']),120)
             fingerprints.add(proposal['proposal']['resolved_plan_fingerprint'])
             p.executor.assert_not_called()

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { AnalysisQualityScore } from './AnalysisQualityScore';
 import { AnalystChart } from './Charts';
-import { chartAccent, conciseChartTitle, dashboardCharts, dashboardPrimaryCharts, dashboardHighlights, dashboardFindings, initialChartType, chartExplanation, businessCategory } from '../utils/analystDashboardLayout.mjs';
+import { chartAccent, conciseChartTitle, dashboardCharts, dashboardPrimaryCharts, dashboardChartTabs, dashboardHighlights, dashboardFindings, initialChartType, chartExplanation, businessCategory } from '../utils/analystDashboardLayout.mjs';
 import { formatChartValue } from '../utils/aiChartConfig.mjs';
 import { analysisChartGroups, analysisChartSpan, analysisPlanLabel } from '../utils/analysisPresentation.mjs';
 
@@ -14,7 +14,7 @@ const ChartCard: React.FC<{ chart: any; compact?: boolean; span: string; editing
     <div className="flex items-start justify-between gap-3 mb-5">
       <div className="min-w-0"><div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full shrink-0" style={{ background: accent }} /><h5 className="text-sm font-semibold text-slate-900">{conciseChartTitle(chart)}</h5></div>
         <p className="text-[11px] text-slate-500 mt-1.5">{chart.x_label || chart.lens_label || chart.domain_label || 'Trong phạm vi đã chọn'}{chart.unit ? ` · ${chart.unit}` : ''}</p>
-        <p data-chart-explanation className="text-xs text-slate-600 leading-relaxed mt-2">{chartExplanation({ ...chart, chart_type: type })}</p>
+        <details className="text-xs text-slate-600 leading-relaxed mt-2"><summary data-chart-explanation className="cursor-pointer">Cách đọc biểu đồ</summary><p className="mt-1">{chartExplanation({ ...chart, chart_type: type })}</p></details>
         {chart.role === 'supporting' && <span className="inline-block mt-2 rounded-full bg-teal-50 px-2 py-1 text-[10px] font-medium text-teal-700">Góc nhìn bổ sung</span>}
       </div>
       <details className="relative shrink-0 text-xs"><summary aria-label={`Tùy chọn ${conciseChartTitle(chart)}`} className="cursor-pointer list-none rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-50">•••</summary>
@@ -25,8 +25,9 @@ const ChartCard: React.FC<{ chart: any; compact?: boolean; span: string; editing
         </div>
       </details>
     </div>
-    <div className="min-h-[300px] flex-1 flex flex-col justify-center min-w-0"><AnalystChart chart={{ ...chart, chart_type: type, accent_color: accent }} /></div>
+    <div className="h-[320px] overflow-auto flex-1 flex flex-col justify-center min-w-0"><AnalystChart chart={{ ...chart, chart_type: type, accent_color: accent }} /></div>
     {chart.time_note && <p className="text-[11px] leading-relaxed text-amber-700 mt-4">{chart.time_note}</p>}
+    {chart.ranking_note && <p className="text-[11px] leading-relaxed text-slate-600 mt-4">{chart.ranking_note}</p>}
     {chart.value_transform === 'contribution_share' && chart.evidence_refs?.[0] && <a className="text-xs text-blue-600 mt-4" href={`#evidence-${encodeURIComponent(chart.evidence_refs[0])}`}>Đối chiếu tử số và mẫu số ↗</a>}
     {chart.grouped_categories > 0 && <p className="text-[11px] leading-relaxed text-slate-500 mt-4">6 nhóm lớn nhất và Khác ({chart.grouped_categories} nhóm). Tổng và tỷ trọng tính trên toàn bộ {chart.population_count} nhóm; xem từng nhóm trong bảng dữ liệu.</p>}
     {(chart.selection === 'Top N' || chart.selection === 'limited' || chart.selection === 'display_subset') && <p className="text-[11px] text-slate-500 mt-4 border-t border-slate-100 pt-3">
@@ -35,32 +36,31 @@ const ChartCard: React.FC<{ chart: any; compact?: boolean; span: string; editing
   </article>;
 };
 
-export const AnalystViews: React.FC<{ charts?: any[]; onChartTypeChange?: (id: string, type: string) => void; editing?: boolean; compact?: boolean }> = ({ charts = [], onChartTypeChange, editing = false, compact = false }) => compact ? <div data-dashboard-grid className="grid grid-cols-1 lg:grid-cols-6 gap-5 items-stretch">
-  {charts.map((chart, index) => <ChartCard key={chart.id || index} chart={chart} compact span={['line','area','multi_line','heatmap'].includes(chart.chart_type)
-    ? charts.some(c => c.chart_type === 'donut') && index === 0 ? 'col-span-1 lg:col-span-4' : 'col-span-1 lg:col-span-6'
-    : chart.chart_type === 'donut' && index === 1 && ['line','area','multi_line'].includes(charts[0]?.chart_type)
-    ? 'col-span-1 lg:col-span-2' : 'col-span-1 lg:col-span-3'} editing={editing} onChartTypeChange={onChartTypeChange} />)}
+export const AnalystViews: React.FC<{ charts?: any[]; onChartTypeChange?: (id: string, type: string) => void; editing?: boolean; compact?: boolean }> = ({ charts = [], onChartTypeChange, editing = false, compact = false }) => compact ? <div data-dashboard-grid className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+  {charts.map((chart, index) => <ChartCard key={chart.id || index} chart={chart} compact span="col-span-1" editing={editing} onChartTypeChange={onChartTypeChange} />)}
 </div> : <div className="space-y-5">
   {analysisChartGroups(charts).map(group => <section key={group.role} aria-label={group.title} className="space-y-3">
-    <h4 className="text-xs font-semibold text-slate-500">{compact ? group.charts[0]?.domain_label || group.title : group.title}</h4>
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-      {group.charts.map((chart: any, index: number) => <ChartCard key={chart.id || index} chart={chart} compact={compact} span={compact ? (['multi_line', 'heatmap'].includes(chart.chart_type) ? 'col-span-1 lg:col-span-2' : 'col-span-1') : analysisChartSpan(chart, index, group.charts.length)} editing={editing} onChartTypeChange={onChartTypeChange} />)}
+    <h4 className="text-xs font-semibold text-slate-500">{group.title}</h4>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+      {group.charts.map((chart: any, index: number) => <ChartCard key={chart.id || index} chart={chart} span={analysisChartSpan(chart, index, group.charts.length)} editing={editing} onChartTypeChange={onChartTypeChange} />)}
     </div>
   </section>)}
 </div>;
 
 export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChartTypeChange?: (id: string, type: string) => void }> = ({ report, editing, onChartTypeChange }) => {
   const [showAll, setShowAll] = useState(false);
+  const [view, setView] = useState('all');
+  useEffect(() => { setView('all'); setShowAll(false); }, [report.session_id, report.revision]);
   const [resultId, setResultId] = useState<string | null>(null);
   const selected = dashboardCharts(report.charts || [], report);
   const primary = dashboardPrimaryCharts(selected.charts);
   const highlights = dashboardHighlights(report), findings = dashboardFindings(report);
   const results = Object.entries(report.result_sets || {});
   const activeResult = results.find(([id]) => id === resultId) || results.find(([,data]: any) => (data.total_rows ?? data.rows?.length) > 1) || results[0];
-  const visibleCharts = [...(showAll ? selected.charts : primary)];
-  const hero = visibleCharts.find(c => ['line','area','multi_line'].includes(c.chart_type));
-  const composition = visibleCharts.find(c => c.chart_type === 'donut');
-  const arranged = hero && composition ? [hero,composition,...visibleCharts.filter(c => c !== hero && c !== composition)] : visibleCharts;
+  const tabs = dashboardChartTabs(selected.charts);
+  const activeTab = tabs.find(tab => tab.id === view) || tabs[0];
+  const visibleCharts = view === 'all' ? [...(showAll ? selected.charts : primary)] : activeTab.charts;
+  const minimum = Math.max(4, report.quality_assessment?.verification_checks?.find((c: any) => c.id === 'analysis_depth_coverage')?.total || report.diagnostics?.minimum_visuals || 0);
   return <div className="space-y-5">
     {!!report.data_warnings?.length && <details className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800"><summary className="cursor-pointer font-medium">{report.data_warnings.length} lưu ý về dữ liệu · Xem chi tiết</summary><ul className="mt-2 space-y-1">{report.data_warnings.map((w: string, i: number) => <li key={i}>{w}</li>)}</ul></details>}
     {!!highlights.length && <div className={`grid grid-cols-1 ${highlights.length === 1 ? 'sm:grid-cols-1' : highlights.length === 3 ? 'sm:grid-cols-2 xl:grid-cols-3' : 'sm:grid-cols-2 xl:grid-cols-4'} gap-3`}>{highlights.map((card: any, i: number) => <section key={card.evidence_id || i} className="rounded-xl border border-slate-200 bg-white p-4 min-w-0">
@@ -70,8 +70,13 @@ export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChar
     </section>)}</div>}
     {!!findings.length && <section className="rounded-xl border border-slate-200 bg-white p-4"><h3 className="text-xs font-semibold text-slate-900 mb-3">Điểm nổi bật</h3><div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">{findings.map((f: any, i: number) => <div key={i} className="text-xs text-slate-600 leading-relaxed"><span className="inline-block w-1.5 h-1.5 bg-teal-500 rounded-full mr-2" />{f.text}{f.evidence_id && <a href={`#evidence-${encodeURIComponent(f.evidence_id)}`} className="block text-blue-600 mt-1">Đối chiếu dữ liệu ↗</a>}</div>)}</div></section>}
     <div className="flex flex-wrap gap-2 items-center justify-between"><h3 className="text-sm font-semibold text-slate-900">Các góc nhìn phân tích</h3><span className="text-xs text-slate-400">{selected.charts.length} biểu đồ{selected.duplicateCount ? ` · ${selected.duplicateCount} góc nhìn trùng đã gộp` : ''}</span></div>
-    <AnalystViews charts={arranged} compact editing={editing} onChartTypeChange={onChartTypeChange} />
-    {selected.charts.length > primary.length && <button onClick={() => setShowAll(!showAll)} className="w-full rounded-xl border border-slate-200 py-3 text-xs text-slate-600 hover:bg-white">{showAll ? 'Thu gọn biểu đồ' : `Xem thêm ${selected.charts.length - primary.length} góc nhìn chi tiết`}</button>}
+    {minimum > selected.charts.length && <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">Mới có {selected.charts.length}/{minimum} góc nhìn cần thiết. Báo cáo phân tích chưa đầy đủ biểu đồ; xem các giới hạn trong mục kiểm chứng.</p>}
+    {selected.charts.length > 1 && <div role="tablist" aria-label="Góc nhìn biểu đồ" className="flex flex-wrap gap-2">{tabs.map(tab => <button key={tab.id} id={`chart-tab-${tab.id}`} role="tab" aria-selected={activeTab.id === tab.id} aria-controls="analysis-chart-panel" onClick={() => setView(tab.id)} className={`rounded-lg border px-3 py-2 text-xs ${activeTab.id === tab.id ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-600'}`}>{tab.label} · {tab.charts.length}</button>)}</div>}
+    <div id="analysis-chart-panel" role={selected.charts.length > 1 ? 'tabpanel' : undefined} aria-labelledby={selected.charts.length > 1 ? `chart-tab-${activeTab.id}` : undefined}>
+    <AnalystViews charts={visibleCharts} compact editing={editing} onChartTypeChange={onChartTypeChange} />
+    </div>
+    {!selected.charts.length && <div role="status" className="rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600 leading-relaxed">Chưa có biểu đồ phù hợp được kiểm chứng cho kết quả này. Xem bảng dữ liệu đối chiếu và mục kiểm chứng bên dưới để biết phần trình bày còn thiếu.</div>}
+    {view === 'all' && selected.charts.length > primary.length && <button onClick={() => setShowAll(!showAll)} className="w-full rounded-xl border border-slate-200 py-3 text-xs text-slate-600 hover:bg-white">{showAll ? 'Thu gọn biểu đồ' : `Xem thêm ${selected.charts.length - primary.length} góc nhìn chi tiết`}</button>}
     <AnalysisQualityScore assessment={report.quality_assessment} />
     {!!results.length && <section className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
       <div className="flex justify-between gap-3"><h3 className="text-sm font-semibold text-slate-900">Bảng dữ liệu đối chiếu</h3><span className="text-xs text-slate-400">{results.length} phần phân tích</span></div>
@@ -145,7 +150,7 @@ export const AnalystPlanningSummary: React.FC<{ diagnostics?: any }> = ({ diagno
   const omitted = Number.isInteger(diagnostics.omitted_supporting_operation_count) ? diagnostics.omitted_supporting_operation_count : 0;
   return <div role="status" className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 space-y-1">
     <p>AI đã lập kế hoạch. Bạn xác nhận phạm vi trước khi tạo báo cáo.</p>
-    {diagnostics.analysis_depth === 'deep' && <p>Phân tích sâu: mục tiêu 5–6 góc nhìn hữu ích theo dữ liệu và phạm vi đã chọn.</p>}
+    {diagnostics.analysis_depth === 'deep' && <p>Phân tích sâu: mục tiêu 4–6 góc nhìn hữu ích theo dữ liệu và phạm vi đã chọn.</p>}
     {diagnostics.analysis_depth === 'comprehensive' && <p>Phân tích toàn diện: mở rộng các miền liên quan, hướng đến 6–8 góc nhìn khi dữ liệu cho phép.</p>}
     {diagnostics.depth_coverage?.status === 'limited' && <p>Dữ liệu hoặc phạm vi hiện tại cung cấp ít góc nhìn hơn mục tiêu; báo cáo giữ các kết quả đã kiểm chứng.</p>}
     <p>{diagnostics.requested_operation_count || diagnostics.registered_requested_operations || 0} phần theo yêu cầu · {diagnostics.supporting_operation_count || diagnostics.registered_supporting_operations || 0} phần hỗ trợ</p>

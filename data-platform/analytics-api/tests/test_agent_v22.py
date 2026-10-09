@@ -2022,6 +2022,7 @@ class AgentTests(unittest.TestCase):
             "relationships": [],
         }
         r = overlay["analysis_registry"]
+        overlay["silver_tables"]["silver.energy"] = {"primary_key": [], "joins": []}
         r["subjects"]["energy"] = {
             "business_name": "Năng lượng",
             "aliases": ["energy"],

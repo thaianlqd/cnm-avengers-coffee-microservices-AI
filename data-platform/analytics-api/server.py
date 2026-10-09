@@ -67,6 +67,8 @@ def _background_init_warehouse_views():
 
 @app.on_event("startup")
 def on_startup():
+    from services.readiness_service import catalog_probe
+    catalog_probe(False)
     if os.getenv("ANALYTICS_INITIALIZE_WAREHOUSE_ON_STARTUP", "false").lower() != "true":
         logger.info("Warehouse bootstrap disabled; serving existing schemas without startup DDL.")
         return

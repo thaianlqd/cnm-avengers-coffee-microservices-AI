@@ -486,9 +486,9 @@ class OneShotTests(unittest.TestCase):
 
     def test_generic_new_metadata_metric_and_dimension_need_no_code_branch(self):
         overlay = deepcopy(self.catalog.overlay); r = overlay["analysis_registry"]
-        r["metrics"]["new_volume"] = {**r["metrics"]["quantity_sold"], "business_name": "New measurement"}
+        r["metrics"]["new_volume"] = {**r["metrics"]["quantity_sold"], "business_name": "New measurement", "aliases": ["new measurement"]}
         r["subjects"]["products"]["metrics"].append("new_volume")
-        r["dimensions"]["new_group"] = {**r["dimensions"]["category"], "business_name": "New grouping"}
+        r["dimensions"]["new_group"] = {**r["dimensions"]["category"], "business_name": "New grouping", "aliases": ["new grouping"]}
         catalog = AnalysisCatalog(physical_metadata(), overlay)
         manifest, _ = build_manifest(catalog)
         self.assertIn(("metric", "new_volume"), manifest_references(manifest))

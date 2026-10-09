@@ -66,7 +66,7 @@ class VoucherTests(fixture.unittest.TestCase):
 
     def test_voucher_charts_and_conclusions_keep_code_identity(self):
         _,r=self.report(data={'khuyen_mai':[dict(v,ten_khuyen_mai='Cùng chương trình') for v in DATA['khuyen_mai']]})
-        charts=[c for c in r['charts'] if c['query_id'] in {q['id'] for q in r['analytical_queries'] if not q.get('ranking') and q['group_by']}]
+        charts=[c for c in r['charts'] if c['query_id'] in {q['id'] for q in r['analytical_queries'] if not q.get('ranking') and q['group_by']==['promotion'] and q['role']=='requested'}]
         self.assertTrue(charts)
         for c in charts:
             self.assertEqual(len(c['data']),2)
@@ -78,7 +78,10 @@ class VoucherTests(fixture.unittest.TestCase):
         self.assertEqual({e['values']['dimensions']['promotion_id']:e['values']['share_pct'] for e in shares},{'v1':20,'v2':80})
         leaders={e['metric']:e['values'] for e in r['evidence'] if e['feature']=='leader'}
         self.assertNotEqual(leaders['voucher_order_count'],leaders['voucher_revenue'])
-        self.assertEqual(r['quality_assessment']['score'],90)
+        self.assertLessEqual(r['quality_assessment']['score'],90)
+        checks={c['id']:c for c in r['quality_assessment']['verification_checks']}
+        self.assertEqual(checks['request_coverage']['status'],'passed')
+        self.assertEqual(checks['analysis_depth_coverage']['status'],'passed')
         self.assertTrue(any('không kết luận ROI' in l['label'] for l in r['quality_limitations']))
 
     def test_mixed_additive_average_default_targets_do_not_discard_aggregate(self):

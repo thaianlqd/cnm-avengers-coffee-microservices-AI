@@ -263,6 +263,8 @@ def create_session(
     owner_id: Optional[str] = None,
 ) -> ReportSession:
     """Create a new report session and return it."""
+    from services.provider_budget import check_request_deadline
+    check_request_deadline()
     if storage() is not None:
         session = ReportSession(session_id=str(uuid.uuid4()), original_prompt=original_prompt, domain=domain, time_label=time_label, owner_id=owner_id)
         storage().save(session, create=True)
@@ -466,5 +468,7 @@ def storage():
 
 
 def save_session(session):
+    from services.provider_budget import check_request_deadline
+    check_request_deadline()
     if storage() is not None:
         storage().save(session)

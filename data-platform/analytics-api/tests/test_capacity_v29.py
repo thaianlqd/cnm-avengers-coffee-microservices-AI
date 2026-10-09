@@ -77,6 +77,9 @@ class CapacityTests(unittest.TestCase):
 
     def test_row_boundaries_artifact_backed_exact_population(self):
         # Exercise the complete report/verification/session path at every cliff.
+        # Synthetic responses model only the requested population. Supporting
+        # SQL is covered by the real fixture integration in the dashboard suite.
+        self.enterContext(patch('services.analysis_expansion_service.supporting_candidates',return_value=[]))
         for n in (1,10,100,1999,2000,2001,5000,20000):
             with self.subTest(n=n):
                 intent = f.envelope(req('groups',['product_revenue'],['product'],features=['contribution_share']))
@@ -107,6 +110,7 @@ class CapacityTests(unittest.TestCase):
                 self.assertEqual(p.provider.call_count,1)
 
     def test_session_size_1_to_10mb_and_reference_roundtrip(self):
+        self.enterContext(patch('services.analysis_expansion_service.supporting_candidates',return_value=[]))
         p = self.pipeline(f.scripted(f.envelope(req('groups',['product_revenue'],['product']))))
         request = self.request('Phân tích doanh thu sản phẩm'); proposal=p.propose(request)
         session=get_session(proposal['session_id']); a=next(iter(session.agent_artifacts.values()))
@@ -188,9 +192,9 @@ class CapacityTests(unittest.TestCase):
         request=self.request('Doanh thu toàn bộ');f.approve(request,p.propose(request))
         self.assertEqual(warehouse.events,[])
         report=p.generate(request)
-        self.assertEqual(warehouse.events,['dry','execute'])
+        self.assertEqual(warehouse.events,['dry','execute']*len(report['analytical_queries']))
         self.assertEqual(p.provider.call_count,1)
-        self.assertEqual(report['diagnostics']['dry_run_count'],1)
+        self.assertEqual(report['diagnostics']['dry_run_count'],len(report['analytical_queries']))
         warehouse.valid=False;warehouse.events=[]
         p=self.pipeline(f.scripted(f.envelope(req('kpi',['revenue'],features=['scalar']))),executor=warehouse)
         request=self.request('Doanh thu toàn bộ');f.approve(request,p.propose(request))
@@ -213,7 +217,8 @@ class CapacityTests(unittest.TestCase):
                     warehouse=FixtureWarehouse(self.catalog.overlay)
                     try:
                         p=self.pipeline(f.scripted(intent),executor=warehouse)
-                        request=self.request('Phân tích dữ liệu kinh doanh');f.approve(request,p.propose(request));report=p.generate(request)
+                        days=intent['requirements'][0]['time']['amount']
+                        request=self.request(f'Phân tích dữ liệu kinh doanh trong {days} ngày gần nhất');f.approve(request,p.propose(request));report=p.generate(request)
                         self.assertEqual(report['outcome'],'SUCCESS')
                         self.assertEqual(report['quality_assessment'],verify_saved_report(report,self.catalog))
                         self.assertLess(len(encode_session(get_session(request.session_id)).encode()),1_000_000)

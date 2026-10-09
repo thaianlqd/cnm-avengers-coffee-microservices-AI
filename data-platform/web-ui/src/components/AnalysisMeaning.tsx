@@ -9,7 +9,7 @@ export const AnalysisMeaning: React.FC<{ interpretation?: any; compact?: boolean
   const kinds: Record<string, string> = { ranking: 'Xếp hạng', aggregate: 'Tổng hợp', trend: 'Xu hướng', comparison: 'So sánh', distribution: 'Cơ cấu', detail: 'Chi tiết', composite: 'Phân tích nhiều phần', heatmap: 'Phân tích hai chiều', cross_tab: 'Phân tích hai chiều', relationship: 'Liên hệ quan sát' };
   const grains: Record<string, string> = { day: 'ngày', week: 'tuần', month: 'tháng', quarter: 'quý', year: 'năm' };
   const operators: Record<string, string> = { eq: '=', in: 'thuộc', gt: '>', gte: '≥', lt: '<', lte: '≤' };
-  const filters = (value.filters || []).map((f: any) => `${f.dimension} ${operators[f.operator || 'eq'] || '='} ${Array.isArray(f.value) ? f.value.join(', ') : String(f.value)}`);
+  const filters = (value.filters || []).map((f: any) => { const v = f.display_value ?? f.value; return `${f.dimension} ${operators[f.operator || 'eq'] || '='} ${Array.isArray(v) ? v.join(', ') : String(v)}`; });
   if (compact) return <details className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
     <summary className="cursor-pointer flex flex-wrap items-center gap-x-4 gap-y-2 list-none">
       <span className="font-medium text-slate-700">{filters.join(' · ') || 'Toàn phạm vi'}</span>

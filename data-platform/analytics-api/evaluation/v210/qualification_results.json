@@ -1,0 +1,63 @@
+{
+  "version": "2.10.0",
+  "starting_head": "18a9bae8e350cadfb6e1a9bf55b3ffea383bd13a",
+  "measurement_scope": "OFFLINE_SCRIPTED_SERVER_QUALIFICATION_AND_LOCAL_DEPLOYMENT_SMOKE",
+  "backend": {
+    "passed": 687,
+    "failed": 0,
+    "duration_seconds": 283.61
+  },
+  "frontend": {
+    "passed": 104,
+    "failed": 0,
+    "duration_ms": 411.138542
+  },
+  "typecheck": "passed",
+  "offline_evaluation": {
+    "passed": 110,
+    "failed": 0,
+    "capacity_tests_passed": 8,
+    "capacity_tests_failed": 0
+  },
+  "docker_build": {
+    "analytics-api": "passed",
+    "web-ui": "passed"
+  },
+  "deployment": {
+    "services_updated": [
+      "analytics-api",
+      "web-ui"
+    ],
+    "health": {
+      "analytics-api": "healthy",
+      "web-ui": "healthy"
+    },
+    "customer_services_verified_unchanged": 9,
+    "smoke": {
+      "readiness": {
+        "status": "ready",
+        "version": "2.10.0",
+        "warehouse_available": true,
+        "catalog_ready": true,
+        "redis_available": true
+      },
+      "proxied_ai_status": {
+        "status": "ready",
+        "reliability_version": "2.10.0",
+        "provider_call_budget": 3,
+        "provider_status": {
+          "configured": true,
+          "last_success_at": null,
+          "last_failure_at": null,
+          "last_failure_category": null,
+          "recent_latency_ms": null,
+          "state": "unknown"
+        }
+      },
+      "startup_warehouse_ddl_enabled": "false"
+    }
+  },
+  "LIVE_PROVIDER_REQUESTS": 0,
+  "WAREHOUSE_WRITES": 0,
+  "live_stability": "Real provider stability not measured."
+}

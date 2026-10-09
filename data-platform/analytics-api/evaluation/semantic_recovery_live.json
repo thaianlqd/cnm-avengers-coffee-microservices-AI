@@ -1,0 +1,356 @@
+{
+  "measurement_scope": "LIVE_PROVIDER",
+  "submission_limit": 2,
+  "provider_call_limit": 6,
+  "submission_count": 2,
+  "LIVE_PROVIDER_REQUESTS": 4,
+  "WAREHOUSE_WRITES": 0,
+  "report_sql_executions": 0,
+  "runs": [
+    {
+      "measurement_scope": "LIVE_PROVIDER",
+      "submission_count": 1,
+      "LIVE_PROVIDER_REQUESTS": 2,
+      "provider_requests_upper_bound": 2,
+      "success_count": 1,
+      "failure_count": 0,
+      "WAREHOUSE_WRITES": 0,
+      "records": [
+        {
+          "submission": 1,
+          "latency_ms": 4700.8,
+          "question": "Đánh giá doanh thu và xếp hạng hiệu suất các chi nhánh",
+          "status": "proposal_ready",
+          "outcome": "SUCCESS",
+          "provider_request_count": 2,
+          "provider_attempt_latencies": [
+            2477.37,
+            1712.16
+          ],
+          "error_category": null,
+          "failure_stage": null,
+          "semantic_repair_count": 1,
+          "transport_retry_count": 0,
+          "db_query_count": 0,
+          "root_contract_issues": [
+            {
+              "requirement_id": null,
+              "field": "clarification",
+              "code": "clarification_required"
+            }
+          ],
+          "semantic_issue_history": [
+            [
+              {
+                "requirement_id": null,
+                "field": "clarification",
+                "code": "clarification_required"
+              }
+            ]
+          ],
+          "resolver_diagnostic": null,
+          "query_shapes": [
+            {
+              "subject": "orders",
+              "operation": "ranking",
+              "metrics": [
+                "revenue"
+              ],
+              "group_by": [
+                "store"
+              ],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": {
+                "metric": "revenue",
+                "direction": "DESC",
+                "top_n": 10,
+                "per_group": []
+              }
+            },
+            {
+              "subject": "stores",
+              "operation": "ranking",
+              "metrics": [
+                "store_revenue"
+              ],
+              "group_by": [
+                "store"
+              ],
+              "time": {
+                "kind": "range",
+                "mode": null,
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": "2026-10-01",
+                "end": "2026-10-31",
+                "amount": null,
+                "unit": null
+              },
+              "ranking": {
+                "metric": "store_revenue",
+                "direction": "DESC",
+                "top_n": 10,
+                "per_group": []
+              }
+            },
+            {
+              "subject": "orders",
+              "operation": "aggregate",
+              "metrics": [
+                "purchasing_customer_count"
+              ],
+              "group_by": [
+                "city"
+              ],
+              "time": {
+                "kind": "range",
+                "mode": null,
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": "2026-10-01",
+                "end": "2026-10-31",
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null
+            },
+            {
+              "subject": "stores",
+              "operation": "aggregate",
+              "metrics": [
+                "store_revenue"
+              ],
+              "group_by": [
+                "city"
+              ],
+              "time": {
+                "kind": "range",
+                "mode": null,
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": "2026-10-01",
+                "end": "2026-10-31",
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null
+            },
+            {
+              "subject": "orders",
+              "operation": "aggregate",
+              "metrics": [
+                "order_count"
+              ],
+              "group_by": [
+                "city"
+              ],
+              "time": {
+                "kind": "range",
+                "mode": null,
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": "2026-10-01",
+                "end": "2026-10-31",
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "measurement_scope": "LIVE_PROVIDER",
+      "submission_count": 1,
+      "LIVE_PROVIDER_REQUESTS": 2,
+      "provider_requests_upper_bound": 2,
+      "success_count": 1,
+      "failure_count": 0,
+      "WAREHOUSE_WRITES": 0,
+      "records": [
+        {
+          "submission": 1,
+          "latency_ms": 3740.61,
+          "question": "Đánh giá doanh thu và xếp hạng hiệu suất các chi nhánh",
+          "status": "proposal_ready",
+          "outcome": "SUCCESS",
+          "provider_request_count": 2,
+          "provider_attempt_latencies": [
+            1838.02,
+            1426.9
+          ],
+          "error_category": null,
+          "failure_stage": null,
+          "semantic_repair_count": 1,
+          "transport_retry_count": 0,
+          "db_query_count": 0,
+          "root_contract_issues": [
+            {
+              "requirement_id": null,
+              "field": "clarification",
+              "code": "clarification_required"
+            }
+          ],
+          "semantic_issue_history": [
+            [
+              {
+                "requirement_id": null,
+                "field": "clarification",
+                "code": "clarification_required"
+              }
+            ]
+          ],
+          "resolver_diagnostic": null,
+          "query_shapes": [
+            {
+              "subject": "orders",
+              "operation": "ranking",
+              "metrics": [
+                "revenue"
+              ],
+              "group_by": [
+                "store"
+              ],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": {
+                "metric": "revenue",
+                "direction": "DESC",
+                "top_n": 10,
+                "per_group": []
+              }
+            },
+            {
+              "subject": "stores",
+              "operation": "ranking",
+              "metrics": [
+                "store_revenue"
+              ],
+              "group_by": [
+                "store"
+              ],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": {
+                "metric": "store_revenue",
+                "direction": "DESC",
+                "top_n": 10,
+                "per_group": []
+              }
+            },
+            {
+              "subject": "stores",
+              "operation": "aggregate",
+              "metrics": [
+                "store_revenue"
+              ],
+              "group_by": [
+                "city"
+              ],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null
+            },
+            {
+              "subject": "orders",
+              "operation": "aggregate",
+              "metrics": [
+                "purchasing_customer_count"
+              ],
+              "group_by": [
+                "city"
+              ],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null
+            },
+            {
+              "subject": "orders",
+              "operation": "aggregate",
+              "metrics": [
+                "order_count"
+              ],
+              "group_by": [
+                "city"
+              ],
+              "time": {
+                "kind": "relative",
+                "mode": "all_time",
+                "year": null,
+                "month": null,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "ranking": null
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "qualification_note": "First run exposed unrequested mixed time scopes. Final run after server time policy uses all_time consistently. Two successful proposals do not establish broad language accuracy or warehouse correctness."
+}

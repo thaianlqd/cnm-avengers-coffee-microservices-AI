@@ -118,6 +118,11 @@ class OneShotPlanner:
         if context.get("natural_input"):
             # Permission is narrowly tied to server-owned defaults of the chosen,
             # physically validated delivered lens, never arbitrary model IDs.
+            # A whole-subject manifest shard can omit metrics still explicitly
+            # delivered in the selected lens directory. Preserve that narrower
+            # permission without authorizing other catalog or model references.
+            delivered_metrics = getattr(self, "delivered_lens_metrics", {}).get(raw.get("lens_id"), set())
+            self.semantic.discovered.update(("metric", m) for m in raw.get("metrics", []) if m in delivered_metrics)
             if "lens_default_subject" in blueprint_rules:
                 self.semantic.discovered.add(("subject",raw["subject"]))
             if "lens_default_metric" in blueprint_rules:
@@ -456,6 +461,7 @@ class OneShotPlanner:
             if natural:
                 self.delivered_lenses = {l[0] for lenses in delivered_knowledge.get("lens_directory", {}).values() for l in lenses}
                 self.delivered_lenses.update(l[0] for p in delivered_knowledge["packs"] for l in p["lenses"])
+                self.delivered_lens_metrics = {l[0]: set(l[4]) for lenses in delivered_knowledge.get("lens_directory", {}).values() for l in lenses}
                 self.diagnostics["delivered_lens_count"] = len(self.delivered_lenses)
             repair_operation_count = 0
             repair_components = set()

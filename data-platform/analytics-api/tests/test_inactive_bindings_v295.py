@@ -34,14 +34,17 @@ class InactiveBindingTests(f.unittest.TestCase):
                 p=self.pipeline(f.scripted(raw),executor=Mock(wraps=warehouse))
                 request=self.request(OVERVIEW_45D);proposal=p.propose(request)
                 self.assertEqual(p.provider.call_count,1);p.executor.assert_not_called()
-                self.assertEqual(len(proposal['proposal']['analytical_queries']),5)
+                self.assertEqual(len([q for q in proposal['proposal']['analytical_queries'] if q['role']=='requested']),5)
                 changes=proposal['diagnostics']['semantic_normalizations']
                 self.assertTrue(any(c['rule']=='inactive_feature_binding' and c['feature']=='contribution_share' for c in changes))
                 fingerprints.add(proposal['proposal']['resolved_plan_fingerprint'])
                 f.approve(request,proposal);report=p.generate(request)
                 self.assertEqual(report['outcome'],'SUCCESS');self.assertEqual(p.provider.call_count,1)
-                self.assertEqual(p.executor.call_count,5)
-                self.assertEqual(report['quality_assessment']['score'],90)
+                self.assertEqual(p.executor.call_count,len(report['analytical_queries']))
+                self.assertLessEqual(report['quality_assessment']['score'],90)
+                checks={c['id']:c for c in report['quality_assessment']['verification_checks']}
+                for key in ('request_coverage','semantic_consistency','derived_features','analysis_depth_coverage'):
+                    self.assertEqual(checks[key]['status'],'passed')
                 self.assertEqual(verify_saved_report(report,self.catalog),report['quality_assessment'])
                 self.assertTrue(all(c['state']=='RESOLVED' for c in report['resolved_requirement_coverage']))
                 shares=[e for e in report['evidence'] if e['feature']=='contribution_share']

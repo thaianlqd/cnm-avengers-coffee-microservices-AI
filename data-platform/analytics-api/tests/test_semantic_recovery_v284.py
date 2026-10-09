@@ -72,7 +72,7 @@ class RecoveryTests(fixture.unittest.TestCase):
                 self.assertTrue(any(e['feature']=='contribution_share' for e in report['evidence']))
                 for r in report['semantic_intent']['requirements']:
                     self.assertEqual(r['time']['amount'],60)
-                    self.assertIn('item_revenue',r['metric_ids'])
+                    if not r.get('supporting_for'): self.assertIn('item_revenue',r['metric_ids'])
 
     def test_complete_fresh_variants_need_one_interpretation(self):
         for alias in ['item_revenue','product_revenue']:
@@ -152,12 +152,12 @@ class RecoveryTests(fixture.unittest.TestCase):
     def test_model_context_explains_compatibility_equivalence_and_shape_rules(self):
         p=self.pipeline();p.propose(self.request())
         payload=json.loads(p.provider.requests[0]['messages'][0]['content'])
-        vocab=payload['vocabulary']
-        self.assertIn('compatible_dimensions',vocab['metric_columns'])
+        vocab=payload['semantic_candidate_packet']
+        self.assertTrue(all('compatible_dimensions' in m for m in vocab['metrics']))
         self.assertIn(['item_revenue','product_revenue'],vocab['equivalent_metrics'])
-        metric=next(m for m in vocab['metrics'] if m[0]=='product_revenue')
-        self.assertIn('product',metric[-1]);self.assertIn('category',metric[-1])
-        self.assertIn('ranking.metric_id',vocab['shape_rules']['ranking'])
+        metric=next(m for m in vocab['metrics'] if m['id']=='product_revenue')
+        self.assertIn('product',metric['compatible_dimensions'])
+        self.assertIn('metric_id',p.provider.requests[0]['tools'][0]['parameters']['properties']['requirements']['items']['properties']['ranking']['properties'])
         self.assertLess(p.semantic_info['primary_context_chars'],24000)
 
     def test_error_card_uses_safe_catalog_labels_and_preserves_root_cause(self):
@@ -179,9 +179,9 @@ class RecoveryTests(fixture.unittest.TestCase):
         with patch.dict(os.environ,{'AI_OFFLINE':'0','GEMINI_API_STYLE':'native','DATA_ANALYST_INTENT_TRANSPORT':'json'}),patch.object(llm_service,'GEMINI_API_KEY','fixture'),patch.object(llm_service,'GEMINI_MODELS',['fixture']),patch('services.agent_provider.requests.post',side_effect=[requests.exceptions.ReadTimeout('private'),Mock(ok=True,json=Mock(return_value=body))]) as http,patch('services.hybrid_analyst_planner.time.sleep'):
             p=self.pipeline(NativeAgentProvider());proposal=p.propose(self.request())
             self.assertEqual(http.call_count,2);self.assertEqual(proposal['diagnostics']['transport_retry_count'],1)
-            self.assertTrue(all(c.kwargs['timeout'].total<=(18 if i==0 else 8) and c.kwargs['timeout'].connect_timeout<=2
+            self.assertTrue(all(c.kwargs['timeout'].total<=25 and c.kwargs['timeout'].connect_timeout<=2
                                 for i,c in enumerate(http.call_args_list)))
-            self.assertEqual(proposal['diagnostics']['planning_budget_ms'],27000)
+            self.assertEqual(proposal['diagnostics']['planning_budget_ms'],28000)
             p.executor.assert_not_called()
 
     def test_native_and_compat_transports_receive_partial_repair_schema(self):

@@ -352,6 +352,7 @@ class UnderstandingV21Tests(unittest.TestCase):
         }
         overlay = deepcopy(self.catalog.overlay)
         registry = overlay["analysis_registry"]
+        overlay["silver_tables"]["silver.energy_facts"] = {"primary_key": [], "joins": []}
         registry["subjects"]["energy"] = {
             "business_name": "Năng lượng",
             "aliases": ["electricity"],

@@ -46,7 +46,8 @@ def requirement_meaning(requirement, reference=None, catalog=None):
 
 
 def intent_fingerprint(intent, reference=None, catalog=None):
-    return digest(sorted((requirement_meaning(r, reference, catalog) for r in intent.requirements), key=digest))
+    meanings={digest(requirement_meaning(r,reference,catalog)):requirement_meaning(r,reference,catalog) for r in intent.requirements}
+    return digest([meanings[k] for k in sorted(meanings)])
 
 
 def plan_fingerprint(operations, coverage, catalog_fingerprint):
@@ -58,7 +59,8 @@ def plan_fingerprint(operations, coverage, catalog_fingerprint):
     requirements = [{"state": c["state"], "reason": c.get("reason"),
                      "features": c["derived_features"],
                      "operations": sorted((meaning(by_id[id]) for id in c["operation_ids"]), key=digest)} for c in coverage]
-    return digest([VERSION, catalog_fingerprint, sorted(requirements, key=digest)])
+    unique={digest(r):r for r in requirements}
+    return digest([VERSION, catalog_fingerprint, [unique[k] for k in sorted(unique)]])
 
 
 class CompatibilityIndex:
@@ -112,6 +114,26 @@ class AnalyticalResolver:
 
     def issue(self, req, field, code, **extra):
         return {"requirement_id": req.id, "field":field, "code":code, **extra}
+
+    def validate_time(self, req):
+        """Only errors at the time boundary authorize a time-only repair."""
+        from services.analysis_contract import TIME_SHAPES
+        try:
+            supplied = req.time.model_dump(mode='json', exclude_none=True) if req.time else {'kind':'relative','mode':'all_time'}
+            required, optional = TIME_SHAPES[supplied['kind']]
+            _, _, period = resolve_time(supplied, self.reference, self.catalog.registry['timezone'])
+            extras = set(supplied) - {'kind', *required, *optional}
+            # Historical stored rolling/calendar scopes carry resolved dates.
+            # Admit only exactly matching redundant bounds; never choose between
+            # contradictory windows or discard another kind's non-null fields.
+            if any(f not in {'start','end'} or supplied[f] != period[f] for f in extras):
+                raise ValueError('contradictory time fields')
+        except AnalysisError:
+            raise
+        except (ValueError, OverflowError):
+            required = TIME_SHAPES[req.time.kind][0] if req.time else ()
+            raise ResolutionIssues([self.issue(req, 'time', 'invalid_time_shape',
+                required_fields=list(required))]) from None
 
     def normalize(self, req):
         req = req.model_copy(deep=True)
@@ -212,6 +234,7 @@ class AnalyticalResolver:
 
     def resolve_requirement(self, raw):
         req = self.normalize(raw)
+        self.validate_time(req)
         if req.availability != "requested":
             if not req.reason:
                 raise ResolutionIssues([self.issue(req,"reason","limitation_reason_required")])
@@ -403,12 +426,61 @@ class AnalyticalResolver:
         return req,[op],"RESOLVED",None,[]
 
     def resolve(self, intent):
+        if self.ui.get('server_supporting_expansion'):
+            # Reproduce the same metadata policy during approval verification.
+            # Model suggestions have no authority to add optional analytical work.
+            requested=[r for r in intent.requirements if not r.supporting_for]
+            baseline_ui={k:v for k,v in self.ui.items() if k!='server_supporting_expansion'}
+            baseline=AnalyticalResolver(self.catalog,self.reference,baseline_ui).resolve(
+                AnalysisIntentEnvelope(decision='analyze',requirements=requested))
+            from services.analysis_expansion_service import supporting_candidates, dashboard_policy, estimated_views
+            from services.analytical_capacity_planner import AnalyticalCapacityContract
+            from services.semantic_tools import SemanticTools
+            from services.analytical_tool_contract import canonicalize
+            from services.analytical_query_service import signature
+            tools=SemanticTools(self.catalog,None)
+            def identity(op):
+                query,_=canonicalize(op,{}, {})
+                period=resolve_time(query.time.model_dump(mode='json'),self.reference,self.catalog.registry['timezone'])[2]
+                return signature(query,period,self.catalog.fingerprint)
+            signatures={identity(op) for op in baseline['operations']}
+            selected=[]; added=0
+            planned_views=estimated_views(baseline['operations'],self.catalog)
+            target_views=dashboard_policy(self.catalog)['target_views']
+            support_limit=6 if self.ui.get('minimum_visuals') else 3
+            capacity=min(8,AnalyticalCapacityContract.from_env().operations)
+            for candidate in supporting_candidates(self,baseline['intent'].requirements):
+                if candidate.id in self.ui.get('omitted_supporting_ids',[]):
+                    continue
+                if len(requested)+len(selected)>=16 or added>=support_limit:
+                    break
+                if planned_views>=target_views and 'scalar' not in candidate.derived_features:
+                    continue
+                try:
+                    req,ops,state,reason,features=self.resolve_requirement(candidate)
+                except (AnalysisError,ValueError,KeyError,TypeError):
+                    continue
+                parents=[o for c in baseline['coverage'] if c['requirement_id']==candidate.supporting_for
+                         for o in baseline['operations'] if o['id'] in c['operation_ids']]
+                if state!='RESOLVED' or not ops or any(identity(o) in signatures for o in ops):
+                    continue
+                if not any(all(p['time']==o['time'] and p['filters']==o['filters'] and
+                    tools.related_population(p['subject'],o['subject'],p['metrics'],o['metrics'],
+                        allow_snapshot=o['time'].get('mode')=='all_time') for o in ops) for p in parents):
+                    continue
+                if added+len(ops)>support_limit or len(baseline['operations'])+added+len(ops)>capacity:
+                    continue
+                signatures.update(identity(o) for o in ops)
+                selected.append(req);added+=len(ops)
+                planned_views+=estimated_views(ops,self.catalog)
+            intent=AnalysisIntentEnvelope(decision='analyze',requirements=requested+selected)
         normalized, operations, coverage, bindings, issues, seen = [], [], [], [], [], set()
         # Requested work always resolves first. Optional model-proposed views may
         # enrich the approved plan, but never substitute for a requested goal.
         ordered = sorted(intent.requirements, key=lambda r: bool(r.supporting_for))
         requested_ops = {}
         support_count = 0
+        support_limit=6 if self.ui.get('minimum_visuals') else 3
         from services.semantic_tools import SemanticTools
         scope_tools = SemanticTools(self.catalog, None)
         for raw in ordered:
@@ -419,19 +491,30 @@ class AnalyticalResolver:
                         if all(scope_tools.related_population(p['subject'], o['subject'], p['metrics'], o['metrics'],
                             allow_snapshot=o['time'].get('mode') == 'all_time')
                             and p['time'] == o['time'] and p['filters'] == o['filters'] for o in ops)), None)
-                    if state != 'RESOLVED' or not parent or not ops or support_count + len(ops) > 3 or len(operations) + len(ops) > 8:
+                    if parent:
+                        for op in ops:
+                            op.update(role='supporting', parent_id=parent['id'], purpose='context', population_relation='related')
+                    # Shared denominators and duplicate requested meanings are
+                    # executed once. Count the same identities as the final
+                    # deduplication before deciding whether a drilldown fits.
+                    from services.analytical_tool_contract import canonicalize
+                    from services.analytical_query_service import signature
+                    identities = set()
+                    for op in [*operations, *ops]:
+                        query, _ = canonicalize(op, {}, {})
+                        period = resolve_time(query.time.model_dump(mode='json'), self.reference, self.catalog.registry['timezone'])[2]
+                        identities.add((signature(query, period, self.catalog.fingerprint), op['role'], op.get('parent_id')))
+                    if state != 'RESOLVED' or not parent or not ops or support_count + len(ops) > support_limit or len(identities) > 8:
                         req = req.model_copy(update={'availability':'unsupported','reason':'definition_unavailable'})
                         ops, features, state, reason = [], [], 'UNSUPPORTED', 'definition_unavailable'
                     else:
-                        for op in ops:
-                            op.update(role='supporting', parent_id=parent['id'], purpose='context', population_relation='related')
                         support_count += len(ops)
                 else:
                     requested_ops[req.id] = ops
                 key = digest(requirement_meaning(req,self.reference,self.catalog))
-                if key in seen:
+                if (key,req.id) in seen:
                     continue
-                seen.add(key)
+                seen.add((key,req.id))
                 normalized.append(req); operations.extend(ops); bindings.extend(features)
                 coverage.append({"requirement_id":req.id,"state":state,"reason":reason,"operation_ids":[op["id"] for op in ops],
                                  "derived_features":req.derived_features,"goal":req.goal})
@@ -443,8 +526,19 @@ class AnalyticalResolver:
                         'operation_ids':[],'derived_features':req.derived_features,'goal':req.goal})
                 else:
                     issues.extend(error.issues)
-            except (ValueError,TypeError,KeyError):
-                issues.append(self.issue(raw,"time","invalid_semantic_shape"))
+            except AnalysisError:
+                # Business/capacity/storage errors inherit ValueError. They must
+                # retain their category and must never consume semantic retries.
+                raise
+            except (ValueError, TypeError, KeyError) as cause:
+                import traceback
+                error = AnalysisError('resolver_internal', 'Internal analytical resolution failed')
+                error.resolver_diagnostic = dict(requirement_id=raw.id, exception_type=type(cause).__name__,
+                    frames=[dict(file=f.filename.rsplit('/',1)[-1], function=f.name, line=f.lineno)
+                            for f in traceback.extract_tb(cause.__traceback__)[-6:]])
+                # No exception text, provider content, or credentials in logs.
+                logger.error('[AnalystResolverInternal] %s', json.dumps(error.resolver_diagnostic))
+                raise error from None
         if issues:
             error = ResolutionIssues(issues)
             error.accepted_requirements = normalized
@@ -474,7 +568,7 @@ class AnalyticalResolver:
                 binding['denominator_query_id'] = aliases[binding['denominator_query_id']]
         if len(operations)>8:
             raise AnalysisError("requested_scope_too_large","Legal plan exceeds bounded operation capacity")
-        normalized.sort(key=lambda r:digest(requirement_meaning(r,self.reference,self.catalog)))
+        normalized.sort(key=lambda r:(bool(r.supporting_for),digest(requirement_meaning(r,self.reference,self.catalog))))
         coverage.sort(key=lambda c:c['requirement_id'])
         bindings.sort(key=lambda b:(b['requirement_id'],b['feature'],b['query_id']))
         operations.sort(key=lambda o:(o['role']=='supporting',o['operation']!='ranking',o['id']))

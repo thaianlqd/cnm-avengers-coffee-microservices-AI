@@ -2,6 +2,22 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { dashboardCharts, dashboardPrimaryCharts, dashboardHighlights, initialChartType, chartAccent, compositionData, trendComparison, dashboardFindings, chartExplanation, reportHeading } from './analystDashboardLayout.mjs';
 
+test('multi-axis ranking preserves both metric views, tuple labels and partition meaning', () => {
+  const data = [{ label: 'Trạng thái đơn: Hoàn thành · Sản phẩm: A', value: 85, rank_position: 1 },
+    { label: 'Trạng thái đơn: Đang giao · Sản phẩm: A', value: 90, rank_position: 1 }];
+  const base = { chart_type: 'horizontal_bar', selection: 'Top N', category_fields: ['order_status', 'product'],
+    ranking_metric: 'quantity_sold', ranking_metric_label: 'Số lượng bán', ranking_limit: 5,
+    ranking_per_group: ['order_status'], ranking_note: 'Xếp hạng riêng trong từng nhóm: Trạng thái đơn', data };
+  const quantity = { ...base, metric: 'quantity_sold', metrics: ['quantity_sold'], unit: 'sản phẩm', semantic_view_key: 'quantity' };
+  const revenue = { ...base, metric: 'product_revenue', metrics: ['product_revenue'], unit: 'VND', semantic_view_key: 'revenue', title: 'Top 5 — Doanh thu sản phẩm' };
+  const charts = dashboardPrimaryCharts(dashboardCharts([quantity, revenue]).charts);
+  assert.equal(charts.length, 2);
+  assert.deepEqual(charts[0].data, data);
+  assert.deepEqual(charts[1].category_fields, ['order_status', 'product']);
+  assert.match(chartExplanation(revenue), /Xếp hạng riêng trong từng nhóm: Trạng thái đơn/);
+  assert.match(chartExplanation(revenue), /giữ nguyên thứ tự theo số lượng bán/);
+});
+
 test('overview KPIs use whole-scope values, deduplicate equivalent revenue and retain population differences', () => {
   const scope = { source:'orders', joins:[], dimensions:[], filters:[], time_column:'created', period:{start:'2026-08-26',end:'2026-10-09'} };
   const query_plans = [
@@ -27,11 +43,12 @@ test('comparison retains columns even with concentration evidence', () => {
   assert.equal(dashboardCharts([chart],{evidence}).charts[0].chart_type,'bar');
 });
 
-test('main dashboard prioritizes existing validated families and retains detail views', () => {
-  const charts=[...Array.from({length:7},(_,i)=>({id:i,chart_type:'bar',data:[i]})),{id:7,chart_type:'line',data:[1]},{id:8,chart_type:'donut',data:[2]}];
+test('main dashboard keeps every requested view ahead of optional views', () => {
+  const charts=[...Array.from({length:7},(_,i)=>({id:i,role:'requested',chart_type:'bar',data:[i]})),{id:7,role:'supporting',chart_type:'line'},{id:8,role:'supporting',chart_type:'donut'}];
   const primary=dashboardPrimaryCharts(charts);
-  assert.equal(primary.length,6);assert.ok(primary.includes(charts[7]));assert.ok(primary.includes(charts[8]));
-  assert.equal(charts.length,9);assert.ok(primary.every(c=>charts.includes(c)));
+  assert.equal(primary.length,7);
+  assert.ok(charts.slice(0,7).every(c=>primary.includes(c)));
+  assert.ok(!primary.includes(charts[7]));
 });
 
 test('refined report title follows current Top 2 meaning instead of original Top 5 prompt', () => {

@@ -79,10 +79,10 @@ class FirstSubmissionTests(f.unittest.TestCase):
         clock=[100.0]
         with patch('services.provider_budget.time.monotonic',side_effect=lambda:clock[0]):
             budget=ProviderBudget({},max_calls=3);budget.start_deadline()
-            budget.consume();self.assertEqual(budget.http_timeout().total,18)
-            clock[0]+=8;budget.consume();self.assertEqual(budget.http_timeout().total,8)
-            clock[0]+=14;budget.consume();self.assertEqual(budget.http_timeout().total,2)
-            clock[0]+=2
+            budget.consume();self.assertEqual(budget.http_timeout().total,25)
+            clock[0]+=8;budget.consume();self.assertEqual(budget.http_timeout().total,17)
+            clock[0]+=14;budget.consume();self.assertEqual(budget.http_timeout().total,3)
+            clock[0]+=3
             with self.assertRaises(AnalysisError) as caught:budget.http_timeout()
             self.assertEqual(caught.exception.category,'planning_timeout')
             self.assertEqual(budget.used,3)

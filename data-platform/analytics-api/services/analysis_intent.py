@@ -103,6 +103,17 @@ def intent_tool(delta=False):
         props['feature_metrics']={'type':'object','description':IntentRequirement.model_fields['feature_metrics'].description,
             'properties':{f:{'type':'array','items':{'type':'string'},'minItems':1,'maxItems':6}
                           for f in get_args(DerivedFeature)}}
+        # The provider must use the same complete time grammar as resolution.
+        # A flat object with only kind required previously admitted mode-less
+        # relative windows and contradictory date fields on every repair.
+        from services.analysis_contract import TIME_SHAPES, TimeScope
+        time_props = props['time']['properties']
+        time_props['mode'] = {'type':'string', 'enum': [m for m in
+            TimeScope.model_json_schema()['properties']['mode']['enum'] if m != 'custom']}
+        props['time'] = {'description':'Omit when unspecified (all_time). Supply exactly one complete time kind.',
+            'anyOf':[{'type':'object', 'properties':{'kind':{'type':'string','enum':[kind]},
+                **{f:time_props[f] for f in required + optional}}, 'required':['kind', *required]}
+                for kind,(required,optional) in TIME_SHAPES.items()]}
     if delta:
         # A semantic patch uses the SAME finite field grammar, not arbitrary JSON.
         properties = intent_tool()["parameters"]["properties"]["requirements"]["items"]["properties"]

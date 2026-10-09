@@ -20,6 +20,8 @@ def verification_score(checks, *, independent_accuracy=None):
     capacity_aware = 'population_correctness' in by_id
     if capacity_aware:
         weights = {**WEIGHTS, 'request_coverage':10, 'population_correctness':5, 'provenance_completeness':5}
+    if 'analysis_depth_coverage' in by_id:
+        weights = {**weights, 'analysis_depth_coverage':15}
     if len(by_id)!=len(parsed) or set(by_id)!=set(weights):
         raise ValueError('Exactly one observation per configured check group is required')
     if any(c.passed>c.total or (c.total==0)!=(c.status=='not_applicable') for c in parsed):
@@ -45,5 +47,7 @@ def verification_score(checks, *, independent_accuracy=None):
     method=ScoreMethod(unmeasured_points=0 if measured else 10)
     if capacity_aware:
         method.id = 'verification_evidence_v2'
+    if 'analysis_depth_coverage' in by_id:
+        method.id = 'verification_evidence_v3'
     return dict(score=round(earned+external,1),score_method=method.model_dump(mode='json'),
         score_breakdown=[p.model_dump(mode='json') for p in parts])

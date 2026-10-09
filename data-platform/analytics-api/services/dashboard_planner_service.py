@@ -19,9 +19,40 @@ PALETTE = [
 ]
 
 
+def visible_dimensions(a):
+    # Hide only identity companions declared by metadata, not every *_id axis.
+    identities = {a.grounded.dimensions.get(d, {}).get('identity') for d in a.plan.dimensions}
+    return [d for d in a.plan.dimensions if d not in identities]
+
+
+def category_fields(v, a):
+    """A categorical bar represents each full returned tuple without regrouping."""
+    return visible_dimensions(a) if v.chart_type in {'bar', 'horizontal_bar'} else [v.x_field]
+
+
+def category_labeler(v, a, rows):
+    fields = category_fields(v, a)
+    display = dimension_labeler(a.plan.dimensions, rows, a.grounded.dimensions)
+    def base(row):
+        if len(fields) == 1:
+            return display(row, fields[0])
+        return ' · '.join(a.grounded.dimensions[d]['business_name'] + ': ' + display(row, d) for d in fields)
+    # Delimiters in real values must not make distinct tuples share an axis label.
+    labels = {}
+    for row in rows:
+        labels.setdefault(base(row), set()).add(json.dumps([row.get(d) for d in a.plan.dimensions], default=str))
+    def label(row):
+        value = base(row)
+        if len(labels[value]) > 1:
+            key = json.dumps([row.get(d) for d in a.plan.dimensions], default=str)
+            value += ' (' + hashlib.sha256(key.encode()).hexdigest()[:10] + ')'
+        return value
+    return label
+
+
 def paired_aggregate(a):
     """Complement volume comparisons with an average from the same entity rows."""
-    visible = [d for d in a.plan.dimensions if not d.endswith("_id")]
+    visible = visible_dimensions(a)
     if a.plan.kind != "aggregate" or a.plan.ranking or a.plan.explicit_limit or len(visible) != 1:
         return None
     totals = [m for m in a.plan.metrics if a.grounded.metrics[m].get("additive")]
@@ -29,10 +60,10 @@ def paired_aggregate(a):
     return [totals[0], averages[0]] if totals and averages else None
 
 
-def defaults(artifacts):
+def defaults(artifacts, include_composition=False):
     visuals = []
     for id, a in artifacts.items():
-        visible = [d for d in a.plan.dimensions if not d.endswith("_id")] or list(a.plan.dimensions)
+        visible = visible_dimensions(a)
         if a.query.operation == "relationship" and len(a.plan.metrics) == 2:
             candidate = DashboardVisual(query_id=id, chart_type="scatter", metrics=a.plan.metrics, x_field=a.plan.metrics[0], role=a.query.role, priority=80, purpose="relationship")
             if chart_reason(candidate, a, 100, 16) in (None, 'chart_point_budget'):
@@ -47,7 +78,8 @@ def defaults(artifacts):
         if same_unit and a.plan.kind == "trend" and not visible:
             visuals.append(DashboardVisual(query_id=id, chart_type="multi_line", metrics=a.plan.metrics, x_field="period", role=a.query.role, priority=80, purpose="trend"))
             continue
-        for metric in a.plan.metrics:
+        metrics = sorted(a.plan.metrics, key=lambda m: m != a.plan.ranking.metric) if a.plan.ranking else a.plan.metrics
+        for metric in metrics:
             composition = (
                 a.plan.kind == "distribution"
                 and len(visible) == 1
@@ -72,7 +104,7 @@ def defaults(artifacts):
                         else (
                             "heatmap"
                             if len(visible) == 2
-                            else "donut" if composition else "bar"
+                            else "horizontal_bar" if len(visible) > 2 else "donut" if composition else "bar"
                         )
                     )
                 )
@@ -109,6 +141,18 @@ def defaults(artifacts):
                         ),
                     )
                 )
+    if include_composition:
+        # Absolute values and shares answer different questions. Reuse only a
+        # complete additive cohort; never infer a composition from Top N rows.
+        for id,a in artifacts.items():
+            visible=visible_dimensions(a)
+            if a.plan.kind!='aggregate' or a.plan.ranking or a.plan.explicit_limit or len(visible)!=1 or a.result.get('truncated'):
+                continue
+            for metric in a.plan.metrics:
+                v=DashboardVisual(query_id=id,chart_type='donut',metrics=[metric],x_field=visible[0],
+                    role=a.query.role,priority=60,purpose='distribution')
+                if chart_reason(v,a,100,16) is None:
+                    visuals.append(v)
     for id, a in artifacts.items():
         pair = paired_aggregate(a)
         if pair:
@@ -192,7 +236,7 @@ def population_label(a):
 
 def category_preview(v, a, max_categories):
     """A labelled display subset; complete analytical rows remain authoritative."""
-    visible = [d for d in a.plan.dimensions if not d.endswith("_id")] or list(a.plan.dimensions)
+    visible = visible_dimensions(a)
     display=dimension_labeler(a.plan.dimensions,a.result['rows'],a.grounded.dimensions)
     return (
         a.plan.kind in {"aggregate", "distribution"}
@@ -232,9 +276,10 @@ def chart_reason(v, a, max_categories, max_series):
     units = {a.grounded.metrics[m]["unit"] for m in v.metrics}
     if len(units) > 1 and v.chart_type != "scatter":
         return "mixed_units_require_linked_views"
-    if len({display(r,v.x_field) for r in rows}) > max_categories and v.chart_type not in {"donut", "scatter"} and not category_preview(v, a, max_categories):
+    category = category_labeler(v, a, rows)
+    if len({category(r) for r in rows}) > max_categories and v.chart_type not in {"donut", "scatter"} and not category_preview(v, a, max_categories):
         return "category_budget"
-    visible = [d for d in p.dimensions if not d.endswith("_id")] or list(p.dimensions)
+    visible = visible_dimensions(a)
     if v.chart_type in ("line", "area", "multi_line"):
         if (
             p.kind != "trend"
@@ -277,8 +322,12 @@ def chart_reason(v, a, max_categories, max_series):
         ):
             return "invalid_part_to_whole"
     elif v.chart_type in ("bar", "horizontal_bar", "grouped_bar", "donut"):
-        if len(visible) != 1 or v.x_field != visible[0] or v.series_field:
+        if not visible or v.x_field != visible[0] or v.series_field or (
+            len(visible) != 1 and v.chart_type not in {'bar', 'horizontal_bar'}
+        ):
             return "requires_single_dimension"
+        if v.chart_type in {'bar', 'horizontal_bar'} and len({category(r) for r in rows}) != len(rows):
+            return 'duplicate_category'
     if (
         v.chart_type != "grouped_bar"
         and v.chart_type != "scatter"
@@ -304,6 +353,7 @@ def chart_reason(v, a, max_categories, max_series):
 def render(v, a, index, max_categories=100):
     rows, subset = presentation_rows(v, a, max_categories, 16)
     display=dimension_labeler(a.plan.dimensions,rows,a.grounded.dimensions)
+    category=category_labeler(v,a,rows)
     population_count = len(a.result['rows'])
     metric = v.metrics[0]
     preview = category_preview(v, a, max_categories)
@@ -351,6 +401,9 @@ def render(v, a, index, max_categories=100):
         if v.x_field == "period"
         else a.grounded.dimensions.get(v.x_field, {}).get("business_name", "")
     )
+    if v.chart_type in {'bar', 'horizontal_bar'}:
+        output['category_fields'] = category_fields(v, a)
+        output['x_label'] = ' / '.join(a.grounded.dimensions[d]['business_name'] for d in output['category_fields'])
     # Shared physical metric definitions may have different domain aliases.
     # A display equivalence key includes their full population and query shape.
     identity = [
@@ -361,6 +414,7 @@ def render(v, a, index, max_categories=100):
         a.plan.dimensions, [f.model_dump(mode="json") for f in a.plan.filters],
         a.plan.time_column, a.plan.period, a.plan.granularity, a.plan.ranking.model_dump(mode="json") if a.plan.ranking else None,
         a.plan.row_limit, a.plan.explicit_limit, v.x_field, v.series_field,
+        category_fields(v, a),
         "share" if v.chart_type in {"donut", "stacked_100"} else "raw",
     ]
     output["semantic_view_key"] = hashlib.sha256(json.dumps(identity, sort_keys=True, default=str).encode()).hexdigest()
@@ -371,6 +425,10 @@ def render(v, a, index, max_categories=100):
         output.update(ranking_metric=a.plan.ranking.metric,
             ranking_metric_label=a.grounded.metrics[a.plan.ranking.metric]['business_name'],
             ranking_direction=a.plan.ranking.direction,ranking_limit=a.plan.ranking.top_n)
+        output['ranking_per_group'] = list(a.plan.ranking.per_group)
+        if a.plan.ranking.per_group:
+            output['ranking_note'] = 'Xếp hạng riêng trong từng nhóm: ' + ' / '.join(
+                a.grounded.dimensions[d]['business_name'] for d in a.plan.ranking.per_group)
         output["title"] = f"Top {a.plan.ranking.top_n} — " + output["title"]
         if metric != a.plan.ranking.metric:
             output["title"] += " trong tập xếp hạng theo " + a.grounded.metrics[a.plan.ranking.metric]["business_name"]
@@ -460,9 +518,10 @@ def render(v, a, index, max_categories=100):
     else:
         output["data"] = [
             {
-                "label": display(r,v.x_field),
+                "label": category(r) if v.chart_type in {'bar', 'horizontal_bar'} else display(r,v.x_field),
                 "value": r[metric],
                 "color": PALETTE[i % len(PALETTE)],
+                **({'rank_position': r['rank_position']} if a.plan.ranking and a.plan.ranking.per_group else {}),
             }
             for i, r in enumerate(rows)
         ]
@@ -476,9 +535,9 @@ def render(v, a, index, max_categories=100):
 
 
 def build_dashboard(
-    artifacts, evidence, plan=None, max_charts=8, max_categories=100, max_series=16, catalog=None
+    artifacts, evidence, plan=None, max_charts=8, max_categories=100, max_series=16, catalog=None, minimum_visuals=0
 ):
-    proposals = list(plan.visuals) if plan and plan.visuals else defaults(artifacts)
+    proposals = list(plan.visuals) if plan and plan.visuals else defaults(artifacts,include_composition=bool(minimum_visuals))
     if plan and plan.visuals:
         represented = {
             (v.query_id, m) for v in proposals for m in v.metrics
@@ -490,11 +549,14 @@ def build_dashboard(
         table_only = {v.query_id for v in proposals if v.chart_type == "table"}
         proposals += [
             v
-            for v in defaults(artifacts)
+            for v in defaults(artifacts,include_composition=bool(minimum_visuals))
             if v.query_id not in table_only
             and any((v.query_id, m) not in represented for m in v.metrics)
         ]
     charts = []
+    from services.derived_chart_service import contribution_charts
+    derived_views = contribution_charts(artifacts, evidence)
+    requested_derived = sum(c['role'] == 'requested' for c in derived_views)
     omitted = []
     seen = {}
     covered = set()
@@ -557,7 +619,9 @@ def build_dashboard(
             existing["scope_refs"] = list(dict.fromkeys([*existing.get("scope_refs", [existing["scope_ref"]]), v.query_id, *v.compare_query_ids]))
             covered.update((a.query.id, m) for m in v.metrics)
             reason = "duplicate_semantic_view"
-        if not reason and len(charts) >= max_charts:
+        # Optional drilldowns cannot consume slots reserved for requested shares.
+        chart_limit = max_charts - requested_derived if a and a.query.role == 'supporting' else max_charts
+        if not reason and len(charts) >= chart_limit:
             reason = "chart_budget"
         if not reason and v.compare_query_ids:
             sources = [artifacts[id] for id in [v.query_id, *v.compare_query_ids]]
@@ -609,8 +673,7 @@ def build_dashboard(
             covered.update((a.query.id, m) for m in v.metrics)
     # Requested derived meaning gets a distinct verified view. Reuse the exact
     # full-population denominator already executed; never add chart-only SQL.
-    from services.derived_chart_service import contribution_charts
-    for derived in contribution_charts(artifacts,evidence):
+    for derived in sorted(derived_views, key=lambda c:c['role'] == 'supporting'):
         if len(charts)>=max_charts:
             omitted.append(dict(query_id=derived['query_id'],chart_type=derived['chart_type'],role=derived['role'],priority=70,reason='chart_budget'))
             continue

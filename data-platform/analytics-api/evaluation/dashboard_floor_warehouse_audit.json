@@ -1,0 +1,846 @@
+{
+  "status": "PASS",
+  "measurement_scope": "SCRIPTED_INTENT_LIVE_READ_ONLY_WAREHOUSE",
+  "LIVE_PROVIDER_REQUESTS": 0,
+  "WAREHOUSE_WRITES": 0,
+  "cases": [
+    {
+      "id": "payments",
+      "question": "Thống kê số giao dịch và doanh thu thanh toán theo cổng thanh toán và trạng thái giao dịch trong 30 ngày gần nhất.",
+      "query_count": 4,
+      "chart_count": 6,
+      "independent_primary_sql_matched": true,
+      "minimum_views": 4,
+      "quality": {
+        "score": 90.0,
+        "grade": "good",
+        "status": "verified",
+        "components": [],
+        "completed": [
+          {
+            "id": "r1",
+            "label": "Giao dịch thanh toán",
+            "evidence_refs": [
+              "q_706e607431bace23f472a7e9:payment_count:group_comparison:6230060e3b",
+              "q_706e607431bace23f472a7e9:payment_revenue:group_comparison:6230060e3b"
+            ]
+          }
+        ],
+        "missing": [],
+        "unverified": [
+          {
+            "id": "causes",
+            "label": "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+            "evidence_refs": []
+          },
+          {
+            "id": "independent_accuracy",
+            "label": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.",
+            "evidence_refs": []
+          }
+        ],
+        "limitations": [
+          {
+            "id": "metric_population:payment_count",
+            "label": "Số giao dịch: Đếm mọi giao dịch theo ngày tạo giao dịch, gồm mọi trạng thái; không mặc định bằng số đơn thanh toán thành công.",
+            "evidence_refs": [
+              "q_706e607431bace23f472a7e9:payment_count:group_comparison:6230060e3b",
+              "q_706e607431bace23f472a7e9:payment_revenue:group_comparison:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:payment_revenue",
+            "label": "Doanh thu thanh toán: Tổng số tiền giao dịch theo ngày tạo giao dịch, gồm mọi trạng thái; không mặc định là doanh thu thuần hoặc dòng tiền thành công.",
+            "evidence_refs": [
+              "q_706e607431bace23f472a7e9:payment_count:group_comparison:6230060e3b",
+              "q_706e607431bace23f472a7e9:payment_revenue:group_comparison:6230060e3b"
+            ]
+          },
+          {
+            "id": "related:q_3356440dd92e17af0e2c1902",
+            "label": "Tập dữ liệu liên quan có quần thể riêng; không suy ra tỷ trọng hoặc nhân quả với phần chính.",
+            "evidence_refs": [
+              "q_3356440dd92e17af0e2c1902:payment_count:scalar:6230060e3b",
+              "q_3356440dd92e17af0e2c1902:payment_revenue:scalar:6230060e3b"
+            ]
+          },
+          {
+            "id": "related:q_39d1354cc885dcb2d3dbbfc9",
+            "label": "Tập dữ liệu liên quan có quần thể riêng; không suy ra tỷ trọng hoặc nhân quả với phần chính.",
+            "evidence_refs": [
+              "q_39d1354cc885dcb2d3dbbfc9:payment_count:change:6230060e3b",
+              "q_39d1354cc885dcb2d3dbbfc9:payment_count:extrema:6230060e3b",
+              "q_39d1354cc885dcb2d3dbbfc9:payment_revenue:change:6230060e3b"
+            ]
+          },
+          {
+            "id": "partial_period:q_39d1354cc885dcb2d3dbbfc9",
+            "label": "Kỳ biên chưa đủ ngày; chỉ so sánh biến động giữa các kỳ đầy đủ.",
+            "evidence_refs": [
+              "q_39d1354cc885dcb2d3dbbfc9:payment_count:change:6230060e3b",
+              "q_39d1354cc885dcb2d3dbbfc9:payment_count:extrema:6230060e3b",
+              "q_39d1354cc885dcb2d3dbbfc9:payment_revenue:change:6230060e3b"
+            ]
+          },
+          {
+            "id": "related:q_7ab262d99e76758486b46b2c",
+            "label": "Tập dữ liệu liên quan có quần thể riêng; không suy ra tỷ trọng hoặc nhân quả với phần chính.",
+            "evidence_refs": [
+              "q_7ab262d99e76758486b46b2c:payment_count:concentration:6230060e3b",
+              "q_7ab262d99e76758486b46b2c:payment_revenue:concentration:6230060e3b"
+            ]
+          }
+        ],
+        "suggested_next_actions": [
+          {
+            "id": "partial_period:q_39d1354cc885dcb2d3dbbfc9",
+            "label": "Đối chiếu các kỳ đầy đủ có cùng độ dài.",
+            "evidence_refs": [
+              "q_39d1354cc885dcb2d3dbbfc9:payment_count:change:6230060e3b",
+              "q_39d1354cc885dcb2d3dbbfc9:payment_count:extrema:6230060e3b",
+              "q_39d1354cc885dcb2d3dbbfc9:payment_revenue:change:6230060e3b"
+            ],
+            "action": "compare_complete_periods"
+          }
+        ],
+        "coverage": {
+          "requested_count": 1,
+          "completed_count": 1,
+          "supporting_count": 3,
+          "omitted_count": 0
+        },
+        "generated_by": "deterministic_verifier",
+        "version": "2.8.5",
+        "reason": null,
+        "measurement_mode": "evidence_checks",
+        "verification_checks": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "passed": 1,
+            "total": 1,
+            "status": "passed",
+            "summary": "1/1 phần yêu cầu đã thực hiện."
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "passed": 1,
+            "total": 1,
+            "status": "passed",
+            "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "passed": 4,
+            "total": 4,
+            "status": "passed",
+            "summary": "4 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "passed": 36,
+            "total": 36,
+            "status": "passed",
+            "summary": "36/36 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "passed": 1,
+            "total": 1,
+            "status": "passed",
+            "summary": "1/1 phép tính yêu cầu có đủ quan sát và bằng chứng."
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "passed": 50,
+            "total": 50,
+            "status": "passed",
+            "summary": "50/50 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "passed": 8,
+            "total": 8,
+            "status": "passed",
+            "summary": "2/2 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "passed": 6,
+            "total": 6,
+            "status": "passed",
+            "summary": "6/6 giới hạn dữ liệu được công bố."
+          },
+          {
+            "id": "analysis_depth_coverage",
+            "label": "Độ đầy đủ góc nhìn",
+            "passed": 4,
+            "total": 4,
+            "status": "passed",
+            "summary": "6/4 góc nhìn độc lập được kiểm chứng; mọi báo cáo phân tích cần đủ góc nhìn."
+          },
+          {
+            "id": "population_correctness",
+            "label": "Quần thể và mẫu số",
+            "passed": 4,
+            "total": 4,
+            "status": "passed",
+            "summary": "Kiểm tra toàn bộ kết quả không bị cắt; phần hiển thị là tiền tố có gắn tổng số nhóm. Tỷ trọng được tính lại với truy vấn mẫu số đầy đủ."
+          },
+          {
+            "id": "provenance_completeness",
+            "label": "Nguồn gốc kết quả",
+            "passed": 4,
+            "total": 4,
+            "status": "passed",
+            "summary": "Hash nội dung, truy vấn, kế hoạch và danh mục khớp kết quả đầy đủ; không xác nhận dữ liệu nguồn độc lập."
+          }
+        ],
+        "score_method": {
+          "id": "verification_evidence_v3",
+          "label": "Điểm kiểm chứng tổng",
+          "formula": "90 × trung bình có trọng số các kiểm tra áp dụng + 10 × tỷ lệ khớp đối chứng độc lập. Chưa đo đối chứng: chưa cộng 10 điểm; kiểm tra không áp dụng không bị trừ.",
+          "unmeasured_points": 10.0,
+          "interpretation": "Chỉ số mức độ kiểm chứng theo trọng số quy định; không phải độ chính xác hay xác suất AI trả lời đúng."
+        },
+        "score_breakdown": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "earned_points": 8.5714,
+            "possible_points": 8.5714,
+            "status": "passed"
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "earned_points": 12.8571,
+            "possible_points": 12.8571,
+            "status": "passed"
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "earned_points": 12.8571,
+            "possible_points": 12.8571,
+            "status": "passed"
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "earned_points": 8.5714,
+            "possible_points": 8.5714,
+            "status": "passed"
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "earned_points": 8.5714,
+            "possible_points": 8.5714,
+            "status": "passed"
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "earned_points": 8.5714,
+            "possible_points": 8.5714,
+            "status": "passed"
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "earned_points": 4.2857,
+            "possible_points": 4.2857,
+            "status": "passed"
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "earned_points": 4.2857,
+            "possible_points": 4.2857,
+            "status": "passed"
+          },
+          {
+            "id": "population_correctness",
+            "label": "Quần thể và mẫu số",
+            "earned_points": 4.2857,
+            "possible_points": 4.2857,
+            "status": "passed"
+          },
+          {
+            "id": "provenance_completeness",
+            "label": "Nguồn gốc kết quả",
+            "earned_points": 4.2857,
+            "possible_points": 4.2857,
+            "status": "passed"
+          },
+          {
+            "id": "analysis_depth_coverage",
+            "label": "Độ đầy đủ góc nhìn",
+            "earned_points": 12.8571,
+            "possible_points": 12.8571,
+            "status": "passed"
+          },
+          {
+            "id": "independent_reference",
+            "label": "Đối chứng độc lập",
+            "earned_points": 0.0,
+            "possible_points": 10.0,
+            "status": "not_measured"
+          }
+        ],
+        "accuracy_assessment": {
+          "status": "not_measured",
+          "matched_count": null,
+          "reference_count": 0,
+          "accuracy_pct": null,
+          "reference_source": null,
+          "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+        },
+        "confidence_probability": null,
+        "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+      },
+      "charts": [
+        {
+          "chart_type": "heatmap",
+          "metric": "payment_count",
+          "x_field": "payment_gateway",
+          "series_field": "payment_transaction_status",
+          "role": "requested",
+          "semantic_view_key": "7db694d80895a160c674186e48086f67cb6f685c372786812a14eb66f5e97f77"
+        },
+        {
+          "chart_type": "heatmap",
+          "metric": "payment_revenue",
+          "x_field": "payment_gateway",
+          "series_field": "payment_transaction_status",
+          "role": "requested",
+          "semantic_view_key": "e0b195dca46a32248f9880b1ccc04527b1306f3dd5f41eb3278448900bcce97f"
+        },
+        {
+          "chart_type": "area",
+          "metric": "payment_count",
+          "x_field": "period",
+          "series_field": null,
+          "role": "supporting",
+          "semantic_view_key": "85a07a23b4aeed287b961011898ea6b8f6daeb1edeb2f4a3e666c4e17abf996b"
+        },
+        {
+          "chart_type": "area",
+          "metric": "payment_revenue",
+          "x_field": "period",
+          "series_field": null,
+          "role": "supporting",
+          "semantic_view_key": "e811c141fdec135a08f78eaa09a29f579a962a70f2c00a99f45bd93fdd44df60"
+        },
+        {
+          "chart_type": "donut",
+          "metric": "payment_count",
+          "x_field": "payment_gateway",
+          "series_field": null,
+          "role": "supporting",
+          "semantic_view_key": "453d30ffc3798a7e1e015cfd672a55970c3afe961b939a88000c9f043c5dbc2f"
+        },
+        {
+          "chart_type": "donut",
+          "metric": "payment_revenue",
+          "x_field": "payment_gateway",
+          "series_field": null,
+          "role": "supporting",
+          "semantic_view_key": "ddeee2da45636117d242648a70e26e84e5e57a1bc3a937232f9bddae6e98028b"
+        }
+      ],
+      "periods": [
+        {
+          "kind": "range",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-09-10",
+          "end": "2026-10-09",
+          "amount": null,
+          "unit": null
+        },
+        {
+          "kind": "range",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-09-10",
+          "end": "2026-10-09",
+          "amount": null,
+          "unit": null
+        },
+        {
+          "kind": "range",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-09-10",
+          "end": "2026-10-09",
+          "amount": null,
+          "unit": null
+        },
+        {
+          "kind": "range",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-09-10",
+          "end": "2026-10-09",
+          "amount": null,
+          "unit": null
+        }
+      ]
+    },
+    {
+      "id": "products",
+      "question": "Trong 30 ngày gần nhất, xếp hạng 5 sản phẩm bán chạy nhất theo số lượng bán. Với từng sản phẩm, hiển thị số lượng bán và doanh thu sản phẩm. Nêu rõ trạng thái đơn được tính.",
+      "query_count": 5,
+      "chart_count": 5,
+      "independent_primary_sql_matched": true,
+      "minimum_views": 4,
+      "quality": {
+        "score": 90.0,
+        "grade": "good",
+        "status": "verified",
+        "components": [],
+        "completed": [
+          {
+            "id": "r1",
+            "label": "Sản phẩm",
+            "evidence_refs": [
+              "q_8b89d114e66f04037e2f9247:product_revenue:selected_total:6230060e3b",
+              "q_8b89d114e66f04037e2f9247:quantity_sold:leader:6230060e3b",
+              "q_8b89d114e66f04037e2f9247:quantity_sold:top_gap:6230060e3b"
+            ]
+          }
+        ],
+        "missing": [],
+        "unverified": [
+          {
+            "id": "causes",
+            "label": "Nguyên nhân biến động chưa được xác minh; dữ liệu mô tả các kỳ quan sát.",
+            "evidence_refs": []
+          },
+          {
+            "id": "independent_accuracy",
+            "label": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; độ chính xác và xác suất trả lời đúng chưa được đo.",
+            "evidence_refs": []
+          }
+        ],
+        "limitations": [
+          {
+            "id": "metric_population:product_revenue",
+            "label": "Doanh thu sản phẩm: Tổng thành tiền dòng sản phẩm thuộc đơn HOAN_THANH/DANG_GIAO; không mặc định đối soát bằng doanh thu cấp đơn.",
+            "evidence_refs": [
+              "q_8b89d114e66f04037e2f9247:product_revenue:selected_total:6230060e3b",
+              "q_8b89d114e66f04037e2f9247:quantity_sold:leader:6230060e3b",
+              "q_8b89d114e66f04037e2f9247:quantity_sold:top_gap:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:quantity_sold",
+            "label": "Số lượng sản phẩm bán: Tổng số lượng trên dòng món thuộc đơn HOAN_THANH/DANG_GIAO; đếm số đơn vị bán, không phải số sản phẩm khác nhau.",
+            "evidence_refs": [
+              "q_8b89d114e66f04037e2f9247:product_revenue:selected_total:6230060e3b",
+              "q_8b89d114e66f04037e2f9247:quantity_sold:leader:6230060e3b",
+              "q_8b89d114e66f04037e2f9247:quantity_sold:top_gap:6230060e3b"
+            ]
+          },
+          {
+            "id": "topn:q_8b89d114e66f04037e2f9247",
+            "label": "Tập Top N được chọn; không đại diện cơ cấu toàn bộ.",
+            "evidence_refs": [
+              "q_8b89d114e66f04037e2f9247:product_revenue:selected_total:6230060e3b",
+              "q_8b89d114e66f04037e2f9247:quantity_sold:leader:6230060e3b",
+              "q_8b89d114e66f04037e2f9247:quantity_sold:top_gap:6230060e3b"
+            ]
+          },
+          {
+            "id": "metric_population:item_revenue",
+            "label": "Doanh thu món: Tổng thành tiền dòng món thuộc đơn HOAN_THANH/DANG_GIAO; không mặc định bằng tổng tiền đơn.",
+            "evidence_refs": [
+              "q_360ad76b5eb61ce2f3226129:item_revenue:scalar:6230060e3b"
+            ]
+          },
+          {
+            "id": "related:q_360ad76b5eb61ce2f3226129",
+            "label": "Tập dữ liệu liên quan có quần thể riêng; không suy ra tỷ trọng hoặc nhân quả với phần chính.",
+            "evidence_refs": [
+              "q_360ad76b5eb61ce2f3226129:item_revenue:scalar:6230060e3b"
+            ]
+          },
+          {
+            "id": "related:q_5f07a0ac50f1e4b4f7e437b5",
+            "label": "Tập dữ liệu liên quan có quần thể riêng; không suy ra tỷ trọng hoặc nhân quả với phần chính.",
+            "evidence_refs": [
+              "q_5f07a0ac50f1e4b4f7e437b5:product_revenue:scalar:6230060e3b",
+              "q_5f07a0ac50f1e4b4f7e437b5:quantity_sold:scalar:6230060e3b"
+            ]
+          },
+          {
+            "id": "related:q_5f9a64ddc6c78b9638757316",
+            "label": "Tập dữ liệu liên quan có quần thể riêng; không suy ra tỷ trọng hoặc nhân quả với phần chính.",
+            "evidence_refs": [
+              "q_5f9a64ddc6c78b9638757316:quantity_sold:concentration:6230060e3b"
+            ]
+          },
+          {
+            "id": "related:q_94de2e290cbdb495a06c23f8",
+            "label": "Tập dữ liệu liên quan có quần thể riêng; không suy ra tỷ trọng hoặc nhân quả với phần chính.",
+            "evidence_refs": [
+              "q_94de2e290cbdb495a06c23f8:product_revenue:change:6230060e3b",
+              "q_94de2e290cbdb495a06c23f8:product_revenue:extrema:6230060e3b",
+              "q_94de2e290cbdb495a06c23f8:quantity_sold:change:6230060e3b"
+            ]
+          },
+          {
+            "id": "partial_period:q_94de2e290cbdb495a06c23f8",
+            "label": "Kỳ biên chưa đủ ngày; chỉ so sánh biến động giữa các kỳ đầy đủ.",
+            "evidence_refs": [
+              "q_94de2e290cbdb495a06c23f8:product_revenue:change:6230060e3b",
+              "q_94de2e290cbdb495a06c23f8:product_revenue:extrema:6230060e3b",
+              "q_94de2e290cbdb495a06c23f8:quantity_sold:change:6230060e3b"
+            ]
+          }
+        ],
+        "suggested_next_actions": [
+          {
+            "id": "partial_period:q_94de2e290cbdb495a06c23f8",
+            "label": "Đối chiếu các kỳ đầy đủ có cùng độ dài.",
+            "evidence_refs": [
+              "q_94de2e290cbdb495a06c23f8:product_revenue:change:6230060e3b",
+              "q_94de2e290cbdb495a06c23f8:product_revenue:extrema:6230060e3b",
+              "q_94de2e290cbdb495a06c23f8:quantity_sold:change:6230060e3b"
+            ],
+            "action": "compare_complete_periods"
+          }
+        ],
+        "coverage": {
+          "requested_count": 1,
+          "completed_count": 1,
+          "supporting_count": 3,
+          "omitted_count": 0
+        },
+        "generated_by": "deterministic_verifier",
+        "version": "2.8.5",
+        "reason": null,
+        "measurement_mode": "evidence_checks",
+        "verification_checks": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "passed": 1,
+            "total": 1,
+            "status": "passed",
+            "summary": "1/1 phần yêu cầu đã thực hiện."
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "passed": 1,
+            "total": 1,
+            "status": "passed",
+            "summary": "Phạm vi, lịch sử tinh chỉnh và các phép phân tích khớp danh mục hiện tại; chưa chứng minh mọi cách hiểu ngôn ngữ đều đúng."
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "passed": 5,
+            "total": 5,
+            "status": "passed",
+            "summary": "5 tập kết quả qua kiểm tra cấu trúc, đơn vị, giới hạn và thứ tự; chưa xác minh tính đúng của dữ liệu nguồn."
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "passed": 139,
+            "total": 139,
+            "status": "passed",
+            "summary": "139/139 ô chỉ số có giá trị; ô thiếu không được xem là số 0."
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "passed": 2,
+            "total": 2,
+            "status": "passed",
+            "summary": "2/2 phép tính yêu cầu có đủ quan sát và bằng chứng."
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "passed": 61,
+            "total": 61,
+            "status": "passed",
+            "summary": "61/61 phát biểu và chỉ số có bằng chứng hợp lệ. Được tính lại từ các tập kết quả đã lưu, không phải đối chứng dữ liệu độc lập."
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "passed": 7,
+            "total": 7,
+            "status": "passed",
+            "summary": "2/2 chỉ số cần biểu đồ được trình bày; 0 biểu đồ chưa hợp lệ."
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "passed": 9,
+            "total": 9,
+            "status": "passed",
+            "summary": "9/9 giới hạn dữ liệu được công bố."
+          },
+          {
+            "id": "analysis_depth_coverage",
+            "label": "Độ đầy đủ góc nhìn",
+            "passed": 4,
+            "total": 4,
+            "status": "passed",
+            "summary": "5/4 góc nhìn độc lập được kiểm chứng; mọi báo cáo phân tích cần đủ góc nhìn."
+          },
+          {
+            "id": "population_correctness",
+            "label": "Quần thể và mẫu số",
+            "passed": 5,
+            "total": 5,
+            "status": "passed",
+            "summary": "Kiểm tra toàn bộ kết quả không bị cắt; phần hiển thị là tiền tố có gắn tổng số nhóm. Tỷ trọng được tính lại với truy vấn mẫu số đầy đủ."
+          },
+          {
+            "id": "provenance_completeness",
+            "label": "Nguồn gốc kết quả",
+            "passed": 5,
+            "total": 5,
+            "status": "passed",
+            "summary": "Hash nội dung, truy vấn, kế hoạch và danh mục khớp kết quả đầy đủ; không xác nhận dữ liệu nguồn độc lập."
+          }
+        ],
+        "score_method": {
+          "id": "verification_evidence_v3",
+          "label": "Điểm kiểm chứng tổng",
+          "formula": "90 × trung bình có trọng số các kiểm tra áp dụng + 10 × tỷ lệ khớp đối chứng độc lập. Chưa đo đối chứng: chưa cộng 10 điểm; kiểm tra không áp dụng không bị trừ.",
+          "unmeasured_points": 10.0,
+          "interpretation": "Chỉ số mức độ kiểm chứng theo trọng số quy định; không phải độ chính xác hay xác suất AI trả lời đúng."
+        },
+        "score_breakdown": [
+          {
+            "id": "request_coverage",
+            "label": "Phạm vi yêu cầu",
+            "earned_points": 8.5714,
+            "possible_points": 8.5714,
+            "status": "passed"
+          },
+          {
+            "id": "semantic_consistency",
+            "label": "Ngữ nghĩa & kế hoạch",
+            "earned_points": 12.8571,
+            "possible_points": 12.8571,
+            "status": "passed"
+          },
+          {
+            "id": "result_integrity",
+            "label": "Kết quả dữ liệu",
+            "earned_points": 12.8571,
+            "possible_points": 12.8571,
+            "status": "passed"
+          },
+          {
+            "id": "observed_values",
+            "label": "Giá trị dữ liệu quan sát",
+            "earned_points": 8.5714,
+            "possible_points": 8.5714,
+            "status": "passed"
+          },
+          {
+            "id": "derived_features",
+            "label": "Phép tính được yêu cầu",
+            "earned_points": 8.5714,
+            "possible_points": 8.5714,
+            "status": "passed"
+          },
+          {
+            "id": "evidence_grounding",
+            "label": "Bằng chứng",
+            "earned_points": 8.5714,
+            "possible_points": 8.5714,
+            "status": "passed"
+          },
+          {
+            "id": "visualization_appropriateness",
+            "label": "Biểu đồ",
+            "earned_points": 4.2857,
+            "possible_points": 4.2857,
+            "status": "passed"
+          },
+          {
+            "id": "limitation_disclosure",
+            "label": "Giới hạn dữ liệu",
+            "earned_points": 4.2857,
+            "possible_points": 4.2857,
+            "status": "passed"
+          },
+          {
+            "id": "population_correctness",
+            "label": "Quần thể và mẫu số",
+            "earned_points": 4.2857,
+            "possible_points": 4.2857,
+            "status": "passed"
+          },
+          {
+            "id": "provenance_completeness",
+            "label": "Nguồn gốc kết quả",
+            "earned_points": 4.2857,
+            "possible_points": 4.2857,
+            "status": "passed"
+          },
+          {
+            "id": "analysis_depth_coverage",
+            "label": "Độ đầy đủ góc nhìn",
+            "earned_points": 12.8571,
+            "possible_points": 12.8571,
+            "status": "passed"
+          },
+          {
+            "id": "independent_reference",
+            "label": "Đối chứng độc lập",
+            "earned_points": 0.0,
+            "possible_points": 10.0,
+            "status": "not_measured"
+          }
+        ],
+        "accuracy_assessment": {
+          "status": "not_measured",
+          "matched_count": null,
+          "reference_count": 0,
+          "accuracy_pct": null,
+          "reference_source": null,
+          "reason": "Chưa có đáp án đối chứng độc lập cho yêu cầu này; không suy ra độ chính xác từ các kiểm tra nội bộ."
+        },
+        "confidence_probability": null,
+        "confidence_reason": "Chưa hiệu chuẩn xác suất trả lời đúng trên tập đối chứng độc lập; không công bố xác suất tin cậy."
+      },
+      "charts": [
+        {
+          "chart_type": "horizontal_bar",
+          "metric": "quantity_sold",
+          "x_field": "product",
+          "series_field": null,
+          "role": "requested",
+          "semantic_view_key": "7f34c2a05cb907d55cc1f9db39de61632d30abc4a69bac6a80e5ff9563614de9"
+        },
+        {
+          "chart_type": "horizontal_bar",
+          "metric": "product_revenue",
+          "x_field": "product",
+          "series_field": null,
+          "role": "requested",
+          "semantic_view_key": "e4aad02cd4d9cbc8ba01c72974b5b55483213f5abf8758ae6b4627d212d1d7f8"
+        },
+        {
+          "chart_type": "area",
+          "metric": "product_revenue",
+          "x_field": "period",
+          "series_field": null,
+          "role": "supporting",
+          "semantic_view_key": "85c535830cdb6281934d0dcdb40f45267f1477a374d39990304b6cc4a0af33fd"
+        },
+        {
+          "chart_type": "area",
+          "metric": "quantity_sold",
+          "x_field": "period",
+          "series_field": null,
+          "role": "supporting",
+          "semantic_view_key": "859050a726fe8029cbdc8cac521a03a023721b80eeab1a36e7b17c9283514ac7"
+        },
+        {
+          "chart_type": "donut",
+          "metric": "quantity_sold",
+          "x_field": "product",
+          "series_field": null,
+          "role": "supporting",
+          "semantic_view_key": "f2c65cf88b930b439a90222875851dd4d35d4a13b648b30cbb234905d2d7026a"
+        }
+      ],
+      "periods": [
+        {
+          "kind": "range",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-09-10",
+          "end": "2026-10-09",
+          "amount": null,
+          "unit": null
+        },
+        {
+          "kind": "range",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-09-10",
+          "end": "2026-10-09",
+          "amount": null,
+          "unit": null
+        },
+        {
+          "kind": "range",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-09-10",
+          "end": "2026-10-09",
+          "amount": null,
+          "unit": null
+        },
+        {
+          "kind": "range",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-09-10",
+          "end": "2026-10-09",
+          "amount": null,
+          "unit": null
+        },
+        {
+          "kind": "range",
+          "mode": null,
+          "year": null,
+          "month": null,
+          "quarter": null,
+          "day": null,
+          "start": "2026-09-10",
+          "end": "2026-10-09",
+          "amount": null,
+          "unit": null
+        }
+      ]
+    }
+  ],
+  "limitation": "Verifies live SQL, chart contracts and report verification with scripted intent; does not measure live AI language accuracy."
+}

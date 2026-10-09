@@ -78,17 +78,22 @@ export function dashboardCharts(charts = [], report = {}) {
 }
 
 export function dashboardPrimaryCharts(charts = [], limit = 6) {
-  const family = c => ['line', 'area', 'multi_line'].includes(c.chart_type) ? 'trend'
-    : ['bar', 'horizontal_bar', 'grouped_bar'].includes(c.chart_type) ? 'comparison' : c.chart_type;
-  const selected = [], families = new Set();
-  // Pick existing validated views. Do not convert chart types or data merely
-  // to fill a variety quota; remaining views stay accessible on demand.
-  for (const c of charts) if (!families.has(family(c)) && selected.length < limit) {
-    selected.push(c); families.add(family(c));
-  }
-  for (const c of charts) if (!selected.includes(c) && selected.length < limit) selected.push(c);
-  return selected;
+  // Requested views stay visible even if they exceed the preferred primary count.
+  const requested = charts.filter(c => c.role !== 'supporting');
+  const supporting = charts.filter(c => c.role === 'supporting');
+  return [...requested, ...supporting.slice(0, Math.max(0, limit - requested.length))];
 }
+
+export function dashboardChartTabs(charts = []) {
+  const category = c => c.purpose === 'ranking' || c.ranking_metric ? 'ranking'
+    : c.purpose === 'trend' || c.x_field === 'period' ? 'trend'
+    : c.purpose === 'distribution' || c.value_transform === 'contribution_share' || ['donut','stacked_100'].includes(c.chart_type) ? 'composition' : 'comparison';
+  return [{ id:'all', label:'Tất cả', charts },
+    ...[['ranking','Xếp hạng'],['trend','Diễn biến'],['composition','Cơ cấu'],['comparison','So sánh']]
+      .map(([id,label]) => ({id,label,charts:charts.filter(c => category(c)===id)}))
+      .filter(tab => tab.charts.length)];
+}
+
 export function dashboardHighlights(report = {}) {
   // Whole-scope values answer the question before local maxima. Never sum
   // grouped averages, or turn a group's scalar into a whole-scope KPI.
@@ -219,10 +224,11 @@ export function chartExplanation(chart = {}) {
   const type = chart.chart_type;
   if (chart.selection === 'Top N') {
     const ranking = (chart.ranking_metric_label || '').toLowerCase();
+    const partition = chart.ranking_per_group?.length ? `${chart.ranking_note || 'Xếp hạng riêng trong từng nhóm.'} ` : '';
     if (ranking && chart.ranking_metric !== chart.metric && !(chart.metrics || []).includes(chart.ranking_metric)) {
-      return `Hiển thị ${title} của tập Top ${chart.ranking_limit || chart.data?.length || ''} được chọn theo ${ranking}; giữ nguyên thứ tự theo ${ranking}, không xếp hạng lại theo chỉ số đang hiển thị.`;
+      return partition + `Hiển thị ${title} của tập Top ${chart.ranking_limit || chart.data?.length || ''} được chọn theo ${ranking}; giữ nguyên thứ tự theo ${ranking}, không xếp hạng lại theo chỉ số đang hiển thị.`;
     }
-    return `Thứ tự theo ${ranking || title}; chiều dài thanh thể hiện giá trị của từng ${dimension} trong tập Top N.`;
+    return partition + `Thứ tự theo ${ranking || title}; chiều dài thanh thể hiện giá trị của từng ${dimension} trong tập Top N.`;
   }
   if (type === 'donut') return `Cơ cấu ${title} theo ${dimension}; tỷ trọng tính trên toàn bộ ${chart.population_count || chart.data?.length || ''} nhóm trong phạm vi đã chọn.`;
   if (['line', 'area', 'multi_line'].includes(type)) {

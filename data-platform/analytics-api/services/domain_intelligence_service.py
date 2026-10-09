@@ -312,37 +312,45 @@ class DomainIntelligence:
             raise AnalysisError("unsupported_domain", "Selected domain is unavailable")
         question_text = value_text(question)
         stop = set(map(value_text, self.catalog.registry["interpretation"].get("retrieval_stopwords", [])))
-        index = {}
-        r = self.catalog.registry
-        entity_owners = {}
-        for id, p in profiles.items():
-            for d in p["dimension_refs"]:
-                for alias in [r["dimensions"][d]["business_name"], *r["dimensions"][d].get("aliases", [])]:
-                    entity_owners.setdefault(value_text(alias), set()).add(id)
-        shared_entities = {phrase for phrase, owners in entity_owners.items() if len(owners) > 1}
-        for id, p in profiles.items():
-            texts = [(p["business_label"], "exact_business_label_match"), (id, "alias_match")]
-            texts += [(a, "alias_match") for a in p["model_aliases"]]
-            domain_names = set(map(value_text, [id, p["business_label"], *p["model_aliases"]]))
-            for s in p["primary_subjects"]:
-                # Legacy subject search aliases may include shared scope words.
-                # Those are not direct domain evidence unless the profile also
-                # explicitly names the word as a business domain alias.
-                texts += [(a, "alias_match") for a in [s, r["subjects"][s]["business_name"], *r["subjects"][s].get("aliases", [])]
-                          if value_text(a) not in shared_entities or value_text(a) in domain_names]
-            # Shared scope entities (for example a geographic dimension) are
-            # not evidence for a single domain merely because that profile
-            # lists the dimension as primary. Count all checked owners.
-            for d in p["dimension_refs"]:
-                texts += [(a, "entity_alias_match") for a in [r["dimensions"][d]["business_name"], *r["dimensions"][d].get("aliases", [])]]
-            for m in p["metric_refs"]:
-                texts += [(a, "metric_alias_match") for a in [r["metrics"][m]["business_name"], *r["metrics"][m].get("aliases", [])]]
-            for lens in p["analytical_lenses"]:
-                texts += [(a, "lens_example_match") for a in [lens["business_label"], lens["business_question"], *lens.get("example_intents", [])]]
-            for text, category in texts:
-                phrase = value_text(text)
-                if len(phrase) >= 3 and phrase not in stop and any(t not in stop and not t.isdigit() for t in phrase.split()):
-                    index.setdefault(phrase, {}).setdefault(category, set()).add(id)
+        search_key=(self.catalog.fingerprint, 'retrieval_alias_index')
+        with _lock:
+            index=deepcopy(_cache.get(search_key))
+        if index is None:
+            index = {}
+            r = self.catalog.registry
+            entity_owners = {}
+            for id, p in profiles.items():
+                for d in p["dimension_refs"]:
+                    for alias in [r["dimensions"][d]["business_name"], *r["dimensions"][d].get("aliases", [])]:
+                        entity_owners.setdefault(value_text(alias), set()).add(id)
+            shared_entities = {phrase for phrase, owners in entity_owners.items() if len(owners) > 1}
+            for id, p in profiles.items():
+                texts = [(p["business_label"], "exact_business_label_match"), (id, "alias_match")]
+                texts += [(a, "alias_match") for a in p["model_aliases"]]
+                domain_names = set(map(value_text, [id, p["business_label"], *p["model_aliases"]]))
+                for s in p["primary_subjects"]:
+                    # Legacy subject search aliases may include shared scope words.
+                    # Those are not direct domain evidence unless the profile also
+                    # explicitly names the word as a business domain alias.
+                    texts += [(a, "alias_match") for a in [s, r["subjects"][s]["business_name"], *r["subjects"][s].get("aliases", [])]
+                              if value_text(a) not in shared_entities or value_text(a) in domain_names]
+                # Shared scope entities (for example a geographic dimension) are
+                # not evidence for a single domain merely because that profile
+                # lists the dimension as primary. Count all checked owners.
+                for d in p["dimension_refs"]:
+                    texts += [(a, "entity_alias_match") for a in [r["dimensions"][d]["business_name"], *r["dimensions"][d].get("aliases", [])]]
+                for m in p["metric_refs"]:
+                    texts += [(a, "metric_alias_match") for a in [r["metrics"][m]["business_name"], *r["metrics"][m].get("aliases", [])]]
+                for lens in p["analytical_lenses"]:
+                    texts += [(a, "lens_example_match") for a in [lens["business_label"], lens["business_question"], *lens.get("example_intents", [])]]
+                for text, category in texts:
+                    phrase = value_text(text)
+                    if len(phrase) >= 3 and phrase not in stop and any(t not in stop and not t.isdigit() for t in phrase.split()):
+                        index.setdefault(phrase, {}).setdefault(category, set()).add(id)
+            with _lock:
+                _cache[search_key]=deepcopy(index)
+                while len(_cache)>64:
+                    _cache.popitem(last=False)
         categories = ("exact_business_label_match", "alias_match", "entity_alias_match", "metric_alias_match", "lens_example_match")
         matches = []
         for phrase, by_category in index.items():
@@ -464,7 +472,7 @@ TIME_PRESETS = {"auto": "Tự động", "today": "Hôm nay", "7d": "7 ngày qua"
                 "previous_quarter": "Quý trước", "all_time": "Toàn bộ thời gian", "custom": "Tùy chọn"}
 
 DEPTH_POLICIES = {
-    "focused": {"supports": 1, "packs": 1, "domain_chars": 1800, "body_chars": 24000, "target_views": [1, 3]},
+    "focused": {"supports": 1, "packs": 1, "domain_chars": 1800, "body_chars": 24000, "target_views": [2, 4]},
     "deep": {"supports": 6, "packs": 2, "domain_chars": 3500, "body_chars": 24000, "target_views": [4, 6]},
     "comprehensive": {"supports": 7, "packs": 8, "domain_chars": 8000, "body_chars": 24000, "target_views": [6, 8]},
 }

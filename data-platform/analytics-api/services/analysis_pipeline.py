@@ -36,6 +36,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "forecast_unsupported",
     }
     messages = {
+        'resolver_internal': 'Máy chủ gặp lỗi xử lý kế hoạch phân tích. Câu hỏi được giữ nguyên; hệ thống chưa chạy truy vấn báo cáo. Cần kiểm tra lỗi bộ phân giải trên máy chủ.',
         'planning_timeout': 'Hệ thống chưa hoàn tất lập kế hoạch trong giới hạn 30 giây. Đây là lỗi xử lý hoặc thời gian phản hồi của hệ thống; câu hỏi được giữ nguyên và chưa cần bổ sung thông tin.',
         'capacity_requires_choice': 'Phạm vi và nhịp thời gian yêu cầu vượt dung lượng thực thi. Chọn khoảng thời gian ngắn hơn, ít nhóm hơn hoặc nhịp tuần/tháng; hệ thống chưa thay đổi yêu cầu của bạn.',
         'artifact_store_unavailable': 'Kho kết quả phân tích chưa sẵn sàng. Dữ liệu lớn chưa được lưu vào phiên; cần khôi phục kho kết quả.',
@@ -84,8 +85,8 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "provider_model_not_found": "Model AI được cấu hình chưa khả dụng. Vui lòng kiểm tra cấu hình model trên máy chủ.",
         "provider_rate_limited": "Dịch vụ AI đang vượt giới hạn sử dụng hoặc quota. Vui lòng thử lại sau.",
         "provider_daily_quota": "Model AI đã hết hạn mức theo ngày. Vui lòng chờ quota được cấp lại.",
-        "provider_timeout": "Dịch vụ AI phản hồi quá thời gian chờ. Vui lòng thử lại sau.",
-        "provider_connection": "Không thể kết nối đến nhà cung cấp AI. Vui lòng kiểm tra kết nối mạng của máy chủ.",
+        "provider_timeout": "Dịch vụ AI chưa phản hồi trong thời gian cho phép. Câu hỏi của bạn đã được nhận diện cục bộ nhưng chưa thể hoàn tất diễn giải.",
+        "provider_connection": "Máy chủ chưa kết nối được tới nhà cung cấp AI.",
         "provider_schema_invalid": "Nhà cung cấp AI từ chối cấu trúc yêu cầu. Cấu hình tích hợp dịch vụ AI cần được kiểm tra.",
         "provider_bad_request": "Dịch vụ AI từ chối yêu cầu. Máy chủ cần kiểm tra nguyên nhân lỗi từ nhà cung cấp AI.",
         "provider_invalid_json": "Dịch vụ AI trả về dữ liệu chưa hợp lệ. Vui lòng thử lại sau.",

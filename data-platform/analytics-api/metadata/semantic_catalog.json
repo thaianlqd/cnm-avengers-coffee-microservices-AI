@@ -355,7 +355,7 @@
         },
         "loai_diem_ban": {
           "type": "text",
-          "description": "Phân loại cửa hàng: 'CHI_NHANH_CHINH', 'KIOT', 'FLAGSHIP'"
+          "description": "Phân loại điểm bán: CHI_NHANH_CHINH, KIOSK_NHUONG_QUYEN, KIOSK_VE_TINH; kiosk gồm hai loại KIOSK_*, không xác định bằng tên."
         },
         "gio_mo_cua": {
           "type": "text",
@@ -3532,7 +3532,10 @@
           "doanh thu",
           "payment_revenue",
           "Doanh thu thanh toán",
-          "payment revenue"
+          "payment revenue",
+          "số tiền giao dịch",
+          "tổng số tiền giao dịch",
+          "transaction amount"
         ],
         "expression": "SUM(silver.giao_dich_thanh_toan.so_tien)",
         "source": "silver.giao_dich_thanh_toan",
@@ -3550,7 +3553,7 @@
         "aggregation_semantics": "sum",
         "business_meaning": "Tổng số tiền giao dịch theo ngày tạo giao dịch, gồm mọi trạng thái; không mặc định là doanh thu thuần hoặc dòng tiền thành công.",
         "historical_capability": "historical",
-        "population_definition": "Toàn bộ bản ghi của đối tượng",
+        "population_definition": "Mọi giao dịch thanh toán, gồm mọi trạng thái; thời gian theo ngày tạo giao dịch. Không đồng nhất với doanh thu đơn hàng.",
         "recommended_uses": [
           "overview",
           "comparison",
@@ -5030,6 +5033,86 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "enumerated"
+      },
+      "payment_transaction_status": {
+        "table": "silver.giao_dich_thanh_toan",
+        "column": "trang_thai",
+        "business_name": "Trạng thái giao dịch",
+        "aliases": [
+          "trạng thái giao dịch",
+          "transaction status",
+          "payment_transaction_status"
+        ],
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "enum",
+          "max_candidates": 8
+        },
+        "business_meaning": "Trạng thái bản ghi giao dịch thanh toán, khác trạng thái thanh toán của đơn hàng.",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
+      },
+      "store_type": {
+        "table": "silver.chi_nhanh",
+        "column": "loai_diem_ban",
+        "business_name": "Loại điểm bán",
+        "aliases": [
+          "loại điểm bán",
+          "loại cửa hàng",
+          "loại chi nhánh"
+        ],
+        "role": "dimension",
+        "scope_selectable": true,
+        "enum": [
+          "CHI_NHANH_CHINH",
+          "KIOSK_NHUONG_QUYEN",
+          "KIOSK_VE_TINH"
+        ],
+        "value_grounding": {
+          "mode": "enum"
+        },
+        "population_selector": true,
+        "value_aliases": {
+          "chi nhánh chính": "CHI_NHANH_CHINH",
+          "cửa hàng chính": "CHI_NHANH_CHINH",
+          "kiosk nhượng quyền": "KIOSK_NHUONG_QUYEN",
+          "kiốt nhượng quyền": "KIOSK_NHUONG_QUYEN",
+          "kiosk vệ tinh": "KIOSK_VE_TINH",
+          "kiốt vệ tinh": "KIOSK_VE_TINH"
+        },
+        "value_groups": [
+          {
+            "aliases": [
+              "kiosk",
+              "kiosks",
+              "kisok",
+              "kiốt",
+              "kiot",
+              "ki-ốt"
+            ],
+            "values": [
+              "KIOSK_NHUONG_QUYEN",
+              "KIOSK_VE_TINH"
+            ]
+          }
+        ],
+        "value_labels": {
+          "CHI_NHANH_CHINH": "Chi nhánh chính",
+          "KIOSK_NHUONG_QUYEN": "Kiosk nhượng quyền",
+          "KIOSK_VE_TINH": "Kiosk vệ tinh"
+        },
+        "business_meaning": "Phân loại điểm bán từ trường loai_diem_ban; kiosk gồm nhượng quyền và vệ tinh, không suy ra từ tên cửa hàng.",
+        "grouping_semantics": "Nhóm theo loại điểm bán chuẩn.",
+        "filter_semantics": "Lọc mã loại điểm bán; nhóm kiosk gồm hai loại KIOSK_NHUONG_QUYEN và KIOSK_VE_TINH.",
+        "hierarchies": [
+          [
+            "store_type",
+            "store"
+          ]
+        ],
+        "cardinality_hint": 3
       }
     },
     "subjects": {
@@ -7130,7 +7213,8 @@
           ],
           "dimension_refs": [
             "city",
-            "store"
+            "store",
+            "store_type"
           ],
           "analytical_lenses": [
             {
@@ -7443,7 +7527,8 @@
           ],
           "diagnostic_dimensions": [
             "city",
-            "store"
+            "store",
+            "store_type"
           ],
           "drilldown_hierarchies": [
             [
@@ -8187,7 +8272,8 @@
           ],
           "dimension_refs": [
             "payment_gateway",
-            "payment_status"
+            "payment_status",
+            "payment_transaction_status"
           ],
           "analytical_lenses": [
             {
@@ -8199,7 +8285,8 @@
               ],
               "dimension_refs": [
                 "payment_gateway",
-                "payment_status"
+                "payment_status",
+                "payment_transaction_status"
               ],
               "supports_time_series": true,
               "supports_ranking": true,
@@ -8207,7 +8294,8 @@
               "supports_distribution": true,
               "recommended_drilldowns": [
                 "payment_gateway",
-                "payment_status"
+                "payment_status",
+                "payment_transaction_status"
               ],
               "related_lens_refs": [],
               "blueprint": {
@@ -8238,6 +8326,9 @@
                   ],
                   [
                     "payment_status"
+                  ],
+                  [
+                    "payment_transaction_status"
                   ]
                 ],
                 "requires_historical_data": false,
@@ -8262,7 +8353,8 @@
                 ],
                 "cross_tab_grouping_refs": [
                   "payment_gateway",
-                  "payment_status"
+                  "payment_status",
+                  "payment_transaction_status"
                 ]
               },
               "example_intents": [
@@ -8279,7 +8371,8 @@
               ],
               "dimension_refs": [
                 "payment_gateway",
-                "payment_status"
+                "payment_status",
+                "payment_transaction_status"
               ],
               "supports_time_series": true,
               "supports_ranking": true,
@@ -8287,7 +8380,8 @@
               "supports_distribution": true,
               "recommended_drilldowns": [
                 "payment_gateway",
-                "payment_status"
+                "payment_status",
+                "payment_transaction_status"
               ],
               "related_lens_refs": [],
               "blueprint": {
@@ -8318,6 +8412,9 @@
                   ],
                   [
                     "payment_status"
+                  ],
+                  [
+                    "payment_transaction_status"
                   ]
                 ],
                 "requires_historical_data": false,
@@ -8342,7 +8439,8 @@
                 ],
                 "cross_tab_grouping_refs": [
                   "payment_gateway",
-                  "payment_status"
+                  "payment_status",
+                  "payment_transaction_status"
                 ]
               },
               "example_intents": [
@@ -8359,14 +8457,16 @@
                 "payment_revenue"
               ],
               "dimension_refs": [
-                "payment_gateway"
+                "payment_gateway",
+                "payment_transaction_status"
               ],
               "supports_time_series": true,
               "supports_ranking": true,
               "supports_comparison": true,
               "supports_distribution": true,
               "recommended_drilldowns": [
-                "payment_gateway"
+                "payment_gateway",
+                "payment_transaction_status"
               ],
               "related_lens_refs": [],
               "blueprint": {
@@ -8393,6 +8493,9 @@
                   [],
                   [
                     "payment_gateway"
+                  ],
+                  [
+                    "payment_transaction_status"
                   ]
                 ],
                 "requires_historical_data": true,
@@ -8415,7 +8518,9 @@
                   "no_causal_interpretation",
                   "distinct_populations"
                 ],
-                "cross_tab_grouping_refs": []
+                "cross_tab_grouping_refs": [
+                  "payment_transaction_status"
+                ]
               },
               "example_intents": [
                 "Diễn biến thanh toán trong phạm vi đã chọn?",
@@ -8447,7 +8552,8 @@
           ],
           "diagnostic_dimensions": [
             "payment_gateway",
-            "payment_status"
+            "payment_status",
+            "payment_transaction_status"
           ],
           "drilldown_hierarchies": [],
           "comparison_semantics": [
@@ -10671,9 +10777,30 @@
         "product_revenue"
       ]
     ],
-    "metric_concept_groups": [["aov", "store_aov"]],
-    "population_scope_qualifiers": ["phạm vi", "điều kiện", "định nghĩa"],
-    "grouping_qualifiers": ["theo"],
+    "metric_concept_groups": [
+      [
+        "aov",
+        "store_aov"
+      ]
+    ],
+    "population_scope_qualifiers": [
+      "phạm vi",
+      "điều kiện",
+      "định nghĩa",
+      "nêu rõ"
+    ],
+    "ranking_quantifier_aliases": {
+      "top": [
+        "top",
+        "xếp hạng"
+      ],
+      "bottom": [
+        "bottom"
+      ]
+    },
+    "grouping_qualifiers": [
+      "theo"
+    ],
     "granularity_aliases": {
       "day": [
         "theo ngày",
@@ -10696,6 +10823,35 @@
       "year": [
         "theo năm"
       ]
+    },
+    "semantic_negation_relations": [
+      {
+        "prefix": "không coi",
+        "relation": "là"
+      }
+    ],
+    "analysis_breadth_aliases": {
+      "deep": [
+        "đánh giá",
+        "đánh giá hiệu suất",
+        "phân tích tổng quan",
+        "phân tích toàn diện",
+        "tổng quan"
+      ]
+    },
+    "filter_exclusion_qualifiers": [
+      "không tính",
+      "không gồm",
+      "không bao gồm",
+      "loại trừ",
+      "ngoại trừ",
+      "trừ",
+      "không phải"
+    ],
+    "dashboard_policy": {
+      "minimum_views": 4,
+      "target_views": 5,
+      "default_depth": "deep"
     }
   }
 }

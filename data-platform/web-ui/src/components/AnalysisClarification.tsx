@@ -20,7 +20,7 @@ export const AnalysisClarification: React.FC<{
   const failed = response?.status === 'error';
   const actions = analysisFailureActions(response);
   return (
-    <section role={failed ? 'alert' : 'status'} className="rounded-2xl border border-amber-200 bg-amber-50 p-6 space-y-3">
+    <section role={failed ? 'alert' : 'status'} className={`rounded-2xl border p-6 space-y-3 ${failed ? 'border-rose-200 bg-rose-50' : 'border-amber-200 bg-amber-50'}`}>
       <h3 className="text-sm font-semibold text-slate-800">{issue?.title || analysisFailureTitle(response)}</h3>
       <p className="text-sm text-slate-700">{clarification?.user_message || response?.message || 'Hệ thống chưa thể diễn giải yêu cầu lúc này. Vui lòng thử lại.'}</p>
       {issue?.what_is_known?.length > 0 && <div className="text-xs"><strong>Đã nhận diện:</strong> {issue.what_is_known.join(' · ')}</div>}

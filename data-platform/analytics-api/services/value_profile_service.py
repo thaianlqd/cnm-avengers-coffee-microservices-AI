@@ -2,6 +2,7 @@
 import math
 import threading
 import time
+from copy import deepcopy
 from services.metadata_service import is_sensitive_column
 from services.value_grounding_service import dimension_values
 
@@ -9,17 +10,22 @@ _cache, _lock = {}, threading.RLock()
 
 
 def profiles_for(catalog, loader=None):
-    key = catalog.fingerprint
+    key = (catalog.fingerprint, catalog.snapshot_version, bool(loader),
+           repr([(d['table'],d['column'],[(c['name'],c.get('distinct_upper_bound'),c.get('date_min'),c.get('date_max'))
+                 for c in catalog.tables.get(d['table'],{}).get('columns',[])])
+                 for d in catalog.registry['dimensions'].values()]))
     with _lock:
         cached = _cache.get(key)
-        if loader and cached and cached[0] > time.time():
-            return cached[1]
+        if cached and cached[0] > time.time():
+            return deepcopy(cached[1])
     physical = loader(catalog) if loader else {}
     result = {}
     for name, desc in catalog.registry['dimensions'].items():
         if is_sensitive_column(desc['column']):
             continue
-        column = next(c for c in catalog.tables[desc['table']]['columns'] if c['name'] == desc['column'])
+        column = next((c for c in catalog.tables.get(desc['table'],{}).get('columns',[]) if c['name'] == desc['column']),None)
+        if column is None or column.get('sensitive'):
+            continue
         profile = dict(physical.get(desc['table']+'.'+desc['column'], {}))
         for field in ('distinct_upper_bound', 'null_fraction', 'date_min', 'date_max', 'duplicate_labels'):
             if field in column:
@@ -32,10 +38,9 @@ def profiles_for(catalog, loader=None):
         result[name] = profile
         result.setdefault(desc['table']+'.'+desc['column'], profile)
     with _lock:
-        if loader:
-            if len(_cache) >= 32:
-                _cache.clear()
-            _cache[key] = (time.time()+600, result)
+        if len(_cache) >= 32:
+            _cache.pop(next(iter(_cache)))
+        _cache[key] = (time.time()+300, deepcopy(result))
     return result
 
 

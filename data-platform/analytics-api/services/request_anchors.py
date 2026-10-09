@@ -50,6 +50,16 @@ def request_anchors(question, catalog, ui):
                     continue
                 vocabulary.setdefault(value_text(alias), set()).add(id)
         output[kind] = exact_mentions(text, vocabulary)
+    # Explicit non-equivalence statements constrain interpretation. Catalog
+    # relation markers identify the referenced RHS concept; they cannot request
+    # that concept or synthesize a business plan.
+    exclusions=[]
+    for relation in r.get('semantic_negation_relations',[]):
+        pattern=r'\b'+re.escape(value_text(relation['prefix']))+r'\b.{0,160}?\b'+re.escape(value_text(relation['relation']))+r'\s+'
+        for match in re.finditer(pattern,text):
+            exclusions.extend(a for a in output['metrics'] if match.end()<=a['start']<match.end()+80)
+    output['metric_constraints']=exclusions
+    output['metrics']=[a for a in output['metrics'] if a not in exclusions]
     output['dimensions'] = [d for d in output['dimensions'] if not any(
         m['start'] <= d['start'] and d['end'] <= m['end'] and m['end']-m['start'] > d['end']-d['start']
         for m in output['metrics'])]
@@ -82,7 +92,11 @@ def request_anchors(question, catalog, ui):
         return bool(re.search(r'\b(?:khong|chua|dung)\s+(?:tu\s+)?(?:ket luan|suy ra|tinh|danh gia|cong bo)(?:\s+(?:ve|duoc|chi so|hieu qua|gia tri))*\s*$',prefix))
     output['capability_constraints']=[m for m in capabilities if prohibited(m)]
     output['capabilities']=[m for m in capabilities if not prohibited(m)]
-    values = []
+    values, excluded_values = [], []
+    def excluded(mention):
+        prefix = text[max(0,mention['start']-80):mention['start']]
+        return any(re.search(r'(?<!\w)'+re.escape(value_text(q))+r'\s*$',prefix)
+                   for q in r.get('filter_exclusion_qualifiers',[]))
     for dimension in r["dimensions"]:
         vocabulary = aliases_for(catalog, dimension, dimension_values(catalog, dimension))
         for mention in exact_mentions(text, {k: {str(v)} for k,v in vocabulary.items()}):
@@ -90,11 +104,37 @@ def request_anchors(question, catalog, ui):
                    for kind in ('metrics','features','capabilities') for a in output[kind]):
                 continue
             value = next(v for k,v in vocabulary.items() if k == mention["phrase"])
-            if {"dimension": dimension, "value": value} not in values:
-                values.append({"dimension": dimension, "value": value})
+            target = excluded_values if excluded(mention) else values
+            if {"dimension": dimension, "value": value} not in target:
+                target.append({"dimension": dimension, "value": value})
+        for group in r['dimensions'][dimension].get('value_groups',[]):
+            for mention in exact_mentions(text,{value_text(a):set(group['values']) for a in group['aliases']}):
+                target = excluded_values if excluded(mention) else values
+                # A qualified alias (e.g. one subtype) outranks the generic group.
+                if any(m['start']<=mention['start'] and mention['end']<=m['end'] and
+                       m['end']-m['start']>mention['end']-mention['start'] for m in
+                       exact_mentions(text,{k:{str(v)} for k,v in vocabulary.items()})):
+                    continue
+                for value in group['values']:
+                    item={'dimension':dimension,'value':value}
+                    if item not in target: target.append(item)
     output["values"] = values
-    rankings = re.findall(r"\b(top|bottom)\s+(\d{1,3})\b", text)
+    output['excluded_values'] = excluded_values
+    breadth = exact_mentions(text,{value_text(a):{depth} for depth,aliases in
+                                   r.get('analysis_breadth_aliases',{}).items() for a in aliases})
+    output['analysis_breadth'] = 'deep' if breadth else None
+    ranking_words={value_text(a):direction for direction,aliases in r.get('ranking_quantifier_aliases',
+        {'top':['top'],'bottom':['bottom']}).items() for a in aliases}
+    rankings = [(ranking_words[word],n) for word,n in re.findall(
+        r'\b('+ '|'.join(re.escape(a) for a in sorted(ranking_words,key=len,reverse=True))+r')\s+(\d{1,3})\b',text)]
     output["rankings"] = [{"direction": d, "limit": int(n)} for d,n in rankings if 1 <= int(n) <= 100]
+    # Bind a numeric ranking only to a unique catalog metric mention in its
+    # clause. Companion metrics in later sentences cannot replace the criterion.
+    quantifiers=list(re.finditer(r'\b('+ '|'.join(re.escape(a) for a in sorted(ranking_words,key=len,reverse=True))+r')\s+(\d{1,3})\b',text))
+    for rank,mention in zip(output['rankings'],quantifiers):
+        eligible=sorted((a for a in output['metrics'] if mention.end()<=a['start']<mention.end()+200),key=lambda a:a['start'])
+        if eligible and len(eligible[0]['candidate_ids'])==1:
+            rank['metric_id']=eligible[0]['candidate_ids'][0]
     rolling = re.findall(r"\b(\d{1,4})\s+(ngay|thang)\s+(?:gan nhat|gan day|qua)\b", text)
     output["times"] = [{"kind": "rolling", "amount": int(n), "unit": "day" if u == "ngay" else "month"}
                        for n,u in rolling if 1 <= int(n) <= 3660]
@@ -105,6 +145,43 @@ def request_anchors(question, catalog, ui):
         for g, aliases in r.get('granularity_aliases', {}).items() for a in aliases})
     output["ui"] = {k: v for k,v in ui.items() if k in {"required_period", "required_filters", "required_filter", "required_domain", "scope_mode"}}
     return output
+
+
+def population_filters(anchors, catalog):
+    """Finite metadata value groups constrain every operation, not one sibling."""
+    from services.analysis_catalog import AnalysisError
+    result=[]
+    for dimension,definition in catalog.registry['dimensions'].items():
+        if not definition.get('population_selector'): continue
+        positive={a['value'] for a in anchors.get('values',[]) if a['dimension']==dimension}
+        negative={a['value'] for a in anchors.get('excluded_values',[]) if a['dimension']==dimension}
+        if not positive and not negative: continue
+        allowed=set(dimension_values(catalog,dimension))
+        if not allowed or not (positive|negative)<=allowed:
+            raise AnalysisError('unsupported_dimension','Requested population classification is unavailable')
+        selected=sorted((positive or allowed)-negative)
+        if not selected: raise AnalysisError('query_scope','Requested population constraints conflict')
+        result.append(dict(dimension=dimension,operator='eq' if len(selected)==1 else 'in',
+                           value=selected[0] if len(selected)==1 else selected))
+    return result
+
+
+def complete_population_filters(intent, anchors, catalog):
+    from services.analysis_contract import Filter
+    from services.analytical_resolver import ResolutionIssues
+    result=intent.model_copy(deep=True); changes=[]; issues=[]
+    for expected in population_filters(anchors,catalog):
+        for req in result.requirements:
+            if req.availability!='requested': continue
+            present=[f for f in req.filters if f.dimension==expected['dimension']]
+            selected=set(expected['value'] if isinstance(expected['value'],list) else [expected['value']])
+            if present and any(f.operator not in {'eq','in'} or set(f.value if isinstance(f.value,list) else [f.value])!=selected for f in present):
+                issues.append(dict(requirement_id=req.id,field='filters',code='population_filter_mismatch',expected=expected))
+            elif not present:
+                req.filters.append(Filter.model_validate(expected))
+                changes.append(dict(requirement_id=req.id,field='filters',rule='explicit_metadata_population',value=expected))
+    if issues: raise ResolutionIssues(issues)
+    return result,changes
 
 
 def complete_explicit_granularity(intent, anchors):
@@ -119,6 +196,29 @@ def complete_explicit_granularity(intent, anchors):
             req.granularity = next(iter(values))
             changes.append(dict(requirement_id=req.id, field='granularity',
                                 rule='explicit_request_cadence', value=req.granularity))
+    return result, changes
+
+
+def complete_default_time(intent, anchors, question, catalog, reference):
+    """Apply the declared all_time policy only when the user supplied no time.
+
+    Calendar/relative syntax is checked with the shared metadata grammar, not
+    just numeric windows. Refinements must inherit their stored time separately.
+    """
+    from services.time_resolution_service import parse_time
+    from services.analysis_contract import TimeSpec
+    if anchors['ui'].get('required_period') or anchors.get('times'):
+        return intent, []
+    parsed = parse_time(question, catalog.registry['interpretation'], catalog.registry['timezone'], reference)
+    if parsed['recognized_time_parts'] or parsed['time_errors']:
+        return intent, []
+    result = intent.model_copy(deep=True)
+    changes = []
+    default = TimeSpec(kind='relative',mode='all_time')
+    for req in result.requirements:
+        if req.availability == 'requested' and req.time != default:
+            req.time = default.model_copy()
+            changes.append(dict(requirement_id=req.id,field='time',rule='unspecified_time_all_time'))
     return result, changes
 
 
@@ -191,11 +291,56 @@ def complete_explicit_share_targets(intent, anchors, catalog):
     return result, changes
 
 
+def disclosure_only_dimensions(anchors):
+    """Dimensions named solely to explain population definitions, never grain."""
+    disclosed = {d for a in anchors.get('population_scopes', []) if len(a['candidate_ids']) == 1
+                 for d in a['candidate_ids']}
+    independent = {d for a in anchors.get('dimensions', []) for d in a['candidate_ids']}
+    return disclosed - independent
+
+
+def normalize_population_disclosures(intent, anchors):
+    """Remove a provably disclosure-only axis from an unapproved initial draft.
+
+    Filters retain their meaning. Partitioned ranking needs explicit repair;
+    silently changing its partition could change the requested population.
+    """
+    result, changes = intent.model_copy(deep=True), []
+    excluded = disclosure_only_dimensions(anchors)
+    for req in result.requirements:
+        if req.availability != 'requested' or req.supporting_for:
+            continue
+        removed = set(req.dimension_ids) & excluded
+        if not removed or (req.ranking and removed & set(req.ranking.per_group)):
+            continue
+        req.dimension_ids = [d for d in req.dimension_ids if d not in removed]
+        changes.append(dict(requirement_id=req.id, field='dimension_ids',
+                            rule='population_disclosure_is_not_grouping', removed_dimensions=sorted(removed)))
+    return result, changes
+
+
 def verify_anchors(anchors, requirements, reference, catalog):
     from services.time_resolution_service import resolve_time
     issues = []
+    for expected in population_filters(anchors,catalog):
+        selected=set(expected['value'] if isinstance(expected['value'],list) else [expected['value']])
+        for req in requirements:
+            if req.availability!='requested': continue
+            present=[f for f in req.filters if f.dimension==expected['dimension']]
+            if not present or any(f.operator not in {'eq','in'} or set(f.value if isinstance(f.value,list) else [f.value])!=selected for f in present):
+                issues.append(dict(requirement_id=req.id,field='filters',code='population_filter_mismatch',expected=expected))
     requirements = [r for r in requirements if not r.supporting_for]
     requested = [r for r in requirements if r.availability == "requested"]
+    excluded = disclosure_only_dimensions(anchors)
+    for req in requested:
+        extra = excluded & set(req.dimension_ids)
+        if extra:
+            issues.append(dict(requirement_id=req.id, field='dimension_ids',
+                               code='population_disclosure_used_as_grouping', candidate_ids=sorted(extra)))
+        partition = excluded & set(req.ranking.per_group) if req.ranking else set()
+        if partition:
+            issues.append(dict(requirement_id=req.id, field='ranking',
+                               code='population_disclosure_used_as_partition', candidate_ids=sorted(partition)))
     selected = {m for req in requested for m in req.metric_ids if m in catalog.registry['metrics']}
     for scope in anchors.get('population_scopes', []):
         # Definitions are reported for every executed metric. A qualified scope
@@ -242,6 +387,10 @@ def verify_anchors(anchors, requirements, reference, catalog):
     for rank in anchors["rankings"]:
         if not any(r.ranking and (r.ranking.direction, r.ranking.limit) == (rank["direction"], rank["limit"]) for r in requested):
             issues.append({"requirement_id": None, "field": "ranking", "code": "explicit_ranking_missing", "expected": rank})
+        elif rank.get('metric_id') and not any(r.ranking and
+                (r.ranking.direction,r.ranking.limit,r.ranking.metric_id)==(rank['direction'],rank['limit'],rank['metric_id']) for r in requested):
+            targets=[r for r in requested if r.ranking and (r.ranking.direction,r.ranking.limit)==(rank['direction'],rank['limit'])]
+            issues.extend(dict(requirement_id=r.id,field='ranking',code='explicit_ranking_metric_mismatch',expected=rank) for r in targets)
     cadences={g for a in anchors.get('granularities',[]) for g in a['candidate_ids']}
     if len(cadences)==1:
         cadence=next(iter(cadences))
@@ -324,10 +473,12 @@ def refinement_anchors(original, initial_intent, history, catalog, ui, reference
                     period = resolve_time(old.model_dump(mode='json'),reference,catalog.registry['timezone'])[2]
                     protected = [a for a in protected if resolve_time(a,reference,catalog.registry['timezone'])[2] == period]
                 anchors[kind] = [a for a in anchors[kind] if a not in protected]
-        for kind in (*fields.values(), 'capabilities'):
+        for kind in (*fields.values(), 'capabilities', 'population_scopes', 'excluded_values'):
             for anchor in feedback[kind]:
                 if anchor not in anchors[kind]:
                     anchors[kind].append(deepcopy(anchor))
+        if feedback.get('analysis_breadth'):
+            anchors['analysis_breadth']=feedback['analysis_breadth']
         intent = after
         issues = verify_anchors(anchors,intent.requirements,reference,catalog)
         if issues:

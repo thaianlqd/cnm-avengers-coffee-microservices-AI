@@ -1,0 +1,76 @@
+{
+  "status": "PASS",
+  "validated_at": "2026-10-09T05:55:16.406458+00:00",
+  "scope": "data-platform analytical dashboards; universal minimum views",
+  "policy": {
+    "minimum_views": 4,
+    "target_views": 5,
+    "max_queries": 8,
+    "max_charts": 8
+  },
+  "backend": {
+    "executed": 726,
+    "passed": 726,
+    "failed": 0,
+    "errors": 0,
+    "log": "/private/tmp/dashboard-global-complete.log"
+  },
+  "default_domain_matrix": {
+    "domains": 16,
+    "minimum_verified_distinct_views": 4,
+    "status": "PASS"
+  },
+  "frontend": {
+    "executed": 110,
+    "passed": 110,
+    "failed": 0,
+    "typecheck": "PASS",
+    "build": "PASS",
+    "log": "/private/tmp/dashboard-global-ui-complete.log"
+  },
+  "git_diff_check": "PASS",
+  "live_warehouse": {
+    "measurement_scope": "SCRIPTED_INTENT_LIVE_READ_ONLY_WAREHOUSE",
+    "LIVE_PROVIDER_REQUESTS": 0,
+    "WAREHOUSE_WRITES": 0,
+    "cases": [
+      {
+        "id": "payments",
+        "query_count": 4,
+        "chart_count": 6,
+        "minimum_views": 4,
+        "independent_primary_sql_matched": true
+      },
+      {
+        "id": "products",
+        "query_count": 5,
+        "chart_count": 5,
+        "minimum_views": 4,
+        "independent_primary_sql_matched": true
+      }
+    ]
+  },
+  "deployment": {
+    "services": [
+      "analytics-api",
+      "web-ui"
+    ],
+    "api_health": "ok",
+    "api_readiness": "ready",
+    "both_containers_healthy": true,
+    "redis_available": true,
+    "catalog_ready": true,
+    "warehouse_available": true,
+    "analytics_api_started_at": "2026-10-09T05:52:27.564381251Z",
+    "analytics_web_started_at": "2026-10-09T05:52:33.18543792Z",
+    "customer_ai_started_at_before": "2026-10-09T03:59:56.168679043Z",
+    "customer_ai_started_at_after": "2026-10-09T03:59:56.168679043Z",
+    "customer_ai_restarted": false
+  },
+  "additional_paid_ai_requests": 0,
+  "limitations": [
+    "Read-only live warehouse audit used scripted intent and does not measure live AI language interpretation.",
+    "Empty or unsuitable observations retain controlled errors or partial verification instead of fabricated charts.",
+    "Existing reports need a new approved proposal under the updated catalog."
+  ]
+}

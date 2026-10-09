@@ -43,7 +43,7 @@ class OverviewTests(unittest.TestCase):
 
     def test_exact_failed_redis_intent_succeeds_in_one_interpretation(self):
         _,_,report,proposal=self.report(RECORDED['failed_intent'])
-        self.assertEqual(len(report['analytical_queries']),7)
+        self.assertEqual(len([q for q in report['analytical_queries'] if q['role']=='requested']),7)
         self.assert_shared_share_denominator(report, {'req_city_dist','req_store_rank'}, 'store_revenue')
         self.assertTrue(all(c['state']=='RESOLVED' for c in report['resolved_requirement_coverage']))
         trend=next(q for q in report['analytical_queries'] if q['operation']=='trend')
@@ -60,9 +60,9 @@ class OverviewTests(unittest.TestCase):
 
     def test_observed_successful_variant_remains_valid(self):
         _,_,report,_=self.report(RECORDED['successful_intent'])
-        self.assertEqual(len(report['analytical_queries']),6)
+        self.assertEqual(len([q for q in report['analytical_queries'] if q['role']=='requested']),6)
         self.assert_shared_share_denominator(report, {'revenue_by_city','revenue_by_store'}, 'revenue')
-        self.assertEqual(len(report['charts']),5)
+        self.assertEqual(len([c for c in report['charts'] if c['role']=='requested']),5)
 
     def assert_shared_share_denominator(self,report,requirements,metric):
         bindings=[b for b in report['derived_feature_bindings']

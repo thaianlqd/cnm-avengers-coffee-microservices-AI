@@ -838,6 +838,7 @@ class OfflineTests(unittest.TestCase):
         }
         overlay = deepcopy(self.catalog.overlay)
         r = overlay["analysis_registry"]
+        overlay["silver_tables"]["silver.operational_facts"] = {"primary_key": [], "joins": []}
         r["subjects"]["energy"] = {
             "business_name": "Năng lượng",
             "aliases": ["energy"],

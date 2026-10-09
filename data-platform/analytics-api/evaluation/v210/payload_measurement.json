@@ -1,0 +1,24 @@
+{
+  "measurement_scope": "OFFLINE_SCRIPTED_WARMED_METADATA",
+  "fixture": "product_quantity_ranking_30d",
+  "before_body_chars": {
+    "native": 17463,
+    "compat": 17602
+  },
+  "after": {
+    "provider_body_chars": {
+      "native": 10572,
+      "compat": 10711
+    },
+    "candidate_packet_chars": 3175,
+    "schema_chars": 3899,
+    "local_metadata_ms": 41.84,
+    "metadata_retrieval_ms": 19.75,
+    "local_grounding_ms": 34.39,
+    "resolver_ms": 2.02,
+    "total_ms": 133.36
+  },
+  "LIVE_PROVIDER_REQUESTS": 0,
+  "WAREHOUSE_WRITES": 0,
+  "limitations": "Characters from provider body serializer, not token counts or UTF-8 byte counts; single warmed synthetic sample, not a production latency percentile."
+}

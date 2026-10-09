@@ -129,11 +129,15 @@ def labelled_interpretation(catalog, data=None, hint=None):
         values = value if isinstance(value, list) else [value]
         if hint and any((dimension, str(v)) not in safe_values for v in values):
             return None
-        return {
+        result = {
             "dimension": registry["dimensions"][dimension]["business_name"],
             "operator": f.get("operator", "eq"),
             "value": value,
         }
+        value_labels=registry['dimensions'][dimension].get('value_labels',{})
+        if value_labels:
+            result['display_value']=[value_labels.get(v,v) for v in values] if isinstance(value,list) else value_labels.get(value,value)
+        return result
 
     ranking = deepcopy(data.get("ranking"))
     if ranking:

@@ -19,6 +19,8 @@ def semantic_failure_summary(diagnostics):
         if t.get('kind')=='rolling' and type(t.get('amount')) is int and t.get('unit') in {'day','month'}:
             known.append(f"{t['amount']} {'ngày' if t['unit']=='day' else 'tháng'} gần nhất")
     descriptions = {
+        'population_filter_mismatch':'Kế hoạch chưa giữ đúng nhóm đối tượng được yêu cầu; bộ lọc phải áp dụng cho mọi phần phân tích.',
+        'invalid_time_shape':'Phần thời gian trong phản hồi AI bị thiếu trường, mâu thuẫn hoặc không hợp lệ.',
         'explicit_metrics_missing':'Chưa đưa đủ chỉ số được yêu cầu vào kế hoạch.',
         'explicit_features_missing':'Chưa đưa đủ phép tính được yêu cầu vào kế hoạch.',
         'granularity_required':'Phần xu hướng chưa xác định được nhịp ngày, tuần hoặc tháng.',

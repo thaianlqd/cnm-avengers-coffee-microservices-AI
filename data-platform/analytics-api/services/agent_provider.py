@@ -24,6 +24,12 @@ def http_failure(response):
         429: "provider_rate_limited",
     }.get(status, "provider_http")
     failure = {"http_status": status, "error_category": category}
+    if status in {500,502,503,504}:
+        failure['retryable'] = True
+    if status == 429:
+        retry = getattr(response,'headers',{}).get('Retry-After')
+        if isinstance(retry,str) and re.fullmatch(r'\d+(?:\.\d+)?',retry) and 0 < float(retry) <= 2:
+            failure.update(retry_after_seconds=float(retry),retryable=True)
     # Inspect prose only locally for fixed classifications. Never publish the
     # message, metadata, URL, credentials or arbitrary provider-controlled text.
     try:
@@ -644,6 +650,8 @@ class NativeAgentProvider:
                     self.gemini_model = model
                 attempt["latency_ms"] = round((time.perf_counter() - started) * 1000, 2)
                 attempts.append(attempt)
+                from services.provider_health_service import observe_attempt
+                observe_attempt(attempt)
                 return {"calls": calls, "attempts": attempts}
             except requests.exceptions.Timeout:
                 attempt["error_category"] = "provider_timeout"
@@ -659,6 +667,8 @@ class NativeAgentProvider:
                 attempt.setdefault("error_category", "provider_unavailable")
             attempt["latency_ms"] = round((time.perf_counter() - started) * 1000, 2)
             attempts.append(attempt)
+            from services.provider_health_service import observe_attempt
+            observe_attempt(attempt)
             logger.warning(
                 "Native provider failed provider=%s model=%s http_status=%s category=%s reason=%s provider_status=%s schema_keywords=%s latency_ms=%s quota_scopes=%s retry_after_seconds=%s",
                 provider,

@@ -45,7 +45,7 @@ class ComparisonScoreTests(unittest.TestCase):
             self.assertEqual(intent['dimension_ids'],['city'])
             self.assertEqual(set(intent['filters'][0]['value']),{'Hồ Chí Minh','Hà Nội'})
             self.assertEqual(intent['time']['amount'],90)
-            queries=proposal['proposal']['analytical_queries']
+            queries=[q for q in proposal['proposal']['analytical_queries'] if q['role']=='requested']
             self.assertEqual(len(queries),2) # valid-order revenue/AOV vs all-order count
             self.assertEqual({q['operation'] for q in queries},{'aggregate'})
             self.assertTrue(all(q['group_by']==['city'] for q in queries))
@@ -64,9 +64,9 @@ class ComparisonScoreTests(unittest.TestCase):
         p,request,report=self.report(meaning(),QUESTION)
         self.assertEqual(p.provider.call_count,1)
         self.assertEqual(report['outcome'],'SUCCESS')
-        self.assertEqual(len(report['charts']),3)
+        self.assertGreaterEqual(len([c for c in report['charts'] if c['role']=='requested']),3)
         observed={}
-        for result in report['result_sets'].values():
+        for result in (report['result_sets'][q['id']] for q in report['analytical_queries'] if q['role']=='requested'):
             for row in result['rows']:observed.setdefault(row['city'],{}).update({k:v for k,v in row.items() if k!='city'})
         self.assertEqual(observed['Hồ Chí Minh'],dict(revenue=300,aov=150,order_count=2))
         self.assertEqual(observed['Hà Nội'],dict(revenue=400,aov=400,order_count=2))
@@ -87,14 +87,15 @@ class ComparisonScoreTests(unittest.TestCase):
 
     def test_requested_shares_have_third_view_using_full_denominator_not_topn_sum(self):
         p,request,report=self.report()
-        self.assertEqual(len(report['charts']),3)
+        self.assertEqual(len([c for c in report['charts'] if c['role']=='requested']),3)
         chart=next(c for c in report['charts'] if c.get('value_transform')=='contribution_share')
         self.assertEqual(chart['unit'],'%')
         self.assertEqual(chart['denominator_selection'],'complete')
         self.assertTrue(all(r['denominator']==600 for r in chart['data']))
         self.assertEqual(sorted(r['numerator'] for r in chart['data']),[200,400])
         self.assertAlmostEqual(sum(r['value'] for r in chart['data']),100) # only two in-scope fixture products
-        self.assertEqual(p.executor.call_count,2) # ranking + already-required denominator only
+        self.assertEqual(sum(q['role']=='requested' for q in report['analytical_queries']),2) # ranking + exact denominator
+        self.assertEqual(p.executor.call_count,len(report['analytical_queries']))
         self.assertEqual(report['quality_assessment']['score'],90)
         self.assertEqual(report['quality_assessment'],verify_saved_report(report,self.catalog))
 
@@ -121,7 +122,8 @@ class ComparisonScoreTests(unittest.TestCase):
         self.assertEqual(chart['data'][0]['numerator'],400)
         self.assertAlmostEqual(chart['data'][0]['value'],100*400/600)
         self.assertEqual(report['quality_assessment']['score'],90)
-        self.assertEqual(p.executor.call_count,2)
+        self.assertEqual(sum(q['role']=='requested' for q in report['analytical_queries']),2)
+        self.assertEqual(p.executor.call_count,len(report['analytical_queries']))
 
     def test_missing_or_tampered_stored_score_never_changes_recomputed_index(self):
         _,_,report=self.report()

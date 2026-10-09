@@ -5,7 +5,7 @@ import calendar
 import re
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
-from services.analysis_contract import TimeSpec, TimeScope
+from services.analysis_contract import TimeSpec, TimeScope, TIME_SHAPES
 from services.analysis_catalog import normalize, resolve_period
 
 
@@ -18,6 +18,10 @@ def shift_months(value, offset):
 def resolve_time(spec, reference_date, timezone):
     """Most recent occurrence whose start is not future; explicit years are exact."""
     spec = TimeSpec.model_validate(spec)
+    required, optional = TIME_SHAPES[spec.kind]
+    supplied = spec.model_dump(exclude_none=True)
+    if any(supplied.get(field) is None for field in required):
+        raise ValueError('incomplete time shape')
     assumptions = []
     if spec.kind == "relative":
         scope = TimeScope(mode=spec.mode, timezone=timezone)

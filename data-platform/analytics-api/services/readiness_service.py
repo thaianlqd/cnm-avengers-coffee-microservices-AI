@@ -4,7 +4,7 @@ import os
 import time
 from contextlib import contextmanager
 
-VERSION = '2.9.6'
+VERSION = '2.10.0'
 _catalog_cache = (0, False)
 
 
@@ -31,8 +31,10 @@ def catalog_probe(physical_required):
     global _catalog_cache
     from services.analysis_catalog import AnalysisCatalog, CATALOG_PATH
     from services.domain_intelligence_service import validate_profiles
-    registry = json.loads(CATALOG_PATH.read_text())['analysis_registry']
-    validate_profiles(registry)
+    overlay = json.loads(CATALOG_PATH.read_text())
+    registry=overlay['analysis_registry']
+    from services.semantic_catalog_validation import validate_catalog
+    validate_catalog(overlay)
     if not physical_required:
         return bool(registry['metrics'] and registry['dimensions'])
     if _catalog_cache[0] > time.monotonic():
@@ -83,6 +85,8 @@ def readiness():
         session_backend=session,artifact_backend=artifact,backend_configuration_valid=config,
         redis_required='redis' in {session,artifact}, redis_available=None,
         catalog_ready=False,warehouse_required=warehouse_required,warehouse_available=None)
+    from services.provider_health_service import provider_health
+    result['provider_status']=provider_health()
     if result['redis_required']:
         try:
             result['redis_available'] = redis_probe()

@@ -1,4 +1,9 @@
 const titles = {
+  provider_timeout: 'Dịch vụ AI chưa phản hồi kịp',
+  provider_connection: 'Chưa kết nối được dịch vụ AI',
+  provider_rate_limited: 'Dịch vụ AI đang giới hạn lượt gọi',
+  provider_auth: 'Dịch vụ AI chưa xác thực được',
+  planning_timeout: 'Hệ thống chưa hoàn tất kế hoạch trong thời gian cho phép',
   invalid_analysis_contract: 'Hệ thống chưa hoàn tất diễn giải phân tích',
   semantic_intent_invalid: 'Hệ thống chưa hoàn tất diễn giải phân tích',
   duplicate_invalid_tool_call: 'AI chưa sửa được kế hoạch phân tích',
@@ -54,8 +59,5 @@ export function analysisChartGroups(charts = []) {
 }
 
 export function analysisChartSpan(chart, index, count) {
-  const wide = chart.layout === 'wide' || chart.col_span === 12 ||
-    ['line', 'area', 'multi_line', 'heatmap', 'scatter'].includes(chart.chart_type) ||
-    count === 1 || (chart.role !== 'supporting' && index === 0);
-  return wide ? 'col-span-1 lg:col-span-2' : 'col-span-1';
+  return 'col-span-1';
 }

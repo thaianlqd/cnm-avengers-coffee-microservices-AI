@@ -86,8 +86,8 @@ class AnalysisCatalog:
             else json.loads(CATALOG_PATH.read_text())
         )
         self.registry = self.overlay["analysis_registry"]
-        from services.domain_intelligence_service import validate_profiles
-        validate_profiles(self.registry)
+        from services.semantic_catalog_validation import validate_catalog
+        validate_catalog(self.overlay)
         self.tables = {
             n: t
             for n, t in physical.get("table_map", {}).items()
@@ -124,6 +124,7 @@ class AnalysisCatalog:
             ).encode()
         ).hexdigest()
         self.edges = self._relationships()
+        self.snapshot_version=physical.get('snapshot_version') or physical.get('refreshed_at')
         self.policy = {
             "tables": {
                 n: [

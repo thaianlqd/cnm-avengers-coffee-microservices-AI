@@ -2,6 +2,8 @@
 
 import json
 import time
+import logging
+from uuid import uuid4
 from copy import deepcopy
 from datetime import date, datetime, timedelta
 from services.analysis_catalog import AnalysisCatalog, AnalysisError
@@ -36,7 +38,7 @@ class AnalysisPipeline:
         self.module_repository = module_repository
         self.planning_mode = planning_mode
         self.metadata_loader = metadata_loader or (
-            lambda: get_local_metadata(force=True)
+            lambda: get_local_metadata()
         )
         self.provider = provider or NativeAgentProvider(legacy_policy=planning_mode == "legacy")
         self.executor = executor or execute_read_only
@@ -45,6 +47,8 @@ class AnalysisPipeline:
         self.semantic_info = {}
         self.embedding_calls = 0
         self.started = time.perf_counter()
+        self.semantic_info.update(request_id=uuid4().hex,provider_primary_ms=0,provider_repair_ms=0,
+            local_grounding_ms=0,metadata_retrieval_ms=0,resolver_ms=0,proposal_persistence_ms=0)
 
     @property
     def calls(self):
@@ -318,6 +322,11 @@ class AnalysisPipeline:
             session.feature_bindings = deepcopy(self.semantic_info.get("derived_feature_bindings", []))
             session.resolver_version = self.semantic_info["resolver_version"]
             session.contract_version = "2.8"
+            if self.semantic_info.get('server_supporting_expansion'):
+                session.ui_constraints.update(
+                    server_supporting_expansion=self.semantic_info['server_supporting_expansion'],
+                    minimum_visuals=self.semantic_info.get('minimum_visuals',session.ui_constraints.get('minimum_visuals',0)),
+                    omitted_supporting_ids=self.semantic_info.get('omitted_supporting_ids', []))
         session.analysis_depth = self.semantic_info.get("analysis_depth", session.analysis_depth)
         main = next(iter(artifacts.values()))
         session.analysis_spec = main.grounded.analysis_spec.model_dump(mode="json")
@@ -359,11 +368,24 @@ class AnalysisPipeline:
         ).model_dump(mode="json")
 
     def propose(self, request):
-        from services.provider_budget import check_request_deadline
+        from services.provider_budget import request_deadline, PLANNING_SECONDS
+        token=None
+        if request_deadline.get() is None:
+            token=request_deadline.set(time.monotonic()+PLANNING_SECONDS)
+        try:
+            return self._propose(request)
+        finally:
+            if token is not None:
+                request_deadline.reset(token)
+
+    def _propose(self, request):
+        from services.provider_budget import check_request_deadline, request_deadline
         check_request_deadline()
         catalog = self.catalog()
         reference = self.reference(request, catalog)
         context = self.ui_context(request, catalog, reference)
+        self.semantic_info.update(local_metadata_ms=round((time.perf_counter()-self.started)*1000,2),
+            catalog_fingerprint_prefix=catalog.fingerprint[:12])
         previous, concepts, module = {}, [], None
         if request.analysis_module_id or request.analysis_module_name:
             from services.analysis_module_service import AnalysisModules
@@ -372,7 +394,11 @@ class AnalysisPipeline:
             previous, concepts = modules.prepare_context(self, module, catalog, reference, context)
         artifacts, plan = self.agent(catalog, reference, proposal=True, previous=previous, known_concepts=concepts).run(request.prompt, context)
         check_request_deadline()
+        context.update(server_supporting_expansion=self.semantic_info.get('server_supporting_expansion'),
+            minimum_visuals=self.semantic_info.get('minimum_visuals',0),
+            omitted_supporting_ids=self.semantic_info.get('omitted_supporting_ids',[]))
         self.enforce_ui(artifacts, context)
+        persistence_started=time.perf_counter()
         session = create_session(request.prompt, request.domain or "auto", owner_id=self.owner_id)
         session.owner_id = self.owner_id
         session.natural_input = request.natural_input
@@ -444,7 +470,19 @@ class AnalysisPipeline:
         }
         session.diagnostics = deepcopy(response["diagnostics"])
         from services.session_service import save_session
+        check_request_deadline()
         save_session(session)
+        check_request_deadline()
+        self.semantic_info.update(proposal_persistence_ms=round((time.perf_counter()-persistence_started)*1000,2),
+            session_ms=round((time.perf_counter()-persistence_started)*1000,2),
+            total_ms=round((time.perf_counter()-self.started)*1000,2),
+            remaining_budget_ms=round(max(0,(request_deadline.get() or time.monotonic())-time.monotonic())*1000,2))
+        response['diagnostics']=self.diagnostics(catalog,{'proposal':'passed'})
+        logging.getLogger('ai-analytics').info('[ProposalDiagnostics] %s',json.dumps({k:self.semantic_info.get(k) for k in (
+            'request_id','catalog_fingerprint_prefix','candidate_packet_chars','provider_body_chars','schema_chars',
+            'provider_attempt_count','provider_attempt_latencies','provider_attempt_categories','semantic_repair_count',
+            'transport_retry_count','remaining_budget_ms','local_metadata_ms','local_grounding_ms','metadata_retrieval_ms',
+            'provider_primary_ms','provider_repair_ms','provider_ms','resolver_ms','proposal_persistence_ms','session_ms','total_ms')}))
         return response
 
     def generate(self, request):
@@ -584,7 +622,8 @@ class AnalysisPipeline:
         artifacts = agent.queries.artifacts
         plan = DashboardPlan.model_validate(session.dashboard_plan)
         evidence = analytical_features(artifacts, catalog, self.semantic_info.get("derived_feature_bindings"))
-        current = build_dashboard(artifacts, evidence, plan, self.budget.charts, self.budget.categories, self.budget.series)
+        current = build_dashboard(artifacts, evidence, plan, self.budget.charts, self.budget.categories, self.budget.series,
+                                  minimum_visuals=self.semantic_info.get('minimum_visuals',0))
         # Include validated defaults supplied by the dashboard when a prior
         # optional visual was ineligible. These are genuine server chart choices.
         visuals = [DashboardVisual.model_validate(v) for v in current["dashboard_plan"]["visuals"]]
@@ -618,6 +657,7 @@ class AnalysisPipeline:
             self.budget.categories,
             self.budget.series,
             catalog=catalog,
+            minimum_visuals=self.semantic_info.get('minimum_visuals',0),
         )
         if session.natural_input:
             for a in artifacts.values():
@@ -870,7 +910,9 @@ class AnalysisPipeline:
                 resolved_plan_fingerprint=session.plan_fingerprint,resolved_operations=deepcopy(session.resolved_operations),
                 resolved_requirement_coverage=deepcopy(session.requirement_coverage),derived_feature_bindings=deepcopy(session.feature_bindings),resolver_version=session.resolver_version,
                 request_anchors=deepcopy(session.diagnostics.get("request_anchors", {})),request_anchor_verification="passed",
-                initial_semantic_intent=deepcopy(session.initial_semantic_intent),semantic_history=deepcopy(session.semantic_history))
+                initial_semantic_intent=deepcopy(session.initial_semantic_intent),semantic_history=deepcopy(session.semantic_history),
+                server_supporting_expansion=session.ui_constraints.get('server_supporting_expansion'),
+                minimum_visuals=session.ui_constraints.get('minimum_visuals',0))
 
     def check_owner(self, session):
         if session.owner_id != self.owner_id:

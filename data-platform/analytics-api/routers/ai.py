@@ -3,6 +3,7 @@
 import logging
 import asyncio
 import time
+from threading import Event
 from fastapi import APIRouter, Body, HTTPException, Query, Request, Response
 from services.browser_owner import browser_owner
 from common import (
@@ -68,12 +69,18 @@ def _invoke(action, payload, owner_id=None):
             raise AnalysisError("approval_required", "Approve a server proposal before execution")
         return getattr(pipeline, action)(payload)
     except Exception as error:
+        pipeline.semantic_info['total_ms']=round((time.perf_counter()-pipeline.started)*1000,2)
         failure = safe_failure(error, pipeline.calls, pipeline.semantic_info)
         logger.warning(
-            "Analysis rejected action=%s category=%s contract_issues=%s",
+            "Analysis rejected action=%s category=%s stage=%s provider_calls=%s root_contract_issues=%s contract_issues=%s issue_history=%s resolver_diagnostic=%s",
             action,
             failure["diagnostics"]["error_category"],
+            pipeline.semantic_info.get('failure_stage'),
+            pipeline.semantic_info.get('provider_call_count',len(pipeline.calls)),
+            pipeline.semantic_info.get('root_contract_issues',[]),
             pipeline.semantic_info.get("contract_issues", []),
+            pipeline.semantic_info.get('semantic_issue_history',[]),
+            pipeline.semantic_info.get('resolver_diagnostic',{}),
         )
         failure["diagnostics"].update(
             {
@@ -93,9 +100,15 @@ def ai_status():
     from services.provider_budget import validate_single_shot_policy
     providers = provider_configuration()
     metadata = cache_status()
+    from services.provider_health_service import provider_health
+    from services.readiness_service import readiness
+    local = readiness()
     return {
-        "status": "ready" if metadata["local_ready"] else "unavailable",
+        "status": local['status'],
+        "system_readiness": local,
+        "provider_status": provider_health(),
         "pipeline_version": "2.8",
+        "reliability_version": '2.10.0',
         "planning_mode": "hybrid_verifiable",
         "provider_call_budget": validate_single_shot_policy(),
         "providers": providers,
@@ -135,9 +148,11 @@ def ai_scope_values(dimension: str = Query(min_length=1, max_length=64), search:
 
 @router.post("/propose-plan")
 async def bounded_propose_plan(payload: AiTextToReportRequest, request: Request = None, response: Response = None):
-    from services.provider_budget import request_deadline
+    from services.provider_budget import request_deadline, request_cancelled, PLANNING_SECONDS
     owner=browser_owner(request,response)
-    token=request_deadline.set(time.monotonic()+27)
+    token=request_deadline.set(time.monotonic()+PLANNING_SECONDS)
+    cancelled=Event()
+    cancellation_token=request_cancelled.set(cancelled)
     try:
         # The HTTP deadline also covers catalog I/O and preflight. A timed-out
         # worker cannot start provider work or create a proposal after expiry;
@@ -146,8 +161,10 @@ async def bounded_propose_plan(payload: AiTextToReportRequest, request: Request 
     except asyncio.TimeoutError:
         logger.warning('Analysis planning HTTP deadline exhausted')
         return safe_failure(AnalysisError('planning_timeout','Planning response deadline exhausted'),
-                            layer_diagnostics={'failure_stage':'PLANNING_DEADLINE','planning_budget_ms':27000})
+                            layer_diagnostics={'failure_stage':'PLANNING_DEADLINE','planning_budget_ms':PLANNING_SECONDS*1000})
     finally:
+        cancelled.set()
+        request_cancelled.reset(cancellation_token)
         request_deadline.reset(token)
 
 

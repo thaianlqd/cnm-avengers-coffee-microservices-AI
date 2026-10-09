@@ -19,7 +19,38 @@ function compile(relative) {
   } finally { rmSync(directory, { recursive: true, force: true }); }
 }
 const { AnalystChart, SeriesLineChart, HeatmapChart } = compile('../components/Charts.tsx');
-const { AnalystDashboardSummary, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence, AnalystViews, AnalystResultTable, AnalystPlanningSummary } = compile('../components/AnalystDashboardSummary.tsx');
+const { AnalystDashboard, AnalystDashboardSummary, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence, AnalystViews, AnalystResultTable, AnalystPlanningSummary } = compile('../components/AnalystDashboardSummary.tsx');
+
+test('ranked metric companions render two plot cards with full category names', () => {
+  const observed = JSON.parse(readFileSync(new URL('../../../analytics-api/tests/fixtures/ranking_dashboard_observed.json', import.meta.url), 'utf8'));
+  const charts = ['quantity_sold', 'product_revenue'].map((metric, index) => ({
+    id: `metric_${index}`, chart_type: 'horizontal_bar', metrics: [metric], metric, role: 'requested',
+    selection: 'Top N', ranking_metric: 'quantity_sold', ranking_metric_label: 'Số lượng bán', ranking_limit: 5,
+    title: `Top 5 — ${index ? 'Doanh thu sản phẩm trong tập xếp hạng theo Số lượng bán' : 'Số lượng bán'}`,
+    unit: index ? 'VND' : 'sản phẩm', x_field: 'product', x_label: 'Sản phẩm',
+    data: observed.artifacts[0].result.rows.map(row => ({ label: row.product, value: row[metric] })),
+  }));
+  const html = renderToStaticMarkup(React.createElement(AnalystDashboard, { report: { charts } }));
+  assert.equal((html.match(/data-dashboard-chart=/g) || []).length, 2);
+  for (const name of ['Americano Phúc Bồn Tử', '1 Lít Matcha Latte Tây Bắc', 'Bánh Trung Thu Matcha']) {
+    assert.ok(html.includes(name));
+  }
+  assert.ok(html.includes('lg:grid-cols-2'));
+  assert.ok(html.includes('giữ nguyên thứ tự theo số lượng bán'));
+});
+
+test('per-group bars show stored ranks and empty chart sections explain missing presentation', () => {
+  const html = renderToStaticMarkup(React.createElement(AnalystChart, { chart: {
+    chart_type: 'horizontal_bar', selection: 'Top N', data: [
+      { label: 'Nhóm A · Món 1', value: 100, rank_position: 1 },
+      { label: 'Nhóm B · Món 2', value: 200, rank_position: 1 },
+    ],
+  } }));
+  assert.equal((html.match(/mr-2">1\./g) || []).length, 2);
+  const empty = renderToStaticMarkup(React.createElement(AnalystDashboard, { report: { charts: [] } }));
+  assert.ok(empty.includes('Chưa có biểu đồ phù hợp được kiểm chứng'));
+  assert.ok(empty.includes('bảng dữ liệu đối chiếu'));
+});
 
 test('large population chart discloses display subset and complete analytical coverage', () => {
   const html = renderToStaticMarkup(React.createElement(AnalystViews, { charts: [{
@@ -105,7 +136,7 @@ test('natural fields replace depth configuration and approval reuses submitted i
 
 test('deep planning and related population evidence explain their actual scope', () => {
   const summary = render(AnalystPlanningSummary, { diagnostics: { planning_mode: 'one_shot', analysis_depth: 'deep', requested_operation_count: 1, supporting_operation_count: 5 } });
-  assert.ok(summary.includes('5–6')); assert.ok(summary.includes('5 phần hỗ trợ'));
+  assert.ok(summary.includes('4–6')); assert.ok(summary.includes('5 phần hỗ trợ'));
   const html = render(AnalystEvidence, { report: { analysis_explanation: [{query_id:'internal', subject:'Khuyến mãi', objective:'Cơ cấu', role:'supporting', population_note:'Giữ nguyên bộ lọc; tập đơn có khuyến mãi được đo riêng.', metrics:[{label:'Chi tiêu', unit:'VND', historical:false, population_requirements:['Khuyến mãi có giá trị']}]}] } });
   assert.ok(html.includes('tập đơn có khuyến mãi được đo riêng'));
   assert.ok(html.includes('không thể suy ra diễn biến quá khứ'));
@@ -123,7 +154,7 @@ test('seven views render requested first, with responsive widths and distinct un
   assert.equal((html.match(/<article/g) || []).length, 7);
   assert.ok(html.indexOf('Phân tích theo yêu cầu') < html.indexOf('Phân tích hỗ trợ'));
   assert.ok(html.includes('grid-cols-1 lg:grid-cols-2'));
-  assert.ok(html.includes('lg:col-span-2'));
+  assert.ok(!html.includes('lg:col-span-2'));
   for (const label of ['VND', 'sản phẩm', 'Tập Top N']) assert.ok(html.includes(label));
   assert.ok(!html.includes('private_query_'));
 });
@@ -142,7 +173,7 @@ for (const [category, title] of [
   ['invalid_analysis_contract', 'Hệ thống chưa hoàn tất diễn giải phân tích'],
   ['duplicate_invalid_tool_call', 'AI chưa sửa được kế hoạch phân tích'],
   ['agent_budget', 'Chưa hoàn tất kế hoạch'],
-  ['provider_auth', 'Dịch vụ AI chưa khả dụng'],
+  ['provider_auth', 'Dịch vụ AI chưa xác thực được'],
   ['execution', 'Truy vấn phân tích gặp lỗi'],
   ['result_contract', 'Kết quả chưa vượt qua kiểm chứng'],
 ]) test(`failure UI attributes ${category} to its actual layer`, () => {
@@ -221,7 +252,7 @@ test('large evidence collections are collapsed and bounded to one page', () => {
 
 test('dashboard opens with up to six primary views and keeps all result tables in disclosure', () => {
   const { AnalystDashboard } = compile('../components/AnalystDashboardSummary.tsx');
-  const html = render(AnalystDashboard, { report: { charts: Array.from({ length: 9 }, (_, i) => ({ id: `c${i}`, title: `Chart ${i}`, chart_type: 'bar', data: [{ label: 'A', value: i }] })), result_sets: { all: { columns: ['value'], rows: [{ value: 1 }] } } } });
+  const html = render(AnalystDashboard, { report: { charts: Array.from({ length: 9 }, (_, i) => ({ id: `c${i}`, role: i < 3 ? 'requested' : 'supporting', title: `Chart ${i}`, chart_type: 'bar', data: [{ label: 'A', value: i }] })), result_sets: { all: { columns: ['value'], rows: [{ value: 1 }] } } } });
   assert.equal((html.match(/<article/g) || []).length, 6);
   assert.ok(html.includes('Xem thêm 3 góc nhìn chi tiết')); assert.ok(html.includes('Bảng dữ liệu')); assert.ok(html.includes('Diễn giải đầy đủ'));
   assert.ok(!html.includes('open=""'));
@@ -240,16 +271,16 @@ test('compact dashboard uses one responsive grid across different story sections
   assert.equal((html.match(/data-dashboard-grid/g) || []).length, 1);
   assert.equal((html.match(/<article/g) || []).length, 4);
   assert.ok(!html.includes('lg:col-span-2'));
-  assert.ok(html.includes('lg:grid-cols-6'));
+  assert.ok(html.includes('lg:grid-cols-2'));
 });
 
-test('overview displays a wide trend beside composition and a visible result table', () => {
+test('overview displays equal trend and composition cards and a visible result table', () => {
   const { AnalystDashboard } = compile('../components/AnalystDashboardSummary.tsx');
   const html = render(AnalystDashboard,{report:{charts:[
     {id:'mix',chart_type:'donut',title:'Cơ cấu',data:[{label:'A',value:40},{label:'B',value:60}]},
     {id:'trend',chart_type:'line',title:'Diễn biến',data:[{label:'2026-09-01',value:100}]},
   ],result_sets:{q:{columns:['order_type','revenue'],column_labels:{order_type:'Hình thức nhận hàng',revenue:'Doanh thu'},rows:[{order_type:'DUNG_TAI_CHO',revenue:249482000}]}}}});
-  assert.ok(html.includes('lg:col-span-4'));assert.ok(html.includes('lg:col-span-2'));
+  assert.ok(!html.includes('lg:col-span-4'));assert.ok(!html.includes('lg:col-span-2'));
   assert.ok(html.includes('role="tabpanel"'));assert.ok(html.includes('Dùng tại chỗ'));
   assert.ok(html.includes('249.482.000'));assert.ok(html.includes('Bảng dữ liệu đối chiếu'));
 });
@@ -273,4 +304,67 @@ test('clipped weekly buckets are marked and disclose the actual selected dates',
   assert.ok(html.includes('2026-07-01 → 2026-07-05'));
   assert.ok(html.includes('2026-09-28 → 2026-09-30'));
   assert.equal((html.match(/fill="white"/g) || []).length, 2);
+});
+
+for (const count of [1, 3, 4, 5, 6]) {
+  test(`${count} primary chart cards share two equal desktop columns and one mobile column`, () => {
+    const charts=Array.from({length:count}, (_,i)=>({id:'balanced'+i,chart_type:['line','donut','bar','heatmap'][i%4],title:'View '+i,data:[]}));
+    const html=render(AnalystViews,{charts,compact:true});
+    assert.equal((html.match(/<article/g)||[]).length,count);
+    assert.match(html,/grid-cols-1 lg:grid-cols-2/);
+    assert.doesNotMatch(html,/lg:col-span-|lg:grid-cols-6/);
+    assert.equal((html.match(/class="col-span-1 /g)||[]).length,count);
+  });
+}
+
+test('provider status is shown separately from local readiness and generic failure', () => {
+  const source=readFileSync(new URL('../views/AnalyticsView.tsx',import.meta.url),'utf8');
+  for (const label of ['Kho dữ liệu:', 'Semantic catalog:', 'AI provider:', 'Chưa kiểm tra', 'Không ổn định']) assert.ok(source.includes(label));
+  const error=render(AnalysisClarification,{response:{status:'error',diagnostics:{error_category:'provider_timeout'},message:'Provider chậm'}});
+  const clarification=render(AnalysisClarification,{response:{status:'needs_clarification',message:'Chọn chỉ số'}});
+  assert.match(error,/border-rose-200/);assert.match(clarification,/border-amber-200/);
+  assert.match(error,/Dịch vụ AI chưa phản hồi kịp/);
+});
+
+test('broad kiosk dashboard opens four views with view tabs and honest missing-view notice', () => {
+  const charts = [
+    { id:'rank', purpose:'ranking', chart_type:'horizontal_bar', title:'Xếp hạng kiosk' },
+    { id:'trend', purpose:'trend', x_field:'period', chart_type:'line', title:'Diễn biến kiosk' },
+    { id:'composition', purpose:'distribution', chart_type:'donut', title:'Cơ cấu loại đơn kiosk' },
+    { id:'city', purpose:'comparison', chart_type:'bar', title:'Doanh thu kiosk theo thành phố' },
+  ].map(c => ({ ...c, data:[{ label:'A',value:10 },{ label:'B',value:20 }] }));
+  const quality = { verification_checks:[{id:'analysis_depth_coverage',total:4}] };
+  const html = render(AnalystDashboard,{report:{charts,quality_assessment:quality}});
+  assert.equal((html.match(/data-dashboard-chart=/g) || []).length,4);
+  assert.ok(html.includes('aria-label="Góc nhìn biểu đồ"'));
+  for (const label of ['Tất cả','Xếp hạng','Diễn biến','Cơ cấu','So sánh']) assert.ok(html.includes(label));
+  assert.ok(html.includes('aria-selected="true"'));
+  assert.ok(!html.includes('Mới có'));
+  const partial = render(AnalystDashboard,{report:{charts:charts.slice(0,1),quality_assessment:quality}});
+  assert.ok(partial.includes('1/4'));assert.ok(partial.includes('chưa đầy đủ'));
+});
+
+test('expanded report shows whole-population KPIs before ranking findings', () => {
+  const report = {
+    evidence: ['store_revenue','store_order_count','store_aov'].map((metric,i) => ({
+      id:'e'+i,scope_ref:'full',feature:'scalar',metric,unit:i===1?'đơn':'VND',values:{value:100+i} })),
+    analysis_explanation:[{query_id:'full',dimensions:[],metrics:[
+      {id:'store_revenue',label:'Doanh thu kiosk'},{id:'store_order_count',label:'Số đơn kiosk'},{id:'store_aov',label:'Giá trị đơn trung bình kiosk'}]}],
+    charts:[]
+  };
+  const html=render(AnalystDashboard,{report});
+  for (const label of ['Doanh thu kiosk','Số đơn kiosk','Giá trị đơn trung bình kiosk']) assert.ok(html.includes(label));
+  assert.ok(!html.includes('hạng 1'));
+});
+
+test('simple legacy reports cannot hide the four-view floor with missing or zero flags', () => {
+  const charts=['Số giao dịch','Doanh thu thanh toán'].map((title,i)=>({
+    id:'payment'+i,chart_type:'bar',title,metric:'m'+i,x_field:'payment_gateway',
+    data:[{label:'VNPAY',value:10},{label:'Ví điện tử',value:20}]
+  }));
+  for (const diagnostics of [undefined,{minimum_visuals:0}]) {
+    const html=render(AnalystDashboard,{report:{charts,diagnostics}});
+    assert.ok(html.includes('2/4'));
+    assert.ok(html.includes('Báo cáo phân tích chưa đầy đủ biểu đồ'));
+  }
 });

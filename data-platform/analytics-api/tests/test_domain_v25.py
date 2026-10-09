@@ -261,6 +261,7 @@ class DomainV25Tests(unittest.TestCase):
     def test_new_domain_and_metric_need_no_router_or_frontend_changes(self):
         physical = physical_metadata(); overlay = deepcopy(self.catalog.overlay); registry = overlay["analysis_registry"]
         physical["table_map"]["silver.energy_facts"] = {"columns": [{"name": "site", "data_type": "text"}, {"name": "kwh", "data_type": "numeric"}], "relationships": []}
+        overlay["silver_tables"]["silver.energy_facts"] = {"primary_key": [], "joins": []}
         registry["subjects"]["energy"] = {"business_name": "Năng lượng", "source": "silver.energy_facts", "grain": "site_snapshot", "metrics": ["electricity_used"], "default_dimension": "site", "detail_columns": ["site"]}
         registry["metrics"]["electricity_used"] = {"business_name": "Điện tiêu thụ", "expression": "SUM(silver.energy_facts.kwh)", "source": "silver.energy_facts", "grain": "site_snapshot", "unit": "kWh", "subjects": ["energy"], "time_column": None, "additive": True, "quality_direction": "lower_better", "aggregation_semantics": "sum", "business_meaning": "Điện hiện tại theo site; chưa có lịch sử."}
         registry["dimensions"]["site"] = {"business_name": "Site", "table": "silver.energy_facts", "column": "site", "scope_selectable": True}
