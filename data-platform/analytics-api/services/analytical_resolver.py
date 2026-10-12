@@ -292,7 +292,7 @@ class AnalyticalResolver:
                     req.granularity = cadence
                     break
             if not req.granularity:
-                raise AnalysisError('capacity_requires_choice','Implicit trend population requires smaller scope')
+                req.granularity = 'year'
         period = resolve_time(req.time.model_dump(mode="json", exclude_none=True) if req.time else {"kind":"relative","mode":"all_time"},self.reference,self.catalog.registry["timezone"])[2]
         if (period["start"] or req.analysis_kind == "trend") and any(not self.index.metrics[m]["historical"] for m in req.metric_ids):
             return req, [], "INSUFFICIENT_DATA", "historical_data_unavailable", []
@@ -363,6 +363,21 @@ class AnalyticalResolver:
                         options.append((tuple(sorted(subset)),)+tail)
             return min(options,key=lambda p:(len(p),p)) if options else None
         parts = partition(metrics)
+        if parts is None:
+            for size in range(len(metrics) - 1, 0, -1):
+                best_sub_parts = None
+                for subset in combinations(metrics, size):
+                    sub_parts = partition(subset)
+                    if sub_parts is not None:
+                        best_sub_parts = sub_parts
+                        resolved_metrics = set(subset)
+                        break
+                if best_sub_parts is not None:
+                    parts = best_sub_parts
+                    req.metric_ids = sorted(resolved_metrics)
+                    for feature in req.derived_features:
+                        targets[feature] = targets[feature] & resolved_metrics
+                    break
         if parts is None:
             return req, [], "UNSUPPORTED", "definition_unavailable", []
         if len(parts)>1 and req.analysis_kind in {"ranking","relationship","distribution"}:
@@ -573,6 +588,21 @@ class AnalyticalResolver:
             binding['query_id'] = aliases[binding['query_id']]
             if 'denominator_query_id' in binding:
                 binding['denominator_query_id'] = aliases[binding['denominator_query_id']]
+        if len(operations)>8:
+            sup_ops = [op for op in operations if op.get('role') == 'supporting']
+            if sup_ops and (len(operations) - len(sup_ops) <= 8):
+                keep_count = 8 - (len(operations) - len(sup_ops))
+                dropped_sup = set(op['id'] for op in sup_ops[keep_count:])
+                operations = [op for op in operations if op['id'] not in dropped_sup]
+                for c in coverage:
+                    c['operation_ids'] = [oid for oid in c['operation_ids'] if oid not in dropped_sup]
+                    if not c['operation_ids'] and c.get('state') == 'RESOLVED':
+                        c['state'] = 'UNSUPPORTED'
+                        c['reason'] = 'definition_unavailable'
+                for r in normalized:
+                    if r.supporting_for and not any(r.id == c['requirement_id'] and c['operation_ids'] for c in coverage):
+                        r.availability = 'unsupported'
+                        r.reason = 'definition_unavailable'
         if len(operations)>8:
             raise AnalysisError("requested_scope_too_large","Legal plan exceeds bounded operation capacity")
         normalized.sort(key=lambda r:(bool(r.supporting_for),digest(requirement_meaning(r,self.reference,self.catalog))))

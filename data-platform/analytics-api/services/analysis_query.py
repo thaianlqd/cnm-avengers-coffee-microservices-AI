@@ -272,7 +272,7 @@ def build_plans(grounded, catalog):
                     row_limit=limit,
                     group=group.name if group else None,
                     schema_fingerprint=grounded.schema_fingerprint,
-                    explicit_limit=comp.row_limit is not None,
+                    explicit_limit=comp.row_limit is not None or comp.kind == "detail",
                 )
             )
     return plans
@@ -447,7 +447,7 @@ def compile_sql(plan, grounded, catalog):
     # than presenting a truncated cohort as the complete requested population.
     sql_limit = (
         plan.row_limit
-        if plan.explicit_limit or plan.ranking and not plan.ranking.per_group
+        if plan.explicit_limit or plan.kind == "detail" or plan.ranking and not plan.ranking.per_group
         else plan.row_limit + 1
     )
     return query + " LIMIT " + str(sql_limit)

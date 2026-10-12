@@ -21,14 +21,12 @@ export const AnalysisInputForm: React.FC<{
     <select id="analysis-time" value={p.time} onChange={e => p.onTime(e.target.value)} className={fieldClass}>
       {presets.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
     </select>
-    <p className="text-xs text-slate-500 mt-1">Tự động: AI hiểu thời gian từ câu hỏi. Chọn kỳ cụ thể khi bạn muốn xác định rõ.</p>
     {p.time === 'custom' && <div className="flex gap-2 mt-2"><input aria-label="Từ ngày" type="date" required value={p.start} max={p.end || undefined} onChange={e => p.onStart(e.target.value)} className={fieldClass} /><input aria-label="Đến ngày" type="date" required value={p.end} min={p.start || undefined} onChange={e => p.onEnd(e.target.value)} className={fieldClass} /></div>}
   </div>
-  <div data-analysis-input="context"><label htmlFor="analysis-context" className="text-xs font-semibold">Ngữ cảnh phân tích <span className="font-normal">(không bắt buộc)</span></label>
+  <div data-analysis-input="context"><label htmlFor="analysis-context" className="text-xs font-semibold">Ngữ cảnh phân tích</label>
     <textarea id="analysis-context" maxLength={2000} value={p.context} onChange={e => p.onContext(e.target.value)} rows={2} placeholder="Ví dụ: tập trung hai thành phố, chi nhánh và sản phẩm…" className={`${fieldClass} mt-1`} />
   </div>
-  <div data-analysis-input="expectation"><label htmlFor="analysis-expectation" className="text-xs font-semibold">Mong muốn phân tích <span className="font-normal">(không bắt buộc)</span></label>
+  <div data-analysis-input="expectation"><label htmlFor="analysis-expectation" className="text-xs font-semibold">Mong muốn phân tích</label>
     <textarea id="analysis-expectation" maxLength={1500} value={p.expectation} onChange={e => p.onExpectation(e.target.value)} rows={2} placeholder="Ví dụ: nhiều góc nhìn, chỉ ra điểm cần chú ý và biểu đồ phù hợp…" className={`${fieldClass} mt-1`} />
-    <p className="text-xs text-slate-500 mt-1">Nhấn Phân tích để nhận báo cáo. Hệ thống hỏi lại khi cần thêm thông tin hoặc xác nhận phần phạm vi còn thiếu.</p>
   </div>
 </fieldset>;

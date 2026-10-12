@@ -80,7 +80,6 @@ export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChar
     <AnalysisQualityScore assessment={report.quality_assessment} />
     {!!results.length && <section className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
       <div className="flex justify-between gap-3"><h3 className="text-sm font-semibold text-slate-900">Bảng dữ liệu đối chiếu</h3><span className="text-xs text-slate-400">{results.length} phần phân tích</span></div>
-      <p className="text-xs text-slate-500">Tra cứu giá trị đầy đủ, phạm vi từng chỉ số và tải bảng số liệu.</p>
       <div role="tablist" aria-label="Bảng kết quả phân tích" className="flex flex-wrap gap-2">{results.map(([id], index) => {
         const op = report.analysis_explanation?.find((o: any) => o.query_id === id);
         return <button key={id} role="tab" aria-selected={activeResult?.[0] === id} onClick={() => setResultId(id)} className={`rounded-lg px-3 py-2 text-xs border ${activeResult?.[0] === id ? 'bg-blue-50 text-blue-700 border-blue-200' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>{op ? `${(op.metrics || []).map((m: any) => m.label).join(' · ') || op.lens_label || 'Chi tiết'} — ${op.granularity ? 'Theo ' + ({day:'ngày',week:'tuần',month:'tháng'} as any)[op.granularity] : op.dimensions?.join(' · ') || 'Toàn phạm vi'}` : `Bảng ${index+1}`}</button>;
@@ -165,10 +164,15 @@ export const AnalystReportReady: React.FC<{ report: any; onOpen: () => void }> =
       <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
       <div>
         <div className="text-xs font-semibold text-slate-900">Bản xem trực quan đã sẵn sàng: {report.title || 'Báo cáo mới'}</div>
-        <div className="text-[11px] text-slate-500">Chuyển sang Bước 3 để xem Dashboard trực quan hoặc xuất file Word (.docx).</div>
       </div>
     </div>
-    <button onClick={onOpen} className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-medium transition-all shadow-xs cursor-pointer self-start sm:self-auto">Xem báo cáo (Bước 3)</button>
+    <button onClick={onOpen} className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-medium transition-all shadow-xs cursor-pointer self-start sm:self-auto">
+      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+      </svg>
+      Xem báo cáo
+    </button>
   </div>;
 };
 
