@@ -20,7 +20,7 @@ export const AnalysisQualityScore: React.FC<{ assessment?: any }> = ({ assessmen
     {!checked && <p className="text-xs text-slate-600">{q.reason || 'Chưa đủ metadata để kiểm chứng.'}</p>}
     {!!checks.length && <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{checks.map((c: any) => <div key={c.id} className="rounded-xl border border-slate-100 p-3 text-xs"><div className="flex justify-between gap-2 font-medium text-slate-800"><span>{c.label}</span><span className="whitespace-nowrap">{Number.isInteger(c.total) && c.total > 0 ? `${c.passed}/${c.total} đạt` : status(c.status)}</span></div><p className="text-slate-500 mt-1 leading-relaxed">{c.summary}</p></div>)}</div>}
     {groups.some(([, items]) => items?.length) && <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs text-slate-600">{groups.map(([label, items]) => !!items?.length && <div key={label}><h4 className="font-semibold text-slate-800 mb-2">{label}</h4><ul className="space-y-2">{items.map(item)}</ul></div>)}</div>}
-    {!!q.suggested_next_actions?.length && <div className="text-xs text-slate-600 border-t border-slate-100 pt-3"><h4 className="font-semibold text-slate-800 mb-2">Bước tiếp theo</h4><ul className="space-y-2">{q.suggested_next_actions.map(item)}</ul></div>}
+    {!!q.suggested_next_actions?.length && <div className="text-xs text-slate-600 border-t border-slate-100 pt-3"><h4 className="font-semibold text-slate-800 mb-2">Hành động gợi ý</h4><ul className="space-y-2">{q.suggested_next_actions.map(item)}</ul></div>}
     <p className="text-[10px] text-slate-400">Bộ kiểm tra {q.version || 'cũ'} · Tính lại phạm vi, phép tính và bằng chứng từ kết quả báo cáo</p>
   </section>;
 };

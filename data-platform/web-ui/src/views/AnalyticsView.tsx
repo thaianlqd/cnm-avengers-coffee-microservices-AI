@@ -2465,14 +2465,14 @@ export const AnalyticsView: React.FC = () => {
               {/* Step 1 */}
               <button
                 onClick={() => setAiStep(1)}
-                className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer text-left ${
+                className={`flex items-center space-x-2.5 px-4 py-2.5 rounded-xl transition-all cursor-pointer text-left ${
                   aiStep === 1
                     ? 'bg-white text-slate-900 shadow-xs'
                     : 'text-slate-500 hover:text-slate-900 hover:bg-white/50'
                 }`}
               >
                 <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center font-medium text-xs flex-shrink-0 ${
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs flex-shrink-0 ${
                     aiStep === 1
                       ? 'bg-slate-900 text-white'
                       : (aiPlan || generatedReport)
@@ -2480,15 +2480,12 @@ export const AnalyticsView: React.FC = () => {
                         : 'bg-slate-200 text-slate-600'
                   }`}
                 >
-                  1
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
                 </div>
-                <div className="min-w-0">
-                  <div className="text-xs font-medium truncate">
-                    Đặt câu hỏi
-                  </div>
-                  <div className="text-[10px] text-slate-400 truncate hidden sm:block">
-                    Soạn câu hỏi & gợi ý
-                  </div>
+                <div className="text-xs font-semibold truncate">
+                  Đặt câu hỏi
                 </div>
               </button>
 
@@ -2496,7 +2493,7 @@ export const AnalyticsView: React.FC = () => {
               <button
                 onClick={() => (aiPlan || isProposingPlan) && setAiStep(2)}
                 disabled={!aiPlan && !isProposingPlan}
-                className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all text-left ${
+                className={`flex items-center space-x-2.5 px-4 py-2.5 rounded-xl transition-all text-left ${
                   aiStep === 2
                     ? 'bg-white text-slate-900 shadow-xs cursor-pointer'
                     : aiPlan
@@ -2505,7 +2502,7 @@ export const AnalyticsView: React.FC = () => {
                 }`}
               >
                 <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center font-medium text-xs flex-shrink-0 ${
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs flex-shrink-0 ${
                     aiStep === 2
                       ? 'bg-slate-900 text-white'
                       : generatedReport
@@ -2513,15 +2510,12 @@ export const AnalyticsView: React.FC = () => {
                         : 'bg-slate-200 text-slate-600'
                   }`}
                 >
-                  2
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
                 </div>
-                <div className="min-w-0">
-                  <div className="text-xs font-medium truncate">
-                    Duyệt kế hoạch
-                  </div>
-                  <div className="text-[10px] text-slate-400 truncate hidden sm:block">
-                    Cấu trúc & biểu đồ
-                  </div>
+                <div className="text-xs font-semibold truncate">
+                  Duyệt kế hoạch
                 </div>
               </button>
 
@@ -2529,7 +2523,7 @@ export const AnalyticsView: React.FC = () => {
               <button
                 onClick={() => (generatedReport || isGeneratingAi) && setAiStep(3)}
                 disabled={!generatedReport && !isGeneratingAi}
-                className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all text-left ${
+                className={`flex items-center space-x-2.5 px-4 py-2.5 rounded-xl transition-all text-left ${
                   aiStep === 3
                     ? 'bg-white text-slate-900 shadow-xs cursor-pointer'
                     : generatedReport
@@ -2538,21 +2532,18 @@ export const AnalyticsView: React.FC = () => {
                 }`}
               >
                 <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center font-medium text-xs flex-shrink-0 ${
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs flex-shrink-0 ${
                     aiStep === 3
                       ? 'bg-slate-900 text-white'
                       : 'bg-slate-200 text-slate-600'
                   }`}
                 >
-                  3
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
                 </div>
-                <div className="min-w-0">
-                  <div className="text-xs font-medium truncate">
-                    Báo cáo & Xuất Word
-                  </div>
-                  <div className="text-[10px] text-slate-400 truncate hidden sm:block">
-                    Bản trực quan & tải về
-                  </div>
+                <div className="text-xs font-semibold truncate">
+                  Báo cáo & Xuất Word
                 </div>
               </button>
             </div>
@@ -2703,14 +2694,14 @@ export const AnalyticsView: React.FC = () => {
               {!isProposingPlan && !aiPlan && (
                 <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-xs">
                   <h4 className="text-sm font-semibold text-slate-800">Chưa có kế hoạch phân tích</h4>
-                  <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                    Vui lòng quay lại Bước 1 để nhập câu hỏi phân tích.
-                  </p>
                   <button
                     onClick={() => setAiStep(1)}
-                    className="mt-4 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-medium transition-all shadow-xs cursor-pointer"
+                    className="mt-4 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-medium transition-all shadow-xs cursor-pointer inline-flex items-center gap-1.5"
                   >
-                    Quay lại Bước 1
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Quay lại
                   </button>
                 </div>
               )}
@@ -2907,14 +2898,14 @@ export const AnalyticsView: React.FC = () => {
               {!isGeneratingAi && !generatedReport && (
                 <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-xs">
                   <h4 className="text-sm font-semibold text-slate-800">Chưa có báo cáo nào</h4>
-                  <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                    Vui lòng quay lại Bước 1 để đặt câu hỏi phân tích.
-                  </p>
                   <button
                     onClick={() => setAiStep(1)}
-                    className="mt-4 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-medium transition-all shadow-xs cursor-pointer inline-flex items-center"
+                    className="mt-4 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-medium transition-all shadow-xs cursor-pointer inline-flex items-center gap-1.5"
                   >
-                    Quay lại Bước 1
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Quay lại
                   </button>
                 </div>
               )}

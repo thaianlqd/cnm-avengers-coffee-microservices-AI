@@ -193,6 +193,23 @@ def decompose_scalar_draft(intent):
         targets = req.feature_metrics.get('scalar', req.metric_ids)
         if not targets or not set(targets) <= set(req.metric_ids) or len(ids) >= 16:
             continue
+        merged = False
+        target_metrics = sorted(set(targets))
+        for existing_kpi in additions:
+            if existing_kpi.time == req.time and existing_kpi.filters == req.filters:
+                new_metrics = sorted(set(existing_kpi.metric_ids) | set(target_metrics))
+                existing_kpi.metric_ids = new_metrics
+                existing_kpi.feature_metrics['scalar'] = new_metrics
+                req.derived_features = [f for f in req.derived_features if f != 'scalar']
+                req.feature_metrics.pop('scalar', None)
+                changes.append(dict(requirement_id=req.id, field='derived_features',
+                    rule='scalar_scope_decomposition', scalar_requirement_id=existing_kpi.id, metric_ids=target_metrics))
+                merged = True
+                break
+        if merged:
+            continue
+        if len(result.requirements) + len(additions) >= 8:
+            continue
         base = 'kpi_'+hashlib.sha256(req.id.encode()).hexdigest()[:16]
         id = base
         n = 1
@@ -200,9 +217,9 @@ def decompose_scalar_draft(intent):
             id = base+'_'+str(n); n += 1
         kpi = req.model_copy(deep=True)
         kpi.id = id; kpi.goal = 'Chỉ số tổng trong cùng phạm vi'
-        kpi.metric_ids = sorted(set(targets)); kpi.dimension_ids = []
+        kpi.metric_ids = target_metrics; kpi.dimension_ids = []
         kpi.analysis_kind = 'aggregate'; kpi.granularity = None
-        kpi.derived_features = ['scalar']; kpi.feature_metrics = {'scalar': sorted(set(targets))}
+        kpi.derived_features = ['scalar']; kpi.feature_metrics = {'scalar': target_metrics}
         req.derived_features = [f for f in req.derived_features if f != 'scalar']
         req.feature_metrics.pop('scalar', None)
         ids.add(id); additions.append(kpi)
