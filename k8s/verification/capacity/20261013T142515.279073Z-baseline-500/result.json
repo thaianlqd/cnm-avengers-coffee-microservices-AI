@@ -1,0 +1,13 @@
+{
+  "http_pass": false,
+  "stable": false,
+  "violations": [
+    "HPA metrics invalid",
+    "new Killing event",
+    "new application container restart",
+    "observer data unavailable",
+    "post-load smoke failed"
+  ],
+  "status": "FAIL",
+  "smoke_after_exit": 22
+}

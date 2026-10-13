@@ -168,6 +168,42 @@ Load script chỉ GET các route có thật: menu danh mục/sản phẩm, chi n
 news list. Không gọi AI, thanh toán, voucher, wallet hoặc tạo đơn. Mặc định tối đa
 200 VU; tùy chọn 300 theo [hướng dẫn tải](load-tests/k6/README.md).
 
+Capacity là bài đo riêng, không dùng staircase để suy ra ngưỡng. Xem
+[capacity report](K8S_CAPACITY_REPORT.md) trước khi chạy tải lớn trên Mac:
+
+Phase capacity xác nhận **250 VU public browse x2**, HTTP không nén, think 3s,
+0 lỗi, p95 488,5 / 415,0ms. 500 VU không lặp lại ổn định; 1.000 không đạt.
+Đây là giới hạn qualification trên shared host local; demo lớp vẫn dùng
+moderate 200 VU. Cache, HPA/resource và RAM Docker giữ nguyên.
+
+```bash
+export K8S_DB_MODE=existing
+bash scripts/k8s/capacity-test.sh 250 --label confirm
+# 1000 là mức đã fail; chỉ chạy riêng khi cần chẩn đoán.
+bash scripts/k8s/capacity-test.sh 1000 --label baseline
+CAPACITY_ACCEPT_ENCODING=gzip bash scripts/k8s/capacity-test.sh 1000 --label gzip
+python3 scripts/k8s/summarize-capacity.py
+```
+
+Harness chạy từng mức độc lập, think time 3s, ramp/hold/down 60/120/30s, cooldown
+tự nhiên về 2/1/1 trước/sau, smoke và observer riêng. Dừng tại first failing level;
+test mức thấp hơn để thu hẹp ngưỡng và confirm mức cuối ít nhất hai lần. HTTP PASS
+kèm restart mới không được qualified. Generator và Docker Desktop dùng chung
+CPU/RAM Mac, nên số liệu host cũng phải được đọc cùng số liệu node. Gateway
+production mặc định tắt per-request logging; Kubernetes đặt rõ
+`GATEWAY_REQUEST_LOGGING=false`. Dev có thể bật bằng `true`.
+Hai thử nghiệm opt-in `GATEWAY_PROXY_KEEP_ALIVE` và
+`GATEWAY_MAX_REQUESTS_PER_SOCKET` giữ trong code nhưng **tắt trong cấu hình demo
+cuối** (`false` / `0`): throughput có cải thiện nhưng chưa qualified ổn định.
+Timeout/probe, HPA/resource, cache 5 giây và dữ liệu giữ nguyên.
+
+Capacity mặc định giữ HTTP không nén của k6 cũ. Biến
+`CAPACITY_ACCEPT_ENCODING=gzip` tạo nhóm đo riêng giống browser: server nén dữ
+liệu sẵn có, k6 vẫn giải nén và kiểm tra toàn bộ JSON. Không gộp hai nhóm khi
+so sánh trước/sau. Harness từ chối Compose customer app chạy trùng, quan sát
+restart/pressure/metrics và chờ HPA giảm tự nhiên; chỉ xác nhận ngưỡng sau hai
+lượt ổn định cùng cấu hình. Xem report để biết kết quả và giới hạn host local.
+
 ## Kiểm chứng realtime trước khi nghĩ đến Order HPA
 
 Test hai server local dùng gateway/adapter thật, dữ liệu synthetic:

@@ -1,0 +1,212 @@
+Host: Darwin arm64; Bash 3.2.57(1)-release
+linux/aarch64 CPUs=8 Memory=8319770624
+Environment valid; DB mode=existing; secrets redacted
+Compose infrastructure host ports: 6543 / 6379 / 5672
+Target context: docker-desktop (current: docker-desktop)
+node/desktop-control-plane condition met
+NAME                    ARCH
+desktop-control-plane   arm64
+NAME                    CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)   
+desktop-control-plane   266m         3%       1693Mi          21%         
+NAMESPACE            NAME                                            CPU(cores)   MEMORY(bytes)   
+avengers-coffee      ai-service-74595687bb-sjdxt                     4m           179Mi           
+avengers-coffee      api-gateway-7f4fcdd58c-llfzw                    1m           28Mi            
+avengers-coffee      api-gateway-7f4fcdd58c-wsxjd                    2m           24Mi            
+avengers-coffee      identity-service-5774bb6df7-6bn9h               5m           47Mi            
+avengers-coffee      inventory-service-cd68cd75b-s5xjr               4m           41Mi            
+avengers-coffee      menu-service-7cf979fcc-6p25w                    5m           42Mi            
+avengers-coffee      news-service-855d5cb5fd-ght8t                   5m           43Mi            
+avengers-coffee      order-service-6c86bf89-bwgj7                    4m           55Mi            
+avengers-coffee      web-customer-6c9cf65c5-cmmtz                    1m           7Mi             
+kube-system          coredns-589f44dc88-6qqzm                        3m           37Mi            
+kube-system          coredns-589f44dc88-kklvn                        2m           23Mi            
+kube-system          etcd-desktop-control-plane                      27m          69Mi            
+kube-system          kindnet-mxhvv                                   3m           34Mi            
+kube-system          kube-apiserver-desktop-control-plane            50m          352Mi           
+kube-system          kube-controller-manager-desktop-control-plane   19m          100Mi           
+kube-system          kube-proxy-7j2qw                                2m           32Mi            
+kube-system          kube-scheduler-desktop-control-plane            11m          45Mi            
+kube-system          metrics-server-5b58578978-jggsv                 11m          53Mi            
+local-path-storage   local-path-provisioner-855c7b7774-tjnwm         4m           22Mi            
+Preflight passed. Pod-to-host reachability is checked by deploy.sh.
+PASS configured database connection and five application schemas
+Public media image unchanged; using existing arm64 snapshot
+PASS rendered overlay: 22 resources, eight Services with unique/resolved ports, selectors, config refs, probes/resources, DNS, HPA/PDB
+{"apiVersion":"v1","kind":"Service","metadata":{"labels":{"app.kubernetes.io/component":"gateway","app.kubernetes.io/name":"api-gateway","app.kubernetes.io/part-of":"avengers-coffee"},"name":"api-gateway","namespace":"avengers-coffee"},"spec":{"ports":[{"name":"http","port":3000,"protocol":"TCP","targetPort":"http"}],"selector":{"app.kubernetes.io/name":"api-gateway","app.kubernetes.io/part-of":"avengers-coffee"},"type":"LoadBalancer"}}
+{"apiVersion":"v1","kind":"Service","metadata":{"labels":{"app.kubernetes.io/component":"backend","app.kubernetes.io/name":"order-service","app.kubernetes.io/part-of":"avengers-coffee"},"name":"order-service","namespace":"avengers-coffee"},"spec":{"ports":[{"name":"http","port":3005,"protocol":"TCP","targetPort":"http"}],"selector":{"app.kubernetes.io/name":"order-service","app.kubernetes.io/part-of":"avengers-coffee"},"sessionAffinity":"ClientIP","sessionAffinityConfig":{"clientIP":{"timeoutSeconds":10800}},"type":"LoadBalancer"}}
+{"apiVersion":"v1","kind":"Service","metadata":{"labels":{"app.kubernetes.io/component":"frontend","app.kubernetes.io/name":"web-customer","app.kubernetes.io/part-of":"avengers-coffee"},"name":"web-customer","namespace":"avengers-coffee"},"spec":{"ports":[{"name":"http","port":5175,"protocol":"TCP","targetPort":"http"}],"selector":{"app.kubernetes.io/name":"web-customer","app.kubernetes.io/part-of":"avengers-coffee"},"type":"LoadBalancer"}}
+namespace/avengers-coffee unchanged
+Environment valid; DB mode=existing; secrets redacted
+Compose infrastructure host ports: 6543 / 6379 / 5672
+namespace/avengers-coffee unchanged
+Applied per-service ConfigMaps/Secrets without logging values. Restart existing pods after config changes.
+namespace/avengers-coffee unchanged
+configmap/avengers-common unchanged
+service/ai-service unchanged
+service/api-gateway unchanged
+service/identity-service unchanged
+service/inventory-service unchanged
+service/menu-service unchanged
+service/news-service unchanged
+service/order-service unchanged
+service/web-customer unchanged
+deployment.apps/ai-service configured
+deployment.apps/api-gateway configured
+deployment.apps/identity-service unchanged
+deployment.apps/inventory-service unchanged
+deployment.apps/menu-service unchanged
+deployment.apps/news-service unchanged
+deployment.apps/order-service unchanged
+deployment.apps/web-customer unchanged
+poddisruptionbudget.policy/api-gateway configured
+horizontalpodautoscaler.autoscaling/api-gateway unchanged
+horizontalpodautoscaler.autoscaling/identity-service unchanged
+horizontalpodautoscaler.autoscaling/menu-service unchanged
+deployment "web-customer" successfully rolled out
+Waiting for deployment "api-gateway" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "api-gateway" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "api-gateway" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "api-gateway" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "api-gateway" rollout to finish: 1 old replicas are pending termination...
+deployment "api-gateway" successfully rolled out
+deployment "identity-service" successfully rolled out
+deployment "menu-service" successfully rolled out
+deployment "inventory-service" successfully rolled out
+deployment "order-service" successfully rolled out
+deployment "news-service" successfully rolled out
+deployment "ai-service" successfully rolled out
+(node:181) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS Pod service DNS, DB schemas, Redis/RabbitMQ host bridge
+PASS GET /health/live
+PASS GET /health/ready
+PASS GET /menu/danh-muc
+PASS GET /menu/san-pham
+PASS GET /users/branches/public
+PASS GET /news?page=1&limit=6
+PASS auth availability/boundary (401 without credentials)
+NAME                    STATUS   ROLES           AGE    VERSION
+desktop-control-plane   Ready    control-plane   6h6m   v1.36.1
+NAME                                    READY   STATUS        RESTARTS      AGE     IP             NODE                    NOMINATED NODE   READINESS GATES
+pod/ai-service-74595687bb-sjdxt         1/1     Running       0             5h4m    10.244.0.44    desktop-control-plane   <none>           <none>
+pod/api-gateway-7dcfb96878-rtntw        1/1     Running       0             11s     10.244.0.208   desktop-control-plane   <none>           <none>
+pod/api-gateway-7dcfb96878-tvrsc        1/1     Running       0             16s     10.244.0.207   desktop-control-plane   <none>           <none>
+pod/api-gateway-7f4fcdd58c-wsxjd        1/1     Terminating   3 (18m ago)   31m     10.244.0.186   desktop-control-plane   <none>           <none>
+pod/identity-service-5774bb6df7-6bn9h   1/1     Running       0             113m    10.244.0.159   desktop-control-plane   <none>           <none>
+pod/inventory-service-cd68cd75b-s5xjr   1/1     Running       0             5h4m    10.244.0.47    desktop-control-plane   <none>           <none>
+pod/menu-service-7cf979fcc-6p25w        1/1     Running       0             168m    10.244.0.130   desktop-control-plane   <none>           <none>
+pod/news-service-855d5cb5fd-ght8t       1/1     Running       0             4h26m   10.244.0.86    desktop-control-plane   <none>           <none>
+pod/order-service-6c86bf89-bwgj7        1/1     Running       0             5h4m    10.244.0.50    desktop-control-plane   <none>           <none>
+pod/web-customer-6c9cf65c5-cmmtz        1/1     Running       0             5h4m    10.244.0.51    desktop-control-plane   <none>           <none>
+
+NAME                                READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS          IMAGES                                              SELECTOR
+deployment.apps/ai-service          1/1     1            1           5h23m   ai-service          avengers/ai-service:k8s-local-82f4acdb0c75          app.kubernetes.io/name=ai-service,app.kubernetes.io/part-of=avengers-coffee
+deployment.apps/api-gateway         2/2     2            2           5h23m   api-gateway         avengers/api-gateway:k8s-local-67e1a8b59dee         app.kubernetes.io/name=api-gateway,app.kubernetes.io/part-of=avengers-coffee
+deployment.apps/identity-service    1/1     1            1           5h23m   identity-service    avengers/identity-service:k8s-local-ddefcf333ccb    app.kubernetes.io/name=identity-service,app.kubernetes.io/part-of=avengers-coffee
+deployment.apps/inventory-service   1/1     1            1           5h23m   inventory-service   avengers/inventory-service:k8s-local-8518a3746e94   app.kubernetes.io/name=inventory-service,app.kubernetes.io/part-of=avengers-coffee
+deployment.apps/menu-service        1/1     1            1           5h23m   menu-service        avengers/menu-service:k8s-local-782a72470a1e        app.kubernetes.io/name=menu-service,app.kubernetes.io/part-of=avengers-coffee
+deployment.apps/news-service        1/1     1            1           5h23m   news-service        avengers/news-service:k8s-local-176431e7beb0        app.kubernetes.io/name=news-service,app.kubernetes.io/part-of=avengers-coffee
+deployment.apps/order-service       1/1     1            1           5h23m   order-service       avengers/order-service:k8s-local-97db7add6ca4       app.kubernetes.io/name=order-service,app.kubernetes.io/part-of=avengers-coffee
+deployment.apps/web-customer        1/1     1            1           5h23m   web-customer        avengers/web-customer:k8s-local-016f08dce095        app.kubernetes.io/name=web-customer,app.kubernetes.io/part-of=avengers-coffee
+
+NAME                        TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE     SELECTOR
+service/ai-service          ClusterIP      10.96.125.75    <none>        8000/TCP         5h23m   app.kubernetes.io/name=ai-service,app.kubernetes.io/part-of=avengers-coffee
+service/api-gateway         LoadBalancer   10.96.37.61     172.21.0.5    3000:30326/TCP   5h23m   app.kubernetes.io/name=api-gateway,app.kubernetes.io/part-of=avengers-coffee
+service/identity-service    ClusterIP      10.96.61.243    <none>        3001/TCP         5h23m   app.kubernetes.io/name=identity-service,app.kubernetes.io/part-of=avengers-coffee
+service/inventory-service   ClusterIP      10.96.196.231   <none>        3004/TCP         5h23m   app.kubernetes.io/name=inventory-service,app.kubernetes.io/part-of=avengers-coffee
+service/menu-service        ClusterIP      10.96.75.93     <none>        3003/TCP         5h23m   app.kubernetes.io/name=menu-service,app.kubernetes.io/part-of=avengers-coffee
+service/news-service        ClusterIP      10.96.53.117    <none>        3006/TCP         5h23m   app.kubernetes.io/name=news-service,app.kubernetes.io/part-of=avengers-coffee
+service/order-service       LoadBalancer   10.96.22.218    172.21.0.6    3005:30159/TCP   5h23m   app.kubernetes.io/name=order-service,app.kubernetes.io/part-of=avengers-coffee
+service/web-customer        LoadBalancer   10.96.233.188   172.21.0.7    5175:31134/TCP   5h23m   app.kubernetes.io/name=web-customer,app.kubernetes.io/part-of=avengers-coffee
+
+NAME                                                   REFERENCE                     TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/api-gateway        Deployment/api-gateway        cpu: 2%/60%    2         4         2          5h23m
+horizontalpodautoscaler.autoscaling/identity-service   Deployment/identity-service   cpu: 22%/60%   1         3         1          5h23m
+horizontalpodautoscaler.autoscaling/menu-service       Deployment/menu-service       cpu: 18%/60%   1         4         1          5h23m
+
+NAME                                     MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
+poddisruptionbudget.policy/api-gateway   1               N/A               1                     5h23m
+NAME                    CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)   
+desktop-control-plane   1565m        19%      1705Mi          21%         
+NAME                                CPU(cores)   MEMORY(bytes)   
+ai-service-74595687bb-sjdxt         16m          179Mi           
+api-gateway-7dcfb96878-tvrsc        169m         27Mi            
+api-gateway-7f4fcdd58c-wsxjd        6m           24Mi            
+identity-service-5774bb6df7-6bn9h   8m           47Mi            
+inventory-service-cd68cd75b-s5xjr   13m          41Mi            
+menu-service-7cf979fcc-6p25w        24m          43Mi            
+news-service-855d5cb5fd-ght8t       24m          43Mi            
+order-service-6c86bf89-bwgj7        13m          55Mi            
+web-customer-6c9cf65c5-cmmtz        1m           7Mi             
+LAST SEEN   TYPE      REASON      OBJECT                                  MESSAGE
+60m         Warning   Unhealthy   pod/identity-service-5774bb6df7-89ccw   Readiness probe failed: HTTP probe failed with statuscode: 503
+58m         Warning   Unhealthy   pod/identity-service-5774bb6df7-hcfbk   Readiness probe failed: Get "http://10.244.0.184:3001/health/ready": dial tcp 10.244.0.184:3001: connect: connection refused
+31m         Warning   Unhealthy   pod/identity-service-5774bb6df7-mmdcn   Startup probe failed: Get "http://10.244.0.189:3001/health/live": dial tcp 10.244.0.189:3001: connect: connection refused
+31m         Warning   Unhealthy   pod/menu-service-7cf979fcc-5qd8v        Startup probe failed: Get "http://10.244.0.187:3003/health/live": dial tcp 10.244.0.187:3003: connect: connection refused
+30m         Warning   Unhealthy   pod/identity-service-5774bb6df7-v6cdz   Startup probe failed: Get "http://10.244.0.191:3001/health/live": dial tcp 10.244.0.191:3001: connect: connection refused
+30m         Warning   Unhealthy   pod/menu-service-7cf979fcc-9x2wv        Startup probe failed: Get "http://10.244.0.190:3003/health/live": dial tcp 10.244.0.190:3003: connect: connection refused
+30m         Warning   Unhealthy   pod/menu-service-7cf979fcc-x6t8f        Startup probe failed: Get "http://10.244.0.192:3003/health/live": dial tcp 10.244.0.192:3003: connect: connection refused
+29m         Warning   Unhealthy   pod/ai-service-74595687bb-sjdxt         Liveness probe failed: Get "http://10.244.0.44:8000/health/live": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+29m         Warning   Unhealthy   pod/identity-service-5774bb6df7-v6cdz   Readiness probe failed: Get "http://10.244.0.191:3001/health/ready": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+29m         Warning   Unhealthy   pod/menu-service-7cf979fcc-9x2wv        Readiness probe failed: HTTP probe failed with statuscode: 503
+29m         Warning   Unhealthy   pod/menu-service-7cf979fcc-5qd8v        Readiness probe failed: HTTP probe failed with statuscode: 503
+29m         Warning   Unhealthy   pod/identity-service-5774bb6df7-v6cdz   Readiness probe failed: HTTP probe failed with statuscode: 503
+29m         Warning   Unhealthy   pod/menu-service-7cf979fcc-x6t8f        Readiness probe failed: HTTP probe failed with statuscode: 503
+29m         Warning   Unhealthy   pod/identity-service-5774bb6df7-mmdcn   Readiness probe failed: HTTP probe failed with statuscode: 503
+28m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-svjc4        Liveness probe failed: Get "http://10.244.0.170:3000/health/live": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+28m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-cjtz8        Readiness probe failed: Get "http://10.244.0.188:3000/health/ready": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+28m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-svjc4        Readiness probe failed: Get "http://10.244.0.170:3000/health/ready": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+28m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-cjtz8        Liveness probe failed: Get "http://10.244.0.188:3000/health/live": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+28m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-svjc4        Readiness probe failed: Get "http://10.244.0.170:3000/health/ready": dial tcp 10.244.0.170:3000: connect: connection refused
+20m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-tsppw        Startup probe failed: Get "http://10.244.0.193:3000/health/live": dial tcp 10.244.0.193:3000: connect: connection refused
+20m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-4kmmr        Startup probe failed: Get "http://10.244.0.194:3000/health/live": dial tcp 10.244.0.194:3000: connect: connection refused
+20m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-llfzw        Liveness probe failed: Get "http://10.244.0.171:3000/health/live": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+20m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-llfzw        Readiness probe failed: Get "http://10.244.0.171:3000/health/ready": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+20m         Warning   Unhealthy   pod/menu-service-7cf979fcc-rsqm7        Startup probe failed: Get "http://10.244.0.195:3003/health/live": dial tcp 10.244.0.195:3003: connect: connection refused
+20m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-wsxjd        Liveness probe failed: Get "http://10.244.0.186:3000/health/live": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+20m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-wsxjd        Readiness probe failed: Get "http://10.244.0.186:3000/health/ready": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+20m         Warning   Unhealthy   pod/identity-service-5774bb6df7-4vm9f   Startup probe failed: Get "http://10.244.0.196:3001/health/live": dial tcp 10.244.0.196:3001: connect: connection refused
+20m         Warning   Unhealthy   pod/identity-service-5774bb6df7-6bn9h   Liveness probe failed: Get "http://10.244.0.159:3001/health/live": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+19m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-wsxjd        Readiness probe failed: Get "http://10.244.0.186:3000/health/ready": read tcp 10.244.0.1:37734->10.244.0.186:3000: read: connection reset by peer
+19m         Warning   Unhealthy   pod/news-service-855d5cb5fd-ght8t       Readiness probe failed: Get "http://10.244.0.86:3006/health/ready": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+19m         Warning   Unhealthy   pod/menu-service-7cf979fcc-6p25w        Readiness probe failed: Get "http://10.244.0.130:3003/health/ready": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+19m         Warning   Unhealthy   pod/ai-service-74595687bb-sjdxt         Readiness probe failed: HTTP probe failed with statuscode: 503
+19m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-llfzw        Readiness probe failed: Get "http://10.244.0.171:3000/health/ready": dial tcp 10.244.0.171:3000: connect: connection refused
+19m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-llfzw        Startup probe failed: Get "http://10.244.0.171:3000/health/live": dial tcp 10.244.0.171:3000: connect: connection refused
+19m         Warning   Unhealthy   pod/menu-service-7cf979fcc-6p25w        Liveness probe failed: Get "http://10.244.0.130:3003/health/live": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+19m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-wsxjd        Readiness probe failed: Get "http://10.244.0.186:3000/health/ready": dial tcp 10.244.0.186:3000: connect: connection refused
+19m         Warning   Unhealthy   pod/identity-service-5774bb6df7-4vm9f   Readiness probe failed: Get "http://10.244.0.196:3001/health/ready": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+19m         Warning   Unhealthy   pod/identity-service-5774bb6df7-fldjm   Startup probe failed: Get "http://10.244.0.197:3001/health/live": dial tcp 10.244.0.197:3001: connect: connection refused
+19m         Warning   Unhealthy   pod/menu-service-7cf979fcc-stn8g        Startup probe failed: Get "http://10.244.0.199:3003/health/live": dial tcp 10.244.0.199:3003: connect: connection refused
+19m         Warning   Unhealthy   pod/menu-service-7cf979fcc-hpbwk        Startup probe failed: Get "http://10.244.0.198:3003/health/live": dial tcp 10.244.0.198:3003: connect: connection refused
+18m         Warning   Unhealthy   pod/menu-service-7cf979fcc-stn8g        Readiness probe failed: HTTP probe failed with statuscode: 503
+18m         Warning   Unhealthy   pod/menu-service-7cf979fcc-hpbwk        Readiness probe failed: Get "http://10.244.0.198:3003/health/ready": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+18m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-4kmmr        Liveness probe failed: Get "http://10.244.0.194:3000/health/live": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+18m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-4kmmr        Readiness probe failed: Get "http://10.244.0.194:3000/health/ready": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+17m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-tsppw        Readiness probe failed: Get "http://10.244.0.193:3000/health/ready": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+17m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-tsppw        Liveness probe failed: Get "http://10.244.0.193:3000/health/live": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+17m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-4kmmr        Readiness probe failed: Get "http://10.244.0.194:3000/health/ready": dial tcp 10.244.0.194:3000: connect: connection refused
+17m         Warning   Unhealthy   pod/menu-service-7cf979fcc-rsqm7        Readiness probe failed: HTTP probe failed with statuscode: 503
+17m         Warning   Unhealthy   pod/menu-service-7cf979fcc-hpbwk        Readiness probe failed: HTTP probe failed with statuscode: 503
+17m         Warning   Unhealthy   pod/identity-service-5774bb6df7-fldjm   Readiness probe failed: HTTP probe failed with statuscode: 503
+17m         Warning   Unhealthy   pod/api-gateway-7f4fcdd58c-tsppw        Readiness probe failed: Get "http://10.244.0.193:3000/health/ready": dial tcp 10.244.0.193:3000: connect: connection refused
+15m         Warning   Unhealthy   pod/identity-service-5774bb6df7-4vm9f   Readiness probe failed: HTTP probe failed with statuscode: 503
+11m         Warning   Unhealthy   pod/identity-service-5774bb6df7-nqt98   Startup probe failed: Get "http://10.244.0.202:3001/health/live": dial tcp 10.244.0.202:3001: connect: connection refused
+11m         Warning   Unhealthy   pod/menu-service-7cf979fcc-rstkm        Startup probe failed: Get "http://10.244.0.203:3003/health/live": dial tcp 10.244.0.203:3003: connect: connection refused
+10m         Warning   Unhealthy   pod/identity-service-5774bb6df7-6kgsq   Startup probe failed: Get "http://10.244.0.204:3001/health/live": dial tcp 10.244.0.204:3001: connect: connection refused
+10m         Warning   Unhealthy   pod/menu-service-7cf979fcc-jgnnl        Startup probe failed: Get "http://10.244.0.205:3003/health/live": dial tcp 10.244.0.205:3003: connect: connection refused
+10m         Warning   Unhealthy   pod/news-service-855d5cb5fd-ght8t       Readiness probe failed: HTTP probe failed with statuscode: 503
+10m         Warning   Unhealthy   pod/inventory-service-cd68cd75b-s5xjr   Readiness probe failed: HTTP probe failed with statuscode: 503
+10m         Warning   Unhealthy   pod/menu-service-7cf979fcc-l2pzj        Startup probe failed: Get "http://10.244.0.206:3003/health/live": dial tcp 10.244.0.206:3003: connect: connection refused
+10m         Warning   Unhealthy   pod/menu-service-7cf979fcc-rstkm        Readiness probe failed: HTTP probe failed with statuscode: 503
+9m35s       Warning   Unhealthy   pod/menu-service-7cf979fcc-l2pzj        Readiness probe failed: HTTP probe failed with statuscode: 503
+9m35s       Warning   Unhealthy   pod/identity-service-5774bb6df7-6kgsq   Readiness probe failed: HTTP probe failed with statuscode: 503
+9m5s        Warning   Unhealthy   pod/identity-service-5774bb6df7-nqt98   Readiness probe failed: HTTP probe failed with statuscode: 503
+8m40s       Warning   Unhealthy   pod/menu-service-7cf979fcc-jgnnl        Readiness probe failed: HTTP probe failed with statuscode: 503
+7m18s       Warning   Unhealthy   pod/identity-service-5774bb6df7-6bn9h   Readiness probe failed: HTTP probe failed with statuscode: 503
+74s         Warning   Unhealthy   pod/order-service-6c86bf89-bwgj7        Readiness probe failed: HTTP probe failed with statuscode: 503
+53s         Warning   Unhealthy   pod/menu-service-7cf979fcc-6p25w        Readiness probe failed: HTTP probe failed with statuscode: 503
+
+Web: http://localhost:5175
+API: http://localhost:3000
+Socket.IO: http://localhost:3005

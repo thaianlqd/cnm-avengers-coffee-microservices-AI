@@ -1,0 +1,24 @@
+{
+  "observed_at": "2026-10-13T16:24:42.588Z",
+  "purpose": "HTTP encoding diagnostic only; synthetic loopback fixture, not capacity evidence",
+  "records": [
+    {
+      "mode": "default",
+      "accept_encoding": "",
+      "response_encoding": "identity",
+      "wire_body_bytes": 718448,
+      "received_bytes": 718607,
+      "decoded_bytes": 718448,
+      "json_ok": 1
+    },
+    {
+      "mode": "gzip",
+      "accept_encoding": "gzip",
+      "response_encoding": "gzip",
+      "wire_body_bytes": 750,
+      "received_bytes": 930,
+      "decoded_bytes": 718448,
+      "json_ok": 1
+    }
+  ]
+}

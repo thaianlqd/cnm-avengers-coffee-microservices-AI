@@ -73,5 +73,11 @@ spec:
         - secretRef:
             name: api-gateway-secrets
         env:
+        - name: GATEWAY_REQUEST_LOGGING
+          value: 'false'
+        - name: GATEWAY_PROXY_KEEP_ALIVE
+          value: 'false'
+        - name: GATEWAY_MAX_REQUESTS_PER_SOCKET
+          value: '0'
         - name: PORT
           value: '3000'

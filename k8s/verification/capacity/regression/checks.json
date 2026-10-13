@@ -1,0 +1,69 @@
+{
+  "verified_at": "2026-10-13T17:01:51.934727+00:00",
+  "gateway_jest": {
+    "exit": 0,
+    "suites": 5,
+    "tests": 20
+  },
+  "k8s_python_unittest": {
+    "exit": 0,
+    "tests": 24
+  },
+  "render": {
+    "exit": 0,
+    "resources": 22
+  },
+  "server_dry_run": {
+    "exit": 0,
+    "overlay": "k8s/overlays/.docker-desktop-runtime"
+  },
+  "public_socket": {
+    "exit": 0,
+    "transports": [
+      "websocket",
+      "polling"
+    ],
+    "operations": [
+      "synthetic room join",
+      "disconnect/reconnect"
+    ],
+    "after_final_deploy": true
+  },
+  "deploy": {
+    "exit": 0,
+    "verified_at": "2026-10-13T17:20:52.578420+00:00",
+    "log_source": "regression/deploy-final.txt",
+    "gateway_image_tag": "k8s-local-67e1a8b59dee",
+    "final_policy": {
+      "request_logging": false,
+      "proxy_keep_alive": false,
+      "max_requests_per_socket": 0
+    },
+    "includes": [
+      "DB read-only audit",
+      "render",
+      "server dry-run",
+      "deploy",
+      "readiness",
+      "connectivity",
+      "smoke"
+    ]
+  },
+  "syntax": {
+    "bash": 0,
+    "python_py_compile": 0,
+    "node_check_diagnostics": 0
+  },
+  "availability": {
+    "healing": {
+      "samples": 60,
+      "failed": 0
+    },
+    "rollout": {
+      "samples": 60,
+      "failed": 0
+    }
+  },
+  "final_smoke_exit": 0,
+  "final_state_observed_at": "2026-10-13T18:06:05.688399+00:00"
+}

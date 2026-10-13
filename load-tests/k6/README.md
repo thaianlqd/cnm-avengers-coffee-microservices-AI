@@ -48,3 +48,71 @@ python3 scripts/k8s/observe-hpa.py --seconds 480
 Run stable throughput qualification first, then self-healing/rollout availability
 as separate measurements. A 60-request availability pass does not cancel k6
 failures during combined stress/fault injection.
+
+## Independent capacity qualification
+
+The separate `customer-browse-capacity.js` profile uses the same four public GET
+routes and HTTP/JSON checks. Each run ramps from zero for 60s, holds one target
+for 120s, and ramps down for 30s, with 3s think time per four-request iteration.
+It keeps the original thresholds and also applies them to the sustained phase.
+The moderate classroom profile is unchanged.
+
+```bash
+export K8S_DB_MODE=existing
+bash scripts/k8s/capacity-test.sh 1000 --label baseline
+# Separate browser-like transport variant; preserve the identity results:
+CAPACITY_ACCEPT_ENCODING=gzip bash scripts/k8s/capacity-test.sh 1000 --label gzip
+# Run the next level only after reviewing this result; stop at the first failure.
+python3 scripts/k8s/summarize-capacity.py
+```
+
+The harness requires two consecutive snapshots at baseline 2/1/1, valid HPA
+metrics, healthy node conditions, unchanged read-only/5s-cache flags, and smoke
+before load. Cooldown is natural and bounded to 720s. It repeats cooldown and
+smoke after load. New restarts, OOM, CrashLoopBackOff, node pressure, invalid
+metrics or missing observer evidence reject stability even if HTTP passes.
+Normal HPA scale-down termination is recorded without being counted as an
+overload restart. Expected scale-up startup probe failures remain visible.
+The harness refuses duplicate customer Compose applications and stops its own
+generator if they appear during a run; infra Compose services remain running.
+
+The default encoding preserves the original k6 workload (no `Accept-Encoding`
+header). k6 0.57.0 on this machine did not negotiate gzip automatically.
+`CAPACITY_ACCEPT_ENCODING=gzip` requests the existing server compression and k6
+still decodes and checks the complete JSON. These are **separate transport
+variants**, not interchangeable before/after application results. Keep encoding
+fixed throughout each ladder and both confirmation runs. The public payload size
+and digest diagnostic is `node scripts/k8s/inspect-public-encoding.cjs`.
+
+Gateway demo policy disables request logs. The two connection experiments remain
+opt-in and are **disabled in the final demo** (`GATEWAY_PROXY_KEEP_ALIVE=false`,
+`GATEWAY_MAX_REQUESTS_PER_SOCKET=0`): higher throughput did not qualify stable
+capacity. The pool experiment bounds 128 active / 16 idle per origin and retires
+eligible idle sockets after 30s; it does not guarantee request-level balancing.
+The client-budget experiment renews connections after completed responses.
+Proxy timeouts, payloads, cache, probes, HPA and resources are unchanged.
+Production request logging defaults off, development on.
+
+Evidence is stored in unique timestamped directories under
+`/tmp/avengers-k8s-capacity` (override `K8S_CAPACITY_RESULTS`). It includes k6
+summary/log, timestamps, image IDs/resources/probes, sanitized Pod/HPA/node/event
+snapshots, top metrics, restart deltas, Gateway cgroup CPU/OOM counters, host CPU/
+memory, k6 CPU/RSS and descriptor counts. No sensitive app env, Secret, credential, query
+text or application log is exported. Process sampling stores executable names,
+not arguments. `analysis.json` distinguishes per-Pod peaks from simultaneous
+aggregate service peaks. Metrics are samples and cannot prove the absolute peak.
+
+`K6_BIN` selects a native binary; otherwise the pinned local 0.57.0 binary is
+used. `CAPACITY_RAMP_SECONDS` supports 30..60 and `CAPACITY_HOLD_SECONDS` 60..120;
+keep durations identical for comparisons. Target is bounded to 1..5000 and the
+qualified URL to localhost:3000. No automatic staircase or unlimited retry loop
+is provided. Review [the capacity report](../../K8S_CAPACITY_REPORT.md) for the
+measured limit, failed attempts and host/generator constraints.
+
+Final qualification on this shared Mac: **250 VUs passed twice**, 0% errors,
+p95 488.5 / 415.0ms. 500 VUs did not repeat consistently. Archived `.jsonl.gz`
+and `.log.gz` evidence can also be reanalyzed directly:
+
+```bash
+python3 scripts/k8s/summarize-capacity.py k8s/verification/capacity
+```

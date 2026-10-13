@@ -84,3 +84,9 @@ The classroom generator should use native macOS arm64 k6 → localhost. Use
 `install-k6-local.sh` for a checksum-verified pinned 0.57.0 binary in gitignored
 `.tools`. Container → host.docker.internal transport has failed the stress
 qualification and remains explicit diagnostics (`K8S_LOAD_USE_DOCKER=1`).
+
+Independent capacity runs use `scripts/k8s/capacity-test.sh VUS` with fixed 3s
+think time and 60/120/30s ramp/hold/down, separate from the moderate profile.
+See [capacity results and reproduction](../K8S_CAPACITY_REPORT.md). The default
+preserves k6's uncompressed transport; `CAPACITY_ACCEPT_ENCODING=gzip` is a
+separate browser-like variant. Duplicate customer Compose apps are refused.

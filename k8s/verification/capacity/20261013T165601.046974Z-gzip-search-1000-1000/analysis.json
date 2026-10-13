@@ -1,0 +1,391 @@
+{
+  "directory": "20261013T165601.046974Z-gzip-search-1000-1000",
+  "started_at": "2026-10-13T16:56:01.687671+00:00",
+  "vus": 1000,
+  "think_seconds": 3,
+  "cache_ms": 5000,
+  "accept_encoding": "gzip",
+  "ramp_seconds": 60,
+  "hold_seconds": 120,
+  "down_seconds": 30,
+  "k6_version": "k6 v0.57.0 (commit/50afd82c18, go1.23.6, darwin/arm64)",
+  "source_head": "9cc558034d5190decd88188818d04d7962c0645e",
+  "generator_rlimit_nofile": [
+    1048575,
+    9223372036854775807
+  ],
+  "host_fd_limit": "maxfiles    256            unlimited",
+  "host_cpu_count": "8",
+  "workload_sha256": "bbdb588301541dbcd0998d00b3da84282152aa7e79912865208c27baa296da3f",
+  "k6_sha256": "e234ca660a9c73b8dafd7d0cbbf4f7edeb4eebcc5ab55a60b6483db2b4658fe7",
+  "gateway_policy": {
+    "GATEWAY_REQUEST_LOGGING": "false",
+    "GATEWAY_PROXY_KEEP_ALIVE": "true",
+    "GATEWAY_MAX_REQUESTS_PER_SOCKET": "64"
+  },
+  "gateway_runtime": {
+    "node": "v20.20.2",
+    "arch": "arm64"
+  },
+  "load_started_at": "2026-10-13T16:56:23.029835+00:00",
+  "k6_exit": 99,
+  "load_finished_at": "2026-10-13T16:59:59.252028+00:00",
+  "finished_at": "2026-10-13T17:05:01.767074+00:00",
+  "http_pass": false,
+  "stable": false,
+  "violations": [
+    "new Killing event",
+    "new application container restart"
+  ],
+  "status": "FAIL",
+  "smoke_after_exit": 0,
+  "requests": 91648,
+  "rps": 426.77257898448755,
+  "successful_rps": 131.54102447575295,
+  "failure_rate": 0.6917772346368715,
+  "checks_rate": 0.3082227653631285,
+  "p95_ms": 8153.311149999999,
+  "hold_metrics": {
+    "http_req_duration{phase:hold}": {
+      "avg": 905.2899266747809,
+      "p(50)": 95.99449999999999,
+      "p(95)": 6375.906199999997,
+      "max": 10117.021
+    },
+    "http_reqs{phase:hold}": {
+      "count": 72308,
+      "rate": 336.71298491194926
+    },
+    "checks{phase:hold}": {
+      "fails": 115742,
+      "rate": 0.1996597886817503,
+      "passes": 28874
+    },
+    "http_req_failed{phase:hold}": {
+      "passes": 57871,
+      "fails": 14437,
+      "rate": 0.8003402113182497
+    }
+  },
+  "hold_rps": 602.5666666666667,
+  "route_p95_ms": {
+    "menu_products_ms": 5997.28565,
+    "public_news_ms": 4707.08725,
+    "menu_categories_ms": 10000.098,
+    "public_branches_ms": 5663.936999999998
+  },
+  "peaks_per_pod_and_node": {
+    "desktop-control-plane": {
+      "cpu_m": 4020,
+      "ram_Mi": 2225
+    },
+    "ai-service": {
+      "cpu_m": 31,
+      "ram_Mi": 187
+    },
+    "api-gateway": {
+      "cpu_m": 414,
+      "ram_Mi": 53
+    },
+    "identity-service": {
+      "cpu_m": 194,
+      "ram_Mi": 55
+    },
+    "inventory-service": {
+      "cpu_m": 23,
+      "ram_Mi": 42
+    },
+    "menu-service": {
+      "cpu_m": 227,
+      "ram_Mi": 47
+    },
+    "news-service": {
+      "cpu_m": 166,
+      "ram_Mi": 45
+    },
+    "order-service": {
+      "cpu_m": 25,
+      "ram_Mi": 56
+    },
+    "web-customer": {
+      "cpu_m": 4,
+      "ram_Mi": 7
+    }
+  },
+  "peaks_aggregate_service": {
+    "ai-service": {
+      "cpu_m": 31,
+      "ram_Mi": 187
+    },
+    "api-gateway": {
+      "cpu_m": 1167,
+      "ram_Mi": 145
+    },
+    "identity-service": {
+      "cpu_m": 476,
+      "ram_Mi": 152
+    },
+    "inventory-service": {
+      "cpu_m": 23,
+      "ram_Mi": 42
+    },
+    "menu-service": {
+      "cpu_m": 632,
+      "ram_Mi": 178
+    },
+    "news-service": {
+      "cpu_m": 166,
+      "ram_Mi": 45
+    },
+    "order-service": {
+      "cpu_m": 25,
+      "ram_Mi": 56
+    },
+    "web-customer": {
+      "cpu_m": 4,
+      "ram_Mi": 7
+    }
+  },
+  "hpa_peak": {
+    "api-gateway": 4,
+    "identity-service": 3,
+    "menu-service": 4
+  },
+  "new_restarts": {
+    "api-gateway-7f4fcdd58c-llfzw/api-gateway": 2,
+    "api-gateway-7f4fcdd58c-4kmmr/api-gateway": 2,
+    "api-gateway-7f4fcdd58c-wsxjd/api-gateway": 2,
+    "api-gateway-7f4fcdd58c-tsppw/api-gateway": 2
+  },
+  "new_probe_failures": [
+    {
+      "object": "api-gateway-7f4fcdd58c-llfzw",
+      "message": "Liveness probe failed: Get \"http://10.244.0.171:3000/health/live\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 3
+    },
+    {
+      "object": "menu-service-7cf979fcc-6p25w",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+      "count": 4
+    },
+    {
+      "object": "news-service-855d5cb5fd-ght8t",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+      "count": 8
+    },
+    {
+      "object": "api-gateway-7f4fcdd58c-4kmmr",
+      "message": "Startup probe failed: Get \"http://10.244.0.194:3000/health/live\": dial tcp 10.244.0.194:3000: connect: connection refused",
+      "count": 1
+    },
+    {
+      "object": "api-gateway-7f4fcdd58c-llfzw",
+      "message": "Readiness probe failed: Get \"http://10.244.0.171:3000/health/ready\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 3
+    },
+    {
+      "object": "api-gateway-7f4fcdd58c-tsppw",
+      "message": "Startup probe failed: Get \"http://10.244.0.193:3000/health/live\": dial tcp 10.244.0.193:3000: connect: connection refused",
+      "count": 1
+    },
+    {
+      "object": "api-gateway-7f4fcdd58c-wsxjd",
+      "message": "Liveness probe failed: Get \"http://10.244.0.186:3000/health/live\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 3
+    },
+    {
+      "object": "api-gateway-7f4fcdd58c-wsxjd",
+      "message": "Readiness probe failed: Get \"http://10.244.0.186:3000/health/ready\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 3
+    },
+    {
+      "object": "identity-service-5774bb6df7-4vm9f",
+      "message": "Startup probe failed: Get \"http://10.244.0.196:3001/health/live\": dial tcp 10.244.0.196:3001: connect: connection refused",
+      "count": 6
+    },
+    {
+      "object": "identity-service-5774bb6df7-6bn9h",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+      "count": 12
+    },
+    {
+      "object": "menu-service-7cf979fcc-rsqm7",
+      "message": "Startup probe failed: Get \"http://10.244.0.195:3003/health/live\": dial tcp 10.244.0.195:3003: connect: connection refused",
+      "count": 5
+    },
+    {
+      "object": "api-gateway-7f4fcdd58c-4kmmr",
+      "message": "Readiness probe failed: Get \"http://10.244.0.194:3000/health/ready\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 11
+    },
+    {
+      "object": "api-gateway-7f4fcdd58c-llfzw",
+      "message": "Readiness probe failed: Get \"http://10.244.0.171:3000/health/ready\": dial tcp 10.244.0.171:3000: connect: connection refused",
+      "count": 5
+    },
+    {
+      "object": "api-gateway-7f4fcdd58c-tsppw",
+      "message": "Readiness probe failed: Get \"http://10.244.0.193:3000/health/ready\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 10
+    },
+    {
+      "object": "ai-service-74595687bb-sjdxt",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+      "count": 15
+    },
+    {
+      "object": "api-gateway-7f4fcdd58c-4kmmr",
+      "message": "Liveness probe failed: Get \"http://10.244.0.194:3000/health/live\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 6
+    },
+    {
+      "object": "api-gateway-7f4fcdd58c-llfzw",
+      "message": "Startup probe failed: Get \"http://10.244.0.171:3000/health/live\": dial tcp 10.244.0.171:3000: connect: connection refused",
+      "count": 1
+    },
+    {
+      "object": "api-gateway-7f4fcdd58c-tsppw",
+      "message": "Liveness probe failed: Get \"http://10.244.0.193:3000/health/live\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 6
+    },
+    {
+      "object": "api-gateway-7f4fcdd58c-wsxjd",
+      "message": "Readiness probe failed: Get \"http://10.244.0.186:3000/health/ready\": dial tcp 10.244.0.186:3000: connect: connection refused",
+      "count": 6
+    },
+    {
+      "object": "api-gateway-7f4fcdd58c-wsxjd",
+      "message": "Readiness probe failed: Get \"http://10.244.0.186:3000/health/ready\": read tcp 10.244.0.1:37734->10.244.0.186:3000: read: connection reset by peer",
+      "count": 1
+    },
+    {
+      "object": "identity-service-5774bb6df7-4vm9f",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+      "count": 6
+    },
+    {
+      "object": "identity-service-5774bb6df7-6bn9h",
+      "message": "Liveness probe failed: Get \"http://10.244.0.159:3001/health/live\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 1
+    },
+    {
+      "object": "identity-service-5774bb6df7-fldjm",
+      "message": "Startup probe failed: Get \"http://10.244.0.197:3001/health/live\": dial tcp 10.244.0.197:3001: connect: connection refused",
+      "count": 6
+    },
+    {
+      "object": "inventory-service-cd68cd75b-s5xjr",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+      "count": 5
+    },
+    {
+      "object": "menu-service-7cf979fcc-6p25w",
+      "message": "Liveness probe failed: Get \"http://10.244.0.130:3003/health/live\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 5
+    },
+    {
+      "object": "menu-service-7cf979fcc-6p25w",
+      "message": "Readiness probe failed: Get \"http://10.244.0.130:3003/health/ready\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 8
+    },
+    {
+      "object": "menu-service-7cf979fcc-hpbwk",
+      "message": "Startup probe failed: Get \"http://10.244.0.198:3003/health/live\": dial tcp 10.244.0.198:3003: connect: connection refused",
+      "count": 4
+    },
+    {
+      "object": "menu-service-7cf979fcc-rsqm7",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+      "count": 7
+    },
+    {
+      "object": "menu-service-7cf979fcc-stn8g",
+      "message": "Startup probe failed: Get \"http://10.244.0.199:3003/health/live\": dial tcp 10.244.0.199:3003: connect: connection refused",
+      "count": 5
+    },
+    {
+      "object": "news-service-855d5cb5fd-ght8t",
+      "message": "Readiness probe failed: Get \"http://10.244.0.86:3006/health/ready\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 1
+    },
+    {
+      "object": "order-service-6c86bf89-bwgj7",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+      "count": 4
+    },
+    {
+      "object": "api-gateway-7f4fcdd58c-4kmmr",
+      "message": "Readiness probe failed: Get \"http://10.244.0.194:3000/health/ready\": dial tcp 10.244.0.194:3000: connect: connection refused",
+      "count": 7
+    },
+    {
+      "object": "api-gateway-7f4fcdd58c-tsppw",
+      "message": "Readiness probe failed: Get \"http://10.244.0.193:3000/health/ready\": dial tcp 10.244.0.193:3000: connect: connection refused",
+      "count": 8
+    },
+    {
+      "object": "identity-service-5774bb6df7-4vm9f",
+      "message": "Readiness probe failed: Get \"http://10.244.0.196:3001/health/ready\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 1
+    },
+    {
+      "object": "menu-service-7cf979fcc-hpbwk",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+      "count": 2
+    },
+    {
+      "object": "identity-service-5774bb6df7-fldjm",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+      "count": 3
+    },
+    {
+      "object": "menu-service-7cf979fcc-hpbwk",
+      "message": "Readiness probe failed: Get \"http://10.244.0.198:3003/health/ready\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 1
+    },
+    {
+      "object": "menu-service-7cf979fcc-stn8g",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+      "count": 1
+    }
+  ],
+  "gateway_quota_counters": {
+    "89510046-e5b9-4973-8a6f-553a267a0da8": {
+      "periods": 339,
+      "throttled_periods": 179,
+      "fraction": 0.528023598820059,
+      "throttled_usec": 5778852
+    },
+    "9ddc2c06-a356-47e1-9fa7-ae63d3300c52": {
+      "periods": 200,
+      "throttled_periods": 162,
+      "fraction": 0.81,
+      "throttled_usec": 8713940
+    },
+    "58b2d5cf-74dd-4fb2-b132-5448d53b0d21": {
+      "periods": 124,
+      "throttled_periods": 20,
+      "fraction": 0.16129032258064516,
+      "throttled_usec": 1373829
+    },
+    "139d25d5-b168-41d4-aa63-474377c41621": {
+      "periods": 621,
+      "throttled_periods": 281,
+      "fraction": 0.4524959742351047,
+      "throttled_usec": 12209443
+    }
+  },
+  "host_busy_peak_percent": 100.0,
+  "k6_cpu_peak_one_core_percent": 217.6,
+  "k6_rss_peak_KiB": 571376,
+  "observer_samples": 36,
+  "k6_open_fds_peak": 970,
+  "transport_error_mentions": {
+    "request timeout": 3666,
+    "EOF": 59406,
+    "too many open files": 0,
+    "cannot assign requested address": 0,
+    "Insufficient VUs": 0,
+    "connection refused": 0
+  }
+}

@@ -1,0 +1,213 @@
+{
+  "directory": "20261013T175455.894727Z-final-logger-confirm-2-250",
+  "started_at": "2026-10-13T17:54:56.172838+00:00",
+  "vus": 250,
+  "think_seconds": 3,
+  "cache_ms": 5000,
+  "accept_encoding": "legacy identity (header absent)",
+  "ramp_seconds": 60,
+  "hold_seconds": 120,
+  "down_seconds": 30,
+  "k6_version": "k6 v0.57.0 (commit/50afd82c18, go1.23.6, darwin/arm64)",
+  "source_head": "9cc558034d5190decd88188818d04d7962c0645e",
+  "generator_rlimit_nofile": [
+    1048575,
+    9223372036854775807
+  ],
+  "host_fd_limit": "maxfiles    256            unlimited",
+  "host_cpu_count": "8",
+  "workload_sha256": "bbdb588301541dbcd0998d00b3da84282152aa7e79912865208c27baa296da3f",
+  "k6_sha256": "e234ca660a9c73b8dafd7d0cbbf4f7edeb4eebcc5ab55a60b6483db2b4658fe7",
+  "gateway_policy": {
+    "GATEWAY_REQUEST_LOGGING": "false",
+    "GATEWAY_PROXY_KEEP_ALIVE": "false",
+    "GATEWAY_MAX_REQUESTS_PER_SOCKET": "0"
+  },
+  "gateway_runtime": {
+    "node": "v20.20.2",
+    "arch": "arm64"
+  },
+  "load_started_at": "2026-10-13T17:55:16.237579+00:00",
+  "k6_exit": 0,
+  "load_finished_at": "2026-10-13T17:58:48.101864+00:00",
+  "finished_at": "2026-10-13T18:03:12.822372+00:00",
+  "http_pass": true,
+  "stable": true,
+  "violations": [],
+  "status": "STABLE PASS",
+  "smoke_after_exit": 0,
+  "requests": 50260,
+  "rps": 237.7933608812794,
+  "successful_rps": 237.7933608812794,
+  "failure_rate": 0,
+  "checks_rate": 1,
+  "p95_ms": 415.01759999999996,
+  "hold_metrics": {
+    "http_reqs{phase:hold}": {
+      "count": 36423,
+      "rate": 172.3268520369845
+    },
+    "http_req_failed{phase:hold}": {
+      "fails": 36423,
+      "rate": 0,
+      "passes": 0
+    },
+    "checks{phase:hold}": {
+      "rate": 1,
+      "passes": 72846,
+      "fails": 0
+    },
+    "http_req_duration{phase:hold}": {
+      "p(50)": 14.2,
+      "p(95)": 349.76989999999995,
+      "max": 2756.352,
+      "avg": 69.41158957252318
+    }
+  },
+  "hold_rps": 303.525,
+  "route_p95_ms": {
+    "menu_products_ms": 236.71719999999996,
+    "menu_categories_ms": 117.97279999999999,
+    "public_news_ms": 370.5835999999999,
+    "public_branches_ms": 860.7501999999997
+  },
+  "peaks_per_pod_and_node": {
+    "desktop-control-plane": {
+      "cpu_m": 1900,
+      "ram_Mi": 2272
+    },
+    "ai-service": {
+      "cpu_m": 5,
+      "ram_Mi": 178
+    },
+    "api-gateway": {
+      "cpu_m": 265,
+      "ram_Mi": 38
+    },
+    "identity-service": {
+      "cpu_m": 159,
+      "ram_Mi": 53
+    },
+    "inventory-service": {
+      "cpu_m": 4,
+      "ram_Mi": 42
+    },
+    "menu-service": {
+      "cpu_m": 121,
+      "ram_Mi": 46
+    },
+    "news-service": {
+      "cpu_m": 68,
+      "ram_Mi": 46
+    },
+    "order-service": {
+      "cpu_m": 7,
+      "ram_Mi": 56
+    },
+    "web-customer": {
+      "cpu_m": 1,
+      "ram_Mi": 7
+    }
+  },
+  "peaks_aggregate_service": {
+    "ai-service": {
+      "cpu_m": 5,
+      "ram_Mi": 178
+    },
+    "api-gateway": {
+      "cpu_m": 888,
+      "ram_Mi": 134
+    },
+    "identity-service": {
+      "cpu_m": 268,
+      "ram_Mi": 150
+    },
+    "inventory-service": {
+      "cpu_m": 4,
+      "ram_Mi": 42
+    },
+    "menu-service": {
+      "cpu_m": 322,
+      "ram_Mi": 173
+    },
+    "news-service": {
+      "cpu_m": 68,
+      "ram_Mi": 46
+    },
+    "order-service": {
+      "cpu_m": 7,
+      "ram_Mi": 56
+    },
+    "web-customer": {
+      "cpu_m": 1,
+      "ram_Mi": 7
+    }
+  },
+  "hpa_peak": {
+    "api-gateway": 4,
+    "identity-service": 3,
+    "menu-service": 4
+  },
+  "new_restarts": {},
+  "new_probe_failures": [
+    {
+      "object": "menu-service-7cf979fcc-7s2qs",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+      "count": 1
+    },
+    {
+      "object": "identity-service-5774bb6df7-x5fqt",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+      "count": 1
+    },
+    {
+      "object": "identity-service-5774bb6df7-6bn9h",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+      "count": 1
+    },
+    {
+      "object": "menu-service-7cf979fcc-8w5tr",
+      "message": "Readiness probe failed: Get \"http://10.244.0.241:3003/health/ready\": dial tcp 10.244.0.241:3003: connect: connection refused",
+      "count": 1
+    }
+  ],
+  "gateway_quota_counters": {
+    "8d855045-3c90-4452-b174-8f03d49831f4": {
+      "periods": 2031,
+      "throttled_periods": 204,
+      "fraction": 0.10044313146233383,
+      "throttled_usec": 7271474
+    },
+    "3f9fe031-3964-418b-b7c9-3a650fdcef55": {
+      "periods": 2026,
+      "throttled_periods": 173,
+      "fraction": 0.08538993089832182,
+      "throttled_usec": 8322167
+    },
+    "b35eeae8-23b1-4fce-8798-6de52298121d": {
+      "periods": 1644,
+      "throttled_periods": 252,
+      "fraction": 0.15328467153284672,
+      "throttled_usec": 14805036
+    },
+    "cb8bae51-7f7b-4ad6-9d24-7c0a4d9acda5": {
+      "periods": 1482,
+      "throttled_periods": 169,
+      "fraction": 0.11403508771929824,
+      "throttled_usec": 5338311
+    }
+  },
+  "host_busy_peak_percent": 98.55,
+  "k6_cpu_peak_one_core_percent": 201.8,
+  "k6_rss_peak_KiB": 349248,
+  "observer_samples": 42,
+  "k6_open_fds_peak": 73,
+  "transport_error_mentions": {
+    "request timeout": 0,
+    "EOF": 0,
+    "too many open files": 0,
+    "cannot assign requested address": 0,
+    "Insufficient VUs": 0,
+    "connection refused": 0
+  }
+}

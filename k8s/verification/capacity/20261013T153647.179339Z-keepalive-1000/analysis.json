@@ -1,0 +1,236 @@
+{
+  "directory": "20261013T153647.179339Z-keepalive-1000",
+  "started_at": "2026-10-13T15:36:47.737160+00:00",
+  "vus": 1000,
+  "think_seconds": 3,
+  "cache_ms": 5000,
+  "ramp_seconds": 60,
+  "hold_seconds": 120,
+  "down_seconds": 30,
+  "k6_version": "k6 v0.57.0 (commit/50afd82c18, go1.23.6, darwin/arm64)",
+  "source_head": "9cc558034d5190decd88188818d04d7962c0645e",
+  "generator_rlimit_nofile": [
+    1048575,
+    9223372036854775807
+  ],
+  "host_fd_limit": "maxfiles    256            unlimited",
+  "host_cpu_count": "8",
+  "workload_sha256": "206e5d73be79baab3720469b23c97a57aa811ff4def43d08a075e02ce364d3f0",
+  "k6_sha256": "e234ca660a9c73b8dafd7d0cbbf4f7edeb4eebcc5ab55a60b6483db2b4658fe7",
+  "gateway_policy": {
+    "GATEWAY_REQUEST_LOGGING": "false",
+    "GATEWAY_PROXY_KEEP_ALIVE": "true"
+  },
+  "gateway_runtime": {
+    "node": "v20.20.2",
+    "arch": "arm64"
+  },
+  "load_started_at": "2026-10-13T15:37:08.201763+00:00",
+  "k6_exit": 99,
+  "load_finished_at": "2026-10-13T15:40:40.166333+00:00",
+  "finished_at": "2026-10-13T15:46:58.302929+00:00",
+  "http_pass": false,
+  "stable": true,
+  "violations": [],
+  "status": "FAIL",
+  "smoke_after_exit": 0,
+  "requests": 101628,
+  "rps": 480.837439520479,
+  "successful_rps": 480.72388716730376,
+  "failure_rate": 0.0002361553902467824,
+  "checks_rate": 0.9997638446097532,
+  "p95_ms": 2972.5677999999994,
+  "hold_metrics": {
+    "http_req_duration{phase:hold}": {
+      "avg": 955.668295185355,
+      "p(50)": 702.905,
+      "p(95)": 3013.787449999999,
+      "max": 9955.386
+    },
+    "checks{phase:hold}": {
+      "rate": 0.9997003339136391,
+      "passes": 140114,
+      "fails": 42
+    },
+    "http_req_failed{phase:hold}": {
+      "rate": 0.0002996660863609121,
+      "passes": 21,
+      "fails": 70057
+    },
+    "http_reqs{phase:hold}": {
+      "count": 70078,
+      "rate": 331.5634085755513
+    }
+  },
+  "hold_rps": 583.9833333333333,
+  "route_p95_ms": {
+    "public_news_ms": 2268.607399999998,
+    "menu_products_ms": 2203.6684999999998,
+    "menu_categories_ms": 2405.1594,
+    "public_branches_ms": 3747.0292999999997
+  },
+  "peaks_per_pod_and_node": {
+    "desktop-control-plane": {
+      "cpu_m": 3493,
+      "ram_Mi": 2406
+    },
+    "ai-service": {
+      "cpu_m": 14,
+      "ram_Mi": 229
+    },
+    "api-gateway": {
+      "cpu_m": 501,
+      "ram_Mi": 79
+    },
+    "identity-service": {
+      "cpu_m": 145,
+      "ram_Mi": 158
+    },
+    "inventory-service": {
+      "cpu_m": 9,
+      "ram_Mi": 41
+    },
+    "menu-service": {
+      "cpu_m": 192,
+      "ram_Mi": 46
+    },
+    "news-service": {
+      "cpu_m": 142,
+      "ram_Mi": 46
+    },
+    "order-service": {
+      "cpu_m": 24,
+      "ram_Mi": 57
+    },
+    "web-customer": {
+      "cpu_m": 1,
+      "ram_Mi": 8
+    }
+  },
+  "peaks_aggregate_service": {
+    "ai-service": {
+      "cpu_m": 14,
+      "ram_Mi": 229
+    },
+    "api-gateway": {
+      "cpu_m": 1557,
+      "ram_Mi": 210
+    },
+    "identity-service": {
+      "cpu_m": 328,
+      "ram_Mi": 195
+    },
+    "inventory-service": {
+      "cpu_m": 9,
+      "ram_Mi": 41
+    },
+    "menu-service": {
+      "cpu_m": 555,
+      "ram_Mi": 178
+    },
+    "news-service": {
+      "cpu_m": 142,
+      "ram_Mi": 46
+    },
+    "order-service": {
+      "cpu_m": 24,
+      "ram_Mi": 57
+    },
+    "web-customer": {
+      "cpu_m": 1,
+      "ram_Mi": 8
+    }
+  },
+  "hpa_peak": {
+    "api-gateway": 4,
+    "identity-service": 3,
+    "menu-service": 4
+  },
+  "new_restarts": {},
+  "new_probe_failures": [
+    {
+      "object": "api-gateway-7d5589bd48-j64pw",
+      "message": "Liveness probe failed: Get \"http://10.244.0.162:3000/health/live\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 2
+    },
+    {
+      "object": "identity-service-5774bb6df7-nz56d",
+      "message": "Startup probe failed: Get \"http://10.244.0.165:3001/health/live\": dial tcp 10.244.0.165:3001: connect: connection refused",
+      "count": 1
+    },
+    {
+      "object": "api-gateway-7d5589bd48-9vcj5",
+      "message": "Liveness probe failed: Get \"http://10.244.0.161:3000/health/live\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 1
+    },
+    {
+      "object": "api-gateway-7d5589bd48-9vcj5",
+      "message": "Readiness probe failed: Get \"http://10.244.0.161:3000/health/ready\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 1
+    },
+    {
+      "object": "api-gateway-7d5589bd48-j64pw",
+      "message": "Readiness probe failed: Get \"http://10.244.0.162:3000/health/ready\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "count": 1
+    },
+    {
+      "object": "menu-service-7cf979fcc-kf4zz",
+      "message": "Startup probe failed: Get \"http://10.244.0.167:3003/health/live\": dial tcp 10.244.0.167:3003: connect: connection refused",
+      "count": 1
+    },
+    {
+      "object": "menu-service-7cf979fcc-6p25w",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+      "count": 1
+    },
+    {
+      "object": "menu-service-7cf979fcc-v826j",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+      "count": 2
+    },
+    {
+      "object": "menu-service-7cf979fcc-kf4zz",
+      "message": "Readiness probe failed: Get \"http://10.244.0.167:3003/health/ready\": dial tcp 10.244.0.167:3003: connect: connection refused",
+      "count": 1
+    }
+  ],
+  "gateway_quota_counters": {
+    "5fc80e68-9041-4036-b892-cc86104b7160": {
+      "periods": 2344,
+      "throttled_periods": 1814,
+      "fraction": 0.7738907849829352,
+      "throttled_usec": 142882244
+    },
+    "71d343ac-848c-444a-82b9-587b6ccd73ed": {
+      "periods": 2317,
+      "throttled_periods": 1805,
+      "fraction": 0.7790246007768666,
+      "throttled_usec": 91638984
+    },
+    "176e7137-3e50-4c52-8b25-085c0745e047": {
+      "periods": 1544,
+      "throttled_periods": 479,
+      "fraction": 0.31023316062176165,
+      "throttled_usec": 23654748
+    },
+    "535719a2-b59a-4ae8-abda-3913eb545908": {
+      "periods": 1441,
+      "throttled_periods": 412,
+      "fraction": 0.28591256072172105,
+      "throttled_usec": 26315300
+    }
+  },
+  "host_busy_peak_percent": 99.87,
+  "k6_cpu_peak_one_core_percent": 316.9,
+  "k6_rss_peak_KiB": 871408,
+  "observer_samples": 50,
+  "k6_open_fds_peak": 1009,
+  "transport_error_mentions": {
+    "request timeout": 0,
+    "EOF": 0,
+    "too many open files": 0,
+    "cannot assign requested address": 0,
+    "Insufficient VUs": 0,
+    "connection refused": 0
+  }
+}

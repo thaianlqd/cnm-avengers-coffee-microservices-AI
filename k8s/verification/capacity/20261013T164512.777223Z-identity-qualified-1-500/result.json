@@ -1,0 +1,10 @@
+{
+  "http_pass": false,
+  "stable": false,
+  "violations": [
+    "new Killing event",
+    "new application container restart"
+  ],
+  "status": "FAIL",
+  "smoke_after_exit": 0
+}

@@ -1,0 +1,13 @@
+{
+  "started_at": "2026-10-13T17:21:15.064534+00:00",
+  "finished_at": "2026-10-13T17:29:14.106250+00:00",
+  "k6_exit": 0,
+  "smoke_exit": 0,
+  "violations": [],
+  "status": "STABLE PASS",
+  "requests": 37884,
+  "failure_rate": 0,
+  "checks_rate": 1,
+  "p95_ms": 751.15545,
+  "rps": 208.78619069484853
+}

@@ -1,0 +1,14 @@
+{
+  "excluded_from_capacity_claim": true,
+  "reason": "Five duplicate customer Compose applications started immediately before load; confounded environment, not comparable to single-copy Kubernetes qualification.",
+  "compose_start_utc": "2026-10-13T15:05:16Z",
+  "compose_stopped_utc": "2026-10-13T15:20:00Z",
+  "applications": [
+    "ai-service",
+    "identity-service",
+    "inventory-service",
+    "menu-service",
+    "news-service"
+  ],
+  "evidence": "docker inspect State.StartedAt/FinishedAt captured after preflight rejected duplicate applications. No statement that remote DB was unchanged by external normal-mode startup."
+}

@@ -1,0 +1,93 @@
+{
+  "observed_at": "2026-10-13T16:38:06.295Z",
+  "routes": [
+    {
+      "route": "/menu/danh-muc",
+      "identity": {
+        "request_encoding": "identity",
+        "response_encoding": "identity",
+        "wire_body_bytes": 2390,
+        "decoded_bytes": 2390,
+        "item_count": 23,
+        "total": null,
+        "decoded_sha256": "cf478e184f4d83fad83c156c950bfeb423c8611241c4af7630db617cc139138c"
+      },
+      "gzip": {
+        "request_encoding": "gzip",
+        "response_encoding": "gzip",
+        "wire_body_bytes": 455,
+        "decoded_bytes": 2390,
+        "item_count": 23,
+        "total": null,
+        "decoded_sha256": "cf478e184f4d83fad83c156c950bfeb423c8611241c4af7630db617cc139138c"
+      },
+      "same_full_json": true
+    },
+    {
+      "route": "/menu/san-pham",
+      "identity": {
+        "request_encoding": "identity",
+        "response_encoding": "identity",
+        "wire_body_bytes": 116121,
+        "decoded_bytes": 116121,
+        "item_count": 118,
+        "total": null,
+        "decoded_sha256": "15e6bca6029d285882736faaebec91899460e53622ce43a9962635d38bc5e2f3"
+      },
+      "gzip": {
+        "request_encoding": "gzip",
+        "response_encoding": "gzip",
+        "wire_body_bytes": 13198,
+        "decoded_bytes": 116121,
+        "item_count": 118,
+        "total": null,
+        "decoded_sha256": "15e6bca6029d285882736faaebec91899460e53622ce43a9962635d38bc5e2f3"
+      },
+      "same_full_json": true
+    },
+    {
+      "route": "/users/branches/public",
+      "identity": {
+        "request_encoding": "identity",
+        "response_encoding": "identity",
+        "wire_body_bytes": 718448,
+        "decoded_bytes": 718448,
+        "item_count": 1215,
+        "total": 1215,
+        "decoded_sha256": "8957620e58fc9419b4759898f4caee36a7b1d61f8b17e0ad8fed32436b1fbe9e"
+      },
+      "gzip": {
+        "request_encoding": "gzip",
+        "response_encoding": "gzip",
+        "wire_body_bytes": 80793,
+        "decoded_bytes": 718448,
+        "item_count": 1215,
+        "total": 1215,
+        "decoded_sha256": "8957620e58fc9419b4759898f4caee36a7b1d61f8b17e0ad8fed32436b1fbe9e"
+      },
+      "same_full_json": true
+    },
+    {
+      "route": "/news?page=1&limit=6",
+      "identity": {
+        "request_encoding": "identity",
+        "response_encoding": "identity",
+        "wire_body_bytes": 5984,
+        "decoded_bytes": 5984,
+        "item_count": 3,
+        "total": 3,
+        "decoded_sha256": "78a3948c62176040d683761446c04e38c46c9ea1995d74dcc2a37544c38ca83d"
+      },
+      "gzip": {
+        "request_encoding": "gzip",
+        "response_encoding": "gzip",
+        "wire_body_bytes": 2700,
+        "decoded_bytes": 5984,
+        "item_count": 3,
+        "total": 3,
+        "decoded_sha256": "78a3948c62176040d683761446c04e38c46c9ea1995d74dcc2a37544c38ca83d"
+      },
+      "same_full_json": true
+    }
+  ]
+}
