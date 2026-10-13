@@ -130,6 +130,10 @@ def _safe_log_inference(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    if os.getenv('K8S_DEMO_READ_ONLY') == 'true':
+        logger.info('Kubernetes read-only browse demo: startup training/storage writes disabled')
+        yield
+        return
     logger.info("AI Service dang khoi dong - Dang huan luyen model...")
     from src.agents.agent_memory import redis_available
     from src.common.agent_provider_policy import enabled
@@ -2009,3 +2013,31 @@ def health():
         "agent_fallback_providers": os.getenv("AI_AGENT_FALLBACK_PROVIDERS", "gemini,openai"),
         "redis_available": redis_available(),
     }
+
+
+@app.get("/health/live")
+def health_live():
+    return {"status": "ok"}
+
+
+@app.get("/health/ready")
+def health_ready():
+    # Keep the dependency probe bounded and independent of model training/provider quota.
+    import psycopg2
+    conn = None
+    try:
+        conn = psycopg2.connect(
+            host=os.getenv("DB_HOST", "localhost"), port=os.getenv("DB_PORT", "5432"),
+            user=os.getenv("DB_USER", "admin"), password=os.getenv("DB_PASSWORD"),
+            dbname=os.getenv("DB_NAME", "avengers_coffee"),
+            sslmode=os.getenv("PGSSLMODE", "require"), connect_timeout=2,
+            options="-c statement_timeout=1000",
+        )
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT 1")
+        return {"status": "ok"}
+    except Exception:
+        raise HTTPException(status_code=503, detail="not_ready") from None
+    finally:
+        if conn is not None:
+            conn.close()

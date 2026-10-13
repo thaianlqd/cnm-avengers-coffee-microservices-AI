@@ -61,3 +61,5 @@ pnpm-debug.log*
 # SQL files are kept in repo so teammates can restore and run the project quickly.
 db_metadata.txt
 .review-seed-backups/
+/k8s/overlays/.docker-desktop-runtime/
+/.tools/k6/

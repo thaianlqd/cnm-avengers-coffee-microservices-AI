@@ -9,6 +9,8 @@ import {
   Post,
   Put,
   Query,
+  Req,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -21,6 +23,8 @@ import { CreateArticleDto, UpdateArticleDto } from './dto/article.dto';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { RolesGuard } from '../../auth/roles.guard';
 import { Roles } from '../../auth/auth.decorators';
+import type { Request, Response } from 'express';
+import { PublicBrowseCache } from '../../public-browse-cache';
 
 const uploadRootDir =
   process.env.UPLOAD_ROOT_DIR || join(process.cwd(), 'uploads');
@@ -51,6 +55,7 @@ const newsImageInterceptor = FileInterceptor('image', {
 
 @Controller('news')
 export class NewsController {
+  private readonly publicCache = new PublicBrowseCache();
   constructor(private readonly newsService: NewsService) {}
 
   @Get()
@@ -58,12 +63,13 @@ export class NewsController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('category') category?: string,
+    @Req() req?: Request,
+    @Res() res?: Response,
   ) {
-    return this.newsService.findAll(
-      Number(page || 1),
-      Number(limit || 12),
-      category,
-    );
+    const resolvedPage = Number(page || 1), resolvedLimit = Number(limit || 12);
+    const load = () => this.newsService.findAll(resolvedPage, resolvedLimit, category);
+    if (!req || !res) return load();
+    return this.publicCache.respond(JSON.stringify([resolvedPage, resolvedLimit, category ?? null]), load, req, res);
   }
 
   @Get('featured/list')

@@ -1,10 +1,13 @@
-import { Body, Controller, Delete, ForbiddenException, Get, Param, Patch, Post, Query, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Delete, ForbiddenException, Get, Param, Patch, Post, Query, UnauthorizedException, Req, Res } from '@nestjs/common';
+import type { Request, Response } from 'express';
+import { PublicBrowseCache } from '../../public-browse-cache';
 import { AllowInternal, CurrentUser, Public, Roles } from '../../auth/auth.decorators';
 import type { AuthUser } from '../../auth/auth.types';
 import { UserService } from './user.service';
 
 @Controller()
 export class UserController {
+  private readonly publicBrowseCache = new PublicBrowseCache();
   constructor(private readonly userService: UserService) {}
 
   private ensureSelfOrAdmin(currentUser: AuthUser | null, userId: string) {
@@ -161,8 +164,8 @@ export class UserController {
 
   @Public()
   @Get(['branches/public', 'users/branches/public'])
-  async layDanhSachChiNhanhCongKhai() {
-    return this.userService.layDanhSachChiNhanhCongKhai();
+  async layDanhSachChiNhanhCongKhai(@Req() req: Request, @Res() res: Response) {
+    await this.publicBrowseCache.respond('public-branches', () => this.userService.layDanhSachChiNhanhCongKhai(), req, res);
   }
 
   @Roles('ADMIN')

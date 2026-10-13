@@ -1,0 +1,86 @@
+{
+  "verified_date": "2026-10-13",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "baseline_head": "4a2cabe35dfffc31b1da4317cbfd8c7bf5f6f184",
+  "images": {
+    "web-customer": {
+      "architecture": "arm64",
+      "image_id": "sha256:23635cec022b31392a15ba0828f9029e87446d9ce86375eb12d997bc25a636ba",
+      "tag": "avengers/web-customer:k8s-local"
+    },
+    "api-gateway": {
+      "architecture": "arm64",
+      "image_id": "sha256:1754a0e054dd2be6269d0bb51ff68e3b9da91f8742739678f5d4ed84831a873a",
+      "tag": "avengers/api-gateway:k8s-local"
+    },
+    "identity-service": {
+      "architecture": "arm64",
+      "image_id": "sha256:f601c137f79032216e53d57d6ece99dc40def93fbb980408a7177909337dc911",
+      "tag": "avengers/identity-service:k8s-local"
+    },
+    "menu-service": {
+      "architecture": "arm64",
+      "image_id": "sha256:f6dc6da5b24a9ceb740f20edcf7e95ba87bbe97ff0d02a41af40034400fcfc30",
+      "tag": "avengers/menu-service:k8s-local"
+    },
+    "inventory-service": {
+      "architecture": "arm64",
+      "image_id": "sha256:8d8b9f7707c70cf30700b0f8767cec5c78831b3003a6f78aa1f80a3fd8522900",
+      "tag": "avengers/inventory-service:k8s-local"
+    },
+    "order-service": {
+      "architecture": "arm64",
+      "image_id": "sha256:20d23defbf72bc724f6e06c646409a4b9259773b1a3ceba4f569ed67c44564b5",
+      "tag": "avengers/order-service:k8s-local"
+    },
+    "news-service": {
+      "architecture": "arm64",
+      "image_id": "sha256:45eea3a05c5b281259ecce106b76aa2dda5b2ace8a3cc6d6573adf43b5bc4e3e",
+      "tag": "avengers/news-service:k8s-local"
+    },
+    "ai-service": {
+      "architecture": "arm64",
+      "image_id": "sha256:546101b0a176cd6f1fd1d6dd72faace1475cac672109d6d975c7b9a6ce9483de",
+      "tag": "avengers/ai-service:k8s-local"
+    }
+  },
+  "tests": {
+    "nest_passed": 257,
+    "web_passed": 66,
+    "ai_container_passed": 18,
+    "environment_passed": 14,
+    "total_passed": 355
+  },
+  "schema": {
+    "application_resources_valid": 22,
+    "synthetic_config_secret_resources_valid": 14
+  },
+  "socketio": {
+    "two_servers": "PASS",
+    "transports": [
+      "websocket",
+      "polling"
+    ],
+    "two_kubernetes_pods": "NOT RUN"
+  },
+  "k6_smoke": {
+    "target": "existing Compose gateway",
+    "requests": 36,
+    "failed_rate": 0,
+    "checks_rate": 1,
+    "p95_ms": 660.6,
+    "max_vus": 2,
+    "duration_seconds": 20,
+    "status": "PASS"
+  },
+  "qualification": {
+    "kubernetes_context": "BLOCKED: absent docker-desktop context",
+    "local_compose_db": "FAIL: configured credentials and required application schemas missing",
+    "existing_backend_db_audit": "PASS",
+    "hpa_scaling": "NOT RUN",
+    "self_healing": "NOT RUN",
+    "rolling_update": "NOT RUN",
+    "ui_kubernetes": "NOT RUN",
+    "rollback_kubernetes": "NOT RUN"
+  }
+}

@@ -186,8 +186,10 @@ export class UserService implements OnModuleInit {
     }
 
     if (value) {
-      const newConfig = this.membershipConfigRepo.create({ key, value });
-      await this.membershipConfigRepo.save(newConfig);
+      if (process.env.K8S_DEMO_READ_ONLY !== 'true') {
+        const newConfig = this.membershipConfigRepo.create({ key, value });
+        await this.membershipConfigRepo.save(newConfig);
+      }
       return value;
     }
 

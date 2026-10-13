@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { SocketRedisAdapter } from './infrastructure/socket-redis.adapter';
 import {
   Catch,
   ExceptionFilter,
@@ -36,6 +37,12 @@ class GlobalExceptionFilter implements ExceptionFilter {
 async function bootstrap() {
   try {
     const app = await NestFactory.create(AppModule);
+    app.enableShutdownHooks();
+    if (process.env.SOCKET_REDIS_ENABLED === 'true') {
+      const socketAdapter = new SocketRedisAdapter(app);
+      await socketAdapter.connect();
+      app.useWebSocketAdapter(socketAdapter);
+    }
     app.enableCors();
     app.useGlobalFilters(new GlobalExceptionFilter());
 

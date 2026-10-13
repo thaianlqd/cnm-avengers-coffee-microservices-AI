@@ -9,3 +9,7 @@ __pycache__/
 .DS_Store
 .git/
 .gitignore
+
+.env
+.env.*
+!.env.example

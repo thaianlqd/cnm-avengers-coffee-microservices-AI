@@ -1,0 +1,13 @@
+Deleting one gateway Pod: api-gateway-6fc484db57-6c5zz
+pod "api-gateway-6fc484db57-6c5zz" deleted from avengers-coffee namespace
+pod/api-gateway-6fc484db57-6c5zz condition met
+Waiting for deployment "api-gateway" rollout to finish: 2 of 4 updated replicas are available...
+Waiting for deployment "api-gateway" rollout to finish: 3 of 4 updated replicas are available...
+deployment "api-gateway" successfully rolled out
+NAME                           READY   STATUS    RESTARTS   AGE     IP            NODE                    NOMINATED NODE   READINESS GATES
+api-gateway-6fc484db57-7ltfr   1/1     Running   0          10s     10.244.0.56   desktop-control-plane   <none>           <none>
+api-gateway-6fc484db57-c7v26   1/1     Running   0          3m8s    10.244.0.52   desktop-control-plane   <none>           <none>
+api-gateway-6fc484db57-g8r4j   1/1     Running   0          3m13s   10.244.0.45   desktop-control-plane   <none>           <none>
+api-gateway-6fc484db57-pcwkg   1/1     Running   0          8s      10.244.0.57   desktop-control-plane   <none>           <none>
+Availability samples: 60 failed: 0 report: /var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/avengers-availability.XXXXXX.83piqDpy3m
+PASS

@@ -1,3 +1,4 @@
+import { HealthController } from './health.controller';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import type { StringValue } from 'ms';
@@ -140,7 +141,7 @@ assertProductionSecrets(['JWT_SECRET', 'INTERNAL_SERVICE_TOKEN', 'VNPAY_TMN_CODE
     GiftCardModule,
     SmtpModule,
   ],
-  controllers: [AppController, ReviewController, SurveyController, BranchReviewController],
+  controllers: [HealthController, AppController, ReviewController, SurveyController, BranchReviewController],
   providers: [AppService, ReviewService, SurveyService, BranchReviewService],
 })
 export class AppModule { }

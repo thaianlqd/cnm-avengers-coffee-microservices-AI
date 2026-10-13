@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-customer
+  labels:
+    app.kubernetes.io/part-of: avengers-coffee
+    app.kubernetes.io/name: web-customer
+    app.kubernetes.io/component: frontend
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: web-customer
+    app.kubernetes.io/part-of: avengers-coffee
+  ports:
+  - name: http
+    port: 80
+    targetPort: http

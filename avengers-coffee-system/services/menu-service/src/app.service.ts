@@ -19,6 +19,7 @@ export class AppService implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap() {
+    if (process.env.K8S_DEMO_READ_ONLY === 'true') return;
     console.log('Bootstrapping AppService: running variants migration...');
     await this.migrateExistingVariants();
   }

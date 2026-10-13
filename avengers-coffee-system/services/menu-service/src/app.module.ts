@@ -1,3 +1,4 @@
+import { HealthController } from './health.controller';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Client } from 'pg';
@@ -54,7 +55,7 @@ const menuSchema = process.env.DB_SCHEMA || 'menu';
     TypeOrmModule.forFeature([SanPham, DanhMuc, ThuocTinh, BienTheSanPham]),
     MenuModule,
   ],
-  controllers: [AppController],
+  controllers: [HealthController, AppController],
   providers: [AppService],
 })
 export class AppModule { }

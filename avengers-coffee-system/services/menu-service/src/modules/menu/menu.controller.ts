@@ -1,18 +1,21 @@
-import { Controller, Get, Param, NotFoundException } from '@nestjs/common'
+import { Controller, Get, Param, NotFoundException, Req, Res } from '@nestjs/common'
+import type { Request, Response } from 'express';
+import { PublicBrowseCache } from '../../public-browse-cache';
 import { MenuService } from './menu.service';
 
 @Controller('menu')
 export class MenuController {
+  private readonly publicCache = new PublicBrowseCache();
   constructor(private readonly menuService: MenuService) {}
 
   @Get('san-pham')
-  async laySanPham() {
-    return await this.menuService.layTatCaSanPham();
+  async laySanPham(@Req() req: Request, @Res() res: Response) {
+    await this.publicCache.respond('products', () => this.menuService.layTatCaSanPham(), req, res);
   }
 
   @Get('danh-muc')
-  async layDanhMuc() {
-    return await this.menuService.layTatCaDanhMuc();
+  async layDanhMuc(@Req() req: Request, @Res() res: Response) {
+    await this.publicCache.respond('categories', () => this.menuService.layTatCaDanhMuc(), req, res);
   }
 
   @Get('san-pham/:id')

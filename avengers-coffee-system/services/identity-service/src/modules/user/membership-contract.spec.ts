@@ -1,6 +1,20 @@
 import { UserService } from './user.service';
 
 describe('membership delivery-pricing contract', () => {
+  it('returns default config without seeding the remote DB in demo mode', async () => {
+    const previous = process.env.K8S_DEMO_READ_ONLY;
+    process.env.K8S_DEMO_READ_ONLY = 'true';
+    try {
+      const config = { findOne: jest.fn().mockResolvedValue(null), create: jest.fn(), save: jest.fn() };
+      const service = new UserService({} as any, {} as any, {} as any, {} as any, {} as any,
+        {} as any, config as any, {} as any, {} as any, {} as any);
+      expect(await service.layMembershipConfig('TIER_CONFIG')).toBeTruthy();
+      expect(config.save).not.toHaveBeenCalled();
+    } finally {
+      if (previous === undefined) delete process.env.K8S_DEMO_READ_ONLY;
+      else process.env.K8S_DEMO_READ_ONLY = previous;
+    }
+  });
   const originalConfig = (UserService as any).tierConfigCache;
   afterEach(() => { (UserService as any).tierConfigCache = originalConfig; });
 

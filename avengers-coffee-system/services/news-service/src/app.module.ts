@@ -1,3 +1,4 @@
+import { HealthController } from './health.controller';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import type { StringValue } from 'ms';
@@ -54,7 +55,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
     }),
     NewsModule,
   ],
-  controllers: [],
+  controllers: [HealthController, ],
   providers: [],
 })
 export class AppModule { }
