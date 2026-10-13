@@ -55,7 +55,7 @@ function fmtDate(str) {
 }
 
 const SHIPPER_STATUS_CONFIG = {
-  ACTIVE: { label: 'Đang hoạt động', color: '#059669', bg: '#ecfdf5', border: '#a7f3d0' },
+  ACTIVE: { label: 'Đang hoạt động', color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
   INACTIVE: { label: 'Tắt hoạt động', color: '#475569', bg: '#f1f5f9', border: '#cbd5e1' },
   SUSPENDED: { label: 'Tạm ngưng', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
 }
@@ -170,8 +170,8 @@ const SearchableBranchSelect = ({ branches, value, onChange }) => {
                   padding: '0.5rem 0.75rem', 
                   cursor: 'pointer', 
                   fontSize: '0.875rem',
-                  background: value === (b.code || b.id) ? '#eff6ff' : 'transparent',
-                  color: value === (b.code || b.id) ? '#1d4ed8' : '#334155'
+                  background: value === (b.code || b.id) ? 'var(--primary-light)' : 'transparent',
+                  color: value === (b.code || b.id) ? 'var(--primary-hover)' : '#334155'
                 }}
                 onMouseEnter={e => { if (value !== (b.code || b.id)) e.target.style.background = '#f8fafc' }}
                 onMouseLeave={e => { if (value !== (b.code || b.id)) e.target.style.background = 'transparent' }}
@@ -427,8 +427,8 @@ export function AdminShipperPanel({ branchOptions = [] }) {
   }
 
   const getVehicleIcon = (type) => {
-    if (type === 'CAR') return <Car size={16} style={{ color: '#2563eb' }} />
-    if (type === 'BICYCLE') return <Bike size={16} style={{ color: '#059669' }} />
+    if (type === 'CAR') return <Car size={16} style={{ color: 'var(--primary)' }} />
+    if (type === 'BICYCLE') return <Bike size={16} style={{ color: '#2563eb' }} />
     return <Bike size={16} style={{ color: '#d97706' }} />
   }
 
@@ -460,7 +460,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {/* Filter & Search */}
           <div style={{ background: '#ffffff', padding: '1rem', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 200px 180px 130px', gap: '0.85rem', alignItems: 'center' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '0.85rem', alignItems: 'center' }}>
               {/* Search Input Box */}
               <div className="delivery-input-wrapper">
                 <Search size={18} style={{ color: '#64748b', flexShrink: 0 }} />
@@ -499,7 +499,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                 onClick={loadShippers}
                 style={{
                   height: '42px',
-                  background: '#2563eb',
+                  background: 'var(--primary)',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '8px',
@@ -522,17 +522,17 @@ export function AdminShipperPanel({ branchOptions = [] }) {
           <div style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.04)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid #f1f5f9' }}>
               <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                {editingId ? <Edit2 size={18} style={{ color: '#2563eb' }} /> : <UserPlus size={18} style={{ color: '#059669' }} />}
+                {editingId ? <Edit2 size={18} style={{ color: 'var(--primary)' }} /> : <UserPlus size={18} style={{ color: '#2563eb' }} />}
                 {editingId ? 'Cập nhật thông tin giao hàng' : 'Tạo tài khoản giao hàng mới'}
               </h3>
               {editingId && (
-                <span style={{ fontSize: '0.8rem', background: '#eff6ff', color: '#1d4ed8', padding: '0.25rem 0.6rem', borderRadius: '6px', fontWeight: '600' }}>
+                <span style={{ fontSize: '0.8rem', background: 'var(--primary-light)', color: 'var(--primary-hover)', padding: '0.25rem 0.6rem', borderRadius: '6px', fontWeight: '600' }}>
                   Đang chỉnh sửa ID: {editingId}
                 </span>
               )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
               <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#475569' }}>Tên đăng nhập (Username) *</span>
                 <input
@@ -647,7 +647,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                 disabled={saving}
                 style={{
                   padding: '0.5rem 1.5rem',
-                  background: '#059669',
+                  background: '#2563eb',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '8px',
@@ -669,7 +669,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
           {/* Table List */}
           {shippersLoading && shippers.length === 0 ? (
             <div style={{ background: '#fff', padding: '2rem', textAlign: 'center', borderRadius: '12px', color: '#64748b' }}>
-              <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem auto', color: '#2563eb' }} />
+              <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem auto', color: 'var(--primary)' }} />
               <p style={{ margin: 0 }}>Đang tải danh sách nhân viên giao hàng...</p>
             </div>
           ) : shippersError && shippers.length === 0 ? (
@@ -762,8 +762,8 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                               }}
                               style={{
                                 padding: '0.35rem 0.65rem',
-                                background: '#eff6ff',
-                                color: '#1d4ed8',
+                                background: 'var(--primary-light)',
+                                color: 'var(--primary-hover)',
                                 border: '1px solid #bfdbfe',
                                 borderRadius: '6px',
                                 fontSize: '0.75rem',
@@ -784,9 +784,9 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                               onClick={() => handleToggleStatus(s)}
                               style={{
                                 padding: '0.35rem 0.65rem',
-                                background: s.status === 'ACTIVE' ? '#fff7ed' : '#f0fdf4',
-                                color: s.status === 'ACTIVE' ? '#c2410c' : '#15803d',
-                                border: s.status === 'ACTIVE' ? '1px solid #ffedd5' : '1px solid #bbf7d0',
+                                background: s.status === 'ACTIVE' ? '#fff7ed' : '#eff6ff',
+                                color: s.status === 'ACTIVE' ? '#c2410c' : '#1d4ed8',
+                                border: s.status === 'ACTIVE' ? '1px solid #ffedd5' : '1px solid #bfdbfe',
                                 borderRadius: '6px',
                                 fontSize: '0.75rem',
                                 fontWeight: '600',
@@ -842,13 +842,13 @@ export function AdminShipperPanel({ branchOptions = [] }) {
       {activeTab === 'config' && (
         <div style={{ background: '#ffffff', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.04)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid #f1f5f9' }}>
-            <Sliders size={22} style={{ color: '#2563eb' }} />
+            <Sliders size={22} style={{ color: 'var(--primary)' }} />
             <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>
               Cấu hình thuật toán phân công đơn hàng
             </h3>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
             {/* Auto Assign Toggle */}
             <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
               <span style={{ display: 'block', fontWeight: '700', fontSize: '0.875rem', color: '#334155', marginBottom: '0.75rem' }}>
@@ -859,10 +859,10 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                   type="checkbox"
                   checked={config.auto_assign}
                   onChange={e => setConfig(p => ({ ...p, auto_assign: e.target.checked }))}
-                  style={{ width: '18px', height: '18px', accentColor: '#2563eb' }}
+                  style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }}
                 />
                 <div>
-                  <div style={{ fontWeight: '600', fontSize: '0.875rem', color: config.auto_assign ? '#059669' : '#dc2626' }}>
+                  <div style={{ fontWeight: '600', fontSize: '0.875rem', color: config.auto_assign ? '#2563eb' : '#dc2626' }}>
                     {config.auto_assign ? 'Đang bật tự động phân công' : 'Đang tắt - Phân công thủ công'}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
@@ -949,11 +949,11 @@ export function AdminShipperPanel({ branchOptions = [] }) {
           </div>
 
           {/* Current Rules Summary Callout */}
-          <div style={{ background: '#ecfdf5', padding: '1rem 1.25rem', borderRadius: '10px', borderLeft: '4px solid #059669', marginBottom: '1.5rem' }}>
-            <div style={{ fontWeight: '700', color: '#065f46', fontSize: '0.875rem', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <div style={{ background: '#eff6ff', padding: '1rem 1.25rem', borderRadius: '10px', borderLeft: '4px solid #2563eb', marginBottom: '1.5rem' }}>
+            <div style={{ fontWeight: '700', color: '#1e40af', fontSize: '0.875rem', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <CheckCircle2 size={16} /> Quy tắc phân công đang áp dụng:
             </div>
-            <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#047857', fontSize: '0.825rem', lineHeight: '1.5' }}>
+            <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#1d4ed8', fontSize: '0.825rem', lineHeight: '1.5' }}>
               <li>Chế độ: <strong>{config.auto_assign ? 'Tự động phân công' : 'Thủ công'}</strong></li>
               <li>Thuật toán: <strong>{ALGORITHM_OPTIONS.find(o => o.id === config.algorithm)?.label}</strong></li>
               <li>Bán kính tìm kiếm: <strong>{config.search_radius_km} km</strong></li>
@@ -969,7 +969,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
               disabled={savingConfig}
               style={{
                 padding: '0.65rem 1.75rem',
-                background: '#059669',
+                background: '#2563eb',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '8px',
@@ -995,7 +995,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
           {/* Controls Bar */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
             <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <BarChart3 size={20} style={{ color: '#2563eb' }} /> Báo cáo hiệu suất giao hàng toàn chuỗi
+              <BarChart3 size={20} style={{ color: 'var(--primary)' }} /> Báo cáo hiệu suất giao hàng toàn chuỗi
             </h3>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               {[
@@ -1014,8 +1014,8 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                       borderRadius: '6px',
                       fontSize: '0.8rem',
                       fontWeight: '600',
-                      border: isSel ? '1px solid #2563eb' : '1px solid #cbd5e1',
-                      background: isSel ? '#2563eb' : '#fff',
+                      border: isSel ? '1px solid var(--primary)' : '1px solid #cbd5e1',
+                      background: isSel ? 'var(--primary)' : '#fff',
                       color: isSel ? '#fff' : '#475569',
                       cursor: 'pointer',
                     }}
@@ -1029,17 +1029,17 @@ export function AdminShipperPanel({ branchOptions = [] }) {
 
           {kpiLoading ? (
             <div style={{ background: '#fff', padding: '2rem', textAlign: 'center', borderRadius: '12px', color: '#64748b' }}>
-              <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem auto', color: '#2563eb' }} />
+              <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem auto', color: 'var(--primary)' }} />
               <p style={{ margin: 0 }}>Đang tải báo cáo KPI...</p>
             </div>
           ) : kpiData ? (
             <>
               {/* Metric Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '1rem' }}>
                 {[
-                  { label: 'Tổng đơn hoàn thành', value: kpiData.total_delivered || 0, color: '#059669', bg: '#ecfdf5', icon: CheckCircle2 },
+                  { label: 'Tổng đơn hoàn thành', value: kpiData.total_delivered || 0, color: '#2563eb', bg: '#eff6ff', icon: CheckCircle2 },
                   { label: 'Tổng đơn thất bại', value: kpiData.total_failed || 0, color: '#dc2626', bg: '#fef2f2', icon: XCircle },
-                  { label: 'Tỷ lệ thành công', value: `${kpiData.success_rate || 0}%`, color: '#2563eb', bg: '#eff6ff', icon: TrendingUp },
+                  { label: 'Tỷ lệ thành công', value: `${kpiData.success_rate || 0}%`, color: 'var(--primary)', bg: 'var(--primary-light)', icon: TrendingUp },
                   { label: 'Tổng hoa hồng đã chi', value: fmtCurrency(kpiData.total_commission || 0), color: '#d97706', bg: '#fffbeb', icon: Coins },
                 ].map(stat => {
                   const IconComp = stat.icon
@@ -1051,7 +1051,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                           <IconComp size={18} />
                         </div>
                       </div>
-                      <div style={{ fontSize: '1.5rem', fontWeight: '800', color: stat.color }}>
+                      <div style={{ fontSize: '1.5rem', fontWeight: '600', color: stat.color }}>
                         {typeof stat.value === 'number' ? stat.value.toLocaleString('vi-VN') : stat.value}
                       </div>
                     </div>
@@ -1085,7 +1085,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                             <td style={{ padding: '0.85rem 1rem', fontWeight: '700', color: '#0f172a' }}>
                               {s.full_name || s.username}
                             </td>
-                            <td style={{ padding: '0.85rem 1rem', color: '#059669', fontWeight: '700' }}>
+                            <td style={{ padding: '0.85rem 1rem', color: '#2563eb', fontWeight: '700' }}>
                               {s.delivered || 0}
                             </td>
                             <td style={{ padding: '0.85rem 1rem', color: '#dc2626' }}>
@@ -1098,9 +1098,9 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                                 borderRadius: '9999px',
                                 fontSize: '0.75rem',
                                 fontWeight: '700',
-                                backgroundColor: rate >= 90 ? '#ecfdf5' : rate >= 70 ? '#fffbeb' : '#fef2f2',
-                                color: rate >= 90 ? '#047857' : rate >= 70 ? '#b45309' : '#b91c1c',
-                                border: `1px solid ${rate >= 90 ? '#a7f3d0' : rate >= 70 ? '#fde68a' : '#fecaca'}`,
+                                backgroundColor: rate >= 90 ? '#eff6ff' : rate >= 70 ? '#fffbeb' : '#fef2f2',
+                                color: rate >= 90 ? '#1d4ed8' : rate >= 70 ? '#b45309' : '#b91c1c',
+                                border: `1px solid ${rate >= 90 ? '#bfdbfe' : rate >= 70 ? '#fde68a' : '#fecaca'}`,
                               }}>
                                 {rate}%
                               </span>
@@ -1110,7 +1110,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                                 {s.rating ? <><Star size={14} fill="#d97706" /> {Number(s.rating).toFixed(1)}</> : '—'}
                               </div>
                             </td>
-                            <td style={{ padding: '0.85rem 1rem', textAlign: 'right', color: '#059669', fontWeight: '700' }}>
+                            <td style={{ padding: '0.85rem 1rem', textAlign: 'right', color: '#2563eb', fontWeight: '700' }}>
                               {fmtCurrency(s.commission || 0)}
                             </td>
                           </tr>
@@ -1191,7 +1191,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                 disabled={savingCommission}
                 style={{
                   padding: '0.55rem 1.25rem',
-                  background: '#059669',
+                  background: '#2563eb',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '8px',
@@ -1242,7 +1242,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
 
             {financeLoading ? (
               <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
-                <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem auto', color: '#2563eb' }} />
+                <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem auto', color: 'var(--primary)' }} />
                 <p style={{ margin: 0 }}>Đang tải lịch sử chi trả...</p>
               </div>
             ) : financeData?.payments?.length > 0 ? (
@@ -1269,7 +1269,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                       <td style={{ padding: '0.85rem 1rem', fontWeight: '600', color: '#334155' }}>
                         {p.order_count || 0}
                       </td>
-                      <td style={{ padding: '0.85rem 1rem', color: '#059669', fontWeight: '700' }}>
+                      <td style={{ padding: '0.85rem 1rem', color: '#2563eb', fontWeight: '700' }}>
                         {fmtCurrency(p.total_commission)}
                       </td>
                       <td style={{ padding: '0.85rem 1rem' }}>
@@ -1279,9 +1279,9 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                           borderRadius: '9999px',
                           fontSize: '0.75rem',
                           fontWeight: '700',
-                          backgroundColor: p.status === 'PAID' ? '#ecfdf5' : '#fffbeb',
-                          color: p.status === 'PAID' ? '#047857' : '#b45309',
-                          border: `1px solid ${p.status === 'PAID' ? '#a7f3d0' : '#fde68a'}`,
+                          backgroundColor: p.status === 'PAID' ? '#eff6ff' : '#fffbeb',
+                          color: p.status === 'PAID' ? '#1d4ed8' : '#b45309',
+                          border: `1px solid ${p.status === 'PAID' ? '#bfdbfe' : '#fde68a'}`,
                         }}>
                           {p.status === 'PAID' ? 'Đã quyết toán' : 'Chờ quyết toán'}
                         </span>
@@ -1309,9 +1309,9 @@ export function AdminShipperPanel({ branchOptions = [] }) {
             <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center', flexWrap: 'wrap' }}>
               {[
                 { id: 'PENDING', label: 'Chờ duyệt', Icon: Clock, color: '#d97706', bg: '#fffbeb', border: '#fde68a' },
-                { id: 'CONFIRMED', label: 'Đã xác nhận', Icon: CheckCircle2, color: '#059669', bg: '#ecfdf5', border: '#a7f3d0' },
+                { id: 'CONFIRMED', label: 'Đã xác nhận', Icon: CheckCircle2, color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
                 { id: 'REJECTED', label: 'Từ chối', Icon: XCircle, color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
-                { id: '', label: 'Tất cả phiếu', Icon: Filter, color: '#4f46e5', bg: '#eff6ff', border: '#bfdbfe' },
+                { id: '', label: 'Tất cả phiếu', Icon: Filter, color: 'var(--primary)', bg: 'var(--primary-light)', border: '#bfdbfe' },
               ].map(opt => {
                 const isSelected = codStatusFilter === opt.id
                 const OptIcon = opt.Icon
@@ -1416,7 +1416,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                           <td style={{ padding: '0.85rem 1rem', color: '#475569', fontSize: '0.8125rem' }}>
                             {r.branch_code || 'Toàn hệ thống'}
                           </td>
-                          <td style={{ padding: '0.85rem 1rem', fontWeight: '800', color: '#dc2626', fontSize: '0.95rem' }}>
+                          <td style={{ padding: '0.85rem 1rem', fontWeight: '600', color: '#dc2626', fontSize: '0.95rem' }}>
                             {fmtCurrency(r.amount)}
                           </td>
                           <td style={{ padding: '0.85rem 1rem', color: '#64748b', fontSize: '0.8125rem', maxWidth: '200px' }}>
@@ -1431,9 +1431,9 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                               borderRadius: '9999px',
                               fontSize: '0.75rem',
                               fontWeight: '700',
-                              backgroundColor: isPending ? '#fffbeb' : isConfirmed ? '#ecfdf5' : '#fef2f2',
-                              color: isPending ? '#b45309' : isConfirmed ? '#047857' : '#dc2626',
-                              border: `1px solid ${isPending ? '#fde68a' : isConfirmed ? '#a7f3d0' : '#fecaca'}`,
+                              backgroundColor: isPending ? '#fffbeb' : isConfirmed ? '#eff6ff' : '#fef2f2',
+                              color: isPending ? '#b45309' : isConfirmed ? '#1d4ed8' : '#dc2626',
+                              border: `1px solid ${isPending ? '#fde68a' : isConfirmed ? '#bfdbfe' : '#fecaca'}`,
                             }}>
                               {isPending ? (
                                 <>
@@ -1442,7 +1442,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                                 </>
                               ) : isConfirmed ? (
                                 <>
-                                  <CheckCircle2 size={12} color="#047857" />
+                                  <CheckCircle2 size={12} color="#1d4ed8" />
                                   <span>Đã xác nhận</span>
                                 </>
                               ) : (
@@ -1468,15 +1468,15 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                                     borderRadius: '8px',
                                     fontSize: '0.78125rem',
                                     fontWeight: '700',
-                                    backgroundColor: '#ecfdf5',
-                                    color: '#059669',
-                                    border: '1px solid #a7f3d0',
+                                    backgroundColor: '#eff6ff',
+                                    color: '#2563eb',
+                                    border: '1px solid #bfdbfe',
                                     cursor: 'pointer',
                                     opacity: codConfirming === r.id + 'CONFIRMED' ? 0.6 : 1,
                                     transition: 'all 0.15s ease'
                                   }}
                                 >
-                                  <CheckCircle2 size={14} color="#059669" />
+                                  <CheckCircle2 size={14} color="#2563eb" />
                                   <span>Đã nhận tiền</span>
                                 </button>
                                 <button
@@ -1504,8 +1504,8 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                                 </button>
                               </div>
                             ) : (
-                              <span style={{ fontSize: '0.78125rem', color: isConfirmed ? '#059669' : '#94a3b8', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                                {isConfirmed ? <><CheckCircle2 size={13} color="#059669" /> Đã xác nhận {fmtDate(r.confirmed_at)}</> : <><XCircle size={13} color="#94a3b8" /> Đã từ chối</>}
+                              <span style={{ fontSize: '0.78125rem', color: isConfirmed ? '#2563eb' : '#94a3b8', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                {isConfirmed ? <><CheckCircle2 size={13} color="#2563eb" /> Đã xác nhận {fmtDate(r.confirmed_at)}</> : <><XCircle size={13} color="#94a3b8" /> Đã từ chối</>}
                               </span>
                             )}
                           </td>

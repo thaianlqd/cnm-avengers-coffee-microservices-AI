@@ -1,61 +1,71 @@
-import React, { useState } from 'react'
+import TextInput from '../components/TextInput'
+import Alert from '../lib/alert'
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
+  Pressable,
   SafeAreaView,
   ScrollView,
-  TextInput,
-  Alert,
+
+
   ActivityIndicator,
   Linking
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { useNavigation } from '@react-navigation/native'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useIsFocused, useNavigation } from '@react-navigation/native'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useUser } from '../context/UserContext'
 import apiClient from '../lib/apiClient'
 import { getUserId } from '../lib/customerData'
 import { colors } from '../theme'
 import { LinearGradient } from 'expo-linear-gradient'
+import Pagination, { usePagination } from '../components/Pagination'
+import Reveal from '../components/Reveal'
 
 export function WalletScreen() {
   const navigation = useNavigation()
   const { user } = useUser()
   const userId = getUserId(user)
   const [amount, setAmount] = useState('')
+  const [pendingTopUp, setPendingTopUp] = useState(null)
+  const client = useQueryClient(), focused = useIsFocused()
 
-  const { data: walletData, isLoading, refetch } = useQuery({
-    queryKey: ['wallet', userId],
+  const { data: walletData, isLoading, isError, refetch } = useQuery({
+    queryKey: ['userWallet', userId],
     queryFn: async () => {
       const response = await apiClient.get(`/customers/${userId}/wallet`)
-      return response.data
+      return response.data || response
     },
     enabled: Boolean(userId),
     refetchOnWindowFocus: true
   })
+  const transactions = usePagination(walletData?.transactions || [], userId)
 
   const topUpMutation = useMutation({
     mutationFn: async (topUpAmount) => {
       const response = await apiClient.post(`/customers/${userId}/wallet/topup`, {
         amount: Number(topUpAmount)
       })
-      return response.data
+      return response.data || response
     },
     onSuccess: (data) => {
-      if (data.redirect_url) {
-        Linking.openURL(data.redirect_url)
-      } else {
-        Alert.alert('Thành công', data.message || 'Nạp tiền thành công!')
-        refetch()
-        setAmount('')
-      }
+      setPendingTopUp(data)
+      if (data.redirect_url) Linking.openURL(data.redirect_url).catch(() => Alert.alert('Thanh toán', 'Chạm Mở trang thanh toán để tiếp tục.'))
+      else Alert.alert('Yêu cầu nạp tiền', 'Chưa nhận được liên kết thanh toán. Số dư chỉ thay đổi khi ngân hàng xác nhận thành công.')
     },
     onError: (error) => {
       Alert.alert('Lỗi', error.response?.data?.message || 'Có lỗi xảy ra khi nạp tiền.')
     }
   })
+
+  const topUpStatus = useQuery({ queryKey: ['wallet-topup', userId, pendingTopUp?.transaction_id], queryFn: () => apiClient.get(`/customers/${userId}/wallet/topup/${pendingTopUp.transaction_id}`), enabled: Boolean(pendingTopUp?.transaction_id && focused), refetchInterval: q => !q.state.data?.status || q.state.data.status === 'PENDING' ? 4000 : false, retry: false })
+  useEffect(() => {
+    if (topUpStatus.data?.status === 'SUCCESS') { client.invalidateQueries({ queryKey: ['userWallet', userId] }); setAmount('') }
+  }, [topUpStatus.data?.status])
+  useEffect(() => { if (focused && userId) refetch() }, [focused, userId])
 
   const handleTopUp = () => {
     const value = Number(amount)
@@ -70,7 +80,7 @@ export function WalletScreen() {
     const isTopUp = tx.type === 'TOP_UP'
     const Icon = isTopUp ? 'arrow-down-outline' : 'arrow-up-outline'
     const color = isTopUp ? '#2e7d32' : '#d32f2f'
-    
+
     return (
       <View key={tx.id} style={styles.txItem}>
         <View style={[styles.txIconContainer, { backgroundColor: isTopUp ? '#e8f5e9' : '#ffebee' }]}>
@@ -84,7 +94,7 @@ export function WalletScreen() {
           <Text style={[styles.txAmount, { color }]}>
             {isTopUp ? '+' : '-'}{Number(tx.amount).toLocaleString('vi-VN')}đ
           </Text>
-          <Text style={[styles.txStatus, { 
+          <Text style={[styles.txStatus, {
             color: tx.status === 'SUCCESS' ? '#2e7d32' : tx.status === 'PENDING' ? '#f57c00' : '#d32f2f',
             backgroundColor: tx.status === 'SUCCESS' ? '#e8f5e9' : tx.status === 'PENDING' ? '#fff3e0' : '#ffebee'
           }]}>
@@ -108,10 +118,10 @@ export function WalletScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {isLoading ? (
           <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
-        ) : (
+        ) : isError ? <Pressable onPress={() => refetch()} style={{padding: 24}}><Text>Chưa tải được ví. Chạm để thử lại.</Text></Pressable> : !userId ? <Pressable onPress={() => navigation.navigate('Login')} style={{padding: 24}}><Text>Đăng nhập để xem ví của bạn.</Text></Pressable> : (
           <>
             <LinearGradient
-              colors={['#ea8025', '#d16a1b']}
+              colors={['#b22830', '#8d1f27']}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               style={styles.balanceCard}
             >
@@ -125,6 +135,7 @@ export function WalletScreen() {
 
             <View style={styles.topUpSection}>
               <Text style={styles.sectionTitle}>Nạp tiền vào ví</Text>
+              {pendingTopUp && <View style={{ backgroundColor: '#faf4f4', padding: 12, marginBottom: 12, borderRadius: 8, gap: 10 }}><Text>{topUpStatus.data?.status === 'SUCCESS' ? 'Ngân hàng đã xác nhận nạp tiền thành công.' : topUpStatus.data?.status && topUpStatus.data.status !== 'PENDING' ? 'Giao dịch nạp tiền đã kết thúc, chưa ghi nhận nạp thành công.' : 'Đang chờ ngân hàng xác nhận. Số dư chưa được cộng.'}</Text>{topUpStatus.isError && <Pressable onPress={() => topUpStatus.refetch()}><Text style={{ color: colors.primary }}>Chưa tải được trạng thái. Thử lại</Text></Pressable>}{pendingTopUp.redirect_url && topUpStatus.data?.status !== 'SUCCESS' && <Pressable onPress={() => Linking.openURL(pendingTopUp.redirect_url)}><Text style={{ color: colors.primary }}>Mở trang thanh toán →</Text></Pressable>}</View>}
               <View style={styles.inputContainer}>
                 <TextInput
                   style={styles.amountInput}
@@ -137,8 +148,8 @@ export function WalletScreen() {
               </View>
               <View style={styles.suggestedAmounts}>
                 {[50000, 100000, 200000, 500000].map(val => (
-                  <TouchableOpacity 
-                    key={val} 
+                  <TouchableOpacity
+                    key={val}
                     style={styles.suggestedChip}
                     onPress={() => setAmount(val.toString())}
                   >
@@ -146,10 +157,10 @@ export function WalletScreen() {
                   </TouchableOpacity>
                 ))}
               </View>
-              <TouchableOpacity 
-                style={[styles.topUpButton, topUpMutation.isPending && styles.topUpButtonDisabled]} 
+              <TouchableOpacity
+                style={[styles.topUpButton, topUpMutation.isPending && styles.topUpButtonDisabled]}
                 onPress={handleTopUp}
-                disabled={topUpMutation.isPending}
+                disabled={topUpMutation.isPending || Boolean(pendingTopUp?.transaction_id && (!topUpStatus.data?.status || topUpStatus.data.status === 'PENDING'))}
               >
                 {topUpMutation.isPending ? (
                   <ActivityIndicator color="#fff" />
@@ -162,7 +173,7 @@ export function WalletScreen() {
             <View style={styles.txSection}>
               <Text style={styles.sectionTitle}>Lịch sử giao dịch</Text>
               {walletData?.transactions?.length > 0 ? (
-                walletData.transactions.map(renderTransaction)
+                <>{transactions.items.map(tx => <Reveal key={tx.id}>{renderTransaction(tx)}</Reveal>)}<Pagination {...transactions} onChange={transactions.setPage} /></>
               ) : (
                 <View style={styles.emptyContainer}>
                   <Ionicons name="receipt-outline" size={48} color="#ccc" />

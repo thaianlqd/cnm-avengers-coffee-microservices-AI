@@ -1,0 +1,49 @@
+{
+  "method": "isolated Chromium, mocked APIs, no real backend/provider calls",
+  "failures": [],
+  "screens": {
+    "home-390": {
+      "horizontal_overflow": false
+    },
+    "menu": {
+      "horizontal_overflow": false
+    },
+    "staff-chat": {
+      "horizontal_overflow": false
+    },
+    "chat-320": {
+      "horizontal_overflow": false
+    },
+    "chat-480": {
+      "horizontal_overflow": false
+    },
+    "chat-1440": {
+      "horizontal_overflow": false
+    },
+    "home-320": {
+      "horizontal_overflow": false
+    },
+    "home-480": {
+      "horizontal_overflow": false
+    },
+    "home-1440": {
+      "horizontal_overflow": false
+    }
+  },
+  "carousel": {
+    "manual": true,
+    "pause": true,
+    "resume": true,
+    "reduced_motion": true
+  },
+  "chat": {
+    "history_user_and_staff": true,
+    "send_count": 1,
+    "socket_event_response": true,
+    "poll_response": true,
+    "stopped_after_leaving": true,
+    "ai_provider_calls": 0,
+    "failed_send_keeps_draft": true
+  },
+  "errors": []
+}

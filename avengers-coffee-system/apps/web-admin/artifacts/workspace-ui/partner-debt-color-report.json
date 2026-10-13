@@ -1,0 +1,93 @@
+{
+  "method": "mocked API, isolated Chromium; no real login/backend writes",
+  "actors": {
+    "partner": {
+      "pages": [
+        {
+          "label": "Tổng quan Kiosk",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        }
+      ],
+      "errors": [],
+      "accent": "#007cad",
+      "sidebar_color": "rgb(23, 27, 36)",
+      "font": "Inter, -apple-system, \"system-ui\", \"Segoe UI\", Arial, sans-serif",
+      "charts": 4,
+      "debt_badge": {
+        "color": "rgb(23, 100, 216)",
+        "background": "rgb(237, 244, 255)"
+      },
+      "selected_menu": {
+        "background": "rgb(0, 124, 173)",
+        "color": "rgb(255, 255, 255)"
+      },
+      "mobile_overflow": []
+    }
+  },
+  "login": {
+    "manager_in_partner_rejected": true,
+    "admin": {
+      "src": "/images/login/admin-coffee.jpg",
+      "loaded": true,
+      "geometry": {
+        "photo_width": 1440,
+        "photo_height": 1000,
+        "card_left": 902.40625,
+        "card_width": 480,
+        "viewport": 1440,
+        "horizontal_overflow": false
+      }
+    },
+    "manager": {
+      "src": "/images/login/manager-cafe.jpg",
+      "loaded": true,
+      "geometry": {
+        "photo_width": 1440,
+        "photo_height": 1000,
+        "card_left": 902.40625,
+        "card_width": 480,
+        "viewport": 1440,
+        "horizontal_overflow": false
+      }
+    },
+    "staff": {
+      "src": "/images/login/staff-barista.jpg",
+      "loaded": true,
+      "geometry": {
+        "photo_width": 1440,
+        "photo_height": 1000,
+        "card_left": 902.40625,
+        "card_width": 480,
+        "viewport": 1440,
+        "horizontal_overflow": false
+      }
+    },
+    "partner": {
+      "src": "/images/login/partner-kiosk.jpg",
+      "loaded": true,
+      "geometry": {
+        "photo_width": 1440,
+        "photo_height": 1000,
+        "card_left": 902.40625,
+        "card_width": 480,
+        "viewport": 1440,
+        "horizontal_overflow": false
+      }
+    },
+    "accountant": {
+      "src": "/images/login/accountant-desk.jpg",
+      "loaded": true,
+      "geometry": {
+        "photo_width": 1440,
+        "photo_height": 1000,
+        "card_left": 902.40625,
+        "card_width": 480,
+        "viewport": 1440,
+        "horizontal_overflow": false
+      }
+    }
+  },
+  "failures": []
+}

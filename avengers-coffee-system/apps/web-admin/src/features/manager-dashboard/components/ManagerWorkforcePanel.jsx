@@ -294,7 +294,7 @@ export function ManagerWorkforcePanel({
   }
 
   return (
-    <div className="panel-container" style={{
+    <div className="panel-container workspace-workforce" style={{
       padding: '1.75rem',
       background: '#f8fafc',
       borderRadius: '20px',
@@ -315,17 +315,17 @@ export function ManagerWorkforcePanel({
             width: '42px',
             height: '42px',
             borderRadius: '12px',
-            background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+            background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
             color: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 10px rgba(16, 185, 129, 0.3)'
+            boxShadow: '0 4px 10px rgba(59, 130, 246, 0.3)'
           }}>
             <Users size={24} />
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '800', color: '#0f172a' }}>
+            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600', color: '#0f172a' }}>
               Quản lý Lịch Làm Nhân Sự
             </h2>
             <span style={{ fontSize: '0.825rem', color: '#64748b' }}>
@@ -336,7 +336,7 @@ export function ManagerWorkforcePanel({
       </div>
 
       {/* Tabs Bar */}
-      <div style={{
+      <div className="workspace-workforce-tabs" style={{
         display: 'flex',
         gap: '0.5rem',
         background: '#ffffff',
@@ -353,7 +353,7 @@ export function ManagerWorkforcePanel({
             padding: '0.65rem 1rem',
             borderRadius: '9px',
             border: 'none',
-            background: activeTab === TABS.MANAGE ? '#10b981' : 'transparent',
+            background: activeTab === TABS.MANAGE ? '#3b82f6' : 'transparent',
             color: activeTab === TABS.MANAGE ? '#ffffff' : '#64748b',
             fontWeight: activeTab === TABS.MANAGE ? '700' : '500',
             fontSize: '0.875rem',
@@ -376,7 +376,7 @@ export function ManagerWorkforcePanel({
             padding: '0.65rem 1rem',
             borderRadius: '9px',
             border: 'none',
-            background: activeTab === TABS.APPROVE ? '#10b981' : 'transparent',
+            background: activeTab === TABS.APPROVE ? '#3b82f6' : 'transparent',
             color: activeTab === TABS.APPROVE ? '#ffffff' : '#64748b',
             fontWeight: activeTab === TABS.APPROVE ? '700' : '500',
             fontSize: '0.875rem',
@@ -399,7 +399,7 @@ export function ManagerWorkforcePanel({
             padding: '0.65rem 1rem',
             borderRadius: '9px',
             border: 'none',
-            background: activeTab === TABS.SCHEDULE ? '#10b981' : 'transparent',
+            background: activeTab === TABS.SCHEDULE ? '#3b82f6' : 'transparent',
             color: activeTab === TABS.SCHEDULE ? '#ffffff' : '#64748b',
             fontWeight: activeTab === TABS.SCHEDULE ? '700' : '500',
             fontSize: '0.875rem',
@@ -419,7 +419,7 @@ export function ManagerWorkforcePanel({
       {activeTab === TABS.MANAGE && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Form phân ca */}
-          <form
+          <form className="workspace-form"
             onSubmit={onCreateWorkShift}
             style={{
               background: '#ffffff',
@@ -432,11 +432,11 @@ export function ManagerWorkforcePanel({
               gap: '1.25rem'
             }}
           >
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <PlusCircle size={18} color="#10b981" /> Thêm lịch làm mới cho nhân viên
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <PlusCircle size={18} color="#3b82f6" /> Thêm lịch làm mới cho nhân viên
             </h3>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1rem' }}>
               <div>
                 <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.35rem' }}>
                   Nhân viên được chọn
@@ -490,7 +490,7 @@ export function ManagerWorkforcePanel({
                 />
               </div>
 
-              <div style={{ gridColumn: 'span 2' }}>
+              <div style={{ gridColumn: '1 / -1' }}>
                 <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.35rem' }}>
                   Khung ca làm (Chọn 1 hoặc nhiều ca trong ngày)
                 </label>
@@ -505,9 +505,9 @@ export function ManagerWorkforcePanel({
                         style={{
                           padding: '0.5rem 0.85rem',
                           borderRadius: '8px',
-                          border: isSelected ? '1px solid #10b981' : '1px solid #cbd5e1',
-                          background: isSelected ? '#ecfdf5' : '#ffffff',
-                          color: isSelected ? '#047857' : '#475569',
+                          border: isSelected ? '1px solid #3b82f6' : '1px solid #cbd5e1',
+                          background: isSelected ? '#eff6ff' : '#ffffff',
+                          color: isSelected ? '#1d4ed8' : '#475569',
                           fontWeight: isSelected ? '700' : '500',
                           fontSize: '0.85rem',
                           cursor: 'pointer',
@@ -516,7 +516,7 @@ export function ManagerWorkforcePanel({
                           gap: '0.35rem'
                         }}
                       >
-                        {isSelected ? <Check size={14} color="#047857" /> : <Plus size={14} />}
+                        {isSelected ? <Check size={14} color="#1d4ed8" /> : <Plus size={14} />}
                         {item.label}
                       </button>
                     )
@@ -524,7 +524,7 @@ export function ManagerWorkforcePanel({
                 </div>
               </div>
 
-              <div style={{ gridColumn: 'span 2' }}>
+              <div style={{ gridColumn: '1 / -1' }}>
                 <label style={{ fontSize: '0.825rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.35rem' }}>
                   Ghi chú phân công
                 </label>
@@ -556,12 +556,12 @@ export function ManagerWorkforcePanel({
                   padding: '0.65rem 1.25rem',
                   borderRadius: '10px',
                   border: 'none',
-                  background: '#10b981',
+                  background: '#3b82f6',
                   color: '#ffffff',
                   fontSize: '0.875rem',
                   fontWeight: '700',
                   cursor: creatingWorkShift ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 4px 10px rgba(16, 185, 129, 0.25)'
+                  boxShadow: '0 4px 10px rgba(59, 130, 246, 0.25)'
                 }}
               >
                 <PlusCircle size={16} />
@@ -578,8 +578,8 @@ export function ManagerWorkforcePanel({
             padding: '1.5rem',
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)'
           }}>
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <ListChecks size={18} color="#2563eb" /> Phân công công việc (Checklist ca)
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <ListChecks size={18} color="var(--primary)" /> Phân công công việc (Checklist ca)
             </h3>
             <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: '#64748b' }}>
               Chọn các công việc mẫu bên dưới để gắn nhanh vào ghi chú lịch làm đang tạo:
@@ -634,7 +634,7 @@ export function ManagerWorkforcePanel({
                   }))
                 }}
                 style={{
-                  background: '#2563eb',
+                  background: 'var(--primary)',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '8px',
@@ -676,12 +676,12 @@ export function ManagerWorkforcePanel({
           padding: '1.5rem',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)'
         }}>
-          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <UserCheck size={18} color="#10b981" /> Phê duyệt nguyện vọng ca từ Nhân viên
+          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <UserCheck size={18} color="#3b82f6" /> Phê duyệt nguyện vọng ca từ Nhân viên
           </h3>
 
           {pendingRequests.length > 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '1rem' }}>
               {pendingPageRows.map((item) => {
                 const draft = requestDrafts[item.ma_ca_lam_viec] || {
                   review_note: item.ghi_chu_duyet || '',
@@ -730,7 +730,7 @@ export function ManagerWorkforcePanel({
                         })}
                         disabled={handlingShiftRequestId === String(item.ma_ca_lam_viec)}
                         style={{
-                          background: '#10b981',
+                          background: '#3b82f6',
                           color: '#ffffff',
                           border: 'none',
                           padding: '0.45rem 0.85rem',
@@ -800,7 +800,7 @@ export function ManagerWorkforcePanel({
             gap: '0.85rem'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Users size={18} color="#10b981" />
+              <Users size={18} color="#3b82f6" />
               <span style={{ fontSize: '0.875rem', fontWeight: '700', color: '#374151' }}>Xem lịch làm theo Nhân viên:</span>
               <select
                 value={selectedStaffFilter}
@@ -816,7 +816,7 @@ export function ManagerWorkforcePanel({
               </select>
             </div>
 
-            <span style={{ fontSize: '0.825rem', color: '#059669', fontWeight: '700', background: '#ecfdf5', padding: '0.35rem 0.75rem', borderRadius: '9999px' }}>
+            <span style={{ fontSize: '0.825rem', color: '#2563eb', fontWeight: '700', background: '#eff6ff', padding: '0.35rem 0.75rem', borderRadius: '9999px' }}>
               {calendarItems.length} ca làm đã xếp
             </span>
           </div>
@@ -848,7 +848,7 @@ export function ManagerWorkforcePanel({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: '#0f172a' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '600', color: '#0f172a' }}>
                       {selectedShiftDetails.staff_name || selectedShiftDetails.staff_username}
                     </h3>
                     <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '600' }}>
@@ -879,7 +879,7 @@ export function ManagerWorkforcePanel({
                 </div>
 
                 {/* Edit Form */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '0.85rem' }}>
                   <div>
                     <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#374151', display: 'block', marginBottom: '0.25rem' }}>
                       Trạng thái chấm công
@@ -930,7 +930,7 @@ export function ManagerWorkforcePanel({
                     onClick={luuChamCongChiTiet}
                     disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
                     style={{
-                      background: '#10b981',
+                      background: '#3b82f6',
                       color: '#ffffff',
                       border: 'none',
                       padding: '0.55rem 1.1rem',
@@ -951,8 +951,8 @@ export function ManagerWorkforcePanel({
                     onClick={taoCheckInNhanh}
                     disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
                     style={{
-                      background: '#eff6ff',
-                      color: '#2563eb',
+                      background: 'var(--primary-light)',
+                      color: 'var(--primary)',
                       border: '1px solid #bfdbfe',
                       padding: '0.55rem 1.1rem',
                       borderRadius: '8px',
@@ -969,8 +969,8 @@ export function ManagerWorkforcePanel({
                     onClick={taoCheckOutNhanh}
                     disabled={updatingWorkShiftId === selectedShiftDetails.ma_ca_lam_viec}
                     style={{
-                      background: '#eff6ff',
-                      color: '#2563eb',
+                      background: 'var(--primary-light)',
+                      color: 'var(--primary)',
                       border: '1px solid #bfdbfe',
                       padding: '0.55rem 1.1rem',
                       borderRadius: '8px',

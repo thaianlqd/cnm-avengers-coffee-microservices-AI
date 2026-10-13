@@ -1,3 +1,4 @@
+import { uiText as ui, useUiLanguage, uiLocale } from "../lib/uiText";
 import { ClockIcon } from '@heroicons/react/24/outline';
 
 const ORDER_STATUS_LABEL = {
@@ -61,11 +62,11 @@ function getTimeline(order) {
 
 function fmtDate(dateValue) {
   if (!dateValue) return '---';
-  return new Date(dateValue).toLocaleString('vi-VN');
+  return new Date(dateValue).toLocaleString(uiLocale());
 }
 
 function fmtMoney(value) {
-  return `${Number(value || 0).toLocaleString('vi-VN')}đ`;
+  return `${Number(value || 0).toLocaleString(uiLocale())}đ`;
 }
 
 function resolveProductImage(item, menuProducts = []) {
@@ -103,6 +104,7 @@ export default function KioskOrderCard({
   onCancelClick,
   onReviewProductClick,
 }) {
+  useUiLanguage();
   const timelineSteps = getTimeline(order);
   const branchName = order.co_so_ma || 'Kiosk';
 
@@ -115,9 +117,7 @@ export default function KioskOrderCard({
             <span className="text-xs font-mono font-black text-orange-700 bg-orange-100 border border-orange-200 px-2 py-0.5 rounded-md">
               #{order.ma_don_hang}
             </span>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300 shadow-sm">
-              🚀 Đơn Nhượng Quyền Kiosk
-            </span>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300 shadow-sm">{ui("🚀 Đơn Nhượng Quyền Kiosk")}</span>
           </div>
           <div className="mt-2 flex items-center gap-4 text-xs text-gray-600 font-medium flex-wrap">
             <span>Kiosk: <strong className="text-orange-900 font-bold">{branchName}</strong></span>
@@ -151,21 +151,21 @@ export default function KioskOrderCard({
                     {idx + 1}
                   </div>
                   <span className={`text-[10px] font-bold mt-1 line-clamp-1 ${step.reached ? 'text-orange-900' : 'text-gray-400'}`}>
-                    {step.label}
+                    {ui(step.label)}
                   </span>
                 </div>
               ))}
             </div>
           </div>
 
-          <p className="mb-2 text-[11px] font-extrabold uppercase tracking-wider text-orange-500">Món Nhượng Quyền</p>
+          <p className="mb-2 text-[11px] font-extrabold uppercase tracking-wider text-orange-500">{ui("Món Nhượng Quyền")}</p>
           <div className="space-y-2">
             {(order.chi_tiet || []).map((item) => (
               <div key={item.id || `${item.ma_san_pham}-${item.ten_san_pham}`} className="rounded-xl bg-orange-50/30 border border-orange-100 p-2.5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <img
                     src={resolveProductImage(item, menuProducts)}
-                    alt={item.ten_san_pham || 'Sản phẩm'}
+                    alt={item.ten_san_pham || ui("Sản phẩm")}
                     className="h-11 w-11 rounded-lg object-cover bg-white border border-gray-100 shrink-0"
                     onError={(e) => {
                       e.target.onerror = null;
@@ -184,9 +184,7 @@ export default function KioskOrderCard({
                       type="button"
                       onClick={() => onReviewProductClick?.({ productId: item.ma_san_pham, productName: item.ten_san_pham, orderId: order.ma_don_hang })}
                       className="text-[10px] font-bold text-orange-600 hover:text-orange-800 underline cursor-pointer"
-                    >
-                      Đánh giá món
-                    </button>
+                    >{ui("Đánh giá món")}</button>
                   )}
                 </div>
               </div>
@@ -196,13 +194,13 @@ export default function KioskOrderCard({
 
         <div className="flex flex-col justify-between rounded-xl border border-orange-100 bg-orange-50/50 p-3.5">
           <div className="space-y-2">
-            <p className="text-[11px] font-extrabold uppercase tracking-wider text-orange-500">Thanh toán (Tại Kiosk)</p>
+            <p className="text-[11px] font-extrabold uppercase tracking-wider text-orange-500">{ui("Thanh toán (Tại Kiosk)")}</p>
             <div className="flex items-center justify-between text-xs text-gray-700">
-              <span className="font-medium text-gray-500">Phương thức:</span>
+              <span className="font-medium text-gray-500">{ui("Phương thức:")}</span>
               <span className="font-bold">{PAYMENT_METHOD_LABEL[order.phuong_thuc_thanh_toan] || order.phuong_thuc_thanh_toan}</span>
             </div>
             <div className="pt-2 border-t border-orange-200 flex items-center justify-between">
-              <span className="text-xs font-bold text-gray-700">Tổng cộng:</span>
+              <span className="text-xs font-bold text-gray-700">{ui("Tổng cộng:")}</span>
               <span className="text-base font-black text-orange-600">{fmtMoney(order.tong_tien)}</span>
             </div>
           </div>
@@ -213,9 +211,7 @@ export default function KioskOrderCard({
                 type="button"
                 onClick={() => onCancelClick?.(order.ma_don_hang)}
                 className="w-full rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 py-2 text-xs font-bold uppercase tracking-wider text-rose-600 transition-colors cursor-pointer"
-              >
-                Hủy Đơn Hàng
-              </button>
+              >{ui("Hủy Đơn Hàng")}</button>
             )}
           </div>
         </div>

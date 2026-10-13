@@ -131,17 +131,17 @@ export function MenuPanel({
             width: '42px',
             height: '42px',
             borderRadius: '12px',
-            background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+            background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
             color: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 10px rgba(16, 185, 129, 0.3)'
+            boxShadow: '0 4px 10px rgba(59, 130, 246, 0.3)'
           }}>
             <Coffee size={24} />
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '800', color: '#0f172a' }}>
+            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600', color: '#0f172a' }}>
               Quản lý Thực Đơn
             </h2>
             <span style={{ fontSize: '0.825rem', color: '#64748b' }}>
@@ -168,12 +168,12 @@ export function MenuPanel({
               padding: '0.45rem 0.85rem',
               borderRadius: '8px',
               border: 'none',
-              background: viewMode === 'grid' ? '#10b981' : 'transparent',
+              background: viewMode === 'grid' ? '#3b82f6' : 'transparent',
               color: viewMode === 'grid' ? '#ffffff' : '#64748b',
               fontWeight: viewMode === 'grid' ? '700' : '500',
               fontSize: '0.825rem',
               cursor: 'pointer',
-              boxShadow: viewMode === 'grid' ? '0 2px 4px rgba(16, 185, 129, 0.25)' : 'none',
+              boxShadow: viewMode === 'grid' ? '0 2px 4px rgba(59, 130, 246, 0.25)' : 'none',
               transition: 'all 0.2s ease'
             }}
           >
@@ -190,12 +190,12 @@ export function MenuPanel({
               padding: '0.45rem 0.85rem',
               borderRadius: '8px',
               border: 'none',
-              background: viewMode === 'list' ? '#10b981' : 'transparent',
+              background: viewMode === 'list' ? '#3b82f6' : 'transparent',
               color: viewMode === 'list' ? '#ffffff' : '#64748b',
               fontWeight: viewMode === 'list' ? '700' : '500',
               fontSize: '0.825rem',
               cursor: 'pointer',
-              boxShadow: viewMode === 'list' ? '0 2px 4px rgba(16, 185, 129, 0.25)' : 'none',
+              boxShadow: viewMode === 'list' ? '0 2px 4px rgba(59, 130, 246, 0.25)' : 'none',
               transition: 'all 0.2s ease'
             }}
           >
@@ -225,8 +225,8 @@ export function MenuPanel({
             width: '42px',
             height: '42px',
             borderRadius: '12px',
-            background: '#eff6ff',
-            color: '#2563eb',
+            background: 'var(--primary-light)',
+            color: 'var(--primary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
@@ -235,7 +235,7 @@ export function MenuPanel({
           </div>
           <div>
             <div style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500' }}>Tổng số món</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: '800', color: '#1e293b' }}>{stats.total} món</div>
+            <div style={{ fontSize: '1.3rem', fontWeight: '600', color: '#1e293b' }}>{stats.total} món</div>
           </div>
         </div>
 
@@ -253,8 +253,8 @@ export function MenuPanel({
             width: '42px',
             height: '42px',
             borderRadius: '12px',
-            background: '#ecfdf5',
-            color: '#059669',
+            background: '#eff6ff',
+            color: '#2563eb',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
@@ -263,7 +263,7 @@ export function MenuPanel({
           </div>
           <div>
             <div style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500' }}>Đang mở bán</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: '800', color: '#059669' }}>{stats.selling} món</div>
+            <div style={{ fontSize: '1.3rem', fontWeight: '600', color: '#2563eb' }}>{stats.selling} món</div>
           </div>
         </div>
 
@@ -291,7 +291,7 @@ export function MenuPanel({
           </div>
           <div>
             <div style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500' }}>Tạm ngưng bán</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: '800', color: '#ef4444' }}>{stats.paused} món</div>
+            <div style={{ fontSize: '1.3rem', fontWeight: '600', color: '#ef4444' }}>{stats.paused} món</div>
           </div>
         </div>
 
@@ -309,8 +309,8 @@ export function MenuPanel({
             width: '42px',
             height: '42px',
             borderRadius: '12px',
-            background: '#e0e7ff',
-            color: '#4f46e5',
+            background: 'var(--primary-subtle)',
+            color: 'var(--primary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
@@ -319,7 +319,7 @@ export function MenuPanel({
           </div>
           <div>
             <div style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500' }}>Số danh mục</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: '800', color: '#4f46e5' }}>{stats.categoryCount} nhóm</div>
+            <div style={{ fontSize: '1.3rem', fontWeight: '600', color: 'var(--primary)' }}>{stats.categoryCount} nhóm</div>
           </div>
         </div>
       </div>
@@ -358,7 +358,7 @@ export function MenuPanel({
                 boxSizing: 'border-box',
                 transition: 'border 0.2s ease'
               }}
-              onFocus={(e) => { e.target.style.borderColor = '#10b981' }}
+              onFocus={(e) => { e.target.style.borderColor = '#3b82f6' }}
               onBlur={(e) => { e.target.style.borderColor = '#cbd5e1' }}
             />
             {searchText && (
@@ -388,12 +388,12 @@ export function MenuPanel({
             {hasFilter ? (
               <>
                 <span style={{
-                  background: '#ecfdf5',
-                  color: '#047857',
+                  background: '#eff6ff',
+                  color: '#1d4ed8',
                   fontWeight: '700',
                   padding: '0.2rem 0.6rem',
                   borderRadius: '9999px',
-                  border: '1px solid #a7f3d0'
+                  border: '1px solid #bfdbfe'
                 }}>
                   {filtered.length} / {itemsList.length} món
                 </span>
@@ -437,9 +437,9 @@ export function MenuPanel({
                     style={{
                       padding: '0.35rem 0.8rem',
                       borderRadius: '8px',
-                      border: isActive ? '1px solid #10b981' : '1px solid #e2e8f0',
-                      background: isActive ? '#ecfdf5' : '#ffffff',
-                      color: isActive ? '#047857' : '#475569',
+                      border: isActive ? '1px solid #3b82f6' : '1px solid #e2e8f0',
+                      background: isActive ? '#eff6ff' : '#ffffff',
+                      color: isActive ? '#1d4ed8' : '#475569',
                       fontWeight: isActive ? '700' : '500',
                       fontSize: '0.825rem',
                       cursor: 'pointer',
@@ -469,13 +469,13 @@ export function MenuPanel({
                     style={{
                       padding: '0.35rem 0.8rem',
                       borderRadius: '8px',
-                      border: isActive ? '1px solid #10b981' : '1px solid #e2e8f0',
-                      background: isActive ? '#10b981' : '#ffffff',
+                      border: isActive ? '1px solid #3b82f6' : '1px solid #e2e8f0',
+                      background: isActive ? '#3b82f6' : '#ffffff',
                       color: isActive ? '#ffffff' : '#475569',
                       fontWeight: isActive ? '700' : '500',
                       fontSize: '0.825rem',
                       cursor: 'pointer',
-                      boxShadow: isActive ? '0 2px 4px rgba(16, 185, 129, 0.2)' : 'none',
+                      boxShadow: isActive ? '0 2px 4px rgba(59, 130, 246, 0.2)' : 'none',
                       transition: 'all 0.2s ease'
                     }}
                   >
@@ -498,7 +498,7 @@ export function MenuPanel({
           border: '1px solid #e2e8f0',
           color: '#64748b'
         }}>
-          <RefreshCw size={32} color="#10b981" style={{ animation: 'spin 1s linear infinite', marginBottom: '0.75rem' }} />
+          <RefreshCw size={32} color="#3b82f6" style={{ animation: 'spin 1s linear infinite', marginBottom: '0.75rem' }} />
           <h4 style={{ margin: '0 0 0.25rem 0', color: '#334155' }}>Đang tải danh sách thực đơn...</h4>
           <p style={{ margin: 0, fontSize: '0.85rem' }}>Dữ liệu sản phẩm đang được cập nhật từ hệ thống.</p>
         </div>
@@ -533,7 +533,7 @@ export function MenuPanel({
               type="button"
               onClick={resetFilters}
               style={{
-                background: '#10b981',
+                background: '#3b82f6',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '10px',
@@ -541,7 +541,7 @@ export function MenuPanel({
                 fontSize: '0.85rem',
                 fontWeight: '700',
                 cursor: 'pointer',
-                boxShadow: '0 2px 4px rgba(16, 185, 129, 0.25)'
+                boxShadow: '0 2px 4px rgba(59, 130, 246, 0.25)'
               }}
             >
               Xóa bộ lọc
@@ -580,8 +580,8 @@ export function MenuPanel({
                   <span style={{
                     fontSize: '0.75rem',
                     fontWeight: '700',
-                    color: '#4f46e5',
-                    background: '#e0e7ff',
+                    color: 'var(--primary)',
+                    background: 'var(--primary-subtle)',
                     padding: '0.2rem 0.6rem',
                     borderRadius: '6px'
                   }}>
@@ -593,8 +593,8 @@ export function MenuPanel({
                     fontWeight: '700',
                     padding: '0.2rem 0.6rem',
                     borderRadius: '9999px',
-                    background: item.dang_ban ? '#d1fae5' : '#fee2e2',
-                    color: item.dang_ban ? '#047857' : '#b91c1c',
+                    background: item.dang_ban ? '#dbeafe' : '#fee2e2',
+                    color: item.dang_ban ? '#1d4ed8' : '#b91c1c',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.25rem'
@@ -611,8 +611,8 @@ export function MenuPanel({
                       width: '36px',
                       height: '36px',
                       borderRadius: '10px',
-                      background: item.dang_ban ? '#eff6ff' : '#f1f5f9',
-                      color: item.dang_ban ? '#2563eb' : '#94a3b8',
+                      background: item.dang_ban ? 'var(--primary-light)' : '#f1f5f9',
+                      color: item.dang_ban ? 'var(--primary)' : '#94a3b8',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -636,7 +636,7 @@ export function MenuPanel({
                     </div>
                   </div>
 
-                  <div style={{ fontSize: '1.2rem', fontWeight: '800', color: '#059669', marginTop: '0.4rem' }}>
+                  <div style={{ fontSize: '1.2rem', fontWeight: '600', color: '#2563eb', marginTop: '0.4rem' }}>
                     {fmtMoney(item.price)}
                   </div>
                 </div>
@@ -652,7 +652,7 @@ export function MenuPanel({
                       padding: '0.6rem 0.85rem',
                       borderRadius: '10px',
                       border: 'none',
-                      background: item.dang_ban ? '#ef4444' : '#10b981',
+                      background: item.dang_ban ? '#ef4444' : '#3b82f6',
                       color: '#ffffff',
                       fontSize: '0.85rem',
                       fontWeight: '700',
@@ -663,7 +663,7 @@ export function MenuPanel({
                       gap: '0.4rem',
                       boxShadow: item.dang_ban
                         ? '0 2px 4px rgba(239, 68, 68, 0.2)'
-                        : '0 2px 4px rgba(16, 185, 129, 0.25)',
+                        : '0 2px 4px rgba(59, 130, 246, 0.25)',
                       transition: 'all 0.2s ease'
                     }}
                   >
@@ -717,8 +717,8 @@ export function MenuPanel({
                     width: '40px',
                     height: '40px',
                     borderRadius: '10px',
-                    background: item.dang_ban ? '#eff6ff' : '#f1f5f9',
-                    color: item.dang_ban ? '#2563eb' : '#94a3b8',
+                    background: item.dang_ban ? 'var(--primary-light)' : '#f1f5f9',
+                    color: item.dang_ban ? 'var(--primary)' : '#94a3b8',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -734,8 +734,8 @@ export function MenuPanel({
                       <span style={{
                         fontSize: '0.725rem',
                         fontWeight: '700',
-                        color: '#4f46e5',
-                        background: '#e0e7ff',
+                        color: 'var(--primary)',
+                        background: 'var(--primary-subtle)',
                         padding: '0.15rem 0.5rem',
                         borderRadius: '6px'
                       }}>
@@ -750,7 +750,7 @@ export function MenuPanel({
 
                 {/* Right Price & Toggle */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                  <div style={{ fontSize: '1.1rem', fontWeight: '800', color: '#059669' }}>
+                  <div style={{ fontSize: '1.1rem', fontWeight: '600', color: '#2563eb' }}>
                     {fmtMoney(item.price)}
                   </div>
 
@@ -762,7 +762,7 @@ export function MenuPanel({
                       padding: '0.5rem 1rem',
                       borderRadius: '8px',
                       border: 'none',
-                      background: item.dang_ban ? '#ef4444' : '#10b981',
+                      background: item.dang_ban ? '#ef4444' : '#3b82f6',
                       color: '#ffffff',
                       fontSize: '0.825rem',
                       fontWeight: '700',
@@ -770,7 +770,7 @@ export function MenuPanel({
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.4rem',
-                      boxShadow: item.dang_ban ? '0 2px 4px rgba(239, 68, 68, 0.2)' : '0 2px 4px rgba(16, 185, 129, 0.2)',
+                      boxShadow: item.dang_ban ? '0 2px 4px rgba(239, 68, 68, 0.2)' : '0 2px 4px rgba(59, 130, 246, 0.2)',
                       transition: 'all 0.2s ease',
                       minWidth: '130px',
                       justifyContent: 'center'
@@ -846,7 +846,7 @@ export function MenuPanel({
                     height: '34px',
                     borderRadius: '8px',
                     border: 'none',
-                    background: safePage === p ? '#10b981' : 'transparent',
+                    background: safePage === p ? '#3b82f6' : 'transparent',
                     color: safePage === p ? '#ffffff' : '#64748b',
                     fontWeight: safePage === p ? '700' : '500',
                     fontSize: '0.85rem',

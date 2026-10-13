@@ -1,6 +1,8 @@
+import { uiText as ui, useUiLanguage } from '../../../lib/uiText';
 import React, { useState } from 'react';
 
 export const FAQsSection = () => {
+  useUiLanguage();
   const [openFaq, setOpenFaq] = useState(0);
   const faqs = [
     { q: 'Tôi có thể đăng ký thẻ Avengers Coffee để tặng người thân được không?', a: 'Bạn có thể tặng bất cứ thẻ Avengers Coffee nào cho người thân khi đăng ký qua website avengers-coffee.vn. Hãy nhớ gửi một lời chúc thật dễ thương nhé!' },
@@ -27,12 +29,12 @@ export const FAQsSection = () => {
                 >
                   <span className={`flex-shrink-0 font-bold text-[20px] leading-none mt-0 w-4 transition-colors ${openFaq === i ? 'text-[#1a1a1a]' : 'text-[#1a1a1a] group-hover:text-[#b22830]'}`}>{openFaq === i ? '−' : '+'}</span>
                   <span className={`text-[15px] leading-relaxed transition-all ${openFaq === i ? 'font-bold text-[#1a1a1a]' : 'font-medium text-[#333] group-hover:text-[#b22830]'}`}>
-                    {faq.q}
+                    {ui(faq.q)}
                   </span>
                 </button>
                 {openFaq === i && (
                   <div className="pb-5 px-5 pl-14 -mt-2">
-                    <p className="text-[14px] text-[#555] leading-loose">{faq.a}</p>
+                    <p className="text-[14px] text-[#555] leading-loose">{ui(faq.a)}</p>
                   </div>
                 )}
               </div>
@@ -50,12 +52,12 @@ export const FAQsSection = () => {
                   >
                     <span className={`flex-shrink-0 font-bold text-[20px] leading-none mt-0 w-4 transition-colors ${openFaq === idx ? 'text-[#1a1a1a]' : 'text-[#1a1a1a] group-hover:text-[#b22830]'}`}>{openFaq === idx ? '−' : '+'}</span>
                     <span className={`text-[15px] leading-relaxed transition-all ${openFaq === idx ? 'font-bold text-[#1a1a1a]' : 'font-medium text-[#333] group-hover:text-[#b22830]'}`}>
-                      {faq.q}
+                      {ui(faq.q)}
                     </span>
                   </button>
                   {openFaq === idx && (
                     <div className="pb-5 px-5 pl-14 -mt-2">
-                      <p className="text-[14px] text-[#555] leading-loose">{faq.a}</p>
+                      <p className="text-[14px] text-[#555] leading-loose">{ui(faq.a)}</p>
                     </div>
                   )}
                 </div>

@@ -1,9 +1,12 @@
+import { Header, Skeleton, EmptyState } from '../components/Experience'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { LazyScrollView, LazySection } from '../components/LazyScrollView'
 import React, { useState } from 'react'
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
+
   TouchableOpacity,
   TextInput,
   ScrollView,
@@ -32,7 +35,7 @@ export function VehicleScreen({ navigation }) {
   const { shipper } = useShipper()
   const queryClient = useQueryClient()
 
-  const { data: vehicle, isLoading } = useQuery({
+  const { data: vehicle, isLoading, isError, refetch } = useQuery({
     queryKey: ['shipper-vehicle', shipper?.id],
     queryFn: () => apiClient.get(`/shippers/${shipper.id}/vehicle`),
     enabled: !!shipper?.id,
@@ -58,7 +61,7 @@ export function VehicleScreen({ navigation }) {
         vehicle_plate: vehiclePlate.trim().toUpperCase(),
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries(['shipper-vehicle', shipper?.id])
+      queryClient.invalidateQueries({ queryKey: ['shipper-vehicle', shipper?.id] })
       Alert.alert('✅ Cập nhật thành công', 'Thông tin phương tiện đã được lưu.')
     },
     onError: (err) => Alert.alert('Lỗi', err?.response?.data?.message || 'Không thể cập nhật'),
@@ -68,7 +71,7 @@ export function VehicleScreen({ navigation }) {
     mutationFn: () =>
       apiClient.post(`/shippers/${shipper.id}/exceptions`, {
         delivery_id: null,
-        exception_type: 'VEHICLE_ISSUE',
+        type: 'VEHICLE_ISSUE',
         description: `Tình trạng phương tiện: ${VEHICLE_CONDITIONS.find(c => c.id === condition)?.label}. ${conditionNote.trim()}`,
       }),
     onSuccess: () => {
@@ -96,18 +99,20 @@ export function VehicleScreen({ navigation }) {
     ])
   }
 
+  if (isError) return <SafeAreaView edges={['top','left','right']} style={styles.safeArea}><Header title="Chưa tải được dữ liệu" onBack={() => navigation.goBack()} /><EmptyState title="Kết nối chưa sẵn sàng" description="Kiểm tra mạng rồi thử tải lại." retry={refetch} /></SafeAreaView>
+
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={['top','left','right']} style={styles.safeArea}>
         <View style={styles.loading}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <Skeleton />
         </View>
       </SafeAreaView>
     )
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['top','left','right']} style={styles.safeArea}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -116,10 +121,10 @@ export function VehicleScreen({ navigation }) {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.body}>
+      <LazyScrollView contentContainerStyle={styles.body}>
         {/* Vehicle Type */}
-        <Text style={styles.sectionLabel}>Loại phương tiện</Text>
-        <View style={styles.optionRow}>
+        <LazySection minHeight={36}><Text style={styles.sectionLabel}>Loại phương tiện</Text></LazySection>
+        <LazySection minHeight={160}><View style={styles.optionRow}>
           {VEHICLE_TYPES.map((vt) => {
             const isSelected = vehicleType === vt.id
             return (
@@ -134,11 +139,11 @@ export function VehicleScreen({ navigation }) {
               </TouchableOpacity>
             )
           })}
-        </View>
+        </View></LazySection>
 
         {/* Plate */}
-        <Text style={styles.sectionLabel}>Biển số xe</Text>
-        <View style={styles.inputWrap}>
+        <LazySection minHeight={36}><Text style={styles.sectionLabel}>Biển số xe</Text></LazySection>
+        <LazySection minHeight={56}><View style={styles.inputWrap}>
           <Ionicons name="card-outline" size={20} color={colors.muted} style={styles.inputIcon} />
           <TextInput
             style={styles.input}
@@ -148,9 +153,9 @@ export function VehicleScreen({ navigation }) {
             onChangeText={setVehiclePlate}
             autoCapitalize="characters"
           />
-        </View>
+        </View></LazySection>
 
-        <TouchableOpacity
+        <LazySection minHeight={56}><TouchableOpacity
           style={[styles.saveBtn, updateMutation.isPending && styles.saveBtnDisabled]}
           onPress={() => updateMutation.mutate()}
           disabled={updateMutation.isPending}
@@ -163,17 +168,17 @@ export function VehicleScreen({ navigation }) {
               <Text style={styles.saveBtnText}>Lưu thông tin xe</Text>
             </>
           )}
-        </TouchableOpacity>
+        </TouchableOpacity></LazySection>
 
         {/* Divider */}
-        <View style={styles.divider} />
+        <LazySection minHeight={24}><View style={styles.divider} /></LazySection>
 
         {/* Condition Report */}
-        <Text style={styles.sectionHeader}>Báo cáo tình trạng xe</Text>
-        <Text style={styles.sectionDesc}>
+        <LazySection minHeight={36}><Text style={styles.sectionHeader}>Báo cáo tình trạng xe</Text></LazySection>
+        <LazySection minHeight={36}><Text style={styles.sectionDesc}>
           Nếu xe có vấn đề, hãy báo cáo để Quản lý sắp xếp hỗ trợ kịp thời.
-        </Text>
-        <View style={styles.conditionRow}>
+        </Text></LazySection>
+        <LazySection minHeight={160}><View style={styles.conditionRow}>
           {VEHICLE_CONDITIONS.map((c) => {
             const isSelected = condition === c.id
             return (
@@ -187,7 +192,7 @@ export function VehicleScreen({ navigation }) {
               </TouchableOpacity>
             )
           })}
-        </View>
+        </View></LazySection>
 
         {condition !== 'GOOD' && (
           <>
@@ -217,7 +222,7 @@ export function VehicleScreen({ navigation }) {
             </TouchableOpacity>
           </>
         )}
-      </ScrollView>
+      </LazyScrollView>
     </SafeAreaView>
   )
 }

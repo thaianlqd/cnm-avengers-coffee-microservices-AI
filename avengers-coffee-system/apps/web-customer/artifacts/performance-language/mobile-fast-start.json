@@ -1,0 +1,7 @@
+{
+  "method": "Chromium, catalog API artificially delayed 3s, no real backend/provider calls",
+  "home_painted_before_catalog_completed": true,
+  "observed_ms_from_navigation": 2037,
+  "document_title": "Trang chủ | Highlands Coffee",
+  "errors": []
+}

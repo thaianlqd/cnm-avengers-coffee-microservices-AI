@@ -128,11 +128,11 @@ export function PosOrderPanel({
         </div>
       )}
       {(isKioskStaff || isStaff) && activeKioskShift && (
-        <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '1.25rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <Clock size={24} color="#16a34a" style={{ flexShrink: 0 }} />
+        <div style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', padding: '1.25rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <Clock size={24} color="#2563eb" style={{ flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
-            <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '0.95rem', fontWeight: '700', color: '#166534' }}>Ca làm việc hiện tại</h3>
-            <p style={{ margin: 0, fontSize: '0.8125rem', color: '#15803d' }}>
+            <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '0.95rem', fontWeight: '700', color: '#1e40af' }}>Ca làm việc hiện tại</h3>
+            <p style={{ margin: 0, fontSize: '0.8125rem', color: '#1d4ed8' }}>
               Tiền mặt đầu ca: <strong>{fmtMoney(activeKioskShift.tien_dau_ca)}</strong> • 
               Bắt đầu lúc: <strong>{new Date(activeKioskShift.thoi_gian_mo_ca).toLocaleTimeString('vi-VN')}</strong>
               {activeKioskShift.ghi_chu_mo_ca ? ` • Ghi chú: ${activeKioskShift.ghi_chu_mo_ca}` : ''}
@@ -142,7 +142,7 @@ export function PosOrderPanel({
       )}
 
       {/* SPLIT CONTAINER */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '1.5rem', alignItems: 'start' }}>
         
         {/* LEFT COLUMN: FORM & ITEMS SELECTION */}
         <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -217,7 +217,7 @@ export function PosOrderPanel({
           </div>
 
           {/* Customer & Table Inputs */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.85rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 160px), 1fr))', gap: '0.85rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
               <label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#334155', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                 <User size={14} color="#64748b" /> Tên khách hàng
@@ -322,7 +322,7 @@ export function PosOrderPanel({
               <p style={{ margin: 0, fontSize: '0.78125rem', color: '#dc2626', fontWeight: '600', backgroundColor: '#fef2f2', padding: '0.5rem', borderRadius: '6px' }}>{posStatus.error}</p>
             ) : null}
             {posStatus?.success ? (
-              <p style={{ margin: 0, fontSize: '0.78125rem', color: '#059669', fontWeight: '600', backgroundColor: '#ecfdf5', padding: '0.5rem', borderRadius: '6px' }}>{posStatus.success}</p>
+              <p style={{ margin: 0, fontSize: '0.78125rem', color: '#2563eb', fontWeight: '600', backgroundColor: '#eff6ff', padding: '0.5rem', borderRadius: '6px' }}>{posStatus.success}</p>
             ) : null}
             {posHasUnavailableItem ? (
               <p style={{ margin: 0, fontSize: '0.78125rem', color: '#dc2626', fontWeight: '600', backgroundColor: '#fef2f2', padding: '0.5rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -352,7 +352,7 @@ export function PosOrderPanel({
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.05rem', color: '#0f172a', borderTop: '1px solid #f1f5f9', paddingTop: '0.65rem', marginTop: '0.2rem' }}>
                 <span>Tổng cộng thu khách:</span>
-                <strong style={{ color: 'var(--primary)', fontWeight: '800' }}>{fmtMoney(posTotal)}</strong>
+                <strong style={{ color: 'var(--primary)', fontWeight: '600' }}>{fmtMoney(posTotal)}</strong>
               </div>
             </div>
 
@@ -375,7 +375,7 @@ export function PosOrderPanel({
                   onFocus={(e) => e.target.select()}
                   placeholder="0"
                 />
-                <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.78125rem', fontWeight: '700', color: posCashInsufficient ? '#dc2626' : '#059669' }}>
+                <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.78125rem', fontWeight: '700', color: posCashInsufficient ? '#dc2626' : '#2563eb' }}>
                   {posCashInsufficient ? '⚠️ Tiền khách đưa chưa đủ' : `Tiền thối lại: ${fmtMoney(posChange)}`}
                 </p>
               </div>
@@ -443,7 +443,7 @@ export function PosOrderPanel({
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span>Thanh toán:</span>
-                  <strong style={{ color: '#059669' }}>{lastPosOrder.order.trang_thai_thanh_toan}</strong>
+                  <strong style={{ color: '#2563eb' }}>{lastPosOrder.order.trang_thai_thanh_toan}</strong>
                 </div>
               </div>
 

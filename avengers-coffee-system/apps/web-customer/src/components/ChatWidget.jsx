@@ -1,4 +1,8 @@
+import { uiText as ui, useUiLanguage, uiLocale } from "../lib/uiText";
 import { useCallback, useEffect, useRef, useState } from 'react';
+import useChatSound from './useChatSound';
+import { useTranslation } from 'react-i18next';
+import { SpeakerWaveIcon, SpeakerXMarkIcon } from '@heroicons/react/24/outline';
 import { useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import { apiClient } from '../lib/apiClient';
@@ -12,8 +16,8 @@ import { walletTopupRequest, walletAmountError, createWalletTopup, pollWalletTop
 import { CheckCircleIcon, CheckIcon } from '@heroicons/react/24/solid';
 
 // ─── Utilities & Formatters ──────────────────────────────────────────────────
-const fmtVND = (n) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
-const fmtTime = (v) => { if (!v) return ''; const d = new Date(v); return isNaN(d) ? '' : d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }); };
+const fmtVND = (n) => Number(n || 0).toLocaleString(uiLocale()) + 'đ';
+const fmtTime = (v) => { if (!v) return ''; const d = new Date(v); return isNaN(d) ? '' : d.toLocaleTimeString(uiLocale(), { hour: '2-digit', minute: '2-digit' }); };
 const isCheckoutConfirmation = (value) => {
   const raw = String(value || '');
   const normalized = String(value || '')
@@ -46,7 +50,7 @@ const fmtDateHeader = (v) => {
   if (isNaN(d)) return '';
   const days = ['CN', 'THỨ 2', 'THỨ 3', 'THỨ 4', 'THỨ 5', 'THỨ 6', 'THỨ 7'];
   const dayName = days[d.getDay()];
-  const dateStr = d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const dateStr = d.toLocaleDateString(uiLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
   return `${dayName}, ${dateStr}`;
 };
 
@@ -94,6 +98,7 @@ const QUICK_ACTIONS = [
 
 // ─── SVG Avatars & Icons ──────────────────────────────────────────────────────
 function AIAvatar({ size = 32 }) {
+  useUiLanguage();
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%',
@@ -108,6 +113,7 @@ function AIAvatar({ size = 32 }) {
 }
 
 function CustomerAvatar({ user, size = 32 }) {
+  useUiLanguage();
   const avatarUrl = user?.avatar_url || user?.avatarUrl || user?.hinh_anh || user?.hinh_anh_url;
   const userName = user?.ho_ten || user?.email || '';
 
@@ -159,6 +165,7 @@ function CustomerAvatar({ user, size = 32 }) {
 }
 
 function StaffAvatar({ name, size = 32 }) {
+  useUiLanguage();
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%',
@@ -177,6 +184,7 @@ function StaffAvatar({ name, size = 32 }) {
 
 // ─── Rich Card Components ─────────────────────────────────────────────────────
 function ProductCard({ p, onAdd, resolvePrice, grouped = false }) {
+  useUiLanguage();
   const [hover, setHover] = useState(false);
   const seedPrice = Number(p.gia_ban ?? p.final_price ?? p.price);
   const [canonicalPrice, setCanonicalPrice] = useState(Number.isFinite(seedPrice) && seedPrice > 0 ? seedPrice : null);
@@ -231,14 +239,14 @@ function ProductCard({ p, onAdd, resolvePrice, grouped = false }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#2D3748', lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{p.display_index ? `${p.display_index}. ` : ''}{productName}</p>
         <p style={{ margin: '3px 0 0', fontSize: '0.82rem', fontWeight: 800, color: '#F08080' }}>
-          {canonicalPrice != null ? fmtVND(canonicalPrice) : priceLoading ? 'Đang kiểm tra giá…' : priceUnavailable ? 'Chưa xác minh được giá' : 'Đang tải giá…'}
+          {canonicalPrice != null ? fmtVND(canonicalPrice) : priceLoading ? ui("Đang kiểm tra giá…") : priceUnavailable ? ui("Chưa xác minh được giá") : ui("Đang tải giá…")}
         </p>
         {(p.danh_muc || p.category) && <p style={{ margin: '2px 0 0', fontSize: '0.68rem', color: '#A0AEC0', fontWeight: 600 }}>
           {p.danh_muc || p.category}
           {grouped && p.group_display_index && ['food', 'drink'].includes(p.menu_bucket) &&
-            ` · ${p.menu_bucket === 'food' ? 'Bánh' : 'Nước'} số ${p.group_display_index}`}
+            ui(" · {{v0}} số {{v1}}", {v0:p.menu_bucket === 'food' ? ui("Bánh") : ui("Nước"),v1:p.group_display_index})}
         </p>}
-        {productId != null && <span style={{ fontSize: '0.66rem', color: '#B22830' }}>Xem chi tiết →</span>}
+        {productId != null && <span style={{ fontSize: '0.66rem', color: '#B22830' }}>{ui("Xem chi tiết →")}</span>}
       </div>
       <button
         disabled={canonicalPrice == null}
@@ -246,13 +254,14 @@ function ProductCard({ p, onAdd, resolvePrice, grouped = false }) {
         style={{ all: 'unset', cursor: canonicalPrice == null ? 'not-allowed' : 'pointer', opacity: canonicalPrice == null ? 0.45 : 1, width: 30, height: 30, borderRadius: '50%', background: '#F08080', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, alignSelf: 'center', fontWeight: 900, fontSize: '1.1rem', boxShadow: '0 2px 8px rgba(240,128,128,0.4)', transition: 'transform 0.1s' }}
         onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.9)'; }}
         onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-        title={canonicalPrice == null ? 'Chưa xác minh được giá từ menu' : 'Thêm vào giỏ'}
+        title={canonicalPrice == null ? ui("Chưa xác minh được giá từ menu") : ui("Thêm vào giỏ")}
       >+</button>
     </div>
   );
 }
 
 function ProductCards({ products, onAdd, resolvePrice }) {
+  useUiLanguage();
   const groups = new Map();
   products.forEach((product) => {
     const bucket = product.menu_bucket || 'unknown';
@@ -270,6 +279,7 @@ function ProductCards({ products, onAdd, resolvePrice }) {
 }
 
 function OrderCard({ o }) {
+  useUiLanguage();
   const s = ORDER_STATUS[o.trang_thai_don_hang] || { label: o.trang_thai_don_hang || 'N/A', color: '#718096' };
   const code = String(o.ma_don_hang || '').slice(-8).toUpperCase();
   return (
@@ -279,17 +289,18 @@ function OrderCard({ o }) {
           <p style={{ margin: 0, fontSize: '0.76rem', fontWeight: 800, color: '#2D3748', letterSpacing: '0.3px' }}>#{code}</p>
           <p style={{ margin: '2px 0 0', fontSize: '0.65rem', color: '#A0AEC0' }}>{fmtDateHeader(o.ngay_tao)}</p>
         </div>
-        <span style={{ fontSize: '0.65rem', fontWeight: 800, color: s.color, background: s.color + '18', padding: '4px 10px', borderRadius: 20 }}>{s.label}</span>
+        <span style={{ fontSize: '0.65rem', fontWeight: 800, color: s.color, background: s.color + '18', padding: '4px 10px', borderRadius: 20 }}>{ui(s.label)}</span>
       </div>
       <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <p style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: '#F08080' }}>{fmtVND(o.tong_tien)}</p>
-        <a href="/?tab=orders" style={{ fontSize: '0.68rem', fontWeight: 800, color: '#F08080', textDecoration: 'none', padding: '4px 10px', border: '1px solid #F0808040', borderRadius: 20 }}>Chi tiết →</a>
+        <a href="/?tab=orders" style={{ fontSize: '0.68rem', fontWeight: 800, color: '#F08080', textDecoration: 'none', padding: '4px 10px', border: '1px solid #F0808040', borderRadius: 20 }}>{ui("Chi tiết →")}</a>
       </div>
     </div>
   );
 }
 
 function StoreCard({ b }) {
+  useUiLanguage();
   const status = b.availability_status;
   const opening = b.gio_mo_cua || b.opening_time;
   const closing = b.gio_dong_cua || b.closing_time;
@@ -314,18 +325,18 @@ function StoreCard({ b }) {
           <p style={{ margin: 0, fontSize: '0.86rem', fontWeight: 800, color: '#2D3748' }}>{b.display_index ? `${b.display_index}. ` : ''}{b.ten_chi_nhanh || b.branch_name}</p>
           <p style={{ margin: '3px 0 0', fontSize: '0.8rem', color: '#526174', lineHeight: 1.4 }}>{b.dia_chi || b.address}</p>
           {branchDistanceLabel(b) && <p style={{ margin: '3px 0 0', fontSize: '0.76rem', color: '#526174' }}>{branchDistanceLabel(b)}</p>}
-          {!isAvailable && b.available_products?.length > 0 && <p style={{ margin: '4px 0 0', fontSize: '0.76rem', color: '#15803D' }}>Còn bán: {b.available_products.join(', ')}</p>}
-          {b.unverified_products?.length > 0 && <p style={{ margin: '4px 0 0', fontSize: '0.76rem', color: '#B45309' }}>Chưa đọc được: {b.unverified_products.join(', ')}</p>}
+          {!isAvailable && b.available_products?.length > 0 && <p style={{ margin: '4px 0 0', fontSize: '0.76rem', color: '#15803D' }}>{ui("Còn bán: ")}{b.available_products.join(', ')}</p>}
+          {b.unverified_products?.length > 0 && <p style={{ margin: '4px 0 0', fontSize: '0.76rem', color: '#B45309' }}>{ui("Chưa đọc được: ")}{b.unverified_products.join(', ')}</p>}
           {statusText && <p style={{ margin: '4px 0 0', fontSize: '0.76rem', color: isAvailable ? '#15803D' : '#DC2626', fontWeight: 800 }}>{statusText}</p>}
-          {(opening || closing) && <p style={{ margin: '3px 0 0', fontSize: '0.76rem', color: '#B22830', fontWeight: 700 }}><ClockIcon aria-hidden="true" style={{ display: 'inline', width: 14, height: 14, marginRight: 4 }} />{opening && closing ? `${opening} – ${closing}` : opening ? `Mở cửa: ${opening}` : `Đóng cửa: ${closing}`}</p>}
+          {(opening || closing) && <p style={{ margin: '3px 0 0', fontSize: '0.76rem', color: '#B22830', fontWeight: 700 }}><ClockIcon aria-hidden="true" style={{ display: 'inline', width: 14, height: 14, marginRight: 4 }} />{opening && closing ? `${opening} – ${closing}` : opening ? ui("Mở cửa: {{v0}}", {v0:opening}) : ui("Đóng cửa: {{v0}}", {v0:closing})}</p>}
         </div>
       </div>
       <div style={{ display: 'flex', gap: 7 }}>
         {phone && (
-          <a href={`tel:${String(phone).replace(/[^+0-9]/g, '')}`} style={{ flex: 1, fontSize: '0.8rem', fontWeight: 800, color: '#4A5568', background: '#F7FAFC', border: '1px solid #EDF2F7', borderRadius: 8, padding: '6px 0', textDecoration: 'none', textAlign: 'center', display: 'block' }}><PhoneIcon aria-hidden="true" style={{ display: 'inline', width: 14, height: 14, marginRight: 5 }} />Gọi cửa hàng</a>
+          <a href={`tel:${String(phone).replace(/[^+0-9]/g, '')}`} style={{ flex: 1, fontSize: '0.8rem', fontWeight: 800, color: '#4A5568', background: '#F7FAFC', border: '1px solid #EDF2F7', borderRadius: 8, padding: '6px 0', textDecoration: 'none', textAlign: 'center', display: 'block' }}><PhoneIcon aria-hidden="true" style={{ display: 'inline', width: 14, height: 14, marginRight: 5 }} />{ui("Gọi cửa hàng")}</a>
         )}
         {mapUrl && (
-          <a href={mapUrl} target="_blank" rel="noreferrer" style={{ flex: 1, fontSize: '0.8rem', fontWeight: 800, color: '#FFF', background: '#B22830', borderRadius: 8, padding: '6px 0', textDecoration: 'none', textAlign: 'center', display: 'block' }}><MapPinIcon aria-hidden="true" style={{ display: 'inline', width: 14, height: 14, marginRight: 5 }} />Chỉ đường</a>
+          <a href={mapUrl} target="_blank" rel="noreferrer" style={{ flex: 1, fontSize: '0.8rem', fontWeight: 800, color: '#FFF', background: '#B22830', borderRadius: 8, padding: '6px 0', textDecoration: 'none', textAlign: 'center', display: 'block' }}><MapPinIcon aria-hidden="true" style={{ display: 'inline', width: 14, height: 14, marginRight: 5 }} />{ui("Chỉ đường")}</a>
         )}
       </div>
     </div>
@@ -333,6 +344,7 @@ function StoreCard({ b }) {
 }
 
 function PaymentCard({ onChoose, options }) {
+  useUiLanguage();
   const methods = [
     { name: 'VNPAY', text: 'Tôi chọn thanh toán VNPAY', desc: 'ATM / Internet Banking', color: '#1E40AF' },
     { name: 'QR ngân hàng', text: 'Tôi chọn chuyển khoản QR ngân hàng', desc: 'Quét mã và chuyển khoản', color: '#A21CAF' },
@@ -357,6 +369,7 @@ function PaymentCard({ onChoose, options }) {
 }
 
 function VoucherCard({ v }) {
+  useUiLanguage();
   const code = v.ma_khuyen_mai || v.ma_voucher || v.code || 'AVENGER';
   const name = v.ten_khuyen_mai || v.ten_voucher || v.name || v.title || `Voucher ${code}`;
   const type = String(v.loai_khuyen_mai || v.loai_giam_gia || v.loai || '').toUpperCase();
@@ -378,8 +391,7 @@ function VoucherCard({ v }) {
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: 800, color: '#2D3748', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</p>
-        <p style={{ margin: '2px 0 0', fontSize: '0.66rem', color: '#F08080', fontWeight: 700, letterSpacing: '0.3px' }}>
-          Mã: <span style={{ fontWeight: 900 }}>{code}</span>{minSpend}
+        <p style={{ margin: '2px 0 0', fontSize: '0.66rem', color: '#F08080', fontWeight: 700, letterSpacing: '0.3px' }}>{ui("Mã: ")}<span style={{ fontWeight: 900 }}>{code}</span>{minSpend}
         </p>
       </div>
     </div>
@@ -387,6 +399,7 @@ function VoucherCard({ v }) {
 }
 
 function QrPaymentCard({ payment, pending, isPaid }) {
+  useUiLanguage();
   const [imageFailed, setImageFailed] = useState(false);
   const imageUrl = payment.qrImgUrl || payment.qrUrl;
   const fallbackUrl = payment.qrFallbackUrl || (payment.qrUrl !== imageUrl ? payment.qrUrl : null);
@@ -416,15 +429,9 @@ function QrPaymentCard({ payment, pending, isPaid }) {
         }}>
           <CheckIcon style={{ width: 24, height: 24, strokeWidth: 3 }} />
         </div>
-        <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#065F46', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-          Giao Dịch Hoàn Tất
-        </div>
-        <div style={{ fontSize: '0.92rem', fontWeight: 900, color: '#047857', marginTop: 2 }}>
-          ĐÃ THANH TOÁN QR THÀNH CÔNG!
-        </div>
-        <div style={{ fontSize: '0.74rem', color: '#4B5563', margin: '4px 0 10px 0' }}>
-          Đơn <strong>#{payment.orderId}</strong> đã được xác nhận tự động qua SePay.
-        </div>
+        <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#065F46', textTransform: 'uppercase', letterSpacing: 0.5 }}>{ui("Giao Dịch Hoàn Tất")}</div>
+        <div style={{ fontSize: '0.92rem', fontWeight: 900, color: '#047857', marginTop: 2 }}>{ui("ĐÃ THANH TOÁN QR THÀNH CÔNG!")}</div>
+        <div style={{ fontSize: '0.74rem', color: '#4B5563', margin: '4px 0 10px 0' }}>{ui("Đơn ")}<strong>#{payment.orderId}</strong>{ui(" đã được xác nhận tự động qua SePay.")}</div>
         <div style={{
           background: '#FFFFFF',
           padding: '10px 12px',
@@ -437,16 +444,16 @@ function QrPaymentCard({ payment, pending, isPaid }) {
           gap: 4
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: '#6B7280' }}>Mã tham chiếu:</span>
+            <span style={{ color: '#6B7280' }}>{ui("Mã tham chiếu:")}</span>
             <span style={{ fontWeight: 700, color: '#1F2937', fontFamily: 'monospace' }}>{payment.reference || 'QR-' + payment.orderId}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: '#6B7280' }}>Số tiền đã nhận:</span>
+            <span style={{ color: '#6B7280' }}>{ui("Số tiền đã nhận:")}</span>
             <span style={{ fontWeight: 800, color: '#059669' }}>{fmtVND(payment.amount)}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: '#6B7280' }}>Trạng thái đơn:</span>
-            <span style={{ fontWeight: 700, color: '#047857' }}>🟢 Đã xác nhận & Đang pha chế</span>
+            <span style={{ color: '#6B7280' }}>{ui("Trạng thái đơn:")}</span>
+            <span style={{ fontWeight: 700, color: '#047857' }}>{ui("🟢 Đã xác nhận & Đang pha chế")}</span>
           </div>
         </div>
       </div>
@@ -463,17 +470,14 @@ function QrPaymentCard({ payment, pending, isPaid }) {
       textAlign: 'center',
       boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
     }}>
-      <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1F2937', marginBottom: 2 }}>
-        Quét mã QR để thanh toán đơn #{payment.orderId}
+      <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1F2937', marginBottom: 2 }}>{ui("Quét mã QR để thanh toán đơn #")}{payment.orderId}
       </div>
-      <div style={{ fontSize: '0.72rem', color: '#6B7280', marginBottom: 8 }}>
-        Chuyển khoản qua ngân hàng bằng mã VietQR / SePay
-      </div>
+      <div style={{ fontSize: '0.72rem', color: '#6B7280', marginBottom: 8 }}>{ui("Chuyển khoản qua ngân hàng bằng mã VietQR / SePay")}</div>
       {imageUrl && !imageFailed && (
         <div style={{ padding: 6, display: 'inline-block', background: '#FFFFFF', borderRadius: 12, border: '1px solid #E5E7EB' }}>
           <img
             src={imageUrl}
-            alt="Mã QR thanh toán ngân hàng"
+            alt={ui("Mã QR thanh toán ngân hàng")}
             onError={() => {
               if (fallbackUrl && imageUrl !== fallbackUrl) {
                 setImageFailed(true);
@@ -487,15 +491,13 @@ function QrPaymentCard({ payment, pending, isPaid }) {
         <div style={{ padding: 6, display: 'inline-block', background: '#FFFFFF', borderRadius: 12, border: '1px solid #E5E7EB' }}>
           <img
             src={fallbackUrl}
-            alt="Mã QR thanh toán ngân hàng"
+            alt={ui("Mã QR thanh toán ngân hàng")}
             style={{ display: 'block', width: 190, height: 190, maxWidth: '100%', margin: '0 auto', borderRadius: 8 }}
           />
         </div>
       )}
       {!imageUrl && !fallbackUrl && (
-        <div style={{ fontSize: '0.72rem', color: '#EF4444', margin: '8px 0' }}>
-          Chưa lấy được mã QR. Bạn có thể mở chi tiết trong mục Đơn hàng.
-        </div>
+        <div style={{ fontSize: '0.72rem', color: '#EF4444', margin: '8px 0' }}>{ui("Chưa lấy được mã QR. Bạn có thể mở chi tiết trong mục Đơn hàng.")}</div>
       )}
 
       <div style={{
@@ -510,11 +512,11 @@ function QrPaymentCard({ payment, pending, isPaid }) {
         gap: 3
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: '#6B7280' }}>Mã tham chiếu:</span>
-          <span style={{ fontWeight: 700, color: '#111827', fontFamily: 'monospace' }}>{payment.reference || 'Đang cập nhật'}</span>
+          <span style={{ color: '#6B7280' }}>{ui("Mã tham chiếu:")}</span>
+          <span style={{ fontWeight: 700, color: '#111827', fontFamily: 'monospace' }}>{payment.reference || ui("Đang cập nhật")}</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: '#6B7280' }}>Số tiền cần chuyển:</span>
+          <span style={{ color: '#6B7280' }}>{ui("Số tiền cần chuyển:")}</span>
           <span style={{ fontWeight: 800, color: '#DC2626' }}>{fmtVND(payment.amount)}</span>
         </div>
       </div>
@@ -533,7 +535,7 @@ function QrPaymentCard({ payment, pending, isPaid }) {
         gap: 6
       }}>
         <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981', animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite' }} />
-        <span>Hệ thống đang tự động xác thực thanh toán qua SePay...</span>
+        <span>{ui("Hệ thống đang tự động xác thực thanh toán qua SePay...")}</span>
       </div>
     </div>
   );
@@ -541,6 +543,7 @@ function QrPaymentCard({ payment, pending, isPaid }) {
 
 // ─── Typing Animation ────────────────────────────────────────────────────────
 function TypingBubble({ label = 'Mình đang xử lý yêu cầu của bạn...' }) {
+  useUiLanguage();
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, padding: '4px 0', animation: 'fadeIn 0.2s ease' }}>
       <AIAvatar size={28} />
@@ -640,6 +643,10 @@ function isStaffChatMessage(msg) {
 
 // ─── Main Chat Widget Component ───────────────────────────────────────────────
 export default function ChatWidget({ user, socketUrl, onLogin }) {
+  useUiLanguage();
+  const { i18n } = useTranslation();
+  const copy = (vi, en) => i18n.resolvedLanguage === 'en' ? en : vi;
+  const { soundEnabled, toggleSound, playSound } = useChatSound();
   const userId = accountId(user);
   const effectiveUserId = userId || getGuestSessionId();
   const queryClient = useQueryClient();
@@ -658,7 +665,15 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
   const [isTyping, setIsTyping] = useState(false);
   const [loadingLabel, setLoadingLabel] = useState('Mình đang xử lý yêu cầu của bạn...');
   const [loading, setLoading] = useState(false);
-  const [unread, setUnread] = useState(0);
+  const [staffUnread, setStaffUnread] = useState({});
+  const [aiUnread, setAiUnread] = useState(0);
+  const unread = aiUnread + Object.values(staffUnread).reduce((sum, count) => sum + count, 0);
+  const [staffHistoryReady, setStaffHistoryReady] = useState(false);
+  const seenMessages = useRef(new Set());
+  const staffCountsRef = useRef({});
+  const staffConversationsRef = useRef({});
+  const staffVersionsRef = useRef({});
+  const readRequestsRef = useRef(new Set());
   const [conversation, setConversation] = useState(null);
   const [pendingOrder, setPendingOrder] = useState(null);
   const [pendingQrPayment, setPendingQrPayment] = useState(() => {
@@ -731,8 +746,10 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
   const addAIMsg = useCallback((noi_dung, extras = {}) => {
     const msg = buildMsg({ vai_tro_nguoi_gui: 'AI', ten_nguoi_gui: 'Trợ lý AI', noi_dung, ...extras });
     setMessages((prev) => [...prev, msg]);
+    if (!isOpenRef.current || chatModeRef.current !== 'AI' || document.visibilityState !== 'visible') setAiUnread(n => n + 1);
+    if (!extras._greeting) playSound();
     return msg;
-  }, []);
+  }, [playSound]);
 
   useEffect(() => {
     const paymentUserId = walletUserId || effectiveUserId;
@@ -829,48 +846,108 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
     return () => { active = false; window.clearInterval(timer); window.removeEventListener('focus', check); };
   }, [pendingWalletTopup, walletUserId, walletTopupOffer, isOpen, queryClient, addAIMsg, scrollBottom]);
 
-  // Socket for staff chat
+  // The server owns staff unread counts, including messages received while offline.
   useEffect(() => {
     if (!effectiveUserId || !socketUrl) return;
+    let active = true;
+    staffCountsRef.current = {}; staffConversationsRef.current = {}; staffVersionsRef.current = {}; seenMessages.current.clear();
     const socket = io(`${socketUrl}/chat`, { transports: ['websocket'], auth: { userId: effectiveUserId, role: 'CUSTOMER' } });
-    socket.emit('chat:subscribe', { userId: effectiveUserId, role: 'CUSTOMER' });
+    const sync = async () => {
+      socket.emit('chat:subscribe', { userId: effectiveUserId, role: 'CUSTOMER' });
+      const versions = { ...staffVersionsRef.current };
+      try {
+        const response = await apiClient.get(`/chat/conversations?user_id=${encodeURIComponent(effectiveUserId)}&role=CUSTOMER`);
+        if (!active) return;
+        const rows = response.data?.items || [];
+        const counts = {};
+        rows.forEach(conv => {
+          const id = conv.ma_hoi_thoai;
+          counts[id] = staffVersionsRef.current[id] === versions[id] ? Number(conv.so_tin_nhan_chua_doc_khach) || 0 : staffCountsRef.current[id] || 0;
+          if (staffVersionsRef.current[id] === versions[id]) staffConversationsRef.current[id] = conv;
+          socket.emit('chat:conversation:join', { conversationId: conv.ma_hoi_thoai });
+        });
+        staffCountsRef.current = { ...staffCountsRef.current, ...counts }; setStaffUnread(staffCountsRef.current);
+        setConversation(prev => String(prev?.ma_khach_hang) === String(effectiveUserId) ? prev : rows.find(c => Number(c.so_tin_nhan_chua_doc_khach) > 0) || rows.find(c => c.trang_thai === 'OPEN') || null);
+      } catch { /* Live updates still work; reconnect will retry the list. */ }
+    };
+    socket.on('connect', sync);
     socket.on('chat:message:new', (msg) => {
-      if (!isStaffChatMessage(msg)) return;
+      if (!active || !isStaffChatMessage(msg) || seenMessages.current.has(String(msg.id))) return;
+      seenMessages.current.add(String(msg.id));
       const m = buildMsg(msg);
-      setStaffMessages((prev) => prev.some((x) => String(x.id) === String(m.id)) ? prev : [...prev, m]);
-      if (m.vai_tro_nguoi_gui !== 'CUSTOMER' && (!isOpenRef.current || chatModeRef.current !== 'STAFF')) {
-        setUnread((n) => n + 1);
-      }
+      setStaffMessages(prev => prev.some(x => String(x.id) === String(m.id)) ? prev : [...prev, m]);
       scrollBottom();
     });
-    socket.on('chat:conversation:update', (c) => { if (c.ma_khach_hang === effectiveUserId) setConversation(c); });
+    socket.on('chat:conversation:update', conv => {
+      if (!active || String(conv.ma_khach_hang) !== String(effectiveUserId)) return;
+      const id = conv.ma_hoi_thoai;
+      staffConversationsRef.current[id] = conv;
+      staffVersionsRef.current[id] = (staffVersionsRef.current[id] || 0) + 1;
+      const count = Number(conv.so_tin_nhan_chua_doc_khach) || 0;
+      if (count > (staffCountsRef.current[id] || 0) && ['STAFF', 'MANAGER'].includes(conv.vai_tro_nguoi_gui_cuoi)) playSound();
+      staffCountsRef.current = { ...staffCountsRef.current, [id]: count };
+      setStaffUnread(staffCountsRef.current);
+      setConversation(prev => !prev || prev.ma_hoi_thoai === id ? conv : prev);
+      socket.emit('chat:conversation:join', { conversationId: id });
+    });
     socketRef.current = socket;
-    return () => { socket.disconnect(); socketRef.current = null; };
-  }, [socketUrl, effectiveUserId, scrollBottom]);
+    return () => { active = false; socket.disconnect(); socketRef.current = null; };
+  }, [socketUrl, effectiveUserId, scrollBottom, playSound]);
+
+  useEffect(() => {
+    const readVisible = () => {
+      if (!isOpen || document.visibilityState !== 'visible') return;
+      if (chatMode === 'AI') { setAiUnread(0); return; }
+      const id = conversation?.ma_hoi_thoai;
+      if (!id || !staffHistoryReady || !staffUnread[id] || readRequestsRef.current.has(id)) return;
+      const version = staffVersionsRef.current[id];
+      readRequestsRef.current.add(id);
+      apiClient.patch(`/chat/conversations/${id}/read`, { reader_user_id: effectiveUserId, reader_role: 'CUSTOMER' })
+        .then(response => {
+          const conv = response.data?.conversation;
+          if (conv && staffVersionsRef.current[id] === version) {
+            staffCountsRef.current = { ...staffCountsRef.current, [id]: Number(conv.so_tin_nhan_chua_doc_khach) || 0 };
+            setStaffUnread(staffCountsRef.current);
+          }
+        }).catch(() => { /* Retain unread until the server confirms the read. */ }).finally(() => readRequestsRef.current.delete(id));
+    };
+    readVisible();
+    document.addEventListener('visibilitychange', readVisible);
+    return () => document.removeEventListener('visibilitychange', readVisible);
+  }, [isOpen, chatMode, aiUnread, staffUnread, conversation?.ma_hoi_thoai, staffHistoryReady, effectiveUserId]);
 
   // Open staff chat
   const openStaffChat = useCallback(async () => {
-    if (conversation) { scrollBottom(); return; }
+    setStaffHistoryReady(false);
     setLoading(true);
     try {
       const token = window.localStorage.getItem('token');
       const headers = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`}/chat/conversations/open`, {
+      const unreadConversation = Object.values(staffConversationsRef.current).find(conv => staffCountsRef.current[conv.ma_hoi_thoai] > 0);
+      const selectedConversation = unreadConversation || (String(conversation?.ma_khach_hang) === String(effectiveUserId) ? conversation : null);
+      const res = selectedConversation ? null : await fetch(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`}/chat/conversations/open`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ customer_user_id: effectiveUserId, customer_name: userName }),
       });
-      const data = await res.json();
-      const conv = data?.conversation || data;
+      const data = res ? await res.json() : null;
+      const conv = selectedConversation || data?.conversation || data;
       if (conv) {
+        staffConversationsRef.current[conv.ma_hoi_thoai] = conv;
         setConversation(conv);
         if (socketRef.current) socketRef.current.emit('chat:conversation:join', { conversationId: conv.ma_hoi_thoai });
         const msgsRes = await apiClient.get(`/chat/conversations/${conv.ma_hoi_thoai}/messages?user_id=${effectiveUserId}&role=CUSTOMER`);
         const items = msgsRes?.data?.items || [];
         const staffOnly = items.filter(isStaffChatMessage);
-        setStaffMessages(staffOnly.map((m) => buildMsg(m)));
+        staffOnly.forEach(m => seenMessages.current.add(String(m.id)));
+        setStaffMessages(prev => {
+          const history = staffOnly.map(m => buildMsg(m));
+          const ids = new Set(history.map(m => String(m.id)));
+          return [...history, ...prev.filter(m => m.ma_hoi_thoai === conv.ma_hoi_thoai && !ids.has(String(m.id)))];
+        });
+        setStaffHistoryReady(true);
         scrollBottom();
       }
     } catch { /* ignore */ }
@@ -879,9 +956,11 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
 
   // Open chat window
   const openChat = useCallback((mode = 'AI') => {
+    chatModeRef.current = mode;
+    isOpenRef.current = true;
     setChatMode(mode);
     setIsOpen(true);
-    setUnread(0);
+    if (mode === 'AI') setAiUnread(0);
     if (mode === 'AI') {
       const saved = loadAISession(effectiveUserId);
       if (!saved || saved.length === 0) {
@@ -890,13 +969,19 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
         const nameStr = user?.ho_ten || user?.hoTen ? ` ${user.ho_ten || user.hoTen}` : '';
         addAIMsg(
           `Xin chào${nameStr}! 👋 Mình là Trợ lý AI của Avengers Coffee.\n\nHôm nay mình có thể hỗ trợ gì cho bạn?`,
-          { _quickReplies: QUICK_ACTIONS.slice(0, 4) }
+          { _quickReplies: QUICK_ACTIONS.slice(0, 4), _greeting: true }
         );
       }
     } else if (mode === 'STAFF') {
       openStaffChat();
     }
-  }, [user, addAIMsg, openStaffChat]);
+  }, [user, effectiveUserId, addAIMsg, openStaffChat]);
+
+  useEffect(() => {
+    const open = event => openChat(event.detail?.mode === 'STAFF' ? 'STAFF' : 'AI');
+    window.addEventListener('avengers:open-chat', open);
+    return () => window.removeEventListener('avengers:open-chat', open);
+  }, [openChat]);
 
   const handleResetChat = useCallback(async () => {
     if (window.confirm('Bắt đầu cuộc trò chuyện AI mới? Giỏ hàng của bạn sẽ được giữ nguyên.')) {
@@ -1380,7 +1465,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
   // Voice speech-to-text
   const startVoice = useCallback(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { alert('Trình duyệt của bạn chưa hỗ trợ nhận diện giọng nói. Vui lòng dùng Google Chrome!'); return; }
+    if (!SR) { alert(ui("Trình duyệt của bạn chưa hỗ trợ nhận diện giọng nói. Vui lòng dùng Google Chrome!")); return; }
     const r = new SR();
     r.lang = 'vi-VN'; r.interimResults = false; r.maxAlternatives = 1;
     r.onstart = () => setIsListening(true);
@@ -1390,7 +1475,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
     r.start();
   }, [sendMessage]);
 
-  const activeMessages = chatMode === 'AI' ? messages : staffMessages;
+  const activeMessages = chatMode === 'AI' ? messages : staffMessages.filter(m => m.ma_hoi_thoai === conversation?.ma_hoi_thoai);
 
   return (
     <>
@@ -1410,7 +1495,9 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
       {/* Floating Launcher Button */}
       {!isOpen && (
         <button
-          onClick={() => openChat('AI')}
+          data-chat-toggle-button
+          aria-label={copy(`Mở trò chuyện, ${unread} tin chưa đọc`, `Open chat, ${unread} unread messages`)}
+          onClick={() => openChat(Object.values(staffUnread).some(n => n > 0) ? 'STAFF' : 'AI')}
           style={{
             position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
             width: 60, height: 60, borderRadius: '50%',
@@ -1423,7 +1510,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
           }}
           onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.08)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-          title="Trợ lý AI Avengers Coffee"
+          title={ui("Trợ lý AI Avengers Coffee")}
         >
           <AIAvatar size={36} />
           {unread > 0 && (
@@ -1434,7 +1521,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               border: '2px solid #FFF', padding: '0 4px'
             }}>
-              {unread}
+              {unread > 99 ? '99+' : unread}
             </span>
           )}
         </button>
@@ -1471,17 +1558,18 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
                 </div>
                 <div>
                   <div style={{ fontSize: '0.95rem', fontWeight: 500, color: '#111111', letterSpacing: '0.2px' }}>
-                    {chatMode === 'AI' ? 'Trợ lý Avengers' : 'Nhân viên Hỗ trợ'}
+                    {chatMode === 'AI' ? copy('Trợ lý Avengers', 'Avengers assistant') : copy('Nhân viên Hỗ trợ', 'Customer support')}
                   </div>
                   <div style={{ fontSize: '0.7rem', color: '#666666', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22C55E' }} title="Online" />
-                    Trực tuyến - Trả lời ngay
-                  </div>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22C55E' }} title="Online" />{ui("Trực tuyến - Trả lời ngay")}</div>
                 </div>
               </div>
 
               {/* Window controls (Minimize & Close) */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button type="button" onClick={toggleSound} aria-pressed={soundEnabled} title={copy(soundEnabled ? ui("Tắt âm báo") : ui("Bật âm báo"), soundEnabled ? 'Mute notifications' : 'Enable sound')} aria-label={copy('Âm báo tin nhắn', 'Message notification sound')} style={{ border: 0, background: 'transparent', cursor: 'pointer', padding: 4, color: '#64748B' }}>
+                  {soundEnabled ? <SpeakerWaveIcon style={{ width: 18 }} /> : <SpeakerXMarkIcon style={{ width: 18 }} />}
+                </button>
                 {chatMode === 'AI' && (
                   <button
                     onClick={handleResetChat}
@@ -1493,18 +1581,16 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.background = '#FEE2E2'; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = '#FEF2F2'; }}
-                    title="Bắt đầu cuộc trò chuyện mới"
+                    title={ui("Bắt đầu cuộc trò chuyện mới")}
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                    Làm mới
-                  </button>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>{ui("Làm mới")}</button>
                 )}
                 <button
                   onClick={() => setIsOpen(false)}
                   style={{ all: 'unset', cursor: 'pointer', background: '#F1F5F9', color: '#64748B', width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = '#E2E8F0'; e.currentTarget.style.color = '#334155'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.color = '#64748B'; }}
-                  title="Thu nhỏ"
+                  title={ui("Thu nhỏ")}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 14 12 22 20 14"></polyline><line x1="12" y1="2" x2="12" y2="22"></line></svg>
                 </button>
@@ -1513,7 +1599,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
                   style={{ all: 'unset', cursor: 'pointer', background: '#F1F5F9', color: '#64748B', width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = '#E2E8F0'; e.currentTarget.style.color = '#334155'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.color = '#64748B'; }}
-                  title="Đóng"
+                  title={ui("Đóng")}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
@@ -1522,10 +1608,10 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
 
             {/* Mode switch tabs */}
             <div style={{ display: 'flex', background: '#F1F5F9', padding: 4, borderRadius: 6, gap: 4, marginTop: 12 }}>
-              {[{ mode: 'AI', label: 'Trợ lý AI' }, { mode: 'STAFF', label: 'Nhân viên' }].map(({ mode, label }) => (
+              {[{ mode: 'AI', label: copy('Trợ lý AI', 'AI assistant') }, { mode: 'STAFF', label: copy('Nhân viên', 'Support') }].map(({ mode, label }) => (
                 <button
                   key={mode}
-                  onClick={() => { setChatMode(mode); setSending(false); if (mode === 'STAFF') openStaffChat(); }}
+                  onClick={() => { chatModeRef.current = mode; setChatMode(mode); setSending(false); if (mode === 'STAFF') openStaffChat(); }}
                   style={{
                     border: 'none', outline: 'none', cursor: 'pointer', flex: 1, padding: '5px 0', borderRadius: 4,
                     fontSize: '0.76rem', fontWeight: 500, textAlign: 'center', transition: 'all 0.2s',
@@ -1534,7 +1620,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
                     boxShadow: chatMode === mode ? '0 1px 4px rgba(0,0,0,0.05)' : 'none',
                   }}
                 >
-                  {label}
+                  {label} {mode === 'STAFF' && Object.values(staffUnread).some(n => n > 0) && <span style={{ color: '#b22830', fontWeight: 700 }}>({Object.values(staffUnread).reduce((a, b) => a + b, 0)})</span>}
                 </button>
               ))}
             </div>
@@ -1559,7 +1645,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 14, padding: '0 20px' }}>
                 <AIAvatar size={54} />
                 <p style={{ margin: 0, fontSize: '0.88rem', fontWeight: 700, color: '#4A5568', textAlign: 'center', lineHeight: 1.4 }}>
-                  {chatMode === 'AI' ? 'Xin chào! Bạn cần hỗ trợ gì về đồ uống hay đơn hàng hôm nay?' : 'Nhân viên tư vấn sẽ phản hồi trong giây lát.'}
+                  {chatMode === 'AI' ? ui("Xin chào! Bạn cần hỗ trợ gì về đồ uống hay đơn hàng hôm nay?") : ui("Nhân viên tư vấn sẽ phản hồi trong giây lát.")}
                 </p>
                 {chatMode === 'AI' && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center' }}>
@@ -1574,7 +1660,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
                           display: 'flex', alignItems: 'center', gap: 4
                         }}
                       >
-                        {a.icon} {a.label}
+                        {a.icon} {ui(a.label)}
                       </button>
                     ))}
                   </div>
@@ -1611,9 +1697,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
                         <a href="/?tab=login" onClick={(event) => {
                           sessionStorage.setItem('post_login_redirect', 'cart');
                           if (onLogin) { event.preventDefault(); onLogin(); }
-                        }} style={{ display: 'block', marginTop: 12, padding: '10px 14px', borderRadius: 10, background: '#B22830', color: '#FFF', textAlign: 'center', textDecoration: 'none', fontWeight: 700 }}>
-                          Đăng nhập để tiếp tục
-                        </a>
+                        }} style={{ display: 'block', marginTop: 12, padding: '10px 14px', borderRadius: 10, background: '#B22830', color: '#FFF', textAlign: 'center', textDecoration: 'none', fontWeight: 700 }}>{ui("Đăng nhập để tiếp tục")}</a>
                       )}
                       {/* Rich Content Cards */}
                       {msg._products && msg._products.length > 0 && (
@@ -1639,7 +1723,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
                       )}
                       {msg._paymentUrl && (
                         <a href={msg._paymentUrl} target="_blank" rel="noreferrer" style={{ display: 'block', marginTop: 10, padding: '9px 12px', borderRadius: 10, background: '#B22830', color: '#FFF', textAlign: 'center', textDecoration: 'none', fontWeight: 800, fontSize: '0.76rem' }}>
-                          {msg._paymentLabel || 'Tiếp tục thanh toán'}
+                          {msg._paymentLabel || ui("Tiếp tục thanh toán")}
                         </a>
                       )}
                       {msg._qrPayment && (
@@ -1675,10 +1759,10 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
             {pendingOrder && (
               <div style={{ padding: '10px 14px', background: '#FFF', borderRadius: 12, border: '1px solid #F0808050' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 800 }}>Tổng cộng: {fmtVND(pendingOrder.total)}</span>
-                  <button onClick={() => setPendingOrder(null)} disabled={orderConfirming} style={{ border: 0, borderRadius: 16, padding: '6px 10px', cursor: 'pointer' }}>Để sau</button>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 800 }}>{ui("Tổng cộng: ")}{fmtVND(pendingOrder.total)}</span>
+                  <button onClick={() => setPendingOrder(null)} disabled={orderConfirming} style={{ border: 0, borderRadius: 16, padding: '6px 10px', cursor: 'pointer' }}>{ui("Để sau")}</button>
                   <button onClick={confirmPendingOrder} disabled={orderConfirming} style={{ border: 0, borderRadius: 16, padding: '6px 12px', background: '#b22830', color: '#FFF', cursor: 'pointer' }}>
-                    {orderConfirming ? 'Đang đặt...' : 'Xác nhận đặt hàng'}
+                    {orderConfirming ? ui("Đang đặt...") : ui("Xác nhận đặt hàng")}
                   </button>
                 </div>
               </div>
@@ -1691,7 +1775,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
           {replyTo && (
             <div style={{ padding: '6px 14px', background: '#FFF0F0', borderTop: '1px solid #FFE3E3', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ overflow: 'hidden' }}>
-                <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#F08080' }}>Đang trả lời {replyTo.ten_nguoi_gui || 'tin nhắn'}: </span>
+                <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#F08080' }}>{ui("Đang trả lời ")}{replyTo.ten_nguoi_gui || ui("tin nhắn")}: </span>
                 <span style={{ fontSize: '0.7rem', color: '#4A5568' }}>{replyTo.noi_dung}</span>
               </div>
               <button onClick={() => setReplyTo(null)} style={{ border: 'none', background: 'none', color: '#F08080', cursor: 'pointer', fontWeight: 'bold' }}>×</button>
@@ -1708,7 +1792,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
                     onMouseEnter={(e) => { e.currentTarget.style.background = '#fff3f0'; e.currentTarget.style.color = '#b22830'; e.currentTarget.style.borderColor = '#b2283040'; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = '#f8f9fa'; e.currentTarget.style.color = '#495057'; e.currentTarget.style.borderColor = '#e9ecef'; }}
                   >
-                    {a.icon} {a.label}
+                    {a.icon} {ui(a.label)}
                   </button>
                 ))}
               </div>
@@ -1724,14 +1808,14 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
                   onFocus={(e) => { e.currentTarget.parentElement.style.borderColor = '#b22830'; e.currentTarget.parentElement.style.boxShadow = '0 0 0 3px rgba(178,40,48,0.12)'; }}
                   onBlur={(e) => { e.currentTarget.parentElement.style.borderColor = '#e9ecef'; e.currentTarget.parentElement.style.boxShadow = 'none'; }}
-                  placeholder={chatMode === 'AI' ? 'Nhắn tin với AI...' : 'Nhắn tin cho nhân viên...'}
+                  placeholder={chatMode === 'AI' ? ui("Nhắn tin với AI...") : ui("Nhắn tin cho nhân viên...")}
                   rows={1}
                   style={{ flex: 1, border: 'none', padding: 0, outline: 'none', background: 'transparent', fontSize: '0.84rem', color: '#212529', resize: 'none', maxHeight: 100, lineHeight: 1.5, fontFamily: 'inherit' }}
                 />
               </div>
 
               {chatMode === 'AI' && (
-                <button onClick={startVoice} disabled={isListening} title="Nói để đặt hàng"
+                <button onClick={startVoice} disabled={isListening} title={ui("Nói để đặt hàng")}
                   style={{ padding: 0, outline: 'none', cursor: 'pointer', width: 42, height: 42, borderRadius: '50%', background: isListening ? 'linear-gradient(135deg,#ef4444,#dc2626)' : '#f8f9fa', border: '1.5px solid #e9ecef', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s', boxShadow: isListening ? '0 0 0 4px rgba(239,68,68,0.2)' : 'none', animation: isListening ? 'micPulse 1s ease-in-out infinite' : 'none' }}>
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke={isListening ? '#fff' : '#868e96'} style={{ width: 18, height: 18 }}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />

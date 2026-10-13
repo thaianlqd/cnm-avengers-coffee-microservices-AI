@@ -19,7 +19,9 @@
       }
     },
     "splash": {
-      "backgroundColor": "#f26b1d"
+      "image": "./assets/branding/splash-logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#b22a2e"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -36,6 +38,12 @@
         "expo-av",
         {
           "microphonePermission": "Ứng dụng cần quyền microphone để đặt hàng bằng giọng nói"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Avengers Coffee dùng vị trí để tìm cửa hàng phục vụ và giao đơn đến bạn."
         }
       ]
     ]

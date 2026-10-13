@@ -1,8 +1,9 @@
+import { uiText as ui, useUiLanguage } from "../lib/uiText";
 import React, { useState } from 'react';
-import { 
-  MapPinIcon, 
-  PhoneIcon, 
-  EnvelopeIcon, 
+import {
+  MapPinIcon,
+  PhoneIcon,
+  EnvelopeIcon,
   PaperAirplaneIcon,
   CheckCircleIcon,
   ShieldCheckIcon
@@ -10,6 +11,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 export default function OrderFooter({ onNavigate }) {
+  useUiLanguage();
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
@@ -34,9 +36,9 @@ export default function OrderFooter({ onNavigate }) {
           {/* ── COL 1: BRAND & COMPANY INFO (4 Cols) ── */}
           <div className="lg:col-span-4 space-y-4">
             <div className="flex items-center gap-3">
-              <img 
-                src="/hc-assets/red_BG_logo800.png" 
-                alt="Avengers Coffee" 
+              <img
+                src="/hc-assets/red_BG_logo800.png"
+                alt="Avengers Coffee"
                 className="h-12 w-auto object-contain"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
@@ -53,9 +55,7 @@ export default function OrderFooter({ onNavigate }) {
             <ul className="space-y-2.5 text-xs text-gray-300 font-medium">
               <li className="flex items-start gap-2.5">
                 <MapPinIcon className="w-4 h-4 text-[#b22830] shrink-0 mt-0.5" />
-                <span className="text-gray-300 leading-normal">
-                  125-127 Nguyễn Cơ Thạch, Phường An Lợi Đông, TP. Thủ Đức, TP. Hồ Chí Minh. MSDN: 0309965814.
-                </span>
+                <span className="text-gray-300 leading-normal">{ui("125-127 Nguyễn Cơ Thạch, Phường An Lợi Đông, TP. Thủ Đức, TP. Hồ Chí Minh. MSDN: 0309965814.")}</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <PhoneIcon className="w-4 h-4 text-[#b22830] shrink-0" />
@@ -69,27 +69,27 @@ export default function OrderFooter({ onNavigate }) {
 
             {/* Social Media Pills */}
             <div className="pt-2 flex items-center gap-2.5">
-              <a 
-                href="https://facebook.com" 
-                target="_blank" 
+              <a
+                href="https://facebook.com"
+                target="_blank"
                 rel="noreferrer"
                 className="w-9 h-9 rounded-xl bg-gray-800 hover:bg-[#1877f2] text-white flex items-center justify-center transition-colors shadow-2xs"
                 title="Facebook"
               >
                 <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" /></svg>
               </a>
-              <a 
-                href="https://zalo.me" 
-                target="_blank" 
+              <a
+                href="https://zalo.me"
+                target="_blank"
                 rel="noreferrer"
                 className="w-9 h-9 rounded-xl bg-gray-800 hover:bg-[#0068ff] text-white flex items-center justify-center text-xs font-black transition-colors shadow-2xs"
                 title="Zalo"
               >
                 Zalo
               </a>
-              <a 
-                href="https://instagram.com" 
-                target="_blank" 
+              <a
+                href="https://instagram.com"
+                target="_blank"
                 rel="noreferrer"
                 className="w-9 h-9 rounded-xl bg-gray-800 hover:bg-[#e4405f] text-white flex items-center justify-center transition-colors shadow-2xs"
                 title="Instagram"
@@ -106,33 +106,33 @@ export default function OrderFooter({ onNavigate }) {
             </h4>
             <ul className="space-y-2.5 text-xs font-medium text-gray-400">
               <li>
-                <button 
-                  type="button" 
-                  onClick={() => onNavigate?.('chinh-sach-dat-hang')} 
+                <button
+                  type="button"
+                  onClick={() => onNavigate?.('chinh-sach-dat-hang')}
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
                   {t('orderFooter.orderPolicy')}
                 </button>
               </li>
               <li>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
                   {t('orderFooter.privacyPolicy')}
                 </button>
               </li>
               <li>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
                   {t('orderFooter.paymentPolicy')}
                 </button>
               </li>
               <li>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => onNavigate?.('hoi-vien')}
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
@@ -149,8 +149,8 @@ export default function OrderFooter({ onNavigate }) {
             </h4>
             <ul className="space-y-2.5 text-xs font-medium text-gray-400">
               <li>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => { onNavigate?.('tra-cuu-don'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
@@ -158,8 +158,8 @@ export default function OrderFooter({ onNavigate }) {
                 </button>
               </li>
               <li>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => onNavigate?.('cua-hang')}
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
@@ -167,8 +167,8 @@ export default function OrderFooter({ onNavigate }) {
                 </button>
               </li>
               <li>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => onNavigate?.('ho-tro')}
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
@@ -176,8 +176,8 @@ export default function OrderFooter({ onNavigate }) {
                 </button>
               </li>
               <li>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => onNavigate?.('vong-quay')}
                   className="hover:text-white hover:translate-x-1 transition-all cursor-pointer bg-transparent border-none p-0 text-left"
                 >
@@ -209,7 +209,7 @@ export default function OrderFooter({ onNavigate }) {
                 <button
                   type="submit"
                   className="absolute right-1.5 p-1.5 rounded-lg bg-[#b22830] hover:bg-[#8f1d24] text-white transition-colors cursor-pointer"
-                  title="Đăng ký"
+                  title={ui("Đăng ký")}
                 >
                   <PaperAirplaneIcon className="w-4 h-4" />
                 </button>
@@ -222,11 +222,11 @@ export default function OrderFooter({ onNavigate }) {
             </form>
 
             <div className="pt-2 flex items-center gap-3">
-              <img 
-                src="/hc-assets/logo_bct.png" 
-                alt="Đã thông báo Bộ Công Thương" 
-                className="h-10 w-auto object-contain" 
-                onError={(e) => { e.currentTarget.style.display = 'none'; }} 
+              <img
+                src="/hc-assets/logo_bct.png"
+                alt={ui("Đã thông báo Bộ Công Thương")}
+                className="h-10 w-auto object-contain"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
               <span className="text-[10px] text-gray-500 font-semibold flex items-center gap-1">
                 <ShieldCheckIcon className="w-4 h-4 text-emerald-500" /> {t('orderFooter.copyrightText')}

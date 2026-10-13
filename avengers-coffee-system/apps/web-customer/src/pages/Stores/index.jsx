@@ -1,3 +1,4 @@
+import { uiText as ui, useUiLanguage, uiLocale } from "../../lib/uiText";
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -52,6 +53,7 @@ function buildMapEmbedUrl(address) {
 }
 
 export default function StoresPage() {
+  useUiLanguage();
   const { t } = useTranslation();
   const { data: publicBranchPayload, isLoading: isStoresLoading } = useQuery({
     queryKey: ['public-branches'],
@@ -159,11 +161,11 @@ export default function StoresPage() {
   const suggestions = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const query = normalizeLocationText(searchQuery);
-    
+
     const matchingCities = cities
       .filter(c => c !== 'ALL' && normalizeLocationText(c).includes(query))
       .map(c => ({ type: 'city', text: c, value: c }));
-    
+
     const matchingStoreItems = stores.filter(s => {
       const name = normalizeLocationText(s.name);
       const addr = normalizeLocationText(s.address);
@@ -187,7 +189,7 @@ export default function StoresPage() {
       {/* Detailed Store View */}
       {detailedStore ? (
         <div className="flex-1 overflow-y-auto bg-gray-50 pb-16">
-          <div 
+          <div
             className="bg-[#b22830] h-14 flex items-center px-6 w-full cursor-pointer hover:bg-red-800 transition-colors shadow-md"
             onClick={() => setDetailedStore(null)}
           >
@@ -201,11 +203,11 @@ export default function StoresPage() {
             {/* Store Banner & Meta */}
             <div className="bg-white p-8 shadow-sm rounded-2xl flex flex-col md:flex-row gap-10 border border-gray-100">
               <div className="bg-[#b22830] flex-1 flex items-center justify-center p-10 min-h-[260px] rounded-2xl">
-                <img 
-                  src="/hc-assets/red_BG_logo800.png" 
-                  alt="Avengers Coffee" 
-                  className="w-[80%] max-w-[260px] object-contain" 
-                  onError={(e) => e.currentTarget.style.display = 'none'} 
+                <img
+                  src="/hc-assets/red_BG_logo800.png"
+                  alt="Avengers Coffee"
+                  className="w-[80%] max-w-[260px] object-contain"
+                  onError={(e) => e.currentTarget.style.display = 'none'}
                 />
               </div>
               <div className="flex-1 flex flex-col justify-between">
@@ -218,14 +220,11 @@ export default function StoresPage() {
                           {Number(detailedBranchReviews?.diem_trung_binh || detailedStore.rating || 5.0).toFixed(1)} / 5.0
                         </span>
                         <span className="text-xs text-gray-500 font-medium">
-                          ({detailedBranchReviews?.tong_luot_danh_gia || detailedStore.reviewCount || 0} đánh giá)
-                        </span>
+                          ({detailedBranchReviews?.tong_luot_danh_gia || detailedStore.reviewCount || 0}{ui(" đánh giá)")}</span>
                       </>
                     ) : (
                       <span className="bg-gray-100 text-gray-500 text-xs font-black px-3 py-1 rounded-full flex items-center gap-1.5 border border-gray-200">
-                        <StarIconSolid className="w-4 h-4 text-gray-400" />
-                        Chưa có đánh giá
-                      </span>
+                        <StarIconSolid className="w-4 h-4 text-gray-400" />{ui("Chưa có đánh giá")}</span>
                     )}
                   </div>
                   <h2 className="text-[22px] font-black uppercase text-[#333333] mb-4">{detailedStore.name}</h2>
@@ -340,7 +339,7 @@ export default function StoresPage() {
                           </span>
                         </div>
                         <span className="text-xs text-gray-400 font-medium">
-                          {new Date(review.ngay_tao).toLocaleDateString('vi-VN')}
+                          {new Date(review.ngay_tao).toLocaleDateString(uiLocale())}
                         </span>
                       </div>
                       {review.nhan_xet && (
@@ -360,14 +359,14 @@ export default function StoresPage() {
       {/* Top Filter Bar */}
       <div className="w-full bg-white py-3.5 px-6 border-b border-gray-200/80 shadow-2xs z-10">
         <div className="max-w-[1400px] mx-auto flex flex-wrap items-center justify-center gap-2.5">
-          <select 
+          <select
             className="h-9 px-3.5 bg-gray-50/60 border border-gray-200/90 rounded-xl text-xs text-gray-700 font-bold outline-none focus:border-[#b22830] min-w-[130px]"
             disabled
           >
-            <option value="ALL">Việt Nam</option>
+            <option value="ALL">{ui("Việt Nam")}</option>
           </select>
 
-          <select 
+          <select
             className="h-9 px-3.5 bg-gray-50/60 border border-gray-200/90 rounded-xl text-xs text-gray-800 font-semibold outline-none focus:border-[#b22830] min-w-[160px] cursor-pointer"
             value={selectedCity}
             onChange={(e) => {
@@ -380,22 +379,22 @@ export default function StoresPage() {
             ))}
           </select>
 
-          <select 
+          <select
             className="h-9 px-3.5 bg-gray-50/60 border border-gray-200/90 rounded-xl text-xs text-gray-800 font-semibold outline-none focus:border-[#b22830] min-w-[160px] cursor-pointer"
             value={selectedType}
             onChange={(e) => {
               setSelectedType(e.target.value);
             }}
           >
-            <option value="ALL">Tất cả loại điểm bán</option>
-            <option value="CHI_NHANH_CHINH">Cửa hàng chuẩn</option>
-            <option value="KIOSK_VE_TINH">Điểm bán take-away</option>
+            <option value="ALL">{ui("Tất cả loại điểm bán")}</option>
+            <option value="CHI_NHANH_CHINH">{ui("Cửa hàng chuẩn")}</option>
+            <option value="KIOSK_VE_TINH">{ui("Điểm bán take-away")}</option>
           </select>
 
           <div className="relative flex items-center w-[320px]" ref={searchInputRef}>
             <div className="flex items-center w-full bg-gray-50/60 rounded-xl border border-gray-200/90 overflow-hidden focus-within:border-[#b22830] focus-within:ring-2 focus-within:ring-red-100 transition-all">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder={t('stores.searchPlaceholder')}
                 value={searchQuery}
                 onFocus={() => setShowSuggestions(true)}
@@ -406,16 +405,16 @@ export default function StoresPage() {
                 className="flex-1 h-9 px-3.5 text-xs font-semibold text-gray-800 bg-transparent outline-none"
               />
               {searchQuery && (
-                <button 
-                  onClick={() => setSearchQuery('')} 
-                  className="px-2.5 text-gray-400 hover:text-[#b22830] transition-colors flex items-center justify-center cursor-pointer" 
-                  title="Xóa"
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="px-2.5 text-gray-400 hover:text-[#b22830] transition-colors flex items-center justify-center cursor-pointer"
+                  title={ui("Xóa")}
                 >
                   <XMarkIcon className="w-4 h-4" />
                 </button>
               )}
             </div>
-            
+
             {/* Dropdown Autocomplete Menu */}
             {showSuggestions && suggestions.length > 0 && (
               <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200/80 shadow-2xl rounded-2xl overflow-hidden z-[100] max-h-[380px] overflow-y-auto animate-fade-in">
@@ -423,8 +422,8 @@ export default function StoresPage() {
                   {t('stores.searchSuggestions')}
                 </div>
                 {suggestions.map((item, idx) => (
-                  <div 
-                    key={idx} 
+                  <div
+                    key={idx}
                     className="px-4 py-2.5 cursor-pointer hover:bg-red-50/50 border-b border-gray-50 last:border-none flex items-start gap-3 transition-colors"
                     onClick={() => {
                       if (item.type === 'city') {
@@ -465,7 +464,7 @@ export default function StoresPage() {
           <div className="bg-[#f2f2f2] px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <p className="text-gray-600 font-medium italic text-[15px] flex items-center gap-2">
               <BuildingStorefrontIcon className="w-4 h-4 text-gray-500" />
-              {isStoresLoading ? 'Đang tải danh sách...' : `Tìm được ${filteredStores.length} quán`}
+              {isStoresLoading ? ui("Đang tải danh sách...") : ui("Tìm được {{v0}} quán", {v0:filteredStores.length})}
             </p>
           </div>
 
@@ -477,8 +476,8 @@ export default function StoresPage() {
                   key={store.id}
                   onClick={() => setSelectedStore(store)}
                   className={`w-full text-left p-6 transition-all cursor-pointer relative ${
-                    isSelected 
-                      ? 'bg-red-50/40 border-l-4 border-l-[#b22830] shadow-sm' 
+                    isSelected
+                      ? 'bg-red-50/40 border-l-4 border-l-[#b22830] shadow-sm'
                       : 'hover:bg-gray-50 border-l-4 border-l-transparent'
                   }`}
                 >
@@ -488,14 +487,10 @@ export default function StoresPage() {
                         {store.name}
                       </h3>
                       {store.type === 'KIOSK_VE_TINH' && (
-                        <span className="self-start text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded uppercase font-bold">
-                          Điểm Take-away
-                        </span>
+                        <span className="self-start text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded uppercase font-bold">{ui("Điểm Take-away")}</span>
                       )}
                       {store.type === 'XE_NUOC_FRUIT' && (
-                        <span className="self-start text-[10px] bg-orange-100 text-orange-800 px-2 py-0.5 rounded uppercase font-bold">
-                          Xe Đẩy
-                        </span>
+                        <span className="self-start text-[10px] bg-orange-100 text-orange-800 px-2 py-0.5 rounded uppercase font-bold">{ui("Xe Đẩy")}</span>
                       )}
                     </div>
                     {store.reviewCount > 0 ? (
@@ -505,9 +500,7 @@ export default function StoresPage() {
                       </span>
                     ) : (
                       <span className="bg-gray-100 text-gray-500 text-[11px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 border border-gray-200 flex-shrink-0 ml-2">
-                        <StarIconSolid className="w-3.5 h-3.5 text-amber-500" />
-                        Chưa có đánh giá
-                      </span>
+                        <StarIconSolid className="w-3.5 h-3.5 text-amber-500" />{ui("Chưa có đánh giá")}</span>
                     )}
                   </div>
 
@@ -535,32 +528,26 @@ export default function StoresPage() {
                       {/* Amenities Pills */}
                       <div className="flex flex-wrap gap-2">
                         <span className="flex items-center gap-1 text-[11px] font-bold text-blue-700 bg-blue-50/80 px-2.5 py-1 rounded-md border border-blue-100">
-                          <WifiIcon className="w-3.5 h-3.5 text-blue-600" /> Wifi Miễn Phí
-                        </span>
+                          <WifiIcon className="w-3.5 h-3.5 text-blue-600" />{ui(" Wifi Miễn Phí")}</span>
                         <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50/80 px-2.5 py-1 rounded-md border border-emerald-100">
-                          <CreditCardIcon className="w-3.5 h-3.5 text-emerald-600" /> Thanh toán bằng thẻ
-                        </span>
+                          <CreditCardIcon className="w-3.5 h-3.5 text-emerald-600" />{ui(" Thanh toán bằng thẻ")}</span>
                       </div>
 
                       {/* Action Buttons */}
                       <div className="flex gap-2.5 pt-1">
-                        <button 
+                        <button
                           type="button"
                           onClick={() => setDetailedStore(store)}
                           className="flex-1 bg-[#b22830] hover:bg-red-800 text-white text-[11px] font-black uppercase py-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5"
                         >
-                          <InformationCircleIcon className="w-4 h-4 text-white" />
-                          Xem chi tiết & Đánh giá
-                        </button>
-                        <a 
+                          <InformationCircleIcon className="w-4 h-4 text-white" />{ui("Xem chi tiết & Đánh giá")}</button>
+                        <a
                           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.address)}`}
                           target="_blank"
                           rel="noreferrer"
                           className="flex-1 bg-[#5c3a21] hover:bg-[#4a2e1a] text-white text-[11px] font-black uppercase py-2.5 rounded-xl transition-all shadow-sm text-center flex items-center justify-center gap-1.5"
                         >
-                          <ArrowTopRightOnSquareIcon className="w-4 h-4 text-white" />
-                          Tìm đường
-                        </a>
+                          <ArrowTopRightOnSquareIcon className="w-4 h-4 text-white" />{ui("Tìm đường")}</a>
                       </div>
                     </div>
                   )}
@@ -570,7 +557,7 @@ export default function StoresPage() {
             {filteredStores.length === 0 && !isStoresLoading && (
               <div className="p-8 text-center text-gray-500 text-sm space-y-2">
                 <BuildingStorefrontIcon className="w-10 h-10 text-gray-300 mx-auto" />
-                <p>Không tìm thấy cửa hàng nào phù hợp với tìm kiếm của bạn.</p>
+                <p>{ui("Không tìm thấy cửa hàng nào phù hợp với tìm kiếm của bạn.")}</p>
               </div>
             )}
           </div>
@@ -581,7 +568,7 @@ export default function StoresPage() {
           {selectedStore ? (
             <iframe
               key={selectedStore.id}
-              title={`Bản đồ ${selectedStore.name}`}
+              title={ui("Bản đồ {{v0}}", {v0:selectedStore.name})}
               src={buildMapEmbedUrl(selectedStore.address)}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
@@ -591,7 +578,7 @@ export default function StoresPage() {
             <div className="w-full h-full flex items-center justify-center text-gray-400 bg-[#e5e3df]">
               <div className="text-center space-y-2">
                 <MapPinIcon className="w-12 h-12 text-gray-400 mx-auto animate-bounce" />
-                <p className="text-sm font-medium">Vui lòng chọn cửa hàng từ danh sách để xem vị trí bản đồ</p>
+                <p className="text-sm font-medium">{ui("Vui lòng chọn cửa hàng từ danh sách để xem vị trí bản đồ")}</p>
               </div>
             </div>
           )}

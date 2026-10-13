@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-13",
+  "client_name": "Web client 2",
+  "approved_by_user": true,
+  "added_javascript_origins": [
+    "http://localhost:8090",
+    "http://127.0.0.1:8090"
+  ],
+  "cloud_ui_confirmation": "OAuth client saved",
+  "existing_origins_preserved": true,
+  "live_google_login_tested": false,
+  "native_client_changed": false
+}

@@ -1,3 +1,4 @@
+import { uiText as ui, useUiLanguage, uiLocale } from "../lib/uiText";
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { XMarkIcon, ClockIcon, CreditCardIcon } from '@heroicons/react/24/outline';
@@ -128,11 +129,11 @@ function getTimeline(order) {
 
 function fmtDate(dateValue) {
   if (!dateValue) return '---';
-  return new Date(dateValue).toLocaleString('vi-VN');
+  return new Date(dateValue).toLocaleString(uiLocale());
 }
 
 function fmtMoney(value) {
-  return `${Number(value || 0).toLocaleString('vi-VN')}đ`;
+  return `${Number(value || 0).toLocaleString(uiLocale())}đ`;
 }
 
 function parseLegacyItemOptions(item) {
@@ -177,21 +178,21 @@ function badgeClass(status) {
 
 function renderOrderTypeTag(type, method, table) {
   if (type === 'DUNG_TAI_CHO') {
-    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200/80">Dùng tại bàn {table ? `(Bàn ${table})` : ''}</span>;
+    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200/80">{ui("Dùng tại bàn ")}{table ? ui("(Bàn {{v0}})", {v0:table}) : ''}</span>;
   }
   if (type === 'TAI_CHO') {
-    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200/80">Tại quầy {table ? `- Bàn ${table}` : ''}</span>;
+    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200/80">{ui("Tại quầy ")}{table ? ui("- Bàn {{v0}}", {v0:table}) : ''}</span>;
   }
   if (type === 'LAY_TAI_QUAN') {
-    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200/80">Lấy tại quán</span>;
+    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200/80">{ui("Lấy tại quán")}</span>;
   }
   if (type === 'MANG_DI') {
-    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200/80">Mang đi</span>;
+    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200/80">{ui("Mang đi")}</span>;
   }
   if (type === 'GIAO_TAN_NOI') {
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${method === 'LALAMOVE' ? 'bg-purple-50 text-purple-700 border-purple-200/80' : 'bg-indigo-50 text-indigo-700 border-indigo-200/80'}`}>
-        {method === 'LALAMOVE' ? 'Giao hàng Lalamove' : 'Giao tận nơi'}
+        {method === 'LALAMOVE' ? ui("Giao hàng Lalamove") : ui("Giao tận nơi")}
       </span>
     );
   }
@@ -234,6 +235,7 @@ function taoMaDongTam() {
 }
 
 export default function OrderHistoryModal({ isOpen, onClose, user }) {
+  useUiLanguage();
   const queryClient = useQueryClient();
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('ALL');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('ALL');
@@ -648,9 +650,9 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
           <div>
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-6 rounded-full bg-[#b22830]"></div>
-              <h2 className="text-xl font-black tracking-tight text-gray-900 font-sans">LỊCH SỬ ĐƠN HÀNG</h2>
+              <h2 className="text-xl font-black tracking-tight text-gray-900 font-sans">{ui("LỊCH SỬ ĐƠN HÀNG")}</h2>
             </div>
-            <p className="mt-0.5 text-xs font-semibold text-gray-500">Quản lý, theo dõi tiến trình đơn và thông tin thanh toán</p>
+            <p className="mt-0.5 text-xs font-semibold text-gray-500">{ui("Quản lý, theo dõi tiến trình đơn và thông tin thanh toán")}</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors cursor-pointer">
             <XMarkIcon className="h-6 w-6" />
@@ -662,14 +664,12 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
             <div className="w-12 h-12 rounded-full bg-red-50 text-[#b22830] flex items-center justify-center mx-auto text-xl font-bold">
               📦
             </div>
-            <h3 className="text-lg font-black text-gray-800">Tra cứu lịch sử đơn hàng</h3>
-            <p className="text-xs font-semibold text-gray-500 leading-relaxed">
-              Bạn chưa đăng nhập. Nhập số điện thoại hoặc mã đơn hàng của bạn để xem tiến trình và lịch sử mua hàng.
-            </p>
+            <h3 className="text-lg font-black text-gray-800">{ui("Tra cứu lịch sử đơn hàng")}</h3>
+            <p className="text-xs font-semibold text-gray-500 leading-relaxed">{ui("Bạn chưa đăng nhập. Nhập số điện thoại hoặc mã đơn hàng của bạn để xem tiến trình và lịch sử mua hàng.")}</p>
             <div className="flex gap-2">
               <input
                 type="text"
-                placeholder="Nhập SĐT hoặc mã đơn hàng..."
+                placeholder={ui("Nhập SĐT hoặc mã đơn hàng...")}
                 value={guestLookupInput}
                 onChange={(e) => setGuestLookupInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -681,9 +681,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                 type="button"
                 onClick={() => setGuestLookupId(guestLookupInput.trim())}
                 className="rounded-xl bg-[#b22830] hover:bg-[#8e1c23] px-4 py-2.5 text-xs font-bold text-white transition-colors cursor-pointer"
-              >
-                Tra cứu
-              </button>
+              >{ui("Tra cứu")}</button>
             </div>
           </div>
         ) : trackingOrderId ? (
@@ -703,7 +701,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                   }
                 }}
                 className="rounded-xl border border-gray-200/90 px-3.5 py-2 text-xs font-semibold text-gray-800 outline-none focus:border-[#b22830] focus:ring-1 focus:ring-[#b22830] transition-all bg-gray-50/50"
-                placeholder="Tìm mã đơn, tên món..."
+                placeholder={ui("Tìm mã đơn, tên món...")}
               />
 
               <select
@@ -711,12 +709,12 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                 onChange={(e) => setPaymentStatusFilter(e.target.value)}
                 className="rounded-xl border border-gray-200/90 px-3 py-2 text-xs font-semibold text-gray-700 outline-none focus:border-[#b22830] transition-all bg-gray-50/50 cursor-pointer"
               >
-                <option value="ALL">Tất cả thanh toán</option>
-                <option value="CHO_XU_LY">Chờ xử lý</option>
-                <option value="CHO_THANH_TOAN">Chờ thanh toán</option>
-                <option value="CHO_THANH_TOAN_KHI_NHAN_HANG">Thu tiền khi nhận hàng</option>
-                <option value="DA_THANH_TOAN">Đã thanh toán</option>
-                <option value="THAT_BAI">Thất bại</option>
+                <option value="ALL">{ui("Tất cả thanh toán")}</option>
+                <option value="CHO_XU_LY">{ui("Chờ xử lý")}</option>
+                <option value="CHO_THANH_TOAN">{ui("Chờ thanh toán")}</option>
+                <option value="CHO_THANH_TOAN_KHI_NHAN_HANG">{ui("Thu tiền khi nhận hàng")}</option>
+                <option value="DA_THANH_TOAN">{ui("Đã thanh toán")}</option>
+                <option value="THAT_BAI">{ui("Thất bại")}</option>
               </select>
 
               <select
@@ -724,9 +722,9 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                 onChange={(e) => setPaymentMethodFilter(e.target.value)}
                 className="rounded-xl border border-gray-200/90 px-3 py-2 text-xs font-semibold text-gray-700 outline-none focus:border-[#b22830] transition-all bg-gray-50/50 cursor-pointer"
               >
-                <option value="ALL">Tất cả phương thức</option>
+                <option value="ALL">{ui("Tất cả phương thức")}</option>
                 <option value="VNPAY">VNPAY</option>
-                <option value="NGAN_HANG_QR">Ngân hàng QR</option>
+                <option value="NGAN_HANG_QR">{ui("Ngân hàng QR")}</option>
                 <option value="THANH_TOAN_KHI_NHAN_HANG">COD</option>
               </select>
 
@@ -734,9 +732,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                 type="button"
                 onClick={() => setAppliedKeyword(searchKeyword.trim())}
                 className="rounded-xl bg-[#b22830] hover:bg-[#8e1c23] px-4 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-2xs transition-colors cursor-pointer"
-              >
-                Tìm kiếm
-              </button>
+              >{ui("Tìm kiếm")}</button>
             </div>
 
             <div className="flex-1 overflow-y-auto bg-[#fffdf9] px-6 py-5">
@@ -756,7 +752,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
 
               {!loading && isError ? (
                 <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-semibold text-red-700">
-                  {String(error?.response?.data?.message || error?.message || 'Có lỗi khi tải lịch sử đơn hàng')
+                  {String(error?.response?.data?.message || error?.message || ui("Có lỗi khi tải lịch sử đơn hàng"))
                     .replace(/^[A-Za-z0-9_]+Exception:\s*/i, '')
                     .replace(/^[A-Za-z0-9_]+Error:\s*/i, '')
                     .trim()}
@@ -765,8 +761,8 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
 
               {!loading && !isError && orders.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-10 text-center">
-                  <p className="text-lg font-black text-gray-600">Chưa có đơn hàng nào</p>
-                  <p className="mt-1 text-sm font-semibold text-gray-400">Hãy đặt món và quay lại để theo dõi tiến trình thanh toán.</p>
+                  <p className="text-lg font-black text-gray-600">{ui("Chưa có đơn hàng nào")}</p>
+                  <p className="mt-1 text-sm font-semibold text-gray-400">{ui("Hãy đặt món và quay lại để theo dõi tiến trình thanh toán.")}</p>
                 </div>
               ) : null}
 
@@ -787,7 +783,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                               {renderOrderTypeTag(resolveOrderType(order), order.phuong_thuc_giao_hang, order.ma_ban)}
                             </div>
                             <div className="mt-2 flex items-center gap-4 text-xs text-gray-500 font-medium flex-wrap">
-                              <span>Cơ sở: <strong className="text-gray-800 font-semibold">{fmtBranch(order.co_so_ma, allBranches)}</strong></span>
+                              <span>{ui("Cơ sở: ")}<strong className="text-gray-800 font-semibold">{fmtBranch(order.co_so_ma, allBranches)}</strong></span>
                               <span>•</span>
                               <div className="flex items-center gap-1">
                                 <ClockIcon className="h-3.5 w-3.5 text-gray-400" />
@@ -819,7 +815,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                                       {idx + 1}
                                     </div>
                                     <span className={`text-[10px] font-bold mt-1 line-clamp-1 ${step.reached ? 'text-gray-800' : 'text-gray-400'}`}>
-                                      {step.label}
+                                      {ui(step.label)}
                                     </span>
                                   </div>
                                 ))}
@@ -827,14 +823,14 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                             </div>
 
                             {/* Product Items List */}
-                            <p className="mb-2 text-[11px] font-extrabold uppercase tracking-wider text-gray-400">Danh sách món đã đặt</p>
+                            <p className="mb-2 text-[11px] font-extrabold uppercase tracking-wider text-gray-400">{ui("Danh sách món đã đặt")}</p>
                             <div className="space-y-2">
                               {(order.chi_tiet || []).map((item) => (
                                 <div key={item.id || `${item.ma_san_pham}-${item.ten_san_pham}`} className="rounded-xl bg-gray-50/70 border border-gray-100 p-2.5 flex items-center justify-between gap-3">
                                   <div className="flex items-center gap-3 min-w-0">
                                     <img
                                       src={resolveProductImage(item, menuProducts)}
-                                      alt={item.ten_san_pham || 'Sản phẩm'}
+                                      alt={item.ten_san_pham || ui("Sản phẩm")}
                                       className="h-11 w-11 rounded-lg object-cover bg-white border border-gray-100 shrink-0"
                                       onError={(e) => {
                                         e.target.onerror = null;
@@ -843,15 +839,15 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                                     />
                                     <div className="min-w-0">
                                       <p className="text-xs font-bold text-gray-900 truncate">{item.ten_san_pham}</p>
-                                      <p className="text-[11px] text-gray-500 font-medium">Size: {item.kich_co || 'Nhỏ'} • SL: {item.so_luong}</p>
+                                      <p className="text-[11px] text-gray-500 font-medium">Size: {item.kich_co || ui("Nhỏ")} • SL: {item.so_luong}</p>
                                       {item.toppings?.length > 0 && (
                                         <p className="text-[10px] text-gray-500 truncate">Topping: {item.toppings.join(', ')}</p>
                                       )}
                                       {(item.luong_da || item.do_ngot) && (
                                         <p className="text-[10px] text-gray-500">
-                                          {item.luong_da ? `Đá: ${item.luong_da}` : ''}
+                                          {item.luong_da ? ui("Đá: {{v0}}", {v0:item.luong_da}) : ''}
                                           {item.luong_da && item.do_ngot ? ' | ' : ''}
-                                          {item.do_ngot ? `Ngọt: ${item.do_ngot}` : ''}
+                                          {item.do_ngot ? ui("Ngọt: {{v0}}", {v0:item.do_ngot}) : ''}
                                         </p>
                                       )}
                                     </div>
@@ -863,9 +859,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                                         type="button"
                                         onClick={() => setReviewingProduct({ productId: item.ma_san_pham, productName: item.ten_san_pham, orderId: order.ma_don_hang })}
                                         className="text-[10px] font-bold text-blue-600 hover:text-blue-800 underline cursor-pointer"
-                                      >
-                                        Đánh giá món
-                                      </button>
+                                      >{ui("Đánh giá món")}</button>
                                     )}
                                   </div>
                                 </div>
@@ -876,25 +870,25 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                           {/* Order Summary & Actions Side Card */}
                           <div className="flex flex-col justify-between rounded-xl border border-gray-100 bg-gray-50/70 p-3.5">
                             <div className="space-y-2">
-                              <p className="text-[11px] font-extrabold uppercase tracking-wider text-gray-400">Thông tin thanh toán</p>
+                              <p className="text-[11px] font-extrabold uppercase tracking-wider text-gray-400">{ui("Thông tin thanh toán")}</p>
                               <div className="flex items-center justify-between text-xs text-gray-700">
-                                <span className="font-medium text-gray-500">Phương thức:</span>
+                                <span className="font-medium text-gray-500">{ui("Phương thức:")}</span>
                                 <span className="font-bold">{getPaymentMethodDisplay(order)}</span>
                               </div>
                               {order.dia_chi_giao_hang && (
                                 <div className="text-xs text-gray-700">
-                                  <span className="font-medium text-gray-500">Địa chỉ: </span>
+                                  <span className="font-medium text-gray-500">{ui("Địa chỉ: ")}</span>
                                   <span className="font-semibold text-gray-800 line-clamp-2">{order.dia_chi_giao_hang}</span>
                                 </div>
                               )}
                               {order.ma_voucher && (
                                 <div className="rounded-lg border border-amber-200/80 bg-amber-50 px-2.5 py-1.5 text-xs flex items-center justify-between">
-                                  <span className="font-bold text-amber-800">Mã voucher: {order.ma_voucher}</span>
+                                  <span className="font-bold text-amber-800">{ui("Mã voucher: ")}{order.ma_voucher}</span>
                                   {order.so_tien_giam > 0 && <span className="font-extrabold text-amber-900">(-{fmtMoney(order.so_tien_giam)})</span>}
                                 </div>
                               )}
                               <div className="pt-2 border-t border-gray-200/80 flex items-center justify-between">
-                                <span className="text-xs font-bold text-gray-700">Tổng thanh toán:</span>
+                                <span className="text-xs font-bold text-gray-700">{ui("Tổng thanh toán:")}</span>
                                 <span className="text-base font-black text-[#b22830]">{fmtMoney(order.tong_tien)}</span>
                               </div>
                             </div>
@@ -907,7 +901,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                                   onClick={() => setTrackingOrderId(order.ma_don_hang)}
                                   className="w-full rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 py-2 text-xs font-bold uppercase tracking-wider text-indigo-700 transition-colors cursor-pointer"
                                 >
-                                  {order.trang_thai_don_hang === 'HOAN_THANH' ? 'Xem & Đánh giá Shipper' : 'Theo dõi vận chuyển'}
+                                  {order.trang_thai_don_hang === 'HOAN_THANH' ? ui("Xem & Đánh giá Shipper") : ui("Theo dõi vận chuyển")}
                                 </button>
                               )}
 
@@ -916,9 +910,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                                   type="button"
                                   onClick={() => setBranchReviewOrder(order)}
                                   className="w-full rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 py-2 text-xs font-bold uppercase tracking-wider text-amber-800 transition-colors cursor-pointer"
-                                >
-                                  Đánh Giá Chi Nhánh
-                                </button>
+                                >{ui("Đánh Giá Chi Nhánh")}</button>
                               )}
 
                               {['MOI_TAO', 'DA_XAC_NHAN'].includes(order.trang_thai_don_hang) && !coTheSuaDon(order) && (
@@ -929,9 +921,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                                   type="button"
                                   onClick={() => batDauSuaDon(order)}
                                   className="w-full rounded-xl border border-sky-200 bg-sky-50 hover:bg-sky-100 py-2 text-xs font-bold uppercase tracking-wider text-sky-700 transition-colors cursor-pointer"
-                                >
-                                  Sửa Đơn Hàng
-                                </button>
+                                >{ui("Sửa Đơn Hàng")}</button>
                               )}
 
                               {coTheHuyDon(order) && (
@@ -943,9 +933,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                                     setActionMessage('');
                                   }}
                                   className="w-full rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 py-2 text-xs font-bold uppercase tracking-wider text-rose-600 transition-colors cursor-pointer"
-                                >
-                                  Hủy đơn hàng
-                                </button>
+                                >{ui("Hủy đơn hàng")}</button>
                               )}
 
                               {/* Reorder Button */}
@@ -956,8 +944,8 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                                 className="w-full rounded-xl bg-[#b22830] hover:bg-[#8e1c23] py-2 text-xs font-bold uppercase tracking-wider text-white transition-colors cursor-pointer shadow-2xs disabled:opacity-50"
                               >
                                 {reorderMutation.isPending && reorderMutation.variables?.order?.ma_don_hang === order.ma_don_hang
-                                  ? 'Đang xử lý...'
-                                  : 'Đặt lại đơn này'}
+                                  ? ui("Đang xử lý...")
+                                  : ui("Đặt lại đơn này")}
                               </button>
                             </div>
                           </div>
@@ -1001,7 +989,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
           <div className="w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-3xl bg-white shadow-2xl border border-gray-100 flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <div>
-                <h3 className="text-lg font-black text-gray-900">Sửa đơn hàng</h3>
+                <h3 className="text-lg font-black text-gray-900">{ui("Sửa đơn hàng")}</h3>
                 <p className="text-xs font-semibold text-gray-500 font-mono">#{editOrderId}</p>
               </div>
               <button
@@ -1015,10 +1003,10 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
 
             <div className="p-6 overflow-y-auto space-y-5">
               {actionMessage && <p role="alert" className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">{actionMessage}</p>}
-              <p className="text-sm text-gray-600">Chỉ sửa trước khi quán chuẩn bị món. Tổng mới phải bằng hoặc cao hơn tổng cũ. Đơn ví sẽ trừ thêm phần chênh lệch sau khi bạn xác nhận.</p>
+              <p className="text-sm text-gray-600">{ui("Chỉ sửa trước khi quán chuẩn bị món. Tổng mới phải bằng hoặc cao hơn tổng cũ. Đơn ví sẽ trừ thêm phần chênh lệch sau khi bạn xác nhận.")}</p>
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="space-y-1.5 md:col-span-2">
-                  <span className="text-xs font-extrabold text-gray-700 uppercase">Địa chỉ giao hàng</span>
+                  <span className="text-xs font-extrabold text-gray-700 uppercase">{ui("Địa chỉ giao hàng")}</span>
                   <input
                     value={editForm.diaChi}
                     onChange={(event) => setEditForm((prev) => ({ ...prev, diaChi: event.target.value }))}
@@ -1026,16 +1014,16 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                   />
                 </label>
                 <label className="space-y-1.5">
-                  <span className="text-xs font-extrabold text-gray-700 uppercase">Khung giờ giao</span>
+                  <span className="text-xs font-extrabold text-gray-700 uppercase">{ui("Khung giờ giao")}</span>
                   <input
                     value={editForm.khungGio}
                     onChange={(event) => setEditForm((prev) => ({ ...prev, khungGio: event.target.value }))}
-                    placeholder="Ví dụ: 15:00 - 15:30"
+                    placeholder={ui("Ví dụ: 15:00 - 15:30")}
                     className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-sky-400"
                   />
                 </label>
                 <label className="space-y-1.5">
-                  <span className="text-xs font-extrabold text-gray-700 uppercase">Ghi chú</span>
+                  <span className="text-xs font-extrabold text-gray-700 uppercase">{ui("Ghi chú")}</span>
                   <input
                     value={editForm.ghiChu}
                     onChange={(event) => setEditForm((prev) => ({ ...prev, ghiChu: event.target.value }))}
@@ -1046,14 +1034,12 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-black text-gray-900 uppercase">Danh sách món</h4>
+                  <h4 className="text-sm font-black text-gray-900 uppercase">{ui("Danh sách món")}</h4>
                   <button
                     type="button"
                     onClick={themDongSuaDon}
                     className="rounded-xl bg-sky-50 border border-sky-200 px-3 py-2 text-xs font-bold text-sky-700 hover:bg-sky-100 cursor-pointer"
-                  >
-                    + Thêm món
-                  </button>
+                  >{ui("+ Thêm món")}</button>
                 </div>
 
                 {editForm.items.map((item, idx) => (
@@ -1081,22 +1067,18 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                         type="button"
                         onClick={() => xoaDongSuaDon(item.lineId)}
                         className="rounded-xl border border-rose-200 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 cursor-pointer"
-                      >
-                        Xóa
-                      </button>
+                      >{ui("Xóa")}</button>
                     </div>
 
                     <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                       <span className="font-semibold text-gray-600">
-                        Size: {item.kichCo || 'Mặc định'} · SL: {item.soLuong} · {fmtMoney(item.giaBan * item.soLuong)}
+                        Size: {item.kichCo || ui("Mặc định")} · SL: {item.soLuong} · {fmtMoney(item.giaBan * item.soLuong)}
                       </span>
                       <button
                         type="button"
                         onClick={() => moBangSuaTuyChon(idx, item)}
                         className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 font-bold text-amber-800 hover:bg-amber-100 cursor-pointer"
-                      >
-                        Chỉnh tùy chọn
-                      </button>
+                      >{ui("Chỉnh tùy chọn")}</button>
                     </div>
                   </div>
                 ))}
@@ -1105,14 +1087,14 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
 
             {editPreview && (
               <div className="px-6 py-4 border-t border-gray-100 text-sm space-y-1" aria-live="polite">
-                <p>Tổng cũ: <strong>{fmtMoney(editPreview.original_total)}</strong></p>
-                <p>Tạm tính: {fmtMoney(editPreview.subtotal)} · Giảm giá: {fmtMoney(editPreview.discount_amount)} · Phí giao: {fmtMoney(editPreview.delivery_fee)}</p>
-                <p>Tổng mới: <strong>{fmtMoney(editPreview.final_total)}</strong></p>
+                <p>{ui("Tổng cũ: ")}<strong>{fmtMoney(editPreview.original_total)}</strong></p>
+                <p>{ui("Tạm tính: ")}{fmtMoney(editPreview.subtotal)}{ui(" · Giảm giá: ")}{fmtMoney(editPreview.discount_amount)}{ui(" · Phí giao: ")}{fmtMoney(editPreview.delivery_fee)}</p>
+                <p>{ui("Tổng mới: ")}<strong>{fmtMoney(editPreview.final_total)}</strong></p>
                 {editPreview.payment_method === 'VI_DIEN_TU' ? (
-                  <p>Ví Avengers sẽ trừ thêm <strong>{fmtMoney(editPreview.wallet_charge)}</strong> khi xác nhận.</p>
-                ) : <p>COD: thanh toán tổng mới khi nhận hàng.</p>}
-                {Number(editPreview.wallet_shortfall) > 0 && <p className="text-red-600">Ví chưa đủ tiền. Bạn cần nạp thêm {fmtMoney(editPreview.wallet_shortfall)}, rồi xem lại thay đổi trước khi xác nhận.</p>}
-                <button type="button" onClick={() => setEditPreview(null)} className="text-sky-700 underline">Xem lại / sửa tiếp</button>
+                  <p>{ui("Ví Avengers sẽ trừ thêm ")}<strong>{fmtMoney(editPreview.wallet_charge)}</strong>{ui(" khi xác nhận.")}</p>
+                ) : <p>{ui("COD: thanh toán tổng mới khi nhận hàng.")}</p>}
+                {Number(editPreview.wallet_shortfall) > 0 && <p className="text-red-600">{ui("Ví chưa đủ tiền. Bạn cần nạp thêm ")}{fmtMoney(editPreview.wallet_shortfall)}{ui(", rồi xem lại thay đổi trước khi xác nhận.")}</p>}
+                <button type="button" onClick={() => setEditPreview(null)} className="text-sky-700 underline">{ui("Xem lại / sửa tiếp")}</button>
               </div>
             )}
             <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
@@ -1120,16 +1102,14 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                 type="button"
                 onClick={() => setEditOrderId(null)}
                 className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-bold text-gray-600 hover:bg-white cursor-pointer"
-              >
-                Đóng
-              </button>
+              >{ui("Đóng")}</button>
               <button
                 type="button"
                 onClick={luuSuaDon}
                 disabled={editOrderMutation.isPending || previewOrderMutation.isPending || Number(editPreview?.wallet_shortfall) > 0}
                 className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-sky-700 disabled:opacity-50 cursor-pointer"
               >
-                {editOrderMutation.isPending ? 'Đang lưu...' : previewOrderMutation.isPending ? 'Đang kiểm tra...' : editPreview ? 'Xác nhận sửa đơn' : 'Xem trước thay đổi'}
+                {editOrderMutation.isPending ? ui("Đang lưu...") : previewOrderMutation.isPending ? ui("Đang kiểm tra...") : editPreview ? ui("Xác nhận sửa đơn") : ui("Xem trước thay đổi")}
               </button>
             </div>
           </div>
@@ -1165,23 +1145,19 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                 <XMarkIcon className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-gray-900 font-sans">Xác nhận hủy đơn hàng</h3>
-                <p className="text-xs font-semibold text-gray-500">Mã đơn: <span className="font-mono text-rose-600 font-black">#{cancelOrderId}</span></p>
+                <h3 className="text-lg font-black text-gray-900 font-sans">{ui("Xác nhận hủy đơn hàng")}</h3>
+                <p className="text-xs font-semibold text-gray-500">{ui("Mã đơn: ")}<span className="font-mono text-rose-600 font-black">#{cancelOrderId}</span></p>
               </div>
             </div>
 
-            <p className="text-xs font-semibold text-gray-600 leading-relaxed">
-              Bạn có chắc chắn muốn hủy đơn hàng này? Thao tác hủy đơn không thể hoàn tác.
-            </p>
+            <p className="text-xs font-semibold text-gray-600 leading-relaxed">{ui("Bạn có chắc chắn muốn hủy đơn hàng này? Thao tác hủy đơn không thể hoàn tác.")}</p>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-extrabold text-gray-700 uppercase tracking-wider">
-                Lý do hủy (không bắt buộc)
-              </label>
+              <label className="block text-xs font-extrabold text-gray-700 uppercase tracking-wider">{ui("Lý do hủy (không bắt buộc)")}</label>
               <textarea
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
-                placeholder="Nhập lý do hủy đơn của bạn..."
+                placeholder={ui("Nhập lý do hủy đơn của bạn...")}
                 className="w-full rounded-2xl border border-gray-200 p-3 text-xs font-semibold text-gray-800 outline-none focus:border-[#b22830] focus:ring-1 focus:ring-[#b22830] transition-all resize-none bg-gray-50/50"
                 rows={3}
               />
@@ -1195,9 +1171,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                   setCancelReason('');
                 }}
                 className="flex-1 py-3 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-600 font-black text-xs uppercase tracking-wider transition-colors cursor-pointer"
-              >
-                Bỏ qua
-              </button>
+              >{ui("Bỏ qua")}</button>
               <button
                 type="button"
                 disabled={cancelOrderMutation.isPending}
@@ -1209,7 +1183,7 @@ export default function OrderHistoryModal({ isOpen, onClose, user }) {
                 }}
                 className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-rose-200 transition-all cursor-pointer disabled:opacity-50"
               >
-                {cancelOrderMutation.isPending ? 'Đang hủy...' : 'Xác nhận hủy'}
+                {cancelOrderMutation.isPending ? ui("Đang hủy...") : ui("Xác nhận hủy")}
               </button>
             </div>
           </div>

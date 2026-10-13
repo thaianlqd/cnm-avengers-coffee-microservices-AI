@@ -1,3 +1,5 @@
+import TextInput from '../components/TextInput'
+import Alert from '../lib/alert'
 /**
  * ChatScreen.js — AI Chat Assistant Siêu Xịn
  * Features:
@@ -7,19 +9,19 @@
  * - Store info with directions link
  * - Voice ordering
  */
-import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   View,
   Text,
   StyleSheet,
   Pressable,
-  TextInput,
+
   FlatList,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Animated,
-  Alert,
+
   Image,
   ScrollView,
   Linking,
@@ -30,7 +32,9 @@ import { Audio } from 'expo-av'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useUser } from '../context/UserContext'
 import apiClient from '../lib/apiClient'
-import { getUserDisplayName, getUserId, safeArray } from '../lib/customerData'
+import { formatDateOnly, getUserDisplayName, getUserId, safeArray } from '../lib/customerData'
+import StaffChatPanel from './StaffChatPanel'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors, spacing, shadows, radius } from '../theme'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -54,10 +58,10 @@ function formatCurrency(amount) {
 
 function getOrderStatusLabel(status) {
   const labels = {
-    CHO_XAC_NHAN: { label: 'Vừa tạo', color: '#f59e0b', bg: '#fef3c7', icon: 'time-outline' },
+    CHO_XAC_NHAN: { label: 'Vừa tạo', color: '#f59e0b', bg: '#f3f4f6', icon: 'time-outline' },
     DA_XAC_NHAN: { label: 'Đã xác nhận', color: '#3b82f6', bg: '#eff6ff', icon: 'checkmark-circle-outline' },
     DANG_CHUAN_BI: { label: 'Đang chuẩn bị', color: '#8b5cf6', bg: '#f5f3ff', icon: 'cafe-outline' },
-    DANG_GIAO: { label: 'Đang giao', color: '#ea8025', bg: '#fff7ed', icon: 'bicycle-outline' },
+    DANG_GIAO: { label: 'Đang giao', color: '#b22830', bg: '#f3f4f6', icon: 'bicycle-outline' },
     HOAN_THANH: { label: 'Hoàn thành', color: '#22c55e', bg: '#f0fdf4', icon: 'checkmark-done-circle-outline' },
     DA_HUY: { label: 'Đã huỷ', color: '#ef4444', bg: '#fef2f2', icon: 'close-circle-outline' },
   }
@@ -187,7 +191,7 @@ function PaymentInfoCard() {
   const methods = [
     { icon: 'card-outline', color: '#0ea5e9', label: 'VNPAY', desc: 'Thẻ ATM / Internet Banking' },
     { icon: 'qr-code-outline', color: '#3b82f6', label: 'QR Code', desc: 'Quét mã ngân hàng' },
-    { icon: 'wallet-outline', color: '#ea8025', label: 'Ví Avengers', desc: 'Nạp tiền, nhận hoàn xu' },
+    { icon: 'wallet-outline', color: '#b22830', label: 'Ví Avengers', desc: 'Nạp tiền, nhận hoàn xu' },
     { icon: 'cash-outline', color: '#22c55e', label: 'Tiền mặt', desc: 'Thanh toán khi nhận hàng' },
   ]
   return (
@@ -243,7 +247,7 @@ function VoucherInfoCard({ vouchers = [] }) {
             <View style={{ flex: 1 }}>
               <Text style={richStyles.voucherName} numberOfLines={1}>{name}</Text>
               <Text style={richStyles.voucherCode}>
-                Mã: <Text style={{ fontWeight: '800', color: '#ea8025' }}>{code}</Text>{minSpend}
+                Mã: <Text style={{ fontWeight: '800', color: '#b22830' }}>{code}</Text>{minSpend}
               </Text>
               <Text style={{ fontSize: 10, color: '#94a3b8', marginTop: 2 }}>{expiry}</Text>
             </View>
@@ -261,7 +265,7 @@ function AIBubble({ message, onProductAdd, onOrderTrack, onQuickReply }) {
   return (
     <View style={styles.aiBubbleWrap}>
       {/* Avatar */}
-      <LinearGradient colors={['#ea8025', '#c45c10']} style={styles.aiAvatar}>
+      <LinearGradient colors={['#b22830', '#c45c10']} style={styles.aiAvatar}>
         <Ionicons name="sparkles" size={16} color="#fff" />
       </LinearGradient>
 
@@ -314,7 +318,7 @@ function AIBubble({ message, onProductAdd, onOrderTrack, onQuickReply }) {
           <View style={styles.quickRepliesWrap}>
             {message.quickReplies.map(qr => (
               <Pressable key={qr.id} style={styles.quickReplyChip} onPress={() => onQuickReply(qr.text)}>
-                {qr.icon && <Ionicons name={qr.icon} size={14} color="#ea8025" style={{ marginRight: 4 }} />}
+                {qr.icon && <Ionicons name={qr.icon} size={14} color="#b22830" style={{ marginRight: 4 }} />}
                 <Text style={styles.quickReplyText}>{qr.label}</Text>
               </Pressable>
             ))}
@@ -379,8 +383,8 @@ function TypingIndicator() {
       Animated.loop(
         Animated.sequence([
           Animated.delay(delay),
-          Animated.timing(dot, { toValue: -6, duration: 300, useNativeDriver: true }),
-          Animated.timing(dot, { toValue: 0, duration: 300, useNativeDriver: true }),
+          Animated.timing(dot, { toValue: -6, duration: 300, useNativeDriver: Platform.OS !== 'web' }),
+          Animated.timing(dot, { toValue: 0, duration: 300, useNativeDriver: Platform.OS !== 'web' }),
           Animated.delay(600),
         ])
       ).start()
@@ -391,7 +395,7 @@ function TypingIndicator() {
 
   return (
     <View style={styles.aiBubbleWrap}>
-      <LinearGradient colors={['#ea8025', '#c45c10']} style={styles.aiAvatar}>
+      <LinearGradient colors={['#b22830', '#c45c10']} style={styles.aiAvatar}>
         <Ionicons name="sparkles" size={16} color="#fff" />
       </LinearGradient>
       <View style={[styles.aiBubble, { flexDirection: 'row', gap: 4, paddingVertical: 14, paddingHorizontal: 16 }]}>
@@ -412,8 +416,8 @@ function MicPulse() {
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(scale, { toValue: 1.25, duration: 500, useNativeDriver: true }),
-        Animated.timing(scale, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.timing(scale, { toValue: 1.25, duration: 500, useNativeDriver: Platform.OS !== 'web' }),
+        Animated.timing(scale, { toValue: 1, duration: 500, useNativeDriver: Platform.OS !== 'web' }),
       ])
     ).start()
   }, [])
@@ -427,17 +431,26 @@ function MicPulse() {
 }
 
 // ─── MAIN SCREEN ──────────────────────────────────────────────────────────────
-export function ChatScreen({ navigation }) {
-  const { user } = useUser()
-  const userId = getUserId(user)
+export function ChatScreen({ navigation, route }) {
+  const { activeUserId } = useUser()
+  return <ChatWorkspace key={activeUserId} navigation={navigation} route={route} />
+}
+function ChatWorkspace({ navigation, route }) {
+  const [aiMessages, setAIMessages] = useState([])
+  const [isTyping, setIsTyping] = useState(false)
+  const [mode, setMode] = useState(route?.params?.mode === 'staff' ? 'staff' : 'ai')
+  const insets = useSafeAreaInsets()
+  useEffect(() => { if (route?.params?.mode) setMode(route.params.mode === 'staff' ? 'staff' : 'ai') }, [route?.params?.mode])
+  return <View style={{ flex: 1, backgroundColor: '#fff', paddingTop: insets.top }}><View style={{ flexDirection: 'row', padding: 10, gap: 8, borderBottomWidth: 1, borderColor: '#eee' }}>{[['ai','Trợ lý AI','sparkles-outline'],['staff','Nhân viên','headset-outline']].map(([id,label,icon])=><Pressable key={id} accessibilityRole="tab" accessibilityLabel={label} accessibilityState={{ selected: mode === id }} onPress={()=>setMode(id)} style={{ flex: 1, padding: 11, backgroundColor: mode === id ? colors.primary : '#f5f5f5', borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}><Ionicons name={icon} size={17} color={mode===id?'#fff':'#555'}/><Text style={{ fontSize: 13, fontWeight: '500', color: mode===id?'#fff':'#555' }}>{label}</Text></Pressable>)}</View>{mode==='staff'?<StaffChatPanel navigation={navigation}/>:<AIChatPanel navigation={navigation} localMessages={aiMessages} setLocalMessages={setAIMessages} isTyping={isTyping} setIsTyping={setIsTyping}/>}</View>
+}
+function AIChatPanel({ navigation, localMessages, setLocalMessages, isTyping, setIsTyping }) {
+  const { user, activeUserId } = useUser()
+  const userId = activeUserId
   const userName = getUserDisplayName(user)
   const queryClient = useQueryClient()
   const flatListRef = useRef(null)
 
   const [inputText, setInputText] = useState('')
-  const [isTyping, setIsTyping] = useState(false)
-  const [localMessages, setLocalMessages] = useState([]) // AI messages (local)
-  const [conversationId, setConversationId] = useState(null)
   const fadeAnim = useRef(new Animated.Value(0)).current
 
   // Voice
@@ -446,7 +459,7 @@ export function ChatScreen({ navigation }) {
   const recordingRef = useRef(null)
 
   useEffect(() => {
-    Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start()
+    Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: Platform.OS !== 'web' }).start()
   }, [])
 
   // ─── Load products for suggestions ───────────────────────────────────────
@@ -487,36 +500,6 @@ export function ChatScreen({ navigation }) {
     staleTime: 2 * 60 * 1000,
   })
 
-  // ─── Open conversation ────────────────────────────────────────────────────
-  const openConvMutation = useMutation({
-    mutationFn: async () =>
-      apiClient.post('/chat/conversations/open', {
-        customer_user_id: userId,
-        customer_name: userName,
-      }),
-    onSuccess: (data) => {
-      if (data?.conversation?.ma_hoi_thoai) setConversationId(data.conversation.ma_hoi_thoai)
-    },
-  })
-
-  useEffect(() => {
-    if (userId && !conversationId) openConvMutation.mutate()
-  }, [userId])
-
-  // ─── Server messages ──────────────────────────────────────────────────────
-  const serverMsgQuery = useQuery({
-    queryKey: ['chat', 'messages', conversationId],
-    queryFn: async () =>
-      apiClient.get(
-        `/chat/conversations/${conversationId}/messages?user_id=${encodeURIComponent(userId)}&role=CUSTOMER`
-      ),
-    enabled: Boolean(conversationId),
-    refetchInterval: 5000,
-    staleTime: 3000,
-  })
-
-  const serverMessages = serverMsgQuery.data?.items || []
-
   // ─── Add AI greeting on first load ───────────────────────────────────────
   useEffect(() => {
     if (localMessages.length === 0) {
@@ -530,18 +513,6 @@ export function ChatScreen({ navigation }) {
       ])
     }
   }, [])
-
-  // ─── Send to server ───────────────────────────────────────────────────────
-  const sendServerMsg = useMutation({
-    mutationFn: async (content) =>
-      apiClient.post(`/chat/conversations/${conversationId}/messages`, {
-        sender_user_id: userId,
-        sender_name: userName,
-        sender_role: 'CUSTOMER',
-        content,
-      }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['chat', 'messages', conversationId] }),
-  })
 
   // ─── Add to cart ──────────────────────────────────────────────────────────
   const addToCartMutation = useMutation({
@@ -726,14 +697,14 @@ export function ChatScreen({ navigation }) {
   // ─── Handlers ─────────────────────────────────────────────────────────────
   const handleSend = useCallback(async () => {
     const text = inputText.trim()
-    if (!text) return
+    if (!text || isTyping) return
     setInputText('')
     await processMessage(text)
-  }, [inputText, conversationId, userId])
+  }, [inputText, userId, isTyping])
 
   const handleQuickReply = useCallback((text) => {
-    processMessage(text)
-  }, [conversationId, userId, productsQuery.data, branchesQuery.data, ordersQuery.data])
+    if (!isTyping) processMessage(text)
+  }, [userId, productsQuery.data, branchesQuery.data, ordersQuery.data, isTyping])
 
   const handleProductAdd = useCallback((product) => {
     if (!userId || String(userId).startsWith('anon-')) {
@@ -791,41 +762,8 @@ export function ChatScreen({ navigation }) {
   }
 
   // ─── Combine local + server messages ─────────────────────────────────────
-  const allMessages = useMemo(() => {
-    const result = []
-    let lastDate = ''
-
-    // Server messages (staff chat)
-    const staffMsgs = serverMessages
-      .filter(m => m.vai_tro_nguoi_gui === 'STAFF' || m.vai_tro_nguoi_gui === 'MANAGER')
-      .map(m => ({ ...m, _source: 'staff' }))
-
-    // Customer server messages
-    const customerServerMsgs = serverMessages
-      .filter(m => m.vai_tro_nguoi_gui === 'CUSTOMER')
-      .map(m => ({ ...m, _source: 'customerServer' }))
-
-    // Merge local + server by date logic (simplified: append local at end)
-    const combined = [
-      ...localMessages,
-      ...staffMsgs,
-    ]
-
-    // Add date separators for staff messages
-    for (const msg of combined) {
-      if (msg._source === 'staff') {
-        const d = formatDate(msg.ngay_tao)
-        if (d && d !== lastDate) {
-          result.push({ type: 'date', date: d, id: `date-${d}` })
-          lastDate = d
-        }
-      }
-      result.push(msg)
-    }
-    return result
-  }, [localMessages, serverMessages])
-
-  const isLoading = openConvMutation.isPending
+  const allMessages = localMessages
+  const isLoading = false
 
   return (
     <Animated.View style={[styles.screen, { opacity: fadeAnim }]}>
@@ -835,13 +773,13 @@ export function ChatScreen({ navigation }) {
           <Ionicons name="arrow-back" size={22} color="#1e293b" />
         </Pressable>
         <View style={styles.headerInfo}>
-          <LinearGradient colors={['#ea8025', '#c45c10']} style={styles.headerAvatar}>
+          <LinearGradient colors={['#b22830', '#c45c10']} style={styles.headerAvatar}>
             <Ionicons name="sparkles" size={20} color="#fff" />
           </LinearGradient>
           <View style={styles.onlineDot} />
           <View>
             <Text style={styles.headerTitle}>Trợ lý Avengers Coffee</Text>
-            <Text style={styles.headerSubtitle}>🟢 Luôn sẵn sàng hỗ trợ bạn</Text>
+            <Text style={styles.headerSubtitle}>Gợi ý món & giải đáp với AI</Text>
           </View>
         </View>
         <Pressable style={styles.voiceBadge} onPressIn={startRecording} onPressOut={stopRecordingAndProcess}>
@@ -959,11 +897,11 @@ export function ChatScreen({ navigation }) {
             {/* Send button */}
             <Pressable
               onPress={handleSend}
-              disabled={!inputText.trim() || sendServerMsg.isPending}
+              disabled={!inputText.trim() || isTyping}
               style={[styles.iconBtn, !inputText.trim() && { opacity: 0.5 }]}
             >
               <LinearGradient
-                colors={inputText.trim() ? ['#ea8025', '#c45c10'] : ['#e2e8f0', '#cbd5e1']}
+                colors={inputText.trim() ? ['#b22830', '#c45c10'] : ['#e2e8f0', '#cbd5e1']}
                 style={styles.iconBtnGrad}
               >
                 <Ionicons name="send" size={16} color={inputText.trim() ? '#fff' : '#94a3b8'} />
@@ -1024,14 +962,14 @@ const richStyles = StyleSheet.create({
   productPrice: {
     fontSize: 13,
     fontWeight: '900',
-    color: '#ea8025',
+    color: '#b22830',
     marginTop: 4,
   },
   productAddBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#ea8025',
+    backgroundColor: '#b22830',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -1068,19 +1006,19 @@ const richStyles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  orderTotal: { fontSize: 15, fontWeight: '900', color: '#ea8025' },
+  orderTotal: { fontSize: 15, fontWeight: '900', color: '#b22830' },
   trackBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#f3f4f6',
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderWidth: 1,
     borderColor: '#fdba74',
   },
-  trackBtnText: { fontSize: 12, fontWeight: '700', color: '#ea8025' },
+  trackBtnText: { fontSize: 12, fontWeight: '700', color: '#b22830' },
   // Store card
   storeCard: {
     backgroundColor: '#fff',
@@ -1096,7 +1034,7 @@ const richStyles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -1111,18 +1049,18 @@ const richStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#f3f4f6',
     borderRadius: 10,
     paddingVertical: 8,
     borderWidth: 1,
     borderColor: '#fdba74',
   },
   storeBtnPrimary: {
-    backgroundColor: '#ea8025',
-    borderColor: '#ea8025',
+    backgroundColor: '#b22830',
+    borderColor: '#b22830',
     flex: 1.5,
   },
-  storeBtnText: { fontSize: 12, fontWeight: '700', color: '#ea8025' },
+  storeBtnText: { fontSize: 12, fontWeight: '700', color: '#b22830' },
   // Info card
   infoCard: {
     backgroundColor: '#f8fafc',
@@ -1143,14 +1081,14 @@ const richStyles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 10,
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#fdba74',
     flexShrink: 0,
   },
-  voucherBadgeText: { fontSize: 12, fontWeight: '900', color: '#ea8025', textAlign: 'center' },
+  voucherBadgeText: { fontSize: 12, fontWeight: '900', color: '#b22830', textAlign: 'center' },
   voucherName: { fontSize: 13, fontWeight: '700', color: '#1e293b' },
   voucherCode: { fontSize: 11, color: '#64748b', marginTop: 2 },
 })
@@ -1161,7 +1099,7 @@ const styles = StyleSheet.create({
 
   // Header
   header: {
-    paddingTop: 52,
+    paddingTop: 12,
     paddingHorizontal: 16,
     paddingBottom: 12,
     backgroundColor: '#fff',
@@ -1204,7 +1142,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#f3f4f6',
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -1258,7 +1196,7 @@ const styles = StyleSheet.create({
   // User bubble
   userBubbleRow: { alignSelf: 'flex-end', marginBottom: 14, maxWidth: '80%' },
   userBubble: {
-    backgroundColor: '#ea8025',
+    backgroundColor: '#b22830',
     borderRadius: 18,
     borderBottomRightRadius: 4,
     paddingHorizontal: 14,
@@ -1272,14 +1210,14 @@ const styles = StyleSheet.create({
   quickReplyChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#f3f4f6',
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderWidth: 1,
     borderColor: '#fdba74',
   },
-  quickReplyText: { fontSize: 12, fontWeight: '700', color: '#ea8025' },
+  quickReplyText: { fontSize: 12, fontWeight: '700', color: '#b22830' },
 
   // Date separator
   dateSeparator: { flexDirection: 'row', alignItems: 'center', gap: 8, marginVertical: 12 },

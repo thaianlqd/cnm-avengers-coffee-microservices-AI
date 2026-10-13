@@ -149,21 +149,21 @@ export function BranchDetailReviewsView({ branch, onBack }) {
             <span>Tải lại</span>
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', backgroundColor: '#e0e7ff', border: '1px solid #c7d2fe', padding: '0.35rem 0.75rem', borderRadius: '0.5rem' }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: '700', color: '#4338ca', textTransform: 'uppercase' }}>Mã chi nhánh:</span>
-            <strong style={{ fontSize: '0.85rem', fontWeight: '800', color: '#3730a3', fontFamily: 'monospace' }}>{branchCode}</strong>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', backgroundColor: 'var(--primary-subtle)', border: '1px solid #e8cdbb', padding: '0.35rem 0.75rem', borderRadius: '0.5rem' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: '700', color: 'var(--primary-hover)', textTransform: 'uppercase' }}>Mã chi nhánh:</span>
+            <strong style={{ fontSize: '0.85rem', fontWeight: '600', color: '#3730a3', fontFamily: 'monospace' }}>{branchCode}</strong>
           </div>
         </div>
       </div>
 
       {/* Branch Hero Overview Banner Card */}
       <div style={{ backgroundColor: '#ffffff', borderRadius: '1rem', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px -2px rgba(0, 0, 0, 0.05)', padding: '1.75rem', marginBottom: '1.75rem', overflow: 'hidden', position: 'relative' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #4f46e5 0%, #10b981 50%, #f59e0b 100%)' }}></div>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, var(--primary) 0%, #3b82f6 50%, #f59e0b 100%)' }}></div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.25rem' }}>
             {/* Branch Image Thumbnail or Avatar Icon */}
-            <div style={{ width: '4rem', height: '4rem', borderRadius: '1rem', backgroundColor: '#eef2ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #c7d2fe', flexShrink: 0, boxShadow: '0 2px 8px rgba(79, 70, 229, 0.15)' }}>
+            <div style={{ width: '4rem', height: '4rem', borderRadius: '1rem', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e8cdbb', flexShrink: 0, boxShadow: '0 2px 8px rgba(79, 70, 229, 0.15)' }}>
               {branch?.hinh_anh_url ? (
                 <img src={branch.hinh_anh_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '1rem' }} />
               ) : (
@@ -173,7 +173,7 @@ export function BranchDetailReviewsView({ branch, onBack }) {
 
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
-                <h1 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
+                <h1 style={{ fontSize: '1.35rem', fontWeight: '600', color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
                   {branch?.ten_chi_nhanh || branch?.name || 'Chi nhánh Avengers Coffee'}
                 </h1>
                 <span style={{
@@ -184,11 +184,11 @@ export function BranchDetailReviewsView({ branch, onBack }) {
                   borderRadius: '9999px',
                   fontSize: '0.72rem',
                   fontWeight: '700',
-                  backgroundColor: branch?.trang_thai === 'ACTIVE' ? '#ecfdf5' : '#fef2f2',
-                  color: branch?.trang_thai === 'ACTIVE' ? '#059669' : '#dc2626',
-                  border: branch?.trang_thai === 'ACTIVE' ? '1px solid #a7f3d0' : '1px solid #fee2e2'
+                  backgroundColor: branch?.trang_thai === 'ACTIVE' ? '#eff6ff' : '#fef2f2',
+                  color: branch?.trang_thai === 'ACTIVE' ? '#2563eb' : '#dc2626',
+                  border: branch?.trang_thai === 'ACTIVE' ? '1px solid #bfdbfe' : '1px solid #fee2e2'
                 }}>
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: branch?.trang_thai === 'ACTIVE' ? '#10b981' : '#ef4444' }}></span>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: branch?.trang_thai === 'ACTIVE' ? '#3b82f6' : '#ef4444' }}></span>
                   {branch?.trang_thai === 'ACTIVE' ? 'Hoạt động' : 'Tạm dừng'}
                 </span>
               </div>
@@ -198,7 +198,7 @@ export function BranchDetailReviewsView({ branch, onBack }) {
                   <MapPin size={15} color="#ef4444" style={{ flexShrink: 0 }} />
                   <span style={{ fontWeight: '500' }}>{branch?.dia_chi || 'Chưa cập nhật địa chỉ'}</span>
                   {branch?.map_url && (
-                    <a href={branch.map_url} target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', fontSize: '0.75rem', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.2rem', textDecoration: 'none', marginLeft: '0.3rem' }}>
+                    <a href={branch.map_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontSize: '0.75rem', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.2rem', textDecoration: 'none', marginLeft: '0.3rem' }}>
                       Maps <ExternalLink size={11} />
                     </a>
                   )}
@@ -206,7 +206,7 @@ export function BranchDetailReviewsView({ branch, onBack }) {
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Phone size={14} color="#10b981" />
+                    <Phone size={14} color="#3b82f6" />
                     <span>{branch?.so_dien_thoai || 'Chưa cập nhật SĐT'}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -221,7 +221,7 @@ export function BranchDetailReviewsView({ branch, onBack }) {
           {/* Overall Rating Score Card Widget */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', backgroundColor: '#fffbeb', border: '1px solid #fef08a', padding: '1rem 1.35rem', borderRadius: '0.875rem', boxShadow: '0 2px 6px rgba(245, 158, 11, 0.08)' }}>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '2.25rem', fontWeight: '900', color: '#b45309', lineHeight: '1.1' }}>
+              <div style={{ fontSize: '2.25rem', fontWeight: '600', color: '#b45309', lineHeight: '1.1' }}>
                 {Number(avgRating).toFixed(1)}
               </div>
               <div style={{ fontSize: '0.75rem', color: '#d97706', fontWeight: '600', marginTop: '0.1rem' }}>trên 5.0</div>
@@ -254,7 +254,7 @@ export function BranchDetailReviewsView({ branch, onBack }) {
           {/* 4 Service Evaluation Criteria Stat Cards */}
           <div>
             <h3 style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-              <Award size={18} color="#4f46e5" /> Thống kê theo 4 Tiêu chí Phục vụ
+              <Award size={18} color="var(--primary)" /> Thống kê theo 4 Tiêu chí Phục vụ
             </h3>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1rem' }}>
@@ -262,16 +262,16 @@ export function BranchDetailReviewsView({ branch, onBack }) {
               <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '0.875rem', padding: '1.1rem 1.25rem', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.78125rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase' }}>Thái độ phục vụ</span>
-                  <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', backgroundColor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Smile size={16} color="#059669" />
+                  <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Smile size={16} color="#2563eb" />
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
-                  <span style={{ fontSize: '1.65rem', fontWeight: '800', color: '#0f172a' }}>{Number(criteria.phuc_vu || 5.0).toFixed(1)}</span>
+                  <span style={{ fontSize: '1.65rem', fontWeight: '600', color: '#0f172a' }}>{Number(criteria.phuc_vu || 5.0).toFixed(1)}</span>
                   <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600' }}>/ 5.0</span>
                 </div>
                 <div style={{ width: '100%', backgroundColor: '#f1f5f9', height: '6px', borderRadius: '9999px', overflow: 'hidden' }}>
-                  <div style={{ backgroundColor: '#10b981', height: '100%', width: `${(Number(criteria.phuc_vu || 5.0) / 5) * 100}%`, borderRadius: '9999px' }}></div>
+                  <div style={{ backgroundColor: '#3b82f6', height: '100%', width: `${(Number(criteria.phuc_vu || 5.0) / 5) * 100}%`, borderRadius: '9999px' }}></div>
                 </div>
               </div>
 
@@ -279,12 +279,12 @@ export function BranchDetailReviewsView({ branch, onBack }) {
               <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '0.875rem', padding: '1.1rem 1.25rem', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.78125rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase' }}>Không gian &amp; Vệ sinh</span>
-                  <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Sparkles size={16} color="#2563eb" />
+                  <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', backgroundColor: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Sparkles size={16} color="var(--primary)" />
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
-                  <span style={{ fontSize: '1.65rem', fontWeight: '800', color: '#0f172a' }}>{Number(criteria.ve_sinh || 5.0).toFixed(1)}</span>
+                  <span style={{ fontSize: '1.65rem', fontWeight: '600', color: '#0f172a' }}>{Number(criteria.ve_sinh || 5.0).toFixed(1)}</span>
                   <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600' }}>/ 5.0</span>
                 </div>
                 <div style={{ width: '100%', backgroundColor: '#f1f5f9', height: '6px', borderRadius: '9999px', overflow: 'hidden' }}>
@@ -301,7 +301,7 @@ export function BranchDetailReviewsView({ branch, onBack }) {
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
-                  <span style={{ fontSize: '1.65rem', fontWeight: '800', color: '#0f172a' }}>{Number(criteria.toc_do || 5.0).toFixed(1)}</span>
+                  <span style={{ fontSize: '1.65rem', fontWeight: '600', color: '#0f172a' }}>{Number(criteria.toc_do || 5.0).toFixed(1)}</span>
                   <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600' }}>/ 5.0</span>
                 </div>
                 <div style={{ width: '100%', backgroundColor: '#f1f5f9', height: '6px', borderRadius: '9999px', overflow: 'hidden' }}>
@@ -313,16 +313,16 @@ export function BranchDetailReviewsView({ branch, onBack }) {
               <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '0.875rem', padding: '1.1rem 1.25rem', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.78125rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase' }}>Chất lượng đồ uống</span>
-                  <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', backgroundColor: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Coffee size={16} color="#7c3aed" />
+                  <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', backgroundColor: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Coffee size={16} color="var(--primary)" />
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
-                  <span style={{ fontSize: '1.65rem', fontWeight: '800', color: '#0f172a' }}>{Number(criteria.chat_luong_mon || 5.0).toFixed(1)}</span>
+                  <span style={{ fontSize: '1.65rem', fontWeight: '600', color: '#0f172a' }}>{Number(criteria.chat_luong_mon || 5.0).toFixed(1)}</span>
                   <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600' }}>/ 5.0</span>
                 </div>
                 <div style={{ width: '100%', backgroundColor: '#f1f5f9', height: '6px', borderRadius: '9999px', overflow: 'hidden' }}>
-                  <div style={{ backgroundColor: '#8b5cf6', height: '100%', width: `${(Number(criteria.chat_luong_mon || 5.0) / 5) * 100}%`, borderRadius: '9999px' }}></div>
+                  <div style={{ backgroundColor: 'var(--primary)', height: '100%', width: `${(Number(criteria.chat_luong_mon || 5.0) / 5) * 100}%`, borderRadius: '9999px' }}></div>
                 </div>
               </div>
             </div>
@@ -332,7 +332,7 @@ export function BranchDetailReviewsView({ branch, onBack }) {
           <div style={{ backgroundColor: '#ffffff', borderRadius: '1rem', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 6px rgba(0, 0, 0, 0.03)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem', pb: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <MessageSquare size={18} color="#4f46e5" />
+                <MessageSquare size={18} color="var(--primary)" />
                 <h3 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: '700', color: '#0f172a' }}>
                   Danh sách Nhận xét Khách hàng ({filteredItems.length})
                 </h3>
@@ -396,13 +396,13 @@ export function BranchDetailReviewsView({ branch, onBack }) {
                     <div key={r.id || Math.random()} style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '0.875rem', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)', transition: 'all 0.15s ease' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.75rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '50%', backgroundColor: '#e0e7ff', color: '#4338ca', fontWeight: '700', fontSize: '0.875rem', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #c7d2fe', flexShrink: 0 }}>
+                          <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '50%', backgroundColor: 'var(--primary-subtle)', color: 'var(--primary-hover)', fontWeight: '700', fontSize: '0.875rem', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e8cdbb', flexShrink: 0 }}>
                             {firstChar}
                           </div>
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                               <strong style={{ fontSize: '0.875rem', color: '#0f172a' }}>{customerName}</strong>
-                              <span style={{ backgroundColor: '#d1fae5', color: '#047857', fontSize: '0.7rem', fontWeight: '700', padding: '0.1rem 0.45rem', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                              <span style={{ backgroundColor: '#dbeafe', color: '#1d4ed8', fontSize: '0.7rem', fontWeight: '700', padding: '0.1rem 0.45rem', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
                                 <CheckCircle2 size={10} /> Đã mua hàng
                               </span>
                               {r.ma_don_hang && (
@@ -420,7 +420,7 @@ export function BranchDetailReviewsView({ branch, onBack }) {
                         {/* Overall Rating Pill */}
                         <div style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a', padding: '0.25rem 0.65rem', borderRadius: '9999px', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                           {renderStars(r.diem_tong_quan || 5, 14)}
-                          <span style={{ fontSize: '0.78125rem', fontWeight: '800', color: '#b45309' }}>
+                          <span style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#b45309' }}>
                             {Number(r.diem_tong_quan || 5).toFixed(1)}
                           </span>
                         </div>

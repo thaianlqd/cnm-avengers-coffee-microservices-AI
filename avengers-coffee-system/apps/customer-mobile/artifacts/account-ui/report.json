@@ -1,0 +1,14 @@
+{
+  "method": "isolated fixture API, no real login, no profile write",
+  "profile_avatar_from_api": true,
+  "responsive_widths": [
+    320,
+    390,
+    480,
+    1440
+  ],
+  "notification_filter_read_all": true,
+  "single_input_focus": true,
+  "local_highlands_artwork": true,
+  "errors": []
+}

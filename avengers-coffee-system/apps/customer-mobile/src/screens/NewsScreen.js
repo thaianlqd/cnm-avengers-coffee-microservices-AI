@@ -1,4 +1,9 @@
-import React, { useState } from 'react'
+import Pagination, { usePagination } from '../components/Pagination'
+import Reveal, { useListReveal } from '../components/Reveal'
+import ScreenHeader from '../components/ScreenHeader'
+import Modal from '../components/AppModal'
+import Image from '../components/CachedImage'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   View,
   Text,
@@ -6,9 +11,7 @@ import {
   FlatList,
   ActivityIndicator,
   Pressable,
-  Image,
   ScrollView,
-  Modal,
   RefreshControl,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -30,24 +33,14 @@ const CATEGORIES = [
 function ArticleDetailModal({ article, visible, onClose }) {
   if (!article) return null
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
+    <View style={{ flex: 1 }}>
       <View style={detailStyles.container}>
-        {/* Header */}
-        <LinearGradient colors={['#1a0a02', '#3d1a08']} style={detailStyles.header}>
-          <Pressable onPress={onClose} style={detailStyles.backBtn}>
-            <Ionicons name="arrow-back" size={22} color="#fff" />
-          </Pressable>
-          {article.category ? (
-            <View style={detailStyles.categoryBadge}>
-              <Text style={detailStyles.categoryBadgeText}>{article.category}</Text>
-            </View>
-          ) : null}
-        </LinearGradient>
+        <ScreenHeader title="Chuyện cà phê" onBack={onClose} />
 
         <ScrollView style={detailStyles.content} showsVerticalScrollIndicator={false}>
           {/* Cover Image */}
           {article.image_url ? (
-            <Image source={{ uri: article.image_url }} style={detailStyles.image} resizeMode="cover" />
+            <Image source={article.image_source || { uri: article.image_url }} style={detailStyles.image} resizeMode="cover" />
           ) : null}
 
           <View style={detailStyles.body}>
@@ -80,7 +73,7 @@ function ArticleDetailModal({ article, visible, onClose }) {
           </View>
         </ScrollView>
       </View>
-    </Modal>
+    </View>
   )
 }
 
@@ -91,9 +84,9 @@ function FeaturedNewsCard({ article, onPress }) {
       style={({ pressed }) => [styles.featuredCard, shadows.card, pressed && { opacity: 0.9 }]}
     >
       {article.image_url ? (
-        <Image source={{ uri: article.image_url }} style={styles.featuredImage} resizeMode="cover" />
+        <Image source={article.image_source || { uri: article.image_url }} style={styles.featuredImage} resizeMode="cover" />
       ) : (
-        <LinearGradient colors={['#f26b1d', '#3d1a08']} style={styles.featuredImage}>
+        <LinearGradient colors={['#b22830', '#3d1a08']} style={styles.featuredImage}>
           <Ionicons name="newspaper-outline" size={48} color="#fff" />
         </LinearGradient>
       )}
@@ -125,7 +118,7 @@ function NewsListCard({ article, onPress }) {
       style={({ pressed }) => [styles.newsCard, shadows.xs, pressed && { opacity: 0.92 }]}
     >
       {article.image_url ? (
-        <Image source={{ uri: article.image_url }} style={styles.newsImage} resizeMode="cover" />
+        <Image source={article.image_source || { uri: article.image_url }} style={styles.newsImage} resizeMode="cover" />
       ) : (
         <View style={[styles.newsImage, styles.newsImagePlaceholder]}>
           <Ionicons name="newspaper-outline" size={24} color={colors.muted} />
@@ -153,10 +146,12 @@ function NewsListCard({ article, onPress }) {
 }
 
 export function NewsScreen({ route, navigation: navigationProp }) {
-  const navigation = navigationProp || useNavigation()
+  const navigation = useNavigation()
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [selectedArticle, setSelectedArticle] = useState(route?.params?.article || null)
   const [isDetailOpen, setIsDetailOpen] = useState(Boolean(route?.params?.article))
+
+  useEffect(() => { if (route?.params?.article) { setSelectedArticle(route.params.article); setIsDetailOpen(true); navigation.setParams({ article: null }) } }, [route?.params?.article])
 
   const newsQuery = useQuery({
     queryKey: ['customer', 'news', categoryFilter],
@@ -169,30 +164,22 @@ export function NewsScreen({ route, navigation: navigationProp }) {
   })
 
   const articles = newsQuery.data || []
-  const featuredArticle = articles[0] || null
-  const restArticles = articles.slice(1)
+  const paging = usePagination(articles, categoryFilter), reveal = useListReveal()
+  const featuredArticle = paging.page === 1 ? paging.items[0] || null : null
+  const restArticles = featuredArticle ? paging.items.slice(1) : paging.items
 
+  const list = useRef(null)
+  useEffect(() => { list.current?.scrollToOffset({ offset: 0, animated: false }) }, [paging.page])
   const handlePress = (article) => {
     setSelectedArticle(article)
     setIsDetailOpen(true)
   }
 
+  if (selectedArticle && isDetailOpen) return <ArticleDetailModal article={selectedArticle} onClose={() => { setIsDetailOpen(false); setSelectedArticle(null) }} />
+
   return (
     <View style={styles.screen}>
-      {/* Header with Back button */}
-      <LinearGradient colors={['#1a0a02', '#3d1a08']} style={styles.header}>
-        <View style={styles.headerTopRow}>
-          {navigation?.canGoBack() ? (
-            <Pressable onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={12}>
-              <Ionicons name="chevron-back" size={24} color="#fff" />
-            </Pressable>
-          ) : null}
-          <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>Tin tức & Câu chuyện</Text>
-            <Text style={styles.headerSubtitle}>{articles.length} bài viết</Text>
-          </View>
-        </View>
-      </LinearGradient>
+      <ScreenHeader title="Tin tức & Câu chuyện" onBack={() => navigation.goBack()} />
 
       {/* Category Filter */}
       <View style={styles.categoryBar}>
@@ -223,8 +210,9 @@ export function NewsScreen({ route, navigation: navigationProp }) {
         </View>
       ) : null}
 
+      {newsQuery.isError && <Pressable onPress={() => newsQuery.refetch()} style={{ padding: 24 }}><Text>Chưa tải được bài viết. Chạm để thử lại.</Text></Pressable>}
       {/* Empty */}
-      {!newsQuery.isLoading && articles.length === 0 ? (
+      {!newsQuery.isLoading && !newsQuery.isError && articles.length === 0 ? (
         <View style={styles.emptyWrap}>
           <Ionicons name="newspaper-outline" size={56} color={colors.border} />
           <Text style={styles.emptyTitle}>Chưa có bài viết</Text>
@@ -232,45 +220,18 @@ export function NewsScreen({ route, navigation: navigationProp }) {
         </View>
       ) : null}
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
-        refreshControl={
-          <RefreshControl
-            refreshing={newsQuery.isFetching && !newsQuery.isLoading}
-            onRefresh={() => newsQuery.refetch()}
-            tintColor={colors.primary}
-          />
-        }
-      >
-        {/* Featured Article */}
-        {featuredArticle ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>📌 Nổi bật</Text>
-            <FeaturedNewsCard article={featuredArticle} onPress={handlePress} />
-          </View>
-        ) : null}
-
-        {/* Rest Articles */}
-        {restArticles.length > 0 ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>📰 Tất cả bài viết</Text>
-            {restArticles.map((article) => (
-              <NewsListCard key={article.id} article={article} onPress={handlePress} />
-            ))}
-          </View>
-        ) : null}
-      </ScrollView>
-
-      {/* Article Detail Modal */}
-      <ArticleDetailModal
-        article={selectedArticle}
-        visible={isDetailOpen}
-        onClose={() => {
-          setIsDetailOpen(false)
-          setSelectedArticle(null)
-        }}
+      <FlatList
+        ref={list} data={restArticles}
+        keyExtractor={item => String(item.id)}
+        onViewableItemsChanged={reveal.onViewableItemsChanged} viewabilityConfig={reveal.viewabilityConfig}
+        renderItem={({ item }) => <Reveal visible={reveal.visible.has(String(item.id))}><NewsListCard article={item} onPress={handlePress} /></Reveal>}
+        initialNumToRender={5} maxToRenderPerBatch={5} windowSize={7}
+        showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}
+        refreshControl={<RefreshControl refreshing={newsQuery.isFetching && !newsQuery.isLoading} onRefresh={() => newsQuery.refetch()} tintColor={colors.primary} />}
+        ListHeaderComponent={featuredArticle ? <View style={styles.section}><Text style={styles.sectionLabel}>NỔI BẬT</Text><FeaturedNewsCard article={featuredArticle} onPress={handlePress} />{restArticles.length > 0 && <Text style={[styles.sectionLabel, { marginTop: 24 }]}>BÀI VIẾT MỚI</Text>}</View> : null}
       />
+
+      <Pagination {...paging} onChange={paging.setPage} />
     </View>
   )
 }

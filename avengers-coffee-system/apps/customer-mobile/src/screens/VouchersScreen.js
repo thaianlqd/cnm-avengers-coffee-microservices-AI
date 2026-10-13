@@ -1,4 +1,7 @@
-import React, { useState } from 'react'
+import Pagination, { usePagination } from '../components/Pagination'
+import Reveal, { useListReveal } from '../components/Reveal'
+import ScreenHeader from '../components/ScreenHeader'
+import React, { useState, useRef, useEffect } from 'react'
 import {
   View,
   Text,
@@ -25,11 +28,11 @@ const TYPE_CONFIG = {
 
 function VoucherCard({ voucher, onCopy }) {
   const type = String(voucher?.loai_khuyen_mai || voucher?.loai || '').toUpperCase()
-  const tc = TYPE_CONFIG[type] || { label: 'Ưu đãi', color: colors.primary, bg: '#fff9f5', icon: 'ticket-outline' }
+  const tc = TYPE_CONFIG[type] || { label: 'Ưu đãi', color: colors.primary, bg: '#f3f4f6', icon: 'ticket-outline' }
 
   const title = getVoucherDisplayTitle(voucher)
   const description = getVoucherDisplayDescription(voucher)
-  const isExpired = voucher?.ngay_ket_thuc && new Date(voucher.ngay_ket_thuc) < new Date()
+  const isExpired = (voucher?.han_su_dung || voucher?.ngay_ket_thuc) && new Date(voucher.han_su_dung || voucher.ngay_ket_thuc) < new Date()
 
   return (
     <View style={[styles.voucherCard, shadows.sm, isExpired && styles.voucherCardExpired]}>
@@ -64,19 +67,19 @@ function VoucherCard({ voucher, onCopy }) {
         <View style={styles.voucherFooter}>
           <View style={styles.voucherCodeWrap}>
             <Ionicons name="ticket-outline" size={13} color={isExpired ? colors.muted : tc.color} />
-            <Text style={[styles.voucherCode, { color: isExpired ? colors.muted : tc.color }]}>
-              {voucher.ma_khuyen_mai || voucher.ma_voucher}
+            <Text selectable style={[styles.voucherCode, { color: isExpired ? colors.muted : tc.color }]}>
+              {voucher.ma_voucher || voucher.ma_khuyen_mai}
             </Text>
           </View>
           <View style={styles.voucherDateCopyRow}>
-            <Text style={styles.voucherDate}>HSD: {formatDateOnly(voucher.ngay_ket_thuc) || 'Không giới hạn'}</Text>
+            <Text style={styles.voucherDate}>HSD: {formatDateOnly(voucher.han_su_dung || voucher.ngay_ket_thuc) || 'Không giới hạn'}</Text>
             {!isExpired ? (
               <Pressable
-                onPress={() => onCopy(voucher.ma_khuyen_mai || voucher.ma_voucher)}
+                onPress={() => onCopy(voucher.ma_voucher || voucher.ma_khuyen_mai)}
                 style={[styles.copyBtn, { backgroundColor: tc.bg, borderColor: tc.color }]}
               >
                 <Ionicons name="copy-outline" size={12} color={tc.color} />
-                <Text style={[styles.copyBtnText, { color: tc.color }]}>Sao chép</Text>
+                <Text style={[styles.copyBtnText, { color: tc.color }]}>Dùng</Text>
               </Pressable>
             ) : null}
           </View>
@@ -94,10 +97,10 @@ export function VouchersScreen({ navigation }) {
   const vouchersQuery = useQuery({
     queryKey: ['customer', 'vouchers-list', userId],
     queryFn: async () => {
-      const q = userId ? `?user_id=${encodeURIComponent(userId)}&limit=100` : '?limit=100'
-      const response = await apiClient.get(`/promotions/vouchers${q}`)
+      const response = await apiClient.get(`/vouchers?ma_nguoi_dung=${encodeURIComponent(userId)}`)
       return safeArray(response?.items || response)
     },
+    enabled: Boolean(userId),
     staleTime: 60 * 1000,
   })
 
@@ -106,34 +109,23 @@ export function VouchersScreen({ navigation }) {
 
   const filteredVouchers = vouchers.filter(v => {
     if (filter === 'valid') {
-      return !v.ngay_ket_thuc || new Date(v.ngay_ket_thuc) >= now
+      return !(v.han_su_dung || v.ngay_ket_thuc) || new Date((v.han_su_dung || v.ngay_ket_thuc)) >= now
     }
     if (filter === 'expired') {
-      return v.ngay_ket_thuc && new Date(v.ngay_ket_thuc) < now
+      return (v.han_su_dung || v.ngay_ket_thuc) && new Date((v.han_su_dung || v.ngay_ket_thuc)) < now
     }
     return true
   })
 
-  const handleCopyCode = (code) => {
-    Alert.alert(
-      'Mã ưu đãi',
-      `Mã của bạn: ${code}\n\nSao chép và dán vào ô nhập mã khi thanh toán.`,
-      [{ text: 'Đã hiểu', style: 'default' }]
-    )
-  }
+  const paging = usePagination(filteredVouchers, `${userId}:${filter}`), reveal = useListReveal()
+  const list = useRef(null)
+  useEffect(() => { list.current?.scrollToOffset({ offset: 0, animated: false }) }, [paging.page])
+  const handleCopyCode = code => navigation.navigate('Tabs', { screen: 'Cart', params: { voucherCode: code } })
 
   return (
     <View style={styles.screen}>
       {/* Header */}
-      <LinearGradient colors={['#1a0a02', '#3d1a08']} style={styles.headerRow}>
-        <Pressable onPress={() => navigation?.goBack()} style={styles.backBtn} hitSlop={12}>
-          <Ionicons name="chevron-back" size={24} color="#fff" />
-        </Pressable>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>Ưu đãi & Voucher</Text>
-          <Text style={styles.headerSubtitle}>{vouchers.length} voucher hiện có</Text>
-        </View>
-      </LinearGradient>
+      <ScreenHeader title="Ưu đãi của bạn" onBack={() => navigation.goBack()} />
 
       {/* Filters */}
       <View style={styles.filterBar}>
@@ -163,28 +155,31 @@ export function VouchersScreen({ navigation }) {
       ) : null}
 
       {/* Empty */}
-      {!vouchersQuery.isLoading && filteredVouchers.length === 0 ? (
+      {vouchersQuery.isError && <Pressable onPress={() => vouchersQuery.refetch()} style={{padding: 24}}><Text>Chưa tải được ưu đãi. Chạm để thử lại.</Text></Pressable>}
+      {!vouchersQuery.isLoading && !vouchersQuery.isError && filteredVouchers.length === 0 ? (
         <View style={styles.emptyWrap}>
           <Ionicons name="ticket-outline" size={56} color={colors.border} />
           <Text style={styles.emptyTitle}>Không có voucher</Text>
           <Text style={styles.emptyText}>
             {filter !== 'all'
               ? 'Hãy thử xem ở danh mục khác.'
-              : 'Mua hàng nhiều hơn để nhận được các ưu đãi hấp dẫn!'}
+              : userId ? 'Bạn chưa có ưu đãi trong tài khoản.' : 'Đăng nhập để xem ưu đãi của bạn.'}
           </Text>
         </View>
       ) : null}
 
       {/* Voucher List */}
       <FlatList
-        data={filteredVouchers}
-        keyExtractor={(item) => String(item.ma_khuyen_mai || item.id || Math.random())}
-        renderItem={({ item }) => <VoucherCard voucher={item} onCopy={handleCopyCode} />}
+        ref={list} data={paging.items}
+        keyExtractor={(item) => String(item.ma_voucher || item.ma_khuyen_mai || item.id)}
+        onViewableItemsChanged={reveal.onViewableItemsChanged} viewabilityConfig={reveal.viewabilityConfig}
+        renderItem={({ item }) => <Reveal visible={reveal.visible.has(String(item.id ?? item.ma_voucher ?? item.ma_khuyen_mai))}><VoucherCard voucher={item} onCopy={handleCopyCode} /></Reveal>}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         onRefresh={() => vouchersQuery.refetch()}
         refreshing={vouchersQuery.isFetching && !vouchersQuery.isLoading}
       />
+      <Pagination {...paging} onChange={paging.setPage} />
     </View>
   )
 }

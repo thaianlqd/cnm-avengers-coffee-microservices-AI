@@ -1,0 +1,1446 @@
+Trang chủ	Home
+Giỏ hàng	Cart
+Thanh toán	Checkout
+Giỏ hàng của bạn	Your cart
+Thông tin thanh toán	Checkout details
+Bạn đang có {{v0}} món đồ uống & bánh trong giỏ	You have {{v0}} drinks and cakes in your cart
+Hoàn tất địa chỉ và chọn phương thức thanh toán phù hợp	Complete your address and choose a payment method
+1. Giỏ hàng	1. Cart
+2. Thanh toán	2. Payment
+3. Hoàn tất	3. Complete
+Đặc quyền Freeship hạng	Free shipping for tier
+Đã đủ điều kiện Freeship! Giảm ngay	Free shipping unlocked! Save
+đ phí giao hàng	₫ on delivery
+Mua thêm	Add another
+đ	₫
+để được giảm ngay	to save
+phí ship	delivery fee
+Đơn từ	Orders from
+đ sẽ nhận ưu đãi Freeship	₫ qualify for free shipping
+Tiến trình Freeship	Free shipping progress
+Giỏ hàng của bạn đang trống	Your cart is empty
+Hãy khám phá thực đơn cà phê thơm nồng & bánh tươi ra lò để lấp đầy giỏ hàng nhé!	Explore our coffee and freshly baked treats to fill your cart!
+Khám phá Thực đơn	Explore the menu
+Đá:	Ice:
+Ngọt:	Sweetness:
+Chỉnh sửa tùy chọn	Edit options
+Tạm hết hàng tại chi nhánh này	Currently unavailable at this store
+Xóa {{v0}}	Remove {{v0}}
+Gợi ý dùng kèm	Pairs well with your order
+Thêm bánh ngọt & đồ nhắm hợp khẩu vị cùng giỏ hàng	Add cakes and snacks to complement your order
++ Thêm ❯	+ Add ❯
+Quay lại sửa giỏ hàng	Back to cart
+Thông tin giao hàng & Thanh toán	Delivery and payment details
+Bạn chọn hình thức nhận hàng để tiếp tục nhé.	Choose how you would like to receive your order.
+Địa chỉ giao hàng	Delivery address
+Địa chỉ đã lưu	Saved addresses
+Chọn địa chỉ đã lưu	Choose a saved address
+(mặc định)	(default)
+Số nhà, tên đường / Địa chỉ nhận hàng	House number and street / Delivery address
+Tỉnh / Thành phố	Province / City
+-- Chọn Tỉnh / Thành phố --	-- Choose a province / city --
+Phường / Xã	Ward / Commune
+-- Chọn Phường / Xã --	-- Choose a ward / commune --
+Chọn cửa hàng nhận đồ	Choose a pickup store
+Số bàn (không bắt buộc)	Table number (optional)
+Ví dụ: Bàn 12	For example: Table 12
+Đang phục vụ tại bàn	Table service
+Bạn đang ngồi tại	You are seated at
+Bàn	Table
+. Nhân viên sẽ mang nước ra tận bàn!	. Our staff will bring your drinks to your table!
+Thông tin khách hàng	Customer details
+Bắt buộc cả hai	Both fields are required
+Email nhận đơn	Order email
+Ví dụ: nguyenvan@gmail.com	For example: name@gmail.com
+Số điện thoại liên hệ	Contact phone number
+Ví dụ: 0987654321	For example: 0987654321
+Bắt buộc nhập cả Email và Số điện thoại để hệ thống gửi thông báo đơn hàng và liên hệ giao hàng.	Enter both your email and phone number for order updates and delivery contact.
+Ghi chú cho quầy pha chế / Shipper	Notes for the barista / courier
+Ví dụ: ít đá, ngọt vừa, giao trước 11h30...	For example: less ice, medium sweetness, deliver before 11:30...
+Phương thức thanh toán	Payment method
+Thẻ / App	Card / App
+ATM, Visa, QR Ngân Hàng	ATM, Visa, bank QR
+Ngân Hàng QR	Bank QR
+Quét mã chuyển khoản tự động	Scan to pay by bank transfer
+Ví Avengers	Avengers Wallet
+Trừ trực tiếp số dư ví	Pay using your wallet balance
+Thanh toán tại quầy	Pay at the counter
+Thanh toán cho shipper khi nhận	Pay the courier on delivery
+Cà thẻ / tiền mặt tại quầy	Card / cash at the counter
+Tóm tắt đơn hàng	Order summary
+Tạm tính (	Subtotal (
+món)	items)
+Voucher giảm giá	Voucher discount
+0đ	0₫
+Phí giao hàng	Delivery fee
+Miễn phí	Free
+Đã áp dụng Freeship hạng	Free shipping applied for tier
+đ để tự động Freeship	₫ to unlock free shipping
+đ hạng	₫ for tier
+Tổng thanh toán	Total payment
+(Đã bao gồm VAT & phí)	(Including VAT and fees)
+Đã áp dụng	Applied
+đ cho đơn hàng	₫ on this order
+Bỏ dùng	Remove
+MÃ GIẢM GIÁ	PROMO CODE
+Áp dụng	Apply
+Mã giảm giá dành cho bạn	Available promo codes
+Không có mã giảm giá khả dụng	No promo codes available
+Dành riêng cho bạn	Just for you
+Voucher quà tặng	Gift voucher
+Hạn sử dụng dài	Extended validity
+Dùng	Use
+Khuyến mãi hệ thống	Store promotions
+Giảm {{v0}}	Save {{v0}}
+Không giới hạn	No expiry
+Tiến hành thanh toán	Proceed to checkout
+Đăng nhập để thanh toán	Log in to check out
+Chưa xác minh được tình trạng món tại cửa hàng. Vui lòng thử lại.	Store availability could not be verified. Please try again.
+Có món trong giỏ hàng đã hết hàng tại chi nhánh này. Vui lòng kiểm tra lại giỏ hàng!	Some items are unavailable at this store. Please review your cart.
+Đang tạo đơn hàng...	Placing your order...
+Thử lại đơn đã gửi	Retry the submitted order
+Xác nhận & Đặt hàng	Confirm and place order
+Giao dịch hoàn tất	Transaction complete
+THANH TOÁN THÀNH CÔNG!	PAYMENT SUCCESSFUL!
+Hệ thống đã nhận được tiền chuyển khoản SePay và tự động xác nhận đơn.	Your SePay transfer has been received and your order confirmed.
+Mã tham chiếu:	Reference:
+Số tiền đã nhận:	Amount received:
+Trạng thái đơn:	Order status:
+Đã xác nhận & Chờ pha chế	Confirmed and awaiting preparation
+Xem Lịch Sử Đơn Hàng	View order history
+Đơn hàng đang được chuẩn bị tại chi nhánh	Your order is being prepared at the store
+Quét mã QR để thanh toán đơn hàng	Scan the QR code to pay for your order
+QR ngân hàng	Bank QR
+Số tiền cần chuyển:	Transfer amount:
+Hệ thống đang tự động xác thực thanh toán qua Sepay...	Your SePay payment is being verified automatically...
+Đăng nhập	Log in
+Đăng ký	Sign up
+Đăng xuất	Log out
+Email	Email
+Mật khẩu	Password
+Họ và tên	Full name
+Họ tên	Full name
+Số điện thoại	Phone number
+Quên mật khẩu?	Forgot password?
+Đăng nhập tài khoản	Account login
+Đăng ký tài khoản	Create an account
+Bạn chưa có tài khoản ?	Don't have an account?
+Đăng ký tại đây	Sign up here
+Quên mật khẩu? Nhấn vào	Forgot your password? Click
+đây	here
+Hoặc đăng nhập bằng	Or log in with
+Nhập Email	Enter your email
+Nhập mật khẩu	Enter your password
+Xác nhận mật khẩu	Confirm password
+Gửi mã xác thực	Send verification code
+Mã OTP	OTP code
+Mật khẩu mới	New password
+Đặt lại mật khẩu	Reset password
+Quay lại đăng nhập	Back to login
+Quay lại	Back
+Tiếp tục	Continue
+Lưu	Save
+Hủy	Cancel
+Hủy bỏ	Cancel
+Đóng	Close
+Chỉnh sửa	Edit
+Xóa	Remove
+Thêm	Add
+Cập nhật	Update
+Xác nhận	Confirm
+Đang tải...	Loading...
+Đang tải…	Loading…
+Đang tải danh sách...	Loading stores...
+Đang xử lý...	Processing...
+Thử lại	Try again
+Tải lại	Reload
+Xem thêm	View more
+Xem tất cả	View all
+Không có dữ liệu	No data available
+Cửa hàng	Stores
+Thực đơn	Menu
+Sản phẩm	Products
+Chi tiết sản phẩm	Product details
+Tài khoản	Account
+Hồ sơ của tôi	My profile
+Đơn hàng	Orders
+Đơn hàng của tôi	My orders
+Lịch sử đơn hàng	Order history
+Tra cứu đơn hàng	Track an order
+Mã đơn hàng	Order ID
+Chi nhánh	Store
+Kiosk	Kiosk
+Tìm kiếm	Search
+Tìm cửa hàng	Find a store
+Tìm kiếm cửa hàng	Find a store
+Giao hàng tận nơi	Delivery
+Mang đi	Takeaway
+Tại quán	Dine in
+Nhận tại cửa hàng	Store pickup
+Cà phê	Coffee
+Trà	Tea
+Bánh	Cakes
+Bánh ngọt	Cakes
+Bánh mặn	Savoury snacks
+Đồ uống	Drinks
+Đồ ăn	Food
+Nhỏ	Small
+Vừa	Medium
+Lớn	Large
+Kích thước	Size
+Độ ngọt	Sweetness
+Lượng đá	Ice level
+Loại sữa	Milk type
+Ít đá	Less ice
+Không đá	No ice
+Bình thường	Regular
+Nhiều đá	Extra ice
+Ít ngọt	Less sweet
+Không ngọt	No sugar
+Thêm ngọt	Extra sweet
+Số lượng	Quantity
+Thêm vào giỏ hàng	Add to cart
+Thêm vào giỏ	Add to cart
+Đánh giá	Reviews
+Đánh giá từ khách hàng	Customer reviews
+Viết đánh giá	Write a review
+Gửi đánh giá	Submit review
+Trả lời	Reply
+Phản hồi	Feedback
+Khuyến mãi	Promotions
+Ưu đãi	Offers
+Thông báo	Notifications
+Tin tức	News
+Liên hệ	Contact
+Hỗ trợ	Support
+Tuyển dụng	Careers
+Về chúng tôi	About us
+Điểm tích lũy	Loyalty points
+Hạng thành viên	Membership tier
+Ví điện tử	Wallet
+Quà tặng	Gifts
+Thẻ quà tặng	Gift cards
+Khảo sát	Survey
+Vòng quay may mắn	Lucky wheel
+Giảm giá	Discount
+Miễn phí giao hàng	Free delivery
+Còn món	Available
+Hết hàng	Out of stock
+Còn hàng	In stock
+Chọn	Choose
+Chưa có đánh giá	No reviews yet
+Chưa có đánh giá nào	No reviews yet
+Hoàn thành	Completed
+Đang giao	Out for delivery
+Đang chuẩn bị	Preparing
+Đã xác nhận	Confirmed
+Đã hủy	Cancelled
+Chờ xác nhận	Awaiting confirmation
+Mới tạo	New
+Tiền mặt COD	Cash on delivery
+Địa chỉ	Address
+Ghi chú	Notes
+Email hoặc số điện thoại	Email or phone number
+Hiện mật khẩu	Show password
+Ẩn mật khẩu	Hide password
+Tất cả	All
+Tên	Name
+Tổng tiền	Total
+Ngày đặt	Order date
+Ngày tạo	Created on
+Trạng thái	Status
+Chi tiết	Details
+Chưa có thông tin	No information available
+Đang cập nhật	Updating
+Đang cập nhật địa chỉ	Address is being updated
+Vui lòng chọn cửa hàng từ danh sách để xem vị trí bản đồ	Choose a store from the list to see its location on the map
+Sắp hết hàng	Low stock
+Trang trước	Previous page
+Trang sau	Next page
+Trang đầu	First page
+Trang cuối	Last page
+Trang	Page
+Chưa có đơn hàng	No orders yet
+Đơn hàng gần đây	Recent orders
+Lưu thay đổi	Save changes
+Đổi mật khẩu	Change password
+Mật khẩu hiện tại	Current password
+Bảo mật	Security
+Gửi	Send
+Tin nhắn	Messages
+Nhắn tin	Chat
+Nhắn tin với nhân viên	Chat with staff
+Nhân viên	Staff
+Trợ lý AI	AI assistant
+Cần hỗ trợ?	Need help?
+CÂU CHUYỆN NÀY LÀ CỦA CHÚNG MÌNH	THIS STORY BELONGS TO US
+Highlands Coffee® được thành lập vào năm 1999, bắt nguồn từ tình yêu dành cho đất Việt cùng với cà phê và cộng đồng nơi đây. Ngay từ những ngày đầu tiên, mục tiêu của chúng mình là có thể phục vụ và góp phần phát triển cộng đồng bằng cách siết chặt thêm sự kết nối và sự gắn bó giữa người với người.	Highlands Coffee® was founded in 1999 out of a love for Vietnam, its coffee and its communities. From the very beginning, our goal has been to serve and help communities grow by strengthening the bonds between people.
+DỊCH VỤ	SERVICES
+DỊCH VỤ NÀY LÀ CỦA CHÚNG MÌNH	THIS SERVICE BELONGS TO US
+Highlands Coffee® là không gian của chúng mình nên mọi thứ ở đây đều vì sự thoải mái của chúng mình. Đừng giữ trong lòng, hãy chia sẻ với chúng mình điều bạn mong muốn để cùng nhau giúp Highlands Coffee® trở nên tuyệt vời hơn.	Highlands Coffee® is our shared space, so everything here is designed for our comfort. Tell us what you would like to see so that together we can make Highlands Coffee® even better.
+CƠ HỘI NÀY LÀ CỦA CHÚNG MÌNH	THIS OPPORTUNITY BELONGS TO US
+Là điểm hội tụ của cộng đồng, Highlands Coffee® luôn tìm kiếm những thành viên mới với mong muốn không ngừng hoàn thiện một không gian dành cho tất cả mọi người. Chúng mình luôn chào đón bạn trở thành một phần của Highlands Coffee® để cùng nhau siết chặt thêm những kết nối và sự gắn bó giữa người với người.	As a community gathering place, Highlands Coffee® is always looking for new team members who want to help improve a space for everyone. Join Highlands Coffee® and help strengthen the connections between people.
+Tầm Nhìn	Our vision
+Trở thành thương hiệu cà phê và trà được yêu thích nhất tại Việt Nam và tự hào chia sẻ với thế giới.	To become Vietnam's most loved coffee and tea brand and proudly share it with the world.
+Sứ mệnh của Highlands Coffee là đạt được ngôi vị quán quân về khẩu vị cà phê Việt Nam và phong cách quán cà phê hiện đại, với giá cả hợp lý, sẵn sàng phục vụ mọi lúc, mọi nơi, mọi khách hàng.	Highlands Coffee's mission is to lead the way in Vietnamese coffee and modern café culture, with affordable prices and service for every customer, anytime and anywhere.
+Giá Trị Cốt Lõi	Our core values
+Quan tâm khách hàng	Customer care
+Tinh thần đồng đội & hợp tác	Teamwork and collaboration
+Tôn trọng & liêm chính	Respect and integrity
+Tự hào Việt & chia sẻ đến cộng đồng	Vietnamese pride and community sharing
+Đam mê	Passion
+Tìm kiếm công việc	Search for jobs
+Công việc...	Job title...
+Văn phòng	Office
+Hồ Chí Minh	Ho Chi Minh City
+Hà Nội	Hanoi
+Đà Nẵng	Da Nang
+Tìm cơ hội	Find opportunities
+HIGHLANDS COFFEE® || LÀ CỦA CHÚNG MÌNH	HIGHLANDS COFFEE® || BELONGS TO US
+Hành trình hạnh phúc của chúng mình	Our journey of happiness
+Đồng nghiệp thân yêu	Valued colleagues
+7 năm	7 years
+Thâm niên trung bình tại Highlands	Average length of service at Highlands
+Số ly thức uống phục vụ đến khách hàng mỗi ngày	Drinks served to customers each day
+Số cửa hàng trải dài trên 63 tỉnh thành	Stores across 63 provinces and cities
+Môi trường làm việc của sự quan tâm	A caring workplace
+Trong 02 năm vừa qua, Highlands lần đầu tiên đạt chứng nhận toàn cầu	Over the past two years, Highlands received global certification for the first time as a
+Nơi Làm Việc Tuyệt Vời	Great Place to Work
+và được vinh danh là	and was recognised as one of the
+Nơi Làm Việc Tốt Nhất Việt Nam.	Best Workplaces in Vietnam.
+Đây là cả một quá trình nỗ lực to lớn của chúng mình trong việc xây dựng một nền văn hóa làm việc hòa nhập, hỗ trợ và văn hóa gắn kết. Tại Highlands, chúng mình được lắng nghe, trao quyền và đối xử như một thành viên trong gia đình. Đây là nơi làm việc lý tưởng mà mình tin bạn đang tìm kiếm.	This reflects our efforts to build an inclusive, supportive and connected workplace. At Highlands, we are heard, empowered and treated like family. It is the welcoming workplace you may be looking for.
+Cuộc sống tại Highlands	Life at Highlands
+Thú vị, tràn ngập niềm vui & như một gia đình	Fun, full of joy and like a family
+Tìm hiểu các phòng ban	Explore our departments
+Khám phá các vị trí có thể phù hợp với bạn	Find a role that suits you
+Những cập nhật mới nhất về Cuộc sống tại Highlands	The latest updates on life at Highlands
+Ngày hội việc làm 2025	Career Fair 2025
+Nhìn lại hành trình "Ngày hội việc làm" năm 2025	Looking back at our Career Fair 2025
+Hành trình lan tỏa tinh hoa: Talents Award 2025	Sharing our passion: Talents Award 2025
+Khám phá món quà	Discover the gift
+CÙNG "KHỐI NGHỈ HÈ" HIGHLANDS KHÁM PHÁ MÓN QUÀ HÁO HỨC DỊP QUỐC TẾ THIẾU NHI 2025	DISCOVER AN EXCITING CHILDREN'S DAY 2025 GIFT WITH HIGHLANDS' SUMMER TEAM
+Highlands Coffee đón tiếp Đoàn sinh viên từ Havard Business School	Highlands Coffee welcomes students from Harvard Business School
+Chính sách Đặt hàng | Highlands Coffee®	Ordering Policy | Highlands Coffee®
+Chính sách đặt hàng	Ordering policy
+1. Phạm vi giao hàng và vận chuyển	1. Delivery coverage and shipping
+Trong tháng 10/2023, Highlands Coffee® hỗ trợ đặt hàng trên website	In October 2023, Highlands Coffee® supports website orders at
+và giao hàng trên địa bàn Tp.Hồ Chí Minh. Tùy theo tình hình thực tế, các chính sách đặt hàng và giao hàng sẽ có sự thay đổi và khách hàng sẽ nhận được thông tin cập nhật trên website.	and delivery within Ho Chi Minh City. Ordering and delivery policies may change according to actual conditions; updates will be published on the website.
+2. Chính sách hoàn trả hàng và hoàn tiền	2. Returns and refunds
+Quý Khách Hàng có quyền hoàn trả sản phẩm (đối với Thức uống/Bánh/Sản phẩm Trà, Cà Phê đóng gói và sản phẩm Ly/Bình giữ nhiệt) nếu đơn hàng/sản phẩm gặp vấn đề trong các trường hợp sau:	Customers may return drinks, cakes, packaged tea or coffee, cups and insulated bottles if an order or product has one of the following issues:
+(1) Sản phẩm bị hư hỏng, không còn nguyên vẹn trong quá trình vận chuyển từ nhà cung cấp;	(1) The product is damaged or loses its integrity during transport from the supplier;
+(2) Sản phẩm có vấn đề về chất lượng sau khi được kiểm tra và xác thực thông tin phản ánh là chính xác.	(2) A quality issue is confirmed after the customer's report has been checked and verified.
+Lưu ý:	Please note:
+Highlands Coffee chưa thể hỗ trợ các yêu cầu trả hàng/hoàn tiền với các lý do liên quan đến cảm quan/không hài lòng/thay đổi quyết định mua hàng hoặc thông tin phản ánh chưa chính xác.	Highlands Coffee cannot support returns or refunds based on personal taste, dissatisfaction, a change of purchase decision, or reports that have not been verified as accurate.
+Thời hạn để gửi yêu cầu đổi trả sản phẩm kể từ ngày nhận hàng là	The deadline for submitting a return request after receiving the product is
+. Đối với ngành hàng Thức uống/Bánh ngọt, thời hạn gửi yêu cầu là	. For drinks and cakes, requests must be submitted
+trong ngày	on the same day
+kể từ ngày nhận hàng cho đến khi kết thúc ca làm việc cuối ngày của cửa hàng.	after receipt and before the store's final shift ends.
+3. Phương thức thanh toán	3. Payment methods
+Quý Khách Hàng có thể lựa chọn hình thức thanh toán phù hợp:	Customers can choose a suitable payment method:
+Thanh toán khi nhận hàng (COD):	Cash on delivery (COD):
+Thanh toán bằng tiền mặt khi nhận hàng tại nhà.	Pay in cash when your order is delivered to your home.
+Chuyển khoản ngân hàng:	Bank transfer:
+Khách hàng thực hiện chuyển khoản theo thông tin được cung cấp sau khi đặt hàng thành công.	Transfer payment using the details provided after your order is placed successfully.
+Ví điện tử (Momo, ZaloPay, VNPay...):	E-wallets (Momo, ZaloPay, VNPay...):
+Hỗ trợ thanh toán qua các ví điện tử phổ biến.	Payment through popular e-wallets is supported.
+4. Thời gian xử lý và giao hàng	4. Processing and delivery times
+Đơn hàng sẽ được xác nhận trong vòng	Orders will be confirmed within
+15-30 phút	15–30 minutes
+sau khi đặt hàng thành công.	after they are placed successfully.
+Thời gian giao hàng từ	Delivery takes
+30-60 phút	30–60 minutes
+tùy thuộc vào khoảng cách và điều kiện giao thông.	depending on distance and traffic conditions.
+Trong một số trường hợp đặc biệt (thời tiết xấu, giờ cao điểm...), thời gian giao hàng có thể kéo dài hơn.	Delivery may take longer in exceptional circumstances, such as bad weather or peak hours.
+5. Quy trình khiếu nại	5. Complaint process
+Nếu có bất kỳ vấn đề nào với đơn hàng, Quý Khách Hàng vui lòng:	If you have an issue with your order, please:
+Liên hệ với chúng tôi qua hotline	Contact our hotline
+Cung cấp thông tin đơn hàng và mô tả vấn đề gặp phải	Provide your order details and describe the issue
+Đội ngũ hỗ trợ sẽ phản hồi trong vòng 24 giờ làm việc	Our support team will respond within 24 business hours
+Lưu ý quan trọng:	Important:
+Chính sách này áp dụng cho các đơn hàng được đặt qua website	This policy applies to orders placed through the website
+. Đối với các đơn hàng tại cửa hàng trực tiếp, vui lòng tham khảo chính sách riêng của từng cửa hàng.	. For in-store purchases, please refer to the individual store's policy.
+Bạn có chắc chắn muốn hủy hồ sơ đăng ký này không? Hành động này không thể hoàn tác!	Are you sure you want to cancel this application? This action cannot be undone.
+Các gói đầu tư	Investment packages
+Chọn Mô Hình Phù Hợp	Choose the right model
+Chi tiết hạng mục đầu tư	Investment breakdown
+Combo Nguyên Liệu Đầu Kỳ	Initial ingredient combo
+* Ước tính pha chế khoảng	* Estimated yield of approximately
+ly đồ uống	drinks
+Đã chọn gói này	Selected package
+Chọn gói này	Choose this package
+Quy trình hợp tác	Our partnership process
+4 Bước Đơn Giản	4 simple steps
+Bước	Step
+Hệ thống đối tác	Our partner network
+Mạng Lưới Kiosk Avengers	Avengers Kiosk network
+Tìm kiếm Kiosk (Tên đường, phường, cửa hàng)...	Search kiosks by street, ward or store name...
+Không tìm thấy Kiosk nào phù hợp	No matching kiosks found
+Tìm được	Found
+XEM ĐÁNH GIÁ	VIEW REVIEWS
+ĐÁNH GIÁ CHI NHÁNH NÀY	REVIEW THIS STORE
+Đang tải danh sách cửa hàng...	Loading stores...
+Hệ thống đang cập nhật danh sách cửa hàng.	The store list is being updated.
+Hãy trở thành đối tác đầu tiên của chúng tôi!	Become our first partner!
+Bản đồ {{v0}}	Map of {{v0}}
+Chọn một cửa hàng trong danh sách để xem vị trí bản đồ	Choose a store from the list to see its location
+Tại Kiosk, chúng tôi cam kết mang đến đồ uống chất lượng với không gian vệ sinh sạch sẽ, đáp ứng nhu cầu thưởng thức cà phê tiện lợi của bạn mỗi ngày. Hãy nhấp vào	At our kiosks, we are committed to quality drinks and a clean environment for your daily coffee. Click
+ở danh sách bên trên nếu bạn muốn để lại phản hồi cho chúng tôi!	in the list above to leave your feedback!
+Bắt đầu hành trình	Start your journey
+Đăng Ký Hồ Sơ Nhượng Quyền	Franchise application
+Chúng tôi sẽ phản hồi trong vòng	We will respond within
+24 giờ làm việc	24 business hours
+. Thư xác nhận sẽ được gửi về hộp thư tiếp nhận	. A confirmation email will be sent to
+Tiếp nhận thành công	Application received
+Gửi hồ sơ chưa thành công	Application could not be submitted
+Hồ sơ đã được tiếp nhận thành công	Your application has been received
+Đã xảy ra lỗi khi gửi hồ sơ	An error occurred while submitting your application
+Các bước tiếp theo:	Next steps:
+Thư xác nhận đã được gửi đến hộp thư của quý khách	A confirmation email has been sent to your inbox
+Đội ngũ tư vấn sẽ liên hệ trực tiếp trong vòng 24 giờ làm việc	Our consultants will contact you within 24 business hours
+Quý khách vui lòng chuẩn bị thông tin mặt bằng và nguồn vốn dự kiến để được tư vấn chính xác nhất	Please prepare information about your proposed premises and budget so we can advise you accurately
+Trở về trang nhượng quyền	Back to franchise information
+Mô hình nhượng quyền quan tâm *	Preferred franchise model *
+Hộp thư điện tử nhận thông tin *	Contact email address *
+Thư xác nhận và thông tin tài khoản quản trị sẽ gửi về địa chỉ thư này	Confirmation and management account details will be sent to this email address
+Địa chỉ mặt bằng dự kiến *	Proposed premises address *
+Số nhà, Tên đường	House number and street
+Tỉnh, Thành phố *	Province / City *
+Chọn hoặc nhập Tỉnh/Thành phố...	Choose or enter a province / city...
+Phường, Xã *	Ward / Commune *
+Chọn hoặc nhập Phường/Xã...	Choose or enter a ward / commune...
+Diện tích (m²)	Area (m²)
+Ghi chú thêm	Additional notes
+Kinh nghiệm kinh doanh, câu hỏi hoặc yêu cầu cần tư vấn chi tiết...	Business experience, questions or topics you would like advice on...
+Đang gửi hồ sơ...	Submitting application...
+Nộp Hồ Sơ Đăng Ký	Submit application
+Bằng cách gửi biểu mẫu này, quý khách đồng ý để chúng tôi liên hệ tư vấn. Mọi thông tin được cam kết bảo mật theo chính sách thương hiệu.	By submitting this form, you agree to be contacted for advice. Your information is protected under our brand privacy policy.
+Muốn tư vấn trực tiếp?	Prefer to speak to us directly?
+Liên hệ trực tiếp với bộ phận phát triển nhượng quyền Avengers Coffee	Contact the Avengers Coffee franchise development team
+Tra Cứu Hồ Sơ Đăng Ký	Look up your application
+Nhập số điện thoại đã đăng ký...	Enter the phone number used for your application...
+Đang tìm...	Searching...
+Hồ sơ ngày	Application date
+Mô hình đăng ký:	Selected model:
+Ghi chú từ hệ thống:	System notes:
+Lý do từ chối:	Reason for rejection:
+Hủy đăng ký hồ sơ	Cancel application
+Hồ sơ đã được duyệt và cấp tài khoản. Quý khách vui lòng đăng nhập Cổng Nhượng Quyền để quản lý hoặc gửi yêu cầu hoàn cọc.	Your application has been approved and an account created. Log in to the Franchise Portal to manage it or request a deposit refund.
+Cảm ơn bạn đã đánh giá cửa hàng!	Thank you for reviewing this store!
+Đánh Giá Khách Hàng -	Customer reviews –
+Đang tải danh sách đánh giá...	Loading reviews...
+Kiosk này chưa có đánh giá nào.	This kiosk has no reviews yet.
+Đánh giá trung bình:	Average rating:
+đánh giá)	reviews)
+Khách hàng ẩn danh	Anonymous customer
+Giải pháp doanh nghiệp	Business solutions
+Vui lòng nhấn "liên hệ" để gửi thông tin cho chúng tôi nếu bạn cần mua số lượng lớn để được hỗ trợ tốt nhất	Please click "contact" to send us your information if you need a bulk purchase, so we can provide the best support
+Thẻ Avengers Coffee	Avengers Coffee Card
+với thiết kế tinh tế, sử dụng dễ dàng - là món quà nhỏ bé để bạn trao tay người thương thay vạn lời muốn nói.	with its thoughtful design and easy use, is a small gift that says more than words to someone you love.
+135/37/50 Nguyễn Hữu Cảnh, Phường 22, Quận Bình Thạnh, Thành phố Hồ Chí Minh, Việt Nam	135/37/50 Nguyen Huu Canh, Ward 22, Binh Thanh District, Ho Chi Minh City, Vietnam
+Chọn mẫu thẻ	Choose a card design
+Giá trị Thẻ Avengers Coffee	Avengers Coffee Card value
+Vui lòng chọn giá trị Thẻ Avengers Coffee	Please select an Avengers Coffee Card value
+Thông tin người gửi	Sender details
+Tên người gửi	Sender name
+Email người gửi	Sender email
+Số điện thoại người gửi	Sender phone number
+Thông tin người nhận	Recipient details
+Tôi muốn tặng chính mình	I want to gift myself
+Tên người nhận	Recipient name
+Email người nhận	Recipient email
+Số điện thoại người nhận	Recipient phone number
+Lời bạn muốn nhắn nhủ đến người nhận	Your message to the recipient
+Điền nội dung tại đây	Enter your message here
+ký tự còn lại	characters remaining
+Đặt Lại	Reset
+Xác Nhận Thanh Toán	Confirm payment
+Hỗ Trợ Thẻ Avengers Coffee	Avengers Coffee Card support
+3 Bước Xúng Xính Rinh Thẻ	Get your card in 3 simple steps
+Bước {{v0}}	Step {{v0}}
+Thẻ Avengers Coffee Là Gì?	What is an Avengers Coffee Card?
+Bí Kíp Xài Thẻ Avengers Coffee	How to use your Avengers Coffee Card
+Lợi Ích Khi Sử Dụng Thẻ Avengers Coffee	Benefits of using an Avengers Coffee Card
+Mua nhiều giảm đậm	Buy more, save more
+Thiết kế Thẻ hiện đại, đẹp mắt, sang trọng	Modern, attractive and elegant card designs
+Avengers Coffee Card với thiết kế tinh tế, sử dụng dễ dàng - là món quà nhỏ bé để bạn trao tay người thương thay vạn lời muốn nói.	With a thoughtful design and easy use, the Avengers Coffee Card is a small gift that says more than words to someone you love.
+Gửi đến chúng tôi yêu cầu của Quý Doanh Nghiệp	Send us your business requirements
+Tên Doanh Nghiệp	Company name
+ex: 135/37/50 Nguyễn Hữu Cảnh, Quận Bình Thạnh, TP.HCM	For example: 135/37/50 Nguyen Huu Canh, Binh Thanh District, Ho Chi Minh City
+Người Liên Hệ	Contact person
+ex: Nguyễn Văn A	For example: Nguyen Van A
+Số lượng cần mua	Quantity required
+Nhu Cầu Doanh Nghiệp	Business requirements
+Tôi cần ...	I need...
+Gửi yêu cầu	Submit request
+Bộ Sưu Tập Thẻ 2025	2025 Card collection
+Chill Hè 2025 Collection	Chill Summer 2025 Collection
+Tết Mã 2025 Collection	Tet Ma 2025 Collection
+Bộ Sưu Tập Thẻ 2026	2026 Card collection
+Mua Thẻ Ngay!	Buy a card now!
+HƯỚNG DẪN ĐĂNG KÝ, NẠP TIỀN, KÍCH HOẠT VÀ NHẬN THẺ AVENGERS COFFEE KHI THỰC HIỆN NẠP TIỀN TRÊN WEBSITE CARD.AVENGERSCOFFEE.COM.VN	GUIDE TO REGISTERING, TOPPING UP, ACTIVATING AND RECEIVING AN AVENGERS COFFEE CARD THROUGH CARD.AVENGERSCOFFEE.COM.VN
+Ngày Cập Nhật: 31/05/2024	Updated: 31 May 2024
+Bạn vui lòng xem kỹ Hướng Dẫn này để hiểu rõ cách thức đăng ký và nạp tiền vào Thẻ Avengers Coffee qua website card.avengerscoffee.com.vn, Gửi tặng thẻ Avengers Coffee cho người thân, bạn bè. Đồng thời lưu ý các chính sách, quy định về việc Nhận mã xác nhận, Thời hạn kích hoạt, Địa điểm kích hoạt.	Please read this guide carefully to understand how to register and top up an Avengers Coffee Card through card.avengerscoffee.com.vn, and how to gift one to family or friends. Please also note the rules on confirmation codes, activation deadlines and activation locations.
+Khi bạn đăng ký, kích hoạt hoặc sử dụng Thẻ Avengers Coffee, bạn đồng ý chịu ràng buộc bời ĐIỀU KHOẢN SỬ DỤNG THẺ AVENGERS COFFEE được đăng tải trên	By registering, activating or using an Avengers Coffee Card, you agree to be bound by the AVENGERS COFFEE CARD TERMS OF USE published at
+Xin vui lòng xem kỹ Chính Sách Bảo Mật Thông Tin bên dưới để hiểu cách Avengers Coffee thu thập, sử dụng, bảo mật, tiết lộ các thông tin về khách hàng trên website:	Please read the Privacy Policy below to understand how Avengers Coffee collects, uses, protects and discloses customer information on the website:
+1. ĐĂNG KÝ VÀ NẠP TIỀN QUA WEBSITE CARD.AVENGERSCOFFEE.COM.VN	1. REGISTERING AND TOPPING UP THROUGH CARD.AVENGERSCOFFEE.COM.VN
+Bạn có thể đăng ký và nạp tiền vào Thẻ Avengers Coffee bằng cách truy cập vào website: card.avengerscoffee.com.vn và hoàn tất các bước sau đây:	You can register and top up an Avengers Coffee Card through card.avengerscoffee.com.vn by completing these steps:
+Truy cập vào website	Visit the website
+Chọn mẫu thiết kế của Thẻ Avengers Coffee	Choose an Avengers Coffee Card design
+Chọn giá trị tiền nạp vào Thẻ Avengers Coffee	Choose the amount to load onto your Avengers Coffee Card
+Nhập tên, số điện thoại, địa chỉ email của bạn	Enter your name, phone number and email address
+Nhấn tick vào ô “Tôi muốn gửi tặng cho chính mình”	Tick “I want to gift myself”
+Nhấn “Gửi”	Click “Send”
+Xem lại thông tin giao dịch	Review the transaction details
+Vui lòng xem kỹ Điều Khoản Sử Dụng Thẻ Avengers Coffee trước khi nạp tiền vào Thẻ Avengers Coffee	Please read the Avengers Coffee Card Terms of Use carefully before topping up your card
+Nếu bạn đồng ý với Điều Khoản Sử Dụng Thẻ Avengers Coffee, vui lòng chọn “Xác nhận”	If you agree to the Avengers Coffee Card Terms of Use, select “Confirm”
+Nhập thông tin tài khoản thanh toán của bạn vào trang thanh toán do nhà cung cấp dịch vụ thanh toán của chúng tôi cung cấp để nạp tiền vào Thẻ Avengers Coffee	Enter your payment account information on the page provided by our payment service provider to top up your Avengers Coffee Card
+Sau khi hoàn tất bước nạp tiền, bạn sẽ nhận được một Mã xác nhận qua SMS.	After completing the top-up, you will receive a confirmation code by SMS.
+2. GỬI TẶNG THẺ AVENGERS COFFEE	2. GIFTING AN AVENGERS COFFEE CARD
+Bạn có thể gửi tặng Thẻ Avengers Coffee cho bạn bè và người thân bằng cách truy cập vào trang website: card.avengerscoffee.com.vn bằng cách hoàn tất các bước sau đây:	You can gift an Avengers Coffee Card to friends or family through card.avengerscoffee.com.vn by completing the following steps:
+Truy cập vào	Visit
+Nhập tên, số điện thoại, địa chỉ email của người gửi và tên, số điện thoại, địa chỉ email của người nhận và tin nhắn cá nhân của bạn	Enter the sender's name, phone number and email, the recipient's name, phone number and email, and your personal message
+Sau khi hoàn tất bước nạp tiền, người được bạn gửi tặng Thẻ Avengers Coffee sẽ nhận được một Mã xác nhận qua SMS.	After the top-up is completed, the recipient of your Avengers Coffee Card will receive a confirmation code by SMS.
+3. MÃ XÁC NHẬN	3. CONFIRMATION CODE
+Mã xác nhận sẽ được gửi đến bạn qua SMS trong vòng 2-5 phút sau khi bạn hoàn tất đăng ký Thẻ Avengers Coffee và nạp tiền vào thẻ thành công.	Your confirmation code will be sent by SMS within 2–5 minutes after you successfully register and top up your Avengers Coffee Card.
+Bạn vui lòng lưu ý, với 01 Mã xác nhận bạn sẽ chỉ được kích hoạt 01 lần và được nhận 01 Thẻ Avengers Coffee duy nhất trong Thời Hạn Kích Hoạt nêu tại [Mục IV] của Hướng dẫn này.	Please note that each confirmation code can be activated only once and exchanged for one Avengers Coffee Card within the activation period described in Section IV of this guide.
+Chúng tôi sẽ không chịu trách nhiệm trong trường hợp bạn nhập sai thông tin của người nhận khi đăng ký Thẻ Avengers Coffee.	We are not responsible if you enter incorrect recipient information when registering an Avengers Coffee Card.
+Trường hợp bạn không nhận được Mã xác nhận sau 5 phút hoặc gặp phải các sự cố với Mã xác nhận (vd: làm mất Mã xác nhận hoặc Mã xác nhận bị lỗi), xin vui lòng liên hệ tới Chăm Sóc Khách Hàng Avengers Coffee qua hotline 1900 1755 hoặc email	If you do not receive a confirmation code within five minutes, or experience an issue such as a lost or invalid code, please contact Avengers Coffee Customer Care on 1900 1755 or email
+để được hướng dẫn cụ thể và hỗ trợ.	for detailed guidance and support.
+4. THỜI HẠN KÍCH HOẠT	4. ACTIVATION DEADLINE
+Sau khi nhận được Mã xác nhận, bạn sẽ cần kích hoạt Thẻ Avengers Coffee trong vòng tối đa	After receiving your confirmation code, you must activate your Avengers Coffee Card within a maximum of
+90 (chín mươi) ngày	90 (ninety) days
+kể từ ngày nhận được Mã xác nhận.	from receipt of the confirmation code.
+Thời hạn kích hoạt được hiểu là thời hạn bạn có thể sử dụng Mã xác nhận, mang đến hệ thống cửa hàng Avengers Coffee được quy định tại [Mục 5] để đổi lấy Thẻ Avengers Coffee.	The activation period is the time during which you can bring your confirmation code to an Avengers Coffee store specified in Section 5 and exchange it for an Avengers Coffee Card.
+Thời hạn kích hoạt	The activation deadline
+KHÔNG PHẢI	IS NOT
+thời hạn sử dụng của Thẻ Avengers Coffee. Nếu bạn muốn tìm hiểu thêm về thông tin thời hạn sử dụng Thẻ Avengers Coffee, vui lòng xem chi tiết Điều Khoản Sử Dụng Thẻ Avengers Coffee được đăng tải tại:	the expiry date of the Avengers Coffee Card. To learn about the card's validity, please read the Avengers Coffee Card Terms of Use published at:
+Bạn vui lòng lưu ý rằng, nếu sau	Please note that if, after
+90 ngày	90 days
+kể từ ngày nhận được Mã xác nhận mà Thẻ Avengers Coffee vẫn chưa được kích hoạt thì Mã xác nhận sẽ hết hiệu lực và không thể sử dụng để kích hoạt Thẻ Avengers Coffee được nữa. Chúng tôi sẽ không giải quyết cấp lại Mã xác nhận và hoàn tiền, vì vậy, bạn vui lòng kích hoạt Thẻ Avengers Coffee trong Thời hạn kích hoạt.	from receipt of the confirmation code, your Avengers Coffee Card has not been activated, the code expires and can no longer be used to activate a card. We will not reissue the code or provide a refund, so please activate your card within the activation period.
+5. ĐỊA ĐIỂM KÍCH HOẠT VÀ SỬ DỤNG THẺ AVENGERS COFFEE	5. AVENGERS COFFEE CARD ACTIVATION AND USAGE LOCATIONS
+Trong Thời hạn kích hoạt, bạn có thể kích hoạt Thẻ Avengers Coffee trực tiếp tại tất cả cửa hàng Avengers Coffee trên toàn quốc (ngoại trừ những cửa hàng Avengers Coffee nằm trong các hệ thống sau: Foodcourt Menas Mall, Giga Mall, Lotte Mart, Sense City, Aeon Mall và sân bay quốc tế Đà Nẵng).	Within the activation period, you can activate your Avengers Coffee Card at Avengers Coffee stores nationwide, excluding stores in Foodcourt Menas Mall, Giga Mall, Lotte Mart, Sense City, Aeon Mall and Da Nang International Airport.
+Sau khi kích hoạt, bạn có thể sử dụng Thẻ Avengers Coffee để mua các sản phẩm trực tiếp tại cửa hàng Avengers Coffee như việc sử dụng tiền mặt. Bạn vui lòng tham khảo chi tiết cách sử dụng Thẻ Avengers Coffee tại	After activation, you can use your Avengers Coffee Card to buy products directly at Avengers Coffee stores in the same way as cash. Please refer to the usage instructions at
+Trên đây là Hướng Dẫn đăng ký, nạp tiền, nhận và kích hoạt Thẻ Avengers Coffee khi thực hiện online trên website card.avengerscoffee.com.vn.	This concludes the guide to registering, topping up, receiving and activating an Avengers Coffee Card online through card.avengerscoffee.com.vn.
+Nếu bạn có bất cứ thắc mắc nào liên quan đến Thẻ Avengers Coffee, xin vui lòng liên hệ tới Chăm Sóc Khách Hàng Avengers Coffee số 1900 1755 hoặc email	For questions about Avengers Coffee Cards, please contact Customer Care on 1900 1755 or email
+6. LIÊN KẾT & QUẢN LÝ THẺ AVENGERS COFFEE	6. LINKING AND MANAGING AVENGERS COFFEE CARDS
+Bạn có thể liên kết toàn bộ Thẻ Avengers Coffee của bạn thông qua ứng dụng Avengers Coffee chỉ với vài thao tác đơn giản như sau:	You can link all your Avengers Coffee Cards through the Avengers Coffee app in a few simple steps:
+Bước 1: Tải Ứng Dụng Avengers Coffee tại đây:	Step 1: Download the Avengers Coffee app here:
+Bước 2: Đăng Nhập / Đăng ký nếu bạn chưa có tài khoản	Step 2: Log in, or sign up if you do not have an account
+Bước 3: Tại Trang Chủ chọn mục "Thẻ Avengers"	Step 3: Select “Avengers Cards” on the home screen
+Bước 4: Trong mục thẻ quà tặng vật lý chọn "Thêm Thẻ"	Step 4: Under physical gift cards, select “Add card”
+Bước 5: Nhập đầy đủ số Thẻ được in sau Thẻ Avengers và nhấn “Xác nhận”	Step 5: Enter the full card number printed on the back of your Avengers Card and select “Confirm”
+Lưu ý: Nếu bạn đã liên kết số điện thoại với Thẻ tại quầy, ứng dụng sẽ tự động hiển thị thông tin Thẻ của bạn.	Note: If your phone number was linked to the card at the counter, the app will display your card information automatically.
+Cập nhật mới nhất: 22/01/2024	Last updated: 22 January 2024
+Chính Sách Bảo Mật Thông Tin này ("Chính Sách") áp dụng thẻ Avengers Coffee. Trong Chính Sách này, các thuật ngữ “Avengers Coffee”, “chúng tôi” là để chỉ Công ty. Chúng tôi cam kết bảo vệ và tôn trọng quyền riêng tư của bạn. Chính Sách này giải thích cách chúng tôi xử lý thông tin cá nhân của bạn. Nếu bạn không đồng ý với Chính Sách này, bạn có quyền từ chối cung cấp thông tin và chúng tôi sẽ không chịu trách nhiệm giải quyết bất kỳ khiếu nại nào liên quan đến thẻ Avengers Coffee.	This Privacy Policy (“Policy”) applies to Avengers Coffee Cards. “Avengers Coffee” and “we” refer to the Company. We are committed to protecting and respecting your privacy. This Policy explains how we process your personal information. If you disagree with this Policy, you may refuse to provide information, and we will not be responsible for handling complaints related to the Avengers Coffee Card.
+Phạm Vi Xử Lý Thông Tin	Scope of information processing
+Trong phạm vi Chính Sách này, "Xử lý thông tin cá nhân” có nghĩa là một hoặc nhiều hoạt động tác động tới dữ liệu cá nhân, như: thu thập, ghi, phân tích, xác nhận, lưu trữ, chỉnh sửa, công khai, kết hợp, truy cập, truy xuất, thu hồi, mã hóa, giải mã, sao chép, chia sẻ, truyền đưa, cung cấp, chuyển giao, xóa, hủy dữ liệu cá nhân hoặc các hành động khác có liên quan.	In this Policy, “processing personal information” means one or more activities affecting personal data, including collection, recording, analysis, verification, storage, modification, publication, combination, access, retrieval, recovery, encryption, decryption, copying, sharing, transmission, provision, transfer, deletion, destruction, or other related actions.
+Khi bạn sử dụng thẻ Avengers Coffee hoặc đăng ký và nạp tiền thẻ Avengers Coffee qua website card.avengerscoffee.com.vn, chúng tôi xử lý một số thông tin cá nhân về bạn và các dịch vụ mà bạn sử dụng. Loại thông tin cá nhân mà chúng tôi xử lý có thể bao gồm thông tin cá nhân cơ bản chẳng hạn như số điện thoại,... Thông tin cá nhân của bạn mà chúng tôi xử lý được thu thập từ hai nguồn (i) thông tin bạn cung cấp cho chúng tôi (ii) Thông tin chúng tôi thu thâp một cách tự động khi bạn sử dụng các dịch vụ của chúng tôi.	When you use an Avengers Coffee Card, or register and top it up through card.avengerscoffee.com.vn, we process personal information about you and the services you use. This may include basic personal information such as your phone number. The information comes from two sources: (i) information you provide to us and (ii) information collected automatically when you use our services.
+Thông Tin Bạn Cung Cấp Cho Chúng Tôi	Information you provide to us
+Chúng tôi thu thập thông tin mà bạn cung cấp cho chúng tôi khi bạn sử dụng các dịch vụ của chúng tôi. Một số ví dụ về việc sử dụng “các dịch vụ" của chúng tôi là khi bạn thực hiện một giao dịch tại một trong các cửa hàng của chúng tôi.	We collect information you provide when using our services, for example when making a transaction at one of our stores.
+Thông tin bạn cung cấp cho chúng tôi có thể bao gồm tên hoặc họ; tên người dùng; mật khẩu; địa chỉ email; địa chỉ nhận thư; số điện thoại;	This information may include your first or last name, username, password, email address, mailing address and phone number;
+Thông Tin Chúng Tôi Thu Thập Một Cách Tự Động Khi Bạn Sử Dụng Các Dịch Vụ Của Chúng Tôi	Information collected automatically when you use our services
+Thông Tin Về Giao Dịch Mua	Purchase information
+– Chúng tôi có thể thu thập thông tin về các giao dịch của bạn tại các cửa hàng của chúng tôi bao gồm những sản phẩm bạn mua, mức độ thường xuyên bạn mua các sản phẩm, bất kỳ quà tặng hoặc khuyến mại liên quan đến giao dịch mua.	– We may collect information about your store transactions, including the products you purchase, how often you buy them, and gifts or promotions related to your purchase.
+Thông Tin Tài Khoản	Account information
+- Khi bạn thanh toán cho các giao dịch tại cửa hàng thông qua thiết bị của nhà cung cấp dịch vụ thanh toán của chúng tôi.	– When you pay for store transactions through equipment provided by our payment service provider.
+1.Cách Chúng Tôi Chia Sẻ Thông Tin mà Chúng Tôi Thu Thập	1. How we share the information we collect
+Khi Chúng Tôi Làm Việc Với Nhà Cung Cấp Dịch Vụ	When working with service providers
+– Chúng tôi có thể chia sẻ thông tin của bạn với các nhà cung cấp dịch vụ mà họ cung cấp cho chúng tôi các dịch vụ hỗ trợ, chẳng hạn như máy chủ trang web, gửi email, vị trí bản đồ, quy trình thư bưu chính, chuẩn bị và giao hàng theo đơn, và phân tích. Chúng tôi yêu cầu các công ty này không thực hiện việc thu thập, sử dụng và tiết lộ thông tin của bạn trừ khi họ đang thực hiện công việc cho chúng tôi hoặc khi việc tiết lộ thông tin của bạn được yêu cầu theo pháp luật.	– We may share information with service providers that support us, such as website hosting, email delivery, map locations, postal processing, order preparation and delivery, and analytics. We require them not to collect, use or disclose your information except when working for us or when disclosure is required by law.
+Khi Việc Chia Sẻ Hoặc Tiết Lộ Là Theo Quy Định Của Pháp Luật Hoặc Để Bảo Vệ Các Lợi Ích Hợp Pháp	When sharing or disclosure is required by law or protects legitimate interests
+– Chúng tôi có thể tiết lộ thông tin của bạn theo yêu cầu của pháp luật, để thực thi các thỏa thuận và chính sách của chúng tôi, hoặc để bảo vệ quyền và lợi ích hợp pháp, hoặc sự an toàn của Avengers Coffee hoặc các khách hàng hoặc các đối tác của chúng tôi.	– We may disclose information as required by law, to enforce our agreements and policies, or to protect the rights, legitimate interests or safety of Avengers Coffee, our customers or our partners.
+Khi Chúng Tôi Chia Sẻ Với Các Công Ty Khác Nhằm Mục Đích Tiếp Thị	When sharing with other companies for marketing
+– Chúng tôi có thể chia sẻ thông tin của bạn với các đơn vị cung cấp dịch vụ để sử dụng thông tin của bạn thay mặt chúng tôi để cung cấp cho bạn các khuyến mại và các đề nghị đặc biệt, thông báo cho bạn về các cuộc thi, rút thăm trúng thưởng, các sự kiện hoặc cho mục đích khuyến mại khác.	– We may share information with service providers acting on our behalf to provide promotions and special offers, or notify you about competitions, prize draws, events or other promotions.
+Khi Bạn Chấp Thuận	With your consent
+– Chúng tôi có thể chia sẻ thông tin về bạn với các công ty khác nếu bạn cho phép chúng tôi hoặc chỉ thị cho chúng tôi chia sẻ thông tin.	– We may share information with other companies if you authorise or instruct us to do so.
+2. Cam Kết Bảo Mật Thông Tin Cá Nhân Khách Hàng	2. Commitment to protecting customers' personal information
+Avengers Coffee bảo vệ thông tin của bạn bằng cách sử dụng các biện pháp bảo mật về kỹ thuật, vật lý và quản lý để giảm nguy cơ bị mất, sử dụng sai, truy cập, tiết lộ hoặc sửa đổi bất hợp pháp các thông tin của bạn theo quy định của Luật. Một số biện pháp bảo vệ của chúng tôi bao gồm tường lửa, mã hóa dữ liệu, kiểm soát truy cập vật lý, và kiểm soát thông tin quản trị.	Avengers Coffee uses technical, physical and administrative safeguards to reduce the risk of loss, misuse, unlawful access, disclosure or modification of information in accordance with law. These safeguards include firewalls, data encryption, physical access controls and information management controls.
+Tuy nhiên, trong khi chúng tôi sử dụng các công nghệ và quy trình an ninh để giúp bảo vệ thông tin cá nhân của bạn, bạn thừa nhận và đồng ý rằng không có hệ thống bảo mật nào là hoàn hảo và do bản chất vốn có của Internet, chúng tôi không thể đảm bảo rằng dữ liệu, bao gồm cả thông tin cá nhân, được an toàn tuyệt đối trước sự xâm nhập hoặc truy cập trái phép của người khác. Trong trường hợp xảy ra giao dịch đáng nghi ngờ, vui lòng liên hệ Trung Tâm Chăm Sóc Khách Hàng của chúng tôi để chúng tôi sẽ nỗ lực hết sức để hỗ trợ bạn ngăn chặn hậu quả của sự cố này, nhưng chúng tôi không chịu bất kỳ trách nhiệm pháp lý nào phát sinh từ những sự cố như vậy.	Although we use security technologies and processes to protect personal information, you acknowledge that no security system is perfect. Due to the nature of the Internet, we cannot guarantee absolute protection of data, including personal information, against intrusion or unauthorised access. For suspicious transactions, please contact Customer Care. We will make every effort to help prevent the consequences of the incident, but accept no legal liability arising from such incidents.
+Khuyến Mãi Nạp Thẻ Avengers	Avengers Card top-up offers
+Khuyến Mãi Nạp Thẻ	Card top-up offers
+Tặng 5% Khi Nạp Thẻ Avengers Từ 200K	Get 5% extra when topping up an Avengers Card with 200K or more
+Hướng Dẫn Liên Kết Và Quản Lý Thẻ Avengers	How to link and manage Avengers Cards
+Khuyến Mãi Trên Avengers Coffee App	Avengers Coffee app offers
+Khuyến Mãi App	App offers
+Trà Chiều - Avengers App Mua 1 Tặng 1	Afternoon Tea – Buy one, get one free on Avengers App
+Bạn Hỏi Avengers Trả Lời	You ask, Avengers answers
+Không thể tìm thấy những gì bạn đang tìm kiếm?	Can't find what you are looking for?
+Email Cho Chúng Tôi	Email us
+Highlands Coffee® Order thuộc CÔNG TY CỔ PHẦN DỊCH VỤ CÀ PHÊ CAO NGUYÊN	Highlands Coffee® Order is operated by CAO NGUYEN COFFEE SERVICE JOINT STOCK COMPANY
+Địa chỉ: 125-127 Nguyễn Cơ Thạch, phường An Lợi Đông, Quận 2, TP Hồ Chí Minh. MSDN: 0309965814 do Sở Kế hoạch - Đầu tư Tp.HCM cấp lần đầu ngày 20/04/2010, sửa đổi lần thứ 30 ngày 30/08/2022.	Address: 125–127 Nguyen Co Thach, An Loi Dong Ward, District 2, Ho Chi Minh City. Business registration number: 0309965814, first issued by the Ho Chi Minh City Department of Planning and Investment on 20 April 2010; 30th amendment dated 30 August 2022.
+Số điện thoại:	Phone number:
+LIÊN HỆ VỚI CHÚNG TÔI	CONTACT US
+Cảm ơn bạn đã liên hệ!	Thank you for contacting us!
+Chúng tôi sẽ phản hồi trong vòng 24 giờ làm việc.	We will respond within 24 business hours.
+Họ tên*	Full name*
+Số điện thoại*	Phone number*
+Nhập nội dung*	Your message*
+Giờ làm việc	Business hours
+Thứ 7 - Chủ nhật:	Saturday – Sunday:
+Miễn phí, 7:00 - 22:00 mỗi ngày	Free, 7:00–22:00 daily
+Bankrista Thịnh Vượng	Bankrista Thinh Vuong
+CÔNG TY CỔ PHẦN DỊCH VỤ CÀ PHÊ CAO NGUYÊN	CAO NGUYEN COFFEE SERVICE JOINT STOCK COMPANY
+Đăng ký nhận tin	Subscribe to updates
+Nhận ưu đãi & tin tức mới nhất từ Highlands Coffee	Get the latest offers and news from Highlands Coffee
+Nhập địa chỉ em	Enter your email address
+Đăng ký thành công! Mời bạn đăng nhập.	Sign-up successful! Please log in.
+Khôi phục mật khẩu	Password recovery
+KHÔI PHỤC MẬT KHẨU	PASSWORD RECOVERY
+Đã có tài khoản?	Already have an account?
+Đăng nhập tại đây	Log in here
+Email hoặc tên đăng nhập	Email or username
+Mã OTP (6 số)	OTP code (6 digits)
+Nhập lại mật khẩu mới	Confirm your new password
+Gửi mã OTP	Send OTP
+Xác nhận đặt lại mật khẩu	Confirm password reset
+Gửi lại OTP	Resend OTP
+Đăng nhập với Google	Log in with Google
+Xác minh nhanh & an toàn	Fast and secure verification
+Xác minh bạn không phải robot	Verify that you are not a robot
+Captcha chưa cấu hình.	Captcha has not been configured.
+Chọn tài khoản Google	Choose a Google account
+Huỷ bỏ	Cancel
+Dùng Google fallback	Use the alternative Google login
+Lỗi xác định giải thưởng.	The prize could not be identified.
+Vui lòng đăng nhập để tham gia vòng quay và quy đổi điểm thưởng lấy những phần quà cực khủng.	Please log in to spin the wheel and exchange reward points for gifts.
+Đăng nhập ngay	Log in now
+MINI GAME & ĐẶC QUYỀN MỤC THƯỞNG	MINI GAME & REWARD BENEFITS
+điểm khả dụng	available points
+để tham gia quay thưởng (không ảnh hưởng điểm xét hạng thành viên). Cơ hội 100% trúng thưởng điểm, voucher tiền mặt hoặc ưu đãi độc quyền.	to enter the prize draw without affecting your membership tier points. Every spin wins points, cash vouchers or exclusive offers.
+Điểm khả dụng của bạn	Your available points
+điểm	points
+Chi phí / lượt quay	Cost per spin
+Sử dụng điểm khả dụng để quay (Không bị trừ điểm tích lũy xét hạng)	Use available points to spin (membership tier points are not deducted)
+Cơ cấu giải thưởng	Prize distribution
+phần quà	gifts
+Mỗi lượt quay tiêu tốn	Each spin costs
+(không ảnh hưởng điểm xét hạng).	(without affecting membership tier points).
+Voucher nhận được có HSD 14 ngày, tự động thêm vào kho quà cá nhân.	Vouchers are valid for 14 days and added automatically to your personal rewards.
+Tỷ lệ trúng thưởng 100%, có thể sử dụng voucher ngay khi tạo đơn hàng.	Every spin wins; vouchers can be used immediately when placing an order.
+Chúc mừng bạn!	Congratulations!
+Bạn đã may mắn quay trúng phần quà:	You have won:
+Mã voucher của bạn	Your voucher code
+Đã được thêm tự động vào danh sách ưu đãi của bạn.	Automatically added to your offers.
+Cập nhật ngày sinh thành công! 🎉	Birthday updated successfully! 🎉
+Vui lòng đăng nhập để xem thông tin hạng thành viên và các quyền lợi đặc biệt dành riêng cho bạn.	Please log in to view your membership tier and personal benefits.
+Đã có lỗi xảy ra khi tải thông tin thành viên. Vui lòng thử lại sau.	Membership information could not be loaded. Please try again later.
+Đặc quyền thành viên	Membership benefits
+Chi tiêu tích lũy, nâng hạng ngay hôm nay để mở khóa các đặc quyền, voucher sinh nhật, quà tặng lên hạng và nhiều ưu đãi độc quyền.	Accumulate spending and upgrade your tier to unlock birthday vouchers, upgrade gifts and exclusive offers.
+THẺ HỘI VIÊN CHÍNH THỨC	OFFICIAL MEMBERSHIP CARD
+Thành viên	Member
+Chủ sở hữu	Cardholder
+Quý khách	Valued customer
+Điểm xét hạng	Tier points
+Thông báo tạm điều chỉnh Hạng do chưa đủ chi tiêu duy trì tháng	Temporary tier adjustment due to insufficient monthly qualifying spend
+Bạn đã tích lũy đủ	You have accumulated enough
+xét hạng (Đạt mốc	qualifying points (reaching
+Hạng	Tier
+). Tuy nhiên, hạng	). However, tier
+yêu cầu chi tiêu tối thiểu	requires minimum spending of
+đ/tháng	₫ per month
+để giữ hạng & đặc quyền.	to keep its tier and benefits.
+💡 Đã chi tiêu tháng này:	💡 Spending this month:
+đ (Còn thiếu	₫ (still needed:
+đ). Hạng của bạn tạm thời chuyển về	₫). Your tier temporarily changes to
+cho đến khi đạt đủ mức chi tiêu duy trì.	until the required qualifying spend is reached.
+Tiến trình nâng hạng thành viên	Membership upgrade progress
+Cần thêm	Still needed:
+👑 Hạng cao nhất đạt được!	👑 Highest tier reached!
+điểm xét hạng)	qualifying points)
+điểm)	points)
+Dùng để giữ & lên hạng	Used to keep and upgrade your tier
+Điểm khả dụng	Available points
+Quay thưởng & đổi quà	Spin and redeem gifts
+Chi tiêu lũy kế	Total accumulated spending
+Tất cả đơn thành công	All successful orders
+Hệ số tích điểm	Points multiplier
+Đang kích hoạt	Active
+Chi tiêu duy trì tháng	Monthly qualifying spend
+đ)	₫)
+Đã đạt	Achieved
+Còn thiếu {{v0}}đ	{{v0}}₫ still needed
+Mục tiêu	Target
+Freeship hạng	Free shipping for tier
+Không hỗ trợ	Not supported
+Tính năng giải trí	Entertainment feature
+Dùng 100 điểm khả dụng của bạn để thử vận may nhận voucher 50K hoặc các món nước miễn phí!	Use 100 available points for a chance to win a 50K voucher or free drinks!
+Quy đổi & Quay ngay	Redeem and spin now
+Voucher Sinh Nhật	Birthday voucher
+Avengers House chúc bạn tuổi mới ngập tràn niềm vui, hạnh phúc và thành công! 🥳	Avengers House wishes you a birthday full of joy, happiness and success! 🥳
+🎁 Đã nhận voucher ưu đãi sinh nhật trong kho!	🎁 Your birthday voucher is in your rewards!
+Hệ thống đã chuẩn bị voucher đặc biệt cho bạn.	A special voucher has been prepared for you.
+Tháng sinh nhật của bạn! 🎈	It's your birthday month! 🎈
+Ngày sinh:	Date of birth:
+Đã nhận voucher ưu đãi sinh nhật!	Birthday voucher received!
+Hệ thống đang chuẩn bị voucher ưu đãi gửi tặng bạn.	Your birthday voucher is being prepared.
+Hệ thống sẽ tự động gửi voucher giảm giá lên đến	You will automatically receive a voucher worth up to
+vào tháng sinh nhật của bạn.	during your birthday month.
+Thiết lập ngày sinh nhật để nhận voucher ưu đãi bất ngờ từ Avengers Coffee Loyalty Program.	Set your birthday to receive a surprise voucher from Avengers Coffee Loyalty Program.
+Ngày	Day
+Tháng	Month
+Năm	Year
+Lưu ngày sinh	Save birthday
+Thiết lập ngày sinh	Set birthday
+Voucher cá nhân (	Personal vouchers (
+Bạn chưa có voucher cá nhân nào.	You have no personal vouchers yet.
+Hãy nâng hạng hoặc quy đổi lượt quay để tích lũy voucher nhé!	Upgrade your tier or redeem spins to collect vouchers!
+Tặng kèm	Free item
+Bảng đối chiếu đặc quyền các hạng thành viên	Membership benefits comparison
+Đặc quyền được đồng bộ trực tiếp từ hệ thống thiết lập của quản trị viên (Admin Panel)	Benefits are synced directly from the administrator's system settings
+Cập nhật mới nhất 2026	Latest update: 2026
+Mốc điểm lên hạng	Upgrade threshold
+Duy trì / Tháng	Monthly qualifying spend
+Hạng hiện tại	Current tier
+Không yêu cầu	No requirement
+Giảm 10% (tối đa 20.000đ)	10% off (up to 20,000₫)
+GIẢM	OFF
+ĐỘC QUYỀN	EXCLUSIVE
+Đặc quyền dành riêng cho bạn	Your exclusive benefits
+Giảm {{v0}} toàn hệ thống	Save {{v0}} across all stores
+Hạn dài	Extended validity
+ĐÃ CHÉP	COPIED
+SAO CHÉP	COPY
+Mở danh mục sản phẩm	Open product categories
+Gợi ý AI	AI suggestions
+Chọn tùy chọn {{v0}}	Choose options for {{v0}}
+Chuyện Nhà	Our stories
+Từ những hạt cà phê thanh lịch đến những ly trà đậm hương - Avengers House luôn mang đến một thế giới riêng	From carefully chosen coffee beans to fragrant tea, Avengers House always offers a world of its own
+Câu chuyện của chúng tôi	Our story
+The Avengers House là gì?	What is The Avengers House?
+The Avengers House tự hào là nơi cộ lũ hứa hẹn mang đến những khoảnh khắc thanh bình và tươi sáng trong nhịp sống thường ngày. Từ những hạt cà phê thanh lịch, những ly trà đậm hương đến những chiếc bánh nướng thơm nức nần - tất cả được chọn lọc, chế biến và phục vụ với tâm huyết.	The Avengers House is a place for peaceful and uplifting moments in everyday life. From carefully chosen coffee beans and fragrant tea to freshly baked treats, everything is selected, prepared and served with care.
+Chúng tôi không chỉ bán sản phẩm, mà chúng tôi bán những khoảnh khắc - những lúc bạn có thể dừng lại, thả lỏng và khẽ cười với người bạn yêu quý.	We offer more than products: we offer moments to pause, relax and smile with someone you love.
+Những giá trị cốt lõi	Our core values
+Chúng tôi tin vào điều gì	What we believe in
+Đội ngũ của chúng tôi	Our team
+Những người làm nên Avengers House	The people behind Avengers House
+Từ barista giàu kinh nghiệm đến nhân viên pha trà, từ người phục vụ thân thiện đến nhân viên sau quầy - tất cả đều là một phần của gia đình Avengers House. Chúng tôi không chỉ là đồng nghiệp, mà chúng tôi là những người bạn cùng chí hướng.	From experienced baristas and tea makers to friendly servers and counter staff, everyone belongs to the Avengers House family. We are colleagues and friends who share a common purpose.
+Những lời thương	Kind words
+Bạn nói gì về chúng tôi	What you say about us
+Bạn đã sẵn sàng tham gia gia đình Avengers House?	Ready to join the Avengers House family?
+Hãy tìm chi nhánh gần nhất hoặc đặt hàng trực tuyến ngay hôm nay.	Find your nearest store or order online today.
+Quay lại trang chính	Back to the main page
+Không tìm thấy thông tin sản phẩm.	Product information not found.
+Quay lại trang Đặt hàng	Back to the ordering page
+Đã chọn ({{v0}})	Selected ({{v0}})
+Tuỳ chọn Topping	Topping options
+(+{{v0}}đ)	(+{{v0}}₫)
+Kích thước:	Size:
+Lượng đá:	Ice:
+Độ ngọt:	Sweetness:
+Loại sữa:	Milk type:
+Sản phẩm hiện chưa có mô tả chi tiết.	A detailed description is not available for this product yet.
+Chọn tùy chọn	Choose options
+Hãy mua và trải nghiệm sản phẩm để là người đầu tiên đánh giá!	Try this product and be the first to review it!
+lượt đánh giá	reviews
+Vừa đây	Just now
+☕ Phản hồi của Avengers Coffee	☕ Reply from Avengers Coffee
+Trang khách hàng	Customer page
+Trang tài khoản	Account page
+Xin chào,	Hello,
+Thông tin tài khoản	Account details
+Đơn hàng của bạn	Your orders
+Sổ địa chỉ (0)	Address book (0)
+Họ tên:	Full name:
+Đặt mật khẩu an toàn với ít nhất 6 ký tự để bảo vệ tài khoản	Choose a secure password with at least 6 characters to protect your account
+Nhập mật khẩu hiện tại	Enter your current password
+Nhập mật khẩu mới	Enter a new password
+Xác nhận mật khẩu mới	Confirm new password
+Xác nhận lại mật khẩu mới	Re-enter your new password
+Cập nhật mật khẩu	Update password
+Sổ địa chỉ	Address book
+Bạn chưa có địa chỉ nào được lưu.	You have no saved addresses.
+THÊM ĐỊA CHỈ MỚI	ADD NEW ADDRESS
+Tất cả loại điểm bán	All store types
+Cửa hàng chuẩn	Standard store
+Điểm bán take-away	Takeaway location
+Tìm được {{v0}} quán	{{v0}} stores found
+Điểm Take-away	Takeaway location
+Xe Đẩy	Cart
+Xem chi tiết & Đánh giá	Details and reviews
+Tìm đường	Get directions
+Không tìm thấy cửa hàng nào phù hợp với tìm kiếm của bạn.	No stores match your search.
+Không có khảo sát nào	No surveys available
+Hiện tại không có chương trình khảo sát trải nghiệm nào đang kích hoạt. Cám ơn sự đồng hành của bạn!	There are no active experience surveys at the moment. Thank you for your support!
+Quay lại trang chủ	Back to home
+Cảm ơn bạn rất nhiều!	Thank you so much!
+Những chia sẻ quý báu của bạn giúp chúng tôi không ngừng cải tiến dịch vụ để mang đến trải nghiệm tuyệt vời nhất tại Avengers House.	Your valuable feedback helps us improve our service and offer the best experience at Avengers House.
+Quà tặng hoàn thành khảo sát	Survey completion reward
+GIẢM NGAY 20%	GET 20% OFF
+Áp dụng cho đơn hàng kế tiếp từ 100.000đ. Hiệu lực 5 ngày.	Valid on your next order of 100,000₫ or more. Valid for 5 days.
+Sao chép	Copy
+* Mã đã được lưu vào Kho Voucher của tài khoản:	* The code has been saved to the account's Voucher Wallet:
+bạn	you
+💡 Hãy đăng nhập tài khoản khách hàng trong các đơn hàng tới để tự động nhận mã giảm giá 20% khi tham gia khảo sát nhé!	💡 Log in to your customer account on your next order to automatically receive a 20% voucher when completing a survey!
+Quay lại đặt hàng	Back to ordering
+🎁 Hoàn thành khảo sát để nhận ngay	🎁 Complete the survey to receive
+💡 Lưu ý: Cần đăng nhập để hệ thống tự động phát hành Voucher 20% vào tài khoản.	💡 Note: Log in so the 20% voucher can be issued automatically to your account.
+Thông tin liên hệ (Không bắt buộc)	Contact details (optional)
+Ví dụ: Nguyễn Văn A	For example: Nguyen Van A
+Ví dụ: 0912345678	For example: 0912345678
+Nhập câu trả lời ngắn...	Enter a short answer...
+Hãy viết câu trả lời chi tiết của bạn ở đây...	Write your detailed answer here...
+-- Chọn câu trả lời --	-- Choose an answer --
+Đang gửi...	Sending...
+Gửi khảo sát	Submit survey
+Khách Vãng Lai & Đơn Hàng	Guest orders
+Xem thực đơn đặt món	View the menu
+Bạn đang đăng nhập tài khoản:	You are logged in as:
+Hội viên Avengers	Avengers member
+Mọi đơn hàng của bạn đều được lưu tự động trong Lịch sử đơn hàng, bạn có thể xem nhanh tại đây mà không cần nhập mã tra cứu.	Your orders are saved automatically in Order History. View them here without entering a tracking code.
+Nhập mã tra cứu hoặc mã đơn hàng	Enter a tracking code or order ID
+Ví dụ: AC-A1B2C hoặc DH12345...	For example: AC-A1B2C or DH12345...
+Xóa mã	Clear code
+Đang tra cứu...	Looking up your order...
+Mẹo: Mã tra cứu thường có 8 ký tự dạng	Tip: A tracking code usually contains 8 characters, such as
+được gửi trong email xác nhận khi bạn đặt hàng thành công.	and is sent in the confirmation email after a successful order.
+Tra cứu gần đây:	Recent searches:
+Mã đơn hàng:	Order ID:
+Mã tra cứu khách vãng lai:	Guest tracking code:
+Đơn hàng thành viên (Theo dõi qua Lịch sử đơn hàng)	Member order (track through Order History)
+Sao chép mã đơn	Copy order ID
+Thời gian đặt:	Ordered at:
+Đơn hàng này đã bị hủy. Nếu có bất kỳ thắc mắc nào về hoàn tiền hoặc đơn hàng, vui lòng liên hệ hotline 1900 1755.	This order has been cancelled. For questions about your order or refund, please contact 1900 1755.
+Thông Tin Giao Nhận	Delivery and pickup details
+Hình thức nhận hàng:	Fulfilment method:
+Địa chỉ nhận hàng:	Delivery address:
+Tại quầy cửa hàng	At the store counter
+Cơ sở xử lý:	Handling store:
+Người giao hàng:	Courier:
+Tài xế Avengers Coffee	Avengers Coffee courier
+Đơn hàng đang trên đường vận chuyển.	Your order is on its way.
+Đơn hàng đang chờ cửa hàng xác nhận và điều phối tài xế giao hàng.	Your order is awaiting store confirmation and courier assignment.
+Hình thức phục vụ:	Service type:
+Phục vụ tại bàn: Nhân viên sẽ mang thức uống ra tận Bàn {{v0}}.	Table service: our staff will bring your drinks to Table {{v0}}.
+Đến lấy tại quầy: Vui lòng đọc mã đơn hàng cho Barista tại quầy khi nhận món.	Counter pickup: please give the barista your order ID when collecting your order.
+Ghi chú giao hàng:	Delivery notes:
+Người Nhận & Thanh Toán	Recipient and payment
+Khách hàng nhận:	Recipient:
+Khách hàng Avengers Coffee	Avengers Coffee customer
+Email nhận thông báo:	Notification email:
+Phương thức thanh toán:	Payment method:
+Trạng thái thanh toán:	Payment status:
+Mã ưu đãi đã áp dụng:	Applied promo code:
+(Giảm	(Save
+Bản Đồ Theo Dõi Lộ Trình Giao Hàng	Delivery tracking map
+Định vị vệ tinh hiển thị vị trí quán, tuyến đường di chuyển và tài xế trực tiếp	The map shows the store, delivery route and live courier location
+Tài xế đang kết nối	Courier connecting
+Chi Tiết Món Đã Đặt (	Ordered items (
+In biên nhận	Print receipt
+Đơn giá:	Unit price:
+Tùy chọn:	Options:
+Tạm tính tiền món:	Items subtotal:
+Phí giao hàng:	Delivery fee:
+Giảm giá voucher:	Voucher discount:
+Tổng tiền thanh toán:	Total payment:
+Tra cứu đơn hàng khác	Look up another order
+Tiếp tục đặt món	Keep ordering
+1. Lấy mã tra cứu	1. Get your tracking code
+Email xác nhận đơn hàng	Order confirmation email
+hoặc tin nhắn biên nhận sau khi đặt hàng để lấy mã tra cứu (VD: AC-A1B2C).	or the receipt message sent after ordering contains your tracking code (for example: AC-A1B2C).
+2. Tra cứu tức thì	2. Look it up instantly
+Nhập mã vào khung tìm kiếm bên trên và nhấn	Enter the code in the search box above and select
+để kiểm tra tiến trình xử lý đơn hàng.	to check your order's progress.
+3. Đảm bảo quyền lợi	3. Protecting your interests
+Mọi thông tin đơn hàng, hóa đơn và người giao hàng đều được bảo mật và cập nhật liên tục theo thời gian thực.	Order, invoice and courier information is kept secure and updated in real time.
+Cảm ơn bạn đã đánh giá Shipper!	Thank you for reviewing your courier!
+Đang tải thông tin đơn hàng...	Loading order details...
+Không tìm thấy đơn hàng	Order not found
+Theo dõi đơn hàng	Track your order
+Trạng thái hiện tại	Current status
+Giờ lấy:	Pickup time:
+🚀 Giao hỏa tốc Lalamove	🚀 Lalamove express delivery
+Giao hàng thành công!	Delivered successfully!
+Bạn đánh giá tài xế giao hàng thế nào?	How was your delivery courier?
+Chia sẻ thêm cảm nhận của bạn (không bắt buộc)...	Tell us more about your experience (optional)...
+Cảm ơn bạn đã đánh giá tài xế.	Thank you for reviewing your courier.
+Shipper đang giao chuyến ghép (	The courier is making a combined delivery (
+đơn)	orders)
+Tài xế đang giao một đơn hàng khác trên cùng lộ trình. Thời gian dự kiến có thể kéo dài thêm một chút, mong bạn thông cảm!	Your courier is delivering another order on the same route. Arrival may take a little longer; thank you for your patience!
+Thời gian đến	Arrival time
+< 1 phút	< 1 minute
+~{{v0}} phút	~{{v0}} minutes
+Khoảng cách	Distance
+Theo dõi trực tiếp trên app Lalamove	Track live in the Lalamove app
+Đang tìm tài xế Lalamove, vui lòng chờ giây lát...	Finding a Lalamove courier, please wait...
+Tiến trình đơn hàng	Order progress
+Chi tiết đơn hàng	Order details
+Chào mừng bạn quay lại!	Welcome back!
+Gia nhập Avengers House	Join Avengers House
+Nhập email để nhận OTP và đặt mật khẩu mới	Enter your email to receive an OTP and set a new password
+Đăng nhập để nhận ưu đãi đặc biệt	Log in for special offers
+Đăng ký để tích điểm đổi quà	Sign up to collect points and redeem gifts
+Đăng ký nhanh với Google	Quick sign-up with Google
+Đang kết nối Facebook...	Connecting to Facebook...
+Đăng nhập với Facebook	Log in with Facebook
+Bước 1: Xác minh captcha	Step 1: Verify captcha
+Captcha chưa được cấu hình. Vui lòng thêm VITE_RECAPTCHA_SITE_KEY.	Captcha has not been configured. Please add VITE_RECAPTCHA_SITE_KEY.
+Bước 2: Chọn tài khoản Google	Step 2: Choose a Google account
+Ẩn khung Google	Hide Google login
+Đăng nhập mạng xã hội chưa được cấu hình. Vui lòng thêm Google/Facebook app key.	Social login is not configured. Please add Google/Facebook app keys.
+Email của bạn	Your email
+Đăng ký ngay	Sign up now
+Bạn chưa có tài khoản? Đăng ký	Don't have an account? Sign up
+Bạn đã có tài khoản? Đăng nhập	Already have an account? Log in
+Đánh Giá Chi Nhánh	Store review
+• Đơn hàng #{{v0}}	• Order #{{v0}}
+Trải nghiệm tổng quan của bạn	Your overall experience
+😍 Rất tuyệt vời!	😍 Excellent!
+😊 Hài lòng!	😊 Satisfied!
+😐 Bình thường	😐 Average
+🙁 Chưa hài lòng	🙁 Unsatisfied
+😡 Rất tệ	😡 Very poor
+Đánh giá chi tiết tiêu chí	Rate each aspect
+Nhận xét / Góp ý cho chi nhánh (Không bắt buộc)	Store comments / suggestions (optional)
+Chia sẻ chi tiết trải nghiệm của bạn tại quán để chi nhánh phục vụ tốt hơn...	Tell us about your visit so the store can serve you better...
+Chỉnh sửa món	Edit item
+Thêm Topping:	Add toppings:
+Cập nhật giỏ hàng	Update cart
+Đang kiểm tra giá…	Checking price…
+Chưa xác minh được giá	Price not yet verified
+Đang tải giá…	Loading price…
+Nước	Drink
+Chưa xác minh được giá từ menu	Price could not be verified from the menu
+Còn bán:	Available:
+Chưa đọc được:	Could not load:
+Đóng cửa: {{v0}}	Closed: {{v0}}
+Gọi cửa hàng	Call store
+Chỉ đường	Get directions
+Mã:	Code:
+ĐÃ THANH TOÁN QR THÀNH CÔNG!	QR PAYMENT SUCCESSFUL!
+Đơn	Order
+đã được xác nhận tự động qua SePay.	has been confirmed automatically through SePay.
+🟢 Đã xác nhận & Đang pha chế	🟢 Confirmed and being prepared
+Quét mã QR để thanh toán đơn #	Scan the QR code to pay for order #
+Chuyển khoản qua ngân hàng bằng mã VietQR / SePay	Bank transfer through VietQR / SePay
+Mã QR thanh toán ngân hàng	Bank payment QR code
+Chưa lấy được mã QR. Bạn có thể mở chi tiết trong mục Đơn hàng.	The QR code could not be loaded. You can open order details under Orders.
+Trình duyệt của bạn chưa hỗ trợ nhận diện giọng nói. Vui lòng dùng Google Chrome!	Your browser does not support speech recognition. Please use Google Chrome.
+Trợ lý AI Avengers Coffee	Avengers Coffee AI assistant
+Trực tuyến - Trả lời ngay	Online – ready to help
+Tắt âm báo	Mute notification sounds
+Bật âm báo	Enable notification sounds
+Bắt đầu cuộc trò chuyện mới	Start a new conversation
+Làm mới	Refresh
+Thu nhỏ	Minimise
+Xin chào! Bạn cần hỗ trợ gì về đồ uống hay đơn hàng hôm nay?	Hello! How can we help with your drinks or order today?
+Nhân viên tư vấn sẽ phản hồi trong giây lát.	A staff member will reply shortly.
+Đăng nhập để tiếp tục	Log in to continue
+Tiếp tục thanh toán	Continue to checkout
+Để sau	Later
+Đang đặt...	Placing order...
+Xác nhận đặt hàng	Confirm order
+Đang trả lời	Responding
+Nhắn tin cho nhân viên...	Message our staff...
+Nói để đặt hàng	Speak to order
+Danh sách yêu thích	Favourites
+món đang lưu	saved items
+Bạn chưa có món nào trong danh sách yêu thích.	You have no favourite items yet.
+Thêm tất cả vào giỏ	Add all to cart
+Ngôn ngữ / Language	Language / Ngôn ngữ
+🚀 Đơn Nhượng Quyền Kiosk	🚀 Kiosk franchise order
+Món Nhượng Quyền	Franchise item
+Đánh giá món	Review item
+Thanh toán (Tại Kiosk)	Payment (at kiosk)
+Phương thức:	Method:
+Hủy Đơn Hàng	Cancel order
+Bộ sưu tập Thẻ Quà Tặng	Gift card collection
+Lưu Thẻ Quà Tặng Mới	Save a new gift card
+Nhập mã thẻ (VD: GIFT-...)	Enter card code (for example: GIFT-...)
+Đang lưu...	Saving...
+Lưu thẻ ngay	Save card
+Bạn chưa sở hữu thẻ quà tặng nào.	You do not have any gift cards yet.
+Không có ảnh	No image
+Xóa thẻ (Test)	Remove card (test)
+Mệnh giá ban đầu	Original value
+Số dư hiện tại	Current balance
+Nạp số dư vào ví	Transfer balance to wallet
+Thẻ đã dùng hết	Card balance exhausted
+125-127 Nguyễn Cơ Thạch, Phường An Lợi Đông, TP. Thủ Đức, TP. Hồ Chí Minh. MSDN: 0309965814.	125–127 Nguyen Co Thach, An Loi Dong Ward, Thu Duc City, Ho Chi Minh City. Business registration number: 0309965814.
+Đã thông báo Bộ Công Thương	Notified to the Ministry of Industry and Trade
+Dùng tại bàn	Table service
+(Bàn {{v0}})	(Table {{v0}})
+Tại quầy	At the counter
+- Bàn {{v0}}	– Table {{v0}}
+Lấy tại quán	Store pickup
+Giao hàng Lalamove	Lalamove delivery
+Giao tận nơi	Delivery
+Quản lý, theo dõi tiến trình đơn và thông tin thanh toán	Manage and track orders and payment details
+Tra cứu lịch sử đơn hàng	Look up order history
+Bạn chưa đăng nhập. Nhập số điện thoại hoặc mã đơn hàng của bạn để xem tiến trình và lịch sử mua hàng.	You are not logged in. Enter your phone number or order ID to view progress and purchase history.
+Nhập SĐT hoặc mã đơn hàng...	Enter a phone number or order ID...
+Tìm mã đơn, tên món...	Search by order ID or item name...
+Tất cả thanh toán	All payment statuses
+Chờ xử lý	Pending processing
+Chờ thanh toán	Awaiting payment
+Thu tiền khi nhận hàng	Pay on delivery
+Đã thanh toán	Paid
+Thất bại	Failed
+Tất cả phương thức	All methods
+Có lỗi khi tải lịch sử đơn hàng	Order history could not be loaded
+Chưa có đơn hàng nào	No orders yet
+Hãy đặt món và quay lại để theo dõi tiến trình thanh toán.	Place an order, then return here to track its payment progress.
+Cơ sở:	Store:
+Danh sách món đã đặt	Ordered items
+Đá: {{v0}}	Ice: {{v0}}
+Ngọt: {{v0}}	Sweetness: {{v0}}
+Địa chỉ:	Address:
+Mã voucher:	Voucher code:
+Tổng thanh toán:	Total payment:
+Xem & Đánh giá Shipper	View and review courier
+Theo dõi vận chuyển	Track delivery
+Sửa Đơn Hàng	EDIT ORDER
+Hủy đơn hàng	Cancel order
+Đặt lại đơn này	Order again
+Sửa đơn hàng	Edit order
+Chỉ sửa trước khi quán chuẩn bị món. Tổng mới phải bằng hoặc cao hơn tổng cũ. Đơn ví sẽ trừ thêm phần chênh lệch sau khi bạn xác nhận.	Orders can only be edited before preparation starts. The new total must be equal to or higher than the original total. For wallet orders, the difference will be deducted after confirmation.
+Ví dụ: 15:00 - 15:30	For example: 15:00–15:30
+Danh sách món	Items
++ Thêm món	+ Add item
+Mặc định	Default
+Chỉnh tùy chọn	Edit options
+Tổng cũ:	Original total:
+Tạm tính:	Subtotal:
+· Giảm giá:	· Discount:
+· Phí giao:	· Delivery fee:
+Ví Avengers sẽ trừ thêm	Avengers Wallet will deduct an additional
+khi xác nhận.	when you confirm.
+COD: thanh toán tổng mới khi nhận hàng.	COD: pay the new total when your order arrives.
+Ví chưa đủ tiền. Bạn cần nạp thêm	Your wallet balance is insufficient. Top up another
+, rồi xem lại thay đổi trước khi xác nhận.	, then review your changes before confirming.
+Xem lại / sửa tiếp	Review / continue editing
+Đang kiểm tra...	Checking...
+Xác nhận sửa đơn	Confirm order changes
+Xem trước thay đổi	Preview changes
+Xác nhận hủy đơn hàng	Confirm order cancellation
+Mã đơn:	Order ID:
+Bạn có chắc chắn muốn hủy đơn hàng này? Thao tác hủy đơn không thể hoàn tác.	Are you sure you want to cancel this order? Cancellation cannot be undone.
+Lý do hủy (không bắt buộc)	Reason for cancellation (optional)
+Nhập lý do hủy đơn của bạn...	Enter your reason for cancelling...
+Bỏ qua	Skip
+Đang hủy...	Cancelling...
+Xác nhận hủy	Confirm cancellation
+Quay lại tra cứu	Back to lookup
+Theo Dõi Đơn Hàng #{{v0}}	Track order #{{v0}}
+Tra Cứu & Theo Dõi Đơn Hàng	Order lookup and tracking
+Cập nhật lộ trình tài xế thời gian thực	Live courier route updates
+Theo dõi trạng thái giao hàng tức thì	Instant delivery status tracking
+Tạm hết	Unavailable
+Bán chạy tháng này	This month's bestseller
+Bỏ yêu thích	Remove from favourites
+Thêm yêu thích	Add to favourites
+Vui lòng chọn size trước khi mua.	Please choose a size before purchasing.
+Chọn size (bắt buộc):	Choose a size (required):
+🥤 Nhỏ + 0 đ	🥤 Small + 0₫
+🥤 Vừa + 6.000 đ	🥤 Medium + 6,000₫
+Chọn size để mua	Choose a size to buy
+Đánh giá người dùng	Customer reviews
+Đang tải đánh giá...	Loading reviews...
+Chưa có đánh giá nào cho sản phẩm này.	This product has no reviews yet.
+Bạn	You
+Khách {{v0}}	Guest {{v0}}
+Không có bình luận.	No comment provided.
+Phản hồi từ quản lý	Reply from management
+Đã bán	Sold
+đơn tháng này	orders this month
+Tìm kiếm...	Search...
+Không tìm thấy	Not found
+Nạp tiền vào ví qua VNPAY thành công!	Your VNPAY wallet top-up was successful!
+Nạp tiền vào ví thất bại hoặc đã bị hủy!	Your wallet top-up failed or was cancelled.
+Cập nhật thông tin thành công!	Details updated successfully!
+Đổi mật khẩu thành công!	Password changed successfully!
+! Quản lý hồ sơ, đơn hàng và các đặc quyền thành viên của bạn.	! Manage your profile, orders and membership benefits.
+Lịch sử đơn hàng đang hiển thị ở bảng điều khiển chung	Order history is displayed in the shared dashboard
+Bạn có thể quản lý và xem tất cả trạng thái đơn hàng của mình tại đây.	Manage and view all your order statuses here.
+Không thể tải thông tin cá nhân.	Personal information could not be loaded.
+Hạng tài khoản	Account tier
+Điểm hiện có	Current points
+Cần tích lũy thêm	Collect another
+điểm để thăng hạng	points to upgrade
+Bạn đang ở hạng cao nhất ✨	You have reached the highest tier ✨
+1 PTS = 1.000đ	1 PTS = 1,000₫
+Đã hoàn thành	Completed
+PTS khả dụng	Available PTS
+Đơn yêu thích	Favourite orders
+Món đặt thường xuyên	Frequently ordered items
+Ảnh đại diện tài khoản	Profile picture
+Dán link (URL) ảnh đại diện của bạn hoặc chọn nhanh avatar bên dưới.	Paste your profile picture URL or choose a sample avatar below.
+Avatar mẫu:	Sample avatars:
+Xóa ảnh	Remove picture
+Thông tin cá nhân	Personal information
+Nhập họ và tên	Enter your full name
+Giới tính	Gender
+Ngày sinh	Date of birth
+Tài khoản & Xác thực	Account and verification
+Đã xác thực	Verified
+Tên đăng nhập	Username
+Địa chỉ Email	Email address
+Lưu thay đổi hồ sơ	Save profile changes
+Sổ địa chỉ của bạn	Your address book
+Bạn chưa thêm địa chỉ nhận hàng nào.	You have not added a delivery address yet.
+Ghi chú:	Notes:
+Đặt mặc định	Set as default
+Bạn có chắc muốn xóa địa chỉ này?	Are you sure you want to remove this address?
+Sửa địa chỉ	Edit address
+Thêm địa chỉ	Add address
+Đang định vị...	Getting your location...
+Vị trí hiện tại	Current location
+Tên gợi nhớ địa chỉ	Address label
+Chọn tên gợi nhớ...	Choose an address label...
+Nhập tên khác...	Enter another label...
+Chọn Tỉnh / Thành phố	Choose a province / city
+Chọn Phường / Xã	Choose a ward / commune
+Số nhà, tên đường	House number and street
+ví dụ: 123 Đường Nguyễn Trãi	For example: 123 Nguyen Trai Street
+Ghi chú (hướng dẫn giao hàng)	Notes (delivery instructions)
+ví dụ: Gần tòa nhà ABC, gọi trước khi đến...	For example: near building ABC, call before arriving...
+Hủy sửa	Cancel editing
+Đơn đặt hàng yêu thích của tôi	My favourite orders
+Cùng danh sách món đã đặt từ 5 lần trở lên, không phân biệt số lượng và tùy chọn; không tính đơn huỷ hoặc thanh toán thất bại.	Orders with the same item list placed at least 5 times, regardless of quantity or options; cancelled orders and failed payments are excluded.
+Chưa tải được đơn yêu thích.	Favourite orders could not be loaded.
+Chưa có đơn hàng yêu thích nào	No favourite orders yet
+Đã kiểm tra	Checked
+đơn trong lịch sử; chưa có danh sách món nào đạt 5 lần.	historical orders; no item list has reached 5 orders yet.
+Khi bạn đặt cùng một danh sách các món ăn từ 5 lần trở lên, đơn hàng đó sẽ tự động xuất hiện ở đây để bạn dễ dàng đặt lại!	When you order the same item list at least 5 times, it will appear here automatically for easy reordering!
+Danh sách gần đạt yêu thích:	Almost favourites:
+/5 lần	/5 orders
+Còn	Remaining:
+lần đặt cùng danh sách món để tự xuất hiện trong đơn yêu thích.	orders with the same item list before it becomes a favourite.
+Bắt đầu đặt món ngay	Start ordering
+Đã đặt	Ordered
+lần	times
+Lần cuối:	Last order:
+Tiền món lần gần nhất	Latest items total
+Đang thêm vào giỏ...	Adding to cart...
+Số dư khả dụng	Available balance
+Nạp tiền vào ví	Top up wallet
+Số tiền nạp phải từ 10,000đ đến 5,000,000đ	The top-up amount must be between 10,000₫ and 5,000,000₫
+Nhập số tiền cần nạp...	Enter top-up amount...
+Nạp qua VNPAY	Top up with VNPAY
+Lịch sử giao dịch	Transaction history
+Hoàn tiền đơn hàng	Order refund
+Thanh toán đơn hàng	Order payment
+Thành công	Successful
+Đang chờ	Pending
+Chưa có giao dịch nào.	No transactions yet.
+Lịch sử đánh giá	Review history
+Không thể tải lịch sử đánh giá.	Review history could not be loaded.
+Bạn chưa có đánh giá nào	You have no reviews yet
+Hãy đánh giá sản phẩm từ lịch sử đơn hàng để theo dõi tại đây.	Review products from your order history to track your reviews here.
+Sản phẩm #	Product #
+Đổi mật khẩu tài khoản	Change account password
+Đặt mật khẩu mạnh để bảo vệ thông tin tài khoản của bạn	Choose a strong password to protect your account
+Nhập mật khẩu hiện tại của bạn	Enter your current password
+Mật khẩu mới (tối thiểu 6 ký tự)	New password (at least 6 characters)
+Độ mạnh mật khẩu:	Password strength:
+Trung bình	Medium
+Mạnh	Strong
+Mật khẩu dài ít nhất 6 ký tự	Password is at least 6 characters long
+Mật khẩu xác nhận trùng khớp	Passwords match
+Khuyên dùng bảo mật	Security recommendations
+Mật khẩu nên chứa cả	Your password should include
+chữ cái, chữ số & ký tự đặc biệt	letters, numbers and special characters
+(!@#$) để đạt độ bảo mật tối đa.	(!@#$) for stronger protection.
+Không sử dụng lại mật khẩu giống với các tài khoản mạng xã hội hoặc email cá nhân khác.	Do not reuse passwords from your social media or personal email accounts.
+Thay đổi mật khẩu định kỳ	Change your password regularly
+3 - 6 tháng/lần	every 3–6 months
+để giữ an toàn cho ví quà tặng và điểm thưởng.	to protect your gift card wallet and reward points.
+Không chia sẻ mã OTP hoặc mật khẩu đăng nhập cho bất kỳ ai, kể cả nhân viên hỗ trợ.	Never share your OTP or password with anyone, including support staff.
+Tài khoản được bảo vệ	Account protected
+Chưa phát hiện hoạt động đăng nhập bất thường nào	No unusual login activity detected
+Tùy chọn {{v0}}	Options for {{v0}}
+Đóng tùy chọn sản phẩm	Close product options
+Thương hiệu:	Brand:
+({{v0}}{{v1}}đ)	({{v0}}{{v1}}₫)
+({{v0}}đ)	({{v0}}₫)
+Giảm số lượng	Decrease quantity
+Tăng số lượng	Increase quantity
+Đang thêm…	Adding…
+Tạm hết hàng	Out of stock
+Chia sẻ ý kiến của bạn để giúp cải thiện sản phẩm	Share your thoughts to help improve the product
+Chưa chọn	Not selected
+Bình luận	Comment
+Chia sẻ trải nghiệm của bạn...	Share your experience...
+Xóa...	Removing...
+Phân trang đánh giá	Review pagination
+Hiển thị	Showing
+Trang đánh giá trước	Previous review page
+Trang đánh giá sau	Next review page
+Khảo Sát Trải Nghiệm	Experience survey
+Bạn vừa hoàn thành đặt hàng thành công! ☕	Your order has been placed successfully! ☕
+Hãy dành 1-2 phút chia sẻ trải nghiệm của bạn tại Avengers Coffee House để giúp chúng tôi cải thiện chất lượng phục vụ tốt hơn mỗi ngày.	Please take 1–2 minutes to share your Avengers Coffee House experience and help us improve our service every day.
+giảm giá cho đơn từ 100k!	off orders from 100K!
+💡 Lưu ý: Hãy đăng nhập trước khi khảo sát để có cơ hội nhận voucher giảm giá 20%.	💡 Note: Log in before completing the survey for a chance to receive a 20% voucher.
+Đồng ý	Agree
+Trang cá nhân	Your profile
+Quản lý thông tin và bảo mật tài khoản của bạn	Manage your information and account security
+Bạn cần đăng nhập để xem trang cá nhân.	Log in to view your profile.
+Hồ sơ	Profile
+Nhập số điện thoại	Enter your phone number
+Đang cập nhật...	Updating...
+Mật khẩu mới ít nhất 6 ký tự	New password must contain at least 6 characters
+Nạp ví Avengers	Top up Avengers Wallet
+Đang chờ nạp	Awaiting top-up of
+. Số dư chỉ cập nhật sau khi VNPAY xác nhận.	. Your balance updates only after VNPAY confirms payment.
+Mở VNPAY để nạp tiền	Open VNPAY to top up
+Thanh toán ở tab mới, rồi quay lại đây để tiếp tục.	Pay in the new tab, then return here to continue.
+Số dư:	Balance:
+· Còn thiếu:	· Still needed:
+Số tiền muốn nạp	Top-up amount
+Nhập số tiền, ví dụ 100k	Enter an amount, for example 100K
+Đang xử lý…	Processing…
+Nạp từ 10.000đ đến 5.000.000đ. Bạn cũng có thể nhắn “nạp 200k”.	Top up between 10,000₫ and 5,000,000₫. You can also type “top up 200K”.
+Tiếp tục thanh toán bằng ví	Continue with wallet payment
+Đang định vị GPS...	Getting GPS location...
+Lấy vị trí GPS	Use GPS location
+Gợi ý địa chỉ trên bản đồ	Map address suggestions
+Bấm để tự động điền	Tap to fill automatically
+Chọn chi nhánh	Choose a store
+Bấm để xem danh sách chi nhánh	Tap to view stores
+Tìm theo tên quán hoặc địa chỉ...	Search by store name or address...
+Chi nhánh hệ thống	Our stores
+Không tìm thấy cửa hàng phù hợp.	No matching store found.
+Phương thức giao hàng	Delivery method
+🛵 Avengers Delivery (Shipper riêng - Miễn phí)	🛵 Avengers Delivery (our courier – free)
+🚚 Giao hỏa tốc Lalamove (	🚚 Lalamove express delivery (
+Đang tính phí...	Calculating fee...
+{{v0}} đ	{{v0}}₫
+Chờ tính phí...	Waiting for fee calculation...
+Cửa hàng phục vụ (Bán kính 5km)	Serving stores (within 5 km)
+Đang kiểm tra món...	Checking availability...
+Địa chỉ vượt quá phạm vi giao hàng 5km	Your address is outside the 5 km delivery area
+Rất tiếc, hiện tại không có chi nhánh nào trong bán kính	Sorry, there are currently no stores within
+gần địa chỉ của bạn.	of your address.
+👉 Vui lòng đổi địa chỉ nhận hoặc chọn hình thức	👉 Please change your delivery address or choose
+Tạm ngưng	Temporarily unavailable
+Đang kiểm tra	Checking
+Chưa đọc được	Could not load
+Chi nhánh tiếp nhận đơn	Store accepting orders
+Còn đủ các món trong giỏ	All cart items are available
+Còn: {{v0}}	Available: {{v0}}
+Tạm ngưng:	Unavailable:
+Chưa đọc được tình trạng bán	Sales availability could not be loaded
+Thu gọn	Collapse
+chi nhánh gần bạn	stores near you
+15 - 25 phút	15–25 minutes
+Đang giao tận nơi	Being delivered
+Đang lấy hàng tại quán	Being collected at the store
+Đã tiếp nhận đơn hàng	Order received
+Giao hàng thành công	Delivered successfully
+Đang kết nối tài xế	Connecting to courier
+Tài xế giao hàng	Delivery courier
+Điểm nhận hàng	Pickup location
+Đang tải bản đồ...	Loading map...
+Chưa có vị trí tài xế. Đang chờ kết nối...	Courier location is not available yet. Waiting for connection...
+Xem sản phẩm trước	View previous product
+Xem sản phẩm tiếp theo	View next product
+Thanh toán đơn hàng thành công. Cảm ơn bạn!	Order payment successful. Thank you!
+Thanh toán đơn hàng thất bại hoặc bị hủy.	Order payment failed or was cancelled.
+Hẹn gặp lại bạn tại Avengers House! ☕	See you again at Avengers House! ☕
+Không thể sao chép mã, vui lòng thử lại.	The code could not be copied. Please try again.
+Khuyến mãi dành cho bạn	Offers for you
+Cập nhật danh sách mã ưu đãi đang hoạt động. Nhấn vào mã để sao chép nhanh và áp dụng khi đặt hàng.	Browse active promo codes. Click a code to copy it and apply it when ordering.
+Không thể tải danh sách voucher lúc này.	Vouchers cannot be loaded right now.
+Chưa có voucher phù hợp	No matching vouchers
+Thử đổi bộ lọc hoặc quay lại sau để cập nhật ưu đãi mới nhất.	Try a different filter or return later for new offers.
+Không thể dùng do chưa đủ hạng	Your membership tier does not qualify
+Sao chép mã	Copy code
+🔒 Khóa	🔒 Locked
+Đã sao chép mã	Code copied
+Voucher ưu đãi	Offer voucher
+Áp dụng cho đơn hàng hợp lệ theo điều kiện của chương trình.	Applies to eligible orders according to the promotion's terms.
+Đơn tối thiểu	Minimum order
+Còn lại	Remaining
+{{v0}} lượt	{{v0}} uses
+Vô hạn	Unlimited
+Bắt đầu:	Starts:
+Kết thúc:	Ends:
+Đã dùng:	Used:
+Hết lượt	No uses remaining
+Còn hiệu lực	Valid
+Yêu cầu hạng {{v0}} trở lên	Requires tier {{v0}} or above
+Bạn có thể dùng	You can use this
+Bạn đã đạt giới hạn	You have reached the limit
+Đăng nhập để theo dõi lượt dùng	Log in to track usage
+Chưa xác nhận được việc đồng bộ giỏ khách:	Guest cart sync has not been confirmed:
+Thử đồng bộ lại	Retry sync
+Thông báo mới	New notification
+Chúc Mừng Sinh Nhật!	Happy birthday!
+Nhân dịp tháng sinh nhật của bạn, Avengers House xin gửi tặng bạn một món quà đặc biệt. Một **Voucher mừng sinh nhật** đã được gửi vào kho voucher cá nhân của bạn!	To celebrate your birthday month, Avengers House has a special gift for you. A **birthday voucher** has been added to your personal vouchers!
+QUÀ TẶNG THÀNH VIÊN	MEMBER GIFT
+Xem quà tặng của tôi	View my gifts
+Đồng bộ đơn hàng	Link orders
+Chào mừng bạn gia nhập! Chúng tôi tìm thấy	Welcome! We found
+chưa gán tài khoản khớp với Email hoặc Số điện thoại của bạn.	unlinked orders matching your email or phone number.
+Bạn có muốn liên kết các đơn hàng này vào tài khoản để theo dõi lịch sử đơn và tích lũy điểm thành viên không?	Would you like to link these orders to your account to track your order history and earn membership points?
+Liên kết đơn hàng thành công!	Orders linked successfully!
+Có lỗi xảy ra khi liên kết đơn hàng.	An error occurred while linking orders.
+Đang liên kết...	Linking...
+Liên kết ngay	Link now
+Để sau / Bỏ qua	Later / Skip
+⚠️ Lỗi hiển thị React (Runtime Error)	⚠️ Display error (React runtime error)
+Đơn trước đã gửi nhưng chưa nhận được kết quả. Vui lòng kiểm tra đơn đó trước khi thay đổi thông tin checkout.	Your previous order was submitted but its result has not been received. Check that order before changing checkout details.
+Tư vấn và Khảo sát	Consultation and site survey
+Ký hợp đồng và Setup	Contract signing and setup
+Khai trương và Vận hành	Opening and operations
+Chờ xem xét	Under review
+Chờ đặt cọc	Awaiting deposit
+Đã duyệt và Đã cọc	Approved and deposit received
+Đã từ chối	Rejected
+Địa điểm này cách một chi nhánh hoặc Kiosk hiện tại dưới 500m. Vui lòng chọn vị trí khác để đảm bảo đặc quyền khu vực!	This location is less than 500 m from an existing store or kiosk. Please choose another location to preserve exclusive local coverage.
+Kiosk trên toàn quốc	Kiosks nationwide
+Đối tác hài lòng	Satisfied partners
+Phản hồi hồ sơ nhanh chóng	Fast application response
+Hỗ trợ thiết lập hoàn thiện	Complete setup support
+Không gian	Space
+Phí duy trì	Maintenance fee
+Họ và tên *	Full name *
+Số điện thoại liên hệ *	Contact phone number *
+Về thẻ Avengers Coffee	About Avengers Coffee Cards
+Bộ sưu tập thẻ	Card collection
+Chính sách	Policies
+Mua số lượng lớn	Bulk purchases
+100.000 VNĐ	100,000 VND
+200,000 VNĐ	200,000 VND
+300,000 VNĐ	300,000 VND
+500,000 VNĐ	500,000 VND
+1,000,000 VNĐ	1,000,000 VND
+🎉 Mua thẻ thành công!	🎉 Card purchase successful!
+Về Thẻ Avengers Coffee	About Avengers Coffee Cards
+Điều khoản sử dụng	Terms of use
+Vui lòng điền đầy đủ thông tin.	Please complete all required information.
+Đăng nhập thất bại, vui lòng thử lại	Login failed. Please try again.
+Đăng nhập Google chưa được cấu hình đúng.	Google login is not configured correctly.
+Đăng nhập Google yêu cầu captcha, nhưng captcha chưa được cấu hình.	Google login requires captcha, but captcha is not configured.
+Không nhận được Google credential. Vui lòng thử lại.	No Google credential was received. Please try again.
+Đã chọn tài khoản Google. Vui lòng xác minh captcha để hoàn tất.	Google account selected. Complete captcha verification to continue.
+Đăng nhập Google thất bại, vui lòng thử lại.	Google login failed. Please try again.
+Đăng nhập Facebook chưa được cấu hình. Thiếu VITE_FACEBOOK_APP_ID.	Facebook login is not configured. VITE_FACEBOOK_APP_ID is missing.
+Đăng ký bằng Facebook chưa bật. Vui lòng dùng Đăng nhập Facebook.	Facebook sign-up is not enabled. Please use Facebook login.
+Trình duyệt đã chặn popup Facebook. Vui lòng cho phép popup và thử lại.	Your browser blocked the Facebook popup. Allow popups and try again.
+Vui lòng nhập email hoặc tên đăng nhập để nhận mã OTP.	Enter your email or username to receive an OTP.
+Vui lòng nhập đầy đủ email/tài khoản, OTP và mật khẩu mới.	Enter your email or username, OTP and new password.
+Mật khẩu xác nhận không khớp.	Passwords do not match.
+Google chưa được cấu hình. Vui lòng thêm VITE_GOOGLE_CLIENT_ID.	Google is not configured. Please add VITE_GOOGLE_CLIENT_ID.
+Captcha hết hạn.	Captcha expired.
+CÀ PHÊ VIỆT NAM	VIETNAMESE COFFEE
+TRÀ HIGHLANDS	HIGHLANDS TEA
+FREEZE ĐÁ XAY	FREEZE BLENDED DRINKS
+BÁNH & ĐỒ ĂN	CAKES AND FOOD
+Chất lượng Hàng Đầu	Quality first
+Tâm Huyết & Tình Yêu	Care and passion
+Bền Vững & Trách Nhiệm	Sustainability and responsibility
+Tôi yêu The Avengers House vì không gian thoải mái và cả phế đều ngon. Đội ngũ rất thân thiện, luôn sẵn sàng tư vấn cho tôi chọn thức uống phù hợp.	I love The Avengers House for its welcoming space and delicious coffee. The friendly team always helps me choose a drink that suits me.
+Đây là nơi tôi yêu thích nhất để làm việc. WiFi tốt, cà phê ngon, và không khí yên tĩnh. Tuyệt vời!	This is my favourite place to work. Good Wi-Fi, great coffee and a quiet atmosphere. Wonderful!
+Tôi thường tới đây để gặp bạn bè. Không khí vui vẻ, đồ uống ngon, giá cả lại hợp lý. Highly recommended!	I often come here to meet friends. A cheerful atmosphere, delicious drinks and reasonable prices. Highly recommended!
+Không tìm thấy dữ liệu đơn hàng	Order data not found
+Không tìm thấy đơn hàng tương ứng với mã này. Vui lòng kiểm tra lại mã tra cứu (VD: AC-FD2C0) hoặc mã đơn hàng.	No order matches this code. Check your tracking code (for example: AC-FD2C0) or order ID.
+Kết nối máy chủ đang bận xử lý dữ liệu. Vui lòng bấm nút "Tra Cứu Ngay" để thử lại.	The server is busy. Click “Look up now” to try again.
+Đã hủy đơn	Order cancelled
+Đang giao hàng	Out for delivery
+Đang pha chế và đóng gói	Being prepared and packed
+Đã tiếp nhận đơn	Order received
+Đã nhận đơn	Order accepted
+Đang pha chế	Being prepared
+Google chưa được cấu hình. Thêm VITE_GOOGLE_CLIENT_ID để bật nút này.	Google is not configured. Add VITE_GOOGLE_CLIENT_ID to enable this button.
+Captcha đã hết hạn, vui lòng xác minh lại.	Captcha expired. Please verify again.
+Captcha không khả dụng, vui lòng thử lại.	Captcha is unavailable. Please try again.
+Google chưa được cấu hình. Thêm VITE_GOOGLE_CLIENT_ID để đăng nhập thật.	Google is not configured. Add VITE_GOOGLE_CLIENT_ID for live login.
+Đã huỷ	Cancelled
+Gợi ý cho tôi menu đồ uống nổi bật	Suggest some popular drinks for me
+Đặt hàng	Order
+Tôi muốn đặt đồ uống giao ngay	I want to order drinks for immediate delivery
+Kiểm tra trạng thái đơn hàng của tôi	Check my order status
+Địa chỉ các chi nhánh gần đây	Show nearby store addresses
+Cho tôi xem mã giảm giá và khuyến mãi	Show me promo codes and offers
+Các phương thức thanh toán được hỗ trợ	Which payment methods are supported?
+Tôi chọn thanh toán VNPAY	I choose VNPAY payment
+Tôi chọn chuyển khoản QR ngân hàng	I choose bank QR payment
+Tôi chọn Ví Avengers	I choose Avengers Wallet
+Tôi chọn thanh toán tiền mặt COD	I choose cash on delivery
+Thiếu phương thức thanh toán hoặc hình thức nhận hàng. Hãy tạo lại bản tóm tắt đơn.	Payment or fulfilment method is missing. Please create a new order summary.
+Xem đơn hàng	View order
+Xem đơn hàng của tôi	View my orders
+Xóa thẻ này?	Remove this card?
+Dữ liệu sẽ bị xóa hoàn toàn khỏi bộ sưu tập	This card will be removed permanently from your collection
+Xóa luôn	Remove now
+Nạp tiền vào ví?	Top up your wallet?
+Không thể lấy địa chỉ từ tọa độ này.	An address could not be found for these coordinates.
+Thông tin	Information
+Vòng quay	Lucky wheel
+Vui lòng chọn số sao	Please select a star rating
+Dùng tại chỗ	Dine in
+Chưa xác minh được cửa hàng phục vụ địa chỉ này.	The store serving this address could not be verified.
+Không tìm thấy chi nhánh nào trong bán kính 5km gần địa chỉ của bạn.	No stores were found within 5 km of your address.
+Matcha Tây Bắc	Northwest Matcha
+Trà trái cây	Fruit tea
+Trà sữa	Milk tea
+Giảm %	Percentage discount
+Giảm tiền	Amount discount
+Nam	Male
+Nữ	Female
+Khác	Other
+Nhà riêng	Home
+Công ty	Office
+Vàng	Gold
+Bạc	Silver
+Kim cương	Diamond
+Chưa xác định	Unknown
+Tiền mặt	Cash
+Chọn Tỉnh/Thành phố	Choose a province / city
+Shipper giao đồ uống tận tay trong 15-30 phút	Your courier delivers your drinks in 15–30 minutes
+Đặt trước, ghé quầy nhận đồ nhanh chóng	Order ahead and collect quickly at the counter
+Thưởng thức trực tiếp tại không gian quán	Enjoy your drinks in the café
+NGUỒN GỐC	ORIGINS
+XEM CHI TIẾT	VIEW DETAILS
+Sứ Mệnh	Our mission
+Sữa:	Milk:
+Tiết kiệm	Save
+24 giờ	24 hours
+hoặc email	or email
+TỔNG CỘNG DỰ KIẾN	ESTIMATED TOTAL
+Tra cứu	Look up
+Khu vực:	Area:
+Tiếng Việt	Vietnamese
+Gửi tin nhắn	Send message
+Thứ 2 - Thứ 6:	Monday – Friday:
+Hotline hỗ trợ	Support hotline
+Hoặc	Or
+bằng	with
+hoặc	or
+Thể lệ tham gia	Participation rules
+Quay tiếp	Spin again
+Hệ số gốc (x1.0)	Base multiplier (x1.0)
+Việt Nam	Vietnam
+Tra Cứu Ngay	Look up now
+Biển số: {{v0}}	Plate number: {{v0}}
+Kiểm tra	Check
+"Tra cứu ngay"	“Look up now”
+Mở link Lalamove	Open Lalamove link
+Tổng cộng	Total
+· {{v0}} số {{v1}}	· {{v0}} × {{v1}}
+Xem chi tiết →	View details →
+Chi tiết →	Details →
+Mở cửa: {{v0}}	Opens: {{v0}}
+Tổng cộng:	Total:
+Nhắn tin với AI...	Message the AI assistant...
+Khung giờ giao	Delivery time slot
+Tổng mới:	New total:
+Sửa	Edit
+Yếu	Weak
+Giao dự kiến:	Estimated delivery:
+Mỗi hạt cà phê, mỗi lá trà được chọn lọc từ những nguồn uy tín nhất. Chúng tôi không bao giờ thỏa hiệp với chất lượng.	Every coffee bean and tea leaf is selected from trusted sources. We never compromise on quality.
+Mỗi xe phục vụ được tạo nên với thái độ cần mẫn và yêu thương. Đó là cách chúng tôi nói "cảm ơn bạn đã tín tưởng chúng tôi".	Every drink is prepared with care and dedication. It is our way of thanking you for placing your trust in us.
+Chúng tôi quan tâm đến môi trường và cộng đông. Mỗi quyết định kinh doanh đều tính đến tác động lâu dài.	We care about the environment and our community. Every business decision considers its long-term impact.
+Khách hàng thường xuyên	Regular customer
+Sinh viên	Student
+Chọn mẫu thẻ ưng ý và điền tâm thư bạn muốn nhắn nhủ tới người thương	Choose your favourite card design and write a personal message for someone you love
+Người nhận thẻ sẽ nhận được Mã Xác Nhận qua SMS từ Avengers Coffee	The recipient will receive a confirmation code by SMS from Avengers Coffee
+Tôi có thể đăng ký thẻ Avengers Coffee để tặng người thân được không?	Can I register an Avengers Coffee Card as a gift for someone?
+Bạn có thể tặng bất cứ thẻ Avengers Coffee nào cho người thân khi đăng ký qua website avengers-coffee.vn. Hãy nhớ gửi một lời chúc thật dễ thương nhé!	You can gift any Avengers Coffee Card to family or friends by registering at avengers-coffee.vn. Remember to include a thoughtful message!
+Làm thế nào để tôi sử dụng được thẻ đã đăng ký?	How do I use the card I registered?
+Sau khi nhập thông tin và thanh toán, hệ thống sẽ gửi 1 SMS đến số điện thoại của người nhận gồm 1 mã xác nhận 10 số và đường link. Bạn hãy mang Mã xác nhận ra quầy thanh toán tại bất kỳ cửa hàng Avengers Coffee nào trên toàn quốc.	After you enter your details and pay, an SMS containing a 10-digit confirmation code and a link will be sent to the recipient's phone. Bring the confirmation code to the payment counter at any Avengers Coffee store nationwide.
+Tôi phải làm gì nếu không nhận được tin nhắn SMS?	What should I do if I do not receive an SMS?
+Tin nhắn SMS sẽ được tự động gửi đến số điện thoại của người nhận sau 1-3 phút kể từ thời điểm thanh toán thành công. Trường hợp bạn không nhận được Mã xác nhận sau 5 phút, xin vui lòng liên hệ hotline 19001755 hoặc email customerservice@avengers-coffee.vn.	An SMS is sent automatically to the recipient within 1–3 minutes of successful payment. If no confirmation code arrives after five minutes, please call 19001755 or email customerservice@avengers-coffee.vn.
+Tôi có thể đổi Thẻ Avengers Coffee lấy tiền mặt được không?	Can I exchange an Avengers Coffee Card for cash?
+Không, chúng tôi sẽ không giải quyết hoàn tiền và/hoặc quy đổi số dư trong Thẻ Avengers Coffee thành tiền mặt trong mọi trường hợp.	No. We do not provide refunds or exchange an Avengers Coffee Card balance for cash under any circumstances.
+Thời hạn kích hoạt thẻ Avengers Coffee đăng ký qua website là bao lâu?	How long do I have to activate a card registered through the website?
+Sau khi nhận được Mã xác nhận, bạn sẽ cần kích hoạt Thẻ Avengers Coffee trong vòng tối đa 90 (chín mươi) ngày kể từ ngày nhận được Mã xác nhận.	After receiving the confirmation code, you must activate your Avengers Coffee Card within 90 (ninety) days.

@@ -1,5 +1,6 @@
+import { SafeAreaView } from 'react-native-safe-area-context'
 import React, { useState, useEffect, useRef } from 'react'
-import { View, StyleSheet, TouchableOpacity, Text, SafeAreaView, Linking, Platform, Alert, ScrollView, Modal, Image, Animated } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, Text,  Linking, Platform, Alert, ScrollView, Modal, Image, Animated } from 'react-native'
 import * as Location from 'expo-location'
 import { Ionicons } from '@expo/vector-icons'
 import { useQuery } from '@tanstack/react-query'
@@ -34,6 +35,7 @@ if (Platform.OS !== 'web') {
   }
 }
 
+const simulationEnabled = process.env.EXPO_PUBLIC_ENABLE_DELIVERY_SIMULATION === 'true'
 const VIETMAP_API_KEY = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || 'dbdd3165b3cb0d85239a7f59f410a9fa925974c4a6d4c54b';
 const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN || '';
 
@@ -196,7 +198,7 @@ export function MapScreen({ route, navigation }) {
 
   if (Platform.OS === 'web') {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView edges={['top','left','right']} style={styles.container}>
         <View style={styles.headerWrap}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -468,7 +470,7 @@ export function MapScreen({ route, navigation }) {
 
   const handleTakePhoto = async () => {
     if (!cameraRef.current) {
-      handleDemoPhoto()
+      if (simulationEnabled) handleDemoPhoto(); else Alert.alert('Camera chưa sẵn sàng', 'Vui lòng cấp quyền camera và thử lại.')
       return
     }
     try {
@@ -615,7 +617,7 @@ export function MapScreen({ route, navigation }) {
         </MapView>
       )}
 
-      <SafeAreaView style={styles.headerWrap} pointerEvents="box-none">
+      <SafeAreaView edges={['top','left','right']} style={styles.headerWrap} pointerEvents="box-none">
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color={colors.text} />
@@ -670,8 +672,8 @@ export function MapScreen({ route, navigation }) {
 
         {/* CỤM NÚT ĐIỀU KHIỂN MÔ PHỎNG & TRẠNG THÁI (ĐƯỢC ĐƯA XUỐNG DƯỚI) */}
         <View style={styles.controlSection}>
-          <Text style={styles.controlSectionTitle}>ĐIỀU HƯỚNG VÀ MÔ PHỎNG VỊ TRÍ</Text>
-          <View style={styles.demoButtonsGrid}>
+          <Text style={styles.controlSectionTitle}>Điều hướng chuyến giao</Text>
+          {simulationEnabled && (<View style={styles.demoButtonsGrid}>
             <TouchableOpacity
               style={[styles.simBtn, { backgroundColor: '#2563EB' }]}
               onPress={() => simulateMovement(storeLat, storeLng)}
@@ -687,7 +689,7 @@ export function MapScreen({ route, navigation }) {
               <Ionicons name="person-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
               <Text style={styles.simBtnText}>Mô phỏng tới Khách</Text>
             </TouchableOpacity>
-          </View>
+          </View>)}
 
           {/* Nút hành động đơn hàng */}
           <View style={{ marginTop: 8 }}>
@@ -708,7 +710,7 @@ export function MapScreen({ route, navigation }) {
                 }}
               >
                 <Ionicons name="checkmark-circle-outline" size={20} color="#fff" style={{ marginRight: 6 }} />
-                <Text style={styles.actionStatusBtnText}>XÁC NHẬN ĐÃ LẤY HÀNG</Text>
+                <Text style={styles.actionStatusBtnText}>Đã lấy món · Bắt đầu giao</Text>
               </TouchableOpacity>
             )}
 
@@ -718,11 +720,11 @@ export function MapScreen({ route, navigation }) {
                 onPress={handleCompleteDelivery}
               >
                 <Ionicons name="shield-checkmark-outline" size={20} color="#fff" style={{ marginRight: 6 }} />
-                <Text style={styles.actionStatusBtnText}>HOÀN THÀNH GIAO HÀNG (CHỤP ẢNH POD)</Text>
+                <Text style={styles.actionStatusBtnText}>Chụp ảnh · Xác nhận đã giao</Text>
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity
+            {simulationEnabled && (<TouchableOpacity
               style={[styles.simCancelBtn, { marginTop: 8 }]}
               onPress={async () => {
                 isSimulatingRef.current = false;
@@ -747,7 +749,7 @@ export function MapScreen({ route, navigation }) {
             >
               <Ionicons name="stop-circle-outline" size={18} color={colors.danger} style={{ marginRight: 6 }} />
               <Text style={styles.simCancelBtnText}>Dừng mô phỏng GPS</Text>
-            </TouchableOpacity>
+            </TouchableOpacity>)}
           </View>
         </View>
 
@@ -860,9 +862,9 @@ export function MapScreen({ route, navigation }) {
         </View>
       </ScrollView>
 
-      <Modal visible={podStep !== 'idle'} transparent animationType="fade" statusBarTranslucent>
+      <Modal visible={podStep !== 'idle'} transparent animationType="fade" statusBarTranslucent onRequestClose={closePodModal}>
         <View style={styles.podOverlay}>
-          <Animated.View style={[styles.podContainer, { transform: [{ scale: podScaleAnim }] }]}>
+          <Animated.View style={[styles.podContainer, { transform: [{ scale: podScaleAnim }] }]}><ScrollView showsVerticalScrollIndicator={false} bounces={false}>
             {podStep === 'camera' && (
               <>
                 <View style={styles.podHeader}>
@@ -900,7 +902,7 @@ export function MapScreen({ route, navigation }) {
                     <Text style={styles.cameraPlaceholderText}>
                       {!cameraPermission?.granted ? 'Camera chưa được cấp quyền' : 'Camera không khả dụng'}
                     </Text>
-                    <Text style={styles.cameraPlaceholderSub}>Chọn "Ảnh Demo" để tiếp tục test</Text>
+                    <Text style={styles.cameraPlaceholderSub}>Cho phép camera để chụp ảnh hàng đã giao</Text>
                   </View>
                 )}
 
@@ -917,10 +919,10 @@ export function MapScreen({ route, navigation }) {
                       <View style={styles.captureInner} />
                     </TouchableOpacity>
                   ) : (
-                    <TouchableOpacity style={styles.demoPhotoBtn} onPress={handleDemoPhoto}>
+                    (simulationEnabled ? (<TouchableOpacity style={styles.demoPhotoBtn} onPress={handleDemoPhoto}>
                       <Ionicons name="images-outline" size={20} color="#fff" />
                       <Text style={styles.demoPhotoBtnText}>Ảnh Demo (Test)</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity>) : null)
                   )}
                 </View>
               </>
@@ -1022,7 +1024,7 @@ export function MapScreen({ route, navigation }) {
                 </View>
               </View>
             )}
-          </Animated.View>
+          </ScrollView></Animated.View>
         </View>
       </Modal>
     </View>
@@ -1054,7 +1056,7 @@ const styles = StyleSheet.create({
     ...shadows.sm,
   },
   navInstructionPillText: { color: '#F8FAFC', fontSize: 12, fontWeight: '700', flexShrink: 1 },
-  navInstructionPillEta: { color: '#38BDF8', fontSize: 12, fontWeight: '800', marginLeft: 4 },
+  navInstructionPillEta: { color: '#38BDF8', fontSize: 12, fontWeight: '700', marginLeft: 4 },
 
   markerStore: { backgroundColor: colors.primary, padding: 8, borderRadius: 20, borderWidth: 2, borderColor: colors.surface, ...shadows.sm },
   markerDest: { backgroundColor: colors.danger, padding: 6, borderRadius: 20, borderWidth: 2, borderColor: colors.surface, ...shadows.sm },
@@ -1081,7 +1083,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     marginRight: 10,
   },
-  navInstructionTitle: { color: '#fff', fontSize: 14, fontWeight: '800' },
+  navInstructionTitle: { color: '#fff', fontSize: 14, fontWeight: '700' },
   navInstructionSub: { color: '#93C5FD', fontSize: 12, fontWeight: '600', marginTop: 2 },
 
   controlSection: {
@@ -1090,19 +1092,19 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1, borderColor: '#E2E8F0',
   },
-  controlSectionTitle: { fontSize: 11, fontWeight: '800', color: colors.textSecondary, letterSpacing: 0.5, marginBottom: 8 },
+  controlSectionTitle: { fontSize: 11, fontWeight: '700', color: colors.textSecondary, letterSpacing: 0.5, marginBottom: 8 },
   demoButtonsGrid: { flexDirection: 'row', gap: 8 },
   simBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     paddingVertical: 10, borderRadius: 12, ...shadows.sm,
   },
-  simBtnText: { color: '#fff', fontSize: 12, fontWeight: '800' },
+  simBtnText: { color: '#fff', fontSize: 12, fontWeight: '700' },
 
   actionStatusBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     paddingVertical: 12, borderRadius: 14, ...shadows.sm,
   },
-  actionStatusBtnText: { color: '#fff', fontSize: 13, fontWeight: '900', letterSpacing: 0.3 },
+  actionStatusBtnText: { color: '#fff', fontSize: 13, fontWeight: '700', letterSpacing: 0.3 },
 
   simCancelBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
@@ -1111,7 +1113,7 @@ const styles = StyleSheet.create({
   },
   simCancelBtnText: { color: colors.danger, fontSize: 12, fontWeight: '700' },
 
-  routeSectionLabel: { fontSize: 12, fontWeight: '800', color: colors.text, marginBottom: 6 },
+  routeSectionLabel: { fontSize: 12, fontWeight: '700', color: colors.text, marginBottom: 6 },
   routeBtn: {
     paddingVertical: 6, paddingHorizontal: 12,
     borderRadius: 14, backgroundColor: '#F1F5F9',
@@ -1137,8 +1139,8 @@ const styles = StyleSheet.create({
   },
   routePointRow: { flexDirection: 'row', alignItems: 'flex-start' },
   pointIconWrap: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
-  pointLabel: { fontSize: 10, fontWeight: '800', color: colors.muted, textTransform: 'uppercase' },
-  pointTitle: { fontSize: 13, fontWeight: '800', color: colors.text, marginTop: 1 },
+  pointLabel: { fontSize: 10, fontWeight: '700', color: colors.muted, textTransform: 'uppercase' },
+  pointTitle: { fontSize: 13, fontWeight: '700', color: colors.text, marginTop: 1 },
   pointSub: { fontSize: 12, color: colors.textSecondary, marginTop: 2, lineHeight: 16 },
   pointConnectLine: { width: 2, height: 16, backgroundColor: '#E5E7EB', marginLeft: 13, marginVertical: 4 },
 
@@ -1148,7 +1150,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     paddingVertical: 12, borderRadius: 14, gap: 8, ...shadows.sm,
   },
-  fabText: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  fabText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 
   // ─── POD Modal Styles ──────────────────────────────────────────
   podOverlay: {
@@ -1158,7 +1160,7 @@ const styles = StyleSheet.create({
   },
   podContainer: {
     backgroundColor: colors.surface, borderRadius: radius.xl,
-    width: '100%', maxWidth: 420, overflow: 'hidden', ...shadows.lg,
+    width: '100%', maxWidth: 456, maxHeight: '90%', overflow: 'hidden', ...shadows.lg,
   },
   podHeader: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -1231,7 +1233,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(227, 26, 35, 0.88)',
     paddingHorizontal: 10, paddingVertical: 6,
   },
-  watermarkBrand: { color: '#fff', fontSize: 11, fontWeight: '900', letterSpacing: 0.5 },
+  watermarkBrand: { color: '#fff', fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
   watermarkFooter: { backgroundColor: 'rgba(0,0,0,0.75)', paddingHorizontal: 10, paddingVertical: 8 },
   watermarkRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 },
   watermarkGPS: {
@@ -1239,9 +1241,9 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   watermarkTime: { color: '#fff', fontSize: 11, fontWeight: '700' },
-  watermarkOrder: { color: '#fbbf24', fontSize: 11, fontWeight: '900' },
+  watermarkOrder: { color: '#fbbf24', fontSize: 11, fontWeight: '700' },
   watermarkBadge: { backgroundColor: colors.success, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
-  watermarkBadgeText: { color: '#fff', fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
+  watermarkBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
 
   podInfoBanner: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 8,
@@ -1262,7 +1264,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.success, paddingVertical: 14,
     borderRadius: radius.lg, ...shadows.success,
   },
-  confirmDeliveryBtnText: { color: '#fff', fontWeight: '900', fontSize: 15 },
+  confirmDeliveryBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 
   // Submitting & Done states
   podCenterState: { padding: spacing.xl, alignItems: 'center' },

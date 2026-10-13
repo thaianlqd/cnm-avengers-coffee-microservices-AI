@@ -1,4 +1,6 @@
-import { Injectable, UnauthorizedException, BadRequestException, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { verifiedGoogleIdentity } from '../../auth/google-identity';
+import { assertLoginWorkspace } from '../../auth/workspace-policy';
+import { Injectable, UnauthorizedException, BadRequestException, NotFoundException, OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -411,7 +413,8 @@ export class UserService implements OnModuleInit {
       });
       console.log(`[forgot-password] OTP email sent successfully to ${email}`);
     } catch (err: any) {
-      console.warn(`[forgot-password] Mail send error (${err.message}). Fallback OTP for ${email}: ${code}`);
+      console.warn('[forgot-password] OTP email delivery failed');
+      throw new ServiceUnavailableException({ message: 'Chưa gửi được email xác thực. Vui lòng thử lại sau một phút.', retry_after_seconds: RESET_CODE_COOLDOWN_SECONDS });
     }
   }
 
@@ -523,9 +526,7 @@ export class UserService implements OnModuleInit {
   private taoAccessToken(user: User) {
     const isFranchiseStaff = Boolean(
       user.vai_tro === 'FRANCHISE_STAFF' ||
-      user.parent_franchisee_id ||
-      user.kiosk_id ||
-      (user.vai_tro === 'STAFF' && user.co_so_ma && user.co_so_ma.startsWith('KSK-'))
+      (user.vai_tro === 'STAFF' && (user.parent_franchisee_id || user.kiosk_id || user.co_so_ma?.startsWith('KSK-')))
     );
     const effectiveRole = isFranchiseStaff ? 'FRANCHISE_STAFF' : (user.vai_tro || 'CUSTOMER');
 
@@ -653,11 +654,11 @@ export class UserService implements OnModuleInit {
 
     const isFranchiseStaff = Boolean(
       user.vai_tro === 'FRANCHISE_STAFF' ||
-      user.parent_franchisee_id ||
-      user.kiosk_id ||
-      (user.vai_tro === 'STAFF' && user.co_so_ma && user.co_so_ma.startsWith('KSK-'))
+      (user.vai_tro === 'STAFF' && (user.parent_franchisee_id || user.kiosk_id || user.co_so_ma?.startsWith('KSK-')))
     );
     const effectiveRole = isFranchiseStaff ? 'FRANCHISE_STAFF' : (user.vai_tro || 'CUSTOMER');
+
+    assertLoginWorkspace(data?.workspace, effectiveRole);
 
     // Trả về đúng format để Frontend AuthModal.jsx của bác đọc được
     const receivedBirthdayVoucher = await this.kiemTraVaSinhVoucherSinhNhatChoUser(user.ma_nguoi_dung);
@@ -736,7 +737,7 @@ export class UserService implements OnModuleInit {
   }) {
     const identifier = String(payload?.email || payload?.tai_khoan || '').trim();
     const otp = String(payload?.otp || '').trim();
-    const newPassword = String(payload?.newPassword || '').trim();
+    const newPassword = String(payload?.newPassword || '');
 
     if (!identifier || !otp || !newPassword) {
       throw new BadRequestException('Thiếu thông tin đặt lại mật khẩu');
@@ -801,9 +802,7 @@ export class UserService implements OnModuleInit {
     if (!user) throw new NotFoundException('Người dùng không tồn tại');
     const isFranchiseStaff = Boolean(
       user.vai_tro === 'FRANCHISE_STAFF' ||
-      user.parent_franchisee_id ||
-      user.kiosk_id ||
-      (user.vai_tro === 'STAFF' && user.co_so_ma && user.co_so_ma.startsWith('KSK-'))
+      (user.vai_tro === 'STAFF' && (user.parent_franchisee_id || user.kiosk_id || user.co_so_ma?.startsWith('KSK-')))
     );
     const effectiveRole = isFranchiseStaff ? 'FRANCHISE_STAFF' : (user.vai_tro || 'CUSTOMER');
 
@@ -2751,10 +2750,6 @@ export class UserService implements OnModuleInit {
           user.ho_ten = meJson.name;
           shouldSave = true;
         }
-        if (user.trang_thai !== 'ACTIVE') {
-          user.trang_thai = 'ACTIVE';
-          shouldSave = true;
-        }
 
         if (shouldSave) {
           user = await this.userRepo.save(user);
@@ -2796,40 +2791,9 @@ export class UserService implements OnModuleInit {
         throw new BadRequestException('Google token là bắt buộc');
       }
 
-      let googleData: any = {};
-      try {
-        const rawToken = String(payload.googleToken || payload.googleTokenId || '').trim();
-        const parts = rawToken.split('.');
-
-        if (payload.isAccessToken || parts.length !== 3) {
-          const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-            headers: {
-              Authorization: `Bearer ${rawToken}`,
-            },
-          });
-
-          const payloadText = await response.text();
-          const parsedPayload = payloadText ? JSON.parse(payloadText) : {};
-
-          if (!response.ok) {
-            throw new Error(parsedPayload?.error || 'Invalid Google access token');
-          }
-
-          googleData = parsedPayload;
-        } else {
-          const payload_decoded = JSON.parse(
-            Buffer.from(parts[1], 'base64').toString('utf8')
-          );
-          googleData = payload_decoded;
-        }
-      } catch (err) {
-        throw new UnauthorizedException('Token Google không hợp lệ');
-      }
-
-      const email = googleData.email || googleData.email_verified_by && googleData.email;
-      if (!email) {
-        throw new UnauthorizedException('Không tìm thấy email trong token Google');
-      }
+      const rawToken = String(payload.googleToken || payload.googleTokenId || '').trim();
+      const googleData = await verifiedGoogleIdentity(rawToken, Boolean(payload.isAccessToken || rawToken.split('.').length !== 3));
+      const email = googleData.email;
 
       let user = await this.userRepo.findOne({ where: { email } });
 
@@ -2848,6 +2812,7 @@ export class UserService implements OnModuleInit {
         });
         user = await this.userRepo.save(user);
       } else {
+        if (user.trang_thai !== 'ACTIVE') throw new UnauthorizedException('Tài khoản đã bị vô hiệu hóa.');
         let shouldSave = false;
         if (!user.avatar_url && googleData.picture) {
           user.avatar_url = googleData.picture;
@@ -2855,10 +2820,6 @@ export class UserService implements OnModuleInit {
         }
         if (!user.ho_ten && googleData.name) {
           user.ho_ten = googleData.name;
-          shouldSave = true;
-        }
-        if (user.trang_thai !== 'ACTIVE') {
-          user.trang_thai = 'ACTIVE';
           shouldSave = true;
         }
         if (shouldSave) {

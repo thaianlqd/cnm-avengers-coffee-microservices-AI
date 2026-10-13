@@ -13,6 +13,8 @@ await build({entryPoints:['src/pages/Cart/index.jsx'], bundle:true, platform:'no
   b.onResolve({filter:/^react$/}, a => a.namespace==='fixture' ? undefined : {path:'react-hooks',namespace:'fixture'});
   b.onResolve({filter:/CartContext$/}, () => ({path:'cart',namespace:'fixture'}));
   b.onResolve({filter:/^@tanstack\/react-query$/}, () => ({path:'query',namespace:'fixture'}));
+  // Copy is tested in browser QA; keep deterministic Vietnamese text in this SSR business fixture.
+  b.onResolve({filter:/uiText$/},()=>({path:'ui-copy',namespace:'fixture'}));
   b.onResolve({filter:/apiClient$/}, () => ({path:'api',namespace:'fixture'}));
   b.onResolve({filter:/components\//}, a => /DeliveryModeSelector|BranchSelector/.test(a.path) ? undefined : {path:'component',namespace:'fixture'});
   b.onResolve({filter:/geocodingService$/}, () => ({path:'geo',namespace:'fixture'}));
@@ -31,6 +33,7 @@ await build({entryPoints:['src/pages/Cart/index.jsx'], bundle:true, platform:'no
       if(queryKey[0]==='public-branches')return {data:{items:f.branches||[]}};
       if(queryKey[0]==='inventory')return {data:f.inventory===undefined?[]:f.inventory};
       if(String(queryKey).includes('membership'))return {data:{quyen_loi_hien_tai:{freeship_value:f.freeship||0,freeship_min_order:0}}};return {};};`,
+    'ui-copy': `export const uiText=(source,values={})=>{if(typeof source!=='string')return source;for(const[k,v]of Object.entries(values))source=source.split('{{'+k+'}}').join(String(v));return source;}; export const uiLocale=()=> 'vi-VN'; export const useUiLanguage=()=>{};`,
     api:`export const apiClient={post:(...args)=>globalThis.checkoutFixture.post(...args),get:async path=>{
       const f=globalThis.checkoutFixture; if(f.availabilityFailure)throw new Error('inventory unavailable');
       return {data:path.startsWith('/inventory')?(f.inventory||[]):f.items.map(item=>({...item,trang_thai:f.active!==false}))};

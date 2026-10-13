@@ -512,6 +512,7 @@ export class ThanhToanService {
 
     // 1. Invalidate Redis cache for staff orders list of this branch
     await this.redisCacheService.deleteByPrefix(`orders:staff:${branchCode}:`).catch(() => undefined);
+    await this.redisCacheService.deleteByPrefix('orders:staff:ALL:').catch(() => undefined);
 
     // 2. Emit real-time WebSocket event directly to branch room
     this.notificationService.guiSuKienDonHangTheoChiNhanh(branchCode, {
@@ -806,7 +807,7 @@ export class ThanhToanService {
   }
 
   private buildStaffOrdersCacheKey(branchCode: string, boLoc: BoLocLichSuDonHang) {
-    return `orders:staff:${branchCode}:${JSON.stringify(boLoc || {})}`;
+    return `orders:staff:${branchCode}:${branchCode === 'ALL' ? 'all-v2:' : ''}${JSON.stringify(boLoc || {})}`;
   }
 
   private async invalidateOrderCaches(maNguoiDung?: string | null, branchCode?: string | null) {
@@ -817,6 +818,7 @@ export class ThanhToanService {
 
     if (branchCode) {
       await this.redisCacheService.deleteByPrefix(`orders:staff:${branchCode}:`);
+      await this.redisCacheService.deleteByPrefix('orders:staff:ALL:');
     }
   }
 
@@ -2879,7 +2881,7 @@ export class ThanhToanService {
   }
 
   async layLichSuDonHang(maNguoiDung: string, boLoc: BoLocLichSuDonHang = {}) {
-    const cacheKey = this.buildCustomerOrdersCacheKey(maNguoiDung, boLoc);
+    const cacheKey = `${this.buildCustomerOrdersCacheKey(maNguoiDung, boLoc)}:pagination-v2`;
     const cached = await this.redisCacheService.getJson<{ total: number; orders: any[] }>(cacheKey);
     if (cached) {
       return cached;
@@ -2919,11 +2921,11 @@ export class ThanhToanService {
     const page = boLoc.page && boLoc.page > 0 ? boLoc.page : 1;
     const skip = (page - 1) * limit;
 
-    const danhSach = await query
+    const [danhSach, total] = await query
       .orderBy('don_hang.ngay_tao', 'DESC')
       .take(limit)
       .skip(skip)
-      .getMany();
+      .getManyAndCount();
 
     const maDonHangs = danhSach.map(d => d.ma_don_hang);
     let trackings: any[] = [];
@@ -3004,13 +3006,15 @@ export class ThanhToanService {
       };
     });
 
-    const result = { total: orders.length, orders };
+    const result = { total, orders };
     await this.redisCacheService.setJson(cacheKey, result, 120).catch(() => undefined); // Tăng từ 45s → 120s
     return result;
   }
 
-  async layDanhSachDonHangChoStaff(boLoc: BoLocLichSuDonHang = {}) {
+  async layDanhSachDonHangChoStaff(boLoc: BoLocLichSuDonHang = {}, allowAllBranches = false) {
     const branchCode = this.normalizeBranchCode(boLoc.branchCode);
+    const allBranches = branchCode === 'ALL' && allowAllBranches;
+    if (branchCode === 'ALL' && !allowAllBranches) throw new BadRequestException('Phạm vi toàn hệ thống chưa được cấp quyền');
     const cacheKey = this.buildStaffOrdersCacheKey(branchCode, boLoc);
     const cached = await this.redisCacheService.getJson<{ total: number; orders: any[] }>(cacheKey);
     if (cached) {
@@ -3021,7 +3025,7 @@ export class ThanhToanService {
       .createQueryBuilder('don_hang')
       .leftJoinAndSelect('don_hang.chi_tiet', 'chi_tiet')
       .leftJoinAndSelect('don_hang.giao_dich_thanh_toan', 'giao_dich')
-      .where('don_hang.co_so_ma = :branchCode', { branchCode });
+      .where(allBranches ? '1=1' : 'don_hang.co_so_ma = :branchCode', { branchCode });
 
     if (boLoc.status) {
       query.andWhere('don_hang.trang_thai_don_hang = :status', { status: boLoc.status });

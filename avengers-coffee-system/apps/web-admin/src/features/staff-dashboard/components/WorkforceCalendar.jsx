@@ -71,8 +71,8 @@ export function WorkforceCalendar({
         borderBottom: '1px solid #f1f5f9'
       }}>
         <div>
-          <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <Calendar size={20} color="#10b981" /> Lịch làm việc theo tuần
+          <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <Calendar size={20} color="#3b82f6" /> Lịch làm việc theo tuần
           </h3>
           <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: '#64748b', fontWeight: '600' }}>
             Thời gian: <strong>{formatWeekRange(weekStart)}</strong>
@@ -110,8 +110,8 @@ export function WorkforceCalendar({
               padding: '0.45rem 0.8rem',
               borderRadius: '8px',
               border: 'none',
-              background: '#eff6ff',
-              color: '#2563eb',
+              background: 'var(--primary-light)',
+              color: 'var(--primary)',
               fontSize: '0.825rem',
               fontWeight: '700',
               cursor: 'pointer'
@@ -173,17 +173,17 @@ export function WorkforceCalendar({
             <div
               key={toDateOnlyLocal(day)}
               style={{
-                background: isToday ? '#ecfdf5' : '#f8fafc',
+                background: isToday ? '#eff6ff' : '#f8fafc',
                 padding: '0.75rem 0.5rem',
                 textAlign: 'center',
                 borderBottom: '2px solid',
-                borderColor: isToday ? '#10b981' : 'transparent'
+                borderColor: isToday ? '#3b82f6' : 'transparent'
               }}
             >
-              <strong style={{ display: 'block', fontSize: '0.85rem', color: isToday ? '#047857' : '#1e293b' }}>
+              <strong style={{ display: 'block', fontSize: '0.85rem', color: isToday ? '#1d4ed8' : '#1e293b' }}>
                 {DAY_LABELS[index]}
               </strong>
-              <span style={{ fontSize: '0.75rem', color: isToday ? '#059669' : '#64748b', fontWeight: '600' }}>
+              <span style={{ fontSize: '0.75rem', color: isToday ? '#2563eb' : '#64748b', fontWeight: '600' }}>
                 {formatDayHeader(day)}
               </span>
             </div>
@@ -245,13 +245,13 @@ export function WorkforceCalendar({
                             textAlign: 'left',
                             padding: '0.5rem 0.6rem',
                             borderRadius: '8px',
-                            border: isSelected ? '2px solid #10b981' : '1px solid #cbd5e1',
-                            background: isSelected ? '#ecfdf5' : '#f8fafc',
+                            border: isSelected ? '2px solid #3b82f6' : '1px solid #cbd5e1',
+                            background: isSelected ? '#eff6ff' : '#f8fafc',
                             cursor: 'pointer',
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '0.2rem',
-                            boxShadow: isSelected ? '0 2px 4px rgba(16, 185, 129, 0.2)' : 'none',
+                            boxShadow: isSelected ? '0 2px 4px rgba(59, 130, 246, 0.2)' : 'none',
                             transition: 'all 0.2s ease'
                           }}
                         >
@@ -274,8 +274,8 @@ export function WorkforceCalendar({
                             fontWeight: '700',
                             padding: '0.1rem 0.4rem',
                             borderRadius: '4px',
-                            background: insight.isLate || insight.leftEarly ? '#fef3c7' : '#d1fae5',
-                            color: insight.isLate || insight.leftEarly ? '#b45309' : '#047857',
+                            background: insight.isLate || insight.leftEarly ? '#fef3c7' : '#dbeafe',
+                            color: insight.isLate || insight.leftEarly ? '#b45309' : '#1d4ed8',
                             width: 'fit-content'
                           }}>
                             {insight.shortLabel}

@@ -48,7 +48,7 @@ function fmtDateTime(str) {
 }
 
 const STATUS_COLOR = {
-  ACTIVE: '#059669',
+  ACTIVE: '#2563eb',
   INACTIVE: '#64748b',
   SUSPENDED: '#dc2626',
 }
@@ -203,7 +203,7 @@ export function ManagerShipperPanel({ session }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.85rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.85rem' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-            <Bike size={20} color="#4f46e5" /> Quản lý NV giao hàng
+            <Bike size={20} color="var(--primary)" /> Quản lý NV giao hàng
           </h1>
           <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.78125rem', color: '#64748b' }}>
             Theo dõi đội ngũ giao nhận, điều phối phân công đơn hàng và xử lý sự cố ngoại lệ thời gian thực.
@@ -229,8 +229,8 @@ export function ManagerShipperPanel({ session }) {
                 borderRadius: '8px',
                 fontSize: '0.75rem',
                 fontWeight: isActive ? '700' : '600',
-                border: isActive ? '1px solid #4f46e5' : '1px solid #cbd5e1',
-                backgroundColor: isActive ? '#4f46e5' : '#ffffff',
+                border: isActive ? '1px solid var(--primary)' : '1px solid #cbd5e1',
+                backgroundColor: isActive ? 'var(--primary)' : '#ffffff',
                 color: isActive ? '#ffffff' : '#475569',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
@@ -256,7 +256,7 @@ export function ManagerShipperPanel({ session }) {
             </div>
             <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.9rem 1.1rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
               <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '600', display: 'block' }}>ĐANG TRỰC TUYẾN</span>
-              <strong style={{ fontSize: '1.15rem', color: '#059669', fontWeight: '700', marginTop: '0.1rem', display: 'block' }}>{onlineShippers.length}</strong>
+              <strong style={{ fontSize: '1.15rem', color: '#2563eb', fontWeight: '700', marginTop: '0.1rem', display: 'block' }}>{onlineShippers.length}</strong>
             </div>
             <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.9rem 1.1rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
               <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '600', display: 'block' }}>NGOẠI TUYẾN</span>
@@ -264,7 +264,7 @@ export function ManagerShipperPanel({ session }) {
             </div>
             <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.9rem 1.1rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
               <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '600', display: 'block' }}>ĐƠN ĐANG GIAO</span>
-              <strong style={{ fontSize: '1.15rem', color: '#4f46e5', fontWeight: '700', marginTop: '0.1rem', display: 'block' }}>
+              <strong style={{ fontSize: '1.15rem', color: 'var(--primary)', fontWeight: '700', marginTop: '0.1rem', display: 'block' }}>
                 {shippers.reduce((sum, s) => sum + (s.active_delivery_count || 0), 0)}
               </strong>
             </div>
@@ -293,23 +293,23 @@ export function ManagerShipperPanel({ session }) {
 
                     <span style={{
                       padding: '0.15rem 0.55rem', borderRadius: '9999px', fontSize: '0.68rem', fontWeight: '700',
-                      backgroundColor: shipper.status === 'ACTIVE' ? '#ecfdf5' : '#f1f5f9',
-                      color: shipper.status === 'ACTIVE' ? '#059669' : '#64748b',
-                      border: shipper.status === 'ACTIVE' ? '1px solid #a7f3d0' : '1px solid #cbd5e1',
+                      backgroundColor: shipper.status === 'ACTIVE' ? '#eff6ff' : '#f1f5f9',
+                      color: shipper.status === 'ACTIVE' ? '#2563eb' : '#64748b',
+                      border: shipper.status === 'ACTIVE' ? '1px solid #bfdbfe' : '1px solid #cbd5e1',
                       display: 'inline-flex', alignItems: 'center', gap: '0.3rem'
                     }}>
-                      <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: shipper.status === 'ACTIVE' ? '#059669' : '#64748b' }} />
+                      <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: shipper.status === 'ACTIVE' ? '#2563eb' : '#64748b' }} />
                       {shipper.status === 'ACTIVE' ? 'Trực tuyến' : 'Ngoại tuyến'}
                     </span>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem', backgroundColor: '#f8fafc', padding: '0.6rem', borderRadius: '8px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
                     <div>
-                      <strong style={{ display: 'block', fontSize: '0.9rem', color: '#4f46e5', fontWeight: '700' }}>{shipper.active_delivery_count || 0}</strong>
+                      <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--primary)', fontWeight: '700' }}>{shipper.active_delivery_count || 0}</strong>
                       <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: '600' }}>Đang giao</span>
                     </div>
                     <div>
-                      <strong style={{ display: 'block', fontSize: '0.9rem', color: '#059669', fontWeight: '700' }}>{shipper.total_delivered_today || 0}</strong>
+                      <strong style={{ display: 'block', fontSize: '0.9rem', color: '#2563eb', fontWeight: '700' }}>{shipper.total_delivered_today || 0}</strong>
                       <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: '600' }}>Đã xong</span>
                     </div>
                     <div>
@@ -345,7 +345,7 @@ export function ManagerShipperPanel({ session }) {
         <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <MapPin size={15} color="#4f46e5" /> Bản đồ thời gian thực đội giao hàng
+              <MapPin size={15} color="var(--primary)" /> Bản đồ thời gian thực đội giao hàng
             </h3>
             <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.75rem', color: '#64748b' }}>
               Theo dõi vị trí của từng Shipper trực tuyến trong khu vực chi nhánh.
@@ -366,7 +366,7 @@ export function ManagerShipperPanel({ session }) {
               </p>
               {onlineShippers.slice(0, 5).map((s) => (
                 <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '5px', fontSize: '0.72rem', color: '#334155' }}>
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#059669', flexShrink: 0 }} />
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#2563eb', flexShrink: 0 }} />
                   <span style={{ fontWeight: '600' }}>{s.full_name || s.username}</span>
                   <span style={{ color: '#64748b', marginLeft: 'auto' }}>{s.active_delivery_count || 0} đơn</span>
                 </div>
@@ -381,7 +381,7 @@ export function ManagerShipperPanel({ session }) {
         <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <ClipboardList size={15} color="#4f46e5" /> Điều phối &amp; Phân công đơn thủ công
+              <ClipboardList size={15} color="var(--primary)" /> Điều phối &amp; Phân công đơn thủ công
             </h3>
             <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.75rem', color: '#64748b' }}>
               Chọn đơn hàng đang chờ giao và gán cho Shipper trực tuyến phù hợp.
@@ -467,10 +467,10 @@ export function ManagerShipperPanel({ session }) {
                   <tbody>
                     {pendingOrders.slice(0, 10).map((o) => (
                       <tr key={o.ma_don_hang} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                        <td style={{ padding: '0.55rem 0.65rem', fontWeight: '700', color: '#4f46e5' }}>#{String(o.ma_don_hang || '').slice(0, 8).toUpperCase()}</td>
+                        <td style={{ padding: '0.55rem 0.65rem', fontWeight: '700', color: 'var(--primary)' }}>#{String(o.ma_don_hang || '').slice(0, 8).toUpperCase()}</td>
                         <td style={{ padding: '0.55rem 0.65rem', color: '#334155' }}>{o.dia_chi_giao_hang || 'Chưa có địa chỉ'}</td>
                         <td style={{ padding: '0.55rem 0.65rem' }}>
-                          <span style={{ padding: '0.12rem 0.45rem', borderRadius: '9999px', backgroundColor: '#e0e7ff', color: '#4f46e5', fontSize: '0.68rem', fontWeight: '700' }}>
+                          <span style={{ padding: '0.12rem 0.45rem', borderRadius: '9999px', backgroundColor: 'var(--primary-subtle)', color: 'var(--primary)', fontSize: '0.68rem', fontWeight: '700' }}>
                             {DELIVERY_STATUS_LABEL[o.trang_thai] || o.trang_thai || 'DANG_GIAO'}
                           </span>
                         </td>
@@ -492,7 +492,7 @@ export function ManagerShipperPanel({ session }) {
             <p style={{ fontSize: '0.78125rem', color: '#64748b' }}>Đang tải báo cáo ngoại lệ...</p>
           ) : exceptions.length === 0 ? (
             <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '2.5rem 1.5rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-              <CheckCircle2 size={36} color="#059669" />
+              <CheckCircle2 size={36} color="#2563eb" />
               <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: '700', color: '#0f172a' }}>Không có báo cáo ngoại lệ nào chờ xử lý</h3>
               <p style={{ margin: 0, fontSize: '0.78125rem', color: '#64748b' }}>Tất cả các sự cố giao nhận đã được giải quyết xong.</p>
             </div>
@@ -569,7 +569,7 @@ export function ManagerShipperPanel({ session }) {
         <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1.25rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <BarChart3 size={15} color="#4f46e5" /> Báo cáo &amp; Hiệu suất KPI đội giao hàng
+              <BarChart3 size={15} color="var(--primary)" /> Báo cáo &amp; Hiệu suất KPI đội giao hàng
             </h3>
             <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.75rem', color: '#64748b' }}>
               Thống kê tổng lượng đơn hoàn thành, tỷ lệ giao đúng giờ và đánh giá trung bình từ khách hàng.
@@ -579,11 +579,11 @@ export function ManagerShipperPanel({ session }) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
             <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.85rem' }}>
               <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '600' }}>TỶ LỆ GIAO ĐÚNG GIỜ</span>
-              <strong style={{ display: 'block', fontSize: '1.15rem', color: '#059669', fontWeight: '700', marginTop: '0.15rem' }}>98.5%</strong>
+              <strong style={{ display: 'block', fontSize: '1.15rem', color: '#2563eb', fontWeight: '700', marginTop: '0.15rem' }}>98.5%</strong>
             </div>
             <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.85rem' }}>
               <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '600' }}>THỜI GIAN GIAO TB</span>
-              <strong style={{ display: 'block', fontSize: '1.15rem', color: '#4f46e5', fontWeight: '700', marginTop: '0.15rem' }}>22 Phút</strong>
+              <strong style={{ display: 'block', fontSize: '1.15rem', color: 'var(--primary)', fontWeight: '700', marginTop: '0.15rem' }}>22 Phút</strong>
             </div>
             <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.85rem' }}>
               <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '600' }}>ĐÁNH GIÁ TRUNG BÌNH</span>

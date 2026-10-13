@@ -1,0 +1,18 @@
+{
+  "method": "isolated Chromium, mocked APIs, original image dimensions",
+  "login": {
+    "admin": {
+      "width": 2048,
+      "height": 1365,
+      "displayWidth": 1440,
+      "filter": "none"
+    },
+    "accountant": {
+      "width": 2048,
+      "height": 1365,
+      "displayWidth": 1440,
+      "filter": "none"
+    }
+  },
+  "runtime_errors": []
+}

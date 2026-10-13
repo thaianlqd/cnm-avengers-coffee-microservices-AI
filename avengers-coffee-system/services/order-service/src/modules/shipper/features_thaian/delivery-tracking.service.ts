@@ -439,16 +439,6 @@ export class DeliveryTrackingService {
               rating: null,
             };
           }
-        } else if (['ON_GOING', 'PICKED_UP'].includes(latestStatus)) {
-          // FIX CHO SANDBOX: Lalamove Sandbox không trả về driverId. Tự động mock tài xế Lalamove để không bị đè bởi Tài xế Avengers.
-          shipperInfo = {
-            full_name: 'Nguyễn Văn Lalamove (Sandbox)',
-            phone: '0901234567',
-            vehicle_plate: '59-S1 999.99',
-            vehicle_type: 'MOTORBIKE',
-            avatar_url: 'https://cdn-icons-png.flaticon.com/512/1048/1048313.png',
-            rating: 5.0,
-          };
         }
       } catch (err) {
         this.logger.warn(`Lalamove tracking error: ${err.message}`);
@@ -466,17 +456,17 @@ export class DeliveryTrackingService {
       // ignore
     }
 
-    const resolvedStoreLat = tracking?.store_latitude
-      ? Number(tracking.store_latitude)
-      : (branchInfo?.vi_do ? Number(branchInfo.vi_do) : 10.80734);
-    const resolvedStoreLng = tracking?.store_longitude
-      ? Number(tracking.store_longitude)
-      : (branchInfo?.kinh_do ? Number(branchInfo.kinh_do) : 106.717612);
+    const numericCoordinate = (value: unknown, limit: number): number | null => {
+      if (value === null || value === undefined || value === '') return null;
+      const result = Number(value);
+      return Number.isFinite(result) && Math.abs(result) <= limit ? result : null;
+    };
+    const resolvedStoreLat = numericCoordinate(tracking?.store_latitude, 90) ?? numericCoordinate(branchInfo?.vi_do, 90);
+    const resolvedStoreLng = numericCoordinate(tracking?.store_longitude, 180) ?? numericCoordinate(branchInfo?.kinh_do, 180);
+    let resolvedDestLat = numericCoordinate(tracking?.destination_latitude, 90);
+    let resolvedDestLng = numericCoordinate(tracking?.destination_longitude, 180);
 
-    let resolvedDestLat = tracking?.destination_latitude ? Number(tracking.destination_latitude) : null;
-    let resolvedDestLng = tracking?.destination_longitude ? Number(tracking.destination_longitude) : null;
-
-    if ((!resolvedDestLat || !resolvedDestLng) && donHang?.dia_chi_giao_hang) {
+    if ((resolvedDestLat === null || resolvedDestLng === null) && donHang?.dia_chi_giao_hang) {
       try {
         const geo = await this.geocodeDiaChiMapbox(donHang.dia_chi_giao_hang);
         if (geo) {
@@ -534,14 +524,14 @@ export class DeliveryTrackingService {
           delivery_method: tracking.delivery_method,
           tracking_code: tracking.tracking_code,
           branch_code: bCode,
-          branch_name: branchInfo?.ten_chi_nhanh || branchInfo?.name || `Avengers Coffee - ${bCode || 'Cửa hàng'}`,
-          branch_address: branchInfo?.dia_chi || `Avengers Coffee - ${bCode || 'Cửa hàng'}`,
+          branch_name: branchInfo?.ten_chi_nhanh || branchInfo?.name || null,
+          branch_address: branchInfo?.dia_chi || null,
           branch_phone: branchInfo?.so_dien_thoai || null,
           table_number: tracking.table_number,
           delivery_fee: Number(tracking.delivery_fee || 0),
           estimated_minutes: tracking.estimated_minutes,
-          store_location: { latitude: resolvedStoreLat, longitude: resolvedStoreLng },
-          destination_location: resolvedDestLat && resolvedDestLng
+          store_location: resolvedStoreLat !== null && resolvedStoreLng !== null ? { latitude: resolvedStoreLat, longitude: resolvedStoreLng } : null,
+          destination_location: resolvedDestLat !== null && resolvedDestLng !== null
             ? { latitude: resolvedDestLat, longitude: resolvedDestLng }
             : null,
         }

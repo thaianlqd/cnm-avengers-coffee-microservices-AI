@@ -1,3 +1,4 @@
+import { uiText as ui, useUiLanguage, uiLocale } from "../../lib/uiText";
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -52,6 +53,7 @@ const BANNER_IMAGES = [
 ];
 
 function BannerSlider() {
+  useUiLanguage();
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -64,7 +66,7 @@ function BannerSlider() {
   return (
     <div className="w-full relative group bg-[#42a853] rounded-2xl overflow-hidden shadow-sm flex items-center justify-center aspect-[16/9]">
       {BANNER_IMAGES.map((img, idx) => (
-        <img
+        <img loading="lazy" decoding="async"
           key={idx}
           src={img}
           alt={`Banner ${idx + 1}`}
@@ -93,7 +95,7 @@ export default function OrderPage({
   userName,
   onOpenAccount,
   onViewDetail,
-  onQuickAdd,
+  onAddToCart,
   isFavoriteProduct,
   onToggleFavorite,
   searchKeyword,
@@ -109,8 +111,10 @@ export default function OrderPage({
   selectedCatId,
   onSelectedCatIdChange,
 }) {
+  useUiLanguage();
   const { t, i18n } = useTranslation();
-  const currentLng = i18n.language || 'vi';
+  const currentLng = i18n.resolvedLanguage || 'vi';
+  const copy = (vi, en) => currentLng === 'en' ? en : vi;
 
   const tCategory = (name) => {
     if (!name) return '';
@@ -129,17 +133,16 @@ export default function OrderPage({
       "Frappe": "frappe",
       "Thẻ Quà Tặng": "giftCard"
     };
-    const key = map[name];
+    const key = Object.entries(map).find(([label]) => label.toLocaleLowerCase() === String(name).trim().toLocaleLowerCase())?.[1];
     return key ? t(`dbCategories.${key}`) : name;
   };
 
   const [activeCategory, setActiveCategory] = useState(selectedCatId || 'all');
-
-  useEffect(() => {
-    if (selectedCatId) {
-      setActiveCategory(selectedCatId);
-    }
-  }, [selectedCatId]);
+  const [previousSelectedCatId, setPreviousSelectedCatId] = useState(selectedCatId);
+  if (selectedCatId !== previousSelectedCatId) {
+    setPreviousSelectedCatId(selectedCatId);
+    setActiveCategory(selectedCatId || 'all');
+  }
   const [isScrolled, setIsScrolled] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -147,8 +150,6 @@ export default function OrderPage({
   const [searchViewMode, setSearchViewMode] = useState('list'); // 'list' | 'grid'
   const [isSearchBoxOpen, setIsSearchBoxOpen] = useState(false);
   const [copiedVoucherCode, setCopiedVoucherCode] = useState(null);
-  const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
-  const [trackingOrderId, setTrackingOrderId] = useState(null);
 
   // Flash Sale Timer Logic
   const [timeLeft, setTimeLeft] = useState({ hours: 22, minutes: 9, seconds: 47 });
@@ -219,18 +220,12 @@ export default function OrderPage({
     }
   ];
 
-  const [recentProducts, setRecentProducts] = useState([]);
-
-  useEffect(() => {
+  const [recentProducts, setRecentProducts] = useState(() => {
     try {
-      const saved = localStorage.getItem('hc_recent_products');
-      if (saved) {
-        setRecentProducts(JSON.parse(saved));
-      }
-    } catch (error) {
-      console.error('Failed to load recent products', error);
-    }
-  }, []);
+      const saved = JSON.parse(localStorage.getItem('hc_recent_products') || '[]');
+      return Array.isArray(saved) ? saved.slice(0, 4) : [];
+    } catch { return []; }
+  });
 
   const handleProductClick = (product, isQuickView = false) => {
     setRecentProducts(prev => {
@@ -253,51 +248,7 @@ export default function OrderPage({
       }
     }
   };
-  const [hasRecentLookup, setHasRecentLookup] = useState(false);
-
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('avengers_recent_lookups') || '[]');
-      if (Array.isArray(saved) && saved.length > 0) {
-        setHasRecentLookup(true);
-      }
-    } catch { }
-  }, [isTrackingModalOpen]);
-
-  const fullText = t('home.searchPlaceholder');
-  const [placeholderText, setPlaceholderText] = useState("");
-
-  useEffect(() => {
-    let i = 0;
-    let isDeleting = false;
-    let timeoutId;
-
-    const typeWriter = () => {
-      setPlaceholderText(fullText.substring(0, i) + (isDeleting ? "" : "|"));
-
-      let typeSpeed = 100;
-
-      if (isDeleting) {
-        typeSpeed /= 2;
-        i--;
-      } else {
-        i++;
-      }
-
-      if (!isDeleting && i === fullText.length) {
-        typeSpeed = 2000;
-        isDeleting = true;
-      } else if (isDeleting && i === 0) {
-        isDeleting = false;
-        typeSpeed = 500;
-      }
-
-      timeoutId = setTimeout(typeWriter, typeSpeed);
-    };
-
-    timeoutId = setTimeout(typeWriter, 500);
-    return () => clearTimeout(timeoutId);
-  }, []);
+  const placeholderText = t('home.searchPlaceholder');
 
   const [sortByOrder, setSortByOrder] = useState('default'); // 'default' | 'price-asc' | 'price-desc' | 'name-asc'
   const [expandedParents, setExpandedParents] = useState({});
@@ -467,7 +418,7 @@ export default function OrderPage({
             <span className="text-[17px] font-black leading-none tracking-tight block drop-shadow-xs font-sans">
               {valueText}
             </span>
-            <span className="text-[8px] font-extrabold tracking-widest uppercase text-white/80 block leading-none mt-0.5">GIẢM</span>
+            <span className="text-[8px] font-extrabold tracking-widest uppercase text-white/80 block leading-none mt-0.5">{ui("GIẢM")}</span>
           </div>
         </div>
 
@@ -484,21 +435,19 @@ export default function OrderPage({
               </span>
             </div>
             {isPersonal && (
-              <span className="text-[8px] font-extrabold text-amber-700 bg-amber-50 px-1 py-0.25 rounded border border-amber-200/80 shrink-0">
-                ĐỘC QUYỀN
-              </span>
+              <span className="text-[8px] font-extrabold text-amber-700 bg-amber-50 px-1 py-0.25 rounded border border-amber-200/80 shrink-0">{ui("ĐỘC QUYỀN")}</span>
             )}
           </div>
 
           <p className="text-[10px] text-gray-600 font-semibold truncate my-0.5" title={voucher.ten_khuyen_mai || voucher.mo_ta}>
-            {voucher.ten_khuyen_mai || voucher.mo_ta || (isPersonal ? 'Đặc quyền dành riêng cho bạn' : `Giảm ${valueText} toàn hệ thống`)}
+            {voucher.ten_khuyen_mai || voucher.mo_ta || (isPersonal ? ui("Đặc quyền dành riêng cho bạn") : ui("Giảm {{v0}} toàn hệ thống", {v0:valueText}))}
           </p>
 
           <div className="flex items-center justify-between gap-1 pt-1 border-t border-gray-100/80">
             <div className="flex items-center gap-0.5 text-[8.5px] text-gray-400 font-medium">
               <ClockIcon className="w-2.5 h-2.5 text-gray-400 shrink-0" />
               <span className="truncate">
-                {voucher.ngay_ket_thuc ? new Date(voucher.ngay_ket_thuc).toLocaleDateString('vi-VN') : 'Hạn dài'}
+                {voucher.ngay_ket_thuc ? new Date(voucher.ngay_ket_thuc).toLocaleDateString(uiLocale()) : ui("Hạn dài")}
               </span>
             </div>
 
@@ -517,14 +466,10 @@ export default function OrderPage({
             >
               {isCopied ? (
                 <>
-                  <CheckIcon className="w-2.5 h-2.5 stroke-[3]" />
-                  ĐÃ CHÉP
-                </>
+                  <CheckIcon className="w-2.5 h-2.5 stroke-[3]" />{ui("ĐÃ CHÉP")}</>
               ) : (
                 <>
-                  <ClipboardDocumentIcon className="w-2.5 h-2.5" />
-                  SAO CHÉP
-                </>
+                  <ClipboardDocumentIcon className="w-2.5 h-2.5" />{ui("SAO CHÉP")}</>
               )}
             </button>
           </div>
@@ -612,7 +557,7 @@ export default function OrderPage({
                 }`}
             >
               <div className="flex items-center gap-3.5">
-                <img
+                <img loading="lazy" decoding="async"
                   src={iconUrl}
                   alt={parent.ten_danh_muc}
                   className={`w-5 h-5 object-contain transition-transform duration-200 ${isActive ? 'brightness-0 invert scale-110' : ''}`}
@@ -631,13 +576,14 @@ export default function OrderPage({
   return (
     <div className="w-full min-h-screen bg-white flex flex-col">
       {/* ── TOP HEADER (Full Width) ── */}
-      <header className={`w-full bg-white flex items-center px-4 lg:px-6 sticky top-0 z-[60] shadow-sm gap-4 border-b border-gray-100 relative transition-all duration-300 ${isScrolled ? 'h-[64px]' : 'h-[84px]'}`}>
+      <header className={`customer-order-header w-full bg-white flex items-center px-4 lg:px-6 sticky top-0 z-[60] shadow-sm gap-4 border-b border-gray-100 relative transition-all duration-300 ${isScrolled ? 'h-[64px]' : 'h-[84px]'}`}>
 
         {/* Mobile Toggle & Logo */}
         <div className="flex items-center h-full relative" ref={mobileMenuRef}>
           {/* Mobile Menu Button */}
           <button
             type="button"
+            aria-label={ui("Mở danh mục sản phẩm")} aria-expanded={isMobileMenuOpen}
             className="w-10 h-10 flex flex-col justify-center gap-1 cursor-pointer mr-2 lg:hidden"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
@@ -646,9 +592,10 @@ export default function OrderPage({
             <span className="w-6 h-0.5 bg-gray-800 block"></span>
           </button>
 
-          <div className="flex-shrink-0 h-full flex items-center lg:ml-6 lg:w-[260px]">
+          <div className="flex-shrink-0 h-full flex items-center lg:ml-6 lg:w-[180px] xl:w-[260px]">
+            {isScrolled && <img src="/hc-assets/logo.png" alt="Highlands Coffee" className="lg:hidden h-[46px] w-auto object-contain" />}
             {!isScrolled ? (
-              <img
+              <img loading="lazy" decoding="async"
                 src="/hc-assets/logo.png"
                 alt="Highlands Coffee"
                 className="h-[60px] w-auto object-contain cursor-pointer transition-transform hover:scale-105"
@@ -663,7 +610,7 @@ export default function OrderPage({
             ) : (
               <div
                 ref={dropdownRef}
-                className="group flex items-center gap-3 cursor-pointer w-full relative h-full select-none"
+                className="group hidden lg:flex items-center gap-3 cursor-pointer w-full relative h-full select-none"
                 onClick={() => setIsDropdownOpen((prev) => !prev)}
               >
                 <div className="w-5 flex flex-col gap-[3px]">
@@ -671,7 +618,7 @@ export default function OrderPage({
                   <span className="w-full h-[2px] bg-[#333333] block"></span>
                   <span className="w-full h-[2px] bg-[#333333] block"></span>
                 </div>
-                <span className="text-[15px] font-bold text-[#333333] whitespace-nowrap">{t('order.productCategories')}</span>
+                <span className="text-[15px] font-bold text-[#333333] min-w-0 truncate">{t('order.productCategories')}</span>
                 <ChevronDownIcon className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
 
                 {/* Dropdown List in Top Header */}
@@ -697,7 +644,7 @@ export default function OrderPage({
             </div>
           )}
         </div>
-        <div className="flex-1 max-w-[500px]">
+        <div className="order-header-search flex-1 min-w-0 max-w-[500px]">
           <div className="relative">
             <input
               type="text"
@@ -734,7 +681,7 @@ export default function OrderPage({
                       type="button"
                       onClick={() => setSearchViewMode('list')}
                       className={`p-1.5 rounded-md transition-colors ${searchViewMode === 'list' ? 'bg-gray-200 text-[#b22830]' : 'text-gray-400 hover:bg-gray-100'}`}
-                      title="Danh sách"
+                      title={copy('Danh sách', 'List view')}
                     >
                       <ListBulletIcon className="w-5 h-5" />
                     </button>
@@ -742,7 +689,7 @@ export default function OrderPage({
                       type="button"
                       onClick={() => setSearchViewMode('grid')}
                       className={`p-1.5 rounded-md transition-colors ${searchViewMode === 'grid' ? 'bg-gray-200 text-[#b22830]' : 'text-gray-400 hover:bg-gray-100'}`}
-                      title="Lưới"
+                      title={copy('Lưới', 'Grid view')}
                     >
                       <Squares2X2Icon className="w-5 h-5" />
                     </button>
@@ -775,18 +722,18 @@ export default function OrderPage({
                           className="flex items-center justify-between px-5 py-3 hover:bg-[#fcf8f2] cursor-pointer transition-colors"
                         >
                           <div className="flex items-center gap-3">
-                            <img
+                            <img loading="lazy" decoding="async"
                               src={p.hinh_anh_url || p.img}
                               alt={p.ten_san_pham || p.name}
                               className="w-14 h-14 object-contain rounded bg-[#fdfaf5] p-1 border border-gray-100"
                             />
+
                             <span className="font-bold text-sm text-[#333333]">
                               {p.ten_san_pham || p.name}
                             </span>
                           </div>
                           <span className="font-black text-sm text-[#b22830]">
-                            {(Number(p.gia_ban) || 0).toLocaleString('vi-VN')}đ
-                          </span>
+                            {(Number(p.gia_ban) || 0).toLocaleString(uiLocale())}{ui("đ")}</span>
                         </div>
                       ))}
                     </div>
@@ -805,17 +752,17 @@ export default function OrderPage({
                           }}
                           className="flex flex-col rounded-xl border border-gray-100 p-3 hover:shadow-md cursor-pointer transition-all bg-white"
                         >
-                          <img
+                          <img loading="lazy" decoding="async"
                             src={p.hinh_anh_url || p.img}
                             alt={p.ten_san_pham || p.name}
                             className="h-28 w-full object-contain rounded-lg bg-[#fdfaf5] p-2"
                           />
+
                           <span className="font-bold text-xs text-[#333333] line-clamp-1 mt-2">
                             {p.ten_san_pham || p.name}
                           </span>
                           <span className="font-black text-sm text-[#b22830] mt-1">
-                            {(Number(p.gia_ban) || 0).toLocaleString('vi-VN')}đ
-                          </span>
+                            {(Number(p.gia_ban) || 0).toLocaleString(uiLocale())}{ui("đ")}</span>
                         </div>
                       ))}
                     </div>
@@ -837,21 +784,21 @@ export default function OrderPage({
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-6 ml-auto mr-2 lg:mr-8">
+        <div className="order-header-actions flex items-center gap-3 xl:gap-6 ml-auto mr-2 lg:mr-4">
           <div className="hidden md:flex items-center gap-2">
             <button
               type="button"
               onClick={() => i18n.changeLanguage('vi')}
-              className={`transition-all hover:scale-110 ${i18n.language === 'vi' ? 'ring-2 ring-[#b22830] opacity-100 rounded-[2px]' : 'opacity-40 hover:opacity-100'}`}
+              className={`transition-all hover:scale-110 ${currentLng === 'vi' ? 'ring-2 ring-[#b22830] opacity-100 rounded-[2px]' : 'opacity-40 hover:opacity-100'}`}
             >
-              <img src="https://flagcdn.com/w40/vn.png" alt="VN" className="h-[20px] rounded-[2px] shadow-sm w-auto block" />
+              <img loading="lazy" decoding="async" src="https://flagcdn.com/w40/vn.png" alt="VN" className="h-[20px] rounded-[2px] shadow-sm w-auto block" />
             </button>
             <button
               type="button"
               onClick={() => i18n.changeLanguage('en')}
-              className={`transition-all hover:scale-110 ${i18n.language === 'en' ? 'ring-2 ring-[#b22830] opacity-100 rounded-[2px]' : 'opacity-40 hover:opacity-100'}`}
+              className={`transition-all hover:scale-110 ${currentLng === 'en' ? 'ring-2 ring-[#b22830] opacity-100 rounded-[2px]' : 'opacity-40 hover:opacity-100'}`}
             >
-              <img src="https://flagcdn.com/w40/gb.png" alt="EN" className="h-[20px] rounded-[2px] shadow-sm w-auto block" />
+              <img loading="lazy" decoding="async" src="https://flagcdn.com/w40/gb.png" alt="EN" className="h-[20px] rounded-[2px] shadow-sm w-auto block" />
             </button>
           </div>
 
@@ -860,7 +807,7 @@ export default function OrderPage({
               <PhoneIcon className="w-[18px] h-[18px]" />
             </div>
             <div className="flex flex-col text-right">
-              <span className="text-[11px] font-bold text-gray-500 uppercase">Giao tận nơi</span>
+              <span className="text-[11px] font-bold text-gray-500 uppercase">{copy('Giao tận nơi', 'DELIVERY')}</span>
               <span className="text-[16px] font-black text-[#b22830] leading-none">1900 1755</span>
             </div>
           </div>
@@ -892,7 +839,7 @@ export default function OrderPage({
                 <div className="w-[240px] bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden">
                   <div className="px-4 py-3 border-b border-gray-100 bg-[#f9f4ec] flex items-center gap-2">
                     <UserIcon className="w-4 h-4 text-[#b22830]" />
-                    <span className="text-[14px] font-bold text-[#b22830]">Xin chào, {userName}</span>
+                    <span className="text-[14px] font-bold text-[#b22830]">{t('header.greeting', { name: userName })}</span>
                   </div>
                   <button onClick={onOpenProfile} className="w-full text-left px-4 py-2.5 text-[13px] font-medium text-gray-700 hover:bg-[#fcf8f2] hover:text-[#b22830] transition-colors flex items-center gap-2">
                     <UserIcon className="w-4 h-4" />
@@ -919,10 +866,10 @@ export default function OrderPage({
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             className="flex items-center gap-2 px-3 py-1.5 border border-[#b22830] rounded-md hover:bg-red-50 text-[#b22830] font-bold text-[13px] transition-all bg-white h-[38px] cursor-pointer shadow-2xs group"
-            title="Tra cứu đơn hàng"
+            title={t('header.tracking')}
           >
             <TruckIcon className="w-4 h-4 text-[#b22830] group-hover:scale-110 transition-transform" />
-            <span className="hidden sm:inline">Tra cứu đơn</span>
+            <span className="hidden sm:inline">{t('header.trackingShort')}</span>
           </button>
 
           <button
@@ -930,7 +877,7 @@ export default function OrderPage({
             className="flex items-center gap-3 px-4 py-1.5 border border-[#b22830] rounded-md hover:bg-red-50 transition-colors bg-white h-[38px] cursor-pointer"
           >
             <ShoppingCartIcon className="w-5 h-5 text-[#b22830]" />
-            <span className="text-[14px] font-bold text-[#333333] mr-1">{t('header.cart')}</span>
+            <span className="hidden sm:inline text-[14px] font-bold text-[#333333] mr-1">{t('header.cart')}</span>
             <span className="bg-[#f3f4f6] text-[#b22830] text-[13px] font-bold px-2 py-0.5 rounded-[4px] min-w-[24px] text-center border border-gray-200">
               {cartCount}
             </span>
@@ -961,20 +908,20 @@ export default function OrderPage({
             className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity bg-transparent border-none p-0 cursor-pointer font-bold"
           >
             <TruckIcon className="w-4 h-4 text-white" />
-            <span className="text-[13px]">Tra cứu đơn hàng</span>
+            <span className="text-[13px]">{t('header.tracking')}</span>
           </button>
 
           <button type="button" onClick={() => onNavigate?.('chinh-sach-dat-hang')} className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity bg-transparent border-none p-0 cursor-pointer">
-            <img src="/hc-assets/icon_chinhsach.png" alt="" className="w-5 h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+            <img loading="lazy" decoding="async" src="/hc-assets/icon_chinhsach.png" alt="" className="w-5 h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
             <span className="text-[13px] font-medium">{t('order.returnPolicy')}</span>
           </button>
           <button type="button" onClick={() => onNavigate?.('lien-he')} className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity bg-transparent border-none p-0 cursor-pointer">
-            <img src="/hc-assets/icon_lienhe.png" alt="" className="w-5 h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+            <img loading="lazy" decoding="async" src="/hc-assets/icon_lienhe.png" alt="" className="w-5 h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
             <span className="text-[13px] font-medium">{t('order.contact')}</span>
           </button>
           <a href="#" className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity hidden sm:flex">
-            <img src="/hc-assets/icon_bank.png" alt="" className="w-5 h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-            <span className="text-[13px] font-medium">Bankrista Thịnh Vượng</span>
+            <img loading="lazy" decoding="async" src="/hc-assets/icon_bank.png" alt="" className="w-5 h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+            <span className="text-[13px] font-medium">{ui("Bankrista Thịnh Vượng")}</span>
           </a>
         </div>
       </div>
@@ -1020,22 +967,22 @@ export default function OrderPage({
                           FLASH SALE
                           <span className="text-[#f5a623]">⚡⚡</span>
                         </h2>
-                        <p className="text-gray-500 text-[13px] mt-1">Sản phẩm sẽ trở về giá gốc khi hết giờ</p>
+                        <p className="text-gray-500 text-[13px] mt-1">{copy('Sản phẩm sẽ trở về giá gốc khi hết giờ', 'Prices return to normal when the offer ends')}</p>
                       </div>
                       <div className="flex gap-2.5 md:ml-6 items-center">
                         <div className="flex flex-col items-center justify-center w-10 h-10 border border-[#b22830] rounded-full text-[#b22830] bg-white">
                           <span className="text-sm font-bold leading-none">{String(timeLeft.hours).padStart(2, '0')}</span>
-                          <span className="text-[8px] font-bold">Giờ</span>
+                          <span className="text-[8px] font-bold">{copy('Giờ', 'Hours')}</span>
                         </div>
                         <span className="text-[#b22830] font-bold mb-1">:</span>
                         <div className="flex flex-col items-center justify-center w-10 h-10 border border-[#b22830] rounded-full text-[#b22830] bg-white">
                           <span className="text-sm font-bold leading-none">{String(timeLeft.minutes).padStart(2, '0')}</span>
-                          <span className="text-[8px] font-bold">Phút</span>
+                          <span className="text-[8px] font-bold">{copy('Phút', 'Minutes')}</span>
                         </div>
                         <span className="text-[#b22830] font-bold mb-1">:</span>
                         <div className="flex flex-col items-center justify-center w-10 h-10 border border-[#b22830] rounded-full text-[#b22830] bg-white">
                           <span className="text-sm font-bold leading-none">{String(timeLeft.seconds).padStart(2, '0')}</span>
-                          <span className="text-[8px] font-bold">Giây</span>
+                          <span className="text-[8px] font-bold">{copy('Giây', 'Seconds')}</span>
                         </div>
                       </div>
                     </div>
@@ -1056,7 +1003,7 @@ export default function OrderPage({
                             {item.tag}
                           </div>
                           <div className="relative aspect-square w-full overflow-hidden flex items-center justify-center mb-4">
-                            <img
+                            <img loading="lazy" decoding="async"
                               src={item.img}
                               alt={item.name}
                               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -1080,7 +1027,7 @@ export default function OrderPage({
                                   style={{ width: `${(item.sold / item.total) * 100}%` }}
                                 ></div>
                                 <span className="relative z-10 text-[10px] text-white font-bold whitespace-nowrap">
-                                  {item.sold} sản phẩm đã bán
+                                  {item.sold} {copy('sản phẩm đã bán', 'sold')}
                                 </span>
                               </div>
                             </div>
@@ -1134,7 +1081,7 @@ export default function OrderPage({
                             <SparklesIcon className="w-3.5 h-3.5 text-[#c41230]" />
                             SMART RECOMMENDATION
                           </div>
-                          <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-gray-900 font-sans">
+                          <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-gray-900 font-sans">
                             {t('order.top5Favs')}
                           </h2>
                           <p className="mt-1 text-xs md:text-sm font-medium text-gray-500">
@@ -1162,20 +1109,20 @@ export default function OrderPage({
                             >
                               {/* Product Image Container */}
                               <div className="relative aspect-[4/3] w-full overflow-hidden flex items-center justify-center bg-[#f5f0e1]">
-                                <img
+                                <img loading="lazy" decoding="async"
                                   src={product.hinh_anh_url || product.img || '/hc-assets/caphe-1.png'}
                                   alt={product.ten_san_pham || product.name}
                                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 mix-blend-multiply"
                                 />
+                                <button type="button" aria-label={`Xem nhanh ${product.ten_san_pham || product.name}`} onClick={event => { event.stopPropagation(); handleProductClick(product, true); }} className="product-quick-view"><MagnifyingGlassIcon className="w-4 h-4" /></button>
 
                                 {/* Badges Overlay */}
                                 <div className="absolute top-2 left-2 flex flex-col gap-1 z-10 pointer-events-none">
                                   <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-[#c41230] to-amber-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
-                                    <SparklesIcon className="w-3 h-3 text-amber-200" /> Gợi ý AI
-                                  </span>
+                                    <SparklesIcon className="w-3 h-3 text-amber-200" />{ui(" Gợi ý AI")}</span>
                                   {product.la_hot && (
                                     <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-orange-500 to-amber-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
-                                      Bán chạy tháng này
+                                      {copy('Bán chạy tháng này', 'Best sellers')}
                                     </span>
                                   )}
                                 </div>
@@ -1193,12 +1140,10 @@ export default function OrderPage({
                                 <div className="mt-auto pt-1 flex items-center justify-between">
                                   <div className="flex flex-col">
                                     <span className="text-[15px] font-semibold text-[#b22830] leading-none">
-                                      {Number(product.gia_ban || 39000).toLocaleString('vi-VN')}đ
-                                    </span>
+                                      {Number(product.gia_ban || 39000).toLocaleString(uiLocale())}{ui("đ")}</span>
                                     {product.dang_giam_gia && (
                                       <span className="text-[12px] text-gray-400 line-through mt-1">
-                                        {Number(product.gia_niem_yet).toLocaleString('vi-VN')}đ
-                                      </span>
+                                        {Number(product.gia_niem_yet).toLocaleString(uiLocale())}{ui("đ")}</span>
                                     )}
                                   </div>
                                 </div>
@@ -1206,12 +1151,13 @@ export default function OrderPage({
                                 {/* Absolute positioned + button as in Highlands */}
                                 <button
                                   type="button"
-                                  onClick={(e) => {
+                                  aria-label={ui("Chọn tùy chọn {{v0}}", {v0:product.ten_san_pham || product.name})}
+                                    onClick={(e) => {
                                     e.stopPropagation();
-                                    onQuickAdd?.(product);
+                                    handleProductClick(product, true);
                                   }}
                                   className="absolute bottom-3 right-3 w-6 h-6 rounded-full bg-[#b22830] text-white flex items-center justify-center hover:bg-[#8e1c23] hover:scale-110 active:scale-95 transition-all shadow-sm cursor-pointer z-10"
-                                  title="Thêm vào giỏ"
+                                  title={copy('Thêm vào giỏ', 'Add to cart')}
                                 >
                                   <span className="text-sm font-bold leading-none">+</span>
                                 </button>
@@ -1238,7 +1184,7 @@ export default function OrderPage({
                           : 'bg-[#f5f5f5] text-[#333333] hover:bg-gray-200'
                         }`}
                     >
-                      Tất cả
+                      {copy('Tất cả', 'All')}
                     </button>
                     {parentCats.map((parent, idx) => {
                       const iconUrl = MENU_ICONS[idx % MENU_ICONS.length];
@@ -1276,9 +1222,9 @@ export default function OrderPage({
                                   <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                                 </svg>
                               </div>
-                              <h3 className="text-xl font-bold text-gray-900 mb-2">Không tìm thấy sản phẩm</h3>
+                              <h3 className="text-xl font-bold text-gray-900 mb-2">{copy('Không tìm thấy sản phẩm', 'No products found')}</h3>
                               <p className="text-gray-500 text-sm max-w-sm text-center">
-                                Không có sản phẩm nào phù hợp với tìm kiếm hoặc bộ lọc của bạn trong danh mục này.
+                                {copy('Không có sản phẩm nào phù hợp với tìm kiếm hoặc bộ lọc của bạn trong danh mục này.', 'No products match your search or filters in this category.')}
                               </p>
                             </div>
                           );
@@ -1304,32 +1250,32 @@ export default function OrderPage({
                               {viewCategory !== 'all' ? (
                                 <div className="mb-6 pt-2">
                                   <div className="text-[13px] text-gray-500 mb-8 uppercase tracking-wider font-semibold">
-                                    <span className="cursor-pointer hover:text-[#b22830] transition-colors" onClick={() => setViewCategory('all')}>Trang chủ</span>
+                                    <span className="cursor-pointer hover:text-[#b22830] transition-colors" onClick={() => setViewCategory('all')}>{copy('Trang chủ', 'Home')}</span>
                                     <span className="mx-2">/</span>
-                                    <span className="text-[#333333] font-bold">{section.label}</span>
+                                    <span className="text-[#333333] font-bold">{tCategory(section.label)}</span>
                                   </div>
                                   <h1 className="text-3xl md:text-[32px] font-normal text-[#333333] uppercase mb-8">
-                                    {section.label}
+                                    {tCategory(section.label)}
                                   </h1>
                                   <div className="flex flex-wrap items-center gap-4 md:gap-6 text-[13px] font-semibold text-gray-500 mb-8 pb-4">
-                                    <span className="text-gray-900 font-bold mr-2">Sắp xếp:</span>
-                                    <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'name-asc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('name-asc')}>Tên A → Z</button>
-                                    <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'name-desc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('name-desc')}>Tên Z → A</button>
-                                    <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'price-asc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('price-asc')}>Giá tăng dần</button>
-                                    <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'price-desc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('price-desc')}>Giá giảm dần</button>
-                                    <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'default' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('default')}>Hàng mới</button>
+                                    <span className="text-gray-900 font-bold mr-2">{copy('Sắp xếp:', 'Sort by:')}</span>
+                                    <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'name-asc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('name-asc')}>{copy('Tên A → Z', 'Name A → Z')}</button>
+                                    <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'name-desc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('name-desc')}>{copy('Tên Z → A', 'Name Z → A')}</button>
+                                    <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'price-asc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('price-asc')}>{copy('Giá tăng dần', 'Price: low to high')}</button>
+                                    <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'price-desc' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('price-desc')}>{copy('Giá giảm dần', 'Price: high to low')}</button>
+                                    <button type="button" className={`hover:text-[#b22830] transition-colors cursor-pointer ${sortByOrder === 'default' ? 'text-[#b22830]' : ''}`} onClick={() => setSortByOrder('default')}>{ui("Hàng mới")}</button>
                                   </div>
                                 </div>
                               ) : (
                                 <div className="flex items-center justify-between border-b-2 border-gray-100 pb-3.5 mb-6 pt-4">
                                   <div className="flex items-center gap-3">
                                     <div className="w-2.5 h-7 rounded-full bg-[#b22830] shrink-0 shadow-2xs"></div>
-                                    <h3 className="text-xl md:text-2xl font-black text-gray-900 uppercase font-sans tracking-wide">
-                                      {section.label}
+                                    <h3 className="text-lg md:text-xl font-semibold text-gray-900 font-sans tracking-wide">
+                                      {tCategory(section.label)}
                                     </h3>
                                   </div>
                                   <span className="text-xs font-extrabold text-[#b22830] bg-red-50 px-3.5 py-1 rounded-full border border-red-100 shadow-2xs">
-                                    {sortedItems.length} món
+                                    {sortedItems.length} {copy('món', 'items')}
                                   </span>
                                 </div>
                               )}
@@ -1345,22 +1291,23 @@ export default function OrderPage({
                                     >
                                       {/* Product Image Container */}
                                       <div className="relative aspect-[4/3] w-full overflow-hidden flex items-center justify-center bg-[#f5f0e1]">
-                                        <img
+                                        <img loading="lazy" decoding="async"
                                           src={p.hinh_anh_url || '/hc-assets/caphe-1.png'}
                                           alt={p.ten_san_pham || p.name}
                                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 mix-blend-multiply"
                                         />
+                                <button type="button" aria-label={`Xem nhanh ${p.ten_san_pham || p.name}`} onClick={event => { event.stopPropagation(); handleProductClick(p, true); }} className="product-quick-view"><MagnifyingGlassIcon className="w-4 h-4" /></button>
 
                                         {/* Badges Overlay */}
                                         <div className="absolute top-2 left-2 flex flex-col gap-1 z-10 pointer-events-none">
                                           {p.la_hot && (
                                             <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-orange-500 to-amber-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
-                                              Bán chạy tháng này
+                                              {copy('Bán chạy tháng này', 'Best sellers')}
                                             </span>
                                           )}
                                           {p.la_moi && (
                                             <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-emerald-600 to-teal-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
-                                              Món mới
+                                              {copy('Món mới', 'New')}
                                             </span>
                                           )}
                                         </div>
@@ -1378,12 +1325,10 @@ export default function OrderPage({
                                         <div className="mt-auto pt-1 flex items-center justify-between">
                                           <div className="flex flex-col">
                                             <span className="text-[15px] font-semibold text-[#b22830] leading-none">
-                                              {Number(p.gia_ban || 39000).toLocaleString('vi-VN')}đ
-                                            </span>
+                                              {Number(p.gia_ban || 39000).toLocaleString(uiLocale())}{ui("đ")}</span>
                                             {p.dang_giam_gia && (
                                               <span className="text-[12px] text-gray-400 line-through mt-1">
-                                                {Number(p.gia_niem_yet).toLocaleString('vi-VN')}đ
-                                              </span>
+                                                {Number(p.gia_niem_yet).toLocaleString(uiLocale())}{ui("đ")}</span>
                                             )}
                                           </div>
                                         </div>
@@ -1391,12 +1336,13 @@ export default function OrderPage({
                                         {/* Absolute positioned + button as in Highlands */}
                                         <button
                                           type="button"
-                                          onClick={(e) => {
+                                          aria-label={ui("Chọn tùy chọn {{v0}}", {v0:p.ten_san_pham || p.name})}
+                                    onClick={(e) => {
                                             e.stopPropagation();
-                                            onQuickAdd?.(p);
+                                            handleProductClick(p, true);
                                           }}
                                           className="absolute bottom-3 right-3 w-6 h-6 rounded-full bg-[#b22830] text-white flex items-center justify-center hover:bg-[#8e1c23] hover:scale-110 active:scale-95 transition-all shadow-sm cursor-pointer z-10"
-                                          title="Thêm vào giỏ"
+                                          title={copy('Thêm vào giỏ', 'Add to cart')}
                                         >
                                           <span className="text-sm font-bold leading-none">+</span>
                                         </button>
@@ -1416,7 +1362,7 @@ export default function OrderPage({
                                     }}
                                     className="px-6 py-2.5 rounded-full border-2 border-[#b22830] text-[#b22830] font-bold text-[14px] hover:bg-[#b22830] hover:text-white transition-all duration-300 cursor-pointer flex items-center gap-2"
                                   >
-                                    Xem tất cả {sortedItems.length} món
+                                    {copy('Xem tất cả', 'View all')} {sortedItems.length} {copy('món', 'items')}
                                   </button>
                                 </div>
                               )}
@@ -1430,7 +1376,7 @@ export default function OrderPage({
                     {viewCategory === 'all' && recentProducts.length > 0 && (
                       <div className="mt-16 mb-8 w-full border-t border-gray-100 pt-10">
                         <h2 className="text-[22px] font-bold text-gray-900 mb-6 font-sans">
-                          Sản phẩm đã xem
+                          {copy('Sản phẩm đã xem', 'Recently viewed')}
                         </h2>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-8">
                           {recentProducts.map((p) => (
@@ -1441,11 +1387,12 @@ export default function OrderPage({
                             >
                               {/* Product Image Container */}
                               <div className="relative aspect-[4/3] w-full overflow-hidden flex items-center justify-center bg-[#f5f0e1]">
-                                <img
+                                <img loading="lazy" decoding="async"
                                   src={p.hinh_anh_url || p.img || '/hc-assets/caphe-1.png'}
                                   alt={p.ten_san_pham || p.name}
                                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 mix-blend-multiply"
                                 />
+                                <button type="button" aria-label={`Xem nhanh ${p.ten_san_pham || p.name}`} onClick={event => { event.stopPropagation(); handleProductClick(p, true); }} className="product-quick-view"><MagnifyingGlassIcon className="w-4 h-4" /></button>
                               </div>
 
                               {/* Product Info */}
@@ -1459,24 +1406,23 @@ export default function OrderPage({
                                 <div className="mt-auto pt-1 flex items-center justify-between">
                                   <div className="flex flex-col">
                                     <span className="text-[15px] font-semibold text-[#b22830] leading-none">
-                                      {Number(p.gia_ban || 39000).toLocaleString('vi-VN')}đ
-                                    </span>
+                                      {Number(p.gia_ban || 39000).toLocaleString(uiLocale())}{ui("đ")}</span>
                                     {p.dang_giam_gia && (
                                       <span className="text-[12px] text-gray-400 line-through mt-1">
-                                        {Number(p.gia_niem_yet).toLocaleString('vi-VN')}đ
-                                      </span>
+                                        {Number(p.gia_niem_yet).toLocaleString(uiLocale())}{ui("đ")}</span>
                                     )}
                                   </div>
                                 </div>
 
                                 <button
                                   type="button"
-                                  onClick={(e) => {
+                                  aria-label={ui("Chọn tùy chọn {{v0}}", {v0:p.ten_san_pham || p.name})}
+                                    onClick={(e) => {
                                     e.stopPropagation();
-                                    onQuickAdd?.(p);
+                                    handleProductClick(p, true);
                                   }}
                                   className="absolute bottom-3 right-3 w-6 h-6 rounded-full bg-[#b22830] text-white flex items-center justify-center hover:bg-[#8e1c23] hover:scale-110 active:scale-95 transition-all shadow-sm cursor-pointer z-10"
-                                  title="Thêm vào giỏ"
+                                  title={copy('Thêm vào giỏ', 'Add to cart')}
                                 >
                                   <span className="text-sm font-bold leading-none">+</span>
                                 </button>
@@ -1511,7 +1457,7 @@ export default function OrderPage({
         <QuickViewModal
           product={quickViewProduct}
           onClose={() => setQuickViewProduct(null)}
-          onAddToCart={onQuickAdd}
+          onAddToCart={onAddToCart}
         />
       )}
     </div>

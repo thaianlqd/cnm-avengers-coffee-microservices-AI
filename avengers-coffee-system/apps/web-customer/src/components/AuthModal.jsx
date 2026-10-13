@@ -1,3 +1,4 @@
+import { uiText as ui, useUiLanguage, uiLocale } from "../lib/uiText";
 import React, { useRef, useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useMutation } from '@tanstack/react-query';
@@ -15,6 +16,7 @@ function AuthModalInner({
   canUseFacebook,
   canUseRecaptcha,
 }) {
+  useUiLanguage();
   const recaptchaRef = useRef(null);
   const [isLoginView, setIsLoginView] = useState(true);
   const [showGooglePanel, setShowGooglePanel] = useState(false);
@@ -115,7 +117,7 @@ function AuthModalInner({
               return;
             }
 
-            alert('Đăng ký thành công! Mời bạn đăng nhập.');
+            alert(ui("Đăng ký thành công! Mời bạn đăng nhập."));
             setIsLoginView(true);
             setFormData({ email: '', password: '', hoTen: '', soDienThoai: '' });
             resetSocialState();
@@ -345,14 +347,14 @@ function AuthModalInner({
             </div>
             <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#d06a2e]">The Avengers House</p>
             <h2 className="mt-2 text-2xl font-black uppercase italic tracking-tighter text-[#1f1a17]">
-              {showForgotView ? 'Khôi phục mật khẩu' : isLoginView ? 'Chào mừng bạn quay lại!' : 'Gia nhập Avengers House'}
+              {showForgotView ? ui("Khôi phục mật khẩu") : isLoginView ? ui("Chào mừng bạn quay lại!") : ui("Gia nhập Avengers House")}
             </h2>
             <p className="mt-2 text-sm font-semibold text-[#867b73]">
               {showForgotView
-                ? 'Nhập email để nhận OTP và đặt mật khẩu mới'
+                ? ui("Nhập email để nhận OTP và đặt mật khẩu mới")
                 : isLoginView
-                  ? 'Đăng nhập để nhận ưu đãi đặc biệt'
-                  : 'Đăng ký để tích điểm đổi quà'}
+                  ? ui("Đăng nhập để nhận ưu đãi đặc biệt")
+                  : ui("Đăng ký để tích điểm đổi quà")}
             </p>
           </div>
 
@@ -361,7 +363,7 @@ function AuthModalInner({
               <form onSubmit={forgotStep === 'REQUEST' ? handleForgotRequest : handleForgotReset} className="space-y-4">
                 <input
                   type="text"
-                  placeholder="Email hoặc tên đăng nhập"
+                  placeholder={ui("Email hoặc tên đăng nhập")}
                   required
                   value={forgotForm.email}
                   className="w-full rounded-2xl border-none bg-gray-50 px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-tch-orange"
@@ -372,7 +374,7 @@ function AuthModalInner({
                   <>
                     <input
                       type="text"
-                      placeholder="Mã OTP (6 số)"
+                      placeholder={ui("Mã OTP (6 số)")}
                       required
                       value={forgotForm.otp}
                       maxLength={6}
@@ -381,7 +383,7 @@ function AuthModalInner({
                     />
                     <input
                       type="password"
-                      placeholder="Mật khẩu mới"
+                      placeholder={ui("Mật khẩu mới")}
                       required
                       value={forgotForm.newPassword}
                       className="w-full rounded-2xl border-none bg-gray-50 px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-tch-orange"
@@ -389,7 +391,7 @@ function AuthModalInner({
                     />
                     <input
                       type="password"
-                      placeholder="Nhập lại mật khẩu mới"
+                      placeholder={ui("Nhập lại mật khẩu mới")}
                       required
                       value={forgotForm.confirmPassword}
                       className="w-full rounded-2xl border-none bg-gray-50 px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-tch-orange"
@@ -399,17 +401,17 @@ function AuthModalInner({
                 ) : null}
 
                 {forgotInfo ? <p className="text-center text-xs font-bold text-emerald-600">{forgotInfo}</p> : null}
-                {error ? <p className="text-center text-xs font-bold text-red-500">{error}</p> : null}
+                {error ? <p className="text-center text-xs font-bold text-red-500">{ui(error)}</p> : null}
 
                 <button
                   disabled={forgotRequestMutation.isPending || forgotResetMutation.isPending}
                   className="w-full rounded-2xl bg-tch-orange py-4 font-black uppercase tracking-widest text-white shadow-lg shadow-orange-200 transition-all hover:bg-orange-600 disabled:bg-gray-300"
                 >
                   {forgotRequestMutation.isPending || forgotResetMutation.isPending
-                    ? 'Đang xử lý...'
+                    ? ui("Đang xử lý...")
                     : forgotStep === 'REQUEST'
-                      ? 'Gửi mã OTP'
-                      : 'Xác nhận đặt lại mật khẩu'}
+                      ? ui("Gửi mã OTP")
+                      : ui("Xác nhận đặt lại mật khẩu")}
                 </button>
               </form>
 
@@ -424,9 +426,7 @@ function AuthModalInner({
                     setError('');
                     setForgotForm({ email: '', otp: '', newPassword: '', confirmPassword: '' });
                   }}
-                >
-                  Quay lại đăng nhập
-                </button>
+                >{ui("Quay lại đăng nhập")}</button>
                 {forgotStep === 'RESET' ? (
                   <button
                     type="button"
@@ -437,9 +437,7 @@ function AuthModalInner({
                       setForgotInfo('');
                       setForgotForm((prev) => ({ ...prev, otp: '', newPassword: '', confirmPassword: '' }));
                     }}
-                  >
-                    Gửi lại OTP
-                  </button>
+                  >{ui("Gửi lại OTP")}</button>
                 ) : null}
               </div>
             </>
@@ -463,7 +461,7 @@ function AuthModalInner({
                     <path fill="#4A90E2" d="M12 21.6c2.5 0 4.7-.8 6.2-2.2l-2.9-2.4c-.8.6-1.9 1-3.3 1-3.9 0-5.3-2.6-5.5-3.9l-3.2 2.5c1.7 3.2 5 5 8.7 5z"/>
                     <path fill="#FBBC05" d="M2.4 16.4l3.2-2.5c-.2-.5-.3-1.1-.3-1.9s.1-1.4.3-2L2.4 7.6C1.7 9 1.2 10.5 1.2 12s.5 3 1.2 4.4z"/>
                   </svg>
-                  <span>{isLoginView ? 'Đăng nhập với Google' : 'Đăng ký nhanh với Google'}</span>
+                  <span>{isLoginView ? ui("Đăng nhập với Google") : ui("Đăng ký nhanh với Google")}</span>
                 </button>
               ) : (
                 <button
@@ -477,7 +475,7 @@ function AuthModalInner({
                     <path fill="#4A90E2" d="M12 21.6c2.5 0 4.7-.8 6.2-2.2l-2.9-2.4c-.8.6-1.9 1-3.3 1-3.9 0-5.3-2.6-5.5-3.9l-3.2 2.5c1.7 3.2 5 5 8.7 5z"/>
                     <path fill="#FBBC05" d="M2.4 16.4l3.2-2.5c-.2-.5-.3-1.1-.3-1.9s.1-1.4.3-2L2.4 7.6C1.7 9 1.2 10.5 1.2 12s.5 3 1.2 4.4z"/>
                   </svg>
-                  <span>{isLoginView ? 'Đăng nhập với Google' : 'Đăng ký nhanh với Google'}</span>
+                  <span>{isLoginView ? ui("Đăng nhập với Google") : ui("Đăng ký nhanh với Google")}</span>
                 </button>
               )}
 
@@ -489,7 +487,7 @@ function AuthModalInner({
                   className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#cdd7f4] bg-[#edf3ff] px-4 py-3 text-sm font-black text-[#244f9a] transition-all hover:bg-[#e4eeff] disabled:opacity-70"
                 >
                   <span aria-hidden="true" style={{ fontSize: '1rem', fontWeight: 900 }}>f</span>
-                  <span>{facebookPending ? 'Đang kết nối Facebook...' : 'Đăng nhập với Facebook'}</span>
+                  <span>{facebookPending ? ui("Đang kết nối Facebook...") : ui("Đăng nhập với Facebook")}</span>
                 </button>
               )}
             </div>
@@ -497,13 +495,12 @@ function AuthModalInner({
 
           {canUseGoogle && showGooglePanel && (
             <div className="mb-5 rounded-2xl border border-[#eadfcd] bg-[#fff8ef] p-4">
-              <p className="text-center text-[11px] font-black uppercase tracking-[0.18em] text-[#d6802f]">
-                Bước 1: Xác minh captcha
-              </p>
+              <p className="text-center text-[11px] font-black uppercase tracking-[0.18em] text-[#d6802f]">{ui("Bước 1: Xác minh captcha")}</p>
 
               {canUseRecaptcha ? (
                 <div className="mt-3 flex justify-center">
                   <ReCAPTCHA
+                            hl={uiLocale().startsWith('en') ? 'en' : 'vi'}
                     ref={recaptchaRef}
                     sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
                     onChange={async (token) => {
@@ -534,14 +531,10 @@ function AuthModalInner({
                   />
                 </div>
               ) : (
-                <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
-                  Captcha chưa được cấu hình. Vui lòng thêm VITE_RECAPTCHA_SITE_KEY.
-                </p>
+                <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{ui("Captcha chưa được cấu hình. Vui lòng thêm VITE_RECAPTCHA_SITE_KEY.")}</p>
               )}
 
-              <p className="mt-4 text-center text-[11px] font-black uppercase tracking-[0.18em] text-[#8b7f72]">
-                Bước 2: Chọn tài khoản Google
-              </p>
+              <p className="mt-4 text-center text-[11px] font-black uppercase tracking-[0.18em] text-[#8b7f72]">{ui("Bước 2: Chọn tài khoản Google")}</p>
               <div className="mt-2 flex justify-center">
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
@@ -549,7 +542,7 @@ function AuthModalInner({
                   theme="outline"
                   size="large"
                   width="320"
-                  locale="vi"
+                  locale={uiLocale().startsWith('en') ? 'en' : 'vi'}
                   auto_select={false}
                   use_fedcm_for_prompt={false}
                 />
@@ -571,16 +564,12 @@ function AuthModalInner({
                   setError('');
                 }}
                 className="mt-3 w-full text-xs font-black uppercase text-[#7f7670] hover:text-[#312b27]"
-              >
-                Ẩn khung Google
-              </button>
+              >{ui("Ẩn khung Google")}</button>
             </div>
           )}
 
           {!canUseGoogle && !canUseFacebook && (
-            <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-700">
-              Đăng nhập mạng xã hội chưa được cấu hình. Vui lòng thêm Google/Facebook app key.
-            </p>
+            <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-700">{ui("Đăng nhập mạng xã hội chưa được cấu hình. Vui lòng thêm Google/Facebook app key.")}</p>
           )}
 
           {(canUseGoogle || canUseFacebook) && (
@@ -596,7 +585,7 @@ function AuthModalInner({
               <input
                 type="text"
                 name="hoTen"
-                placeholder="Họ và tên"
+                placeholder={ui("Họ và tên")}
                 required
                 className="w-full rounded-2xl border-none bg-gray-50 px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-tch-orange"
                 onChange={(e) => setFormData({ ...formData, hoTen: e.target.value })}
@@ -605,7 +594,7 @@ function AuthModalInner({
             <input
               type="email"
               name="email"
-              placeholder="Email của bạn"
+              placeholder={ui("Email của bạn")}
               required
               className="w-full rounded-2xl border-none bg-gray-50 px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-tch-orange"
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -613,23 +602,23 @@ function AuthModalInner({
             <input
               type="password"
               name="password"
-              placeholder="Mật khẩu"
+              placeholder={ui("Mật khẩu")}
               required
               className="w-full rounded-2xl border-none bg-gray-50 px-5 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-tch-orange"
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             />
 
-            {error && <p className="text-center text-xs font-bold text-red-500">{error}</p>}
+            {error && <p className="text-center text-xs font-bold text-red-500">{ui(error)}</p>}
 
             <button
               disabled={authMutation.isPending}
               className="w-full rounded-2xl bg-tch-orange py-4 font-black uppercase tracking-widest text-white shadow-lg shadow-orange-200 transition-all hover:bg-orange-600 disabled:bg-gray-300"
             >
               {authMutation.isPending
-                ? 'Đang xử lý...'
+                ? ui("Đang xử lý...")
                 : isLoginView
-                  ? 'Đăng nhập'
-                  : 'Đăng ký ngay'}
+                  ? ui("Đăng nhập")
+                  : ui("Đăng ký ngay")}
             </button>
 
             {isLoginView ? (
@@ -643,9 +632,7 @@ function AuthModalInner({
                   setForgotForm((prev) => ({ ...prev, email: formData.email || '' }));
                 }}
                 className="w-full text-center text-xs font-black uppercase text-[#8e7f76] hover:text-tch-orange"
-              >
-                Quên mật khẩu?
-              </button>
+              >{ui("Quên mật khẩu?")}</button>
             ) : null}
           </form>
 
@@ -659,7 +646,7 @@ function AuthModalInner({
               }}
               className="text-xs font-black uppercase text-gray-400 transition-colors hover:text-tch-orange"
             >
-              {isLoginView ? 'Bạn chưa có tài khoản? Đăng ký' : 'Bạn đã có tài khoản? Đăng nhập'}
+              {isLoginView ? ui("Bạn chưa có tài khoản? Đăng ký") : ui("Bạn đã có tài khoản? Đăng nhập")}
             </button>
           </div>
           </>
@@ -671,6 +658,7 @@ function AuthModalInner({
 }
 
 function QuickGoogleButton({ onLoginSuccess, resetSocialState, onClose, setError }) {
+  useUiLanguage();
   const GOOGLE_CLIENT_ID = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
   const canUseGoogle = /\.apps\.googleusercontent\.com$/.test(GOOGLE_CLIENT_ID);
 
@@ -705,9 +693,7 @@ function QuickGoogleButton({ onLoginSuccess, resetSocialState, onClose, setError
         handleQuickGoogleLogin();
       }}
       className="rounded-full border border-[#eadfcd] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#8f6a50] hover:bg-[#fff7ef]"
-    >
-      Dùng Google fallback
-    </button>
+    >{ui("Dùng Google fallback")}</button>
   );
 }
 
@@ -717,6 +703,7 @@ export default function AuthModal({
   initialMode = 'login',
   onSuccess,
 }) {
+  useUiLanguage();
   const rawGoogleId = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
   const GOOGLE_CLIENT_ID = rawGoogleId.replace(/^["']|["']$/g, '');
   const RECAPTCHA_SITE_KEY = String(import.meta.env.VITE_RECAPTCHA_SITE_KEY || '').trim();
@@ -730,7 +717,8 @@ export default function AuthModal({
     <AuthModalInner
       isOpen={isOpen}
       onClose={onClose}
-      onLoginSuccess={onLoginSuccess}
+      onLoginSuccess={onSuccess}
+      initialMode={initialMode}
       canUseGoogle={canUseGoogle}
       canUseFacebook={canUseFacebook}
       canUseRecaptcha={canUseRecaptcha}

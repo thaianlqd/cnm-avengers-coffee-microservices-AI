@@ -1,16 +1,19 @@
+import Alert from '../lib/alert'
+import ScreenHeader from '../components/ScreenHeader'
+import Modal from '../components/AppModal'
 import React, { useState, useRef } from 'react'
 import {
+  Platform,
   View,
   Text,
   StyleSheet,
   Pressable,
-  Alert,
+
   ScrollView,
   ActivityIndicator,
   Animated,
   Easing,
   Dimensions,
-  Modal,
 } from 'react-native'
 import Svg, { G, Path, Circle, Text as SvgText } from 'react-native-svg'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -27,16 +30,7 @@ const FRAME_SIZE = Math.min(SCREEN_WIDTH - 32, 330)
 const INNER_SIZE = FRAME_SIZE - 24
 const SVG_RADIUS = INNER_SIZE / 2
 
-const REFERENCE_8_PRIZES = [
-  { id: '1', ten: '+50 ĐIỂM', icon: '🎁', mau: '#FF6B6B' },
-  { id: '2', ten: '+100 ĐIỂM', icon: '⭐', mau: '#4ECDC4' },
-  { id: '3', ten: 'VOUCHER 10K', icon: '🎫', mau: '#45B7D1' },
-  { id: '4', ten: '+200 ĐIỂM', icon: '🎁', mau: '#96CEB4' },
-  { id: '5', ten: 'VOUCHER 20K', icon: '🏷️', mau: '#FFEAA7' },
-  { id: '6', ten: 'FREE TOPPING', icon: '🎁', mau: '#DDA0DD' },
-  { id: '7', ten: 'FREE PHIN SỮA ĐÁ', icon: '🎁', mau: '#FF9FF3' },
-  { id: '8', ten: 'VOUCHER 50K', icon: '🏆', mau: '#F8B500' },
-]
+const WHEEL_COLORS = ['#8d1f27', '#b22830', '#cf7379', '#95242c']
 
 function getSlicePath(cx, cy, r, startAngle, endAngle) {
   const rad1 = (startAngle - 90) * (Math.PI / 180)
@@ -68,9 +62,9 @@ function formatPrizeDisplayName(prize) {
 
 function RenderWheelIcon({ iconType, prizeName, x, y, rot }) {
   const str = String(iconType || '') + ' ' + String(prizeName || '')
-  
+
   let pathD = "M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.67C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1h-2.12l1.43-1.91c.17-.23.43-.37.69-.37zm-6 0c.26 0 .52.14.69.37L11.12 6H9c-.55 0-1-.45-1-1s.45-1 1-1zm11 15H4V8h16v11z"
-  
+
   if (str.includes('🎫') || str.toLowerCase().includes('voucher') || str.includes('TPL_5Z6')) {
     pathD = "M20 4H4c-1.1 0-1.99.9-1.99 2L2 16c0 1.1.9 2 2 2h16c1.1 0 2-.89 2-2V6c0-1.1-.9-2-2-2zm-1 9h-2v-2h2v2zm0-4h-2V9h2v2zm-4 4H5V9h10v6z"
   } else if (str.includes('🏷️') || str.toLowerCase().includes('tag')) {
@@ -100,7 +94,7 @@ export function LuckyWheelScreen() {
   const spinAnim = useRef(new Animated.Value(0)).current
   const currentRotationRef = useRef(0)
 
-  const { data: wheelData, isLoading: isPrizesLoading } = useQuery({
+  const { data: wheelData, isLoading: isPrizesLoading, isError: prizesError, refetch: retryPrizes } = useQuery({
     queryKey: ['luckyWheelPrizes'],
     queryFn: async () => {
       const response = await apiClient.get('/users/lucky-wheel/prizes')
@@ -120,19 +114,10 @@ export function LuckyWheelScreen() {
     staleTime: 10 * 1000,
   })
 
-  const rawPrizes = Array.isArray(wheelData?.giai_thuong) && wheelData.giai_thuong.length >= 8
-    ? wheelData.giai_thuong.slice(0, 8)
-    : REFERENCE_8_PRIZES
-
-  const prizes = rawPrizes.map((p, i) => ({
-    ...p,
-    mau: p.mau || REFERENCE_8_PRIZES[i % 8].mau,
-    icon: p.icon || REFERENCE_8_PRIZES[i % 8].icon,
-  }))
-
-  const cost = Number(wheelData?.chi_phi_quay || 100)
-  const diemKhaDung = Number(memData?.diem_kha_dung ?? user?.diem_kha_dung ?? 0)
-  const availableSpins = Math.floor(diemKhaDung / cost)
+  const prizes = (Array.isArray(wheelData?.giai_thuong) ? wheelData.giai_thuong : []).map((p, i) => ({ ...p, mau: p.mau || WHEEL_COLORS[i % WHEEL_COLORS.length] }))
+  const cost = Number(wheelData?.chi_phi_quay || 0)
+  const diemKhaDung = Number(memData?.diem_kha_dung ?? 0)
+  const availableSpins = cost > 0 ? Math.floor(diemKhaDung / cost) : 0
 
   const spinMutation = useMutation({
     mutationFn: async () => {
@@ -142,10 +127,11 @@ export function LuckyWheelScreen() {
     onSuccess: (data) => {
       const winnerId = data?.giai_thuong?.id || data?.id
       const winnerIndex = prizes.findIndex(p => String(p.id) === String(winnerId))
-      const idx = winnerIndex >= 0 ? winnerIndex : Math.floor(Math.random() * prizes.length)
+      if (winnerIndex < 0) { setIsSpinning(false); setPrizeResult(data); setShowResultModal(true); queryClient.invalidateQueries({ queryKey: ['luckyWheelPrizes'] }); return }
+      const idx = winnerIndex
 
       // Calculate rotation angle so winner lands precisely at 12 o'clock top pointer
-      const targetSegmentMid = (idx + 0.5) * 45
+      const targetSegmentMid = (idx + 0.5) * (360 / prizes.length)
       const extraRounds = 360 * 6
       const targetDeg = currentRotationRef.current + extraRounds + (360 - (targetSegmentMid % 360))
       currentRotationRef.current = targetDeg
@@ -155,7 +141,7 @@ export function LuckyWheelScreen() {
         toValue: targetDeg,
         duration: 5200,
         easing: Easing.bezier(0.1, 0.8, 0.1, 1),
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }).start(() => {
         setIsSpinning(false)
         setPrizeResult(data)
@@ -170,6 +156,7 @@ export function LuckyWheelScreen() {
   })
 
   const handleSpin = () => {
+    if (!prizes.length || cost <= 0) return
     if (!userId) {
       Alert.alert('Yêu cầu đăng nhập', 'Vui lòng đăng nhập tài khoản để quay thưởng.', [
         { text: 'Hủy', style: 'cancel' },
@@ -180,7 +167,7 @@ export function LuckyWheelScreen() {
     if (isSpinning) return
 
     if (diemKhaDung < cost) {
-      Alert.alert('Chưa đủ điểm', `Bạn cần tối thiểu ${cost} điểm khả dụng để quay. Hiện tại bạn có ${diemKhaDung.toLocaleString('vi-VN')} điểm.`)
+      Alert.alert('Chưa đủ điểm', `Bạn cần tối thiểu ${isPrizesLoading || prizesError ? '…' : cost} điểm khả dụng để quay. Hiện tại bạn có ${diemKhaDung.toLocaleString('vi-VN')} điểm.`)
       return
     }
 
@@ -197,13 +184,7 @@ export function LuckyWheelScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <LinearGradient colors={['#2b170c', '#4a2310']} style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={12}>
-          <Ionicons name="chevron-back" size={24} color="#fff" />
-        </Pressable>
-        <Text style={styles.headerTitle}>Vòng Quay May Mắn</Text>
-        <View style={{ width: 40 }} />
-      </LinearGradient>
+      <ScreenHeader title="Vòng quay ưu đãi" onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Main Hero Header */}
@@ -214,11 +195,12 @@ export function LuckyWheelScreen() {
           </View>
           <Text style={styles.heroTitle}>Vòng quay may mắn 🎡</Text>
           <Text style={styles.heroSubtitle}>
-            Dùng {cost} điểm khả dụng / lượt quay. Không trừ điểm xếp hạng!
+            Dùng {isPrizesLoading || prizesError ? '…' : cost} điểm khả dụng / lượt quay. Không trừ điểm xếp hạng!
           </Text>
         </View>
 
-        {isPrizesLoading ? (
+        {!isPrizesLoading && !prizesError && !prizes.length && <Text style={{ padding: 20 }}>Chưa có chương trình quay thưởng đang mở.</Text>}
+        {prizesError ? <Pressable onPress={() => retryPrizes()} style={{ padding: 20 }}><Text style={{ color: colors.primary }}>Không tải được chương trình. Chạm để thử lại.</Text></Pressable> : isPrizesLoading ? (
           <ActivityIndicator size="large" color="#b22830" style={{ marginVertical: 40 }} />
         ) : (
           <View style={styles.wheelOuterContainer}>
@@ -245,8 +227,8 @@ export function LuckyWheelScreen() {
                 <Svg width={INNER_SIZE} height={INNER_SIZE} viewBox={`0 0 ${INNER_SIZE} ${INNER_SIZE}`}>
                   <G>
                     {prizes.map((item, idx) => {
-                      const startAngle = idx * 45
-                      const endAngle = (idx + 1) * 45
+                      const startAngle = idx * (360 / prizes.length)
+                      const endAngle = (idx + 1) * (360 / prizes.length)
                       const midAngle = startAngle + 22.5
                       const radMid = (midAngle - 90) * (Math.PI / 180)
 
@@ -263,7 +245,7 @@ export function LuckyWheelScreen() {
                       // Rotation along ray (midAngle - 90) matches Web 100%
                       const rot = midAngle - 90
 
-                      const sliceColor = item.mau || REFERENCE_8_PRIZES[idx % 8].mau
+                      const sliceColor = item.mau || WHEEL_COLORS[idx % WHEEL_COLORS.length]
                       const displayName = formatPrizeDisplayName(item).toUpperCase()
                       const fontSize = displayName.length > 12 ? '7' : displayName.length > 8 ? '8' : '9'
 
@@ -345,7 +327,7 @@ export function LuckyWheelScreen() {
             <View style={styles.statDivider} />
             <View style={styles.statCol}>
               <Text style={styles.statLabel}>CHI PHÍ / LƯỢT QUAY</Text>
-              <Text style={styles.statValueGold}>{cost} điểm</Text>
+              <Text style={styles.statValueGold}>{isPrizesLoading || prizesError ? '…' : cost} điểm</Text>
             </View>
           </View>
           <View style={styles.statNoteBadge}>
@@ -365,7 +347,7 @@ export function LuckyWheelScreen() {
             {prizes.map((prize, idx) => (
               <View key={prize.id || idx} style={styles.prizeRowItem}>
                 <View style={styles.prizeRowLeft}>
-                  <View style={[styles.prizeDot, { backgroundColor: prize.mau || REFERENCE_8_PRIZES[idx % 8].mau }]} />
+                  <View style={[styles.prizeDot, { backgroundColor: prize.mau || WHEEL_COLORS[idx % WHEEL_COLORS.length] }]} />
                   <View style={styles.prizeIconWrap}>
                     <Text style={{ fontSize: 14 }}>{prize.icon || '🎁'}</Text>
                   </View>
@@ -388,7 +370,7 @@ export function LuckyWheelScreen() {
           <View style={styles.rulesList}>
             <View style={styles.ruleItem}>
               <Ionicons name="checkmark-circle" size={16} color="#10b981" style={{ marginTop: 2 }} />
-              <Text style={styles.ruleText}>Mỗi lượt quay tiêu tốn cố định {cost} điểm khả dụng.</Text>
+              <Text style={styles.ruleText}>Mỗi lượt quay tiêu tốn cố định {isPrizesLoading || prizesError ? '…' : cost} điểm khả dụng.</Text>
             </View>
             <View style={styles.ruleItem}>
               <Ionicons name="checkmark-circle" size={16} color="#10b981" style={{ marginTop: 2 }} />

@@ -1,3 +1,4 @@
+import { LazyScrollView, LazySection } from '../components/LazyScrollView'
 import React, { useState } from 'react'
 import {
   View,
@@ -9,8 +10,9 @@ import {
   Alert,
   TextInput,
   Modal,
-  Linking,
+  KeyboardAvoidingView,
   Platform,
+  Linking,
   StatusBar,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -24,6 +26,7 @@ import { formatCurrency, deliveryStatusLabels, deliveryStatusColors } from '../l
 import * as Location from 'expo-location'
 import { formatBranchName, formatBranchFullTitle, formatBranchAddress, setGlobalBranchList } from '../lib/branchHelper'
 import { openGoogleMapsNavigation } from '../lib/navigationHelper'
+import { Header, IconButton, Skeleton } from '../components/Experience'
 import { startBackgroundLocationTracking } from '../lib/backgroundLocationManager'
 
 export function OrderDetailScreen({ route, navigation }) {
@@ -141,7 +144,7 @@ export function OrderDetailScreen({ route, navigation }) {
   if (isLoading) {
     return (
       <View style={styles.loadingWrap}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <Skeleton />
       </View>
     )
   }
@@ -168,7 +171,7 @@ export function OrderDetailScreen({ route, navigation }) {
       { id: 'IN_TRANSIT', label: 'Đang giao', icon: 'bicycle-outline' },
       { id: 'DELIVERED', label: 'Hoàn thành', icon: 'checkmark-circle-outline' },
     ]
-    const currentIndex = steps.findIndex(s => s.id === delivery.status)
+    const currentIndex = steps.findIndex(s => s.id === (delivery.status === 'CONFIRMED' ? 'PENDING' : delivery.status))
     const isCancelled = delivery.status === 'CANCELLED' || delivery.status === 'FAILED'
 
     return (
@@ -200,21 +203,21 @@ export function OrderDetailScreen({ route, navigation }) {
   }
 
   const renderActionButtons = () => {
-    if (delivery.status === 'PENDING') {
+    if (['PENDING','CONFIRMED'].includes(delivery.status)) {
       return (
         <TouchableOpacity
           style={styles.primaryBtn}
           onPress={() => handleAction('confirm-pickup')}
           disabled={loadingAction !== null}
         >
-          {loadingAction === 'confirm-pickup' ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>XÁC NHẬN ĐI LẤY HÀNG</Text>}
+          {loadingAction === 'confirm-pickup' ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Xác nhận đi lấy món</Text>}
         </TouchableOpacity>
       )
     }
     if (delivery.status === 'PICKING_UP') {
       return (
         <TouchableOpacity style={styles.primaryBtn} onPress={() => handleAction('start')} disabled={loadingAction !== null}>
-          {loadingAction === 'start' ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>ĐÃ LẤY HÀNG - BẮT ĐẦU GIAO</Text>}
+          {loadingAction === 'start' ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Đã lấy món · Bắt đầu giao</Text>}
         </TouchableOpacity>
       )
     }
@@ -222,11 +225,11 @@ export function OrderDetailScreen({ route, navigation }) {
       return (
         <View style={{ gap: 10 }}>
           <TouchableOpacity
-            style={[styles.primaryBtn, { backgroundColor: '#4338CA', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }]}
+            style={[styles.primaryBtn, { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }]}
             onPress={() => navigation.navigate('Map', { delivery })}
           >
             <Ionicons name="navigate-circle-outline" size={22} color="#fff" />
-            <Text style={styles.btnText}>MỞ BẢN ĐỒ VÀ ĐỊNH VỊ GPS TRỰC TIẾP</Text>
+            <Text style={styles.btnText}>Mở bản đồ giao hàng</Text>
           </TouchableOpacity>
 
           <View style={styles.actionRow}>
@@ -240,14 +243,14 @@ export function OrderDetailScreen({ route, navigation }) {
               }}
               disabled={loadingAction !== null}
             >
-              {loadingAction === 'complete' ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>GIAO THÀNH CÔNG</Text>}
+              {loadingAction === 'complete' ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Giao thành công</Text>}
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.primaryBtn, { flex: 1, backgroundColor: colors.danger, marginLeft: 8 }]}
               onPress={() => setFailModalVisible(true)}
               disabled={loadingAction !== null}
             >
-              {loadingAction === 'fail' ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>GIAO THẤT BẠI</Text>}
+              {loadingAction === 'fail' ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Giao thất bại</Text>}
             </TouchableOpacity>
           </View>
         </View>
@@ -272,31 +275,10 @@ export function OrderDetailScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.primaryDark} />
+      <SafeAreaView edges={['top']} style={{ backgroundColor: '#fff' }}><Header title="Chi tiết vận đơn" subtitle={`#${String(delivery.ma_don_hang || deliveryId).slice(0,8).toUpperCase()}`} onBack={() => navigation.goBack()} right={delivery.status === 'IN_TRANSIT' ? <IconButton name="warning-outline" label="Báo cáo ngoại lệ" onPress={() => navigation.navigate('Exception',{ deliveryId })} /> : undefined} /></SafeAreaView>
 
-      <LinearGradient colors={colors.gradientRed} style={styles.header}>
-        <SafeAreaView>
-          <View style={styles.headerTop}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-              <Ionicons name="arrow-back" size={24} color={colors.surface} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Chi Tiết Vận Đơn</Text>
-            {delivery.status === 'IN_TRANSIT' ? (
-              <TouchableOpacity
-                style={styles.exceptionBtn}
-                onPress={() => navigation.navigate('Exception', { deliveryId })}
-              >
-                <Ionicons name="warning" size={22} color={colors.surface} />
-              </TouchableOpacity>
-            ) : (
-              <View style={{ width: 40 }} />
-            )}
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
-
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.card}>
+      <LazyScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <LazySection minHeight={160}><View style={styles.card}>
           <View style={styles.cardHeader}>
             <View>
               <Text style={styles.orderIdLabel}>Mã vận đơn</Text>
@@ -307,9 +289,9 @@ export function OrderDetailScreen({ route, navigation }) {
             </View>
           </View>
           {renderStepper()}
-        </View>
+        </View></LazySection>
 
-        <View style={styles.card}>
+        <LazySection minHeight={160}><View style={styles.card}>
           <View style={styles.cardSectionHeader}>
             <Ionicons name="map" size={18} color={colors.primary} />
             <Text style={styles.sectionTitle}>Hành trình</Text>
@@ -353,7 +335,7 @@ export function OrderDetailScreen({ route, navigation }) {
               <Text style={[styles.actionChipText, { color: '#2563EB', fontWeight: '700' }]}>Mở Google Maps</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </View></LazySection>
 
         {/* Customer Info */}
         {(delivery.customer_name || delivery.customer_phone) && (
@@ -383,7 +365,7 @@ export function OrderDetailScreen({ route, navigation }) {
         )}
 
         {/* COD Info */}
-        <View style={styles.card}>
+        <LazySection minHeight={160}><View style={styles.card}>
           <View style={styles.cardSectionHeader}>
             <Ionicons name="cash" size={18} color={colors.primary} />
             <Text style={styles.sectionTitle}>Thông tin thu hộ</Text>
@@ -391,14 +373,14 @@ export function OrderDetailScreen({ route, navigation }) {
 
           <View style={styles.feeRow}>
             <Text style={styles.feeLabel}>Phí vận chuyển (bạn nhận)</Text>
-            <Text style={styles.feeValue}>{formatCurrency(delivery.delivery_fee || 15000)}</Text>
+            <Text style={styles.feeValue}>{delivery.delivery_fee != null ? formatCurrency(delivery.delivery_fee) : 'Chưa cập nhật'}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.feeRow}>
             <Text style={styles.codLabel}>Tiền cần thu khách (COD)</Text>
             <Text style={styles.codValue}>{formatCurrency(delivery.cod_amount || 0)}</Text>
           </View>
-        </View>
+        </View></LazySection>
 
         {/* Notes */}
         {delivery.delivery_note && (
@@ -412,7 +394,7 @@ export function OrderDetailScreen({ route, navigation }) {
             </View>
           </View>
         )}
-      </ScrollView>
+      </LazyScrollView>
 
       {/* Bottom Actions */}
       {renderActionButtons() && (
@@ -422,9 +404,9 @@ export function OrderDetailScreen({ route, navigation }) {
       )}
 
       {/* Fail Reason Modal */}
-      <Modal visible={failModalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
+      <Modal visible={failModalVisible} transparent animationType="slide" onRequestClose={() => setFailModalVisible(false)}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+          <ScrollView keyboardShouldPersistTaps="handled" style={styles.modalBox} contentContainerStyle={{ padding: 20 }}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Báo cáo giao thất bại</Text>
               <TouchableOpacity onPress={() => setFailModalVisible(false)}>
@@ -457,8 +439,8 @@ export function OrderDetailScreen({ route, navigation }) {
                 )}
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   )
@@ -481,10 +463,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   backBtn: { padding: spacing.sm, width: 40, alignItems: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '800', color: colors.surface, letterSpacing: 0.5 },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: colors.surface, letterSpacing: 0.5 },
   exceptionBtn: { padding: spacing.sm, width: 40, alignItems: 'center' },
 
-  scrollContent: { padding: spacing.md, paddingBottom: spacing.xxl * 2 },
+  scrollContent: { padding: spacing.md, paddingBottom: spacing.lg },
 
   // Cards
   card: {
@@ -503,7 +485,7 @@ const styles = StyleSheet.create({
   orderIdLabel: { fontSize: 12, color: colors.muted, marginBottom: 2 },
   orderId: { ...typography.h3, color: colors.text, fontSize: 20 },
   statusBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.sm },
-  statusText: { color: colors.surface, fontSize: 12, fontWeight: '800' },
+  statusText: { color: colors.surface, fontSize: 12, fontWeight: '700' },
 
   // Stepper
   stepperContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -514,7 +496,7 @@ const styles = StyleSheet.create({
   },
   stepCurrent: { borderWidth: 2, borderColor: colors.primaryLight, ...shadows.primary },
   stepLabel: { fontSize: 10, color: colors.muted, textAlign: 'center', fontWeight: '600' },
-  stepLabelActive: { color: colors.primary, fontWeight: '800' },
+  stepLabelActive: { color: colors.primary, fontWeight: '700' },
   stepLine: { flex: 1, height: 2, backgroundColor: colors.borderLight, marginHorizontal: -8, marginTop: -15 },
 
   // Address
@@ -531,7 +513,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     paddingVertical: 10, borderRadius: radius.md, gap: 6,
   },
-  actionChipText: { fontWeight: '800', fontSize: 13 },
+  actionChipText: { fontWeight: '700', fontSize: 13 },
 
   // Customer
   customerRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bg, padding: spacing.md, borderRadius: radius.md },
@@ -546,9 +528,9 @@ const styles = StyleSheet.create({
   // Fees
   feeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: spacing.xs },
   feeLabel: { color: colors.textSecondary, fontSize: 14 },
-  feeValue: { color: colors.success, fontWeight: '800', fontSize: 16 },
-  codLabel: { color: colors.text, fontWeight: '800', fontSize: 14 },
-  codValue: { color: colors.danger, fontWeight: '900', fontSize: 20 },
+  feeValue: { color: colors.success, fontWeight: '700', fontSize: 16 },
+  codLabel: { color: colors.text, fontWeight: '700', fontSize: 14 },
+  codValue: { color: colors.danger, fontWeight: '700', fontSize: 20 },
   divider: { height: 1, backgroundColor: colors.borderLight, marginVertical: spacing.md, borderStyle: 'dashed' },
 
   noteBox: { backgroundColor: colors.bg, padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.borderLight },
@@ -562,11 +544,11 @@ const styles = StyleSheet.create({
   },
   primaryBtnDisabled: { opacity: 0.5 },
   actionRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  btnText: { color: colors.surface, fontWeight: '900', fontSize: 14, letterSpacing: 0.5 },
+  btnText: { color: colors.surface, fontWeight: '700', fontSize: 13, letterSpacing: 0 },
 
   // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  modalBox: { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: spacing.lg },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end', alignItems: 'center', paddingHorizontal: 12, paddingBottom: 12 },
+  modalBox: { width: '100%', maxWidth: 456, maxHeight: '90%', backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xs },
   modalTitle: { ...typography.h3, color: colors.text, fontSize: 18 },
   modalDesc: { ...typography.caption, color: colors.textSecondary, marginBottom: spacing.md, fontSize: 13 },

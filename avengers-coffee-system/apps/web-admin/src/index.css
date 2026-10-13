@@ -1,16 +1,16 @@
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Kravio / Enterprise Precision Primary Palette */
-  --primary: #2563eb; /* Blue 600 */
-  --primary-hover: #1d4ed8; /* Blue 700 */
-  --primary-light: #eff6ff; /* Blue 50 */
-  --primary-subtle: #dbeafe; /* Blue 100 */
+  /* Neutral default; each authenticated actor supplies its own accent in Console.css. */
+  --primary: #536270;
+  --primary-hover: #35434e;
+  --primary-light: #f0f3f5;
+  --primary-subtle: #dde4e8;
   
   /* Status Colors */
-  --success: #10b981;
-  --success-bg: #ecfdf5;
-  --success-text: #047857;
+  --success: #2563eb;
+  --success-bg: #eff6ff;
+  --success-text: #2563eb;
   --warning: #f59e0b;
   --warning-bg: #fffbeb;
   --warning-text: #b45309;
@@ -18,21 +18,21 @@
   --danger-bg: #fef2f2;
   --danger-text: #b91c1c;
   --info: #3b82f6;
-  --info-bg: #eff6ff;
-  --info-text: #1d4ed8;
+  --info-bg: var(--primary-light);
+  --info-text: var(--primary-hover);
   
   /* Surface & Neutral Grayscale */
-  --surface: #f7f9fb; /* Kravio main background */
+  --surface: #f8fafb;
   --surface-dim: #d8dadc;
   --surface-container: #ffffff; /* Card & sidebar white */
-  --surface-low: #f2f4f6;
-  --text-main: #111827; /* Gray 900 */
+  --surface-low: #f3f7f8;
+  --text-main: #29353b;
   --text-body: #374151; /* Gray 700 */
   --text-muted: #6b7280; /* Gray 500 */
   --text-subtle: #9ca3af; /* Gray 400 */
-  --border-light: #e5e7eb; /* Gray 200 */
+  --border-light: #e5ebed;
   --border-subtle: #f3f4f6; /* Gray 100 */
-  --border-focus: #2563eb;
+  --border-focus: var(--primary);
   
   /* Modern Crisp Shadows */
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
@@ -74,7 +74,7 @@ body,
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   background: var(--surface);
   color: var(--text-main);
   font-weight: 400;
@@ -84,7 +84,7 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6, button, input, select, textarea {
-  font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* Custom Sleek Scrollbar */

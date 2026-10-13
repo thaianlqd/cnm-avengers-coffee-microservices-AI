@@ -118,13 +118,15 @@ export class AppService implements OnApplicationBootstrap {
 
   // Lấy danh mục thật từ DB
   async getCategories() {
-    const categories = await this.dmRepo.find({ order: { ma_danh_muc: 'ASC' } });
-    return Promise.all(
-      categories.map(async (category) => {
-        const productCount = await this.spRepo.count({ where: { danhMuc: { ma_danh_muc: category.ma_danh_muc } } });
-        return this.formatCategory(category, productCount);
-      }),
-    );
+    const [categories, counts] = await Promise.all([
+      this.dmRepo.find({ order: { ma_danh_muc: 'ASC' } }),
+      this.spRepo.createQueryBuilder('product')
+        .select('product.ma_danh_muc', 'category_id')
+        .addSelect('COUNT(*)', 'product_count')
+        .groupBy('product.ma_danh_muc').getRawMany(),
+    ]);
+    const byCategory = new Map(counts.map(row => [String(row.category_id), Number(row.product_count)]));
+    return categories.map(category => this.formatCategory(category, byCategory.get(String(category.ma_danh_muc)) || 0));
   }
 
   async getAttributes() {

@@ -1,3 +1,4 @@
+import { uiText as ui, useUiLanguage } from "../../lib/uiText";
 import React, { useState, useRef, useEffect } from 'react';
 import { MapPinIcon, ChevronDownIcon, CheckCircleIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
 
@@ -8,6 +9,7 @@ const normalizeSearch = (value) => String(value || '')
   .toLowerCase();
 
 export default function BranchSelector({ branches, selectedBranch, onChange }) {
+  useUiLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const wrapperRef = useRef(null);
@@ -54,7 +56,7 @@ export default function BranchSelector({ branches, selectedBranch, onChange }) {
 
   return (
     <div className={`relative w-full ${isOpen ? 'z-[9999]' : 'z-10'}`} ref={wrapperRef}>
-      <label className="text-xs font-bold text-gray-500 mb-1.5 block">Cửa hàng</label>
+      <label className="text-xs font-bold text-gray-500 mb-1.5 block">{ui("Cửa hàng")}</label>
 
       {/* Trigger Button */}
       <button
@@ -72,10 +74,10 @@ export default function BranchSelector({ branches, selectedBranch, onChange }) {
           </div>
           <div className="flex flex-col min-w-0">
             <span className="text-[13px] font-bold text-gray-900 truncate">
-              {selected?.ten_chi_nhanh || selected?.ten_co_so || selected?.name || 'Chọn chi nhánh'}
+              {selected?.ten_chi_nhanh || selected?.ten_co_so || selected?.name || ui("Chọn chi nhánh")}
             </span>
             <span className="text-[11px] font-medium text-gray-500 truncate">
-              {selected?.dia_chi || 'Bấm để xem danh sách chi nhánh'}
+              {selected?.dia_chi || ui("Bấm để xem danh sách chi nhánh")}
             </span>
           </div>
         </div>
@@ -97,7 +99,7 @@ export default function BranchSelector({ branches, selectedBranch, onChange }) {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 onClick={(event) => event.stopPropagation()}
-                placeholder="Tìm theo tên quán hoặc địa chỉ..."
+                placeholder={ui("Tìm theo tên quán hoặc địa chỉ...")}
                 className="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-xs font-semibold outline-none focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/10"
               />
             </div>
@@ -105,7 +107,7 @@ export default function BranchSelector({ branches, selectedBranch, onChange }) {
 
           {filteredBranches.map((branch) => {
             const code = branch.ma_chi_nhanh || branch.co_so_ma || branch.branch_code;
-            const name = branch.ten_chi_nhanh || branch.ten_co_so || branch.name || 'Chi nhánh hệ thống';
+            const name = branch.ten_chi_nhanh || branch.ten_co_so || branch.name || ui("Chi nhánh hệ thống");
             const isSelected = selectedBranch === code;
 
             return (
@@ -141,9 +143,7 @@ export default function BranchSelector({ branches, selectedBranch, onChange }) {
             );
           })}
           {filteredBranches.length === 0 && (
-            <p className="px-4 py-5 text-center text-xs font-semibold text-gray-500">
-              Không tìm thấy cửa hàng phù hợp.
-            </p>
+            <p className="px-4 py-5 text-center text-xs font-semibold text-gray-500">{ui("Không tìm thấy cửa hàng phù hợp.")}</p>
           )}
         </div>
       )}

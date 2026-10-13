@@ -42,7 +42,7 @@ export default function VoiceOrderCard({
     <View style={styles.card}>
       {/* Header */}
       <LinearGradient
-        colors={['#f26b1d', '#d4560e']}
+        colors={['#b22830', '#8d1f27']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={styles.header}
@@ -122,7 +122,7 @@ export default function VoiceOrderCard({
             style={({ pressed }) => [styles.confirmBtn, pressed && { opacity: 0.85 }]}
           >
             <LinearGradient
-              colors={['#f26b1d', '#d4560e']}
+              colors={['#b22830', '#8d1f27']}
               style={styles.confirmBtnGradient}
             >
               {loading ? (
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: radius.xl,
     borderWidth: 1.5,
-    borderColor: '#f26b1d30',
+    borderColor: '#b2283030',
     overflow: 'hidden',
     maxWidth: '90%',
     alignSelf: 'flex-start',
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 3,
     borderWidth: 1,
-    borderColor: '#f26b1d40',
+    borderColor: '#b2283040',
   },
   itemQtyText: {
     fontSize: 11,

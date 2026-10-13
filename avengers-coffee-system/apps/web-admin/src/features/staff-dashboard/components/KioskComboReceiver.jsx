@@ -55,7 +55,7 @@ export function KioskComboReceiver({ session }) {
             <Package size={22} color="white" />
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#0f172a' }}>Nhận Combo Nguyên Liệu</h2>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: '#0f172a' }}>Nhận Combo Nguyên Liệu</h2>
             <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>Kiosk: <strong>{branchCode}</strong> — Xác nhận nhận hàng từ chi nhánh mẹ</p>
           </div>
         </div>
@@ -68,12 +68,12 @@ export function KioskComboReceiver({ session }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12, marginBottom: '1.5rem' }}>
         <div style={{ background: 'white', borderRadius: 12, padding: '1rem 1.25rem', border: '1px solid #fed7aa', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
           <div style={{ fontSize: 12, color: '#ea580c', fontWeight: 700, marginBottom: 4 }}>⏳ Chờ xác nhận</div>
-          <div style={{ fontSize: 32, fontWeight: 900, color: '#ea580c' }}>{pending.length}</div>
+          <div style={{ fontSize: 32, fontWeight: 600, color: '#ea580c' }}>{pending.length}</div>
           <div style={{ fontSize: 11, color: '#94a3b8' }}>phiếu cần xác nhận</div>
         </div>
-        <div style={{ background: 'white', borderRadius: 12, padding: '1rem 1.25rem', border: '1px solid #bbf7d0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-          <div style={{ fontSize: 12, color: '#16a34a', fontWeight: 700, marginBottom: 4 }}>✅ Đã nhận</div>
-          <div style={{ fontSize: 32, fontWeight: 900, color: '#16a34a' }}>{received.length}</div>
+        <div style={{ background: 'white', borderRadius: 12, padding: '1rem 1.25rem', border: '1px solid #bfdbfe', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <div style={{ fontSize: 12, color: '#2563eb', fontWeight: 700, marginBottom: 4 }}>✅ Đã nhận</div>
+          <div style={{ fontSize: 32, fontWeight: 600, color: '#2563eb' }}>{received.length}</div>
           <div style={{ fontSize: 11, color: '#94a3b8' }}>phiếu đã xác nhận</div>
         </div>
       </div>
@@ -98,18 +98,18 @@ export function KioskComboReceiver({ session }) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {displayed.map(c => (
-            <div key={c.id} style={{ background: 'white', borderRadius: 12, padding: '1rem 1.25rem', border: `1.5px solid ${c.trang_thai === 'RECEIVED' ? '#bbf7d0' : '#fed7aa'}`, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 10, background: c.trang_thai === 'RECEIVED' ? '#dcfce7' : '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                {c.trang_thai === 'RECEIVED' ? <PackageCheck size={22} color="#16a34a" /> : <Package size={22} color="#ea580c" />}
+            <div key={c.id} style={{ background: 'white', borderRadius: 12, padding: '1rem 1.25rem', border: `1.5px solid ${c.trang_thai === 'RECEIVED' ? '#bfdbfe' : '#fed7aa'}`, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 10, background: c.trang_thai === 'RECEIVED' ? '#dbeafe' : '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {c.trang_thai === 'RECEIVED' ? <PackageCheck size={22} color="#2563eb" /> : <Package size={22} color="#ea580c" />}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#0f172a', marginBottom: 2 }}>{c.ten_combo}</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#0f172a', marginBottom: 2 }}>{c.ten_combo}</div>
                 {c.mo_ta && <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>{c.mo_ta}</div>}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: '#94a3b8' }}>
                   <Clock size={11} />
                   <span>{new Date(c.thoi_gian_giao).toLocaleString('vi-VN')}</span>
                   {c.trang_thai === 'RECEIVED' && c.nguoi_nhan && (
-                    <span style={{ color: '#16a34a', fontWeight: 600 }}>• Đã nhận bởi: {c.nguoi_nhan}</span>
+                    <span style={{ color: '#2563eb', fontWeight: 600 }}>• Đã nhận bởi: {c.nguoi_nhan}</span>
                   )}
                   {c.trang_thai === 'RECEIVED' && c.thoi_gian_nhan && (
                     <span>• {new Date(c.thoi_gian_nhan).toLocaleString('vi-VN')}</span>
@@ -120,7 +120,7 @@ export function KioskComboReceiver({ session }) {
                 <button
                   onClick={() => handleReceive(c.id)}
                   disabled={receivingId === c.id}
-                  style={{ padding: '10px 18px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', cursor: receivingId === c.id ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 700, opacity: receivingId === c.id ? 0.7 : 1, whiteSpace: 'nowrap', boxShadow: '0 4px 10px rgba(16,185,129,0.25)' }}
+                  style={{ padding: '10px 18px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #2563eb, #3b82f6)', color: 'white', cursor: receivingId === c.id ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 700, opacity: receivingId === c.id ? 0.7 : 1, whiteSpace: 'nowrap', boxShadow: '0 4px 10px rgba(16,185,129,0.25)' }}
                 >
                   {receivingId === c.id ? 'Đang xử lý...' : '✅ Xác nhận nhận'}
                 </button>

@@ -1,3 +1,4 @@
+import ScreenHeader from '../components/ScreenHeader'
 import React from 'react'
 import { View, Text, StyleSheet, ScrollView, Pressable, Image } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -10,13 +11,7 @@ export function AboutScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#1a0c05', '#3d1a08']} style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={12}>
-          <Ionicons name="chevron-back" size={24} color="#fff" />
-        </Pressable>
-        <Text style={styles.headerTitle}>Về Avengers Coffee</Text>
-        <View style={{ width: 40 }} />
-      </LinearGradient>
+      <ScreenHeader title="Về Avengers Coffee" onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.heroBox}>

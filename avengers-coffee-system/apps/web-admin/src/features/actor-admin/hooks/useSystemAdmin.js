@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
-import { getAdminAccessToken } from '../../../lib/adminFetch'
+import { getAdminAccessToken, getAdminSession } from '../../../lib/adminFetch'
 
 const authHeaders = (extra = {}) => {
   const token = getAdminAccessToken()
@@ -318,9 +318,9 @@ async function fetchPromotions() {
 }
 
 async function fetchRecentOrders() {
-  const response = await fetch(`${API_BASE_URL}/staff/orders?limit=200`)
+  const response = await fetch(`${API_BASE_URL}/staff/orders?limit=100&branch_code=ALL`)
   const payload = await readJsonResponse(response, {})
-  if (!response.ok) return []
+  if (!response.ok) throw new Error(payload?.message || 'Không tải được đơn hàng')
   return payload?.items || payload?.orders || []
 }
 
@@ -333,6 +333,9 @@ async function fetchAccountsAdmin() {
 
 export function useSystemAdmin() {
   const [activeTab, setActiveTab] = useState('overview')
+  const loadedTabs = useRef(new Set())
+  const owner = getAdminSession()?.user?.ma_nguoi_dung || getAdminSession()?.user?.maNguoiDung || getAdminSession()?.user?.id || getAdminSession()?.user?.ten_dang_nhap || getAdminSession()?.user?.tenDangNhap || 'admin'
+  const needs = (...tabs) => tabs.includes(activeTab)
 
   const [statsState, setStatsState] = useState({ loading: true, error: '', data: null })
 
@@ -386,43 +389,52 @@ export function useSystemAdmin() {
   }
 
   const statsQuery = useQuery({
-    queryKey: ['system-admin', 'stats'],
+    queryKey: ['system-admin', 'stats', owner],
+    enabled: needs('overview'),
     queryFn: fetchStats,
   })
 
   const branchesQuery = useQuery({
-    queryKey: ['system-admin', 'branches'],
+    queryKey: ['system-admin', 'branches', owner],
+    enabled: needs('overview','branches','users','customers'),
     queryFn: fetchBranches,
   })
 
   const categoriesQuery = useQuery({
-    queryKey: ['system-admin', 'categories'],
+    queryKey: ['system-admin', 'categories', owner],
+    enabled: needs('categories','menu','promotions'),
     queryFn: fetchCategories,
   })
 
   const menuQuery = useQuery({
-    queryKey: ['system-admin', 'menu'],
+    queryKey: ['system-admin', 'menu', owner],
+    enabled: needs('overview','menu','promotions'),
     queryFn: fetchMenuItems,
   })
 
   const promotionsQuery = useQuery({
-    queryKey: ['system-admin', 'promotions'],
+    queryKey: ['system-admin', 'promotions', owner],
+    enabled: needs('overview','promotions'),
     queryFn: fetchPromotions,
   })
 
   const ordersQuery = useQuery({
-    queryKey: ['system-admin', 'recent-orders'],
+    queryKey: ['system-admin', 'recent-orders', owner, 'all-v2'],
+    refetchInterval: 60000,
+    staleTime: 30000,
+    enabled: needs('overview'),
     queryFn: fetchRecentOrders,
   })
 
   const accountsQuery = useQuery({
-    queryKey: ['system-admin', 'all-accounts'],
+    queryKey: ['system-admin', 'all-accounts', owner],
+    enabled: needs('overview','users','customers','membership-config'),
     queryFn: fetchAccountsAdmin,
   })
 
   useEffect(() => {
     setStatsState({
-      loading: statsQuery.isLoading || statsQuery.isFetching,
+      loading: statsQuery.isLoading && !statsQuery.data,
       error: statsQuery.error?.message || '',
       data: statsQuery.data ?? null,
     })
@@ -431,7 +443,7 @@ export function useSystemAdmin() {
   useEffect(() => {
     if (accountsQuery.data) {
       setUsersState({
-        loading: accountsQuery.isLoading || accountsQuery.isFetching,
+        loading: accountsQuery.isLoading && !accountsQuery.data,
         error: accountsQuery.error?.message || '',
         items: accountsQuery.data || [],
       })
@@ -445,7 +457,7 @@ export function useSystemAdmin() {
       return bTime - aTime
     })
     setBranchesState({
-      loading: branchesQuery.isLoading || branchesQuery.isFetching,
+      loading: branchesQuery.isLoading && !branchesQuery.data,
       error: branchesQuery.error?.message || '',
       items,
     })
@@ -462,7 +474,7 @@ export function useSystemAdmin() {
   useEffect(() => {
     const items = categoriesQuery.data || []
     setCategoriesState({
-      loading: categoriesQuery.isLoading || categoriesQuery.isFetching,
+      loading: categoriesQuery.isLoading && !categoriesQuery.data,
       error: categoriesQuery.error?.message || '',
       items,
     })
@@ -474,7 +486,7 @@ export function useSystemAdmin() {
 
   useEffect(() => {
     setMenuState({
-      loading: menuQuery.isLoading || menuQuery.isFetching,
+      loading: menuQuery.isLoading && !menuQuery.data,
       error: menuQuery.error?.message || '',
       items: menuQuery.data || [],
     })
@@ -482,7 +494,7 @@ export function useSystemAdmin() {
 
   useEffect(() => {
     setPromotionsState({
-      loading: promotionsQuery.isLoading || promotionsQuery.isFetching,
+      loading: promotionsQuery.isLoading && !promotionsQuery.data,
       error: promotionsQuery.error?.message || '',
       items: promotionsQuery.data || [],
     })
@@ -829,11 +841,12 @@ export function useSystemAdmin() {
   };
 
   useEffect(() => {
-    loadUsers()
-    loadCustomers()
-    loadAttributes()
-    loadMembershipConfigs()
-  }, [])
+    if (loadedTabs.current.has(activeTab)) return
+    loadedTabs.current.add(activeTab)
+    if (activeTab === 'customers') loadCustomers()
+    if (activeTab === 'menu') loadAttributes()
+    if (activeTab === 'membership-config') loadMembershipConfigs()
+  }, [activeTab])
 
   const startEditUser = (item) => {
     setEditingUserId(item.ma_nguoi_dung)
@@ -1445,6 +1458,7 @@ export function useSystemAdmin() {
     startEditCustomerMembership,
     cancelEditCustomerMembership,
     saveCustomerMembership,
+    recentOrdersState: { loading: ordersQuery.isLoading && !ordersQuery.data, error: ordersQuery.error?.message || '' },
     recentOrders: ordersQuery.data || [],
     recentUsers: accountsQuery.data || [],
   }

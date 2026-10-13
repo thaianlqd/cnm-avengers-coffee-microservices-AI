@@ -53,16 +53,16 @@ function statusBadgeConfig(statusKey) {
     case 'CHECKED_IN':
       return {
         label: 'Đang trong ca làm',
-        bg: '#d1fae5',
-        color: '#047857',
-        border: '#a7f3d0',
+        bg: '#dbeafe',
+        color: '#1d4ed8',
+        border: '#bfdbfe',
         icon: UserCheck
       }
     case 'COMPLETED':
       return {
         label: 'Đã check-out',
-        bg: '#dbeafe',
-        color: '#1d4ed8',
+        bg: 'var(--primary-subtle)',
+        color: 'var(--primary-hover)',
         border: '#bfdbfe',
         icon: CheckCircle2
       }
@@ -77,9 +77,9 @@ function statusBadgeConfig(statusKey) {
     case 'SCHEDULED':
       return {
         label: 'Có lịch, chưa vào ca',
-        bg: '#e0e7ff',
-        color: '#4338ca',
-        border: '#c7d2fe',
+        bg: 'var(--primary-subtle)',
+        color: 'var(--primary-hover)',
+        border: '#e8cdbb',
         icon: Clock
       }
     case 'ABSENT':
@@ -281,17 +281,17 @@ export function ManagerEmployeePanel({
             width: '42px',
             height: '42px',
             borderRadius: '12px',
-            background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+            background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
             color: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 10px rgba(16, 185, 129, 0.3)'
+            boxShadow: '0 4px 10px rgba(59, 130, 246, 0.3)'
           }}>
             <Users size={24} />
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '800', color: '#0f172a' }}>
+            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600', color: '#0f172a' }}>
               Quản lý Hồ sơ & Trạng thái Nhân viên
             </h2>
             <span style={{ fontSize: '0.825rem', color: '#64748b' }}>
@@ -306,7 +306,7 @@ export function ManagerEmployeePanel({
             alignItems: 'center',
             gap: '0.5rem',
             padding: '0.65rem 1rem',
-            background: '#2563eb',
+            background: 'var(--primary)',
             color: '#fff',
             border: 'none',
             borderRadius: '8px',
@@ -337,12 +337,12 @@ export function ManagerEmployeePanel({
           gap: '0.75rem',
           boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
         }}>
-          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Users size={18} />
           </div>
           <div>
             <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>Tổng nhân viên</span>
-            <strong style={{ fontSize: '1.2rem', fontWeight: '800', color: '#1e293b', display: 'block' }}>{summary.total} người</strong>
+            <strong style={{ fontSize: '1.2rem', fontWeight: '600', color: '#1e293b', display: 'block' }}>{summary.total} người</strong>
           </div>
         </div>
 
@@ -356,12 +356,12 @@ export function ManagerEmployeePanel({
           gap: '0.75rem',
           boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
         }}>
-          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <UserCheck size={18} />
           </div>
           <div>
             <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>Đang vào ca</span>
-            <strong style={{ fontSize: '1.2rem', fontWeight: '800', color: '#059669', display: 'block' }}>{summary.CHECKED_IN} ca</strong>
+            <strong style={{ fontSize: '1.2rem', fontWeight: '600', color: '#2563eb', display: 'block' }}>{summary.CHECKED_IN} ca</strong>
           </div>
         </div>
 
@@ -375,12 +375,12 @@ export function ManagerEmployeePanel({
           gap: '0.75rem',
           boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
         }}>
-          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#dbeafe', color: '#1d4ed8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--primary-subtle)', color: 'var(--primary-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <CheckCircle2 size={18} />
           </div>
           <div>
             <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>Đã check-out</span>
-            <strong style={{ fontSize: '1.2rem', fontWeight: '800', color: '#1d4ed8', display: 'block' }}>{summary.COMPLETED} ca</strong>
+            <strong style={{ fontSize: '1.2rem', fontWeight: '600', color: 'var(--primary-hover)', display: 'block' }}>{summary.COMPLETED} ca</strong>
           </div>
         </div>
 
@@ -399,7 +399,7 @@ export function ManagerEmployeePanel({
           </div>
           <div>
             <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>Đi muộn / Về sớm</span>
-            <strong style={{ fontSize: '1.2rem', fontWeight: '800', color: '#b45309', display: 'block' }}>{summary.LATE} ca</strong>
+            <strong style={{ fontSize: '1.2rem', fontWeight: '600', color: '#b45309', display: 'block' }}>{summary.LATE} ca</strong>
           </div>
         </div>
 
@@ -413,12 +413,12 @@ export function ManagerEmployeePanel({
           gap: '0.75rem',
           boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
         }}>
-          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#e0e7ff', color: '#4338ca', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--primary-subtle)', color: 'var(--primary-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Clock size={18} />
           </div>
           <div>
             <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>Có lịch chưa vào</span>
-            <strong style={{ fontSize: '1.2rem', fontWeight: '800', color: '#4338ca', display: 'block' }}>{summary.SCHEDULED} ca</strong>
+            <strong style={{ fontSize: '1.2rem', fontWeight: '600', color: 'var(--primary-hover)', display: 'block' }}>{summary.SCHEDULED} ca</strong>
           </div>
         </div>
 
@@ -437,7 +437,7 @@ export function ManagerEmployeePanel({
           </div>
           <div>
             <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>Vắng mặt</span>
-            <strong style={{ fontSize: '1.2rem', fontWeight: '800', color: '#b91c1c', display: 'block' }}>{summary.ABSENT} ca</strong>
+            <strong style={{ fontSize: '1.2rem', fontWeight: '600', color: '#b91c1c', display: 'block' }}>{summary.ABSENT} ca</strong>
           </div>
         </div>
       </div>
@@ -528,7 +528,7 @@ export function ManagerEmployeePanel({
 
       {(workforceUsersState.loading || workShiftState.loading) ? (
         <div style={{ textAlign: 'center', padding: '3.5rem 1.5rem', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', color: '#64748b' }}>
-          <RefreshCw size={32} color="#10b981" style={{ animation: 'spin 1s linear infinite', marginBottom: '0.75rem' }} />
+          <RefreshCw size={32} color="#3b82f6" style={{ animation: 'spin 1s linear infinite', marginBottom: '0.75rem' }} />
           <h4 style={{ margin: '0 0 0.25rem 0', color: '#334155' }}>Đang tải danh sách nhân sự...</h4>
         </div>
       ) : pageRows.length === 0 ? (
@@ -569,20 +569,20 @@ export function ManagerEmployeePanel({
                       width: '44px',
                       height: '44px',
                       borderRadius: '50%',
-                      background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
-                      color: '#2563eb',
+                      background: 'linear-gradient(135deg, var(--primary-light) 0%, var(--primary-subtle) 100%)',
+                      color: 'var(--primary)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontWeight: '800',
+                      fontWeight: '600',
                       fontSize: '1.1rem',
                       border: '1px solid #bfdbfe',
                       flexShrink: 0
                     }}>
-                      <User size={22} color="#2563eb" />
+                      <User size={22} color="var(--primary)" />
                     </div>
                     <div style={{ minWidth: 0 }}>
-                      <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '800', color: '#0f172a', wordBreak: 'break-word' }}>
+                      <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '600', color: '#0f172a', wordBreak: 'break-word' }}>
                         {row.fullName}
                       </h3>
                       <span style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500', display: 'block', wordBreak: 'break-all' }}>
@@ -626,8 +626,8 @@ export function ManagerEmployeePanel({
                     <span style={{
                       fontSize: '0.725rem',
                       fontWeight: '700',
-                      color: row.role === 'MANAGER' ? '#4338ca' : '#0369a1',
-                      background: row.role === 'MANAGER' ? '#e0e7ff' : '#e0f2fe',
+                      color: row.role === 'MANAGER' ? 'var(--primary-hover)' : '#0369a1',
+                      background: row.role === 'MANAGER' ? 'var(--primary-subtle)' : '#e0f2fe',
                       padding: '0.2rem 0.55rem',
                       borderRadius: '6px',
                       display: 'inline-flex',
@@ -660,7 +660,7 @@ export function ManagerEmployeePanel({
 
                 {/* Today Shift Box */}
                 <div style={{
-                  background: '#eff6ff',
+                  background: 'var(--primary-light)',
                   border: '1px solid #bfdbfe',
                   borderRadius: '12px',
                   padding: '0.85rem',
@@ -668,8 +668,8 @@ export function ManagerEmployeePanel({
                   flexDirection: 'column',
                   gap: '0.35rem'
                 }}>
-                  <div style={{ fontSize: '0.875rem', fontWeight: '700', color: '#1e40af', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Clock size={16} color="#2563eb" style={{ flexShrink: 0 }} /> {toShiftLabel(row.primaryShift)}
+                  <div style={{ fontSize: '0.875rem', fontWeight: '700', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Clock size={16} color="var(--primary)" style={{ flexShrink: 0 }} /> {toShiftLabel(row.primaryShift)}
                   </div>
                   <span style={{ fontSize: '0.775rem', color: '#3b82f6', fontWeight: '500' }}>
                     Tổng số ca hôm nay: <strong>{row.shiftsToday.length} ca</strong>
@@ -694,7 +694,7 @@ export function ManagerEmployeePanel({
                       Check-out: <strong>{row.primaryShift.check_out_at ? new Date(row.primaryShift.check_out_at).toLocaleString('vi-VN') : 'Chưa điểm danh'}</strong>
                     </div>
                     {row.primaryInsight && (
-                      <div style={{ color: '#059669', fontWeight: '600', marginTop: '0.15rem' }}>
+                      <div style={{ color: '#2563eb', fontWeight: '600', marginTop: '0.15rem' }}>
                         Giờ làm thực tế: {row.primaryInsight.workedHours || 0}
                         {row.primaryInsight.isLate ? ` • Muộn ${formatMinutesLabel(row.primaryInsight.lateMinutes)}` : ''}
                         {row.primaryInsight.leftEarly ? ` • Về sớm ${formatMinutesLabel(row.primaryInsight.earlyLeaveMinutes)}` : ''}
@@ -757,7 +757,7 @@ export function ManagerEmployeePanel({
                     height: '34px',
                     borderRadius: '8px',
                     border: 'none',
-                    background: safePage === p ? '#10b981' : 'transparent',
+                    background: safePage === p ? '#3b82f6' : 'transparent',
                     color: safePage === p ? '#ffffff' : '#64748b',
                     fontWeight: safePage === p ? '700' : '500',
                     fontSize: '0.85rem',
@@ -797,8 +797,8 @@ export function ManagerEmployeePanel({
       {showAddModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: '#fff', padding: '1.5rem 2rem', borderRadius: '16px', width: '400px', maxWidth: '90vw', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}>
-            <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.25rem', color: '#0f172a', fontWeight: '800' }}>Thêm Kiosk Staff</h3>
-            <form onSubmit={handleAddSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.25rem', color: '#0f172a', fontWeight: '600' }}>Thêm Kiosk Staff</h3>
+            <form className="workspace-form" onSubmit={handleAddSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', fontWeight: '600', color: '#334155' }}>Họ tên</label>
                 <input required type="text" value={addForm.ho_ten} onChange={e => setAddForm({ ...addForm, ho_ten: e.target.value })} style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem' }} placeholder="Nguyễn Văn A" />
@@ -824,7 +824,7 @@ export function ManagerEmployeePanel({
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button type="button" onClick={() => setShowAddModal(false)} style={{ padding: '0.5rem 1rem', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}>Hủy</button>
-                <button type="submit" disabled={isSubmitting || kiosks.length === 0} style={{ padding: '0.5rem 1rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: (isSubmitting || kiosks.length === 0) ? 'not-allowed' : 'pointer', opacity: (isSubmitting || kiosks.length === 0) ? 0.6 : 1 }}>
+                <button type="submit" disabled={isSubmitting || kiosks.length === 0} style={{ padding: '0.5rem 1rem', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: (isSubmitting || kiosks.length === 0) ? 'not-allowed' : 'pointer', opacity: (isSubmitting || kiosks.length === 0) ? 0.6 : 1 }}>
                   {isSubmitting ? 'Đang lưu...' : 'Tạo tài khoản'}
                 </button>
               </div>

@@ -1,5 +1,9 @@
-import { useEffect, useState } from 'react'
+import { WorkspaceSidebar, WorkspaceSearch } from './components/console/WorkspaceNavigation'
+import { useEffect, useState, useRef, lazy, Suspense } from 'react'
 import './App.css'
+import './Console.css'
+import { DashboardSkeleton } from './components/console/DashboardCharts'
+import { WorkspaceErrorBoundary } from './components/console/WorkspaceErrorBoundary'
 import {
   ACCOUNT_TAB,
   DASHBOARD_ROLES,
@@ -15,20 +19,20 @@ import {
   WORKFORCE_TAB,
 } from './features/admin-dashboard/constants'
 import { useAdminDashboard } from './features/admin-dashboard/hooks/useAdminDashboard'
-import { ManagerSurveyPanel } from './features/manager-dashboard/components/ManagerSurveyPanel'
+const ManagerSurveyPanel = lazy(() => import('./features/manager-dashboard/components/ManagerSurveyPanel').then(module => ({ default: module.ManagerSurveyPanel })))
 import { fmtMoney, normalizeViText } from './features/admin-dashboard/utils'
 import { LoginScreen } from './features/admin-dashboard/components/LoginScreen'
 import { OverviewPanel } from './features/admin-dashboard/components/OverviewPanel'
-import { OrdersPanel } from './features/admin-dashboard/components/OrdersPanel'
-import { MenuPanel } from './features/admin-dashboard/components/MenuPanel'
-import { ShiftPanel } from './features/admin-dashboard/components/ShiftPanel'
-import { PosOrderPanel } from './features/admin-dashboard/components/PosOrderPanel'
-import { ManagerWorkforcePanel } from './features/manager-dashboard/components/ManagerWorkforcePanel'
-import { ManagerEmployeePanel } from './features/manager-dashboard/components/ManagerEmployeePanel'
-import { ManagerCustomerCarePanel } from './features/manager-dashboard/components/ManagerCustomerCarePanel'
+const OrdersPanel = lazy(() => import('./features/admin-dashboard/components/OrdersPanel').then(module => ({ default: module.OrdersPanel })))
+const MenuPanel = lazy(() => import('./features/admin-dashboard/components/MenuPanel').then(module => ({ default: module.MenuPanel })))
+const ShiftPanel = lazy(() => import('./features/admin-dashboard/components/ShiftPanel').then(module => ({ default: module.ShiftPanel })))
+const PosOrderPanel = lazy(() => import('./features/admin-dashboard/components/PosOrderPanel').then(module => ({ default: module.PosOrderPanel })))
+const ManagerWorkforcePanel = lazy(() => import('./features/manager-dashboard/components/ManagerWorkforcePanel').then(module => ({ default: module.ManagerWorkforcePanel })))
+const ManagerEmployeePanel = lazy(() => import('./features/manager-dashboard/components/ManagerEmployeePanel').then(module => ({ default: module.ManagerEmployeePanel })))
+const ManagerCustomerCarePanel = lazy(() => import('./features/manager-dashboard/components/ManagerCustomerCarePanel').then(module => ({ default: module.ManagerCustomerCarePanel })))
 import { StaffWorkShiftsPanel } from './features/staff-dashboard/components/StaffWorkShiftsPanel'
 import StaffDeliveryPanel from './features/staff-dashboard/features_thaian/StaffDeliveryPanel'
-import { AdminSystemConsole } from './features/actor-admin/components/AdminSystemConsole'
+const AdminSystemConsole = lazy(() => import('./features/actor-admin/components/AdminSystemConsole').then(module => ({ default: module.AdminSystemConsole })))
 import { AdminSatelliteKioskPanel } from './features/actor-admin/components/AdminSatelliteKioskPanel'
 import {
   Bike,
@@ -51,24 +55,22 @@ import {
   ChevronDown,
   ChevronRight
 } from 'lucide-react'
-import { ManagerShipperPanel } from './features/manager-dashboard/components/ManagerShipperPanel'
+const ManagerShipperPanel = lazy(() => import('./features/manager-dashboard/components/ManagerShipperPanel').then(module => ({ default: module.ManagerShipperPanel })))
 import { AdminChatWidget } from './features/admin-dashboard/components/AdminChatWidget'
-import { TableManagementPanel } from './features/admin-dashboard/components/TableManagementPanel'
+const TableManagementPanel = lazy(() => import('./features/admin-dashboard/components/TableManagementPanel').then(module => ({ default: module.TableManagementPanel })))
 import { AUTH_INVALID_EVENT } from './lib/adminFetch'
-import { AccountCenterPanel } from './features/shared/components/AccountCenterPanel'
+const AccountCenterPanel = lazy(() => import('./features/shared/components/AccountCenterPanel').then(module => ({ default: module.AccountCenterPanel })))
 import { AdminNotificationBell } from './features/shared/components/AdminNotificationBell'
-import { NewsPanel } from './features/shared/components/NewsPanel'
-import { FranchisePanel } from './features/franchise/FranchisePanel'
+const NewsPanel = lazy(() => import('./features/shared/components/NewsPanel').then(module => ({ default: module.NewsPanel })))
+const FranchisePanel = lazy(() => import('./features/franchise/FranchisePanel').then(module => ({ default: module.FranchisePanel })))
 import { KioskComboReceiver } from './features/staff-dashboard/components/KioskComboReceiver'
-import { FranchiseePortal } from './features/franchise/FranchiseePortal'
-import { FranchiseStaffPortal } from './features/franchise/FranchiseStaffPortal'
-import { AccountantFranchiseShell } from './features/franchise/AccountantFranchiseShell'
+const FranchiseePortal = lazy(() => import('./features/franchise/FranchiseePortal').then(module => ({ default: module.FranchiseePortal })))
+const FranchiseStaffPortal = lazy(() => import('./features/franchise/FranchiseStaffPortal').then(module => ({ default: module.FranchiseStaffPortal })))
+const AccountantFranchiseShell = lazy(() => import('./features/franchise/AccountantFranchiseShell').then(module => ({ default: module.AccountantFranchiseShell })))
 
-function App() {
+function AppContent() {
+  const consoleMainRef = useRef(null)
   const [adminToast, setAdminToast] = useState(null)
-  const openShipperLauncher = () => {
-    window.open('http://localhost:5176', '_blank', 'noopener,noreferrer')
-  }
 
   const showAdminToast = (title, message) => {
     setAdminToast({ title, message })
@@ -170,70 +172,43 @@ function App() {
     kichHoatBieuMauKhaoSat,
     taiDanhSachBieuMau,
     taiDanhSachPhanHoi,
+    taoKioskStaff,
     pendingPasswordChange,
     confirmFirstLoginPasswordChange,
   } = useAdminDashboard()
 
   const userRole = session?.user?.vaiTro || session?.user?.vai_tro || DASHBOARD_ROLES.STAFF
-  const branchCode = session?.user?.coSoMa || session?.user?.co_so_ma || ''
   const isFranchisee = userRole === DASHBOARD_ROLES.FRANCHISEE
   const isAccountant = userRole === DASHBOARD_ROLES.ACCOUNTANT
-  const isFranchiseStaff =
-    userRole === DASHBOARD_ROLES.FRANCHISE_STAFF ||
-    Boolean(
-      session?.user?.parent_franchisee_id ||
-      session?.user?.parentFranchiseeId ||
-      session?.user?.kiosk_id ||
-      session?.user?.kioskId ||
-      (branchCode && branchCode.startsWith('KSK-'))
-    )
+  const isFranchiseStaff = userRole === DASHBOARD_ROLES.FRANCHISE_STAFF
   const branchName = session?.user?.coSoTen || session?.user?.co_so_ten || 'Chi nhánh hệ thống'
   const isSystemAdmin = userRole === DASHBOARD_ROLES.ADMIN
   const isManager = userRole === DASHBOARD_ROLES.MANAGER
   const isKioskStaff = userRole === DASHBOARD_ROLES.KIOSK_STAFF
-  const staffNavTabs = isManager
-    ? [...NAV_TABS, { ...WORKFORCE_TAB, label: 'Lịch làm của tôi' }, ACCOUNT_TAB]
-    : isKioskStaff
-    ? [
-        ...NAV_TABS.filter((t) => ['pos', 'orders', 'shift'].includes(t.id)),
-        { ...WORKFORCE_TAB, label: 'Lịch làm việc của tôi' },
-        ACCOUNT_TAB,
-      ]
-    : [
-        ...NAV_TABS.filter((t) => !['franchise-manage', 'menu', 'news'].includes(t.id)),
-        { ...WORKFORCE_TAB, label: 'Lịch làm việc của tôi' },
-        ACCOUNT_TAB,
-      ]
-  const managerNavTabs = isManager
-    ? [
-        MANAGER_SHIFT_APPROVAL_TAB,
-        MANAGER_EMPLOYEE_MANAGEMENT_TAB,
-        MANAGER_WORKFORCE_MANAGEMENT_TAB,
-        MANAGER_CUSTOMER_CARE_TAB,
-        { id: 'shipper-manage', label: 'Quản lý NV giao hàng' },
-      ]
-    : []
-
-  const [activeStaffGroup, setActiveStaffGroup] = useState('group-1')
-
-  useEffect(() => {
-    if (isKioskStaff) {
-      document.body.classList.add('theme-kiosk')
-    } else {
-      document.body.classList.remove('theme-kiosk')
-    }
-    return () => document.body.classList.remove('theme-kiosk')
-  }, [isKioskStaff])
-
-  useEffect(() => {
-    if (['overview', 'orders', 'pos', 'delivery', 'table-management', 'shift'].includes(activeTab)) {
-      setActiveStaffGroup('group-1')
-    } else if (['menu', 'news'].includes(activeTab)) {
-      setActiveStaffGroup('group-2')
-    } else if (['workforce', 'account', 'shift-approval', 'employee-manage', 'workforce-manage', 'shipper-manage', 'customer-care', 'survey-manage'].includes(activeTab)) {
-      setActiveStaffGroup('group-3')
-    }
-  }, [activeTab])
+  const operationalGroups = [
+    { label: 'Vận hành & bán hàng', items: [
+      ...(!isKioskStaff ? [{ id: 'overview', label: 'Tổng quan', icon: LayoutGrid }] : []),
+      { id: 'orders', label: 'Đơn hàng', icon: ShoppingBag }, { id: 'pos', label: 'Bán hàng POS', icon: Monitor },
+      ...(!isKioskStaff ? [{ id: 'delivery', label: 'Giao hàng', icon: Bike }, { id: 'table-management', label: 'Bàn & khu vực', icon: Store }] : []),
+      { id: 'shift', label: 'Chốt ca', icon: Clock },
+      ...(isKioskStaff ? [{ id: 'kiosk-combo', label: 'Nhận combo nguyên liệu', icon: Store }] : []),
+    ] },
+    ...(!isKioskStaff ? [{ label: 'Sản phẩm & tin tức', items: [{ id: 'menu', label: 'Thực đơn', icon: Coffee }, { id: 'news', label: 'Tin tức', icon: Newspaper }] }] : []),
+    { label: isManager ? 'Nhân sự & chăm sóc khách hàng' : 'Ca làm & cá nhân', items: [
+      { id: 'workforce', label: 'Lịch làm của tôi', icon: Calendar },
+      ...(isManager ? [
+        { id: 'shift-approval', label: 'Duyệt chốt ca', icon: CheckCircle2 },
+        { id: 'employee-manage', label: 'Nhân viên', icon: Users },
+        { id: 'workforce-manage', label: 'Lịch làm nhân viên', icon: Calendar },
+        { id: 'shipper-manage', label: 'Nhân viên giao hàng', icon: Truck },
+        { id: 'customer-care', label: 'Đánh giá khách hàng', icon: MessageSquare },
+        { id: 'survey-manage', label: 'Khảo sát', icon: BarChart3 },
+        { id: 'satellite-kiosk', label: 'Kiosk vệ tinh', icon: Store },
+      ] : []),
+      { id: 'account', label: 'Hồ sơ & bảo mật', icon: UserCheck },
+    ] },
+  ]
+  useEffect(() => { consoleMainRef.current?.scrollTo({ top: 0, behavior: 'instant' }) }, [activeTab])
 
   const statusTone = (status) => {
     const map = {
@@ -328,274 +303,28 @@ function App() {
   }
 
   return (
-    <div className="admin-app-shell">
-      <aside className="left-nav">
-        <div style={{ padding: '0.75rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.625rem', borderBottom: '1px solid var(--border-light)', marginBottom: '0.75rem' }}>
-          <div style={{ width: '1.875rem', height: '1.875rem', backgroundColor: 'var(--primary)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(79, 70, 229, 0.25)' }}>
-            <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '1rem' }}>A</span>
-          </div>
-          <span style={{ fontWeight: '700', fontSize: '1.125rem', letterSpacing: '-0.025em', color: 'var(--text-main)' }}>Avengers Admin</span>
-        </div>
+    <div className="admin-app-shell console-shell" data-actor={isManager ? 'manager' : 'staff'}>
+      <WorkspaceSidebar groups={operationalGroups} activeTab={activeTab} onSelect={setActiveTab} session={session} label={isManager ? 'Quản lý cửa hàng' : 'Nhân viên cửa hàng'} onLogout={logout} />
 
-
-
-        <div style={{ padding: '0 0.25rem', marginBottom: '0.85rem' }}>
-          <button type="button" className="shipper-launcher-btn" onClick={openShipperLauncher} style={{ width: '100%', margin: 0, height: '38px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', border: '1px solid var(--border-light)', borderRadius: '8px', fontWeight: '700', fontSize: '0.8125rem', cursor: 'pointer', transition: 'all 0.15s ease' }}>
-            <Bike size={16} color="var(--primary)" />
-            <span>Mở Shipper Mobile</span>
-          </button>
-        </div>
-
-        <nav style={{ padding: '0 0.25rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-          
-          {/* GROUP 1: VẬN HÀNH & BÁN HÀNG */}
-          <div>
-            <button
-              type="button"
-              className="nav-group-header-btn"
-              onClick={() => setActiveStaffGroup(activeStaffGroup === 'group-1' ? '' : 'group-1')}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justify: 'space-between',
-                padding: '0.45rem 0.55rem',
-                border: 'none',
-                background: 'transparent',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                color: '#64748b',
-                fontWeight: '700',
-                fontSize: '0.7rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <ShoppingBag size={14} color="#64748b" />
-                <span>{isKioskStaff ? 'Giao dịch Kiosk' : 'Vận hành & Bán hàng'}</span>
-              </div>
-              {activeStaffGroup === 'group-1' ? <ChevronDown size={14} color="#94a3b8" /> : <ChevronRight size={14} color="#94a3b8" />}
-            </button>
-
-            {activeStaffGroup === 'group-1' && (
-              <div className="nav-group-children" style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginTop: '0.25rem', paddingLeft: '0.35rem' }}>
-                {!isKioskStaff && (
-                  <button type="button" className={activeTab === 'overview' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('overview')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <LayoutGrid size={15} /> <span>Tổng quan</span>
-                  </button>
-                )}
-                <button type="button" className={activeTab === 'orders' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('orders')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <ShoppingBag size={15} /> <span>Quản lý đơn hàng</span>
-                </button>
-                <button type="button" className={activeTab === 'pos' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('pos')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Monitor size={15} /> <span>POS tạo đơn nhanh</span>
-                </button>
-                {!isKioskStaff && (
-                  <>
-                    <button type="button" className={activeTab === 'delivery' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('delivery')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Bike size={15} /> <span>Quản lý NV giao hàng</span>
-                    </button>
-                    <button type="button" className={activeTab === 'table-management' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('table-management')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Store size={15} /> <span>Quản lý Bàn</span>
-                    </button>
-                  </>
-                )}
-                <button type="button" className={activeTab === 'shift' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('shift')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Clock size={15} /> <span>Chốt ca</span>
-                </button>
-                {isKioskStaff && (
-                  <button type="button" className={activeTab === 'kiosk-combo' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('kiosk-combo')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Store size={15} /> <span>Nhận Combo NL</span>
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* GROUP 2: SẢN PHẨM & TIN TỨC */}
-          {!isKioskStaff && (
-            <div>
-              <button
-                type="button"
-                className="nav-group-header-btn"
-                onClick={() => setActiveStaffGroup(activeStaffGroup === 'group-2' ? '' : 'group-2')}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justify: 'space-between',
-                  padding: '0.45rem 0.55rem',
-                  border: 'none',
-                  background: 'transparent',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  color: '#64748b',
-                  fontWeight: '700',
-                  fontSize: '0.7rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <Coffee size={14} color="#64748b" />
-                  <span>Sản phẩm &amp; Tin tức</span>
-                </div>
-                {activeStaffGroup === 'group-2' ? <ChevronDown size={14} color="#94a3b8" /> : <ChevronRight size={14} color="#94a3b8" />}
-              </button>
-
-              {activeStaffGroup === 'group-2' && (
-                <div className="nav-group-children" style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginTop: '0.25rem', paddingLeft: '0.35rem' }}>
-                  <button type="button" className={activeTab === 'menu' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('menu')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Coffee size={15} /> <span>Quản lý thực đơn</span>
-                  </button>
-                  <button type="button" className={activeTab === 'news' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('news')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Newspaper size={15} /> <span>Quản lý tin tức</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* GROUP 3: NHÂN SỰ & QUẢN LÝ */}
-          <div>
-            <button
-              type="button"
-              className="nav-group-header-btn"
-              onClick={() => setActiveStaffGroup(activeStaffGroup === 'group-3' ? '' : 'group-3')}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justify: 'space-between',
-                padding: '0.45rem 0.55rem',
-                border: 'none',
-                background: 'transparent',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                color: '#64748b',
-                fontWeight: '700',
-                fontSize: '0.7rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Users size={14} color="#64748b" />
-                <span>{isKioskStaff ? 'Cá nhân Kiosk' : 'Nhân sự & Quản lý'}</span>
-              </div>
-              {activeStaffGroup === 'group-3' ? <ChevronDown size={14} color="#94a3b8" /> : <ChevronRight size={14} color="#94a3b8" />}
-            </button>
-
-            {activeStaffGroup === 'group-3' && (
-              <div className="nav-group-children" style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginTop: '0.25rem', paddingLeft: '0.35rem' }}>
-                <button type="button" className={activeTab === 'workforce' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('workforce')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Calendar size={15} /> <span>{isManager ? 'Lịch làm của tôi' : 'Lịch làm nhân sự'}</span>
-                </button>
-
-                <button type="button" className={activeTab === 'account' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('account')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <UserCheck size={15} /> <span>Hồ sơ &amp; Bảo mật</span>
-                </button>
-
-                {isManager && (
-                  <>
-                    <button type="button" className={activeTab === 'shift-approval' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('shift-approval')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <CheckCircle2 size={15} /> <span>Kiểm tra chốt ca</span>
-                    </button>
-                    <button type="button" className={activeTab === 'employee-manage' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('employee-manage')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Users size={15} /> <span>Quản lý nhân viên</span>
-                    </button>
-                    <button type="button" className={activeTab === 'workforce-manage' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('workforce-manage')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Calendar size={15} /> <span>Quản lý lịch làm nhân viên</span>
-                    </button>
-                    <button type="button" className={activeTab === 'shipper-manage' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('shipper-manage')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Truck size={15} /> <span>Quản lý NV giao hàng</span>
-                    </button>
-                    <button type="button" className={activeTab === 'customer-care' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('customer-care')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <MessageSquare size={15} /> <span>CSKH phản hồi đánh giá</span>
-                    </button>
-                    <button type="button" className={activeTab === 'survey-manage' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('survey-manage')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <BarChart3 size={15} /> <span>Quản lý khảo sát</span>
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* GROUP 4: MẠNG LƯỚI & HỆ THỐNG (Dành cho Manager) */}
-          {isManager && (
-            <div>
-              <button
-                type="button"
-                className="nav-group-header-btn"
-                onClick={() => setActiveStaffGroup(activeStaffGroup === 'group-4' ? '' : 'group-4')}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justify: 'space-between',
-                  padding: '0.45rem 0.55rem',
-                  border: 'none',
-                  background: 'transparent',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  color: '#64748b',
-                  fontWeight: '700',
-                  fontSize: '0.7rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <Monitor size={14} color="#64748b" />
-                  <span>Mạng lưới &amp; Hệ thống</span>
-                </div>
-                {activeStaffGroup === 'group-4' ? <ChevronDown size={14} color="#94a3b8" /> : <ChevronRight size={14} color="#94a3b8" />}
-              </button>
-
-              {activeStaffGroup === 'group-4' && (
-                <div className="nav-group-children" style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginTop: '0.25rem', paddingLeft: '0.35rem' }}>
-                  <button type="button" className={activeTab === 'satellite-kiosk' ? 'nav-tab active' : 'nav-tab'} onClick={() => setActiveTab('satellite-kiosk')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Store size={15} /> <span>Quản lý Kiosk vệ tinh</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-        </nav>
-
-        <div style={{ marginTop: 'auto', paddingTop: '0.75rem', paddingLeft: '0.25rem', paddingRight: '0.25rem' }}>
-          <button type="button" className="logout-btn" onClick={logout} style={{ width: '100%', height: '38px', borderRadius: '8px', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
-            <LogOut size={16} /> Đăng xuất
-          </button>
-        </div>
-      </aside>
-
-      <main className="content-area">
+      <main ref={consoleMainRef} className="content-area console-main">
         <header className="content-header" style={{ padding: '1rem 1.75rem', backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="content-header-title">
             <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', color: '#0f172a' }}>Trung tâm vận hành cửa hàng</h1>
             <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8125rem', color: '#64748b' }}>Xin chào <strong>{session.user?.tenDangNhap || session.user?.email || 'nhan vien'}</strong>, cơ sở {branchName}.</p>
           </div>
           <div className="header-right-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-            <div className="header-search" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <Search size={15} color="#64748b" style={{ position: 'absolute', left: '0.75rem', pointerEvents: 'none' }} />
-              <input
-                type="text"
-                placeholder="Tìm kiếm mọi thứ..."
-                style={{ padding: '0.45rem 0.85rem 0.45rem 2.2rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', fontSize: '0.8125rem', color: '#0f172a', outline: 'none', width: '220px' }}
-              />
-            </div>
+            <WorkspaceSearch items={operationalGroups.flatMap(group => group.items.map(item => ({ ...item, group: group.label })))} onSelect={setActiveTab} />
             <AdminNotificationBell session={session} />
           </div>
         </header>
 
+        <WorkspaceErrorBoundary key={activeTab} inline><div key={activeTab} className="workspace-tab-content"><Suspense fallback={<DashboardSkeleton />}>
         {activeTab === 'overview' ? (
           <OverviewPanel
             branchName={branchName}
             totals={totals}
+            loading={ordersState.loading || inventoryState.loading}
+            error={ordersState.error || inventoryState.error}
             overviewData={overviewData}
             overviewRange={overviewRange}
             setOverviewRange={setOverviewRange}
@@ -795,6 +524,7 @@ function App() {
         )}
 
         {activeTab === 'account' ? <AccountCenterPanel session={session} /> : null}
+        </Suspense></div></WorkspaceErrorBoundary>
       </main>
         <AdminChatWidget session={session} />
 
@@ -822,4 +552,7 @@ function App() {
   )
 }
 
+function App() {
+  return <WorkspaceErrorBoundary><Suspense fallback={<div className="console-shell"><div className="console-page"><DashboardSkeleton /></div></div>}><AppContent /></Suspense></WorkspaceErrorBoundary>
+}
 export default App

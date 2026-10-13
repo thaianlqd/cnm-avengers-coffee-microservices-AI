@@ -1,3 +1,4 @@
+import { uiText as ui, useUiLanguage, uiLocale } from "../lib/uiText";
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/apiClient';
@@ -5,6 +6,7 @@ import Swal from 'sweetalert2';
 import { GiftIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 export default function MyGiftCardsTab() {
+  useUiLanguage();
   const [giftCardCode, setGiftCardCode] = useState('');
   const queryClient = useQueryClient();
   const activeUserId = localStorage.getItem('avengers_active_user_id') || '00000000-0000-0000-0000-000000000000';
@@ -81,18 +83,18 @@ export default function MyGiftCardsTab() {
       <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4">
         <div className="flex items-center gap-2">
           <GiftIcon className="w-5 h-5 text-[#b22830]" />
-          <h3 className="text-base font-black uppercase text-gray-800 tracking-wide">Bộ sưu tập Thẻ Quà Tặng</h3>
+          <h3 className="text-base font-black uppercase text-gray-800 tracking-wide">{ui("Bộ sưu tập Thẻ Quà Tặng")}</h3>
         </div>
       </div>
 
       {/* Form Lưu Thẻ Mới */}
       <div className="rounded-xl border border-[#b22830]/20 bg-[#fbf8f1] p-5 mb-8">
-        <h4 className="text-sm font-black uppercase tracking-wide text-[#b22830] mb-3">Lưu Thẻ Quà Tặng Mới</h4>
+        <h4 className="text-sm font-black uppercase tracking-wide text-[#b22830] mb-3">{ui("Lưu Thẻ Quà Tặng Mới")}</h4>
         <form onSubmit={handleClaimCard} className="flex flex-col md:flex-row gap-3">
           <div className="flex-1 relative">
             <input
               type="text"
-              placeholder="Nhập mã thẻ (VD: GIFT-...)"
+              placeholder={ui("Nhập mã thẻ (VD: GIFT-...)")}
               value={giftCardCode}
               onChange={(e) => setGiftCardCode(e.target.value.toUpperCase())}
               className="w-full rounded-xl border border-[#b22830]/30 pl-4 pr-4 py-3 text-sm font-bold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-[#b22830]/10 transition-all bg-white text-[#b22830]"
@@ -104,7 +106,7 @@ export default function MyGiftCardsTab() {
             disabled={redeemMutation.isPending || !giftCardCode.trim()}
             className="rounded-xl bg-[#b22830] hover:bg-[#8f1d24] px-6 py-3 text-sm font-black uppercase tracking-wide text-white transition-all disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
           >
-            {redeemMutation.isPending ? 'Đang lưu...' : 'Lưu thẻ ngay'}
+            {redeemMutation.isPending ? ui("Đang lưu...") : ui("Lưu thẻ ngay")}
           </button>
         </form>
       </div>
@@ -117,7 +119,7 @@ export default function MyGiftCardsTab() {
         </div>
       ) : myCards.length === 0 ? (
         <div className="text-center py-10">
-          <p className="text-gray-500 font-medium">Bạn chưa sở hữu thẻ quà tặng nào.</p>
+          <p className="text-gray-500 font-medium">{ui("Bạn chưa sở hữu thẻ quà tặng nào.")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -125,20 +127,20 @@ export default function MyGiftCardsTab() {
             const hasBalance = Number(card.current_balance) > 0;
             const bgImage = card.theme_detail?.image_url;
             return (
-              <div 
-                key={card.id} 
+              <div
+                key={card.id}
                 className={`relative rounded-2xl overflow-hidden shadow-lg transition-transform hover:-translate-y-1 ${!hasBalance ? 'opacity-75 grayscale-[30%]' : ''}`}
                 style={{
                   border: `2px solid ${card.theme_detail?.color || '#b22830'}`
                 }}
               >
                 {/* Ảnh thẻ */}
-                <div 
+                <div
                   className="w-full aspect-[1.6/1] bg-cover bg-center relative group"
                   style={{ backgroundImage: bgImage ? `url(${bgImage})` : 'none', backgroundColor: '#f1f1f1' }}
                 >
                   {!bgImage && (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">Không có ảnh</div>
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">{ui("Không có ảnh")}</div>
                   )}
                   {/* Nút Xóa (Dành cho Dev Test) */}
                   <button
@@ -159,7 +161,7 @@ export default function MyGiftCardsTab() {
                     }}
                     disabled={deleteMutation.isPending}
                     className="absolute top-2 right-2 bg-white/80 hover:bg-red-500 hover:text-white text-red-500 p-2 rounded-full shadow backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
-                    title="Xóa thẻ (Test)"
+                    title={ui("Xóa thẻ (Test)")}
                   >
                     <TrashIcon className="w-4 h-4" />
                   </button>
@@ -169,12 +171,12 @@ export default function MyGiftCardsTab() {
                 <div className="p-4 bg-white">
                   <div className="flex justify-between items-center mb-3">
                     <div>
-                      <p className="text-xs text-gray-500 font-medium">Mệnh giá ban đầu</p>
-                      <p className="text-sm font-bold text-gray-800">{Number(card.value).toLocaleString('vi-VN')} đ</p>
+                      <p className="text-xs text-gray-500 font-medium">{ui("Mệnh giá ban đầu")}</p>
+                      <p className="text-sm font-bold text-gray-800">{Number(card.value).toLocaleString(uiLocale())}{ui(" đ")}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-[#b22830] font-black">Số dư hiện tại</p>
-                      <p className="text-lg font-black text-[#b22830]">{Number(card.current_balance).toLocaleString('vi-VN')} đ</p>
+                      <p className="text-xs text-[#b22830] font-black">{ui("Số dư hiện tại")}</p>
+                      <p className="text-lg font-black text-[#b22830]">{Number(card.current_balance).toLocaleString(uiLocale())}{ui(" đ")}</p>
                     </div>
                   </div>
 
@@ -182,7 +184,7 @@ export default function MyGiftCardsTab() {
                     onClick={() => {
                       Swal.fire({
                         title: 'Nạp tiền vào ví?',
-                        text: `Bạn muốn chuyển ${Number(card.current_balance).toLocaleString('vi-VN')}đ vào ví điện tử chính?`,
+                        text: `Bạn muốn chuyển ${Number(card.current_balance).toLocaleString(uiLocale())}đ vào ví điện tử chính?`,
                         icon: 'question',
                         showCancelButton: true,
                         confirmButtonText: 'Đồng ý',
@@ -201,7 +203,7 @@ export default function MyGiftCardsTab() {
                         : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     }`}
                   >
-                    {hasBalance ? 'Nạp số dư vào ví' : 'Thẻ đã dùng hết'}
+                    {hasBalance ? ui("Nạp số dư vào ví") : ui("Thẻ đã dùng hết")}
                   </button>
                 </div>
               </div>

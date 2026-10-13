@@ -13,6 +13,8 @@ const apiClient = axios.create({
 })
 
 let authToken = null
+let guestSessionId = null
+export function setGuestSessionId(id) { guestSessionId = id }
 
 apiClient.interceptors.request.use(
   async (config) => {
@@ -26,6 +28,10 @@ apiClient.interceptors.request.use(
     if (authToken) {
       config.headers = config.headers || {}
       config.headers.Authorization = `Bearer ${authToken}`
+    }
+    if (!authToken && guestSessionId && config.url?.startsWith('/cart')) {
+      config.headers = config.headers || {}
+      config.headers['x-guest-session-id'] = guestSessionId
     }
     return config
   },
@@ -76,4 +82,4 @@ apiClient.postForm = async function postForm(url, formData) {
     timeout: 60000,
   })
   return response.data
-}
+}

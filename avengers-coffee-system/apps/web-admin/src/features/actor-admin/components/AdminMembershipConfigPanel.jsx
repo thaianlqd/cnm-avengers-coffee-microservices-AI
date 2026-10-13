@@ -49,7 +49,7 @@ export function AdminMembershipConfigPanel({
   const [tierForm, setTierForm] = useState({
     ma_hang: '',
     ten_hang: '',
-    mau_sac: '#2563eb',
+    mau_sac: '#536270',
     diem_toi_thieu: 0,
     chi_tieu_toi_thieu_thang: 0,
     he_so_diem: 1,
@@ -94,7 +94,7 @@ export function AdminMembershipConfigPanel({
     setTierForm({
       ma_hang: '',
       ten_hang: '',
-      mau_sac: '#0284c7',
+      mau_sac: '#2563eb',
       diem_toi_thieu: nextMinScore,
       chi_tieu_toi_thieu_thang: 0,
       he_so_diem: 1.2,
@@ -113,7 +113,7 @@ export function AdminMembershipConfigPanel({
     setTierForm({
       ma_hang: tier.ma_hang || '',
       ten_hang: tier.ten_hang || '',
-      mau_sac: tier.mau_sac || '#2563eb',
+      mau_sac: tier.mau_sac || '#536270',
       diem_toi_thieu: Number(tier.diem_toi_thieu || 0),
       chi_tieu_toi_thieu_thang: Number(tier.chi_tieu_toi_thieu_thang || 0),
       he_so_diem: Number(tier.he_so_diem || 1),
@@ -270,7 +270,7 @@ export function AdminMembershipConfigPanel({
       <div style={{ marginTop: '0.35rem', padding: '0.45rem 0.65rem', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e5e7eb', fontSize: '0.76rem', color: '#4b5563', lineHeight: 1.4 }}>
         <div style={{ fontWeight: '700', color: '#1a1a1a' }}>{found.ten_khuyen_mai || found.ten_voucher} ({found.ma_khuyen_mai || found.ma_voucher})</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.25rem' }}>
-          <span>• <strong>Mức giảm:</strong> <span style={{ color: '#2563eb', fontWeight: '800' }}>{valStr}</span></span>
+          <span>• <strong>Mức giảm:</strong> <span style={{ color: 'var(--primary)', fontWeight: '600' }}>{valStr}</span></span>
           <span>• <strong>Giảm tối đa:</strong> {maxDiscount}</span>
           <span>• <strong>Đơn tối thiểu:</strong> {minOrder > 0 ? `${minOrder.toLocaleString('vi-VN')}đ` : '0đ (Không giới hạn)'}</span>
           <span>• <strong>Hạn dùng cấp:</strong> {days} ngày</span>
@@ -327,7 +327,7 @@ export function AdminMembershipConfigPanel({
   }
 
   return (
-    <section className="panel system-admin-panel" style={{ padding: '1rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+    <section className="panel system-admin-panel workspace-membership" style={{ padding: '1rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       {/* High-Impact Selected Sub Tabs Navigation Bar with Action Button */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', margin: '0 0 0.5rem 0' }}>
         <div
@@ -398,7 +398,7 @@ export function AdminMembershipConfigPanel({
           {showTierForm && (
             <div
               ref={formRef}
-              className="system-admin-card"
+              className="system-admin-card workspace-edit-form"
               style={{
                 backgroundColor: '#ffffff',
                 border: '1px solid #e2e8f0',
@@ -408,7 +408,7 @@ export function AdminMembershipConfigPanel({
               }}
             >
               {/* Form Header */}
-              <div
+              <div className="workspace-form-heading"
                 style={{
                   padding: '1.1rem 1.5rem',
                   backgroundColor: '#f8fafc',
@@ -425,9 +425,9 @@ export function AdminMembershipConfigPanel({
                       width: '38px',
                       height: '38px',
                       borderRadius: '10px',
-                      backgroundColor: editingTierCode ? '#eff6ff' : '#ecfdf5',
-                      color: editingTierCode ? '#2563eb' : '#059669',
-                      border: editingTierCode ? '1px solid #bfdbfe' : '1px solid #a7f3d0',
+                      backgroundColor: editingTierCode ? 'var(--primary-light)' : '#eff6ff',
+                      color: editingTierCode ? 'var(--primary)' : '#2563eb',
+                      border: editingTierCode ? '1px solid #bfdbfe' : '1px solid #bfdbfe',
                       display: 'flex',
                       alignItems: 'center',
                       justify: 'center',
@@ -475,7 +475,7 @@ export function AdminMembershipConfigPanel({
                     <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                       Mã định danh hạng <span style={{ color: '#ef4444' }}>*</span>
                     </label>
-                    <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: editingTierCode === 'MEMBER' ? '#f1f5f9' : '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                    <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: editingTierCode === 'MEMBER' ? '#f1f5f9' : '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                       <Tag size={16} color="#64748b" style={{ flexShrink: 0 }} />
                       <input
                         style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', boxShadow: 'none' }}
@@ -492,7 +492,7 @@ export function AdminMembershipConfigPanel({
                     <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                       Tên hiển thị hạng <span style={{ color: '#ef4444' }}>*</span>
                     </label>
-                    <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                    <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                       <Award size={16} color="#64748b" style={{ flexShrink: 0 }} />
                       <input
                         style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', boxShadow: 'none' }}
@@ -508,20 +508,20 @@ export function AdminMembershipConfigPanel({
                     <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                       Màu sắc đại diện
                     </label>
-                    <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                    <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                       <Palette size={16} color="#64748b" style={{ flexShrink: 0 }} />
                       <input
                         type="color"
                         style={{ width: '28px', height: '28px', border: 'none', borderRadius: '4px', cursor: 'pointer', backgroundColor: 'transparent' }}
-                        value={tierForm.mau_sac || '#2563eb'}
+                        value={tierForm.mau_sac || '#536270'}
                         onChange={(e) => setTierForm((p) => ({ ...p, mau_sac: e.target.value }))}
                       />
                       <input
                         type="text"
                         style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', boxShadow: 'none' }}
-                        value={tierForm.mau_sac || '#2563eb'}
+                        value={tierForm.mau_sac || '#536270'}
                         onChange={(e) => setTierForm((p) => ({ ...p, mau_sac: e.target.value }))}
-                        placeholder="#2563eb"
+                        placeholder="var(--primary)"
                       />
                     </div>
                   </div>
@@ -531,7 +531,7 @@ export function AdminMembershipConfigPanel({
                     <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                       Mốc điểm tích lũy xét hạng (pt)
                     </label>
-                    <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: tierForm.ma_hang === 'MEMBER' ? '#f1f5f9' : '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                    <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: tierForm.ma_hang === 'MEMBER' ? '#f1f5f9' : '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                       <Coins size={16} color="#64748b" style={{ flexShrink: 0 }} />
                       <input
                         type="number"
@@ -549,7 +549,7 @@ export function AdminMembershipConfigPanel({
                     <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                       Chi tiêu duy trì / Tháng (đ)
                     </label>
-                    <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: tierForm.ma_hang === 'MEMBER' ? '#f1f5f9' : '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                    <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: tierForm.ma_hang === 'MEMBER' ? '#f1f5f9' : '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                       <Zap size={16} color="#64748b" style={{ flexShrink: 0 }} />
                       <input
                         type="number"
@@ -569,7 +569,7 @@ export function AdminMembershipConfigPanel({
                     <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                       Hệ số tích điểm (VD: 1.2x)
                     </label>
-                    <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                    <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                       <Sparkles size={16} color="#64748b" style={{ flexShrink: 0 }} />
                       <input
                         type="number"
@@ -587,7 +587,7 @@ export function AdminMembershipConfigPanel({
                     <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                       Lượt quay may mắn / Tháng
                     </label>
-                    <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                    <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                       <Gift size={16} color="#64748b" style={{ flexShrink: 0 }} />
                       <input
                         type="number"
@@ -604,7 +604,7 @@ export function AdminMembershipConfigPanel({
                     <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                       Mức giảm phí ship (đ)
                     </label>
-                    <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                    <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                       <ShieldCheck size={16} color="#64748b" style={{ flexShrink: 0 }} />
                       <input
                         type="number"
@@ -623,7 +623,7 @@ export function AdminMembershipConfigPanel({
                     <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                       Quà Thăng Hạng (Voucher Template)
                     </label>
-                    <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                    <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                       <Gift size={16} color="#64748b" style={{ flexShrink: 0 }} />
                       <select
                         style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.82rem', color: '#0f172a', boxShadow: 'none', cursor: 'pointer' }}
@@ -646,7 +646,7 @@ export function AdminMembershipConfigPanel({
                     <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                       Quà Sinh Nhật (Voucher Template)
                     </label>
-                    <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                    <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                       <Gift size={16} color="#64748b" style={{ flexShrink: 0 }} />
                       <select
                         style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.82rem', color: '#0f172a', boxShadow: 'none', cursor: 'pointer' }}
@@ -708,7 +708,7 @@ export function AdminMembershipConfigPanel({
                   onClick={handleSaveTierForm}
                   disabled={savingMembershipConfig}
                   style={{
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                     color: '#ffffff',
                     border: 'none',
                     height: '40px',
@@ -720,7 +720,7 @@ export function AdminMembershipConfigPanel({
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.4rem',
-                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
+                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)'
                   }}
                 >
                   <UserCheck size={17} color="#ffffff" />
@@ -731,14 +731,15 @@ export function AdminMembershipConfigPanel({
           )}
 
           {/* OVERVIEW GRID OF TIERS SUMMARY CARDS */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+          <div className="workspace-tier-grid">
             {tiers.map((tier) => (
               <div
                 key={tier.ma_hang}
+                className="workspace-tier-card"
                 style={{
                   backgroundColor: '#ffffff',
                   border: '1px solid #e2e8f0',
-                  borderTop: `4px solid ${tier.mau_sac || '#2563eb'}`,
+                  borderTop: '1px solid #e2e8f0',
                   borderRadius: '14px',
                   padding: '1.25rem',
                   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)',
@@ -750,7 +751,7 @@ export function AdminMembershipConfigPanel({
                 {/* Header */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: `${tier.mau_sac || '#2563eb'}15`, color: tier.mau_sac || '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Award size={18} />
                     </div>
                     <div>
@@ -761,7 +762,7 @@ export function AdminMembershipConfigPanel({
                     </div>
                   </div>
 
-                  <span style={{ background: tier.mau_sac || '#2563eb', color: '#ffffff', fontSize: '0.72rem', fontWeight: '700', padding: '0.2rem 0.6rem', borderRadius: '9999px' }}>
+                  <span style={{ background: 'var(--primary-light)', color: 'var(--primary)', fontSize: '0.72rem', fontWeight: '700', padding: '0.2rem 0.6rem', borderRadius: '9999px' }}>
                     {tier.ma_hang}
                   </span>
                 </div>
@@ -775,17 +776,17 @@ export function AdminMembershipConfigPanel({
 
                   <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.5rem 0.65rem' }}>
                     <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block' }}>Chi tiêu/Tháng</span>
-                    <strong style={{ fontSize: '0.875rem', color: '#2563eb' }}>{tier.chi_tieu_toi_thieu_thang ? `${fmtNumber(tier.chi_tieu_toi_thieu_thang)}đ` : 'Không bắt buộc'}</strong>
+                    <strong style={{ fontSize: '0.875rem', color: 'var(--primary)' }}>{tier.chi_tieu_toi_thieu_thang ? `${fmtNumber(tier.chi_tieu_toi_thieu_thang)}đ` : 'Không bắt buộc'}</strong>
                   </div>
 
                   <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.5rem 0.65rem' }}>
                     <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block' }}>Hệ số điểm</span>
-                    <strong style={{ fontSize: '0.875rem', color: '#059669' }}>{tier.he_so_diem}x</strong>
+                    <strong style={{ fontSize: '0.875rem', color: 'var(--text-main)' }}>{tier.he_so_diem}x</strong>
                   </div>
 
                   <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.5rem 0.65rem' }}>
                     <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block' }}>Lượt quay</span>
-                    <strong style={{ fontSize: '0.875rem', color: '#7c3aed' }}>{tier.luot_quay_thang || 1} lượt/tháng</strong>
+                    <strong style={{ fontSize: '0.875rem', color: 'var(--text-body)' }}>{tier.luot_quay_thang || 1} lượt/tháng</strong>
                   </div>
                 </div>
 
@@ -793,16 +794,16 @@ export function AdminMembershipConfigPanel({
                 <div style={{ backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #f1f5f9', padding: '0.65rem 0.85rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.78125rem' }}>
                   <div>
                     <span style={{ color: '#64748b' }}>Quà thăng hạng: </span>
-                    <span style={{ fontWeight: '600', color: '#2563eb' }}>{tier.ma_voucher_thang_hang ? `Voucher ${tier.ma_voucher_thang_hang}` : 'Tự động tạo'}</span>
+                    <span style={{ fontWeight: '600', color: 'var(--primary)' }}>{tier.ma_voucher_thang_hang ? `Voucher ${tier.ma_voucher_thang_hang}` : 'Tự động tạo'}</span>
                   </div>
                   <div>
                     <span style={{ color: '#64748b' }}>Quà sinh nhật: </span>
-                    <span style={{ fontWeight: '600', color: '#7c3aed' }}>{tier.ma_voucher_sinh_nhat ? `Voucher ${tier.ma_voucher_sinh_nhat}` : 'Tự động tạo'}</span>
+                    <span style={{ fontWeight: '600', color: 'var(--text-body)' }}>{tier.ma_voucher_sinh_nhat ? `Voucher ${tier.ma_voucher_sinh_nhat}` : 'Tự động tạo'}</span>
                   </div>
                 </div>
 
                 {/* Card Actions */}
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem', paddingTop: '0.75rem', borderTop: '1px solid #f1f5f9', justifyContent: 'flex-end' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto', paddingTop: '0.75rem', borderTop: '1px solid #f1f5f9', justifyContent: 'flex-end' }}>
                   {tier.ma_hang !== 'MEMBER' && (
                     <button
                       type="button"
@@ -832,8 +833,8 @@ export function AdminMembershipConfigPanel({
                     type="button"
                     onClick={() => openEditTierForm(tier)}
                     style={{
-                      backgroundColor: '#eff6ff',
-                      color: '#2563eb',
+                      backgroundColor: 'var(--primary-light)',
+                      color: 'var(--primary)',
                       border: '1px solid #bfdbfe',
                       padding: '0.35rem 0.85rem',
                       borderRadius: '6px',
@@ -845,7 +846,7 @@ export function AdminMembershipConfigPanel({
                       gap: '0.35rem'
                     }}
                   >
-                    <Edit3 size={14} color="#2563eb" />
+                    <Edit3 size={14} color="var(--primary)" />
                     Chỉnh sửa
                   </button>
                 </div>
@@ -908,7 +909,7 @@ export function AdminMembershipConfigPanel({
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', height: '40px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem', width: '160px' }}>
+              <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '40px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem', width: '160px' }}>
                 <Coins size={16} color="#d97706" style={{ flexShrink: 0 }} />
                 <input
                   type="number"
@@ -928,14 +929,14 @@ export function AdminMembershipConfigPanel({
                   gap: '0.5rem',
                   padding: '0.45rem 0.85rem',
                   borderRadius: '9999px',
-                  backgroundColor: isWheelProbabilityValid ? '#ecfdf5' : '#fef2f2',
-                  border: isWheelProbabilityValid ? '1px solid #a7f3d0' : '1px solid #fecaca',
+                  backgroundColor: isWheelProbabilityValid ? '#eff6ff' : '#fef2f2',
+                  border: isWheelProbabilityValid ? '1px solid #bfdbfe' : '1px solid #fecaca',
                   fontSize: '0.8125rem',
                   fontWeight: '700',
-                  color: isWheelProbabilityValid ? '#059669' : '#dc2626'
+                  color: isWheelProbabilityValid ? '#2563eb' : '#dc2626'
                 }}
               >
-                <Sparkles size={16} color={isWheelProbabilityValid ? '#059669' : '#dc2626'} />
+                <Sparkles size={16} color={isWheelProbabilityValid ? '#2563eb' : '#dc2626'} />
                 <span>Tổng xác suất: {totalProbability}% {isWheelProbabilityValid ? '(Hợp lệ)' : '(Phải = 100%)'}</span>
               </div>
             </div>
@@ -963,8 +964,8 @@ export function AdminMembershipConfigPanel({
                       style={{
                         padding: '0.85rem 1rem',
                         borderRadius: '12px',
-                        border: isSelected ? '2px solid #6366f1' : '1px solid #e2e8f0',
-                        backgroundColor: isSelected ? '#f5f3ff' : '#ffffff',
+                        border: isSelected ? '2px solid var(--primary)' : '1px solid #e2e8f0',
+                        backgroundColor: isSelected ? 'var(--primary-light)' : '#ffffff',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -981,7 +982,7 @@ export function AdminMembershipConfigPanel({
                             minWidth: '32px',
                             minHeight: '32px',
                             borderRadius: '50%',
-                            backgroundColor: prize.mau || '#4f46e5',
+                            backgroundColor: prize.mau || 'var(--primary)',
                             color: '#ffffff',
                             display: 'flex',
                             alignItems: 'center',
@@ -989,7 +990,7 @@ export function AdminMembershipConfigPanel({
                             textAlign: 'center',
                             lineHeight: '32px',
                             fontSize: '0.8125rem',
-                            fontWeight: '800',
+                            fontWeight: '600',
                             flexShrink: 0,
                             boxShadow: '0 2px 5px rgba(0,0,0,0.15)',
                             margin: 0,
@@ -1015,8 +1016,8 @@ export function AdminMembershipConfigPanel({
                           style={{
                             fontWeight: '700',
                             fontSize: '0.8125rem',
-                            color: isSelected ? '#4f46e5' : '#334155',
-                            backgroundColor: isSelected ? '#e0e7ff' : '#f1f5f9',
+                            color: isSelected ? 'var(--primary)' : '#334155',
+                            backgroundColor: isSelected ? 'var(--primary-subtle)' : '#f1f5f9',
                             padding: '0.2rem 0.55rem',
                             borderRadius: '9999px'
                           }}
@@ -1064,15 +1065,15 @@ export function AdminMembershipConfigPanel({
                         minWidth: '38px',
                         minHeight: '38px',
                         borderRadius: '10px',
-                        backgroundColor: activePrize.mau ? `${activePrize.mau}20` : '#eef2ff',
-                        color: activePrize.mau || '#4f46e5',
-                        border: `1px solid ${activePrize.mau || '#c7d2fe'}`,
+                        backgroundColor: activePrize.mau ? `${activePrize.mau}20` : 'var(--primary-light)',
+                        color: activePrize.mau || 'var(--primary)',
+                        border: `1px solid ${activePrize.mau || '#e8cdbb'}`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         textAlign: 'center',
                         lineHeight: '38px',
-                        fontWeight: '800',
+                        fontWeight: '600',
                         fontSize: '0.9rem',
                         flexShrink: 0
                       }}
@@ -1105,7 +1106,7 @@ export function AdminMembershipConfigPanel({
                       <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                         Loại phần thưởng <span style={{ color: '#ef4444' }}>*</span>
                       </label>
-                      <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                      <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                         <Tag size={16} color="#64748b" style={{ flexShrink: 0 }} />
                         <select
                           style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', boxShadow: 'none', cursor: 'pointer', fontWeight: '600' }}
@@ -1125,7 +1126,7 @@ export function AdminMembershipConfigPanel({
                       <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                         Tên hiển thị trên vòng quay <span style={{ color: '#ef4444' }}>*</span>
                       </label>
-                      <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                      <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                         <Gift size={16} color="#64748b" style={{ flexShrink: 0 }} />
                         <input
                           type="text"
@@ -1142,18 +1143,18 @@ export function AdminMembershipConfigPanel({
                       <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                         Màu sắc ô quay
                       </label>
-                      <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                      <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                         <Palette size={16} color="#64748b" style={{ flexShrink: 0 }} />
                         <input
                           type="color"
                           style={{ width: '28px', height: '28px', border: 'none', borderRadius: '4px', cursor: 'pointer', backgroundColor: 'transparent' }}
-                          value={activePrize.mau || '#4f46e5'}
+                          value={activePrize.mau || 'var(--primary)'}
                           onChange={(e) => handleActivePrizeChange('mau', e.target.value)}
                         />
                         <input
                           type="text"
                           style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', boxShadow: 'none' }}
-                          value={activePrize.mau || '#4f46e5'}
+                          value={activePrize.mau || 'var(--primary)'}
                           onChange={(e) => handleActivePrizeChange('mau', e.target.value)}
                         />
                       </div>
@@ -1164,7 +1165,7 @@ export function AdminMembershipConfigPanel({
                       <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                         Tỉ lệ xác suất trúng (%) <span style={{ color: '#ef4444' }}>*</span>
                       </label>
-                      <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                      <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                         <Sparkles size={16} color="#64748b" style={{ flexShrink: 0 }} />
                         <input
                           type="number"
@@ -1187,7 +1188,7 @@ export function AdminMembershipConfigPanel({
                         <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                           Số điểm cộng cho khách hàng
                         </label>
-                        <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#ffffff', padding: '0 0.85rem', gap: '0.65rem' }}>
+                        <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#ffffff', padding: '0 0.85rem', gap: '0.65rem' }}>
                           <Coins size={16} color="#d97706" style={{ flexShrink: 0 }} />
                           <input
                             type="number"
@@ -1206,7 +1207,7 @@ export function AdminMembershipConfigPanel({
                         <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                           Chọn Mẫu Voucher Vòng Quay
                         </label>
-                        <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#ffffff', padding: '0 0.85rem', gap: '0.65rem' }}>
+                        <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#ffffff', padding: '0 0.85rem', gap: '0.65rem' }}>
                           <Gift size={16} color="#64748b" style={{ flexShrink: 0 }} />
                           <select
                             style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.82rem', color: '#0f172a', boxShadow: 'none', cursor: 'pointer' }}
@@ -1225,7 +1226,7 @@ export function AdminMembershipConfigPanel({
                         {!activePrize.ma_voucher && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginTop: '0.35rem' }}>
                             <span style={{ fontSize: '0.78rem', color: '#64748b' }}>Số tiền giảm thủ công (nếu không chọn voucher mẫu):</span>
-                            <div style={{ display: 'flex', alignItems: 'center', height: '38px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#ffffff', padding: '0 0.85rem' }}>
+                            <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '38px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#ffffff', padding: '0 0.85rem' }}>
                               <input
                                 type="number"
                                 style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', boxShadow: 'none' }}
@@ -1244,7 +1245,7 @@ export function AdminMembershipConfigPanel({
                         <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                           Sản phẩm Menu tặng kèm
                         </label>
-                        <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#ffffff', padding: '0 0.85rem', gap: '0.65rem' }}>
+                        <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#ffffff', padding: '0 0.85rem', gap: '0.65rem' }}>
                           <Gift size={16} color="#64748b" style={{ flexShrink: 0 }} />
                           {menuProducts.length > 0 ? (
                             <select
@@ -1271,8 +1272,8 @@ export function AdminMembershipConfigPanel({
                     )}
 
                     {activePrize.loai === 'FREE_TOPPING' && (
-                      <div style={{ backgroundColor: '#ecfdf5', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid #a7f3d0', fontSize: '0.8125rem', color: '#047857', lineHeight: 1.5, display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                        <Sparkles size={20} color="#059669" style={{ flexShrink: 0 }} />
+                      <div style={{ backgroundColor: '#eff6ff', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid #bfdbfe', fontSize: '0.8125rem', color: '#1d4ed8', lineHeight: 1.5, display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                        <Sparkles size={20} color="#2563eb" style={{ flexShrink: 0 }} />
                         <div>
                           <strong>Voucher Free Topping:</strong> Khi khách quay trúng ô này, hệ thống tự động cấp 1 voucher miễn phí 1 topping bất kỳ cho đơn hàng kế tiếp.
                         </div>
@@ -1288,9 +1289,9 @@ export function AdminMembershipConfigPanel({
           <div
             style={{
               padding: '1rem 1.5rem',
-              backgroundColor: isWheelProbabilityValid ? '#ecfdf5' : '#fef2f2',
+              backgroundColor: isWheelProbabilityValid ? '#eff6ff' : '#fef2f2',
               borderRadius: '16px',
-              border: `1px solid ${isWheelProbabilityValid ? '#a7f3d0' : '#fecaca'}`,
+              border: `1px solid ${isWheelProbabilityValid ? '#bfdbfe' : '#fecaca'}`,
               display: 'flex',
               alignItems: 'center',
               justify: 'space-between',
@@ -1300,7 +1301,7 @@ export function AdminMembershipConfigPanel({
           >
             <div>
               <span style={{ fontWeight: '600', color: '#334155', fontSize: '0.875rem' }}>Trạng thái cấu hình Vòng quay: </span>
-              <strong style={{ fontSize: '0.95rem', color: isWheelProbabilityValid ? '#059669' : '#dc2626', marginLeft: '0.35rem' }}>
+              <strong style={{ fontSize: '0.95rem', color: isWheelProbabilityValid ? '#2563eb' : '#dc2626', marginLeft: '0.35rem' }}>
                 Tổng xác suất = {totalProbability}%
               </strong>
               {!isWheelProbabilityValid && (

@@ -14,7 +14,7 @@ const GiftCardPage = () => {
     const hash = window.location.hash.replace('#', '');
     return hash ? hash : 'home';
   };
-  
+
   const [activePage, setActivePage] = useState(getInitialPage);
 
   useEffect(() => {
@@ -25,14 +25,14 @@ const GiftCardPage = () => {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const handleNavigate = (page) => { 
+  const handleNavigate = (page) => {
     if (page === 'home') {
       window.history.pushState(null, '', window.location.pathname + window.location.search);
     } else {
       window.history.pushState(null, '', '#' + page);
     }
-    setActivePage(page); 
-    window.scrollTo({ top: 0, behavior: 'smooth' }); 
+    setActivePage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const renderPage = () => {

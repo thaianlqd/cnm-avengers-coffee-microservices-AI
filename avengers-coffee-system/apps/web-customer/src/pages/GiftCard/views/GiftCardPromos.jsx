@@ -1,3 +1,4 @@
+import { uiText as ui, useUiLanguage } from "../../../lib/uiText";
 import React from 'react';
 
 const IMG_BANNER_1 = "https://storage.googleapis.com/public-drupal-storage-bucket/styles/_lb_convert_to_webp/cloud-storage/2024-11/HC_GIFCARD%20WEBSITE%20BANNER-WOMENMONTH-_HOME%202.png.webp?itok=wGL5MGTE";
@@ -26,31 +27,30 @@ const PromoCard = ({ title, image, desc, buttonText }) => (
 );
 
 export const GiftCardPromos = () => {
+  useUiLanguage();
   return (
     <div className="bg-white min-h-screen font-sans pb-24">
       <div className="max-w-[1140px] mx-auto px-4 pt-12">
-        
+
         {/* Section 1: Nạp thẻ */}
         <div className="mb-20">
-          <h2 className="text-[28px] md:text-[32px] font-bold text-center text-[#b22830] mb-8">
-            Khuyến Mãi Nạp Thẻ Avengers
-          </h2>
-          
+          <h2 className="text-[28px] md:text-[32px] font-bold text-center text-[#b22830] mb-8">{ui("Khuyến Mãi Nạp Thẻ Avengers")}</h2>
+
           {/* Large Banner */}
           <div className="w-full overflow-hidden mb-12 shadow-sm border border-gray-50">
-            <img src={IMG_BANNER_1} alt="Khuyến Mãi Nạp Thẻ" className="w-full h-auto object-cover block" />
+            <img src={IMG_BANNER_1} alt={ui("Khuyến Mãi Nạp Thẻ")} className="w-full h-auto object-cover block" />
           </div>
 
           {/* Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 px-4 md:px-0">
-            <PromoCard 
-              title="Tặng 5% Khi Nạp Thẻ Avengers Từ 200K"
+            <PromoCard
+              title={ui("Tặng 5% Khi Nạp Thẻ Avengers Từ 200K")}
               image={IMG_CARD_1}
               desc="Avengers bật mí với bạn: Top những món quà ý nghĩa cho người thân yêu, thay lời yêu thương, gắn kết tinh thần.&#10;🎁 Tặng ngay 5% khi nạp thẻ từ 500K"
               buttonText="Xem Thông Tin Khuyến Mãi"
             />
-            <PromoCard 
-              title="Hướng Dẫn Liên Kết Và Quản Lý Thẻ Avengers"
+            <PromoCard
+              title={ui("Hướng Dẫn Liên Kết Và Quản Lý Thẻ Avengers")}
               image={IMG_CARD_2}
               desc="☕ Quản lý Thẻ và kiểm tra số dư Thẻ Avengers của bạn trên ứng dụng, chỉ với vài thao tác đơn giản. Sử dụng tiện lợi nhanh chóng. Tìm hiểu ngay!"
               buttonText="Xem Thông Tin Chi Tiết"
@@ -60,19 +60,17 @@ export const GiftCardPromos = () => {
 
         {/* Section 2: App */}
         <div className="mb-10">
-          <h2 className="text-[28px] md:text-[32px] font-bold text-center text-[#b22830] mb-8">
-            Khuyến Mãi Trên Avengers Coffee App
-          </h2>
-          
+          <h2 className="text-[28px] md:text-[32px] font-bold text-center text-[#b22830] mb-8">{ui("Khuyến Mãi Trên Avengers Coffee App")}</h2>
+
           {/* Large Banner */}
           <div className="w-full overflow-hidden mb-12 shadow-sm border border-gray-50">
-            <img src={IMG_BANNER_2} alt="Khuyến Mãi App" className="w-full h-auto object-cover block" />
+            <img src={IMG_BANNER_2} alt={ui("Khuyến Mãi App")} className="w-full h-auto object-cover block" />
           </div>
 
           {/* Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 px-4 md:px-0">
-            <PromoCard 
-              title="Trà Chiều - Avengers App Mua 1 Tặng 1"
+            <PromoCard
+              title={ui("Trà Chiều - Avengers App Mua 1 Tặng 1")}
               image={IMG_CARD_3}
               desc="🎉 Mua 1 mà được 2, rủ rê ngay bạn thân lên App lên kèo trà chiều, đặt liền tay có nước liền mà không cần xếp hàng order nè!"
               buttonText="Xem Thông Tin Khuyến Mãi"

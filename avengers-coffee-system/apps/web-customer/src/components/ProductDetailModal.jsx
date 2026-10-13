@@ -1,3 +1,4 @@
+import { uiText as ui, useUiLanguage, uiLocale } from "../lib/uiText";
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { XMarkIcon } from '@heroicons/react/24/outline';
@@ -8,6 +9,7 @@ import { queryKeys } from '../lib/queryKeys';
 import ProductSalesSummary from './ProductSalesSummary';
 
 export default function ProductDetailModal({ product, isOpen, onClose, user }) {
+  useUiLanguage();
   const { addToCart } = useCart(); // BƯỚC 4: Lấy hàm thêm vào giỏ
   const [selectedSize, setSelectedSize] = useState('');
 
@@ -37,7 +39,7 @@ export default function ProductDetailModal({ product, isOpen, onClose, user }) {
 
   const handlePurchase = () => {
     if (!selectedSize) {
-      alert('Vui lòng chọn size trước khi mua.');
+      alert(ui("Vui lòng chọn size trước khi mua."));
       return;
     }
 
@@ -51,7 +53,7 @@ export default function ProductDetailModal({ product, isOpen, onClose, user }) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-[#fffcf5] w-full max-w-4xl rounded-[40px] overflow-hidden shadow-2xl relative flex flex-col md:flex-row animate-in zoom-in duration-300">
-        
+
         {/* Nút đóng */}
         <button onClick={onClose} className="absolute top-6 right-6 z-10 p-2 bg-white/80 hover:bg-white rounded-full shadow-md transition-all">
           <XMarkIcon className="h-6 w-6 text-gray-500" />
@@ -59,9 +61,9 @@ export default function ProductDetailModal({ product, isOpen, onClose, user }) {
 
         {/* Trái: Ảnh */}
         <div className="md:w-1/2 bg-[#f5f0e8] p-12 flex items-center justify-center relative">
-          <img 
-            src={product.hinh_anh_url} 
-            alt={product.ten_san_pham} 
+          <img
+            src={product.hinh_anh_url}
+            alt={product.ten_san_pham}
             className="w-full h-auto object-contain drop-shadow-2xl scale-110"
           />
           <span className="absolute top-20 right-10 text-2xl">☕</span>
@@ -71,14 +73,14 @@ export default function ProductDetailModal({ product, isOpen, onClose, user }) {
         <div className="md:w-1/2 p-10 md:p-14 flex flex-col justify-center">
           <h2 className="text-4xl font-black text-gray-800 mb-2">{product.ten_san_pham}</h2>
           <ProductSalesSummary product={product} detailed className="mb-3" />
-          <p className="text-2xl font-black text-tch-orange mb-6">{finalPrice.toLocaleString('vi-VN')} đ</p>
-          
+          <p className="text-2xl font-black text-tch-orange mb-6">{finalPrice.toLocaleString(uiLocale())}{ui(" đ")}</p>
+
           <p className="text-gray-500 text-sm leading-relaxed mb-8 font-medium italic">
-            {product.mo_ta?.trim() || "Sản phẩm hiện chưa có mô tả chi tiết."}
+            {product.mo_ta?.trim() || ui("Sản phẩm hiện chưa có mô tả chi tiết.")}
           </p>
 
           <div className="mb-8">
-            <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-4">Chọn size (bắt buộc):</p>
+            <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-4">{ui("Chọn size (bắt buộc):")}</p>
             <div className="space-y-3">
               <button
                 type="button"
@@ -87,7 +89,7 @@ export default function ProductDetailModal({ product, isOpen, onClose, user }) {
                   selectedSize === 'Nhỏ' ? 'border-tch-orange bg-orange-50' : 'border-gray-100 bg-white hover:border-orange-200'
                 }`}
               >
-                <span className="text-sm font-bold text-gray-700">🥤 Nhỏ + 0 đ</span>
+                <span className="text-sm font-bold text-gray-700">{ui("🥤 Nhỏ + 0 đ")}</span>
                 <div className={`w-5 h-5 rounded-full ${selectedSize === 'Nhỏ' ? 'border-4 border-tch-orange' : 'border-2 border-gray-200'}`}></div>
               </button>
               <button
@@ -97,7 +99,7 @@ export default function ProductDetailModal({ product, isOpen, onClose, user }) {
                   selectedSize === 'Vừa' ? 'border-tch-orange bg-orange-50' : 'border-gray-100 bg-white hover:border-orange-200'
                 }`}
               >
-                <span className="text-sm font-bold text-gray-500">🥤 Vừa + 6.000 đ</span>
+                <span className="text-sm font-bold text-gray-500">{ui("🥤 Vừa + 6.000 đ")}</span>
                 <div className={`w-5 h-5 rounded-full ${selectedSize === 'Vừa' ? 'border-4 border-tch-orange' : 'border-2 border-gray-200'}`}></div>
               </button>
             </div>
@@ -108,12 +110,12 @@ export default function ProductDetailModal({ product, isOpen, onClose, user }) {
             className="w-full py-5 bg-tch-orange text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-orange-200 hover:bg-orange-600 transition-all active:scale-95 disabled:bg-gray-300 disabled:shadow-none"
             disabled={!selectedSize}
           >
-            {selectedSize ? `Mua ngay - ${selectedSize}` : 'Chọn size để mua'}
+            {selectedSize ? `Mua ngay - ${selectedSize}` : ui("Chọn size để mua")}
           </button>
 
           <div className="mt-8 rounded-2xl border border-orange-100 bg-white p-4">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-black uppercase tracking-widest text-gray-500">Đánh giá người dùng</p>
+              <p className="text-xs font-black uppercase tracking-widest text-gray-500">{ui("Đánh giá người dùng")}</p>
               <p className="text-xs font-semibold text-gray-500">{tongReview} review</p>
             </div>
 
@@ -130,16 +132,16 @@ export default function ProductDetailModal({ product, isOpen, onClose, user }) {
             </div>
 
             {isReviewsLoading ? (
-              <p className="mt-3 text-xs font-semibold text-gray-400">Đang tải đánh giá...</p>
+              <p className="mt-3 text-xs font-semibold text-gray-400">{ui("Đang tải đánh giá...")}</p>
             ) : hienThiReviews.length === 0 ? (
-              <p className="mt-3 text-xs font-semibold text-gray-400">Chưa có đánh giá nào cho sản phẩm này.</p>
+              <p className="mt-3 text-xs font-semibold text-gray-400">{ui("Chưa có đánh giá nào cho sản phẩm này.")}</p>
             ) : (
               <div className="mt-3 max-h-72 space-y-2 overflow-y-auto pr-1">
                 {hienThiReviews.map((review) => {
                   const reviewerId = String(review.ma_nguoi_dung || '');
                   const reviewer = reviewerId === currentUserId
-                    ? 'Bạn'
-                    : review.ten_nguoi_dung || `Khách ${reviewerId.slice(0, 8)}`;
+                    ? ui("Bạn")
+                    : review.ten_nguoi_dung || ui("Khách {{v0}}", {v0:reviewerId.slice(0, 8)});
 
                   return (
                     <div key={review.id} className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2">
@@ -154,11 +156,10 @@ export default function ProductDetailModal({ product, isOpen, onClose, user }) {
                           ))}
                         </div>
                       </div>
-                      <p className="mt-1 text-xs font-semibold text-gray-600">{review.binh_luan || 'Không có bình luận.'}</p>
+                      <p className="mt-1 text-xs font-semibold text-gray-600">{review.binh_luan || ui("Không có bình luận.")}</p>
                       {review.phan_hoi_quan_ly ? (
                         <div className="mt-2 rounded-lg border border-orange-100 bg-orange-50 px-2 py-1">
-                          <p className="text-[11px] font-black uppercase tracking-wide text-orange-600">
-                            Phản hồi từ quản lý{review.nguoi_phan_hoi ? ` (${review.nguoi_phan_hoi})` : ''}
+                          <p className="text-[11px] font-black uppercase tracking-wide text-orange-600">{ui("Phản hồi từ quản lý")}{review.nguoi_phan_hoi ? ` (${review.nguoi_phan_hoi})` : ''}
                           </p>
                           <p className="text-xs font-semibold text-orange-700">{review.phan_hoi_quan_ly}</p>
                         </div>

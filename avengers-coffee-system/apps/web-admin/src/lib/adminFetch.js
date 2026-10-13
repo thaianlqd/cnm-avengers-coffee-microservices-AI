@@ -1,18 +1,10 @@
+import { readWorkspaceSession, clearWorkspaceSession } from './workspaceAuth'
 import { API_BASE_URL } from '../features/admin-dashboard/constants'
 
 const FETCH_INTERCEPTOR_FLAG = '__avengersAdminFetchInstalled'
 const AUTH_INVALID_EVENT = 'avengers-admin-auth-invalid'
 
-export function getAdminSession() {
-  const raw = window.localStorage.getItem('adminSession')
-  if (!raw) return null
-
-  try {
-    return JSON.parse(raw)
-  } catch {
-    return null
-  }
-}
+export const getAdminSession = readWorkspaceSession
 
 export function getAdminAccessToken() {
   const session = getAdminSession()
@@ -51,7 +43,7 @@ export function installAdminFetchInterceptor() {
         // If we sent a token and the server still rejected it, the session is invalid.
         // Don't check message strings — gateway-wrapped errors have different formats.
         if (getAdminAccessToken()) {
-          window.localStorage.removeItem('adminSession')
+          clearWorkspaceSession()
           window.dispatchEvent(new CustomEvent(AUTH_INVALID_EVENT, { detail: {} }))
         }
       }

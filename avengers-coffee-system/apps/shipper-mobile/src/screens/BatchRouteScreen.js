@@ -38,6 +38,7 @@ if (Platform.OS !== 'web') {
   } catch (e) {}
 }
 
+const simulationEnabled = process.env.EXPO_PUBLIC_ENABLE_DELIVERY_SIMULATION === 'true'
 const VIETMAP_API_KEY = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || 'dbdd3165b3cb0d85239a7f59f410a9fa925974c4a6d4c54b';
 const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN || '';
 
@@ -484,7 +485,7 @@ export function BatchRouteScreen({ route, navigation }) {
 
   const handleTakePhoto = async () => {
     if (!cameraRef.current) {
-      handleDemoPhoto()
+      if (simulationEnabled) handleDemoPhoto(); else Alert.alert('Camera chưa sẵn sàng', 'Vui lòng cấp quyền camera và thử lại.')
       return
     }
     try {
@@ -497,13 +498,10 @@ export function BatchRouteScreen({ route, navigation }) {
         setPodImage(photo.uri)
         setPodStep('preview')
       } else {
-        handleDemoPhoto()
+        if (simulationEnabled) handleDemoPhoto(); else Alert.alert('Chưa chụp được ảnh', 'Vui lòng thử lại.')
       }
     } catch (err) {
-      Alert.alert('Lỗi máy ảnh', 'Không thể chụp ảnh lúc này. Bạn có thể chọn ảnh mẫu để tiếp tục.', [
-        { text: 'Dùng ảnh mẫu', onPress: handleDemoPhoto },
-        { text: 'Thử lại', style: 'cancel' }
-      ])
+      Alert.alert('Lỗi máy ảnh', 'Không thể chụp ảnh lúc này. Kiểm tra quyền camera và thử lại.')
     }
   }
 
@@ -934,9 +932,9 @@ export function BatchRouteScreen({ route, navigation }) {
       </Animated.View>
 
       {/* ─── Proof of Delivery (P.O.D) Modal Chuẩn Giống Đơn Lẻ ─── */}
-      <Modal visible={podStep !== 'idle'} transparent animationType="fade" statusBarTranslucent>
+      <Modal visible={podStep !== 'idle'} transparent animationType="fade" statusBarTranslucent onRequestClose={closePodModal}>
         <View style={styles.podOverlay}>
-          <Animated.View style={[styles.podContainer, { transform: [{ scale: podScaleAnim }] }]}>
+          <Animated.View style={[styles.podContainer, { transform: [{ scale: podScaleAnim }] }]}><ScrollView showsVerticalScrollIndicator={false} bounces={false}>
             {podStep === 'camera' && (
               <>
                 <View style={styles.podHeader}>
@@ -984,7 +982,7 @@ export function BatchRouteScreen({ route, navigation }) {
                         <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }}>Cấp quyền Camera</Text>
                       </TouchableOpacity>
                     )}
-                    <Text style={styles.cameraPlaceholderSub}>Hoặc chọn "Ảnh Demo" để tiếp tục</Text>
+                    <Text style={styles.cameraPlaceholderSub}>Cho phép camera để chụp ảnh hàng đã giao</Text>
                   </View>
                 )}
 
@@ -1001,16 +999,16 @@ export function BatchRouteScreen({ route, navigation }) {
                       <TouchableOpacity style={styles.captureBtn} onPress={handleTakePhoto}>
                         <View style={styles.captureInner} />
                       </TouchableOpacity>
-                      <TouchableOpacity style={styles.demoPhotoSmallBtn} onPress={handleDemoPhoto}>
+                      {simulationEnabled && (<TouchableOpacity style={styles.demoPhotoSmallBtn} onPress={handleDemoPhoto}>
                         <Ionicons name="images-outline" size={18} color={colors.textSecondary} />
                         <Text style={styles.demoPhotoSmallText}>Ảnh mẫu</Text>
-                      </TouchableOpacity>
+                      </TouchableOpacity>)}
                     </View>
                   ) : (
-                    <TouchableOpacity style={styles.demoPhotoBtn} onPress={handleDemoPhoto}>
+                    (simulationEnabled ? (<TouchableOpacity style={styles.demoPhotoBtn} onPress={handleDemoPhoto}>
                       <Ionicons name="images-outline" size={20} color="#fff" />
                       <Text style={styles.demoPhotoBtnText}>Ảnh Demo (Test)</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity>) : null)
                   )}
                 </View>
               </>
@@ -1114,7 +1112,7 @@ export function BatchRouteScreen({ route, navigation }) {
                 </View>
               </View>
             )}
-          </Animated.View>
+          </ScrollView></Animated.View>
         </View>
       </Modal>
     </View>
@@ -1140,7 +1138,7 @@ const styles = StyleSheet.create({
   routeMarkerTarget: { borderWidth: 3, borderColor: '#FB923C', transform: [{ scale: 1.18 }], ...shadows.md },
   routeMarkerCompleted: { backgroundColor: '#9CA3AF', opacity: 0.7 },
   routeMarkerSelected: { transform: [{ scale: 1.25 }] },
-  routeMarkerText: { color: '#fff', fontWeight: '900', fontSize: 13 },
+  routeMarkerText: { color: '#fff', fontWeight: '700', fontSize: 13 },
 
   // Bottom Panel
   bottomPanel: {
@@ -1187,7 +1185,7 @@ const styles = StyleSheet.create({
   },
   panelTitleClean: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#0F172A',
     letterSpacing: 0.2,
   },
@@ -1240,13 +1238,13 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     marginRight: spacing.sm, flexShrink: 0, ...shadows.sm,
   },
-  stopBadgeNum: { color: '#fff', fontWeight: '900', fontSize: 15 },
+  stopBadgeNum: { color: '#fff', fontWeight: '700', fontSize: 15 },
   stopContent: { flex: 1 },
   stopTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   stopLabelWrap: { flex: 1, marginRight: 8 },
   stopLabel: { ...typography.bodyBold, color: colors.text, fontSize: 14 },
   stopOrderCode: { color: colors.primary, fontSize: 11, fontWeight: '700', marginTop: 1 },
-  stopFee: { color: colors.success, fontWeight: '800', fontSize: 14, flexShrink: 0 },
+  stopFee: { color: colors.success, fontWeight: '700', fontSize: 14, flexShrink: 0 },
   stopAddress: { ...typography.caption, color: colors.textSecondary, marginTop: 4, lineHeight: 16 },
   stopDistRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
   distDot: { width: 8, height: 8, borderRadius: 4 },
@@ -1282,7 +1280,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     paddingVertical: spacing.md, paddingHorizontal: spacing.lg,
   },
-  ctaTitle: { color: '#fff', fontWeight: '900', fontSize: 16 },
+  ctaTitle: { color: '#fff', fontWeight: '700', fontSize: 16 },
   ctaSub: { color: 'rgba(255,255,255,0.75)', fontSize: 12, marginTop: 2 },
 
   // ─── POD Modal Styles ──────────────────────────────────────────
@@ -1293,7 +1291,7 @@ const styles = StyleSheet.create({
   },
   podContainer: {
     backgroundColor: colors.surface, borderRadius: radius.xl,
-    width: '100%', maxWidth: 420, overflow: 'hidden', ...shadows.lg,
+    width: '100%', maxWidth: 456, maxHeight: '90%', overflow: 'hidden', ...shadows.lg,
   },
   podHeader: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -1373,7 +1371,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(227, 26, 35, 0.88)',
     paddingHorizontal: 10, paddingVertical: 6,
   },
-  watermarkBrand: { color: '#fff', fontSize: 11, fontWeight: '900', letterSpacing: 0.5 },
+  watermarkBrand: { color: '#fff', fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
   watermarkFooter: { backgroundColor: 'rgba(0,0,0,0.75)', paddingHorizontal: 10, paddingVertical: 8 },
   watermarkRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 },
   watermarkGPS: {
@@ -1381,9 +1379,9 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   watermarkTime: { color: '#fff', fontSize: 11, fontWeight: '700' },
-  watermarkOrder: { color: '#fbbf24', fontSize: 11, fontWeight: '900' },
+  watermarkOrder: { color: '#fbbf24', fontSize: 11, fontWeight: '700' },
   watermarkBadge: { backgroundColor: colors.success, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
-  watermarkBadgeText: { color: '#fff', fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
+  watermarkBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
 
   podInfoBanner: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 8,
@@ -1404,7 +1402,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.success, paddingVertical: 14,
     borderRadius: radius.lg, ...shadows.success,
   },
-  confirmDeliveryBtnText: { color: '#fff', fontWeight: '900', fontSize: 15 },
+  confirmDeliveryBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 
   // Submitting & Done states
   podCenterState: { padding: spacing.xl, alignItems: 'center' },

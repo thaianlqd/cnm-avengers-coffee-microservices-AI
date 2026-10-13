@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import { uiText as ui, useUiLanguage, uiLocale } from "../../lib/uiText";
+import React, { useState, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   MagnifyingGlassIcon,
@@ -12,6 +13,9 @@ import {
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import QuickViewModal from '../../components/QuickViewModal';
 import ProductSalesSummary from '../../components/ProductSalesSummary';
+import ReviewPagination from '../../components/ReviewPagination';
+import { useReviewPagination } from '../../lib/useReviewPagination';
+import { productUnitPrice } from '../../lib/productPrice';
 import { useTranslation } from 'react-i18next';
 import { apiClient } from '../../lib/apiClient';
 import { queryKeys } from '../../lib/queryKeys';
@@ -24,6 +28,7 @@ export default function ProductDetailPage({
   onBack,
   onNavigate,
 }) {
+  useUiLanguage();
   const { t } = useTranslation();
   const [quantity, setQuantity] = useState(1);
   const availableSizes = product?.sizes || {};
@@ -31,8 +36,6 @@ export default function ProductDetailPage({
   const defaultSize = sizeKeys.length > 0 ? sizeKeys[0] : '';
   const [selectedSize, setSelectedSize] = useState(defaultSize);
 
-  const availableToppings = product?.toppings || {};
-  const toppingKeys = Object.keys(availableToppings);
   const [selectedToppings, setSelectedToppings] = useState([]);
 
   const availableLuongDa = product?.luong_da || {};
@@ -48,7 +51,10 @@ export default function ProductDetailPage({
   const [selectedLoaiSua, setSelectedLoaiSua] = useState(lsKeys.length > 0 ? lsKeys[0] : '');
 
   const [toastMessage, setToastMessage] = useState('');
-  
+  const [cartError, setCartError] = useState('');
+  const [addingToCart, setAddingToCart] = useState(false);
+  const adding = useRef(false);
+
   const [showToppingsList, setShowToppingsList] = useState(false);
   const [showDynamicToppings, setShowDynamicToppings] = useState(false);
 
@@ -84,56 +90,18 @@ export default function ProductDetailPage({
     setTimeout(() => setToastMessage(''), 3000);
   };
 
-  if (!product) {
-    return (
-      <div className="min-h-[500px] flex flex-col items-center justify-center bg-white py-16">
-        <p className="text-gray-500 font-medium text-lg mb-4">Không tìm thấy thông tin sản phẩm.</p>
-        <button
-          onClick={() => onBack ? onBack() : onNavigate?.('order')}
-          className="px-6 py-2.5 rounded-full bg-[#b22830] text-white font-bold text-sm hover:bg-[#921e24] transition-colors"
-        >
-          Quay lại trang Đặt hàng
-        </button>
-      </div>
-    );
-  }
+  const price = productUnitPrice(product, hasDynamicVariants ? '' : selectedSize, hasDynamicVariants
+    ? { custom_attributes: dynamicSelections }
+    : { toppings: selectedToppings, loaiSua: selectedLoaiSua, luongDa: selectedLuongDa, doNgot: selectedDoNgot });
 
-  const dynamicPrice = useMemo(() => {
-    let extra = 0;
-    if (hasDynamicVariants) {
-      for (const [attrName, selection] of Object.entries(dynamicSelections)) {
-        const optionsObj = product.bien_the[attrName] || {};
-        if (Array.isArray(selection)) {
-          for (const val of selection) {
-            extra += Number(optionsObj[val]) || 0;
-          }
-        } else {
-          extra += Number(optionsObj[selection]) || 0;
-        }
-      }
-    }
-    return extra;
-  }, [hasDynamicVariants, product?.bien_the, dynamicSelections]);
-
-  const basePrice = (selectedSize && availableSizes[selectedSize] !== undefined) 
-    ? Number(availableSizes[selectedSize]) 
-    : Number(product?.gia_ban || product?.price || 30000);
-
-  const toppingsPrice = selectedToppings.reduce((acc, t) => acc + Number(availableToppings[t] || 0), 0);
-  const loaiSuaPrice = (selectedLoaiSua && availableLoaiSua[selectedLoaiSua] !== undefined) ? Number(availableLoaiSua[selectedLoaiSua]) : 0;
-  
-  const price = hasDynamicVariants
-    ? Number(product?.gia_ban || product?.price || 30000) + dynamicPrice
-    : basePrice + toppingsPrice + loaiSuaPrice;
-
-  const sku = product.ma_san_pham ? `0CPG0${String(product.ma_san_pham).slice(-2)}` : '0CPG07';
-  const categoryName = product.danhMuc?.ten_danh_muc || product.categoryName || 'Cà Phê Đóng Gói';
+  const sku = product?.ma_san_pham ? `0CPG0${String(product.ma_san_pham).slice(-2)}` : '0CPG07';
+  const categoryName = product?.danhMuc?.ten_danh_muc || product?.categoryName || 'Cà Phê Đóng Gói';
 
   // Lấy danh sách sản phẩm cùng loại
   const relatedProducts = useMemo(() => {
     return products
-      .filter(p => (p.ma_san_pham !== product.ma_san_pham) && (
-        String(p.ma_danh_muc) === String(product.ma_danh_muc) ||
+      .filter(p => (p.ma_san_pham !== product?.ma_san_pham) && (
+        String(p.ma_danh_muc) === String(product?.ma_danh_muc) ||
         String(p?.danhMuc?.ten_danh_muc) === String(categoryName)
       ))
       .slice(0, 6);
@@ -152,12 +120,13 @@ export default function ProductDetailPage({
   });
 
   const reviewItems = reviewsData?.items || [];
+  const reviewPaging = useReviewPagination(reviewItems, productIdStr);
   const totalReviews = reviewsData?.tongReview || 0;
   const avgRating = reviewsData?.diemTrungBinh || 0;
 
   // Danh sách bánh ngon side widget
   const pastryItems = useMemo(() => {
-    const pastries = products.filter(p => 
+    const pastries = products.filter(p =>
       String(p?.danhMuc?.ten_danh_muc || '').toLowerCase().includes('bánh') ||
       String(p.ten_san_pham || '').toLowerCase().includes('bánh')
     );
@@ -170,43 +139,59 @@ export default function ProductDetailPage({
     ];
   }, [products]);
 
-  const handleMainAddToCart = (isBuyNow = false) => {
-    if (hasDynamicVariants) {
-      const getVal = (keywords, isArray = false) => {
-        const key = Object.keys(dynamicSelections).find(k => keywords.some(kw => k.toLowerCase().includes(kw)));
-        if (key) return dynamicSelections[key];
-        return isArray ? [] : '';
-      };
+  if (!product) {
+    return (
+      <div className="min-h-[500px] flex flex-col items-center justify-center bg-white py-16">
+        <p className="text-gray-500 font-medium text-lg mb-4">{ui("Không tìm thấy thông tin sản phẩm.")}</p>
+        <button
+          onClick={() => onBack ? onBack() : onNavigate?.('order')}
+          className="px-6 py-2.5 rounded-full bg-[#b22830] text-white font-bold text-sm hover:bg-[#921e24] transition-colors"
+        >{ui("Quay lại trang Đặt hàng")}</button>
+      </div>
+    );
+  }
 
-      const size = getVal(['kích thước', 'kích cỡ', 'size']);
-      const toppings = getVal(['topping', 'đồ kèm', 'thêm'], true);
-      const luongDa = getVal(['lượng đá', 'đá', 'ice']);
-      const doNgot = getVal(['độ ngọt', 'ngọt', 'đường', 'sugar']);
-      const loaiSua = getVal(['loại sữa', 'sữa', 'milk']);
-      
-      onAddToCart?.(product, quantity, size, {
-        toppings,
-        luongDa,
-        doNgot,
-        loaiSua,
-        custom_attributes: dynamicSelections,
-      });
-    } else {
-      onAddToCart?.(product, quantity, selectedSize, {
-        toppings: selectedToppings,
-        luongDa: selectedLuongDa,
-        doNgot: selectedDoNgot,
-        loaiSua: selectedLoaiSua,
-      });
-    }
-    showToast(`Đã thêm ${quantity} x ${product.ten_san_pham} vào giỏ hàng!`);
-    if (isBuyNow) {
-      setTimeout(() => onNavigate?.('cart'), 500);
-    }
+  const handleMainAddToCart = async (isBuyNow = false) => {
+    if (adding.current || !onAddToCart) return;
+    adding.current = true; setAddingToCart(true); setCartError('');
+    try {
+      if (hasDynamicVariants) {
+        const getVal = (keywords, isArray = false) => {
+          const key = Object.keys(dynamicSelections).find(k => keywords.some(kw => k.toLowerCase().includes(kw)));
+          if (key) return dynamicSelections[key];
+          return isArray ? [] : '';
+        };
+
+        const size = getVal(['kích thước', 'kích cỡ', 'size']);
+        const toppings = getVal(['topping', 'đồ kèm', 'thêm'], true);
+        const luongDa = getVal(['lượng đá', 'đá', 'ice']);
+        const doNgot = getVal(['độ ngọt', 'ngọt', 'đường', 'sugar']);
+        const loaiSua = getVal(['loại sữa', 'sữa', 'milk']);
+
+        await onAddToCart(product, quantity, size, {
+          toppings,
+          luongDa,
+          doNgot,
+          loaiSua,
+          custom_attributes: dynamicSelections,
+        });
+      } else {
+        await onAddToCart(product, quantity, selectedSize, {
+          toppings: selectedToppings,
+          luongDa: selectedLuongDa,
+          doNgot: selectedDoNgot,
+          loaiSua: selectedLoaiSua,
+        });
+      }
+      showToast(`Đã thêm ${quantity} x ${product.ten_san_pham} vào giỏ hàng!`);
+      if (isBuyNow) onNavigate?.('cart');
+    } catch (error) { setCartError(error?.response?.data?.message || 'Chưa thêm được món. Bạn có thể thử lại với các tùy chọn đã chọn.'); }
+    finally { adding.current = false; setAddingToCart(false); }
   };
 
   return (
     <div className="min-h-screen bg-white pb-20">
+      {cartError && <p role="alert" className="mx-auto max-w-6xl px-4 py-3 text-sm text-red-700">{cartError}</p>}
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-24 right-6 z-50 bg-[#b22830] text-white px-5 py-3 rounded-xl shadow-xl font-bold text-sm flex items-center gap-2 animate-bounce">
@@ -253,7 +238,7 @@ export default function ProductDetailPage({
               <span className="text-sm font-bold text-gray-500 uppercase tracking-wide">
                 Highlands Coffee
               </span>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#222222] mt-1 uppercase">
+              <h1 className="text-xl sm:text-2xl lg:text-[28px] font-semibold text-[#222222] mt-1 uppercase">
                 {product.ten_san_pham || product.name}
               </h1>
 
@@ -268,9 +253,8 @@ export default function ProductDetailPage({
 
               {/* Price */}
               <div className="mt-6">
-                <span className="text-3xl sm:text-4xl font-black text-[#b22830]">
-                  {price.toLocaleString('vi-VN')}đ
-                </span>
+                <span className="text-2xl sm:text-3xl font-semibold text-[#b22830]">
+                  {price.toLocaleString(uiLocale())}{ui("đ")}</span>
               </div>
 
               {/* Dynamic options or static fallbacks */}
@@ -282,14 +266,14 @@ export default function ProductDetailPage({
 
                   if (isMulti) {
                     return (
-                      <div key={attrName} className="relative mt-4">
-                        <span className="block text-xs font-bold text-gray-500 uppercase mb-2.5">{attrName}:</span>
-                        <button 
-                          type="button" 
+                      <div key={ui(attrName)} className="relative mt-4">
+                        <span className="block text-xs font-bold text-gray-500 uppercase mb-2.5">{ui(attrName)}:</span>
+                        <button
+                          type="button"
                           onClick={() => setShowDynamicToppings(!showDynamicToppings)}
                           className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-gray-300 bg-gray-50 text-left font-bold text-sm hover:border-[#b22830] transition-colors"
                         >
-                          <span>{dynamicSelections[attrName]?.length > 0 ? `Đã chọn (${dynamicSelections[attrName].length})` : 'Tuỳ chọn Topping'}</span>
+                          <span>{dynamicSelections[attrName]?.length > 0 ? ui("Đã chọn ({{v0}})", {v0:dynamicSelections[attrName].length}) : ui("Tuỳ chọn Topping")}</span>
                           <span className="text-gray-400 text-xs">▼</span>
                         </button>
                         {showDynamicToppings && (
@@ -298,9 +282,9 @@ export default function ProductDetailPage({
                               {optionKeys.map((opt) => {
                                 const isSelected = (dynamicSelections[attrName] || []).includes(opt);
                                 return (
-                                  <label key={opt} className="flex items-center gap-3 cursor-pointer group p-2 hover:bg-gray-50 rounded-md">
-                                    <input 
-                                      type="checkbox" 
+                                  <label key={ui(opt)} className="flex items-center gap-3 cursor-pointer group p-2 hover:bg-gray-50 rounded-md">
+                                    <input
+                                      type="checkbox"
                                       checked={isSelected}
                                       onChange={() => {
                                         const currentList = dynamicSelections[attrName] || [];
@@ -314,8 +298,8 @@ export default function ProductDetailPage({
                                       }}
                                       className="w-4 h-4 text-[#b22830] rounded border-gray-300 focus:ring-[#b22830]"
                                     />
-                                    <span className="text-sm font-bold text-gray-700 group-hover:text-[#b22830] transition-colors flex-1">{opt}</span>
-                                    <span className="text-sm font-bold text-[#b22830]">+{Number(optionsObj[opt]).toLocaleString('vi-VN')}đ</span>
+                                    <span className="text-sm font-bold text-gray-700 group-hover:text-[#b22830] transition-colors flex-1">{ui(opt)}</span>
+                                    <span className="text-sm font-bold text-[#b22830]">+{Number(optionsObj[opt]).toLocaleString(uiLocale())}{ui("đ")}</span>
                                   </label>
                                 );
                               })}
@@ -327,14 +311,14 @@ export default function ProductDetailPage({
                   }
 
                   return (
-                    <div key={attrName} className="mt-4">
-                      <span className="block text-sm font-bold text-gray-700 mb-2">{attrName}:</span>
+                    <div key={ui(attrName)} className="mt-4">
+                      <span className="block text-sm font-bold text-gray-700 mb-2">{ui(attrName)}:</span>
                       <div className="flex flex-wrap items-center gap-3">
                         {optionKeys.map((opt) => {
                           const isSelected = dynamicSelections[attrName] === opt;
                           return (
                             <button
-                              key={opt}
+                              key={ui(opt)}
                               type="button"
                               onClick={() => {
                                 setDynamicSelections({
@@ -348,7 +332,7 @@ export default function ProductDetailPage({
                                   : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
                               }`}
                             >
-                              {opt} {optionsObj[opt] > 0 ? `(+${Number(optionsObj[opt]).toLocaleString('vi-VN')}đ)` : ''}
+                              {ui(opt)} {optionsObj[opt] > 0 ? ui("(+{{v0}}đ)", {v0:Number(optionsObj[opt]).toLocaleString(uiLocale())}) : ''}
                             </button>
                           );
                         })}
@@ -361,11 +345,11 @@ export default function ProductDetailPage({
                   {/* Size options if applicable */}
                   {sizeKeys.length > 0 && (
                     <div className="mt-6">
-                      <span className="block text-sm font-bold text-gray-700 mb-2">Kích thước:</span>
+                      <span className="block text-sm font-bold text-gray-700 mb-2">{ui("Kích thước:")}</span>
                       <div className="flex flex-wrap items-center gap-3">
                         {sizeKeys.map((sz) => (
                           <button
-                            key={sz}
+                            key={ui(sz)}
                             type="button"
                             onClick={() => setSelectedSize(sz)}
                             className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all ${
@@ -374,7 +358,7 @@ export default function ProductDetailPage({
                                 : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
                             }`}
                           >
-                            {sz} {availableSizes[sz] > 0 ? `(+${availableSizes[sz].toLocaleString('vi-VN')}đ)` : ''}
+                            {ui(sz)} {availableSizes[sz] > 0 ? ui("(+{{v0}}đ)", {v0:availableSizes[sz].toLocaleString(uiLocale())}) : ''}
                           </button>
                         ))}
                       </div>
@@ -384,7 +368,7 @@ export default function ProductDetailPage({
                   {/* Lượng đá */}
                   {ldKeys.length > 0 && (
                     <div className="mt-4">
-                      <span className="block text-sm font-bold text-gray-700 mb-2">Lượng đá:</span>
+                      <span className="block text-sm font-bold text-gray-700 mb-2">{ui("Lượng đá:")}</span>
                       <div className="flex flex-wrap items-center gap-3">
                         {ldKeys.map((ld) => (
                           <button
@@ -407,7 +391,7 @@ export default function ProductDetailPage({
                   {/* Độ ngọt */}
                   {dnKeys.length > 0 && (
                     <div className="mt-4">
-                      <span className="block text-sm font-bold text-gray-700 mb-2">Độ ngọt:</span>
+                      <span className="block text-sm font-bold text-gray-700 mb-2">{ui("Độ ngọt:")}</span>
                       <div className="flex flex-wrap items-center gap-3">
                         {dnKeys.map((dn) => (
                           <button
@@ -430,7 +414,7 @@ export default function ProductDetailPage({
                   {/* Loại sữa */}
                   {lsKeys.length > 0 && (
                     <div className="mt-4">
-                      <span className="block text-sm font-bold text-gray-700 mb-2">Loại sữa:</span>
+                      <span className="block text-sm font-bold text-gray-700 mb-2">{ui("Loại sữa:")}</span>
                       <div className="flex flex-wrap items-center gap-3">
                         {lsKeys.map((ls) => (
                           <button
@@ -443,7 +427,7 @@ export default function ProductDetailPage({
                                 : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
                             }`}
                           >
-                            {ls} {availableLoaiSua[ls] >= 0 ? `(+${Number(availableLoaiSua[ls]).toLocaleString('vi-VN')}đ)` : ''}
+                            {ls} {availableLoaiSua[ls] >= 0 ? ui("(+{{v0}}đ)", {v0:Number(availableLoaiSua[ls]).toLocaleString(uiLocale())}) : ''}
                           </button>
                         ))}
                       </div>
@@ -454,12 +438,12 @@ export default function ProductDetailPage({
                   {product.toppings && Object.keys(product.toppings || {}).length > 0 && (
                     <div className="relative mt-4">
                       <span className="block text-xs font-bold text-gray-500 uppercase mb-2.5">Topping:</span>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setShowToppingsList(!showToppingsList)}
                         className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-gray-300 bg-gray-50 text-left font-bold text-sm hover:border-[#b22830] transition-colors"
                       >
-                        <span>{selectedToppings.length > 0 ? `Đã chọn (${selectedToppings.length})` : 'Tuỳ chọn Topping'}</span>
+                        <span>{selectedToppings.length > 0 ? ui("Đã chọn ({{v0}})", {v0:selectedToppings.length}) : ui("Tuỳ chọn Topping")}</span>
                         <span className="text-gray-400 text-xs">▼</span>
                       </button>
                       {showToppingsList && (
@@ -469,8 +453,8 @@ export default function ProductDetailPage({
                               const isSelected = selectedToppings.includes(tp);
                               return (
                                 <label key={tp} className="flex items-center gap-3 cursor-pointer group p-2 hover:bg-gray-50 rounded-md">
-                                  <input 
-                                    type="checkbox" 
+                                  <input
+                                    type="checkbox"
                                     checked={isSelected}
                                     onChange={() => {
                                       if (isSelected) setSelectedToppings(selectedToppings.filter(t => t !== tp));
@@ -479,7 +463,7 @@ export default function ProductDetailPage({
                                     className="w-4 h-4 text-[#b22830] rounded border-gray-300 focus:ring-[#b22830]"
                                   />
                                   <span className="text-sm font-bold text-gray-700 group-hover:text-[#b22830] transition-colors flex-1">{tp}</span>
-                                  <span className="text-sm font-bold text-[#b22830]">+{Number(product.toppings[tp]).toLocaleString('vi-VN')}đ</span>
+                                  <span className="text-sm font-bold text-[#b22830]">+{Number(product.toppings[tp]).toLocaleString(uiLocale())}{ui("đ")}</span>
                                 </label>
                               );
                             })}
@@ -518,14 +502,14 @@ export default function ProductDetailPage({
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <button
                 type="button"
-                onClick={() => handleMainAddToCart(true)}
+                disabled={addingToCart} onClick={() => handleMainAddToCart(true)}
                 className="flex-1 min-w-[160px] py-3.5 px-8 rounded-full bg-[#d0021b] text-white font-bold text-sm uppercase tracking-wider shadow-md hover:bg-[#a80014] transition-all text-center"
               >
                 {t('productDetail.buyNow')}
               </button>
               <button
                 type="button"
-                onClick={() => handleMainAddToCart(false)}
+                disabled={addingToCart} onClick={() => handleMainAddToCart(false)}
                 className="flex-1 min-w-[160px] py-3.5 px-8 rounded-full bg-[#ff5a5f] text-white font-bold text-sm uppercase tracking-wider shadow-md hover:bg-[#e0484d] transition-all text-center"
               >
                 {t('productDetail.addToCart')}
@@ -538,12 +522,12 @@ export default function ProductDetailPage({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mt-12 pb-14 border-b border-gray-200">
           {/* Left Description */}
           <div className="lg:col-span-8">
-            <h2 className="text-2xl font-black text-[#222222] border-b-2 border-gray-800 pb-3 mb-6 uppercase">
+            <h2 className="text-xl font-semibold text-[#222222] border-b-2 border-gray-800 pb-3 mb-6 uppercase">
               {t('productDetail.description')}
             </h2>
             <div className="text-gray-700 leading-relaxed space-y-4 text-[15px]">
               <p className="whitespace-pre-line">
-                {product.mo_ta?.trim() || 'Sản phẩm hiện chưa có mô tả chi tiết.'}
+                {product.mo_ta?.trim() || ui("Sản phẩm hiện chưa có mô tả chi tiết.")}
               </p>
             </div>
           </div>
@@ -573,18 +557,16 @@ export default function ProductDetailPage({
                           {pastry.ten_san_pham}
                         </h4>
                         <span className="font-black text-xs text-[#b22830]">
-                          {(Number(pastry.gia_ban) || 19000).toLocaleString('vi-VN')}đ
-                        </span>
+                          {(Number(pastry.gia_ban) || 19000).toLocaleString(uiLocale())}{ui("đ")}</span>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => {
-                        onAddToCart?.(pastry, 1, 'M');
-                        showToast(`Đã thêm ${pastry.ten_san_pham} vào giỏ hàng!`);
+                        openModal(pastry);
                       }}
                       className="w-8 h-8 rounded-full bg-[#ff6b6b] text-white flex items-center justify-center hover:bg-[#e31837] transition-colors shadow-sm"
-                      title="Thêm nhanh"
+                      aria-label={ui("Chọn tùy chọn {{v0}}", {v0:pastry.ten_san_pham})} title={ui("Chọn tùy chọn")}
                     >
                       <PlusIcon className="w-4 h-4 font-bold" />
                     </button>
@@ -598,13 +580,10 @@ export default function ProductDetailPage({
         {/* PRODUCT REVIEWS SECTION */}
         <div className="mt-12 pb-14 border-b border-gray-200">
           <div className="flex items-center gap-3 mb-8">
-            <h2 className="text-2xl font-black text-[#222222] uppercase">
-              Đánh giá từ khách hàng
-            </h2>
+            <h2 className="text-xl font-semibold text-[#222222] uppercase">{ui("Đánh giá từ khách hàng")}</h2>
             {totalReviews > 0 && (
               <span className="bg-[#b22830]/10 text-[#b22830] text-sm font-black px-3 py-1 rounded-full">
-                {totalReviews} đánh giá
-              </span>
+                {totalReviews}{ui(" đánh giá")}</span>
             )}
           </div>
 
@@ -631,10 +610,8 @@ export default function ProductDetailPage({
             /* Empty State */
             <div className="text-center py-14 bg-[#fafafa] rounded-2xl border border-gray-100">
               <div className="text-5xl mb-4">⭐</div>
-              <h3 className="text-lg font-black text-gray-700 mb-2">Chưa có đánh giá nào</h3>
-              <p className="text-sm text-gray-400 font-medium">
-                Hãy mua và trải nghiệm sản phẩm để là người đầu tiên đánh giá!
-              </p>
+              <h3 className="text-lg font-black text-gray-700 mb-2">{ui("Chưa có đánh giá nào")}</h3>
+              <p className="text-sm text-gray-400 font-medium">{ui("Hãy mua và trải nghiệm sản phẩm để là người đầu tiên đánh giá!")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -642,7 +619,7 @@ export default function ProductDetailPage({
               <div className="lg:col-span-4">
                 <div className="bg-gradient-to-b from-[#fff9f9] to-white border border-red-50 rounded-2xl p-6 shadow-sm sticky top-24">
                   <div className="text-center mb-5">
-                    <div className="text-6xl font-black text-[#b22830] leading-none">
+                    <div className="text-4xl font-semibold text-[#b22830] leading-none">
                       {avgRating.toFixed(1)}
                     </div>
                     <div className="flex items-center justify-center gap-1 mt-2">
@@ -658,8 +635,7 @@ export default function ProductDetailPage({
                       ))}
                     </div>
                     <p className="text-sm text-gray-500 font-semibold mt-1">
-                      {totalReviews} lượt đánh giá
-                    </p>
+                      {totalReviews}{ui(" lượt đánh giá")}</p>
                   </div>
 
                   {/* Rating distribution bars */}
@@ -687,19 +663,19 @@ export default function ProductDetailPage({
 
               {/* RIGHT: Review list */}
               <div className="lg:col-span-8 space-y-4">
-                {reviewItems.map((review, idx) => {
+                {reviewPaging.items.map((review, idx) => {
                   const displayName = review.ten_nguoi_dung
                     ? review.ten_nguoi_dung.length > 2
                       ? review.ten_nguoi_dung[0] + '*'.repeat(review.ten_nguoi_dung.length - 2) + review.ten_nguoi_dung[review.ten_nguoi_dung.length - 1]
                       : review.ten_nguoi_dung
-                    : 'Khách hàng';
+                    : ui("Khách hàng");
 
                   const initials = (review.ten_nguoi_dung || 'K')[0].toUpperCase();
                   const avatarColors = [
-                    'bg-rose-100 text-rose-600',
+                    'bg-blue-50 text-blue-700',
                     'bg-indigo-100 text-indigo-600',
-                    'bg-emerald-100 text-emerald-600',
-                    'bg-amber-100 text-amber-700',
+                    'bg-sky-50 text-sky-700',
+                    'bg-orange-50 text-orange-700',
                     'bg-violet-100 text-violet-600',
                   ];
                   const colorClass = avatarColors[idx % avatarColors.length];
@@ -707,7 +683,7 @@ export default function ProductDetailPage({
                   return (
                     <div
                       key={review.id}
-                      className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow"
+                      className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm transition-shadow"
                     >
                       {/* Header */}
                       <div className="flex items-start justify-between mb-3">
@@ -719,8 +695,8 @@ export default function ProductDetailPage({
                             <p className="font-bold text-gray-800 text-sm">{displayName}</p>
                             <p className="text-xs text-gray-400">
                               {review.ngay_tao
-                                ? new Date(review.ngay_tao).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
-                                : 'Vừa đây'}
+                                ? new Date(review.ngay_tao).toLocaleDateString(uiLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' })
+                                : ui("Vừa đây")}
                             </p>
                           </div>
                         </div>
@@ -747,9 +723,7 @@ export default function ProductDetailPage({
                       {/* Manager reply */}
                       {review.phan_hoi_quan_ly && (
                         <div className="bg-[#fdf8f4] border-l-4 border-[#b22830] rounded-r-xl p-3 mt-2">
-                          <p className="text-xs font-black text-[#b22830] mb-1 uppercase tracking-wider">
-                            ☕ Phản hồi của Avengers Coffee
-                          </p>
+                          <p className="text-xs font-black text-[#b22830] mb-1 uppercase tracking-wider">{ui("☕ Phản hồi của Avengers Coffee")}</p>
                           <p className="text-xs text-gray-700 leading-relaxed">
                             {review.phan_hoi_quan_ly}
                           </p>
@@ -758,6 +732,7 @@ export default function ProductDetailPage({
                     </div>
                   );
                 })}
+                <ReviewPagination {...reviewPaging} />
               </div>
             </div>
           )}
@@ -765,7 +740,7 @@ export default function ProductDetailPage({
 
         {/* RELATED PRODUCTS SECTION (Sản phẩm cùng loại - Ảnh 4) */}
         <div className="mt-12">
-          <h2 className="text-2xl font-black text-[#222222] mb-6 uppercase">
+          <h2 className="text-xl font-semibold text-[#222222] mb-6 uppercase">
             {t('productDetail.relatedProducts')}
           </h2>
 
@@ -817,8 +792,7 @@ export default function ProductDetailPage({
 
                     <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
                       <span className="font-black text-base text-[#b22830]">
-                        {(Number(relProduct.gia_ban) || 0).toLocaleString('vi-VN')}đ
-                      </span>
+                        {(Number(relProduct.gia_ban) || 0).toLocaleString(uiLocale())}{ui("đ")}</span>
 
                       {/* Red circle plus button bottom right */}
                       <button
@@ -842,10 +816,10 @@ export default function ProductDetailPage({
 
       {/* POPUP MODAL SẢN PHẨM CÙNG LOẠI */}
       {modalProduct && (
-        <QuickViewModal 
-          product={modalProduct} 
-          onClose={() => setModalProduct(null)} 
-          onAddToCart={onAddToCart} 
+        <QuickViewModal
+          product={modalProduct}
+          onClose={() => setModalProduct(null)}
+          onAddToCart={onAddToCart}
         />
       )}
     </div>

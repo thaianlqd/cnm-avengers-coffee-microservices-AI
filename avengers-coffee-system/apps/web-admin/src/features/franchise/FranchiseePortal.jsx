@@ -1,3 +1,8 @@
+import { WorkspaceSidebar, WorkspaceSearch } from '../../components/console/WorkspaceNavigation'
+import { AdminNotificationBell } from '../shared/components/AdminNotificationBell'
+import { getAdminSession } from '../../lib/adminFetch'
+import { Chart, DashboardSkeleton } from '../../components/console/DashboardCharts'
+import { WorkspaceErrorBoundary } from '../../components/console/WorkspaceErrorBoundary'
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   Users,
@@ -151,7 +156,7 @@ const fmtDate = (d) => {
 // ─── Modal Component ───────────────────────────────────────────────────────
 const Modal = ({ title, onClose, children }) => (
   <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-    <div style={{ background: '#fff', borderRadius: 16, padding: 28, minWidth: 480, maxWidth: 580, width: '100%', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+    <div style={{ background: '#fff', borderRadius: 16, padding: 28, minWidth: 0, maxWidth: 580, width: '100%', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>{title}</h3>
         <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#6b7280' }}>×</button>
@@ -162,7 +167,7 @@ const Modal = ({ title, onClose, children }) => (
 )
 
 const apiFetch = async (path, opts = {}) => {
-  const session = JSON.parse(localStorage.getItem('adminSession') || '{}')
+  const session = (getAdminSession() || {})
   const token = session?.token || session?.accessToken
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...opts,
@@ -278,10 +283,10 @@ const ATTENDANCE_STATUS_CONFIG = {
   },
   PRESENT: {
     label: 'Đúng giờ',
-    bg: '#ecfdf5',
-    text: '#047857',
-    border: '#a7f3d0',
-    dot: '#10b981',
+    bg: '#eff6ff',
+    text: '#1d4ed8',
+    border: '#bfdbfe',
+    dot: '#3b82f6',
     icon: CheckCircle2,
   },
   LATE: {
@@ -1160,20 +1165,21 @@ export function FranchiseePortal({ session, onLogout }) {
   const congNoTheoKiosk = congNos.filter(c => !activeKioskId || c.kiosk_id === activeKioskId)
   const royaltyTheoKiosk = royalties.filter(r => !activeKioskId || r.kiosk_id === activeKioskId)
   const donTheoKiosk = dons.filter(d => !activeKioskId || d.kiosk_id === activeKioskId)
-  const tongCongNoTheoKiosk = congNoTheoKiosk.filter(c => c.trang_thai !== 'DA_THANH_TOAN').reduce((s, c) => s + Number(c.so_tien) + Number(c.phi_phat_tre_han || 0), 0)
-
-  const completedDonTheoKiosk = donTheoKiosk.filter(d => d.trang_thai_don_hang === 'HOAN_THANH')
-  const tongDoanhThuKiosk = completedDonTheoKiosk.reduce((s, d) => s + Number(d.tong_tien || 0), 0)
-  const totalCupsSold = completedDonTheoKiosk.reduce((s, d) => {
-    const items = d.chi_tiet || [];
-    return s + items.reduce((sum, item) => sum + (item.so_luong || 0), 0)
-  }, 0)
-  const loiNhuanNhuongQuyen = Math.round(tongDoanhThuKiosk * 0.07)
+  const comboOrderTrend = useMemo(() => {
+    const months = {}
+    for (const order of dons) {
+      const date = new Date(order.ngay_tao)
+      if (!order.ngay_tao || !Number.isFinite(date.getTime())) continue
+      const month = date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' }).slice(0, 7)
+      months[month] = (months[month] || 0) + 1
+    }
+    return Object.entries(months).sort(([a], [b]) => a.localeCompare(b)).map(([label, value]) => ({ label, value }))
+  }, [dons])
 
   const LOAI_KIOSK_LABEL = {
     'XE_LUU_DONG': { label: 'Xe lưu động', color: '#0369a1', bg: '#e0f2fe' },
-    'KIOSK_CO_DINH': { label: 'Kiosk cố định', color: '#7c3aed', bg: '#ede9fe' },
-    'CONTAINER_CAFE': { label: 'Container café', color: '#065f46', bg: '#d1fae5' },
+    'KIOSK_CO_DINH': { label: 'Kiosk cố định', color: 'var(--primary)', bg: 'var(--primary-light)' },
+    'CONTAINER_CAFE': { label: 'Container café', color: '#1e40af', bg: '#dbeafe' },
   }
 
   const filterMenuByKiosk = (items, kType) => {
@@ -1223,9 +1229,9 @@ export function FranchiseePortal({ session, onLogout }) {
       return { name: 'Gói VIP (Container)', short: 'VIP', bg: '#fef2f2', color: '#991b1b', border: '#fecaca' }
     }
     if (activeKiosk.loai_kiosk === 'XE_LUU_DONG') {
-      return { name: 'Gói Cơ Bản (Xe Kiosk)', short: 'Cơ Bản', bg: '#f0fdf4', color: '#166534', border: '#bbf7d0' }
+      return { name: 'Gói Cơ Bản (Xe Kiosk)', short: 'Cơ Bản', bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe' }
     }
-    return { name: 'Gói Tiêu Chuẩn (Cố Định)', short: 'Tiêu Chuẩn', bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe' }
+    return { name: 'Gói Tiêu Chuẩn (Cố Định)', short: 'Tiêu Chuẩn', bg: 'var(--primary-light)', color: 'var(--primary)', border: '#bfdbfe' }
   }, [activeKiosk])
 
   useEffect(() => {
@@ -1317,14 +1323,14 @@ export function FranchiseePortal({ session, onLogout }) {
   const alertBanner = msg && (
     <div style={{
       padding: '12px 18px', borderRadius: 12, marginBottom: 16,
-      background: msg.type === 'success' ? '#ecfdf5' : '#fef2f2',
-      border: `1px solid ${msg.type === 'success' ? '#a7f3d0' : '#fecaca'}`,
-      color: msg.type === 'success' ? '#065f46' : '#991b1b',
+      background: msg.type === 'success' ? '#eff6ff' : '#fef2f2',
+      border: `1px solid ${msg.type === 'success' ? '#bfdbfe' : '#fecaca'}`,
+      color: msg.type === 'success' ? '#1e40af' : '#991b1b',
       fontWeight: 600, fontSize: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        {msg.type === 'success' ? <CheckCircle2 size={18} color="#059669" /> : <AlertTriangle size={18} color="#dc2626" />}
+        {msg.type === 'success' ? <CheckCircle2 size={18} color="#2563eb" /> : <AlertTriangle size={18} color="#dc2626" />}
         <span>{msg.text}</span>
       </div>
       <button onClick={() => setMsg(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'inherit' }}>×</button>
@@ -1337,99 +1343,27 @@ export function FranchiseePortal({ session, onLogout }) {
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
-      <div style={{ display: 'flex', minHeight: '100vh', fontFamily: '"Segoe UI",Inter,system-ui,sans-serif', background: '#f8fafc' }}>
-        {/* ── Sidebar ─────────────────────────────────────── */}
-        <aside style={{
-          width: 256, flexShrink: 0, background: '#0f172a',
-          display: 'flex', flexDirection: 'column', padding: '24px 0', position: 'sticky', top: 0, height: '100vh',
-          borderRight: '1px solid #1e293b'
-        }}>
-          {/* Logo */}
-          <div style={{ padding: '0 20px 20px', borderBottom: '1px solid #1e293b' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-              <div style={{
-                width: 36, height: 36, borderRadius: 8,
-                background: '#2563eb', 
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}>
-                <Coffee size={20} color="#ffffff" />
-              </div>
-              <div>
-                <div style={{ color: '#f8fafc', fontWeight: 800, fontSize: 15, letterSpacing: '-0.01em' }}>Avengers Coffee</div>
-                <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Đối tác nhượng quyền</div>
-              </div>
-            </div>
-          </div>
-
-          {/* User info */}
-          <div style={{ padding: '16px 20px 20px', borderBottom: '1px solid #1e293b' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{
-                width: 40, height: 40, borderRadius: '50%', background: '#1e293b',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#f8fafc', fontWeight: 700, fontSize: 16
-              }}>
-                {userName.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <div style={{ color: '#f8fafc', fontWeight: 600, fontSize: 14 }}>{userName}</div>
-                <div style={{
-                  color: '#64748b', fontSize: 12, fontWeight: 500, marginTop: 2
-                }}>
-                  Franchisee Admin
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Nav Tabs */}
-          <nav className="hide-scroll" style={{ flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 4, overflowY: 'auto' }}>
-            {TABS.map(t => {
-              const IconComp = t.icon
-              const isSelected = tab === t.id
-              return (
-                <button key={t.id} onClick={() => setTab(t.id)} style={{
-                  display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
-                  border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'left',
-                  fontWeight: isSelected ? 600 : 500, fontSize: 14, transition: 'background .2s',
-                  background: isSelected ? '#1e293b' : 'transparent',
-                  color: isSelected ? '#f8fafc' : '#94a3b8',
-                }}>
-                  <IconComp size={18} color={isSelected ? '#38bdf8' : '#64748b'} />
-                  <span>{t.label}</span>
-                </button>
-              )
-            })}
-          </nav>
-
-          {/* Logout */}
-          <div style={{ padding: '16px 20px' }}>
-            <button onClick={onLogout} style={{
-              width: '100%', padding: '10px', border: '1px solid #1e293b',
-              borderRadius: 8, background: 'transparent', cursor: 'pointer',
-              color: '#94a3b8', fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              transition: 'all .2s'
-            }}>
-              <span>Đăng xuất</span>
-            </button>
-          </div>
-        </aside>
+      <div className="console-shell" data-actor="partner" style={{ display: 'flex', minHeight: '100vh', fontFamily: '"Segoe UI",Inter,system-ui,sans-serif', background: '#f8fafc' }}>
+        <WorkspaceSidebar groups={[
+          { label: 'Điểm bán & vận hành', items: TABS.filter(item => ['dashboard','pos','staff_manage','shift_schedule','kiosk_shifts','pos_orders','menu'].includes(item.id)) },
+          { label: 'Nguyên liệu & tài chính', items: TABS.filter(item => ['wallet','order','history','debt','royalty','expansion'].includes(item.id)) },
+        ]} activeTab={tab} onSelect={setTab} session={session} label="Đối tác kiosk" onLogout={onLogout} />
 
         {/* ── Main Content Area ───────────────────────────── */}
-        <main style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+        <main className="console-main" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
           {/* Top Bar */}
-          <header style={{
+          <header className="console-topbar" style={{
             background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #e2e8f0',
             padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             position: 'sticky', top: 0, zIndex: 50
           }}>
             <div>
-              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 10 }}>
                 {(() => {
                   const currTab = TABS.find(t => t.id === tab)
                   if (!currTab) return null
                   const IconC = currTab.icon
-                  return <><IconC size={22} color="#b45309" /> {currTab.label}</>
+                  return <><IconC size={22} color="var(--primary)" /> {currTab.label}</>
                 })()}
               </h2>
               <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b', fontWeight: 500 }}>
@@ -1437,13 +1371,12 @@ export function FranchiseePortal({ session, onLogout }) {
               </p>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="workspace-topbar-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <WorkspaceSearch items={TABS} onSelect={setTab} />
+              <AdminNotificationBell session={session} />
               {tongCongNo > 0 && (
-                <div style={{
-                  padding: '6px 14px', background: '#fffbeb', border: '1px solid #fde68a',
-                  borderRadius: 99, fontSize: 12, color: '#b45309', fontWeight: 700
-                }}>
-                  Công nợ: {fmtMoney(tongCongNo)}
+                <div className="workspace-debt-badge">
+                  <CreditCard size={15} /> Công nợ: {fmtMoney(tongCongNo)}
                 </div>
               )}
 
@@ -1459,7 +1392,7 @@ export function FranchiseePortal({ session, onLogout }) {
 
           {/* KIOSK CONTEXT SELECTOR BAR */}
           {tab !== 'dashboard' && tab !== 'wallet' && kiosks.length > 0 && (
-            <div style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', padding: '12px 32px', display: 'flex', alignItems: 'center', gap: 16, position: 'sticky', top: 68, zIndex: 40 }}>
+            <div className="console-context-bar" style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', padding: '12px 32px', display: 'flex', alignItems: 'center', gap: 16 }}>
               <label style={{ fontSize: 14, fontWeight: 600, color: '#334155' }}>
                 Chọn Kiosk:
               </label>
@@ -1481,14 +1414,12 @@ export function FranchiseePortal({ session, onLogout }) {
           )}
 
           {/* Tab Body */}
-          <div style={{ padding: '24px 32px', flex: 1 }}>
+          <div className="console-partner-body workspace-tab-content" style={{ padding: '24px 32px', flex: 1 }}>
+            <WorkspaceErrorBoundary key={tab} inline>
             {alertBanner}
 
             {loading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0', color: '#a16207' }}>
-                <RefreshCw size={32} className="animate-spin" style={{ marginBottom: 12 }} />
-                <div style={{ fontWeight: 700, fontSize: 15 }}>Đang tải dữ liệu Kiosk...</div>
-              </div>
+              <DashboardSkeleton />
             ) : (
               <>
                 {/* ═══════════════════════════════════════════════════════════ */}
@@ -1497,77 +1428,36 @@ export function FranchiseePortal({ session, onLogout }) {
                 {tab === 'dashboard' && (
                   <div>
                     {/* Hero Stats */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 18, marginBottom: 32 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 210px), 1fr))', gap: 18, marginBottom: 32 }}>
                       {[
-                        { icon: Store, label: 'Kiosk đang hoạt động', value: kiosks.filter(k => k.trang_thai === 'DANG_HOAT_DONG').length + ' / ' + kiosks.length, color: '#059669', bg: '#ecfdf5' },
-                        { icon: Users, label: 'Nhân sự con tại Kiosk', value: subStaffList.length || '—', color: '#2563eb', bg: '#eff6ff' },
-                        { icon: Package, label: 'Tổng combo nguyên liệu', value: kiosks.reduce((s, k) => s + (k.so_combo_hien_tai || 0), 0), color: '#d97706', bg: '#fffbeb' },
-                        { icon: CreditCard, label: 'Công nợ chưa thanh toán', value: fmtMoney(tongCongNo), color: tongCongNo > 0 ? '#dc2626' : '#059669', bg: tongCongNo > 0 ? '#fef2f2' : '#ecfdf5' },
+                        { icon: Store, label: 'Kiosk đang hoạt động', value: kiosks.filter(k => k.trang_thai === 'DANG_HOAT_DONG').length + ' / ' + kiosks.length, color: '#2563eb', bg: '#eff6ff' },
+                        { icon: Users, label: 'Nhân sự con tại Kiosk', value: subStaffList.length, color: 'var(--primary)', bg: 'var(--primary-light)' },
+                        { icon: Package, label: 'Tổng combo nguyên liệu', value: kiosks.reduce((s, k) => s + (k.so_combo_hien_tai || 0), 0), color: '#e56723', bg: '#fff2e9' },
+                        { icon: CreditCard, label: 'Công nợ chưa thanh toán', value: fmtMoney(tongCongNo), color: tongCongNo > 0 ? '#dc2626' : '#2563eb', bg: tongCongNo > 0 ? '#fef2f2' : '#eff6ff' },
                       ].map((s, i) => {
                         const IconComp = s.icon
                         return (
-                          <div key={i} style={{ background: '#fff', borderRadius: 20, padding: '22px', border: '1px solid #e2e8f0', boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
+                          <div key={i} className="workspace-partner-stat" style={{ '--stat-color': s.color, background: '#fff', borderRadius: 20, padding: '22px', border: '1px solid #e2e8f0', boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
                             <div style={{ width: 44, height: 44, borderRadius: 12, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
                               <IconComp size={22} color={s.color} />
                             </div>
-                            <div style={{ fontSize: 24, fontWeight: 900, color: '#0f172a' }}>{s.value}</div>
+                            <div style={{ fontSize: 24, fontWeight: 600, color: '#0f172a' }}>{s.value}</div>
                             <div style={{ fontSize: 13, color: '#64748b', marginTop: 4, fontWeight: 600 }}>{s.label}</div>
                           </div>
                         )
                       })}
                     </div>
 
-                    {/* Profit Report Widget */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, marginTop: 32 }}>
-                      <h3 style={{ fontWeight: 900, fontSize: 18, color: '#0f172a', margin: 0 }}>Báo Cáo Đối Soát Doanh Thu & Phí Nhượng Quyền</h3>
-                    </div>
-                    
-                    <div style={{ background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)', borderRadius: 20, padding: '24px', border: '1px solid #e2e8f0', boxShadow: '0 4px 16px rgba(0,0,0,0.03)', marginBottom: 32, display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-                        <div>
-                          <div style={{ fontSize: 12, color: '#475569', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>Tổng số đơn (Hoàn thành)</div>
-                          <div style={{ fontSize: 24, fontWeight: 900, color: '#0f172a' }}>{completedDonTheoKiosk.length} <span style={{ fontSize: 14, fontWeight: 700, color: '#64748b' }}>đơn</span></div>
-                        </div>
-                        <div style={{ width: 1, background: '#cbd5e1' }}></div>
-                        <div>
-                          <div style={{ fontSize: 12, color: '#475569', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>Tổng ly / Sản phẩm</div>
-                          <div style={{ fontSize: 24, fontWeight: 900, color: '#0f172a' }}>{totalCupsSold} <span style={{ fontSize: 14, fontWeight: 700, color: '#64748b' }}>ly</span></div>
-                        </div>
-                        <div style={{ width: 1, background: '#cbd5e1' }}></div>
-                        <div>
-                          <div style={{ fontSize: 12, color: '#475569', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>Tổng doanh thu POS</div>
-                          <div style={{ fontSize: 24, fontWeight: 900, color: '#0f172a' }}>{fmtMoney(tongDoanhThuKiosk)}</div>
-                        </div>
-                      </div>
-                      
-                      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                        {/* 7% Royalty Fee (Trích về Tổng công ty) */}
-                        <div style={{ background: '#fff', borderRadius: 16, padding: '16px 20px', border: '2px solid #fecaca', boxShadow: '0 8px 24px rgba(220, 38, 38, 0.08)', minWidth: 200, textAlign: 'center' }}>
-                          <div style={{ fontSize: 12, color: '#b91c1c', fontWeight: 800, textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                            Phí Nhượng Quyền (7%)
-                          </div>
-                          <div style={{ fontSize: 24, fontWeight: 900, color: '#dc2626' }}>{fmtMoney(loiNhuanNhuongQuyen)}</div>
-                          <div style={{ fontSize: 11, color: '#ef4444', fontWeight: 600, marginTop: 6, fontStyle: 'italic' }}>
-                            Trích nộp về công ty mẹ
-                          </div>
-                        </div>
-
-                        {/* 93% Net Revenue (Thực nhận của Đối tác) */}
-                        <div style={{ background: '#fff', borderRadius: 16, padding: '16px 20px', border: '2px solid #34d399', boxShadow: '0 8px 24px rgba(16, 185, 129, 0.1)', minWidth: 220, textAlign: 'center' }}>
-                          <div style={{ fontSize: 12, color: '#047857', fontWeight: 800, textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                            <Sparkles size={16} /> Doanh Thu Kiosk Nhận (93%)
-                          </div>
-                          <div style={{ fontSize: 28, fontWeight: 900, color: '#059669' }}>{fmtMoney(tongDoanhThuKiosk - loiNhuanNhuongQuyen)}</div>
-                          <div style={{ fontSize: 11, color: '#10b981', fontWeight: 600, marginTop: 6, fontStyle: 'italic' }}>
-                            Doanh thu thực nhận của đối tác
-                          </div>
-                        </div>
-                      </div>
+                    <div className="console-charts">
+                      <Chart title="Xu hướng nhập combo" subtitle="Số đơn theo tháng trong dữ liệu đã tải · giờ Việt Nam" type="line" rows={comboOrderTrend} />
+                      <Chart title="Đơn nhập combo theo kiosk" subtitle="Toàn bộ đơn nhập trong dữ liệu đã tải" rows={kiosks.map(kiosk => ({label:kiosk.ten_kiosk || kiosk.ten || kiosk.ma_kiosk, value:dons.filter(order => order.kiosk_id === kiosk.id).length}))} />
+                      <Chart title="Trạng thái điểm bán" type="donut" rows={Object.entries(kiosks.reduce((groups,kiosk) => {const label=kiosk.trang_thai || 'Chưa xác định';groups[label]=(groups[label] || 0)+1;return groups},{})).map(([label,value]) => ({label:({'DANG_HOAT_DONG':'Đang hoạt động','TAM_NGUNG':'Tạm ngưng','CHO_DUYET':'Chờ duyệt'})[label] || label,value}))} />
+                      <Chart title="Giá trị công nợ theo kiosk" subtitle="Khoản chưa thanh toán và phí trễ hạn" format={fmtMoney} rows={kiosks.map(kiosk => ({label:kiosk.ten_kiosk || kiosk.ten || kiosk.ma_kiosk,value:congNos.filter(debt => debt.kiosk_id === kiosk.id && debt.trang_thai !== 'DA_THANH_TOAN').reduce((sum,debt) => sum+Number(debt.so_tien || 0)+Number(debt.phi_phat_tre_han || 0),0)}))} />
                     </div>
 
                     {/* Kiosk list cards */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                      <h3 style={{ fontWeight: 800, fontSize: 18, color: '#0f172a', margin: 0 }}>Danh Sách Kiosk Của Tôi</h3>
+                      <h3 style={{ fontWeight: 600, fontSize: 18, color: '#0f172a', margin: 0 }}>Danh Sách Kiosk Của Tôi</h3>
                       <button onClick={() => setTab('staff_manage')} style={{
                         padding: '8px 16px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 8,
                         fontWeight: 600, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
@@ -1638,9 +1528,9 @@ export function FranchiseePortal({ session, onLogout }) {
                                     </div>
                                     <span style={{
                                       padding: '4px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700,
-                                      background: k.trang_thai === 'DANG_HOAT_DONG' ? '#ecfdf5' : '#fef2f2',
-                                      color: k.trang_thai === 'DANG_HOAT_DONG' ? '#059669' : '#dc2626',
-                                      border: `1px solid ${k.trang_thai === 'DANG_HOAT_DONG' ? '#a7f3d0' : '#fecaca'}`
+                                      background: k.trang_thai === 'DANG_HOAT_DONG' ? '#eff6ff' : '#fef2f2',
+                                      color: k.trang_thai === 'DANG_HOAT_DONG' ? '#2563eb' : '#dc2626',
+                                      border: `1px solid ${k.trang_thai === 'DANG_HOAT_DONG' ? '#bfdbfe' : '#fecaca'}`
                                     }}>
                                       {k.trang_thai === 'DANG_HOAT_DONG' ? 'Đang hoạt động' : 'Tạm dừng'}
                                     </span>
@@ -1675,7 +1565,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                         <Clock size={14} /> Ca trực
                                       </button>
                                       <button onClick={() => { switchKiosk(k.id); setTab('pos'); }} style={{
-                                        padding: '6px 10px', borderRadius: 6, border: 'none', background: '#2563eb',
+                                        padding: '6px 10px', borderRadius: 6, border: 'none', background: 'var(--primary)',
                                         color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
                                       }}>
                                         <Coffee size={14} /> POS
@@ -1722,7 +1612,7 @@ export function FranchiseePortal({ session, onLogout }) {
                     {/* Header & Actions */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
                       <div>
-                        <h3 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>Danh Sách Nhân Viên Con Tại Kiosk</h3>
+                        <h3 style={{ margin: 0, fontSize: 24, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.02em' }}>Danh Sách Nhân Viên Con Tại Kiosk</h3>
                         <p style={{ margin: '6px 0 0', color: '#64748b', fontSize: 14 }}>
                           Tạo tài khoản nhân viên, phân công Kiosk làm việc và phân quyền thao tác trên máy POS.
                         </p>
@@ -1773,7 +1663,7 @@ export function FranchiseePortal({ session, onLogout }) {
                       <button onClick={loadStaffList} style={{ padding: '10px 16px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 12, cursor: 'pointer', fontWeight: 700, color: '#475569', display: 'flex', alignItems: 'center', gap: 6, transition: 'background .15s' }}>
                         <RefreshCw size={14} /> Tải lại
                       </button>
-                      <div style={{ padding: '6px 14px', borderRadius: 99, background: '#eff6ff', color: '#1d4ed8', fontSize: 13, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ padding: '6px 14px', borderRadius: 99, background: 'var(--primary-light)', color: 'var(--primary-hover)', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
                         <Users size={15} /> {subStaffList.length} nhân sự
                       </div>
                     </div>
@@ -1781,7 +1671,7 @@ export function FranchiseePortal({ session, onLogout }) {
                     {/* Staff Table */}
                     {subStaffLoading ? (
                       <div style={{ textAlign: 'center', padding: 80, color: '#64748b', fontSize: 15, background: '#fff', borderRadius: 20, border: '1px solid #e2e8f0' }}>
-                        <RefreshCw size={28} className="animate-spin" style={{ margin: '0 auto 12px', color: '#059669' }} />
+                        <RefreshCw size={28} className="animate-spin" style={{ margin: '0 auto 12px', color: '#2563eb' }} />
                         <div style={{ fontWeight: 700 }}>Đang tải danh sách nhân viên con...</div>
                       </div>
                     ) : (
@@ -1790,13 +1680,13 @@ export function FranchiseePortal({ session, onLogout }) {
                           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: 920 }}>
                             <thead>
                               <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', width: '22%' }}>Nhân Viên</th>
-                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', width: '14%' }}>Tài Khoản</th>
-                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', width: '18%' }}>Liên Hệ</th>
-                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', width: '18%' }}>Kiosk Trực Thuộc</th>
-                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', width: '24%' }}>Quyền Hạn POS</th>
-                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', width: '12%', textAlign: 'center' }}>Trạng Thái</th>
-                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', width: '16%', textAlign: 'right' }}>Hành Động</th>
+                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', width: '22%' }}>Nhân Viên</th>
+                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', width: '14%' }}>Tài Khoản</th>
+                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', width: '18%' }}>Liên Hệ</th>
+                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', width: '18%' }}>Kiosk Trực Thuộc</th>
+                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', width: '24%' }}>Quyền Hạn POS</th>
+                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', width: '12%', textAlign: 'center' }}>Trạng Thái</th>
+                                <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', width: '16%', textAlign: 'right' }}>Hành Động</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1819,12 +1709,12 @@ export function FranchiseePortal({ session, onLogout }) {
                                           width: 42, height: 42, borderRadius: '50%', flexShrink: 0,
                                           background: '#f8fafc', color: '#0f172a',
                                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                          fontWeight: 800, fontSize: 16, border: '1px solid #cbd5e1'
+                                          fontWeight: 600, fontSize: 16, border: '1px solid #cbd5e1'
                                         }}>
                                           {s.ho_ten?.charAt(0).toUpperCase() || 'U'}
                                         </div>
                                         <div>
-                                          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 14 }}>{s.ho_ten}</div>
+                                          <div style={{ fontWeight: 600, color: '#0f172a', fontSize: 14 }}>{s.ho_ten}</div>
                                           <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>Tham gia: {fmtDate(s.ngay_tao)}</div>
                                         </div>
                                       </div>
@@ -1898,13 +1788,13 @@ export function FranchiseePortal({ session, onLogout }) {
                                     <td style={{ padding: '16px 20px', textAlign: 'center' }}>
                                       <span style={{
                                         display: 'inline-flex', alignItems: 'center', gap: 6,
-                                        padding: '5px 12px', borderRadius: 99, fontSize: 12, fontWeight: 800,
-                                        background: isActive ? '#ecfdf5' : '#fef2f2',
-                                        color: isActive ? '#065f46' : '#991b1b',
-                                        border: `1px solid ${isActive ? '#a7f3d0' : '#fecaca'}`,
+                                        padding: '5px 12px', borderRadius: 99, fontSize: 12, fontWeight: 600,
+                                        background: isActive ? '#eff6ff' : '#fef2f2',
+                                        color: isActive ? '#1e40af' : '#991b1b',
+                                        border: `1px solid ${isActive ? '#bfdbfe' : '#fecaca'}`,
                                         whiteSpace: 'nowrap'
                                       }}>
-                                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: isActive ? '#10b981' : '#ef4444' }}></span>
+                                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: isActive ? '#3b82f6' : '#ef4444' }}></span>
                                         {isActive ? 'Hoạt động' : 'Đã khóa'}
                                       </span>
                                     </td>
@@ -1924,7 +1814,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                           });
                                           setShowEditStaffModal(true);
                                         }} style={{
-                                          padding: '6px 10px', background: '#eff6ff', color: '#0284c7', border: '1px solid #bae6fd',
+                                          padding: '6px 10px', background: 'var(--primary-light)', color: '#0284c7', border: '1px solid #bae6fd',
                                           borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 12, display: 'inline-flex',
                                           alignItems: 'center', gap: 4, transition: 'all .15s'
                                         }} title="Sửa thông tin & phân quyền POS">
@@ -1962,7 +1852,7 @@ export function FranchiseePortal({ session, onLogout }) {
                             <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
                               <Users size={28} color="#94a3b8" />
                             </div>
-                            <div style={{ fontWeight: 800, fontSize: 16, color: '#0f172a' }}>Chưa có tài khoản nhân viên con nào</div>
+                            <div style={{ fontWeight: 600, fontSize: 16, color: '#0f172a' }}>Chưa có tài khoản nhân viên con nào</div>
                             <p style={{ fontSize: 13, color: '#64748b', marginTop: 4, maxWidth: 400, margin: '4px auto 0' }}>Bấm nút "Thêm nhân viên con mới" ở góc trên để cấp tài khoản cho nhân viên Kiosk của bạn.</p>
                           </div>
                         )}
@@ -1980,14 +1870,14 @@ export function FranchiseePortal({ session, onLogout }) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 16 }}>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                          <h3 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>Lịch & Phân Ca Làm Việc Tại Kiosk</h3>
+                          <h3 style={{ margin: 0, fontSize: 24, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.02em' }}>Lịch & Phân Ca Làm Việc Tại Kiosk</h3>
                           {activeKiosk && (
                             <span style={{
                               display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px',
-                              borderRadius: 99, background: '#ecfdf5', border: '1px solid #a7f3d0',
-                              color: '#065f46', fontSize: 12, fontWeight: 800
+                              borderRadius: 99, background: '#eff6ff', border: '1px solid #bfdbfe',
+                              color: '#1e40af', fontSize: 12, fontWeight: 600
                             }}>
-                              <Store size={14} color="#059669" />
+                              <Store size={14} color="#2563eb" />
                               <span>{activeKiosk.ten_kiosk} ({activeKiosk.ma_kiosk})</span>
                             </span>
                           )}
@@ -2036,7 +1926,7 @@ export function FranchiseePortal({ session, onLogout }) {
                               padding: '8px 14px', border: weekOffset === 0 ? '1px solid #0f172a' : '1px solid transparent',
                               background: weekOffset === 0 ? '#0f172a' : 'transparent',
                               color: weekOffset === 0 ? '#ffffff' : '#64748b',
-                              cursor: 'pointer', borderRadius: 10, fontWeight: 800, fontSize: 13,
+                              cursor: 'pointer', borderRadius: 10, fontWeight: 600, fontSize: 13,
                               display: 'flex', alignItems: 'center', gap: 6, transition: 'all .15s'
                             }}
                           >
@@ -2119,7 +2009,7 @@ export function FranchiseePortal({ session, onLogout }) {
                               <CalendarCheck size={20} />
                             </div>
                             <div>
-                              <div style={{ fontWeight: 800, fontSize: 14, color: '#92400e' }}>
+                              <div style={{ fontWeight: 600, fontSize: 14, color: '#92400e' }}>
                                 Có {pendingList.length} yêu cầu đăng ký ca làm việc mới chờ duyệt
                               </div>
                               <div style={{ fontSize: 12, color: '#b45309', marginTop: 2 }}>
@@ -2163,7 +2053,7 @@ export function FranchiseePortal({ session, onLogout }) {
                     {/* ── Weekly Schedule Grid ── */}
                     {workShiftsLoading ? (
                       <div style={{ textAlign: 'center', padding: 80, color: '#64748b', background: '#fff', borderRadius: 20, border: '1px solid #e2e8f0' }}>
-                        <RefreshCw size={28} className="animate-spin" style={{ margin: '0 auto 12px', color: '#059669' }} />
+                        <RefreshCw size={28} className="animate-spin" style={{ margin: '0 auto 12px', color: '#2563eb' }} />
                         <div style={{ fontWeight: 700 }}>Đang tải lịch phân ca làm việc tuần...</div>
                       </div>
                     ) : (
@@ -2189,11 +2079,11 @@ export function FranchiseePortal({ session, onLogout }) {
                                   textAlign: 'center', color: day.isToday ? '#fff' : '#0f172a'
                                 }}>
                                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                                    <span style={{ fontWeight: 900, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{day.label}</span>
+                                    <span style={{ fontWeight: 600, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{day.label}</span>
                                     <span style={{
                                       padding: '1px 6px', borderRadius: 6,
                                       background: day.isToday ? 'rgba(255,255,255,0.2)' : '#e2e8f0',
-                                      fontSize: 10, fontWeight: 800,
+                                      fontSize: 10, fontWeight: 600,
                                       color: day.isToday ? '#ffffff' : '#475569'
                                     }}>
                                       {activeDayShifts.length} ca
@@ -2203,7 +2093,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                   <div style={{
                                     display: 'inline-block', marginTop: 4, padding: '2px 8px', borderRadius: 99,
                                     background: day.isToday ? '#ffffff' : '#f1f5f9',
-                                    fontSize: 11, fontWeight: 800, color: day.isToday ? '#0f172a' : '#475569',
+                                    fontSize: 11, fontWeight: 600, color: day.isToday ? '#0f172a' : '#475569',
                                     border: day.isToday ? 'none' : '1px solid #e2e8f0'
                                   }}>
                                     {String(day.date.getDate()).padStart(2, '0')}/{String(day.date.getMonth() + 1).padStart(2, '0')}
@@ -2214,7 +2104,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                       <span style={{
                                         display: 'inline-flex', alignItems: 'center', gap: 4,
                                         background: 'rgba(255,255,255,0.2)', padding: '2px 8px',
-                                        borderRadius: 99, fontSize: 10, fontWeight: 800, color: '#ffffff'
+                                        borderRadius: 99, fontSize: 10, fontWeight: 600, color: '#ffffff'
                                       }}>
                                         <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ffffff', display: 'inline-block' }} />
                                         Hôm nay
@@ -2237,7 +2127,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                             <ShiftIcon size={14} color={tmpl.accent} />
-                                            <span style={{ fontWeight: 800, fontSize: 12, color: tmpl.text, letterSpacing: '0.01em' }}>
+                                            <span style={{ fontWeight: 600, fontSize: 12, color: tmpl.text, letterSpacing: '0.01em' }}>
                                               {tmpl.name}
                                             </span>
                                           </div>
@@ -2300,7 +2190,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                                 }}>
                                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <span style={{
-                                                      fontSize: 10, fontWeight: 800, padding: '2px 6px', borderRadius: 6,
+                                                      fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 6,
                                                       background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a',
                                                       display: 'inline-flex', alignItems: 'center', gap: 3
                                                     }}>
@@ -2314,12 +2204,12 @@ export function FranchiseePortal({ session, onLogout }) {
                                                       width: 28, height: 28, borderRadius: '50%',
                                                       background: 'linear-gradient(135deg, #f59e0b, #d97706)',
                                                       color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                      fontSize: 11, fontWeight: 800, flexShrink: 0
+                                                      fontSize: 11, fontWeight: 600, flexShrink: 0
                                                     }}>
                                                       {initials}
                                                     </div>
                                                     <div style={{ minWidth: 0 }}>
-                                                      <div style={{ fontWeight: 800, fontSize: 12, color: '#0f172a', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={staffDisplay}>
+                                                      <div style={{ fontWeight: 600, fontSize: 12, color: '#0f172a', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={staffDisplay}>
                                                         {staffDisplay}
                                                       </div>
                                                       <div style={{ fontSize: 10, color: '#64748b' }}>
@@ -2345,9 +2235,9 @@ export function FranchiseePortal({ session, onLogout }) {
                                                       disabled={approvingRequestId === shift.ma_ca_lam_viec}
                                                       style={{
                                                         flex: 1, padding: '5px 8px',
-                                                        background: 'linear-gradient(135deg, #10b981, #059669)',
+                                                        background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
                                                         color: '#fff', border: 'none', borderRadius: 8,
-                                                        fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                                                        fontWeight: 600, fontSize: 11, cursor: 'pointer',
                                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                                                         gap: 3, boxShadow: '0 2px 6px rgba(16,185,129,0.25)',
                                                         transition: 'all .15s'
@@ -2385,14 +2275,14 @@ export function FranchiseePortal({ session, onLogout }) {
                                                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                                                     <div style={{
                                                       width: 28, height: 28, borderRadius: '50%',
-                                                      background: 'linear-gradient(135deg, #059669, #047857)',
+                                                      background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
                                                       color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                      fontSize: 11, fontWeight: 800, flexShrink: 0
+                                                      fontSize: 11, fontWeight: 600, flexShrink: 0
                                                     }}>
                                                       {initials}
                                                     </div>
                                                     <div style={{ minWidth: 0 }}>
-                                                      <div style={{ fontWeight: 800, fontSize: 12, color: '#0f172a', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={staffDisplay}>
+                                                      <div style={{ fontWeight: 600, fontSize: 12, color: '#0f172a', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={staffDisplay}>
                                                         {staffDisplay}
                                                       </div>
                                                       <div style={{ fontSize: 10, color: '#64748b', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
@@ -2433,7 +2323,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                                     value={attStatus}
                                                     onChange={e => handleUpdateAttendance(shift.ma_ca_lam_viec, e.target.value)}
                                                     style={{
-                                                      width: '100%', fontSize: 11, fontWeight: 800, padding: '4px 6px', borderRadius: 6,
+                                                      width: '100%', fontSize: 11, fontWeight: 600, padding: '4px 6px', borderRadius: 6,
                                                       border: `1px solid ${statusCfg.border}`,
                                                       background: statusCfg.bg,
                                                       color: statusCfg.text,
@@ -2477,7 +2367,7 @@ export function FranchiseePortal({ session, onLogout }) {
                       {/* Tiêu đề & Công cụ quản trị */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
                         <div>
-                          <h3 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: '#0f172a' }}>Giám Sát Ca Trực và Đối Soát Két Tiền</h3>
+                          <h3 style={{ margin: 0, fontSize: 22, fontWeight: 600, color: '#0f172a' }}>Giám Sát Ca Trực và Đối Soát Két Tiền</h3>
                           <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
                             Theo dõi tình trạng hoạt động thực tế tại Kiosk, kiểm soát dòng tiền đầu ca, doanh thu và đối soát chốt két của nhân viên.
                           </p>
@@ -2498,8 +2388,8 @@ export function FranchiseePortal({ session, onLogout }) {
                           <button
                             onClick={() => setTab('shift_schedule')}
                             style={{
-                              padding: '10px 18px', background: '#ecfdf5', border: '1.5px solid #a7f3d0', borderRadius: 12,
-                              fontWeight: 700, fontSize: 13, color: '#065f46', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+                              padding: '10px 18px', background: '#eff6ff', border: '1.5px solid #bfdbfe', borderRadius: 12,
+                              fontWeight: 700, fontSize: 13, color: '#1e40af', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
                               boxShadow: '0 2px 6px rgba(6,95,70,0.05)', transition: 'all 0.15s ease'
                             }}
                           >
@@ -2521,12 +2411,12 @@ export function FranchiseePortal({ session, onLogout }) {
                         }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
                             <div>
-                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.18)', fontSize: 12, fontWeight: 800, marginBottom: 12, letterSpacing: '0.04em' }}>
-                                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#34d399', display: 'inline-block' }}></span>
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.18)', fontSize: 12, fontWeight: 600, marginBottom: 12, letterSpacing: '0.04em' }}>
+                                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#38bdf8', display: 'inline-block' }}></span>
                                 CA TRỰC ĐANG HOẠT ĐỘNG
                               </div>
 
-                              <h2 style={{ margin: '0 0 6px', fontSize: 26, fontWeight: 900, color: '#ffffff' }}>
+                              <h2 style={{ margin: '0 0 6px', fontSize: 26, fontWeight: 600, color: '#ffffff' }}>
                                 Thu ngân: {activeKioskShift.active_shift?.staff_name || activeKioskShift.active_shift?.staff_username}
                               </h2>
 
@@ -2551,7 +2441,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                 onClick={() => setShowForceCloseModal(true)}
                                 style={{
                                   padding: '11px 18px', background: '#ffffff', color: '#dc2626', border: 'none',
-                                  borderRadius: 12, fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                                  borderRadius: 12, fontWeight: 600, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
                                   boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                                 }}
                                 title="Cưỡng chế đóng ca khi nhân viên trước quên chốt hoặc bỏ ca"
@@ -2565,22 +2455,22 @@ export function FranchiseePortal({ session, onLogout }) {
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginTop: 24, paddingTop: 22, borderTop: '1px solid rgba(255,255,255,0.18)' }}>
                             <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: '16px' }}>
                               <div style={{ fontSize: 12, opacity: 0.85, fontWeight: 700 }}>Tiền mặt đầu ca bàn giao</div>
-                              <div style={{ fontSize: 22, fontWeight: 900, marginTop: 6 }}>{fmtMoney(activeKioskShift.active_shift?.tien_dau_ca)}</div>
+                              <div style={{ fontSize: 22, fontWeight: 600, marginTop: 6 }}>{fmtMoney(activeKioskShift.active_shift?.tien_dau_ca)}</div>
                             </div>
 
                             <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: '16px' }}>
                               <div style={{ fontSize: 12, opacity: 0.85, fontWeight: 700 }}>Doanh thu tạm tính trong ca</div>
-                              <div style={{ fontSize: 22, fontWeight: 900, marginTop: 6 }}>{fmtMoney(activeKioskShift.live_stats?.total_revenue)}</div>
+                              <div style={{ fontSize: 22, fontWeight: 600, marginTop: 6 }}>{fmtMoney(activeKioskShift.live_stats?.total_revenue)}</div>
                             </div>
 
                             <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: '16px' }}>
                               <div style={{ fontSize: 12, opacity: 0.85, fontWeight: 700 }}>Số đơn đã bán tại quầy</div>
-                              <div style={{ fontSize: 22, fontWeight: 900, marginTop: 6 }}>{activeKioskShift.live_stats?.total_orders} đơn</div>
+                              <div style={{ fontSize: 22, fontWeight: 600, marginTop: 6 }}>{activeKioskShift.live_stats?.total_orders} đơn</div>
                             </div>
 
                             <div style={{ background: 'rgba(255,255,255,0.16)', borderRadius: 14, padding: '16px', border: '1px solid rgba(255,255,255,0.22)' }}>
-                              <div style={{ fontSize: 12, opacity: 0.95, fontWeight: 800, color: '#fef08a' }}>Tiền mặt kỳ vọng trong két</div>
-                              <div style={{ fontSize: 24, fontWeight: 900, color: '#fef08a', marginTop: 6 }}>{fmtMoney(activeKioskShift.live_stats?.expected_cash)}</div>
+                              <div style={{ fontSize: 12, opacity: 0.95, fontWeight: 600, color: '#fef08a' }}>Tiền mặt kỳ vọng trong két</div>
+                              <div style={{ fontSize: 24, fontWeight: 600, color: '#fef08a', marginTop: 6 }}>{fmtMoney(activeKioskShift.live_stats?.expected_cash)}</div>
                             </div>
                           </div>
                         </div>
@@ -2592,12 +2482,12 @@ export function FranchiseePortal({ session, onLogout }) {
                         }}>
                           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
                             <div style={{ maxWidth: 640 }}>
-                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 14px', borderRadius: 999, background: '#f1f5f9', color: '#475569', fontSize: 12, fontWeight: 800, marginBottom: 14 }}>
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 14px', borderRadius: 999, background: '#f1f5f9', color: '#475569', fontSize: 12, fontWeight: 600, marginBottom: 14 }}>
                                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#94a3b8', display: 'inline-block' }}></span>
                                 HIỆN CHƯA CÓ CA TRỰC MỞ
                               </div>
 
-                              <h3 style={{ margin: '0 0 10px', fontSize: 22, fontWeight: 900, color: '#0f172a' }}>
+                              <h3 style={{ margin: '0 0 10px', fontSize: 22, fontWeight: 600, color: '#0f172a' }}>
                                 Kiosk Hiện Đang Chờ Mở Ca Trực
                               </h3>
 
@@ -2612,7 +2502,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                 onClick={() => setTab('shift_schedule')}
                                 style={{
                                   padding: '12px 20px', background: '#0f172a', color: '#ffffff', border: 'none',
-                                  borderRadius: 12, fontWeight: 800, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                                  borderRadius: 12, fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                                   boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'background 0.15s ease'
                                 }}
                               >
@@ -2635,8 +2525,8 @@ export function FranchiseePortal({ session, onLogout }) {
                           {lastClosedShift && (
                             <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, background: '#f8fafc', padding: '16px 20px', borderRadius: 14 }}>
                               <div>
-                                <span style={{ fontSize: 12, fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Ca trực kết thúc gần nhất:</span>
-                                <div style={{ fontSize: 14, fontWeight: 800, color: '#0f172a', marginTop: 2 }}>
+                                <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Ca trực kết thúc gần nhất:</span>
+                                <div style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', marginTop: 2 }}>
                                   Thu ngân: {lastClosedShift.staff_name || lastClosedShift.staff_username} (Đóng lúc: {fmtDate(lastClosedShift.thoi_gian_dong_ca)})
                                 </div>
                               </div>
@@ -2644,17 +2534,17 @@ export function FranchiseePortal({ session, onLogout }) {
                               <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
                                 <div>
                                   <span style={{ fontSize: 12, color: '#64748b' }}>Tiền thực tế cuối ca:</span>
-                                  <div style={{ fontSize: 15, fontWeight: 800, color: '#0f172a' }}>{fmtMoney(lastClosedShift.tien_cuoi_ca)}</div>
+                                  <div style={{ fontSize: 15, fontWeight: 600, color: '#0f172a' }}>{fmtMoney(lastClosedShift.tien_cuoi_ca)}</div>
                                 </div>
                                 <div>
                                   <span style={{ fontSize: 12, color: '#64748b' }}>Chênh lệch đối soát:</span>
                                   <div>
                                     {lastClosedShift.chenh_lech === 0 ? (
-                                      <span style={{ fontSize: 13, fontWeight: 800, color: '#059669' }}>Khớp chuẩn 0đ</span>
+                                      <span style={{ fontSize: 13, fontWeight: 600, color: '#2563eb' }}>Khớp chuẩn 0đ</span>
                                     ) : (lastClosedShift.chenh_lech > 0 ? (
-                                      <span style={{ fontSize: 13, fontWeight: 800, color: '#d97706' }}>+ {fmtMoney(lastClosedShift.chenh_lech)} (Thừa)</span>
+                                      <span style={{ fontSize: 13, fontWeight: 600, color: '#d97706' }}>+ {fmtMoney(lastClosedShift.chenh_lech)} (Thừa)</span>
                                     ) : (
-                                      <span style={{ fontSize: 13, fontWeight: 800, color: '#dc2626' }}>- {fmtMoney(Math.abs(lastClosedShift.chenh_lech))} (Thiếu)</span>
+                                      <span style={{ fontSize: 13, fontWeight: 600, color: '#dc2626' }}>- {fmtMoney(Math.abs(lastClosedShift.chenh_lech))} (Thiếu)</span>
                                     ))}
                                   </div>
                                 </div>
@@ -2668,7 +2558,7 @@ export function FranchiseePortal({ session, onLogout }) {
                       <div style={{ background: '#ffffff', borderRadius: 22, border: '1px solid #e2e8f0', padding: 26, boxShadow: '0 4px 16px rgba(0,0,0,0.02)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
                           <div>
-                            <h4 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a' }}>
+                            <h4 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#0f172a' }}>
                               Lịch Sử Ca Trực và Đối Soát Két Tiền Kiosk
                             </h4>
                             <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 13 }}>
@@ -2693,7 +2583,7 @@ export function FranchiseePortal({ session, onLogout }) {
                               <thead>
                                 <tr style={{ background: '#f8fafc', borderBottom: '1.5px solid #e2e8f0' }}>
                                   {['Thời Gian Ca', 'Thu Ngân Phụ Trách', 'Tiền Đầu Ca', 'Doanh Thu Hệ Thống', 'Số Đơn', 'Thực Tế Cuối Ca', 'Chênh Lệch Đối Soát', 'Trạng Thái'].map(h => (
-                                    <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{h}</th>
+                                    <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{h}</th>
                                   ))}
                                 </tr>
                               </thead>
@@ -2720,7 +2610,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                         {fmtMoney(shift.tien_dau_ca)}
                                       </td>
 
-                                      <td style={{ padding: '16px', fontSize: 13, fontWeight: 800, color: '#059669' }}>
+                                      <td style={{ padding: '16px', fontSize: 13, fontWeight: 600, color: '#2563eb' }}>
                                         {fmtMoney(shift.doanh_thu_he_thong)}
                                       </td>
 
@@ -2728,7 +2618,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                         {shift.tong_don_hang} đơn
                                       </td>
 
-                                      <td style={{ padding: '16px', fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
+                                      <td style={{ padding: '16px', fontSize: 13, fontWeight: 600, color: '#0f172a' }}>
                                         {shift.tien_cuoi_ca !== null ? fmtMoney(shift.tien_cuoi_ca) : '—'}
                                       </td>
 
@@ -2736,15 +2626,15 @@ export function FranchiseePortal({ session, onLogout }) {
                                         {diff === null || diff === undefined ? (
                                           <span style={{ color: '#94a3b8' }}>Chưa chốt</span>
                                         ) : diff === 0 ? (
-                                          <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 800, background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0' }}>
+                                          <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600, background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe' }}>
                                             Khớp chuẩn 0đ
                                           </span>
                                         ) : diff > 0 ? (
-                                          <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 800, background: '#fffbeb', color: '#b45309', border: '1px solid #fde68a' }}>
+                                          <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600, background: '#fffbeb', color: '#b45309', border: '1px solid #fde68a' }}>
                                             + {fmtMoney(diff)} (Thừa)
                                           </span>
                                         ) : (
-                                          <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 800, background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}>
+                                          <span style={{ padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600, background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}>
                                             - {fmtMoney(Math.abs(diff))} (Thiếu)
                                           </span>
                                         )}
@@ -2752,10 +2642,10 @@ export function FranchiseePortal({ session, onLogout }) {
 
                                       <td style={{ padding: '16px' }}>
                                         <span style={{
-                                          padding: '5px 12px', borderRadius: 999, fontSize: 12, fontWeight: 800,
-                                          background: isOpen ? '#ecfdf5' : isForceClosed ? '#fef2f2' : '#f1f5f9',
-                                          color: isOpen ? '#047857' : isForceClosed ? '#dc2626' : '#475569',
-                                          border: `1px solid ${isOpen ? '#a7f3d0' : isForceClosed ? '#fecaca' : '#cbd5e1'}`
+                                          padding: '5px 12px', borderRadius: 999, fontSize: 12, fontWeight: 600,
+                                          background: isOpen ? '#eff6ff' : isForceClosed ? '#fef2f2' : '#f1f5f9',
+                                          color: isOpen ? '#1d4ed8' : isForceClosed ? '#dc2626' : '#475569',
+                                          border: `1px solid ${isOpen ? '#bfdbfe' : isForceClosed ? '#fecaca' : '#cbd5e1'}`
                                         }}>
                                           {isOpen ? 'Đang mở' : isForceClosed ? 'Ép đóng ca' : 'Đã chốt ca'}
                                         </span>
@@ -2778,7 +2668,7 @@ export function FranchiseePortal({ session, onLogout }) {
                 {tab === 'pos_orders' && (
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                      <h3 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: '#1e293b' }}>🧾 Đơn Bán Hàng Tại Quầy Kiosk</h3>
+                      <h3 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: '#1e293b' }}>🧾 Đơn Bán Hàng Tại Quầy Kiosk</h3>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>Thời gian:</span>
                         <select value={posDateFilter} onChange={e => setPosDateFilter(e.target.value)}
@@ -2802,7 +2692,7 @@ export function FranchiseePortal({ session, onLogout }) {
                           <thead>
                             <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                               {['Mã Đơn', 'Ngày tạo', 'Khách hàng', 'Tổng tiền', 'Thanh toán', 'Chi tiết món', 'Trạng thái', 'Thao tác'].map(h => (
-                                <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: 12, fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>{h}</th>
+                                <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>{h}</th>
                               ))}
                             </tr>
                           </thead>
@@ -2816,12 +2706,12 @@ export function FranchiseePortal({ session, onLogout }) {
 
                               return (
                                 <tr key={d.ma_don_hang} style={{ borderBottom: '1px solid #f1f5f9', background: isVoided ? '#fff7f7' : 'transparent' }}>
-                                  <td style={{ padding: '14px 16px', fontWeight: 800, color: isVoided ? '#94a3b8' : '#1e293b', fontSize: 13 }}>
+                                  <td style={{ padding: '14px 16px', fontWeight: 600, color: isVoided ? '#94a3b8' : '#1e293b', fontSize: 13 }}>
                                     #{d.ma_don_hang.substring(0, 8).toUpperCase()}
                                   </td>
                                   <td style={{ padding: '14px 16px', color: '#64748b', fontSize: 13, fontWeight: 500 }}>{fmtDate(d.ngay_tao)}</td>
                                   <td style={{ padding: '14px 16px', color: '#475569', fontSize: 13, fontWeight: 600 }}>{d.ten_khach_hang || 'Khách tại quầy'}</td>
-                                  <td style={{ padding: '14px 16px', fontWeight: 900, color: isVoided ? '#94a3b8' : '#0f172a', fontSize: 15, textDecoration: isVoided ? 'line-through' : 'none' }}>
+                                  <td style={{ padding: '14px 16px', fontWeight: 600, color: isVoided ? '#94a3b8' : '#0f172a', fontSize: 15, textDecoration: isVoided ? 'line-through' : 'none' }}>
                                     {fmtMoney(d.tong_tien)}
                                   </td>
                                   <td style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: '#475569' }}>
@@ -2837,16 +2727,16 @@ export function FranchiseePortal({ session, onLogout }) {
                                   <td style={{ padding: '14px 16px' }}>
                                     {isVoided ? (
                                       <span style={{
-                                        padding: '4px 10px', borderRadius: 99, fontSize: 11, fontWeight: 800,
+                                        padding: '4px 10px', borderRadius: 99, fontSize: 11, fontWeight: 600,
                                         background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca', display: 'inline-flex', alignItems: 'center', gap: 4
                                       }}>
                                         <RotateCcw size={11} /> Đã hủy &amp; Hoàn tiền
                                       </span>
                                     ) : (
                                       <span style={{
-                                        padding: '4px 10px', borderRadius: 99, fontSize: 11, fontWeight: 800,
-                                        background: d.trang_thai_don_hang === 'HOAN_THANH' ? '#dcfce7' : '#fef9c3',
-                                        color: d.trang_thai_don_hang === 'HOAN_THANH' ? '#059669' : '#d97706',
+                                        padding: '4px 10px', borderRadius: 99, fontSize: 11, fontWeight: 600,
+                                        background: d.trang_thai_don_hang === 'HOAN_THANH' ? '#dbeafe' : '#fef9c3',
+                                        color: d.trang_thai_don_hang === 'HOAN_THANH' ? '#2563eb' : '#d97706',
                                       }}>
                                         {d.trang_thai_don_hang === 'HOAN_THANH' ? 'Hoàn thành' : d.trang_thai_don_hang}
                                       </span>
@@ -2870,7 +2760,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                           border: '1.5px solid #e2e8f0',
                                           backgroundColor: '#ffffff',
                                           color: '#dc2626',
-                                          fontWeight: 800,
+                                          fontWeight: 600,
                                           fontSize: 12,
                                           cursor: 'pointer',
                                           display: 'inline-flex',
@@ -2939,8 +2829,8 @@ export function FranchiseePortal({ session, onLogout }) {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             <span style={{
-                              padding: '5px 12px', borderRadius: 8, background: '#ecfdf5',
-                              color: '#065f46', border: '1px solid #a7f3d0', fontSize: 13, fontWeight: 800
+                              padding: '5px 12px', borderRadius: 8, background: '#eff6ff',
+                              color: '#1e40af', border: '1px solid #bfdbfe', fontSize: 13, fontWeight: 600
                             }}>
                               Gói {currentKioskLabel}
                             </span>
@@ -2995,11 +2885,11 @@ export function FranchiseePortal({ session, onLogout }) {
                               )}
                               <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                 <div>
-                                  <div style={{ fontWeight: 800, fontSize: 16, color: '#0f172a', marginBottom: 4 }}>{name}</div>
+                                  <div style={{ fontWeight: 600, fontSize: 16, color: '#0f172a', marginBottom: 4 }}>{name}</div>
                                   <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>{getCategoryName(m.danh_muc || m.danhMuc)}</div>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14 }}>
-                                  <div style={{ fontWeight: 900, color: '#0f172a', fontSize: 17 }}>{fmtMoney(price)}</div>
+                                  <div style={{ fontWeight: 600, color: '#0f172a', fontSize: 17 }}>{fmtMoney(price)}</div>
                                   <span
                                     style={{
                                       padding: '5px 12px', background: '#f8fafc', color: '#334155',
@@ -3057,7 +2947,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                     style={{
                                       width: 34, height: 34, borderRadius: 8,
                                       border: isCurrent ? 'none' : '1px solid #cbd5e1',
-                                      background: isCurrent ? '#059669' : '#ffffff',
+                                      background: isCurrent ? '#2563eb' : '#ffffff',
                                       color: isCurrent ? '#ffffff' : '#334155',
                                       fontWeight: isCurrent ? 800 : 600, fontSize: 13,
                                       cursor: 'pointer',
@@ -3128,13 +3018,13 @@ export function FranchiseePortal({ session, onLogout }) {
                         <div style={{ display: 'grid', gap: 12 }}>
                           {availableCombos.map(c => (
                             <div key={c.id} onClick={() => setOrderForm(f => ({ ...f, combo_id: c.id }))} style={{
-                              padding: '16px', border: `1px solid ${orderForm.combo_id === c.id ? '#2563eb' : '#e2e8f0'}`,
-                              borderRadius: 12, cursor: 'pointer', background: orderForm.combo_id === c.id ? '#eff6ff' : '#fff',
+                              padding: '16px', border: `1px solid ${orderForm.combo_id === c.id ? 'var(--primary)' : '#e2e8f0'}`,
+                              borderRadius: 12, cursor: 'pointer', background: orderForm.combo_id === c.id ? 'var(--primary-light)' : '#fff',
                               transition: 'all 0.2s'
                             }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <div>
-                                  <div style={{ fontWeight: 600, fontSize: 15, color: orderForm.combo_id === c.id ? '#1e3a8a' : '#0f172a' }}>{c.ten_combo}</div>
+                                  <div style={{ fontWeight: 600, fontSize: 15, color: orderForm.combo_id === c.id ? 'var(--primary)' : '#0f172a' }}>{c.ten_combo}</div>
                                   <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Ước tính ~{c.so_ly_pha_che_uoc_tinh} ly</div>
                                 </div>
                                 <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a' }}>{fmtMoney(c.gia_ban)}</div>
@@ -3200,7 +3090,7 @@ export function FranchiseePortal({ session, onLogout }) {
                             <td style={{ padding: '12px 16px', fontSize: 13, color: '#475569' }}>{d.phuong_thuc_thanh_toan}</td>
                             <td style={{ padding: '12px 16px', color: '#64748b', fontSize: 13 }}>{fmtDate(d.ngay_dat)}</td>
                             <td style={{ padding: '12px 16px' }}>
-                              <span style={{ padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 500, background: d.trang_thai === 'DA_GIAO' ? '#f0fdf4' : '#f8fafc', color: d.trang_thai === 'DA_GIAO' ? '#16a34a' : '#475569', border: `1px solid ${d.trang_thai === 'DA_GIAO' ? '#bbf7d0' : '#e2e8f0'}` }}>
+                              <span style={{ padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 500, background: d.trang_thai === 'DA_GIAO' ? '#eff6ff' : '#f8fafc', color: d.trang_thai === 'DA_GIAO' ? '#2563eb' : '#475569', border: `1px solid ${d.trang_thai === 'DA_GIAO' ? '#bfdbfe' : '#e2e8f0'}` }}>
                                 {d.trang_thai === 'DA_GIAO' ? 'Đã giao' : d.trang_thai}
                               </span>
                             </td>
@@ -3221,12 +3111,12 @@ export function FranchiseePortal({ session, onLogout }) {
                     <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 16, padding: 32, marginBottom: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                          <div style={{ width: 56, height: 56, borderRadius: 12, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Wallet size={28} color="#2563eb" />
+                          <div style={{ width: 56, height: 56, borderRadius: 12, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Wallet size={28} color="var(--primary)" />
                           </div>
                           <div>
                             <div style={{ color: '#64748b', fontSize: 14, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.02em' }}>Số dư khả dụng</div>
-                            <div style={{ fontSize: 36, fontWeight: 800, color: '#0f172a', marginTop: 4 }}>
+                            <div style={{ fontSize: 36, fontWeight: 600, color: '#0f172a', marginTop: 4 }}>
                               {fmtMoney(walletInfo?.so_du_vi || 0)}
                             </div>
                           </div>
@@ -3264,7 +3154,7 @@ export function FranchiseePortal({ session, onLogout }) {
                               }}
                               style={{ 
                                 padding: '0 24px', borderRadius: 8, border: 'none', 
-                                background: '#2563eb', color: '#ffffff', fontWeight: 600, fontSize: 15, cursor: 'pointer',
+                                background: 'var(--primary)', color: '#ffffff', fontWeight: 600, fontSize: 15, cursor: 'pointer',
                                 opacity: (depositLoading || !depositAmount || depositAmount <= 0) ? 0.6 : 1,
                                 transition: 'background .2s'
                               }}
@@ -3295,7 +3185,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                   {fmtDate(tx.ngay_giao_dich)} • {tx.mo_ta}
                                 </div>
                               </div>
-                              <div style={{ fontWeight: 700, fontSize: 16, color: tx.so_tien > 0 ? '#16a34a' : '#ef4444' }}>
+                              <div style={{ fontWeight: 700, fontSize: 16, color: tx.so_tien > 0 ? '#2563eb' : '#ef4444' }}>
                                 {tx.so_tien > 0 ? '+' : ''}{fmtMoney(tx.so_tien)}
                               </div>
                             </div>
@@ -3324,7 +3214,7 @@ export function FranchiseePortal({ session, onLogout }) {
                             </div>
                             <div style={{ textAlign: 'right' }}>
                               <div style={{ fontSize: 18, fontWeight: 700, color: '#0f172a' }}>{fmtMoney(c.so_tien)}</div>
-                              <span style={{ display: 'inline-block', marginTop: 6, padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 500, background: c.trang_thai === 'DA_THANH_TOAN' ? '#f0fdf4' : '#fff1f2', color: c.trang_thai === 'DA_THANH_TOAN' ? '#16a34a' : '#e11d48', border: `1px solid ${c.trang_thai === 'DA_THANH_TOAN' ? '#bbf7d0' : '#fecdd3'}` }}>
+                              <span style={{ display: 'inline-block', marginTop: 6, padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 500, background: c.trang_thai === 'DA_THANH_TOAN' ? '#eff6ff' : '#fff1f2', color: c.trang_thai === 'DA_THANH_TOAN' ? '#2563eb' : '#e11d48', border: `1px solid ${c.trang_thai === 'DA_THANH_TOAN' ? '#bfdbfe' : '#fecdd3'}` }}>
                                 {c.trang_thai === 'DA_THANH_TOAN' ? 'Đã thanh toán' : 'Chưa thanh toán'}
                               </span>
                             </div>
@@ -3342,7 +3232,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                     setMsg({ type: 'error', text: e.message || 'Thanh toán thất bại' });
                                   }
                                 }}
-                                style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#2563eb', color: '#fff', fontWeight: 500, fontSize: 14, cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}
+                                style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: 500, fontSize: 14, cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}
                               >
                                 <Wallet size={16} /> Thanh toán Ví
                               </button>
@@ -3406,11 +3296,11 @@ export function FranchiseePortal({ session, onLogout }) {
                               <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 16 }}>Tháng {r.thang}</div>
                               <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Kiosk: {r.kiosk?.ten_kiosk}</div>
                             </div>
-                            <span style={{ padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 500, background: r.trang_thai === 'DA_THANH_TOAN' ? '#f0fdf4' : '#f8fafc', color: r.trang_thai === 'DA_THANH_TOAN' ? '#16a34a' : '#475569', border: `1px solid ${r.trang_thai === 'DA_THANH_TOAN' ? '#bbf7d0' : '#e2e8f0'}` }}>
+                            <span style={{ padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 500, background: r.trang_thai === 'DA_THANH_TOAN' ? '#eff6ff' : '#f8fafc', color: r.trang_thai === 'DA_THANH_TOAN' ? '#2563eb' : '#475569', border: `1px solid ${r.trang_thai === 'DA_THANH_TOAN' ? '#bfdbfe' : '#e2e8f0'}` }}>
                               {r.trang_thai === 'DA_THANH_TOAN' ? 'Đã thanh toán' : 'Chờ đối soát'}
                             </span>
                           </div>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
                             <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 12 }}>
                               <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>Doanh thu</div>
                               <div style={{ fontSize: 15, fontWeight: 600, color: '#0f172a', marginTop: 4 }}>{fmtMoney(r.doanh_thu_thuc_te)}</div>
@@ -3449,12 +3339,12 @@ export function FranchiseePortal({ session, onLogout }) {
                         onClick={() => setExpansionForm(f => ({ ...f, goi_kiosk: 'XE_LUU_DONG' }))}
                         style={{ 
                           background: '#fff', 
-                          border: expansionForm.goi_kiosk === 'XE_LUU_DONG' ? '2px solid #2563eb' : '1px solid #e2e8f0', 
+                          border: expansionForm.goi_kiosk === 'XE_LUU_DONG' ? '2px solid var(--primary)' : '1px solid #e2e8f0',
                           borderRadius: 16, padding: 24, cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
                           boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                         }}
                       >
-                        {expansionForm.goi_kiosk === 'XE_LUU_DONG' && <div style={{ position: 'absolute', top: 16, right: 16 }}><CheckCircle2 size={20} color="#2563eb" /></div>}
+                        {expansionForm.goi_kiosk === 'XE_LUU_DONG' && <div style={{ position: 'absolute', top: 16, right: 16 }}><CheckCircle2 size={20} color="var(--primary)" /></div>}
                         <div style={{ marginBottom: 16 }}>
                           <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600, color: '#0f172a' }}>Xe Lưu Động</h3>
                           <span style={{ color: '#64748b', fontSize: 12 }}>Vốn thấp nhất</span>
@@ -3472,12 +3362,12 @@ export function FranchiseePortal({ session, onLogout }) {
                         onClick={() => setExpansionForm(f => ({ ...f, goi_kiosk: 'KIOSK_CO_DINH' }))}
                         style={{ 
                           background: '#fff', 
-                          border: expansionForm.goi_kiosk === 'KIOSK_CO_DINH' ? '2px solid #2563eb' : '1px solid #e2e8f0', 
+                          border: expansionForm.goi_kiosk === 'KIOSK_CO_DINH' ? '2px solid var(--primary)' : '1px solid #e2e8f0',
                           borderRadius: 16, padding: 24, cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
                           boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                         }}
                       >
-                        {expansionForm.goi_kiosk === 'KIOSK_CO_DINH' && <div style={{ position: 'absolute', top: 16, right: 16 }}><CheckCircle2 size={20} color="#2563eb" /></div>}
+                        {expansionForm.goi_kiosk === 'KIOSK_CO_DINH' && <div style={{ position: 'absolute', top: 16, right: 16 }}><CheckCircle2 size={20} color="var(--primary)" /></div>}
                         <div style={{ marginBottom: 16 }}>
                           <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600, color: '#0f172a' }}>Kiosk Cố Định</h3>
                           <span style={{ color: '#64748b', fontSize: 12 }}>Phổ biến nhất</span>
@@ -3495,12 +3385,12 @@ export function FranchiseePortal({ session, onLogout }) {
                         onClick={() => setExpansionForm(f => ({ ...f, goi_kiosk: 'CONTAINER_CAFE' }))}
                         style={{ 
                           background: '#fff', 
-                          border: expansionForm.goi_kiosk === 'CONTAINER_CAFE' ? '2px solid #2563eb' : '1px solid #e2e8f0', 
+                          border: expansionForm.goi_kiosk === 'CONTAINER_CAFE' ? '2px solid var(--primary)' : '1px solid #e2e8f0',
                           borderRadius: 16, padding: 24, cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
                           boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                         }}
                       >
-                        {expansionForm.goi_kiosk === 'CONTAINER_CAFE' && <div style={{ position: 'absolute', top: 16, right: 16 }}><CheckCircle2 size={20} color="#2563eb" /></div>}
+                        {expansionForm.goi_kiosk === 'CONTAINER_CAFE' && <div style={{ position: 'absolute', top: 16, right: 16 }}><CheckCircle2 size={20} color="var(--primary)" /></div>}
                         <div style={{ marginBottom: 16 }}>
                           <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600, color: '#0f172a' }}>Container Café</h3>
                           <span style={{ color: '#64748b', fontSize: 12 }}>Cao cấp</span>
@@ -3514,7 +3404,7 @@ export function FranchiseePortal({ session, onLogout }) {
                       </div>
                     </div>
 
-                    <form onSubmit={handleExpansionSubmit} style={{ background: '#fff', borderRadius: 16, padding: 32, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                    <form className="workspace-form" onSubmit={handleExpansionSubmit} style={{ background: '#fff', borderRadius: 16, padding: 32, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                       <h3 style={{ margin: '0 0 24px', fontSize: 18, fontWeight: 600, color: '#0f172a' }}>Thông tin mặt bằng dự kiến</h3>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 32 }}>
                         <div style={{ gridColumn: '1 / -1' }}>
@@ -3550,11 +3440,11 @@ export function FranchiseePortal({ session, onLogout }) {
                   activeKiosk?.trang_thai !== 'DANG_HOAT_DONG' ? (
                     <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', margin: '0 auto', maxWidth: 600, marginTop: 40 }}>
                       <Lock size={48} color="#94a3b8" style={{ margin: '0 auto 16px' }} />
-                      <h2 style={{ fontSize: 20, fontWeight: 800, color: '#334155', marginBottom: 8 }}>Kiosk Chưa Hoạt Động</h2>
+                      <h2 style={{ fontSize: 20, fontWeight: 600, color: '#334155', marginBottom: 8 }}>Kiosk Chưa Hoạt Động</h2>
                       <p style={{ color: '#64748b' }}>Kiosk này hiện chưa khai trương chính thức hoặc chưa hoàn tất mua Combo nhượng quyền.<br />Vui lòng liên hệ Quản lý để biết thêm chi tiết.</p>
                     </div>
                   ) : (
-                  <div style={{
+                  <div className="console-pos-layout" style={{
                     display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 390px', gap: 20,
                     alignItems: 'start', width: '100%', height: 'calc(100vh - 150px)', minHeight: 640
                   }}>
@@ -3571,7 +3461,7 @@ export function FranchiseePortal({ session, onLogout }) {
                           <span style={{
                             padding: '4px 10px', borderRadius: 8, background: packageMeta.bg,
                             color: packageMeta.color, border: `1px solid ${packageMeta.border}`,
-                            fontSize: 12, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6
+                            fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6
                           }}>
                             <Package size={14} />
                             <span>{packageMeta.name}</span>
@@ -3589,7 +3479,7 @@ export function FranchiseePortal({ session, onLogout }) {
                             style={{
                               padding: '5px 10px', border: 'none', borderRadius: 6, cursor: 'pointer',
                               background: posViewMode === 'grid' ? '#ffffff' : 'transparent',
-                              color: posViewMode === 'grid' ? '#059669' : '#64748b',
+                              color: posViewMode === 'grid' ? '#2563eb' : '#64748b',
                               fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4,
                               boxShadow: posViewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
                             }}
@@ -3602,7 +3492,7 @@ export function FranchiseePortal({ session, onLogout }) {
                             style={{
                               padding: '5px 10px', border: 'none', borderRadius: 6, cursor: 'pointer',
                               background: posViewMode === 'compact' ? '#ffffff' : 'transparent',
-                              color: posViewMode === 'compact' ? '#059669' : '#64748b',
+                              color: posViewMode === 'compact' ? '#2563eb' : '#64748b',
                               fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4,
                               boxShadow: posViewMode === 'compact' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
                             }}
@@ -3675,7 +3565,7 @@ export function FranchiseePortal({ session, onLogout }) {
                       <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4, minHeight: 0 }}>
                         {menuLoading ? (
                           <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
-                            <RefreshCw size={26} className="animate-spin" style={{ margin: '0 auto 10px', color: '#2563eb' }} />
+                            <RefreshCw size={26} className="animate-spin" style={{ margin: '0 auto 10px', color: 'var(--primary)' }} />
                             <div style={{ fontSize: 13, fontWeight: 600 }}>Đang tải thực đơn...</div>
                           </div>
                         ) : filteredProducts.length === 0 ? (
@@ -3711,8 +3601,8 @@ export function FranchiseePortal({ session, onLogout }) {
                                   <span style={{ fontSize: 10, color: '#64748b', background: '#f1f5f9', padding: '2px 6px', borderRadius: 4, fontWeight: 600 }}>{item.danh_muc}</span>
                                 </div>
                                 <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <span style={{ fontWeight: 800, fontSize: 14, color: '#0f172a' }}>{fmtMoney(item.gia_ban)}</span>
-                                  <span style={{ width: 26, height: 26, borderRadius: 6, background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 600 }}>+</span>
+                                  <span style={{ fontWeight: 600, fontSize: 14, color: '#0f172a' }}>{fmtMoney(item.gia_ban)}</span>
+                                  <span style={{ width: 26, height: 26, borderRadius: 6, background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 600 }}>+</span>
                                 </div>
                               </div>
                             ))}
@@ -3745,8 +3635,8 @@ export function FranchiseePortal({ session, onLogout }) {
                                   </div>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                                  <span style={{ fontWeight: 800, fontSize: 14, color: '#0f172a' }}>{fmtMoney(item.gia_ban)}</span>
-                                  <button type="button" style={{ padding: '6px 12px', borderRadius: 6, background: '#eff6ff', color: '#2563eb', border: 'none', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
+                                  <span style={{ fontWeight: 600, fontSize: 14, color: '#0f172a' }}>{fmtMoney(item.gia_ban)}</span>
+                                  <button type="button" style={{ padding: '6px 12px', borderRadius: 6, background: 'var(--primary-light)', color: 'var(--primary)', border: 'none', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
                                     Thêm
                                   </button>
                                 </div>
@@ -3783,7 +3673,7 @@ export function FranchiseePortal({ session, onLogout }) {
                       boxSizing: 'border-box', height: '100%', display: 'flex', flexDirection: 'column'
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                        <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
                           <Receipt size={18} color="#0f172a" /> Đơn hàng Kiosk
                         </h3>
                         {posCart.length > 0 && (
@@ -3826,7 +3716,7 @@ export function FranchiseePortal({ session, onLogout }) {
                           <span>Tạm tính ({posCart.reduce((a, c) => a + c.sl, 0)} món):</span>
                           <span style={{ fontWeight: 600, color: '#0f172a' }}>{fmtMoney(posTotal)}</span>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 16, fontWeight: 800, color: '#0f172a', paddingTop: 12, borderTop: '1px dashed #cbd5e1' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 16, fontWeight: 600, color: '#0f172a', paddingTop: 12, borderTop: '1px dashed #cbd5e1' }}>
                           <span>Tổng thanh toán:</span>
                           <span>{fmtMoney(posTotal)}</span>
                         </div>
@@ -3835,7 +3725,7 @@ export function FranchiseePortal({ session, onLogout }) {
                       {/* Payment Methods */}
                       <div style={{ marginBottom: 16 }}>
                         <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 8 }}>Phương thức thanh toán</label>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 8 }}>
                           {[{ id: 'TIEN_MAT', label: 'Tiền mặt' }, { id: 'NGAN_HANG_QR', label: 'QR Pay' }, { id: 'THE', label: 'Thẻ' }].map((m) => {
                             const isSelected = posPayment === m.id
                             return (
@@ -3872,7 +3762,7 @@ export function FranchiseePortal({ session, onLogout }) {
                         style={{
                           width: '100%', padding: '14px', borderRadius: 10, border: 'none',
                           background: posCart.length === 0 ? '#cbd5e1' : '#0f172a',
-                          color: '#fff', fontSize: 14, fontWeight: 800, cursor: posCart.length === 0 ? 'not-allowed' : 'pointer',
+                          color: '#fff', fontSize: 14, fontWeight: 600, cursor: posCart.length === 0 ? 'not-allowed' : 'pointer',
                           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all .2s ease'
                         }}
                       >
@@ -3893,6 +3783,7 @@ export function FranchiseePortal({ session, onLogout }) {
                 )}
               </>
             )}
+            </WorkspaceErrorBoundary>
           </div>
         </main>
 
@@ -3915,14 +3806,14 @@ export function FranchiseePortal({ session, onLogout }) {
                     <UserPlus size={20} />
                   </div>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a' }}>Tạo Tài Khoản Nhân Viên Con</h3>
+                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#0f172a' }}>Tạo Tài Khoản Nhân Viên Con</h3>
                     <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>Phân quyền trực tiếp cho nhân viên vận hành Kiosk</p>
                   </div>
                 </div>
-                <button onClick={() => setShowCreateStaffModal(false)} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 800, color: '#64748b' }}>×</button>
+                <button onClick={() => setShowCreateStaffModal(false)} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 600, color: '#64748b' }}>×</button>
               </div>
 
-              <form onSubmit={handleCreateStaff} style={{ padding: 24 }}>
+              <form className="workspace-form" onSubmit={handleCreateStaff} style={{ padding: 24 }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                   <div>
                     <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 6 }}>Họ và tên *</label>
@@ -3976,7 +3867,7 @@ export function FranchiseePortal({ session, onLogout }) {
                 {/* Phân quyền POS chi tiết */}
                 <div style={{ marginBottom: 24 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <label style={{ fontSize: 13, fontWeight: 800, color: '#0f172a', textTransform: 'uppercase' }}>Phân quyền thao tác POS</label>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', textTransform: 'uppercase' }}>Phân quyền thao tác POS</label>
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button type="button" onClick={() => setStaffForm(f => ({ ...f, pos_permissions: POS_PERMISSIONS_LIST.map(p => p.id) }))} style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: '#f1f5f9', border: 'none', cursor: 'pointer' }}>Chọn tất cả</button>
                       <button type="button" onClick={() => setStaffForm(f => ({ ...f, pos_permissions: ['pos_allow_order'] }))} style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: '#f1f5f9', border: 'none', cursor: 'pointer' }}>Chỉ bán hàng</button>
@@ -4013,7 +3904,7 @@ export function FranchiseePortal({ session, onLogout }) {
 
                 <div style={{ display: 'flex', gap: 12 }}>
                   <button type="button" onClick={() => setShowCreateStaffModal(false)} style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</button>
-                  <button type="submit" disabled={staffSubmitting} style={{ flex: 2, padding: '12px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                  <button type="submit" disabled={staffSubmitting} style={{ flex: 2, padding: '12px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                     {staffSubmitting ? 'Đang lưu...' : '✓ Xác nhận tạo tài khoản'}
                   </button>
                 </div>
@@ -4037,13 +3928,13 @@ export function FranchiseePortal({ session, onLogout }) {
             }} onClick={e => e.stopPropagation()}>
               <div style={{ padding: '24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a' }}>Chỉnh Sửa Nhân Viên: @{selectedStaff.ten_dang_nhap}</h3>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#0f172a' }}>Chỉnh Sửa Nhân Viên: @{selectedStaff.ten_dang_nhap}</h3>
                   <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>Cập nhật thông tin và điều chỉnh quyền hạn POS</p>
                 </div>
-                <button onClick={() => setShowEditStaffModal(false)} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 800, color: '#64748b' }}>×</button>
+                <button onClick={() => setShowEditStaffModal(false)} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 600, color: '#64748b' }}>×</button>
               </div>
 
-              <form onSubmit={handleUpdateStaff} style={{ padding: 24 }}>
+              <form className="workspace-form" onSubmit={handleUpdateStaff} style={{ padding: 24 }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                   <div>
                     <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 6 }}>Họ và tên</label>
@@ -4077,7 +3968,7 @@ export function FranchiseePortal({ session, onLogout }) {
 
                 {/* Phân quyền POS */}
                 <div style={{ marginBottom: 24 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', marginBottom: 10 }}>Cấp quyền thao tác POS</label>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#0f172a', textTransform: 'uppercase', marginBottom: 10 }}>Cấp quyền thao tác POS</label>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {POS_PERMISSIONS_LIST.map(perm => {
                       const isChecked = (staffForm.pos_permissions || []).includes(perm.id)
@@ -4108,7 +3999,7 @@ export function FranchiseePortal({ session, onLogout }) {
 
                 <div style={{ display: 'flex', gap: 12 }}>
                   <button type="button" onClick={() => setShowEditStaffModal(false)} style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</button>
-                  <button type="submit" disabled={staffSubmitting} style={{ flex: 2, padding: '12px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                  <button type="submit" disabled={staffSubmitting} style={{ flex: 2, padding: '12px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                     {staffSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
                   </button>
                 </div>
@@ -4132,13 +4023,13 @@ export function FranchiseePortal({ session, onLogout }) {
             }} onClick={e => e.stopPropagation()}>
               <div style={{ padding: '24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a' }}>Đặt Lại Mật Khẩu</h3>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#0f172a' }}>Đặt Lại Mật Khẩu</h3>
                   <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>Cho nhân viên: <b>@{selectedStaff.ten_dang_nhap}</b></p>
                 </div>
-                <button onClick={() => setShowResetPwdModal(false)} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 800, color: '#64748b' }}>×</button>
+                <button onClick={() => setShowResetPwdModal(false)} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 600, color: '#64748b' }}>×</button>
               </div>
 
-              <form onSubmit={handleResetPassword} style={{ padding: 24 }}>
+              <form className="workspace-form" onSubmit={handleResetPassword} style={{ padding: 24 }}>
                 <div style={{ marginBottom: 20 }}>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 6 }}>Mật khẩu mới *</label>
                   <input type="password" required value={resetPwdInput} onChange={e => setResetPwdInput(e.target.value)} placeholder="Nhập mật khẩu mới..."
@@ -4147,7 +4038,7 @@ export function FranchiseePortal({ session, onLogout }) {
 
                 <div style={{ display: 'flex', gap: 12 }}>
                   <button type="button" onClick={() => setShowResetPwdModal(false)} style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</button>
-                  <button type="submit" disabled={staffSubmitting} style={{ flex: 2, padding: '12px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                  <button type="submit" disabled={staffSubmitting} style={{ flex: 2, padding: '12px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                     {staffSubmitting ? 'Đang lưu...' : 'Xác nhận đổi MK'}
                   </button>
                 </div>
@@ -4174,13 +4065,13 @@ export function FranchiseePortal({ session, onLogout }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{
                     width: 42, height: 42, borderRadius: 12,
-                    background: 'linear-gradient(135deg, #ecfdf5, #d1fae5)',
-                    color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    background: 'linear-gradient(135deg, #eff6ff, #dbeafe)',
+                    color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center'
                   }}>
                     <CalendarDays size={22} />
                   </div>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a' }}>Phân Ca Làm Việc Tại Kiosk</h3>
+                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#0f172a' }}>Phân Ca Làm Việc Tại Kiosk</h3>
                     <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>
                       Kiosk: <b>{activeKiosk?.ten_kiosk} ({activeKiosk?.ma_kiosk})</b>
                     </p>
@@ -4201,7 +4092,7 @@ export function FranchiseePortal({ session, onLogout }) {
               </div>
 
               {/* Modal Form */}
-              <form onSubmit={handleCreateWorkShift} style={{ padding: 24 }}>
+              <form className="workspace-form" onSubmit={handleCreateWorkShift} style={{ padding: 24 }}>
                 {/* Chọn nhân viên */}
                 <div style={{ marginBottom: 16 }}>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 6 }}>
@@ -4248,7 +4139,7 @@ export function FranchiseePortal({ session, onLogout }) {
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>
                     Khung ca làm việc *
                   </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 10 }}>
                     {SHIFT_TEMPLATES.map((tmpl) => {
                       const isSelected = shiftScheduleForm.shift_code === tmpl.id
                       const IconComp = tmpl.icon
@@ -4258,22 +4149,22 @@ export function FranchiseePortal({ session, onLogout }) {
                           onClick={() => setShiftScheduleForm(f => ({ ...f, shift_code: tmpl.id }))}
                           style={{
                             padding: '12px 10px', borderRadius: 12, cursor: 'pointer',
-                            border: isSelected ? '2px solid #059669' : '1px solid #e2e8f0',
-                            background: isSelected ? '#ecfdf5' : '#ffffff',
+                            border: isSelected ? '2px solid #2563eb' : '1px solid #e2e8f0',
+                            background: isSelected ? '#eff6ff' : '#ffffff',
                             textAlign: 'center', transition: 'all .15s',
                             boxShadow: isSelected ? '0 4px 12px rgba(5,150,105,0.15)' : 'none',
                             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4
                           }}
                         >
-                          <IconComp size={20} color={isSelected ? '#059669' : tmpl.accent} />
-                          <div style={{ fontWeight: 800, fontSize: 12, color: isSelected ? '#047857' : '#0f172a' }}>
+                          <IconComp size={20} color={isSelected ? '#2563eb' : tmpl.accent} />
+                          <div style={{ fontWeight: 600, fontSize: 12, color: isSelected ? '#1d4ed8' : '#0f172a' }}>
                             {tmpl.name}
                           </div>
                           <div style={{ fontSize: 10, fontWeight: 700, color: '#64748b' }}>
                             {tmpl.time}
                           </div>
                           {isSelected && (
-                            <div style={{ marginTop: 2, display: 'inline-flex', alignItems: 'center', gap: 2, color: '#059669', fontSize: 10, fontWeight: 800 }}>
+                            <div style={{ marginTop: 2, display: 'inline-flex', alignItems: 'center', gap: 2, color: '#2563eb', fontSize: 10, fontWeight: 600 }}>
                               <Check size={12} /> Đã chọn
                             </div>
                           )}
@@ -4320,8 +4211,8 @@ export function FranchiseePortal({ session, onLogout }) {
                     disabled={shiftScheduleSubmitting}
                     style={{
                       flex: 2, padding: '12px',
-                      background: 'linear-gradient(135deg, #10b981, #059669)',
-                      color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800,
+                      background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                      color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600,
                       fontSize: 14, cursor: 'pointer', boxShadow: '0 4px 14px rgba(16,185,129,0.35)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                       transition: 'all .2s'
@@ -4370,7 +4261,7 @@ export function FranchiseePortal({ session, onLogout }) {
                     <CalendarCheck size={22} />
                   </div>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a' }}>
+                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#0f172a' }}>
                       Duyệt Yêu Cầu Đăng Ký Ca Làm Việc
                     </h3>
                     <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>
@@ -4396,7 +4287,7 @@ export function FranchiseePortal({ session, onLogout }) {
               <div style={{ padding: '12px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: 8, background: '#f8fafc' }}>
                 {[
                   { id: 'PENDING', label: 'Chờ duyệt', count: shiftRequests.filter(r => r.trang_thai_yeu_cau === 'PENDING').length, color: '#d97706', activeBg: '#fef3c7' },
-                  { id: 'APPROVED', label: 'Đã duyệt (Chính thức)', count: shiftRequests.filter(r => r.trang_thai_yeu_cau === 'APPROVED').length, color: '#059669', activeBg: '#ecfdf5' },
+                  { id: 'APPROVED', label: 'Đã duyệt (Chính thức)', count: shiftRequests.filter(r => r.trang_thai_yeu_cau === 'APPROVED').length, color: '#2563eb', activeBg: '#eff6ff' },
                   { id: 'REJECTED', label: 'Đã từ chối', count: shiftRequests.filter(r => r.trang_thai_yeu_cau === 'REJECTED').length, color: '#dc2626', activeBg: '#fef2f2' },
                   { id: 'ALL', label: 'Tất cả yêu cầu', count: shiftRequests.length, color: '#475569', activeBg: '#e2e8f0' },
                 ].map(f => {
@@ -4414,7 +4305,7 @@ export function FranchiseePortal({ session, onLogout }) {
                     >
                       <span>{f.label}</span>
                       <span style={{
-                        padding: '1px 6px', borderRadius: 99, fontSize: 10, fontWeight: 800,
+                        padding: '1px 6px', borderRadius: 99, fontSize: 10, fontWeight: 600,
                         background: isSel ? f.color : '#f1f5f9', color: isSel ? '#fff' : '#64748b'
                       }}>
                         {f.count}
@@ -4438,7 +4329,7 @@ export function FranchiseePortal({ session, onLogout }) {
                         <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
                           <CheckCircle2 size={24} color="#94a3b8" />
                         </div>
-                        <div style={{ fontWeight: 800, fontSize: 15, color: '#0f172a' }}>Không có yêu cầu đăng ký ca nào</div>
+                        <div style={{ fontWeight: 600, fontSize: 15, color: '#0f172a' }}>Không có yêu cầu đăng ký ca nào</div>
                         <p style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
                           {shiftRequestTabFilter === 'PENDING'
                             ? 'Toàn bộ ca làm việc đăng ký đã được duyệt hoặc chưa có yêu cầu mới.'
@@ -4472,14 +4363,14 @@ export function FranchiseePortal({ session, onLogout }) {
                                 width: 38, height: 38, borderRadius: '50%',
                                 background: isPending
                                   ? 'linear-gradient(135deg, #f59e0b, #d97706)'
-                                  : isApproved ? 'linear-gradient(135deg, #059669, #047857)' : '#94a3b8',
+                                  : isApproved ? 'linear-gradient(135deg, #2563eb, #1d4ed8)' : '#94a3b8',
                                 color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontSize: 13, fontWeight: 800, flexShrink: 0
+                                fontSize: 13, fontWeight: 600, flexShrink: 0
                               }}>
                                 {initials}
                               </div>
                               <div>
-                                <div style={{ fontWeight: 800, fontSize: 14, color: '#0f172a' }}>
+                                <div style={{ fontWeight: 600, fontSize: 14, color: '#0f172a' }}>
                                   {req.staff_name} <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b' }}>@{req.staff_username}</span>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
@@ -4515,8 +4406,8 @@ export function FranchiseePortal({ session, onLogout }) {
                                     onClick={() => handleApproveShiftRequest(req.ma_ca_lam_viec)}
                                     disabled={approvingRequestId === req.ma_ca_lam_viec}
                                     style={{
-                                      padding: '8px 14px', background: 'linear-gradient(135deg, #10b981, #059669)',
-                                      color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 12,
+                                      padding: '8px 14px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                                      color: '#fff', border: 'none', borderRadius: 10, fontWeight: 600, fontSize: 12,
                                       cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
                                       boxShadow: '0 2px 6px rgba(16,185,129,0.25)', transition: 'all .15s'
                                     }}
@@ -4539,8 +4430,8 @@ export function FranchiseePortal({ session, onLogout }) {
                               {isApproved && (
                                 <span style={{
                                   display: 'inline-flex', alignItems: 'center', gap: 4,
-                                  padding: '4px 10px', borderRadius: 99, background: '#ecfdf5',
-                                  color: '#059669', fontSize: 12, fontWeight: 800, border: '1px solid #a7f3d0'
+                                  padding: '4px 10px', borderRadius: 99, background: '#eff6ff',
+                                  color: '#2563eb', fontSize: 12, fontWeight: 600, border: '1px solid #bfdbfe'
                                 }}>
                                   <CheckCircle2 size={13} /> Đã duyệt chính thức
                                 </span>
@@ -4549,7 +4440,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                 <span style={{
                                   display: 'inline-flex', alignItems: 'center', gap: 4,
                                   padding: '4px 10px', borderRadius: 99, background: '#fef2f2',
-                                  color: '#dc2626', fontSize: 12, fontWeight: 800, border: '1px solid #fecaca'
+                                  color: '#dc2626', fontSize: 12, fontWeight: 600, border: '1px solid #fecaca'
                                 }}>
                                   <XCircle size={13} /> Đã từ chối
                                 </span>
@@ -4583,8 +4474,8 @@ export function FranchiseePortal({ session, onLogout }) {
                       onClick={handleApproveAllPending}
                       disabled={shiftRequestsLoading}
                       style={{
-                        padding: '8px 18px', background: 'linear-gradient(135deg, #10b981, #059669)',
-                        color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 13,
+                        padding: '8px 18px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                        color: '#fff', border: 'none', borderRadius: 10, fontWeight: 600, fontSize: 13,
                         cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
                         boxShadow: '0 3px 10px rgba(16,185,129,0.35)'
                       }}
@@ -4611,7 +4502,7 @@ export function FranchiseePortal({ session, onLogout }) {
             display: 'flex', flexDirection: 'column', maxHeight: '90vh'
           }}>
             <div style={{ padding: '24px 24px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span>🎯</span> Tiêu Chí Chấm Điểm Kiosk
               </h3>
               <button onClick={() => setScoringCriteriaModal(false)} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#64748b' }}>×</button>
@@ -4626,15 +4517,15 @@ export function FranchiseePortal({ session, onLogout }) {
                 <div style={{ display: 'grid', gap: 10 }}>
                   <div style={{ background: '#fef2f2', padding: '12px 16px', borderRadius: 12, border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#991b1b', fontWeight: 600, fontSize: 13 }}>Nợ quá hạn / Chưa thanh toán</span>
-                    <span style={{ color: '#dc2626', fontWeight: 900 }}>-10đ / Khoản</span>
+                    <span style={{ color: '#dc2626', fontWeight: 600 }}>-10đ / Khoản</span>
                   </div>
                   <div style={{ background: '#fffbeb', padding: '12px 16px', borderRadius: 12, border: '1px solid #fde68a', display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#92400e', fontWeight: 600, fontSize: 13 }}>Biên bản Đối soát: Cảnh báo Vàng</span>
-                    <span style={{ color: '#d97706', fontWeight: 900 }}>-15đ / Biên bản</span>
+                    <span style={{ color: '#d97706', fontWeight: 600 }}>-15đ / Biên bản</span>
                   </div>
                   <div style={{ background: '#fef2f2', padding: '12px 16px', borderRadius: 12, border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#991b1b', fontWeight: 600, fontSize: 13 }}>Biên bản Đối soát: Cảnh báo Đỏ</span>
-                    <span style={{ color: '#dc2626', fontWeight: 900 }}>-30đ / Biên bản</span>
+                    <span style={{ color: '#dc2626', fontWeight: 600 }}>-30đ / Biên bản</span>
                   </div>
                 </div>
               </div>
@@ -4642,30 +4533,30 @@ export function FranchiseePortal({ session, onLogout }) {
               <div style={{ marginBottom: 24 }}>
                 <h4 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: '#0f172a', textTransform: 'uppercase' }}>📈 Điểm Cộng (Thành tích)</h4>
                 <div style={{ display: 'grid', gap: 10 }}>
-                  <div style={{ background: '#ecfdf5', padding: '12px 16px', borderRadius: 12, border: '1px solid #a7f3d0', display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#065f46', fontWeight: 600, fontSize: 13 }}>Tiêu thụ tích lũy &gt; 50 Combo gốc</span>
-                    <span style={{ color: '#059669', fontWeight: 900 }}>+10đ</span>
+                  <div style={{ background: '#eff6ff', padding: '12px 16px', borderRadius: 12, border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#1e40af', fontWeight: 600, fontSize: 13 }}>Tiêu thụ tích lũy &gt; 50 Combo gốc</span>
+                    <span style={{ color: '#2563eb', fontWeight: 600 }}>+10đ</span>
                   </div>
                 </div>
               </div>
 
               <div>
                 <h4 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: '#0f172a', textTransform: 'uppercase' }}>🏆 Xếp Hạng</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, textAlign: 'center' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 210px), 1fr))', gap: 8, textAlign: 'center' }}>
                   <div style={{ background: '#fef08a', padding: '10px', borderRadius: 12 }}>
-                    <div style={{ fontWeight: 900, color: '#854d0e', fontSize: 20 }}>S</div>
+                    <div style={{ fontWeight: 600, color: '#854d0e', fontSize: 20 }}>S</div>
                     <div style={{ fontSize: 11, color: '#a16207', fontWeight: 700, marginTop: 4 }}>≥ 90đ</div>
                   </div>
                   <div style={{ background: '#bfdbfe', padding: '10px', borderRadius: 12 }}>
-                    <div style={{ fontWeight: 900, color: '#1e3a8a', fontSize: 20 }}>A</div>
-                    <div style={{ fontSize: 11, color: '#1d4ed8', fontWeight: 700, marginTop: 4 }}>≥ 70đ</div>
+                    <div style={{ fontWeight: 600, color: 'var(--primary)', fontSize: 20 }}>A</div>
+                    <div style={{ fontSize: 11, color: 'var(--primary-hover)', fontWeight: 700, marginTop: 4 }}>≥ 70đ</div>
                   </div>
-                  <div style={{ background: '#bbf7d0', padding: '10px', borderRadius: 12 }}>
-                    <div style={{ fontWeight: 900, color: '#14532d', fontSize: 20 }}>B</div>
-                    <div style={{ fontSize: 11, color: '#15803d', fontWeight: 700, marginTop: 4 }}>≥ 50đ</div>
+                  <div style={{ background: '#bfdbfe', padding: '10px', borderRadius: 12 }}>
+                    <div style={{ fontWeight: 600, color: '#1e3a8a', fontSize: 20 }}>B</div>
+                    <div style={{ fontSize: 11, color: '#1d4ed8', fontWeight: 700, marginTop: 4 }}>≥ 50đ</div>
                   </div>
                   <div style={{ background: '#fecaca', padding: '10px', borderRadius: 12 }}>
-                    <div style={{ fontWeight: 900, color: '#7f1d1d', fontSize: 20 }}>C</div>
+                    <div style={{ fontWeight: 600, color: '#7f1d1d', fontSize: 20 }}>C</div>
                     <div style={{ fontSize: 11, color: '#b91c1c', fontWeight: 700, marginTop: 4 }}>&lt; 50đ</div>
                   </div>
                 </div>
@@ -4775,16 +4666,16 @@ export function FranchiseePortal({ session, onLogout }) {
             background: '#fff', borderRadius: 24, width: '100%', maxWidth: 400, overflow: 'hidden',
             boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', animation: 'slideUp 0.3s ease-out'
           }} onClick={e => e.stopPropagation()}>
-            <div style={{ background: 'linear-gradient(135deg, #4338ca, #3b82f6)', padding: '24px', textAlign: 'center', color: '#fff' }}>
+            <div style={{ background: 'linear-gradient(135deg, var(--primary-hover), #3b82f6)', padding: '24px', textAlign: 'center', color: '#fff' }}>
               <div style={{ fontSize: 40, marginBottom: 8 }}>💳</div>
-              <h3 style={{ margin: 0, fontSize: 22, fontWeight: 900 }}>Avengers Pay</h3>
+              <h3 style={{ margin: 0, fontSize: 22, fontWeight: 600 }}>Avengers Pay</h3>
               <p style={{ margin: '4px 0 0', fontSize: 14, opacity: 0.8 }}>Thanh toán công nợ</p>
             </div>
             
             <div style={{ padding: 24 }}>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
                 <div style={{ fontSize: 14, color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Số tiền cần thanh toán</div>
-                <div style={{ fontSize: 36, fontWeight: 900, color: '#1e293b', marginTop: 4 }}>
+                <div style={{ fontSize: 36, fontWeight: 600, color: '#1e293b', marginTop: 4 }}>
                   {fmtMoney(selectedDebt.so_tien)}
                 </div>
                 <div style={{ fontSize: 14, color: '#3b82f6', fontWeight: 700, marginTop: 4 }}>
@@ -4795,13 +4686,13 @@ export function FranchiseePortal({ session, onLogout }) {
               <div style={{ background: '#f8fafc', padding: 16, borderRadius: 16, border: '1px solid #e2e8f0', marginBottom: 24 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                   <span style={{ fontSize: 14, color: '#64748b', fontWeight: 600 }}>Số dư ví hiện tại:</span>
-                  <span style={{ fontSize: 16, fontWeight: 800, color: walletBalance >= Number(selectedDebt.so_tien) ? '#059669' : '#dc2626' }}>
+                  <span style={{ fontSize: 16, fontWeight: 600, color: walletBalance >= Number(selectedDebt.so_tien) ? '#2563eb' : '#dc2626' }}>
                     {fmtMoney(walletBalance)}
                   </span>
                 </div>
                 {walletBalance < Number(selectedDebt.so_tien) && (
                   <button onClick={handleNapTien} type="button" style={{
-                    width: '100%', padding: '10px', background: '#dbeafe', color: '#1d4ed8',
+                    width: '100%', padding: '10px', background: 'var(--primary-subtle)', color: 'var(--primary-hover)',
                     border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer', marginTop: 8
                   }}>
                     + Nạp thêm tiền vào ví
@@ -4816,8 +4707,8 @@ export function FranchiseePortal({ session, onLogout }) {
                 </button>
                 <button type="button" onClick={handleThanhToan} disabled={walletBalance < Number(selectedDebt.so_tien) || paymentProcessing}
                   style={{
-                    flex: 2, padding: '14px', background: walletBalance < Number(selectedDebt.so_tien) ? '#cbd5e1' : '#4f46e5',
-                    color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 800,
+                    flex: 2, padding: '14px', background: walletBalance < Number(selectedDebt.so_tien) ? '#cbd5e1' : 'var(--primary)',
+                    color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 600,
                     cursor: walletBalance < Number(selectedDebt.so_tien) || paymentProcessing ? 'not-allowed' : 'pointer',
                     boxShadow: walletBalance < Number(selectedDebt.so_tien) ? 'none' : '0 4px 14px rgba(79,70,229,0.4)'
                   }}>
@@ -4845,18 +4736,18 @@ export function FranchiseePortal({ session, onLogout }) {
             }} onClick={e => e.stopPropagation()}>
               <div style={{ padding: '24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <PlayCircle size={22} />
                   </div>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a' }}>Mở Ca Làm Việc Trực Tiếp</h3>
+                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#0f172a' }}>Mở Ca Làm Việc Trực Tiếp</h3>
                     <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>Kiosk: <b>{activeKiosk?.ten_kiosk} ({activeKiosk?.ma_kiosk})</b></p>
                   </div>
                 </div>
-                <button onClick={() => setShowOpenShiftModal(false)} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 800, color: '#64748b' }}>×</button>
+                <button onClick={() => setShowOpenShiftModal(false)} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 600, color: '#64748b' }}>×</button>
               </div>
 
-              <form onSubmit={handleOpenKioskShift} style={{ padding: 24 }}>
+              <form className="workspace-form" onSubmit={handleOpenKioskShift} style={{ padding: 24 }}>
                 <div style={{ marginBottom: 16 }}>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 6 }}>Nhân viên trực ca *</label>
                   <select required value={openShiftForm.staff_username} onChange={e => {
@@ -4872,8 +4763,8 @@ export function FranchiseePortal({ session, onLogout }) {
                 <div style={{ marginBottom: 16 }}>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 6 }}>Tiền mặt bàn giao đầu ca (VNĐ) *</label>
                   <input type="number" required min="0" step="1000" value={openShiftForm.cash_open} onChange={e => setOpenShiftForm(f => ({ ...f, cash_open: Number(e.target.value) }))}
-                    style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 16, fontWeight: 800, outline: 'none', boxSizing: 'border-box' }} />
-                  <div style={{ fontSize: 12, color: '#059669', fontWeight: 700, marginTop: 4 }}>
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 16, fontWeight: 600, outline: 'none', boxSizing: 'border-box' }} />
+                  <div style={{ fontSize: 12, color: '#2563eb', fontWeight: 700, marginTop: 4 }}>
                     Tiền lẻ mở két: {fmtMoney(openShiftForm.cash_open)}
                   </div>
                 </div>
@@ -4886,7 +4777,7 @@ export function FranchiseePortal({ session, onLogout }) {
 
                 <div style={{ display: 'flex', gap: 12 }}>
                   <button type="button" onClick={() => setShowOpenShiftModal(false)} style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</button>
-                  <button type="submit" disabled={shiftActionSubmitting} style={{ flex: 2, padding: '12px', background: '#059669', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 14px rgba(5,150,105,0.3)' }}>
+                  <button type="submit" disabled={shiftActionSubmitting} style={{ flex: 2, padding: '12px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 14px rgba(5,150,105,0.3)' }}>
                     {shiftActionSubmitting ? 'Đang mở ca...' : '✓ Bắt đầu mở ca'}
                   </button>
                 </div>
@@ -4910,18 +4801,18 @@ export function FranchiseePortal({ session, onLogout }) {
             }} onClick={e => e.stopPropagation()}>
               <div style={{ padding: '24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <CheckCircle2 size={22} />
                   </div>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a' }}>Chốt Ca Kiểm Tiền Kiosk</h3>
+                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#0f172a' }}>Chốt Ca Kiểm Tiền Kiosk</h3>
                     <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>Kiosk: <b>{activeKiosk?.ten_kiosk} ({activeKiosk?.ma_kiosk})</b></p>
                   </div>
                 </div>
-                <button onClick={() => setShowCloseShiftModal(false)} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 800, color: '#64748b' }}>×</button>
+                <button onClick={() => setShowCloseShiftModal(false)} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 16, cursor: 'pointer', fontWeight: 600, color: '#64748b' }}>×</button>
               </div>
 
-              <form onSubmit={handleCloseKioskShift} style={{ padding: 24 }}>
+              <form className="workspace-form" onSubmit={handleCloseKioskShift} style={{ padding: 24 }}>
                 <div style={{ background: '#f8fafc', borderRadius: 14, padding: 16, marginBottom: 16, border: '1px solid #e2e8f0' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 }}>
                     <span style={{ color: '#64748b' }}>Tiền mặt đầu ca:</span>
@@ -4929,27 +4820,27 @@ export function FranchiseePortal({ session, onLogout }) {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 }}>
                     <span style={{ color: '#64748b' }}>Tiền mặt thu được trong ca:</span>
-                    <span style={{ fontWeight: 700, color: '#059669' }}>{fmtMoney(activeKioskShift.live_stats?.cash_revenue)}</span>
+                    <span style={{ fontWeight: 700, color: '#2563eb' }}>{fmtMoney(activeKioskShift.live_stats?.cash_revenue)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: 8, fontSize: 14 }}>
-                    <span style={{ fontWeight: 800, color: '#0f172a' }}>Tiền mặt kỳ vọng trong két:</span>
-                    <span style={{ fontWeight: 900, color: '#d97706', fontSize: 16 }}>{fmtMoney(activeKioskShift.live_stats?.expected_cash)}</span>
+                    <span style={{ fontWeight: 600, color: '#0f172a' }}>Tiền mặt kỳ vọng trong két:</span>
+                    <span style={{ fontWeight: 600, color: '#d97706', fontSize: 16 }}>{fmtMoney(activeKioskShift.live_stats?.expected_cash)}</span>
                   </div>
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 6 }}>Tiền mặt thực tế đếm được cuối ca (VNĐ) *</label>
                   <input type="number" required min="0" value={closeShiftForm.cash_close} onChange={e => setCloseShiftForm(f => ({ ...f, cash_close: Number(e.target.value) }))}
-                    style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 16, fontWeight: 800, outline: 'none', boxSizing: 'border-box' }} />
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 16, fontWeight: 600, outline: 'none', boxSizing: 'border-box' }} />
                   
                   {/* Difference feedback */}
                   {(() => {
                     const diff = Number(closeShiftForm.cash_close || 0) - Number(activeKioskShift.live_stats?.expected_cash || 0)
                     return (
                       <div style={{
-                        marginTop: 8, padding: '8px 12px', borderRadius: 8, fontSize: 13, fontWeight: 800,
-                        background: diff === 0 ? '#ecfdf5' : diff > 0 ? '#fffbeb' : '#fef2f2',
-                        color: diff === 0 ? '#059669' : diff > 0 ? '#d97706' : '#dc2626',
+                        marginTop: 8, padding: '8px 12px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                        background: diff === 0 ? '#eff6ff' : diff > 0 ? '#fffbeb' : '#fef2f2',
+                        color: diff === 0 ? '#2563eb' : diff > 0 ? '#d97706' : '#dc2626',
                         display: 'flex', justifyContent: 'space-between'
                       }}>
                         <span>Chênh lệch két tiền:</span>
@@ -4967,7 +4858,7 @@ export function FranchiseePortal({ session, onLogout }) {
 
                 <div style={{ display: 'flex', gap: 12 }}>
                   <button type="button" onClick={() => setShowCloseShiftModal(false)} style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</button>
-                  <button type="submit" disabled={shiftActionSubmitting} style={{ flex: 2, padding: '12px', background: '#059669', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 14px rgba(5,150,105,0.3)' }}>
+                  <button type="submit" disabled={shiftActionSubmitting} style={{ flex: 2, padding: '12px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 14px rgba(5,150,105,0.3)' }}>
                     {shiftActionSubmitting ? 'Đang chốt ca...' : '✓ Xác nhận chốt ca'}
                   </button>
                 </div>
@@ -4995,13 +4886,13 @@ export function FranchiseePortal({ session, onLogout }) {
                     <ShieldAlert size={20} />
                   </div>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#991b1b' }}>Cưỡng Chế Đóng Ca Trực Kiosk</h3>
+                    <h3 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: '#991b1b' }}>Cưỡng Chế Đóng Ca Trực Kiosk</h3>
                   </div>
                 </div>
-                <button onClick={() => setShowForceCloseModal(false)} style={{ background: '#fee2e2', border: 'none', width: 28, height: 28, borderRadius: 14, cursor: 'pointer', fontWeight: 800, color: '#991b1b' }}>×</button>
+                <button onClick={() => setShowForceCloseModal(false)} style={{ background: '#fee2e2', border: 'none', width: 28, height: 28, borderRadius: 14, cursor: 'pointer', fontWeight: 600, color: '#991b1b' }}>×</button>
               </div>
 
-              <form onSubmit={handleForceCloseKioskShift} style={{ padding: 24 }}>
+              <form className="workspace-form" onSubmit={handleForceCloseKioskShift} style={{ padding: 24 }}>
                 <p style={{ margin: '0 0 16px', color: '#64748b', fontSize: 13, lineHeight: 1.5 }}>
                   Dùng chức năng này khi nhân viên trước đã về mà <b>quên chốt ca</b>, giúp giải phóng Kiosk để nhân viên ca sau có thể mở ca làm việc.
                 </p>
@@ -5014,7 +4905,7 @@ export function FranchiseePortal({ session, onLogout }) {
 
                 <div style={{ display: 'flex', gap: 12 }}>
                   <button type="button" onClick={() => setShowForceCloseModal(false)} style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Hủy</button>
-                  <button type="submit" disabled={shiftActionSubmitting} style={{ flex: 2, padding: '12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 14px rgba(220,38,38,0.3)' }}>
+                  <button type="submit" disabled={shiftActionSubmitting} style={{ flex: 2, padding: '12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 14px rgba(220,38,38,0.3)' }}>
                     {shiftActionSubmitting ? 'Đang đóng ca...' : '⚠️ Xác nhận ép đóng ca'}
                   </button>
                 </div>

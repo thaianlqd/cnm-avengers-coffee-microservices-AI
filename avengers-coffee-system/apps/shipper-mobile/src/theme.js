@@ -1,55 +1,56 @@
-// Shipper Mobile Theme - ViettelPost Style (Red Professional Logistics)
+// Avengers Coffee · Delivery partner design tokens
 export const colors = {
-  // Brand - ViettelPost Red
-  primary: '#E31A23',        // ViettelPost signature red
-  primaryDark: '#B5141C',    // Darker red
-  primaryLight: '#FF4D55',   // Lighter red
+  // Brand
+  primary: '#B42332',        // Avengers brand red
+  primaryDark: '#861B29',    // Darker red
+  primaryLight: '#D94C59',   // Lighter red
   primaryBg: '#FFF0F1',      // Red tint background
   secondary: '#1A1A2E',      // Deep navy
   accent: '#FF8C00',         // Orange accent (earnings/COD)
   accentBg: '#FFF4E0',       // Orange tint
 
   // Gradient pairs
-  gradientRed: ['#E31A23', '#B5141C'],
+  gradientRed: ['#B42332', '#861B29'],
   gradientDark: ['#1A1A2E', '#16213E'],
-  gradientOrange: ['#FF8C00', '#E31A23'],
+  gradientOrange: ['#FF8C00', '#B42332'],
 
   // Status colors
   success: '#00A86B',        // Green (delivered/online)
   successBg: '#E6F7F2',
   warning: '#FF8C00',        // Orange (pending/COD)
   warningBg: '#FFF4E0',
-  danger: '#E31A23',         // Red (failed/urgent)
+  danger: '#B42332',         // Red (failed/urgent)
   dangerBg: '#FFF0F1',
   info: '#0066CC',           // Blue (info)
   infoBg: '#E6F0FF',
-  offline: '#9CA3AF',
+  offline: '#758091',
   online: '#00A86B',
 
   // Backgrounds
-  bg: '#F5F5F7',             // Light grey (iOS-like)
+  bg: '#F5F6F8',             // Light grey (iOS-like)
   surface: '#FFFFFF',
   card: '#FFFFFF',
   darkBg: '#1A1A2E',
-  headerBg: '#E31A23',       // Red header
+  headerBg: '#B42332',       // Red header
   background: {
-    default: '#F5F5F7',
+    default: '#F5F6F8',
     paper: '#FFFFFF',
     surface: '#FFFFFF',
   },
 
   // Text
-  text: '#1A1A2E',
+  text: '#202B3C',
+  coffee: '#202B3C',
   textSecondary: '#4B5563',
-  muted: '#9CA3AF',
+  muted: '#758091',
   lightText: '#FFFFFF',
-  redText: '#E31A23',
+  redText: '#B42332',
 
   // Borders
   border: '#E5E7EB',
   borderLight: '#F3F4F6',
   divider: '#D1D5DB',
-  placeholder: '#9CA3AF',
+  placeholder: '#758091',
 
   // Overlay
   overlay: 'rgba(26, 26, 46, 0.65)',
@@ -94,7 +95,7 @@ export const shadows = {
     elevation: 8,
   },
   primary: {
-    shadowColor: '#E31A23',
+    shadowColor: '#B42332',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 10,
@@ -125,13 +126,14 @@ export const radius = {
   xl: 20,
   xxl: 28,
   full: 9999,
+  round: 9999,
 }
 
 export const typography = {
-  h1: { fontSize: 30, fontWeight: '900', lineHeight: 38 },
-  h2: { fontSize: 26, fontWeight: '800', lineHeight: 34 },
-  h3: { fontSize: 22, fontWeight: '700', lineHeight: 30 },
-  h4: { fontSize: 18, fontWeight: '800', lineHeight: 26 },
+  h1: { fontSize: 28, fontWeight: '700', lineHeight: 38 },
+  h2: { fontSize: 24, fontWeight: '700', lineHeight: 34 },
+  h3: { fontSize: 20, fontWeight: '700', lineHeight: 30 },
+  h4: { fontSize: 18, fontWeight: '700', lineHeight: 26 },
   body: { fontSize: 15, fontWeight: '500', lineHeight: 22 },
   bodyBold: { fontSize: 15, fontWeight: '700', lineHeight: 22 },
   label: { fontSize: 13, fontWeight: '600', lineHeight: 18 },

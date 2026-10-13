@@ -1,7 +1,9 @@
+import { uiText as ui, useUiLanguage } from "../../lib/uiText";
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider, categories, setSelectedCatId }) {
+  useUiLanguage();
   const { t } = useTranslation();
 
   return (
@@ -19,7 +21,7 @@ export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider, categorie
         <div className="flex flex-col md:flex-row w-full">
           {/* Left: App promo image (Website_bannerr.png từ HC) */}
           <div className="flex-1">
-            <img
+            <img loading="lazy" decoding="async"
               src={HC_IMG.appPromo}
               alt={t('home.appMember')}
               className="h-full w-full object-cover"
@@ -59,14 +61,14 @@ export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider, categorie
             ].map((item, idx) => (
               <div key={idx} className="flex flex-col items-center cursor-pointer group" onClick={() => setActiveTab(item.action)}>
                 <div className="overflow-hidden rounded-2xl w-full">
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={item.img}
                     alt={item.label}
                     className="h-[360px] w-full object-cover transition-transform duration-700 group-hover:scale-105"
                     onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=600&q=80'; }}
                   />
                 </div>
-                <p className="mt-6 text-center text-[15px] font-black uppercase tracking-wide text-[#333333] group-hover:text-[#c41230] transition-colors">{item.label}</p>
+                <p className="mt-6 text-center text-[15px] font-black uppercase tracking-wide text-[#333333] group-hover:text-[#c41230] transition-colors">{ui(item.label)}</p>
               </div>
             ))}
           </div>
@@ -88,7 +90,7 @@ export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider, categorie
               className="group flex flex-col overflow-hidden shadow-sm"
             >
               <div className="overflow-hidden rounded-t-[20px] w-full">
-                <img
+                <img loading="lazy" decoding="async"
                   src={HC_IMG.nuocNgon}
                   className="h-[460px] md:h-[550px] lg:h-[650px] w-full object-cover transition-transform duration-700 group-hover:scale-105"
                   alt={t('home.tastyDrinks')}
@@ -110,7 +112,7 @@ export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider, categorie
               className="group flex flex-col overflow-hidden shadow-sm"
             >
               <div className="overflow-hidden rounded-t-[20px] w-full">
-                <img
+                <img loading="lazy" decoding="async"
                   src={HC_IMG.banhNgon}
                   className="h-[460px] md:h-[550px] lg:h-[650px] w-full object-cover transition-transform duration-700 group-hover:scale-105"
                   alt={t('home.tastyCakes')}
@@ -146,9 +148,9 @@ export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider, categorie
           </div>
           {/* Image side */}
           <div className="flex-1 overflow-hidden">
-            <img
+            <img loading="lazy" decoding="async"
               src={HC_IMG.cuaHang}
-              alt="Cửa Hàng Avengers Gần Bạn"
+              alt={ui("Cửa Hàng Avengers Gần Bạn")}
               className="h-[400px] w-full object-cover md:h-full md:min-h-[500px]"
               onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=900&q=80'; }}
             />

@@ -24,7 +24,7 @@ function StatusDot({ ok }) {
   return (
     <span style={{
       display: 'inline-block', width: 10, height: 10, borderRadius: '50%',
-      background: ok ? '#22c55e' : '#ef4444', marginRight: 6, verticalAlign: 'middle',
+      background: ok ? '#3b82f6' : '#ef4444', marginRight: 6, verticalAlign: 'middle',
     }} />
   )
 }
@@ -51,7 +51,7 @@ function formatPaymentMethod(name) {
     .replace(/(^\w|\s\w)/g, (m) => m.toUpperCase())
 }
 
-function HorizontalBar({ label, value, max, note, barGradient = 'linear-gradient(90deg, #2563eb, #38bdf8)' }) {
+function HorizontalBar({ label, value, max, note, barGradient = 'linear-gradient(90deg, var(--primary), #38bdf8)' }) {
   const width = max > 0 ? Math.max(4, Math.min(100, Math.round((value / max) * 100))) : 0
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 5, padding: '4px 0' }}>
@@ -150,7 +150,7 @@ function ForecastChart({ history = [], forecast = [], metric }) {
 
       {/* Historical line */}
       {histPoints.length > 1 && (
-        <polyline points={polyline(histPoints)} fill="none" stroke="#1d4ed8" strokeWidth="2.2" strokeLinejoin="round" />
+        <polyline points={polyline(histPoints)} fill="none" stroke="var(--primary-hover)" strokeWidth="2.2" strokeLinejoin="round" />
       )}
 
       {/* Forecast line (dashed) */}
@@ -183,7 +183,7 @@ function ForecastChart({ history = [], forecast = [], metric }) {
       ))}
 
       {/* Legend */}
-      <rect x={W - PR - 140} y={PT} width={10} height={3} fill="#1d4ed8" rx="1" />
+      <rect x={W - PR - 140} y={PT} width={10} height={3} fill="var(--primary-hover)" rx="1" />
       <text x={W - PR - 126} y={PT + 5} fontSize="9" fill="#374151">Thực tế</text>
       <rect x={W - PR - 85} y={PT} width={10} height={3} fill="#3b82f6" rx="1" />
       <text x={W - PR - 71} y={PT + 5} fontSize="9" fill="#374151">Dự báo</text>
@@ -217,7 +217,7 @@ function RecommendCard({ item }) {
         </p>
         <span style={{
           display: 'inline-block', marginTop: 4, fontSize: 10, padding: '2px 7px',
-          borderRadius: 99, background: '#eff6ff', color: '#2563eb', fontWeight: 600,
+          borderRadius: 99, background: 'var(--primary-light)', color: 'var(--primary)', fontWeight: 600,
         }}>
           {item.reason}
         </span>
@@ -400,18 +400,18 @@ export function AiAnalyticsPanel({ session }) {
 
       {/* ── Hero banner ────────────────────────────────────────────────── */}
       <div style={{
-        background: 'linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 60%, #3b82f6 100%)',
+        background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 60%, #3b82f6 100%)',
         borderRadius: 16, padding: '24px 28px', marginBottom: 24, color: '#ffffff',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16,
       }}>
         <div>
-          <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#93c5fd', textTransform: 'uppercase' }}>
+          <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#d8b99e', textTransform: 'uppercase' }}>
             TRUNG TÂM PHÂN TÍCH AI
           </p>
-          <h2 style={{ margin: '6px 0 8px', fontSize: 20, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.01em' }}>
+          <h2 style={{ margin: '6px 0 8px', fontSize: 20, fontWeight: 600, color: '#ffffff', letterSpacing: '-0.01em' }}>
             Gợi ý sản phẩm và Dự báo nhu cầu
           </h2>
-          <p style={{ margin: 0, fontSize: 13, color: '#e0e7ff', maxWidth: 520, lineHeight: 1.5 }}>
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--primary-subtle)', maxWidth: 520, lineHeight: 1.5 }}>
             Hệ thống tổng hợp hành vi mua hàng để gợi ý sản phẩm phù hợp,
             đồng thời dự báo số đơn hoặc doanh thu trong các ngày tiếp theo để hỗ trợ vận hành.
           </p>
@@ -422,7 +422,7 @@ export function AiAnalyticsPanel({ session }) {
             disabled={retrainCfMutation.isPending}
             onClick={handleRetrainCf}
             style={{
-              background: '#ffffff', color: '#1e40af', border: 'none',
+              background: '#ffffff', color: 'var(--primary)', border: 'none',
               borderRadius: 8, padding: '9px 16px', cursor: 'pointer',
               fontSize: 12, fontWeight: 700, boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
             }}
@@ -511,7 +511,7 @@ export function AiAnalyticsPanel({ session }) {
           background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16,
           padding: '20px 24px', marginBottom: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
         }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#111827' }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#111827' }}>
             Bảng diễn giải hành vi mua hàng
           </h3>
           <p style={{ margin: '6px 0 14px', fontSize: 12, color: '#6b7280' }}>
@@ -546,18 +546,18 @@ export function AiAnalyticsPanel({ session }) {
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#111827' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#111827' }}>
               Biểu đồ hành vi mua sắm Khách hàng
             </h3>
             <p style={{ margin: '6px 0 0', fontSize: 12, color: '#64748b' }}>
               Tổng hợp dữ liệu thực từ đơn hàng, đánh giá, yêu thích và voucher để đồng bộ với gợi ý cho Khách hàng.
             </p>
-            <span style={{ display: 'inline-block', marginTop: 8, padding: '3px 10px', borderRadius: 999, border: '1px solid #bfdbfe', background: '#eff6ff', color: '#1d4ed8', fontSize: 11, fontWeight: 700 }}>
+            <span style={{ display: 'inline-block', marginTop: 8, padding: '3px 10px', borderRadius: 999, border: '1px solid #bfdbfe', background: 'var(--primary-light)', color: 'var(--primary-hover)', fontSize: 11, fontWeight: 700 }}>
               Đồng bộ Khách hàng
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <strong style={{ fontSize: 13, color: '#1e40af' }}>Tổng đơn đã phân tích: {fmtNum(behaviorInsights.totalOrders)}</strong>
+            <strong style={{ fontSize: 13, color: 'var(--primary)' }}>Tổng đơn đã phân tích: {fmtNum(behaviorInsights.totalOrders)}</strong>
             <select
               value={behaviorDays}
               onChange={(e) => setBehaviorDays(Number(e.target.value) || 30)}
@@ -579,10 +579,10 @@ export function AiAnalyticsPanel({ session }) {
             <div style={{ marginTop: 14, border: '1px solid #e2e8f0', borderRadius: 12, background: '#f8fafc', overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                 <thead>
-                  <tr style={{ background: '#eff6ff' }}>
-                    <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #dbeafe' }}>#</th>
-                    <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #dbeafe' }}>Top 5 sản phẩm đồng bộ Khách hàng</th>
-                    <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #dbeafe' }}>Điểm đa tín hiệu</th>
+                  <tr style={{ background: 'var(--primary-light)' }}>
+                    <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid var(--primary-subtle)' }}>#</th>
+                    <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid var(--primary-subtle)' }}>Top 5 sản phẩm đồng bộ Khách hàng</th>
+                    <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid var(--primary-subtle)' }}>Điểm đa tín hiệu</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -590,7 +590,7 @@ export function AiAnalyticsPanel({ session }) {
                     <tr key={`${item.name}-${idx}`}>
                       <td style={{ padding: '9px 12px', borderBottom: '1px solid #e2e8f0', fontWeight: 700 }}>{idx + 1}</td>
                       <td style={{ padding: '9px 12px', borderBottom: '1px solid #e2e8f0', fontWeight: 700, color: '#0f172a' }}>{item.name}</td>
-                      <td style={{ padding: '9px 12px', borderBottom: '1px solid #e2e8f0', color: '#1d4ed8', fontWeight: 700 }}>{fmtNum(item.score, 2)}</td>
+                      <td style={{ padding: '9px 12px', borderBottom: '1px solid #e2e8f0', color: 'var(--primary-hover)', fontWeight: 700 }}>{fmtNum(item.score, 2)}</td>
                     </tr>
                   ))}
                   {topProductsSummaryRows.length === 0 ? (
@@ -615,7 +615,7 @@ export function AiAnalyticsPanel({ session }) {
                       value={item.qty}
                       max={behaviorInsights.topProducts[0]?.qty || 1}
                       note={`${fmtNum(item.qty)} lượt`}
-                      barGradient="linear-gradient(90deg, #2563eb, #38bdf8)"
+                      barGradient="linear-gradient(90deg, var(--primary), #38bdf8)"
                     />
                   ))}
                 </div>
@@ -633,7 +633,7 @@ export function AiAnalyticsPanel({ session }) {
                       value={item.count}
                       max={behaviorInsights.paymentMix[0]?.count || 1}
                       note={`${fmtNum(item.count)} đơn`}
-                      barGradient="linear-gradient(90deg, #10b981, #34d399)"
+                      barGradient="linear-gradient(90deg, #3b82f6, #38bdf8)"
                     />
                   ))}
                 </div>
@@ -669,7 +669,7 @@ export function AiAnalyticsPanel({ session }) {
                       value={item.avgRating}
                       max={5}
                       note={`${fmtNum(item.avgRating, 1)} ★ (${fmtNum(item.reviews)} đánh giá)`}
-                      barGradient="linear-gradient(90deg, #8b5cf6, #c084fc)"
+                      barGradient="linear-gradient(90deg, var(--primary), #c084fc)"
                     />
                   ))}
                 </div>
@@ -705,7 +705,7 @@ export function AiAnalyticsPanel({ session }) {
                       value={item.qty}
                       max={behaviorInsights.topVoucherProducts?.[0]?.qty || 1}
                       note={`${fmtNum(item.qty)} SL / ${fmtNum(item.orders)} đơn`}
-                      barGradient="linear-gradient(90deg, #6366f1, #818cf8)"
+                      barGradient="linear-gradient(90deg, var(--primary), #818cf8)"
                     />
                   ))}
                 </div>
@@ -722,7 +722,7 @@ export function AiAnalyticsPanel({ session }) {
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#111827' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#111827' }}>
               Dự báo nhu cầu mua hàng
             </h3>
             <p style={{ margin: '4px 0 0', fontSize: 12, color: '#6b7280' }}>
@@ -775,12 +775,12 @@ export function AiAnalyticsPanel({ session }) {
                 {
                   label: 'Xu hướng',
                   value: `${fc.summary?.trend_pct > 0 ? '↑' : '↓'} ${Math.abs(fc.summary?.trend_pct || 0)}%`,
-                  color: fc.summary?.trend_pct > 0 ? '#16a34a' : '#dc2626',
+                  color: fc.summary?.trend_pct > 0 ? '#2563eb' : '#dc2626',
                 },
               ].map((s, i) => (
                 <div key={i} style={{ background: '#f9fafb', borderRadius: 8, padding: '10px 16px', minWidth: 130 }}>
                   <div style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>{s.label}</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: s.color || '#111827', marginTop: 4 }}>{s.value}</div>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: s.color || '#111827', marginTop: 4 }}>{s.value}</div>
                 </div>
               ))}
             </div>
@@ -822,7 +822,7 @@ export function AiAnalyticsPanel({ session }) {
         background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16,
         padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
       }}>
-        <h3 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 800, color: '#111827' }}>
+        <h3 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 600, color: '#111827' }}>
           Thử nghiệm gợi ý theo hành vi khách
         </h3>
         <p style={{ margin: '0 0 16px', fontSize: 12, color: '#6b7280' }}>
@@ -845,7 +845,7 @@ export function AiAnalyticsPanel({ session }) {
             onClick={() => recommendTargetUserId && runRecommendTest(recommendTargetUserId)}
             disabled={!recommendTargetUserId}
             style={{
-              background: '#1d4ed8', color: '#fff', border: 'none',
+              background: 'var(--primary-hover)', color: '#fff', border: 'none',
               borderRadius: 8, padding: '10px 20px', cursor: 'pointer',
               fontSize: 13, fontWeight: 700, opacity: recommendTargetUserId ? 1 : 0.6,
             }}
@@ -864,8 +864,8 @@ export function AiAnalyticsPanel({ session }) {
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 padding: '4px 12px', borderRadius: 99, fontSize: 12, fontWeight: 600,
-                background: recs.is_personalized ? '#dcfce7' : '#fef3c7',
-                color: recs.is_personalized ? '#16a34a' : '#92400e',
+                background: recs.is_personalized ? '#dbeafe' : '#fef3c7',
+                color: recs.is_personalized ? '#2563eb' : '#92400e',
               }}>
                 {recs.is_personalized ? '✓ Gợi ý cá nhân hóa' : '★ Sản phẩm phổ biến (cold start)'}
               </span>

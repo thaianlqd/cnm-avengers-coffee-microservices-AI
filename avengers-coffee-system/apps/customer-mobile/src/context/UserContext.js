@@ -1,5 +1,7 @@
+import { useQueryClient } from '@tanstack/react-query'
+import { randomUUID } from 'expo-crypto'
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import apiClient, { clearAuthToken, setAuthToken } from '../lib/apiClient'
+import apiClient, { clearAuthToken, setAuthToken, setGuestSessionId } from '../lib/apiClient'
 import { clearUserSession, loadUserSession, saveUserSession, getGuestUserId } from '../lib/storage'
 import { getUserId } from '../lib/customerData'
 
@@ -23,15 +25,19 @@ function normalizeUser(user) {
 }
 
 export function UserProvider({ children }) {
+  const queryClient = useQueryClient()
   const [user, setUser] = useState(null)
   const [token, setToken] = useState(null)
-  const [guestId, setGuestId] = useState('guest-customer')
+  const [guestId, setGuestId] = useState(null)
+  const [cartMergeError, setCartMergeError] = useState('')
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
     ; (async () => {
+      try {
       const anonId = await getGuestUserId()
       setGuestId(anonId)
+      setGuestSessionId(anonId)
       const session = await loadUserSession()
       if (session.user && session.token) {
         const nextUser = normalizeUser(session.user)
@@ -42,31 +48,21 @@ export function UserProvider({ children }) {
         await clearUserSession()
         await clearAuthToken()
       }
-      setHydrated(true)
+      } catch {
+        setUser(null); setToken(null)
+        await clearAuthToken().catch(() => {})
+        const recoveryId = `anon-${randomUUID()}`
+        setGuestId(recoveryId); setGuestSessionId(recoveryId)
+      } finally { setHydrated(true) }
     })()
   }, [])
 
-  const login = async ({ taiKhoan, matKhau, email }) => {
-    const identifier = String(taiKhoan || email || '').trim()
-    const password = String(matKhau || '').trim()
-
-    console.log('🔐 API URL:', process.env.EXPO_PUBLIC_API_URL)
-    console.log('📦 Body:', { tai_khoan: identifier, mat_khau: password })
-
-    const response = await apiClient.post('/auth/login', {
-      tai_khoan: identifier,
-      mat_khau: password,
-      email: identifier,
-      password,
-    })
-
-    console.log('✅ Response:', JSON.stringify(response))
-
+  const completeLogin = async response => {
     const nextToken = response?.accessToken || response?.token || response?.data?.accessToken || response?.data?.token || ''
     const nextUser = normalizeUser(response?.user || response?.data?.user)
 
-    if (!nextToken || !nextUser) {
-      throw new Error('Backend login response missing accessToken or user')
+    if (typeof nextToken !== 'string' || !nextToken || !nextUser?.id) {
+      throw new Error('Chưa nhận được phiên đăng nhập hợp lệ. Bạn hãy thử lại.')
     }
 
     setUser(nextUser)
@@ -74,9 +70,42 @@ export function UserProvider({ children }) {
     await setAuthToken(nextToken)
     await saveUserSession(nextUser, nextToken)
 
+    // Same guest capability merge as web; failed merges remain retryable.
+    try {
+      await apiClient.post('/cart/merge-guest', { guest_session_id: guestId }, {
+        headers: { 'x-guest-session-id': guestId, 'x-idempotency-key': randomUUID() },
+      })
+      setCartMergeError('')
+      await queryClient.invalidateQueries({ queryKey: ['customer', 'cart'] })
+    } catch { setCartMergeError('Chưa chuyển được giỏ khách. Chạm để thử lại.') }
     return nextUser
   }
 
+  const login = async ({ taiKhoan, matKhau, email }) => {
+    const raw = String(taiKhoan || email || '').trim()
+    const identifier = raw.includes('@') ? raw.toLowerCase() : raw
+    const password = String(matKhau || '')
+    if (!identifier || !password) throw new Error('Bạn hãy nhập tài khoản và mật khẩu.')
+    return completeLogin(await apiClient.post('/auth/login', {
+      tai_khoan: identifier, mat_khau: password, email: identifier, password,
+    }))
+  }
+  const loginGoogle = async (googleToken, recaptchaToken) => {
+    if (!googleToken) throw new Error('Chưa nhận được xác thực Google. Bạn hãy thử lại.')
+    if (recaptchaToken) {
+      const verification = await apiClient.post('/auth/recaptcha/verify', { recaptchaToken })
+      if (!verification?.success) throw new Error('Xác thực chưa thành công. Bạn hãy thử lại.')
+    }
+    return completeLogin(await apiClient.post('/auth/google', { googleToken, isAccessToken: true, ...(recaptchaToken ? { recaptchaToken } : {}) }))
+  }
+
+  const retryCartMerge = async () => {
+    await apiClient.post('/cart/merge-guest', { guest_session_id: guestId }, {
+      headers: { 'x-guest-session-id': guestId, 'x-idempotency-key': randomUUID() },
+    })
+    setCartMergeError('')
+      await queryClient.invalidateQueries({ queryKey: ['customer', 'cart'] })
+  }
   const updateSession = async (nextUser, nextToken = token) => {
     const normalizedUser = normalizeUser(nextUser)
     setUser(normalizedUser)
@@ -131,12 +160,15 @@ export function UserProvider({ children }) {
       guestId,
       activeUserId,
       hydrated,
+      cartMergeError,
+      retryCartMerge,
       login,
+      loginGoogle,
       updateSession,
       refreshProfile,
       logout,
     }),
-    [hydrated, user, token, guestId, activeUserId],
+    [hydrated, user, token, guestId, activeUserId, cartMergeError],
   )
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>

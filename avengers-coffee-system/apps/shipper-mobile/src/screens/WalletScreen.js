@@ -1,6 +1,9 @@
+import { deliveryArray } from '../lib/deliverySummary.mjs'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { LazyScrollView, LazySection } from '../components/LazyScrollView'
 import React, { useState, useEffect, useRef } from 'react'
 import {
-  View, Text, StyleSheet, SafeAreaView, ScrollView,
+  View, Text, StyleSheet,  ScrollView,
   TouchableOpacity, RefreshControl, ActivityIndicator, Alert,
 } from 'react-native'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -10,6 +13,8 @@ import { useShipper } from '../context/ShipperContext'
 import apiClient from '../lib/apiClient'
 import { colors, radius, spacing, shadows, typography } from '../theme'
 import { formatCurrency, formatDateTime } from '../lib/shipperData'
+import { Header, IconButton, Skeleton, EmptyState, Reveal } from '../components/Experience'
+import Pagination, { usePagination } from '../components/Pagination'
 import { formatBranchName, setGlobalBranchList } from '../lib/branchHelper'
 
 const TX_TYPE_CONFIG = {
@@ -45,33 +50,24 @@ const txStyles = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: colors.borderLight,
   },
   iconWrap: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginRight: spacing.md },
-  info: { flex: 1 },
+  info: { flex: 1, minWidth: 0 },
   title: { ...typography.bodyBold, color: colors.text },
   date: { ...typography.caption, color: colors.muted, marginTop: 2 },
-  amount: { fontSize: 16, fontWeight: '800' },
+  amount: { fontSize: 14, fontWeight: '700' },
 })
 
 export function WalletScreen({ navigation }) {
   const { shipper } = useShipper()
   const queryClient = useQueryClient()
 
+  const scrollRef = useRef(null)
+  const [transactionY, setTransactionY] = useState(0)
   // Wallet & Stats
-  const { data: wallet, isLoading: walletLoading, refetch: refetchWallet } = useQuery({
+  const { data: wallet, isLoading: walletLoading, isError: walletError, refetch: refetchWallet } = useQuery({
     queryKey: ['shipperWallet', shipper?.id],
     queryFn: async () => {
       if (!shipper?.id) return null
-      try {
-        return await apiClient.get(`/shippers/${shipper.id}/wallet`)
-      } catch {
-        // Fallback to stats
-        const stats = await apiClient.get(`/shippers/${shipper.id}/stats`)
-        return {
-          balance: stats?.balance || 0,
-          cod_holding: stats?.cod_holding || 0,
-          pending_commission: stats?.pending_commission || 0,
-          total_earned: stats?.total_income || 0,
-        }
-      }
+      return apiClient.get(`/shippers/${shipper.id}/wallet`)
     },
     enabled: !!shipper?.id,
   })
@@ -86,20 +82,17 @@ export function WalletScreen({ navigation }) {
   })
 
   // Transactions
-  const { data: transactions, isLoading: txLoading, refetch: refetchTx } = useQuery({
+  const { data: transactions, isLoading: txLoading, isError: txError, refetch: refetchTx } = useQuery({
     queryKey: ['shipperTransactions', shipper?.id],
     queryFn: async () => {
       if (!shipper?.id) return []
-      try {
-        const res = await apiClient.get(`/shippers/${shipper.id}/transactions?limit=30`)
-        return Array.isArray(res) ? res : res?.items || []
-      } catch {
-        return []
-      }
+      const res = await apiClient.get(`/shippers/${shipper.id}/deliveries`)
+      return deliveryArray(res).filter(d => d.status === 'DELIVERED' && d.delivery_fee != null).sort((a,b) => new Date(b.delivered_at)-new Date(a.delivered_at)).map(d => ({ id: d.id, type: 'INCOME', amount: Number(d.delivery_fee), title: `Phí giao #${String(d.ma_don_hang || d.id).slice(0,8).toUpperCase()}`, date: d.delivered_at }))
     },
     enabled: !!shipper?.id,
   })
 
+  const txPages = usePagination(transactions || [], shipper?.id)
   // COD active deliveries
   const { data: activeDeliveries } = useQuery({
     queryKey: ['activeCod', shipper?.id],
@@ -141,7 +134,7 @@ export function WalletScreen({ navigation }) {
       return apiClient.post(`/shippers/${shipper.id}/cod-remit`, { amount, branch_code: branchCode })
     },
     onSuccess: () => {
-      Alert.alert('✅ Thành công', 'Đã xác nhận nộp COD cho cửa hàng.')
+      Alert.alert('✅ Thành công', 'Đã gửi yêu cầu nộp COD. Chờ cửa hàng xác nhận.')
       refetchWallet()
       refetchStats()
       refetchTx()
@@ -172,30 +165,27 @@ export function WalletScreen({ navigation }) {
   const balance = wallet?.balance || 0
 
   const totalCodInTransit = (activeDeliveries || []).reduce(
-    (sum, d) => sum + Number(d.cod_amount || d.order_value || 0), 0
+    (sum, d) => sum + Number(d.cod_amount ?? 0), 0
   )
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Ví & Doanh thu</Text>
-        <TouchableOpacity onPress={handleRefresh} style={styles.refreshBtn}>
-          <Ionicons name="refresh-outline" size={22} color={colors.primary} />
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView edges={['top','left','right']} style={styles.safeArea}>
+      <Header title="Ví & COD" subtitle="Thu nhập và tiền thu hộ" right={<IconButton name="refresh-outline" label="Làm mới ví" onPress={handleRefresh} />} />
+      {walletError && <EmptyState title="Chưa tải được ví" description="Kiểm tra kết nối và thử lại để xem số dư mới nhất." retry={handleRefresh} />}
+      {walletLoading && <Skeleton count={1} />}
 
-      <ScrollView
+      <LazyScrollView ref={scrollRef}
         contentContainerStyle={styles.scroll}
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} tintColor={colors.primary} />}
       >
         {/* Main Balance Card */}
-        <LinearGradient
-          colors={[colors.primary, '#0ea5e9']}
+        <LazySection minHeight={160}><LinearGradient
+          colors={colors.gradientDark}
           style={styles.balanceCard}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
         >
           <Text style={styles.balanceLabel}>Số dư ví Shipper</Text>
-          <Text style={styles.balanceValue}>{formatCurrency(balance)}</Text>
+          <Text style={styles.balanceValue}>{walletLoading || walletError ? '—' : formatCurrency(balance)}</Text>
 
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
@@ -213,17 +203,17 @@ export function WalletScreen({ navigation }) {
               <Text style={styles.statValue}>⭐ {Number(stats?.rating || shipper?.rating || 0).toFixed(1)}</Text>
             </View>
           </View>
-        </LinearGradient>
+        </LinearGradient></LazySection>
 
         {/* COD Card */}
-        <View style={[styles.card, styles.codCard]}>
+        <LazySection minHeight={160}><View style={[styles.card, styles.codCard]}>
           <View style={styles.cardHeaderRow}>
             <View style={styles.cardIconWrap}>
               <Ionicons name="cash" size={22} color={colors.warning} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.cardTitle}>Tiền thu hộ (COD) đang giữ</Text>
-              <Text style={styles.codAmount}>{formatCurrency(codHolding)}</Text>
+              <Text style={styles.codAmount}>{walletLoading || walletError ? '—' : formatCurrency(codHolding)}</Text>
             </View>
           </View>
 
@@ -273,12 +263,12 @@ export function WalletScreen({ navigation }) {
               >
                 {remitMutation.isPending
                   ? <ActivityIndicator size="small" color={colors.warning} />
-                  : <Text style={styles.codBtnText}>✓ Xác nhận đã nộp COD</Text>
+                  : <Text style={styles.codBtnText}>✓ Gửi yêu cầu nộp COD</Text>
                 }
               </TouchableOpacity>
             )
           )}
-        </View>
+        </View></LazySection>
 
         {/* Pending Commission */}
         {(wallet?.pending_commission > 0) && (
@@ -299,14 +289,14 @@ export function WalletScreen({ navigation }) {
         )}
 
         {/* Quick Actions */}
-        <View style={styles.actionsSection}>
+        <LazySection minHeight={160}><View style={styles.actionsSection}>
           <Text style={styles.sectionTitle}>Thao tác nhanh</Text>
           <View style={styles.actionsGrid}>
             {[
               { icon: 'bar-chart', label: 'Đối soát\nthu nhập', onPress: () => navigation.navigate('Report'), color: colors.primary },
-              { icon: 'document-text', label: 'Lịch sử\ngiao dịch', onPress: () => {}, color: colors.info },
+              { icon: 'document-text', label: 'Phí giao\nđã ghi nhận', onPress: () => scrollRef.current?.scrollTo({ y: transactionY, animated: false }), color: colors.info },
               { icon: 'calendar', label: 'Lịch\nlàm việc', onPress: () => navigation.navigate('Schedule'), color: colors.success },
-              { icon: 'help-circle', label: 'Hỗ trợ\ntài chính', onPress: () => navigation.navigate('Notification'), color: colors.warning },
+              { icon: 'help-circle', label: 'Thông báo\ncủa bạn', onPress: () => navigation.navigate('Notification'), color: colors.warning },
             ].map((action, i) => (
               <TouchableOpacity key={i} style={styles.actionBtn} onPress={action.onPress}>
                 <View style={[styles.actionIcon, { backgroundColor: action.color + '20' }]}>
@@ -316,29 +306,30 @@ export function WalletScreen({ navigation }) {
               </TouchableOpacity>
             ))}
           </View>
-        </View>
+        </View></LazySection>
 
         {/* Transaction History */}
-        <View style={styles.txSection}>
+        <View style={styles.txSection} onLayout={event => setTransactionY(event.nativeEvent.layout.y)}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Lịch sử giao dịch</Text>
+            <Text style={styles.sectionTitle}>Phí giao đã ghi nhận</Text>
             {transactions?.length > 0 && (
-              <Text style={styles.sectionCount}>{transactions.length} giao dịch</Text>
+              <Text style={styles.sectionCount}>{transactions.length} đơn</Text>
             )}
           </View>
           {txLoading ? (
             <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.lg }} />
-          ) : !transactions?.length ? (
+          ) : txError ? <EmptyState title="Chưa tải được phí giao" description="Kiểm tra kết nối để xem các đơn đã ghi nhận phí." retry={refetchTx} /> : !transactions?.length ? (
             <View style={styles.emptyState}>
               <Ionicons name="receipt-outline" size={48} color={colors.muted} />
-              <Text style={styles.emptyText}>Chưa có giao dịch nào</Text>
-              <Text style={styles.emptyDesc}>Giao dịch thu nhập và COD sẽ xuất hiện ở đây</Text>
+              <Text style={styles.emptyText}>Chưa có phí giao được ghi nhận</Text>
+              <Text style={styles.emptyDesc}>Phí từ các đơn giao thành công sẽ xuất hiện ở đây</Text>
             </View>
           ) : (
-            transactions.map((tx, i) => <TxItem key={tx.id || i} tx={tx} />)
+            txPages.items.map((tx, i) => <Reveal key={tx.id || i}><TxItem tx={tx} /></Reveal>)
           )}
+          <Pagination page={txPages.page} pages={txPages.pages} total={txPages.total} onChange={page => { txPages.setPage(page); scrollRef.current?.scrollTo({ y: transactionY, animated: false }) }} />
         </View>
-      </ScrollView>
+      </LazyScrollView>
     </SafeAreaView>
   )
 }
@@ -354,9 +345,9 @@ const styles = StyleSheet.create({
   scroll: { padding: spacing.md, paddingBottom: spacing.xxl },
 
   // Balance
-  balanceCard: { borderRadius: radius.xl, padding: spacing.xl, marginBottom: spacing.lg, ...shadows.primary },
+  balanceCard: { borderRadius: radius.xl, padding: spacing.lg, marginBottom: spacing.lg, ...shadows.primary },
   balanceLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 14, marginBottom: spacing.xs },
-  balanceValue: { color: colors.surface, fontSize: 36, fontWeight: '900', marginBottom: spacing.lg },
+  balanceValue: { color: colors.surface, fontSize: 32, fontWeight: '700', marginBottom: spacing.lg },
   statsRow: {
     flexDirection: 'row', alignItems: 'center', paddingTop: spacing.md,
     borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.2)',
@@ -364,7 +355,7 @@ const styles = StyleSheet.create({
   statItem: { flex: 1, alignItems: 'center' },
   statDivider: { width: 1, height: 36, backgroundColor: 'rgba(255,255,255,0.2)' },
   statLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 11, marginBottom: 4, textAlign: 'center' },
-  statValue: { color: colors.surface, fontSize: 15, fontWeight: '800', textAlign: 'center' },
+  statValue: { color: colors.surface, fontSize: 15, fontWeight: '700', textAlign: 'center' },
 
   // Cards
   card: {
@@ -378,13 +369,13 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', marginRight: spacing.md,
   },
   cardTitle: { ...typography.bodyBold, color: colors.text },
-  codAmount: { fontSize: 24, fontWeight: '900', color: colors.danger, marginTop: 4 },
+  codAmount: { fontSize: 24, fontWeight: '700', color: colors.danger, marginTop: 4 },
   codDesc: { ...typography.caption, color: colors.textSecondary, marginBottom: spacing.md },
   codBtn: {
     backgroundColor: colors.warningBg, borderWidth: 1, borderColor: colors.warning,
     paddingVertical: spacing.sm, borderRadius: radius.md, alignItems: 'center',
   },
-  codBtnText: { color: colors.warning, fontWeight: '800', fontSize: 14 },
+  codBtnText: { color: colors.warning, fontWeight: '700', fontSize: 14 },
   infoBox: {
     flexDirection: 'row', alignItems: 'flex-start', backgroundColor: colors.infoBg,
     padding: spacing.sm, borderRadius: radius.sm, marginBottom: spacing.sm, gap: spacing.xs,
