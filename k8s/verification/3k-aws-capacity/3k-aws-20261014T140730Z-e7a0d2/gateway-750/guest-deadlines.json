@@ -1,0 +1,7 @@
+{
+  "generator_shutdown_no_later_than": "2026-10-14T16:58:00Z",
+  "controller_deadline_approx": "2026-10-14T17:02:00Z",
+  "max_instance_runtime_hours": 3,
+  "projected_budget_unchanged_usd": 3.6187,
+  "reason": "align bounded generator fail-safes before independent long confirmations; no lifetime exceeds initial three-hour projection"
+}

@@ -1,0 +1,6 @@
+{
+  "source_manifest": "pool30-final/source-manifest.json",
+  "images_manifest": "pool30-final/images.json",
+  "images_manifest_sha256": "9f96d0224b83bc01814705c2adb8b98d947adb797191b9450bd2dea4a3bb5b44",
+  "runtime_overlay_sha256": "a293032899c6c7253c59c992e87fb8ba76218afe86f7a963400a73bb1e8619c6"
+}

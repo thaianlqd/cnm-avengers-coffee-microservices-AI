@@ -1,0 +1,13 @@
+{
+  "existing_db": true,
+  "read_only_demo": true,
+  "startup_audit": {
+    "identity": "membership defaults save skipped in demo",
+    "menu": "variant migration skipped",
+    "news": "seed/clear and view write skipped",
+    "typeorm": "synchronize false all three"
+  },
+  "database_permission_boundary": false,
+  "credential_transport": "CMS encrypted, signed, AWS-console authenticated recipient",
+  "production_provider_secrets_copied": false
+}

@@ -1,0 +1,6 @@
+{
+  "source_manifest": "gateway-750/source-manifest.json",
+  "images_manifest": "gateway-750/images.json",
+  "images_manifest_sha256": "9f96d0224b83bc01814705c2adb8b98d947adb797191b9450bd2dea4a3bb5b44",
+  "runtime_overlay_sha256": "ad10dc41a5db70517af6f55d0317e68af3e8488cb385b70f56a0852b4b42f209"
+}

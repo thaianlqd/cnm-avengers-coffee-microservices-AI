@@ -14,7 +14,7 @@ objects before apply. Do not apply local k8s-local image references to AWS.
 Pool lifetime experiment: `DB_POOL_IDLE_TIMEOUT_MS=30000` (service default 5000;
 integer bounds 1000–60000). This is independent of the 2000ms readiness connection
 allowance. Cache TTL, pool max=2, workload, resources and HPA remain unchanged.
-The experiment is pending same-load 250 VU validation.
+The pool experiment passed the same-load 250 VU latency comparison; an adequate two-generator 250 run passed all stable gates. It does not qualify 500 or 3000 VUs.
 
 Gateway CPU750m experiment rejected: normal500 had a single STABLE PASS, but
 long500 failed wholep951841.97/hold2421.21ms with adequate generators and no

@@ -1,0 +1,7 @@
+{
+  "role": "generator3",
+  "instance_id": "i-0df0d4743c897b95a",
+  "terminated_confirmed_at": "2026-10-14T16:38:35.170964+00:00",
+  "ownership_verified": true,
+  "reason": "500 app latency failure with adequate generators; freeze 250 confirmations on original valid two-generator topology"
+}

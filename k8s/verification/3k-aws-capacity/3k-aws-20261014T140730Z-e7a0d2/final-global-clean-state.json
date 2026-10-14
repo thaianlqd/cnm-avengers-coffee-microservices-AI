@@ -1,0 +1,18 @@
+{
+  "observed_at": "2026-10-14T16:55:27.085361+00:00",
+  "scope": "all four ownership tags across all RunIds",
+  "counts": {
+    "owned_running_ec2": 0,
+    "owned_stopped_ec2": 0,
+    "owned_nonterminated_ec2": 0,
+    "owned_security_groups": 0,
+    "owned_ebs": 0,
+    "owned_keypairs": 0,
+    "owned_network_interfaces": 0,
+    "temporary_registry_endpoint": 0,
+    "temporary_benchmark_endpoint": 0,
+    "local_control_listener": 0,
+    "cloudflare_control_process_stopped": true
+  },
+  "pass": true
+}

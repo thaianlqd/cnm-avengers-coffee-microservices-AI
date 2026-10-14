@@ -1,0 +1,96 @@
+{
+  "actual_bill": false,
+  "compute_rate_usd_hour": 0.1197,
+  "price_source": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-southeast-2/index.csv",
+  "price_effective_date": "2026-10-01",
+  "ebs_estimate_assumption_usd_gb_month": 0.096,
+  "ebs_assumption_not_revalidated": true,
+  "ipv4_estimate_assumption_usd_hour": 0.005,
+  "root_ebs_gib_each": 30,
+  "instances": [
+    {
+      "instance_id": "i-06149cfceefe4ad22",
+      "role": "target1",
+      "type": "m7i-flex.large",
+      "launch_time": "2026-10-14T14:08:04+00:00",
+      "termination_confirmed_no_later_than": "2026-10-14T16:53:00.094344+00:00",
+      "runtime_upper_bound_seconds": 9896.094344,
+      "compute_upper_bound_usd": 0.32904513693799997,
+      "ebs_estimate_usd": 0.010845034897534247,
+      "ipv4_estimate_usd": 0.013744575477777776
+    },
+    {
+      "instance_id": "i-0f07057e739a8a1fe",
+      "role": "target2",
+      "type": "m7i-flex.large",
+      "launch_time": "2026-10-14T14:08:07+00:00",
+      "termination_confirmed_no_later_than": "2026-10-14T16:53:00.094344+00:00",
+      "runtime_upper_bound_seconds": 9893.094344,
+      "compute_upper_bound_usd": 0.32894538693799996,
+      "ebs_estimate_usd": 0.010841747226301369,
+      "ipv4_estimate_usd": 0.01374040881111111
+    },
+    {
+      "instance_id": "i-06ac56ab85931667e",
+      "role": "target3",
+      "type": "m7i-flex.large",
+      "launch_time": "2026-10-14T14:08:09+00:00",
+      "termination_confirmed_no_later_than": "2026-10-14T16:53:00.094344+00:00",
+      "runtime_upper_bound_seconds": 9891.094344,
+      "compute_upper_bound_usd": 0.328878886938,
+      "ebs_estimate_usd": 0.010839555445479453,
+      "ipv4_estimate_usd": 0.013737631033333333
+    },
+    {
+      "instance_id": "i-0f3acec864f1bd830",
+      "role": "generator1",
+      "type": "m7i-flex.large",
+      "launch_time": "2026-10-14T14:08:12+00:00",
+      "termination_confirmed_no_later_than": "2026-10-14T16:53:00.094344+00:00",
+      "runtime_upper_bound_seconds": 9888.094344,
+      "compute_upper_bound_usd": 0.328779136938,
+      "ebs_estimate_usd": 0.010836267774246575,
+      "ipv4_estimate_usd": 0.013733464366666667
+    },
+    {
+      "instance_id": "i-0deab27bd84d7556b",
+      "role": "generator2",
+      "type": "m7i-flex.large",
+      "launch_time": "2026-10-14T14:28:37+00:00",
+      "termination_confirmed_no_later_than": "2026-10-14T16:53:00.094344+00:00",
+      "runtime_upper_bound_seconds": 8663.094344,
+      "compute_upper_bound_usd": 0.288047886938,
+      "ebs_estimate_usd": 0.009493802020821916,
+      "ipv4_estimate_usd": 0.012032075477777777
+    },
+    {
+      "instance_id": "i-0df0d4743c897b95a",
+      "role": "generator3",
+      "type": "m7i-flex.large",
+      "launch_time": "2026-10-14T15:47:46+00:00",
+      "termination_confirmed_no_later_than": "2026-10-14T16:38:35.170964+00:00",
+      "runtime_upper_bound_seconds": 3049.170964,
+      "compute_upper_bound_usd": 0.101384934553,
+      "ebs_estimate_usd": 0.0033415572208219174,
+      "ipv4_estimate_usd": 0.004234959672222222
+    },
+    {
+      "instance_id": "i-04e5f1272054bc5a8",
+      "role": "generator3",
+      "type": "m7i-flex.large",
+      "launch_time": "2026-10-14T14:49:25+00:00",
+      "termination_confirmed_no_later_than": "2026-10-14T15:24:26.325915+00:00",
+      "runtime_upper_bound_seconds": 2101.325915,
+      "compute_upper_bound_usd": 0.06986908667375,
+      "ebs_estimate_usd": 0.002302822920547945,
+      "ipv4_estimate_usd": 0.0029185082152777776
+    }
+  ],
+  "projected_ceiling_usd": 3.6187,
+  "transfer_not_itemized": true,
+  "transfer_contingency_usd": 0.75,
+  "compute_upper_bound_usd": 1.77495045591675,
+  "ebs_estimate_usd": 0.058500787505753424,
+  "ipv4_estimate_usd": 0.07414162305416666,
+  "estimated_total_excluding_unitemized_transfer_usd": 1.90759286647667
+}

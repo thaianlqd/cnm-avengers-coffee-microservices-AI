@@ -1,0 +1,19 @@
+Defaulted container "news-service" out of: news-service, public-media (init)
+node:internal/deps/undici/undici:10619
+    var markResourceTiming = performance.markResourceTiming;
+                             ^
+
+ReferenceError: performance is not defined
+    at lib/web/fetch/index.js (node:internal/deps/undici/undici:10619:30)
+    at __require (node:internal/deps/undici/undici:6:50)
+    at node:internal/deps/undici/undici:14972:17
+    at BuiltinModule.compileForInternalLoader (node:internal/bootstrap/realm:398:7)
+    at requireBuiltin (node:internal/bootstrap/realm:429:14)
+    at get Response (node:internal/util:616:15)
+    at isCloudflareRuntime (/app/node_modules/pg/lib/stream.js:69:3)
+    at getStreamFuncs (/app/node_modules/pg/lib/stream.js:79:7)
+    at Object.<anonymous> (/app/node_modules/pg/lib/stream.js:1:40)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+
+Node.js v20.20.2
+command terminated with exit code 1

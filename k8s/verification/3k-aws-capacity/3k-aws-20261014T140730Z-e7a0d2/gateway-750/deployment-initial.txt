@@ -1,0 +1,51 @@
+namespace/avengers-coffee configured
+configmap/avengers-common unchanged
+service/api-gateway unchanged
+service/identity-service unchanged
+service/menu-service unchanged
+service/news-service unchanged
+deployment.apps/api-gateway configured
+deployment.apps/identity-service configured
+deployment.apps/menu-service configured
+deployment.apps/news-service configured
+poddisruptionbudget.policy/api-gateway configured
+horizontalpodautoscaler.autoscaling/api-gateway unchanged
+horizontalpodautoscaler.autoscaling/identity-service unchanged
+horizontalpodautoscaler.autoscaling/menu-service unchanged
+Waiting for deployment "api-gateway" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "api-gateway" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "api-gateway" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "api-gateway" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "api-gateway" rollout to finish: 1 old replicas are pending termination...
+deployment "api-gateway" successfully rolled out
+deployment "identity-service" successfully rolled out
+deployment "menu-service" successfully rolled out
+deployment "news-service" successfully rolled out
+NAME               STATUS   ROLES           AGE    VERSION
+ip-172-31-13-225   Ready    <none>          101m   v1.34.1+k3s1
+ip-172-31-14-153   Ready    control-plane   101m   v1.34.1+k3s1
+ip-172-31-9-192    Ready    <none>          101m   v1.34.1+k3s1
+NAME                                    READY   STATUS        RESTARTS   AGE
+pod/api-gateway-b5767d4c9-hd2br         1/1     Running       0          6s
+pod/api-gateway-b5767d4c9-kvgxr         1/1     Running       0          11s
+pod/api-gateway-f7c84f484-dvt86         1/1     Terminating   0          94m
+pod/identity-service-6c46f44f57-p5bq2   1/1     Terminating   0          94m
+pod/identity-service-7fbb94d64d-dvnm4   1/1     Running       0          11s
+pod/menu-service-5b676cc954-4w8pk       1/1     Terminating   0          97m
+pod/menu-service-6467ddf67b-4lwz9       1/1     Running       0          11s
+pod/news-service-647578b9b5-jgm57       1/1     Terminating   0          97m
+pod/news-service-784685c98f-sxkxm       1/1     Running       0          11s
+
+NAME                                                   REFERENCE                     TARGETS              MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/api-gateway        Deployment/api-gateway        cpu: 1%/60%          2         4         2          97m
+horizontalpodautoscaler.autoscaling/identity-service   Deployment/identity-service   cpu: 1%/60%          1         3         1          97m
+horizontalpodautoscaler.autoscaling/menu-service       Deployment/menu-service       cpu: <unknown>/60%   1         4         1          97m
+NAME               CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)   
+ip-172-31-13-225   17m          0%       578Mi           7%          
+ip-172-31-14-153   52m          2%       1093Mi          14%         
+ip-172-31-9-192    12m          0%       466Mi           5%          
+NAME                                CPU(cores)   MEMORY(bytes)   
+api-gateway-f7c84f484-dvt86         1m           30Mi            
+identity-service-6c46f44f57-p5bq2   1m           53Mi            
+menu-service-5b676cc954-4w8pk       1m           44Mi            
+news-service-647578b9b5-jgm57       1m           43Mi            

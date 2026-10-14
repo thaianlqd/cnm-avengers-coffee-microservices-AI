@@ -36,7 +36,9 @@
       "id": "i-04e5f1272054bc5a8",
       "private_ip": "172.31.13.213",
       "launch_time": "2026-10-14T14:49:25+00:00",
-      "type": "m7i-flex.large"
+      "type": "m7i-flex.large",
+      "retired": true,
+      "terminated_confirmed_at": "2026-10-14T15:24:26.325915+00:00"
     }
   },
   "control_pid": null,

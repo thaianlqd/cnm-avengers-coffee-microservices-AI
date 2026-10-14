@@ -1,0 +1,212 @@
+{
+  "passed": true,
+  "samples": [
+    {
+      "at": "2026-10-14T15:18:12.334811+00:00",
+      "hpa": {
+        "api-gateway": 4,
+        "identity-service": 3,
+        "menu-service": 4
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:18:22.514422+00:00",
+      "hpa": {
+        "api-gateway": 4,
+        "identity-service": 3,
+        "menu-service": 4
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:18:32.694908+00:00",
+      "hpa": {
+        "api-gateway": 4,
+        "identity-service": 3,
+        "menu-service": 4
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:18:42.873921+00:00",
+      "hpa": {
+        "api-gateway": 4,
+        "identity-service": 3,
+        "menu-service": 4
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:18:53.055205+00:00",
+      "hpa": {
+        "api-gateway": 4,
+        "identity-service": 3,
+        "menu-service": 4
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:19:03.236493+00:00",
+      "hpa": {
+        "api-gateway": 4,
+        "identity-service": 3,
+        "menu-service": 4
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:19:13.419086+00:00",
+      "hpa": {
+        "api-gateway": 4,
+        "identity-service": 3,
+        "menu-service": 4
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:19:23.597482+00:00",
+      "hpa": {
+        "api-gateway": 4,
+        "identity-service": 3,
+        "menu-service": 4
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:19:33.784496+00:00",
+      "hpa": {
+        "api-gateway": 4,
+        "identity-service": 3,
+        "menu-service": 4
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:19:43.968396+00:00",
+      "hpa": {
+        "api-gateway": 4,
+        "identity-service": 3,
+        "menu-service": 4
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:19:54.149336+00:00",
+      "hpa": {
+        "api-gateway": 4,
+        "identity-service": 2,
+        "menu-service": 3
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:20:04.331411+00:00",
+      "hpa": {
+        "api-gateway": 4,
+        "identity-service": 2,
+        "menu-service": 3
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:20:14.510109+00:00",
+      "hpa": {
+        "api-gateway": 4,
+        "identity-service": 2,
+        "menu-service": 3
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:20:24.692652+00:00",
+      "hpa": {
+        "api-gateway": 3,
+        "identity-service": 2,
+        "menu-service": 3
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:20:34.873576+00:00",
+      "hpa": {
+        "api-gateway": 3,
+        "identity-service": 2,
+        "menu-service": 3
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:20:45.047406+00:00",
+      "hpa": {
+        "api-gateway": 3,
+        "identity-service": 2,
+        "menu-service": 3
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:20:55.222137+00:00",
+      "hpa": {
+        "api-gateway": 3,
+        "identity-service": 1,
+        "menu-service": 2
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:21:05.394847+00:00",
+      "hpa": {
+        "api-gateway": 3,
+        "identity-service": 1,
+        "menu-service": 2
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:21:15.562158+00:00",
+      "hpa": {
+        "api-gateway": 3,
+        "identity-service": 1,
+        "menu-service": 2
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:21:25.732801+00:00",
+      "hpa": {
+        "api-gateway": 2,
+        "identity-service": 1,
+        "menu-service": 2
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:21:35.908129+00:00",
+      "hpa": {
+        "api-gateway": 2,
+        "identity-service": 1,
+        "menu-service": 2
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:21:46.081062+00:00",
+      "hpa": {
+        "api-gateway": 2,
+        "identity-service": 1,
+        "menu-service": 2
+      },
+      "all_pods_ready": true
+    },
+    {
+      "at": "2026-10-14T15:21:56.247749+00:00",
+      "hpa": {
+        "api-gateway": 2,
+        "identity-service": 1,
+        "menu-service": 1
+      },
+      "all_pods_ready": true
+    }
+  ]
+}

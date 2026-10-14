@@ -1,0 +1,9 @@
+namespace/avengers-coffee configured
+configmap/api-gateway-config unchanged
+secret/api-gateway-secrets configured
+configmap/identity-service-config unchanged
+secret/identity-service-secrets configured
+configmap/menu-service-config unchanged
+secret/menu-service-secrets configured
+configmap/news-service-config unchanged
+secret/news-service-secrets configured
