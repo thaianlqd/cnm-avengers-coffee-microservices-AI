@@ -1,0 +1,163 @@
+{
+  "SecurityGroups": [
+    {
+      "GroupId": "sg-04b7a5d4bbad0b3ba",
+      "IpPermissionsEgress": [
+        {
+          "IpProtocol": "-1",
+          "UserIdGroupPairs": [],
+          "IpRanges": [
+            {
+              "CidrIp": "0.0.0.0/0"
+            }
+          ],
+          "Ipv6Ranges": [],
+          "PrefixListIds": []
+        }
+      ],
+      "Tags": [
+        {
+          "Key": "Project",
+          "Value": "avengers-coffee"
+        },
+        {
+          "Key": "ManagedBy",
+          "Value": "codex-features-k8s"
+        },
+        {
+          "Key": "Purpose",
+          "Value": "3k-capacity"
+        },
+        {
+          "Key": "Phase",
+          "Value": "3k-aws"
+        },
+        {
+          "Key": "RunId",
+          "Value": "3k-aws-20261014T083654Z-d7120e"
+        }
+      ],
+      "VpcId": "vpc-019ebb919faf68752",
+      "SecurityGroupArn": "arn:aws:ec2:ap-southeast-2:956035085549:security-group/sg-04b7a5d4bbad0b3ba",
+      "OwnerId": "956035085549",
+      "GroupName": "avengers-3k-generator-3k-aws-20261014T083654Z-d7120e-private",
+      "Description": "Ephemeral AWS private capacity",
+      "IpPermissions": []
+    },
+    {
+      "GroupId": "sg-06abb103e552727e4",
+      "IpPermissionsEgress": [
+        {
+          "IpProtocol": "-1",
+          "UserIdGroupPairs": [],
+          "IpRanges": [
+            {
+              "CidrIp": "0.0.0.0/0"
+            }
+          ],
+          "Ipv6Ranges": [],
+          "PrefixListIds": []
+        }
+      ],
+      "Tags": [
+        {
+          "Key": "Phase",
+          "Value": "3k-aws"
+        },
+        {
+          "Key": "ManagedBy",
+          "Value": "codex-features-k8s"
+        },
+        {
+          "Key": "Project",
+          "Value": "avengers-coffee"
+        },
+        {
+          "Key": "Purpose",
+          "Value": "3k-capacity"
+        },
+        {
+          "Key": "RunId",
+          "Value": "3k-aws-20261014T083654Z-d7120e"
+        }
+      ],
+      "VpcId": "vpc-019ebb919faf68752",
+      "SecurityGroupArn": "arn:aws:ec2:ap-southeast-2:956035085549:security-group/sg-06abb103e552727e4",
+      "OwnerId": "956035085549",
+      "GroupName": "avengers-3k-target-3k-aws-20261014T083654Z-d7120e-private",
+      "Description": "Ephemeral AWS private capacity",
+      "IpPermissions": [
+        {
+          "IpProtocol": "tcp",
+          "FromPort": 6443,
+          "ToPort": 6443,
+          "UserIdGroupPairs": [
+            {
+              "UserId": "956035085549",
+              "GroupId": "sg-06abb103e552727e4"
+            }
+          ],
+          "IpRanges": [],
+          "Ipv6Ranges": [],
+          "PrefixListIds": []
+        },
+        {
+          "IpProtocol": "tcp",
+          "FromPort": 30300,
+          "ToPort": 30300,
+          "UserIdGroupPairs": [
+            {
+              "UserId": "956035085549",
+              "GroupId": "sg-04b7a5d4bbad0b3ba"
+            }
+          ],
+          "IpRanges": [],
+          "Ipv6Ranges": [],
+          "PrefixListIds": []
+        },
+        {
+          "IpProtocol": "tcp",
+          "FromPort": 8050,
+          "ToPort": 8050,
+          "UserIdGroupPairs": [
+            {
+              "UserId": "956035085549",
+              "GroupId": "sg-06abb103e552727e4"
+            }
+          ],
+          "IpRanges": [],
+          "Ipv6Ranges": [],
+          "PrefixListIds": []
+        },
+        {
+          "IpProtocol": "udp",
+          "FromPort": 8472,
+          "ToPort": 8472,
+          "UserIdGroupPairs": [
+            {
+              "UserId": "956035085549",
+              "GroupId": "sg-06abb103e552727e4"
+            }
+          ],
+          "IpRanges": [],
+          "Ipv6Ranges": [],
+          "PrefixListIds": []
+        },
+        {
+          "IpProtocol": "tcp",
+          "FromPort": 10250,
+          "ToPort": 10250,
+          "UserIdGroupPairs": [
+            {
+              "UserId": "956035085549",
+              "GroupId": "sg-06abb103e552727e4"
+            }
+          ],
+          "IpRanges": [],
+          "Ipv6Ranges": [],
+          "PrefixListIds": []
+        }
+      ]
+    }
+  ]
+}

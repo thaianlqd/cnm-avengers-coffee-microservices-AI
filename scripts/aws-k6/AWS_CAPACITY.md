@@ -20,3 +20,23 @@ it does not establish actual fleet eligibility. No IAM, plan or quota changes.
 A successful probe is only a prerequisite, never a capacity result. Deployment,
 secure secrets, native k6, private baseline, observations and load qualification
 must be implemented/validated before any application capacity claim.
+
+## Paused AWS-target execution
+
+Read [the handoff](../../FEATURES_K8S_RESUME.md) and
+[the report](../../K8S_3K_AWS_CAPACITY_REPORT.md). The eligibility probe above is
+not the deployment workflow. `aws-private-session.py start FOLDER --run-id RUN
+--evidence EVIDENCE` manages 3 targets + 1 generator, encrypted control and
+mandatory cleanup; `finish FOLDER` requests cleanup. Guest shutdown is configured
+to terminate at +175 minutes. Certificates must be authenticated via the AWS
+console before jobs/secrets; aws-cli returns decoded console text.
+
+`job FOLDER --role ROLE --script FILE [--stdin FILE] --timeout SECONDS` encrypts
+and signs commands/stdin. The relay sees ciphertext, not application secrets.
+Build/deploy orchestration remains manual; public source clone must pin the
+committed SHA, run tests, build amd64 immutable tags and privately import each
+image on every target. The AWS overlay is a template, not ready for direct apply.
+
+Single-generator helpers: aws-network-baseline.py, aws-run-generator.py,
+aws-generator-metrics.py, aws-observe.py, analyze-aws-capacity.py. Stop on first
+failure. No distributed aggregation exists yet; do not average percentiles.

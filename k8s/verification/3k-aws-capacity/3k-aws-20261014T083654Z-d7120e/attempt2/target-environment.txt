@@ -1,0 +1,32 @@
+PRETTY_NAME="Ubuntu 24.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.5 LTS (Noble Numbat)"
+VERSION_CODENAME=noble
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=noble
+LOGO=ubuntu-logo
+7.0.0-1014-aws
+k3s version v1.34.1+k3s1 (24fc436e)
+go version go1.24.6
+Client:
+  Version:  v2.1.4-k3s2
+  Revision: 
+  Go version: go1.24.6
+
+Server:
+  Version:  v2.1.4-k3s2
+  Revision: 
+  UUID: cc49511c-eb93-4583-964a-89d2576ad47e
+Client Version: v1.34.1+k3s1
+Kustomize Version: v5.7.1
+Server Version: v1.34.1+k3s1
+2
+               total        used        free      shared  buff/cache   available
+Mem:           7.6Gi       995Mi       5.2Gi       3.5Mi       1.7Gi       6.6Gi
+Swap:             0B          0B          0B

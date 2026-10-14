@@ -1,0 +1,5 @@
+{
+  "qualifying_run": false,
+  "additional_low_rate_curl_probes": true,
+  "purpose": "Compare end-to-end curl and k6 timings; additional pod-loopback diagnostic GETs"
+}

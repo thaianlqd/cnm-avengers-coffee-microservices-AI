@@ -1,0 +1,1 @@
+{"passed": true, "observed_at": "2026-10-14T09:31:31.473791+00:00", "replicas": {"api-gateway": 2, "identity-service": 1, "menu-service": 1, "news-service": 1}}

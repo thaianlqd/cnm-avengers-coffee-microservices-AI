@@ -1,0 +1,14 @@
+{
+  "status": "PAUSED_BY_USER",
+  "paused_at": "2026-10-14T09:46:37Z",
+  "max_stable_vu": null,
+  "3000_normal": "NOT RUN",
+  "3000_long_1": "NOT RUN",
+  "3000_long_2": "NOT RUN",
+  "3k_qualified": false,
+  "first_failure_vu": 250,
+  "first_failure": "HTTP latency; valid generator, zero restarts, smoke/recovery PASS",
+  "primary_bottleneck": "Public-browse latency dominated by branches; pool reconnection cost demonstrated but causal fix under workload not yet tested",
+  "next_hypothesis": "AWS DB pool idle timeout 5000 -> 30000ms; no app change implemented for this hypothesis",
+  "cleanup_pass": true
+}

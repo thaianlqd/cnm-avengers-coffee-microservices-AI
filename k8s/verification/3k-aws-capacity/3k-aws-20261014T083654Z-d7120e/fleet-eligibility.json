@@ -1,0 +1,28 @@
+{
+  "started_at": "2026-10-14T08:39:34.081712+00:00",
+  "planned_target_nodes": 3,
+  "planned_generator_nodes": 1,
+  "actual_launched": [
+    {
+      "instance_id": "i-0f222b403a7216494",
+      "launch_time": "2026-10-14T08:39:42+00:00",
+      "role": "target",
+      "type": "m7i-flex.large"
+    },
+    {
+      "instance_id": "i-04c67b0348b9dd696",
+      "launch_time": "2026-10-14T08:39:42+00:00",
+      "role": "target",
+      "type": "m7i-flex.large"
+    },
+    {
+      "instance_id": "i-01c0b15e1cd19e1d4",
+      "launch_time": "2026-10-14T08:39:42+00:00",
+      "role": "target",
+      "type": "m7i-flex.large"
+    }
+  ],
+  "capacity_load_run": false,
+  "launch_requested_at": "2026-10-14T08:39:39.596297+00:00",
+  "fleet_eligibility": "TARGET_LAUNCH_ACCEPTED"
+}

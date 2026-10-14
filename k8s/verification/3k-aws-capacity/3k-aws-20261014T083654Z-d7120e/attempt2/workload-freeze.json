@@ -1,0 +1,24 @@
+{
+  "frozen_at": "2026-10-14T09:24:37.708185+00:00",
+  "application_sha": "b9ba9fd95c3f63f3a9356b27454710a752bfc49b",
+  "workload_sha256": "dfb9af16b94cc0b22ae53710ece3bde446831fb110a928e7573120bf3ffc4c83",
+  "overlay_sha256": {
+    "k8s/overlays/aws-capacity/kustomization.yaml": "f7ec9cc1161240882c774c8356db8cc1490f4ae8048d208454320ec6554a59b9",
+    "k8s/overlays/aws-capacity/hpa.yaml": "e7d3acc2a55affd6e1b737455530a083057e215f351d29defcd885752ce1bec3"
+  },
+  "think_seconds": 3,
+  "routes": [
+    "/menu/danh-muc",
+    "/menu/san-pham",
+    "/users/branches/public",
+    "/news?limit=100"
+  ],
+  "quality": {
+    "failure_rate": "<0.02",
+    "checks": ">0.98",
+    "whole_p95_ms": "<1500",
+    "hold_p95_ms": "<1500"
+  },
+  "target_nodes": 3,
+  "generator_nodes": 1
+}
