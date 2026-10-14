@@ -94,3 +94,10 @@ patches:
     kind: Service
     metadata:
       name: ai-service
+- target:
+    kind: ConfigMap
+    name: avengers-common
+  patch: |-
+    - op: add
+      path: /data/DB_PROBE_CONNECTION_TIMEOUT_MS
+      value: '2000'
