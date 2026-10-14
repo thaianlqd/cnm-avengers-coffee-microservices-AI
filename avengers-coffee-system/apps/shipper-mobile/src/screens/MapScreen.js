@@ -1,13 +1,15 @@
 import { SafeAreaView } from 'react-native-safe-area-context'
 import React, { useState, useEffect, useRef } from 'react'
-import { View, StyleSheet, TouchableOpacity, Text,  Linking, Platform, Alert, ScrollView, Modal, Image, Animated } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, Text,  Linking, Platform, Alert, ScrollView, Modal, Image, Animated, useWindowDimensions } from 'react-native'
 import * as Location from 'expo-location'
 import { Ionicons } from '@expo/vector-icons'
 import { useQuery } from '@tanstack/react-query'
+import { JourneyProgress, JourneyPin } from '../../../shared-ui/JourneyOverlay'
+import { journeyProgress, measuredRouteSummary } from '../../../web-customer/src/components/deliveryMapPresentation'
 import { colors, radius, spacing, shadows, typography } from '../theme'
 import { useShipper, globalState } from '../context/ShipperContext'
 import apiClient from '../lib/apiClient'
-import { formatBranchName, formatBranchFullTitle, formatBranchAddress, setGlobalBranchList } from '../lib/branchHelper'
+import { formatBranchFullTitle, formatBranchAddress, setGlobalBranchList } from '../lib/branchHelper'
 import { openGoogleMapsNavigation } from '../lib/navigationHelper'
 import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '../lib/backgroundLocationManager'
 
@@ -36,8 +38,7 @@ if (Platform.OS !== 'web') {
 }
 
 const simulationEnabled = process.env.EXPO_PUBLIC_ENABLE_DELIVERY_SIMULATION === 'true'
-const VIETMAP_API_KEY = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || 'dbdd3165b3cb0d85239a7f59f410a9fa925974c4a6d4c54b';
-const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN || '';
+const VIETMAP_API_KEY = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
 
 
 function formatETA(distanceKm) {
@@ -86,16 +87,16 @@ function formatWatermarkTime() {
   return `${hh}:${mm} ${dd}/${mo}/${yy}`
 }
 
-function usePodCamera() {
-  if (useCameraPermissions) {
-    return useCameraPermissions()
-  }
-  return [null, null]
-}
+const useNativeCameraPermissions = useCameraPermissions || function useUnavailableCameraPermissions() { return [null,null] }
+function usePodCamera() { return useNativeCameraPermissions() }
+
 
 export function MapScreen({ route, navigation }) {
   const { delivery } = route.params
   const { shipper } = useShipper()
+  const [expanded, setExpanded] = useState(false)
+  const nativeMap = useRef(null)
+  const { height: windowHeight } = useWindowDimensions()
   const [location, setLocation] = useState(null)
   const [errorMsg, setErrorMsg] = useState(null)
   const [distance, setDistance] = useState(null)
@@ -114,8 +115,8 @@ export function MapScreen({ route, navigation }) {
   const [podImage, setPodImage] = useState(null)
   const [watermarkTime, setWatermarkTime] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const podScaleAnim = useRef(new Animated.Value(0)).current
-  const podSuccessAnim = useRef(new Animated.Value(0)).current
+  const [podScaleAnim] = useState(() => new Animated.Value(0))
+  const [podSuccessAnim] = useState(() => new Animated.Value(0))
   const cameraRef = useRef(null)
 
   const [cameraPermission, requestCameraPermission] = usePodCamera()
@@ -163,17 +164,17 @@ export function MapScreen({ route, navigation }) {
 
   const storeLat = delivery?.tracking?.store_latitude
     ? Number(delivery.tracking.store_latitude)
-    : (matchedBranch?.vi_do ? Number(matchedBranch.vi_do) : 10.80734);
+    : (matchedBranch?.vi_do ? Number(matchedBranch.vi_do) : null);
   const storeLng = delivery?.tracking?.store_longitude
     ? Number(delivery.tracking.store_longitude)
-    : (matchedBranch?.kinh_do ? Number(matchedBranch.kinh_do) : 106.717612);
+    : (matchedBranch?.kinh_do ? Number(matchedBranch.kinh_do) : null);
 
   const destLat = delivery?.tracking?.destination_latitude
     ? Number(delivery.tracking.destination_latitude)
-    : (delivery?.delivery_latitude ? Number(delivery.delivery_latitude) : storeLat + 0.006);
+    : (delivery?.delivery_latitude ? Number(delivery.delivery_latitude) : null);
   const destLng = delivery?.tracking?.destination_longitude
     ? Number(delivery.tracking.destination_longitude)
-    : (delivery?.delivery_longitude ? Number(delivery.delivery_longitude) : storeLng + 0.006);
+    : (delivery?.delivery_longitude ? Number(delivery.delivery_longitude) : null);
 
   const customerAddress = String(
     delivery?.delivery_address ||
@@ -196,25 +197,6 @@ export function MapScreen({ route, navigation }) {
     })
   }
 
-  if (Platform.OS === 'web') {
-    return (
-      <SafeAreaView edges={['top','left','right']} style={styles.container}>
-        <View style={styles.headerWrap}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-          <Ionicons name="map-outline" size={64} color={colors.textSecondary} />
-          <Text style={{ fontSize: 18, fontWeight: 'bold', marginTop: 10 }}>Bản đồ không hỗ trợ Web</Text>
-          <Text style={{ textAlign: 'center', color: colors.textSecondary, marginTop: 5 }}>
-            Vui lòng sử dụng ứng dụng di động để xem bản đồ điều hướng.
-          </Text>
-        </View>
-      </SafeAreaView>
-    )
-  }
-
   useEffect(() => {
     let sub = null
       ; (async () => {
@@ -225,14 +207,12 @@ export function MapScreen({ route, navigation }) {
         }
         const initial = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })
         setLocation(initial)
-        const d = calcDistance(initial.coords.latitude, initial.coords.longitude, destLat, destLng)
-        setDistance(d)
 
         const startLat = initial.coords.latitude;
         const startLng = initial.coords.longitude;
 
         // 1. Lộ trình từ vị trí Shipper -> Cửa hàng (Vietmap Motorcycle Route)
-        try {
+        if (VIETMAP_API_KEY && storeLat != null && storeLng != null) try {
           const urlStore = `https://maps.vietmap.vn/api/route?api-version=1.1&apikey=${VIETMAP_API_KEY}&point=${startLat},${startLng}&point=${storeLat},${storeLng}&vehicle=motorcycle&points_encoded=false`;
           const resStore = await fetch(urlStore);
           const dataStore = await resStore.json();
@@ -263,7 +243,7 @@ export function MapScreen({ route, navigation }) {
         }
 
         // 2. Lộ trình từ Cửa hàng -> Khách nhận hàng (Vietmap Motorcycle Route)
-        try {
+        if (VIETMAP_API_KEY && storeLat != null && storeLng != null && destLat != null && destLng != null) try {
           const urlCust = `https://maps.vietmap.vn/api/route?api-version=1.1&apikey=${VIETMAP_API_KEY}&point=${storeLat},${storeLng}&point=${destLat},${destLng}&vehicle=motorcycle&points_encoded=false`;
           const resCust = await fetch(urlCust);
           const dataCust = await resCust.json();
@@ -283,7 +263,7 @@ export function MapScreen({ route, navigation }) {
             setRoutesToCustomer(parsedCust);
             if (parsedCust.length > 0) {
               setDistance(parsedCust[0].distance);
-              setEtaText(formatETA(parsedCust[0].distance));
+              setEtaText(`~${Math.max(1,Math.ceil(parsedCust[0].duration))} phút`);
               if (delivery?.status !== 'PICKING_UP' && delivery?.status !== 'CONFIRMED') {
                 activeStepsRef.current = parsedCust[0]?.steps || [];
                 currentStepIndexRef.current = 0;
@@ -305,8 +285,6 @@ export function MapScreen({ route, navigation }) {
             setLocation(newLoc)
             updateNavInstruction(newLoc.coords.latitude, newLoc.coords.longitude);
 
-            const newD = calcDistance(newLoc.coords.latitude, newLoc.coords.longitude, destLat, destLng)
-            setDistance(newD)
             if (shipper?.id) {
               apiClient.patch(`/shippers/${shipper.id}/location`, {
                 latitude: newLoc.coords.latitude,
@@ -324,13 +302,13 @@ export function MapScreen({ route, navigation }) {
 
     return () => {
       if (sub) sub.remove();
-      if (simulationInterval.current) clearInterval(simulationInterval.current);
+      if (simulationInterval.current) globalThis.clearInterval(simulationInterval.current);
       globalState.isSimulating = false;
       stopBackgroundLocationTracking().catch(() => {});
     }
   }, [])
 
-  const updateNavInstruction = (lat, lng) => {
+  function updateNavInstruction(lat, lng) {
     const steps = activeStepsRef.current;
     if (!steps || steps.length === 0) return;
 
@@ -368,7 +346,7 @@ export function MapScreen({ route, navigation }) {
 
     isSimulatingRef.current = true;
     globalState.isSimulating = true;
-    if (simulationInterval.current) clearInterval(simulationInterval.current);
+    if (simulationInterval.current) globalThis.clearInterval(simulationInterval.current);
 
     let pathCoords = [];
     if (targetLat === destLat && targetLng === destLng && routesToCustomer.length > 0) {
@@ -390,7 +368,7 @@ export function MapScreen({ route, navigation }) {
     const intervalMs = 200; // Trả lại tốc độ cũ (tổng 15s) để khớp với polling 15s của app Customer
     let currentStep = 0;
 
-    simulationInterval.current = setInterval(() => {
+    simulationInterval.current = globalThis.setInterval(() => {
       currentStep++;
       const progress = currentStep / steps;
 
@@ -420,7 +398,7 @@ export function MapScreen({ route, navigation }) {
       setDistance(calcDistance(newLat, newLng, destLat, destLng));
 
       if (currentStep >= steps) {
-        clearInterval(simulationInterval.current);
+        globalThis.clearInterval(simulationInterval.current);
         simulationInterval.current = null;
       }
     }, intervalMs);
@@ -513,7 +491,7 @@ export function MapScreen({ route, navigation }) {
       setPodStep('done')
       stopBackgroundLocationTracking().catch(() => {});
       Animated.spring(podSuccessAnim, { toValue: 1, useNativeDriver: true, tension: 50, friction: 6 }).start()
-      setTimeout(() => {
+      globalThis.setTimeout(() => {
         closePodModal();
         navigation.goBack();
       }, 2200);
@@ -537,25 +515,22 @@ export function MapScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      {MapView && (
-        <MapView style={styles.map} initialRegion={mapRegion} showsUserLocation={true} showsMyLocationButton={true}>
-          <Marker coordinate={{ latitude: storeLat, longitude: storeLng }} title="Cửa hàng Avengers" description="Lấy hàng tại đây">
-            <View style={styles.markerStore}>
-              <Ionicons name="storefront" size={20} color={colors.surface} />
-            </View>
-          </Marker>
+      {MapView && mapRegion.latitude != null && mapRegion.longitude != null && (
+        <MapView ref={nativeMap} style={styles.map} initialRegion={mapRegion} showsUserLocation={true} showsMyLocationButton={false} onMapReady={() => {
+          const points = [[storeLat,storeLng],[destLat,destLng]].filter(p => p.every(v => v != null && Number.isFinite(v))).map(([latitude,longitude]) => ({latitude,longitude}));
+          if (points.length) nativeMap.current?.fitToCoordinates(points,{ edgePadding:{ top:140,left:50,right:50,bottom:windowHeight*.35 },animated:true });
+        }}>
+          {storeLat != null && storeLng != null && <Marker anchor={{ x:.5,y:1 }} coordinate={{ latitude: storeLat, longitude: storeLng }} title="Cửa hàng Avengers" description="Lấy hàng tại đây">
+            <JourneyPin kind="store" />
+          </Marker>}
 
-          <Marker coordinate={{ latitude: destLat, longitude: destLng }} title="Khách hàng" description={customerAddress || 'Địa chỉ khách hàng'}>
-            <View style={styles.markerDest}>
-              <Ionicons name="location" size={24} color={colors.surface} />
-            </View>
-          </Marker>
+          {destLat != null && destLng != null && <Marker anchor={{ x:.5,y:1 }} coordinate={{ latitude: destLat, longitude: destLng }} title="Khách hàng" description={customerAddress || 'Địa chỉ khách hàng'}>
+            <JourneyPin kind="destination" />
+          </Marker>}
 
           {location && (
             <Marker coordinate={{ latitude: location.coords.latitude, longitude: location.coords.longitude }} title="Shipper" zIndex={100}>
-              <View style={styles.markerShipper}>
-                <Text style={{ fontSize: 20 }}>🛵</Text>
-              </View>
+              <JourneyPin kind="driver" />
             </Marker>
           )}
 
@@ -654,8 +629,10 @@ export function MapScreen({ route, navigation }) {
         ) : null}
       </SafeAreaView>
 
-      <ScrollView style={styles.footerPanel} contentContainerStyle={{ paddingBottom: spacing.xxl + 24 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={[styles.footerPanel,{ maxHeight:expanded ? '54%' : '34%' }]} contentContainerStyle={{ paddingBottom: spacing.xxl + 24 }} showsVerticalScrollIndicator={false}>
         {/* THANH CHỈ DẪN ĐIỀU HƯỚNG CHI TIẾT (ĐƯỢC ĐƯA XUỐNG DƯỚI) */}
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={expanded ? 'Thu gọn chi tiết chuyến' : 'Mở rộng chi tiết chuyến'} onPress={() => setExpanded(value => !value)} style={{ paddingBottom:12 }}><View style={{ alignSelf:'center',width:40,height:4,borderRadius:8,backgroundColor:'#d4deeb',marginBottom:12 }} /><View style={{ flexDirection:'row',gap:8,alignItems:'center' }}><Text style={{ flex:1,fontSize:13,fontWeight:'700',color:'#805dc8' }}>{journeyProgress(delivery?.status,Boolean(location)).label}</Text><Ionicons name={expanded ? 'chevron-down' : 'chevron-up'} size={19} color="#8798ac" /></View></TouchableOpacity>
+        <JourneyProgress step={journeyProgress(delivery?.status,Boolean(location)).step} />
         {currentStepText ? (
           <View style={styles.navInstructionCard}>
             <View style={styles.navInstructionIconWrap}>
@@ -730,7 +707,7 @@ export function MapScreen({ route, navigation }) {
                 isSimulatingRef.current = false;
                 globalState.isSimulating = false;
                 if (simulationInterval.current) {
-                  clearInterval(simulationInterval.current);
+                  globalThis.clearInterval(simulationInterval.current);
                   simulationInterval.current = null;
                 }
                 try {
@@ -810,7 +787,7 @@ export function MapScreen({ route, navigation }) {
             <View style={styles.etaDivider} />
             <View style={styles.etaItem}>
               <Ionicons name="time-outline" size={22} color="#059669" />
-              <Text style={styles.etaValue}>{formatETA(distance)}</Text>
+              <Text style={styles.etaValue}>{measuredRouteSummary({distanceKm:distance,durationMinutes:(delivery?.status === 'IN_TRANSIT' ? routesToCustomer[selectedRouteCustomerIndex] : routesToStore[selectedRouteStoreIndex])?.duration})?.duration || 'Chưa cập nhật'}</Text>
               <Text style={styles.etaLabel}>Thời gian dự kiến</Text>
             </View>
           </View>

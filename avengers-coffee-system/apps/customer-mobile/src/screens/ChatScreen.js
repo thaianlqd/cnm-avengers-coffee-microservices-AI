@@ -40,7 +40,7 @@ import useAgentChat from '../hooks/useAgentChat'
 import ChatRichText from '../components/ChatRichText'
 import ChatActions, { CheckoutCard } from '../components/ChatActions'
 import CustomerChoicePanel, { SelectionTray } from '../components/CustomerChoicePanel'
-import { productIdentity, toggleProductSelection, selectionAction, actionMessage } from '../../../web-customer/src/components/customerChoices'
+import { productIdentity, toggleProductSelection, updateProductQuantity, selectionAction, actionMessage } from '../../../web-customer/src/components/customerChoices'
 import { branchDistanceLabel } from '../../../web-customer/src/components/chatWidgetActions'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -627,7 +627,7 @@ function AIChatPanel({ navigation, chat, selectedProducts, setSelectedProducts }
             }}
           />
 
-          <SelectionTray selected={selectedProducts} busy={isTyping} onRemove={product => setSelectedProducts(prev => prev.filter(row => productIdentity(row) !== productIdentity(product)))} onSubmit={submitSelection} />
+          <SelectionTray onQuantityChange={(product, quantity) => setSelectedProducts(prev => updateProductQuantity(prev, product, quantity))} selected={selectedProducts} busy={isTyping} onRemove={product => setSelectedProducts(prev => prev.filter(row => productIdentity(row) !== productIdentity(product)))} onSubmit={submitSelection} />
 
           {/* Recording overlay */}
           {isRecording && (

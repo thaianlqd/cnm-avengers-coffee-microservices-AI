@@ -1,3 +1,4 @@
+import { PaginatedList } from '../../../components/console/CompactPagination'
 import React, { useState, useEffect, useCallback } from 'react'
 import { ArrowLeft, Users, Package, BarChart2, PlusCircle, CheckCircle, Clock } from 'lucide-react'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
@@ -144,7 +145,7 @@ export function KioskDetailPanel({ kiosk, onBack, session }) {
               <h4 style={{ margin: '0 0 1rem', fontSize: 15, fontWeight: 700 }}>Danh sách nhân viên</h4>
               {loadingStaff ? <p>Đang tải...</p> : staffList.length === 0 ? <p style={{ color: '#94a3b8' }}>Chưa có nhân viên nào.</p> : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {staffList.map(s => (
+                  <PaginatedList items={staffList}>{s => (
                     <div key={s.ma_nguoi_dung} style={{ padding: '14px 16px', borderRadius: 12, border: '1px solid #fed7aa', display: 'flex', alignItems: 'center', gap: 12, background: '#fff7ed' }}>
                       <div style={{ width: 40, height: 40, borderRadius: 20, background: '#ea580c', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16 }}>
                         {(s.ho_ten || s.ten_dang_nhap).charAt(0).toUpperCase()}
@@ -157,7 +158,7 @@ export function KioskDetailPanel({ kiosk, onBack, session }) {
                         Hoạt động
                       </span>
                     </div>
-                  ))}
+                  )}</PaginatedList>
                 </div>
               )}
             </div>
@@ -182,7 +183,7 @@ export function KioskDetailPanel({ kiosk, onBack, session }) {
               <h4 style={{ margin: '0 0 1rem', fontSize: 15, fontWeight: 700 }}>Lịch sử giao Combo</h4>
               {loadingCombos ? <p>Đang tải...</p> : combos.length === 0 ? <p style={{ color: '#94a3b8' }}>Chưa có phiếu giao nào.</p> : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {combos.map(c => (
+                  <PaginatedList items={combos}>{c => (
                     <div key={c.id} style={{ padding: 16, borderRadius: 12, border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
                         <strong style={{ display: 'block', fontSize: 15 }}>{c.ten_combo}</strong>
@@ -192,7 +193,7 @@ export function KioskDetailPanel({ kiosk, onBack, session }) {
                         {c.trang_thai === 'RECEIVED' ? 'Đã nhận' : 'Chờ xác nhận'}
                       </span>
                     </div>
-                  ))}
+                  )}</PaginatedList>
                 </div>
               )}
             </div>

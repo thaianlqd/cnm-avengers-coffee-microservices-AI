@@ -1,3 +1,4 @@
+import { PaginatedList } from '../../../components/console/CompactPagination'
 import { getAdminSession } from '../../../lib/adminFetch'
 import React, { useState, useEffect, useMemo } from 'react';
 import { API_BASE_URL } from '../../admin-dashboard/constants';
@@ -526,7 +527,7 @@ export default function StaffDeliveryPanel() {
         vehicle_type: newShipperForm.vehicle_type,
         vehicle_plate: newShipperForm.vehicle_plate.trim(),
         branch_code: branchCode,
-        status: 'ACTIVE',
+        status: 'INACTIVE',
         password: newShipperForm.password.trim() || '123456',
       };
 
@@ -981,7 +982,7 @@ export default function StaffDeliveryPanel() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              {filteredDeliveries.map((order) => {
+              <PaginatedList items={filteredDeliveries} resetKey={JSON.stringify([activeTab,orderSearch,orderStatusFilter,codStatusFilter,shipperSearch,shipperStatusFilter])}>{(order) => {
                 const isDelivering = String(order.trang_thai_don_hang || '').toUpperCase() === 'DANG_GIAO';
                 const isLalamove = order.phuong_thuc_giao_hang === 'LALAMOVE';
 
@@ -1253,7 +1254,7 @@ export default function StaffDeliveryPanel() {
                     </div>
                   </div>
                 );
-              })}
+              }}</PaginatedList>
             </div>
           )}
         </div>
@@ -1406,7 +1407,7 @@ export default function StaffDeliveryPanel() {
                   </tr>
                 </thead>
                 <tbody>
-                  {codRemits.map((r, i) => {
+                  <PaginatedList items={codRemits} resetKey={JSON.stringify([activeTab,orderSearch,orderStatusFilter,codStatusFilter,shipperSearch,shipperStatusFilter])} layout="table" columns={6}>{(r, i) => {
                     const isPending = r.status === 'PENDING';
                     const isConfirmed = r.status === 'CONFIRMED';
                     return (
@@ -1504,7 +1505,7 @@ export default function StaffDeliveryPanel() {
                         </td>
                       </tr>
                     );
-                  })}
+                  }}</PaginatedList>
                 </tbody>
               </table>
             </div>
@@ -1647,7 +1648,7 @@ export default function StaffDeliveryPanel() {
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1rem' }}>
-              {filteredShippers.map((s) => {
+              <PaginatedList items={filteredShippers} resetKey={JSON.stringify([activeTab,orderSearch,orderStatusFilter,codStatusFilter,shipperSearch,shipperStatusFilter])}>{(s) => {
                 const isActive = s.status === 'ACTIVE';
                 const vehicleName =
                   s.vehicle_type === 'CAR'
@@ -1820,7 +1821,7 @@ export default function StaffDeliveryPanel() {
                     </div>
                   </div>
                 );
-              })}
+              }}</PaginatedList>
             </div>
           )}
         </div>

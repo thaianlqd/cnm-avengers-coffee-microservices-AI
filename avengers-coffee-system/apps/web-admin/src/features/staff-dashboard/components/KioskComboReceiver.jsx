@@ -1,3 +1,4 @@
+import { PaginatedList } from '../../../components/console/CompactPagination'
 import { useState, useEffect, useCallback } from 'react'
 import { Package, PackageCheck, RefreshCw, Clock } from 'lucide-react'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
@@ -97,7 +98,7 @@ export function KioskComboReceiver({ session }) {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {displayed.map(c => (
+          <PaginatedList items={displayed} resetKey={tab}>{c => (
             <div key={c.id} style={{ background: 'white', borderRadius: 12, padding: '1rem 1.25rem', border: `1.5px solid ${c.trang_thai === 'RECEIVED' ? '#bfdbfe' : '#fed7aa'}`, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', gap: 14 }}>
               <div style={{ width: 44, height: 44, borderRadius: 10, background: c.trang_thai === 'RECEIVED' ? '#dbeafe' : '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 {c.trang_thai === 'RECEIVED' ? <PackageCheck size={22} color="#2563eb" /> : <Package size={22} color="#ea580c" />}
@@ -126,7 +127,7 @@ export function KioskComboReceiver({ session }) {
                 </button>
               )}
             </div>
-          ))}
+          )}</PaginatedList>
         </div>
       )}
     </div>

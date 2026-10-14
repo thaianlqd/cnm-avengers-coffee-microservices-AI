@@ -1,3 +1,4 @@
+import { PageNumbers } from '../../../components/console/CompactPagination'
 import React, { useMemo, useState } from 'react'
 import {
   MessageSquare,
@@ -648,26 +649,7 @@ export function ManagerCustomerCarePanel({
             </button>
 
             <div style={{ display: 'flex', gap: '0.25rem' }}>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPage(p)}
-                  style={{
-                    width: '34px',
-                    height: '34px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: safePage === p ? '#3b82f6' : 'transparent',
-                    color: safePage === p ? '#ffffff' : '#64748b',
-                    fontWeight: safePage === p ? '700' : '500',
-                    fontSize: '0.85rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {p}
-                </button>
-              ))}
+              <PageNumbers page={safePage} totalPages={totalPages} onChange={setPage} />
             </div>
 
             <button

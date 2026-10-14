@@ -1,3 +1,4 @@
+import { PaginatedList, PageNumbers } from '../../components/console/CompactPagination'
 import { WorkspaceSidebar, WorkspaceSearch } from '../../components/console/WorkspaceNavigation'
 import { AdminNotificationBell } from '../shared/components/AdminNotificationBell'
 import { getAdminSession } from '../../lib/adminFetch'
@@ -1690,11 +1691,11 @@ export function FranchiseePortal({ session, onLogout }) {
                               </tr>
                             </thead>
                             <tbody>
-                              {subStaffList.filter(s => {
+                              <PaginatedList items={subStaffList.filter(s => {
                                 const matchKiosk = !staffKioskFilter || s.kiosk_id === staffKioskFilter || s.co_so_ma === staffKioskFilter
                                 const matchSearch = !staffSearch || (s.ho_ten || '').toLowerCase().includes(staffSearch.toLowerCase()) || (s.ten_dang_nhap || '').toLowerCase().includes(staffSearch.toLowerCase()) || (s.so_dien_thoai || '').includes(staffSearch)
                                 return matchKiosk && matchSearch
-                              }).map(s => {
+                              })} resetKey={JSON.stringify([staffSearch,staffKioskFilter])} layout="table" columns={7}>{s => {
                                 const perms = Array.isArray(s.pos_permissions) ? s.pos_permissions : []
                                 const isActive = s.trang_thai === 'ACTIVE'
                                 const kioskObj = kiosks.find(k => k.id === s.kiosk_id)
@@ -1842,7 +1843,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                     </td>
                                   </tr>
                                 )
-                              })}
+                              }}</PaginatedList>
                             </tbody>
                           </table>
                         </div>
@@ -2588,7 +2589,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                 </tr>
                               </thead>
                               <tbody>
-                                {kioskShiftHistory.map(shift => {
+                                <PaginatedList items={kioskShiftHistory} resetKey={activeKioskId} layout="table" columns={9}>{shift => {
                                   const isForceClosed = shift.trang_thai === 'FORCE_CLOSED'
                                   const isOpen = shift.trang_thai === 'OPEN'
                                   const diff = shift.chenh_lech
@@ -2652,7 +2653,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                       </td>
                                     </tr>
                                   )
-                                })}
+                                }}</PaginatedList>
                               </tbody>
                             </table>
                           </div>
@@ -2697,7 +2698,7 @@ export function FranchiseePortal({ session, onLogout }) {
                             </tr>
                           </thead>
                           <tbody>
-                            {posOrders.map((d) => {
+                            <PaginatedList items={posOrders} resetKey={JSON.stringify([activeKioskId,posDateFilter])} layout="table" columns={9}>{(d) => {
                               const isVoided = d.trang_thai_don_hang === 'DA_HUY' || d.trang_thai_thanh_toan === 'DA_HOAN_TIEN'
                               const isShiftOpen = !!activeKioskShift?.has_open_shift
                               const shiftOpenTime = activeKioskShift?.active_shift?.thoi_gian_mo_ca ? new Date(activeKioskShift.active_shift.thoi_gian_mo_ca).getTime() : 0
@@ -2800,7 +2801,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                   </td>
                                 </tr>
                               )
-                            })}
+                            }}</PaginatedList>
                           </tbody>
                         </table>
                         {posOrders.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>Chưa có đơn bán hàng nào trong thời gian này.</div>}
@@ -2938,26 +2939,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                 Trang trước
                               </button>
 
-                              {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(p => {
-                                const isCurrent = menuPage === p
-                                return (
-                                  <button
-                                    key={p}
-                                    onClick={() => setMenuPage(p)}
-                                    style={{
-                                      width: 34, height: 34, borderRadius: 8,
-                                      border: isCurrent ? 'none' : '1px solid #cbd5e1',
-                                      background: isCurrent ? '#2563eb' : '#ffffff',
-                                      color: isCurrent ? '#ffffff' : '#334155',
-                                      fontWeight: isCurrent ? 800 : 600, fontSize: 13,
-                                      cursor: 'pointer',
-                                      boxShadow: isCurrent ? '0 2px 6px rgba(5,150,105,0.3)' : 'none'
-                                    }}
-                                  >
-                                    {p}
-                                  </button>
-                                )
-                              })}
+                              <PageNumbers page={menuPage} totalPages={totalPages} onChange={setMenuPage} />
 
                               <button
                                 disabled={menuPage >= totalPages}
@@ -3016,7 +2998,7 @@ export function FranchiseePortal({ session, onLogout }) {
                       <div style={{ marginBottom: 24 }}>
                         <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 12 }}>Chọn gói combo</label>
                         <div style={{ display: 'grid', gap: 12 }}>
-                          {availableCombos.map(c => (
+                          <PaginatedList items={availableCombos} resetKey={activeKioskId}>{c => (
                             <div key={c.id} onClick={() => setOrderForm(f => ({ ...f, combo_id: c.id }))} style={{
                               padding: '16px', border: `1px solid ${orderForm.combo_id === c.id ? 'var(--primary)' : '#e2e8f0'}`,
                               borderRadius: 12, cursor: 'pointer', background: orderForm.combo_id === c.id ? 'var(--primary-light)' : '#fff',
@@ -3030,7 +3012,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                 <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a' }}>{fmtMoney(c.gia_ban)}</div>
                               </div>
                             </div>
-                          ))}
+                          )}</PaginatedList>
                         </div>
                       </div>
 
@@ -3081,7 +3063,7 @@ export function FranchiseePortal({ session, onLogout }) {
                         </tr>
                       </thead>
                       <tbody>
-                        {donTheoKiosk.map((d) => (
+                        <PaginatedList items={donTheoKiosk} resetKey={activeKioskId} layout="table" columns={8}>{(d) => (
                           <tr key={d.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                             <td style={{ padding: '12px 16px', fontWeight: 500, color: '#0f172a', fontSize: 14 }}>{d.combo?.ten_combo || 'Combo'}</td>
                             <td style={{ padding: '12px 16px', color: '#64748b', fontSize: 13 }}>{d.kiosk?.ten_kiosk}</td>
@@ -3095,7 +3077,7 @@ export function FranchiseePortal({ session, onLogout }) {
                               </span>
                             </td>
                           </tr>
-                        ))}
+                        )}</PaginatedList>
                       </tbody>
                     </table>
                     {donTheoKiosk.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#64748b', fontSize: 14 }}>Chưa có đơn nhập combo nào.</div>}
@@ -3173,7 +3155,7 @@ export function FranchiseePortal({ session, onLogout }) {
                         <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>Chưa có giao dịch nào</div>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                          {walletInfo.giao_dich.map((tx, idx) => (
+                          <PaginatedList items={walletInfo.giao_dich} resetKey={activeKioskId}>{(tx, idx) => (
                             <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: 12, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                               <div>
                                 <div style={{ fontWeight: 600, color: '#1e293b', fontSize: 14 }}>
@@ -3189,7 +3171,7 @@ export function FranchiseePortal({ session, onLogout }) {
                                 {tx.so_tien > 0 ? '+' : ''}{fmtMoney(tx.so_tien)}
                               </div>
                             </div>
-                          ))}
+                          )}</PaginatedList>
                         </div>
                       )}
                     </div>
@@ -3202,7 +3184,7 @@ export function FranchiseePortal({ session, onLogout }) {
                 {tab === 'debt' && (
                   <div style={{ maxWidth: 680 }}>
                     <div style={{ display: 'grid', gap: 16 }}>
-                      {congNoTheoKiosk.map(c => (
+                      <PaginatedList items={congNoTheoKiosk} resetKey={activeKioskId}>{c => (
                         <div key={c.id} style={{ background: '#fff', borderRadius: 16, padding: 24, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
@@ -3253,7 +3235,7 @@ export function FranchiseePortal({ session, onLogout }) {
                             </div>
                           )}
                         </div>
-                      ))}
+                      )}</PaginatedList>
                       {congNoTheoKiosk.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#64748b', fontSize: 14, background: '#f8fafc', borderRadius: 16, border: '1px solid #e2e8f0' }}>Không có khoản nợ nào.</div>}
                     </div>
                   </div>
@@ -3289,7 +3271,7 @@ export function FranchiseePortal({ session, onLogout }) {
                       </button>
                     </div>
                     <div style={{ display: 'grid', gap: 16 }}>
-                      {royaltyTheoKiosk.map(r => (
+                      <PaginatedList items={royaltyTheoKiosk} resetKey={activeKioskId}>{r => (
                         <div key={r.id} style={{ background: '#fff', borderRadius: 16, padding: 24, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
                             <div>
@@ -3315,7 +3297,7 @@ export function FranchiseePortal({ session, onLogout }) {
                             </div>
                           </div>
                         </div>
-                      ))}
+                      )}</PaginatedList>
                       {royaltyTheoKiosk.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#64748b', fontSize: 14, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 16 }}>Chưa có dữ liệu royalty.</div>}
                     </div>
                   </div>
@@ -4341,7 +4323,7 @@ export function FranchiseePortal({ session, onLogout }) {
 
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {filtered.map(req => {
+                      <PaginatedList items={filtered} resetKey={JSON.stringify([activeKioskId,shiftRequestTabFilter])}>{req => {
                         const isPending = req.trang_thai_yeu_cau === 'PENDING'
                         const isApproved = req.trang_thai_yeu_cau === 'APPROVED'
                         const isRejected = req.trang_thai_yeu_cau === 'REJECTED'
@@ -4448,7 +4430,7 @@ export function FranchiseePortal({ session, onLogout }) {
                             </div>
                           </div>
                         )
-                      })}
+                      }}</PaginatedList>
                     </div>
                   )
                 })()}
@@ -4958,7 +4940,7 @@ export function FranchiseePortal({ session, onLogout }) {
                       </div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                      {reviews.map((rv, idx) => (
+                      <PaginatedList items={reviews} resetKey={activeKioskId}>{(rv, idx) => (
                         <div key={idx} style={{ padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '8px', backgroundColor: '#f8fafc', position: 'relative' }}>
                           <button onClick={() => deleteReview(rv.id)} style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '4px', padding: '0.2rem 0.5rem', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 'bold' }}>Xóa</button>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', paddingRight: '3rem' }}>
@@ -4972,7 +4954,7 @@ export function FranchiseePortal({ session, onLogout }) {
                           </div>
                           {rv.nhan_xet && <div style={{ fontSize: '0.85rem', color: '#334155', fontStyle: 'italic' }}>"{rv.nhan_xet}"</div>}
                         </div>
-                      ))}
+                      )}</PaginatedList>
                     </div>
                   </>
                 )}

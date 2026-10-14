@@ -19,7 +19,7 @@ export default function OrderTrackingPage({ id, onBack }) {
   const [submittingRating, setSubmittingRating] = useState(false);
 
   // ETA & Distance
-  const [routeInfo, setRouteInfo] = useState(null);
+
 
   const [publicBranches, setPublicBranches] = useState([]);
 
@@ -310,34 +310,18 @@ export default function OrderTrackingPage({ id, onBack }) {
                     if (resolved) {
                       destLoc = { latitude: resolved.lat, longitude: resolved.lng };
                     } else {
-                      const baseStore = tracking?.store_location || branchInfo.storeLoc;
-                      destLoc = { latitude: baseStore.latitude + 0.005, longitude: baseStore.longitude + 0.005 };
+                      destLoc = null;
                     }
                   }
                   return destLoc;
                 })()}
                 otherDestinations={trackingData?.batch_info?.other_destinations || []}
                 shipperName={shipper?.full_name || 'Tài xế'}
-                deliveryStatus={order.trang_thai_don_hang}
+                deliveryStatus={trackingData?.shipper_delivery?.status || order.trang_thai_don_hang}
                 storeAddress={branchInfo.address}
-                onRouteInfo={setRouteInfo}
               />
 
-              {/* Floating ETA Box */}
-              {routeInfo && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000] bg-white/95 backdrop-blur shadow-xl rounded-2xl p-3 border border-indigo-50 flex items-center gap-4 w-[90%] max-w-sm animate-fade-in-up">
-                  <div className="flex-1 text-center border-r border-gray-100">
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{ui("Thời gian đến")}</p>
-                    <p className="text-lg font-black text-indigo-600">
-                      {routeInfo.duration < 1 ? ui("< 1 phút") : ui("~{{v0}} phút", {v0:Math.round(routeInfo.duration)})}
-                    </p>
-                  </div>
-                  <div className="flex-1 text-center">
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{ui("Khoảng cách")}</p>
-                    <p className="text-lg font-black text-gray-900">{routeInfo.distance.toFixed(1)} km</p>
-                  </div>
-                </div>
-              )}
+
             </div>
           </div>
         )}

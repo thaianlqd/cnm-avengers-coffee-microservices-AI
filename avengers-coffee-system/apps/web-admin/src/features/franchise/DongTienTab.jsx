@@ -1,3 +1,4 @@
+import { PaginatedList } from '../../components/console/CompactPagination'
 import { getAdminAccessToken } from '../../lib/adminFetch'
 import { useState, useEffect, useCallback } from 'react'
 import { API_BASE_URL } from '../admin-dashboard/constants'
@@ -130,7 +131,7 @@ export function DongTienTab() {
             </tr>
           </thead>
           <tbody>
-            {danh_sach.map(d => {
+            <PaginatedList items={danh_sach} resetKey={JSON.stringify(filter)} layout="table" columns={5}>{d => {
               const lp = LOAI_PHIEU[d.loai_phieu] || { label: d.loai_phieu || '?', color: '#374151', bg: '#e5e7eb' }
               return (
                 <tr key={d.id} style={{ background: '#fff', borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
@@ -147,7 +148,7 @@ export function DongTienTab() {
                   <td style={{ padding: '12px', fontSize: 13, color: '#6b7280' }}>{d.ghi_chu || '-'}</td>
                 </tr>
               )
-            })}
+            }}</PaginatedList>
             {danh_sach.length === 0 && (
               <tr>
                 <td colSpan="5" style={{ textAlign: 'center', padding: 40, color: '#9ca3af', background: '#fff', borderRadius: 8 }}>Chưa có phiếu thu/chi nào.</td>

@@ -30,6 +30,11 @@ export class ShipperService {
   ) {}
 
   private branchCache: { data: any[]; expiresAt: number } | null = null;
+  private requireReadyForOrders(shipper: Shipper) {
+    if (shipper.status !== 'ACTIVE') {
+      throw new BadRequestException('Tài xế chưa bật Sẵn sàng nhận đơn. Vui lòng chọn tài xế đang sẵn sàng.');
+    }
+  }
   private readonly IDENTITY_SERVICE_URL = process.env.IDENTITY_SERVICE_URL || 'http://identity-service:3001';
 
   async layDanhSachChiNhanh(): Promise<any[]> {
@@ -201,7 +206,7 @@ export class ShipperService {
         full_name: `Shipper ${usernameSlug}`,
         phone: `09${Date.now().toString().slice(-8)}`,
         email: null,
-        status: 'ACTIVE',
+        status: 'INACTIVE',
         branch_code: 'HCM_DIEN_BIEN_PHU',
         rating: 4.8,
         password: normalizedPassword,
@@ -237,7 +242,7 @@ export class ShipperService {
 
     await this.shipperRepo.update(
       { id: shipperId },
-      { current_latitude: numLat, current_longitude: numLng, status: 'ACTIVE' },
+      { current_latitude: numLat, current_longitude: numLng },
     );
 
     // Broadcast vị trí tài xế qua WebSocket tới khách và xóa cache Redis để thông tin luôn cập nhật tức thì
@@ -279,6 +284,9 @@ export class ShipperService {
   }
 
   async updateShipperStatus(shipperId: string, status: 'ACTIVE' | 'INACTIVE' | 'ON_BREAK') {
+    if (!['ACTIVE', 'INACTIVE', 'ON_BREAK'].includes(status)) {
+      throw new BadRequestException('Trạng thái nhận đơn không hợp lệ.');
+    }
     await this.shipperRepo.update({ id: shipperId }, { status });
     return { success: true, status };
   }
@@ -440,6 +448,8 @@ export class ShipperService {
       }
       throw new BadRequestException('Đơn hàng này đã được Shipper khác nhận');
     }
+
+    this.requireReadyForOrders(shipper);
 
     // Hủy delivery record cũ nếu có (FAILED/CANCELLED/DELIVERED)
     if (existing) {
@@ -903,7 +913,7 @@ export class ShipperService {
       phone: data.phone || data.phone_number || '0900000000',
       email: data.email || null,
       branch_code: data.branch_code || 'MAC_DINH_CHI',
-      status: data.status || 'ACTIVE',
+      status: 'INACTIVE',
       vehicle_type: data.vehicle_type || 'MOTORBIKE',
       vehicle_plate: data.vehicle_plate || '59X1-12345',
     });
@@ -941,7 +951,7 @@ export class ShipperService {
 
     const defaultPass = String(newPassword || '123456').trim();
     shipper.password = defaultPass;
-    shipper.status = 'ACTIVE';
+    shipper.status = 'INACTIVE';
     await this.shipperRepo.save(shipper);
 
     // Xóa cache nhóm đơn kẹt trong Redis để reset sạch phiên giao dịch
@@ -1058,6 +1068,7 @@ export class ShipperService {
 
     const shipper = await this.shipperRepo.findOne({ where: { id: shipperId } });
     if (!shipper) throw new NotFoundException('Shipper không tồn tại');
+    this.requireReadyForOrders(shipper);
 
     // Chặn nếu nhân viên gán đơn khác chi nhánh của shipper
     if (shipper.branch_code && donHang.co_so_ma) {
@@ -1390,6 +1401,7 @@ export class ShipperService {
 
     const shipper = await this.shipperRepo.findOne({ where: { id: shipperId } });
     if (!shipper) throw new NotFoundException('Tài xế không tồn tại.');
+    this.requireReadyForOrders(shipper);
 
     const branches = await this.layDanhSachChiNhanh();
     const acceptedDeliveries: any[] = [];

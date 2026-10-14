@@ -36,6 +36,8 @@ def validate_action(value):
             values = choice if field == 'toppings' else [choice]
             if not isinstance(values, list) or len(values) > 16 or any(not isinstance(v, str) or not 1 <= len(v) <= 120 for v in values):
                 raise ValueError('invalid_ui_option_value')
+            if len(values) != len(set(values)):
+                raise ValueError('duplicate_ui_option_value')
     return deepcopy(value)
 
 
@@ -93,7 +95,7 @@ def action_envelope(action, turn):
             elif group.get('required') and not group.get('fixed') and not item.get('use_defaults'):
                 raise GroundingError('ui_required_option_missing', domain)
         commands.append({'intent': 'CONFIGURE_PRODUCT', 'args': {
-            'target': {'kind': 'pending_ordinal', 'index': row.get('selection_index', next(i for i, r in enumerate(rows, 1) if r['product_id'] == row['product_id']))},
+            'target': {'kind': 'pending_ordinal', 'index': row.get('selection_index') or next(i for i, r in enumerate(rows, 1) if r['product_id'] == row['product_id'])},
             'options': choices, 'quantity': item.get('quantity', row.get('quantity', 1)),
             **({'use_defaults': True} if item.get('use_defaults') else {})}})
     return {'kind': 'commands', 'message': None, 'commands': commands}

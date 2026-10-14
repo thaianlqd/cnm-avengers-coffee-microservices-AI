@@ -45,7 +45,7 @@ export function MainShell() {
   const renderContent = () => {
     switch (activeTab) {
       case 'Dashboard': return sessionRole === 'ADMIN' ? <AdminDashboardScreen /> : <DashboardScreen />
-      case 'Messages': return <StaffInboxScreen onExit={() => setActiveTab('Dashboard')} />
+      case 'Messages': return <StaffInboxScreen key={admin?.maNguoiDung || admin?.ma_nguoi_dung || admin?.id || admin?.tenDangNhap} onExit={() => setActiveTab('Dashboard')} />
       case 'Orders': return <OrdersScreen />
       case 'Inventory': return <InventoryScreen />
       case 'MenuAdmin': return <AdminMenuScreen />

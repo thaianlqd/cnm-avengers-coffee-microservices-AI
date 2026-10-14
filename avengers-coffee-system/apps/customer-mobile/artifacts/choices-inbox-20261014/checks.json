@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-14",
+  "customer_and_mobile_unit_tests": {
+    "passed": 81,
+    "failed": 0
+  },
+  "admin_unit_ssr_tests": {
+    "passed": 19,
+    "failed": 0
+  },
+  "ai_offline_regression": {
+    "passed": 215,
+    "failed": 0,
+    "network": "none",
+    "provider": "mocked"
+  },
+  "builds": {
+    "web_customer": "PASS",
+    "web_admin": "PASS",
+    "customer_expo_web_ios_android": "PASS",
+    "admin_expo_web_ios_android": "PASS"
+  },
+  "browser_qa": {
+    "passed": 7,
+    "failed": 0,
+    "scenarios": [
+      "customer web batch/select/options",
+      "customer Expo web batch/select/options",
+      "manager web inbox",
+      "manager Expo web inbox",
+      "staff web inbox",
+      "staff Expo web inbox",
+      "admin menu six aligned columns"
+    ],
+    "customer_widths": [
+      320,
+      390,
+      768,
+      1440
+    ],
+    "real_api_requests_sent": 0,
+    "websockets": "intercepted and closed",
+    "fixtures_only": true,
+    "unread_launcher_badge": "PASS"
+  },
+  "targeted_admin_mobile_eslint": "PASS",
+  "local_ai_container": {
+    "state": "running",
+    "startup_complete": true,
+    "startup_tracebacks": 0,
+    "startup_errors": 0
+  },
+  "limits": [
+    "Native iOS/Android bundles built; physical devices/emulators were not exercised.",
+    "No live LLM/provider, checkout/payment or customer-message tests."
+  ],
+  "agent_commit_push": false
+}

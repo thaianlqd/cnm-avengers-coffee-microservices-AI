@@ -89,7 +89,7 @@ try {
   await page.getByRole('tab', { name: 'Nhân viên', exact: true }).click()
   await page.getByRole('tab', { name: 'Trợ lý AI', exact: true }).click()
   assert(await page.locator('body').innerText().then(text => text.includes('Cà Phê Sữa Nóng')))
-  await page.getByRole('button', { name: 'Thêm Cà Phê Sữa Nóng', exact: true }).click()
+  await page.getByRole('button', { name: 'Chọn Cà Phê Sữa Nóng', exact: true }).click()
   await page.waitForTimeout(100)
   await page.waitForTimeout(600)
   const mic = page.getByRole('button', { name: 'Ghi âm tin nhắn', exact: true })

@@ -34,11 +34,11 @@ def _boundary(monkeypatch, *, fail_save=False, durable=None, fail_durable=False)
     lock = threading.Lock()
     calls = []
 
-    def claim(_conversation, _session, turn, message, product):
+    def claim(_conversation, _session, turn, message, product, action_fingerprint=None):
         with lock:
             previous = responses.get(turn)
             if previous:
-                if previous['_request_message'] != message or previous['_selected_product_id'] != product:
+                if previous['_request_message'] != message or previous['_selected_product_id'] != product or previous.get('_action_fingerprint') != action_fingerprint:
                     return {'status': 'conflict'}
                 return {'status': previous.get('_turn_status') if previous.get('_turn_status') in {'in_progress', 'outcome_unknown'} else 'completed',
                         'response': dict(previous)}
@@ -48,7 +48,7 @@ def _boundary(monkeypatch, *, fail_save=False, durable=None, fail_durable=False)
                 return {'status': 'blocked_by_turn', 'blocking_turn_id': blocking[0],
                         'blocking_status': blocking[1]['_turn_status']}
             responses[turn] = {'_turn_status': 'in_progress', '_request_message': message,
-                               '_selected_product_id': product, '_claimed_at': time.time()}
+                               '_selected_product_id': product, '_action_fingerprint': action_fingerprint, '_claimed_at': time.time()}
             return {'status': 'claimed', 'history': list(messages)}
 
     def mark_unknown(_conversation, _session, turn, phase):
@@ -71,7 +71,7 @@ def _boundary(monkeypatch, *, fail_save=False, durable=None, fail_durable=False)
             messages.extend([{'role': 'user', 'content': kwargs['user_message']},
                              {'role': 'assistant', 'content': kwargs['result']['reply']}])
             responses[turn] = {**kwargs['result'], '_request_message': kwargs['user_message'],
-                               '_selected_product_id': kwargs['selected_product_id']}
+                               '_selected_product_id': kwargs['selected_product_id'], '_action_fingerprint': kwargs.get('action_fingerprint')}
 
     monkeypatch.setattr(conversation_memory, 'claim_turn', claim)
     monkeypatch.setattr(conversation_memory, 'mark_outcome_unknown', mark_unknown)
@@ -88,10 +88,10 @@ def _boundary(monkeypatch, *, fail_save=False, durable=None, fail_durable=False)
     monkeypatch.setattr(agent_service, 'run_agent', run_agent)
     conversation_id = str(uuid.uuid4())
     request = Request({'type': 'http', 'headers': []})
-    def send(turn='turn-1', message='cho tôi lấy tại quán và chuyển khoản qr nhé', product=None):
+    def send(turn='turn-1', message='cho tôi lấy tại quán và chuyển khoản qr nhé', product=None, ui_action=None):
         return main.agent_chat(main.AgentChatRequest(session_id='customer', conversation_id=conversation_id,
                                                     client_message_id=turn, message=message,
-                                                    selected_product_id=product), request)
+                                                    selected_product_id=product, ui_action=ui_action), request)
     return send, calls, messages, responses
 
 
@@ -457,3 +457,23 @@ def test_recovery_does_not_trust_ram_only_business_cache(monkeypatch):
     monkeypatch.setattr(cart_manager, '_ensure_table_exists', lambda *_: None)
     assert cart_manager.get_checkout_prefs(session)['processed_order_turns']['T']['result']['reply'] == 'done'
     assert cart_manager.load_durable_processed_turn(session, 'T') is None
+
+
+def test_ui_action_http_replay_binds_options_and_snapshot(monkeypatch):
+    send, calls, messages, _responses = _boundary(monkeypatch)
+    action = {'type': 'configure_products', 'snapshot': 'options-v1',
+              'items': [{'product_id': '38', 'options': {'size': 'Vừa'}}]}
+    first = send(message='Áp dụng tùy chọn', ui_action=action)
+    assert send(message='Áp dụng tùy chọn', ui_action=action).model_dump() == first.model_dump()
+    assert len(calls) == 1 and len(messages) == 2
+    changed = {**action, 'items': [{'product_id': '38', 'options': {'size': 'Lớn'}}]}
+    with pytest.raises(HTTPException) as conflict:
+        send(message='Áp dụng tùy chọn', ui_action=changed)
+    assert conflict.value.status_code == 409 and len(calls) == 1
+
+
+def test_malformed_ui_action_http_rejected_before_claim_or_graph(monkeypatch):
+    send, calls, messages, responses = _boundary(monkeypatch)
+    with pytest.raises(HTTPException) as invalid:
+        send(ui_action={'type': 'confirm_checkout', 'snapshot': 'fake', 'items': [{'product_id': '38'}]})
+    assert invalid.value.status_code == 400 and not calls and not messages and not responses

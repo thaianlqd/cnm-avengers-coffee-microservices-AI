@@ -1,3 +1,4 @@
+import { PaginatedList } from '../../../components/console/CompactPagination'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
 import { getAdminAccessToken, getAdminSession } from '../../../lib/adminFetch'
@@ -692,7 +693,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {shippers.map(s => {
+                  <PaginatedList items={shippers} resetKey={JSON.stringify([filterStatus,filterBranch,searchQ,activeTab])} layout="table" columns={8}>{s => {
                     const st = SHIPPER_STATUS_CONFIG[s.status] || SHIPPER_STATUS_CONFIG.INACTIVE
                     return (
                       <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -824,7 +825,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                         </td>
                       </tr>
                     )
-                  })}
+                  }}</PaginatedList>
                 </tbody>
               </table>
               {shippers.length === 0 && !shippersLoading && (
@@ -1077,7 +1078,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {kpiData.shippers.map((s, i) => {
+                      <PaginatedList items={kpiData.shippers} resetKey={JSON.stringify([filterStatus,filterBranch,searchQ,activeTab])} layout="table" columns={6}>{(s, i) => {
                         const total = (s.delivered || 0) + (s.failed || 0)
                         const rate = total > 0 ? Math.round(s.delivered / total * 100) : 0
                         return (
@@ -1115,7 +1116,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                             </td>
                           </tr>
                         )
-                      })}
+                      }}</PaginatedList>
                     </tbody>
                   </table>
                 </div>
@@ -1258,7 +1259,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {financeData.payments.map((p, i) => (
+                  <PaginatedList items={financeData.payments} resetKey={JSON.stringify([filterStatus,filterBranch,searchQ,activeTab])} layout="table" columns={6}>{(p, i) => (
                     <tr key={p.id || i} style={{ borderBottom: '1px solid #f1f5f9' }}>
                       <td style={{ padding: '0.85rem 1rem', fontWeight: '700', color: '#0f172a' }}>
                         {p.shipper_name || p.shipper_id?.slice(0, 8)}
@@ -1290,7 +1291,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                         {fmtDate(p.paid_at)}
                       </td>
                     </tr>
-                  ))}
+                  )}</PaginatedList>
                 </tbody>
               </table>
             ) : (
@@ -1402,7 +1403,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {codRemits.map((r, i) => {
+                    <PaginatedList items={codRemits} resetKey={JSON.stringify([filterStatus,filterBranch,searchQ,activeTab])} layout="table" columns={7}>{(r, i) => {
                       const isPending = r.status === 'PENDING'
                       const isConfirmed = r.status === 'CONFIRMED'
                       return (
@@ -1511,7 +1512,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                           </td>
                         </tr>
                       )
-                    })}
+                    }}</PaginatedList>
                   </tbody>
                 </table>
               </div>

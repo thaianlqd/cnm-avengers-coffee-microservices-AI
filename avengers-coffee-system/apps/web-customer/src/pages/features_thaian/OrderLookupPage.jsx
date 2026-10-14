@@ -858,7 +858,7 @@ export default function OrderLookupPage({
                 <div className="rounded-2xl overflow-hidden border border-gray-200/80 relative shadow-inner">
                   {(() => {
                     const matchedB = getBranch(currentOrder?.co_so_ma || currentTracking?.branch_code);
-                    const storeLoc = currentTracking?.store_location || (matchedB?.vi_do && matchedB?.kinh_do ? { latitude: Number(matchedB.vi_do), longitude: Number(matchedB.kinh_do) } : { latitude: 10.80734, longitude: 106.717612 });
+                    const storeLoc = currentTracking?.store_location || (matchedB?.vi_do && matchedB?.kinh_do ? { latitude: Number(matchedB.vi_do), longitude: Number(matchedB.kinh_do) } : null);
 
                     let destLoc = currentTracking?.destination_location || (currentOrder?.delivery_latitude ? { latitude: Number(currentOrder.delivery_latitude), longitude: Number(currentOrder.delivery_longitude) } : null);
                     if (!destLoc || !destLoc.latitude) {
@@ -867,7 +867,7 @@ export default function OrderLookupPage({
                       if (resolved) {
                         destLoc = { latitude: resolved.lat, longitude: resolved.lng };
                       } else {
-                        destLoc = { latitude: storeLoc.latitude + 0.005, longitude: storeLoc.longitude + 0.005 };
+                        destLoc = null;
                       }
                     }
 
@@ -880,7 +880,7 @@ export default function OrderLookupPage({
                         destinationLocation={destLoc}
                         shipperLocation={orderResult?.shipper_location?.latitude ? orderResult.shipper_location : null}
                         shipperName={currentShipper?.full_name || 'Tài xế Avengers'}
-                        deliveryStatus={currentOrder?.trang_thai_don_hang}
+                        deliveryStatus={orderResult?.shipper_delivery?.status || currentOrder?.trang_thai_don_hang}
                         storeAddress={addr}
                       />
                     );

@@ -1,3 +1,4 @@
+import { PaginatedList } from '../../../components/console/CompactPagination'
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   ArrowLeft,
@@ -388,7 +389,7 @@ export function BranchDetailReviewsView({ branch, onBack }) {
             ) : (
               /* Review Cards List */
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {filteredItems.map((r) => {
+                <PaginatedList items={filteredItems} resetKey={JSON.stringify([branchCode,starFilter])}>{(r) => {
                   const customerName = r.ten_nguoi_dung || 'Khách hàng Avengers Coffee';
                   const firstChar = customerName.charAt(0).toUpperCase();
 
@@ -456,7 +457,7 @@ export function BranchDetailReviewsView({ branch, onBack }) {
                       )}
                     </div>
                   );
-                })}
+                }}</PaginatedList>
               </div>
             )}
           </div>

@@ -1,3 +1,4 @@
+import { PageNumbers } from '../../../components/console/CompactPagination'
 import React, { useState, useEffect, useRef } from 'react';
 import {
   BarChart3,
@@ -1050,26 +1051,7 @@ export function ManagerSurveyPanel({
                     Trang trước
                   </button>
 
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
-                    <button
-                      key={pageNum}
-                      type="button"
-                      onClick={() => setCurrentPage(pageNum)}
-                      style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '6px',
-                        border: pageNum === currentPage ? 'none' : '1px solid #cbd5e1',
-                        backgroundColor: pageNum === currentPage ? 'var(--primary)' : '#ffffff',
-                        color: pageNum === currentPage ? '#ffffff' : '#334155',
-                        fontWeight: '700',
-                        fontSize: '0.8125rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {pageNum}
-                    </button>
-                  ))}
+                  <PageNumbers page={currentPage} totalPages={totalPages} onChange={setCurrentPage} />
 
                   <button
                     type="button"

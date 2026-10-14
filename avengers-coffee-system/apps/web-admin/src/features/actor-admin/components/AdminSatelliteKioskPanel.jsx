@@ -1,3 +1,4 @@
+import { PaginatedList } from '../../../components/console/CompactPagination'
 import { useState, useEffect, useCallback } from 'react'
 import { MapPin, Store, Plus, Edit2, RefreshCw, ChevronDown, ChevronRight, Map, X, Check, UserPlus, Package, PackageCheck } from 'lucide-react'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
@@ -263,7 +264,7 @@ export function AdminSatelliteKioskPanel({ session }) {
               <span style={{ fontSize: 13, color: '#94a3b8', alignSelf: 'center' }}>{filteredKiosks.length} kết quả</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(100%,340px),1fr))', gap: 14 }}>
-              {filteredKiosks.map(k => {
+              <PaginatedList items={filteredKiosks} resetKey={JSON.stringify([filterZone,filterStatus,activeView])}>{k => {
                 const vtm = LOAI_VI_TRI_META[k.loai_vi_tri] || {}
                 return (
                   <div key={k.ma_chi_nhanh}
@@ -303,7 +304,7 @@ export function AdminSatelliteKioskPanel({ session }) {
                     </div>
                   </div>
                 )
-              })}
+              }}</PaginatedList>
               {filteredKiosks.length === 0 && (
                 <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
                   <MapPin size={40} style={{ marginBottom: 12, opacity: 0.4 }} />
@@ -329,7 +330,7 @@ export function AdminSatelliteKioskPanel({ session }) {
                 </div>
               ))}
             </div>
-            {(stats.theo_cum || []).map(cluster => (
+            <PaginatedList items={stats.theo_cum || []} resetKey={activeView}>{cluster => (
               <div key={cluster.zone.id} style={{ background: 'white', border: '1.5px solid #f1f5f9', borderRadius: 14, overflow: 'hidden', marginBottom: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
                 <button onClick={() => setExpandedZone(expandedZone === cluster.zone.id ? null : cluster.zone.id)}
                   style={{ width: '100%', padding: '14px 20px', border: 'none', background: expandedZone === cluster.zone.id ? 'var(--primary-light)' : 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -346,7 +347,7 @@ export function AdminSatelliteKioskPanel({ session }) {
                 </button>
                 {expandedZone === cluster.zone.id && (
                   <div style={{ padding: '0 20px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {cluster.diem_ban.map(k => (
+                    <PaginatedList items={cluster.diem_ban} resetKey={JSON.stringify([filterZone,filterStatus,activeView])}>{k => (
                       <div key={k.ma_chi_nhanh} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: '#f8fafc', borderRadius: 8 }}>
                         <MapPin size={13} color="var(--primary)" />
                         <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#334155' }}>{k.ten_chi_nhanh}</span>
@@ -359,18 +360,18 @@ export function AdminSatelliteKioskPanel({ session }) {
                           {k.trang_thai === 'ACTIVE' ? 'OK' : 'Tạm dừng'}
                         </span>
                       </div>
-                    ))}
+                    )}</PaginatedList>
                   </div>
                 )}
                 </div>
-              ))}
+              )}</PaginatedList>
             </div>
           )}
 
           {/* ZONES VIEW */}
           {activeView === 'zones' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 14 }}>
-              {zones.map(z => (
+              <PaginatedList items={zones} resetKey={JSON.stringify([filterZone,filterStatus,activeView])}>{z => (
                 <div key={z.id} style={{ background: 'white', border: '1.5px solid #f1f5f9', borderRadius: 14, padding: '1.25rem', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                     <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--primary-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -389,7 +390,7 @@ export function AdminSatelliteKioskPanel({ session }) {
                     </div>
                   </div>
                 </div>
-              ))}
+              )}</PaginatedList>
               {zones.length === 0 && <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>Chưa có khu vực nào.</div>}
             </div>
           )}
