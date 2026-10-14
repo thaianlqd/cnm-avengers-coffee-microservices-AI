@@ -16,6 +16,10 @@ def tags(run):
         raise ValueError('invalid RunId')
     return [dict(Key=k,Value=v) for k,v in {**OWNERS,'RunId':run}.items()]
 
+def target_ingress(target_group,generator_group):
+    cluster=[{'IpProtocol':protocol,'FromPort':port,'ToPort':port,'UserIdGroupPairs':[{'GroupId':target_group}]} for protocol,port in [('tcp',6443),('tcp',10250),('udp',8472),('tcp',8050)]]
+    return cluster+[{'IpProtocol':'tcp','FromPort':30300,'ToPort':30300,'UserIdGroupPairs':[{'GroupId':generator_group}]}]
+
 def owned(resource, run):
     actual={t['Key']:t['Value'] for t in resource.get('Tags',[])}
     return all(actual.get(t['Key'])==t['Value'] for t in tags(run))
@@ -79,9 +83,7 @@ def probe(run, evidence):
               '--description',f'Temporary private AWS 3K {role}', '--vpc-id','vpc-019ebb919faf68752',
               '--tag-specifications',json.dumps([{'ResourceType':'security-group','Tags':tags(run)}]))['GroupId']
         # All cluster protocols are confined to the target group itself.
-        aws('ec2','authorize-security-group-ingress','--group-id',groups['target'],'--ip-permissions',json.dumps([
-          {'IpProtocol':'-1','UserIdGroupPairs':[{'GroupId':groups['target']}]},
-          {'IpProtocol':'tcp','FromPort':30300,'ToPort':30300,'UserIdGroupPairs':[{'GroupId':groups['generator']}]}]))
+        aws('ec2','authorize-security-group-ingress','--group-id',groups['target'],'--ip-permissions',json.dumps(target_ingress(groups['target'],groups['generator'])))
         # No SSH/public application ingress. Probe guests auto-terminate in 15 minutes.
         boot='#!/bin/bash\nset -eu\nshutdown -h +15\n'
         result['launch_requested_at']=datetime.datetime.now(datetime.timezone.utc).isoformat()

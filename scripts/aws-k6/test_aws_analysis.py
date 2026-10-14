@@ -10,7 +10,7 @@ def fixture(folder,fd=10,restart=0,metrics=True):
     for i in range(47):
         t=(start+dt.timedelta(seconds=i*5)).isoformat()
         rows.append({'observed_at':t,'pods':[{'uid':'pod','phase':'Running','containers':[{'restartCount':restart if i>12 else 0}]}],'hpa':[{'name':'api-gateway','status':{'currentReplicas':2,'desiredReplicas':2,'currentMetrics':[{'resource':{'name':'cpu'}}],'conditions':[{'type':'ScalingActive','status':'True'}]}}],'nodes':[{'conditions':[{'type':'Ready','status':'True'},{'type':'MemoryPressure','status':'False'}]}],'top_nodes':'node 30m 1% 100Mi 1%'})
-        generators.append({'observed_at':t,'cpu_ticks':[0,0,0,100+i*100,0,0,0,0],'memory_KiB':{'MemAvailable':1024*1024},'processes':[{'pid':1,'name':'k6','user_ticks':i,'system_ticks':0,'rss_bytes':1000000,'fds':fd}],'network_bytes':{'eth0':{'rx':i*1000,'tx':i*1000}}})
+        generators.append({'observed_at':t,'cpu_ticks':[0,0,0,100+i*100,0,0,0,0],'memory_KiB':{'MemAvailable':1024*1024},'processes':[{'pid':1,'name':'k6','user_ticks':i,'system_ticks':0,'rss_bytes':1000000,'fds':fd}],'network_bytes':{'eth0':{'rx':i*1000,'tx':i*1000}},'ena_valid':True,'ena':{'eth0':{'bw_in_allowance_exceeded':0,'bw_out_allowance_exceeded':0,'pps_allowance_exceeded':0,'conntrack_allowance_exceeded':0}}})
     for name,data in [('target.jsonl',rows),('generator.jsonl',generators)]:(folder/name).write_text(''.join(json.dumps(r)+'\n' for r in data))
     for name in ('post-smoke.json','recovery.json'):(folder/name).write_text('{"passed":true}')
 class Gates(unittest.TestCase):

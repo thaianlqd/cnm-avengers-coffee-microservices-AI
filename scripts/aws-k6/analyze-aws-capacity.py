@@ -17,6 +17,12 @@ def analyze(folder):
     if (g['memory_available_min_KiB'] or 0)<262144:generator_reasons.append('generator available RAM <256MiB')
     if g['k6_fds_peak']>=float(meta['fd_soft'])*.8:generator_reasons.append('generator FD headroom <20%')
     if not gcov['sufficient']:generator_reasons.append('generator hold observer coverage invalid')
+    ena_deltas={}
+    if samples:
+        for iface,values in samples[-1].get('ena',{}).items():
+            for name,v in values.items():ena_deltas[iface+'/'+name]=v-samples[0].get('ena',{}).get(iface,{}).get(name,v)
+    if any(v>0 for v in ena_deltas.values()):generator_reasons.append('generator ENA allowance exceeded')
+    if not samples or sum(r.get('ena_valid') is True for r in samples)<len(samples)*.8:generator_reasons.append('generator ENA observer coverage invalid')
     log=(folder/'k6.log').read_text()
     if any(t in log for t in ('too many open files','cannot assign requested address','socket exhaustion')):generator_reasons.append('generator socket exhaustion')
     required=('http_req_failed','checks','http_req_duration','http_req_failed{phase:hold}','checks{phase:hold}','http_req_duration{phase:hold}','http_reqs{phase:hold}')
@@ -54,6 +60,6 @@ def analyze(folder):
     if recovery.get('passed') is not True:reasons.append('natural recovery missing/failed')
     reasons=list(dict.fromkeys(reasons))
     def value(name,key):return summary.get(name,{}).get('values',{}).get(key)
-    result={'vus':meta['vus'],'hold_seconds':meta['hold_seconds'],'requests':value('http_reqs','count'),'rps':value('http_reqs','rate'),'failure_rate':value('http_req_failed','rate'),'check_rate':value('checks','rate'),'p95_ms':value('http_req_duration','p(95)'),'hold_p95_ms':value('http_req_duration{phase:hold}','p(95)'),'p99_ms':value('http_req_duration','p(99)'), 'http_pass':http_pass,'restart_delta':delta,'hpa_peak':peak,'node_cpu_peak_percent':node_peak,'pending_pod_samples':pending,'target_hold_coverage':tcov,'generator':g,'generator_hold_coverage':gcov,'generator_cpu_saturation_longest_samples':longest,'generator_adequate':not generator_reasons,'generator_reasons':generator_reasons,'target_reasons':reasons,'post_smoke':smoke.get('passed'),'natural_recovery':recovery.get('passed'),'status':'STABLE PASS' if not reasons and not generator_reasons else 'INVALID GENERATOR' if generator_reasons else 'FAIL'}
+    result={'vus':meta['vus'],'hold_seconds':meta['hold_seconds'],'requests':value('http_reqs','count'),'rps':value('http_reqs','rate'),'failure_rate':value('http_req_failed','rate'),'check_rate':value('checks','rate'),'p95_ms':value('http_req_duration','p(95)'),'hold_p95_ms':value('http_req_duration{phase:hold}','p(95)'),'p99_ms':value('http_req_duration','p(99)'), 'http_pass':http_pass,'restart_delta':delta,'hpa_peak':peak,'node_cpu_peak_percent':node_peak,'pending_pod_samples':pending,'target_hold_coverage':tcov,'generator':g,'generator_hold_coverage':gcov,'generator_cpu_saturation_longest_samples':longest,'ena_allowance_deltas':ena_deltas,'generator_adequate':not generator_reasons,'generator_reasons':generator_reasons,'target_reasons':reasons,'post_smoke':smoke.get('passed'),'natural_recovery':recovery.get('passed'),'status':'STABLE PASS' if not reasons and not generator_reasons else 'INVALID GENERATOR' if generator_reasons else 'FAIL'}
     (folder/'analysis.json').write_text(json.dumps(result,indent=2)+'\n');return result
 if __name__=='__main__':print(json.dumps(analyze(Path(sys.argv[1])),indent=2))

@@ -10,6 +10,12 @@ class OwnershipTests(unittest.TestCase):
         for i in range(5):
             t=m.tags(RUN);t.pop(i);self.assertFalse(m.owned({'Tags':t},RUN))
         self.assertFalse(m.owned({'Tags':m.tags(RUN)},RUN[:-6]+'aaaaaa'))
+    def test_nodeport_only_generator_no_public_or_all_protocol_ingress(self):
+        rules=m.target_ingress('sg-target','sg-generator')
+        self.assertEqual([x['UserIdGroupPairs'][0]['GroupId'] for x in rules if x['FromPort']==30300],['sg-generator'])
+        self.assertTrue(all(x['IpProtocol'] in ('tcp','udp') and not x.get('IpRanges') for x in rules))
+        self.assertNotIn(22,[x['FromPort'] for x in rules])
+
     def test_run_id_injection_rejected(self):
         for r in ('',RUN+'/',RUN+';echo hello','other-phase'):
             with self.assertRaises(ValueError):m.tags(r)

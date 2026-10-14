@@ -66,7 +66,7 @@ def start(folder,run,evidence):
         groups={}
         for role in ('target','generator'):
             groups[role]=a.aws('ec2','create-security-group','--group-name',f'avengers-3k-{role}-{run}-private','--description','Ephemeral AWS private capacity','--vpc-id','vpc-019ebb919faf68752','--tag-specifications',json.dumps([{'ResourceType':'security-group','Tags':a.tags(run)}]))['GroupId']
-        a.aws('ec2','authorize-security-group-ingress','--group-id',groups['target'],'--ip-permissions',json.dumps([{'IpProtocol':'-1','UserIdGroupPairs':[{'GroupId':groups['target']}]},{'IpProtocol':'tcp','FromPort':30300,'ToPort':30300,'UserIdGroupPairs':[{'GroupId':groups['generator']}]}]))
+        a.aws('ec2','authorize-security-group-ingress','--group-id',groups['target'],'--ip-permissions',json.dumps(a.target_ingress(groups['target'],groups['generator'])))
         state['groups']=groups
         for role in ('target1','target2','target3','generator1'):
             result=a.aws('ec2','run-instances','--image-id','ami-0f5e1e0151e5b95ed','--instance-type','m7i-flex.large','--count','1','--subnet-id','subnet-0c80e4a6bb54962d6','--security-group-ids',groups['target' if role.startswith('target') else 'generator'],
