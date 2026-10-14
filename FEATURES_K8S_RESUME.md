@@ -1,6 +1,6 @@
 # FEATURES_K8S — bàn giao đang dở (14/10/2026)
 
-**PAUSED theo yêu cầu user chuẩn bị tắt máy. AWS đã cleanup toàn bộ.**
+**RESUMED. Current run 3k-aws-20261014T140730Z-e7a0d2; 250 VU stable once on two generators.**
 Code/evidence nằm trên `features_k8s`; không merge, không PR, không push main/branch_thaian.
 
 ## Mở lại tối nay
@@ -83,3 +83,13 @@ không phải actualbill. Không giữ EC2 qua đêm.
 Giới hạn giữ nguyên: <=$5; target <=4, generators <=3, active fleet <=7;
 không EKS/RDS/NATGateway/planupgrade/IAMchanges/destructiveDB/publicNodePort.
 **Task còn dở. Chưa qualified3K. User tự finalmerge.**
+
+## Active resume checkpoint
+
+Pool config implemented and pushed as `da8ca6f7`; AWS overlay30000.
+New run evidence: `/Users/thaian/Documents/KLTN_Avengers_Coffee_System/cnm-avengers-coffee-microservices-AI-k8s/k8s/verification/3k-aws-capacity/3k-aws-20261014T140730Z-e7a0d2`.
+Single-generator250 HTTP latency PASS but INVALID GENERATOR (CPU98%).
+Two-generator250 STABLE PASS once (p95659.20, hold640.11, 0%errors, checks100%).
+Next:500 independent; stop first failure, scale generators only for measured adequacy, max3.
+Fleet3targets+2generators currently active; cleanup mandatory before ending.
+Historical paused handoff above is retained as previous-state evidence.

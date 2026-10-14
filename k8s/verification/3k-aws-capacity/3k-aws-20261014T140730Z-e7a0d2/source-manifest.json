@@ -1,0 +1,30 @@
+{
+  "commit": "da8ca6f74b04685f6b337630440184c70f5336bc",
+  "main_baseline": "9eaf3b0b72f88acd7356ad71b2f7373ed3c2f36b",
+  "starting_features_k8s": "978fabba45dd48bb2cc63419b0be8bd66ca492c9",
+  "platform": "linux/amd64",
+  "sha256": {
+    "k8s/overlays/aws-capacity/kustomization.yaml": "9b85f067218fdc02942773828c3798044e011c816ef1a95dd463c4f6690b65d6",
+    "k8s/overlays/aws-capacity/hpa.yaml": "e7d3acc2a55affd6e1b737455530a083057e215f351d29defcd885752ce1bec3",
+    "k8s/overlays/aws-capacity/README.md": "9df0b8a74c919bfd1cd1d559ebb4efdf10372e6504b6a161611a87ccea993227",
+    "load-tests/k6/customer-browse-3k.js": "dfb9af16b94cc0b22ae53710ece3bde446831fb110a928e7573120bf3ffc4c83",
+    "avengers-coffee-system/services/ai-service/Dockerfile": "43cd5f594778f1347b8f26978784588355fabfcbe86443841578f77f0fdd7beb",
+    "avengers-coffee-system/services/menu-service/Dockerfile": "b62a2c3ee8dd16a81c256103ed598e3d937cb3901405ae006527aaf49a436a08",
+    "avengers-coffee-system/services/news-service/Dockerfile": "7cbebbd93bbb82a83798b9fc5d331685ea13503b2def03b6e08438b7f28f099b",
+    "avengers-coffee-system/services/order-service/Dockerfile": "4b0d8f2c7fe12bcc368fa9419070390c4ecf17b43b0af68207487401d8a849bf",
+    "avengers-coffee-system/services/identity-service/Dockerfile": "3c279a8085e1a7c4f099c15dc5d30d42b0163ca912edfad135521ffbd5614739",
+    "avengers-coffee-system/services/inventory-service/Dockerfile": "aa018ce8c01cfebcfca5e903b2563efb9d46e7533ca1ccdb7ff218bfb420c8d9",
+    "avengers-coffee-system/api-gateway/gateway-root/Dockerfile": "6a600919e610b6b5920bb4ed615d38460c9838c2b2e6446dbdddf81f767ddf59",
+    "k8s/media/Dockerfile": "1323ad4e25dc90d659c79922fd9d4ca5a75be8c0ef91eadba8991ea85252e47d"
+  },
+  "tests": {
+    "identity": 58,
+    "menu": 43,
+    "news": 32,
+    "gateway": 20,
+    "k8s": 24,
+    "aws": 30,
+    "aws_skips": 1
+  },
+  "runtime_overlay_sha256": "ecd8f26f8abab54c9c688d1c11e7e84027516f5c6962d3e6dfbc7756c8d1f15c"
+}

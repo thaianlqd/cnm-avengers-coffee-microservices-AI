@@ -1,0 +1,9 @@
+{
+  "observed_at": "2026-10-14T14:07:30.982888+00:00",
+  "owned_active_ec2": 0,
+  "owned_stopped_ec2": 0,
+  "owned_sg": 0,
+  "owned_ebs": 0,
+  "owned_keypair": 0,
+  "owned_endpoint": 0
+}

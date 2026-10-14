@@ -1,0 +1,42 @@
+{
+  "run_id": "3k-aws-20261014T140730Z-e7a0d2",
+  "started_at": "2026-10-14T14:07:50.565941+00:00",
+  "roles": {
+    "target1": {
+      "id": "i-06149cfceefe4ad22",
+      "private_ip": "172.31.14.153",
+      "launch_time": "2026-10-14T14:08:04+00:00",
+      "type": "m7i-flex.large"
+    },
+    "target2": {
+      "id": "i-0f07057e739a8a1fe",
+      "private_ip": "172.31.13.225",
+      "launch_time": "2026-10-14T14:08:07+00:00",
+      "type": "m7i-flex.large"
+    },
+    "target3": {
+      "id": "i-06ac56ab85931667e",
+      "private_ip": "172.31.9.192",
+      "launch_time": "2026-10-14T14:08:09+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator1": {
+      "id": "i-0f3acec864f1bd830",
+      "private_ip": "172.31.11.196",
+      "launch_time": "2026-10-14T14:08:12+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator2": {
+      "id": "i-0deab27bd84d7556b",
+      "private_ip": "172.31.13.41",
+      "launch_time": "2026-10-14T14:28:37+00:00",
+      "type": "m7i-flex.large"
+    }
+  },
+  "control_pid": null,
+  "tunnel_pid": null,
+  "groups": {
+    "target": "sg-071fab766270b6e73",
+    "generator": "sg-038ab21b06dfa6b2c"
+  }
+}

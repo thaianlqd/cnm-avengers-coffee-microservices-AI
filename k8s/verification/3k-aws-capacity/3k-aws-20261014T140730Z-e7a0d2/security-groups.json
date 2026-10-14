@@ -1,0 +1,125 @@
+[
+  {
+    "id": "sg-071fab766270b6e73",
+    "tags": [
+      {
+        "Key": "ManagedBy",
+        "Value": "codex-features-k8s"
+      },
+      {
+        "Key": "Project",
+        "Value": "avengers-coffee"
+      },
+      {
+        "Key": "RunId",
+        "Value": "3k-aws-20261014T140730Z-e7a0d2"
+      },
+      {
+        "Key": "Purpose",
+        "Value": "3k-capacity"
+      },
+      {
+        "Key": "Phase",
+        "Value": "3k-aws"
+      }
+    ],
+    "ingress": [
+      {
+        "IpProtocol": "tcp",
+        "FromPort": 30300,
+        "ToPort": 30300,
+        "UserIdGroupPairs": [
+          {
+            "UserId": "956035085549",
+            "GroupId": "sg-038ab21b06dfa6b2c"
+          }
+        ],
+        "IpRanges": [],
+        "Ipv6Ranges": [],
+        "PrefixListIds": []
+      },
+      {
+        "IpProtocol": "tcp",
+        "FromPort": 6443,
+        "ToPort": 6443,
+        "UserIdGroupPairs": [
+          {
+            "UserId": "956035085549",
+            "GroupId": "sg-071fab766270b6e73"
+          }
+        ],
+        "IpRanges": [],
+        "Ipv6Ranges": [],
+        "PrefixListIds": []
+      },
+      {
+        "IpProtocol": "tcp",
+        "FromPort": 8050,
+        "ToPort": 8050,
+        "UserIdGroupPairs": [
+          {
+            "UserId": "956035085549",
+            "GroupId": "sg-071fab766270b6e73"
+          }
+        ],
+        "IpRanges": [],
+        "Ipv6Ranges": [],
+        "PrefixListIds": []
+      },
+      {
+        "IpProtocol": "udp",
+        "FromPort": 8472,
+        "ToPort": 8472,
+        "UserIdGroupPairs": [
+          {
+            "UserId": "956035085549",
+            "GroupId": "sg-071fab766270b6e73"
+          }
+        ],
+        "IpRanges": [],
+        "Ipv6Ranges": [],
+        "PrefixListIds": []
+      },
+      {
+        "IpProtocol": "tcp",
+        "FromPort": 10250,
+        "ToPort": 10250,
+        "UserIdGroupPairs": [
+          {
+            "UserId": "956035085549",
+            "GroupId": "sg-071fab766270b6e73"
+          }
+        ],
+        "IpRanges": [],
+        "Ipv6Ranges": [],
+        "PrefixListIds": []
+      }
+    ]
+  },
+  {
+    "id": "sg-038ab21b06dfa6b2c",
+    "tags": [
+      {
+        "Key": "Project",
+        "Value": "avengers-coffee"
+      },
+      {
+        "Key": "ManagedBy",
+        "Value": "codex-features-k8s"
+      },
+      {
+        "Key": "RunId",
+        "Value": "3k-aws-20261014T140730Z-e7a0d2"
+      },
+      {
+        "Key": "Phase",
+        "Value": "3k-aws"
+      },
+      {
+        "Key": "Purpose",
+        "Value": "3k-capacity"
+      }
+    ],
+    "ingress": []
+  }
+]
