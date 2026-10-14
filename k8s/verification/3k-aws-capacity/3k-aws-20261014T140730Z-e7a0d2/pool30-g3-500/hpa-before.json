@@ -1,0 +1,336 @@
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "autoscaling/v2",
+            "kind": "HorizontalPodAutoscaler",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"autoscaling/v2\",\"kind\":\"HorizontalPodAutoscaler\",\"metadata\":{\"annotations\":{},\"labels\":{\"app.kubernetes.io/component\":\"autoscaler\",\"app.kubernetes.io/name\":\"api-gateway\",\"app.kubernetes.io/part-of\":\"avengers-coffee\"},\"name\":\"api-gateway\",\"namespace\":\"avengers-coffee\"},\"spec\":{\"behavior\":{\"scaleDown\":{\"policies\":[{\"periodSeconds\":60,\"type\":\"Pods\",\"value\":1}],\"stabilizationWindowSeconds\":120},\"scaleUp\":{\"policies\":[{\"periodSeconds\":30,\"type\":\"Pods\",\"value\":1},{\"periodSeconds\":30,\"type\":\"Percent\",\"value\":100}],\"selectPolicy\":\"Max\",\"stabilizationWindowSeconds\":0}},\"maxReplicas\":4,\"metrics\":[{\"resource\":{\"name\":\"cpu\",\"target\":{\"averageUtilization\":60,\"type\":\"Utilization\"}},\"type\":\"Resource\"}],\"minReplicas\":2,\"scaleTargetRef\":{\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"name\":\"api-gateway\"}}}\n"
+                },
+                "creationTimestamp": "2026-10-14T14:14:30Z",
+                "labels": {
+                    "app.kubernetes.io/component": "autoscaler",
+                    "app.kubernetes.io/name": "api-gateway",
+                    "app.kubernetes.io/part-of": "avengers-coffee"
+                },
+                "name": "api-gateway",
+                "namespace": "avengers-coffee",
+                "resourceVersion": "3133",
+                "uid": "72f9ae83-ae20-47fc-8630-37af18bb2e52"
+            },
+            "spec": {
+                "behavior": {
+                    "scaleDown": {
+                        "policies": [
+                            {
+                                "periodSeconds": 60,
+                                "type": "Pods",
+                                "value": 1
+                            }
+                        ],
+                        "selectPolicy": "Max",
+                        "stabilizationWindowSeconds": 120
+                    },
+                    "scaleUp": {
+                        "policies": [
+                            {
+                                "periodSeconds": 30,
+                                "type": "Pods",
+                                "value": 1
+                            },
+                            {
+                                "periodSeconds": 30,
+                                "type": "Percent",
+                                "value": 100
+                            }
+                        ],
+                        "selectPolicy": "Max",
+                        "stabilizationWindowSeconds": 0
+                    }
+                },
+                "maxReplicas": 4,
+                "metrics": [
+                    {
+                        "resource": {
+                            "name": "cpu",
+                            "target": {
+                                "averageUtilization": 60,
+                                "type": "Utilization"
+                            }
+                        },
+                        "type": "Resource"
+                    }
+                ],
+                "minReplicas": 2,
+                "scaleTargetRef": {
+                    "apiVersion": "apps/v1",
+                    "kind": "Deployment",
+                    "name": "api-gateway"
+                }
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastTransitionTime": "2026-10-14T14:14:45Z",
+                        "message": "recommended size matches current size",
+                        "reason": "ReadyForNewScale",
+                        "status": "True",
+                        "type": "AbleToScale"
+                    },
+                    {
+                        "lastTransitionTime": "2026-10-14T14:15:15Z",
+                        "message": "the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)",
+                        "reason": "ValidMetricFound",
+                        "status": "True",
+                        "type": "ScalingActive"
+                    },
+                    {
+                        "lastTransitionTime": "2026-10-14T14:48:31Z",
+                        "message": "the desired replica count is less than the minimum replica count",
+                        "reason": "TooFewReplicas",
+                        "status": "True",
+                        "type": "ScalingLimited"
+                    }
+                ],
+                "currentMetrics": [
+                    {
+                        "resource": {
+                            "current": {
+                                "averageUtilization": 1,
+                                "averageValue": "1m"
+                            },
+                            "name": "cpu"
+                        },
+                        "type": "Resource"
+                    }
+                ],
+                "currentReplicas": 2,
+                "desiredReplicas": 2,
+                "lastScaleTime": "2026-10-14T14:49:32Z"
+            }
+        },
+        {
+            "apiVersion": "autoscaling/v2",
+            "kind": "HorizontalPodAutoscaler",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"autoscaling/v2\",\"kind\":\"HorizontalPodAutoscaler\",\"metadata\":{\"annotations\":{},\"labels\":{\"app.kubernetes.io/component\":\"autoscaler\",\"app.kubernetes.io/name\":\"identity-service\",\"app.kubernetes.io/part-of\":\"avengers-coffee\"},\"name\":\"identity-service\",\"namespace\":\"avengers-coffee\"},\"spec\":{\"behavior\":{\"scaleDown\":{\"policies\":[{\"periodSeconds\":60,\"type\":\"Pods\",\"value\":1}],\"stabilizationWindowSeconds\":120},\"scaleUp\":{\"policies\":[{\"periodSeconds\":30,\"type\":\"Pods\",\"value\":1},{\"periodSeconds\":30,\"type\":\"Percent\",\"value\":100}],\"selectPolicy\":\"Max\",\"stabilizationWindowSeconds\":0}},\"maxReplicas\":3,\"metrics\":[{\"resource\":{\"name\":\"cpu\",\"target\":{\"averageUtilization\":60,\"type\":\"Utilization\"}},\"type\":\"Resource\"}],\"minReplicas\":1,\"scaleTargetRef\":{\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"name\":\"identity-service\"}}}\n"
+                },
+                "creationTimestamp": "2026-10-14T14:14:30Z",
+                "labels": {
+                    "app.kubernetes.io/component": "autoscaler",
+                    "app.kubernetes.io/name": "identity-service",
+                    "app.kubernetes.io/part-of": "avengers-coffee"
+                },
+                "name": "identity-service",
+                "namespace": "avengers-coffee",
+                "resourceVersion": "3171",
+                "uid": "809486dc-d76b-41c9-8c14-ea2741247be6"
+            },
+            "spec": {
+                "behavior": {
+                    "scaleDown": {
+                        "policies": [
+                            {
+                                "periodSeconds": 60,
+                                "type": "Pods",
+                                "value": 1
+                            }
+                        ],
+                        "selectPolicy": "Max",
+                        "stabilizationWindowSeconds": 120
+                    },
+                    "scaleUp": {
+                        "policies": [
+                            {
+                                "periodSeconds": 30,
+                                "type": "Pods",
+                                "value": 1
+                            },
+                            {
+                                "periodSeconds": 30,
+                                "type": "Percent",
+                                "value": 100
+                            }
+                        ],
+                        "selectPolicy": "Max",
+                        "stabilizationWindowSeconds": 0
+                    }
+                },
+                "maxReplicas": 3,
+                "metrics": [
+                    {
+                        "resource": {
+                            "name": "cpu",
+                            "target": {
+                                "averageUtilization": 60,
+                                "type": "Utilization"
+                            }
+                        },
+                        "type": "Resource"
+                    }
+                ],
+                "minReplicas": 1,
+                "scaleTargetRef": {
+                    "apiVersion": "apps/v1",
+                    "kind": "Deployment",
+                    "name": "identity-service"
+                }
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastTransitionTime": "2026-10-14T14:14:45Z",
+                        "message": "recommended size matches current size",
+                        "reason": "ReadyForNewScale",
+                        "status": "True",
+                        "type": "AbleToScale"
+                    },
+                    {
+                        "lastTransitionTime": "2026-10-14T14:15:15Z",
+                        "message": "the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)",
+                        "reason": "ValidMetricFound",
+                        "status": "True",
+                        "type": "ScalingActive"
+                    },
+                    {
+                        "lastTransitionTime": "2026-10-14T14:49:17Z",
+                        "message": "the desired count is within the acceptable range",
+                        "reason": "DesiredWithinRange",
+                        "status": "False",
+                        "type": "ScalingLimited"
+                    }
+                ],
+                "currentMetrics": [
+                    {
+                        "resource": {
+                            "current": {
+                                "averageUtilization": 1,
+                                "averageValue": "1m"
+                            },
+                            "name": "cpu"
+                        },
+                        "type": "Resource"
+                    }
+                ],
+                "currentReplicas": 1,
+                "desiredReplicas": 1,
+                "lastScaleTime": "2026-10-14T14:49:17Z"
+            }
+        },
+        {
+            "apiVersion": "autoscaling/v2",
+            "kind": "HorizontalPodAutoscaler",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"autoscaling/v2\",\"kind\":\"HorizontalPodAutoscaler\",\"metadata\":{\"annotations\":{},\"labels\":{\"app.kubernetes.io/component\":\"autoscaler\",\"app.kubernetes.io/name\":\"menu-service\",\"app.kubernetes.io/part-of\":\"avengers-coffee\"},\"name\":\"menu-service\",\"namespace\":\"avengers-coffee\"},\"spec\":{\"behavior\":{\"scaleDown\":{\"policies\":[{\"periodSeconds\":60,\"type\":\"Pods\",\"value\":1}],\"stabilizationWindowSeconds\":120},\"scaleUp\":{\"policies\":[{\"periodSeconds\":30,\"type\":\"Pods\",\"value\":1},{\"periodSeconds\":30,\"type\":\"Percent\",\"value\":100}],\"selectPolicy\":\"Max\",\"stabilizationWindowSeconds\":0}},\"maxReplicas\":4,\"metrics\":[{\"resource\":{\"name\":\"cpu\",\"target\":{\"averageUtilization\":60,\"type\":\"Utilization\"}},\"type\":\"Resource\"}],\"minReplicas\":1,\"scaleTargetRef\":{\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"name\":\"menu-service\"}}}\n"
+                },
+                "creationTimestamp": "2026-10-14T14:14:30Z",
+                "labels": {
+                    "app.kubernetes.io/component": "autoscaler",
+                    "app.kubernetes.io/name": "menu-service",
+                    "app.kubernetes.io/part-of": "avengers-coffee"
+                },
+                "name": "menu-service",
+                "namespace": "avengers-coffee",
+                "resourceVersion": "3170",
+                "uid": "52db7f47-e304-4cfb-b771-11dc7e1af97f"
+            },
+            "spec": {
+                "behavior": {
+                    "scaleDown": {
+                        "policies": [
+                            {
+                                "periodSeconds": 60,
+                                "type": "Pods",
+                                "value": 1
+                            }
+                        ],
+                        "selectPolicy": "Max",
+                        "stabilizationWindowSeconds": 120
+                    },
+                    "scaleUp": {
+                        "policies": [
+                            {
+                                "periodSeconds": 30,
+                                "type": "Pods",
+                                "value": 1
+                            },
+                            {
+                                "periodSeconds": 30,
+                                "type": "Percent",
+                                "value": 100
+                            }
+                        ],
+                        "selectPolicy": "Max",
+                        "stabilizationWindowSeconds": 0
+                    }
+                },
+                "maxReplicas": 4,
+                "metrics": [
+                    {
+                        "resource": {
+                            "name": "cpu",
+                            "target": {
+                                "averageUtilization": 60,
+                                "type": "Utilization"
+                            }
+                        },
+                        "type": "Resource"
+                    }
+                ],
+                "minReplicas": 1,
+                "scaleTargetRef": {
+                    "apiVersion": "apps/v1",
+                    "kind": "Deployment",
+                    "name": "menu-service"
+                }
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastTransitionTime": "2026-10-14T14:14:45Z",
+                        "message": "recommended size matches current size",
+                        "reason": "ReadyForNewScale",
+                        "status": "True",
+                        "type": "AbleToScale"
+                    },
+                    {
+                        "lastTransitionTime": "2026-10-14T14:15:15Z",
+                        "message": "the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)",
+                        "reason": "ValidMetricFound",
+                        "status": "True",
+                        "type": "ScalingActive"
+                    },
+                    {
+                        "lastTransitionTime": "2026-10-14T14:50:17Z",
+                        "message": "the desired count is within the acceptable range",
+                        "reason": "DesiredWithinRange",
+                        "status": "False",
+                        "type": "ScalingLimited"
+                    }
+                ],
+                "currentMetrics": [
+                    {
+                        "resource": {
+                            "current": {
+                                "averageUtilization": 2,
+                                "averageValue": "2m"
+                            },
+                            "name": "cpu"
+                        },
+                        "type": "Resource"
+                    }
+                ],
+                "currentReplicas": 1,
+                "desiredReplicas": 1,
+                "lastScaleTime": "2026-10-14T14:50:17Z"
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}

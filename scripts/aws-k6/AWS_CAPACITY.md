@@ -40,3 +40,31 @@ image on every target. The AWS overlay is a template, not ready for direct apply
 Single-generator helpers: aws-network-baseline.py, aws-run-generator.py,
 aws-generator-metrics.py, aws-observe.py, analyze-aws-capacity.py. Stop on first
 failure. No distributed aggregation exists yet; do not average percentiles.
+
+## Distributed generator qualification
+
+Scale only after measured inadequacy; maximum three generators. Keep the
+application images/overlay/profile fixed and rerun the same total VU level.
+Distribute integer partitions summing to that level. On each generator run
+`aws-run-generator.py NAME PARTITION --target http://PRIVATE_IP:30300
+--json-output --start-at SHARED_FUTURE_EPOCH` (one line); the shared epoch must
+be less than120seconds ahead. The original workload is unchanged. Gzip JSON
+output contains numeric observations, never application response bodies.
+
+Collect into `RUN/generator1`, `RUN/generator2` (and `generator3` when needed),
+including k6summary/log, generator metrics and postsmoke for each. Copy shared
+target observations/naturalrecovery into each partition. Then use:
+
+```bash
+python3 scripts/aws-k6/merge-aws-generators.py RUN RUN/generator1 RUN/generator2
+python3 scripts/aws-k6/analyze-aws-capacity.py RUN
+```
+
+The merger validates raw request/check counts and start skew<=2seconds, and
+computes exact combined quantiles from observations. The analyzer requires
+every generator's CPU/RAM/FD/socket/ENA/coverage adequacy and all target stability
+gates. HTTP thresholds use merged whole/hold observations. Never averagep95.
+`archive-aws-points.py PARTITION /tmp/NUMERIC_RAW_ARCHIVE` retains exact numeric
+observations and original hashes in compact gzip format; the merger can replay
+them. Full rawoutput stays outside Git. Archive logs/observers as gzip, and
+include source/image/config/workload provenance, runtimecost and finalcleanup.

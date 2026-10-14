@@ -31,6 +31,12 @@
       "private_ip": "172.31.13.41",
       "launch_time": "2026-10-14T14:28:37+00:00",
       "type": "m7i-flex.large"
+    },
+    "generator3": {
+      "id": "i-04e5f1272054bc5a8",
+      "private_ip": "172.31.13.213",
+      "launch_time": "2026-10-14T14:49:25+00:00",
+      "type": "m7i-flex.large"
     }
   },
   "control_pid": null,

@@ -93,3 +93,10 @@ Two-generator250 STABLE PASS once (p95659.20, hold640.11, 0%errors, checks100%).
 Next:500 independent; stop first failure, scale generators only for measured adequacy, max3.
 Fleet3targets+2generators currently active; cleanup mandatory before ending.
 Historical paused handoff above is retained as previous-state evidence.
+
+## Latest active action
+
+500with2generators INVALID;500with3generators FAIL holdp952233.52ms,
+generatorsvalid,restarts0,smoke/recoveryPASS. Do notrun1000+.
+Current action: diagnostic500(neverqualification), isolateDB/pod/kernel/network tails.
+No Gateway/HPA/cache/payload tuning justified yet. Fleet3targets+3generators active.

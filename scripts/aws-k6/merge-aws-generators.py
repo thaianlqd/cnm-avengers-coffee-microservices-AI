@@ -91,7 +91,7 @@ def merge(folders):
     for phase in ('', '{phase:hold}'):
         if len(values['http_req_duration' + phase]) != counts['http_reqs' + phase] or len(values['http_req_failed' + phase]) != counts['http_reqs' + phase]:
             raise ValueError('incomplete HTTP observations')
-    merged = dict(metadata[0], vus=sum(m['vus'] for m in metadata), load_started_at=min(starts).isoformat(), load_finished_at=max(ends).isoformat(), generator_count=len(folders), start_skew_seconds=skew, quantiles='linear interpolation over all actual observations', rps_duration_seconds=span)
+    merged = dict(metadata[0], vus=sum(m['vus'] for m in metadata), load_started_at=min(starts).isoformat(), load_finished_at=max(ends).isoformat(), generator_count=len(folders), generator_folders=[p.name for p in folders], start_skew_seconds=skew, quantiles='linear interpolation over all actual observations', rps_duration_seconds=span)
     return {'metrics': metrics}, merged
 
 

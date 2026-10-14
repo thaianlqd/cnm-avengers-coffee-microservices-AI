@@ -148,3 +148,19 @@ Full numeric latency/check/failure/status observations compacted losslessly for 
 originalraw hashes and sizes retained; real before/after/raw-merge equality verified.
 Fleet currently active:3targets+2generators; lifecycle owns cleanup/deadline.
 Final cleanup/cost and ladder decision pending; do not leave fleet overnight.
+
+## First valid 500 failure — ladder stopped
+
+Two generators:76216requests,357.11RPS,p951233.29/hold1325.20ms,0%errors;
+INVALID GENERATOR (#1 peak94.61%,fourconsecutive>=90%samples). No application FAIL inferred.
+Added generator#3 only for adequacy. Same total500 split167/167/166:
+77848requests,364.84RPS,7failedrequests(6status0/1status500),checks99.991%,
+p951356.48/hold2233.52/p995023.18ms => **FAIL hold latency**.
+All generators valid(CPUpeaks76.0/65.7/72.9%),restart0,HPAvalid,smoke/recoveryPASS.
+Ladderstoppedbefore1000. GatewayholdCPUpeak194–286mCPU versus500mlimit;
+backends<=122mCPU. No evidence for raisingHPA, nodes or blindGateway tuning.
+All four routes have waitingtails(~1.94–2.51s routeholdp95),
+receivingholdp95~67.57ms, connecting~84.14ms; attribution incomplete.
+One500diagnostic withisolatedSELECT1,pod-loopbackGETs andkernel/cgroup/ENA/TCP
+observers is running; it cannot qualify evenifHTTPPASS. No application tuning
+after poolidle30000 has been retained. Fleet3targets+3generators, cleanup pending.

@@ -674,6 +674,7 @@
       "status": "STABLE PASS"
     }
   },
+  "generator_count": 2,
   "start_skew_seconds": 0.000289,
-  "generator_count": 2
+  "generator_cpu_peak_percent": 61.46146146146146
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Combine HTTP, target stability, actual FD limit, generator and recovery gates."""
-import datetime as dt,importlib.util,json,re,sys
+import datetime as dt,gzip,importlib.util,json,re,sys
 from pathlib import Path
 s=importlib.util.spec_from_file_location('metrics',Path(__file__).with_name('analyze-3k.py'));metrics=importlib.util.module_from_spec(s);s.loader.exec_module(metrics)
 def analyze(folder):
@@ -23,7 +23,11 @@ def analyze(folder):
             for name,v in values.items():ena_deltas[iface+'/'+name]=v-samples[0].get('ena',{}).get(iface,{}).get(name,v)
     if any(v>0 for v in ena_deltas.values()):generator_reasons.append('generator ENA allowance exceeded')
     if not samples or sum(r.get('ena_valid') is True for r in samples)<len(samples)*.8:generator_reasons.append('generator ENA observer coverage invalid')
-    log=(folder/'k6.log').read_text()
+    log_path=folder/'k6.log'
+    if log_path.exists():log=log_path.read_text()
+    elif (folder/'k6.log.gz').exists():
+        with gzip.open(folder/'k6.log.gz','rt') as stream:log=stream.read()
+    else:raise ValueError('missing k6 log for socket exhaustion review')
     if any(t in log for t in ('too many open files','cannot assign requested address','socket exhaustion')):generator_reasons.append('generator socket exhaustion')
     required=('http_req_failed','checks','http_req_duration','http_req_failed{phase:hold}','checks{phase:hold}','http_req_duration{phase:hold}','http_reqs{phase:hold}')
     http_pass=all(summary.get(k,{}).get('thresholds') for k in required) and all(t.get('ok') is True for m in summary.values() for t in m.get('thresholds',{}).values())
@@ -61,5 +65,26 @@ def analyze(folder):
     reasons=list(dict.fromkeys(reasons))
     def value(name,key):return summary.get(name,{}).get('values',{}).get(key)
     result={'vus':meta['vus'],'hold_seconds':meta['hold_seconds'],'requests':value('http_reqs','count'),'rps':value('http_reqs','rate'),'failure_rate':value('http_req_failed','rate'),'check_rate':value('checks','rate'),'p95_ms':value('http_req_duration','p(95)'),'hold_p95_ms':value('http_req_duration{phase:hold}','p(95)'),'p99_ms':value('http_req_duration','p(99)'), 'http_pass':http_pass,'restart_delta':delta,'hpa_peak':peak,'node_cpu_peak_percent':node_peak,'pending_pod_samples':pending,'target_hold_coverage':tcov,'generator':g,'generator_hold_coverage':gcov,'generator_cpu_saturation_longest_samples':longest,'ena_allowance_deltas':ena_deltas,'generator_adequate':not generator_reasons,'generator_reasons':generator_reasons,'target_reasons':reasons,'post_smoke':smoke.get('passed'),'natural_recovery':recovery.get('passed'),'status':'STABLE PASS' if not reasons and not generator_reasons else 'INVALID GENERATOR' if generator_reasons else 'FAIL'}
+    count=meta.get('generator_count',1)
+    if count!=1:
+        if count not in (2,3) or not isinstance(meta.get('start_skew_seconds'),(int,float)) or not 0<=meta['start_skew_seconds']<=2:
+            raise ValueError('invalid distributed synchronization evidence')
+        names=meta.get('generator_folders',['generator'+str(i+1) for i in range(count)])
+        if len(names)!=count or len(set(names))!=count or any(not re.fullmatch(r'generator[1-3]',n) for n in names):
+            raise ValueError('invalid generator partition manifest')
+        if any(not (folder/n).is_dir() for n in names):raise ValueError('missing generator partition')
+        shards={n:analyze(folder/n) for n in names}
+        result['generators']=shards
+        result['generator_count']=count
+        result['start_skew_seconds']=meta['start_skew_seconds']
+        result['generator_adequate']=all(v['generator_adequate'] for v in shards.values())
+        result['generator_reasons']=[n+': '+r for n,v in shards.items() for r in v['generator_reasons']]
+        result['generator_cpu_peak_percent']=max(v['generator']['cpu_busy_peak_percent'] for v in shards.values())
+        # HTTP quality is measured over the merged observations. Every generator
+        # must independently satisfy resource, coverage and socket adequacy.
+        result['target_reasons']=list(dict.fromkeys(reasons+[n+': '+r for n,v in shards.items() for r in v['target_reasons'] if r!='HTTP thresholds failed']))
+        result['status']='INVALID GENERATOR' if not result['generator_adequate'] else 'FAIL' if result['target_reasons'] else 'STABLE PASS'
+    if meta.get('diagnostic') is True:
+        result['observed_gate_status']=result['status'];result['qualification_eligible']=False;result['status']='DIAGNOSTIC (NOT QUALIFICATION)'
     (folder/'analysis.json').write_text(json.dumps(result,indent=2)+'\n');return result
 if __name__=='__main__':print(json.dumps(analyze(Path(sys.argv[1])),indent=2))

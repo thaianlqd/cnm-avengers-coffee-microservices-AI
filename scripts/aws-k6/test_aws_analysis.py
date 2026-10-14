@@ -1,4 +1,4 @@
-import datetime as dt,importlib.util,json,tempfile,unittest
+import datetime as dt,gzip,importlib.util,json,tempfile,unittest
 from pathlib import Path
 spec=importlib.util.spec_from_file_location('analysis',Path(__file__).with_name('analyze-aws-capacity.py'));m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 def fixture(folder,fd=10,restart=0,metrics=True):
@@ -18,6 +18,32 @@ class Gates(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             d=Path(d);fixture(d);self.assertEqual(m.analyze(d)['status'],'STABLE PASS')
             fixture(d,restart=1);r=m.analyze(d);self.assertEqual(r['status'],'FAIL');self.assertEqual(r['restart_delta'],1)
+    def test_archived_log_retains_socket_exhaustion_gate(self):
+        with tempfile.TemporaryDirectory() as d:
+            d=Path(d);fixture(d)
+            with gzip.open(d/'k6.log.gz','wt') as f:f.write('too many open files')
+            (d/'k6.log').unlink()
+            self.assertEqual(m.analyze(d)['status'],'INVALID GENERATOR')
+            (d/'k6.log.gz').unlink()
+            with self.assertRaisesRegex(ValueError,'missing k6 log'):m.analyze(d)
+    def test_every_distributed_generator_must_be_adequate(self):
+        with tempfile.TemporaryDirectory() as d:
+            d=Path(d);fixture(d)
+            for name,fd in [('generator1',10),('generator2',900)]:
+                (d/name).mkdir();fixture(d/name,fd=fd)
+            meta=json.loads((d/'metadata.json').read_text());meta.update(generator_count=2,start_skew_seconds=0);(d/'metadata.json').write_text(json.dumps(meta))
+            result=m.analyze(d)
+            self.assertEqual(result['status'],'INVALID GENERATOR')
+            self.assertTrue(any('generator2' in reason for reason in result['generator_reasons']))
+            (d/'generator2').rename(d/'missing')
+            with self.assertRaisesRegex(ValueError,'missing generator'):m.analyze(d)
+    def test_diagnostic_run_cannot_qualify(self):
+        with tempfile.TemporaryDirectory() as d:
+            d=Path(d);fixture(d)
+            meta=json.loads((d/'metadata.json').read_text());meta['diagnostic']=True;(d/'metadata.json').write_text(json.dumps(meta))
+            result=m.analyze(d)
+            self.assertFalse(result['qualification_eligible'])
+            self.assertEqual(result['status'],'DIAGNOSTIC (NOT QUALIFICATION)')
     def test_actual_fd_limit_not_assumed_65536(self):
         with tempfile.TemporaryDirectory() as d:
             d=Path(d);fixture(d,fd=900);self.assertEqual(m.analyze(d)['status'],'INVALID GENERATOR')
