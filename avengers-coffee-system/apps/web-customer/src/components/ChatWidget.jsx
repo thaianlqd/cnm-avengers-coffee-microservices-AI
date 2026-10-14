@@ -11,6 +11,9 @@ import { openChatProductDetail, addChatProduct, branchDistanceLabel, paymentCard
 import { PENDING_AGENT_TURN_KEY, readPendingAgentTurn, matchesAgentTurn, selectAgentTurn, clearCompletedAgentTurn, agentTurnFailure } from './agentTurn';
 import WalletTopupCard from './WalletTopupCard';
 import ChatRichText from './ChatRichText';
+import { isCheckoutConfirmation, agentProducts, pendingCheckout } from './agentContract';
+import CustomerChoicePanel, { SelectionTray } from './CustomerChoicePanel';
+import { toggleProductSelection, selectionAction, actionMessage } from './customerChoices';
 import { ChatBubbleLeftRightIcon, BuildingStorefrontIcon, PhoneIcon, MapPinIcon, CreditCardIcon, WalletIcon, BanknotesIcon, QrCodeIcon, ClockIcon } from '@heroicons/react/24/outline';
 import { walletTopupRequest, walletAmountError, createWalletTopup, pollWalletTopup, latestWalletTopup, latestWalletTopupOffer, latestWalletTopupReady, refreshWalletTopupOffer } from './walletTopup';
 import { CheckCircleIcon, CheckIcon } from '@heroicons/react/24/solid';
@@ -18,32 +21,6 @@ import { CheckCircleIcon, CheckIcon } from '@heroicons/react/24/solid';
 // ─── Utilities & Formatters ──────────────────────────────────────────────────
 const fmtVND = (n) => Number(n || 0).toLocaleString(uiLocale()) + 'đ';
 const fmtTime = (v) => { if (!v) return ''; const d = new Date(v); return isNaN(d) ? '' : d.toLocaleTimeString(uiLocale(), { hour: '2-digit', minute: '2-digit' }); };
-const isCheckoutConfirmation = (value) => {
-  const raw = String(value || '');
-  const normalized = String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/đ/g, 'd')
-    .replace(/[!.,]+$/g, '')
-    .trim();
-  if (!normalized || raw.includes('?')) return false;
-  if (/\b(nhung|doi|them|bot|bo|sua|huy|khoan|chua|khong|dung lai|dung dat|dung chot)\b/.test(normalized)) return false;
-
-  const exact = new Set([
-    'dong y', 'dong y chot don', 'dong y dat hang',
-    'oke xac nhan', 'ok xac nhan', 'okay xac nhan',
-    'xac nhan', 'xac nhan dat hang', 'xac nhan chot don',
-    'ok', 'oke', 'okay', 'chot', 'chot don', 'dat di', 'dat luon',
-    'tien hanh', 'on roi', 'dung roi', 'chuan roi',
-  ]);
-  if (exact.has(normalized)) return true;
-
-  const hasAffirmation = /\b(dong y|xac nhan|ok|oke|okay|duoc roi|on roi|dung roi|chuan roi|yes)\b/.test(normalized);
-  const hasCheckoutAction = /\b(chot|chot don|dat hang|dat don|dat di|dat luon|tien hanh)\b/.test(normalized);
-  const hasImperative = /\b(di|luon|nhe|thoi)\b/.test(normalized);
-  return hasCheckoutAction && (hasAffirmation || hasImperative);
-};
 const fmtDateHeader = (v) => {
   if (!v) return '';
   const d = new Date(v);
@@ -183,7 +160,7 @@ function StaffAvatar({ name, size = 32 }) {
 }
 
 // ─── Rich Card Components ─────────────────────────────────────────────────────
-function ProductCard({ p, onAdd, resolvePrice, grouped = false }) {
+function ProductCard({ p, onAdd, resolvePrice, grouped = false, selected = false }) {
   useUiLanguage();
   const [hover, setHover] = useState(false);
   const seedPrice = Number(p.gia_ban ?? p.final_price ?? p.price);
@@ -249,18 +226,20 @@ function ProductCard({ p, onAdd, resolvePrice, grouped = false }) {
         {productId != null && <span style={{ fontSize: '0.66rem', color: '#B22830' }}>{ui("Xem chi tiết →")}</span>}
       </div>
       <button
+        aria-label={`${selected ? 'Bỏ chọn' : 'Chọn'} ${productName}`}
+        aria-pressed={selected}
         disabled={canonicalPrice == null}
         onClick={(e) => addChatProduct(e, onAdd, p)}
         style={{ all: 'unset', cursor: canonicalPrice == null ? 'not-allowed' : 'pointer', opacity: canonicalPrice == null ? 0.45 : 1, width: 30, height: 30, borderRadius: '50%', background: '#F08080', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, alignSelf: 'center', fontWeight: 900, fontSize: '1.1rem', boxShadow: '0 2px 8px rgba(240,128,128,0.4)', transition: 'transform 0.1s' }}
         onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.9)'; }}
         onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-        title={canonicalPrice == null ? ui("Chưa xác minh được giá từ menu") : ui("Thêm vào giỏ")}
-      >+</button>
+        title={canonicalPrice == null ? ui("Chưa xác minh được giá từ menu") : selected ? 'Bỏ chọn món' : 'Chọn món để gửi cùng lượt'}
+      >{selected ? '✓' : '+'}</button>
     </div>
   );
 }
 
-function ProductCards({ products, onAdd, resolvePrice }) {
+function ProductCards({ products, onAdd, resolvePrice, selectedIds = [] }) {
   useUiLanguage();
   const groups = new Map();
   products.forEach((product) => {
@@ -273,7 +252,7 @@ function ProductCards({ products, onAdd, resolvePrice }) {
   return [...groups].map(([bucket, rows]) => (
     <div key={bucket} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {grouped && <p style={{ margin: '4px 0 2px', fontSize: '0.78rem', fontWeight: 700, color: '#2D3748' }}>{labels[bucket] || labels.unknown}</p>}
-      {rows.map((product, index) => <ProductCard key={product.product_id || index} p={product} onAdd={onAdd} resolvePrice={resolvePrice} grouped={grouped} />)}
+      {rows.map((product, index) => <ProductCard key={product.product_id || index} p={product} onAdd={onAdd} resolvePrice={resolvePrice} grouped={grouped} selected={selectedIds.includes(String(product.product_id))} />)}
     </div>
   ));
 }
@@ -675,6 +654,9 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
   const staffVersionsRef = useRef({});
   const readRequestsRef = useRef(new Set());
   const [conversation, setConversation] = useState(null);
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  useEffect(() => { setSelectedProducts([]); }, [effectiveUserId]);
+  const productConfiguration = [...messages].reverse().find(m => Object.hasOwn(m, '_productConfiguration'))?._productConfiguration;
   const [pendingOrder, setPendingOrder] = useState(null);
   const [pendingQrPayment, setPendingQrPayment] = useState(() => {
     const currentUserId = user?.ma_nguoi_dung || user?.maNguoiDung || user?.id || getGuestSessionId();
@@ -1030,7 +1012,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
 
   // Add item to cart
   // ── Agent API call (Phase 2+3: RAG + Guardrails + Tool Calling) ─────────────
-  const callAgentAPI = useCallback(async (text, selectedProductId) => {
+  const callAgentAPI = useCallback(async (text, selectedProductId, uiAction) => {
     // Build history as [{role, content}] for the Agent endpoint
     const history = messages.slice(-8).map((m) => ({
       role: m.vai_tro_nguoi_gui === 'CUSTOMER' ? 'user' : 'assistant',
@@ -1039,7 +1021,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
 
     const previousTurn = pendingAgentTurnRef.current;
     const turn = selectAgentTurn(previousTurn, {
-      text, selectedProductId, sessionId: effectiveUserId, conversationId: aiConversationId,
+      text, selectedProductId, uiAction, sessionId: effectiveUserId, conversationId: aiConversationId,
     }, newConversationId);
     pendingAgentTurnRef.current = turn;
     sessionStorage.setItem(PENDING_AGENT_TURN_KEY, JSON.stringify(turn));
@@ -1051,6 +1033,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
         client_message_id: turn.id,
         message: text,
         selected_product_id: selectedProductId || null,
+        ...(uiAction ? { ui_action: uiAction } : {}),
         history,
       }, { ...cartRequestConfig(effectiveUserId), timeout: 120000 });
     } catch (error) {
@@ -1149,10 +1132,10 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
   }, [pendingOrder, orderConfirming, effectiveUserId, aiConversationId, addAIMsg, scrollBottom, walletUserId, queryClient]);
 
   // Direct AI API handler (primary: /ai/agent/chat, fallback: /ai/chat)
-  const processAIMessage = useCallback(async (text, selectedProductId) => {
+  const processAIMessage = useCallback(async (text, selectedProductId, uiAction) => {
     const textLower = text.toLowerCase();
 
-    if (pendingOrder && isCheckoutConfirmation(text)) {
+    if (!uiAction && pendingOrder && isCheckoutConfirmation(text)) {
       await confirmPendingOrder();
       return;
     }
@@ -1179,11 +1162,12 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
       if (pendingAgentTurnRef.current?.id === completedTurn?.id) pendingAgentTurnRef.current = null;
     };
     try {
-      const response = await callAgentAPI(text, selectedProductId);
+      const response = await callAgentAPI(text, selectedProductId, uiAction);
       completedTurn = response.turn;
       phase = 'response_processing';
       const agentData = response.data;
       if (!agentData || typeof agentData.reply !== 'string') throw new Error('Invalid agent response');
+      if (uiAction?.type === 'select_products' && !agentData.error) setSelectedProducts([]);
       const agentReply = agentData?.reply;
       const checkoutPayload = agentData?.checkout_payload;
       const agentError = agentData?.error;
@@ -1223,28 +1207,9 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
       if (checkoutPayload && (checkoutPayload.order_summary || checkoutPayload.items)) {
         const summary = checkoutPayload.order_summary || checkoutPayload;
         // Chuyển đổi sang format pendingOrder đang dùng
-        setPendingOrder({
-          items: (summary.items || []).map((i) => ({
-            matched: true,
-            product_id: i.product_id,
-            product_name: i.product_name || i.ten_san_pham,
-            quantity: i.quantity || i.so_luong || 1,
-            price: i.unit_price || i.gia_ban || 0,
-            size: i.size,
-            note: i.note,
-          })),
-          subtotal: summary.total_price ?? summary.subtotal,
-          discount: summary.discount_amount || 0,
-          total: summary.final_total ?? summary.total_price ?? summary.subtotal,
-          message: agentReply || `Tổng đơn: ${fmtVND(summary.total_price)} tại ${summary.branch_name}`,
-          paymentMethod: summary.payment_method,
-          deliveryType: summary.delivery_type,
-          deliveryAddress: summary.delivery_address,
-          actionId: summary.action_id,
-          branch_id: summary.branch_id,
-          branch_name: summary.branch_name,
-        });
+        setPendingOrder(pendingCheckout(checkoutPayload, agentReply || `Tổng đơn: ${fmtVND(summary.total_price)} tại ${summary.branch_name}`));
         if (agentReply) addAIMsg(agentReply, {
+          _productConfiguration: agentData?.ui_payload?.product_configuration || null,
           _quickReplies: [],
           _paymentOptions: Array.isArray(agentData?.ui_payload?.payment_options) ? agentData.ui_payload.payment_options : [],
           _walletTopupOffer: agentData?.ui_payload?.wallet_topup ? { ...agentData.ui_payload.wallet_topup, userId: walletUserId } : null,
@@ -1260,7 +1225,6 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
       // stores as selectable cards.
       if (agentReply && !agentError?.startsWith('blocked:')) {
         const payload = agentData?.ui_payload || {};
-        const catalogById = new Map(cache.current.products.map((item) => [String(item.ma_san_pham || item.id), item]));
         const confirmCheckoutEntry = (agentData?.tool_calls_log || []).find(
           (t) => t.tool === 'confirm_checkout' && ['success', 'already_processed'].includes(t.result?.status)
         );
@@ -1275,10 +1239,9 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
         }
 
         const extras = {
-          _products: Array.isArray(payload.products) ? payload.products.map((item) => ({
-            ...item,
-            hinh_anh_url: item.hinh_anh_url || catalogById.get(String(item.product_id || item.ma_san_pham))?.hinh_anh_url,
-          })) : [],
+          _products: agentProducts(payload, cache.current.products),
+          _selectionSnapshot: payload.product_selection_snapshot,
+          _productConfiguration: payload.product_configuration || null,
           _stores: Array.isArray(payload.branches) ? payload.branches : [],
           _vouchers: !confirmed && Array.isArray(payload.vouchers) ? payload.vouchers : [],
           _paymentOptions: Array.isArray(payload.payment_options) ? payload.payment_options : [],
@@ -1379,7 +1342,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
 
 
   // Send message trigger
-  const sendMessage = useCallback(async (overrideText, selectedProductId) => {
+  const sendMessage = useCallback(async (overrideText, selectedProductId, uiAction) => {
     const text = (overrideText !== undefined ? String(overrideText) : inputText).trim();
     if (!text || sending) return;
     setSending(true);
@@ -1398,7 +1361,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
         return;
       }
       const retry = matchesAgentTurn(pendingAgentTurnRef.current, {
-        text, selectedProductId, sessionId: effectiveUserId, conversationId: aiConversationId,
+        text, selectedProductId, uiAction, sessionId: effectiveUserId, conversationId: aiConversationId,
       });
       if (retry) {
         const failedId = pendingAgentTurnRef.current.id;
@@ -1412,7 +1375,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
       setIsTyping(true);
       setLoadingLabel(chatLoadingLabel(Boolean(pendingOrder && isCheckoutConfirmation(text))));
       try {
-        await processAIMessage(text, selectedProductId);
+        await processAIMessage(text, selectedProductId, uiAction);
       } finally {
         setIsTyping(false);
         setSending(false);
@@ -1457,10 +1420,15 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
     }
   }, [inputText, sending, chatMode, conversation, replyTo, effectiveUserId, aiConversationId, messages, userName, addUserMsg, addAIMsg, scrollBottom, processAIMessage, pendingOrder, walletTopupOffer, pendingWalletTopup, startWalletTopup]);
 
-  const addCardProduct = useCallback((product) => {
+  const addCardProduct = useCallback((product, snapshot) => {
     if (!product.product_id || !product.product_name) return;
-    sendMessage(`Thêm ${product.product_name} vào giỏ`, String(product.product_id));
+    if (!snapshot) { sendMessage(`Thêm ${product.product_name} vào giỏ`, String(product.product_id)); return; }
+    setSelectedProducts(prev => toggleProductSelection(prev, product, snapshot));
   }, [sendMessage]);
+  const submitSelectedProducts = () => {
+    try { const action = selectionAction(selectedProducts); sendMessage(actionMessage(action, selectedProducts), null, action); }
+    catch (error) { addAIMsg(error.message); }
+  };
 
   // Voice speech-to-text
   const startVoice = useCallback(() => {
@@ -1531,7 +1499,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
       {isOpen && (
         <div style={{
           position: 'fixed', bottom: 16, right: 16, zIndex: 9999,
-          width: 'min(94vw, 420px)', height: 'min(85vh, 600px)',
+          width: 'min(94vw, 460px)', height: 'min(88dvh, 760px)',
           display: 'flex', flexDirection: 'column',
           background: '#F4F6F8',
           borderRadius: 8,
@@ -1628,7 +1596,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
 
           {/* Messages Area */}
           <div className="chat-scroll" style={{
-            flex: 1, overflowY: 'auto', padding: '16px 14px',
+            flex: 1, minHeight: 0, minWidth: 0, overflowY: 'auto', overflowX: 'hidden', padding: '16px 14px',
             display: 'flex', flexDirection: 'column', gap: 14,
             background: '#FAFAFA',
           }}>
@@ -1701,8 +1669,8 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
                       )}
                       {/* Rich Content Cards */}
                       {msg._products && msg._products.length > 0 && (
-                        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 328, overflowY: 'auto' }}>
-                          <ProductCards products={msg._products} onAdd={addCardProduct} resolvePrice={fetchCanonicalProductPrice} />
+                        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
+                          <ProductCards products={msg._products} onAdd={product => addCardProduct(product, msg._selectionSnapshot)} selectedIds={selectedProducts.filter(p => p.snapshot === msg._selectionSnapshot).map(p => String(p.product_id))} resolvePrice={fetchCanonicalProductPrice} />
                         </div>
                       )}
                       {msg._orders && msg._orders.length > 0 && (
@@ -1767,9 +1735,12 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
                 </div>
               </div>
             )}
+            {chatMode === 'AI' && productConfiguration?.items?.length > 0 && <CustomerChoicePanel key={productConfiguration.snapshot} configuration={productConfiguration} busy={sending || isTyping} onSubmit={action => sendMessage(actionMessage(action, productConfiguration.items), null, action)} />}
             {isTyping && <TypingBubble label={loadingLabel} />}
             <div ref={bottomRef} />
           </div>
+
+          {chatMode === 'AI' && <SelectionTray selected={selectedProducts} busy={sending || isTyping} onRemove={product => setSelectedProducts(prev => prev.filter(row => row.product_id !== product.product_id))} onSubmit={submitSelectedProducts} />}
 
           {/* Reply-to Bar */}
           {replyTo && (
@@ -1786,7 +1757,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
           <div style={{ padding: '10px 12px 14px', background: '#fff', borderTop: '1px solid #e9ecef', display: 'flex', flexDirection: 'column', gap: 9 }}>
             {/* Quick bar */}
             {chatMode === 'AI' && (
-              <div style={{ display: 'flex', gap: 5, overflowX: 'auto', paddingBottom: 1 }}>
+              <div className="customer-chat-shortcuts" style={{ display: 'flex', gap: 5, overflowX: 'auto', paddingBottom: 1 }}>
                 {QUICK_ACTIONS.map((a) => (
                   <button key={a.id} onClick={() => sendMessage(a.text)} style={{ all: 'unset', cursor: 'pointer', fontSize: '0.68rem', fontWeight: 700, color: '#495057', background: '#f8f9fa', padding: '5px 10px', borderRadius: 20, border: '1px solid #e9ecef', whiteSpace: 'nowrap', flexShrink: 0, transition: 'all 0.15s' }}
                     onMouseEnter={(e) => { e.currentTarget.style.background = '#fff3f0'; e.currentTarget.style.color = '#b22830'; e.currentTarget.style.borderColor = '#b2283040'; }}

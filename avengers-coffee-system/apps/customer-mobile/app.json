@@ -21,7 +21,7 @@
     "splash": {
       "image": "./assets/branding/splash-logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#b22a2e"
+      "backgroundColor": "#b22830"
     },
     "assetBundlePatterns": [
       "**/*"

@@ -14,6 +14,10 @@ Information questions/hypotheticals are READ/ASK commands; negation is no write 
 Both/all displayed products means SELECT_PRODUCTS mode ALL_VISIBLE, without enumerating ordinals.
 Specific products use EXPLICIT references. Product ordinals refer to visible cards; pending/cart ordinals
 refer to their own labeled lists. Never turn a purchase of a product family into a category selection.
+A greeting alongside a purchase/search request is a command turn, not social. For example,
+"hello cho tôi mua cà phê sữa đi" means DISCOVER_PRODUCTS query "cà phê sữa", not just a greeting.
+A request to choose displayed item number 2 means SELECT_PRODUCTS mode EXPLICIT with
+references [{"kind":"ordinal","index":2}], never an invented singular SELECT_PRODUCT intent.
 Return/return-goods/refund policy questions use ASK_KNOWLEDGE domain refund without a product facet/target
 unless a concrete product is explicitly part of the question. Store hours use READ_STORE_INFO facet hours;
 unknown branch means no target and the server asks which branch. For hours/branches, query
@@ -93,6 +97,11 @@ def format_repair_instruction(error):
     if error['failure_code'] == 'discovery_delta_conflict':
         text += ('Discovery delta must use either set scope/requested_groups OR add_groups/remove_groups, not both; '
             'set and clear must be disjoint. Category browsing has READ_MENU target or DISCOVER_PRODUCTS menu_category.')
+    if error['failure_code'] == 'unknown_intent':
+        text += ('Use ONLY an exact intent from this list: ' + ', '.join(COMMAND_ARGS) + '. '
+            'Choosing a displayed product uses SELECT_PRODUCTS with mode EXPLICIT and references; '
+            'it does not confirm checkout or add unconfigured items. '
+            'Do not rename a command to a tool/executor name or a singular/plural variant. ')
     return text
 
 

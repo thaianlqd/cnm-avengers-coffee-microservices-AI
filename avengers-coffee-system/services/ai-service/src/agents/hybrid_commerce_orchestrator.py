@@ -556,9 +556,11 @@ def consolidate_checkout_choices(artifacts, blocks, records):
         [{'tool': 'set_checkout_choices', 'result': result}], artifacts.business)
 
 
-def run_hybrid_turn(session_id, user_message, history=None, client_message_id=None, selected_product_id=None):
+def run_hybrid_turn(session_id, user_message, history=None, client_message_id=None, selected_product_id=None, ui_action=None):
     started = time.monotonic()
     from src.agents.guardrails import check_input, get_block_reply
+    from src.agents.customer_ui_actions import action_envelope, configuration_payload, product_snapshot
+    action_fingerprint = digest(ui_action) if ui_action is not None else None
     safe, reason = check_input(user_message, session_id)
     if not safe:
         return {'reply': get_block_reply(reason or ''), 'checkout_payload': None, 'ui_payload': {}, 'tool_calls_log': [], 'error': 'blocked:' + str(reason)}
@@ -566,7 +568,7 @@ def run_hybrid_turn(session_id, user_message, history=None, client_message_id=No
         previous = (cart_manager.get_checkout_prefs(session_id).get('processed_order_turns') or {}).get(client_message_id)
         previous = previous or cart_manager.load_durable_processed_turn(session_id, client_message_id)
         if previous:
-            if previous.get('message') != user_message or previous.get('selected_product_id') != selected_product_id:
+            if previous.get('message') != user_message or previous.get('selected_product_id') != selected_product_id or previous.get('action_fingerprint') != action_fingerprint:
                 return {'reply': 'Mã lượt chat đã được dùng cho một tin nhắn khác.', 'error': 'client_message_id_conflict', 'tool_calls_log': [], 'checkout_payload': None, 'ui_payload': {}}
             from src.common.provider_retry import retry_ready
             if not retry_ready(previous['result']):
@@ -589,7 +591,14 @@ def run_hybrid_turn(session_id, user_message, history=None, client_message_id=No
     cart_batch, discovery_batch, choice_records, location_completed = [], [], [], False
     location_read = None
     checkout_blocks, checkout_progressed = set(), False
-    if selected_product_id is not None:
+    if ui_action is not None:
+        try:
+            envelope = action_envelope(ui_action, turn)
+        except (GroundingError, ValueError) as exc:
+            envelope = None
+            failure = {'failure_code': getattr(exc, 'code', str(exc)), 'failure_class': 'REFERENCE_GROUNDING'}
+            blocks.append('Các lựa chọn đã thay đổi hoặc chưa đầy đủ. Bạn kiểm tra lại bảng tùy chọn mới bên dưới nhé; chưa thêm món nào từ lượt này.')
+    elif selected_product_id is not None:
         matches = [{**r, 'display_index': r.get('display_index', i)} for i, r in enumerate(turn.rows('products'), 1)
                    if str(r['product_id']) == str(selected_product_id)]
         envelope = {'kind': 'commands', 'commands': [{'intent': 'SELECT_PRODUCTS', 'args': {
@@ -600,7 +609,7 @@ def run_hybrid_turn(session_id, user_message, history=None, client_message_id=No
     else:
         envelope, failure, requests = interpret(turn, user_message, session_id, client_message_id, context['recent'], budget=budget)
     if envelope is not None and not failure:
-        envelope, failure, _ = validate_envelope(envelope)
+        envelope, failure, _ = validate_envelope(envelope, explicit_customer_action=ui_action is not None)
     if envelope is not None and not failure and envelope['kind'] == 'commands':
         try:
             bound = dispatcher.preflight(envelope['commands'])
@@ -615,7 +624,7 @@ def run_hybrid_turn(session_id, user_message, history=None, client_message_id=No
             if exc.code in {'menu_catalog_unavailable', 'menu_catalog_invalid'}:
                 failure['failure_class'] = 'BUSINESS_POLICY'
                 blocks.append('Mình chưa đọc được danh mục Menu lúc này. Bạn thử xem lại danh mục sau nhé; giỏ hàng vẫn được giữ nguyên.')
-            if selected_product_id is None and eligible(turn, envelope, exc) and budget.used < budget.maximum:
+            if ui_action is None and selected_product_id is None and eligible(turn, envelope, exc) and budget.used < budget.maximum:
                 grounding_repairs = 1
                 repaired, repair_error = repair(turn, envelope, exc, user_message, budget)
                 if repaired:
@@ -773,6 +782,8 @@ def run_hybrid_turn(session_id, user_message, history=None, client_message_id=No
     elif any(log['tool'] == 'confirm_checkout' and log['result'].get('status') in {'ok', 'success', 'already_processed'}
              for log in artifacts.logs):
         cart_manager.set_checkout_context(session_id, hybrid_product_display=None, hybrid_discovery_state=None)
+    artifacts.ui['product_configuration'] = configuration_payload(final_state.get('pending_products') or [])
+    artifacts.ui['product_selection_snapshot'] = product_snapshot(artifacts.visible.get('products') or [])
     artifacts.ui['cart'] = public_result(cart_manager.get_cart(session_id))
     if final_state.get('checkout', {}).get('payment_method') and not any(
             c['intent'] == 'LIST_PAYMENT_OPTIONS' for c in (envelope or {}).get('commands', [])):
@@ -790,7 +801,7 @@ def run_hybrid_turn(session_id, user_message, history=None, client_message_id=No
         response['retry_after_seconds'] = retry_delay
         response['_provider_retry'] = {'no_tool_execution': True, 'retry_at': time.time() + retry_delay}
     if client_message_id:
-        record = {'message': user_message, 'selected_product_id': selected_product_id, 'result': deepcopy(response)}
+        record = {'message': user_message, 'selected_product_id': selected_product_id, 'action_fingerprint': action_fingerprint, 'result': deepcopy(response)}
         cart_manager.persist_processed_turn_durable(session_id, client_message_id, record)
         turns = dict(cart_manager.get_checkout_prefs(session_id).get('processed_order_turns') or {})
         turns[client_message_id] = record

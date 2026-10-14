@@ -131,8 +131,8 @@ export function AppNavigator() {
   useQuery({ queryKey: ['customer', 'menu-products-all'], queryFn: async () => safeArray(await apiClient.get('/menu/san-pham', { timeout: 12000 })).map(p => ({ ...normalizeProduct(p), danh_muc_id: String(p.danhMuc?.ma_danh_muc || p.danh_muc_id || ''), trang_thai: Boolean(p.trang_thai) })), enabled: hydrated, staleTime: 60000, retry: false })
   useEffect(() => { if (hydrated && introDone) setBooted(true) }, [hydrated, introDone])
   if (!booted) {
-    return <View style={{ flex: 1, backgroundColor: '#b22a2e', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <Image source={require('../../assets/branding/splash-logo.png')} accessibilityLabel="Highlands Coffee" style={{ width: 250, height: 250 }} resizeMode="contain" />
+    return <View style={{ flex: 1, backgroundColor: '#b22830', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <Image source={require('../../assets/branding/splash-logo.png')} accessibilityLabel="Highlands Coffee" style={{ width: 200, height: 154 }} resizeMode="contain" />
       <ActivityIndicator color="#fff" />
       <Text style={{ color: '#f2dfe1', marginTop: 16, fontSize: 13 }}>Một ly cà phê. Một khoảnh khắc của bạn.</Text>
     </View>

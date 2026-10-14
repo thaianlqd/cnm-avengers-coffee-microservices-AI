@@ -1,0 +1,200 @@
+[
+  {
+    "route": "/menu/danh-muc",
+    "same_full_json": true,
+    "identity": {
+      "status": 200,
+      "content_encoding": null,
+      "wire_bytes": 2390,
+      "decoded_bytes": 2390,
+      "decoded_sha256": "cf478e184f4d83fad83c156c950bfeb423c8611241c4af7630db617cc139138c",
+      "items": 23,
+      "fields": [
+        "cap_bac",
+        "hinh_anh_icon",
+        "ma_danh_muc",
+        "ma_danh_muc_cha",
+        "ten_danh_muc"
+      ]
+    },
+    "gzip": {
+      "status": 200,
+      "content_encoding": "gzip",
+      "wire_bytes": 455,
+      "decoded_bytes": 2390,
+      "decoded_sha256": "cf478e184f4d83fad83c156c950bfeb423c8611241c4af7630db617cc139138c",
+      "items": 23,
+      "fields": [
+        "cap_bac",
+        "hinh_anh_icon",
+        "ma_danh_muc",
+        "ma_danh_muc_cha",
+        "ten_danh_muc"
+      ]
+    }
+  },
+  {
+    "route": "/menu/san-pham",
+    "same_full_json": true,
+    "identity": {
+      "status": 200,
+      "content_encoding": null,
+      "wire_bytes": 116121,
+      "decoded_bytes": 116121,
+      "decoded_sha256": "15e6bca6029d285882736faaebec91899460e53622ce43a9962635d38bc5e2f3",
+      "items": 118,
+      "fields": [
+        "bestseller_period",
+        "bien_the",
+        "danhMuc",
+        "do_ngot",
+        "gia_ban",
+        "gia_niem_yet",
+        "hinh_anh_url",
+        "la_hot",
+        "la_moi",
+        "loai_sua",
+        "luong_da",
+        "ma_san_pham",
+        "mo_ta",
+        "order_count",
+        "sizes",
+        "sold_count",
+        "ten_san_pham",
+        "toppings",
+        "trang_thai"
+      ]
+    },
+    "gzip": {
+      "status": 200,
+      "content_encoding": "gzip",
+      "wire_bytes": 13198,
+      "decoded_bytes": 116121,
+      "decoded_sha256": "15e6bca6029d285882736faaebec91899460e53622ce43a9962635d38bc5e2f3",
+      "items": 118,
+      "fields": [
+        "bestseller_period",
+        "bien_the",
+        "danhMuc",
+        "do_ngot",
+        "gia_ban",
+        "gia_niem_yet",
+        "hinh_anh_url",
+        "la_hot",
+        "la_moi",
+        "loai_sua",
+        "luong_da",
+        "ma_san_pham",
+        "mo_ta",
+        "order_count",
+        "sizes",
+        "sold_count",
+        "ten_san_pham",
+        "toppings",
+        "trang_thai"
+      ]
+    }
+  },
+  {
+    "route": "/users/branches/public",
+    "same_full_json": true,
+    "identity": {
+      "status": 200,
+      "content_encoding": null,
+      "wire_bytes": 718448,
+      "decoded_bytes": 718448,
+      "decoded_sha256": "8957620e58fc9419b4759898f4caee36a7b1d61f8b17e0ad8fed32436b1fbe9e",
+      "items": 1215,
+      "fields": [
+        "dia_chi",
+        "gio_dong_cua",
+        "gio_mo_cua",
+        "hinh_anh_url",
+        "kinh_do",
+        "loai_diem_ban",
+        "ma_chi_nhanh",
+        "map_url",
+        "ngay_cap_nhat",
+        "ngay_tao",
+        "so_dien_thoai",
+        "ten_chi_nhanh",
+        "thanh_pho",
+        "trang_thai",
+        "vi_do"
+      ]
+    },
+    "gzip": {
+      "status": 200,
+      "content_encoding": "gzip",
+      "wire_bytes": 80793,
+      "decoded_bytes": 718448,
+      "decoded_sha256": "8957620e58fc9419b4759898f4caee36a7b1d61f8b17e0ad8fed32436b1fbe9e",
+      "items": 1215,
+      "fields": [
+        "dia_chi",
+        "gio_dong_cua",
+        "gio_mo_cua",
+        "hinh_anh_url",
+        "kinh_do",
+        "loai_diem_ban",
+        "ma_chi_nhanh",
+        "map_url",
+        "ngay_cap_nhat",
+        "ngay_tao",
+        "so_dien_thoai",
+        "ten_chi_nhanh",
+        "thanh_pho",
+        "trang_thai",
+        "vi_do"
+      ]
+    }
+  },
+  {
+    "route": "/news?limit=100",
+    "same_full_json": true,
+    "identity": {
+      "status": 200,
+      "content_encoding": null,
+      "wire_bytes": 5986,
+      "decoded_bytes": 5986,
+      "decoded_sha256": "6b771c920787ae16c7f61dbb9394ab9b82b0b943f59d76eaf194ed157e06df5a",
+      "items": 3,
+      "fields": [
+        "author_id",
+        "author_name",
+        "category",
+        "content",
+        "created_at",
+        "description",
+        "id",
+        "image_url",
+        "is_published",
+        "title",
+        "updated_at",
+        "views"
+      ]
+    },
+    "gzip": {
+      "status": 200,
+      "content_encoding": "gzip",
+      "wire_bytes": 2702,
+      "decoded_bytes": 5986,
+      "decoded_sha256": "6b771c920787ae16c7f61dbb9394ab9b82b0b943f59d76eaf194ed157e06df5a",
+      "items": 3,
+      "fields": [
+        "author_id",
+        "author_name",
+        "category",
+        "content",
+        "created_at",
+        "description",
+        "id",
+        "image_url",
+        "is_published",
+        "title",
+        "updated_at",
+        "views"
+      ]
+    }
+  }
+]

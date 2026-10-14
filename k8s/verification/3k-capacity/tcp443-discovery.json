@@ -1,0 +1,30 @@
+{
+  "samples": [
+    {
+      "repeat": 0,
+      "port": 443,
+      "tcp_connected": true,
+      "mapped_matches_tcp5349": false,
+      "mapped_matches_https": false,
+      "global": true
+    },
+    {
+      "repeat": 1,
+      "port": 443,
+      "tcp_connected": true,
+      "mapped_matches_tcp5349": false,
+      "mapped_matches_https": true,
+      "global": true
+    },
+    {
+      "repeat": 2,
+      "port": 443,
+      "tcp_connected": true,
+      "mapped_matches_tcp5349": false,
+      "mapped_matches_https": false,
+      "global": true
+    }
+  ],
+  "distinct_stun_egress_ipv4": 5,
+  "public_ips_redacted": true
+}

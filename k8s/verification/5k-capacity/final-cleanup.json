@@ -1,0 +1,140 @@
+{
+  "verified_at": "2026-10-14T04:58:02.077779+00:00",
+  "instances": [
+    {
+      "Id": "i-00d7a6b3c1b6d0bef",
+      "State": "terminated",
+      "Type": "m7i-flex.large",
+      "Launch": "2026-10-14T04:28:35+00:00",
+      "Transition": "User initiated (2026-10-14 04:35:43 GMT)",
+      "Tags": [
+        {
+          "Key": "ManagedBy",
+          "Value": "codex-local"
+        },
+        {
+          "Key": "Purpose",
+          "Value": "k6-capacity"
+        },
+        {
+          "Key": "Project",
+          "Value": "avengers-coffee"
+        },
+        {
+          "Key": "Name",
+          "Value": "avengers-k6-loadgen"
+        },
+        {
+          "Key": "Phase",
+          "Value": "5k-qualification"
+        },
+        {
+          "Key": "RunId",
+          "Value": "5k-20261014T042117Z-7be899"
+        }
+      ]
+    },
+    {
+      "Id": "i-021114122c139c390",
+      "State": "terminated",
+      "Type": "m7i-flex.large",
+      "Launch": "2026-10-14T04:03:06+00:00",
+      "Transition": "User initiated (2026-10-14 04:08:29 GMT)",
+      "Tags": [
+        {
+          "Key": "ManagedBy",
+          "Value": "codex-local"
+        },
+        {
+          "Key": "Name",
+          "Value": "avengers-k6-loadgen"
+        },
+        {
+          "Key": "Phase",
+          "Value": "5k-qualification"
+        },
+        {
+          "Key": "Purpose",
+          "Value": "k6-capacity"
+        },
+        {
+          "Key": "RunId",
+          "Value": "5k-20261014T040220Z-46d1e1"
+        },
+        {
+          "Key": "Project",
+          "Value": "avengers-coffee"
+        }
+      ]
+    },
+    {
+      "Id": "i-0427aab6664c6c0b7",
+      "State": "terminated",
+      "Type": "m7i-flex.large",
+      "Launch": "2026-10-14T03:55:32+00:00",
+      "Transition": "User initiated (2026-10-14 03:59:10 GMT)",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "avengers-k6-loadgen"
+        },
+        {
+          "Key": "Phase",
+          "Value": "5k-qualification"
+        },
+        {
+          "Key": "ManagedBy",
+          "Value": "codex-local"
+        },
+        {
+          "Key": "RunId",
+          "Value": "5k-20261014T035344Z-233a50"
+        },
+        {
+          "Key": "Purpose",
+          "Value": "k6-capacity"
+        },
+        {
+          "Key": "Project",
+          "Value": "avengers-coffee"
+        }
+      ]
+    },
+    {
+      "Id": "i-0103ed421c9b50c5d",
+      "State": "terminated",
+      "Type": "m7i-flex.large",
+      "Launch": "2026-10-14T04:39:45+00:00",
+      "Transition": "User initiated (2026-10-14 04:53:52 GMT)",
+      "Tags": [
+        {
+          "Key": "ManagedBy",
+          "Value": "codex-local"
+        },
+        {
+          "Key": "Project",
+          "Value": "avengers-coffee"
+        },
+        {
+          "Key": "Purpose",
+          "Value": "k6-capacity"
+        },
+        {
+          "Key": "RunId",
+          "Value": "5k-20261014T043856Z-6d555f"
+        },
+        {
+          "Key": "Name",
+          "Value": "avengers-k6-loadgen"
+        },
+        {
+          "Key": "Phase",
+          "Value": "5k-qualification"
+        }
+      ]
+    }
+  ],
+  "groups": [],
+  "volumes": [],
+  "keys": []
+}

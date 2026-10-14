@@ -1,0 +1,14 @@
+{
+  "started_at": "2026-10-14T04:35:39.411995+00:00",
+  "run_id": "5k-20261014T042117Z-7be899",
+  "terminated_instance_ids": [
+    "i-00d7a6b3c1b6d0bef"
+  ],
+  "deleted_group_ids": [
+    "sg-06199b02bf8e2614e"
+  ],
+  "remaining_active_instances": [],
+  "remaining_owned_volumes": [],
+  "remaining_owned_groups": [],
+  "finished_at": "2026-10-14T04:36:14.256283+00:00"
+}

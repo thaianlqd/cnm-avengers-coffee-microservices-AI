@@ -57,6 +57,7 @@ import {
 } from 'lucide-react'
 const ManagerShipperPanel = lazy(() => import('./features/manager-dashboard/components/ManagerShipperPanel').then(module => ({ default: module.ManagerShipperPanel })))
 import { AdminChatWidget } from './features/admin-dashboard/components/AdminChatWidget'
+import StaffInbox from './features/admin-dashboard/components/StaffInbox'
 const TableManagementPanel = lazy(() => import('./features/admin-dashboard/components/TableManagementPanel').then(module => ({ default: module.TableManagementPanel })))
 import { AUTH_INVALID_EVENT } from './lib/adminFetch'
 const AccountCenterPanel = lazy(() => import('./features/shared/components/AccountCenterPanel').then(module => ({ default: module.AccountCenterPanel })))
@@ -196,6 +197,7 @@ function AppContent() {
     ...(!isKioskStaff ? [{ label: 'Sản phẩm & tin tức', items: [{ id: 'menu', label: 'Thực đơn', icon: Coffee }, { id: 'news', label: 'Tin tức', icon: Newspaper }] }] : []),
     { label: isManager ? 'Nhân sự & chăm sóc khách hàng' : 'Ca làm & cá nhân', items: [
       { id: 'workforce', label: 'Lịch làm của tôi', icon: Calendar },
+      ...(['STAFF', 'MANAGER'].includes(userRole) ? [{ id: 'messages', label: 'Tin nhắn khách hàng', icon: MessageSquare }] : []),
       ...(isManager ? [
         { id: 'shift-approval', label: 'Duyệt chốt ca', icon: CheckCircle2 },
         { id: 'employee-manage', label: 'Nhân viên', icon: Users },
@@ -523,10 +525,11 @@ function AppContent() {
           </div>
         )}
 
+        {activeTab === 'messages' && ['STAFF', 'MANAGER'].includes(userRole) && <StaffInbox key={session?.user?.id || session?.user?.maNguoiDung || session?.user?.tenDangNhap} session={session} />}
         {activeTab === 'account' ? <AccountCenterPanel session={session} /> : null}
         </Suspense></div></WorkspaceErrorBoundary>
       </main>
-        <AdminChatWidget session={session} />
+        {['STAFF', 'MANAGER'].includes(userRole) && <AdminChatWidget session={session} onOpenInbox={() => setActiveTab('messages')} hidden={activeTab === 'messages'} />}
 
         {adminToast ? (
           <div

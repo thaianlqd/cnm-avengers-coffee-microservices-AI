@@ -1,0 +1,6 @@
+{
+  "observed_at": "2026-10-14T04:28:54Z",
+  "stage": "cloud-init",
+  "error": "bootstrap.sh: line 4: HOME: unbound variable",
+  "k6_started": false
+}

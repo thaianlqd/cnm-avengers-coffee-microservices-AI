@@ -1,3 +1,4 @@
+const actionIdentity = value => JSON.stringify(value || null, (_, v) => v && !Array.isArray(v) && typeof v === 'object' ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b))) : v);
 // A failed agent turn survives a widget remount or page reload in this tab.
 export const PENDING_AGENT_TURN_KEY = 'avengers_ai_pending_agent_turn';
 
@@ -18,6 +19,7 @@ export function matchesAgentTurn(previous, request) {
   const selectedProductId = request.selectedProductId || null;
   return Number.isFinite(previous?.createdAt) &&
       previous.text === request.text &&
+      actionIdentity(previous.uiAction) === actionIdentity(request.uiAction) &&
       (previous.selectedProductId || null) === selectedProductId &&
       previous.sessionId === request.sessionId &&
       previous.conversationId === request.conversationId;

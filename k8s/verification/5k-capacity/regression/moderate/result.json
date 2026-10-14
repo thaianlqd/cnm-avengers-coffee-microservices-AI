@@ -1,0 +1,6 @@
+{
+  "status": "FAIL",
+  "k6_exit": 99,
+  "smoke_exit": 0,
+  "violations": []
+}

@@ -1,0 +1,14 @@
+{
+  "status": "NOT QUALIFIED (network/setup before external load)",
+  "target_vus": 3000,
+  "external_capacity_runs": 0,
+  "max_repeatably_qualified_external_vus": null,
+  "first_external_failing_vus": null,
+  "stop_condition": "C: safe non-Quick data plane could not be established",
+  "failure_class": "B reachability/setup; no application capacity conclusion",
+  "legacy_local_200": "STABLE PASS once; different historical workload",
+  "application_tuning_applied": false,
+  "generator_adequacy": "not evaluated: no k6 capacity run",
+  "uplink_ceiling": "not measured",
+  "independent_3000_confirmations": 0
+}

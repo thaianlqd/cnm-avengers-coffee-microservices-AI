@@ -1,0 +1,15 @@
+{
+  "run_id": "5k-20261014T034500Z-6a545c",
+  "started_at": "2026-10-14T03:45:00.533126+00:00",
+  "key_pair_id": "key-09c8c3b9a284f1cac",
+  "sg_id": "sg-0b6f04316380be76d",
+  "instance_id": "i-0ca9729bcb525e445",
+  "launched_at": "2026-10-14T03:45:40+00:00",
+  "ami": "ami-0f5e1e0151e5b95ed",
+  "instance_type": "m7i-flex.large",
+  "architecture": "x86_64",
+  "az": "ap-southeast-2a",
+  "root_delete_on_termination": true,
+  "public_ip": "13.236.186.46",
+  "error": "ssh operation failed (255); output suppressed"
+}

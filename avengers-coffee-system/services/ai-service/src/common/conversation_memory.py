@@ -100,7 +100,7 @@ def get_cached_response(conversation_id: str, session_id: str, client_message_id
 
 
 def claim_turn(conversation_id: str, session_id: str, client_message_id: str,
-               message: str, selected_product_id: Optional[str]) -> Dict[str, Any]:
+               message: str, selected_product_id: Optional[str], action_fingerprint: Optional[str] = None) -> Dict[str, Any]:
     """Atomically reserve one logical turn in the existing conversation row."""
     _ensure_table()
     schema = _schema()
@@ -120,7 +120,7 @@ def claim_turn(conversation_id: str, session_id: str, client_message_id: str,
         previous = responses.get(str(client_message_id))
         if previous:
             if (previous.get("_request_message") != message or
-                    previous.get("_selected_product_id") != selected_product_id):
+                    previous.get("_selected_product_id") != selected_product_id or previous.get("_action_fingerprint") != action_fingerprint):
                 return {"status": "conflict"}
             if not retry_ready(previous):
                 return {"status": previous.get("_turn_status") if previous.get("_turn_status") in UNRESOLVED_STATUSES else "completed",
@@ -133,7 +133,7 @@ def claim_turn(conversation_id: str, session_id: str, client_message_id: str,
                     "blocking_status": record["_turn_status"]}
         responses[str(client_message_id)] = {
             "_turn_status": IN_PROGRESS, "_request_message": message,
-            "_selected_product_id": selected_product_id, "_claimed_at": time.time(),
+            "_selected_product_id": selected_product_id, "_action_fingerprint": action_fingerprint, "_claimed_at": time.time(),
         }
         conn.execute(text(f'''
             UPDATE "{schema}".chat_ai_conversation
@@ -190,6 +190,7 @@ def save_exchange(
     state: Optional[Dict[str, Any]] = None,
     response_session_id: Optional[str] = None,
     selected_product_id: Optional[str] = None,
+    action_fingerprint: Optional[str] = None,
 ) -> None:
     _ensure_table()
     schema = _schema()
@@ -214,13 +215,14 @@ def save_exchange(
             previous = responses.get(str(client_message_id))
             if previous and previous.get("_turn_status") not in UNRESOLVED_STATUSES:
                 if (previous.get("_request_message") != user_message or
-                        previous.get("_selected_product_id") != selected_product_id):
+                        previous.get("_selected_product_id") != selected_product_id or previous.get("_action_fingerprint") != action_fingerprint):
                     raise ValueError("client_message_id_conflict")
                 return  # A competing recovery already committed this exchange.
             cached_result = dict(result)
             cached_result["_response_session_id"] = response_session_id or session_id
             cached_result["_request_message"] = user_message
             cached_result["_selected_product_id"] = selected_product_id
+            cached_result["_action_fingerprint"] = action_fingerprint
             cached_result["_completed_at"] = time.time()
             responses[str(client_message_id)] = cached_result
             if len(responses) > 50:

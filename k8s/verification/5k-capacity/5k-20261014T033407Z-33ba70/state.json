@@ -1,0 +1,7 @@
+{
+  "run_id": "5k-20261014T033407Z-33ba70",
+  "started_at": "2026-10-14T03:34:07.894482+00:00",
+  "key_pair_id": "key-09c8c3b9a284f1cac",
+  "sg_id": "sg-0a7ec2724fba2c531",
+  "error": "aws operation failed (254); output suppressed"
+}

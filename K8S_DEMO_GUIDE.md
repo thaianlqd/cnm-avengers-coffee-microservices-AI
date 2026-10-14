@@ -1,11 +1,21 @@
 # Demo Kubernetes Avengers Coffee trên Mac M1 Pro
 
+Phase tiếp theo: [report 3K](K8S_3K_CAPACITY_REPORT.md). Clean legacy 200 VU PASS
+một lần (p95 1.044,8ms); external load chưa bắt đầu vì safe non-Quick data path
+chưa thiết lập được. 3K và maximum stable external VU chưa được qualified.
+AWS/network của phase đã cleanup; cấu hình ứng dụng demo được giữ nguyên.
+
 Triển khai này thêm một cách chạy Kubernetes; Docker Compose cũ vẫn dùng được.
 Đã triển khai trên Docker Desktop Kubernetes arm64, node Ready với 8 CPU/~8 GB RAM.
 Database ứng dụng là Supabase/PostgreSQL hiện có; Redis và RabbitMQ giữ Compose.
 Kết quả từng lượt tải và giới hạn nằm trong [verification report](K8S_VERIFICATION_REPORT.md).
 Final qualification: 44.608 requests, 0 lỗi, p95 505 ms; HPA peak Gateway/Menu/Identity
 4/4/3 và về tự nhiên 2/1/1. Self-healing/rolling restart đều 60/60 HTTP 200.
+
+Số qualification trên là evidence phiên trước. [Phase 5k ngày 14/10](K8S_5K_CAPACITY_REPORT.md)
+chưa qualify 5k: external 250 VU bị giới hạn Quick Tunnel; hai lượt legacy 200
+trên shared host hiện tại cũng fail p95 (2.146/1.599ms). Smoke/realtime/availability
+pass; không coi các kết quả đó là performance PASS và không dùng 5k để demo.
 
 ## Kiến trúc để giải thích với giảng viên
 

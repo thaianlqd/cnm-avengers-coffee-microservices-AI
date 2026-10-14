@@ -1,0 +1,11 @@
+{
+  "observed_at": "2026-10-14T04:40:09.126638+00:00",
+  "phase": "ready",
+  "k6_version": "k6 v2.3.0 (commit/e088784614, go1.26.8, linux/amd64)",
+  "k6_sha256": "e001bbf39ba67424a85c9c8516440ba5c73ecf7a6021be96c76194380c15f260",
+  "architecture": "x86_64",
+  "cpu_count": 2,
+  "memory_KiB": 7962844,
+  "fd_soft": 65536,
+  "fd_hard": 524288
+}

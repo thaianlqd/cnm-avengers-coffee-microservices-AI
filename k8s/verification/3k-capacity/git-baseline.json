@@ -1,0 +1,14 @@
+{
+  "branch": "branch_thaian",
+  "head": "443fb99696e4fdaaea043776e8c49416b1fd1fbf",
+  "initial_tracked_diff_stat": "K8S_DEMO_GUIDE.md +5; load-tests/k6/README.md +11",
+  "initial_untracked": [
+    "K8S_5K_CAPACITY_REPORT.md",
+    "k8s/verification/5k-capacity/",
+    "load-tests/k6/customer-browse-5k.js",
+    "scripts/aws-k6/"
+  ],
+  "preserved_previous_work": true,
+  "final_diff_stat": " K8S_DEMO_GUIDE.md       | 10 ++++++++++\n load-tests/k6/README.md | 19 +++++++++++++++++++\n 2 files changed, 29 insertions(+)\n",
+  "commit_or_push": false
+}

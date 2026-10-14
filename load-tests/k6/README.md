@@ -116,3 +116,22 @@ and `.log.gz` evidence can also be reanalyzed directly:
 ```bash
 python3 scripts/k8s/summarize-capacity.py k8s/verification/capacity
 ```
+
+## External browser-like 5k phase
+
+`customer-browse-5k.js` is a separate gzip profile with full JSON item checks,
+fixed think=3s, the current frontend's `/news?limit=100`, and global/hold quality
+gates. Use the [AWS helper workflow](../../scripts/aws-k6/README.md), not a local
+staircase. [The 14 October report](../../K8S_5K_CAPACITY_REPORT.md) records a
+250-VU first-level FAIL through Quick Tunnel (217 HTTP 429, p95 3011.7ms); higher
+levels were not attempted. No stable external max or 5k qualification was established.
+Both legacy moderate 200-VU regression attempts also failed latency in the
+current shared environment; prior local 250-VU results remain historical evidence.
+## Phase 3K follow-up
+
+`customer-browse-3k.js` giữ mix bốn route, full JSON/gzip và think 3s của phase
+external, thêm p99 và chỉ chấp nhận loopback reverse SSH được nối tới Mac thật.
+Quick Tunnel data URL bị từ chối. [Report 3K](../../K8S_3K_CAPACITY_REPORT.md):
+legacy clean 200 PASS một lượt (p95 1.044,8ms), nhưng external 250 chưa chạy vì
+data-plane setup không kết nối được; chưa có external max stable/3K qualification.
+Đọc prerequisite/network stop trong report trước khi launch; không retry mù.

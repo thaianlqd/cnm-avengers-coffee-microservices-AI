@@ -716,6 +716,7 @@ class AgentChatRequest(BaseModel):
     conversation_id: Optional[str] = None
     client_message_id: Optional[str] = None
     selected_product_id: Optional[str] = None
+    ui_action: Optional[Dict[str, Any]] = None
 
 
 class AgentChatResponse(BaseModel):
@@ -784,6 +785,17 @@ def agent_chat(body: AgentChatRequest, request: Request):
     from src.common import conversation_memory
 
     authorize_session(body.session_id, request.headers.get("authorization"))
+    from src.agents.customer_ui_actions import validate_action
+    from src.agents.semantic_protocol import digest
+    if body.ui_action is not None:
+        try:
+            validate_action(body.ui_action)
+            if body.selected_product_id is not None:
+                raise ValueError('conflicting_ui_actions')
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail={'code': str(exc)})
+    action_fingerprint = digest(body.ui_action) if body.ui_action is not None else None
+    action_identity = {'action_fingerprint': action_fingerprint} if action_fingerprint else {}
 
     if not body.client_message_id:
         raise HTTPException(status_code=400, detail={"code": "TURN_ID_REQUIRED", "message": "Thiếu mã lượt chat"})
@@ -800,7 +812,7 @@ def agent_chat(body: AgentChatRequest, request: Request):
     try:
         if body.client_message_id:
             claim = conversation_memory.claim_turn(conversation_id, body.session_id,
-                body.client_message_id, body.message, body.selected_product_id)
+                body.client_message_id, body.message, body.selected_product_id, **action_identity)
             if claim["status"] == "conflict":
                 raise HTTPException(status_code=409, detail={"code": "TURN_ID_CONFLICT", "message": "Mã lượt chat đã được dùng cho yêu cầu khác"})
             if claim["status"] == "blocked_by_turn":
@@ -823,7 +835,7 @@ def agent_chat(body: AgentChatRequest, request: Request):
                 while claim["status"] == conversation_memory.IN_PROGRESS and monotonic() < deadline:
                     sleep(0.05)
                     claim = conversation_memory.claim_turn(conversation_id, body.session_id,
-                        body.client_message_id, body.message, body.selected_product_id)
+                        body.client_message_id, body.message, body.selected_product_id, **action_identity)
                     if claim["status"] == "completed":
                         logger.info("[AgentTurn] conversation_id=%s client_message_id=%s phase=replay cache_hit=true",
                                     conversation_id, body.client_message_id)
@@ -840,14 +852,14 @@ def agent_chat(body: AgentChatRequest, request: Request):
                     # a lost completion write through the existing path.
                     if durable and not retry_ready(durable.get("result"), now=claimed_at):
                         if (durable.get("message") != body.message or
-                                durable.get("selected_product_id") != body.selected_product_id):
+                                durable.get("selected_product_id") != body.selected_product_id or durable.get("action_fingerprint") != action_fingerprint):
                             raise HTTPException(status_code=409, detail={"code": "TURN_ID_CONFLICT", "message": "Mã lượt chat đã được dùng cho yêu cầu khác"})
                         recovered = dict(durable["result"])
                         recovered["conversation_id"] = conversation_id
                         conversation_memory.save_exchange(conversation_id=conversation_id, session_id=body.session_id,
                             user_message=body.message, result=recovered, client_message_id=body.client_message_id,
                             response_session_id=scoped_session_id,
-                            selected_product_id=body.selected_product_id)
+                            selected_product_id=body.selected_product_id, **action_identity)
                         logger.info("[AgentTurn] conversation_id=%s client_message_id=%s phase=business_replay cache_hit=true",
                                     conversation_id, body.client_message_id)
                         return replay(recovered)
@@ -890,6 +902,7 @@ def agent_chat(body: AgentChatRequest, request: Request):
             history=history,
             client_message_id=body.client_message_id,
             selected_product_id=body.selected_product_id,
+            **({"ui_action": body.ui_action} if body.ui_action is not None else {}),
         )
     except Exception as exc:
         logger.warning("[AgentTurn] conversation_id=%s client_message_id=%s phase=graph_failed error=%s",
@@ -897,11 +910,11 @@ def agent_chat(body: AgentChatRequest, request: Request):
         if body.client_message_id:
             try:
                 durable = cart_manager.load_durable_processed_turn(scoped_session_id, body.client_message_id)
-                if durable and durable.get("message") == body.message and durable.get("selected_product_id") == body.selected_product_id:
+                if durable and durable.get("message") == body.message and durable.get("selected_product_id") == body.selected_product_id and durable.get("action_fingerprint") == action_fingerprint:
                     recovered = dict(durable["result"])
                     conversation_memory.save_exchange(conversation_id=conversation_id, session_id=body.session_id,
                         user_message=body.message, result=recovered, client_message_id=body.client_message_id,
-                        response_session_id=scoped_session_id, selected_product_id=body.selected_product_id)
+                        response_session_id=scoped_session_id, selected_product_id=body.selected_product_id, **action_identity)
                     logger.info("[AgentTurn] conversation_id=%s client_message_id=%s phase=business_replay",
                                 conversation_id, body.client_message_id)
                     return replay(recovered)
@@ -922,7 +935,7 @@ def agent_chat(body: AgentChatRequest, request: Request):
     if body.client_message_id:
         try:
             from src.agents.order_flow_graph import _sanitize_replay_result
-            record = {"message": body.message, "selected_product_id": body.selected_product_id,
+            record = {"message": body.message, "selected_product_id": body.selected_product_id, "action_fingerprint": action_fingerprint,
                       "result": _sanitize_replay_result(result)}
             cart_manager.persist_processed_turn_durable(scoped_session_id, body.client_message_id, record)
         except Exception as exc:
@@ -945,6 +958,7 @@ def agent_chat(body: AgentChatRequest, request: Request):
             },
             response_session_id=scoped_session_id,
             selected_product_id=body.selected_product_id,
+            **action_identity,
         )
     except Exception as exc:
         logger.warning("[AgentTurn] conversation_id=%s client_message_id=%s phase=cache_save_failed error=%s",
@@ -1919,6 +1933,7 @@ async def voice_order(
     user_id: str = Form(default=""),
     branch_code: str = Form(default=""),
     language: str = Form(default="vi"),
+    transcription_only: bool = Form(default=False),
 ):
     """
     Voice-to-Order: upload audio → Groq Whisper STT → order intent parsing.
@@ -1955,6 +1970,11 @@ async def voice_order(
             error_message="STT failed",
         )
         raise HTTPException(status_code=422, detail="Không thể nhận dạng giọng nói. Hãy thử lại rõ hơn nhé!")
+
+    # Agent clients submit the transcript to their stateful conversation instead
+    # of executing a second, unrelated legacy order interpretation.
+    if transcription_only is True:
+        return {"transcript": transcript}
 
     # Step 2: Extract order intent from transcript
     intent_data = groq_extract_order_intent(transcript)

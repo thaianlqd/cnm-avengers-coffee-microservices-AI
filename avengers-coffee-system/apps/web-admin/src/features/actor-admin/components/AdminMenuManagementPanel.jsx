@@ -469,12 +469,12 @@ function AdminMenuManagementPanelContent({
                 <table className="menu-table">
                   <thead>
                     <tr>
-                      <th style={{ width: '26%' }}>Sản phẩm</th>
-                      <th style={{ width: '15%' }}>Danh mục</th>
-                      <th style={{ width: '15%' }}>Giá bán</th>
-                      <th style={{ width: '14%' }}>Trạng thái</th>
+                      <th style={{ width: '30%' }}>Sản phẩm</th>
+                      <th style={{ width: '14%' }}>Danh mục</th>
+                      <th style={{ width: '12%' }}>Giá bán</th>
+                      <th style={{ width: '17%' }}>Trạng thái</th>
                       <th style={{ width: '15%' }}>Nhãn đặc trưng</th>
-                      <th style={{ width: '15%', textAlign: 'center' }}>Thao tác</th>
+                      <th style={{ width: '12%', textAlign: 'center' }}>Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>

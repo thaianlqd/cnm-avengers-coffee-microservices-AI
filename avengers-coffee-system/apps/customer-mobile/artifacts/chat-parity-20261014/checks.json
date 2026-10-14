@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-14",
+  "node_contract_tests": {
+    "passed": 62,
+    "failed": 0
+  },
+  "ai_offline_runs": [
+    {
+      "passed": 114,
+      "failed": 0
+    },
+    {
+      "passed": 135,
+      "failed": 0,
+      "includes_new_mobile_tests": true
+    }
+  ],
+  "ai_test_network": "none",
+  "real_provider_requests_sent_by_tests": 0,
+  "browser": {
+    "result": "PASS",
+    "mocked_agent_turns": 4,
+    "viewport_widths": [
+      320,
+      390,
+      480,
+      1440
+    ],
+    "scenarios": [
+      "two exact milk-coffee cards",
+      "ordinal 2 keeps options and does not fabricate checkout",
+      "canonical product plus",
+      "AI/staff switch",
+      "reload conversation",
+      "mocked hold-to-speak uses same Agent",
+      "latest answer above input",
+      "shipper banner",
+      "single-color splash"
+    ]
+  },
+  "builds": {
+    "customer_web": "PASS",
+    "customer_ios_bundle": "PASS",
+    "customer_android_bundle": "PASS",
+    "shipper_web": "PASS",
+    "web_customer": "PASS"
+  },
+  "lint_changed_customer_files": "PASS (installed Expo config, 0 errors/warnings)",
+  "local_ai_service": "rebuilt/recreated successfully; startup complete; no live chat test",
+  "native_device_runtime": "not tested on emulator/device",
+  "note": "AI runs overlap; counts are per run, not summed."
+}

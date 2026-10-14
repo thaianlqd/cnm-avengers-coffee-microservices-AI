@@ -1,0 +1,16 @@
+{
+  "observed_at": "2026-10-14T05:41:52Z",
+  "default_interface": "en0",
+  "lan_private": true,
+  "public_address_is_global": true,
+  "nat_or_firewall_changed": false,
+  "nat_pmp": {
+    "responded": false
+  },
+  "upnp": {
+    "igd_responses": 0,
+    "wan_service_found": false
+  },
+  "cgnat_assessment": "not established: router WAN unavailable",
+  "direct_mapping_protocol_available": false
+}

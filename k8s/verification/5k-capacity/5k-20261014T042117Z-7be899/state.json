@@ -1,0 +1,19 @@
+{
+  "run_id": "5k-20261014T042117Z-7be899",
+  "started_at": "2026-10-14T04:21:17.868673+00:00",
+  "requested_instance_type": "m7i-flex.large",
+  "bootstrap_mode": "https-userdata",
+  "key_pair_id": "key-09c8c3b9a284f1cac",
+  "target_url": "https://committees-angeles-creativity-mac.trycloudflare.com",
+  "control_url": "https://prescribed-item-holdings-ireland.trycloudflare.com",
+  "sg_id": "sg-06199b02bf8e2614e",
+  "instance_id": "i-00d7a6b3c1b6d0bef",
+  "launched_at": "2026-10-14T04:28:35+00:00",
+  "ami": "ami-0f5e1e0151e5b95ed",
+  "instance_type": "m7i-flex.large",
+  "architecture": "x86_64",
+  "az": "ap-southeast-2a",
+  "root_delete_on_termination": true,
+  "public_ip": "3.27.234.122",
+  "error": "KeyboardInterrupt"
+}

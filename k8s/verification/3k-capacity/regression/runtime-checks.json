@@ -1,0 +1,22 @@
+[
+  {
+    "name": "healing",
+    "exit": 0,
+    "availability_60_of_60": true
+  },
+  {
+    "name": "rollout",
+    "exit": 0,
+    "availability_60_of_60": true
+  },
+  {
+    "name": "socket",
+    "exit": 0,
+    "availability_60_of_60": null
+  },
+  {
+    "name": "smoke",
+    "exit": 0,
+    "availability_60_of_60": null
+  }
+]

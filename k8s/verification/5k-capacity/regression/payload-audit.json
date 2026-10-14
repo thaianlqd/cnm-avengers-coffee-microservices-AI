@@ -1,0 +1,234 @@
+[
+  {
+    "route": "/menu/danh-muc",
+    "encodings": [
+      {
+        "request_encoding": "identity",
+        "response_encoding": "identity",
+        "wire_bytes": 2390,
+        "decoded_bytes": 2390,
+        "item_count": 23,
+        "top_level_fields": null,
+        "item_fields": [
+          "cap_bac",
+          "hinh_anh_icon",
+          "ma_danh_muc",
+          "ma_danh_muc_cha",
+          "ten_danh_muc"
+        ],
+        "decoded_sha256": "cf478e184f4d83fad83c156c950bfeb423c8611241c4af7630db617cc139138c"
+      },
+      {
+        "request_encoding": "gzip",
+        "response_encoding": "gzip",
+        "wire_bytes": 455,
+        "decoded_bytes": 2390,
+        "item_count": 23,
+        "top_level_fields": null,
+        "item_fields": [
+          "cap_bac",
+          "hinh_anh_icon",
+          "ma_danh_muc",
+          "ma_danh_muc_cha",
+          "ten_danh_muc"
+        ],
+        "decoded_sha256": "cf478e184f4d83fad83c156c950bfeb423c8611241c4af7630db617cc139138c"
+      }
+    ],
+    "same_full_json": true
+  },
+  {
+    "route": "/menu/san-pham",
+    "encodings": [
+      {
+        "request_encoding": "identity",
+        "response_encoding": "identity",
+        "wire_bytes": 116121,
+        "decoded_bytes": 116121,
+        "item_count": 118,
+        "top_level_fields": null,
+        "item_fields": [
+          "bestseller_period",
+          "bien_the",
+          "danhMuc",
+          "do_ngot",
+          "gia_ban",
+          "gia_niem_yet",
+          "hinh_anh_url",
+          "la_hot",
+          "la_moi",
+          "loai_sua",
+          "luong_da",
+          "ma_san_pham",
+          "mo_ta",
+          "order_count",
+          "sizes",
+          "sold_count",
+          "ten_san_pham",
+          "toppings",
+          "trang_thai"
+        ],
+        "decoded_sha256": "15e6bca6029d285882736faaebec91899460e53622ce43a9962635d38bc5e2f3"
+      },
+      {
+        "request_encoding": "gzip",
+        "response_encoding": "gzip",
+        "wire_bytes": 13198,
+        "decoded_bytes": 116121,
+        "item_count": 118,
+        "top_level_fields": null,
+        "item_fields": [
+          "bestseller_period",
+          "bien_the",
+          "danhMuc",
+          "do_ngot",
+          "gia_ban",
+          "gia_niem_yet",
+          "hinh_anh_url",
+          "la_hot",
+          "la_moi",
+          "loai_sua",
+          "luong_da",
+          "ma_san_pham",
+          "mo_ta",
+          "order_count",
+          "sizes",
+          "sold_count",
+          "ten_san_pham",
+          "toppings",
+          "trang_thai"
+        ],
+        "decoded_sha256": "15e6bca6029d285882736faaebec91899460e53622ce43a9962635d38bc5e2f3"
+      }
+    ],
+    "same_full_json": true
+  },
+  {
+    "route": "/users/branches/public",
+    "encodings": [
+      {
+        "request_encoding": "identity",
+        "response_encoding": "identity",
+        "wire_bytes": 718448,
+        "decoded_bytes": 718448,
+        "item_count": 1215,
+        "top_level_fields": [
+          "items",
+          "total"
+        ],
+        "item_fields": [
+          "dia_chi",
+          "gio_dong_cua",
+          "gio_mo_cua",
+          "hinh_anh_url",
+          "kinh_do",
+          "loai_diem_ban",
+          "ma_chi_nhanh",
+          "map_url",
+          "ngay_cap_nhat",
+          "ngay_tao",
+          "so_dien_thoai",
+          "ten_chi_nhanh",
+          "thanh_pho",
+          "trang_thai",
+          "vi_do"
+        ],
+        "decoded_sha256": "8957620e58fc9419b4759898f4caee36a7b1d61f8b17e0ad8fed32436b1fbe9e"
+      },
+      {
+        "request_encoding": "gzip",
+        "response_encoding": "gzip",
+        "wire_bytes": 80793,
+        "decoded_bytes": 718448,
+        "item_count": 1215,
+        "top_level_fields": [
+          "items",
+          "total"
+        ],
+        "item_fields": [
+          "dia_chi",
+          "gio_dong_cua",
+          "gio_mo_cua",
+          "hinh_anh_url",
+          "kinh_do",
+          "loai_diem_ban",
+          "ma_chi_nhanh",
+          "map_url",
+          "ngay_cap_nhat",
+          "ngay_tao",
+          "so_dien_thoai",
+          "ten_chi_nhanh",
+          "thanh_pho",
+          "trang_thai",
+          "vi_do"
+        ],
+        "decoded_sha256": "8957620e58fc9419b4759898f4caee36a7b1d61f8b17e0ad8fed32436b1fbe9e"
+      }
+    ],
+    "same_full_json": true
+  },
+  {
+    "route": "/news?limit=100",
+    "encodings": [
+      {
+        "request_encoding": "identity",
+        "response_encoding": "identity",
+        "wire_bytes": 5986,
+        "decoded_bytes": 5986,
+        "item_count": 3,
+        "top_level_fields": [
+          "items",
+          "limit",
+          "page",
+          "total",
+          "totalPages"
+        ],
+        "item_fields": [
+          "author_id",
+          "author_name",
+          "category",
+          "content",
+          "created_at",
+          "description",
+          "id",
+          "image_url",
+          "is_published",
+          "title",
+          "updated_at",
+          "views"
+        ],
+        "decoded_sha256": "6b771c920787ae16c7f61dbb9394ab9b82b0b943f59d76eaf194ed157e06df5a"
+      },
+      {
+        "request_encoding": "gzip",
+        "response_encoding": "gzip",
+        "wire_bytes": 2702,
+        "decoded_bytes": 5986,
+        "item_count": 3,
+        "top_level_fields": [
+          "items",
+          "limit",
+          "page",
+          "total",
+          "totalPages"
+        ],
+        "item_fields": [
+          "author_id",
+          "author_name",
+          "category",
+          "content",
+          "created_at",
+          "description",
+          "id",
+          "image_url",
+          "is_published",
+          "title",
+          "updated_at",
+          "views"
+        ],
+        "decoded_sha256": "6b771c920787ae16c7f61dbb9394ab9b82b0b943f59d76eaf194ed157e06df5a"
+      }
+    ],
+    "same_full_json": true
+  }
+]

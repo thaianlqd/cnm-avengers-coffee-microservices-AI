@@ -1,0 +1,30 @@
+{
+  "tcp_stun": [
+    {
+      "endpoint": "stun.cloudflare.com",
+      "port": 3478,
+      "tls": false,
+      "tcp_connected": false,
+      "error_type": "TimeoutError"
+    },
+    {
+      "endpoint": "turn.cloudflare.com",
+      "port": 5349,
+      "tls": true,
+      "tcp_connected": true,
+      "stun_response": true,
+      "mapped_matches_udp": false,
+      "mapped_matches_https": false
+    }
+  ],
+  "system_proxy_flags": {},
+  "proxy_environment_present": {
+    "HTTP_PROXY": false,
+    "HTTPS_PROXY": false,
+    "ALL_PROXY": false,
+    "http_proxy": false,
+    "https_proxy": false,
+    "all_proxy": false
+  },
+  "mac_firewall_modified": false
+}

@@ -1,0 +1,78 @@
+{
+  "unit_tests": [
+    {
+      "name": "gateway",
+      "exit": 0,
+      "tests": 20,
+      "seconds": 1.71
+    },
+    {
+      "name": "identity",
+      "exit": 0,
+      "tests": 39,
+      "seconds": 2.97
+    },
+    {
+      "name": "menu",
+      "exit": 0,
+      "tests": 20,
+      "seconds": 2.33
+    },
+    {
+      "name": "news",
+      "exit": 0,
+      "tests": 9,
+      "seconds": 3.36
+    },
+    {
+      "name": "k8s-python",
+      "exit": 0,
+      "tests": 24,
+      "seconds": 0.83
+    },
+    {
+      "name": "aws-python",
+      "exit": 0,
+      "tests": 16,
+      "timing_source": "latest unittest log; initial wall duration superseded after helper changes"
+    },
+    {
+      "name": "node-security",
+      "exit": 0,
+      "tests": 3,
+      "seconds": 0.33
+    }
+  ],
+  "unit_test_total": 131,
+  "runtime": [
+    {
+      "name": "healing",
+      "exit": 0,
+      "availability_60_of_60": true
+    },
+    {
+      "name": "rollout",
+      "exit": 0,
+      "availability_60_of_60": true
+    },
+    {
+      "name": "socket",
+      "exit": 0,
+      "availability_60_of_60": null
+    },
+    {
+      "name": "smoke",
+      "exit": 0,
+      "availability_60_of_60": null
+    }
+  ],
+  "render_exit": 0,
+  "render_resources": 22,
+  "server_dry_run_exit": 0,
+  "deploy_exit": 0,
+  "deploy_evidence_source": "completed scripts/k8s/deploy.sh tool execution; fresh server dry-run and final snapshots archived",
+  "application_images_resources_probes_gateway_flags_unchanged": true,
+  "baseline_recovered": true,
+  "source_head": "443fb99696e4fdaaea043776e8c49416b1fd1fbf",
+  "source_branch": "branch_thaian"
+}

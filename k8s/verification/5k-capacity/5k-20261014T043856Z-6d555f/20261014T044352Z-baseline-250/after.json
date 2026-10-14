@@ -1,0 +1,2865 @@
+{
+  "observed_at": "2026-10-14T04:52:50.684425+00:00",
+  "compose_application_overlap": [],
+  "pods": [
+    {
+      "name": "ai-service-74595687bb-sjdxt",
+      "uid": "f9091a49-69fe-4304-b2fd-e8e6d694899f",
+      "app": "ai-service",
+      "phase": "Running",
+      "deleting": false,
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T01:43:23Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-13T12:13:29Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T01:43:33Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T01:43:33Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-13T12:13:29Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "containers": [
+        {
+          "name": "ai-service",
+          "ready": true,
+          "restartCount": 1,
+          "state": {
+            "running": {
+              "startedAt": "2026-10-14T01:43:24Z"
+            }
+          },
+          "lastState": {
+            "terminated": {
+              "reason": "Unknown",
+              "exitCode": 255,
+              "startedAt": "2026-10-13T12:13:29Z",
+              "finishedAt": "2026-10-14T01:43:15Z"
+            }
+          },
+          "imageID": "docker.io/avengers/ai-service@sha256:82f4acdb0c75dab2a7d94ebbc0a67240f8c17b4a7042c157375f4fa3132b170d"
+        }
+      ]
+    },
+    {
+      "name": "api-gateway-75789fdf-6l6c7",
+      "uid": "7e785962-8360-4448-9700-93e488f386d7",
+      "app": "api-gateway",
+      "phase": "Running",
+      "deleting": false,
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T03:54:06Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T03:54:06Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T03:54:12Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T03:54:12Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T03:54:06Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "containers": [
+        {
+          "name": "api-gateway",
+          "ready": true,
+          "restartCount": 0,
+          "state": {
+            "running": {
+              "startedAt": "2026-10-14T03:54:07Z"
+            }
+          },
+          "lastState": {},
+          "imageID": "docker.io/avengers/api-gateway@sha256:67e1a8b59dee9d532659fe69086b12fc032ed0aaa4e48c5f2f3a8eac66c51c1b"
+        }
+      ]
+    },
+    {
+      "name": "api-gateway-75789fdf-j4wkj",
+      "uid": "d2c777ce-9468-4d77-b82a-3c9a01d31a0e",
+      "app": "api-gateway",
+      "phase": "Running",
+      "deleting": false,
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T03:54:12Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T03:54:12Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T03:54:18Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T03:54:18Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T03:54:12Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "containers": [
+        {
+          "name": "api-gateway",
+          "ready": true,
+          "restartCount": 0,
+          "state": {
+            "running": {
+              "startedAt": "2026-10-14T03:54:12Z"
+            }
+          },
+          "lastState": {},
+          "imageID": "docker.io/avengers/api-gateway@sha256:67e1a8b59dee9d532659fe69086b12fc032ed0aaa4e48c5f2f3a8eac66c51c1b"
+        }
+      ]
+    },
+    {
+      "name": "identity-service-5774bb6df7-6bn9h",
+      "uid": "fcd45ce7-076b-4e56-b11c-b5c4f9817aa6",
+      "app": "identity-service",
+      "phase": "Running",
+      "deleting": false,
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T01:43:23Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-13T15:24:06Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T01:43:43Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T01:43:43Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-13T15:24:06Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "containers": [
+        {
+          "name": "identity-service",
+          "ready": true,
+          "restartCount": 1,
+          "state": {
+            "running": {
+              "startedAt": "2026-10-14T01:43:24Z"
+            }
+          },
+          "lastState": {
+            "terminated": {
+              "reason": "Unknown",
+              "exitCode": 255,
+              "startedAt": "2026-10-13T15:24:10Z",
+              "finishedAt": "2026-10-14T01:43:15Z"
+            }
+          },
+          "imageID": "docker.io/avengers/identity-service@sha256:ddefcf333ccb2ee2b6dfcc4d9be1d6856f27aca71d2b277cdb8322e49c06b788"
+        }
+      ]
+    },
+    {
+      "name": "inventory-service-cd68cd75b-s5xjr",
+      "uid": "8e2a4e1d-1fd7-4a35-8ffb-1c930e95bcc9",
+      "app": "inventory-service",
+      "phase": "Running",
+      "deleting": false,
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T01:43:24Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-13T12:13:29Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T01:43:43Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T01:43:43Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-13T12:13:29Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "containers": [
+        {
+          "name": "inventory-service",
+          "ready": true,
+          "restartCount": 1,
+          "state": {
+            "running": {
+              "startedAt": "2026-10-14T01:43:24Z"
+            }
+          },
+          "lastState": {
+            "terminated": {
+              "reason": "Unknown",
+              "exitCode": 255,
+              "startedAt": "2026-10-13T12:13:30Z",
+              "finishedAt": "2026-10-14T01:43:15Z"
+            }
+          },
+          "imageID": "docker.io/avengers/inventory-service@sha256:8518a3746e9402482bf1d1f0b320b92f1fb811898eb686f4198764d8acec1eb7"
+        }
+      ]
+    },
+    {
+      "name": "menu-service-7cf979fcc-6p25w",
+      "uid": "e522c028-8752-4ccc-9984-bd2ff892e4e5",
+      "app": "menu-service",
+      "phase": "Running",
+      "deleting": false,
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T01:43:23Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-13T14:29:13Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T01:43:43Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T01:43:43Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-13T14:29:08Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "containers": [
+        {
+          "name": "menu-service",
+          "ready": true,
+          "restartCount": 1,
+          "state": {
+            "running": {
+              "startedAt": "2026-10-14T01:43:26Z"
+            }
+          },
+          "lastState": {
+            "terminated": {
+              "reason": "Unknown",
+              "exitCode": 255,
+              "startedAt": "2026-10-13T14:29:14Z",
+              "finishedAt": "2026-10-14T01:43:15Z"
+            }
+          },
+          "imageID": "docker.io/avengers/menu-service@sha256:782a72470a1ea8c59003a05c373b865976b089a7ed2491991c86c1c9d135b35a"
+        },
+        {
+          "name": "public-media",
+          "ready": true,
+          "restartCount": 1,
+          "state": {
+            "terminated": {
+              "reason": "Completed",
+              "exitCode": 0,
+              "startedAt": "2026-10-14T01:43:24Z",
+              "finishedAt": "2026-10-14T01:43:25Z"
+            }
+          },
+          "lastState": {
+            "terminated": {
+              "reason": "Completed",
+              "exitCode": 0,
+              "startedAt": "2026-10-13T14:29:11Z",
+              "finishedAt": "2026-10-13T14:29:11Z"
+            }
+          },
+          "imageID": "docker.io/avengers/customer-media@sha256:fd811f8eb3985058e11edfc14d69a9254c4d5195a92056af5c298bf050d20e20"
+        }
+      ]
+    },
+    {
+      "name": "news-service-855d5cb5fd-ght8t",
+      "uid": "ad8f3b6c-0f1f-4e14-938f-2acf836a6e59",
+      "app": "news-service",
+      "phase": "Running",
+      "deleting": false,
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T01:43:23Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-13T12:51:09Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T01:43:43Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T01:43:43Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-13T12:51:08Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "containers": [
+        {
+          "name": "news-service",
+          "ready": true,
+          "restartCount": 1,
+          "state": {
+            "running": {
+              "startedAt": "2026-10-14T01:43:26Z"
+            }
+          },
+          "lastState": {
+            "terminated": {
+              "reason": "Unknown",
+              "exitCode": 255,
+              "startedAt": "2026-10-13T12:51:09Z",
+              "finishedAt": "2026-10-14T01:43:15Z"
+            }
+          },
+          "imageID": "docker.io/avengers/news-service@sha256:176431e7beb05257bbd2271feab1f03c6a35811b5b044b7765db19de38af9b6d"
+        },
+        {
+          "name": "public-media",
+          "ready": true,
+          "restartCount": 1,
+          "state": {
+            "terminated": {
+              "reason": "Completed",
+              "exitCode": 0,
+              "startedAt": "2026-10-14T01:43:24Z",
+              "finishedAt": "2026-10-14T01:43:24Z"
+            }
+          },
+          "lastState": {
+            "terminated": {
+              "reason": "Completed",
+              "exitCode": 0,
+              "startedAt": "2026-10-13T12:51:08Z",
+              "finishedAt": "2026-10-13T12:51:08Z"
+            }
+          },
+          "imageID": "docker.io/avengers/customer-media@sha256:fd811f8eb3985058e11edfc14d69a9254c4d5195a92056af5c298bf050d20e20"
+        }
+      ]
+    },
+    {
+      "name": "order-service-6c86bf89-bwgj7",
+      "uid": "ecbe16fb-4d77-4139-9a69-647988fa1248",
+      "app": "order-service",
+      "phase": "Running",
+      "deleting": false,
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T01:43:23Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-13T12:13:29Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T03:22:53Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T03:22:53Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-13T12:13:29Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "containers": [
+        {
+          "name": "order-service",
+          "ready": true,
+          "restartCount": 24,
+          "state": {
+            "running": {
+              "startedAt": "2026-10-14T03:22:48Z"
+            }
+          },
+          "lastState": {
+            "terminated": {
+              "reason": "Error",
+              "exitCode": 1,
+              "startedAt": "2026-10-14T03:17:42Z",
+              "finishedAt": "2026-10-14T03:17:45Z"
+            }
+          },
+          "imageID": "docker.io/avengers/order-service@sha256:97db7add6ca42d5142ef2944b42fac6eaaff6758067a1d4fc55dd7b394fb01cf"
+        }
+      ]
+    },
+    {
+      "name": "web-customer-6c9cf65c5-cmmtz",
+      "uid": "b6fcedce-3d72-45be-9643-0e12722c5e8f",
+      "app": "web-customer",
+      "phase": "Running",
+      "deleting": false,
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T01:43:23Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-13T12:13:29Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T01:43:32Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-14T01:43:32Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-10-13T12:13:29Z",
+          "observedGeneration": 1,
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "containers": [
+        {
+          "name": "web-customer",
+          "ready": true,
+          "restartCount": 1,
+          "state": {
+            "running": {
+              "startedAt": "2026-10-14T01:43:24Z"
+            }
+          },
+          "lastState": {
+            "terminated": {
+              "reason": "Unknown",
+              "exitCode": 255,
+              "startedAt": "2026-10-13T12:13:30Z",
+              "finishedAt": "2026-10-14T01:43:15Z"
+            }
+          },
+          "imageID": "docker.io/avengers/web-customer@sha256:016f08dce095eeb13f91d6929bf6b523c693060ddc7b174e90726f38b9ef4730"
+        }
+      ]
+    }
+  ],
+  "hpa": [
+    {
+      "name": "api-gateway",
+      "min": 2,
+      "max": 4,
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-10-13T11:53:46Z",
+          "message": "recommended size matches current size",
+          "reason": "ReadyForNewScale",
+          "status": "True",
+          "type": "AbleToScale"
+        },
+        {
+          "lastTransitionTime": "2026-10-14T03:54:42Z",
+          "message": "the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)",
+          "reason": "ValidMetricFound",
+          "status": "True",
+          "type": "ScalingActive"
+        },
+        {
+          "lastTransitionTime": "2026-10-14T04:50:07Z",
+          "message": "the desired replica count is less than the minimum replica count",
+          "reason": "TooFewReplicas",
+          "status": "True",
+          "type": "ScalingLimited"
+        }
+      ],
+      "currentMetrics": [
+        {
+          "resource": {
+            "current": {
+              "averageUtilization": 6,
+              "averageValue": "5m"
+            },
+            "name": "cpu"
+          },
+          "type": "Resource"
+        }
+      ],
+      "currentReplicas": 2,
+      "desiredReplicas": 2,
+      "lastScaleTime": "2026-10-14T04:51:08Z"
+    },
+    {
+      "name": "identity-service",
+      "min": 1,
+      "max": 3,
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-10-13T11:53:46Z",
+          "message": "recommended size matches current size",
+          "reason": "ReadyForNewScale",
+          "status": "True",
+          "type": "AbleToScale"
+        },
+        {
+          "lastTransitionTime": "2026-10-14T01:44:26Z",
+          "message": "the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)",
+          "reason": "ValidMetricFound",
+          "status": "True",
+          "type": "ScalingActive"
+        },
+        {
+          "lastTransitionTime": "2026-10-14T04:51:07Z",
+          "message": "the desired count is within the acceptable range",
+          "reason": "DesiredWithinRange",
+          "status": "False",
+          "type": "ScalingLimited"
+        }
+      ],
+      "currentMetrics": [
+        {
+          "resource": {
+            "current": {
+              "averageUtilization": 10,
+              "averageValue": "8m"
+            },
+            "name": "cpu"
+          },
+          "type": "Resource"
+        }
+      ],
+      "currentReplicas": 1,
+      "desiredReplicas": 1,
+      "lastScaleTime": "2026-10-14T04:51:08Z"
+    },
+    {
+      "name": "menu-service",
+      "min": 1,
+      "max": 4,
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-10-13T11:53:46Z",
+          "message": "recommended size matches current size",
+          "reason": "ReadyForNewScale",
+          "status": "True",
+          "type": "AbleToScale"
+        },
+        {
+          "lastTransitionTime": "2026-10-14T01:44:26Z",
+          "message": "the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)",
+          "reason": "ValidMetricFound",
+          "status": "True",
+          "type": "ScalingActive"
+        },
+        {
+          "lastTransitionTime": "2026-10-14T04:52:08Z",
+          "message": "the desired count is within the acceptable range",
+          "reason": "DesiredWithinRange",
+          "status": "False",
+          "type": "ScalingLimited"
+        }
+      ],
+      "currentMetrics": [
+        {
+          "resource": {
+            "current": {
+              "averageUtilization": 6,
+              "averageValue": "5m"
+            },
+            "name": "cpu"
+          },
+          "type": "Resource"
+        }
+      ],
+      "currentReplicas": 1,
+      "desiredReplicas": 1,
+      "lastScaleTime": "2026-10-14T04:52:08Z"
+    }
+  ],
+  "deployments": [
+    {
+      "name": "ai-service",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "ai-service",
+          "image": "avengers/ai-service:k8s-local-82f4acdb0c75",
+          "resources": {
+            "limits": {
+              "cpu": "1",
+              "memory": "1Gi"
+            },
+            "requests": {
+              "cpu": "250m",
+              "memory": "512Mi"
+            }
+          },
+          "livenessProbe": {
+            "failureThreshold": 3,
+            "httpGet": {
+              "path": "/health/live",
+              "port": "http",
+              "scheme": "HTTP"
+            },
+            "periodSeconds": 15,
+            "successThreshold": 1,
+            "timeoutSeconds": 3
+          },
+          "readinessProbe": {
+            "failureThreshold": 3,
+            "httpGet": {
+              "path": "/health/ready",
+              "port": "http",
+              "scheme": "HTTP"
+            },
+            "periodSeconds": 10,
+            "successThreshold": 1,
+            "timeoutSeconds": 4
+          },
+          "capacity_flags": {}
+        }
+      ]
+    },
+    {
+      "name": "api-gateway",
+      "replicas": 2,
+      "ready": 2,
+      "containers": [
+        {
+          "name": "api-gateway",
+          "image": "avengers/api-gateway:k8s-local-67e1a8b59dee",
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          },
+          "livenessProbe": {
+            "failureThreshold": 3,
+            "httpGet": {
+              "path": "/health/live",
+              "port": "http",
+              "scheme": "HTTP"
+            },
+            "periodSeconds": 15,
+            "successThreshold": 1,
+            "timeoutSeconds": 3
+          },
+          "readinessProbe": {
+            "failureThreshold": 3,
+            "httpGet": {
+              "path": "/health/ready",
+              "port": "http",
+              "scheme": "HTTP"
+            },
+            "periodSeconds": 10,
+            "successThreshold": 1,
+            "timeoutSeconds": 4
+          },
+          "capacity_flags": {
+            "GATEWAY_REQUEST_LOGGING": "false",
+            "GATEWAY_PROXY_KEEP_ALIVE": "false",
+            "GATEWAY_MAX_REQUESTS_PER_SOCKET": "0"
+          }
+        }
+      ]
+    },
+    {
+      "name": "identity-service",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "identity-service",
+          "image": "avengers/identity-service:k8s-local-ddefcf333ccb",
+          "resources": {
+            "limits": {
+              "cpu": "400m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          },
+          "livenessProbe": {
+            "failureThreshold": 3,
+            "httpGet": {
+              "path": "/health/live",
+              "port": "http",
+              "scheme": "HTTP"
+            },
+            "periodSeconds": 15,
+            "successThreshold": 1,
+            "timeoutSeconds": 3
+          },
+          "readinessProbe": {
+            "failureThreshold": 3,
+            "httpGet": {
+              "path": "/health/ready",
+              "port": "http",
+              "scheme": "HTTP"
+            },
+            "periodSeconds": 10,
+            "successThreshold": 1,
+            "timeoutSeconds": 4
+          },
+          "capacity_flags": {}
+        }
+      ]
+    },
+    {
+      "name": "inventory-service",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "inventory-service",
+          "image": "avengers/inventory-service:k8s-local-8518a3746e94",
+          "resources": {
+            "limits": {
+              "cpu": "400m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          },
+          "livenessProbe": {
+            "failureThreshold": 3,
+            "httpGet": {
+              "path": "/health/live",
+              "port": "http",
+              "scheme": "HTTP"
+            },
+            "periodSeconds": 15,
+            "successThreshold": 1,
+            "timeoutSeconds": 3
+          },
+          "readinessProbe": {
+            "failureThreshold": 3,
+            "httpGet": {
+              "path": "/health/ready",
+              "port": "http",
+              "scheme": "HTTP"
+            },
+            "periodSeconds": 10,
+            "successThreshold": 1,
+            "timeoutSeconds": 4
+          },
+          "capacity_flags": {}
+        }
+      ]
+    },
+    {
+      "name": "menu-service",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "menu-service",
+          "image": "avengers/menu-service:k8s-local-782a72470a1e",
+          "resources": {
+            "limits": {
+              "cpu": "400m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          },
+          "livenessProbe": {
+            "failureThreshold": 3,
+            "httpGet": {
+              "path": "/health/live",
+              "port": "http",
+              "scheme": "HTTP"
+            },
+            "periodSeconds": 15,
+            "successThreshold": 1,
+            "timeoutSeconds": 3
+          },
+          "readinessProbe": {
+            "failureThreshold": 3,
+            "httpGet": {
+              "path": "/health/ready",
+              "port": "http",
+              "scheme": "HTTP"
+            },
+            "periodSeconds": 10,
+            "successThreshold": 1,
+            "timeoutSeconds": 4
+          },
+          "capacity_flags": {}
+        }
+      ]
+    },
+    {
+      "name": "news-service",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "news-service",
+          "image": "avengers/news-service:k8s-local-176431e7beb0",
+          "resources": {
+            "limits": {
+              "cpu": "400m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          },
+          "livenessProbe": {
+            "failureThreshold": 3,
+            "httpGet": {
+              "path": "/health/live",
+              "port": "http",
+              "scheme": "HTTP"
+            },
+            "periodSeconds": 15,
+            "successThreshold": 1,
+            "timeoutSeconds": 3
+          },
+          "readinessProbe": {
+            "failureThreshold": 3,
+            "httpGet": {
+              "path": "/health/ready",
+              "port": "http",
+              "scheme": "HTTP"
+            },
+            "periodSeconds": 10,
+            "successThreshold": 1,
+            "timeoutSeconds": 4
+          },
+          "capacity_flags": {}
+        }
+      ]
+    },
+    {
+      "name": "order-service",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "order-service",
+          "image": "avengers/order-service:k8s-local-97db7add6ca4",
+          "resources": {
+            "limits": {
+              "cpu": "700m",
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "125m",
+              "memory": "192Mi"
+            }
+          },
+          "livenessProbe": {
+            "failureThreshold": 3,
+            "httpGet": {
+              "path": "/health/live",
+              "port": "http",
+              "scheme": "HTTP"
+            },
+            "periodSeconds": 15,
+            "successThreshold": 1,
+            "timeoutSeconds": 3
+          },
+          "readinessProbe": {
+            "failureThreshold": 3,
+            "httpGet": {
+              "path": "/health/ready",
+              "port": "http",
+              "scheme": "HTTP"
+            },
+            "periodSeconds": 10,
+            "successThreshold": 1,
+            "timeoutSeconds": 4
+          },
+          "capacity_flags": {}
+        }
+      ]
+    },
+    {
+      "name": "web-customer",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "web-customer",
+          "image": "avengers/web-customer:k8s-local-016f08dce095",
+          "resources": {
+            "limits": {
+              "cpu": "200m",
+              "memory": "128Mi"
+            },
+            "requests": {
+              "cpu": "25m",
+              "memory": "64Mi"
+            }
+          },
+          "livenessProbe": {
+            "failureThreshold": 3,
+            "httpGet": {
+              "path": "/health/live",
+              "port": "http",
+              "scheme": "HTTP"
+            },
+            "periodSeconds": 15,
+            "successThreshold": 1,
+            "timeoutSeconds": 3
+          },
+          "readinessProbe": {
+            "failureThreshold": 3,
+            "httpGet": {
+              "path": "/health/ready",
+              "port": "http",
+              "scheme": "HTTP"
+            },
+            "periodSeconds": 10,
+            "successThreshold": 1,
+            "timeoutSeconds": 4
+          },
+          "capacity_flags": {}
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "desktop-control-plane",
+      "capacity": {
+        "cpu": "8",
+        "ephemeral-storage": "474095688Ki",
+        "hugepages-1Gi": "0",
+        "hugepages-2Mi": "0",
+        "hugepages-32Mi": "0",
+        "hugepages-64Ki": "0",
+        "memory": "8124776Ki",
+        "pods": "110"
+      },
+      "allocatable": {
+        "cpu": "8",
+        "ephemeral-storage": "474095688Ki",
+        "hugepages-1Gi": "0",
+        "hugepages-2Mi": "0",
+        "hugepages-32Mi": "0",
+        "hugepages-64Ki": "0",
+        "memory": "8124776Ki",
+        "pods": "110"
+      },
+      "conditions": [
+        {
+          "lastHeartbeatTime": "2026-10-14T04:52:38Z",
+          "lastTransitionTime": "2026-10-13T11:11:13Z",
+          "message": "kubelet has sufficient memory available",
+          "reason": "KubeletHasSufficientMemory",
+          "status": "False",
+          "type": "MemoryPressure"
+        },
+        {
+          "lastHeartbeatTime": "2026-10-14T04:52:38Z",
+          "lastTransitionTime": "2026-10-13T11:11:13Z",
+          "message": "kubelet has no disk pressure",
+          "reason": "KubeletHasNoDiskPressure",
+          "status": "False",
+          "type": "DiskPressure"
+        },
+        {
+          "lastHeartbeatTime": "2026-10-14T04:52:38Z",
+          "lastTransitionTime": "2026-10-13T11:11:13Z",
+          "message": "kubelet has sufficient PID available",
+          "reason": "KubeletHasSufficientPID",
+          "status": "False",
+          "type": "PIDPressure"
+        },
+        {
+          "lastHeartbeatTime": "2026-10-14T04:52:38Z",
+          "lastTransitionTime": "2026-10-13T11:11:36Z",
+          "message": "kubelet is posting ready status",
+          "reason": "KubeletReady",
+          "status": "True",
+          "type": "Ready"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "uid": "859758ef-bd92-4ffd-a877-8d45fb458ccc",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-6l6c7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:54:06Z",
+      "message": ""
+    },
+    {
+      "uid": "be58bbb9-4c44-4e7f-bb86-cfb551b5ebc6",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-6l6c7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:54:06Z",
+      "message": ""
+    },
+    {
+      "uid": "9e7cf97a-d3de-4fd2-b9ef-a58c46a37ba9",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-6l6c7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:54:06Z",
+      "message": ""
+    },
+    {
+      "uid": "85b8d986-2de7-488c-8057-e569061d47e1",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-6l6c7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:54:07Z",
+      "message": ""
+    },
+    {
+      "uid": "7b8c11ee-9897-4eeb-9d76-5db3e69c97dc",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-j4wkj",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:54:12Z",
+      "message": ""
+    },
+    {
+      "uid": "6410a45c-65a5-4bed-8e5d-849df0c433dc",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-j4wkj",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:54:12Z",
+      "message": ""
+    },
+    {
+      "uid": "69b560ca-9a92-48bb-9a0c-90c919f40359",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-j4wkj",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:54:12Z",
+      "message": ""
+    },
+    {
+      "uid": "4cd9a2af-56b7-4226-b3cd-1b72b5a2b4a5",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-j4wkj",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:54:12Z",
+      "message": ""
+    },
+    {
+      "uid": "69ae9630-f1e4-4e93-88c1-f4b4c6d17fa4",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-tb9v2",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:20:31Z",
+      "message": ""
+    },
+    {
+      "uid": "4373b15e-7401-46bd-8302-af3f833a5a20",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-tb9v2",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:20:31Z",
+      "message": ""
+    },
+    {
+      "uid": "3f273117-e878-4bcb-96b7-c9710dff324e",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-tb9v2",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:20:31Z",
+      "message": ""
+    },
+    {
+      "uid": "b2f83572-2c1d-449f-a1db-3657761472ad",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-tb9v2",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:20:32Z",
+      "message": ""
+    },
+    {
+      "uid": "1a9bfbd2-04cd-4444-99ed-9feb59f18841",
+      "reason": "Killing",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-tb9v2",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:25:18Z",
+      "message": "Stopping container api-gateway"
+    },
+    {
+      "uid": "0eb7e3a4-48bc-4ff6-a0a5-09e6434ff592",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-v9r8w",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:20:31Z",
+      "message": ""
+    },
+    {
+      "uid": "5fb842b8-5825-4280-a1d0-5e69b77233b5",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-v9r8w",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:20:31Z",
+      "message": ""
+    },
+    {
+      "uid": "9e6a2249-1169-4c81-b9fa-e54077f7a65b",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-v9r8w",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:20:32Z",
+      "message": ""
+    },
+    {
+      "uid": "47fbc8d9-891b-4fca-9bf9-45060a5525fd",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-v9r8w",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:20:32Z",
+      "message": ""
+    },
+    {
+      "uid": "adde0c37-6548-4a9a-bbc3-6daec9d36bca",
+      "reason": "Killing",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-v9r8w",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:26:18Z",
+      "message": "Stopping container api-gateway"
+    },
+    {
+      "uid": "a2b01ccf-2cb2-4578-befe-813ac39adc2e",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-vh6kp",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:06Z",
+      "message": ""
+    },
+    {
+      "uid": "cdbf2022-acd7-4032-85f8-663c0141dc44",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-vh6kp",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:06Z",
+      "message": ""
+    },
+    {
+      "uid": "92cedeb4-4b77-459b-bfa8-fdfd0e7191f5",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-vh6kp",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:06Z",
+      "message": ""
+    },
+    {
+      "uid": "269fac55-f9a8-4972-a026-a2da9cfb63a8",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-vh6kp",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:07Z",
+      "message": ""
+    },
+    {
+      "uid": "ce3b84ce-d85f-4635-a482-bdb1353ecb92",
+      "reason": "Killing",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-vh6kp",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:50:07Z",
+      "message": "Stopping container api-gateway"
+    },
+    {
+      "uid": "5db76e0c-dd4d-46ef-bf7a-888dc9c62c70",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-xgb24",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:44:51Z",
+      "message": ""
+    },
+    {
+      "uid": "b103fe92-0f48-4b5e-aa35-212a6928db25",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-xgb24",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:44:51Z",
+      "message": ""
+    },
+    {
+      "uid": "f5d801d1-5845-4c27-94af-92ea9a8b9e35",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-xgb24",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:44:52Z",
+      "message": ""
+    },
+    {
+      "uid": "6672628b-1760-4b7c-9525-db835ad35842",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-xgb24",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:44:52Z",
+      "message": ""
+    },
+    {
+      "uid": "f15e4c20-3efd-4dff-9cd3-2c3200631656",
+      "reason": "Killing",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf-xgb24",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:51:08Z",
+      "message": "Stopping container api-gateway"
+    },
+    {
+      "uid": "bc64e9e6-cfc0-457e-852e-4ca63a007bf5",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:54:06Z",
+      "message": ""
+    },
+    {
+      "uid": "7c35a428-4c31-490a-a333-0904b959111e",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:54:12Z",
+      "message": ""
+    },
+    {
+      "uid": "045a347d-ea23-431f-8409-cd02ff05d020",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:20:31Z",
+      "message": ""
+    },
+    {
+      "uid": "ebb4a406-1c82-4e08-9340-dd25448fd5ed",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:20:31Z",
+      "message": ""
+    },
+    {
+      "uid": "8b70ef9d-bd01-4f9d-a711-f3ee55ad66fb",
+      "reason": "SuccessfulDelete",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:25:17Z",
+      "message": ""
+    },
+    {
+      "uid": "7293db43-f97d-4b96-a455-d91c4d495497",
+      "reason": "SuccessfulDelete",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:26:18Z",
+      "message": ""
+    },
+    {
+      "uid": "b5764245-8dca-4f97-a4e2-44c67bd68c1d",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:44:51Z",
+      "message": ""
+    },
+    {
+      "uid": "1b5a40d4-cae8-4a83-8ebf-ffe7610b852d",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:06Z",
+      "message": ""
+    },
+    {
+      "uid": "ea8be62e-2ff4-4b40-b6c5-e00b779c9235",
+      "reason": "SuccessfulDelete",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:50:07Z",
+      "message": ""
+    },
+    {
+      "uid": "3157ec87-5fc4-4031-92e3-380c8524fcdb",
+      "reason": "SuccessfulDelete",
+      "type": "Normal",
+      "object": "api-gateway-75789fdf",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:51:08Z",
+      "message": ""
+    },
+    {
+      "uid": "852110a3-33c8-4f16-afc4-d74125e322c6",
+      "reason": "Killing",
+      "type": "Normal",
+      "object": "api-gateway-c589c6df7-jw6lj",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:52:58Z",
+      "message": "Stopping container api-gateway"
+    },
+    {
+      "uid": "9eddcaf1-abed-4ce1-be8c-b72d4eb1ba10",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "object": "api-gateway-c589c6df7-pghx4",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:52:58Z",
+      "message": ""
+    },
+    {
+      "uid": "29498fae-37d0-47db-82f7-7409614d52a9",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "api-gateway-c589c6df7-pghx4",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:52:59Z",
+      "message": ""
+    },
+    {
+      "uid": "0dcb3d94-506d-4d49-bf80-a9def0cda0c4",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "api-gateway-c589c6df7-pghx4",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:52:59Z",
+      "message": ""
+    },
+    {
+      "uid": "96751220-699d-4f1d-bbe5-ef87ce1d6a36",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "api-gateway-c589c6df7-pghx4",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:52:59Z",
+      "message": ""
+    },
+    {
+      "uid": "0d20fa89-da78-428b-8d63-c490d0c7f5df",
+      "reason": "Killing",
+      "type": "Normal",
+      "object": "api-gateway-c589c6df7-pghx4",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:54:12Z",
+      "message": "Stopping container api-gateway"
+    },
+    {
+      "uid": "b8e36fc2-a386-426e-a3f3-126d8736318d",
+      "reason": "Killing",
+      "type": "Normal",
+      "object": "api-gateway-c589c6df7-tk4ck",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:54:18Z",
+      "message": "Stopping container api-gateway"
+    },
+    {
+      "uid": "b1fd984e-fbe1-4ffc-a20d-724bd5894e0c",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "object": "api-gateway-c589c6df7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:52:58Z",
+      "message": ""
+    },
+    {
+      "uid": "28789898-a091-4f24-bc1c-b0900d04a818",
+      "reason": "SuccessfulDelete",
+      "type": "Normal",
+      "object": "api-gateway-c589c6df7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:54:12Z",
+      "message": ""
+    },
+    {
+      "uid": "395b22b9-061f-4c4e-b795-f7e5947b2016",
+      "reason": "SuccessfulDelete",
+      "type": "Normal",
+      "object": "api-gateway-c589c6df7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:54:18Z",
+      "message": ""
+    },
+    {
+      "uid": "b2f87733-5fc9-4d02-b553-476305166f5d",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "object": "api-gateway",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:54:06Z",
+      "message": ""
+    },
+    {
+      "uid": "918bf22e-3a9c-4282-9fb9-73df92b96b08",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "object": "api-gateway",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:54:12Z",
+      "message": ""
+    },
+    {
+      "uid": "9bb2c8db-34d0-48b3-8374-dfed5e42bf26",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "object": "api-gateway",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:54:12Z",
+      "message": ""
+    },
+    {
+      "uid": "136f0d89-4901-45bf-9310-3819218d8cd0",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "object": "api-gateway",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:54:18Z",
+      "message": ""
+    },
+    {
+      "uid": "2b8897cb-a39d-40dc-a51e-c9b2ffa09b7e",
+      "reason": "FailedGetResourceMetric",
+      "type": "Warning",
+      "object": "api-gateway",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:54:27Z",
+      "message": ""
+    },
+    {
+      "uid": "aabbe3a5-207c-4012-8523-a88672249f88",
+      "reason": "FailedComputeMetricsReplicas",
+      "type": "Warning",
+      "object": "api-gateway",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T03:54:27Z",
+      "message": ""
+    },
+    {
+      "uid": "d015f662-e6ed-473e-aa4d-7ccc6b285317",
+      "reason": "SuccessfulRescale",
+      "type": "Normal",
+      "object": "api-gateway",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:45:06Z",
+      "message": ""
+    },
+    {
+      "uid": "7e770cff-662c-4df5-9d65-dfae138366d8",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "object": "api-gateway",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:20:31Z",
+      "message": ""
+    },
+    {
+      "uid": "517fa86b-caf5-4d00-9ecc-3ecd1c058f4c",
+      "reason": "SuccessfulRescale",
+      "type": "Normal",
+      "object": "api-gateway",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:50:07Z",
+      "message": ""
+    },
+    {
+      "uid": "82a9ab5d-455a-4ec4-bd39-cf8e8476b2e7",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "object": "api-gateway",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:50:07Z",
+      "message": ""
+    },
+    {
+      "uid": "18741b02-ac09-40e7-baf8-bf5b3a35ec6f",
+      "reason": "SuccessfulRescale",
+      "type": "Normal",
+      "object": "api-gateway",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:51:08Z",
+      "message": ""
+    },
+    {
+      "uid": "6240f409-4126-46ef-afa6-5b5038eceda4",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "object": "api-gateway",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:51:08Z",
+      "message": ""
+    },
+    {
+      "uid": "2214f813-b144-40ee-9335-662d57671b80",
+      "reason": "SuccessfulRescale",
+      "type": "Normal",
+      "object": "api-gateway",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:44:51Z",
+      "message": ""
+    },
+    {
+      "uid": "b8e952d0-a48e-469b-9c01-d00a452a91b4",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "object": "api-gateway",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:44:51Z",
+      "message": ""
+    },
+    {
+      "uid": "4cd56193-af9e-400f-9f92-5193ac3a6eac",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "object": "api-gateway",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:06Z",
+      "message": ""
+    },
+    {
+      "uid": "dd35fe3d-176c-4e2a-bed9-5640dc6e2b76",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "object": "identity-service-5774bb6df7-6bn9h",
+      "count": 4,
+      "lastTimestamp": "2026-10-14T04:01:43Z",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503"
+    },
+    {
+      "uid": "4fa4d805-1097-49de-a773-b6f85055bfd2",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7-bp49n",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:36Z",
+      "message": ""
+    },
+    {
+      "uid": "b9e4a52d-ea3f-4c26-9263-30808a34964a",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7-bp49n",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:37Z",
+      "message": ""
+    },
+    {
+      "uid": "ba45be45-909b-462d-ae8f-87fa207fedf9",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7-bp49n",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:37Z",
+      "message": ""
+    },
+    {
+      "uid": "b7270930-c972-45d2-9fe6-0af464a98059",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7-bp49n",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:37Z",
+      "message": ""
+    },
+    {
+      "uid": "5aac368e-4bec-498b-bbaa-4aea5899ae13",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "object": "identity-service-5774bb6df7-bp49n",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:41Z",
+      "message": "Startup probe failed: Get \"http://10.244.0.29:3001/health/live\": dial tcp 10.244.0.29:3001: connect: connection refused"
+    },
+    {
+      "uid": "5a4c5f83-df85-4f98-a27a-abab122ffe16",
+      "reason": "Killing",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7-bp49n",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:50:07Z",
+      "message": "Stopping container identity-service"
+    },
+    {
+      "uid": "79d43c4d-6cfa-459d-92b1-87c654291f69",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7-n4mw7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:44:51Z",
+      "message": ""
+    },
+    {
+      "uid": "d24ed921-9758-495f-b280-4b5e23f204e8",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7-n4mw7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:44:51Z",
+      "message": ""
+    },
+    {
+      "uid": "b713cce4-d4bb-40f0-82bf-dcb1a1e9f561",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7-n4mw7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:44:52Z",
+      "message": ""
+    },
+    {
+      "uid": "dcb5e8ce-4532-4551-bb46-00811156a399",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7-n4mw7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:44:52Z",
+      "message": ""
+    },
+    {
+      "uid": "d21d0bd5-8959-4d9d-b66a-41a83a408d4a",
+      "reason": "Killing",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7-n4mw7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:51:08Z",
+      "message": "Stopping container identity-service"
+    },
+    {
+      "uid": "77a1110a-1c0d-41a5-a36d-ba7a2bd26882",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7-rlnzf",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:31Z",
+      "message": ""
+    },
+    {
+      "uid": "9893e6d1-c86e-4035-ae70-3f1f7dd001c7",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7-rlnzf",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:34Z",
+      "message": ""
+    },
+    {
+      "uid": "a94c88d4-1638-435e-b439-179437b2bfba",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7-rlnzf",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:34Z",
+      "message": ""
+    },
+    {
+      "uid": "a3c9260c-2b6c-4537-88c6-e468157e0e03",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7-rlnzf",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:36Z",
+      "message": ""
+    },
+    {
+      "uid": "a4843293-78c5-4004-8f9f-108c03d8e002",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "object": "identity-service-5774bb6df7-rlnzf",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:21:42Z",
+      "message": "Startup probe failed: Get \"http://10.244.0.22:3001/health/live\": dial tcp 10.244.0.22:3001: connect: connection refused"
+    },
+    {
+      "uid": "2826d8ec-c9f8-42d1-83ac-a5d69dcbaa4a",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "object": "identity-service-5774bb6df7-rlnzf",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:22:39Z",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503"
+    },
+    {
+      "uid": "7b3f5c1f-9de2-460e-957c-12dafcc693b6",
+      "reason": "Killing",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7-rlnzf",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:26:18Z",
+      "message": "Stopping container identity-service"
+    },
+    {
+      "uid": "1418e9d4-db13-48c2-9356-847c6d151843",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7-zdq8w",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:20:46Z",
+      "message": ""
+    },
+    {
+      "uid": "843d301d-fb71-4d0d-bc32-ccaf6eb72108",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7-zdq8w",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:20:46Z",
+      "message": ""
+    },
+    {
+      "uid": "a98fca09-aa6d-4010-9b48-062a8d1ab6c4",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7-zdq8w",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:20:46Z",
+      "message": ""
+    },
+    {
+      "uid": "561ce74c-5ee9-4d49-8533-4395bf8af6e7",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7-zdq8w",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:20:46Z",
+      "message": ""
+    },
+    {
+      "uid": "d1b5b73c-c2f6-49e4-8632-9d4030009384",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "object": "identity-service-5774bb6df7-zdq8w",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:20:51Z",
+      "message": "Startup probe failed: Get \"http://10.244.0.20:3001/health/live\": dial tcp 10.244.0.20:3001: connect: connection refused"
+    },
+    {
+      "uid": "9f8a8873-4dc7-40b7-a365-9b78de2f4051",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "object": "identity-service-5774bb6df7-zdq8w",
+      "count": 3,
+      "lastTimestamp": "2026-10-14T04:22:38Z",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503"
+    },
+    {
+      "uid": "43a3a091-f20b-406d-a6af-faa7117400a3",
+      "reason": "Killing",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7-zdq8w",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:25:17Z",
+      "message": "Stopping container identity-service"
+    },
+    {
+      "uid": "de10d544-a992-4e14-a528-2682496c00ef",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:20:46Z",
+      "message": ""
+    },
+    {
+      "uid": "1384425b-97e7-41a2-840f-6d12b47cbfb3",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:31Z",
+      "message": ""
+    },
+    {
+      "uid": "ba2fc798-44d3-43f4-bdb5-3400d82a5047",
+      "reason": "SuccessfulDelete",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:25:17Z",
+      "message": ""
+    },
+    {
+      "uid": "90a3a6d8-9198-43d6-a7be-f872553c5c38",
+      "reason": "SuccessfulDelete",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:26:18Z",
+      "message": ""
+    },
+    {
+      "uid": "28889e65-6396-4bd4-b635-0aa12fc7c4a4",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:44:51Z",
+      "message": ""
+    },
+    {
+      "uid": "36a76ffd-a919-4b01-9963-5e5e469072ca",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:36Z",
+      "message": ""
+    },
+    {
+      "uid": "7446f3bf-4c20-4e34-a298-b1c4f778c3db",
+      "reason": "SuccessfulDelete",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:50:07Z",
+      "message": ""
+    },
+    {
+      "uid": "839a35a2-15ed-4cd2-a0b5-3a818610a0be",
+      "reason": "SuccessfulDelete",
+      "type": "Normal",
+      "object": "identity-service-5774bb6df7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:51:08Z",
+      "message": ""
+    },
+    {
+      "uid": "91aaebe4-9445-438b-a41a-07a52324c287",
+      "reason": "SuccessfulRescale",
+      "type": "Normal",
+      "object": "identity-service",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:44:51Z",
+      "message": ""
+    },
+    {
+      "uid": "3a0afbee-3a63-4b4f-bffd-54db1f073fd0",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "object": "identity-service",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:44:51Z",
+      "message": ""
+    },
+    {
+      "uid": "07ae4de1-b31d-4652-8fc1-a06475af4b27",
+      "reason": "SuccessfulRescale",
+      "type": "Normal",
+      "object": "identity-service",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:45:36Z",
+      "message": ""
+    },
+    {
+      "uid": "fa4a5738-cf64-4f7e-b20c-bdaf94f601ca",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "object": "identity-service",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:45:36Z",
+      "message": ""
+    },
+    {
+      "uid": "78241241-387c-4f5d-8378-bcf1852854dc",
+      "reason": "SuccessfulRescale",
+      "type": "Normal",
+      "object": "identity-service",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:50:07Z",
+      "message": ""
+    },
+    {
+      "uid": "c5a2fa6e-e67d-44e2-9d50-a48d8199535d",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "object": "identity-service",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:50:07Z",
+      "message": ""
+    },
+    {
+      "uid": "b0e4da16-4125-4a1f-973d-b22fcde5a485",
+      "reason": "SuccessfulRescale",
+      "type": "Normal",
+      "object": "identity-service",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:51:08Z",
+      "message": ""
+    },
+    {
+      "uid": "f5674aee-a360-42a1-9070-5cc914f1b4b7",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "object": "identity-service",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:51:08Z",
+      "message": ""
+    },
+    {
+      "uid": "c0af0e76-798f-4cf2-9976-184768c57a75",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "object": "inventory-service-cd68cd75b-s5xjr",
+      "count": 4,
+      "lastTimestamp": "2026-10-14T04:01:43Z",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503"
+    },
+    {
+      "uid": "0fcc0244-a2bc-4db2-9075-692432cd5485",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-6ggrk",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:46Z",
+      "message": ""
+    },
+    {
+      "uid": "ec7193e5-5ef7-487a-ad27-ea29084d548e",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-6ggrk",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:48Z",
+      "message": ""
+    },
+    {
+      "uid": "fb2007fb-8529-4358-8764-720b5632d172",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-6ggrk",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:48Z",
+      "message": ""
+    },
+    {
+      "uid": "bd479fc2-fa15-4c46-ae02-29e10f5b57bf",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-6ggrk",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:50Z",
+      "message": ""
+    },
+    {
+      "uid": "efc11e64-2720-4a66-b828-417f867ea112",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-6ggrk",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:51Z",
+      "message": ""
+    },
+    {
+      "uid": "fdc7ee19-be53-493c-87b9-d349e093fc6a",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-6ggrk",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:51Z",
+      "message": ""
+    },
+    {
+      "uid": "7f8f8ceb-b4d6-4434-b1b1-8b56327fc710",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-6ggrk",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:51Z",
+      "message": ""
+    },
+    {
+      "uid": "905cc0ad-a085-4ff9-84b6-898004b6ca88",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "object": "menu-service-7cf979fcc-6ggrk",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:52Z",
+      "message": "Startup probe failed: Get \"http://10.244.0.24:3003/health/live\": dial tcp 10.244.0.24:3003: connect: connection refused"
+    },
+    {
+      "uid": "3baa2ab2-5b05-4d0d-907b-c1405e110621",
+      "reason": "Killing",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-6ggrk",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:25:17Z",
+      "message": "Stopping container menu-service"
+    },
+    {
+      "uid": "42408023-a947-44fe-b99a-19ad1c56100d",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-6jp4r",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:01Z",
+      "message": ""
+    },
+    {
+      "uid": "5a85fc1a-c546-48bd-849e-7673335fda48",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-6jp4r",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:03Z",
+      "message": ""
+    },
+    {
+      "uid": "0cb8b0c6-99b1-49ae-8e5d-a9c067faad3f",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-6jp4r",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:03Z",
+      "message": ""
+    },
+    {
+      "uid": "6131c0eb-251d-4d23-bd25-3a0d67e5c21f",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-6jp4r",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:03Z",
+      "message": ""
+    },
+    {
+      "uid": "34b82f90-6871-4471-884c-e8d5389bfbab",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-6jp4r",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:04Z",
+      "message": ""
+    },
+    {
+      "uid": "283ec877-81cd-4d4e-b086-6056f5c1bd0c",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-6jp4r",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:04Z",
+      "message": ""
+    },
+    {
+      "uid": "acda3e1f-82d7-4fbb-896d-f7d7d5b757f7",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-6jp4r",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:04Z",
+      "message": ""
+    },
+    {
+      "uid": "630e8e34-d271-4a94-87a0-558aff0fc13a",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "object": "menu-service-7cf979fcc-6jp4r",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:07Z",
+      "message": "Startup probe failed: Get \"http://10.244.0.21:3003/health/live\": dial tcp 10.244.0.21:3003: connect: connection refused"
+    },
+    {
+      "uid": "eadf17f2-ae0e-4ac5-bf4e-e0f7d280a01f",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "object": "menu-service-7cf979fcc-6jp4r",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:22:46Z",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503"
+    },
+    {
+      "uid": "e14e784f-2f28-492d-b50e-a77afacd429b",
+      "reason": "Killing",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-6jp4r",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:27:18Z",
+      "message": "Stopping container menu-service"
+    },
+    {
+      "uid": "46c2e8e1-9b0b-4ae8-aedc-f910fcfa3a08",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "object": "menu-service-7cf979fcc-6p25w",
+      "count": 4,
+      "lastTimestamp": "2026-10-14T04:01:43Z",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503"
+    },
+    {
+      "uid": "37770d42-82fa-4ce3-8a9a-93ddca0a503d",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "object": "menu-service-7cf979fcc-6p25w",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:22:46Z",
+      "message": "Readiness probe failed: Get \"http://10.244.0.8:3003/health/ready\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)"
+    },
+    {
+      "uid": "33d4936b-72cd-4f8a-9090-cdbc49bef13b",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-954l4",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:31Z",
+      "message": ""
+    },
+    {
+      "uid": "ad349dc3-eefc-4f76-846f-7c9920373c9d",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-954l4",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:34Z",
+      "message": ""
+    },
+    {
+      "uid": "8ed323a2-e26d-4ebc-8346-8ea7b965c2aa",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-954l4",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:34Z",
+      "message": ""
+    },
+    {
+      "uid": "a221a7e6-d134-4734-a0db-992cad815c65",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-954l4",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:36Z",
+      "message": ""
+    },
+    {
+      "uid": "75793801-7980-4ae9-9035-c5138c42f11a",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-954l4",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:37Z",
+      "message": ""
+    },
+    {
+      "uid": "b29140d7-ee0c-4bf5-b52c-716a023a4633",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-954l4",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:37Z",
+      "message": ""
+    },
+    {
+      "uid": "90972aa3-e964-4398-87d2-d7fbaabb99f4",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-954l4",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:38Z",
+      "message": ""
+    },
+    {
+      "uid": "83d2a8e1-e669-4adc-a8cb-e169555415d8",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "object": "menu-service-7cf979fcc-954l4",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:42Z",
+      "message": "Startup probe failed: Get \"http://10.244.0.23:3003/health/live\": dial tcp 10.244.0.23:3003: connect: connection refused"
+    },
+    {
+      "uid": "eb8b0407-2244-42bb-af58-22c01886903f",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "object": "menu-service-7cf979fcc-954l4",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:59Z",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503"
+    },
+    {
+      "uid": "92254402-c3d7-49ed-931a-37dd2f24944a",
+      "reason": "Killing",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-954l4",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:26:18Z",
+      "message": "Stopping container menu-service"
+    },
+    {
+      "uid": "a655bd2b-bd34-4c8b-9e6a-d7e963a35c66",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-b585d",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:46:07Z",
+      "message": ""
+    },
+    {
+      "uid": "bb990249-12ff-4a43-a39a-769d67013dc2",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-b585d",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:46:08Z",
+      "message": ""
+    },
+    {
+      "uid": "6399ef82-b873-41ba-8d4b-8060a31c5f78",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-b585d",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:46:08Z",
+      "message": ""
+    },
+    {
+      "uid": "969a8521-6f94-44ae-abb3-6287f2cb07a6",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-b585d",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:46:08Z",
+      "message": ""
+    },
+    {
+      "uid": "d72355b6-5720-4c25-9679-b825cccf2bf7",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-b585d",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:46:09Z",
+      "message": ""
+    },
+    {
+      "uid": "3642706f-6c63-4687-ad1b-c294614ba5fb",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-b585d",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:46:09Z",
+      "message": ""
+    },
+    {
+      "uid": "313d32a7-559b-42dc-8d13-43105f65e42e",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-b585d",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:46:09Z",
+      "message": ""
+    },
+    {
+      "uid": "f027cef8-6723-484f-b445-14e3470b4485",
+      "reason": "Killing",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-b585d",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:50:08Z",
+      "message": "Stopping container menu-service"
+    },
+    {
+      "uid": "13026f75-b82d-4b2e-90fe-3d44e6592f73",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-dsrhm",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:36Z",
+      "message": ""
+    },
+    {
+      "uid": "2dafb13c-443a-47d8-98ae-ba5a63997716",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-dsrhm",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:37Z",
+      "message": ""
+    },
+    {
+      "uid": "6583b4e9-b716-41c7-846e-888e4c0e0fc4",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-dsrhm",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:37Z",
+      "message": ""
+    },
+    {
+      "uid": "2693f5f9-7a06-437b-85f0-dae6e4a55a56",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-dsrhm",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:37Z",
+      "message": ""
+    },
+    {
+      "uid": "ba97143d-fb4d-4771-b2fa-0be9c9c5a053",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-dsrhm",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:37Z",
+      "message": ""
+    },
+    {
+      "uid": "f5fe3e2d-6d43-41fe-8102-2ec89b960d2b",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-dsrhm",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:37Z",
+      "message": ""
+    },
+    {
+      "uid": "25b822d0-3502-4678-84d2-8fd5100c9c3d",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-dsrhm",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:38Z",
+      "message": ""
+    },
+    {
+      "uid": "05a974df-9100-4905-9ee7-481305154fae",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "object": "menu-service-7cf979fcc-dsrhm",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:41Z",
+      "message": "Startup probe failed: Get \"http://10.244.0.30:3003/health/live\": dial tcp 10.244.0.30:3003: connect: connection refused"
+    },
+    {
+      "uid": "e86bd8de-ca92-41fa-b318-58a24266300a",
+      "reason": "Killing",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-dsrhm",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:52:08Z",
+      "message": "Stopping container menu-service"
+    },
+    {
+      "uid": "2a7fbe52-845c-41c0-ad72-1335962e1b64",
+      "reason": "Scheduled",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-wztfh",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:06Z",
+      "message": ""
+    },
+    {
+      "uid": "d6140090-6ec9-41fe-b693-89c284318902",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-wztfh",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:06Z",
+      "message": ""
+    },
+    {
+      "uid": "41a9cd8d-0256-4db7-ba3f-63f9af9b3328",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-wztfh",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:06Z",
+      "message": ""
+    },
+    {
+      "uid": "a2013fc9-6a9a-4365-bc92-6e4165b31408",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-wztfh",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:07Z",
+      "message": ""
+    },
+    {
+      "uid": "4a3ec104-d2e9-4c95-b821-6466469080bb",
+      "reason": "Pulled",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-wztfh",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:08Z",
+      "message": ""
+    },
+    {
+      "uid": "ebbd88cf-cb85-476b-9821-61d66d7c5c6d",
+      "reason": "Created",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-wztfh",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:08Z",
+      "message": ""
+    },
+    {
+      "uid": "3c7a3fb9-3605-4f9b-a710-ee11b9ac691b",
+      "reason": "Started",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-wztfh",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:08Z",
+      "message": ""
+    },
+    {
+      "uid": "feadd2e4-8ba2-4201-86da-62739c90105c",
+      "reason": "Killing",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc-wztfh",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:51:08Z",
+      "message": "Stopping container menu-service"
+    },
+    {
+      "uid": "c3e722d2-67af-44ea-a4aa-542ddf817fe2",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:01Z",
+      "message": ""
+    },
+    {
+      "uid": "ffee5d66-6590-49ca-a28f-0ce5dd75d11f",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:31Z",
+      "message": ""
+    },
+    {
+      "uid": "c297890f-6677-4909-98c2-7c7bb703c198",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:21:46Z",
+      "message": ""
+    },
+    {
+      "uid": "c0328788-cfaf-4fe3-8d48-c501bba0f0d2",
+      "reason": "SuccessfulDelete",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:25:17Z",
+      "message": ""
+    },
+    {
+      "uid": "c806a14a-7752-4a54-9b17-f7b66937e2d5",
+      "reason": "SuccessfulDelete",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:26:18Z",
+      "message": ""
+    },
+    {
+      "uid": "9d62d1a3-e29f-4a8f-bc6b-14cb09c7baad",
+      "reason": "SuccessfulDelete",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:27:18Z",
+      "message": ""
+    },
+    {
+      "uid": "3f6bf4ab-015c-494b-a65e-5f7f1926b0b9",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:06Z",
+      "message": ""
+    },
+    {
+      "uid": "37d2e325-cd46-481c-af92-0018a761773c",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:45:36Z",
+      "message": ""
+    },
+    {
+      "uid": "6bc85da0-6bc5-44ab-a067-32159c078ea9",
+      "reason": "SuccessfulCreate",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:46:07Z",
+      "message": ""
+    },
+    {
+      "uid": "d0e05346-777b-4555-afc3-12cf5eaff481",
+      "reason": "SuccessfulDelete",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:50:08Z",
+      "message": ""
+    },
+    {
+      "uid": "b8a11852-0698-45ff-9ea2-c74ef26ddbf1",
+      "reason": "SuccessfulDelete",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:51:08Z",
+      "message": ""
+    },
+    {
+      "uid": "5a2e88e4-64af-43ae-b8c6-fe38f49479f3",
+      "reason": "SuccessfulDelete",
+      "type": "Normal",
+      "object": "menu-service-7cf979fcc",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:52:08Z",
+      "message": ""
+    },
+    {
+      "uid": "1bf4aa9c-b683-4eae-814d-ebf2e20c0919",
+      "reason": "SuccessfulRescale",
+      "type": "Normal",
+      "object": "menu-service",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:45:06Z",
+      "message": ""
+    },
+    {
+      "uid": "fc71bc58-ba48-49a3-956e-abde680a563b",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "object": "menu-service",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:45:06Z",
+      "message": ""
+    },
+    {
+      "uid": "c541a26f-831e-4212-bfce-81e0fc4d479f",
+      "reason": "SuccessfulRescale",
+      "type": "Normal",
+      "object": "menu-service",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:45:36Z",
+      "message": ""
+    },
+    {
+      "uid": "ba4e2d94-619f-41e5-8a3d-3ff1db380b9c",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "object": "menu-service",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:45:36Z",
+      "message": ""
+    },
+    {
+      "uid": "d08fe7c5-c734-408b-875b-3d0a7f6d44f2",
+      "reason": "SuccessfulRescale",
+      "type": "Normal",
+      "object": "menu-service",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:46:06Z",
+      "message": ""
+    },
+    {
+      "uid": "ea275eff-da29-4186-897d-243f0faf5482",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "object": "menu-service",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:46:07Z",
+      "message": ""
+    },
+    {
+      "uid": "41024baa-5966-4c5c-8e57-4b1d345cd547",
+      "reason": "SuccessfulRescale",
+      "type": "Normal",
+      "object": "menu-service",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:50:08Z",
+      "message": ""
+    },
+    {
+      "uid": "f06347af-4722-488c-be98-3db61c12e325",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "object": "menu-service",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:50:08Z",
+      "message": ""
+    },
+    {
+      "uid": "4e103003-ac64-45ac-bb04-d6523ae3c31e",
+      "reason": "SuccessfulRescale",
+      "type": "Normal",
+      "object": "menu-service",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:51:08Z",
+      "message": ""
+    },
+    {
+      "uid": "68c8b95f-c02c-4e1a-82ce-73c6de54b693",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "object": "menu-service",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:51:08Z",
+      "message": ""
+    },
+    {
+      "uid": "569cfeab-f85a-4e02-a866-459144363d41",
+      "reason": "SuccessfulRescale",
+      "type": "Normal",
+      "object": "menu-service",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:52:08Z",
+      "message": ""
+    },
+    {
+      "uid": "41a01eed-7ce4-4f5d-9e80-b479e83ae465",
+      "reason": "ScalingReplicaSet",
+      "type": "Normal",
+      "object": "menu-service",
+      "count": 2,
+      "lastTimestamp": "2026-10-14T04:52:08Z",
+      "message": ""
+    },
+    {
+      "uid": "7ed9c59a-96ed-4618-be02-bde2c8e8b141",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "object": "news-service-855d5cb5fd-ght8t",
+      "count": 4,
+      "lastTimestamp": "2026-10-14T04:22:44Z",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503"
+    },
+    {
+      "uid": "533a2e32-bb29-4831-a607-7bf84de8eb01",
+      "reason": "Unhealthy",
+      "type": "Warning",
+      "object": "order-service-6c86bf89-bwgj7",
+      "count": 1,
+      "lastTimestamp": "2026-10-14T04:22:46Z",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503"
+    }
+  ],
+  "top_nodes": "NAME                    CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)   \ndesktop-control-plane   498m         6%       1659Mi          20%         \n",
+  "top_pods": "NAME                                CPU(cores)   MEMORY(bytes)   \nai-service-74595687bb-sjdxt         7m           137Mi           \napi-gateway-75789fdf-6l6c7          5m           30Mi            \napi-gateway-75789fdf-j4wkj          4m           31Mi            \nidentity-service-5774bb6df7-6bn9h   5m           49Mi            \ninventory-service-cd68cd75b-s5xjr   8m           44Mi            \nmenu-service-7cf979fcc-6p25w        6m           44Mi            \nnews-service-855d5cb5fd-ght8t       4m           49Mi            \norder-service-6c86bf89-bwgj7        5m           78Mi            \nweb-customer-6c9cf65c5-cmmtz        1m           9Mi             \n"
+}

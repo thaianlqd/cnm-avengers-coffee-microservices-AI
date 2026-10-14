@@ -2176,13 +2176,16 @@ def run_agent(
     max_tool_rounds: int = 10,
     client_message_id: Optional[str] = None,
     selected_product_id: Optional[str] = None,
+    ui_action: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Choose one orchestrator before a turn; never fall back after a write."""
     import os
     architecture = os.getenv('AI_AGENT_ARCHITECTURE', 'hybrid').strip().lower()
     if architecture == 'hybrid':
         from src.agents.hybrid_commerce_orchestrator import run_hybrid_turn
-        return run_hybrid_turn(session_id, user_message, history, client_message_id, selected_product_id)
+        return run_hybrid_turn(session_id, user_message, history, client_message_id, selected_product_id, ui_action)
+    if ui_action is not None:
+        raise ValueError('Explicit customer actions require Hybrid architecture')
     if architecture != 'semantic_legacy':
         raise ValueError('Invalid AI_AGENT_ARCHITECTURE')
     # Deployments select a mode explicitly. Keep the unconfigured library

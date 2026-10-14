@@ -1,0 +1,62 @@
+{
+  "gateway": {
+    "tests": 20,
+    "suites": 5,
+    "status": "PASS"
+  },
+  "identity": {
+    "tests": 39,
+    "suites": 8,
+    "status": "PASS"
+  },
+  "menu": {
+    "tests": 20,
+    "suites": 4,
+    "status": "PASS"
+  },
+  "news": {
+    "tests": 9,
+    "suites": 2,
+    "status": "PASS"
+  },
+  "kubernetes_python": {
+    "tests": 24,
+    "status": "PASS"
+  },
+  "aws_python": {
+    "tests": 7,
+    "status": "PASS"
+  },
+  "node_ingress_controller": {
+    "tests": 2,
+    "status": "PASS"
+  },
+  "render": {
+    "resources": 22,
+    "status": "PASS"
+  },
+  "deploy_server_dry_run_smoke": {
+    "status": "PASS",
+    "log": "../local-deploy.txt"
+  },
+  "socket_websocket_polling": {
+    "status": "PASS",
+    "data": "synthetic connect/room join/reconnect only"
+  },
+  "legacy_moderate_before": {
+    "status": "FAIL latency",
+    "requests": 21164,
+    "p95_ms": 2146.12165
+  },
+  "legacy_moderate_after_cleanup": {
+    "status": "FAIL latency",
+    "requests": 25632,
+    "p95_ms": 1598.9487
+  },
+  "external_250": {
+    "status": "FAIL network/Quick Tunnel",
+    "requests": 24664,
+    "HTTP_429": 217,
+    "p95_ms": 3011.7222304
+  }
+}

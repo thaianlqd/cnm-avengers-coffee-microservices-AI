@@ -1,0 +1,8 @@
+{
+  "target_result": "FAIL",
+  "qualified_run": false,
+  "status": "NOT QUALIFIED (generator/network adequacy)",
+  "adequacy_reasons": [
+    "HTTP 429 on Quick Tunnel: network/intermediary cap requires diagnosis"
+  ]
+}

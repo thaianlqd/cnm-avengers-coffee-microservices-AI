@@ -1,0 +1,16 @@
+{
+  "run_id": "5k-20261014T040220Z-46d1e1",
+  "started_at": "2026-10-14T04:02:20.127957+00:00",
+  "requested_instance_type": "m7i-flex.large",
+  "key_pair_id": "key-09c8c3b9a284f1cac",
+  "sg_id": "sg-016def26ff90c00e5",
+  "instance_id": "i-021114122c139c390",
+  "launched_at": "2026-10-14T04:03:06+00:00",
+  "ami": "ami-0f5e1e0151e5b95ed",
+  "instance_type": "m7i-flex.large",
+  "architecture": "x86_64",
+  "az": "ap-southeast-2a",
+  "root_delete_on_termination": true,
+  "public_ip": "3.107.179.252",
+  "error": "SSH unavailable"
+}

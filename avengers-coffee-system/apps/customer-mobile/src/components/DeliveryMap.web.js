@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { View, Text, Pressable } from 'react-native'
 import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
+import './leaflet.web.css'
 import { coordinate } from '../lib/trackingSession'
 import useDeliveryRoute from '../hooks/useDeliveryRoute'
 import RouteSummary from './RouteSummary'

@@ -1,0 +1,10 @@
+{
+  "instance_id": "i-00eba98d0766d0e2f",
+  "launched_at": "2026-10-14T05:47:42+00:00",
+  "cleanup_complete_evidence_at": "2026-10-14T05:51:14.196750+00:00",
+  "launch_to_verified_cleanup_upper_seconds": 212.19675,
+  "compute_hourly_usd": 0.1197,
+  "compute_list_price_upper_usd": 0.007055541937500001,
+  "ebs_ipv4_transfer_credit_treatment_excluded": true,
+  "actual_bill_verified": false
+}

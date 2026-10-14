@@ -1,0 +1,7 @@
+PASS GET /health/live
+PASS GET /health/ready
+PASS GET /menu/danh-muc
+PASS GET /menu/san-pham
+PASS GET /users/branches/public
+PASS GET /news?page=1&limit=6
+PASS auth availability/boundary (401 without credentials)

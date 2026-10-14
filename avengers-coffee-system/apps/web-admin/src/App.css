@@ -12865,3 +12865,16 @@ svg.lucide *,
   box-sizing: border-box !important;
 }
 
+
+/* The catalogue is an actual table, unlike the older .menu-table card grid. */
+.menu-table-wrapper > table.menu-table { display: table; width: 100%; min-width: 1080px; table-layout: fixed; border-collapse: collapse; margin: 0; }
+.menu-table-wrapper > table.menu-table thead { display: table-header-group; }
+.menu-table-wrapper > table.menu-table tbody { display: table-row-group; }
+.menu-table-wrapper > table.menu-table tr { display: table-row; }
+.menu-table-wrapper > table.menu-table th, .menu-table-wrapper > table.menu-table td { display: table-cell; vertical-align: middle; padding: 16px; }
+.menu-table-wrapper .menu-product-cell, .menu-table-wrapper .menu-product-info { min-width: 0; }
+.menu-table-wrapper .menu-product-info { overflow: hidden; }
+.menu-table-wrapper .menu-product-name { display: block; white-space: normal; overflow-wrap: anywhere; }
+.menu-table-wrapper .menu-product-desc { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.menu-table-wrapper .menu-product-thumb { flex-shrink: 0; }
+.menu-table-wrapper > table.menu-table th:nth-child(6), .menu-table-wrapper > table.menu-table td:nth-child(6) { text-align: center; }

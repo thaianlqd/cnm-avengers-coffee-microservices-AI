@@ -1,0 +1,27 @@
+{
+  "observed_at": "2026-10-14T06:08:58.664737+00:00",
+  "instances": [
+    {
+      "id": "i-00eba98d0766d0e2f",
+      "state": "terminated"
+    }
+  ],
+  "owned_active_or_stopped_instances": [],
+  "owned_security_groups": [],
+  "owned_volumes": [],
+  "owned_keys": [],
+  "benchmark_executable_counts": {
+    "k6": 0,
+    "cloudflared": 0,
+    "ssh": 0
+  },
+  "benchmark_listener_ports": {
+    "18080": false,
+    "18082": false,
+    "18083": false
+  },
+  "owned_nat_mappings_created": 0,
+  "owned_pf_anchors_created": 0,
+  "local_previous_key_preserved": true,
+  "temporary_private_artifacts_absent": true
+}

@@ -1,0 +1,51 @@
+{
+  "instances": [
+    {
+      "id": "i-0ca9729bcb525e445",
+      "type": "m7i-flex.large",
+      "launch": "2026-10-14T03:45:40+00:00",
+      "cleanup_verified": "2026-10-14T03:49:35.992538+00:00",
+      "runtime_upper_bound_seconds": 235.992538,
+      "setup_error": "ssh operation failed (255); output suppressed"
+    },
+    {
+      "id": "i-0427aab6664c6c0b7",
+      "type": "m7i-flex.large",
+      "launch": "2026-10-14T03:55:32+00:00",
+      "cleanup_verified": "2026-10-14T03:59:41.489090+00:00",
+      "runtime_upper_bound_seconds": 249.48909,
+      "setup_error": "ssh operation failed (255); output suppressed"
+    },
+    {
+      "id": "i-021114122c139c390",
+      "type": "m7i-flex.large",
+      "launch": "2026-10-14T04:03:06+00:00",
+      "cleanup_verified": "2026-10-14T04:09:01.064971+00:00",
+      "runtime_upper_bound_seconds": 355.064971,
+      "setup_error": "SSH unavailable"
+    },
+    {
+      "id": "i-00d7a6b3c1b6d0bef",
+      "type": "m7i-flex.large",
+      "launch": "2026-10-14T04:28:35+00:00",
+      "cleanup_verified": "2026-10-14T04:36:14.256283+00:00",
+      "runtime_upper_bound_seconds": 459.256283,
+      "setup_error": "KeyboardInterrupt"
+    },
+    {
+      "id": "i-0103ed421c9b50c5d",
+      "type": "m7i-flex.large",
+      "launch": "2026-10-14T04:39:45+00:00",
+      "cleanup_verified": "2026-10-14T04:54:39.897335+00:00",
+      "runtime_upper_bound_seconds": 894.897335,
+      "setup_error": null
+    }
+  ],
+  "instance_count_including_serial_setup_replacements": 5,
+  "max_simultaneously_running": 1,
+  "cumulative_launch_to_verified_cleanup_seconds_upper_bound": 2194.700217,
+  "compute_rate_USD_per_hour": 0.1197,
+  "compute_list_price_upper_bound_USD": 0.07297378221525001,
+  "actual_billing_verified": false,
+  "excluded": "EBS, IPv4, egress and account credit treatment"
+}

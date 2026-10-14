@@ -43,6 +43,7 @@ export function DrawerMenu({ visible, onClose, activeTab, onNavigate, admin, ses
   // Match exact web-admin menu
   const staffTabs = [
     { id: 'Dashboard', label: 'Tổng quan', icon: 'stats-chart-outline' },
+    { id: 'Messages', label: 'Tin nhắn khách hàng', icon: 'chatbubbles-outline' },
     { id: 'Orders', label: 'Luồng đơn hàng', icon: 'receipt-outline' },
     { id: 'Inventory', label: 'Quản lý thực đơn', icon: 'restaurant-outline' },
     { id: 'News', label: 'Quản lý tin tức', icon: 'newspaper-outline' },
