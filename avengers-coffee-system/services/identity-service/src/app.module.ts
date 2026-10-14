@@ -1,3 +1,4 @@
+import { dbPoolIdleTimeoutMs } from './db-pool.config';
 import { HealthController } from './health.controller';
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
@@ -62,7 +63,7 @@ const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '7d') as StringValue;
           extra: {
             max: 2,
             connectionTimeoutMillis: 10000,
-            idleTimeoutMillis: 5000,
+            idleTimeoutMillis: dbPoolIdleTimeoutMs(),
           },
           synchronize: false,
 

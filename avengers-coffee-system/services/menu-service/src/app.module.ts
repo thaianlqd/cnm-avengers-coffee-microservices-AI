@@ -1,3 +1,4 @@
+import { dbPoolIdleTimeoutMs } from './db-pool.config';
 import { HealthController } from './health.controller';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -46,7 +47,7 @@ const menuSchema = process.env.DB_SCHEMA || 'menu';
           extra: {
             max: 2,
             connectionTimeoutMillis: 10000,
-            idleTimeoutMillis: 5000,
+            idleTimeoutMillis: dbPoolIdleTimeoutMs(),
           },
           synchronize: false,
         };

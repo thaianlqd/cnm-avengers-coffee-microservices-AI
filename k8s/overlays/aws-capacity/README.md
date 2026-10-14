@@ -10,3 +10,8 @@ This is a deployment template: render to a private temporary directory, replace
 all local images with immutable source-derived amd64 tags, build/import images
 on all target nodes, and provision only the four required service config/secret
 objects before apply. Do not apply local k8s-local image references to AWS.
+
+Pool lifetime experiment: `DB_POOL_IDLE_TIMEOUT_MS=30000` (service default 5000;
+integer bounds 1000–60000). This is independent of the 2000ms readiness connection
+allowance. Cache TTL, pool max=2, workload, resources and HPA remain unchanged.
+The experiment is pending same-load 250 VU validation.

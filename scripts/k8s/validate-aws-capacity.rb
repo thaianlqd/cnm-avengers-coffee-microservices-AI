@@ -16,6 +16,7 @@ common=objects.find{|o|o['kind']=='ConfigMap' && o.dig('metadata','name')=='aven
 errors << 'existing DB intent required' unless common.dig('data','K8S_DB_MODE')=='existing'
 errors << 'read-only startup mode required' unless common.dig('data','K8S_DEMO_READ_ONLY')=='true'
 errors << 'cache TTL changed without experiment' unless common.dig('data','PUBLIC_BROWSE_CACHE_TTL_MS')=='5000'
+errors << 'AWS pool experiment must be 30000ms' unless common.dig('data','DB_POOL_IDLE_TIMEOUT_MS')=='30000'
 expected={'api-gateway'=>[2,4],'identity-service'=>[1,3],'menu-service'=>[1,4]}
 objects.select{|o|o['kind']=='HorizontalPodAutoscaler'}.each do |h|
  errors << 'Unexpected HPA baseline' unless expected[h.dig('metadata','name')]==[h.dig('spec','minReplicas'),h.dig('spec','maxReplicas')]
