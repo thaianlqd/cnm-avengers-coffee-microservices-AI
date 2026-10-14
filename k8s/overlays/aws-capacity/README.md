@@ -15,3 +15,8 @@ Pool lifetime experiment: `DB_POOL_IDLE_TIMEOUT_MS=30000` (service default 5000;
 integer bounds 1000–60000). This is independent of the 2000ms readiness connection
 allowance. Cache TTL, pool max=2, workload, resources and HPA remain unchanged.
 The experiment is pending same-load 250 VU validation.
+
+Measured Gateway burst experiment: CPU limit 500m -> 750m, request stays75m,
+HPA2–4 unchanged. Diagnostic500 showed up to31.2% throttled periods and0.914s
+throttled time per5s interval on one Gateway container; average CPU was below
+limit. This is pending SAME500 validation, not a proven fix or a default change.
