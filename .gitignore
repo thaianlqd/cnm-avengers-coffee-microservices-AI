@@ -25,6 +25,22 @@ pnpm-debug.log*
 **/.cache/
 **/coverage/
 **/*.tsbuildinfo
+# Expo local state and native build output
+**/.expo/
+**/.expo-shared/
+**/.gradle/
+**/Pods/
+
+# Generated UI screenshots/recordings: keep local, retain small JSON reports.
+# Runtime images in assets/ and public/ remain versioned.
+/avengers-coffee-system/apps/*/artifacts/**/*.png
+/avengers-coffee-system/apps/*/artifacts/**/*.jpg
+/avengers-coffee-system/apps/*/artifacts/**/*.jpeg
+/avengers-coffee-system/apps/*/artifacts/**/*.webp
+/avengers-coffee-system/apps/*/artifacts/**/*.gif
+/avengers-coffee-system/apps/*/artifacts/**/*.webm
+/avengers-coffee-system/apps/*/artifacts/**/*.mp4
+/avengers-coffee-system/apps/*/artifacts/**/*.zip
 /package.json
 /package-lock.json
 
@@ -45,3 +61,5 @@ pnpm-debug.log*
 # SQL files are kept in repo so teammates can restore and run the project quickly.
 db_metadata.txt
 .review-seed-backups/
+/k8s/overlays/.docker-desktop-runtime/
+/.tools/k6/

@@ -1,3 +1,5 @@
+import { selectChartPeriod, orderChartData } from '../../../components/console/chartPeriod';
+import { acceptsWorkspace, WORKSPACE_LABELS, readWorkspaceSession, saveWorkspaceSession, clearWorkspaceSession } from '../../../lib/workspaceAuth'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 import { API_BASE_URL, ORDER_STATUSES, OVERVIEW_TIME_RANGES, PAYMENT_METHOD_LABEL } from '../constants'
@@ -33,28 +35,9 @@ export function useAdminDashboard() {
   const [loginForm, setLoginForm] = useState({ identifier: '', password: '' })
   const [loginStatus, setLoginStatus] = useState({ loading: false, error: '' })
   const [pendingPasswordChange, setPendingPasswordChange] = useState(null)
-  const [session, setSession] = useState(() => {
-    const raw = window.localStorage.getItem('adminSession')
-    if (!raw) return null
+  const [session, setSession] = useState(readWorkspaceSession)
+  const [activeTab, setActiveTab] = useState(() => readWorkspaceSession()?.user?.vaiTro === 'KIOSK_STAFF' ? 'pos' : 'overview')
 
-    try {
-      return JSON.parse(raw)
-    } catch {
-      return null
-    }
-  })
-
-  const [activeTab, setActiveTab] = useState(() => {
-    const saved = localStorage.getItem('adminSession')
-    let role = ''
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved)
-        role = parsed?.user?.vai_tro || parsed?.user?.vaiTro || ''
-      } catch (e) {}
-    }
-    return role === 'KIOSK_STAFF' ? 'pos' : 'overview'
-  })
   const [ordersState, setOrdersState] = useState({ loading: true, error: '', items: [] })
   const [inventoryState, setInventoryState] = useState({ loading: true, error: '', items: [] })
   const [updatingOrderId, setUpdatingOrderId] = useState('')
@@ -111,6 +94,7 @@ export function useAdminDashboard() {
 
   const sessionUsername = session?.user?.tenDangNhap || session?.user?.email || ''
   const sessionRole = session?.user?.vaiTro || session?.user?.vai_tro || 'STAFF'
+  const operational = ['MANAGER','STAFF','FRANCHISE_STAFF'].includes(sessionRole)
   const sessionBranchCode = (session?.user?.coSoMa || session?.user?.co_so_ma || 'MAC_DINH_CHI').toUpperCase()
 
   useEffect(() => {
@@ -329,7 +313,7 @@ export function useAdminDashboard() {
   }
 
   useEffect(() => {
-    if (!session) return
+    if (!session || !operational) return
 
     refreshOrders()
     refreshMenuAndInventory()
@@ -341,7 +325,7 @@ export function useAdminDashboard() {
       window.clearInterval(ordersTimer)
       window.clearInterval(inventoryTimer)
     }
-  }, [session])
+  }, [session, operational])
 
   const taiLichLamViecManager = async ({ silent = false } = {}) => {
     if (!silent) {
@@ -602,7 +586,7 @@ export function useAdminDashboard() {
   }, [activeKioskShift])
 
   useEffect(() => {
-    if (!session || sessionRole === 'FRANCHISEE') return
+    if (!session || !operational) return
 
     taiCaKioskDaMo()
     taiLichLamViecCuaToi()
@@ -643,6 +627,7 @@ export function useAdminDashboard() {
     })
 
     const syncWorkforceData = () => {
+      if (!operational) return
       taiLichLamViecCuaToi({ silent: true })
       if (sessionRole !== 'MANAGER') {
         taiYeuCauDangKyCa(false, { silent: true })
@@ -882,7 +867,7 @@ export function useAdminDashboard() {
   }
 
   useEffect(() => {
-    if (!session) return
+    if (!session || !operational || activeTab !== 'shift') return
 
     setShiftRange(taoKhoangChotCaTheoNgay(shiftDate))
 
@@ -893,7 +878,7 @@ export function useAdminDashboard() {
       cashClose: shiftInput.cashClose,
     })
     taiLichSuChotCa()
-  }, [session, shiftDate])
+  }, [session, shiftDate, activeTab, operational])
 
   useEffect(() => {
     if (!session || activeTab !== 'shift') return
@@ -972,6 +957,7 @@ export function useAdminDashboard() {
   const overviewData = useMemo(() => {
     const now = new Date()
     const minTimestamp = cutTimeByRange(overviewRange, now.getTime())
+    const chartPeriod = selectChartPeriod(ordersState.items, overviewRange === '24h' ? 1 : overviewRange === '30d' ? 30 : 7, now)
     const filteredOrders = ordersState.items.filter((order) => {
       const createdTs = new Date(order.ngay_tao).getTime()
       return !Number.isNaN(createdTs) && createdTs >= minTimestamp
@@ -1098,6 +1084,8 @@ export function useAdminDashboard() {
     if (!alerts.length) alerts.push('Van hanh dang on dinh trong pham vi du lieu hien tai')
 
     return {
+      chartPeriod,
+      chartData: orderChartData(chartPeriod.rows),
       hourly,
       statusRows,
       paymentRows,
@@ -1111,6 +1099,7 @@ export function useAdminDashboard() {
       filteredCount: filteredOrders.length,
       summary: {
         grossValue,
+        completedRevenue: filteredOrders.filter(order => order.trang_thai_don_hang === 'HOAN_THANH').reduce((sum, order) => sum + Number(order.tong_tien || 0), 0),
         completedOrders,
         cancelledOrders,
         totalItemsSold,
@@ -1128,7 +1117,7 @@ export function useAdminDashboard() {
     }
   }, [ordersState.items, inventoryState.items, overviewRange])
 
-  const login = async (event) => {
+  const login = async (event, workspace) => {
     event.preventDefault()
     setLoginStatus({ loading: true, error: '' })
 
@@ -1139,6 +1128,7 @@ export function useAdminDashboard() {
         body: JSON.stringify({
           tai_khoan: loginForm.identifier,
           mat_khau: loginForm.password,
+          workspace,
         }),
       })
 
@@ -1148,9 +1138,14 @@ export function useAdminDashboard() {
         throw new Error(payload?.message || 'Không thể đăng nhập với tài khoản này')
       }
 
+      if (!acceptsWorkspace(workspace, payload.user)) {
+        throw new Error(`Tài khoản không thuộc nhóm ${WORKSPACE_LABELS[workspace] || 'đã chọn'}. Hãy chọn đúng tab đăng nhập.`)
+      }
+
       if (payload.requirePasswordChange) {
         setPendingPasswordChange({
           ...payload,
+          workspace,
           tempPassword: loginForm.password,
         })
         setLoginStatus({ loading: false, error: '' })
@@ -1163,7 +1158,7 @@ export function useAdminDashboard() {
         user: payload.user,
       }
 
-      window.localStorage.setItem('adminSession', JSON.stringify(nextSession))
+      saveWorkspaceSession(nextSession)
       setSession(nextSession)
       
       const role = payload?.user?.vai_tro || payload?.user?.vaiTro || ''
@@ -1176,7 +1171,7 @@ export function useAdminDashboard() {
   }
 
   const logout = useCallback(() => {
-    window.localStorage.removeItem('adminSession')
+    clearWorkspaceSession()
     setSession(null)
     setPendingPasswordChange(null)
     setActiveTab('overview')
@@ -1209,7 +1204,7 @@ export function useAdminDashboard() {
         user: pendingPasswordChange.user,
       }
 
-      window.localStorage.setItem('adminSession', JSON.stringify(nextSession))
+      saveWorkspaceSession(nextSession)
       setSession(nextSession)
       setPendingPasswordChange(null)
       setLoginStatus({ loading: false, error: '' })

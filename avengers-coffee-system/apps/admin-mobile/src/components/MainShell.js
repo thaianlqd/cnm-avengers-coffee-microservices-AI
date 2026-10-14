@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAdmin } from '../context/AdminContext'
 import { DrawerMenu } from './DrawerMenu'
 import { AdminChatWidget } from './AdminChatWidget'
+import { StaffInboxScreen } from '../screens/StaffInboxScreen'
 import { colors } from '../theme'
 
 // Screens
@@ -44,6 +45,7 @@ export function MainShell() {
   const renderContent = () => {
     switch (activeTab) {
       case 'Dashboard': return sessionRole === 'ADMIN' ? <AdminDashboardScreen /> : <DashboardScreen />
+      case 'Messages': return <StaffInboxScreen onExit={() => setActiveTab('Dashboard')} />
       case 'Orders': return <OrdersScreen />
       case 'Inventory': return <InventoryScreen />
       case 'MenuAdmin': return <AdminMenuScreen />
@@ -87,7 +89,7 @@ export function MainShell() {
         onLogout={logout}
       />
       
-      <AdminChatWidget admin={admin} sessionRole={sessionRole} />
+      {['STAFF', 'MANAGER'].includes(sessionRole) && activeTab !== 'Messages' && <AdminChatWidget admin={admin} sessionRole={sessionRole} onOpenInbox={() => setActiveTab('Messages')} />}
     </View>
   )
 }

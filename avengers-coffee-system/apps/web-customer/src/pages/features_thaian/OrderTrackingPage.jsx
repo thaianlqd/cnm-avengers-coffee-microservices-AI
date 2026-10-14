@@ -1,3 +1,4 @@
+import { uiText as ui, useUiLanguage, uiLocale } from "../../lib/uiText";
 import React, { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import ShipperMapView from '../../components/features_thaian/ShipperMapView';
@@ -5,17 +6,18 @@ import { apiClient } from '../../lib/apiClient';
 import { resolveAddressCoordinates } from '../../lib/geocodingService';
 
 export default function OrderTrackingPage({ id, onBack }) {
+  useUiLanguage();
   const [trackingData, setTrackingData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const isMounted = useRef(true);
-  
+
   // Rating states
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [isRated, setIsRated] = useState(false);
   const [submittingRating, setSubmittingRating] = useState(false);
-  
+
   // ETA & Distance
   const [routeInfo, setRouteInfo] = useState(null);
 
@@ -39,7 +41,7 @@ export default function OrderTrackingPage({ id, onBack }) {
     try {
       await apiClient.post(`/customers/guest/orders/${id}/rate-shipper`, { rating, comment });
       setIsRated(true);
-      alert('Cảm ơn bạn đã đánh giá Shipper!');
+      alert(ui("Cảm ơn bạn đã đánh giá Shipper!"));
     } catch (err) {
       alert(err?.response?.data?.message || 'Có lỗi xảy ra khi gửi đánh giá');
     } finally {
@@ -132,7 +134,7 @@ export default function OrderTrackingPage({ id, onBack }) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
         <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="font-bold text-gray-600">Đang tải thông tin đơn hàng...</p>
+        <p className="font-bold text-gray-600">{ui("Đang tải thông tin đơn hàng...")}</p>
       </div>
     );
   }
@@ -141,11 +143,9 @@ export default function OrderTrackingPage({ id, onBack }) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 text-center">
         <div className="text-4xl mb-4">🔍</div>
-        <h2 className="text-xl font-black text-gray-900 mb-2">Không tìm thấy đơn hàng</h2>
-        <p className="text-gray-500 mb-6">{error}</p>
-        <button onClick={onBack} className="bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow hover:bg-indigo-700">
-          Quay lại
-        </button>
+        <h2 className="text-xl font-black text-gray-900 mb-2">{ui("Không tìm thấy đơn hàng")}</h2>
+        <p className="text-gray-500 mb-6">{ui(error)}</p>
+        <button onClick={onBack} className="bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow hover:bg-indigo-700">{ui("Quay lại")}</button>
       </div>
     );
   }
@@ -200,24 +200,24 @@ export default function OrderTrackingPage({ id, onBack }) {
           </svg>
         </button>
         <div>
-          <h1 className="font-black text-gray-900 leading-tight">Theo dõi đơn hàng</h1>
+          <h1 className="font-black text-gray-900 leading-tight">{ui("Theo dõi đơn hàng")}</h1>
           <p className="text-xs font-bold text-gray-500">#{order.ma_don_hang}</p>
         </div>
       </div>
 
       <div className="max-w-2xl mx-auto p-4 space-y-4">
-        
+
         {/* Status Banner */}
         <div className="bg-indigo-600 text-white p-4 rounded-2xl shadow-lg flex items-center justify-between">
           <div>
-            <p className="text-indigo-100 text-sm font-medium">Trạng thái hiện tại</p>
+            <p className="text-indigo-100 text-sm font-medium">{ui("Trạng thái hiện tại")}</p>
             <h2 className="text-xl font-black">{currentStep?.label || order.trang_thai_don_hang}</h2>
             {tracking?.delivery_mode === 'LAY_TAI_QUAN' && tracking.pickup_time && (
-              <p className="text-sm mt-1">Giờ lấy: {new Date(tracking.pickup_time).toLocaleString('vi-VN')}</p>
+              <p className="text-sm mt-1">{ui("Giờ lấy: ")}{new Date(tracking.pickup_time).toLocaleString(uiLocale())}</p>
             )}
             {tracking?.delivery_mode === 'GIAO_TAN_NOI' && tracking?.delivery_method && (
               <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-white/20 rounded text-xs font-bold text-white border border-white/30">
-                {tracking.delivery_method === 'LALAMOVE' ? '🚀 Giao hỏa tốc Lalamove' : '🛵 Avengers Delivery'}
+                {tracking.delivery_method === 'LALAMOVE' ? ui("🚀 Giao hỏa tốc Lalamove") : '🛵 Avengers Delivery'}
               </div>
             )}
           </div>
@@ -230,13 +230,13 @@ export default function OrderTrackingPage({ id, onBack }) {
             {!isActuallyRated ? (
               <>
                 <div className="text-4xl mb-2">🎉</div>
-                <h3 className="font-black text-xl text-gray-900 mb-1">Giao hàng thành công!</h3>
-                <p className="text-sm text-gray-500 mb-4">Bạn đánh giá tài xế giao hàng thế nào?</p>
-                
+                <h3 className="font-black text-xl text-gray-900 mb-1">{ui("Giao hàng thành công!")}</h3>
+                <p className="text-sm text-gray-500 mb-4">{ui("Bạn đánh giá tài xế giao hàng thế nào?")}</p>
+
                 <div className="flex justify-center gap-2 mb-4">
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <button 
-                      key={star} 
+                    <button
+                      key={star}
                       onClick={() => setRating(star)}
                       className={`text-3xl transition-transform hover:scale-110 ${star <= rating ? 'text-yellow-400' : 'text-gray-200'}`}
                     >
@@ -244,28 +244,28 @@ export default function OrderTrackingPage({ id, onBack }) {
                     </button>
                   ))}
                 </div>
-                
-                <textarea 
+
+                <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
-                  placeholder="Chia sẻ thêm cảm nhận của bạn (không bắt buộc)..."
+                  placeholder={ui("Chia sẻ thêm cảm nhận của bạn (không bắt buộc)...")}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm mb-4 outline-none focus:border-indigo-500 transition-colors"
                   rows={2}
                 />
-                
-                <button 
+
+                <button
                   onClick={handleRateShipper}
                   disabled={submittingRating}
                   className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-indigo-700 disabled:opacity-50 transition-colors"
                 >
-                  {submittingRating ? 'Đang gửi...' : 'Gửi Đánh Giá'}
+                  {submittingRating ? ui("Đang gửi...") : ui("Gửi Đánh Giá")}
                 </button>
               </>
             ) : (
               <>
                 <div className="text-4xl mb-2">🎉</div>
-                <h3 className="font-black text-xl text-gray-900 mb-1">Giao hàng thành công!</h3>
-                <p className="text-sm text-gray-500 mb-4">Cảm ơn bạn đã đánh giá tài xế.</p>
+                <h3 className="font-black text-xl text-gray-900 mb-1">{ui("Giao hàng thành công!")}</h3>
+                <p className="text-sm text-gray-500 mb-4">{ui("Cảm ơn bạn đã đánh giá tài xế.")}</p>
                 <div className="flex justify-center gap-2 mb-4">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <span key={star} className={`text-3xl ${star <= (ratedStars || rating) ? 'text-yellow-400' : 'text-gray-200'}`}>
@@ -288,12 +288,8 @@ export default function OrderTrackingPage({ id, onBack }) {
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 flex gap-3 text-left shadow-sm">
             <div className="text-amber-500 text-xl mt-0.5">⚠️</div>
             <div>
-              <p className="font-bold text-amber-800 text-sm mb-1">
-                Shipper đang giao chuyến ghép ({trackingData.batch_info.total_batch_orders} đơn)
-              </p>
-              <p className="text-amber-700 text-xs leading-relaxed">
-                Tài xế đang giao một đơn hàng khác trên cùng lộ trình. Thời gian dự kiến có thể kéo dài thêm một chút, mong bạn thông cảm!
-              </p>
+              <p className="font-bold text-amber-800 text-sm mb-1">{ui("Shipper đang giao chuyến ghép (")}{trackingData.batch_info.total_batch_orders}{ui(" đơn)")}</p>
+              <p className="text-amber-700 text-xs leading-relaxed">{ui("Tài xế đang giao một đơn hàng khác trên cùng lộ trình. Thời gian dự kiến có thể kéo dài thêm một chút, mong bạn thông cảm!")}</p>
             </div>
           </div>
         )}
@@ -302,7 +298,7 @@ export default function OrderTrackingPage({ id, onBack }) {
         {tracking?.delivery_mode === 'GIAO_TAN_NOI' && order?.trang_thai_don_hang !== 'HOAN_THANH' && (
           <div className="space-y-2">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-1 relative">
-              <ShipperMapView 
+              <ShipperMapView
                 height="60vh"
                 shipperLocation={shipper_location?.latitude ? shipper_location : null}
                 storeLocation={tracking?.store_location || branchInfo.storeLoc}
@@ -326,18 +322,18 @@ export default function OrderTrackingPage({ id, onBack }) {
                 storeAddress={branchInfo.address}
                 onRouteInfo={setRouteInfo}
               />
-              
+
               {/* Floating ETA Box */}
               {routeInfo && (
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000] bg-white/95 backdrop-blur shadow-xl rounded-2xl p-3 border border-indigo-50 flex items-center gap-4 w-[90%] max-w-sm animate-fade-in-up">
                   <div className="flex-1 text-center border-r border-gray-100">
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Thời gian đến</p>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{ui("Thời gian đến")}</p>
                     <p className="text-lg font-black text-indigo-600">
-                      {routeInfo.duration < 1 ? '< 1 phút' : `~${Math.round(routeInfo.duration)} phút`}
+                      {routeInfo.duration < 1 ? ui("< 1 phút") : ui("~{{v0}} phút", {v0:Math.round(routeInfo.duration)})}
                     </p>
                   </div>
                   <div className="flex-1 text-center">
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Khoảng cách</p>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{ui("Khoảng cách")}</p>
                     <p className="text-lg font-black text-gray-900">{routeInfo.distance.toFixed(1)} km</p>
                   </div>
                 </div>
@@ -373,20 +369,18 @@ export default function OrderTrackingPage({ id, onBack }) {
           <div className="bg-orange-50 rounded-2xl shadow-sm border border-orange-200 p-4 flex flex-col items-center justify-center gap-2 text-center">
             {['ON_GOING', 'PICKED_UP', 'COMPLETED'].includes(lalamove.status) ? (
               <>
-                <p className="text-sm font-bold text-orange-800">Theo dõi trực tiếp trên app Lalamove</p>
+                <p className="text-sm font-bold text-orange-800">{ui("Theo dõi trực tiếp trên app Lalamove")}</p>
                 <a
                   href={lalamove.share_link}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-[#F15A24] text-white px-6 py-2 rounded-xl font-bold hover:bg-orange-600 text-sm w-full"
-                >
-                  Mở link Lalamove
-                </a>
+                >{ui("Mở link Lalamove")}</a>
               </>
             ) : (
               <div className="flex items-center gap-2 text-orange-700">
                 <div className="w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
-                <p className="text-sm font-bold">Đang tìm tài xế Lalamove, vui lòng chờ giây lát...</p>
+                <p className="text-sm font-bold">{ui("Đang tìm tài xế Lalamove, vui lòng chờ giây lát...")}</p>
               </div>
             )}
           </div>
@@ -394,7 +388,7 @@ export default function OrderTrackingPage({ id, onBack }) {
 
         {/* Timeline */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-          <h3 className="font-black text-gray-900 mb-4">Tiến trình đơn hàng</h3>
+          <h3 className="font-black text-gray-900 mb-4">{ui("Tiến trình đơn hàng")}</h3>
           <div className="space-y-6 relative before:absolute before:inset-0 before:ml-[1.125rem] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
             {timeline.map((step, idx) => (
               <div key={step.key} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
@@ -405,10 +399,10 @@ export default function OrderTrackingPage({ id, onBack }) {
                 </div>
                 <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] bg-white p-3 rounded-xl border border-gray-100 shadow-sm ml-2 md:ml-0 md:mr-2 md:group-odd:mr-0 md:group-odd:ml-2">
                   <div className="flex items-center justify-between mb-1">
-                    <h4 className={`font-bold ${step.completed ? 'text-gray-900' : 'text-gray-400'}`}>{step.label}</h4>
+                    <h4 className={`font-bold ${step.completed ? 'text-gray-900' : 'text-gray-400'}`}>{ui(step.label)}</h4>
                     {step.time && (
                       <time className="text-[10px] font-medium text-gray-400">
-                        {new Date(step.time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute:'2-digit' })}
+                        {new Date(step.time).toLocaleTimeString(uiLocale(), { hour: '2-digit', minute:'2-digit' })}
                       </time>
                     )}
                   </div>
@@ -420,7 +414,7 @@ export default function OrderTrackingPage({ id, onBack }) {
 
         {/* Order Details Summary */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-          <h3 className="font-black text-gray-900 mb-3 border-b border-gray-100 pb-3">Chi tiết đơn hàng</h3>
+          <h3 className="font-black text-gray-900 mb-3 border-b border-gray-100 pb-3">{ui("Chi tiết đơn hàng")}</h3>
           <div className="space-y-3">
             {order.items.map((item, idx) => (
               <div key={idx} className="flex gap-3 items-center">
@@ -432,15 +426,15 @@ export default function OrderTrackingPage({ id, onBack }) {
                   {item.kich_co && <p className="text-xs text-gray-500">Size: {item.kich_co}</p>}
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-bold text-gray-900">{item.gia_ban.toLocaleString('vi-VN')} đ</p>
+                  <p className="text-sm font-bold text-gray-900">{item.gia_ban.toLocaleString(uiLocale())}{ui(" đ")}</p>
                   <p className="text-xs text-gray-500">x{item.so_luong}</p>
                 </div>
               </div>
             ))}
           </div>
           <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
-            <span className="font-bold text-gray-600">Tổng cộng</span>
-            <span className="font-black text-indigo-600 text-lg">{order.tong_tien.toLocaleString('vi-VN')} đ</span>
+            <span className="font-bold text-gray-600">{ui("Tổng cộng")}</span>
+            <span className="font-black text-indigo-600 text-lg">{order.tong_tien.toLocaleString(uiLocale())}{ui(" đ")}</span>
           </div>
         </div>
 

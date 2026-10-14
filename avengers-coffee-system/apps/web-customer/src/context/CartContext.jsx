@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, useRef } from 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/apiClient';
 import { queryKeys } from '../lib/queryKeys';
+import { productUnitPrice } from '../lib/productPrice';
 import { accountId, getGuestSessionId, isGuestSessionId, cartRequestConfig, mergeGuestCartOnLogin, GUEST_MERGE_KEY } from '../lib/guestSession';
 
 const CartContext = createContext();
@@ -122,40 +123,13 @@ export const CartProvider = ({ children }) => {
     }
 
     const availableSizes = product.sizes || {};
-    const availableToppings = product.toppings || {};
+    const availableToppings = Object.assign({}, product.toppings || {}, ...Object.entries(product.bien_the || {})
+      .filter(([name]) => /topping|đồ kèm/i.test(name)).map(([, choices]) => choices || {}));
     const sizeKeys = Object.keys(availableSizes);
     const defaultSize = sizeKeys.length > 0 ? sizeKeys[0] : (product.size || 'Nhỏ');
     const appliedSize = size || defaultSize;
 
-    // Tính toán giá dựa trên size & biến thể động
-    let finalPrice = 0;
-    if (product.bien_the && typeof product.bien_the === 'object' && Object.keys(product.bien_the).length > 0) {
-      const base = Number(product.gia_ban || product.price || 30000);
-      let surcharge = 0;
-      const customAttrs = options.custom_attributes || {};
-      for (const [attrName, selection] of Object.entries(customAttrs)) {
-        const optionsObj = product.bien_the[attrName] || {};
-        if (Array.isArray(selection)) {
-          for (const val of selection) {
-            surcharge += Number(optionsObj[val]) || 0;
-          }
-        } else {
-          surcharge += Number(optionsObj[selection]) || 0;
-        }
-      }
-      finalPrice = base + surcharge;
-    } else {
-      const basePrice = (appliedSize && availableSizes[appliedSize] !== undefined) 
-        ? Number(availableSizes[appliedSize]) 
-        : Number(product.gia_ban || product.price || 30000);
-
-      const toppingsPrice = (options.toppings || []).reduce((acc, t) => acc + Number(availableToppings[t] || 0), 0);
-
-      const availableLoaiSua = product.loai_sua || {};
-      const loaiSuaPrice = (options.loaiSua && availableLoaiSua[options.loaiSua] !== undefined) ? Number(availableLoaiSua[options.loaiSua]) : 0;
-
-      finalPrice = basePrice + toppingsPrice + loaiSuaPrice;
-    }
+    const finalPrice = productUnitPrice(product, appliedSize, options);
 
     const item = {
       ma_nguoi_dung: maNguoiDung,
@@ -166,55 +140,12 @@ export const CartProvider = ({ children }) => {
       so_luong: quantity,
       size: appliedSize,
       toppings: options.toppings || [],
-      topping_prices: (options.toppings || []).map(t => Number(availableToppings[t] || 5000)),
+      topping_prices: (options.toppings || []).map(t => Number(availableToppings[t] || 0)),
       luong_da: options.luongDa || '',
       do_ngot: options.doNgot || '',
       loai_sua: options.loaiSua || '',
       custom_attributes: options.custom_attributes || {}
     };
-
-    setCart((prev) => {
-      const isSameOptions = (a, b) => {
-        if ((a.size || 'Nhỏ') !== (b.size || 'Nhỏ')) return false;
-        if (a.luong_da !== b.luong_da) return false;
-        if (a.do_ngot !== b.do_ngot) return false;
-        if (a.loai_sua !== b.loai_sua) return false;
-        const aToppings = [...(a.toppings || [])].sort().join(',');
-        const bToppings = [...(b.toppings || [])].sort().join(',');
-        if (aToppings !== bToppings) return false;
-        
-        // Compare custom_attributes
-        const aAttrs = a.custom_attributes || {};
-        const bAttrs = b.custom_attributes || {};
-        const aKeys = Object.keys(aAttrs);
-        const bKeys = Object.keys(bAttrs);
-        if (aKeys.length !== bKeys.length) return false;
-        for (const key of aKeys) {
-          const valA = aAttrs[key];
-          const valB = bAttrs[key];
-          if (Array.isArray(valA) && Array.isArray(valB)) {
-            if ([...valA].sort().join(',') !== [...valB].sort().join(',')) return false;
-          } else if (valA !== valB) {
-            return false;
-          }
-        }
-        return true;
-      };
-
-      const existedIdx = prev.findIndex(
-        (localItem) => localItem.ma_san_pham === item.ma_san_pham && isSameOptions(localItem, item),
-      );
-      if (existedIdx === -1) {
-        return [...prev, item];
-      }
-
-      const next = [...prev];
-      next[existedIdx] = {
-        ...next[existedIdx],
-        so_luong: next[existedIdx].so_luong + quantity,
-      };
-      return next;
-    });
 
     if (maNguoiDung) {
       await trackCartWrite(themVaoGioMutation.mutateAsync(item));

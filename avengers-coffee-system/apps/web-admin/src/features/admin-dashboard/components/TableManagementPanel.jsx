@@ -48,8 +48,8 @@ const QRCodeDisplay = ({ tableId, storeId }) => {
           gap: '0.5rem',
           padding: '0.35rem 0.85rem',
           borderRadius: '9999px',
-          background: '#eff6ff',
-          color: '#2563eb',
+          background: 'var(--primary-light)',
+          color: 'var(--primary)',
           fontSize: '0.825rem',
           fontWeight: '600',
           marginBottom: '0.5rem'
@@ -86,7 +86,7 @@ const QRCodeDisplay = ({ tableId, storeId }) => {
           alignItems: 'center',
           gap: '0.35rem'
         }}>
-          <Store size={14} color="#10b981" /> Cơ sở: {storeId}
+          <Store size={14} color="#3b82f6" /> Cơ sở: {storeId}
         </div>
       </div>
 
@@ -102,15 +102,15 @@ const QRCodeDisplay = ({ tableId, storeId }) => {
             padding: '0.65rem 1rem',
             borderRadius: '10px',
             border: '1px solid #d1d5db',
-            background: copied ? '#ecfdf5' : '#ffffff',
-            color: copied ? '#059669' : '#374151',
+            background: copied ? '#eff6ff' : '#ffffff',
+            color: copied ? '#2563eb' : '#374151',
             fontSize: '0.875rem',
             fontWeight: '600',
             cursor: 'pointer',
             transition: 'all 0.2s ease'
           }}
         >
-          {copied ? <Check size={16} color="#059669" /> : <Copy size={16} />}
+          {copied ? <Check size={16} color="#2563eb" /> : <Copy size={16} />}
           {copied ? 'Đã sao chép link!' : 'Sao chép liên kết'}
         </button>
 
@@ -126,7 +126,7 @@ const QRCodeDisplay = ({ tableId, storeId }) => {
             gap: '0.5rem',
             padding: '0.65rem 1rem',
             borderRadius: '10px',
-            background: '#2563eb',
+            background: 'var(--primary)',
             color: '#ffffff',
             textDecoration: 'none',
             fontSize: '0.875rem',
@@ -277,14 +277,14 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
               }}
               style={{
                 background: isOccupied
-                  ? 'linear-gradient(145deg, #ffffff 0%, #ecfdf5 100%)'
+                  ? 'linear-gradient(145deg, #ffffff 0%, #eff6ff 100%)'
                   : '#ffffff',
-                border: isOccupied ? '2px solid #10b981' : '1px solid #e5e7eb',
+                border: isOccupied ? '2px solid #3b82f6' : '1px solid #e5e7eb',
                 borderRadius: '16px',
                 padding: '1.25rem 1rem',
                 cursor: 'pointer',
                 boxShadow: isOccupied
-                  ? '0 10px 15px -3px rgba(16, 185, 129, 0.12), 0 4px 6px -2px rgba(16, 185, 129, 0.05)'
+                  ? '0 10px 15px -3px rgba(59, 130, 246, 0.12), 0 4px 6px -2px rgba(59, 130, 246, 0.05)'
                   : '0 2px 4px rgba(0, 0, 0, 0.03)',
                 display: 'flex',
                 flexDirection: 'column',
@@ -298,13 +298,13 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-4px)'
                 e.currentTarget.style.boxShadow = isOccupied
-                  ? '0 14px 20px -3px rgba(16, 185, 129, 0.25)'
+                  ? '0 14px 20px -3px rgba(59, 130, 246, 0.25)'
                   : '0 8px 16px -2px rgba(0, 0, 0, 0.08)'
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)'
                 e.currentTarget.style.boxShadow = isOccupied
-                  ? '0 10px 15px -3px rgba(16, 185, 129, 0.12), 0 4px 6px -2px rgba(16, 185, 129, 0.05)'
+                  ? '0 10px 15px -3px rgba(59, 130, 246, 0.12), 0 4px 6px -2px rgba(59, 130, 246, 0.05)'
                   : '0 2px 4px rgba(0, 0, 0, 0.03)'
               }}
             >
@@ -314,13 +314,13 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                   width: '32px',
                   height: '32px',
                   borderRadius: '10px',
-                  background: isOccupied ? '#10b981' : '#f3f4f6',
+                  background: isOccupied ? '#3b82f6' : '#f3f4f6',
                   color: isOccupied ? '#ffffff' : '#6b7280',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontWeight: 'bold',
-                  boxShadow: isOccupied ? '0 2px 6px rgba(16, 185, 129, 0.3)' : 'none'
+                  boxShadow: isOccupied ? '0 2px 6px rgba(59, 130, 246, 0.3)' : 'none'
                 }}>
                   <Utensils size={16} />
                 </div>
@@ -338,12 +338,12 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                     gap: '0.35rem',
                     fontSize: '0.75rem',
                     fontWeight: '700',
-                    backgroundColor: '#d1fae5',
-                    color: '#047857',
+                    backgroundColor: '#dbeafe',
+                    color: '#1d4ed8',
                     padding: '0.25rem 0.65rem',
                     borderRadius: '9999px'
                   }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }}></span>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#3b82f6', display: 'inline-block' }}></span>
                     {activeOrders.length} đơn ({ORDER_STATUS_LABEL[normalizeOrderStatus(primaryOrder.trang_thai_don_hang)] || 'Đang xử lý'})
                   </div>
 
@@ -359,11 +359,11 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap'
                   }}>
-                    <User size={14} color="#059669" />
+                    <User size={14} color="#2563eb" />
                     <span>{primaryOrder.ten_khach_hang || 'Khách vãng lai'}</span>
                   </div>
 
-                  <div style={{ fontSize: '0.95rem', fontWeight: '800', color: '#059669', marginTop: '0.15rem' }}>
+                  <div style={{ fontSize: '0.95rem', fontWeight: '600', color: '#2563eb', marginTop: '0.15rem' }}>
                     {fmtMoney(primaryOrder.tong_tien)}
                   </div>
                 </div>
@@ -389,7 +389,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
               <div style={{
                 width: '100%',
                 paddingTop: '0.5rem',
-                borderTop: isOccupied ? '1px solid #a7f3d0' : '1px solid #f3f4f6',
+                borderTop: isOccupied ? '1px solid #bfdbfe' : '1px solid #f3f4f6',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center'
@@ -397,7 +397,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                 <span style={{
                   fontSize: '0.775rem',
                   fontWeight: '600',
-                  color: isOccupied ? '#047857' : '#4b5563',
+                  color: isOccupied ? '#1d4ed8' : '#4b5563',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.25rem'
@@ -446,7 +446,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
           <div style={{
             padding: '1.25rem 1.5rem',
             background: isOccupied
-              ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)'
+              ? 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)'
               : 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
             color: '#ffffff',
             display: 'flex',
@@ -473,7 +473,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                     width: '7px',
                     height: '7px',
                     borderRadius: '50%',
-                    background: isOccupied ? '#34d399' : '#94a3b8'
+                    background: isOccupied ? '#38bdf8' : '#94a3b8'
                   }}></span>
                   {isOccupied ? 'Bàn đang có khách phục vụ' : 'Bàn trống sẵn sàng đón khách'}
                 </span>
@@ -516,8 +516,8 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                 padding: '0.75rem 1rem',
                 border: 'none',
                 background: 'transparent',
-                borderBottom: activeModalTab === 'orders' ? '3px solid #10b981' : '3px solid transparent',
-                color: activeModalTab === 'orders' ? '#059669' : '#64748b',
+                borderBottom: activeModalTab === 'orders' ? '3px solid #3b82f6' : '3px solid transparent',
+                color: activeModalTab === 'orders' ? '#2563eb' : '#64748b',
                 fontWeight: activeModalTab === 'orders' ? '700' : '600',
                 fontSize: '0.9rem',
                 cursor: 'pointer',
@@ -538,8 +538,8 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                 padding: '0.75rem 1rem',
                 border: 'none',
                 background: 'transparent',
-                borderBottom: activeModalTab === 'qr' ? '3px solid #10b981' : '3px solid transparent',
-                color: activeModalTab === 'qr' ? '#059669' : '#64748b',
+                borderBottom: activeModalTab === 'qr' ? '3px solid #3b82f6' : '3px solid transparent',
+                color: activeModalTab === 'qr' ? '#2563eb' : '#64748b',
                 fontWeight: activeModalTab === 'qr' ? '700' : '600',
                 fontSize: '0.9rem',
                 cursor: 'pointer',
@@ -590,8 +590,8 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                           fontWeight: '700',
                           padding: '0.25rem 0.65rem',
                           borderRadius: '9999px',
-                          backgroundColor: '#d1fae5',
-                          color: '#047857'
+                          backgroundColor: '#dbeafe',
+                          color: '#1d4ed8'
                         }}>
                           {ORDER_STATUS_LABEL[normalizeOrderStatus(order.trang_thai_don_hang)]}
                         </span>
@@ -610,7 +610,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                         padding: '0.5rem 0.75rem',
                         borderRadius: '8px'
                       }}>
-                        <User size={16} color="#059669" />
+                        <User size={16} color="#2563eb" />
                         <span>Khách hàng: {order.ten_khach_hang || 'Khách vãng lai'}</span>
                       </div>
 
@@ -634,8 +634,8 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                                   width: '20px',
                                   height: '20px',
                                   borderRadius: '50%',
-                                  background: '#eff6ff',
-                                  color: '#2563eb',
+                                  background: 'var(--primary-light)',
+                                  color: 'var(--primary)',
                                   fontSize: '0.75rem',
                                   textAlign: 'center',
                                   lineHeight: '20px',
@@ -669,7 +669,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                         marginBottom: '1rem'
                       }}>
                         <span style={{ fontSize: '0.95rem', color: '#475569', fontWeight: '600' }}>Tổng thanh toán:</span>
-                        <span style={{ fontSize: '1.25rem', fontWeight: '800', color: '#059669' }}>
+                        <span style={{ fontSize: '1.25rem', fontWeight: '600', color: '#2563eb' }}>
                           {fmtMoney(order.tong_tien)}
                         </span>
                       </div>
@@ -682,7 +682,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                             setSelectedTable(null)
                           }}
                           style={{
-                            background: '#10b981',
+                            background: '#3b82f6',
                             color: '#ffffff',
                             border: 'none',
                             borderRadius: '10px',
@@ -693,11 +693,11 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                             display: 'flex',
                             alignItems: 'center',
                             gap: '0.5rem',
-                            boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.3)',
+                            boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.3)',
                             transition: 'all 0.2s ease'
                           }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = '#059669' }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = '#10b981' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = '#2563eb' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = '#3b82f6' }}
                         >
                           <CheckCircle2 size={18} /> Hoàn tất & Trả bàn
                         </button>
@@ -721,7 +721,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                   <button
                     onClick={() => setActiveModalTab('qr')}
                     style={{
-                      background: '#2563eb',
+                      background: 'var(--primary)',
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '10px',
@@ -770,21 +770,21 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
               width: '40px',
               height: '40px',
               borderRadius: '12px',
-              background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+              background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
               color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 10px rgba(16, 185, 129, 0.3)'
+              boxShadow: '0 4px 10px rgba(59, 130, 246, 0.3)'
             }}>
               <Coffee size={22} />
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '800', color: '#0f172a' }}>
+              <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600', color: '#0f172a' }}>
                 Quản lý & Sơ đồ Bàn
               </h2>
               <span style={{ fontSize: '0.825rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <Store size={14} color="#059669" /> Cơ sở: <strong>{storeId}</strong>
+                <Store size={14} color="#2563eb" /> Cơ sở: <strong>{storeId}</strong>
               </span>
             </div>
           </div>
@@ -803,7 +803,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
             fontWeight: '600',
             color: '#334155'
           }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }}></span>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#3b82f6' }}></span>
             Bàn có khách ({stats.occupied})
           </div>
 
@@ -847,8 +847,8 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
             width: '44px',
             height: '44px',
             borderRadius: '12px',
-            background: '#eff6ff',
-            color: '#2563eb',
+            background: 'var(--primary-light)',
+            color: 'var(--primary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
@@ -857,7 +857,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
           </div>
           <div>
             <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>Tổng số bàn</div>
-            <div style={{ fontSize: '1.35rem', fontWeight: '800', color: '#1e293b' }}>{stats.total} bàn</div>
+            <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#1e293b' }}>{stats.total} bàn</div>
           </div>
         </div>
 
@@ -876,8 +876,8 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
             width: '44px',
             height: '44px',
             borderRadius: '12px',
-            background: '#ecfdf5',
-            color: '#059669',
+            background: '#eff6ff',
+            color: '#2563eb',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
@@ -886,7 +886,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
           </div>
           <div>
             <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>Đang phục vụ</div>
-            <div style={{ fontSize: '1.35rem', fontWeight: '800', color: '#059669' }}>{stats.occupied} bàn</div>
+            <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#2563eb' }}>{stats.occupied} bàn</div>
           </div>
         </div>
 
@@ -915,7 +915,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
           </div>
           <div>
             <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>Bàn trống</div>
-            <div style={{ fontSize: '1.35rem', fontWeight: '800', color: '#334155' }}>{stats.empty} bàn</div>
+            <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#334155' }}>{stats.empty} bàn</div>
           </div>
         </div>
 
@@ -944,7 +944,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
           </div>
           <div>
             <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>Doanh thu tạm tính</div>
-            <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#d97706' }}>{fmtMoney(stats.revenue)}</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: '600', color: '#d97706' }}>{fmtMoney(stats.revenue)}</div>
           </div>
         </div>
       </div>
@@ -987,12 +987,12 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
               padding: '0.5rem 1rem',
               borderRadius: '8px',
               border: 'none',
-              background: filterStatus === 'OCCUPIED' ? '#10b981' : 'transparent',
+              background: filterStatus === 'OCCUPIED' ? '#3b82f6' : 'transparent',
               color: filterStatus === 'OCCUPIED' ? '#ffffff' : '#64748b',
               fontWeight: filterStatus === 'OCCUPIED' ? '700' : '500',
               fontSize: '0.85rem',
               cursor: 'pointer',
-              boxShadow: filterStatus === 'OCCUPIED' ? '0 2px 4px rgba(16, 185, 129, 0.3)' : 'none',
+              boxShadow: filterStatus === 'OCCUPIED' ? '0 2px 4px rgba(59, 130, 246, 0.3)' : 'none',
               transition: 'all 0.2s ease'
             }}
           >
@@ -1040,7 +1040,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
               transition: 'border 0.2s ease',
               boxSizing: 'border-box'
             }}
-            onFocus={(e) => { e.target.style.borderColor = '#10b981' }}
+            onFocus={(e) => { e.target.style.borderColor = '#3b82f6' }}
             onBlur={(e) => { e.target.style.borderColor = '#cbd5e1' }}
           />
           {searchQuery && (

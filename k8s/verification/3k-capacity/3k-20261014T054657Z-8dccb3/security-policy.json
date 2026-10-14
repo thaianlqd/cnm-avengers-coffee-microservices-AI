@@ -1,0 +1,12 @@
+{
+  "public_inbound": [
+    {
+      "port": 443,
+      "source": "observed Mac egress IPv4 /32",
+      "source_count": 2
+    }
+  ],
+  "forward_bind": "127.0.0.1:13300",
+  "nat_or_firewall_changed": false,
+  "control_only_cloudflare": true
+}

@@ -1,0 +1,7 @@
+{
+  "http_pass": false,
+  "stable": true,
+  "violations": [],
+  "status": "FAIL",
+  "smoke_after_exit": 0
+}

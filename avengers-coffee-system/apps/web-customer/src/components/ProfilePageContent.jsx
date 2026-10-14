@@ -1,3 +1,4 @@
+import { uiText as ui, useUiLanguage, uiLocale } from "../lib/uiText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import MyGiftCardsTab from './MyGiftCardsTab';
@@ -79,6 +80,7 @@ function tachDiaChiDayDu(rawAddress) {
 }
 
 const SearchableSelect = ({ options, value, onChange, placeholder, icon: Icon, disabled }) => {
+  useUiLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const wrapperRef = React.useRef(null);
@@ -97,7 +99,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder, icon: Icon, d
 
   return (
     <div className={`relative ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`} ref={wrapperRef}>
-      <div 
+      <div
         className={`w-full rounded-xl border border-gray-200 pl-10 pr-4 py-3 text-sm font-semibold outline-none bg-white flex justify-between items-center transition-all duration-200 focus-within:border-[#b22830] focus-within:ring-2 focus-within:ring-[#b22830]/10 ${disabled ? 'cursor-not-allowed bg-gray-50' : 'cursor-pointer'}`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
@@ -105,14 +107,14 @@ const SearchableSelect = ({ options, value, onChange, placeholder, icon: Icon, d
         <svg className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
       </div>
       {Icon && <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />}
-      
+
       {isOpen && (
         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
           <div className="sticky top-0 bg-white p-2 border-b border-gray-100">
             <input
               autoFocus
               type="text"
-              placeholder="Tìm kiếm..."
+              placeholder={ui("Tìm kiếm...")}
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#b22830] transition-colors"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -121,7 +123,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder, icon: Icon, d
           </div>
           {filteredOptions.length > 0 ? (
             filteredOptions.map(opt => (
-              <div 
+              <div
                 key={opt}
                 className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-gray-50 transition-colors ${value === opt ? 'bg-[#fbdcde] text-[#b22830] font-bold' : 'text-gray-700'}`}
                 onClick={() => {
@@ -134,7 +136,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder, icon: Icon, d
               </div>
             ))
           ) : (
-            <div className="px-4 py-3 text-sm text-gray-500 text-center italic">Không tìm thấy</div>
+            <div className="px-4 py-3 text-sm text-gray-500 text-center italic">{ui("Không tìm thấy")}</div>
           )}
         </div>
       )}
@@ -151,6 +153,7 @@ export default function ProfilePageContent({
   setIsOrderHistoryOpen,
   onNavigate,
 }) {
+  useUiLanguage();
   const [activeTab, setActiveTab] = useState('profile');
   const [profileForm, setProfileForm] = useState({ hoTen: '', soDienThoai: '', avatarUrl: '', gioiTinh: 'Nam', ngaySinh: '' });
   const [passwordForm, setPasswordForm] = useState({
@@ -321,14 +324,14 @@ export default function ProfilePageContent({
     const params = new URLSearchParams(window.location.search);
     const walletStatus = params.get('wallet_payment');
     if (walletStatus === 'success') {
-      alert('Nạp tiền vào ví qua VNPAY thành công!');
+      alert(ui("Nạp tiền vào ví qua VNPAY thành công!"));
       // Xóa param khỏi url
       window.history.replaceState({}, document.title, window.location.pathname + '?tab=wallet');
       if (activeTab !== 'wallet') {
         setActiveTab('wallet');
       }
     } else if (walletStatus === 'failed') {
-      alert('Nạp tiền vào ví thất bại hoặc đã bị hủy!');
+      alert(ui("Nạp tiền vào ví thất bại hoặc đã bị hủy!"));
       window.history.replaceState({}, document.title, window.location.pathname + '?tab=wallet');
       if (activeTab !== 'wallet') {
         setActiveTab('wallet');
@@ -354,7 +357,7 @@ export default function ProfilePageContent({
     }
   }, [profile]);
 
-  
+
 
   useEffect(() => {
     if (!wardOptions.length) {
@@ -383,7 +386,7 @@ export default function ProfilePageContent({
       };
       onProfileUpdated(updatedUser);
       queryClient.invalidateQueries({ queryKey: queryKeys.userProfile(userId) });
-      alert('Cập nhật thông tin thành công!');
+      alert(ui("Cập nhật thông tin thành công!"));
     },
     onError: (err) => {
       setProfileError(err?.response?.data?.message || 'Không thể cập nhật thông tin.');
@@ -398,7 +401,7 @@ export default function ProfilePageContent({
     onSuccess: () => {
       setPasswordError('');
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      alert('Đổi mật khẩu thành công!');
+      alert(ui("Đổi mật khẩu thành công!"));
     },
     onError: (err) => {
       setPasswordError(err?.response?.data?.message || 'Không thể đổi mật khẩu.');
@@ -503,29 +506,29 @@ export default function ProfilePageContent({
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&accept-language=vi`
           );
-          
+
           if (!res.ok) throw new Error('Không thể lấy địa chỉ từ tọa độ này.');
-          
+
           const data = await res.json();
           const addr = data.address;
-          
+
           const rawCity = addr.city || addr.municipality || addr.province || addr.state || addr.region || addr.town || '';
           const rawDistrict = addr.county || addr.district || addr.city_district || addr.town || '';
           const rawWard = addr.village || addr.ward || addr.suburb || addr.quarter || addr.hamlet || '';
           const rawStreet = [addr.house_number, addr.road].filter(Boolean).join(' ') || data.display_name;
-          
+
           const removeAccents = (str) => String(str || '').toLowerCase()
             .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
-            
+
           const findBestMatch = (optionsArray, targetStr) => {
             if (!targetStr) return null;
             let target = removeAccents(targetStr).replace(/(thanh pho|tinh|quan|huyen|thi xa|phuong|xa|thi tran)\s+/gi, '').replace(/\s+city/gi, '').trim();
             if (target.includes('ho chi minh') || target.includes('hcm')) target = 'ho chi minh';
-            
+
             return optionsArray.find(opt => {
                 let optNorm = removeAccents(opt).replace(/(thanh pho|tinh|quan|huyen|thi xa|phuong|xa|thi tran)\s+/gi, '').replace(/\s+city/gi, '').trim();
                 if (optNorm.includes('ho chi minh')) optNorm = 'ho chi minh';
-                
+
                 if (optNorm === target) return true;
                 if (target.includes(optNorm)) {
                     // Tránh trường hợp "12" match với "1" (chỉ match số nếu đứng 1 mình)
@@ -553,7 +556,7 @@ export default function ProfilePageContent({
             ward: matchedWard || prev.ward,
             street: rawStreet || prev.street,
           }));
-          
+
         } catch (err) {
           setAddressError(err.message || 'Có lỗi xảy ra khi lấy vị trí.');
         } finally {
@@ -639,10 +642,8 @@ export default function ProfilePageContent({
         {/* Header Greeting */}
         <div className="border-b border-gray-200/80 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl md:text-2xl font-black uppercase text-[#2b2b2b] tracking-tight font-sans">Trang tài khoản</h2>
-            <p className="text-xs md:text-sm text-gray-500 mt-1 font-semibold">
-              Xin chào, <span className="text-[#b22830] font-black">{profileUser?.ho_ten || profileUser?.hoTen || profileUser?.username || 'Bạn'}</span>! Quản lý hồ sơ, đơn hàng và các đặc quyền thành viên của bạn.
-            </p>
+            <h2 className="text-xl md:text-2xl font-black uppercase text-[#2b2b2b] tracking-tight font-sans">{ui("Trang tài khoản")}</h2>
+            <p className="text-xs md:text-sm text-gray-500 mt-1 font-semibold">{ui("Xin chào, ")}<span className="text-[#b22830] font-black">{profileUser?.ho_ten || profileUser?.hoTen || profileUser?.username || ui("Bạn")}</span>{ui("! Quản lý hồ sơ, đơn hàng và các đặc quyền thành viên của bạn.")}</p>
           </div>
           {profile?.avatar_url && (
             <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm self-start md:self-auto">
@@ -650,7 +651,7 @@ export default function ProfilePageContent({
               <div>
                 <p className="text-xs font-black text-gray-800 leading-none">{profileUser?.ho_ten || profileUser?.hoTen}</p>
                 <span className="text-[9px] font-black text-[#c89a58] uppercase tracking-wider leading-none mt-1 inline-block">
-                  {loyaltyData?.hang_thanh_vien?.hang || 'Thành viên'}
+                  {loyaltyData?.hang_thanh_vien?.hang || ui("Thành viên")}
                 </span>
               </div>
             </div>
@@ -693,7 +694,7 @@ export default function ProfilePageContent({
                   }`}
                 >
                   <span className={isActive ? 'text-white' : 'text-gray-400'}>{TAB_ICONS[tab.iconId]}</span>
-                  <span>{tab.label}</span>
+                  <span>{ui(tab.label)}</span>
                   {tab.count !== undefined && (
                     <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-black ${isActive ? 'bg-white text-[#b22830]' : 'bg-gray-100 text-gray-600 border border-gray-200/50'}`}>
                       {tab.count}
@@ -714,8 +715,8 @@ export default function ProfilePageContent({
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               </div>
-              <p className="text-sm font-black uppercase tracking-wide text-gray-700">Lịch sử đơn hàng đang hiển thị ở bảng điều khiển chung</p>
-              <p className="mt-2 text-xs font-semibold text-gray-400 max-w-sm mx-auto">Bạn có thể quản lý và xem tất cả trạng thái đơn hàng của mình tại đây.</p>
+              <p className="text-sm font-black uppercase tracking-wide text-gray-700">{ui("Lịch sử đơn hàng đang hiển thị ở bảng điều khiển chung")}</p>
+              <p className="mt-2 text-xs font-semibold text-gray-400 max-w-sm mx-auto">{ui("Bạn có thể quản lý và xem tất cả trạng thái đơn hàng của mình tại đây.")}</p>
             </div>
           ) : activeTab === 'profile' ? (
             <div className="rounded-2xl border border-gray-200/60 bg-white p-6 shadow-md shadow-gray-100/50">
@@ -727,7 +728,7 @@ export default function ProfilePageContent({
                 </div>
               ) : profileIsError ? (
                 <div className="rounded-xl border border-red-100 bg-red-50 p-4 text-sm font-semibold text-red-700">
-                  {profileError2?.response?.data?.message || 'Không thể tải thông tin cá nhân.'}
+                  {profileError2?.response?.data?.message || ui("Không thể tải thông tin cá nhân.")}
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -741,48 +742,48 @@ export default function ProfilePageContent({
                       ? Math.min(100, Math.round(((diemLoyalty - batDau) / (canLen - batDau)) * 100))
                       : 100;
                     const HANG_STYLE = {
-                      MEMBER: { 
-                        bg: 'from-[#3e2723] via-[#b22830] to-[#2d1b18] shadow-red-950/20', 
-                        border: 'border-white/10', 
-                        text: 'text-white', 
+                      MEMBER: {
+                        bg: 'from-[#3e2723] via-[#b22830] to-[#2d1b18] shadow-red-950/20',
+                        border: 'border-white/10',
+                        text: 'text-white',
                         textMuted: 'text-[#d7ccc8]',
-                        bar: 'bg-white', 
+                        bar: 'bg-white',
                         icon: (
                           <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center border-2 border-white/20 shadow-md shrink-0">
                             <SparklesIcon className="w-6 h-6 text-[#c89a58]" />
                           </div>
                         )
                       },
-                      SILVER: { 
-                        bg: 'from-[#4f5d75] via-[#687b9c] to-[#3a4750] shadow-slate-900/20', 
-                        border: 'border-white/10', 
-                        text: 'text-white', 
+                      SILVER: {
+                        bg: 'from-[#4f5d75] via-[#687b9c] to-[#3a4750] shadow-slate-900/20',
+                        border: 'border-white/10',
+                        text: 'text-white',
                         textMuted: 'text-slate-200',
-                        bar: 'bg-slate-300', 
+                        bar: 'bg-slate-300',
                         icon: (
                           <div className="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center border-2 border-white/35 shadow-md shrink-0">
                             <CheckBadgeIcon className="w-6 h-6 text-slate-100" />
                           </div>
                         )
                       },
-                      GOLD: { 
-                        bg: 'from-[#8a6421] via-[#c89a58] to-[#5d4037] shadow-yellow-900/20', 
-                        border: 'border-white/10', 
-                        text: 'text-white', 
+                      GOLD: {
+                        bg: 'from-[#8a6421] via-[#c89a58] to-[#5d4037] shadow-yellow-900/20',
+                        border: 'border-white/10',
+                        text: 'text-white',
                         textMuted: 'text-amber-100',
-                        bar: 'bg-yellow-400', 
+                        bar: 'bg-yellow-400',
                         icon: (
                           <div className="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center border-2 border-white/35 shadow-md shrink-0">
                             <SparklesIcon className="w-6 h-6 text-yellow-300" />
                           </div>
                         )
                       },
-                      DIAMOND: { 
-                        bg: 'from-[#1a237e] via-[#2a5298] to-[#0d47a1] shadow-blue-900/20', 
-                        border: 'border-white/10', 
-                        text: 'text-white', 
+                      DIAMOND: {
+                        bg: 'from-[#1a237e] via-[#2a5298] to-[#0d47a1] shadow-blue-900/20',
+                        border: 'border-white/10',
+                        text: 'text-white',
                         textMuted: 'text-blue-100',
-                        bar: 'bg-cyan-400', 
+                        bar: 'bg-cyan-400',
                         icon: (
                           <div className="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center border-2 border-white/35 shadow-md shrink-0">
                             <SparklesIcon className="w-6 h-6 text-cyan-300 animate-pulse" />
@@ -796,21 +797,21 @@ export default function ProfilePageContent({
                         {/* Metallic gloss watermark */}
                         <div className="absolute right-0 bottom-0 translate-x-12 translate-y-12 w-48 h-48 bg-white/5 rounded-full blur-3xl pointer-events-none" />
                         <div className="absolute -top-10 -left-10 w-32 h-32 bg-white/5 rounded-full blur-xl pointer-events-none" />
-                        
+
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             {s.icon}
                             <div>
-                              <p className="text-[10px] font-black uppercase tracking-widest text-white/50 leading-none">Hạng tài khoản</p>
+                              <p className="text-[10px] font-black uppercase tracking-widest text-white/50 leading-none">{ui("Hạng tài khoản")}</p>
                               <span className={`text-[11px] font-black uppercase px-2.5 py-0.5 rounded-full ${s.text} bg-white/10 border border-white/20 mt-1.5 inline-block shadow-sm`}>
-                                {hang?.hang || 'Thành viên'}
+                                {hang?.hang || ui("Thành viên")}
                               </span>
                             </div>
                           </div>
-                          
+
                           <div className="text-right">
-                            <p className="text-[9px] font-black text-white/50 uppercase tracking-widest leading-none">Điểm hiện có</p>
-                            <p className="text-3xl font-black mt-1 tracking-tight">{diemLoyalty.toLocaleString('vi-VN')} <span className="text-sm font-bold text-white/70">PTS</span></p>
+                            <p className="text-[9px] font-black text-white/50 uppercase tracking-widest leading-none">{ui("Điểm hiện có")}</p>
+                            <p className="text-3xl font-black mt-1 tracking-tight">{diemLoyalty.toLocaleString(uiLocale())} <span className="text-sm font-bold text-white/70">PTS</span></p>
                           </div>
                         </div>
 
@@ -818,14 +819,12 @@ export default function ProfilePageContent({
                           <div className="mb-2 flex justify-between text-xs font-semibold text-white/80">
                             {canLen != null ? (
                               <>
-                                <span>{diemLoyalty.toLocaleString('vi-VN')} / {canLen.toLocaleString('vi-VN')} điểm</span>
-                                <span>Cần tích lũy thêm {(canLen - diemLoyalty).toLocaleString('vi-VN')} điểm để thăng hạng</span>
+                                <span>{diemLoyalty.toLocaleString(uiLocale())} / {canLen.toLocaleString(uiLocale())}{ui(" điểm")}</span>
+                                <span>{ui("Cần tích lũy thêm ")}{(canLen - diemLoyalty).toLocaleString(uiLocale())}{ui(" điểm để thăng hạng")}</span>
                               </>
                             ) : (
                               <span className="font-black text-yellow-300 flex items-center gap-1">
-                                <SparklesIcon className="w-4 h-4 text-yellow-300" />
-                                Bạn đang ở hạng cao nhất ✨
-                              </span>
+                                <SparklesIcon className="w-4 h-4 text-yellow-300" />{ui("Bạn đang ở hạng cao nhất ✨")}</span>
                             )}
                           </div>
                           <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden shadow-inner">
@@ -835,7 +834,7 @@ export default function ProfilePageContent({
 
                         <div className="mt-4 flex justify-between items-center text-[10px] font-black tracking-widest text-white/40 uppercase">
                           <span>Avengers Coffee Club</span>
-                          <span>1 PTS = 1.000đ</span>
+                          <span>{ui("1 PTS = 1.000đ")}</span>
                         </div>
                       </div>
                     );
@@ -845,46 +844,46 @@ export default function ProfilePageContent({
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="rounded-2xl border border-gray-100 bg-gradient-to-br from-amber-50/50 to-orange-50/30 p-4 transition-all hover:shadow-md hover:-translate-y-0.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase text-amber-700/70 tracking-wider">Đơn hàng</span>
+                        <span className="text-[10px] font-black uppercase text-amber-700/70 tracking-wider">{ui("Đơn hàng")}</span>
                         <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center">
                           <ShoppingBagIcon className="w-4 h-4 text-amber-600" />
                         </div>
                       </div>
                       <p className="text-2xl font-black text-gray-900 mt-2">{allOrdersData?.length || 0}</p>
-                      <p className="text-[10px] font-bold text-gray-400 mt-0.5">Đã hoàn thành</p>
+                      <p className="text-[10px] font-bold text-gray-400 mt-0.5">{ui("Đã hoàn thành")}</p>
                     </div>
 
                     <div className="rounded-2xl border border-gray-100 bg-gradient-to-br from-red-50/50 to-rose-50/30 p-4 transition-all hover:shadow-md hover:-translate-y-0.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase text-rose-700/70 tracking-wider">Điểm tích lũy</span>
+                        <span className="text-[10px] font-black uppercase text-rose-700/70 tracking-wider">{ui("Điểm tích lũy")}</span>
                         <div className="w-8 h-8 rounded-xl bg-rose-500/10 flex items-center justify-center">
                           <SparklesIcon className="w-4 h-4 text-[#b22830]" />
                         </div>
                       </div>
-                      <p className="text-2xl font-black text-gray-900 mt-2">{diemLoyalty.toLocaleString('vi-VN')}</p>
-                      <p className="text-[10px] font-bold text-gray-400 mt-0.5">PTS khả dụng</p>
+                      <p className="text-2xl font-black text-gray-900 mt-2">{diemLoyalty.toLocaleString(uiLocale())}</p>
+                      <p className="text-[10px] font-bold text-gray-400 mt-0.5">{ui("PTS khả dụng")}</p>
                     </div>
 
                     <div className="rounded-2xl border border-gray-100 bg-gradient-to-br from-blue-50/50 to-cyan-50/30 p-4 transition-all hover:shadow-md hover:-translate-y-0.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase text-blue-700/70 tracking-wider">Sổ địa chỉ</span>
+                        <span className="text-[10px] font-black uppercase text-blue-700/70 tracking-wider">{ui("Sổ địa chỉ")}</span>
                         <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center">
                           <MapPinIcon className="w-4 h-4 text-blue-600" />
                         </div>
                       </div>
                       <p className="text-2xl font-black text-gray-900 mt-2">{savedAddresses?.length || 0}</p>
-                      <p className="text-[10px] font-bold text-gray-400 mt-0.5">Địa chỉ giao hàng</p>
+                      <p className="text-[10px] font-bold text-gray-400 mt-0.5">{ui("Địa chỉ giao hàng")}</p>
                     </div>
 
                     <div className="rounded-2xl border border-gray-100 bg-gradient-to-br from-emerald-50/50 to-teal-50/30 p-4 transition-all hover:shadow-md hover:-translate-y-0.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase text-emerald-700/70 tracking-wider">Đơn yêu thích</span>
+                        <span className="text-[10px] font-black uppercase text-emerald-700/70 tracking-wider">{ui("Đơn yêu thích")}</span>
                         <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center">
                           <HeartIcon className="w-4 h-4 text-emerald-600" />
                         </div>
                       </div>
                       <p className="text-2xl font-black text-gray-900 mt-2">{favouriteOrders?.length || 0}</p>
-                      <p className="text-[10px] font-bold text-gray-400 mt-0.5">Món đặt thường xuyên</p>
+                      <p className="text-[10px] font-bold text-gray-400 mt-0.5">{ui("Món đặt thường xuyên")}</p>
                     </div>
                   </div>
 
@@ -908,10 +907,8 @@ export default function ProfilePageContent({
                         <div className="flex-1 w-full space-y-3">
                           <div>
                             <h4 className="text-sm font-black uppercase text-gray-800 tracking-wide flex items-center gap-2">
-                              <CameraIcon className="w-4 h-4 text-[#b22830]" />
-                              Ảnh đại diện tài khoản
-                            </h4>
-                            <p className="text-xs font-medium text-gray-400 mt-0.5">Dán link (URL) ảnh đại diện của bạn hoặc chọn nhanh avatar bên dưới.</p>
+                              <CameraIcon className="w-4 h-4 text-[#b22830]" />{ui("Ảnh đại diện tài khoản")}</h4>
+                            <p className="text-xs font-medium text-gray-400 mt-0.5">{ui("Dán link (URL) ảnh đại diện của bạn hoặc chọn nhanh avatar bên dưới.")}</p>
                           </div>
 
                           <div className="relative">
@@ -927,7 +924,7 @@ export default function ProfilePageContent({
 
                           {/* Quick Preset Avatars */}
                           <div className="flex items-center gap-2 pt-1">
-                            <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Avatar mẫu:</span>
+                            <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">{ui("Avatar mẫu:")}</span>
                             {[
                               'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
                               'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
@@ -948,9 +945,7 @@ export default function ProfilePageContent({
                                 type="button"
                                 onClick={() => setProfileForm((prev) => ({ ...prev, avatarUrl: '' }))}
                                 className="text-[10px] font-bold text-gray-400 hover:text-red-600 underline ml-1 cursor-pointer"
-                              >
-                                Xóa ảnh
-                              </button>
+                              >{ui("Xóa ảnh")}</button>
                             )}
                           </div>
                         </div>
@@ -960,14 +955,11 @@ export default function ProfilePageContent({
                     {/* Section 1: Personal Details */}
                     <div className="rounded-2xl border border-gray-100 bg-white p-5 space-y-4">
                       <h4 className="text-xs font-black uppercase tracking-widest text-[#b22830] border-b border-gray-100 pb-2.5 flex items-center gap-2">
-                        <UserIcon className="w-4 h-4 text-[#b22830]" />
-                        Thông tin cá nhân
-                      </h4>
+                        <UserIcon className="w-4 h-4 text-[#b22830]" />{ui("Thông tin cá nhân")}</h4>
 
                       <div className="grid gap-4 md:grid-cols-2">
                         <div>
-                          <label className="block mb-1.5 text-xs font-bold text-gray-700">
-                            Họ và tên <span className="text-red-500">*</span>
+                          <label className="block mb-1.5 text-xs font-bold text-gray-700">{ui("Họ và tên ")}<span className="text-red-500">*</span>
                           </label>
                           <div className="relative">
                             <input
@@ -975,7 +967,7 @@ export default function ProfilePageContent({
                               required
                               value={profileForm.hoTen}
                               onChange={(e) => setProfileForm((prev) => ({ ...prev, hoTen: e.target.value }))}
-                              placeholder="Nhập họ và tên"
+                              placeholder={ui("Nhập họ và tên")}
                               className="w-full rounded-xl border border-gray-200 pl-10 pr-4 py-3 text-sm font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-[#b22830]/10 transition-all duration-200 bg-white"
                             />
                             <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -983,9 +975,7 @@ export default function ProfilePageContent({
                         </div>
 
                         <div>
-                          <label className="block mb-1.5 text-xs font-bold text-gray-700">
-                            Số điện thoại
-                          </label>
+                          <label className="block mb-1.5 text-xs font-bold text-gray-700">{ui("Số điện thoại")}</label>
                           <div className="relative">
                             <input
                               type="tel"
@@ -1001,7 +991,7 @@ export default function ProfilePageContent({
 
                       <div className="grid gap-4 md:grid-cols-2 pt-1">
                         <div>
-                          <label className="block mb-1.5 text-xs font-bold text-gray-700">Giới tính</label>
+                          <label className="block mb-1.5 text-xs font-bold text-gray-700">{ui("Giới tính")}</label>
                           <div className="flex gap-2">
                             {['Nam', 'Nữ', 'Khác'].map((gender) => (
                               <button
@@ -1021,7 +1011,7 @@ export default function ProfilePageContent({
                         </div>
 
                         <div>
-                          <label className="block mb-1.5 text-xs font-bold text-gray-700">Ngày sinh</label>
+                          <label className="block mb-1.5 text-xs font-bold text-gray-700">{ui("Ngày sinh")}</label>
                           <div className="relative">
                             <input
                               type="date"
@@ -1038,18 +1028,14 @@ export default function ProfilePageContent({
                     <div className="rounded-2xl border border-gray-100 bg-gray-50/50 p-5 space-y-4">
                       <div className="flex items-center justify-between border-b border-gray-200/60 pb-2.5">
                         <h4 className="text-xs font-black uppercase tracking-widest text-gray-600 flex items-center gap-2">
-                          <LockClosedIcon className="w-4 h-4 text-gray-500" />
-                          Tài khoản & Xác thực
-                        </h4>
+                          <LockClosedIcon className="w-4 h-4 text-gray-500" />{ui("Tài khoản & Xác thực")}</h4>
                         <span className="flex items-center gap-1 text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                          <CheckBadgeIcon className="w-3.5 h-3.5 text-emerald-600" />
-                          Đã xác thực
-                        </span>
+                          <CheckBadgeIcon className="w-3.5 h-3.5 text-emerald-600" />{ui("Đã xác thực")}</span>
                       </div>
 
                       <div className="grid gap-4 md:grid-cols-2">
                         <div>
-                          <label className="block mb-1.5 text-xs font-bold text-gray-500">Tên đăng nhập</label>
+                          <label className="block mb-1.5 text-xs font-bold text-gray-500">{ui("Tên đăng nhập")}</label>
                           <div className="relative">
                             <input
                               type="text"
@@ -1063,7 +1049,7 @@ export default function ProfilePageContent({
                         </div>
 
                         <div>
-                          <label className="block mb-1.5 text-xs font-bold text-gray-500">Địa chỉ Email</label>
+                          <label className="block mb-1.5 text-xs font-bold text-gray-500">{ui("Địa chỉ Email")}</label>
                           <div className="relative">
                             <input
                               type="email"
@@ -1098,12 +1084,12 @@ export default function ProfilePageContent({
                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
-                            <span>Đang lưu...</span>
+                            <span>{ui("Đang lưu...")}</span>
                           </>
                         ) : (
                           <>
                             <CheckIcon className="w-4 h-4 text-white" strokeWidth={3} />
-                            <span>Lưu thay đổi hồ sơ</span>
+                            <span>{ui("Lưu thay đổi hồ sơ")}</span>
                           </>
                         )}
                       </button>
@@ -1118,13 +1104,13 @@ export default function ProfilePageContent({
               <div className="lg:col-span-7 rounded-2xl border border-gray-200/60 bg-white p-6 space-y-4 shadow-md shadow-gray-100/50">
                 <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
                   <MapPinIcon className="w-5 h-5 text-[#b22830]" />
-                  <h3 className="text-base font-black uppercase text-gray-800 tracking-wide">Sổ địa chỉ của bạn</h3>
+                  <h3 className="text-base font-black uppercase text-gray-800 tracking-wide">{ui("Sổ địa chỉ của bạn")}</h3>
                 </div>
-                
+
                 {savedAddresses.length === 0 ? (
                   <div className="text-center py-8">
                     <MapPinIcon className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                    <p className="text-sm font-semibold text-gray-500">Bạn chưa thêm địa chỉ nhận hàng nào.</p>
+                    <p className="text-sm font-semibold text-gray-500">{ui("Bạn chưa thêm địa chỉ nhận hàng nào.")}</p>
                   </div>
                 ) : (
                   <div className="space-y-3.5">
@@ -1132,8 +1118,8 @@ export default function ProfilePageContent({
                       <div
                         key={address.id}
                         className={`group rounded-2xl border p-4.5 transition-all duration-200 ${
-                          address.la_mac_dinh 
-                            ? 'border-[#b22830] bg-[#b22830]/[0.01] shadow-sm' 
+                          address.la_mac_dinh
+                            ? 'border-[#b22830] bg-[#b22830]/[0.01] shadow-sm'
                             : 'border-gray-100 bg-gray-50/40 hover:border-gray-200'
                         }`}
                       >
@@ -1144,17 +1130,15 @@ export default function ProfilePageContent({
                           </div>
                           {address.la_mac_dinh ? (
                             <span className="flex items-center gap-1 rounded-full bg-[#b22830] px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white shadow-sm">
-                              <CheckIcon className="w-2.5 h-2.5 text-white" strokeWidth={3} />
-                              Mặc định
-                            </span>
+                              <CheckIcon className="w-2.5 h-2.5 text-white" strokeWidth={3} />{ui("Mặc định")}</span>
                           ) : null}
                         </div>
-                        
+
                         <p className="mt-2 text-xs font-bold text-gray-600 leading-relaxed pl-6">{address.dia_chi_day_du}</p>
-                        
+
                         {address.ghi_chu ? (
                           <div className="mt-1.5 flex items-start gap-1 text-[11px] text-gray-400 font-semibold pl-6">
-                            <span className="text-[10px] text-gray-400 italic font-black uppercase shrink-0 mt-0.5">Ghi chú:</span>
+                            <span className="text-[10px] text-gray-400 italic font-black uppercase shrink-0 mt-0.5">{ui("Ghi chú:")}</span>
                             <span>{address.ghi_chu}</span>
                           </div>
                         ) : null}
@@ -1166,30 +1150,24 @@ export default function ProfilePageContent({
                               onClick={() => setDefaultAddressMutation.mutate(address.id)}
                               className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 hover:text-[#b22830] transition-all cursor-pointer shadow-sm"
                             >
-                              <CheckIcon className="w-3.5 h-3.5" strokeWidth={2.5} />
-                              Đặt mặc định
-                            </button>
+                              <CheckIcon className="w-3.5 h-3.5" strokeWidth={2.5} />{ui("Đặt mặc định")}</button>
                           ) : null}
                           <button
                             type="button"
                             onClick={() => handleEditAddress(address)}
                             className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-blue-600 hover:text-blue-700 transition-all cursor-pointer shadow-sm"
                           >
-                            <PencilSquareIcon className="w-3.5 h-3.5" />
-                            Sửa
-                          </button>
+                            <PencilSquareIcon className="w-3.5 h-3.5" />{ui("Sửa")}</button>
                           <button
                             type="button"
                             onClick={() => {
-                              if (confirm('Bạn có chắc muốn xóa địa chỉ này?')) {
+                              if (confirm(ui("Bạn có chắc muốn xóa địa chỉ này?"))) {
                                 deleteAddressMutation.mutate(address.id);
                               }
                             }}
                             className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-red-50 text-red-600 hover:text-red-700 transition-all ml-auto cursor-pointer shadow-sm"
                           >
-                            <TrashIcon className="w-3.5 h-3.5" />
-                            Xóa
-                          </button>
+                            <TrashIcon className="w-3.5 h-3.5" />{ui("Xóa")}</button>
                         </div>
                       </div>
                     ))}
@@ -1204,7 +1182,7 @@ export default function ProfilePageContent({
                     <div className="flex items-center gap-2">
                       <PencilSquareIcon className="w-5 h-5 text-[#b22830]" />
                       <h3 className="text-base font-black uppercase text-gray-800 tracking-wide">
-                        {editingAddressId ? 'Sửa địa chỉ' : 'Thêm địa chỉ'}
+                        {editingAddressId ? ui("Sửa địa chỉ") : ui("Thêm địa chỉ")}
                       </h3>
                     </div>
                     <button
@@ -1214,13 +1192,13 @@ export default function ProfilePageContent({
                       className="flex items-center gap-1.5 text-[11px] font-bold text-[#b22830] bg-[#fdf5f6] px-3 py-1.5 rounded-full hover:bg-[#fbdcde] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <MapPinIcon className="w-3.5 h-3.5" />
-                      {isLocating ? 'Đang định vị...' : 'Vị trí hiện tại'}
+                      {isLocating ? ui("Đang định vị...") : ui("Vị trí hiện tại")}
                     </button>
                   </div>
 
                   <form onSubmit={handleSaveAddress} className="space-y-4">
                     <div>
-                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Tên gợi nhớ địa chỉ</p>
+                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">{ui("Tên gợi nhớ địa chỉ")}</p>
                       <div className="grid gap-3 grid-cols-1">
                         <div className="relative z-30">
                           <SearchableSelect
@@ -1233,17 +1211,17 @@ export default function ProfilePageContent({
                                 setAddressForm(prev => ({ ...prev, tenDiaChi: val }));
                               }
                             }}
-                            placeholder="Chọn tên gợi nhớ..."
+                            placeholder={ui("Chọn tên gợi nhớ...")}
                             icon={BookmarkIcon}
                           />
                         </div>
-                        
+
                         {(!['Nhà riêng', 'Văn phòng', 'Công ty', 'Trường học', ''].includes(addressForm.tenDiaChi)) && (
                           <div className="relative">
                             <input
                               type="text"
                               required
-                              placeholder="Nhập tên khác..."
+                              placeholder={ui("Nhập tên khác...")}
                               value={addressForm.tenDiaChi === ' ' ? '' : addressForm.tenDiaChi}
                               onChange={(e) => setAddressForm((prev) => ({ ...prev, tenDiaChi: e.target.value || ' ' }))}
                               className="w-full rounded-xl border border-gray-200 pl-4 pr-4 py-3 text-sm font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-[#b22830]/10 transition-all duration-200 bg-white"
@@ -1255,7 +1233,7 @@ export default function ProfilePageContent({
 
                     <div className="grid gap-3 grid-cols-1">
                       <div>
-                        <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Tỉnh / Thành phố</p>
+                        <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">{ui("Tỉnh / Thành phố")}</p>
                         <div className="relative z-20">
                           <SearchableSelect
                             options={Object.keys(addressOptions)}
@@ -1270,7 +1248,7 @@ export default function ProfilePageContent({
                                 ward: defaultWard,
                               }));
                             }}
-                            placeholder="Chọn Tỉnh / Thành phố"
+                            placeholder={ui("Chọn Tỉnh / Thành phố")}
                             icon={MapPinIcon}
                           />
                         </div>
@@ -1278,13 +1256,13 @@ export default function ProfilePageContent({
 
                       <div className="grid gap-3 grid-cols-1">
                         <div>
-                          <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Phường / Xã</p>
+                          <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">{ui("Phường / Xã")}</p>
                           <div className="relative z-10">
                             <SearchableSelect
                               options={wardOptions}
                               value={addressForm.ward}
                               onChange={(newWard) => setAddressForm((prev) => ({ ...prev, ward: newWard }))}
-                              placeholder="Chọn Phường / Xã"
+                              placeholder={ui("Chọn Phường / Xã")}
                               icon={MapPinIcon}
                               disabled={!addressForm.city}
                             />
@@ -1294,12 +1272,12 @@ export default function ProfilePageContent({
                     </div>
 
                     <div>
-                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Số nhà, tên đường</p>
+                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">{ui("Số nhà, tên đường")}</p>
                       <div className="relative">
                         <input
                           type="text"
                           required
-                          placeholder="ví dụ: 123 Đường Nguyễn Trãi"
+                          placeholder={ui("ví dụ: 123 Đường Nguyễn Trãi")}
                           value={addressForm.street}
                           onChange={(e) => setAddressForm((prev) => ({ ...prev, street: e.target.value }))}
                           className="w-full rounded-xl border border-gray-200 pl-10 pr-4 py-3 text-sm font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-[#b22830]/10 transition-all duration-200 bg-white"
@@ -1309,11 +1287,11 @@ export default function ProfilePageContent({
                     </div>
 
                     <div>
-                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Ghi chú (hướng dẫn giao hàng)</p>
+                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">{ui("Ghi chú (hướng dẫn giao hàng)")}</p>
                       <div className="relative">
                         <textarea
                           rows={2}
-                          placeholder="ví dụ: Gần tòa nhà ABC, gọi trước khi đến..."
+                          placeholder={ui("ví dụ: Gần tòa nhà ABC, gọi trước khi đến...")}
                           value={addressForm.ghiChu}
                           onChange={(e) => setAddressForm((prev) => ({ ...prev, ghiChu: e.target.value }))}
                           className="w-full rounded-xl border border-gray-200 pl-10 pr-4 py-3 text-sm font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-[#b22830]/10 transition-all duration-200 bg-white"
@@ -1335,16 +1313,14 @@ export default function ProfilePageContent({
                         disabled={saveAddressMutation.isPending}
                         className="rounded-xl bg-[#b22830] hover:bg-[#8f1d24] px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-md shadow-red-950/10 hover:shadow-lg transition-all duration-200 disabled:bg-gray-300 cursor-pointer active:scale-95 transform"
                       >
-                        {saveAddressMutation.isPending ? 'Đang xử lý...' : editingAddressId ? 'Cập nhật' : 'Thêm địa chỉ'}
+                        {saveAddressMutation.isPending ? ui("Đang xử lý...") : editingAddressId ? ui("Cập nhật") : ui("Thêm địa chỉ")}
                       </button>
                       {editingAddressId ? (
                         <button
                           type="button"
                           onClick={resetAddressEditor}
                           className="rounded-xl border border-gray-200 hover:bg-gray-50 px-5 py-3 text-sm font-black uppercase tracking-wide text-gray-500 transition-colors cursor-pointer"
-                        >
-                          Hủy sửa
-                        </button>
+                        >{ui("Hủy sửa")}</button>
                       ) : null}
                     </div>
                   </form>
@@ -1358,16 +1334,16 @@ export default function ProfilePageContent({
                   <HeartSolidIcon className="w-5 h-5 text-[#b22830]" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black uppercase text-[#2b2b2b] tracking-tight">Đơn đặt hàng yêu thích của tôi</h3>
-                  <p className="text-xs font-semibold text-gray-500">Cùng danh sách món đã đặt từ 5 lần trở lên, không phân biệt số lượng và tùy chọn; không tính đơn huỷ hoặc thanh toán thất bại.</p>
+                  <h3 className="text-lg font-black uppercase text-[#2b2b2b] tracking-tight">{ui("Đơn đặt hàng yêu thích của tôi")}</h3>
+                  <p className="text-xs font-semibold text-gray-500">{ui("Cùng danh sách món đã đặt từ 5 lần trở lên, không phân biệt số lượng và tùy chọn; không tính đơn huỷ hoặc thanh toán thất bại.")}</p>
                 </div>
               </div>
 
               {favouriteMessage && <p role="status" className="mb-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">{favouriteMessage}</p>}
               {isAllOrdersError ? (
                 <div role="alert" className="text-center py-8 text-gray-600">
-                  <p>{allOrdersError?.response?.data?.message || allOrdersError?.message || 'Chưa tải được đơn yêu thích.'}</p>
-                  <button type="button" onClick={() => refetchFavouriteOrders()} className="mt-3 text-[#b22830] font-bold underline">Thử lại</button>
+                  <p>{allOrdersError?.response?.data?.message || allOrdersError?.message || ui("Chưa tải được đơn yêu thích.")}</p>
+                  <button type="button" onClick={() => refetchFavouriteOrders()} className="mt-3 text-[#b22830] font-bold underline">{ui("Thử lại")}</button>
                 </div>
               ) : isAllOrdersLoading ? (
                 <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div></div>
@@ -1376,19 +1352,17 @@ export default function ProfilePageContent({
                   <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
                     <ShoppingBagIcon className="w-8 h-8 text-gray-300" />
                   </div>
-                  <h4 className="text-gray-900 font-bold mb-2">Chưa có đơn hàng yêu thích nào</h4>
-                  <p className="text-sm text-gray-500 mb-2">Đã kiểm tra {allOrdersData?.length || 0} đơn trong lịch sử; chưa có danh sách món nào đạt 5 lần.</p>
-                  <p className="text-sm text-gray-500 max-w-sm mx-auto">Khi bạn đặt cùng một danh sách các món ăn từ 5 lần trở lên, đơn hàng đó sẽ tự động xuất hiện ở đây để bạn dễ dàng đặt lại!</p>
+                  <h4 className="text-gray-900 font-bold mb-2">{ui("Chưa có đơn hàng yêu thích nào")}</h4>
+                  <p className="text-sm text-gray-500 mb-2">{ui("Đã kiểm tra ")}{allOrdersData?.length || 0}{ui(" đơn trong lịch sử; chưa có danh sách món nào đạt 5 lần.")}</p>
+                  <p className="text-sm text-gray-500 max-w-sm mx-auto">{ui("Khi bạn đặt cùng một danh sách các món ăn từ 5 lần trở lên, đơn hàng đó sẽ tự động xuất hiện ở đây để bạn dễ dàng đặt lại!")}</p>
                   {closestFavourite && (
                     <div className="mt-4 mx-auto max-w-md rounded-xl border border-red-100 bg-white p-4 text-left">
-                      <p className="text-sm font-bold text-[#b22830]">Danh sách gần đạt yêu thích: {closestFavourite.count}/5 lần</p>
+                      <p className="text-sm font-bold text-[#b22830]">{ui("Danh sách gần đạt yêu thích: ")}{closestFavourite.count}{ui("/5 lần")}</p>
                       <p className="mt-1 text-sm text-gray-600">{[...new Set(closestFavourite.items.map(item => item.ten_san_pham))].join(', ')}</p>
-                      <p className="mt-2 text-xs text-gray-500">Còn {5 - closestFavourite.count} lần đặt cùng danh sách món để tự xuất hiện trong đơn yêu thích.</p>
+                      <p className="mt-2 text-xs text-gray-500">{ui("Còn ")}{5 - closestFavourite.count}{ui(" lần đặt cùng danh sách món để tự xuất hiện trong đơn yêu thích.")}</p>
                     </div>
                   )}
-                  <button onClick={() => window.location.href = '/order'} className="mt-6 px-6 py-2.5 bg-[#b22830] text-white rounded-full font-bold text-sm hover:bg-[#8a1f25] transition-colors shadow-md shadow-red-900/20">
-                    Bắt đầu đặt món ngay
-                  </button>
+                  <button onClick={() => window.location.href = '/order'} className="mt-6 px-6 py-2.5 bg-[#b22830] text-white rounded-full font-bold text-sm hover:bg-[#8a1f25] transition-colors shadow-md shadow-red-900/20">{ui("Bắt đầu đặt món ngay")}</button>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1397,11 +1371,10 @@ export default function ProfilePageContent({
                       <div>
                         <div className="flex justify-between items-start mb-3">
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 text-[#b22830] text-xs font-bold border border-red-100">
-                            <HeartSolidIcon className="w-3.5 h-3.5" /> Đã đặt {fav.count} lần
-                          </span>
-                          <span className="text-xs text-gray-400 font-medium">Lần cuối: {new Date(fav.lastOrderedAt).toLocaleDateString('vi-VN')}</span>
+                            <HeartSolidIcon className="w-3.5 h-3.5" />{ui(" Đã đặt ")}{fav.count}{ui(" lần")}</span>
+                          <span className="text-xs text-gray-400 font-medium">{ui("Lần cuối: ")}{new Date(fav.lastOrderedAt).toLocaleDateString(uiLocale())}</span>
                         </div>
-                        
+
                         <div className="space-y-2 mb-4">
                           {fav.items.map((item, i) => (
                             <div key={i} className="flex gap-3">
@@ -1420,18 +1393,18 @@ export default function ProfilePageContent({
                           ))}
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
                         <div>
-                          <p className="text-xs text-gray-500 mb-0.5 font-medium">Tiền món lần gần nhất</p>
-                          <p className="text-base font-black text-[#b22830]">{Number(fav.total).toLocaleString('vi-VN')}đ</p>
+                          <p className="text-xs text-gray-500 mb-0.5 font-medium">{ui("Tiền món lần gần nhất")}</p>
+                          <p className="text-base font-black text-[#b22830]">{Number(fav.total).toLocaleString(uiLocale())}{ui("đ")}</p>
                         </div>
                         <button
                           onClick={() => handleReorderFavourite(fav)}
                           disabled={favouriteReorderMutation.isPending}
                           className="px-4 py-2 bg-gray-900 text-white text-xs font-bold rounded-full hover:bg-gray-800 transition-colors shadow-sm active:scale-95"
                         >
-                          {favouriteReorderMutation.isPending && favouriteReorderMutation.variables?.orderId === fav.sampleOrderId ? 'Đang thêm vào giỏ...' : 'Đặt lại đơn này'}
+                          {favouriteReorderMutation.isPending && favouriteReorderMutation.variables?.orderId === fav.sampleOrderId ? ui("Đang thêm vào giỏ...") : ui("Đặt lại đơn này")}
                         </button>
                       </div>
                     </div>
@@ -1444,7 +1417,7 @@ export default function ProfilePageContent({
               <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4">
                 <div className="flex items-center gap-2">
                   <BookmarkIcon className="w-5 h-5 text-[#b22830]" />
-                  <h3 className="text-base font-black uppercase text-gray-800 tracking-wide">Ví điện tử</h3>
+                  <h3 className="text-base font-black uppercase text-gray-800 tracking-wide">{ui("Ví điện tử")}</h3>
                 </div>
               </div>
 
@@ -1459,10 +1432,9 @@ export default function ProfilePageContent({
                   <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#b22830] to-[#8f1d24] p-6 shadow-lg shadow-red-900/20">
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div>
-                        <p className="text-sm font-semibold text-white/80 uppercase tracking-widest mb-1">Số dư khả dụng</p>
+                        <p className="text-sm font-semibold text-white/80 uppercase tracking-widest mb-1">{ui("Số dư khả dụng")}</p>
                         <p className="text-3xl font-black text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                          {Number(walletData?.wallet?.balance || 0).toLocaleString('vi-VN')} đ
-                        </p>
+                          {Number(walletData?.wallet?.balance || 0).toLocaleString(uiLocale())}{ui(" đ")}</p>
                       </div>
                     </div>
                     {/* Background Pattern */}
@@ -1477,7 +1449,7 @@ export default function ProfilePageContent({
 
                   {/* Top-up Form */}
                   <div className="rounded-xl border border-gray-100 bg-gray-50 p-5">
-                    <h4 className="text-sm font-black uppercase tracking-wide text-gray-800 mb-3">Nạp tiền vào ví</h4>
+                    <h4 className="text-sm font-black uppercase tracking-wide text-gray-800 mb-3">{ui("Nạp tiền vào ví")}</h4>
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();
@@ -1485,7 +1457,7 @@ export default function ProfilePageContent({
                         if (amount >= 10000 && amount <= 5000000) {
                           topUpMutation.mutate(amount);
                         } else {
-                          alert('Số tiền nạp phải từ 10,000đ đến 5,000,000đ');
+                          alert(ui("Số tiền nạp phải từ 10,000đ đến 5,000,000đ"));
                         }
                       }}
                       className="flex flex-col md:flex-row gap-3"
@@ -1493,7 +1465,7 @@ export default function ProfilePageContent({
                       <div className="flex-1 relative">
                         <input
                           type="number"
-                          placeholder="Nhập số tiền cần nạp..."
+                          placeholder={ui("Nhập số tiền cần nạp...")}
                           value={topUpAmount}
                           onChange={(e) => setTopUpAmount(e.target.value)}
                           className="w-full rounded-xl border border-gray-200 pl-4 pr-10 py-3 text-sm font-bold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-[#b22830]/10 transition-all bg-white"
@@ -1502,14 +1474,14 @@ export default function ProfilePageContent({
                           step="1000"
                           required
                         />
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">đ</span>
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">{ui("đ")}</span>
                       </div>
                       <button
                         type="submit"
                         disabled={topUpMutation.isPending}
                         className="rounded-xl bg-[#b22830] hover:bg-[#8f1d24] px-6 py-3 text-sm font-black uppercase tracking-wide text-white shadow-md transition-all cursor-pointer whitespace-nowrap"
                       >
-                        {topUpMutation.isPending ? 'Đang xử lý...' : 'Nạp qua VNPAY'}
+                        {topUpMutation.isPending ? ui("Đang xử lý...") : ui("Nạp qua VNPAY")}
                       </button>
                     </form>
                     <div className="flex flex-wrap gap-2 mt-3">
@@ -1520,15 +1492,14 @@ export default function ProfilePageContent({
                           onClick={() => setTopUpAmount(amount.toString())}
                           className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-bold text-gray-600 hover:border-[#b22830] hover:text-[#b22830] transition-colors cursor-pointer"
                         >
-                          {amount.toLocaleString('vi-VN')} đ
-                        </button>
+                          {amount.toLocaleString(uiLocale())}{ui(" đ")}</button>
                       ))}
                     </div>
                   </div>
 
                   {/* Transactions History */}
                   <div>
-                    <h4 className="text-sm font-black uppercase tracking-wide text-gray-800 mb-4">Lịch sử giao dịch</h4>
+                    <h4 className="text-sm font-black uppercase tracking-wide text-gray-800 mb-4">{ui("Lịch sử giao dịch")}</h4>
                     <div className="space-y-3">
                       {walletData?.transactions?.length > 0 ? (
                         walletData.transactions.map((tx) => (
@@ -1543,27 +1514,26 @@ export default function ProfilePageContent({
                               </div>
                               <div>
                                 <p className="text-sm font-bold text-gray-800">
-                                  {tx.type === 'TOP_UP' ? 'Nạp tiền vào ví' : tx.type === 'REFUND' ? 'Hoàn tiền đơn hàng' : 'Thanh toán đơn hàng'}
+                                  {tx.type === 'TOP_UP' ? ui("Nạp tiền vào ví") : tx.type === 'REFUND' ? ui("Hoàn tiền đơn hàng") : ui("Thanh toán đơn hàng")}
                                 </p>
                                 <p className="text-xs font-medium text-gray-500 mt-0.5">
-                                  {new Date(tx.created_at).toLocaleString('vi-VN')}
+                                  {new Date(tx.created_at).toLocaleString(uiLocale())}
                                 </p>
                               </div>
                             </div>
                             <div className="text-right">
                               <p className={`text-sm font-black ${['TOP_UP', 'REFUND'].includes(tx.type) ? 'text-green-600' : 'text-gray-800'}`}>
-                                {['TOP_UP', 'REFUND'].includes(tx.type) ? '+' : '-'}{Number(tx.amount).toLocaleString('vi-VN')} đ
-                              </p>
+                                {['TOP_UP', 'REFUND'].includes(tx.type) ? '+' : '-'}{Number(tx.amount).toLocaleString(uiLocale())}{ui(" đ")}</p>
                               <span className={`inline-block mt-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
                                 tx.status === 'SUCCESS' ? 'bg-green-50 text-green-700' : tx.status === 'PENDING' ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'
                               }`}>
-                                {tx.status === 'SUCCESS' ? 'Thành công' : tx.status === 'PENDING' ? 'Đang chờ' : 'Thất bại'}
+                                {tx.status === 'SUCCESS' ? ui("Thành công") : tx.status === 'PENDING' ? ui("Đang chờ") : ui("Thất bại")}
                               </span>
                             </div>
                           </div>
                         ))
                       ) : (
-                        <p className="text-sm text-gray-500 text-center py-6">Chưa có giao dịch nào.</p>
+                        <p className="text-sm text-gray-500 text-center py-6">{ui("Chưa có giao dịch nào.")}</p>
                       )}
                     </div>
                   </div>
@@ -1577,11 +1547,10 @@ export default function ProfilePageContent({
               <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4">
                 <div className="flex items-center gap-2">
                   <StarOutlineIcon className="w-5 h-5 text-amber-500" />
-                  <h3 className="text-base font-black uppercase text-gray-800 tracking-wide">Lịch sử đánh giá</h3>
+                  <h3 className="text-base font-black uppercase text-gray-800 tracking-wide">{ui("Lịch sử đánh giá")}</h3>
                 </div>
                 <div className="rounded-xl bg-red-50 border border-red-100/30 px-3.5 py-1.5 text-xs font-black uppercase tracking-wide text-[#b22830] shadow-sm">
-                  {myReviews.length} đánh giá
-                </div>
+                  {myReviews.length}{ui(" đánh giá")}</div>
               </div>
 
               {isReviewsLoading ? (
@@ -1592,15 +1561,15 @@ export default function ProfilePageContent({
                 </div>
               ) : isReviewsError ? (
                 <div className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-700">
-                  {reviewsError?.response?.data?.message || 'Không thể tải lịch sử đánh giá.'}
+                  {reviewsError?.response?.data?.message || ui("Không thể tải lịch sử đánh giá.")}
                 </div>
               ) : myReviews.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 p-8 text-center">
                   <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
                     <StarOutlineIcon className="w-6 h-6 text-gray-400" />
                   </div>
-                  <p className="text-sm font-black uppercase tracking-wide text-gray-600">Bạn chưa có đánh giá nào</p>
-                  <p className="mt-2 text-xs font-semibold text-gray-400 max-w-xs mx-auto">Hãy đánh giá sản phẩm từ lịch sử đơn hàng để theo dõi tại đây.</p>
+                  <p className="text-sm font-black uppercase tracking-wide text-gray-600">{ui("Bạn chưa có đánh giá nào")}</p>
+                  <p className="mt-2 text-xs font-semibold text-gray-400 max-w-xs mx-auto">{ui("Hãy đánh giá sản phẩm từ lịch sử đơn hàng để theo dõi tại đây.")}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -1609,14 +1578,14 @@ export default function ProfilePageContent({
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3 mb-3">
                         <div className="flex items-center gap-2">
                           <ShoppingBagIcon className="w-4 h-4 text-gray-400" />
-                          <p className="text-xs font-black uppercase tracking-wider text-gray-700">Sản phẩm #{review.ma_san_pham}</p>
+                          <p className="text-xs font-black uppercase tracking-wider text-gray-700">{ui("Sản phẩm #")}{review.ma_san_pham}</p>
                         </div>
                         <div className="flex items-center gap-1.5 text-xs text-gray-400 font-semibold">
                           <ClockIcon className="w-3.5 h-3.5" />
-                          <span>{new Date(review.ngay_cap_nhat || review.ngay_tao).toLocaleString('vi-VN')}</span>
+                          <span>{new Date(review.ngay_cap_nhat || review.ngay_tao).toLocaleString(uiLocale())}</span>
                         </div>
                       </div>
-                      
+
                       <div className="flex gap-0.5 mb-2.5">
                         {Array.from({ length: 5 }).map((_, i) => {
                           const isFilled = i < Number(review.so_sao || 0);
@@ -1627,9 +1596,9 @@ export default function ProfilePageContent({
                           );
                         })}
                       </div>
-                      
+
                       <p className="text-sm font-semibold text-gray-600 bg-gray-50/50 border border-gray-200/40 rounded-2xl p-4 shadow-inner">
-                        {review.binh_luan || 'Không có bình luận.'}
+                        {review.binh_luan || ui("Không có bình luận.")}
                       </p>
                     </div>
                   ))}
@@ -1650,21 +1619,20 @@ export default function ProfilePageContent({
                       <ShieldCheckIcon className="w-5 h-5 text-[#b22830]" />
                     </div>
                     <div>
-                      <h3 className="text-base font-black uppercase text-gray-900 tracking-wide font-sans">Đổi mật khẩu tài khoản</h3>
-                      <p className="text-xs font-semibold text-gray-500 mt-0.5">Đặt mật khẩu mạnh để bảo vệ thông tin tài khoản của bạn</p>
+                      <h3 className="text-base font-black uppercase text-gray-900 tracking-wide font-sans">{ui("Đổi mật khẩu tài khoản")}</h3>
+                      <p className="text-xs font-semibold text-gray-500 mt-0.5">{ui("Đặt mật khẩu mạnh để bảo vệ thông tin tài khoản của bạn")}</p>
                     </div>
                   </div>
-                  
+
                   {/* Current Password */}
                   <div>
-                    <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-gray-700">
-                      Mật khẩu hiện tại <span className="text-[#b22830]">*</span>
+                    <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-gray-700">{ui("Mật khẩu hiện tại ")}<span className="text-[#b22830]">*</span>
                     </label>
                     <div className="relative">
                       <input
                         type={showCurrentPassword ? "text" : "password"}
                         required
-                        placeholder="Nhập mật khẩu hiện tại của bạn"
+                        placeholder={ui("Nhập mật khẩu hiện tại của bạn")}
                         value={passwordForm.currentPassword}
                         onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
                         className="w-full rounded-xl border border-gray-200/90 pl-10 pr-11 py-3 text-xs font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-red-100 transition-all duration-200 bg-white text-gray-800"
@@ -1674,7 +1642,7 @@ export default function ProfilePageContent({
                         type="button"
                         onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                         className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer p-0.5"
-                        title={showCurrentPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                        title={showCurrentPassword ? ui("Ẩn mật khẩu") : ui("Hiện mật khẩu")}
                       >
                         {showCurrentPassword ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
                       </button>
@@ -1683,14 +1651,13 @@ export default function ProfilePageContent({
 
                   {/* New Password */}
                   <div>
-                    <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-gray-700">
-                      Mật khẩu mới <span className="text-[#b22830]">*</span>
+                    <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-gray-700">{ui("Mật khẩu mới ")}<span className="text-[#b22830]">*</span>
                     </label>
                     <div className="relative">
                       <input
                         type={showNewPassword ? "text" : "password"}
                         required
-                        placeholder="Mật khẩu mới (tối thiểu 6 ký tự)"
+                        placeholder={ui("Mật khẩu mới (tối thiểu 6 ký tự)")}
                         value={passwordForm.newPassword}
                         onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
                         className="w-full rounded-xl border border-gray-200/90 pl-10 pr-11 py-3 text-xs font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-red-100 transition-all duration-200 bg-white text-gray-800"
@@ -1700,7 +1667,7 @@ export default function ProfilePageContent({
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
                         className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer p-0.5"
-                        title={showNewPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                        title={showNewPassword ? ui("Ẩn mật khẩu") : ui("Hiện mật khẩu")}
                       >
                         {showNewPassword ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
                       </button>
@@ -1710,23 +1677,23 @@ export default function ProfilePageContent({
                     {passwordForm.newPassword && (
                       <div className="mt-2 space-y-1">
                         <div className="flex items-center justify-between text-[11px]">
-                          <span className="text-gray-500 font-semibold">Độ mạnh mật khẩu:</span>
+                          <span className="text-gray-500 font-semibold">{ui("Độ mạnh mật khẩu:")}</span>
                           <span className={`font-bold ${
-                            passwordForm.newPassword.length < 6 
-                              ? 'text-rose-600' 
+                            passwordForm.newPassword.length < 6
+                              ? 'text-rose-600'
                               : passwordForm.newPassword.length < 8 || !/[0-9]/.test(passwordForm.newPassword)
-                              ? 'text-amber-600' 
+                              ? 'text-amber-600'
                               : 'text-emerald-600'
                           }`}>
-                            {passwordForm.newPassword.length < 6 ? 'Yếu' : passwordForm.newPassword.length < 8 || !/[0-9]/.test(passwordForm.newPassword) ? 'Trung bình' : 'Mạnh'}
+                            {passwordForm.newPassword.length < 6 ? ui("Yếu") : passwordForm.newPassword.length < 8 || !/[0-9]/.test(passwordForm.newPassword) ? ui("Trung bình") : ui("Mạnh")}
                           </span>
                         </div>
                         <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
                           <div className={`h-full transition-all duration-300 rounded-full ${
-                            passwordForm.newPassword.length < 6 
-                              ? 'w-1/3 bg-rose-500' 
+                            passwordForm.newPassword.length < 6
+                              ? 'w-1/3 bg-rose-500'
                               : passwordForm.newPassword.length < 8 || !/[0-9]/.test(passwordForm.newPassword)
-                              ? 'w-2/3 bg-amber-500' 
+                              ? 'w-2/3 bg-amber-500'
                               : 'w-full bg-emerald-500'
                           }`}></div>
                         </div>
@@ -1736,14 +1703,13 @@ export default function ProfilePageContent({
 
                   {/* Confirm Password */}
                   <div>
-                    <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-gray-700">
-                      Xác nhận mật khẩu mới <span className="text-[#b22830]">*</span>
+                    <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-gray-700">{ui("Xác nhận mật khẩu mới ")}<span className="text-[#b22830]">*</span>
                     </label>
                     <div className="relative">
                       <input
                         type={showConfirmPassword ? "text" : "password"}
                         required
-                        placeholder="Xác nhận lại mật khẩu mới"
+                        placeholder={ui("Xác nhận lại mật khẩu mới")}
                         value={passwordForm.confirmPassword}
                         onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
                         className="w-full rounded-xl border border-gray-200/90 pl-10 pr-11 py-3 text-xs font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-red-100 transition-all duration-200 bg-white text-gray-800"
@@ -1753,7 +1719,7 @@ export default function ProfilePageContent({
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer p-0.5"
-                        title={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                        title={showConfirmPassword ? ui("Ẩn mật khẩu") : ui("Hiện mật khẩu")}
                       >
                         {showConfirmPassword ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
                       </button>
@@ -1768,7 +1734,7 @@ export default function ProfilePageContent({
                       ) : (
                         <XCircleIcon className="w-4 h-4 text-gray-400 shrink-0" />
                       )}
-                      <span className={passwordForm.newPassword.length >= 6 ? 'text-emerald-700 font-semibold' : 'text-gray-500'}>Mật khẩu dài ít nhất 6 ký tự</span>
+                      <span className={passwordForm.newPassword.length >= 6 ? 'text-emerald-700 font-semibold' : 'text-gray-500'}>{ui("Mật khẩu dài ít nhất 6 ký tự")}</span>
                     </div>
 
                     <div className="flex items-center gap-1.5">
@@ -1777,7 +1743,7 @@ export default function ProfilePageContent({
                       ) : (
                         <XCircleIcon className="w-4 h-4 text-gray-400 shrink-0" />
                       )}
-                      <span className={passwordForm.confirmPassword && passwordForm.newPassword === passwordForm.confirmPassword ? 'text-emerald-700 font-semibold' : 'text-gray-500'}>Mật khẩu xác nhận trùng khớp</span>
+                      <span className={passwordForm.confirmPassword && passwordForm.newPassword === passwordForm.confirmPassword ? 'text-emerald-700 font-semibold' : 'text-gray-500'}>{ui("Mật khẩu xác nhận trùng khớp")}</span>
                     </div>
                   </div>
 
@@ -1795,7 +1761,7 @@ export default function ProfilePageContent({
                       className="w-full sm:w-auto rounded-xl bg-[#b22830] hover:bg-[#8f1d24] px-7 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-xs hover:shadow-md transition-all duration-200 disabled:bg-gray-300 cursor-pointer active:scale-95 flex items-center justify-center gap-2"
                     >
                       <ShieldCheckIcon className="w-4 h-4" />
-                      {changePasswordMutation.isPending ? 'Đang xử lý...' : 'Cập nhật mật khẩu'}
+                      {changePasswordMutation.isPending ? ui("Đang xử lý...") : ui("Cập nhật mật khẩu")}
                     </button>
                   </div>
                 </form>
@@ -1808,25 +1774,25 @@ export default function ProfilePageContent({
                     <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-200/60 shrink-0">
                       <LockClosedIcon className="w-4 h-4 text-amber-600" />
                     </div>
-                    <h3 className="text-sm font-extrabold uppercase text-gray-900 tracking-wide font-sans">Khuyên dùng bảo mật</h3>
+                    <h3 className="text-sm font-extrabold uppercase text-gray-900 tracking-wide font-sans">{ui("Khuyên dùng bảo mật")}</h3>
                   </div>
 
                   <ul className="space-y-3.5 text-xs text-gray-600 font-medium">
                     <li className="flex items-start gap-2.5">
                       <span className="w-5 h-5 rounded-full bg-red-50 text-[#b22830] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">1</span>
-                      <span>Mật khẩu nên chứa cả <strong>chữ cái, chữ số & ký tự đặc biệt</strong> (!@#$) để đạt độ bảo mật tối đa.</span>
+                      <span>{ui("Mật khẩu nên chứa cả ")}<strong>{ui("chữ cái, chữ số & ký tự đặc biệt")}</strong>{ui(" (!@#$) để đạt độ bảo mật tối đa.")}</span>
                     </li>
                     <li className="flex items-start gap-2.5">
                       <span className="w-5 h-5 rounded-full bg-red-50 text-[#b22830] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">2</span>
-                      <span>Không sử dụng lại mật khẩu giống với các tài khoản mạng xã hội hoặc email cá nhân khác.</span>
+                      <span>{ui("Không sử dụng lại mật khẩu giống với các tài khoản mạng xã hội hoặc email cá nhân khác.")}</span>
                     </li>
                     <li className="flex items-start gap-2.5">
                       <span className="w-5 h-5 rounded-full bg-red-50 text-[#b22830] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">3</span>
-                      <span>Thay đổi mật khẩu định kỳ <strong>3 - 6 tháng/lần</strong> để giữ an toàn cho ví quà tặng và điểm thưởng.</span>
+                      <span>{ui("Thay đổi mật khẩu định kỳ ")}<strong>{ui("3 - 6 tháng/lần")}</strong>{ui(" để giữ an toàn cho ví quà tặng và điểm thưởng.")}</span>
                     </li>
                     <li className="flex items-start gap-2.5">
                       <span className="w-5 h-5 rounded-full bg-red-50 text-[#b22830] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">4</span>
-                      <span>Không chia sẻ mã OTP hoặc mật khẩu đăng nhập cho bất kỳ ai, kể cả nhân viên hỗ trợ.</span>
+                      <span>{ui("Không chia sẻ mã OTP hoặc mật khẩu đăng nhập cho bất kỳ ai, kể cả nhân viên hỗ trợ.")}</span>
                     </li>
                   </ul>
                 </div>
@@ -1837,8 +1803,8 @@ export default function ProfilePageContent({
                     <CheckCircleIcon className="w-6 h-6 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-xs font-black uppercase text-emerald-900">Tài khoản được bảo vệ</p>
-                    <p className="text-[11px] font-semibold text-emerald-700 mt-0.5">Chưa phát hiện hoạt động đăng nhập bất thường nào</p>
+                    <p className="text-xs font-black uppercase text-emerald-900">{ui("Tài khoản được bảo vệ")}</p>
+                    <p className="text-[11px] font-semibold text-emerald-700 mt-0.5">{ui("Chưa phát hiện hoạt động đăng nhập bất thường nào")}</p>
                   </div>
                 </div>
               </div>

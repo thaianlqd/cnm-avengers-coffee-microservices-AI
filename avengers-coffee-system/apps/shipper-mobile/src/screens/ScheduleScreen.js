@@ -1,9 +1,12 @@
+import { Header, Skeleton, EmptyState } from '../components/Experience'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { LazyScrollView, LazySection } from '../components/LazyScrollView'
 import React, { useState } from 'react'
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
+
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
@@ -68,7 +71,7 @@ export function ScheduleScreen({ navigation }) {
   const [selectedDate, setSelectedDate] = useState(new Date())
   const weekDates = getWeekDates(weekOffset)
 
-  const { data: schedules = [], isLoading } = useQuery({
+  const { data: schedules = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['shipper-schedule', shipper?.id],
     queryFn: () => apiClient.get(`/shippers/${shipper.id}/schedule`),
     enabled: !!shipper?.id,
@@ -79,7 +82,7 @@ export function ScheduleScreen({ navigation }) {
     mutationFn: (scheduleId) =>
       apiClient.post(`/shippers/${shipper.id}/schedule/${scheduleId}/checkin`),
     onSuccess: () => {
-      queryClient.invalidateQueries(['shipper-schedule', shipper?.id])
+      queryClient.invalidateQueries({ queryKey: ['shipper-schedule', shipper?.id] })
       Alert.alert('✅ Check-in thành công!', 'Bắt đầu ca làm việc.')
     },
     onError: (err) => Alert.alert('Lỗi', err?.response?.data?.message || 'Không thể check-in'),
@@ -89,7 +92,7 @@ export function ScheduleScreen({ navigation }) {
     mutationFn: (scheduleId) =>
       apiClient.post(`/shippers/${shipper.id}/schedule/${scheduleId}/checkout`),
     onSuccess: () => {
-      queryClient.invalidateQueries(['shipper-schedule', shipper?.id])
+      queryClient.invalidateQueries({ queryKey: ['shipper-schedule', shipper?.id] })
       Alert.alert('✅ Check-out thành công!', 'Kết thúc ca làm việc.')
     },
     onError: (err) => Alert.alert('Lỗi', err?.response?.data?.message || 'Không thể check-out'),
@@ -117,7 +120,7 @@ export function ScheduleScreen({ navigation }) {
               onPress={() => setSelectedDate(date)}
             >
               <Text style={[styles.dayLabel, isSelected && styles.dayLabelSelected]}>{DAYS_OF_WEEK[date.getDay()]}</Text>
-              <Text style={[styles.dateNum, isSelected && styles.dateNumSelected, isToday && styles.dateNumToday]}>
+              <Text style={[styles.dateNum, isToday && styles.dateNumToday, isSelected && styles.dateNumSelected]}>
                 {date.getDate()}
               </Text>
               {hasSchedule && <View style={[styles.dot, isSelected && styles.dotSelected]} />}
@@ -203,8 +206,10 @@ export function ScheduleScreen({ navigation }) {
     )
   }
 
+  if (isError) return <SafeAreaView edges={['top','left','right']} style={styles.safeArea}><Header title="Chưa tải được dữ liệu" onBack={() => navigation.goBack()} /><EmptyState title="Kết nối chưa sẵn sàng" description="Kiểm tra mạng rồi thử tải lại." retry={refetch} /></SafeAreaView>
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['top','left','right']} style={styles.safeArea}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -218,9 +223,9 @@ export function ScheduleScreen({ navigation }) {
 
       {renderWeekStrip()}
 
-      <ScrollView contentContainerStyle={styles.body}>
+      <LazyScrollView contentContainerStyle={styles.body}>
         {isLoading ? (
-          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 80 }} />
+          <Skeleton />
         ) : selectedDaySchedules.length === 0 ? (
           <View style={styles.empty}>
             <Ionicons name="calendar-outline" size={64} color={colors.muted} />
@@ -230,7 +235,7 @@ export function ScheduleScreen({ navigation }) {
         ) : (
           selectedDaySchedules.map(renderScheduleCard)
         )}
-      </ScrollView>
+      </LazyScrollView>
     </SafeAreaView>
   )
 }
@@ -256,14 +261,15 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     ...shadows.xs,
   },
-  weekArrow: { padding: spacing.sm },
+  weekArrow: { padding: 4, minHeight: 44, justifyContent: 'center' },
   weekDays: { flex: 1, flexDirection: 'row', justifyContent: 'space-around' },
   dayCell: {
     alignItems: 'center',
-    paddingHorizontal: 6,
+    paddingHorizontal: 2,
     paddingVertical: 6,
     borderRadius: radius.md,
-    minWidth: 36,
+    minWidth: 0,
+    flex: 1,
   },
   dayCellSelected: { backgroundColor: colors.primary },
   dayLabel: { ...typography.caption, color: colors.muted, marginBottom: 4 },

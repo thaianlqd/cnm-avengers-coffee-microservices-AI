@@ -1,3 +1,4 @@
+import { uiText as ui, useUiLanguage, uiLocale } from "../../lib/uiText";
 import React, { useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { GoogleOAuthProvider, GoogleLogin, useGoogleLogin } from '@react-oauth/google';
@@ -9,6 +10,7 @@ import { navigateTab } from '../../lib/navigate';
 // Sub-header giống bên order.highlandscoffee.com.vn
 // ============================================================
 function OrderSubHeader() {
+  useUiLanguage();
   return (
     <div className="bg-[#b22830] w-full">
       <div className="mx-auto max-w-[1380px] px-4 md:px-6">
@@ -20,9 +22,7 @@ function OrderSubHeader() {
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-            Danh mục sản phẩm
-          </button>
+            </svg>{ui("Danh mục sản phẩm")}</button>
           <span className="text-white/30">|</span>
           <button
             type="button"
@@ -31,9 +31,7 @@ function OrderSubHeader() {
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Chính sách đổi trả
-          </button>
+            </svg>{ui("Chính sách đổi trả")}</button>
           <button
             type="button"
             onClick={() => navigateTab('lien-he')}
@@ -42,9 +40,7 @@ function OrderSubHeader() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            Liên hệ
-          </button>
+            </svg>{ui("Liên hệ")}</button>
           <a
             href="https://bankrista.highlandscoffee.com.vn/"
             target="_blank"
@@ -53,9 +49,7 @@ function OrderSubHeader() {
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Bankrista Thịnh Vượng
-          </a>
+            </svg>{ui("Bankrista Thịnh Vượng")}</a>
         </div>
       </div>
     </div>
@@ -66,48 +60,45 @@ function OrderSubHeader() {
 // Footer dạng order page (xám)
 // ============================================================
 function OrderFooter() {
+  useUiLanguage();
   return (
     <footer className="bg-[#f5f5f5] border-t border-gray-200 py-10 mt-auto">
       <div className="mx-auto max-w-[1380px] px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <img src="/hc-assets/logo.png" alt="Highlands Coffee" className="h-12 object-contain mb-4" />
-            <p className="text-[12px] text-gray-500 leading-relaxed">
-              CÔNG TY CỔ PHẦN DỊCH VỤ CÀ PHÊ CAO NGUYÊN
-            </p>
+            <p className="text-[12px] text-gray-500 leading-relaxed">{ui("CÔNG TY CỔ PHẦN DỊCH VỤ CÀ PHÊ CAO NGUYÊN")}</p>
             <p className="text-[12px] text-gray-500 mt-1">MST: 0309965814</p>
           </div>
 
           <div>
-            <h4 className="text-[13px] font-bold text-gray-700 uppercase mb-3">Chính sách</h4>
+            <h4 className="text-[13px] font-bold text-gray-700 uppercase mb-3">{ui("Chính sách")}</h4>
             <ul className="space-y-2">
-              <li><button type="button" onClick={() => navigateTab('chinh-sach-dat-hang')} className="text-[13px] text-gray-500 hover:text-[#b22830] bg-transparent border-0 cursor-pointer p-0">Chính sách đặt hàng</button></li>
-              <li><button type="button" onClick={() => navigateTab('chinh-sach-dat-hang')} className="text-[13px] text-gray-500 hover:text-[#b22830] bg-transparent border-0 cursor-pointer p-0">Chính sách bảo mật</button></li>
-              <li><button type="button" onClick={() => navigateTab('chinh-sach-dat-hang')} className="text-[13px] text-gray-500 hover:text-[#b22830] bg-transparent border-0 cursor-pointer p-0">Chính sách đổi trả</button></li>
+              <li><button type="button" onClick={() => navigateTab('chinh-sach-dat-hang')} className="text-[13px] text-gray-500 hover:text-[#b22830] bg-transparent border-0 cursor-pointer p-0">{ui("Chính sách đặt hàng")}</button></li>
+              <li><button type="button" onClick={() => navigateTab('chinh-sach-dat-hang')} className="text-[13px] text-gray-500 hover:text-[#b22830] bg-transparent border-0 cursor-pointer p-0">{ui("Chính sách bảo mật")}</button></li>
+              <li><button type="button" onClick={() => navigateTab('chinh-sach-dat-hang')} className="text-[13px] text-gray-500 hover:text-[#b22830] bg-transparent border-0 cursor-pointer p-0">{ui("Chính sách đổi trả")}</button></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-[13px] font-bold text-gray-700 uppercase mb-3">Hỗ trợ</h4>
+            <h4 className="text-[13px] font-bold text-gray-700 uppercase mb-3">{ui("Hỗ trợ")}</h4>
             <ul className="space-y-2">
-              <li><button type="button" onClick={() => navigateTab('home')} className="text-[13px] text-gray-500 hover:text-[#b22830] bg-transparent border-0 cursor-pointer p-0">Tìm kiếm</button></li>
-              <li><button type="button" onClick={() => navigateTab('login')} className="text-[13px] text-gray-500 hover:text-[#b22830] bg-transparent border-0 cursor-pointer p-0">Đăng nhập</button></li>
-              <li><button type="button" onClick={() => navigateTab('lien-he')} className="text-[13px] text-gray-500 hover:text-[#b22830] bg-transparent border-0 cursor-pointer p-0">Liên hệ</button></li>
+              <li><button type="button" onClick={() => navigateTab('home')} className="text-[13px] text-gray-500 hover:text-[#b22830] bg-transparent border-0 cursor-pointer p-0">{ui("Tìm kiếm")}</button></li>
+              <li><button type="button" onClick={() => navigateTab('login')} className="text-[13px] text-gray-500 hover:text-[#b22830] bg-transparent border-0 cursor-pointer p-0">{ui("Đăng nhập")}</button></li>
+              <li><button type="button" onClick={() => navigateTab('lien-he')} className="text-[13px] text-gray-500 hover:text-[#b22830] bg-transparent border-0 cursor-pointer p-0">{ui("Liên hệ")}</button></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-[13px] font-bold text-gray-700 uppercase mb-3">Đăng ký nhận tin</h4>
-            <p className="text-[12px] text-gray-500 mb-3">Nhận ưu đãi & tin tức mới nhất từ Highlands Coffee</p>
+            <h4 className="text-[13px] font-bold text-gray-700 uppercase mb-3">{ui("Đăng ký nhận tin")}</h4>
+            <p className="text-[12px] text-gray-500 mb-3">{ui("Nhận ưu đãi & tin tức mới nhất từ Highlands Coffee")}</p>
             <div className="flex gap-2">
               <input
                 type="email"
-                placeholder="Nhập địa chỉ em"
+                placeholder={ui("Nhập địa chỉ em")}
                 className="flex-1 border border-gray-300 px-3 py-2 text-[13px] rounded-none outline-none focus:border-[#b22830]"
               />
-              <button className="bg-[#b22830] text-white px-4 py-2 text-[13px] font-semibold hover:bg-[#8a1e24] transition-colors">
-                Đăng ký
-              </button>
+              <button className="bg-[#b22830] text-white px-4 py-2 text-[13px] font-semibold hover:bg-[#8a1e24] transition-colors">{ui("Đăng ký")}</button>
             </div>
           </div>
         </div>
@@ -128,6 +119,7 @@ function LoginPageInner({
   canUseFacebook,
   canUseRecaptcha,
 }) {
+  useUiLanguage();
   const recaptchaRef = useRef(null);
   const [isLoginView, setIsLoginView] = useState(true);
   const [showGooglePanel, setShowGooglePanel] = useState(false);
@@ -224,7 +216,7 @@ function LoginPageInner({
               return;
             }
 
-            alert('Đăng ký thành công! Mời bạn đăng nhập.');
+            alert(ui("Đăng ký thành công! Mời bạn đăng nhập."));
             setIsLoginView(true);
             setFormData({ email: '', password: '', hoTen: '', soDienThoai: '' });
             resetSocialState();
@@ -443,26 +435,26 @@ function LoginPageInner({
     <div className="flex flex-col w-full bg-white">
       <div className="bg-[#f5f5f5] py-2 px-4 text-[13px] text-gray-500 w-full">
         <div className="mx-auto max-w-[1380px] px-4 md:px-6">
-          <a href="/" className="hover:text-[#b22830]">Trang chủ</a>
+          <a href="/" className="hover:text-[#b22830]">{ui("Trang chủ")}</a>
           <span className="mx-1">/</span>
           <span className="text-gray-900">
-            {showForgotView ? 'Khôi phục mật khẩu' : isLoginView ? 'Đăng nhập tài khoản' : 'Đăng ký tài khoản'}
+            {showForgotView ? ui("Khôi phục mật khẩu") : isLoginView ? ui("Đăng nhập tài khoản") : ui("Đăng ký tài khoản")}
           </span>
         </div>
       </div>
 
       <div className="flex-1 mx-auto w-full max-w-[520px] px-4 md:px-6 py-10">
         <h1 className="text-center text-[22px] font-medium uppercase text-[#333] mb-1">
-          {showForgotView ? 'KHÔI PHỤC MẬT KHẨU' : isLoginView ? 'ĐĂNG NHẬP TÀI KHOẢN' : 'ĐĂNG KÝ TÀI KHOẢN'}
+          {showForgotView ? ui("KHÔI PHỤC MẬT KHẨU") : isLoginView ? ui("ĐĂNG NHẬP TÀI KHOẢN") : ui("ĐĂNG KÝ TÀI KHOẢN")}
         </h1>
 
         <div className="text-center text-[13px] text-gray-600 mb-8">
           {showForgotView ? (
-            <span>Quay lại <button onClick={() => { setShowForgotView(false); setForgotStep('REQUEST'); setForgotInfo(''); setError(''); }} className="text-[#337ab7] hover:underline font-bold">đăng nhập</button></span>
+            <span>{ui("Quay lại ")}<button onClick={() => { setShowForgotView(false); setForgotStep('REQUEST'); setForgotInfo(''); setError(''); }} className="text-[#337ab7] hover:underline font-bold">{ui("đăng nhập")}</button></span>
           ) : isLoginView ? (
-            <span>Bạn chưa có tài khoản ? <button onClick={() => { setIsLoginView(false); setError(''); resetSocialState(); }} className="text-[#333] font-bold border-b border-[#333]">Đăng ký tại đây</button></span>
+            <span>{ui("Bạn chưa có tài khoản ? ")}<button onClick={() => { setIsLoginView(false); setError(''); resetSocialState(); }} className="text-[#333] font-bold border-b border-[#333]">{ui("Đăng ký tại đây")}</button></span>
           ) : (
-            <span>Đã có tài khoản? <button onClick={() => { setIsLoginView(true); setError(''); resetSocialState(); }} className="text-[#333] font-bold border-b border-[#333]">Đăng nhập tại đây</button></span>
+            <span>{ui("Đã có tài khoản? ")}<button onClick={() => { setIsLoginView(true); setError(''); resetSocialState(); }} className="text-[#333] font-bold border-b border-[#333]">{ui("Đăng nhập tại đây")}</button></span>
           )}
         </div>
 
@@ -470,10 +462,10 @@ function LoginPageInner({
           /* ======== QUÊN MẬT KHẨU ======== */
           <form onSubmit={forgotStep === 'REQUEST' ? handleForgotRequest : handleForgotReset} className="max-w-[450px] mx-auto">
             <div className="mb-4">
-              <label className="block text-[13px] font-bold text-[#333] mb-1">Email <span className="text-red-500">*</span></label>
+              <label className="block text-[13px] font-bold text-[#333] mb-1">{ui("Email ")}<span className="text-red-500">*</span></label>
               <input
                 type="text"
-                placeholder="Email hoặc tên đăng nhập"
+                placeholder={ui("Email hoặc tên đăng nhập")}
                 required
                 value={forgotForm.email}
                 className="w-full border border-gray-200 rounded-[3px] px-4 py-2 text-[13px] outline-none focus:border-[#a5a5a5]"
@@ -484,10 +476,10 @@ function LoginPageInner({
             {forgotStep === 'RESET' && (
               <>
                 <div className="mb-4">
-                  <label className="block text-[13px] font-bold text-[#333] mb-1">Mã OTP <span className="text-red-500">*</span></label>
+                  <label className="block text-[13px] font-bold text-[#333] mb-1">{ui("Mã OTP ")}<span className="text-red-500">*</span></label>
                   <input
                     type="text"
-                    placeholder="Mã OTP (6 số)"
+                    placeholder={ui("Mã OTP (6 số)")}
                     required
                     value={forgotForm.otp}
                     maxLength={6}
@@ -496,10 +488,10 @@ function LoginPageInner({
                   />
                 </div>
                 <div className="mb-4">
-                  <label className="block text-[13px] font-bold text-[#333] mb-1">Mật khẩu mới <span className="text-red-500">*</span></label>
+                  <label className="block text-[13px] font-bold text-[#333] mb-1">{ui("Mật khẩu mới ")}<span className="text-red-500">*</span></label>
                   <input
                     type="password"
-                    placeholder="Mật khẩu mới"
+                    placeholder={ui("Mật khẩu mới")}
                     required
                     value={forgotForm.newPassword}
                     className="w-full border border-gray-200 rounded-[3px] px-4 py-2 text-[13px] outline-none focus:border-[#a5a5a5]"
@@ -507,10 +499,10 @@ function LoginPageInner({
                   />
                 </div>
                 <div className="mb-4">
-                  <label className="block text-[13px] font-bold text-[#333] mb-1">Nhập lại mật khẩu mới <span className="text-red-500">*</span></label>
+                  <label className="block text-[13px] font-bold text-[#333] mb-1">{ui("Nhập lại mật khẩu mới ")}<span className="text-red-500">*</span></label>
                   <input
                     type="password"
-                    placeholder="Nhập lại mật khẩu mới"
+                    placeholder={ui("Nhập lại mật khẩu mới")}
                     required
                     value={forgotForm.confirmPassword}
                     className="w-full border border-gray-200 rounded-[3px] px-4 py-2 text-[13px] outline-none focus:border-[#a5a5a5]"
@@ -521,17 +513,17 @@ function LoginPageInner({
             )}
 
             {forgotInfo && <p className="text-center text-xs font-bold text-emerald-600 mb-4">{forgotInfo}</p>}
-            {error && <p className="text-center text-xs font-bold text-red-500 mb-4">{error}</p>}
+            {error && <p className="text-center text-xs font-bold text-red-500 mb-4">{ui(error)}</p>}
 
             <button
               disabled={forgotRequestMutation.isPending || forgotResetMutation.isPending}
               className="w-full rounded-[20px] bg-[#d7ccc8] py-2 font-medium text-[#795548] transition-all hover:opacity-90 disabled:opacity-70 mt-4"
             >
               {forgotRequestMutation.isPending || forgotResetMutation.isPending
-                ? 'Đang xử lý...'
+                ? ui("Đang xử lý...")
                 : forgotStep === 'REQUEST'
-                  ? 'Gửi mã OTP'
-                  : 'Xác nhận đặt lại mật khẩu'}
+                  ? ui("Gửi mã OTP")
+                  : ui("Xác nhận đặt lại mật khẩu")}
             </button>
 
             {forgotStep === 'RESET' && (
@@ -544,9 +536,7 @@ function LoginPageInner({
                   setForgotInfo('');
                   setForgotForm((prev) => ({ ...prev, otp: '', newPassword: '', confirmPassword: '' }));
                 }}
-              >
-                Gửi lại OTP
-              </button>
+              >{ui("Gửi lại OTP")}</button>
             )}
           </form>
         ) : (
@@ -554,11 +544,11 @@ function LoginPageInner({
           <form onSubmit={handleSubmit} className="max-w-[450px] mx-auto">
             {!isLoginView && (
               <div className="mb-4">
-                <label className="block text-[13px] font-bold text-[#333] mb-1">Họ tên <span className="text-red-500">*</span></label>
+                <label className="block text-[13px] font-bold text-[#333] mb-1">{ui("Họ tên ")}<span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   name="hoTen"
-                  placeholder="Họ và tên"
+                  placeholder={ui("Họ và tên")}
                   required
                   className="w-full border border-gray-200 rounded-[3px] px-4 py-2 text-[13px] outline-none focus:border-[#a5a5a5]"
                   onChange={(e) => setFormData({ ...formData, hoTen: e.target.value })}
@@ -567,11 +557,11 @@ function LoginPageInner({
             )}
 
             <div className="mb-4">
-              <label className="block text-[13px] font-bold text-[#333] mb-1">Email <span className="text-red-500">*</span></label>
+              <label className="block text-[13px] font-bold text-[#333] mb-1">{ui("Email ")}<span className="text-red-500">*</span></label>
               <input
                 type="email"
                 name="email"
-                placeholder="Email"
+                placeholder={ui("Email")}
                 required
                 className="w-full border border-gray-200 rounded-[3px] px-4 py-2 text-[13px] outline-none focus:border-[#a5a5a5]"
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -579,11 +569,11 @@ function LoginPageInner({
             </div>
 
             <div className="mb-2">
-              <label className="block text-[13px] font-bold text-[#333] mb-1">Mật khẩu <span className="text-red-500">*</span></label>
+              <label className="block text-[13px] font-bold text-[#333] mb-1">{ui("Mật khẩu ")}<span className="text-red-500">*</span></label>
               <input
                 type="password"
                 name="password"
-                placeholder="Mật khẩu"
+                placeholder={ui("Mật khẩu")}
                 required
                 className="w-full border border-gray-200 rounded-[3px] px-4 py-2 text-[13px] outline-none focus:border-[#a5a5a5]"
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -592,7 +582,7 @@ function LoginPageInner({
 
             {isLoginView && (
               <div className="text-left mb-6 text-[13px]">
-                <span className="text-gray-500">Quên mật khẩu? Nhấn vào </span>
+                <span className="text-gray-500">{ui("Quên mật khẩu? Nhấn vào ")}</span>
                 <button
                   type="button"
                   onClick={() => {
@@ -603,30 +593,28 @@ function LoginPageInner({
                     setForgotForm((prev) => ({ ...prev, email: formData.email || '' }));
                   }}
                   className="text-[#337ab7] hover:underline"
-                >
-                  đây
-                </button>
+                >{ui("đây")}</button>
               </div>
             )}
 
-            {error && <p className="text-center text-xs font-bold text-red-500 mb-4">{error}</p>}
+            {error && <p className="text-center text-xs font-bold text-red-500 mb-4">{ui(error)}</p>}
 
             <button
               disabled={authMutation.isPending}
               className="w-full rounded-[20px] bg-[#dfd6ce] py-2 text-[14px] font-medium text-[#b22830] transition-all hover:bg-[#c9bea7] disabled:opacity-70 mt-2"
             >
               {authMutation.isPending
-                ? 'Đang xử lý...'
+                ? ui("Đang xử lý...")
                 : isLoginView
-                  ? 'Đăng nhập'
-                  : 'Đăng ký'}
+                  ? ui("Đăng nhập")
+                  : ui("Đăng ký")}
             </button>
 
             {/* Nút Social */}
             <div className="mt-8">
               <div className="flex items-center justify-center gap-4 mb-6">
                 <div className="h-px bg-gray-300 w-12"></div>
-                <span className="text-[13px] text-[#333]">Hoặc {isLoginView ? 'đăng nhập' : 'đăng ký'} bằng</span>
+                <span className="text-[13px] text-[#333]">{ui("Hoặc ")}{isLoginView ? ui("đăng nhập") : ui("đăng ký")}{ui(" bằng")}</span>
                 <div className="h-px bg-gray-300 w-12"></div>
               </div>
 
@@ -682,9 +670,9 @@ function LoginPageInner({
                         <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#fff" opacity=".9"/>
                         <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#fff" opacity=".9"/>
                       </svg>
-                      <span className="text-[16px] font-bold">Đăng nhập với Google</span>
+                      <span className="text-[16px] font-bold">{ui("Đăng nhập với Google")}</span>
                     </div>
-                    <p className="text-[12px] text-white/75">Xác minh nhanh & an toàn</p>
+                    <p className="text-[12px] text-white/75">{ui("Xác minh nhanh & an toàn")}</p>
                   </div>
 
                   {/* Body */}
@@ -693,11 +681,12 @@ function LoginPageInner({
                     <div className="mb-5">
                       <div className="flex items-center gap-2 mb-3">
                         <div className="w-6 h-6 rounded-full bg-[#b22830] text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">1</div>
-                        <span className="text-[13px] font-semibold text-gray-700">Xác minh bạn không phải robot</span>
+                        <span className="text-[13px] font-semibold text-gray-700">{ui("Xác minh bạn không phải robot")}</span>
                       </div>
                       {canUseRecaptcha ? (
                         <div className="flex justify-center">
                           <ReCAPTCHA
+                            hl={uiLocale().startsWith('en') ? 'en' : 'vi'}
                             ref={recaptchaRef}
                             sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
                             onChange={async (token) => {
@@ -718,7 +707,7 @@ function LoginPageInner({
                           />
                         </div>
                       ) : (
-                        <p className="text-xs text-red-600 text-center bg-red-50 rounded-lg p-3">Captcha chưa cấu hình.</p>
+                        <p className="text-xs text-red-600 text-center bg-red-50 rounded-lg p-3">{ui("Captcha chưa cấu hình.")}</p>
                       )}
                     </div>
 
@@ -726,7 +715,7 @@ function LoginPageInner({
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <div className="w-6 h-6 rounded-full bg-[#b22830] text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">2</div>
-                        <span className="text-[13px] font-semibold text-gray-700">Chọn tài khoản Google</span>
+                        <span className="text-[13px] font-semibold text-gray-700">{ui("Chọn tài khoản Google")}</span>
                       </div>
                       <div className="flex justify-center">
                         <GoogleLogin
@@ -735,13 +724,13 @@ function LoginPageInner({
                           theme="outline"
                           size="large"
                           width="300"
-                          locale="vi"
+                          locale={uiLocale().startsWith('en') ? 'en' : 'vi'}
                           auto_select={false}
                           use_fedcm_for_prompt={false}
                         />
                       </div>
                       <div className="mt-3 text-center">
-                        <span className="text-[12px] text-gray-400">hoặc</span>
+                        <span className="text-[12px] text-gray-400">{ui("hoặc")}</span>
                       </div>
                       <QuickGoogleButton
                         onLoginSuccess={onLoginSuccess}
@@ -750,7 +739,7 @@ function LoginPageInner({
                       />
                     </div>
 
-                    {error && <p className="mt-3 text-center text-xs font-semibold text-red-500">{error}</p>}
+                    {error && <p className="mt-3 text-center text-xs font-semibold text-red-500">{ui(error)}</p>}
                   </div>
 
                   {/* Footer */}
@@ -759,9 +748,7 @@ function LoginPageInner({
                       type="button"
                       onClick={() => { resetSocialState(); setError(''); }}
                       className="w-full text-center text-[13px] text-gray-500 hover:text-gray-700 font-medium"
-                    >
-                      Huỷ bỏ
-                    </button>
+                    >{ui("Huỷ bỏ")}</button>
                   </div>
 
                   {/* Close X button */}
@@ -786,6 +773,7 @@ function LoginPageInner({
 // QuickGoogleButton — dùng useGoogleLogin (phải nằm bên trong GoogleOAuthProvider)
 // ============================================================
 function QuickGoogleButton({ onLoginSuccess, resetSocialState, setError }) {
+  useUiLanguage();
   const handleQuickGoogleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
@@ -811,9 +799,7 @@ function QuickGoogleButton({ onLoginSuccess, resetSocialState, setError }) {
         type="button"
         onClick={() => handleQuickGoogleLogin()}
         className="rounded-full border border-[#eadfcd] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#8f6a50] hover:bg-[#fff7ef] transition-colors"
-      >
-        Dùng Google fallback
-      </button>
+      >{ui("Dùng Google fallback")}</button>
     </div>
   );
 }
@@ -822,6 +808,7 @@ function QuickGoogleButton({ onLoginSuccess, resetSocialState, setError }) {
 // Export default — bọc GoogleOAuthProvider nếu có key
 // ============================================================
 export default function LoginPage({ onLoginSuccess }) {
+  useUiLanguage();
   const rawGoogleId = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
   const GOOGLE_CLIENT_ID = rawGoogleId.replace(/^["']|["']$/g, '');
   const RECAPTCHA_SITE_KEY = String(import.meta.env.VITE_RECAPTCHA_SITE_KEY || '').trim();

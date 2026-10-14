@@ -1,3 +1,4 @@
+import { uiText as ui } from "../../lib/uiText";
 import React from 'react';
 
 export default function DeliveryModeSelector({ selectedMode, onChange }) {
@@ -33,7 +34,7 @@ export default function DeliveryModeSelector({ selectedMode, onChange }) {
                 isSelected ? 'text-[#c41230]' : 'text-gray-500 hover:text-gray-800'
               }`}
             >
-              <span className="truncate">{mode.label}</span>
+              <span className="truncate">{ui(mode.label)}</span>
             </button>
           );
         })}
@@ -48,7 +49,7 @@ export default function DeliveryModeSelector({ selectedMode, onChange }) {
       </div>
 
       <div className="mt-2.5 px-3 pb-0.5 text-center text-xs font-semibold text-gray-500 min-h-[20px] transition-all flex items-center justify-center">
-        <span>{modes.find(m => m.id === selectedMode)?.desc}</span>
+        <span>{ui(modes.find(m => m.id === selectedMode)?.desc)}</span>
       </div>
     </div>
   );

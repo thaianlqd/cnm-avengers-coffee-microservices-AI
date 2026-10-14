@@ -1,191 +1,111 @@
-import { useState, useEffect } from 'react'
-import { FranchisePanel } from './FranchisePanel'
-import BiDashboard from './BiDashboard'
-import { DongTienTab } from './DongTienTab'
-import { API_BASE_URL } from '../admin-dashboard/constants'
+import { WorkspaceSidebar, WorkspaceSearch } from '../../components/console/WorkspaceNavigation'
+import { AdminNotificationBell } from '../shared/components/AdminNotificationBell'
+import { useState, useEffect, lazy, Suspense } from "react";
+import {
+  ChartNoAxesCombined,
+  Store,
+  Wallet,
+  LogOut,
+  Coffee,
+  RefreshCw,
+} from "lucide-react";
+import { API_BASE_URL } from "../admin-dashboard/constants";
+import { DashboardSkeleton } from "../../components/console/DashboardCharts";
+import { WorkspaceErrorBoundary } from "../../components/console/WorkspaceErrorBoundary";
+const FranchisePanel = lazy(() =>
+  import("./FranchisePanel").then((module) => ({
+    default: module.FranchisePanel,
+  })),
+);
+const DongTienTab = lazy(() =>
+  import("./DongTienTab").then((module) => ({ default: module.DongTienTab })),
+);
+const BiDashboard = lazy(() => import("./BiDashboard"));
+const modules = [
+  { id: "bi", label: "Tổng quan tài chính", icon: ChartNoAxesCombined },
+  { id: "franchise", label: "Quản lý nhượng quyền", icon: Store },
+  { id: "thu-chi", label: "Dòng tiền & đối soát", icon: Wallet },
+];
 
-/**
- * AccountantFranchiseShell
- * Giao diện dành riêng cho role ACCOUNTANT — mang phong cách chuyên nghiệp, tối giản.
- * Tập trung vào số liệu, báo cáo với sidebar màu dark navy.
- */
 export function AccountantFranchiseShell({ session, onLogout }) {
-  const userName =
-    session?.user?.ho_ten ||
-    session?.user?.hoTen ||
-    session?.user?.tenDangNhap ||
-    session?.user?.ten_dang_nhap ||
-    'Kế toán'
-
-  const [currentModule, setCurrentModule] = useState('franchise')
-  const [biData, setBiData] = useState(null)
-  const [biError, setBiError] = useState(null)
-
-  const token = session?.token || session?.accessToken
-
+  const [currentModule, setCurrentModule] = useState("bi");
+  const [biData, setBiData] = useState(null);
+  const [biError, setBiError] = useState("");
+  const [revision, setRevision] = useState(0);
+  const token = session?.token || session?.accessToken;
   useEffect(() => {
-    if (currentModule === 'bi') {
-      setBiData(null)
-      setBiError(null)
-      fetch(`${API_BASE_URL}/franchise/dashboard/admin`, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        }
+    if (currentModule !== "bi") return;
+    const controller = new AbortController();
+    fetch(`${API_BASE_URL}/franchise/dashboard/admin`, {
+      signal: controller.signal,
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    })
+      .then(async (response) => {
+        const payload = await response.json();
+        if (!response.ok || !payload.success || !payload.data)
+          throw new Error(
+            payload.message ||
+              "Không tải được báo cáo tài chính. Vui lòng thử lại.",
+          );
+        if (!controller.signal.aborted) setBiData(payload.data);
       })
-      .then(async res => {
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`HTTP ${res.status}: ${errText}`);
-        }
-        return res.json();
-      })
-      .then(res => {
-        if (res.success) setBiData(res.data)
-        else setBiError("Lỗi dữ liệu: " + JSON.stringify(res))
-      })
-      .catch(err => setBiError(err.message))
-    }
-  }, [currentModule, token])
-
+      .catch((error) => {
+        if (!controller.signal.aborted) setBiError(error.message);
+      });
+    return () => controller.abort();
+  }, [currentModule, token, revision]);
+  const refresh = () => {
+    setBiData(null);
+    setBiError("");
+    setRevision((value) => value + 1);
+  };
+  const changeModule = (id) => {
+    setBiData(null);
+    setBiError("");
+    setCurrentModule(id);
+  };
   return (
-    <div
-      style={{
-        display: 'flex',
-        minHeight: '100vh',
-        background: '#f1f5f9', // Nền nhạt, lạnh
-        fontFamily: '"Segoe UI",Inter,system-ui,sans-serif',
-      }}
-    >
-      {/* ── Sidebar (Red Theme) ─────────────────────────────────────────── */}
-      <aside
-        style={{
-          width: 260,
-          flexShrink: 0,
-          background: '#1e3a8a', // Deep Blue
-          color: '#fff',
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
-        }}
-      >
-        {/* Brand */}
-        <div style={{ padding: '24px 20px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-          <div style={{
-            width: 42, height: 42, borderRadius: 10,
-            background: '#2563eb', // Lighter Blue
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 'bold'
-          }}>AC</div>
+    <div className="console-shell" data-actor="accountant">
+      <WorkspaceSidebar groups={[{ label: 'Báo cáo & nghiệp vụ', items: modules }]} activeTab={currentModule} onSelect={changeModule} session={session} label="Kế toán hệ thống" onLogout={onLogout} />
+      <main className="console-main">
+        <header className="console-topbar">
           <div>
-            <div style={{ fontWeight: 800, fontSize: 16, color: '#fff', letterSpacing: '0.02em' }}>Avengers Coffee</div>
-            <div style={{ fontSize: 11, color: '#bfdbfe', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 2 }}>Khối Kế Toán & TC</div>
+            <span className="console-eyebrow">TRUNG TÂM TÀI CHÍNH</span>
+            <h2>
+              {modules.find((module) => module.id === currentModule)?.label}
+            </h2>
           </div>
-        </div>
-
-        {/* User Card */}
-        <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', marginBottom: 6 }}>Xin chào,</div>
-          <div style={{ fontWeight: 700, fontSize: 16, color: '#fff', marginBottom: 8 }}>{userName}</div>
-          <div style={{ display: 'inline-block', padding: '4px 10px', background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 6, color: '#fff', fontSize: 11, fontWeight: 700 }}>
-            ROLE: ACCOUNTANT
-          </div>
-        </div>
-
-        {/* Menu */}
-        <div style={{ flex: 1, padding: '20px' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Modules Hệ Thống</div>
-          
-          <div 
-            onClick={() => setCurrentModule('franchise')}
-            style={{
-              padding: '10px 14px', borderRadius: 8, cursor: 'pointer',
-              background: currentModule === 'franchise' ? 'rgba(255,255,255,0.15)' : 'transparent', 
-              borderLeft: currentModule === 'franchise' ? '3px solid #fff' : '3px solid transparent',
-              color: currentModule === 'franchise' ? '#fff' : 'rgba(255,255,255,0.7)', 
-              fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10,
-              transition: 'all .2s'
-            }}>
-            Quản lý Nhượng quyền
-          </div>
-
-          <div 
-            onClick={() => setCurrentModule('bi')}
-            style={{ 
-              padding: '10px 14px', marginTop: 4, borderRadius: 8, cursor: 'pointer',
-              background: currentModule === 'bi' ? 'rgba(255,255,255,0.15)' : 'transparent', 
-              borderLeft: currentModule === 'bi' ? '3px solid #fff' : '3px solid transparent',
-              color: currentModule === 'bi' ? '#fff' : 'rgba(255,255,255,0.7)', 
-              fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10,
-              transition: 'all .2s'
-            }}>
-            Báo cáo Doanh thu (BI)
-          </div>
-
-          <div 
-            onClick={() => setCurrentModule('thu-chi')}
-            style={{ 
-              padding: '10px 14px', marginTop: 4, borderRadius: 8, cursor: 'pointer',
-              background: currentModule === 'thu-chi' ? 'rgba(255,255,255,0.15)' : 'transparent', 
-              borderLeft: currentModule === 'thu-chi' ? '3px solid #fff' : '3px solid transparent',
-              color: currentModule === 'thu-chi' ? '#fff' : 'rgba(255,255,255,0.7)', 
-              fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10,
-              transition: 'all .2s'
-            }}>
-            Quản trị Dòng tiền (Thu/Chi)
-          </div>
-        </div>
-
-        {/* System info & Logout */}
-        <div style={{ padding: '20px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 16 }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 8px #4ade80' }}></span>
-            Hệ thống đang hoạt động tốt
-          </div>
-          <button
-            onClick={onLogout}
-            style={{
-              width: '100%', padding: '10px', background: 'transparent',
-              border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, cursor: 'pointer',
-              color: '#fff', fontSize: 13, fontWeight: 600, transition: 'all .2s'
-            }}
-            onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff' }}
-            onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#fff' }}
-          >
-            Đăng xuất khỏi hệ thống
-          </button>
-        </div>
-      </aside>
-
-      {/* ── Main Content Area ─────────────────────────────────────────── */}
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {/* Topbar mini */}
-        <header style={{
-          height: 60, background: '#fff', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', position: 'sticky', top: 0, zIndex: 50
-        }}>
-          <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0f172a' }}>Trung tâm Quản lý Nhượng Quyền & Đối Soát</h1>
-          <div style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>
-            Session ID: {Math.random().toString(36).substring(2, 10).toUpperCase()} · {new Date().toLocaleDateString('vi-VN')}
+          <div className="workspace-topbar-actions">
+          <WorkspaceSearch items={modules} onSelect={changeModule} />
+          <AdminNotificationBell session={session} />
+          {currentModule === "bi" && (
+            <button className="console-button" onClick={refresh}>
+              <RefreshCw size={17} /> Làm mới báo cáo
+            </button>
+          )}
           </div>
         </header>
-
-        {/* Nội dung chính */}
-        <div style={{ flex: 1, padding: 24, maxWidth: 1280, margin: '0 auto', width: '100%' }}>
-          {currentModule === 'franchise' ? (
-            <FranchisePanel />
-          ) : currentModule === 'thu-chi' ? (
-            <DongTienTab />
-          ) : biError ? (
-            <div style={{ padding: 40, background: '#fee2e2', color: '#991b1b', borderRadius: 16 }}>
-              Lỗi tải báo cáo BI: {biError} 
-              <br/>(Có thể bạn chưa Restart lại Backend Identity-Service sau khi code mới được cập nhật)
-            </div>
-          ) : (
-            <BiDashboard data={biData} />
-          )}
+        <div key={currentModule} className="console-page">
+          <WorkspaceErrorBoundary key={currentModule} inline>
+          <Suspense fallback={<DashboardSkeleton />}>
+            {currentModule === "franchise" ? (
+              <FranchisePanel />
+            ) : currentModule === "thu-chi" ? (
+              <DongTienTab />
+            ) : biError ? (
+              <div className="console-error" role="alert">
+                {biError}
+                <button className="console-button" onClick={refresh}>
+                  Thử lại
+                </button>
+              </div>
+            ) : (
+              <BiDashboard data={biData} />
+            )}
+          </Suspense>
+          </WorkspaceErrorBoundary>
         </div>
       </main>
     </div>
-  )
+  );
 }

@@ -156,7 +156,7 @@ export function AdminCustomerManagementPanel({
       {/* Form Card: Tạo / Sửa Khách hàng - REDESIGNED LOVELY 2-COLUMN CARD */}
       {isFormActive && (
         <div
-          className="system-admin-card"
+          className="system-admin-card workspace-edit-form"
           style={{
             backgroundColor: '#ffffff',
             border: '1px solid #e2e8f0',
@@ -167,7 +167,7 @@ export function AdminCustomerManagementPanel({
           }}
         >
           {/* Form Header */}
-          <div
+          <div className="workspace-form-heading"
             style={{
               padding: '1.1rem 1.5rem',
               backgroundColor: '#f8fafc',
@@ -184,9 +184,9 @@ export function AdminCustomerManagementPanel({
                   width: '38px',
                   height: '38px',
                   borderRadius: '10px',
-                  backgroundColor: editingCustomerId ? '#eff6ff' : '#ecfdf5',
-                  color: editingCustomerId ? '#2563eb' : '#059669',
-                  border: editingCustomerId ? '1px solid #bfdbfe' : '1px solid #a7f3d0',
+                  backgroundColor: editingCustomerId ? 'var(--primary-light)' : '#eff6ff',
+                  color: editingCustomerId ? 'var(--primary)' : '#2563eb',
+                  border: editingCustomerId ? '1px solid #bfdbfe' : '1px solid #bfdbfe',
                   display: 'flex',
                   alignItems: 'center',
                   justify: 'center',
@@ -438,21 +438,21 @@ export function AdminCustomerManagementPanel({
               {/* Field 6 / Info Tip Box */}
               <div
                 style={{
-                  backgroundColor: '#f0fdf4',
-                  border: '1px solid #bbf7d0',
+                  backgroundColor: '#eff6ff',
+                  border: '1px solid #bfdbfe',
                   borderRadius: '10px',
                   padding: '0.75rem 1rem',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.75rem',
-                  color: '#166534',
+                  color: '#1e40af',
                   fontSize: '0.8125rem',
                   minHeight: '42px',
                   alignSelf: 'flex-end',
                   boxSizing: 'border-box'
                 }}
               >
-                <CheckCircle2 size={18} color="#16a34a" style={{ flexShrink: 0 }} />
+                <CheckCircle2 size={18} color="#2563eb" style={{ flexShrink: 0 }} />
                 <span>
                   Tài khoản tạo mới sẽ mặc định cấp hạng <strong>Thành viên</strong> và 0 điểm tích lũy.
                 </span>
@@ -506,7 +506,7 @@ export function AdminCustomerManagementPanel({
               onClick={saveCustomer}
               disabled={savingCustomer}
               style={{
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                 color: '#ffffff',
                 border: 'none',
                 height: '40px',
@@ -518,7 +518,7 @@ export function AdminCustomerManagementPanel({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.4rem',
-                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
+                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)',
                 transition: 'all 0.15s ease'
               }}
             >
@@ -633,7 +633,7 @@ export function AdminCustomerManagementPanel({
 
                   <td style={{ whiteSpace: 'nowrap' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
-                      <strong style={{ color: '#4f46e5', fontSize: '0.8125rem' }}>{fmtNumber(item.diem_kha_dung)} pt khả dụng</strong>
+                      <strong style={{ color: 'var(--primary)', fontSize: '0.8125rem' }}>{fmtNumber(item.diem_kha_dung)} pt khả dụng</strong>
                       <span style={{ fontSize: '0.72rem', color: '#64748b' }}>({fmtNumber(item.diem_loyalty)} pt tích lũy)</span>
                     </div>
                   </td>
@@ -648,13 +648,13 @@ export function AdminCustomerManagementPanel({
                         borderRadius: '9999px',
                         fontSize: '0.72rem',
                         fontWeight: '600',
-                        backgroundColor: item.trang_thai === 'ACTIVE' ? '#ecfdf5' : '#fef2f2',
-                        color: item.trang_thai === 'ACTIVE' ? '#059669' : '#dc2626',
-                        border: item.trang_thai === 'ACTIVE' ? '1px solid #a7f3d0' : '1px solid #fee2e2',
+                        backgroundColor: item.trang_thai === 'ACTIVE' ? '#eff6ff' : '#fef2f2',
+                        color: item.trang_thai === 'ACTIVE' ? '#2563eb' : '#dc2626',
+                        border: item.trang_thai === 'ACTIVE' ? '1px solid #bfdbfe' : '1px solid #fee2e2',
                         whiteSpace: 'nowrap'
                       }}
                     >
-                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: item.trang_thai === 'ACTIVE' ? '#10b981' : '#ef4444' }}></span>
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: item.trang_thai === 'ACTIVE' ? '#3b82f6' : '#ef4444' }}></span>
                       {item.trang_thai === 'ACTIVE' ? 'Hoạt động' : 'Tạm khóa'}
                     </span>
                   </td>
@@ -697,7 +697,7 @@ export function AdminCustomerManagementPanel({
 
         {/* Pagination Bar */}
         {(() => {
-          const pg = Number(customersPageData?.page || customersPage || 1)
+          const pg = Number(customersPageData?.page || 1)
           const sz = Number(customersPageData?.pageSize || 10)
           const tot = Number(customersPageData?.total || allItems.length || 0)
           const totPages = Number(customersPageData?.totalPages || Math.max(1, Math.ceil(tot / sz)))
@@ -760,9 +760,9 @@ export function AdminCustomerManagementPanel({
       {editingCustomerMembershipId && (
         <div className="admin-modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
           <div className="admin-modal" style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '16px', width: '460px', maxWidth: '92vw', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid #e2e8f0' }}>
-            <div style={{ marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div className="workspace-form-heading" style={{ marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Award size={22} color="#4f46e5" />
+                <Award size={22} color="var(--primary)" />
                 <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700', color: '#0f172a' }}>
                   Cập nhật Membership &amp; Điểm tích lũy
                 </h3>
@@ -780,7 +780,7 @@ export function AdminCustomerManagementPanel({
             {/* Summary info box */}
             <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.85rem 1rem', marginBottom: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
-                <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '50%', backgroundColor: '#eef2ff', color: '#4f46e5', fontWeight: '700', fontSize: '1.05rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, border: '1px solid #c7d2fe', flexShrink: 0 }}>
+                <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '50%', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', fontWeight: '700', fontSize: '1.05rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, border: '1px solid #e8cdbb', flexShrink: 0 }}>
                   <span style={{ display: 'inline-block', lineHeight: 1, margin: 0, padding: 0 }}>
                     {(customerMembershipForm.ho_ten || 'K').charAt(0).toUpperCase()}
                   </span>

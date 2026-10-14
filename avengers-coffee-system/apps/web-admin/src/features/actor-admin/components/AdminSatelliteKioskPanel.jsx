@@ -4,15 +4,15 @@ import { API_BASE_URL } from '../../admin-dashboard/constants'
 import { KioskDetailPanel } from './KioskDetailPanel'
 
 const LOAI_VI_TRI_META = {
-  TRUNG_TAM_TM:  { label: 'Trung tâm TM',   color: '#6366f1', bg: '#eef2ff' },
+  TRUNG_TAM_TM:  { label: 'Trung tâm TM',   color: 'var(--primary)', bg: 'var(--primary-light)' },
   VIA_HE:        { label: 'Vỉa hè',          color: '#f59e0b', bg: '#fffbeb' },
-  CONG_TRUONG:   { label: 'Cổng trường',     color: '#10b981', bg: '#ecfdf5' },
-  TOA_VAN_PHONG: { label: 'Tòa văn phòng',   color: '#3b82f6', bg: '#eff6ff' },
-  KHU_DAN_CU:    { label: 'Khu dân cư',      color: '#8b5cf6', bg: '#f5f3ff' },
+  CONG_TRUONG:   { label: 'Cổng trường',     color: '#3b82f6', bg: '#eff6ff' },
+  TOA_VAN_PHONG: { label: 'Tòa văn phòng',   color: '#3b82f6', bg: 'var(--primary-light)' },
+  KHU_DAN_CU:    { label: 'Khu dân cư',      color: 'var(--primary)', bg: 'var(--primary-light)' },
   TRAM_XANG:     { label: 'Trạm xăng/Dừng nghỉ', color: '#ef4444', bg: '#fef2f2' },
   BEN_XE:        { label: 'Bến xe/Sân bay',  color: '#06b6d4', bg: '#ecfeff' },
   KHU_CONG_NGHIEP:{ label: 'Khu công nghiệp',color: '#64748b', bg: '#f8fafc' },
-  CONG_VIEN:     { label: 'Công viên/Khu DL', color: '#84cc16', bg: '#f7fee7' }
+  CONG_VIEN:     { label: 'Công viên/Khu DL', color: '#f59e0b', bg: '#f7fee7' }
 }
 
 function apiFetch(token, path, options = {}) {
@@ -134,11 +134,11 @@ export function AdminSatelliteKioskPanel({ session }) {
       {/* HEADER */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
             <MapPin size={24} />
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#0f172a' }}>Điểm Bán Take-away</h2>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: '#0f172a' }}>Điểm Bán Take-away</h2>
             <p style={{ margin: '2px 0 0', fontSize: 13, color: '#64748b' }}>
               Quản lý {stats?.total || kiosks.length} điểm bán takeaway trực thuộc công ty — {stats?.zoneCount || zones.length} khu vực
             </p>
@@ -162,7 +162,7 @@ export function AdminSatelliteKioskPanel({ session }) {
         </div>
       )}
       {success && (
-        <div style={{ padding: '10px 16px', background: '#dcfce7', border: '1px solid #bbf7d0', borderRadius: 8, color: '#16a34a', fontSize: 13, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ padding: '10px 16px', background: '#dbeafe', border: '1px solid #bfdbfe', borderRadius: 8, color: '#2563eb', fontSize: 13, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
           <Check size={14} /> {success}
         </div>
       )}
@@ -170,7 +170,7 @@ export function AdminSatelliteKioskPanel({ session }) {
       {/* VIEW TABS */}
       <div style={{ display: 'flex', marginBottom: '1.25rem', borderBottom: '2px solid #f1f5f9' }}>
         {[{ id: 'list', label: 'Danh sách Điểm Bán' }, { id: 'stats', label: 'Thống kê Zone' }, { id: 'zones', label: 'Khu vực' }].map(tab => (
-          <button key={tab.id} onClick={() => setActiveView(tab.id)} style={{ padding: '9px 18px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: activeView === tab.id ? '#4f46e5' : '#64748b', borderBottom: activeView === tab.id ? '2px solid #4f46e5' : '2px solid transparent', marginBottom: -2 }}>
+          <button key={tab.id} onClick={() => setActiveView(tab.id)} style={{ padding: '9px 18px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: activeView === tab.id ? 'var(--primary)' : '#64748b', borderBottom: activeView === tab.id ? '2px solid var(--primary)' : '2px solid transparent', marginBottom: -2 }}>
             {tab.label}
           </button>
         ))}
@@ -181,10 +181,10 @@ export function AdminSatelliteKioskPanel({ session }) {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: 'white', borderRadius: 16, padding: '2rem', width: 580, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 60px rgba(0,0,0,0.2)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0f172a' }}>{editingMa ? 'Cập nhật Điểm Bán Take-away' : 'Tạo Điểm Bán Take-away Mới'}</h3>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#0f172a' }}>{editingMa ? 'Cập nhật Điểm Bán Take-away' : 'Tạo Điểm Bán Take-away Mới'}</h3>
               <button onClick={() => { setShowForm(false); setError(null) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}><X size={20} /></button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,260px),1fr))', gap: 12 }}>
               {!editingMa && (
                 <div style={{ gridColumn: '1/-1' }}>
                   <label style={lbl}>Mã Điểm Bán *</label>
@@ -238,7 +238,7 @@ export function AdminSatelliteKioskPanel({ session }) {
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: '1.25rem' }}>
               <button onClick={() => { setShowForm(false); setError(null) }} style={{ padding: '10px 20px', borderRadius: 8, border: '1px solid #e2e8f0', background: 'white', cursor: 'pointer', fontSize: 13 }}>Hủy</button>
-              <button onClick={handleSave} disabled={saving} style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #4f46e5, #6366f1)', color: 'white', cursor: saving ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 700, opacity: saving ? 0.7 : 1 }}>
+              <button onClick={handleSave} disabled={saving} style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, var(--primary), var(--primary))', color: 'white', cursor: saving ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 700, opacity: saving ? 0.7 : 1 }}>
                 {saving ? 'Đang lưu...' : editingMa ? 'Cập nhật' : 'Tạo mới'}
               </button>
             </div>
@@ -262,7 +262,7 @@ export function AdminSatelliteKioskPanel({ session }) {
               </select>
               <span style={{ fontSize: 13, color: '#94a3b8', alignSelf: 'center' }}>{filteredKiosks.length} kết quả</span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(340px,1fr))', gap: 14 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(100%,340px),1fr))', gap: 14 }}>
               {filteredKiosks.map(k => {
                 const vtm = LOAI_VI_TRI_META[k.loai_vi_tri] || {}
                 return (
@@ -275,18 +275,18 @@ export function AdminSatelliteKioskPanel({ session }) {
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 5 }}>
-                          <span style={{ fontSize: 11, fontWeight: 800, color: '#4f46e5', background: '#e0e7ff', padding: '2px 8px', borderRadius: 20 }}>{k.ma_chi_nhanh}</span>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--primary)', background: 'var(--primary-subtle)', padding: '2px 8px', borderRadius: 20 }}>{k.ma_chi_nhanh}</span>
                           {k.loai_vi_tri && <span style={{ fontSize: 11, fontWeight: 700, color: vtm.color, background: vtm.bg, padding: '2px 8px', borderRadius: 20 }}>{vtm.label}</span>}
-                          <span style={{ fontSize: 11, fontWeight: 700, color: k.trang_thai === 'ACTIVE' ? '#16a34a' : '#dc2626', background: k.trang_thai === 'ACTIVE' ? '#dcfce7' : '#fee2e2', padding: '2px 8px', borderRadius: 20 }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: k.trang_thai === 'ACTIVE' ? '#2563eb' : '#dc2626', background: k.trang_thai === 'ACTIVE' ? '#dbeafe' : '#fee2e2', padding: '2px 8px', borderRadius: 20 }}>
                             {k.trang_thai === 'ACTIVE' ? 'Hoạt động' : 'Tạm dừng'}
                           </span>
                         </div>
-                        <h4 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: '#0f172a', lineHeight: 1.4 }}>{k.ten_chi_nhanh}</h4>
+                        <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#0f172a', lineHeight: 1.4 }}>{k.ten_chi_nhanh}</h4>
                       </div>
                     </div>
                     <div style={{ fontSize: 12, color: '#64748b', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <div style={{ display: 'flex', gap: 6 }}><MapPin size={12} style={{ flexShrink: 0, color: '#4f46e5' }} /><span style={{ lineHeight: 1.5 }}>{k.dia_chi}</span></div>
-                      {k.khu_vuc && <div style={{ display: 'flex', gap: 6 }}><Map size={12} style={{ color: '#6366f1' }} /><span style={{ color: '#6366f1', fontWeight: 600 }}>{k.khu_vuc.ten_khu_vuc}</span></div>}
+                      <div style={{ display: 'flex', gap: 6 }}><MapPin size={12} style={{ flexShrink: 0, color: 'var(--primary)' }} /><span style={{ lineHeight: 1.5 }}>{k.dia_chi}</span></div>
+                      {k.khu_vuc && <div style={{ display: 'flex', gap: 6 }}><Map size={12} style={{ color: 'var(--primary)' }} /><span style={{ color: 'var(--primary)', fontWeight: 600 }}>{k.khu_vuc.ten_khu_vuc}</span></div>}
                       {k.chi_nhanh_me_ma && (() => {
                         const p = standardBranches.find(b => b.ma_chi_nhanh === k.chi_nhanh_me_ma)
                         return (
@@ -317,14 +317,14 @@ export function AdminSatelliteKioskPanel({ session }) {
         {/* STATS VIEW */}
         {activeView === 'stats' && stats && (
           <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,220px),1fr))', gap: 14, marginBottom: '1.5rem' }}>
               {[
-                { label: 'Tổng Kiosk Vệ Tinh', value: stats.tong_tat_ca, color: '#4f46e5' },
-                { label: 'Đang hoạt động', value: (stats.theo_cum || []).reduce((s, z) => s + z.dang_hoat_dong, 0), color: '#16a34a' },
-                { label: 'Số Khu vực', value: (stats.theo_cum || []).length, color: '#6366f1' },
+                { label: 'Tổng Kiosk Vệ Tinh', value: stats.tong_tat_ca, color: 'var(--primary)' },
+                { label: 'Đang hoạt động', value: (stats.theo_cum || []).reduce((s, z) => s + z.dang_hoat_dong, 0), color: '#2563eb' },
+                { label: 'Số Khu vực', value: (stats.theo_cum || []).length, color: 'var(--primary)' },
               ].map(card => (
                 <div key={card.label} style={{ background: 'white', border: '1.5px solid #f1f5f9', borderRadius: 14, padding: '1.25rem', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-                  <div style={{ fontSize: 32, fontWeight: 900, color: card.color }}>{card.value}</div>
+                  <div style={{ fontSize: 32, fontWeight: 600, color: card.color }}>{card.value}</div>
                   <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>{card.label}</div>
                 </div>
               ))}
@@ -332,15 +332,15 @@ export function AdminSatelliteKioskPanel({ session }) {
             {(stats.theo_cum || []).map(cluster => (
               <div key={cluster.zone.id} style={{ background: 'white', border: '1.5px solid #f1f5f9', borderRadius: 14, overflow: 'hidden', marginBottom: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
                 <button onClick={() => setExpandedZone(expandedZone === cluster.zone.id ? null : cluster.zone.id)}
-                  style={{ width: '100%', padding: '14px 20px', border: 'none', background: expandedZone === cluster.zone.id ? '#f5f3ff' : 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 8, background: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Map size={16} color="#4f46e5" /></div>
+                  style={{ width: '100%', padding: '14px 20px', border: 'none', background: expandedZone === cluster.zone.id ? 'var(--primary-light)' : 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--primary-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Map size={16} color="var(--primary)" /></div>
                   <div style={{ flex: 1, textAlign: 'left' }}>
-                    <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 14 }}>{cluster.zone.ten_khu_vuc}</div>
+                    <div style={{ fontWeight: 600, color: '#0f172a', fontSize: 14 }}>{cluster.zone.ten_khu_vuc}</div>
                     <div style={{ fontSize: 12, color: '#94a3b8' }}>{cluster.zone.thanh_pho}</div>
                   </div>
-                  <span style={{ fontSize: 22, fontWeight: 900, color: '#4f46e5' }}>{cluster.tong_diem_ban}</span>
+                  <span style={{ fontSize: 22, fontWeight: 600, color: 'var(--primary)' }}>{cluster.tong_diem_ban}</span>
                   <span style={{ fontSize: 11, color: '#94a3b8', marginRight: 12 }}>điểm</span>
-                  <span style={{ fontSize: 22, fontWeight: 900, color: '#16a34a' }}>{cluster.dang_hoat_dong}</span>
+                  <span style={{ fontSize: 22, fontWeight: 600, color: '#2563eb' }}>{cluster.dang_hoat_dong}</span>
                   <span style={{ fontSize: 11, color: '#94a3b8' }}>hđ</span>
                   {expandedZone === cluster.zone.id ? <ChevronDown size={16} color="#64748b" /> : <ChevronRight size={16} color="#94a3b8" />}
                 </button>
@@ -348,14 +348,14 @@ export function AdminSatelliteKioskPanel({ session }) {
                   <div style={{ padding: '0 20px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {cluster.diem_ban.map(k => (
                       <div key={k.ma_chi_nhanh} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: '#f8fafc', borderRadius: 8 }}>
-                        <MapPin size={13} color="#4f46e5" />
+                        <MapPin size={13} color="var(--primary)" />
                         <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#334155' }}>{k.ten_chi_nhanh}</span>
                         {k.loai_vi_tri && (
                           <span style={{ fontSize: 11, fontWeight: 700, color: (LOAI_VI_TRI_META[k.loai_vi_tri] || {}).color, background: (LOAI_VI_TRI_META[k.loai_vi_tri] || {}).bg, padding: '2px 6px', borderRadius: 12 }}>
                             {(LOAI_VI_TRI_META[k.loai_vi_tri] || {}).label || k.loai_vi_tri}
                           </span>
                         )}
-                        <span style={{ fontSize: 11, fontWeight: 700, color: k.trang_thai === 'ACTIVE' ? '#16a34a' : '#dc2626' }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: k.trang_thai === 'ACTIVE' ? '#2563eb' : '#dc2626' }}>
                           {k.trang_thai === 'ACTIVE' ? 'OK' : 'Tạm dừng'}
                         </span>
                       </div>
@@ -373,18 +373,18 @@ export function AdminSatelliteKioskPanel({ session }) {
               {zones.map(z => (
                 <div key={z.id} style={{ background: 'white', border: '1.5px solid #f1f5f9', borderRadius: 14, padding: '1.25rem', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 8, background: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Map size={16} color="#4f46e5" />
+                    <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--primary-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Map size={16} color="var(--primary)" />
                     </div>
                     <div>
-                      <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 14 }}>{z.ten_khu_vuc}</div>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: '#4f46e5', background: '#e0e7ff', padding: '1px 6px', borderRadius: 10 }}>{z.ma_khu_vuc}</span>
+                      <div style={{ fontWeight: 600, color: '#0f172a', fontSize: 14 }}>{z.ten_khu_vuc}</div>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary)', background: 'var(--primary-subtle)', padding: '1px 6px', borderRadius: 10 }}>{z.ma_khu_vuc}</span>
                     </div>
                   </div>
                   <div style={{ fontSize: 12, color: '#64748b', display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {z.thanh_pho && <div>{z.thanh_pho}</div>}
                     {z.mo_ta && <div style={{ fontStyle: 'italic' }}>{z.mo_ta}</div>}
-                    <div style={{ fontWeight: 700, color: '#6366f1', marginTop: 6 }}>
+                    <div style={{ fontWeight: 700, color: 'var(--primary)', marginTop: 6 }}>
                       {kiosks.filter(k => k.khu_vuc?.id === z.id).length} kiosk vệ tinh
                     </div>
                   </div>

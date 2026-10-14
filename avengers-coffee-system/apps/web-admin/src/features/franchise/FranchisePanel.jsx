@@ -1,3 +1,4 @@
+import { getAdminSession } from '../../lib/adminFetch'
 import { useState, useEffect, useCallback } from 'react'
 import { API_BASE_URL } from '../admin-dashboard/constants'
 
@@ -22,32 +23,32 @@ const fmtDate = (d) => {
 const STATUS_KIOSK = {
   CHO_KY_HOP_DONG: { label: 'Chờ ký HĐ', color: '#f97316', bg: '#fff7ed' },
   DANG_THIET_LAP: { label: 'Đang thiết lập', color: '#0ea5e9', bg: '#f0f9ff' },
-  DANG_HOAT_DONG: { label: 'Đang hoạt động', color: '#16a34a', bg: '#f0fdf4' },
+  DANG_HOAT_DONG: { label: 'Đang hoạt động', color: '#2563eb', bg: '#eff6ff' },
   NGUNG_HOAT_DONG: { label: 'Ngừng hoạt động', color: '#dc2626', bg: '#fef2f2' },
 }
 const STATUS_DON = {
   DA_DAT: { label: 'Đã đặt', color: '#f59e0b' },
-  DA_GIAO: { label: 'Đã giao', color: '#16a34a' },
+  DA_GIAO: { label: 'Đã giao', color: '#2563eb' },
   TAM_HOAN: { label: 'Tạm hoãn', color: '#dc2626' },
 }
 const STATUS_CONG_NO = {
   CON_NO: { label: 'Còn nợ', color: '#f59e0b' },
-  DA_THANH_TOAN: { label: 'Đã thanh toán', color: '#16a34a' },
+  DA_THANH_TOAN: { label: 'Đã thanh toán', color: '#2563eb' },
   QUA_HAN: { label: 'Quá hạn', color: '#dc2626' },
 }
 const STATUS_ROYALTY = {
   CHO_XAC_NHAN: { label: 'Chờ xác nhận', color: '#f59e0b' },
   DA_XAC_NHAN: { label: 'Đã xác nhận', color: '#0ea5e9' },
-  DA_THANH_TOAN: { label: 'Đã thanh toán', color: '#16a34a' },
+  DA_THANH_TOAN: { label: 'Đã thanh toán', color: '#2563eb' },
 }
 const CANH_BAO = {
-  XANH: { label: 'An toàn', emoji: '🟢', color: '#16a34a', bg: '#f0fdf4' },
+  XANH: { label: 'An toàn', emoji: '🟢', color: '#2563eb', bg: '#eff6ff' },
   VANG: { label: 'Cần chú ý', emoji: '🟡', color: '#d97706', bg: '#fffbeb' },
   DO: { label: 'Rủi ro cao', emoji: '🔴', color: '#dc2626', bg: '#fef2f2' },
 }
 
 const apiFetch = async (path, opts = {}) => {
-  const session = JSON.parse(localStorage.getItem('adminSession') || '{}')
+  const session = (getAdminSession() || {})
   const token = session?.token || session?.accessToken
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...opts,
@@ -108,8 +109,8 @@ const Input = (props) => (
 )
 const Btn = ({ children, onClick, variant = 'primary', small, disabled, style: extStyle }) => {
   const styles = {
-    primary: { background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: '#fff' },
-    success: { background: 'linear-gradient(135deg,#16a34a,#22c55e)', color: '#fff' },
+    primary: { background: 'linear-gradient(135deg,var(--primary),var(--primary))', color: '#fff' },
+    success: { background: 'linear-gradient(135deg,#2563eb,#3b82f6)', color: '#fff' },
     danger: { background: 'linear-gradient(135deg,#dc2626,#ef4444)', color: '#fff' },
     outline: { background: '#fff', color: '#374151', border: '1.5px solid #e5e7eb' },
     ghost: { background: 'transparent', color: '#6b7280' },
@@ -246,7 +247,7 @@ function HoSoDangKyTab() {
         <Btn small variant="outline" onClick={load}>Tải lại</Btn>
       </div>
 
-      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 12, background: msg.type === 'success' ? '#f0fdf4' : '#fef2f2', color: msg.type === 'success' ? '#16a34a' : '#dc2626', fontWeight: 600 }}>{msg.text} <button onClick={() => setMsg(null)} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}>×</button></div>}
+      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 12, background: msg.type === 'success' ? '#eff6ff' : '#fef2f2', color: msg.type === 'success' ? '#2563eb' : '#dc2626', fontWeight: 600 }}>{msg.text} <button onClick={() => setMsg(null)} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}>×</button></div>}
 
       {loading ? <div style={{ textAlign: 'center', padding: 40, color: '#6b7280' }}>Đang tải...</div> : (
         <div style={{ display: 'grid', gap: 12 }}>
@@ -257,7 +258,7 @@ function HoSoDangKyTab() {
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 15 }}>
                     {item.ho_ten} 
-                    {item.franchisee_user_id && <span style={{ marginLeft: 8, padding: '2px 8px', borderRadius: 4, fontSize: 11, background: '#e0e7ff', color: '#4f46e5', fontWeight: 600 }}>Mở Rộng (Khách Quen)</span>}
+                    {item.franchisee_user_id && <span style={{ marginLeft: 8, padding: '2px 8px', borderRadius: 4, fontSize: 11, background: 'var(--primary-subtle)', color: 'var(--primary)', fontWeight: 600 }}>Mở Rộng (Khách Quen)</span>}
                     {!item.franchisee_user_id && <span style={{ marginLeft: 8, padding: '2px 8px', borderRadius: 4, fontSize: 11, background: '#fce7f3', color: '#db2777', fontWeight: 600 }}>Đăng Ký Mới</span>}
                   </div>
                   <div style={{ color: '#6b7280', fontSize: 13 }}>{item.email} · {item.so_dien_thoai}</div>
@@ -265,7 +266,7 @@ function HoSoDangKyTab() {
                   <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>Gói: <b>{item.goi_kiosk}</b> · {item.dien_tich_m2}m² · {fmtDate(item.ngay_tao)}</div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
-                  <Badge status={item.trang_thai} map={{ CHO_XEM_XET: { label: 'Chờ xem xét', color: '#6b7280', bg: '#f3f4f6' }, CHO_DAT_COC: { label: 'Chờ đặt cọc', color: '#d97706', bg: '#fef3c7' }, DA_DUYET: { label: 'Đã duyệt', color: '#16a34a', bg: '#f0fdf4' }, TU_CHOI: { label: 'Từ chối', color: '#dc2626', bg: '#fef2f2' }, DA_HUY: { label: 'Đã hủy', color: '#dc2626', bg: '#fef2f2' } }} />
+                  <Badge status={item.trang_thai} map={{ CHO_XEM_XET: { label: 'Chờ xem xét', color: '#6b7280', bg: '#f3f4f6' }, CHO_DAT_COC: { label: 'Chờ đặt cọc', color: '#d97706', bg: '#fef3c7' }, DA_DUYET: { label: 'Đã duyệt', color: '#2563eb', bg: '#eff6ff' }, TU_CHOI: { label: 'Từ chối', color: '#dc2626', bg: '#fef2f2' }, DA_HUY: { label: 'Đã hủy', color: '#dc2626', bg: '#fef2f2' } }} />
                   {item.trang_thai === 'CHO_XEM_XET' && !item.franchisee_user_id && (
                     <div style={{ display: 'flex', gap: 6 }}>
                       <Btn small variant="primary" onClick={() => yeuCauDatCoc(item.id)}>Yêu cầu đặt cọc</Btn>
@@ -387,7 +388,7 @@ function KioskManageTab() {
         <Btn small variant="outline" onClick={load}>Tải lại</Btn>
       </div>
 
-      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 12, background: msg.type === 'success' ? '#f0fdf4' : '#fef2f2', color: msg.type === 'success' ? '#16a34a' : '#dc2626', fontWeight: 600 }}>{msg.text} <button onClick={() => setMsg(null)} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}>×</button></div>}
+      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 12, background: msg.type === 'success' ? '#eff6ff' : '#fef2f2', color: msg.type === 'success' ? '#2563eb' : '#dc2626', fontWeight: 600 }}>{msg.text} <button onClick={() => setMsg(null)} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}>×</button></div>}
 
       {loading ? <div style={{ textAlign: 'center', padding: 40 }}>Đang tải...</div> : (
         <div style={{ display: 'grid', gap: 12 }}>
@@ -398,18 +399,18 @@ function KioskManageTab() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <span style={{ fontWeight: 800, fontSize: 16 }}>{k.ten_kiosk}</span>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#6366f1', background: '#eef2ff', padding: '2px 8px', borderRadius: 99 }}>{k.ma_kiosk}</span>
+                      <span style={{ fontWeight: 600, fontSize: 16 }}>{k.ten_kiosk}</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--primary)', background: 'var(--primary-light)', padding: '2px 8px', borderRadius: 99 }}>{k.ma_kiosk}</span>
                       <Badge status={k.trang_thai} map={STATUS_KIOSK} />
                       {k.xep_hang && (
-                        <span title={`Điểm đánh giá: ${k.diem_danh_gia}/100\nS: >=90, A: >=70, B: >=50, C: <50`} style={{ fontSize: 13, fontWeight: 800, color: k.xep_hang === 'S' ? '#eab308' : k.xep_hang === 'A' ? '#3b82f6' : k.xep_hang === 'B' ? '#10b981' : '#ef4444', background: '#f8fafc', padding: '2px 8px', borderRadius: 99, border: '1px solid #e2e8f0', cursor: 'help', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <span title={`Điểm đánh giá: ${k.diem_danh_gia}/100\nS: >=90, A: >=70, B: >=50, C: <50`} style={{ fontSize: 13, fontWeight: 600, color: k.xep_hang === 'S' ? '#eab308' : k.xep_hang === 'A' ? '#3b82f6' : k.xep_hang === 'B' ? '#3b82f6' : '#ef4444', background: '#f8fafc', padding: '2px 8px', borderRadius: 99, border: '1px solid #e2e8f0', cursor: 'help', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                           Hạng {k.xep_hang}
                         </span>
                       )}
                     </div>
                     <div style={{ color: '#6b7280', fontSize: 13 }}>{k.dia_chi}, {k.thanh_pho}</div>
                     <div style={{ fontSize: 12, color: '#374151', marginTop: 4 }}>
-                      Loại: <b>{k.loai_kiosk}</b> · Combo hiện có: <b style={{ color: k.so_combo_hien_tai < 3 ? '#dc2626' : '#16a34a' }}>{k.so_combo_hien_tai}</b>
+                      Loại: <b>{k.loai_kiosk}</b> · Combo hiện có: <b style={{ color: k.so_combo_hien_tai < 3 ? '#dc2626' : '#2563eb' }}>{k.so_combo_hien_tai}</b>
                       {k.so_cong_no_chua_thanh_toan > 0 && <span style={{ color: '#dc2626', marginLeft: 8 }}>{k.so_cong_no_chua_thanh_toan} khoản nợ</span>}
                     </div>
                     {k.hop_dong && (() => {
@@ -593,7 +594,7 @@ function DonMuaComboTab() {
         <Btn small variant="outline" onClick={load}>Tải lại</Btn>
       </div>
 
-      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 12, background: msg.type === 'success' ? '#f0fdf4' : '#fef2f2', color: msg.type === 'success' ? '#16a34a' : '#dc2626', fontWeight: 600 }}>{msg.text} <button onClick={() => setMsg(null)} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}>×</button></div>}
+      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 12, background: msg.type === 'success' ? '#eff6ff' : '#fef2f2', color: msg.type === 'success' ? '#2563eb' : '#dc2626', fontWeight: 600 }}>{msg.text} <button onClick={() => setMsg(null)} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}>×</button></div>}
 
       {loading ? <div style={{ textAlign: 'center', padding: 40 }}>Đang tải...</div> : (
         <div style={{ overflowX: 'auto' }}>
@@ -610,15 +611,15 @@ function DonMuaComboTab() {
                 <tr key={d.id} style={{ background: '#fff', borderRadius: 8, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                   <td style={{ padding: '10px 12px', fontWeight: 600, fontSize: 13 }}>{d.kiosk?.ten_kiosk || d.kiosk_id.slice(0, 8)} <br/><span style={{fontSize: 11, color: '#9ca3af', fontWeight: 500}}>{d.kiosk?.ma_kiosk}</span></td>
                   <td style={{ padding: '10px 12px', fontSize: 13 }}>
-                    <div style={{ fontWeight: 600, color: '#1e40af' }}>{d.combo?.ten_combo || '—'}</div>
+                    <div style={{ fontWeight: 600, color: 'var(--primary)' }}>{d.combo?.ten_combo || '—'}</div>
                     {getComboDesc(d.combo?.gia_ban || d.don_gia) && (
-                      <div style={{ fontSize: 11, color: '#047857', marginTop: 4, fontStyle: 'italic', maxWidth: 280 }}>
+                      <div style={{ fontSize: 11, color: '#1d4ed8', marginTop: 4, fontStyle: 'italic', maxWidth: 280 }}>
                         {getComboDesc(d.combo?.gia_ban || d.don_gia)}
                       </div>
                     )}
                   </td>
                   <td style={{ padding: '10px 12px', fontWeight: 700 }}>×{d.so_luong}</td>
-                  <td style={{ padding: '10px 12px', fontWeight: 700, color: '#6366f1' }}>{fmtMoney(d.tong_tien)}</td>
+                  <td style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--primary)' }}>{fmtMoney(d.tong_tien)}</td>
                   <td style={{ padding: '10px 12px', fontSize: 12 }}>{d.phuong_thuc_thanh_toan === 'CONG_NO' ? '💳 Công nợ' : d.phuong_thuc_thanh_toan}</td>
                   <td style={{ padding: '10px 12px' }}><Badge status={d.trang_thai} map={STATUS_DON} /></td>
                   <td style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>{fmtDate(d.ngay_dat)}</td>
@@ -722,14 +723,14 @@ function CongNoTab() {
   return (
     <div>
       <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-        <div style={{ flex: 1, padding: '12px 16px', borderRadius: 10, background: 'linear-gradient(135deg,#fef3c7,#fde68a)', border: '1px solid #f59e0b' }}>
+        <div className="workspace-financial-summary" style={{ flex: 1, padding: '12px 16px', borderRadius: 10, background: 'linear-gradient(135deg,#fef3c7,#fde68a)', border: '1px solid #f59e0b' }}>
           <div style={{ fontSize: 12, color: '#92400e', fontWeight: 600 }}>Tổng chưa thanh toán</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: '#d97706' }}>{fmtMoney(tongChuaThanhToan)}</div>
+          <div style={{ fontSize: 22, fontWeight: 600, color: '#d97706' }}>{fmtMoney(tongChuaThanhToan)}</div>
         </div>
         {soQuaHan > 0 && (
           <div style={{ padding: '12px 16px', borderRadius: 10, background: '#fef2f2', border: '1px solid #dc2626' }}>
             <div style={{ fontSize: 12, color: '#991b1b', fontWeight: 600 }}>Quá hạn</div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: '#dc2626' }}>{soQuaHan} khoản</div>
+            <div style={{ fontSize: 22, fontWeight: 600, color: '#dc2626' }}>{soQuaHan} khoản</div>
           </div>
         )}
       </div>
@@ -760,7 +761,7 @@ function CongNoTab() {
         }}>Chạy Quét Nợ</Btn>
       </div>
 
-      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 12, background: msg.type === 'success' ? '#f0fdf4' : '#fef2f2', color: msg.type === 'success' ? '#16a34a' : '#dc2626', fontWeight: 600 }}>{msg.text} <button onClick={() => setMsg(null)} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}>×</button></div>}
+      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 12, background: msg.type === 'success' ? '#eff6ff' : '#fef2f2', color: msg.type === 'success' ? '#2563eb' : '#dc2626', fontWeight: 600 }}>{msg.text} <button onClick={() => setMsg(null)} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}>×</button></div>}
 
       {loading ? <div style={{ textAlign: 'center', padding: 40 }}>Đang tải...</div> : (
         <div style={{ display: 'grid', gap: 10 }}>
@@ -768,15 +769,15 @@ function CongNoTab() {
             <div key={c.id} style={{ background: '#fff', borderRadius: 10, padding: 16, border: `1.5px solid ${c.trang_thai === 'QUA_HAN' ? '#fca5a5' : '#e5e7eb'}`, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
               <div>
                 <div style={{ fontWeight: 700, fontSize: 14 }}>{c.kiosk?.ten_kiosk} <span style={{fontSize: 12, color: '#9ca3af', fontWeight: 500}}>({c.kiosk?.ma_kiosk})</span></div>
-                <div style={{ fontSize: 13, color: '#1e40af', fontWeight: 600, marginTop: 4 }}>{c.loai_phat_sinh === 'KHOI_TAO' ? 'Phí nhượng quyền ban đầu' : c.loai_phat_sinh === 'NGUYEN_LIEU' ? 'Công nợ đặt mua combo nguyên liệu' : 'Phí royalty'}</div>
+                <div style={{ fontSize: 13, color: 'var(--primary)', fontWeight: 600, marginTop: 4 }}>{c.loai_phat_sinh === 'KHOI_TAO' ? 'Phí nhượng quyền ban đầu' : c.loai_phat_sinh === 'NGUYEN_LIEU' ? 'Công nợ đặt mua combo nguyên liệu' : 'Phí royalty'}</div>
                 {c.loai_phat_sinh === 'NGUYEN_LIEU' && getComboDesc(c.so_tien) && (
-                  <div style={{ fontSize: 12, color: '#047857', marginTop: 2, fontStyle: 'italic', maxWidth: 400 }}>📦 Chi tiết: {getComboDesc(c.so_tien)}</div>
+                  <div style={{ fontSize: 12, color: '#1d4ed8', marginTop: 2, fontStyle: 'italic', maxWidth: 400 }}>📦 Chi tiết: {getComboDesc(c.so_tien)}</div>
                 )}
                 <div style={{ fontSize: 12, color: '#374151', marginTop: 6 }}>Hạn: {fmtDate(c.han_thanh_toan)}</div>
                 {c.ghi_chu && <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>Ghi chú: {c.ghi_chu}</div>}
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 18, fontWeight: 800, color: c.trang_thai === 'DA_THANH_TOAN' ? '#16a34a' : '#dc2626' }}>
+                <div style={{ fontSize: 18, fontWeight: 600, color: c.trang_thai === 'DA_THANH_TOAN' ? '#2563eb' : '#dc2626' }}>
                   {fmtMoney(Number(c.so_tien) + Number(c.phi_phat_tre_han || 0))}
                 </div>
                 {Number(c.phi_phat_tre_han) > 0 && <div style={{ fontSize: 11, color: '#dc2626', marginBottom: 4 }}>(Gốc: {fmtMoney(c.so_tien)} + Phạt: {fmtMoney(c.phi_phat_tre_han)})</div>}
@@ -919,13 +920,13 @@ function RoyaltyTab() {
   return (
     <div>
       <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-        <div style={{ padding: '12px 16px', borderRadius: 10, background: 'linear-gradient(135deg,#f0fdf4,#dcfce7)', border: '1px solid #16a34a' }}>
-          <div style={{ fontSize: 12, color: '#14532d', fontWeight: 600 }}>Đã thu được</div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: '#16a34a' }}>{fmtMoney(tongRoyaltyThu)}</div>
+        <div style={{ padding: '12px 16px', borderRadius: 10, background: 'linear-gradient(135deg,#eff6ff,#dbeafe)', border: '1px solid #2563eb' }}>
+          <div style={{ fontSize: 12, color: '#1e3a8a', fontWeight: 600 }}>Đã thu được</div>
+          <div style={{ fontSize: 20, fontWeight: 600, color: '#2563eb' }}>{fmtMoney(tongRoyaltyThu)}</div>
         </div>
-        <div style={{ padding: '12px 16px', borderRadius: 10, background: 'linear-gradient(135deg,#fffbeb,#fde68a)', border: '1px solid #f59e0b' }}>
+        <div className="workspace-financial-summary" style={{ padding: '12px 16px', borderRadius: 10, background: 'linear-gradient(135deg,#fffbeb,#fde68a)', border: '1px solid #f59e0b' }}>
           <div style={{ fontSize: 12, color: '#78350f', fontWeight: 600 }}>Chờ thu</div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: '#d97706' }}>{fmtMoney(tongRoyaltyChoThu)}</div>
+          <div style={{ fontSize: 20, fontWeight: 600, color: '#d97706' }}>{fmtMoney(tongRoyaltyChoThu)}</div>
         </div>
       </div>
 
@@ -940,16 +941,16 @@ function RoyaltyTab() {
         <Btn small variant="outline" onClick={load}>Tải lại</Btn>
       </div>
 
-      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 12, background: msg.type === 'success' ? '#f0fdf4' : '#fef2f2', color: msg.type === 'success' ? '#16a34a' : '#dc2626', fontWeight: 600 }}>{msg.text} <button onClick={() => setMsg(null)} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}>×</button></div>}
+      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 12, background: msg.type === 'success' ? '#eff6ff' : '#fef2f2', color: msg.type === 'success' ? '#2563eb' : '#dc2626', fontWeight: 600 }}>{msg.text} <button onClick={() => setMsg(null)} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}>×</button></div>}
 
       {loading ? <div style={{ textAlign: 'center', padding: 40 }}>Đang tải...</div> : (
         <div style={{ display: 'grid', gap: 10 }}>
           {currentItems.map(r => (
             <div key={r.id} style={{ background: '#fff', borderRadius: 12, padding: 16, border: '1.5px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 14 }}>{r.kiosk?.ten_kiosk} <span style={{fontSize: 12, color: '#9ca3af', fontWeight: 500}}>({r.kiosk?.ma_kiosk})</span> <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 400 }}>·</span> <span style={{ fontSize: 13, color: '#6366f1' }}>Tháng {r.thang}</span></div>
+                <div style={{ fontWeight: 700, fontSize: 14 }}>{r.kiosk?.ten_kiosk} <span style={{fontSize: 12, color: '#9ca3af', fontWeight: 500}}>({r.kiosk?.ma_kiosk})</span> <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 400 }}>·</span> <span style={{ fontSize: 13, color: 'var(--primary)' }}>Tháng {r.thang}</span></div>
                 <div style={{ fontSize: 12, color: '#374151', marginTop: 2 }}>
-                  Doanh thu: <b>{fmtMoney(r.doanh_thu_thuc_te)}</b> × {r.ty_le_royalty}% = <b style={{ color: '#6366f1' }}>{fmtMoney(r.so_tien_royalty)}</b>
+                  Doanh thu: <b>{fmtMoney(r.doanh_thu_thuc_te)}</b> × {r.ty_le_royalty}% = <b style={{ color: 'var(--primary)' }}>{fmtMoney(r.so_tien_royalty)}</b>
                 </div>
                 {r.ghi_chu_ke_toan && <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>Ghi chú: {r.ghi_chu_ke_toan}</div>}
               </div>
@@ -1024,7 +1025,7 @@ function DoiSoatTab() {
             const cb = CANH_BAO[key]
             return n > 0 ? (
               <div key={key} style={{ padding: '10px 18px', borderRadius: 10, background: cb.bg, border: `1.5px solid ${cb.color}44` }}>
-                <div style={{ fontSize: 20, fontWeight: 800, color: cb.color }}>{n}</div>
+                <div style={{ fontSize: 20, fontWeight: 600, color: cb.color }}>{n}</div>
                 <div style={{ fontSize: 11, color: cb.color, fontWeight: 600 }}>{cb.label}</div>
               </div>
             ) : null
@@ -1038,7 +1039,7 @@ function DoiSoatTab() {
         <Btn small variant="outline" onClick={load}>Tải lại</Btn>
       </div>
 
-      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 12, background: msg.type === 'success' ? '#f0fdf4' : '#fef2f2', color: msg.type === 'success' ? '#16a34a' : '#dc2626', fontWeight: 600 }}>{msg.text} <button onClick={() => setMsg(null)} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}>×</button></div>}
+      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 12, background: msg.type === 'success' ? '#eff6ff' : '#fef2f2', color: msg.type === 'success' ? '#2563eb' : '#dc2626', fontWeight: 600 }}>{msg.text} <button onClick={() => setMsg(null)} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}>×</button></div>}
 
       {loading ? <div style={{ textAlign: 'center', padding: 40 }}>Đang tải...</div> : (
         <div style={{ display: 'grid', gap: 10 }}>
@@ -1054,20 +1055,20 @@ function DoiSoatTab() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginTop: 10 }}>
                       <div style={{ background: 'rgba(255,255,255,0.7)', borderRadius: 8, padding: '8px 12px', textAlign: 'center' }}>
                         <div style={{ fontSize: 11, color: '#6b7280' }}>Combo đã mua</div>
-                        <div style={{ fontSize: 18, fontWeight: 800, color: '#374151' }}>{d.tong_combo_da_mua}</div>
+                        <div style={{ fontSize: 18, fontWeight: 600, color: '#374151' }}>{d.tong_combo_da_mua}</div>
                       </div>
                       <div style={{ background: 'rgba(255,255,255,0.7)', borderRadius: 8, padding: '8px 12px', textAlign: 'center' }}>
                         <div style={{ fontSize: 11, color: '#6b7280' }}>DT kỳ vọng</div>
-                        <div style={{ fontSize: 14, fontWeight: 800, color: '#374151' }}>{fmtMoney(d.doanh_thu_ky_vong)}</div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#374151' }}>{fmtMoney(d.doanh_thu_ky_vong)}</div>
                       </div>
                       <div style={{ background: 'rgba(255,255,255,0.7)', borderRadius: 8, padding: '8px 12px', textAlign: 'center' }}>
                         <div style={{ fontSize: 11, color: '#6b7280' }}>DT thực tế</div>
-                        <div style={{ fontSize: 14, fontWeight: 800, color: '#374151' }}>{fmtMoney(d.doanh_thu_thuc_te)}</div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#374151' }}>{fmtMoney(d.doanh_thu_thuc_te)}</div>
                       </div>
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 28, fontWeight: 900, color: cb.color }}>
+                    <div style={{ fontSize: 28, fontWeight: 600, color: cb.color }}>
                       {d.chenh_lech_phan_tram > 0 ? '+' : ''}{Number(d.chenh_lech_phan_tram).toFixed(1)}%
                     </div>
                     <div style={{ fontSize: 12, color: cb.color, fontWeight: 600 }}>{cb.label}</div>
@@ -1176,7 +1177,7 @@ function AuditLogTab() {
             {currentItems.map(d => (
               <tr key={d.id} style={{ background: '#fff', borderRadius: 8, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                 <td style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>{new Date(d.thoi_gian).toLocaleString('vi-VN')}</td>
-                <td style={{ padding: '10px 12px', fontWeight: 700, fontSize: 13, color: '#4f46e5' }}>{d.hanh_dong}</td>
+                <td style={{ padding: '10px 12px', fontWeight: 700, fontSize: 13, color: 'var(--primary)' }}>{d.hanh_dong}</td>
                 <td style={{ padding: '10px 12px', fontSize: 13, color: '#374151' }}>{d.chi_tiet}</td>
                 <td style={{ padding: '10px 12px', fontSize: 12, color: '#9ca3af' }}>{d.admin_id ? d.admin_id.slice(0,8) : 'SYSTEM'}</td>
               </tr>
@@ -1217,27 +1218,27 @@ export function FranchisePanel() {
   return (
     <div style={{ padding: '0 0 32px 0' }}>
       {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', borderRadius: 16, padding: '20px 24px', marginBottom: 20, color: '#fff' }}>
-        <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800 }}>Quản Lý Nhượng Quyền Kiosk</h2>
+      <div className="workspace-franchise-hero" style={{ background: 'linear-gradient(135deg,var(--primary),var(--primary))', borderRadius: 16, padding: '20px 24px', marginBottom: 20, color: '#fff' }}>
+        <h2 style={{ margin: 0, fontSize: 22, fontWeight: 600 }}>Quản Lý Nhượng Quyền Kiosk</h2>
         <p style={{ margin: '4px 0 16px', opacity: 0.85, fontSize: 13 }}>Duyệt hồ sơ · Ký hợp đồng · Theo dõi combo · Công nợ · Royalty · Đối soát gian lận</p>
         
         {stats && (
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
             <div style={{ background: 'rgba(255,255,255,0.15)', padding: '12px 16px', borderRadius: 10, flex: 1, minWidth: 150 }}>
               <div style={{ fontSize: 12, opacity: 0.9, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Kiosk Hoạt động</div>
-              <div style={{ fontSize: 24, fontWeight: 800 }}>{stats.tong_kiosk_hoat_dong}</div>
+              <div style={{ fontSize: 24, fontWeight: 600 }}>{stats.tong_kiosk_hoat_dong}</div>
             </div>
             <div style={{ background: 'rgba(255,255,255,0.15)', padding: '12px 16px', borderRadius: 10, flex: 1, minWidth: 150 }}>
               <div style={{ fontSize: 12, opacity: 0.9, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Tổng Đơn Combo</div>
-              <div style={{ fontSize: 24, fontWeight: 800 }}>{stats.tong_don_combo}</div>
+              <div style={{ fontSize: 24, fontWeight: 600 }}>{stats.tong_don_combo}</div>
             </div>
             <div style={{ background: 'rgba(255,255,255,0.15)', padding: '12px 16px', borderRadius: 10, flex: 1, minWidth: 150 }}>
               <div style={{ fontSize: 12, opacity: 0.9, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Nợ chưa thu</div>
-              <div style={{ fontSize: 24, fontWeight: 800 }}>{fmtMoney(stats.tong_no_chua_thu)}</div>
+              <div style={{ fontSize: 24, fontWeight: 600 }}>{fmtMoney(stats.tong_no_chua_thu)}</div>
             </div>
             <div style={{ background: 'rgba(255,255,255,0.15)', padding: '12px 16px', borderRadius: 10, flex: 1, minWidth: 150 }}>
               <div style={{ fontSize: 12, opacity: 0.9, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Royalty đã thu</div>
-              <div style={{ fontSize: 24, fontWeight: 800 }}>{fmtMoney(stats.tong_royalty_da_thu)}</div>
+              <div style={{ fontSize: 24, fontWeight: 600 }}>{fmtMoney(stats.tong_royalty_da_thu)}</div>
             </div>
           </div>
         )}
@@ -1248,8 +1249,8 @@ export function FranchisePanel() {
         {TABS.map(t => (
           <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
             flex: '1 1 auto', padding: '8px 14px', border: 'none', borderRadius: 9, cursor: 'pointer', fontSize: 13, fontWeight: 600, transition: 'all .2s',
-            background: activeTab === t.id ? '#fff' : 'transparent',
-            color: activeTab === t.id ? '#6366f1' : '#6b7280',
+            background: activeTab === t.id ? 'var(--primary)' : 'transparent',
+            color: activeTab === t.id ? '#fff' : '#526581',
             boxShadow: activeTab === t.id ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
           }}>{t.label}</button>
         ))}

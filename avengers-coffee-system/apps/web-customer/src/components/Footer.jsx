@@ -6,24 +6,24 @@ export default function Footer({ onTabChange }) {
     <footer className="bg-[#b22830] py-12 text-white w-full">
       <div className="mx-auto max-w-[1200px] px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-          
+
           <div className="flex flex-col gap-4 items-center md:items-start">
             <img src="/hc-assets/logo.png" alt="Highlands Coffee" className="w-[120px] h-auto object-contain brightness-0 invert" />
           </div>
-          
+
           <div className="flex flex-col gap-4">
             <h3 className="text-[16px] font-bold uppercase mb-2">{t('footer.about')}</h3>
             <ul className="space-y-3 text-[14px]">
               <li>
-                <button 
-                  onClick={() => { onTabChange?.('about'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                <button
+                  onClick={() => { onTabChange?.('menu-intro'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="hover:text-red-200 transition-colors text-left"
                 >
                   {t('footer.menu')}
                 </button>
               </li>
               <li>
-                <button 
+                <button
                   onClick={() => { onTabChange?.('about'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="hover:text-red-200 transition-colors text-left"
                 >
@@ -31,7 +31,7 @@ export default function Footer({ onTabChange }) {
                 </button>
               </li>
               <li>
-                <button 
+                <button
                   onClick={() => { onTabChange?.('careers'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="hover:text-red-200 transition-colors text-left"
                 >
@@ -39,7 +39,7 @@ export default function Footer({ onTabChange }) {
                 </button>
               </li>
               <li>
-                <button 
+                <button
                   onClick={() => { onTabChange?.('contact'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="hover:text-red-200 transition-colors text-left"
                 >
@@ -48,12 +48,12 @@ export default function Footer({ onTabChange }) {
               </li>
             </ul>
           </div>
-          
+
           <div className="flex flex-col gap-4">
             <h3 className="text-[16px] font-bold uppercase mb-2">{t('footer.stores')}</h3>
             <ul className="space-y-3 text-[14px]">
               <li>
-                <button 
+                <button
                   onClick={() => { onTabChange?.('stores'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="hover:text-red-200 transition-colors text-left"
                 >
@@ -61,20 +61,20 @@ export default function Footer({ onTabChange }) {
                 </button>
               </li>
               <li>
-                <button 
+                <button
                   onClick={() => { onTabChange?.('tra-cuu-don'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="hover:text-red-200 transition-colors text-left flex items-center gap-1.5 font-semibold text-amber-300 hover:text-amber-200"
                 >
-                  <span>Tra cứu đơn hàng</span>
+                  <span>{t('header.tracking')}</span>
                 </button>
               </li>
             </ul>
           </div>
-          
+
           <div className="flex flex-col gap-4">
             <h3 className="text-[16px] font-bold uppercase mb-2">{t('home.news')}</h3>
           </div>
-          
+
           <div className="flex flex-col gap-4">
             <h3 className="text-[16px] font-bold uppercase mb-2">Socials</h3>
             <div className="flex gap-4">
@@ -89,9 +89,9 @@ export default function Footer({ onTabChange }) {
               </a>
             </div>
           </div>
-          
+
         </div>
-        
+
         <div className="mt-12 text-center md:text-left text-[13px] text-gray-200">
           <p>{t('footer.copyright')}</p>
         </div>

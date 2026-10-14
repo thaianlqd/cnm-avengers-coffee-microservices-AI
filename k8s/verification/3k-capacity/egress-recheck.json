@@ -1,0 +1,28 @@
+{
+  "samples": [
+    {
+      "repeat": 0,
+      "tcp_connected": true,
+      "port": 443,
+      "global_address": true,
+      "matches_https_ip": false
+    },
+    {
+      "repeat": 1,
+      "tcp_connected": true,
+      "port": 443,
+      "global_address": true,
+      "matches_https_ip": false
+    },
+    {
+      "repeat": 2,
+      "tcp_connected": true,
+      "port": 443,
+      "global_address": true,
+      "matches_https_ip": false
+    }
+  ],
+  "distinct_tcp443_egress_addresses": 3,
+  "ip_values_kept_only_in_private_tmp": true,
+  "benchmark_data_over_cloudflare": false
+}

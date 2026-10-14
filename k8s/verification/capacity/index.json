@@ -1,0 +1,808 @@
+[
+  {
+    "directory": "20261013T141543.807876Z-baseline-1000",
+    "vus": 1000,
+    "status": "ABORTED before load",
+    "accept_encoding": null,
+    "gateway_policy": null,
+    "http_pass": null,
+    "stable": null,
+    "requests": null,
+    "rps": null,
+    "successful_rps": null,
+    "failure_rate": null,
+    "checks_rate": null,
+    "p95_ms": null,
+    "hold_metrics": {},
+    "hold_rps": 0.0,
+    "hpa_peak": {},
+    "new_restarts": {}
+  },
+  {
+    "directory": "20261013T141807.263585Z-baseline-recovered-1000",
+    "vus": 1000,
+    "status": "FAIL",
+    "accept_encoding": null,
+    "gateway_policy": null,
+    "http_pass": false,
+    "stable": false,
+    "requests": 66032,
+    "rps": 309.9730806180215,
+    "successful_rps": 298.55188324184564,
+    "failure_rate": 0.03684577174703174,
+    "checks_rate": 0.9631542282529683,
+    "p95_ms": 5420.982399999998,
+    "hold_metrics": {
+      "http_req_duration{phase:hold}": {
+        "max": 8605.165,
+        "avg": 1841.2206630670667,
+        "p(50)": 1324.229,
+        "p(95)": 5053.6136
+      },
+      "http_reqs{phase:hold}": {
+        "count": 46579,
+        "rate": 218.65513875252643
+      },
+      "checks{phase:hold}": {
+        "rate": 0.9549153051804461,
+        "passes": 88958,
+        "fails": 4200
+      },
+      "http_req_failed{phase:hold}": {
+        "rate": 0.04508469481955388,
+        "passes": 2100,
+        "fails": 44479
+      }
+    },
+    "hold_rps": 388.15833333333336,
+    "hpa_peak": {
+      "api-gateway": 4,
+      "identity-service": 3,
+      "menu-service": 4
+    },
+    "new_restarts": {
+      "api-gateway-8564fcb9dd-6sktr/api-gateway": 2
+    }
+  },
+  {
+    "directory": "20261013T142515.279073Z-baseline-500",
+    "vus": 500,
+    "status": "FAIL",
+    "accept_encoding": null,
+    "gateway_policy": null,
+    "http_pass": false,
+    "stable": false,
+    "requests": 42068,
+    "rps": 194.8584557450707,
+    "successful_rps": 161.98987150129818,
+    "failure_rate": 0.16867928116383,
+    "checks_rate": 0.83132071883617,
+    "p95_ms": 8327.63704999999,
+    "hold_metrics": {
+      "http_req_duration{phase:hold}": {
+        "avg": 1625.1529596113398,
+        "p(50)": 544.3945,
+        "p(95)": 9999.90275,
+        "max": 10043.088
+      },
+      "http_reqs{phase:hold}": {
+        "count": 25626,
+        "rate": 118.69931508327427
+      },
+      "http_req_failed{phase:hold}": {
+        "rate": 0.1367361273706392,
+        "passes": 3504,
+        "fails": 22122
+      },
+      "checks{phase:hold}": {
+        "rate": 0.8632638726293608,
+        "passes": 44244,
+        "fails": 7008
+      }
+    },
+    "hold_rps": 213.55,
+    "hpa_peak": {
+      "api-gateway": 4,
+      "identity-service": 3,
+      "menu-service": 4
+    },
+    "new_restarts": {
+      "api-gateway-8564fcb9dd-qgspq/api-gateway": 1,
+      "api-gateway-8564fcb9dd-2rfps/api-gateway": 1,
+      "api-gateway-8564fcb9dd-tn5nn/api-gateway": 1,
+      "api-gateway-8564fcb9dd-h7h2g/api-gateway": 1,
+      "identity-service-5774bb6df7-wl6f8/identity-service": 1,
+      "menu-service-7cf979fcc-npshf/menu-service": 1
+    }
+  },
+  {
+    "directory": "20261013T143315.169149Z-baseline-250",
+    "vus": 250,
+    "status": "ABORTED before load",
+    "accept_encoding": null,
+    "gateway_policy": null,
+    "http_pass": null,
+    "stable": null,
+    "requests": null,
+    "rps": null,
+    "successful_rps": null,
+    "failure_rate": null,
+    "checks_rate": null,
+    "p95_ms": null,
+    "hold_metrics": {},
+    "hold_rps": 0.0,
+    "hpa_peak": {},
+    "new_restarts": {}
+  },
+  {
+    "directory": "20261013T144212.053915Z-baseline-retry-250",
+    "vus": 250,
+    "status": "STABLE PASS",
+    "accept_encoding": null,
+    "gateway_policy": null,
+    "http_pass": true,
+    "stable": true,
+    "requests": 49276,
+    "rps": 231.3261772098132,
+    "successful_rps": 231.3261772098132,
+    "failure_rate": 0,
+    "checks_rate": 1,
+    "p95_ms": 484.6307499999995,
+    "hold_metrics": {
+      "http_req_failed{phase:hold}": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 35614
+      },
+      "http_req_duration{phase:hold}": {
+        "p(50)": 18.8395,
+        "p(95)": 470.47569999999996,
+        "max": 2944.886,
+        "avg": 88.25597093839492
+      },
+      "checks{phase:hold}": {
+        "rate": 1,
+        "passes": 71228,
+        "fails": 0
+      },
+      "http_reqs{phase:hold}": {
+        "count": 35614,
+        "rate": 167.18991953791476
+      }
+    },
+    "hold_rps": 296.78333333333336,
+    "hpa_peak": {
+      "api-gateway": 4,
+      "identity-service": 3,
+      "menu-service": 4
+    },
+    "new_restarts": {}
+  },
+  {
+    "directory": "20261013T145359.475913Z-logging-off-500",
+    "vus": 500,
+    "status": "STABLE PASS",
+    "accept_encoding": null,
+    "gateway_policy": null,
+    "http_pass": true,
+    "stable": true,
+    "requests": 83480,
+    "rps": 392.0879488777058,
+    "successful_rps": 392.0879488777058,
+    "failure_rate": 0,
+    "checks_rate": 1,
+    "p95_ms": 933.61465,
+    "hold_metrics": {
+      "http_reqs{phase:hold}": {
+        "count": 61784,
+        "rate": 290.18641391303515
+      },
+      "checks{phase:hold}": {
+        "rate": 1,
+        "passes": 123568,
+        "fails": 0
+      },
+      "http_req_failed{phase:hold}": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 61784
+      },
+      "http_req_duration{phase:hold}": {
+        "avg": 215.90850712158505,
+        "p(50)": 109.81299999999999,
+        "p(95)": 790.9839499999998,
+        "max": 3783.774
+      }
+    },
+    "hold_rps": 514.8666666666667,
+    "hpa_peak": {
+      "api-gateway": 4,
+      "identity-service": 3,
+      "menu-service": 4
+    },
+    "new_restarts": {}
+  },
+  {
+    "directory": "20261013T150507.578311Z-logging-off-1000",
+    "vus": 1000,
+    "status": "EXCLUDED (environment overlap)",
+    "accept_encoding": null,
+    "gateway_policy": null,
+    "http_pass": false,
+    "stable": true,
+    "requests": 87660,
+    "rps": 412.21117338590864,
+    "successful_rps": 412.21117338590864,
+    "failure_rate": 0,
+    "checks_rate": 1,
+    "p95_ms": 3119.9606,
+    "hold_metrics": {
+      "http_reqs{phase:hold}": {
+        "rate": 252.86611496296885,
+        "count": 53774
+      },
+      "http_req_duration{phase:hold}": {
+        "avg": 1468.4751227172928,
+        "p(50)": 1178.2984999999999,
+        "p(95)": 3530.0532999999987,
+        "max": 9028.253
+      },
+      "http_req_failed{phase:hold}": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 53774
+      },
+      "checks{phase:hold}": {
+        "rate": 1,
+        "passes": 107548,
+        "fails": 0
+      }
+    },
+    "hold_rps": 448.1166666666667,
+    "hpa_peak": {
+      "api-gateway": 4,
+      "identity-service": 3,
+      "menu-service": 4
+    },
+    "new_restarts": {}
+  },
+  {
+    "directory": "20261013T152234.554302Z-logging-off-infra-recovered-1000",
+    "vus": 1000,
+    "status": "FAIL",
+    "accept_encoding": null,
+    "gateway_policy": {
+      "GATEWAY_REQUEST_LOGGING": "false"
+    },
+    "http_pass": false,
+    "stable": false,
+    "requests": 60708,
+    "rps": 285.9107354733888,
+    "successful_rps": 272.271717717394,
+    "failure_rate": 0.047703762271858734,
+    "checks_rate": 0.9522962377281413,
+    "p95_ms": 6915.677999999998,
+    "hold_metrics": {
+      "http_reqs{phase:hold}": {
+        "count": 34906,
+        "rate": 164.39349233106194
+      },
+      "http_req_duration{phase:hold}": {
+        "avg": 2730.7289772245417,
+        "p(50)": 1843.942,
+        "p(95)": 7616.78075,
+        "max": 10048.195
+      },
+      "checks{phase:hold}": {
+        "rate": 0.9170343207471495,
+        "passes": 64020,
+        "fails": 5792
+      },
+      "http_req_failed{phase:hold}": {
+        "rate": 0.08296567925285052,
+        "passes": 2896,
+        "fails": 32010
+      }
+    },
+    "hold_rps": 290.8833333333333,
+    "hpa_peak": {
+      "api-gateway": 4,
+      "identity-service": 3,
+      "menu-service": 4
+    },
+    "new_restarts": {
+      "api-gateway-6498c64696-bjlk5/api-gateway": 1
+    }
+  },
+  {
+    "directory": "20261013T153647.179339Z-keepalive-1000",
+    "vus": 1000,
+    "status": "FAIL",
+    "accept_encoding": null,
+    "gateway_policy": {
+      "GATEWAY_REQUEST_LOGGING": "false",
+      "GATEWAY_PROXY_KEEP_ALIVE": "true"
+    },
+    "http_pass": false,
+    "stable": true,
+    "requests": 101628,
+    "rps": 480.837439520479,
+    "successful_rps": 480.72388716730376,
+    "failure_rate": 0.0002361553902467824,
+    "checks_rate": 0.9997638446097532,
+    "p95_ms": 2972.5677999999994,
+    "hold_metrics": {
+      "http_req_duration{phase:hold}": {
+        "avg": 955.668295185355,
+        "p(50)": 702.905,
+        "p(95)": 3013.787449999999,
+        "max": 9955.386
+      },
+      "checks{phase:hold}": {
+        "rate": 0.9997003339136391,
+        "passes": 140114,
+        "fails": 42
+      },
+      "http_req_failed{phase:hold}": {
+        "rate": 0.0002996660863609121,
+        "passes": 21,
+        "fails": 70057
+      },
+      "http_reqs{phase:hold}": {
+        "count": 70078,
+        "rate": 331.5634085755513
+      }
+    },
+    "hold_rps": 583.9833333333333,
+    "hpa_peak": {
+      "api-gateway": 4,
+      "identity-service": 3,
+      "menu-service": 4
+    },
+    "new_restarts": {}
+  },
+  {
+    "directory": "20261013T155708.735837Z-fairness-1000",
+    "vus": 1000,
+    "status": "FAIL",
+    "accept_encoding": null,
+    "gateway_policy": {
+      "GATEWAY_REQUEST_LOGGING": "false",
+      "GATEWAY_PROXY_KEEP_ALIVE": "true",
+      "GATEWAY_MAX_REQUESTS_PER_SOCKET": "64"
+    },
+    "http_pass": false,
+    "stable": false,
+    "requests": 120464,
+    "rps": 565.6035885290236,
+    "successful_rps": 562.3028570014643,
+    "failure_rate": 0.005835768362332315,
+    "checks_rate": 0.9941642316376677,
+    "p95_ms": 2053.484749999999,
+    "hold_metrics": {
+      "http_req_duration{phase:hold}": {
+        "avg": 706.8363068836593,
+        "p(50)": 463.12649999999996,
+        "p(95)": 2106.4454499999997,
+        "max": 10059.799
+      },
+      "http_reqs{phase:hold}": {
+        "count": 81904,
+        "rate": 384.55635139860163
+      },
+      "http_req_failed{phase:hold}": {
+        "rate": 0.006910529400273491,
+        "passes": 566,
+        "fails": 81338
+      },
+      "checks{phase:hold}": {
+        "fails": 1132,
+        "rate": 0.9930894705997265,
+        "passes": 162676
+      }
+    },
+    "hold_rps": 682.5333333333333,
+    "hpa_peak": {
+      "api-gateway": 4,
+      "identity-service": 3,
+      "menu-service": 4
+    },
+    "new_restarts": {
+      "api-gateway-7f4fcdd58c-svjc4/api-gateway": 1,
+      "api-gateway-7f4fcdd58c-llfzw/api-gateway": 1
+    }
+  },
+  {
+    "directory": "20261013T161237.420162Z-final-search-750",
+    "vus": 750,
+    "status": "FAIL",
+    "accept_encoding": null,
+    "gateway_policy": {
+      "GATEWAY_REQUEST_LOGGING": "false",
+      "GATEWAY_PROXY_KEEP_ALIVE": "true",
+      "GATEWAY_MAX_REQUESTS_PER_SOCKET": "64"
+    },
+    "http_pass": false,
+    "stable": true,
+    "requests": 108240,
+    "rps": 507.7400786033616,
+    "successful_rps": 507.7119333661885,
+    "failure_rate": 5.543237250554324e-05,
+    "checks_rate": 0.9999445676274945,
+    "p95_ms": 1484.5789499999992,
+    "hold_metrics": {
+      "http_req_duration{phase:hold}": {
+        "avg": 448.133335735103,
+        "p(50)": 264.221,
+        "p(95)": 1607.51075,
+        "max": 5930.417
+      },
+      "checks{phase:hold}": {
+        "fails": 10,
+        "rate": 0.9999331604416758,
+        "passes": 149602
+      },
+      "http_req_failed{phase:hold}": {
+        "passes": 5,
+        "fails": 74801,
+        "rate": 6.683955832419859e-05
+      },
+      "http_reqs{phase:hold}": {
+        "count": 74806,
+        "rate": 350.9054353289271
+      }
+    },
+    "hold_rps": 623.3833333333333,
+    "hpa_peak": {
+      "api-gateway": 4,
+      "identity-service": 3,
+      "menu-service": 4
+    },
+    "new_restarts": {}
+  },
+  {
+    "directory": "20261013T164512.777223Z-identity-qualified-1-500",
+    "vus": 500,
+    "status": "FAIL",
+    "accept_encoding": "legacy identity (header absent)",
+    "gateway_policy": {
+      "GATEWAY_REQUEST_LOGGING": "false",
+      "GATEWAY_PROXY_KEEP_ALIVE": "true",
+      "GATEWAY_MAX_REQUESTS_PER_SOCKET": "64"
+    },
+    "http_pass": false,
+    "stable": false,
+    "requests": 49260,
+    "rps": 231.12785900258447,
+    "successful_rps": 227.11150806254767,
+    "failure_rate": 0.017377182298010555,
+    "checks_rate": 0.9826228177019894,
+    "p95_ms": 4193.635099999999,
+    "hold_metrics": {
+      "http_req_failed{phase:hold}": {
+        "rate": 0.024511788706512598,
+        "passes": 787,
+        "fails": 31320
+      },
+      "http_reqs{phase:hold}": {
+        "count": 32107,
+        "rate": 150.64600424271174
+      },
+      "http_req_duration{phase:hold}": {
+        "p(50)": 463.651,
+        "p(95)": 5485.125399999998,
+        "max": 10083.943,
+        "avg": 1134.84803491451
+      },
+      "checks{phase:hold}": {
+        "rate": 0.9754882112934874,
+        "passes": 62640,
+        "fails": 1574
+      }
+    },
+    "hold_rps": 267.55833333333334,
+    "hpa_peak": {
+      "api-gateway": 4,
+      "identity-service": 3,
+      "menu-service": 4
+    },
+    "new_restarts": {
+      "api-gateway-7f4fcdd58c-llfzw/api-gateway": 1,
+      "api-gateway-7f4fcdd58c-wsxjd/api-gateway": 1,
+      "api-gateway-7f4fcdd58c-svjc4/api-gateway": 1
+    }
+  },
+  {
+    "directory": "20261013T165601.046974Z-gzip-search-1000-1000",
+    "vus": 1000,
+    "status": "FAIL",
+    "accept_encoding": "gzip",
+    "gateway_policy": {
+      "GATEWAY_REQUEST_LOGGING": "false",
+      "GATEWAY_PROXY_KEEP_ALIVE": "true",
+      "GATEWAY_MAX_REQUESTS_PER_SOCKET": "64"
+    },
+    "http_pass": false,
+    "stable": false,
+    "requests": 91648,
+    "rps": 426.77257898448755,
+    "successful_rps": 131.54102447575295,
+    "failure_rate": 0.6917772346368715,
+    "checks_rate": 0.3082227653631285,
+    "p95_ms": 8153.311149999999,
+    "hold_metrics": {
+      "http_req_duration{phase:hold}": {
+        "avg": 905.2899266747809,
+        "p(50)": 95.99449999999999,
+        "p(95)": 6375.906199999997,
+        "max": 10117.021
+      },
+      "http_reqs{phase:hold}": {
+        "count": 72308,
+        "rate": 336.71298491194926
+      },
+      "checks{phase:hold}": {
+        "fails": 115742,
+        "rate": 0.1996597886817503,
+        "passes": 28874
+      },
+      "http_req_failed{phase:hold}": {
+        "passes": 57871,
+        "fails": 14437,
+        "rate": 0.8003402113182497
+      }
+    },
+    "hold_rps": 602.5666666666667,
+    "hpa_peak": {
+      "api-gateway": 4,
+      "identity-service": 3,
+      "menu-service": 4
+    },
+    "new_restarts": {
+      "api-gateway-7f4fcdd58c-llfzw/api-gateway": 2,
+      "api-gateway-7f4fcdd58c-4kmmr/api-gateway": 2,
+      "api-gateway-7f4fcdd58c-wsxjd/api-gateway": 2,
+      "api-gateway-7f4fcdd58c-tsppw/api-gateway": 2
+    }
+  },
+  {
+    "directory": "20261013T170511.755199Z-final-identity-confirm-1-250",
+    "vus": 250,
+    "status": "FAIL",
+    "accept_encoding": "legacy identity (header absent)",
+    "gateway_policy": {
+      "GATEWAY_REQUEST_LOGGING": "false",
+      "GATEWAY_PROXY_KEEP_ALIVE": "true",
+      "GATEWAY_MAX_REQUESTS_PER_SOCKET": "64"
+    },
+    "http_pass": false,
+    "stable": true,
+    "requests": 37176,
+    "rps": 173.3782832171566,
+    "successful_rps": 172.9585488323507,
+    "failure_rate": 0.002420916720464816,
+    "checks_rate": 0.9975790832795352,
+    "p95_ms": 1580.660749999999,
+    "hold_metrics": {
+      "http_req_duration{phase:hold}": {
+        "p(50)": 189.36950000000002,
+        "p(95)": 1902.6007499999998,
+        "max": 6889.561,
+        "avg": 446.0157522011567
+      },
+      "http_reqs{phase:hold}": {
+        "count": 25214,
+        "rate": 117.59091976106592
+      },
+      "checks{phase:hold}": {
+        "passes": 50264,
+        "fails": 164,
+        "rate": 0.9967478385024193
+      },
+      "http_req_failed{phase:hold}": {
+        "rate": 0.003252161497580709,
+        "passes": 82,
+        "fails": 25132
+      }
+    },
+    "hold_rps": 210.11666666666667,
+    "hpa_peak": {
+      "api-gateway": 4,
+      "identity-service": 3,
+      "menu-service": 4
+    },
+    "new_restarts": {}
+  },
+  {
+    "directory": "20261013T172918.546314Z-final-logger-search-500",
+    "vus": 500,
+    "status": "STABLE PASS",
+    "accept_encoding": "legacy identity (header absent)",
+    "gateway_policy": {
+      "GATEWAY_REQUEST_LOGGING": "false",
+      "GATEWAY_PROXY_KEEP_ALIVE": "false",
+      "GATEWAY_MAX_REQUESTS_PER_SOCKET": "0"
+    },
+    "http_pass": true,
+    "stable": true,
+    "requests": 66940,
+    "rps": 313.2759359153685,
+    "successful_rps": 313.2759359153685,
+    "failure_rate": 0,
+    "checks_rate": 1,
+    "p95_ms": 1463.744949999999,
+    "hold_metrics": {
+      "http_req_duration{phase:hold}": {
+        "avg": 525.2812993603188,
+        "p(50)": 396.096,
+        "p(95)": 1471.6191999999994,
+        "max": 3324.589
+      },
+      "checks{phase:hold}": {
+        "rate": 1,
+        "passes": 92858,
+        "fails": 0
+      },
+      "http_req_failed{phase:hold}": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 46429
+      },
+      "http_reqs{phase:hold}": {
+        "count": 46429,
+        "rate": 217.28545605937623
+      }
+    },
+    "hold_rps": 386.90833333333336,
+    "hpa_peak": {
+      "api-gateway": 4,
+      "identity-service": 3,
+      "menu-service": 4
+    },
+    "new_restarts": {}
+  },
+  {
+    "directory": "20261013T173758.965418Z-final-logger-confirm-500",
+    "vus": 500,
+    "status": "FAIL",
+    "accept_encoding": "legacy identity (header absent)",
+    "gateway_policy": {
+      "GATEWAY_REQUEST_LOGGING": "false",
+      "GATEWAY_PROXY_KEEP_ALIVE": "false",
+      "GATEWAY_MAX_REQUESTS_PER_SOCKET": "0"
+    },
+    "http_pass": false,
+    "stable": true,
+    "requests": 60996,
+    "rps": 284.8984951024956,
+    "successful_rps": 284.8984951024956,
+    "failure_rate": 0,
+    "checks_rate": 1,
+    "p95_ms": 2558.15175,
+    "hold_metrics": {
+      "http_req_failed{phase:hold}": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 38447
+      },
+      "http_req_duration{phase:hold}": {
+        "avg": 807.7690335526838,
+        "p(50)": 333.477,
+        "p(95)": 3072.004299999999,
+        "max": 9236.253
+      },
+      "checks{phase:hold}": {
+        "rate": 1,
+        "passes": 76894,
+        "fails": 0
+      },
+      "http_reqs{phase:hold}": {
+        "count": 38447,
+        "rate": 179.57722541159498
+      }
+    },
+    "hold_rps": 320.39166666666665,
+    "hpa_peak": {
+      "api-gateway": 4,
+      "identity-service": 3,
+      "menu-service": 4
+    },
+    "new_restarts": {}
+  },
+  {
+    "directory": "20261013T174634.781163Z-final-logger-refine-250",
+    "vus": 250,
+    "status": "STABLE PASS",
+    "accept_encoding": "legacy identity (header absent)",
+    "gateway_policy": {
+      "GATEWAY_REQUEST_LOGGING": "false",
+      "GATEWAY_PROXY_KEEP_ALIVE": "false",
+      "GATEWAY_MAX_REQUESTS_PER_SOCKET": "0"
+    },
+    "http_pass": true,
+    "stable": true,
+    "requests": 48932,
+    "rps": 229.95347389691355,
+    "successful_rps": 229.95347389691355,
+    "failure_rate": 0,
+    "checks_rate": 1,
+    "p95_ms": 488.467249999999,
+    "hold_metrics": {
+      "http_req_failed{phase:hold}": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 34912
+      },
+      "http_reqs{phase:hold}": {
+        "count": 34912,
+        "rate": 164.0671887658188
+      },
+      "http_req_duration{phase:hold}": {
+        "avg": 107.57591810838721,
+        "p(50)": 22.643,
+        "p(95)": 513.3319499999992,
+        "max": 2863.358
+      },
+      "checks{phase:hold}": {
+        "rate": 1,
+        "passes": 69824,
+        "fails": 0
+      }
+    },
+    "hold_rps": 290.93333333333334,
+    "hpa_peak": {
+      "api-gateway": 4,
+      "identity-service": 3,
+      "menu-service": 4
+    },
+    "new_restarts": {}
+  },
+  {
+    "directory": "20261013T175455.894727Z-final-logger-confirm-2-250",
+    "vus": 250,
+    "status": "STABLE PASS",
+    "accept_encoding": "legacy identity (header absent)",
+    "gateway_policy": {
+      "GATEWAY_REQUEST_LOGGING": "false",
+      "GATEWAY_PROXY_KEEP_ALIVE": "false",
+      "GATEWAY_MAX_REQUESTS_PER_SOCKET": "0"
+    },
+    "http_pass": true,
+    "stable": true,
+    "requests": 50260,
+    "rps": 237.7933608812794,
+    "successful_rps": 237.7933608812794,
+    "failure_rate": 0,
+    "checks_rate": 1,
+    "p95_ms": 415.01759999999996,
+    "hold_metrics": {
+      "http_reqs{phase:hold}": {
+        "count": 36423,
+        "rate": 172.3268520369845
+      },
+      "http_req_failed{phase:hold}": {
+        "fails": 36423,
+        "rate": 0,
+        "passes": 0
+      },
+      "checks{phase:hold}": {
+        "rate": 1,
+        "passes": 72846,
+        "fails": 0
+      },
+      "http_req_duration{phase:hold}": {
+        "p(50)": 14.2,
+        "p(95)": 349.76989999999995,
+        "max": 2756.352,
+        "avg": 69.41158957252318
+      }
+    },
+    "hold_rps": 303.525,
+    "hpa_peak": {
+      "api-gateway": 4,
+      "identity-service": 3,
+      "menu-service": 4
+    },
+    "new_restarts": {}
+  }
+]

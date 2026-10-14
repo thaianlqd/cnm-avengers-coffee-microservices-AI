@@ -1,0 +1,21 @@
+{
+  "started_at": "2026-10-13T14:25:15.414360+00:00",
+  "vus": 500,
+  "think_seconds": 3,
+  "cache_ms": 5000,
+  "ramp_seconds": 60,
+  "hold_seconds": 120,
+  "down_seconds": 30,
+  "k6_version": "k6 v0.57.0 (commit/50afd82c18, go1.23.6, darwin/arm64)",
+  "source_head": "9cc558034d5190decd88188818d04d7962c0645e",
+  "generator_rlimit_nofile": [
+    1048575,
+    9223372036854775807
+  ],
+  "host_fd_limit": "maxfiles    256            unlimited",
+  "host_cpu_count": "8",
+  "load_started_at": "2026-10-13T14:27:40.142646+00:00",
+  "k6_exit": 99,
+  "load_finished_at": "2026-10-13T14:31:16.629730+00:00",
+  "finished_at": "2026-10-13T14:37:13.633120+00:00"
+}

@@ -1,3 +1,4 @@
+import { uiText as ui, useUiLanguage, uiLocale } from "../../lib/uiText";
 import React, { useState, useEffect, useRef } from 'react';
 import { apiClient } from '../../lib/apiClient';
 import {
@@ -37,6 +38,7 @@ export default function OrderLookupPage({
   user: propUser,
   onOpenOrderHistory,
 }) {
+  useUiLanguage();
   const [currentUser, setCurrentUser] = useState(() => {
     if (propUser) return propUser;
     try {
@@ -229,14 +231,14 @@ export default function OrderLookupPage({
 
   // Helper formatting functions
   const formatCurrency = (amount) => {
-    return (Number(amount) || 0).toLocaleString('vi-VN') + ' đ';
+    return (Number(amount) || 0).toLocaleString(uiLocale()) + ' đ';
   };
 
   const formatDateTime = (dateStr) => {
     if (!dateStr) return 'Đang cập nhật';
     try {
       const d = new Date(dateStr);
-      return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' - ' + d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      return d.toLocaleTimeString(uiLocale(), { hour: '2-digit', minute: '2-digit' }) + ' - ' + d.toLocaleDateString(uiLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
     } catch {
       return dateStr;
     }
@@ -370,26 +372,18 @@ export default function OrderLookupPage({
                 type="button"
                 onClick={onBack || (() => onNavigate?.('order'))}
                 className="hover:text-[#b22830] transition-colors cursor-pointer"
-              >
-                Trang chủ
-              </button>
+              >{ui("Trang chủ")}</button>
               <span>›</span>
               <button
                 type="button"
                 onClick={onBack || (() => onNavigate?.('order'))}
                 className="hover:text-[#b22830] transition-colors cursor-pointer"
-              >
-                Đặt hàng
-              </button>
+              >{ui("Đặt hàng")}</button>
               <span>›</span>
-              <span className="text-[#b22830]">Tra cứu đơn hàng</span>
+              <span className="text-[#b22830]">{ui("Tra cứu đơn hàng")}</span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-[#1f1f1f] font-sans flex items-center gap-3">
-              Tra Cứu Đơn Hàng
-              <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-red-100 text-[#b22830] normal-case tracking-normal">
-                <TruckIcon className="w-3.5 h-3.5" />
-                Khách Vãng Lai &amp; Đơn Hàng
-              </span>
+            <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-[#1f1f1f] font-sans flex items-center gap-3">{ui("Tra Cứu Đơn Hàng")}<span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-red-100 text-[#b22830] normal-case tracking-normal">
+                <TruckIcon className="w-3.5 h-3.5" />{ui("Khách Vãng Lai & Đơn Hàng")}</span>
             </h1>
           </div>
 
@@ -401,7 +395,7 @@ export default function OrderLookupPage({
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-bold transition-all shadow-xs cursor-pointer"
               >
                 <ArrowLeftIcon className="w-3.5 h-3.5" />
-                <span>Quay lại</span>
+                <span>{ui("Quay lại")}</span>
               </button>
             )}
             <button
@@ -410,7 +404,7 @@ export default function OrderLookupPage({
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#b22830] hover:bg-[#961c23] text-white text-xs font-bold transition-all shadow-md shadow-red-900/20 active:scale-95 cursor-pointer"
             >
               <ShoppingBagIcon className="w-3.5 h-3.5" />
-              <span>Xem thực đơn đặt món</span>
+              <span>{ui("Xem thực đơn đặt món")}</span>
             </button>
           </div>
         </div>
@@ -423,12 +417,9 @@ export default function OrderLookupPage({
                 <UserIcon className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs sm:text-sm font-extrabold text-emerald-950">
-                  Bạn đang đăng nhập tài khoản: <span className="text-emerald-700">{currentUser.ho_ten || currentUser.full_name || currentUser.username || currentUser.email || 'Hội viên Avengers'}</span>
+                <p className="text-xs sm:text-sm font-extrabold text-emerald-950">{ui("Bạn đang đăng nhập tài khoản: ")}<span className="text-emerald-700">{currentUser.ho_ten || currentUser.full_name || currentUser.username || currentUser.email || ui("Hội viên Avengers")}</span>
                 </p>
-                <p className="text-xs text-emerald-800/80 mt-0.5 font-medium">
-                  Mọi đơn hàng của bạn đều được lưu tự động trong Lịch sử đơn hàng, bạn có thể xem nhanh tại đây mà không cần nhập mã tra cứu.
-                </p>
+                <p className="text-xs text-emerald-800/80 mt-0.5 font-medium">{ui("Mọi đơn hàng của bạn đều được lưu tự động trong Lịch sử đơn hàng, bạn có thể xem nhanh tại đây mà không cần nhập mã tra cứu.")}</p>
               </div>
             </div>
             <button
@@ -442,7 +433,7 @@ export default function OrderLookupPage({
               }}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-bold transition-all shadow-md shadow-green-700/20 active:scale-95 cursor-pointer shrink-0"
             >
-              <span>Xem Lịch Sử Đơn Hàng</span>
+              <span>{ui("Xem Lịch Sử Đơn Hàng")}</span>
               <ArrowRightIcon className="w-4 h-4" />
             </button>
           </div>
@@ -452,8 +443,7 @@ export default function OrderLookupPage({
         <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-[#ede5dc]">
           <form onSubmit={handleFormSubmit} className="space-y-4">
             <div>
-              <label htmlFor="order-search-input" className="block text-xs font-extrabold text-gray-700 uppercase tracking-wider mb-2">
-                Nhập mã tra cứu hoặc mã đơn hàng <span className="text-[#b22830]">*</span>
+              <label htmlFor="order-search-input" className="block text-xs font-extrabold text-gray-700 uppercase tracking-wider mb-2">{ui("Nhập mã tra cứu hoặc mã đơn hàng ")}<span className="text-[#b22830]">*</span>
               </label>
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
@@ -462,7 +452,7 @@ export default function OrderLookupPage({
                     type="text"
                     value={code}
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
-                    placeholder="Ví dụ: AC-A1B2C hoặc DH12345..."
+                    placeholder={ui("Ví dụ: AC-A1B2C hoặc DH12345...")}
                     className="w-full pl-12 pr-10 py-3.5 rounded-2xl border border-gray-300 focus:border-[#b22830] focus:ring-4 focus:ring-red-100 outline-none transition-all font-mono font-bold text-gray-800 text-sm placeholder:font-sans placeholder:font-normal placeholder:text-gray-400 bg-gray-50/50 focus:bg-white"
                     required
                   />
@@ -472,7 +462,7 @@ export default function OrderLookupPage({
                       type="button"
                       onClick={() => setCode('')}
                       className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-xs bg-gray-200 hover:bg-gray-300 rounded-full w-5 h-5 flex items-center justify-center transition-colors cursor-pointer"
-                      title="Xóa mã"
+                      title={ui("Xóa mã")}
                     >
                       ✕
                     </button>
@@ -487,12 +477,12 @@ export default function OrderLookupPage({
                   {loading ? (
                     <>
                       <ArrowPathIcon className="w-5 h-5 animate-spin" />
-                      <span>Đang tra cứu...</span>
+                      <span>{ui("Đang tra cứu...")}</span>
                     </>
                   ) : (
                     <>
                       <MagnifyingGlassIcon className="w-5 h-5 stroke-[2.5]" />
-                      <span>Tra Cứu Ngay</span>
+                      <span>{ui("Tra Cứu Ngay")}</span>
                     </>
                   )}
                 </button>
@@ -504,10 +494,8 @@ export default function OrderLookupPage({
               <div className="p-4 bg-red-50 text-red-700 text-xs md:text-sm font-semibold rounded-2xl border border-red-100 flex items-start gap-3 animate-fadeIn">
                 <ExclamationCircleIcon className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p>{error}</p>
-                  <p className="mt-1 text-xs text-red-600 font-normal">
-                    Mẹo: Mã tra cứu thường có 8 ký tự dạng <span className="font-mono font-bold">AC-XXXXX</span> được gửi trong email xác nhận khi bạn đặt hàng thành công.
-                  </p>
+                  <p>{ui(error)}</p>
+                  <p className="mt-1 text-xs text-red-600 font-normal">{ui("Mẹo: Mã tra cứu thường có 8 ký tự dạng ")}<span className="font-mono font-bold">AC-XXXXX</span>{ui(" được gửi trong email xác nhận khi bạn đặt hàng thành công.")}</p>
                 </div>
               </div>
             )}
@@ -517,7 +505,7 @@ export default function OrderLookupPage({
               <div className="pt-3 border-t border-gray-100 flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider mr-1">
                   <ClockIcon className="w-3.5 h-3.5 text-gray-400" />
-                  <span>Tra cứu gần đây:</span>
+                  <span>{ui("Tra cứu gần đây:")}</span>
                 </div>
                 {recentLookups.map((c) => (
                   <button
@@ -542,43 +530,39 @@ export default function OrderLookupPage({
         {/* ── CONDITIONAL CONTENT: RESULT OR EMPTY INSTRUCTION ── */}
         {orderResult && currentOrder ? (
           <div className="space-y-6 animate-fadeIn">
-            
+
             {/* 1. ORDER STATUS & TIMELINE CARD */}
             <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-[#ede5dc] space-y-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-gray-100">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2.5 flex-wrap">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Mã đơn hàng:</span>
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{ui("Mã đơn hàng:")}</span>
                     <span className="font-mono font-black text-gray-900 text-base md:text-lg bg-gray-100 px-2.5 py-0.5 rounded-lg border border-gray-200">
                       #{currentOrder.ma_don_hang?.substring(0, 8).toUpperCase()}
                     </span>
                     {currentTracking?.tracking_code ? (
-                      <span className="inline-flex items-center gap-1 font-mono font-bold text-xs bg-amber-50 text-amber-900 border border-amber-200 px-2.5 py-0.5 rounded-lg">
-                        Mã tra cứu khách vãng lai: {currentTracking.tracking_code}
+                      <span className="inline-flex items-center gap-1 font-mono font-bold text-xs bg-amber-50 text-amber-900 border border-amber-200 px-2.5 py-0.5 rounded-lg">{ui("Mã tra cứu khách vãng lai: ")}{currentTracking.tracking_code}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 font-sans font-bold text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-lg">
-                        Đơn hàng thành viên (Theo dõi qua Lịch sử đơn hàng)
-                      </span>
+                      <span className="inline-flex items-center gap-1 font-sans font-bold text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-lg">{ui("Đơn hàng thành viên (Theo dõi qua Lịch sử đơn hàng)")}</span>
                     )}
                     <button
                       type="button"
                       onClick={() => handleCopy(currentOrder.ma_don_hang)}
                       className="text-gray-400 hover:text-gray-600 transition-colors p-1 cursor-pointer"
-                      title="Sao chép mã đơn"
+                      title={ui("Sao chép mã đơn")}
                     >
                       {copiedCode ? <CheckIcon className="w-4 h-4 text-green-600" /> : <DocumentDuplicateIcon className="w-4 h-4" />}
                     </button>
                   </div>
-                  <p className="text-xs font-medium text-gray-500">
-                    Thời gian đặt: <span className="font-bold text-gray-700">{formatDateTime(currentOrder.ngay_tao)}</span>
+                  <p className="text-xs font-medium text-gray-500">{ui("Thời gian đặt: ")}<span className="font-bold text-gray-700">{formatDateTime(currentOrder.ngay_tao)}</span>
                   </p>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <div className={`px-4 py-2 rounded-2xl border flex items-center gap-2 ${currentStatusMeta.colorClass}`}>
                     <span className={`w-2.5 h-2.5 rounded-full ${currentStatusMeta.badgeBg} ${currentStatusMeta.stepIndex > 0 && currentStatusMeta.stepIndex < 4 ? 'animate-pulse' : ''}`} />
-                    <span className="text-xs md:text-sm font-black uppercase tracking-wide">{currentStatusMeta.label}</span>
+                    <span className="text-xs md:text-sm font-black uppercase tracking-wide">{ui(currentStatusMeta.label)}</span>
                   </div>
                 </div>
               </div>
@@ -673,47 +657,43 @@ export default function OrderLookupPage({
               ) : (
                 <div className="p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3 text-red-700">
                   <XCircleIcon className="w-6 h-6 flex-shrink-0" />
-                  <span className="text-xs md:text-sm font-bold">
-                    Đơn hàng này đã bị hủy. Nếu có bất kỳ thắc mắc nào về hoàn tiền hoặc đơn hàng, vui lòng liên hệ hotline 1900 1755.
-                  </span>
+                  <span className="text-xs md:text-sm font-bold">{ui("Đơn hàng này đã bị hủy. Nếu có bất kỳ thắc mắc nào về hoàn tiền hoặc đơn hàng, vui lòng liên hệ hotline 1900 1755.")}</span>
                 </div>
               )}
             </div>
 
             {/* 2. TWO-COLUMN DETAILS: SHIPPING & ORDER INFO */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              
+
               {/* Shipping & Delivery Information */}
               <div className="bg-white rounded-3xl p-6 md:p-7 shadow-sm border border-[#ede5dc] space-y-4">
                 <div className="flex items-center gap-2.5 pb-3 border-b border-gray-100">
                   <div className="w-8 h-8 rounded-lg bg-red-50 text-[#b22830] flex items-center justify-center">
                     <TruckIcon className="w-4 h-4" />
                   </div>
-                  <h2 className="text-sm font-black uppercase tracking-wider text-gray-900">
-                    Thông Tin Giao Nhận
-                  </h2>
+                  <h2 className="text-sm font-black uppercase tracking-wider text-gray-900">{ui("Thông Tin Giao Nhận")}</h2>
                 </div>
 
                 <div className="space-y-3.5 text-xs md:text-sm">
                   <div>
-                    <span className="text-gray-500 font-medium block text-xs">Hình thức nhận hàng:</span>
+                    <span className="text-gray-500 font-medium block text-xs">{ui("Hình thức nhận hàng:")}</span>
                     <span className="font-extrabold text-gray-900 mt-0.5 block">
                       {getDeliveryModeText(currentTracking?.delivery_mode, currentOrder)}
                     </span>
                   </div>
 
                   <div>
-                    <span className="text-gray-500 font-medium block text-xs">Địa chỉ nhận hàng:</span>
+                    <span className="text-gray-500 font-medium block text-xs">{ui("Địa chỉ nhận hàng:")}</span>
                     <div className="flex items-start gap-1.5 mt-0.5">
                       <MapPinIcon className="w-4 h-4 text-[#b22830] flex-shrink-0 mt-0.5" />
                       <span className="font-bold text-gray-800 leading-relaxed">
-                        {currentOrder.dia_chi_giao_hang || 'Tại quầy cửa hàng'}
+                        {currentOrder.dia_chi_giao_hang || ui("Tại quầy cửa hàng")}
                       </span>
                     </div>
                   </div>
 
                   <div>
-                    <span className="text-gray-500 font-medium block text-xs">Cơ sở xử lý:</span>
+                    <span className="text-gray-500 font-medium block text-xs">{ui("Cơ sở xử lý:")}</span>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <BuildingStorefrontIcon className="w-4 h-4 text-gray-600 flex-shrink-0" />
                       <span className="font-bold text-gray-800">
@@ -725,7 +705,7 @@ export default function OrderLookupPage({
                   {/* Shipper info for delivery orders */}
                   {(currentTracking?.delivery_mode === 'GIAO_TAN_NOI' || currentOrder.loai_don_hang === 'GIAO_TAN_NOI') ? (
                     <div className="pt-2 border-t border-gray-100">
-                      <span className="text-gray-500 font-medium block text-xs mb-1.5">Người giao hàng:</span>
+                      <span className="text-gray-500 font-medium block text-xs mb-1.5">{ui("Người giao hàng:")}</span>
                       {currentShipper?.full_name ? (
                         <div className="bg-gray-50 rounded-2xl p-3 border border-gray-200/80 flex items-center justify-between">
                           <div className="flex items-center gap-2.5">
@@ -735,7 +715,7 @@ export default function OrderLookupPage({
                             <div>
                               <p className="font-extrabold text-gray-900 text-xs md:text-sm">{currentShipper.full_name}</p>
                               <p className="text-[11px] font-medium text-gray-500">
-                                {currentShipper.vehicle_plate ? `Biển số: ${currentShipper.vehicle_plate}` : 'Tài xế Avengers Coffee'}
+                                {currentShipper.vehicle_plate ? ui("Biển số: {{v0}}", {v0:currentShipper.vehicle_plate}) : ui("Tài xế Avengers Coffee")}
                               </p>
                             </div>
                           </div>
@@ -754,26 +734,26 @@ export default function OrderLookupPage({
                           <div className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
                           <span>
                             {currentStatusMeta.stepIndex >= 3
-                              ? 'Đơn hàng đang trên đường vận chuyển.'
-                              : 'Đơn hàng đang chờ cửa hàng xác nhận và điều phối tài xế giao hàng.'}
+                              ? ui("Đơn hàng đang trên đường vận chuyển.")
+                              : ui("Đơn hàng đang chờ cửa hàng xác nhận và điều phối tài xế giao hàng.")}
                           </span>
                         </div>
                       )}
                     </div>
                   ) : (
                     <div className="pt-2 border-t border-gray-100">
-                      <span className="text-gray-500 font-medium block text-xs mb-1.5">Hình thức phục vụ:</span>
+                      <span className="text-gray-500 font-medium block text-xs mb-1.5">{ui("Hình thức phục vụ:")}</span>
                       <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 text-gray-700 text-xs font-medium">
                         {currentOrder.loai_don_hang === 'DUNG_TAI_CHO' || currentOrder.ma_ban
-                          ? `Phục vụ tại bàn: Nhân viên sẽ mang thức uống ra tận Bàn ${currentOrder.ma_ban || 'quý khách'}.`
-                          : 'Đến lấy tại quầy: Vui lòng đọc mã đơn hàng cho Barista tại quầy khi nhận món.'}
+                          ? ui("Phục vụ tại bàn: Nhân viên sẽ mang thức uống ra tận Bàn {{v0}}.", {v0:currentOrder.ma_ban || 'quý khách'})
+                          : ui("Đến lấy tại quầy: Vui lòng đọc mã đơn hàng cho Barista tại quầy khi nhận món.")}
                       </div>
                     </div>
                   )}
 
                   {currentOrder.ghi_chu && (
                     <div className="pt-2 border-t border-gray-100">
-                      <span className="text-gray-500 font-medium block text-xs">Ghi chú giao hàng:</span>
+                      <span className="text-gray-500 font-medium block text-xs">{ui("Ghi chú giao hàng:")}</span>
                       <p className="mt-1 p-2.5 bg-amber-50/70 border border-amber-100 rounded-xl text-amber-900 font-medium text-xs">
                         "{currentOrder.ghi_chu}"
                       </p>
@@ -788,22 +768,20 @@ export default function OrderLookupPage({
                   <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
                     <UserIcon className="w-4 h-4" />
                   </div>
-                  <h2 className="text-sm font-black uppercase tracking-wider text-gray-900">
-                    Người Nhận & Thanh Toán
-                  </h2>
+                  <h2 className="text-sm font-black uppercase tracking-wider text-gray-900">{ui("Người Nhận & Thanh Toán")}</h2>
                 </div>
 
                 <div className="space-y-3.5 text-xs md:text-sm">
                   <div>
-                    <span className="text-gray-500 font-medium block text-xs">Khách hàng nhận:</span>
+                    <span className="text-gray-500 font-medium block text-xs">{ui("Khách hàng nhận:")}</span>
                     <span className="font-extrabold text-gray-900 mt-0.5 block">
-                      {currentOrder.ten_khach_hang || 'Khách hàng Avengers Coffee'}
+                      {currentOrder.ten_khach_hang || ui("Khách hàng Avengers Coffee")}
                     </span>
                   </div>
 
                   {currentOrder.guest_phone && (
                     <div>
-                      <span className="text-gray-500 font-medium block text-xs">Số điện thoại:</span>
+                      <span className="text-gray-500 font-medium block text-xs">{ui("Số điện thoại:")}</span>
                       <span className="font-bold text-gray-800 mt-0.5 block font-mono">
                         {currentOrder.guest_phone}
                       </span>
@@ -812,7 +790,7 @@ export default function OrderLookupPage({
 
                   {currentOrder.guest_email && (
                     <div>
-                      <span className="text-gray-500 font-medium block text-xs">Email nhận thông báo:</span>
+                      <span className="text-gray-500 font-medium block text-xs">{ui("Email nhận thông báo:")}</span>
                       <span className="font-medium text-gray-800 mt-0.5 block">
                         {currentOrder.guest_email}
                       </span>
@@ -820,7 +798,7 @@ export default function OrderLookupPage({
                   )}
 
                   <div className="pt-2 border-t border-gray-100">
-                    <span className="text-gray-500 font-medium block text-xs">Phương thức thanh toán:</span>
+                    <span className="text-gray-500 font-medium block text-xs">{ui("Phương thức thanh toán:")}</span>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <CreditCardIcon className="w-4 h-4 text-gray-600 flex-shrink-0" />
                       <span className="font-bold text-gray-800">
@@ -830,25 +808,24 @@ export default function OrderLookupPage({
                   </div>
 
                   <div>
-                    <span className="text-gray-500 font-medium block text-xs">Trạng thái thanh toán:</span>
+                    <span className="text-gray-500 font-medium block text-xs">{ui("Trạng thái thanh toán:")}</span>
                     <div className="mt-1">
                       <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs border ${paymentMeta.className}`}>
-                        {paymentMeta.label}
+                        {ui(paymentMeta.label)}
                       </span>
                     </div>
                   </div>
 
                   {currentOrder.ma_voucher && (
                     <div className="pt-2 border-t border-gray-100">
-                      <span className="text-gray-500 font-medium block text-xs">Mã ưu đãi đã áp dụng:</span>
+                      <span className="text-gray-500 font-medium block text-xs">{ui("Mã ưu đãi đã áp dụng:")}</span>
                       <div className="flex items-center gap-1.5 mt-1">
                         <TicketIcon className="w-4 h-4 text-[#b22830]" />
                         <span className="font-mono font-black text-xs text-[#b22830] bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
                           {currentOrder.ma_voucher}
                         </span>
                         {currentOrder.so_tien_giam > 0 && (
-                          <span className="text-xs font-bold text-emerald-700">
-                            (Giảm {formatCurrency(currentOrder.so_tien_giam)})
+                          <span className="text-xs font-bold text-emerald-700">{ui("(Giảm ")}{formatCurrency(currentOrder.so_tien_giam)})
                           </span>
                         )}
                       </div>
@@ -868,19 +845,13 @@ export default function OrderLookupPage({
                       <MapPinIcon className="w-4 h-4" />
                     </div>
                     <div>
-                      <h2 className="text-sm font-black uppercase tracking-wider text-gray-900">
-                        Bản Đồ Theo Dõi Lộ Trình Giao Hàng
-                      </h2>
-                      <p className="text-[11px] font-medium text-gray-500">
-                        Định vị vệ tinh hiển thị vị trí quán, tuyến đường di chuyển và tài xế trực tiếp
-                      </p>
+                      <h2 className="text-sm font-black uppercase tracking-wider text-gray-900">{ui("Bản Đồ Theo Dõi Lộ Trình Giao Hàng")}</h2>
+                      <p className="text-[11px] font-medium text-gray-500">{ui("Định vị vệ tinh hiển thị vị trí quán, tuyến đường di chuyển và tài xế trực tiếp")}</p>
                     </div>
                   </div>
                   {currentShipper?.full_name && (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 self-start sm:self-auto">
-                      <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
-                      Tài xế đang kết nối
-                    </span>
+                      <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />{ui("Tài xế đang kết nối")}</span>
                   )}
                 </div>
 
@@ -926,9 +897,7 @@ export default function OrderLookupPage({
                   <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
                     <ShoppingBagIcon className="w-4 h-4" />
                   </div>
-                  <h2 className="text-sm md:text-base font-black uppercase tracking-wider text-gray-900">
-                    Chi Tiết Món Đã Đặt ({currentOrder.items?.length || 0} món)
-                  </h2>
+                  <h2 className="text-sm md:text-base font-black uppercase tracking-wider text-gray-900">{ui("Chi Tiết Món Đã Đặt (")}{currentOrder.items?.length || 0}{ui(" món)")}</h2>
                 </div>
 
                 <button
@@ -937,7 +906,7 @@ export default function OrderLookupPage({
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-gray-800 transition-colors p-1 cursor-pointer"
                 >
                   <PrinterIcon className="w-4 h-4" />
-                  <span className="hidden sm:inline">In biên nhận</span>
+                  <span className="hidden sm:inline">{ui("In biên nhận")}</span>
                 </button>
               </div>
 
@@ -966,12 +935,11 @@ export default function OrderLookupPage({
                                 Size {item.kich_co}
                               </span>
                             )}
-                            <span>Số lượng: <strong className="text-gray-900">{item.so_luong}</strong></span>
-                            <span>Đơn giá: {formatCurrency(item.gia_ban)}</span>
+                            <span>{ui("Số lượng: ")}<strong className="text-gray-900">{item.so_luong}</strong></span>
+                            <span>{ui("Đơn giá: ")}{formatCurrency(item.gia_ban)}</span>
                           </div>
                           {item.tuy_chon && (
-                            <p className="text-[11px] text-gray-500 mt-1 italic">
-                              Tùy chọn: {typeof item.tuy_chon === 'string' ? item.tuy_chon : JSON.stringify(item.tuy_chon)}
+                            <p className="text-[11px] text-gray-500 mt-1 italic">{ui("Tùy chọn: ")}{typeof item.tuy_chon === 'string' ? item.tuy_chon : JSON.stringify(item.tuy_chon)}
                             </p>
                           )}
                         </div>
@@ -990,7 +958,7 @@ export default function OrderLookupPage({
               {/* Price Calculation Summary */}
               <div className="pt-4 border-t border-gray-100 bg-[#faf7f4] rounded-2xl p-5 space-y-2.5">
                 <div className="flex justify-between text-xs md:text-sm text-gray-600 font-medium">
-                  <span>Tạm tính tiền món:</span>
+                  <span>{ui("Tạm tính tiền món:")}</span>
                   <span className="font-bold text-gray-900">
                     {formatCurrency(
                       (currentOrder.items || []).reduce(
@@ -1002,23 +970,23 @@ export default function OrderLookupPage({
                 </div>
 
                 <div className="flex justify-between text-xs md:text-sm text-gray-600 font-medium">
-                  <span>Phí giao hàng:</span>
+                  <span>{ui("Phí giao hàng:")}</span>
                   <span className="font-bold text-gray-900">
                     {Number(currentTracking?.delivery_fee || 0) > 0
                       ? formatCurrency(currentTracking.delivery_fee)
-                      : 'Miễn phí'}
+                      : ui("Miễn phí")}
                   </span>
                 </div>
 
                 {Number(currentOrder.so_tien_giam || 0) > 0 && (
                   <div className="flex justify-between text-xs md:text-sm text-emerald-700 font-bold">
-                    <span>Giảm giá voucher:</span>
+                    <span>{ui("Giảm giá voucher:")}</span>
                     <span>-{formatCurrency(currentOrder.so_tien_giam)}</span>
                   </div>
                 )}
 
                 <div className="pt-3 border-t border-gray-200/80 flex justify-between items-center text-sm md:text-base">
-                  <span className="font-black text-gray-900 uppercase tracking-wide">Tổng tiền thanh toán:</span>
+                  <span className="font-black text-gray-900 uppercase tracking-wide">{ui("Tổng tiền thanh toán:")}</span>
                   <span className="font-black text-xl md:text-2xl text-[#b22830] font-sans">
                     {formatCurrency(currentOrder.tong_tien)}
                   </span>
@@ -1031,9 +999,7 @@ export default function OrderLookupPage({
                   type="button"
                   onClick={handleResetSearch}
                   className="w-full sm:w-auto px-6 py-3 rounded-2xl border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-bold text-xs md:text-sm transition-all shadow-xs cursor-pointer text-center"
-                >
-                  Tra cứu đơn hàng khác
-                </button>
+                >{ui("Tra cứu đơn hàng khác")}</button>
 
                 <button
                   type="button"
@@ -1041,7 +1007,7 @@ export default function OrderLookupPage({
                   className="w-full sm:w-auto px-8 py-3 rounded-2xl bg-[#b22830] hover:bg-[#961c23] text-white font-bold text-xs md:text-sm transition-all shadow-md shadow-red-900/20 active:scale-95 cursor-pointer text-center flex items-center justify-center gap-2"
                 >
                   <ShoppingBagIcon className="w-4 h-4" />
-                  <span>Tiếp tục đặt món</span>
+                  <span>{ui("Tiếp tục đặt món")}</span>
                 </button>
               </div>
             </div>
@@ -1050,41 +1016,29 @@ export default function OrderLookupPage({
         ) : (
           /* ── INITIAL STATE: GUIDE & INSTRUCTIONS ── */
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fadeIn">
-            
+
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#ede5dc] flex flex-col items-center text-center space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-red-50 text-[#b22830] flex items-center justify-center">
                 <DocumentDuplicateIcon className="w-6 h-6" />
               </div>
-              <h3 className="font-black text-sm uppercase tracking-wide text-gray-900">
-                1. Lấy mã tra cứu
-              </h3>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                Kiểm tra <strong>Email xác nhận đơn hàng</strong> hoặc tin nhắn biên nhận sau khi đặt hàng để lấy mã tra cứu (VD: AC-A1B2C).
-              </p>
+              <h3 className="font-black text-sm uppercase tracking-wide text-gray-900">{ui("1. Lấy mã tra cứu")}</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">{ui("Kiểm tra ")}<strong>{ui("Email xác nhận đơn hàng")}</strong>{ui(" hoặc tin nhắn biên nhận sau khi đặt hàng để lấy mã tra cứu (VD: AC-A1B2C).")}</p>
             </div>
 
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#ede5dc] flex flex-col items-center text-center space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center">
                 <MagnifyingGlassIcon className="w-6 h-6" />
               </div>
-              <h3 className="font-black text-sm uppercase tracking-wide text-gray-900">
-                2. Tra cứu tức thì
-              </h3>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                Nhập mã vào khung tìm kiếm bên trên và nhấn <strong>"Tra cứu ngay"</strong> để kiểm tra tiến trình xử lý đơn hàng.
-              </p>
+              <h3 className="font-black text-sm uppercase tracking-wide text-gray-900">{ui("2. Tra cứu tức thì")}</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">{ui("Nhập mã vào khung tìm kiếm bên trên và nhấn ")}<strong>{ui("\"Tra cứu ngay\"")}</strong>{ui(" để kiểm tra tiến trình xử lý đơn hàng.")}</p>
             </div>
 
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#ede5dc] flex flex-col items-center text-center space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
                 <ShieldCheckIcon className="w-6 h-6" />
               </div>
-              <h3 className="font-black text-sm uppercase tracking-wide text-gray-900">
-                3. Đảm bảo quyền lợi
-              </h3>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                Mọi thông tin đơn hàng, hóa đơn và người giao hàng đều được bảo mật và cập nhật liên tục theo thời gian thực.
-              </p>
+              <h3 className="font-black text-sm uppercase tracking-wide text-gray-900">{ui("3. Đảm bảo quyền lợi")}</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">{ui("Mọi thông tin đơn hàng, hóa đơn và người giao hàng đều được bảo mật và cập nhật liên tục theo thời gian thực.")}</p>
             </div>
 
           </div>

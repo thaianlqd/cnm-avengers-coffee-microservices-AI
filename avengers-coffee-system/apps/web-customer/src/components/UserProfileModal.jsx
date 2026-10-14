@@ -1,3 +1,4 @@
+import { uiText as ui, useUiLanguage } from "../lib/uiText";
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { XMarkIcon, UserCircleIcon, KeyIcon } from '@heroicons/react/24/outline';
@@ -5,6 +6,7 @@ import { apiClient } from '../lib/apiClient';
 import { queryKeys } from '../lib/queryKeys';
 
 export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated }) {
+  useUiLanguage();
 
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('profile');
@@ -69,7 +71,7 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
 
       onUserUpdated?.(updatedUser);
       queryClient.invalidateQueries({ queryKey: queryKeys.userProfile(userId) });
-      alert('Cập nhật thông tin thành công!');
+      alert(ui("Cập nhật thông tin thành công!"));
     },
     onError: (err) => {
       setProfileError(err?.response?.data?.message || 'Không thể cập nhật thông tin.');
@@ -84,7 +86,7 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
     onSuccess: () => {
       setPasswordError('');
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      alert('Đổi mật khẩu thành công!');
+      alert(ui("Đổi mật khẩu thành công!"));
     },
     onError: (err) => {
       setPasswordError(err?.response?.data?.message || 'Không thể đổi mật khẩu.');
@@ -131,8 +133,8 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
       <div className="relative z-10 h-[88vh] w-full max-w-3xl overflow-hidden rounded-[28px] border border-orange-100 bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-orange-50 bg-gradient-to-r from-orange-50 to-amber-50 px-6 py-5">
           <div>
-            <h2 className="text-2xl font-black uppercase tracking-tight text-gray-800">Trang cá nhân</h2>
-            <p className="mt-1 text-sm font-semibold text-gray-500">Quản lý thông tin và bảo mật tài khoản của bạn</p>
+            <h2 className="text-2xl font-black uppercase tracking-tight text-gray-800">{ui("Trang cá nhân")}</h2>
+            <p className="mt-1 text-sm font-semibold text-gray-500">{ui("Quản lý thông tin và bảo mật tài khoản của bạn")}</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-xl p-2 text-gray-500 hover:bg-white">
             <XMarkIcon className="h-7 w-7" />
@@ -140,7 +142,7 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
         </div>
 
         {!userId ? (
-          <div className="p-8 text-center text-lg font-bold text-gray-700">Bạn cần đăng nhập để xem trang cá nhân.</div>
+          <div className="p-8 text-center text-lg font-bold text-gray-700">{ui("Bạn cần đăng nhập để xem trang cá nhân.")}</div>
         ) : (
           <div className="h-[calc(88vh-86px)] overflow-y-auto bg-[#fffdf9] p-6">
             <div className="mb-6 flex gap-3">
@@ -152,9 +154,7 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
                 }`}
               >
                 <span className="inline-flex items-center gap-2">
-                  <UserCircleIcon className="h-5 w-5" />
-                  Hồ sơ
-                </span>
+                  <UserCircleIcon className="h-5 w-5" />{ui("Hồ sơ")}</span>
               </button>
               <button
                 type="button"
@@ -164,9 +164,7 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
                 }`}
               >
                 <span className="inline-flex items-center gap-2">
-                  <KeyIcon className="h-5 w-5" />
-                  Đổi mật khẩu
-                </span>
+                  <KeyIcon className="h-5 w-5" />{ui("Đổi mật khẩu")}</span>
               </button>
             </div>
 
@@ -180,12 +178,12 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
                   </div>
                 ) : isError ? (
                   <div className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-700">
-                    {error?.response?.data?.message || 'Không thể tải thông tin cá nhân.'}
+                    {error?.response?.data?.message || ui("Không thể tải thông tin cá nhân.")}
                   </div>
                 ) : (
                   <form onSubmit={handleUpdateProfile} className="space-y-4">
                     <div>
-                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Họ tên</p>
+                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">{ui("Họ tên")}</p>
                       <input
                         type="text"
                         required
@@ -196,7 +194,7 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
                     </div>
 
                     <div>
-                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Email</p>
+                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">{ui("Email")}</p>
                       <input
                         type="text"
                         disabled
@@ -206,13 +204,13 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
                     </div>
 
                     <div>
-                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">Số điện thoại</p>
+                      <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">{ui("Số điện thoại")}</p>
                       <input
                         type="text"
                         value={profileForm.soDienThoai}
                         onChange={(e) => setProfileForm((prev) => ({ ...prev, soDienThoai: e.target.value }))}
                         className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange"
-                        placeholder="Nhập số điện thoại"
+                        placeholder={ui("Nhập số điện thoại")}
                       />
                     </div>
 
@@ -234,7 +232,7 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
                       disabled={updateProfileMutation.isPending}
                       className="rounded-xl bg-tch-orange px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-orange-200 disabled:bg-gray-300"
                     >
-                      {updateProfileMutation.isPending ? 'Đang cập nhật...' : 'Lưu thay đổi'}
+                      {updateProfileMutation.isPending ? ui("Đang cập nhật...") : ui("Lưu thay đổi")}
                     </button>
                   </form>
                 )}
@@ -243,11 +241,11 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
               <div className="rounded-2xl border border-gray-200/90 bg-white p-5 shadow-2xs">
                 <form onSubmit={handleChangePassword} className="space-y-4">
                   <div>
-                    <label className="mb-1 block text-xs font-extrabold uppercase tracking-wider text-gray-700">Mật khẩu hiện tại</label>
+                    <label className="mb-1 block text-xs font-extrabold uppercase tracking-wider text-gray-700">{ui("Mật khẩu hiện tại")}</label>
                     <input
                       type="password"
                       required
-                      placeholder="Mật khẩu hiện tại"
+                      placeholder={ui("Mật khẩu hiện tại")}
                       value={passwordForm.currentPassword}
                       onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
                       className="w-full rounded-xl border border-gray-200/90 px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-red-100 transition-all text-gray-800"
@@ -255,11 +253,11 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-xs font-extrabold uppercase tracking-wider text-gray-700">Mật khẩu mới</label>
+                    <label className="mb-1 block text-xs font-extrabold uppercase tracking-wider text-gray-700">{ui("Mật khẩu mới")}</label>
                     <input
                       type="password"
                       required
-                      placeholder="Mật khẩu mới ít nhất 6 ký tự"
+                      placeholder={ui("Mật khẩu mới ít nhất 6 ký tự")}
                       value={passwordForm.newPassword}
                       onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
                       className="w-full rounded-xl border border-gray-200/90 px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-red-100 transition-all text-gray-800"
@@ -267,11 +265,11 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-xs font-extrabold uppercase tracking-wider text-gray-700">Xác nhận mật khẩu mới</label>
+                    <label className="mb-1 block text-xs font-extrabold uppercase tracking-wider text-gray-700">{ui("Xác nhận mật khẩu mới")}</label>
                     <input
                       type="password"
                       required
-                      placeholder="Xác nhận mật khẩu mới"
+                      placeholder={ui("Xác nhận mật khẩu mới")}
                       value={passwordForm.confirmPassword}
                       onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
                       className="w-full rounded-xl border border-gray-200/90 px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-[#b22830] focus:ring-2 focus:ring-red-100 transition-all text-gray-800"
@@ -289,7 +287,7 @@ export default function UserProfileModal({ isOpen, onClose, user, onUserUpdated 
                     disabled={changePasswordMutation.isPending}
                     className="w-full rounded-xl bg-[#b22830] hover:bg-[#8f1d24] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-2xs disabled:bg-gray-300 transition-all cursor-pointer active:scale-95"
                   >
-                    {changePasswordMutation.isPending ? 'Đang xử lý...' : 'Đổi mật khẩu'}
+                    {changePasswordMutation.isPending ? ui("Đang xử lý...") : ui("Đổi mật khẩu")}
                   </button>
                 </form>
               </div>

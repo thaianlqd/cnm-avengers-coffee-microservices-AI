@@ -456,7 +456,7 @@ export function AdminCategoryManagementPanel({
                 <label htmlFor="cat-modal-label" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#334155' }}>
                   Tên danh mục <span className="cat-required" style={{ color: '#ef4444' }}>*</span>
                 </label>
-                <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                   <FolderTree size={16} color="#64748b" style={{ flexShrink: 0 }} />
                   <input
                     id="cat-modal-label"
@@ -474,7 +474,7 @@ export function AdminCategoryManagementPanel({
               {/* Input: Category Level */}
               <div className="cat-form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 <label htmlFor="cat-modal-level" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#334155' }}>Cấp bậc danh mục</label>
-                <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                   <Layers size={16} color="#64748b" style={{ flexShrink: 0 }} />
                   <select
                     id="cat-modal-level"
@@ -496,7 +496,7 @@ export function AdminCategoryManagementPanel({
                   <label htmlFor="cat-modal-parent" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#334155' }}>
                     Danh mục cha <span className="cat-required" style={{ color: '#ef4444' }}>*</span>
                   </label>
-                  <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                  <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                     <Tag size={16} color="#64748b" style={{ flexShrink: 0 }} />
                     <select
                       id="cat-modal-parent"
@@ -523,7 +523,7 @@ export function AdminCategoryManagementPanel({
               {/* Input: Icon Selection / URL */}
               <div className="cat-form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 <label htmlFor="cat-modal-icon" style={{ fontWeight: '600', fontSize: '0.8125rem', color: '#334155' }}>Biểu tượng (Icon)</label>
-                <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                   <Sparkles size={16} color="#64748b" style={{ flexShrink: 0 }} />
                   <input
                     id="cat-modal-icon"
@@ -590,7 +590,7 @@ export function AdminCategoryManagementPanel({
                   className="cat-btn cat-btn--success btn-save"
                   disabled={savingCategory || !categoryForm.label.trim()}
                   style={{
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                     color: '#ffffff',
                     border: 'none',
                     height: '40px',
@@ -602,7 +602,7 @@ export function AdminCategoryManagementPanel({
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.4rem',
-                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
+                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)'
                   }}
                 >
                   {savingCategory ? (

@@ -207,6 +207,7 @@ export class WalletVoucherClaimOutboxService implements OnModuleInit, OnModuleDe
   }
 
   onModuleInit() {
+    if (process.env.K8S_DEMO_READ_ONLY === 'true') return;
     this.timer = setInterval(() => { void this.processPending(); }, 30000);
     this.timer.unref?.();
     void this.processPending();

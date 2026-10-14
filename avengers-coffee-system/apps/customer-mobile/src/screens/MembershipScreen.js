@@ -1,3 +1,7 @@
+import TextInput from '../components/TextInput'
+import Alert from '../lib/alert'
+import ScreenHeader from '../components/ScreenHeader'
+import Modal from '../components/AppModal'
 import React, { useState, useEffect } from 'react'
 import {
   View,
@@ -5,10 +9,9 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
-  Alert,
+
   ActivityIndicator,
-  Modal,
-  TextInput,
+
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
@@ -28,7 +31,7 @@ export function MembershipScreen() {
   const [showBirthdayModal, setShowBirthdayModal] = useState(false)
   const [birthDateInput, setBirthDateInput] = useState('')
 
-  const { data: memData, isLoading, refetch } = useQuery({
+  const { data: memData, isLoading, isError, refetch } = useQuery({
     queryKey: ['membership', userId],
     queryFn: async () => {
       if (!userId) return null
@@ -63,7 +66,7 @@ export function MembershipScreen() {
       }
       queryClient.invalidateQueries({ queryKey: ['membership', userId] })
       setShowBirthdayModal(false)
-      Alert.alert('Thành công 🎉', 'Đã lưu ngày sinh thành công và nhận ưu đãi sinh nhật!')
+      Alert.alert('Đã lưu', 'Ngày sinh đã được cập nhật.')
     },
     onError: (err) => {
       Alert.alert('Lỗi', err?.response?.data?.message || 'Không thể lưu ngày sinh. Vui lòng thử lại.')
@@ -111,13 +114,7 @@ export function MembershipScreen() {
   return (
     <View style={styles.container}>
       {/* Top Header with prominent back button */}
-      <LinearGradient colors={['#1a0c05', '#3d1a08']} style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={12}>
-          <Ionicons name="chevron-back" size={24} color="#fff" />
-        </Pressable>
-        <Text style={styles.headerTitle}>Đặc Quyền Thành Viên</Text>
-        <View style={{ width: 40 }} />
-      </LinearGradient>
+      <ScreenHeader title="Thành viên" onBack={() => navigation.goBack()} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {!userId ? (
@@ -136,7 +133,7 @@ export function MembershipScreen() {
             <ActivityIndicator size="large" color="#b22830" />
             <Text style={styles.loadingText}>Đang đồng bộ dữ liệu thành viên từ hệ thống...</Text>
           </View>
-        ) : (
+        ) : isError ? <Pressable onPress={() => refetch()} style={{ padding: 24 }}><Text>Chưa tải được dữ liệu thành viên. Chạm để thử lại.</Text></Pressable> : (
           <>
             {/* Hero Membership Card - Synced with Web */}
             <LinearGradient colors={cardColors} style={styles.cardHero}>
@@ -168,7 +165,7 @@ export function MembershipScreen() {
 
             {/* Monthly Spending & Tier Privilege Status Card */}
             {currentTierCode !== 'MEMBER' && chi_tieu_toi_thieu_thang > 0 && (
-              <View style={[styles.birthdayBox, { backgroundColor: dat_dieu_kien_dac_quyen ? '#ecfdf5' : '#fff7ed', borderColor: dat_dieu_kien_dac_quyen ? '#a7f3d0' : '#fed7aa', borderWidth: 1 }]}>
+              <View style={[styles.birthdayBox, { backgroundColor: dat_dieu_kien_dac_quyen ? '#ecfdf5' : '#f3f4f6', borderColor: dat_dieu_kien_dac_quyen ? '#a7f3d0' : '#e5e7eb', borderWidth: 1 }]}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 13, fontWeight: '700', color: dat_dieu_kien_dac_quyen ? '#047857' : '#c2410c' }}>
                     {dat_dieu_kien_dac_quyen ? '✅ Đã đủ chi tiêu duy trì đặc quyền Tháng' : `⚠️ Cần chi tiêu thêm ${formatCurrency(con_thieu_thang_nay)} trong tháng`}

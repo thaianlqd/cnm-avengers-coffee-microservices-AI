@@ -218,9 +218,9 @@ export function AdminSmtpConfigPanel() {
           style={{
             padding: '0.85rem 1.25rem',
             borderRadius: '12px',
-            backgroundColor: toast.type === 'success' ? '#ecfdf5' : toast.type === 'error' ? '#fef2f2' : '#eff6ff',
-            color: toast.type === 'success' ? '#059669' : toast.type === 'error' ? '#dc2626' : '#2563eb',
-            border: `1px solid ${toast.type === 'success' ? '#a7f3d0' : toast.type === 'error' ? '#fecaca' : '#bfdbfe'}`,
+            backgroundColor: toast.type === 'success' ? '#eff6ff' : toast.type === 'error' ? '#fef2f2' : 'var(--primary-light)',
+            color: toast.type === 'success' ? '#2563eb' : toast.type === 'error' ? '#dc2626' : 'var(--primary)',
+            border: `1px solid ${toast.type === 'success' ? '#bfdbfe' : toast.type === 'error' ? '#fecaca' : '#bfdbfe'}`,
             display: 'flex',
             alignItems: 'center',
             gap: '0.65rem',
@@ -267,8 +267,8 @@ export function AdminSmtpConfigPanel() {
                 width: '42px',
                 height: '42px',
                 borderRadius: '12px',
-                backgroundColor: '#eff6ff',
-                color: '#2563eb',
+                backgroundColor: 'var(--primary-light)',
+                color: 'var(--primary)',
                 border: '1px solid #bfdbfe',
                 display: 'flex',
                 alignItems: 'center',
@@ -279,7 +279,7 @@ export function AdminSmtpConfigPanel() {
               <Server size={20} />
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '800', color: '#0f172a' }}>
+              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '600', color: '#0f172a' }}>
                 Cấu hình máy chủ gửi Email (SMTP)
               </h3>
               <span style={{ fontSize: '0.8125rem', color: '#64748b' }}>
@@ -330,7 +330,7 @@ export function AdminSmtpConfigPanel() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '0.75rem',
-                  fontWeight: '800'
+                  fontWeight: '600'
                 }}
               >
                 i
@@ -372,25 +372,25 @@ export function AdminSmtpConfigPanel() {
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSave} style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1.35rem' }}>
+        <form className="workspace-form" onSubmit={handleSave} style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1.35rem' }}>
           
           {/* Synchronized System Notice Banner */}
           <div
             style={{
               padding: '0.9rem 1.25rem',
               borderRadius: '12px',
-              backgroundColor: '#f0fdf4',
-              border: '1px solid #bbf7d0',
+              backgroundColor: '#eff6ff',
+              border: '1px solid #bfdbfe',
               display: 'flex',
               alignItems: 'center',
               gap: '0.75rem',
               fontSize: '0.85rem',
-              color: '#166534',
+              color: '#1e40af',
               fontWeight: '600',
               boxShadow: '0 2px 8px rgba(22, 163, 74, 0.05)'
             }}
           >
-            <ShieldCheck size={20} color="#15803d" style={{ flexShrink: 0 }} />
+            <ShieldCheck size={20} color="#1d4ed8" style={{ flexShrink: 0 }} />
             <span>
               Cấu hình này tự động đồng bộ hóa và áp dụng tức thời cho toàn bộ hệ thống: Hóa đơn đơn hàng, Cập nhật trạng thái giao nhận, Thẻ quà tặng điện tử, Mã OTP đặt lại mật khẩu và Hồ sơ nhượng quyền Kiosk.
             </span>
@@ -443,7 +443,7 @@ export function AdminSmtpConfigPanel() {
                   e.currentTarget.style.backgroundColor = '#ffffff'
                 }}
               >
-                <Globe size={14} color="#2563eb" />
+                <Globe size={14} color="var(--primary)" />
                 <span>Gmail (Cổng 587 - STARTTLS)</span>
               </button>
 
@@ -474,7 +474,7 @@ export function AdminSmtpConfigPanel() {
                   e.currentTarget.style.backgroundColor = '#ffffff'
                 }}
               >
-                <ShieldCheck size={14} color="#059669" />
+                <ShieldCheck size={14} color="#2563eb" />
                 <span>Gmail (Cổng 465 - SSL Trực tiếp)</span>
               </button>
             </div>
@@ -571,7 +571,7 @@ export function AdminSmtpConfigPanel() {
                   gap: '0.75rem'
                 }}
               >
-                <Shield size={17} color={form.secure ? '#059669' : '#2563eb'} style={{ flexShrink: 0 }} />
+                <Shield size={17} color={form.secure ? '#2563eb' : 'var(--primary)'} style={{ flexShrink: 0 }} />
                 <select
                   style={{
                     flex: 1,
@@ -608,7 +608,7 @@ export function AdminSmtpConfigPanel() {
                   gap: '0.75rem'
                 }}
               >
-                <CheckCircle2 size={17} color={form.is_active ? '#059669' : '#94a3b8'} style={{ flexShrink: 0 }} />
+                <CheckCircle2 size={17} color={form.is_active ? '#2563eb' : '#94a3b8'} style={{ flexShrink: 0 }} />
                 <select
                   style={{
                     flex: 1,
@@ -616,7 +616,7 @@ export function AdminSmtpConfigPanel() {
                     outline: 'none',
                     backgroundColor: 'transparent',
                     fontSize: '0.85rem',
-                    color: form.is_active ? '#059669' : '#64748b',
+                    color: form.is_active ? '#2563eb' : '#64748b',
                     fontWeight: '700',
                     cursor: 'pointer'
                   }}
@@ -704,7 +704,7 @@ export function AdminSmtpConfigPanel() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontSize: '0.725rem',
-                        fontWeight: '800'
+                        fontWeight: '600'
                       }}
                     >
                       i
@@ -713,7 +713,7 @@ export function AdminSmtpConfigPanel() {
                 </div>
 
                 {form.has_auth_pass && !form.auth_pass && (
-                  <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                     <Check size={13} /> Đã có mật khẩu trong hệ thống
                   </span>
                 )}
@@ -887,8 +887,8 @@ export function AdminSmtpConfigPanel() {
                 width: '42px',
                 height: '42px',
                 borderRadius: '12px',
-                backgroundColor: '#eff6ff',
-                color: '#2563eb',
+                backgroundColor: 'var(--primary-light)',
+                color: 'var(--primary)',
                 border: '1px solid #bfdbfe',
                 display: 'flex',
                 alignItems: 'center',
@@ -899,7 +899,7 @@ export function AdminSmtpConfigPanel() {
               <Send size={20} />
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '800', color: '#0f172a' }}>
+              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '600', color: '#0f172a' }}>
                 Kiểm tra gửi thư điện tử (Test Email)
               </h3>
               <span style={{ fontSize: '0.8125rem', color: '#64748b' }}>
@@ -916,7 +916,7 @@ export function AdminSmtpConfigPanel() {
           </p>
 
           {/* Test Email Input & Button Bar */}
-          <form
+          <form className="workspace-form"
             onSubmit={handleSendTest}
             style={{
               display: 'flex',
@@ -962,7 +962,7 @@ export function AdminSmtpConfigPanel() {
               disabled={testing}
               style={{
                 height: '44px',
-                backgroundColor: '#2563eb',
+                backgroundColor: 'var(--primary)',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '10px',
@@ -980,13 +980,13 @@ export function AdminSmtpConfigPanel() {
               }}
               onMouseEnter={(e) => {
                 if (!testing) {
-                  e.currentTarget.style.backgroundColor = '#1d4ed8'
+                  e.currentTarget.style.backgroundColor = 'var(--primary-hover)'
                   e.currentTarget.style.transform = 'translateY(-1px)'
                 }
               }}
               onMouseLeave={(e) => {
                 if (!testing) {
-                  e.currentTarget.style.backgroundColor = '#2563eb'
+                  e.currentTarget.style.backgroundColor = 'var(--primary)'
                   e.currentTarget.style.transform = 'translateY(0)'
                 }
               }}
@@ -1002,15 +1002,15 @@ export function AdminSmtpConfigPanel() {
               style={{
                 padding: '1rem 1.25rem',
                 borderRadius: '12px',
-                backgroundColor: testResult.success ? '#ecfdf5' : '#fef2f2',
-                border: `1px solid ${testResult.success ? '#a7f3d0' : '#fecaca'}`,
-                color: testResult.success ? '#065f46' : '#991b1b',
+                backgroundColor: testResult.success ? '#eff6ff' : '#fef2f2',
+                border: `1px solid ${testResult.success ? '#bfdbfe' : '#fecaca'}`,
+                color: testResult.success ? '#1e40af' : '#991b1b',
                 fontSize: '0.85rem',
                 lineHeight: 1.6,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '800', marginBottom: '0.35rem' }}>
-                {testResult.success ? <CheckCircle2 size={18} color="#059669" /> : <AlertCircle size={18} color="#dc2626" />}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '600', marginBottom: '0.35rem' }}>
+                {testResult.success ? <CheckCircle2 size={18} color="#2563eb" /> : <AlertCircle size={18} color="#dc2626" />}
                 <span>{testResult.success ? 'Gửi thử nghiệm thành công!' : 'Gửi thử nghiệm thất bại!'}</span>
               </div>
               <p style={{ margin: 0 }}>{testResult.message}</p>
@@ -1021,7 +1021,7 @@ export function AdminSmtpConfigPanel() {
                     target="_blank"
                     rel="noreferrer"
                     style={{
-                      color: '#2563eb',
+                      color: 'var(--primary)',
                       fontWeight: '700',
                       textDecoration: 'underline',
                       display: 'inline-flex',
@@ -1104,7 +1104,7 @@ export function AdminSmtpConfigPanel() {
                   <Key size={20} />
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '800', color: '#0f172a' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '600', color: '#0f172a' }}>
                     Hướng dẫn tạo Mật khẩu ứng dụng Gmail
                   </h3>
                   <span style={{ fontSize: '0.78125rem', color: '#64748b' }}>
@@ -1170,13 +1170,13 @@ export function AdminSmtpConfigPanel() {
                     width: '26px',
                     height: '26px',
                     borderRadius: '50%',
-                    backgroundColor: '#2563eb',
+                    backgroundColor: 'var(--primary)',
                     color: '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: '0.8rem',
-                    fontWeight: '800',
+                    fontWeight: '600',
                     flexShrink: 0,
                     marginTop: '2px'
                   }}
@@ -1210,13 +1210,13 @@ export function AdminSmtpConfigPanel() {
                     width: '26px',
                     height: '26px',
                     borderRadius: '50%',
-                    backgroundColor: '#2563eb',
+                    backgroundColor: 'var(--primary)',
                     color: '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: '0.8rem',
-                    fontWeight: '800',
+                    fontWeight: '600',
                     flexShrink: 0,
                     marginTop: '2px'
                   }}
@@ -1240,8 +1240,8 @@ export function AdminSmtpConfigPanel() {
                         alignItems: 'center',
                         gap: '0.35rem',
                         padding: '0.35rem 0.75rem',
-                        backgroundColor: '#eff6ff',
-                        color: '#2563eb',
+                        backgroundColor: 'var(--primary-light)',
+                        color: 'var(--primary)',
                         border: '1px solid #bfdbfe',
                         borderRadius: '8px',
                         fontSize: '0.78125rem',
@@ -1261,8 +1261,8 @@ export function AdminSmtpConfigPanel() {
                         gap: '0.35rem',
                         padding: '0.35rem 0.65rem',
                         backgroundColor: '#ffffff',
-                        color: copiedLink ? '#059669' : '#64748b',
-                        border: `1px solid ${copiedLink ? '#a7f3d0' : '#cbd5e1'}`,
+                        color: copiedLink ? '#2563eb' : '#64748b',
+                        border: `1px solid ${copiedLink ? '#bfdbfe' : '#cbd5e1'}`,
                         borderRadius: '8px',
                         fontSize: '0.78125rem',
                         fontWeight: '600',
@@ -1293,13 +1293,13 @@ export function AdminSmtpConfigPanel() {
                     width: '26px',
                     height: '26px',
                     borderRadius: '50%',
-                    backgroundColor: '#2563eb',
+                    backgroundColor: 'var(--primary)',
                     color: '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: '0.8rem',
-                    fontWeight: '800',
+                    fontWeight: '600',
                     flexShrink: 0,
                     marginTop: '2px'
                   }}
@@ -1333,13 +1333,13 @@ export function AdminSmtpConfigPanel() {
                     width: '26px',
                     height: '26px',
                     borderRadius: '50%',
-                    backgroundColor: '#2563eb',
+                    backgroundColor: 'var(--primary)',
                     color: '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: '0.8rem',
-                    fontWeight: '800',
+                    fontWeight: '600',
                     flexShrink: 0,
                     marginTop: '2px'
                   }}
@@ -1363,10 +1363,10 @@ export function AdminSmtpConfigPanel() {
               <div
                 style={{
                   padding: '0.85rem 1rem',
-                  backgroundColor: '#ecfdf5',
+                  backgroundColor: '#eff6ff',
                   borderRadius: '12px',
-                  border: '1px solid #a7f3d0',
-                  color: '#065f46',
+                  border: '1px solid #bfdbfe',
+                  color: '#1e40af',
                   fontSize: '0.8rem',
                   lineHeight: 1.5,
                   display: 'flex',
@@ -1374,7 +1374,7 @@ export function AdminSmtpConfigPanel() {
                   gap: '0.65rem'
                 }}
               >
-                <CheckCircle2 size={18} color="#059669" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <CheckCircle2 size={18} color="#2563eb" style={{ flexShrink: 0, marginTop: '2px' }} />
                 <div>
                   <strong>Bảo mật tuyệt đối:</strong> Mật khẩu ứng dụng chỉ cấp quyền gửi email tự động và hoàn toàn không để lộ mật khẩu chính của tài khoản Gmail. Bạn có thể thu hồi mật khẩu này bất kỳ lúc nào trên Google Security.
                 </div>
@@ -1400,7 +1400,7 @@ export function AdminSmtpConfigPanel() {
                   height: '38px',
                   padding: '0 1.25rem',
                   borderRadius: '10px',
-                  backgroundColor: '#2563eb',
+                  backgroundColor: 'var(--primary)',
                   color: '#ffffff',
                   border: 'none',
                   fontWeight: '700',

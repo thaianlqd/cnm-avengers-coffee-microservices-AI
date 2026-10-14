@@ -1,9 +1,10 @@
+import { uiText as ui, useUiLanguage } from "../../lib/uiText";
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { 
-  BuildingStorefrontIcon, 
-  CheckCircleIcon, 
-  ExclamationTriangleIcon, 
-  MapPinIcon, 
+import {
+  BuildingStorefrontIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  MapPinIcon,
   ClockIcon,
   ArrowPathIcon,
   ChevronDownIcon,
@@ -12,10 +13,10 @@ import {
 } from '@heroicons/react/24/solid';
 import { apiClient } from '../../lib/apiClient';
 import { evaluateBranchAvailability, inventoryRows, closestCompatibleBranch, inventoryBranchesToCheck } from '../../lib/branchAvailability';
-import { 
-  calculateDistanceKm, 
-  resolveBranchCoordinates, 
-  MAX_DELIVERY_RADIUS_KM 
+import {
+  calculateDistanceKm,
+  resolveBranchCoordinates,
+  MAX_DELIVERY_RADIUS_KM
 } from '../../lib/geocodingService';
 
 export default function NearbyBranchChecker({
@@ -27,14 +28,15 @@ export default function NearbyBranchChecker({
   onSelectBranch,
   onStockStatusChange,
 }) {
+  useUiLanguage();
   const [branchInventories, setBranchInventories] = useState({});
   const [isLoadingInventory, setIsLoadingInventory] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const userManuallySelectedRef = useRef(false);
   const prevCoordsKeyRef = useRef(null);
 
-  const coordsKey = userCoordinates 
-    ? `${Number(userCoordinates.lat).toFixed(4)},${Number(userCoordinates.lng).toFixed(4)}` 
+  const coordsKey = userCoordinates
+    ? `${Number(userCoordinates.lat).toFixed(4)},${Number(userCoordinates.lng).toFixed(4)}`
     : null;
 
   // Khi tọa độ thay đổi (người dùng đổi địa chỉ nhận hàng), reset lựa chọn thủ công để tự động lấy quán gần nhất
@@ -222,7 +224,7 @@ export default function NearbyBranchChecker({
     // Tự động chọn chi nhánh gần nhất còn đủ món:
     // 1. Nếu người dùng chưa bấm chọn thủ công -> Luôn chọn chi nhánh gần nhất (availableBranches[0])
     // 2. Nếu người dùng đã chọn thủ công nhưng chi nhánh đó không còn hợp lệ -> Trả về chi nhánh gần nhất
-    const closestBranchCode = closestCompatibleBranch(evaluatedBranches, selectedBranch, userManuallySelectedRef.current);
+    const closestBranchCode = isLoadingInventory ? null : closestCompatibleBranch(evaluatedBranches, selectedBranch, userManuallySelectedRef.current);
     if (closestBranchCode) {
       if (selectedBranch !== closestBranchCode) {
         onSelectBranch(closestBranchCode);
@@ -250,12 +252,12 @@ export default function NearbyBranchChecker({
       <div className="flex items-center justify-between">
         <h4 className="text-xs font-black uppercase text-[#c41230] tracking-widest flex items-center gap-1.5">
           <BuildingStorefrontIcon className="w-4 h-4 text-[#c41230]" />
-          <span>Cửa hàng phục vụ (Bán kính 5km)</span>
+          <span>{ui("Cửa hàng phục vụ (Bán kính 5km)")}</span>
         </h4>
         {isLoadingInventory && (
           <span className="text-[11px] text-gray-500 flex items-center gap-1">
             <ArrowPathIcon className="w-3 h-3 animate-spin text-[#c41230]" />
-            <span>Đang kiểm tra món...</span>
+            <span>{ui("Đang kiểm tra món...")}</span>
           </span>
         )}
       </div>
@@ -265,13 +267,10 @@ export default function NearbyBranchChecker({
         <div className="rounded-xl border border-amber-300 bg-amber-50/90 p-3.5 text-amber-900 shadow-2xs space-y-1 animate-fadeIn">
           <div className="flex items-center gap-2 font-bold text-xs text-amber-800">
             <ExclamationTriangleIcon className="w-4 h-4 text-amber-600 flex-shrink-0" />
-            <span>Địa chỉ vượt quá phạm vi giao hàng 5km</span>
+            <span>{ui("Địa chỉ vượt quá phạm vi giao hàng 5km")}</span>
           </div>
-          <p className="text-xs text-amber-700 leading-relaxed">
-            Rất tiếc, hiện tại không có chi nhánh nào trong bán kính <strong>5.0 km</strong> gần địa chỉ của bạn.
-          </p>
-          <div className="pt-0.5 text-[11px] text-amber-800 font-semibold">
-            👉 Vui lòng đổi địa chỉ nhận hoặc chọn hình thức <strong>Lấy tại quán</strong>.
+          <p className="text-xs text-amber-700 leading-relaxed">{ui("Rất tiếc, hiện tại không có chi nhánh nào trong bán kính ")}<strong>5.0 km</strong>{ui(" gần địa chỉ của bạn.")}</p>
+          <div className="pt-0.5 text-[11px] text-amber-800 font-semibold">{ui("👉 Vui lòng đổi địa chỉ nhận hoặc chọn hình thức ")}<strong>{ui("Lấy tại quán")}</strong>.
           </div>
         </div>
       ) : (
@@ -310,12 +309,10 @@ export default function NearbyBranchChecker({
                         {branch.distance} km
                       </span>
                       {isAvailable ? (
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200 shrink-0">
-                          Còn món
-                        </span>
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200 shrink-0">{ui("Còn món")}</span>
                       ) : (
                         <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-md border border-red-200 shrink-0">
-                          {branch.missingItems.length ? 'Tạm ngưng' : branch.checkingInventory ? 'Đang kiểm tra' : 'Chưa đọc được'}
+                          {branch.missingItems.length ? ui("Tạm ngưng") : branch.checkingInventory ? ui("Đang kiểm tra") : ui("Chưa đọc được")}
                         </span>
                       )}
                     </div>
@@ -325,22 +322,21 @@ export default function NearbyBranchChecker({
                     {isSelected && (
                       <p className="text-[10px] font-bold text-emerald-700 flex items-center gap-1 pt-0.5">
                         <CheckCircleIcon className="w-3 h-3" />
-                        <span>Chi nhánh tiếp nhận đơn</span>
+                        <span>{ui("Chi nhánh tiếp nhận đơn")}</span>
                       </p>
                     )}
                     {branch.available_products.length > 0 && (
                       <p className="text-[10px] text-emerald-700">
-                        {isAvailable ? 'Còn đủ các món trong giỏ' : `Còn: ${branch.available_products.map(item => item.product_name).join(', ')}`}
+                        {isAvailable ? ui("Còn đủ các món trong giỏ") : ui("Còn: {{v0}}", {v0:branch.available_products.map(item => item.product_name).join(', ')})}
                       </p>
                     )}
                     {!isAvailable && branch.missingItems.length > 0 && (
-                      <p className="text-[10px] font-bold text-red-600 truncate">
-                        Tạm ngưng: {branch.missingItems.join(', ')}
+                      <p className="text-[10px] font-bold text-red-600 truncate">{ui("Tạm ngưng: ")}{branch.missingItems.join(', ')}
                       </p>
                     )}
                     {branch.unverified_products.length > 0 && (
                       <p className="text-[10px] text-amber-700">
-                        {branch.checkingInventory ? 'Đang kiểm tra' : 'Chưa đọc được tình trạng bán'}: {branch.unverified_products.map(item => item.product_name).join(', ')}
+                        {branch.checkingInventory ? ui("Đang kiểm tra") : ui("Chưa đọc được tình trạng bán")}: {branch.unverified_products.map(item => item.product_name).join(', ')}
                       </p>
                     )}
                   </div>
@@ -367,12 +363,12 @@ export default function NearbyBranchChecker({
               {showAll ? (
                 <>
                   <ChevronUpIcon className="w-3.5 h-3.5" />
-                  <span>Thu gọn</span>
+                  <span>{ui("Thu gọn")}</span>
                 </>
               ) : (
                 <>
                   <ChevronDownIcon className="w-3.5 h-3.5" />
-                  <span>Xem thêm {nearbyBranches.length - 5} chi nhánh gần bạn</span>
+                  <span>{ui("Xem thêm ")}{nearbyBranches.length - 5}{ui(" chi nhánh gần bạn")}</span>
                 </>
               )}
             </button>
@@ -380,7 +376,7 @@ export default function NearbyBranchChecker({
 
           <div className="flex items-center gap-1.5 text-[11px] font-medium text-gray-400 px-1 pt-0.5">
             <ClockIcon className="w-3.5 h-3.5 text-gray-400" />
-            <span>Giao dự kiến: <strong>15 - 25 phút</strong></span>
+            <span>{ui("Giao dự kiến: ")}<strong>{ui("15 - 25 phút")}</strong></span>
           </div>
         </div>
       )}

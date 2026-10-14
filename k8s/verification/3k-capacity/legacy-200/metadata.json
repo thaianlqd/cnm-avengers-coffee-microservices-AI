@@ -1,0 +1,15 @@
+{
+  "started_at": "2026-10-14T05:37:58.840960+00:00",
+  "vus": 200,
+  "hold_seconds": 60,
+  "profile": "legacy moderate unchanged",
+  "think_seconds": 1,
+  "source_head": "443fb99696e4fdaaea043776e8c49416b1fd1fbf",
+  "dirty_diff": " K8S_DEMO_GUIDE.md       |  5 +++++\n load-tests/k6/README.md | 11 +++++++++++\n 2 files changed, 16 insertions(+)\n",
+  "k6_version": "k6 v0.57.0 (commit/50afd82c18, go1.23.6, darwin/arm64)",
+  "workload_sha256": "64bec53696c086c65c3b2fc3792105bca46af2bb2526b660083014108cb42f5d",
+  "load_started_at": "2026-10-14T05:37:59.023822+00:00",
+  "k6_exit": 0,
+  "load_finished_at": "2026-10-14T05:41:00.130961+00:00",
+  "finished_at": "2026-10-14T05:46:13.816563+00:00"
+}

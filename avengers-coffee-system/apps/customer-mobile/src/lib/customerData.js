@@ -1,3 +1,6 @@
+import { newsArtwork } from './newsArtwork'
+import { formatAddress } from './addressContract.mjs'
+
 export function safeArray(value) {
   if (Array.isArray(value)) {
     return value
@@ -84,6 +87,7 @@ export function formatDateOnly(value) {
 
 export function normalizeProduct(item) {
   return {
+    ...item,
     id: String(item?.id ?? item?.ma_san_pham ?? item?.maSanPham ?? ''),
     ma_san_pham: item?.ma_san_pham ?? item?.id ?? item?.maSanPham ?? null,
     ten_san_pham: String(item?.ten_san_pham ?? item?.name ?? '').trim(),
@@ -99,7 +103,7 @@ export function normalizeProduct(item) {
     danh_muc_id: item?.danh_muc_id ?? item?.category_code ?? item?.danhMuc?.ma_danh_muc ?? null,
     la_hot: Boolean(item?.la_hot),
     la_moi: Boolean(item?.la_moi),
-    dang_ban: item?.dang_ban !== undefined ? Boolean(item.dang_ban) : item?.status !== 'sold_out',
+    dang_ban: item?.dang_ban !== undefined ? Boolean(item.dang_ban) : item?.trang_thai !== undefined ? Boolean(item.trang_thai) : item?.status !== 'sold_out',
     status: item?.status || (item?.dang_ban === false ? 'sold_out' : 'available'),
     original_price: item?.original_price !== undefined && item?.original_price !== null
       ? Number(item.original_price)
@@ -122,6 +126,7 @@ export function normalizeCategory(item) {
 
 export function normalizeOrder(item) {
   return {
+    ...item,
     id: String(item?.id ?? item?.ma_don_hang ?? ''),
     ma_don_hang: String(item?.ma_don_hang ?? item?.id ?? '').trim(),
     tong_tien: Number(item?.tong_tien ?? item?.total ?? 0),
@@ -129,13 +134,14 @@ export function normalizeOrder(item) {
     phuong_thuc_thanh_toan: String(item?.phuong_thuc_thanh_toan ?? item?.payment_method ?? '').trim(),
     trang_thai_don_hang: String(item?.trang_thai_don_hang ?? item?.status ?? '').trim(),
     trang_thai_thanh_toan: String(item?.trang_thai_thanh_toan ?? item?.payment_status ?? '').trim(),
-    dia_chi_giao_hang: String(item?.dia_chi_giao_hang ?? item?.address ?? '').trim(),
+    dia_chi_giao_hang: formatAddress(item?.dia_chi_giao_hang ?? item?.address),
     khung_gio_giao: String(item?.khung_gio_giao ?? item?.delivery_slot ?? '').trim(),
     ghi_chu: String(item?.ghi_chu ?? item?.note ?? '').trim(),
     ngay_tao: item?.ngay_tao ?? item?.created_at ?? null,
     ngay_cap_nhat: item?.ngay_cap_nhat ?? item?.updated_at ?? null,
-    chi_tiet: safeArray(item?.chi_tiet).map((detail, index) => ({
-      id: String(detail?.id ?? `${index}`),
+    chi_tiet: safeArray(item?.chi_tiet).map((detail) => ({
+      ...detail,
+      id: detail?.id == null ? null : String(detail.id),
       ma_san_pham: detail?.ma_san_pham ?? null,
       ten_san_pham: String(detail?.ten_san_pham ?? detail?.name ?? '').trim(),
       so_luong: Number(detail?.so_luong ?? detail?.quantity ?? 0),
@@ -153,7 +159,8 @@ export function normalizeCartItem(item) {
   }
   if (!Array.isArray(toppings)) toppings = []
   return {
-    id: String(item?.id ?? item?.ma_san_pham ?? '').trim(),
+    ...item,
+    id: String(item?.id ?? '').trim(),
     ma_nguoi_dung: String(item?.ma_nguoi_dung ?? '').trim(),
     ma_san_pham: Number(item?.ma_san_pham ?? item?.product_id ?? item?.itemId ?? 0),
     ten_san_pham: String(item?.ten_san_pham ?? item?.name ?? '').trim(),
@@ -164,12 +171,13 @@ export function normalizeCartItem(item) {
     toppings: toppings.map(t => typeof t === 'object' && t ? (t.name || t.ten_topping || '') : String(t)).filter(Boolean),
     luong_da: String(item?.luong_da ?? item?.luongDa ?? 'Bình thường').trim(),
     do_ngot: String(item?.do_ngot ?? item?.doNgot ?? 'Bình thường').trim(),
-    ghi_chu: String(item?.ghi_chu ?? item?.ghiChu ?? item?.note ?? '').trim(),
+    ghi_chu: String(item?.ghi_chu ?? item?.custom_attributes?.ghi_chu ?? item?.ghiChu ?? item?.note ?? '').trim(),
   }
 }
 
 export function normalizeAddress(item) {
   return {
+    ...item,
     id: String(item?.id ?? item?.addressId ?? ''),
     ten_dia_chi: String(item?.ten_dia_chi ?? item?.tenDiaChi ?? '').trim(),
     dia_chi_day_du: String(item?.dia_chi_day_du ?? item?.diaChiDayDu ?? item?.dia_chi ?? '').trim(),
@@ -180,6 +188,7 @@ export function normalizeAddress(item) {
 
 export function normalizeBranch(item) {
   return {
+    ...item,
     id: String(item?.id ?? item?.ma_chi_nhanh ?? '').trim(),
     ma_chi_nhanh: String(item?.ma_chi_nhanh ?? item?.code ?? item?.id ?? '').trim(),
     ten_chi_nhanh: String(item?.ten_chi_nhanh ?? item?.name ?? '').trim(),
@@ -196,6 +205,7 @@ export function normalizeBranch(item) {
 
 export function normalizeNewsArticle(item) {
   return {
+    image_source: item?.image_source || newsArtwork(item?.image_url),
     id: String(item?.id ?? '').trim(),
     title: String(item?.title ?? '').trim(),
     description: String(item?.description ?? '').trim(),
@@ -258,7 +268,7 @@ export function getVoucherDisplayTitle(v) {
   if (type === 'FREE_ITEM' || v?.ten_san_pham_tang) {
     return `Tặng ${v?.ten_san_pham_tang || 'sản phẩm'}`
   }
-  
+
   if (v?.ten_khuyen_mai && !String(v.ten_khuyen_mai).startsWith('TPL_')) {
     return v.ten_khuyen_mai
   }
@@ -296,4 +306,4 @@ export function getVoucherDisplayDescription(v) {
   }
 
   return parts.join(' • ')
-}
+}

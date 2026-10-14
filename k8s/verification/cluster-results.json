@@ -1,0 +1,509 @@
+{
+  "observed_at": "2026-10-13T13:08:25.407746+00:00",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "database_mode": "existing",
+  "database_topology": "remote Supabase/PostgreSQL, TLS",
+  "provider_calls_in_tests": 0,
+  "regression_tests_passed": 385,
+  "qualification": {
+    "render": "PASS",
+    "server_dry_run": "PASS",
+    "deploy": "PASS",
+    "public_http_smoke": "PASS",
+    "public_socket_single_pod": "PASS",
+    "self_healing_60_samples": "PASS",
+    "stable_k6": "PASS",
+    "rolling_restart_60_samples": "PASS",
+    "order_hpa": "disabled",
+    "legacy_startup_write_uncertainty": true,
+    "hpa_scale_up": "PASS",
+    "hpa_scale_down": "PASS"
+  },
+  "benchmark": {
+    "version": "k6 v0.57.0 darwin/arm64",
+    "network_path": "localhost LoadBalancer",
+    "profile": "20/50/100/200/0 over 180 seconds",
+    "freshness_ms": 5000,
+    "response_policy": "full JSON snapshots and negotiated gzip",
+    "requests": 44608,
+    "http_req_failed": 0,
+    "checks": 1,
+    "p50_ms": 32.7005,
+    "p95_ms": 505.2409,
+    "avg_ms": 111.28731294835012,
+    "max_ms": 3045.314
+  },
+  "cluster": {
+    "nodes": [
+      {
+        "name": "desktop-control-plane",
+        "architecture": "arm64",
+        "version": "v1.36.1",
+        "ready": true
+      }
+    ],
+    "deployments": [
+      {
+        "name": "ai-service",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          "avengers/ai-service:k8s-local-82f4acdb0c75"
+        ]
+      },
+      {
+        "name": "api-gateway",
+        "desired": 2,
+        "ready": 2,
+        "images": [
+          "avengers/api-gateway:k8s-local-ab327a80ffe0"
+        ]
+      },
+      {
+        "name": "identity-service",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          "avengers/identity-service:k8s-local-ddefcf333ccb"
+        ]
+      },
+      {
+        "name": "inventory-service",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          "avengers/inventory-service:k8s-local-8518a3746e94"
+        ]
+      },
+      {
+        "name": "menu-service",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          "avengers/menu-service:k8s-local-782a72470a1e"
+        ]
+      },
+      {
+        "name": "news-service",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          "avengers/news-service:k8s-local-176431e7beb0"
+        ]
+      },
+      {
+        "name": "order-service",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          "avengers/order-service:k8s-local-97db7add6ca4"
+        ]
+      },
+      {
+        "name": "web-customer",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          "avengers/web-customer:k8s-local-016f08dce095"
+        ]
+      }
+    ],
+    "pods": [
+      {
+        "name": "ai-service-74595687bb-sjdxt",
+        "app": "ai-service",
+        "phase": "Running",
+        "ready": true,
+        "images": [
+          "avengers/ai-service:k8s-local-82f4acdb0c75"
+        ],
+        "restarts": 0
+      },
+      {
+        "name": "api-gateway-8646549bbb-68wrj",
+        "app": "api-gateway",
+        "phase": "Running",
+        "ready": true,
+        "images": [
+          "avengers/api-gateway:k8s-local-ab327a80ffe0"
+        ],
+        "restarts": 0
+      },
+      {
+        "name": "api-gateway-8646549bbb-vjz5w",
+        "app": "api-gateway",
+        "phase": "Running",
+        "ready": true,
+        "images": [
+          "avengers/api-gateway:k8s-local-ab327a80ffe0"
+        ],
+        "restarts": 0
+      },
+      {
+        "name": "identity-service-7666944d5d-bcz7v",
+        "app": "identity-service",
+        "phase": "Running",
+        "ready": true,
+        "images": [
+          "avengers/identity-service:k8s-local-ddefcf333ccb"
+        ],
+        "restarts": 0
+      },
+      {
+        "name": "inventory-service-cd68cd75b-s5xjr",
+        "app": "inventory-service",
+        "phase": "Running",
+        "ready": true,
+        "images": [
+          "avengers/inventory-service:k8s-local-8518a3746e94"
+        ],
+        "restarts": 0
+      },
+      {
+        "name": "menu-service-7cf979fcc-szwmt",
+        "app": "menu-service",
+        "phase": "Running",
+        "ready": true,
+        "images": [
+          "avengers/menu-service:k8s-local-782a72470a1e"
+        ],
+        "restarts": 0
+      },
+      {
+        "name": "news-service-855d5cb5fd-ght8t",
+        "app": "news-service",
+        "phase": "Running",
+        "ready": true,
+        "images": [
+          "avengers/news-service:k8s-local-176431e7beb0"
+        ],
+        "restarts": 0
+      },
+      {
+        "name": "order-service-6c86bf89-bwgj7",
+        "app": "order-service",
+        "phase": "Running",
+        "ready": true,
+        "images": [
+          "avengers/order-service:k8s-local-97db7add6ca4"
+        ],
+        "restarts": 0
+      },
+      {
+        "name": "web-customer-6c9cf65c5-cmmtz",
+        "app": "web-customer",
+        "phase": "Running",
+        "ready": true,
+        "images": [
+          "avengers/web-customer:k8s-local-016f08dce095"
+        ],
+        "restarts": 0
+      }
+    ],
+    "services": [
+      {
+        "name": "ai-service",
+        "type": "ClusterIP",
+        "ports": [
+          {
+            "name": "http",
+            "port": 8000,
+            "protocol": "TCP",
+            "targetPort": "http"
+          }
+        ],
+        "external": {},
+        "affinity": "None"
+      },
+      {
+        "name": "api-gateway",
+        "type": "LoadBalancer",
+        "ports": [
+          {
+            "name": "http",
+            "nodePort": 30326,
+            "port": 3000,
+            "protocol": "TCP",
+            "targetPort": "http"
+          }
+        ],
+        "external": {
+          "ingress": [
+            {
+              "ip": "172.21.0.5",
+              "ipMode": "Proxy",
+              "ports": [
+                {
+                  "port": 3000,
+                  "protocol": "TCP"
+                }
+              ]
+            }
+          ]
+        },
+        "affinity": "None"
+      },
+      {
+        "name": "identity-service",
+        "type": "ClusterIP",
+        "ports": [
+          {
+            "name": "http",
+            "port": 3001,
+            "protocol": "TCP",
+            "targetPort": "http"
+          }
+        ],
+        "external": {},
+        "affinity": "None"
+      },
+      {
+        "name": "inventory-service",
+        "type": "ClusterIP",
+        "ports": [
+          {
+            "name": "http",
+            "port": 3004,
+            "protocol": "TCP",
+            "targetPort": "http"
+          }
+        ],
+        "external": {},
+        "affinity": "None"
+      },
+      {
+        "name": "menu-service",
+        "type": "ClusterIP",
+        "ports": [
+          {
+            "name": "http",
+            "port": 3003,
+            "protocol": "TCP",
+            "targetPort": "http"
+          }
+        ],
+        "external": {},
+        "affinity": "None"
+      },
+      {
+        "name": "news-service",
+        "type": "ClusterIP",
+        "ports": [
+          {
+            "name": "http",
+            "port": 3006,
+            "protocol": "TCP",
+            "targetPort": "http"
+          }
+        ],
+        "external": {},
+        "affinity": "None"
+      },
+      {
+        "name": "order-service",
+        "type": "LoadBalancer",
+        "ports": [
+          {
+            "name": "http",
+            "nodePort": 30159,
+            "port": 3005,
+            "protocol": "TCP",
+            "targetPort": "http"
+          }
+        ],
+        "external": {
+          "ingress": [
+            {
+              "ip": "172.21.0.6",
+              "ipMode": "Proxy",
+              "ports": [
+                {
+                  "port": 3005,
+                  "protocol": "TCP"
+                }
+              ]
+            }
+          ]
+        },
+        "affinity": "ClientIP"
+      },
+      {
+        "name": "web-customer",
+        "type": "LoadBalancer",
+        "ports": [
+          {
+            "name": "http",
+            "nodePort": 31134,
+            "port": 5175,
+            "protocol": "TCP",
+            "targetPort": "http"
+          }
+        ],
+        "external": {
+          "ingress": [
+            {
+              "ip": "172.21.0.7",
+              "ipMode": "Proxy",
+              "ports": [
+                {
+                  "port": 5175,
+                  "protocol": "TCP"
+                }
+              ]
+            }
+          ]
+        },
+        "affinity": "None"
+      }
+    ],
+    "hpa": [
+      {
+        "name": "api-gateway",
+        "min": 2,
+        "max": 4,
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-10-13T11:53:46Z",
+            "message": "recommended size matches current size",
+            "reason": "ReadyForNewScale",
+            "status": "True",
+            "type": "AbleToScale"
+          },
+          {
+            "lastTransitionTime": "2026-10-13T13:02:08Z",
+            "message": "the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)",
+            "reason": "ValidMetricFound",
+            "status": "True",
+            "type": "ScalingActive"
+          },
+          {
+            "lastTransitionTime": "2026-10-13T13:00:53Z",
+            "message": "the desired replica count is less than the minimum replica count",
+            "reason": "TooFewReplicas",
+            "status": "True",
+            "type": "ScalingLimited"
+          }
+        ],
+        "currentMetrics": [
+          {
+            "resource": {
+              "current": {
+                "averageUtilization": 2,
+                "averageValue": "1m"
+              },
+              "name": "cpu"
+            },
+            "type": "Resource"
+          }
+        ],
+        "currentReplicas": 2,
+        "desiredReplicas": 2,
+        "lastScaleTime": "2026-10-13T13:00:23Z"
+      },
+      {
+        "name": "identity-service",
+        "min": 1,
+        "max": 3,
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-10-13T11:53:46Z",
+            "message": "recommended size matches current size",
+            "reason": "ReadyForNewScale",
+            "status": "True",
+            "type": "AbleToScale"
+          },
+          {
+            "lastTransitionTime": "2026-10-13T12:42:06Z",
+            "message": "the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)",
+            "reason": "ValidMetricFound",
+            "status": "True",
+            "type": "ScalingActive"
+          },
+          {
+            "lastTransitionTime": "2026-10-13T13:00:23Z",
+            "message": "the desired count is within the acceptable range",
+            "reason": "DesiredWithinRange",
+            "status": "False",
+            "type": "ScalingLimited"
+          }
+        ],
+        "currentMetrics": [
+          {
+            "resource": {
+              "current": {
+                "averageUtilization": 4,
+                "averageValue": "3m"
+              },
+              "name": "cpu"
+            },
+            "type": "Resource"
+          }
+        ],
+        "currentReplicas": 1,
+        "desiredReplicas": 1,
+        "lastScaleTime": "2026-10-13T13:00:23Z"
+      },
+      {
+        "name": "menu-service",
+        "min": 1,
+        "max": 4,
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-10-13T11:53:46Z",
+            "message": "recommended size matches current size",
+            "reason": "ReadyForNewScale",
+            "status": "True",
+            "type": "AbleToScale"
+          },
+          {
+            "lastTransitionTime": "2026-10-13T12:42:06Z",
+            "message": "the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)",
+            "reason": "ValidMetricFound",
+            "status": "True",
+            "type": "ScalingActive"
+          },
+          {
+            "lastTransitionTime": "2026-10-13T13:01:08Z",
+            "message": "the desired count is within the acceptable range",
+            "reason": "DesiredWithinRange",
+            "status": "False",
+            "type": "ScalingLimited"
+          }
+        ],
+        "currentMetrics": [
+          {
+            "resource": {
+              "current": {
+                "averageUtilization": 5,
+                "averageValue": "4m"
+              },
+              "name": "cpu"
+            },
+            "type": "Resource"
+          }
+        ],
+        "currentReplicas": 1,
+        "desiredReplicas": 1,
+        "lastScaleTime": "2026-10-13T13:01:08Z"
+      }
+    ]
+  },
+  "hpa_observations": {
+    "sample_count": 31,
+    "desired_peak": {
+      "api-gateway": 4,
+      "identity-service": 3,
+      "menu-service": 4
+    },
+    "last_counts": {
+      "api-gateway": 2,
+      "identity-service": 1,
+      "menu-service": 1
+    }
+  },
+  "resource_observations": {
+    "node_cpu_peak_millicores": 3464,
+    "node_memory_peak_mib": 2191,
+    "pod_restart_count": 0
+  }
+}

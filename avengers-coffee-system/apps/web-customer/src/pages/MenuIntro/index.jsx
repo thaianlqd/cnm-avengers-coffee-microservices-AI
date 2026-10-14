@@ -1,12 +1,15 @@
+import { uiText as ui, useUiLanguage, uiLocale } from "../../lib/uiText";
+import { menuCategoryLabel } from '../../lib/categoryLabels';
+import { useTranslation } from 'react-i18next';
 import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { ChevronLeftIcon, ChevronRightIcon, ArrowLongRightIcon, ArrowLongLeftIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon, ArrowLongRightIcon, ArrowLongLeftIcon } from '@heroicons/react/24/outline';
 
 /* ────────────────────────────────────────────────────────
    DATA: Nội dung giới thiệu chi tiết, giàu cảm xúc & thiết kế đẳng cấp
    ──────────────────────────────────────────────────────── */
 const GROUP_THEMES = {
   coffee: {
-    bg: 'linear-gradient(145deg, #0f2316 0%, #1c3d27 50%, #0d1e13 100%)',
+    bg: '#65161d',
     textColor: '#fff',
     titleColor: '#d4af37', // Vàng hoàng gia sang trọng
     descColor: '#e2f0d9',
@@ -17,8 +20,6 @@ const GROUP_THEMES = {
     btnHoverBg: '#d4af37',
     btnHoverText: '#0f2316',
     title: 'CÀ PHÊ VIỆT NAM',
-    description: 'Tinh túy từ đất trời cao nguyên lộng gió Gia Lai và Lâm Đồng. Trải qua quy trình thu hái thủ công tỉ mỉ, tuyển chọn những hạt cà phê Robusta và Arabica chín mọng nhất, kết hợp cùng bí quyết rang xay gia truyền độc bản của Highlands Coffee. Mỗi giọt cà phê mang trong mình sự hòa quyện tuyệt hảo giữa vị đắng đậm đà nguyên bản và hương thơm quyến rũ nồng nàn đầy cảm xúc.',
-    introText: 'Khởi đầu ngày mới tràn đầy năng lượng cùng dòng sản phẩm cà phê trứ danh. Từ những ly Phin Sữa Đá mang đậm bản sắc đường phố Việt Nam, vị đắng sánh mịn quyện cùng sữa đặc béo ngậy, đến dòng PhinDi thế hệ mới phá cách trẻ trung cùng thạch cà phê giòn dai lạ miệng. Hay tinh hoa cà phê Ý Espresso, Americano tinh tế được chiết xuất công phu. Hãy cùng thưởng thức hương vị di sản truyền thống được nâng tầm nghệ thuật đương đại.',
     banner: '/hc-assets/web_banner_2000x2000.jpg',
   },
   tea: {
@@ -33,8 +34,6 @@ const GROUP_THEMES = {
     btnHoverBg: '#8a4b16',
     btnHoverText: '#fff',
     title: 'TRÀ HIGHLANDS',
-    description: 'Hành trình đánh thức mọi giác quan bắt đầu từ những đồi chè xanh mướt phủ sương sớm trên vùng cao nguyên lộng gió. Những búp trà xanh ô long thượng hạng được hái bằng tay, chắt lọc tinh tế để giữ trọn vị chát nhẹ thanh tao tự nhiên. Kết hợp hoàn hảo cùng trái cây tươi ngọt dịu mọng nước và thạch giòn dai độc đáo mang thương hiệu Highlands, tạo nên bản hòa tấu thanh mát hoàn hảo cho ngày dài đầy hứng khởi.',
-    introText: 'Khám phá thế giới trà độc đáo, nơi phong vị truyền thống kết hợp hài hòa cùng hơi thở năng động của cuộc sống hiện đại. Trà Sen Vàng ngọt dịu tao nhã với hạt sen bùi ngậy và củ năng giòn sần sật, Trà Thạch Đào thơm mát rạng rỡ làm xiêu lòng bao thế hệ khách hàng. Mỗi ly trà là một lời mời gọi tận hưởng những phút giây thư thái nhẹ nhàng bên bạn bè và người thân yêu.',
     banner: '/hc-assets/slider_1.jpg',
   },
   freeze: {
@@ -49,8 +48,6 @@ const GROUP_THEMES = {
     btnHoverBg: '#105234',
     btnHoverText: '#fff',
     title: 'FREEZE ĐÁ XAY',
-    description: 'Trải nghiệm cảm giác mát lạnh bùng nổ tức thì cùng dòng đá xay Freeze đặc trưng. Sự hòa quyện đầy mê hoặc giữa lớp kem whipping béo ngậy bông mềm bên trên và phần đá xay mịn màng rực rỡ bên dưới. Chúng tôi kết hợp các hương vị đậm chất Việt Nam và thế giới như trà xanh Nhật Bản thơm nồng, chocolate ngọt ngào quyến rũ cùng thạch giòn dai rộn rã tạo nên sự sảng khoái tối đa cho những buổi hẹn hò đầy năng lượng.',
-    introText: 'Dòng Freeze đá xay độc đáo mang đậm bản sắc năng động, là giải pháp giải nhiệt hoàn hảo cho mọi thời tiết. Những hạt đá bào xay mịn hòa quyện hoàn chỉnh cùng matcha Tây Bắc đậm vị, caramel ngọt dịu quyến rũ hay thạch jelly dai giòn lạ miệng. Hãy đắm mình trong thế giới đá xay đầy sắc màu ngọt ngào và mát lạnh sảng khoái.',
     banner: '/hc-assets/2.png',
   },
   other: {
@@ -65,36 +62,23 @@ const GROUP_THEMES = {
     btnHoverBg: '#5e370e',
     btnHoverText: '#fff',
     title: 'BÁNH & ĐỒ ĂN',
-    description: 'Thưởng thức ẩm thực trọn vẹn khi kết hợp những ly thức uống mát lạnh cùng bộ sưu tập bánh ngọt và bánh mặn hảo hạng của chúng tôi. Được chuẩn bị kỳ công từ những nguyên liệu tươi ngon nhất, nướng nóng hổi giòn rụm mỗi ngày tại bếp bánh chuyên nghiệp, mang đến cho bạn bữa ăn nhẹ đầy đủ dinh dưỡng và ngon miệng nhất.',
-    introText: 'Thực đơn bánh ngọt tinh tế của chúng tôi luôn có những lựa chọn hoàn hảo từ bánh ngọt mousse phô mai dịu ngọt tan chảy, đến những chiếc bánh mì que giòn tan nóng hổi phết pate thơm lừng đặc trưng đậm đà vị Việt. Dù là buổi sáng bận rộn hay buổi xế chiều cần tiếp năng lượng, thực đơn ăn nhẹ luôn sẵn sàng làm bạn hài lòng.',
     banner: '/hc-assets/1_1.jpg',
   }
 };
 
-const SUBCATEGORY_DESCRIPTIONS = {
-  'phin': 'Dòng cà phê phin truyền thống mang đậm bản sắc văn hóa Việt Nam. Từng hạt cà phê Robusta & Arabica hảo hạng được tuyển chọn khắt khe từ vùng cao nguyên nắng gió, qua quy trình rang xay độc quyền mang hương vị đậm đà nguyên bản quyến rũ khó quên.',
-  'phindi': 'Dòng PhinDi thế hệ mới mang đến sự phá cách đột phá, kết hợp hoàn mỹ giữa hương vị cà phê phin truyền thống nhẹ nhàng và các nguyên liệu hiện đại như kem sữa béo ngậy, hạnh nhân nướng bùi thơm hay chocolate ngọt ngào đầy cá tính.',
-  'espresso': 'Tinh hoa cà phê Ý đích thực được chiết xuất công phu dưới áp suất nước tiêu chuẩn, tạo ra lớp crema mịn màng như nhung trên bề mặt. Thức uống dành cho những tâm hồn sành điệu ưa thích hương vị đậm đặc tinh tế bậc nhất.',
-  'americano': 'Biến tấu nhẹ nhàng từ shot Espresso nguyên bản kết hợp cùng nước nóng tinh khiết. Americano mang vị đắng dịu, thanh thoát, là người bạn đồng hành hoàn hảo cho những cuộc trò chuyện công việc hay những buổi sáng cần tập trung cao độ.',
-  'latte': 'Sự kết hợp ngọt ngào giữa một shot Espresso đậm vị và sữa tươi béo ngậy được đánh bọt mịn màng. Mỗi ly Latte đều được các Barista nghệ thuật tạo hình lá phong hay trái tim đầy lãng mạn.',
-  'cold brew': 'Cà phê được ủ lạnh chậm rãi trong nước tinh khiết từ 12-24 giờ. Quá trình chiết xuất ở nhiệt độ thấp giúp giảm thiểu acid tự nhiên, đem đến hương vị mượt mà, thanh khiết và hậu vị ngọt thanh tự nhiên cực kỳ dễ chịu.',
-  'matcha': 'Hương vị trà xanh Nhật Bản thuần khiết xay mịn cùng sữa béo ngậy, phủ lớp kem whipping bông mềm xốp mịn. Thức uống lý tưởng giúp sảng khoái và thanh lọc cơ thể tức thì.',
-  'trà sữa': 'Sự hòa quyện tuyệt vời của những búp trà đen đậm vị được ủ kỹ và sữa tươi béo ngậy ngọt ngào, tạo nên ly trà sữa mượt mà, thơm hương trà thanh mát vị sữa.',
-  'trà trái cây': 'Được chắt lọc từ những búp trà xanh tươi mát kết hợp đầy ngẫu hứng cùng trái cây tươi như đào mọng nước, vải ngọt lịm hay quả mọng chua nhẹ, đem lại nguồn năng lượng sảng khoái tràn đầy.',
-  'sen': 'Biểu tượng trà thanh tao trứ danh. Nước cốt trà xanh ô long thanh mát kết hợp cùng hạt sen hầm chín mềm bùi ngậy và những lát củ năng giòn sần sật lạ miệng đầy cuốn hút.',
-  'thạch': 'Trà thạch đào tươi mát lạnh, quyến rũ nhờ sự kết hợp hài hòa giữa trà ô long, thạch đào giòn sần sật đặc trưng và những lát đào tươi mọng nước ngọt ngào.',
-  'frappe': 'Đá xay mát lạnh, bùng nổ hương vị từ chocolate ngọt ngào, cookie giòn rụm hòa quyện cùng kem sữa whipped cream thơm béo mịn màng.',
-  'bánh mì': 'Bánh mì que truyền thống với lớp vỏ giòn tan nóng hổi phết lớp pate gan béo ngậy đậm đà thơm lừng đặc trưng, là món ăn nhẹ tuyệt vời của người Việt.',
-  'bánh ngọt': 'Những chiếc bánh ngọt mousse phô mai, tiramisu béo ngậy hay bánh bông lan mềm mại được làm thủ công tỉ mỉ hàng ngày, làm trọn vẹn hơn mỗi buổi thưởng trà của bạn.',
-  'bánh mặn': 'Bánh sừng bò croissant bơ tỏi thơm lừng, bánh man mặn được nướng vàng ruộm lôi cuốn giúp nạp nhanh năng lượng.',
+const MENU_COPY = {
+  coffee: ['Cà phê phin, espresso và những lựa chọn quen thuộc cho mỗi ngày.', 'Vietnamese coffee, espresso and familiar everyday favourites.'],
+  tea: ['Trà thanh nhẹ, trà sữa và vị trái cây cho một khoảng nghỉ mát lành.', 'Refreshing tea, milk tea and fruit flavours for your afternoon break.'],
+  freeze: ['Đá xay mát lạnh. Chọn hương vị và tùy chỉnh theo sở thích của bạn.', 'Cool blended drinks. Choose a flavour and make it your own.'],
+  other: ['Bánh, món ăn nhẹ và những lựa chọn để thưởng thức cùng đồ uống.', 'Bakery treats, light bites and more to enjoy with your drink.']
 };
 
-function getSubcatDesc(name) {
-  const lowercase = String(name || '').toLowerCase();
-  for (const [key, desc] of Object.entries(SUBCATEGORY_DESCRIPTIONS)) {
-    if (lowercase.includes(key)) return desc;
-  }
-  return 'Sản phẩm chất lượng cao chuẩn vị được tuyển chọn tinh tế từ nông trại chất lượng hàng đầu, đem lại trải nghiệm hoàn mỹ nhất cho vị giác của bạn.';
+function getSubcatDesc(name, lang, themeKey) {
+  const normalized = String(name || '').toLowerCase();
+  if (normalized.includes('thẻ quà') || normalized.includes('gift')) return lang === 'en' ? 'A gift for someone you care about. Explore available gift cards.' : 'Một món quà cho người bạn yêu quý. Khám phá các lựa chọn thẻ quà tặng.';
+  if (normalized === 'khác' || normalized === 'others') return lang === 'en' ? 'Merchandise, toppings and more choices for your coffee break.' : 'Sản phẩm lưu niệm, topping và những lựa chọn cho giờ cà phê.';
+  const group = themeKey || getGroupThemeKey(name);
+  return MENU_COPY[group][lang === 'en' ? 1 : 0];
 }
 
 function getGroupThemeKey(name) {
@@ -113,6 +97,7 @@ function getProductCategoryId(p) {
    CAROUSEL TỰ ĐỘNG CHẠY (Auto-playing Slide) Cho Cấp 3
    ──────────────────────────────────────────────────────── */
 function AutoPlayProductCarousel({ items, onSelect }) {
+  useUiLanguage();
   const [page, setPage] = useState(0);
   const [perPage, setPerPage] = useState(4);
   const timerRef = useRef(null);
@@ -133,9 +118,9 @@ function AutoPlayProductCarousel({ items, onSelect }) {
 
   const startAutoPlay = () => {
     stopAutoPlay();
-    if (totalPages > 1) {
+    if (totalPages > 1 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       timerRef.current = setInterval(() => {
-        setPage(prev => (prev + 1) % totalPages);
+        if (document.visibilityState === 'visible') setPage(prev => (prev + 1) % totalPages);
       }, 5000); // 5 giây tự động lật trang
     }
   };
@@ -155,7 +140,7 @@ function AutoPlayProductCarousel({ items, onSelect }) {
   const visible = items.slice(page * perPage, page * perPage + perPage);
 
   return (
-    <div 
+    <div
       style={{ position: 'relative' }}
       onMouseEnter={stopAutoPlay}
       onMouseLeave={startAutoPlay}
@@ -167,7 +152,7 @@ function AutoPlayProductCarousel({ items, onSelect }) {
             onClick={() => onSelect?.(p)}
             style={{
               background: '#ffffff',
-              borderRadius: '20px',
+              borderRadius: '6px',
               overflow: 'hidden',
               border: '1px solid #efeae2',
               cursor: 'pointer',
@@ -186,23 +171,22 @@ function AutoPlayProductCarousel({ items, onSelect }) {
             }}
           >
             <div style={{ aspectRatio: '1.05', overflow: 'hidden', background: '#fcfbf9', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-              <img 
-                src={p.hinh_anh_url} 
-                alt={p.ten_san_pham} 
-                style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', transition: 'transform 0.3s ease' }} 
+              <img loading="lazy" decoding="async"
+                src={p.hinh_anh_url}
+                alt={p.ten_san_pham}
+                style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', transition: 'transform 0.3s ease' }}
                 className="carousel-img"
               />
             </div>
             <div style={{ padding: '0 16px' }}>
-              <p style={{ fontWeight: 900, fontSize: '14px', textTransform: 'uppercase', color: '#4a3728', margin: 0, lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', minHeight: '38px' }}>
+              <p style={{ fontWeight: 700, fontSize: '14px', textTransform: 'uppercase', color: '#4a3728', margin: 0, lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', minHeight: '38px' }}>
                 {p.ten_san_pham}
               </p>
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '10px' }}>
                 <span style={{ fontSize: '11px', color: '#8c7b6b', fontWeight: 700 }}>Highlands</span>
-                <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#b22830' }}></div>
-                <span style={{ fontWeight: 900, fontSize: '14px', color: '#b22830', whiteSpace: 'nowrap' }}>
-                  {Number(p.gia_ban).toLocaleString('vi-VN')} đ
-                </span>
+                <div className="menu-intro-page" style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#b22830' }}></div>
+                <span style={{ fontWeight: 700, fontSize: '14px', color: '#b22830', whiteSpace: 'nowrap' }}>
+                  {Number(p.gia_ban).toLocaleString(uiLocale())}{ui(" đ")}</span>
               </div>
             </div>
           </div>
@@ -228,7 +212,7 @@ function AutoPlayProductCarousel({ items, onSelect }) {
           >
             <ChevronLeftIcon style={{ width: '18px', height: '18px' }} />
           </button>
-          
+
           <div style={{ display: 'flex', gap: '8px' }}>
             {Array.from({ length: totalPages }).map((_, idx) => (
               <button
@@ -284,6 +268,11 @@ export default function MenuIntroPage({
   onCategoryChange,
   onOrderProduct
 }) {
+  useUiLanguage();
+  const { i18n } = useTranslation();
+  const lang = i18n.resolvedLanguage;
+  const copy = (vi, en) => lang === 'en' ? en : vi;
+  const categoryLabel = name => menuCategoryLabel(name, lang);
 
   const parentCategories = useMemo(() => {
     return categories.filter(c => c.cap_bac === 1 || !c.ma_danh_muc_cha);
@@ -342,7 +331,7 @@ export default function MenuIntroPage({
      ════════════════════════════════════════════════════ */
   if (viewState === 'overview') {
     return (
-      <div style={{ width: '100%', minHeight: '100vh', fontFamily: "'Plus Jakarta Sans', 'Montserrat', sans-serif" }}>
+      <div className="menu-intro-page" style={{ width: '100%', minHeight: '100vh', fontFamily: "var(--font-sans)" }}>
         {dynamicBigGroups.map((group, idx) => {
           const theme = group.theme;
           const isReversed = idx % 2 !== 0;
@@ -356,7 +345,7 @@ export default function MenuIntroPage({
               key={group.id}
               style={{
                 background: theme.bg,
-                padding: '100px 0',
+                padding: '64px 0',
                 position: 'relative',
                 overflow: 'hidden',
                 borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
@@ -382,42 +371,42 @@ export default function MenuIntroPage({
                 display: 'flex',
                 flexDirection: isReversed ? 'row-reverse' : 'row',
                 alignItems: 'center',
-                gap: '80px',
+                gap: '48px',
                 flexWrap: 'wrap',
               }}>
                 {/* Text content */}
-                <div style={{ flex: '1 1 500px', minWidth: '300px', zIndex: 2 }}>
+                <div style={{ flex: '1 1 500px', minWidth: 0, zIndex: 2 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                    <SparklesIcon style={{ width: '20px', height: '20px', color: theme.accentColor }} />
-                    <span style={{ fontSize: '13px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '3px', color: theme.accentColor }}>
-                      Bản Sắc Cao Nguyên
+
+                    <span style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: theme.accentColor }}>
+                      {copy('Thực đơn Avengers', 'Avengers menu')}
                     </span>
                   </div>
-                  
+
                   <h2 style={{
-                    fontSize: '52px',
-                    fontWeight: 900,
+                    fontSize: 'clamp(32px, 4vw, 48px)',
+                    fontWeight: 700,
                     textTransform: 'uppercase',
                     color: theme.titleColor,
                     margin: '0 0 28px',
                     lineHeight: 1.15,
-                    fontFamily: "'Montserrat', 'Plus Jakarta Sans', sans-serif",
+                    fontFamily: "var(--font-sans)",
                     letterSpacing: '1px',
                   }}>
-                    {group.parentCat.ten_danh_muc}
+                    {categoryLabel(group.parentCat.ten_danh_muc)}
                   </h2>
-                  
+
                   <p style={{
                     fontSize: '15.5px',
                     lineHeight: 1.9,
                     color: theme.descColor,
                     margin: '0 0 36px',
                     fontWeight: 500,
-                    textAlign: 'justify',
+                    textAlign: 'left',
                   }}>
-                    {theme.description}
+                    {getSubcatDesc(group.parentCat.ten_danh_muc, lang, group.themeKey)}
                   </p>
-                  
+
                   <button
                     type="button"
                     onClick={() => onCategoryChange?.(group.id)}
@@ -427,10 +416,10 @@ export default function MenuIntroPage({
                       border: `2px solid ${theme.btnBorder}`,
                       color: theme.btnText,
                       fontSize: '13px',
-                      fontWeight: 950,
-                      borderRadius: '50px',
+                      fontWeight: 700,
+                      borderRadius: '4px',
                       textTransform: 'uppercase',
-                      letterSpacing: '3px',
+                      letterSpacing: '1px',
                       cursor: 'pointer',
                       transition: 'all 0.3s cubic-bezier(0.25, 1, 0.5, 1)',
                       display: 'inline-flex',
@@ -449,7 +438,7 @@ export default function MenuIntroPage({
                       e.currentTarget.style.transform = 'translateY(0)';
                     }}
                   >
-                    <span>KHÁM PHÁ NGAY</span>
+                    <span>{copy('KHÁM PHÁ NGAY', 'EXPLORE')}</span>
                     <ArrowLongRightIcon style={{ width: '18px', height: '18px' }} />
                   </button>
                 </div>
@@ -457,7 +446,7 @@ export default function MenuIntroPage({
                 {/* Image Showcase */}
                 <div style={{
                   flex: '1 1 400px',
-                  minWidth: '300px',
+                  minWidth: 0,
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
@@ -468,16 +457,16 @@ export default function MenuIntroPage({
                     width: '100%',
                     maxWidth: '460px',
                     aspectRatio: '1',
-                    borderRadius: '30px',
+                    borderRadius: '6px',
                     background: theme.themeKey === 'coffee' ? 'rgba(255, 255, 255, 0.03)' : 'transparent',
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
                     padding: '20px',
                   }}>
-                    <img
+                    <img loading="lazy" decoding="async"
                       src={sampleProduct?.hinh_anh_url || theme.banner}
-                      alt={group.parentCat.ten_danh_muc}
+                      alt={categoryLabel(group.parentCat.ten_danh_muc)}
                       style={{
                         maxWidth: '100%',
                         maxHeight: '100%',
@@ -502,24 +491,23 @@ export default function MenuIntroPage({
      CẤP 2: CÁC DANH MỤC CON CỦA 1 NHÓM CHA
      ════════════════════════════════════════════════════ */
   if (viewState === 'category' && currentBigGroup) {
-    const theme = currentBigGroup.theme;
 
     return (
-      <div style={{ width: '100%', minHeight: '100vh', background: '#fdfbfa', fontFamily: "'Plus Jakarta Sans', 'Montserrat', sans-serif" }}>
+      <div className="menu-intro-page" style={{ width: '100%', minHeight: '100vh', background: '#fdfbfa', fontFamily: "var(--font-sans)" }}>
         {/* Breadcrumb */}
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 40px 0' }}>
-          <nav style={{ fontSize: '11px', fontWeight: 900, color: '#a09080', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <nav style={{ fontSize: '11px', fontWeight: 700, color: '#a09080', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button
               type="button"
               onClick={() => onCategoryChange?.('all')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a09080', fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', padding: 0 }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a09080', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', padding: 0 }}
               onMouseEnter={e => e.currentTarget.style.color = '#b22830'}
               onMouseLeave={e => e.currentTarget.style.color = '#a09080'}
             >
-              Thực đơn
+              {copy('Thực đơn', 'Menu')}
             </button>
             <span>/</span>
-            <span style={{ color: '#4a3728' }}>{currentBigGroup.parentCat.ten_danh_muc}</span>
+            <span style={{ color: '#4a3728' }}>{categoryLabel(currentBigGroup.parentCat.ten_danh_muc)}</span>
           </nav>
         </div>
 
@@ -527,18 +515,18 @@ export default function MenuIntroPage({
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 40px 60px' }}>
           <div style={{ borderLeft: '4px solid #b22830', paddingLeft: '24px' }}>
             <h1 style={{
-              fontSize: '48px', fontWeight: 950, textTransform: 'uppercase',
+              fontSize: '48px', fontWeight: 700, textTransform: 'uppercase',
               color: '#4a3728', margin: '0 0 16px', lineHeight: 1.1,
-              fontFamily: "'Montserrat', 'Plus Jakarta Sans', sans-serif",
+              fontFamily: "var(--font-sans)",
             }}>
-              {currentBigGroup.parentCat.ten_danh_muc}
+              {categoryLabel(currentBigGroup.parentCat.ten_danh_muc)}
             </h1>
             <p style={{
               fontSize: '16px', lineHeight: 1.9, color: '#6d5746',
               margin: 0, fontWeight: 500, maxWidth: '800px',
-              textAlign: 'justify',
+              textAlign: 'left',
             }}>
-              {theme.introText}
+              {getSubcatDesc(currentBigGroup.parentCat.ten_danh_muc, lang, currentBigGroup.themeKey)}
             </p>
           </div>
         </div>
@@ -555,7 +543,7 @@ export default function MenuIntroPage({
                 marginBottom: '60px',
                 padding: '40px',
                 background: '#ffffff',
-                borderRadius: '30px',
+                borderRadius: '6px',
                 boxShadow: '0 10px 30px rgba(74, 55, 40, 0.03)',
                 border: '1px solid #efeae2',
               }}>
@@ -570,14 +558,14 @@ export default function MenuIntroPage({
                   <div style={{ flex: '1 1 450px', minWidth: '280px' }}>
                     <h2 style={{
                       fontSize: '34px',
-                      fontWeight: 900,
+                      fontWeight: 700,
                       textTransform: 'uppercase',
                       color: '#4a3728',
                       margin: '0 0 20px',
                       lineHeight: 1.2,
-                      fontFamily: "'Montserrat', 'Plus Jakarta Sans', sans-serif",
+                      fontFamily: "var(--font-sans)",
                     }}>
-                      {subcat.ten_danh_muc}
+                      {categoryLabel(subcat.ten_danh_muc)}
                     </h2>
                     <p style={{
                       fontSize: '14.5px',
@@ -585,9 +573,9 @@ export default function MenuIntroPage({
                       color: '#6d5746',
                       margin: '0 0 32px',
                       fontWeight: 500,
-                      textAlign: 'justify',
+                      textAlign: 'left',
                     }}>
-                      {getSubcatDesc(subcat.ten_danh_muc)}
+                      {getSubcatDesc(subcat.ten_danh_muc, lang, currentBigGroup.themeKey)}
                     </p>
                     <button
                       type="button"
@@ -598,8 +586,8 @@ export default function MenuIntroPage({
                         border: 'none',
                         color: '#fff',
                         fontSize: '12px',
-                        fontWeight: 900,
-                        borderRadius: '50px',
+                        fontWeight: 700,
+                        borderRadius: '4px',
                         textTransform: 'uppercase',
                         letterSpacing: '2px',
                         cursor: 'pointer',
@@ -618,7 +606,7 @@ export default function MenuIntroPage({
                         e.currentTarget.style.transform = 'translateY(0)';
                       }}
                     >
-                      <span>KHÁM PHÁ SẢN PHẨM</span>
+                      <span>{copy('KHÁM PHÁ SẢN PHẨM', 'VIEW PRODUCTS')}</span>
                       <ArrowLongRightIcon style={{ width: '16px', height: '16px' }} />
                     </button>
                   </div>
@@ -632,18 +620,17 @@ export default function MenuIntroPage({
                           background: '#fdfbfa', borderRadius: '16px', padding: '16px',
                           border: '1px solid #efeae2',
                         }}>
-                          <img
+                          <img loading="lazy" decoding="async"
                             src={prod.hinh_anh_url}
                             alt={prod.ten_san_pham}
                             style={{ width: '76px', height: '76px', objectFit: 'contain', borderRadius: '10px', flexShrink: 0 }}
                           />
                           <div style={{ minWidth: 0 }}>
-                            <h4 style={{ fontSize: '13px', fontWeight: 900, color: '#4a3728', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#4a3728', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                               {prod.ten_san_pham}
                             </h4>
-                            <p style={{ fontSize: '13px', fontWeight: 900, color: '#b22830', margin: 0 }}>
-                              {Number(prod.gia_ban).toLocaleString('vi-VN')} đ
-                            </p>
+                            <p style={{ fontSize: '13px', fontWeight: 700, color: '#b22830', margin: 0 }}>
+                              {Number(prod.gia_ban).toLocaleString(uiLocale())}{ui(" đ")}</p>
                           </div>
                         </div>
                       ))}
@@ -656,7 +643,7 @@ export default function MenuIntroPage({
 
           {currentSubcategories.length === 0 && (
             <div style={{ padding: '60px 0', textAlign: 'center', color: '#a09080', fontSize: '15px', fontWeight: 600 }}>
-              Chưa có danh mục con nào được cập nhật trong chuyên mục này.
+              {copy('Chưa có danh mục con nào được cập nhật trong chuyên mục này.', 'No categories are available yet.')}
             </div>
           )}
         </div>
@@ -672,31 +659,31 @@ export default function MenuIntroPage({
     const sidebarProducts = subcategoryProducts.slice(0, 5);
 
     return (
-      <div style={{ width: '100%', minHeight: '100vh', background: '#fdfbfa', fontFamily: "'Plus Jakarta Sans', 'Montserrat', sans-serif" }}>
+      <div className="menu-intro-page" style={{ width: '100%', minHeight: '100vh', background: '#fdfbfa', fontFamily: "var(--font-sans)" }}>
         {/* Breadcrumb */}
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 40px 0' }}>
-          <nav style={{ fontSize: '11px', fontWeight: 900, color: '#a09080', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <nav style={{ fontSize: '11px', fontWeight: 700, color: '#a09080', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <button
               type="button"
               onClick={() => onCategoryChange?.('all')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a09080', fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', padding: 0 }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a09080', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', padding: 0 }}
               onMouseEnter={e => e.currentTarget.style.color = '#b22830'}
               onMouseLeave={e => e.currentTarget.style.color = '#a09080'}
             >
-              Thực đơn
+              {copy('Thực đơn', 'Menu')}
             </button>
             <span>/</span>
             <button
               type="button"
               onClick={() => onCategoryChange?.(currentBigGroup.id)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a09080', fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', padding: 0 }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a09080', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', padding: 0 }}
               onMouseEnter={e => e.currentTarget.style.color = '#b22830'}
               onMouseLeave={e => e.currentTarget.style.color = '#a09080'}
             >
-              {currentBigGroup.parentCat.ten_danh_muc}
+              {categoryLabel(currentBigGroup.parentCat.ten_danh_muc)}
             </button>
             <span>/</span>
-            <span style={{ color: '#4a3728' }}>{currentSubcat?.ten_danh_muc || 'Danh mục'}</span>
+            <span style={{ color: '#4a3728' }}>{categoryLabel(currentSubcat?.ten_danh_muc) || copy('Danh mục', 'Category')}</span>
           </nav>
         </div>
 
@@ -707,14 +694,14 @@ export default function MenuIntroPage({
             onClick={() => onCategoryChange?.(currentBigGroup.id)}
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              color: '#b22830', fontSize: '13px', fontWeight: 900,
+              color: '#b22830', fontSize: '13px', fontWeight: 700,
               textTransform: 'uppercase', letterSpacing: '1px',
               display: 'inline-flex', alignItems: 'center', gap: '8px',
               padding: 0
             }}
           >
             <ArrowLongLeftIcon style={{ width: '18px', height: '18px' }} />
-            <span>Quay lại {currentBigGroup.parentCat.ten_danh_muc}</span>
+            <span>{copy('Quay lại', 'Back to')} {categoryLabel(currentBigGroup.parentCat.ten_danh_muc)}</span>
           </button>
         </div>
 
@@ -723,36 +710,36 @@ export default function MenuIntroPage({
           <div style={{ display: 'flex', gap: '48px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
 
             {/* Cột trái: tiêu đề + mô tả + Carousel sản phẩm (Tự chạy) */}
-            <div style={{ flex: '1 1 700px', minWidth: '300px' }}>
+            <div style={{ flex: '1 1 700px', minWidth: 0 }}>
               <div style={{ marginBottom: '40px' }}>
                 <h1 style={{
-                  fontSize: '44px', fontWeight: 950, textTransform: 'uppercase',
+                  fontSize: '44px', fontWeight: 700, textTransform: 'uppercase',
                   color: '#4a3728', margin: '0 0 20px', lineHeight: 1.1,
-                  fontFamily: "'Montserrat', 'Plus Jakarta Sans', sans-serif",
+                  fontFamily: "var(--font-sans)",
                 }}>
-                  {currentSubcat?.ten_danh_muc || 'DANH MỤC'}
+                  {categoryLabel(currentSubcat?.ten_danh_muc) || copy('Danh mục', 'Category')}
                 </h1>
                 <p style={{
                   fontSize: '15px', lineHeight: 1.9, color: '#6d5746',
                   margin: 0, fontWeight: 500, maxWidth: '720px',
-                  textAlign: 'justify',
+                  textAlign: 'left',
                 }}>
-                  {getSubcatDesc(currentSubcat?.ten_danh_muc)}
+                  {getSubcatDesc(currentSubcat?.ten_danh_muc, lang, currentBigGroup?.themeKey)}
                 </p>
               </div>
 
               {/* Slider tự động lướt */}
               {carouselProducts.length > 0 && (
-                <div style={{ 
-                  background: '#ffffff', 
-                  borderRadius: '30px', 
-                  padding: '30px', 
+                <div style={{
+                  background: '#ffffff',
+                  borderRadius: '6px',
+                  padding: '30px',
                   boxShadow: '0 10px 40px rgba(74, 55, 40, 0.04)',
                   border: '1px solid #efeae2',
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                    <h3 style={{ fontSize: '14px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', color: '#b22830', margin: 0, fontFamily: "'Montserrat', 'Plus Jakarta Sans', sans-serif" }}>
-                      Khám phá danh sách sản phẩm
+                    <h3 style={{ fontSize: '14px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: '#b22830', margin: 0, fontFamily: "var(--font-sans)" }}>
+                      {copy('Khám phá danh sách sản phẩm', 'Explore the products')}
                     </h3>
                   </div>
                   <AutoPlayProductCarousel items={carouselProducts} onSelect={onOrderProduct} />
@@ -762,10 +749,10 @@ export default function MenuIntroPage({
               {subcategoryProducts.length === 0 && (
                 <div style={{
                   padding: '60px 40px', textAlign: 'center', background: '#fff',
-                  borderRadius: '30px', border: '1px solid #efeae2', color: '#a09080',
+                  borderRadius: '6px', border: '1px solid #efeae2', color: '#a09080',
                   fontSize: '15px', fontWeight: 600,
                 }}>
-                  Hiện chưa có sản phẩm nào được hiển thị trong danh mục này.
+                  {copy('Hiện chưa có sản phẩm nào được hiển thị trong danh mục này.', 'No products are available in this category yet.')}
                 </div>
               )}
             </div>
@@ -773,18 +760,18 @@ export default function MenuIntroPage({
             {/* Cột phải: Sidebar sản phẩm nổi bật */}
             {sidebarProducts.length > 0 && (
               <div style={{
-                flex: '0 0 340px', minWidth: '280px',
-                background: '#ffffff', borderRadius: '30px',
+                flex: '1 1 300px', minWidth: 0, maxWidth: '400px',
+                background: '#ffffff', borderRadius: '6px',
                 border: '1px solid #efeae2', padding: '30px',
                 boxShadow: '0 10px 30px rgba(74, 55, 40, 0.03)',
                 position: 'sticky', top: '100px',
               }}>
                 <h3 style={{
-                  fontSize: '13px', fontWeight: 950, textTransform: 'uppercase',
+                  fontSize: '13px', fontWeight: 700, textTransform: 'uppercase',
                   color: '#4a3728', margin: '0 0 24px', letterSpacing: '2px',
                   paddingBottom: '16px', borderBottom: '2px solid #efeae2',
                 }}>
-                  Sản phẩm nổi bật
+                  {copy('Sản phẩm nổi bật', 'Featured products')}
                 </h3>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -799,8 +786,8 @@ export default function MenuIntroPage({
                       onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
                       onMouseLeave={e => e.currentTarget.style.opacity = '1'}
                     >
-                      <div style={{ width: '68px', height: '68px', borderRadius: '14px', overflow: 'hidden', background: '#fdfbfa', border: '1px solid #efeae2', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px', flexShrink: 0 }}>
-                        <img
+                      <div className="menu-intro-page" style={{ width: '68px', height: '68px', borderRadius: '14px', overflow: 'hidden', background: '#fdfbfa', border: '1px solid #efeae2', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px', flexShrink: 0 }}>
+                        <img loading="lazy" decoding="async"
                           src={prod.hinh_anh_url}
                           alt={prod.ten_san_pham}
                           style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
@@ -808,15 +795,14 @@ export default function MenuIntroPage({
                       </div>
                       <div style={{ minWidth: 0, flex: 1 }}>
                         <h4 style={{
-                          fontSize: '13px', fontWeight: 900, color: '#4a3728',
+                          fontSize: '13px', fontWeight: 700, color: '#4a3728',
                           margin: '0 0 4px', textTransform: 'uppercase', lineHeight: 1.35,
                           display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                         }}>
                           {prod.ten_san_pham}
                         </h4>
-                        <p style={{ fontSize: '13px', fontWeight: 900, color: '#b22830', margin: 0 }}>
-                          {Number(prod.gia_ban).toLocaleString('vi-VN')} đ
-                        </p>
+                        <p style={{ fontSize: '13px', fontWeight: 700, color: '#b22830', margin: 0 }}>
+                          {Number(prod.gia_ban).toLocaleString(uiLocale())}{ui(" đ")}</p>
                       </div>
                     </div>
                   ))}

@@ -1,9 +1,11 @@
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { LazyScrollView, LazySection } from '../components/LazyScrollView'
 import React, { useState } from 'react'
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
+
   TouchableOpacity,
   TextInput,
   ScrollView,
@@ -35,7 +37,7 @@ export function ExceptionScreen({ route, navigation }) {
     mutationFn: () =>
       apiClient.post(`/shippers/${shipper.id}/exceptions`, {
         delivery_id: deliveryId || null,
-        exception_type: selectedType,
+        type: selectedType,
         description: description.trim(),
       }),
     onSuccess: () => {
@@ -70,7 +72,7 @@ export function ExceptionScreen({ route, navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['top','left','right']} style={styles.safeArea}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -79,14 +81,14 @@ export function ExceptionScreen({ route, navigation }) {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <LazyScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         {/* Alert Banner */}
-        <View style={styles.alertBanner}>
+        <LazySection minHeight={160}><View style={styles.alertBanner}>
           <Ionicons name="warning" size={20} color="#D97706" />
           <Text style={styles.alertText}>
             Vui lòng chỉ báo cáo khi gặp sự cố thật sự. Báo cáo không chính xác sẽ ảnh hưởng đến điểm uy tín của bạn.
           </Text>
-        </View>
+        </View></LazySection>
 
         {/* Delivery ID Info */}
         {deliveryId && (
@@ -97,8 +99,8 @@ export function ExceptionScreen({ route, navigation }) {
         )}
 
         {/* Exception Type Selection */}
-        <Text style={styles.sectionLabel}>Loại sự cố *</Text>
-        <View style={styles.typeGrid}>
+        <LazySection minHeight={36}><Text style={styles.sectionLabel}>Loại sự cố *</Text></LazySection>
+        <LazySection minHeight={160}><View style={styles.typeGrid}>
           {EXCEPTION_TYPES.map((type) => {
             const isSelected = selectedType === type.id
             return (
@@ -122,11 +124,11 @@ export function ExceptionScreen({ route, navigation }) {
               </TouchableOpacity>
             )
           })}
-        </View>
+        </View></LazySection>
 
         {/* Description */}
-        <Text style={styles.sectionLabel}>Mô tả chi tiết *</Text>
-        <TextInput
+        <LazySection minHeight={36}><Text style={styles.sectionLabel}>Mô tả chi tiết *</Text></LazySection>
+        <LazySection minHeight={36}><TextInput
           style={styles.textArea}
           multiline
           numberOfLines={5}
@@ -135,11 +137,11 @@ export function ExceptionScreen({ route, navigation }) {
           value={description}
           onChangeText={setDescription}
           textAlignVertical="top"
-        />
-        <Text style={styles.charCount}>{description.length} ký tự</Text>
+        /></LazySection>
+        <LazySection minHeight={36}><Text style={styles.charCount}>{description.length} ký tự</Text></LazySection>
 
         {/* Submit */}
-        <TouchableOpacity
+        <LazySection minHeight={56}><TouchableOpacity
           style={[
             styles.submitBtn,
             (!selectedType || !description.trim() || reportMutation.isPending) && styles.submitBtnDisabled,
@@ -155,8 +157,8 @@ export function ExceptionScreen({ route, navigation }) {
               <Text style={styles.submitBtnText}>Gửi báo cáo sự cố</Text>
             </>
           )}
-        </TouchableOpacity>
-      </ScrollView>
+        </TouchableOpacity></LazySection>
+      </LazyScrollView>
     </SafeAreaView>
   )
 }

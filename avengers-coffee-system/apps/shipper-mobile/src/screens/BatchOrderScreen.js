@@ -1,3 +1,5 @@
+import { Header, Skeleton, EmptyState } from '../components/Experience'
+import { LazyScrollView, LazySection } from '../components/LazyScrollView'
 import React, { useState, useEffect, useCallback } from 'react'
 import {
   View,
@@ -155,7 +157,7 @@ export function BatchOrderScreen({ route, navigation }) {
   const deliveries = batchData?.deliveries || routeDeliveries || []
   const totalOrders = deliveries.length
   const totalCod = deliveries.reduce((sum, d) => sum + Number(d.cod_amount || 0), 0)
-  const totalFee = deliveries.reduce((sum, d) => sum + Number(d.delivery_fee || 15000), 0)
+  const totalFee = deliveries.every(d => d.delivery_fee != null) ? deliveries.reduce((sum, d) => sum + Number(d.delivery_fee), 0) : null
   const batchCode = (batchData?.batch_code || batchData?.id || 'NHOM-GHEP').slice(0, 14).toUpperCase()
 
   const storeDisplayName = (() => {
@@ -174,10 +176,10 @@ export function BatchOrderScreen({ route, navigation }) {
 
   if (isLoading && !batchData) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={['top','left','right']} style={styles.safeArea}>
         <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
         <View style={styles.loadingCenter}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <Skeleton />
           <Text style={styles.loadingText}>Đang nạp dữ liệu nhóm ghép đơn...</Text>
         </View>
       </SafeAreaView>
@@ -186,7 +188,7 @@ export function BatchOrderScreen({ route, navigation }) {
 
   if (!batchData && totalOrders === 0) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={['top','left','right']} style={styles.safeArea}>
         <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.8}>
@@ -217,7 +219,7 @@ export function BatchOrderScreen({ route, navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['top','left','right']} style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
 
       {/* Header */}
@@ -235,14 +237,14 @@ export function BatchOrderScreen({ route, navigation }) {
         </View>
       </View>
 
-      <ScrollView
+      <LazyScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor={colors.primary} />}
       >
         {/* Điểm lấy hàng (Cửa hàng) */}
-        <View style={styles.storeCard}>
+        <LazySection minHeight={160}><View style={styles.storeCard}>
           <View style={styles.storeIconWrap}>
             <Ionicons name="storefront" size={22} color={colors.primary} />
           </View>
@@ -254,10 +256,10 @@ export function BatchOrderScreen({ route, navigation }) {
             <Text style={styles.storeName} numberOfLines={1}>{storeDisplayName}</Text>
             <Text style={styles.storeAddress} numberOfLines={2}>{storeDisplayAddress}</Text>
           </View>
-        </View>
+        </View></LazySection>
 
         {/* Hero Button - XEM MAP LỘ TRÌNH TỐI ƯU */}
-        <TouchableOpacity
+        <LazySection minHeight={56}><TouchableOpacity
           style={styles.heroMapBtn}
           onPress={handleOpenMap}
           activeOpacity={0.88}
@@ -277,10 +279,10 @@ export function BatchOrderScreen({ route, navigation }) {
             </View>
             <Ionicons name="chevron-forward-circle" size={28} color="#fff" style={{ opacity: 0.9 }} />
           </LinearGradient>
-        </TouchableOpacity>
+        </TouchableOpacity></LazySection>
 
         {/* Tổng quan chỉ số chuyến xe */}
-        <View style={styles.statsCard}>
+        <LazySection minHeight={160}><View style={styles.statsCard}>
           <View style={styles.statCol}>
             <Ionicons name="cube-outline" size={20} color={colors.primary} />
             <Text style={styles.statVal}>{totalOrders}</Text>
@@ -295,16 +297,16 @@ export function BatchOrderScreen({ route, navigation }) {
           <View style={styles.statDivider} />
           <View style={styles.statCol}>
             <Ionicons name="bicycle-outline" size={20} color={colors.success} />
-            <Text style={[styles.statVal, { color: colors.success }]}>{formatCurrency(totalFee)}</Text>
+            <Text style={[styles.statVal, { color: colors.success }]}>{totalFee == null ? 'Chưa cập nhật' : formatCurrency(totalFee)}</Text>
             <Text style={styles.statLabel}>Thu nhập ship</Text>
           </View>
-        </View>
+        </View></LazySection>
 
         {/* Danh sách các điểm giao trong nhóm */}
-        <View style={styles.sectionHeader}>
+        <LazySection minHeight={160}><View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Danh sách điểm dừng giao hàng</Text>
           <Text style={styles.sectionCount}>{totalOrders} điểm</Text>
-        </View>
+        </View></LazySection>
 
         {deliveries.map((item, index) => {
           const isDone = localCompletedMap[item.id] || localCompletedMap[item.ma_don_hang] || item.status === 'DELIVERED'
@@ -346,7 +348,7 @@ export function BatchOrderScreen({ route, navigation }) {
                     COD: <Text style={{ fontWeight: '700', color: colors.warning }}>{formatCurrency(item.cod_amount || 0)}</Text>
                   </Text>
                   <Text style={styles.stopFeeText}>
-                    Ship: <Text style={{ fontWeight: '700', color: colors.success }}>{formatCurrency(item.delivery_fee || 15000)}</Text>
+                    Ship: <Text style={{ fontWeight: '700', color: colors.success }}>{item.delivery_fee == null ? 'Chưa cập nhật' : formatCurrency(item.delivery_fee)}</Text>
                   </Text>
                 </View>
 
@@ -377,7 +379,7 @@ export function BatchOrderScreen({ route, navigation }) {
         })}
 
         {/* Nút hủy nhóm ghép đơn */}
-        <TouchableOpacity
+        <LazySection minHeight={56}><TouchableOpacity
           style={styles.cancelBatchBtn}
           onPress={handleConfirmCancelBatch}
           disabled={cancelBatchMutation.isPending}
@@ -391,8 +393,8 @@ export function BatchOrderScreen({ route, navigation }) {
               <Text style={styles.cancelBatchBtnText}>Hủy nhóm ghép (Tách thành đơn lẻ)</Text>
             </>
           )}
-        </TouchableOpacity>
-      </ScrollView>
+        </TouchableOpacity></LazySection>
+      </LazyScrollView>
     </SafeAreaView>
   )
 }
@@ -579,7 +581,7 @@ const styles = StyleSheet.create({
   heroMapTitle: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   heroMapSub: {
     color: 'rgba(255, 255, 255, 0.85)',
@@ -663,7 +665,7 @@ const styles = StyleSheet.create({
   },
   stopNumberText: {
     color: '#fff',
-    fontWeight: '800',
+    fontWeight: '700',
     fontSize: 13,
   },
   stopOrderCode: {

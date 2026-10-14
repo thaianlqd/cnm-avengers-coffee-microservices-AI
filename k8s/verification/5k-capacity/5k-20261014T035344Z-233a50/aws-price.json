@@ -1,0 +1,12 @@
+{
+  "SKU": "YZS4YR3ZPHD427K5",
+  "PricePerUnit": "0.1197000000",
+  "Unit": "Hrs",
+  "Currency": "USD",
+  "Location": "Asia Pacific (Sydney)",
+  "Instance Type": "m7i-flex.large",
+  "Operating System": "Linux",
+  "TermType": "OnDemand",
+  "Tenancy": "Shared",
+  "source": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-southeast-2/index.csv"
+}

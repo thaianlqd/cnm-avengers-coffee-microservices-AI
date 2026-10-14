@@ -73,7 +73,7 @@ class PanelErrorBoundary extends Component {
             style={{
               padding: '0.6rem 1.25rem',
               borderRadius: '10px',
-              background: '#10b981',
+              background: '#3b82f6',
               color: '#ffffff',
               border: 'none',
               fontWeight: '600',
@@ -272,7 +272,7 @@ function AdminPromotionManagementPanelContent({
               className={`promo-type-tab promo-type-tab--public ${activeDistributionTab === 'PUBLIC' ? 'active' : ''}`}
               onClick={() => setActiveDistributionTab('PUBLIC')}
             >
-              <Tag size={18} strokeWidth={2.2} style={{ stroke: activeDistributionTab === 'PUBLIC' ? '#ffffff' : '#2563eb', flexShrink: 0 }} className="promo-type-tab-icon" />
+              <Tag size={18} strokeWidth={2.2} style={{ stroke: activeDistributionTab === 'PUBLIC' ? '#ffffff' : 'var(--primary)', flexShrink: 0 }} className="promo-type-tab-icon" />
               <span>Mã áp dụng công khai</span>
               <span className="promo-tab-badge">{stats.publicCount}</span>
             </button>
@@ -282,7 +282,7 @@ function AdminPromotionManagementPanelContent({
               className={`promo-type-tab promo-type-tab--template ${activeDistributionTab === 'TEMPLATE' ? 'active' : ''}`}
               onClick={() => setActiveDistributionTab('TEMPLATE')}
             >
-              <Sparkles size={18} strokeWidth={2.2} style={{ stroke: activeDistributionTab === 'TEMPLATE' ? '#ffffff' : '#9333ea', flexShrink: 0 }} className="promo-type-tab-icon" />
+              <Sparkles size={18} strokeWidth={2.2} style={{ stroke: activeDistributionTab === 'TEMPLATE' ? '#ffffff' : 'var(--primary)', flexShrink: 0 }} className="promo-type-tab-icon" />
               <span>Template Voucher nội bộ</span>
               <span className="promo-tab-badge">{stats.templateCount}</span>
             </button>
@@ -1052,7 +1052,7 @@ function AdminPromotionManagementPanelContent({
                   className="promo-btn promo-btn--success"
                   disabled={savingPromotion || !String(safeForm.ten_khuyen_mai || '').trim() || !safeForm.ma_khuyen_mai}
                   style={{
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                     color: '#ffffff',
                     border: 'none',
                     height: '40px',
@@ -1064,7 +1064,7 @@ function AdminPromotionManagementPanelContent({
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.4rem',
-                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
+                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)'
                   }}
                 >
                   {savingPromotion ? (

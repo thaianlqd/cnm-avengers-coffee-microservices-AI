@@ -1,16 +1,24 @@
+import TextInput from '../components/TextInput'
+import Pagination, { usePagination } from '../components/Pagination'
+import Reveal, { useListReveal } from '../components/Reveal'
+import FulfillmentStrip from '../components/FulfillmentStrip'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { catalogVariantRows, normalizedValue, variantMap, variantPrice } from '../lib/productOptions.mjs'
+import Alert from '../lib/alert'
+import { useCart } from '../hooks/useCart'
+import { useFeedback, errorMessage } from '../context/FeedbackContext'
+import Modal from '../components/AppModal'
+import Image from '../components/CachedImage'
 import React, { useMemo, useRef, useState, useCallback, useEffect } from 'react'
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
-  SectionList,
-  TextInput,
+
   Pressable,
-  Image,
   ActivityIndicator,
-  Alert,
-  Modal,
+
   ScrollView,
   Platform,
   Dimensions,
@@ -144,52 +152,58 @@ function ToppingModal({ visible, onClose, availableToppings = {}, selectedToppin
   )
 }
 
-function ProductDetailModal({ product, cartItem, visible, onClose, onAddToCart, onUpdateCart, userId, allProducts = [], varMap = {} }) {
+export function ProductDetailModal({ product, cartItem, visible, onClose, onAddToCart, onUpdateCart, userId, allProducts = [], varMap = {}, optionsReady = true, onRetryOptions }) {
   const [selectedSize, setSelectedSize] = useState('Nhỏ')
   const [selectedLuongDa, setSelectedLuongDa] = useState('Bình thường')
   const [selectedDoNgot, setSelectedDoNgot] = useState('Bình thường')
   const [selectedToppings, setSelectedToppings] = useState([])
+  const [selectedMilk, setSelectedMilk] = useState('')
+  const [custom, setCustom] = useState({})
   const [showToppings, setShowToppings] = useState(true)
   const [showToppingModal, setShowToppingModal] = useState(false)
   const [note, setNote] = useState('')
   const [quantity, setQuantity] = useState(1)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   useEffect(() => {
+    setSaveError('')
     if (cartItem) {
       setSelectedSize(cartItem.size || 'Nhỏ')
-      setSelectedLuongDa(cartItem.luong_da || 'Bình thường')
-      setSelectedDoNgot(cartItem.do_ngot || 'Bình thường')
+      setSelectedLuongDa(cartItem.luong_da || '')
+      setSelectedDoNgot(cartItem.do_ngot || '')
       setSelectedToppings(Array.isArray(cartItem.toppings) ? cartItem.toppings : [])
-      setNote(cartItem.ghi_chu || '')
+      setSelectedMilk(cartItem.loai_sua || '')
+      setCustom(cartItem.custom_attributes || {})
+      setNote(cartItem.ghi_chu || cartItem.custom_attributes?.ghi_chu || '')
       setQuantity(cartItem.so_luong || 1)
       setShowToppings(true)
       setShowToppingModal(false)
     } else if (product) {
       const pid = String(product.ma_san_pham || product.id || '')
       const realSizes = varMap[pid]?.sizes || {}
-      const sizeKeys = Object.keys(realSizes).length > 0 ? Object.keys(realSizes) : Object.keys(product.sizes || {})
+      const defaultSizes = Object.keys(realSizes).length > 0 ? realSizes : product.sizes || {}
+      const sizeKeys = Object.keys(defaultSizes).sort((a, b) => Number(defaultSizes[a]) - Number(defaultSizes[b]))
       setSelectedSize(sizeKeys.length > 0 ? sizeKeys[0] : 'Nhỏ')
-      const ldKeys = Object.keys(product.luong_da || {})
-      setSelectedLuongDa(ldKeys.length > 0 ? ldKeys[0] : 'Bình thường')
-      const dnKeys = Object.keys(product.do_ngot || {})
-      setSelectedDoNgot(dnKeys.length > 0 ? dnKeys[0] : 'Bình thường')
+      const ldKeys = Object.keys(varMap[pid]?.luong_da || product.luong_da || {})
+      setSelectedLuongDa(ldKeys.find(key => normalizedValue(key) === 'binh thuong') || ldKeys[0] || '')
+      const dnKeys = Object.keys(varMap[pid]?.do_ngot || product.do_ngot || {})
+      setSelectedDoNgot(dnKeys.find(key => normalizedValue(key) === 'binh thuong') || dnKeys[0] || '')
       setSelectedToppings([])
       setShowToppings(true)
       setShowToppingModal(false)
       setNote('')
+      setSelectedMilk(Object.keys(varMap[pid]?.loai_sua || {})[0] || '')
+      setCustom(Object.fromEntries(Object.entries(varMap[pid]?.custom || {}).map(([key, values]) => [key, Object.keys(values)[0] || ''])))
       setQuantity(1)
     }
   }, [product, cartItem, varMap])
 
   const suggestions = useMemo(() => {
-    const list = Array.isArray(allProducts) ? allProducts.filter(p => p && p.ma_san_pham !== product?.ma_san_pham) : []
-    const pastries = list.filter(p => String(p.danh_muc || p.danhMuc?.ten_danh_muc || '').toLowerCase().includes('bánh') || String(p.ten_san_pham || '').toLowerCase().includes('bánh'))
+    const list = Array.isArray(allProducts) ? allProducts.filter(p => p && p.trang_thai && p.ma_san_pham !== product?.ma_san_pham) : []
+    const pastries = list.filter(p => String(p.danh_muc || p.danhMuc?.ten_danh_muc || '').toLowerCase().includes('bánh') || normalizedValue(p.ten_san_pham).includes('banh'))
     if (pastries.length > 0) return pastries.slice(0, 5)
-    return [
-      { ma_san_pham: 901, ten_san_pham: 'Butter Croissant', gia_ban: 29000, hinh_anh_url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200' },
-      { ma_san_pham: 902, ten_san_pham: 'Wafu Pasta Heo Nướng Xốt Shoyu', gia_ban: 69000, hinh_anh_url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200' },
-      { ma_san_pham: 903, ten_san_pham: 'Bánh Mì Que Gà Phô Mai', gia_ban: 19000, hinh_anh_url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200' },
-    ]
+    return []
   }, [allProducts, product])
 
   if (!product) return null
@@ -201,36 +215,24 @@ function ProductDetailModal({ product, cartItem, visible, onClose, onAddToCart, 
   // Use real CSDL sizes if available, otherwise fall back to product data, otherwise defaults
   const availableSizes = Object.keys(realSizes).length > 0
     ? realSizes
-    : (product.sizes && Object.keys(product.sizes).length > 0 ? product.sizes : { 'Nhỏ': product.gia_ban || 35000, 'Vừa': (product.gia_ban || 35000) + 6000, 'Lớn': (product.gia_ban || 35000) + 10000 })
-  const sizeKeys = Object.keys(availableSizes)
+    : (product.sizes && Object.keys(product.sizes).length > 0 ? product.sizes : { 'Nhỏ': Number(product.gia_ban || 0) })
+  const sizeKeys = Object.keys(availableSizes).sort((a, b) => Number(availableSizes[a]) - Number(availableSizes[b]))
 
-  const availableLuongDa = product.luong_da && Object.keys(product.luong_da).length > 0 ? product.luong_da : { 'Bình thường': 0, 'Đá riêng': 0, 'Ít đá': 0 }
+  const availableLuongDa = product.luong_da && Object.keys(product.luong_da).length > 0 ? product.luong_da : (varMap[pid]?.luong_da && Object.keys(varMap[pid].luong_da).length ? varMap[pid].luong_da : {})
   const ldKeys = Object.keys(availableLuongDa)
 
-  const availableDoNgot = product.do_ngot && Object.keys(product.do_ngot).length > 0 ? product.do_ngot : { 'Bình thường': 0, 'Ít ngọt': 0, 'Thêm ngọt': 0 }
+  const availableDoNgot = product.do_ngot && Object.keys(product.do_ngot).length > 0 ? product.do_ngot : (varMap[pid]?.do_ngot && Object.keys(varMap[pid].do_ngot).length ? varMap[pid].do_ngot : {})
   const dnKeys = Object.keys(availableDoNgot)
 
   // Use real CSDL toppings if available
-  const availableToppings = Object.keys(realToppings).length > 0
-    ? realToppings
-    : (product.toppings && Object.keys(product.toppings).length > 0 ? product.toppings : {
-        'Kem Phô Mai Macchiato': 10000,
-        'Shot Espresso': 10000,
-        'Hạt Sen': 10000,
-        'Xốt Caramel': 10000,
-        'Đào Miếng': 10000,
-        'Trân Châu Hoàng Kim': 10000,
-        'Foam Dừa': 10000,
-        'Đài Hoa Hibiscus': 10000,
-        'Trân châu củ năng': 10000,
-        'Trân châu trắng': 10000,
-        'Thạch cà phê': 10000,
-      })
+  const availableToppings = Object.keys(realToppings).length ? realToppings : (product.toppings || {})
   const toppingKeys = Object.keys(availableToppings)
 
   const basePrice = Number(availableSizes[selectedSize] !== undefined ? availableSizes[selectedSize] : product.gia_ban || 0)
   const toppingsPrice = selectedToppings.reduce((sum, t) => sum + Number(availableToppings[t] || 0), 0)
-  const unitPrice = basePrice + toppingsPrice
+  const milkOptions = varMap[pid]?.loai_sua || product.loai_sua || {}
+  const extraGroups = varMap[pid]?.custom || {}
+  const unitPrice = varMap[pid]?.rows?.length ? variantPrice(product.gia_ban, varMap[pid].rows, { size: selectedSize, toppings: selectedToppings, luong_da: selectedLuongDa, do_ngot: selectedDoNgot, loai_sua: selectedMilk, custom_attributes: custom }) : basePrice + toppingsPrice + Number(availableLuongDa[selectedLuongDa] || 0) + Number(availableDoNgot[selectedDoNgot] || 0) + Number(milkOptions[selectedMilk] || 0)
   const totalPrice = unitPrice * quantity
 
   return (
@@ -243,11 +245,11 @@ function ProductDetailModal({ product, cartItem, visible, onClose, onAddToCart, 
               <Pressable onPress={onClose} style={modalStyles.closeBtn}>
                 <Ionicons name="close" size={22} color="#1e293b" />
               </Pressable>
-              <Text style={modalStyles.headerTitle}>Thêm vào giỏ</Text>
+              <Text style={modalStyles.headerTitle}>{cartItem ? 'Sửa món trong giỏ' : 'Thêm vào giỏ'}</Text>
               <View style={{ width: 36 }} />
             </View>
 
-            <ScrollView style={modalStyles.scrollArea} showsVerticalScrollIndicator={false}>
+            <ScrollView style={modalStyles.scrollArea} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               {/* Top Product Hero Section */}
               <View style={modalStyles.productHeroSection}>
                 {product.hinh_anh_url ? (
@@ -264,13 +266,13 @@ function ProductDetailModal({ product, cartItem, visible, onClose, onAddToCart, 
               </View>
 
               {/* Section 1: Gợi ý dùng kèm */}
-              <View style={[modalStyles.sectionContainer, { paddingTop: 12 }]}>
+              {suggestions.length > 0 && <View style={[modalStyles.sectionContainer, { paddingTop: 12 }]}>
                 <Text style={modalStyles.sectionLabel}>Gợi ý dùng kèm</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={modalStyles.sugList}>
                   {suggestions.map((sug, idx) => (
                     <View key={sug.ma_san_pham || idx} style={modalStyles.sugCard}>
                       <View style={modalStyles.sugCardTop}>
-                        <Image source={{ uri: sug.hinh_anh_url || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200' }} style={modalStyles.sugImg} />
+                        <Image source={{ uri: sug.hinh_anh_url }} style={modalStyles.sugImg} />
                         <View style={modalStyles.sugInfo}>
                           <Text style={modalStyles.sugName} numberOfLines={2}>{sug.ten_san_pham || sug.name}</Text>
                           <Text style={modalStyles.sugPrice}>{formatCurrency(sug.gia_ban || sug.price)}</Text>
@@ -278,7 +280,7 @@ function ProductDetailModal({ product, cartItem, visible, onClose, onAddToCart, 
                       </View>
                       <Pressable
                         style={modalStyles.sugAddBtn}
-                        onPress={() => onAddToCart(sug, 1, 'Nhỏ', { unitPrice: sug.gia_ban })}
+                        onPress={async () => { try { await onAddToCart(sug, 1, Object.keys(varMap[String(sug.ma_san_pham)]?.sizes || {})[0] || 'Nhỏ', { unitPrice: sug.gia_ban }) } catch(error) { setSaveError(errorMessage(error)) } }}
                       >
                         <Text style={modalStyles.sugAddBtnText}>Thêm ›</Text>
                       </Pressable>
@@ -286,22 +288,8 @@ function ProductDetailModal({ product, cartItem, visible, onClose, onAddToCart, 
                   ))}
                 </ScrollView>
 
-                {/* Hợp gu? Rating */}
-                <View style={modalStyles.hopGuRow}>
-                  <View style={modalStyles.hopGuLeft}>
-                    <Text style={{ fontSize: 16 }}>⭐</Text>
-                    <Text style={modalStyles.hopGuText}>Hợp gu?</Text>
-                  </View>
-                  <View style={modalStyles.hopGuActions}>
-                    <Pressable style={modalStyles.hopGuThumbBtn}>
-                      <Ionicons name="thumbs-up-outline" size={16} color="#64748b" />
-                    </Pressable>
-                    <Pressable style={modalStyles.hopGuThumbBtn}>
-                      <Ionicons name="thumbs-down-outline" size={16} color="#64748b" />
-                    </Pressable>
-                  </View>
-                </View>
-              </View>
+
+              </View>}
 
               {/* Section 2: Chọn 1 Loại Size */}
               <View style={modalStyles.sectionContainer}>
@@ -326,7 +314,7 @@ function ProductDetailModal({ product, cartItem, visible, onClose, onAddToCart, 
               </View>
 
               {/* Section 3: Lượng Đá */}
-              <View style={modalStyles.sectionContainer}>
+              {ldKeys.length > 0 && <View style={modalStyles.sectionContainer}>
                 <Text style={modalStyles.sectionLabel}>Lượng Đá</Text>
                 <View style={modalStyles.pillGrid}>
                   {ldKeys.map((ld) => {
@@ -342,10 +330,10 @@ function ProductDetailModal({ product, cartItem, visible, onClose, onAddToCart, 
                     )
                   })}
                 </View>
-              </View>
+              </View>}
 
               {/* Section 4: Độ Ngọt */}
-              <View style={modalStyles.sectionContainer}>
+              {dnKeys.length > 0 && <View style={modalStyles.sectionContainer}>
                 <Text style={modalStyles.sectionLabel}>Độ Ngọt</Text>
                 <View style={modalStyles.pillGrid}>
                   {dnKeys.map((dn) => {
@@ -361,10 +349,10 @@ function ProductDetailModal({ product, cartItem, visible, onClose, onAddToCart, 
                     )
                   })}
                 </View>
-              </View>
+              </View>}
 
               {/* Section 5: Chọn Tối Đa 3 Loại Topping */}
-              <View style={modalStyles.sectionContainer}>
+              {toppingKeys.length > 0 && <View style={modalStyles.sectionContainer}>
                 <Text style={modalStyles.sectionLabel}>Chọn Tối Đa 3 Loại Topping</Text>
                 <Pressable
                   onPress={() => setShowToppingModal(true)}
@@ -382,7 +370,7 @@ function ProductDetailModal({ product, cartItem, visible, onClose, onAddToCart, 
                     </Text>
                   </View>
                   <View style={[modalStyles.teaserIconWrap, { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ffd8b8' }]}>
-                    <Ionicons name="chevron-forward" size={18} color="#ea8025" />
+                    <Ionicons name="chevron-forward" size={18} color="#b22830" />
                   </View>
                 </Pressable>
 
@@ -396,7 +384,7 @@ function ProductDetailModal({ product, cartItem, visible, onClose, onAddToCart, 
                           onPress={() => setShowToppingModal(true)}
                           style={[modalStyles.pill, modalStyles.pillActive]}
                         >
-                          <Ionicons name="checkmark" size={14} color="#ea8025" style={{ marginRight: 4 }} />
+                          <Ionicons name="checkmark" size={14} color="#b22830" style={{ marginRight: 4 }} />
                           <Text style={[modalStyles.pillText, modalStyles.pillTextActive]}>
                             {tp} (+{formatCurrency(tpPrice)})
                           </Text>
@@ -405,8 +393,10 @@ function ProductDetailModal({ product, cartItem, visible, onClose, onAddToCart, 
                     })}
                   </View>
                 )}
-              </View>
+              </View>}
 
+              {Object.keys(milkOptions).length > 0 && <View style={modalStyles.sectionContainer}><Text style={modalStyles.sectionLabel}>Loại sữa</Text><View style={modalStyles.pillGrid}>{Object.entries(milkOptions).map(([value, price]) => <Pressable key={value} onPress={() => setSelectedMilk(value)} style={[modalStyles.pill, selectedMilk === value && modalStyles.pillActive]}><Text style={[modalStyles.pillText, selectedMilk === value && modalStyles.pillTextActive]}>{value}{price > 0 ? ` (+${formatCurrency(price)})` : ''}</Text></Pressable>)}</View></View>}
+              {Object.entries(extraGroups).map(([attr, values]) => <View key={attr} style={modalStyles.sectionContainer}><Text style={modalStyles.sectionLabel}>{attr}</Text><View style={modalStyles.pillGrid}>{Object.entries(values).map(([value, price]) => <Pressable key={value} onPress={() => setCustom(prev => ({ ...prev, [attr]: value }))} style={[modalStyles.pill, custom[attr] === value && modalStyles.pillActive]}><Text style={[modalStyles.pillText, custom[attr] === value && modalStyles.pillTextActive]}>{value}{price > 0 ? ` (+${formatCurrency(price)})` : ''}</Text></Pressable>)}</View></View>)}
               {/* Section 6: Ghi Chú Cho Quán */}
               <View style={modalStyles.sectionContainer}>
                 <Text style={modalStyles.sectionLabel}>Ghi Chú Cho Quán</Text>
@@ -424,6 +414,8 @@ function ProductDetailModal({ product, cartItem, visible, onClose, onAddToCart, 
 
             {/* Bottom Footer - Tách 2 bên ra thành 2 hàng dọc: Bộ chọn số lượng ở trên, Nút thêm giỏ hàng tràn viền bên dưới */}
             <View style={modalStyles.footer}>
+              {!optionsReady && <Pressable onPress={onRetryOptions}><Text style={{ color: colors.primary, paddingBottom: 8 }}>Đang tải lựa chọn món. Nếu chưa tải được, chạm để thử lại.</Text></Pressable>}
+              {!!saveError && <Text accessibilityRole="alert" style={{ color: colors.primary, paddingBottom: 8 }}>{saveError}</Text>}
               <View style={modalStyles.qtyRow}>
                 <View style={modalStyles.qtyBox}>
                   <Pressable onPress={() => setQuantity(Math.max(1, quantity - 1))} style={modalStyles.qtyBtnCircle}>
@@ -437,26 +429,24 @@ function ProductDetailModal({ product, cartItem, visible, onClose, onAddToCart, 
               </View>
 
               <Pressable
-                onPress={() => {
-                  const options = {
-                    toppings: selectedToppings,
-                    luongDa: selectedLuongDa,
-                    doNgot: selectedDoNgot,
-                    note: note.trim(),
-                    unitPrice,
-                  }
-                  if (cartItem && onUpdateCart) {
-                    onUpdateCart(cartItem, quantity, selectedSize, options)
-                  } else {
-                    onAddToCart(product, quantity, selectedSize, options)
-                  }
-                  onClose()
+                disabled={saving || !product.trang_thai || !optionsReady}
+                onPress={async () => {
+                  if (saving) return
+                  setSaving(true); setSaveError('')
+                  const options = { toppings: selectedToppings, luongDa: selectedLuongDa,
+                    doNgot: selectedDoNgot, loaiSua: selectedMilk, custom_attributes: { ...custom, ghi_chu: note.trim() }, note: note.trim(), unitPrice }
+                  try {
+                    if (cartItem) await onUpdateCart(cartItem, quantity, selectedSize, options)
+                    else await onAddToCart(product, quantity, selectedSize, options)
+                    onClose()
+                  } catch (error) { setSaveError(errorMessage(error)) }
+                  finally { setSaving(false) }
                 }}
                 style={({ pressed }) => [modalStyles.addCartActionBtn, pressed && { opacity: 0.92 }]}
               >
                 <Ionicons name={cartItem ? "checkmark-circle-outline" : "add-circle-outline"} size={20} color="#ffffff" />
                 <Text style={modalStyles.addCartActionText}>
-                  {cartItem ? 'CẬP NHẬT - ' : 'THÊM VÀO GIỎ - '}{formatCurrency(totalPrice)}
+                  {!optionsReady ? 'CHỜ LỰA CHỌN… ' : saving ? 'ĐANG LƯU… ' : !product.trang_thai ? 'TẠM HẾT MÓN ' : cartItem ? 'CẬP NHẬT - ' : 'THÊM VÀO GIỎ - '}{formatCurrency(totalPrice)}
                 </Text>
               </Pressable>
             </View>
@@ -482,7 +472,14 @@ export function MenuScreen({ navigation, route }) {
   const { user, activeUserId } = useUser()
   const userId = getUserId(user, activeUserId)
   const queryClient = useQueryClient()
+  const insets = useSafeAreaInsets()
+  const searchRef = useRef(null)
+  const [grid, setGrid] = useState(true)
   const [search, setSearch] = useState('')
+  useEffect(() => {
+    if (route?.params?.searchQuery != null) { setSearch(route.params.searchQuery); setActiveCategoryId(null); navigation.setParams({ searchQuery: null }) }
+    if (route?.params?.focusSearch) { const timer = setTimeout(() => searchRef.current?.focus(), 100); navigation.setParams({ focusSearch: false }); return () => clearTimeout(timer) }
+  }, [route?.params?.searchQuery, route?.params?.focusSearch])
   const [activeCategoryId, setActiveCategoryId] = useState(null)
   const [priceFilter, setPriceFilter] = useState('ALL')
   const [sortBy, setSortBy] = useState('DEFAULT')
@@ -495,8 +492,7 @@ export function MenuScreen({ navigation, route }) {
 
 
 
-  const sectionListRef = useRef(null)
-  const sidebarListRef = useRef(null)
+  const productListRef = useRef(null)
 
   const categoriesQuery = useQuery({
     queryKey: ['customer', 'menu-categories'],
@@ -521,42 +517,21 @@ export function MenuScreen({ navigation, route }) {
     staleTime: 60 * 1000,
   })
 
-  const variationsQuery = useQuery({
-    queryKey: ['customer', 'menu-variations'],
-    queryFn: async () => {
-      const res = await apiClient.get('/menu/san-pham/bien-the')
-      return safeArray(res)
-    },
-    staleTime: 5 * 60 * 1000,
-  })
-
-  // Build a map: ma_san_pham -> { sizes: {SizeName: price}, toppings: {ToppingName: price} }
-  const varMap = useMemo(() => {
-    const map = {}
-    for (const v of safeArray(variationsQuery.data)) {
-      const pid = String(v.ma_san_pham || '')
-      if (!pid) continue
-      if (!map[pid]) map[pid] = { sizes: {}, toppings: {} }
-      const tt = String(v.ten_thuoc_tinh || '').toLowerCase()
-      const val = String(v.gia_tri || '')
-      const pt = Number(v.phu_thu || 0)
-      if (tt.includes('size') || tt.includes('kích')) {
-        map[pid].sizes[val] = pt
-      } else if (tt.includes('topping') || tt.includes('trân châu') || tt.includes('thạch')) {
-        map[pid].toppings[val] = pt
-      }
-    }
-    return map
-  }, [variationsQuery.data])
+  const varMap = useMemo(() => variantMap(catalogVariantRows(productsQuery.data || [])), [productsQuery.data])
 
   useEffect(() => {
     if (route?.params?.selectedProduct) {
-      setSelectedProduct(route.params.selectedProduct)
+      if (!productsQuery.data) return
+      const requested = route.params.selectedProduct
+      const product = productsQuery.data.find(p => String(p.ma_san_pham) === String(requested.ma_san_pham || requested.id))
+      if (!product) { navigation.setParams({ selectedProduct: null }); return }
+      setSelectedProduct(product)
       setEditingCartItem(null)
       setIsDetailOpen(true)
       navigation.setParams({ selectedProduct: null })
     }
     if (route?.params?.editCartItem) {
+      if (!productsQuery.data) return
       setEditingCartItem(route.params.editCartItem)
       const pId = route.params.editCartItem.ma_san_pham || route.params.editCartItem.id
       let prod = null
@@ -569,16 +544,9 @@ export function MenuScreen({ navigation, route }) {
     }
   }, [route?.params?.selectedProduct, route?.params?.editCartItem, navigation, productsQuery.data])
 
-  const cartCountQuery = useQuery({
-    queryKey: ['customer', 'cart', userId, 'count'],
-    queryFn: async () => {
-      const response = await apiClient.get(`/cart/${userId}`)
-      return safeArray(response).map(normalizeCartItem).reduce((sum, item) => sum + Number(item.so_luong || 0), 0)
-    },
-    enabled: Boolean(userId),
-    staleTime: 10 * 1000,
-  })
-  const cartCount = cartCountQuery.data || 0
+  const cartApi = useCart()
+  const notify = useFeedback()
+  const cartCount = cartApi.count
 
   const allCategories = categoriesQuery.data || []
   const allProducts = productsQuery.data || []
@@ -600,11 +568,11 @@ export function MenuScreen({ navigation, route }) {
     let list = [...allProducts]
 
     if (search.trim()) {
-      const kw = search.trim().toLowerCase()
+      const kw = normalizedValue(search)
       list = list.filter(p =>
-        String(p.ten_san_pham || '').toLowerCase().includes(kw) ||
-        String(p.mo_ta || '').toLowerCase().includes(kw) ||
-        String(p.danh_muc || '').toLowerCase().includes(kw)
+        normalizedValue(p.ten_san_pham).includes(kw) ||
+        normalizedValue(p.mo_ta).includes(kw) ||
+        normalizedValue(p.danh_muc).includes(kw)
       )
     }
 
@@ -638,118 +606,25 @@ export function MenuScreen({ navigation, route }) {
       .filter(sec => sec.data.length > 0)
   }, [categories, allCategories, filteredProducts])
 
-  const activeCategory = activeCategoryId ?? (sections[0]?.id ?? null)
+  const activeCategory = activeCategoryId
+  const displayedProducts = activeCategory ? sections.find(c => c.id === activeCategory)?.data || [] : filteredProducts
+  const paging = usePagination(displayedProducts, JSON.stringify([search, activeCategory, priceFilter, sortBy, onlyAvailable, onlyHot]))
+  const reveal = useListReveal()
+  const changePage = page => { paging.setPage(page); productListRef.current?.scrollToOffset({ offset: 0, animated: false }) }
+  const categoryTitle = categories.find(c => String(c.id) === activeCategory)?.label || (search ? 'Kết quả tìm kiếm' : 'Thực đơn')
+  const categoryPhotos = categories.map(c => { const ids = [String(c.id), ...allCategories.filter(k => String(k.ma_danh_muc_cha) === String(c.id)).map(k => String(k.id))]; return { ...c, image: allProducts.find(p => ids.includes(String(p.danh_muc_id)))?.hinh_anh_url } })
 
-  const addToCartMutation = useMutation({
-    mutationFn: async ({ item, quantity, size, options = {}, targetUserId }) => {
-      const uid = targetUserId || userId || 'guest-customer'
-      const productId = Number(item.ma_san_pham || item.id || 0)
-      return apiClient.post('/cart', {
-        ma_nguoi_dung: uid,
-        ma_san_pham: productId,
-        ten_san_pham: item.ten_san_pham || 'Sản phẩm',
-        gia_ban: Number(options.unitPrice || item.gia_ban || 0),
-        hinh_anh_url: item.hinh_anh_url || '',
-        size: size || 'Nhỏ',
-        so_luong: Number(quantity || 1),
-        toppings: options.toppings || [],
-        luong_da: options.luongDa || 'Bình thường',
-        do_ngot: options.doNgot || 'Bình thường',
-        ghi_chu: options.note || '',
-      })
-    },
-    onMutate: async ({ item, quantity, size, options = {}, targetUserId }) => {
-      const uid = targetUserId || userId || 'guest-customer'
-      await queryClient.cancelQueries({ queryKey: ['customer', 'cart', uid] })
-      await queryClient.cancelQueries({ queryKey: ['customer', 'cart', uid, 'count'] })
-
-      const addQty = Number(quantity || 1)
-      const itemSize = size || 'Nhỏ'
-      const productId = Number(item.ma_san_pham || item.id || 0)
-      const unitPrice = Number(options.unitPrice || item.gia_ban || 0)
-      const toppingsStr = Array.isArray(options.toppings) && options.toppings.length > 0 ? options.toppings.join(', ') : ''
-      const customKey = `${itemSize}_${toppingsStr}_${options.luongDa || ''}_${options.doNgot || ''}_${options.note || ''}`
-
-      queryClient.setQueryData(['customer', 'cart', uid, 'count'], old => (Number(old) || 0) + addQty)
-      queryClient.setQueryData(['customer', 'cart', uid], old => {
-        const list = Array.isArray(old) ? [...old] : []
-        const idx = list.findIndex(i => {
-          if (Number(i.ma_san_pham) !== productId || (i.size || 'Nhỏ') !== itemSize) return false
-          const iTopStr = Array.isArray(i.toppings) && i.toppings.length > 0 ? i.toppings.join(', ') : ''
-          const iKey = `${i.size || 'Nhỏ'}_${iTopStr}_${i.luong_da || ''}_${i.do_ngot || ''}_${i.ghi_chu || ''}`
-          return iKey === customKey
-        })
-        if (idx >= 0) {
-          list[idx] = { ...list[idx], so_luong: Number(list[idx].so_luong || 1) + addQty, gia_ban: unitPrice }
-        } else {
-          list.push({
-            id: `local_${Date.now()}_${Math.random()}`,
-            ma_nguoi_dung: uid,
-            ma_san_pham: productId,
-            ten_san_pham: item.ten_san_pham || 'Sản phẩm',
-            gia_ban: unitPrice,
-            hinh_anh_url: item.hinh_anh_url || '',
-            size: itemSize,
-            so_luong: addQty,
-            toppings: options.toppings || [],
-            luong_da: options.luongDa || 'Bình thường',
-            do_ngot: options.doNgot || 'Bình thường',
-            ghi_chu: options.note || '',
-          })
-        }
-        return list
-      })
-      return { uid }
-    },
-    onSuccess: async (data, variables, context) => {
-      const uid = context?.uid || userId
-      await queryClient.invalidateQueries({ queryKey: ['customer', 'cart', uid] })
-      await queryClient.invalidateQueries({ queryKey: ['customer', 'cart', uid, 'count'] })
-    },
-    onError: (error, variables, context) => {
-      // Keep optimistic local update for seamless guest & offline cart experience
-    },
-  })
-
-  const handleAddToCart = (item, quantity = 1, size = 'Nhỏ', options = {}) => {
-    if (!item) return
-    const targetUserId = userId || activeUserId || 'guest-customer'
-    addToCartMutation.mutate({ item, quantity, size, options, targetUserId })
-    const toppingInfo = Array.isArray(options?.toppings) && options.toppings.length > 0 ? ` + ${options.toppings.join(', ')}` : ''
-    Alert.alert('✓ Đã thêm vào giỏ', `${item.ten_san_pham} (${quantity}x Size ${size || 'Nhỏ'}${toppingInfo}) đã được thêm vào giỏ.`)
+  const handleAddToCart = async (item, quantity = 1, size = 'Nhỏ', options = {}) => {
+    await cartApi.add(item, quantity, { size, toppings: options.toppings || [],
+      luong_da: options.luongDa || '', do_ngot: options.doNgot || '', loai_sua: options.loaiSua || '',
+      custom_attributes: { ...(options.custom_attributes || {}), ghi_chu: options.note || '' } })
+    notify(`Đã thêm ${quantity} ${item.ten_san_pham} vào giỏ hàng`)
   }
-
-  const updateCartItemMutation = useMutation({
-    mutationFn: async ({ cartItem, quantity, size, options = {}, targetUserId }) => {
-      const uid = targetUserId || userId || 'guest-customer'
-      if (cartItem.id) {
-        await apiClient.delete(`/cart/${cartItem.id}`).catch(() => {})
-      } else if (cartItem.ma_san_pham) {
-        await apiClient.delete(`/cart/${cartItem.ma_san_pham}`).catch(() => {})
-      }
-      return apiClient.post('/cart', {
-        ma_nguoi_dung: uid,
-        ma_san_pham: Number(cartItem.ma_san_pham || 0),
-        ten_san_pham: cartItem.ten_san_pham || 'Sản phẩm',
-        gia_ban: Number(options.unitPrice || cartItem.gia_ban || 0),
-        hinh_anh_url: cartItem.hinh_anh_url || '',
-        size: size || 'Nhỏ',
-        so_luong: Number(quantity || 1),
-        toppings: options.toppings || [],
-        luong_da: options.luongDa || 'Bình thường',
-        do_ngot: options.doNgot || 'Bình thường',
-        ghi_chu: options.note || '',
-      })
-    },
-    onSuccess: async (data, variables, context) => {
-      const uid = userId || 'guest-customer'
-      await queryClient.invalidateQueries({ queryKey: ['customer', 'cart', uid] })
-      await queryClient.invalidateQueries({ queryKey: ['customer', 'cart', uid, 'count'] })
-    }
-  })
-
-  const handleUpdateCart = (cartItem, quantity, size, options) => {
-    updateCartItemMutation.mutate({ cartItem, quantity, size, options })
+  const handleUpdateCart = async (item, quantity, size, options) => {
+    await cartApi.update(item.id, { so_luong: quantity, size, toppings: options.toppings || [],
+      luong_da: options.luongDa || '', do_ngot: options.doNgot || '', loai_sua: options.loaiSua || '',
+      custom_attributes: { ...(options.custom_attributes || {}), ghi_chu: options.note || '' } })
+    notify('Đã cập nhật món trong giỏ hàng')
   }
 
   const activeFiltersCount = [
@@ -761,36 +636,19 @@ export function MenuScreen({ navigation, route }) {
 
   const handleSidebarPress = useCallback((categoryId) => {
     setActiveCategoryId(categoryId)
-    const sectionIndex = sections.findIndex(sec => sec.id === categoryId)
-    if (sectionIndex >= 0 && sectionListRef.current) {
-      sectionListRef.current.scrollToLocation({
-        sectionIndex,
-        itemIndex: 0,
-        viewOffset: 0,
-        animated: true,
-      })
-    }
-  }, [sections])
+    productListRef.current?.scrollToOffset({ offset: 0, animated: false })
+  }, [])
 
-  const onViewableItemsChanged = useRef(({ viewableItems }) => {
-    if (viewableItems.length > 0) {
-      const topSection = viewableItems[0].section
-      if (topSection) {
-        setActiveCategoryId(topSection.id)
-        const idx = sections.findIndex(s => s.id === topSection.id)
-        if (idx >= 0 && sidebarListRef.current) {
-          sidebarListRef.current.scrollToIndex({ index: idx, animated: true, viewPosition: 0.3 })
-        }
-      }
+  useEffect(() => {
+    if (route?.params?.categoryId && categories.length) {
+      handleSidebarPress(String(route.params.categoryId))
+      navigation.setParams({ categoryId: null })
     }
-  }).current
+  }, [route?.params?.categoryId, sections.length, handleSidebarPress, navigation])
 
   const renderProductRow = ({ item }) => (
     <Pressable
-      onPress={() => {
-        setSelectedProduct(item)
-        setIsDetailOpen(true)
-      }}
+      onPress={() => navigation.navigate('ProductDetail', { productId: item.ma_san_pham })}
       style={({ pressed }) => [styles.row, pressed && { opacity: 0.85 }]}
     >
       {item.hinh_anh_url ? (
@@ -837,16 +695,23 @@ export function MenuScreen({ navigation, route }) {
     </Pressable>
   )
 
+  const renderGridProduct = ({ item }) => <Reveal visible={reveal.visible.has(String(item.id))} style={catalogStyles.card}>
+    <Pressable onPress={() => navigation.navigate('ProductDetail', { productId: item.ma_san_pham })} accessibilityLabel={`Chi tiết ${item.ten_san_pham}`}>
+      <View style={catalogStyles.photo}><Image source={{ uri: item.hinh_anh_url }} style={{ width: '100%', aspectRatio: 1 }} resizeMode="contain" />{item.la_hot || item.la_moi ? <Text style={catalogStyles.flag}>{item.la_moi ? 'MỚI' : 'BÁN CHẠY'}</Text> : null}</View>
+      <Text style={catalogStyles.name} numberOfLines={2}>{item.ten_san_pham}</Text>
+    </Pressable>
+    <View style={catalogStyles.priceLine}><Text style={catalogStyles.price}>{formatCurrency(item.gia_ban)}</Text><Pressable onPress={() => { setSelectedProduct(item); setEditingCartItem(null); setIsDetailOpen(true) }} accessibilityLabel={`Thêm ${item.ten_san_pham}`} style={catalogStyles.add}><Ionicons name="add" color="#fff" size={20} /></Pressable></View>
+  </Reveal>
   const isLoading = categoriesQuery.isLoading || productsQuery.isLoading
 
   return (
     <View style={styles.screen}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 6, paddingBottom: 8 }]}>
         <View style={styles.headerTop}>
-          <Pressable style={styles.modeSelectorClean} onPress={() => { }}>
+          <Pressable style={styles.modeSelectorClean} onPress={() => navigation.navigate('StoresTab')}>
             <Ionicons name="cafe-outline" size={20} color="#1e293b" />
-            <Text style={styles.modeSelectorTextClean}>Uống tại quán</Text>
+            <Text style={styles.modeSelectorTextClean}>Chọn cửa hàng & nhận món</Text>
             <Ionicons name="chevron-down" size={16} color="#64748b" />
           </Pressable>
           <Pressable onPress={() => navigation.navigate('Cart')} style={styles.headerRightCart}>
@@ -864,6 +729,9 @@ export function MenuScreen({ navigation, route }) {
           <View style={styles.searchWrap}>
             <Ionicons name="search" size={18} color="#8f8f8f" style={styles.searchIcon} />
             <TextInput
+              ref={searchRef}
+              accessibilityLabel="Tìm món theo tên"
+              returnKeyType="search"
               value={search}
               onChangeText={setSearch}
               placeholder="Tìm món"
@@ -890,100 +758,20 @@ export function MenuScreen({ navigation, route }) {
         </View>
       </View>
 
-      {/* Loading */}
-      {isLoading ? (
-        <View style={styles.loadingWrap}>
-          <ActivityIndicator color={colors.primary} size="large" />
-          <Text style={styles.loadingText}>Đang tải menu...</Text>
-        </View>
-      ) : (
-        <View style={styles.body}>
-          {/* Left sidebar: categories */}
-          <View style={styles.sidebar}>
-            <FlatList
-              ref={sidebarListRef}
-              data={sections}
-              keyExtractor={(item) => item.id}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingVertical: spacing.xs }}
-              getItemLayout={(_, index) => ({ length: 76, offset: 76 * index, index })}
-              renderItem={({ item }) => {
-                const isActive = item.id === activeCategory
-                return (
-                  <Pressable
-                    onPress={() => handleSidebarPress(item.id)}
-                    style={[styles.sidebarItem, isActive && styles.sidebarItemActive]}
-                  >
-                    <View style={[styles.sidebarIconWrap, isActive && styles.sidebarIconWrapActive]}>
-                      <Ionicons
-                        name={iconForCategory(item.title)}
-                        size={20}
-                        color={isActive ? colors.primary : colors.muted}
-                      />
-                    </View>
-                    <Text
-                      style={[styles.sidebarLabel, isActive && styles.sidebarLabelActive]}
-                      numberOfLines={2}
-                    >
-                      {item.title}
-                    </Text>
-                  </Pressable>
-                )
-              }}
-            />
-          </View>
-
-          {/* Right: product sections */}
-          {sections.length === 0 ? (
-            <View style={styles.emptyWrap}>
-              <Ionicons name="search-outline" size={48} color={colors.border} />
-              <Text style={styles.emptyTitle}>Không tìm thấy sản phẩm</Text>
-              <Text style={styles.emptyText}>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</Text>
-              <Pressable
-                onPress={() => {
-                  setSearch('')
-                  setPriceFilter('ALL')
-                  setSortBy('DEFAULT')
-                  setOnlyAvailable(false)
-                  setOnlyHot(false)
-                }}
-                style={styles.resetBtn}
-              >
-                <Text style={styles.resetBtnText}>Xóa bộ lọc</Text>
-              </Pressable>
-            </View>
-          ) : (
-            <SectionList
-              ref={sectionListRef}
-              sections={sections}
-              keyExtractor={(item) => String(item.id || item.ma_san_pham)}
-              renderItem={renderProductRow}
-              renderSectionHeader={({ section }) => (
-                <View style={styles.sectionHeaderWrap}>
-                  <Text style={styles.sectionHeaderText}>{section.title}</Text>
-                </View>
-              )}
-              stickySectionHeadersEnabled={false}
-              contentContainerStyle={styles.listContent}
-              style={{ flex: 1, backgroundColor: '#fff' }}
-              showsVerticalScrollIndicator={false}
-              onViewableItemsChanged={onViewableItemsChanged}
-              viewabilityConfig={{ itemVisiblePercentThreshold: 20 }}
-              onScrollToIndexFailed={() => { }}
-            />
-          )}
-        </View>
-      )}
-
-      {/* Floating AI Chat Widget Button */}
-      <Pressable
-        onPress={() => navigation.navigate('Chat')}
-        style={({ pressed }) => [styles.floatingChatWidget, pressed && { opacity: 0.9, transform: [{ scale: 0.95 }] }]}
-      >
-        <LinearGradient colors={['#f26b1d', '#c41230']} style={styles.floatingChatGradient}>
-          <Ionicons name="chatbubble-ellipses" size={26} color="#fff" />
-        </LinearGradient>
-      </Pressable>
+      <View style={{ flex: 1 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={catalogStyles.categories}>
+          <Pressable onPress={() => handleSidebarPress(null)} style={[catalogStyles.category, !activeCategory && catalogStyles.selected]}><View style={catalogStyles.allIcon}><Ionicons name="grid-outline" size={26} color={colors.primary} /></View><Text style={catalogStyles.categoryText}>Tất cả</Text></Pressable>
+          {categoryPhotos.map(c => <Pressable key={c.id} onPress={() => handleSidebarPress(String(c.id))} style={[catalogStyles.category, activeCategory === String(c.id) && catalogStyles.selected]}><Image source={{ uri: c.image }} style={{ width: 52, height: 52 }} resizeMode="contain" /><Text style={catalogStyles.categoryText} numberOfLines={2}>{c.label}</Text></Pressable>)}
+        </ScrollView>
+        <View style={catalogStyles.heading}><View style={{ flex: 1 }}><Text style={catalogStyles.title}>{categoryTitle}</Text><Text style={{ color: colors.muted, fontSize: 11, marginTop: 3 }}>{displayedProducts.length} món</Text></View>{[{ value: false, icon: 'list-outline', label: 'Hiển thị danh sách' }, { value: true, icon: 'grid-outline', label: 'Hiển thị hai cột' }].map(v => <Pressable key={v.label} onPress={() => setGrid(v.value)} accessibilityLabel={v.label} style={{ padding: 9 }}><Ionicons name={v.icon} size={20} color={grid === v.value ? colors.primary : '#bbb'} /></Pressable>)}</View>
+        {isLoading ? <ActivityIndicator style={{ margin: 32 }} color={colors.primary} /> : categoriesQuery.isError || productsQuery.isError ? <Pressable onPress={() => { categoriesQuery.refetch(); productsQuery.refetch() }} style={{ padding: 24 }}><Text>Chưa tải được thực đơn. Chạm để thử lại.</Text></Pressable> : <FlatList
+          ref={productListRef} key={grid ? 'grid' : 'list'} numColumns={grid ? 2 : 1} data={paging.items} keyExtractor={item => String(item.ma_san_pham)}
+          renderItem={grid ? renderGridProduct : info => <Reveal visible={reveal.visible.has(String(info.item.id))}>{renderProductRow(info)}</Reveal>} onViewableItemsChanged={reveal.onViewableItemsChanged} viewabilityConfig={reveal.viewabilityConfig} style={{ flex: 1 }} contentContainerStyle={{ padding: 12, paddingBottom: 24 }} columnWrapperStyle={grid ? { gap: 12 } : undefined}
+          initialNumToRender={8} maxToRenderPerBatch={6} windowSize={5} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}
+          ListEmptyComponent={<View style={{ padding: 28, alignItems: 'center', gap: 12 }}><Ionicons name="search-outline" size={32} color={colors.muted} /><Text>Không tìm thấy món phù hợp</Text><Pressable onPress={() => { setSearch(''); setActiveCategoryId(null); setPriceFilter('ALL'); setOnlyHot(false); setOnlyAvailable(false) }}><Text style={{ color: colors.primary }}>Xóa bộ lọc</Text></Pressable></View>} />}
+      </View>
+      <Pagination {...paging} onChange={changePage} />
+      <FulfillmentStrip navigation={navigation} />
 
       {/* Filter Modal */}
       <Modal visible={showFilterPanel} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowFilterPanel(false)}>
@@ -1061,7 +849,7 @@ export function MenuScreen({ navigation, route }) {
               onPress={() => setShowFilterPanel(false)}
               style={filterStyles.applyBtn}
             >
-              <LinearGradient colors={['#f26b1d', '#d4560e']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={filterStyles.applyBtnGradient}>
+              <LinearGradient colors={['#b22830', '#8d1f27']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={filterStyles.applyBtnGradient}>
                 <Text style={filterStyles.applyBtnText}>Áp dụng</Text>
               </LinearGradient>
             </Pressable>
@@ -1087,6 +875,8 @@ export function MenuScreen({ navigation, route }) {
           userId={userId}
         allProducts={productsQuery.data || []}
         varMap={varMap}
+        optionsReady={productsQuery.isSuccess}
+        onRetryOptions={() => productsQuery.refetch()}
       />
       )}
     </View>
@@ -1269,11 +1059,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   sidebarItemActive: {
-    backgroundColor: '#fff9e6',
+    backgroundColor: '#f3f4f6',
     borderWidth: 1,
     borderColor: '#d97706',
     elevation: 1,
-    shadowColor: '#ea8025',
+    shadowColor: '#b22830',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.15,
     shadowRadius: 2,
@@ -1407,7 +1197,7 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#ea8025',
+    borderColor: '#b22830',
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1447,7 +1237,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 6,
-    shadowColor: '#ea8025',
+    shadowColor: '#b22830',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25,
     shadowRadius: 6,
@@ -1521,9 +1311,10 @@ const modalStyles = StyleSheet.create({
     alignItems: 'center',
   },
   contentBox: {
-    width: Platform.OS === 'web' ? 500 : '100%',
+    width: '100%',
+    height: '90%',
     maxWidth: '100%',
-    maxHeight: Platform.OS === 'web' ? '88%' : '90%',
+    maxHeight: '90%',
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -1571,8 +1362,8 @@ const modalStyles = StyleSheet.create({
     borderBottomColor: '#f8fafc',
   },
   productHeroImg: {
-    width: 230,
-    height: 230,
+    width: 170,
+    height: 170,
     borderRadius: 16,
     marginBottom: 16,
   },
@@ -1734,7 +1525,7 @@ const modalStyles = StyleSheet.create({
     gap: 12,
     backgroundColor: '#fff8f2',
     borderWidth: 1,
-    borderColor: '#ffe0c8',
+    borderColor: '#e5e7eb',
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
@@ -1852,8 +1643,8 @@ const modalStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkboxActive: {
-    backgroundColor: '#ea8025',
-    borderColor: '#ea8025',
+    backgroundColor: '#b22830',
+    borderColor: '#b22830',
   },
   toppingRowName: {
     fontSize: 14,
@@ -1869,10 +1660,10 @@ const modalStyles = StyleSheet.create({
     width: '100%',
     paddingVertical: 14,
     borderRadius: 999,
-    backgroundColor: '#ea8025',
+    backgroundColor: '#b22830',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#ea8025',
+    shadowColor: '#b22830',
     shadowOpacity: 0.3,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 4 },
@@ -1886,12 +1677,12 @@ const modalStyles = StyleSheet.create({
     width: '100%',
     paddingVertical: 15,
     borderRadius: 999,
-    backgroundColor: '#ea8025',
+    backgroundColor: '#b22830',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: '#ea8025',
+    shadowColor: '#b22830',
     shadowOpacity: 0.3,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 4 },
@@ -2023,4 +1814,8 @@ const filterStyles = StyleSheet.create({
     fontWeight: '900',
     color: '#fff',
   },
+})
+
+const catalogStyles = StyleSheet.create({
+ categories: { paddingHorizontal: 12, paddingVertical: 8, gap: 6 }, category: { width: 75, alignItems: 'center', paddingVertical: 6, borderBottomWidth: 2, borderColor: 'transparent' }, selected: { borderColor: colors.primary }, allIcon: { height: 52, width: 52, alignItems: 'center', justifyContent: 'center' }, categoryText: { fontSize: 10, lineHeight: 14, minHeight: 28, textAlign: 'center', color: colors.text, marginTop: 5 }, heading: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 9, borderTopWidth: 1, borderColor: '#eee' }, title: { fontSize: 16, fontWeight: '600', color: colors.text }, card: { flex: 1, maxWidth: '50%', marginBottom: 12, borderWidth: 1, borderColor: '#eee', padding: 9, borderRadius: 8 }, photo: { backgroundColor: '#faf7f3', borderRadius: 5, overflow: 'hidden' }, flag: { position: 'absolute', bottom: 5, left: 5, fontSize: 9, fontWeight: '600', color: '#fff', backgroundColor: colors.primary, paddingHorizontal: 6, paddingVertical: 4, borderRadius: 3 }, name: { fontWeight: '600', fontSize: 13, lineHeight: 19, minHeight: 38, marginTop: 10 }, priceLine: { flexDirection: 'row', gap: 2, alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }, price: { fontSize: 13, color: colors.primary, fontWeight: '600', flexShrink: 1 }, add: { width: 30, height: 30, borderRadius: 15, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
 })

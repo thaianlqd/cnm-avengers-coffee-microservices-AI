@@ -1,0 +1,16 @@
+{
+  "generated_at": "2026-10-14T06:39:19.233238+00:00",
+  "status": "STOPPED (network/setup before external load)",
+  "target_vus": 3000,
+  "external_capacity_runs": 0,
+  "max_stable_external_vus": null,
+  "local_legacy": "legacy-200/analysis.json",
+  "network_setup_attempts": [
+    "3k-20261014T054657Z-8dccb3"
+  ],
+  "control_only_cloudflare": true,
+  "public_ips_redacted": true,
+  "private_artifacts_excluded": true,
+  "cleanup": "final-cleanup.json",
+  "regression": "regression/checks.json"
+}

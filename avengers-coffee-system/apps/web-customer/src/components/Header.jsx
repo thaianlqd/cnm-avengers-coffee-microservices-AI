@@ -1,3 +1,5 @@
+import { uiText as ui, useUiLanguage, uiLocale } from "../lib/uiText";
+import { menuCategoryLabel } from '../lib/categoryLabels';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -33,7 +35,7 @@ function fmtNotificationTime(value) {
   if (diff < 60) return `${diff}s trước`;
   if (diff < 3600) return `${Math.floor(diff / 60)}p trước`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h trước`;
-  return new Date(value).toLocaleDateString('vi-VN');
+  return new Date(value).toLocaleDateString(uiLocale());
 }
 
 export default function Header({
@@ -68,13 +70,14 @@ export default function Header({
   onReadNotification,
   onReadAllNotifications,
 }) {
+  useUiLanguage();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showSearchPopover, setShowSearchPopover] = useState(false);
   const [showNotificationPopover, setShowNotificationPopover] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const { t, i18n } = useTranslation();
-  const currentLng = i18n.language || 'vi';
+  const currentLng = i18n.resolvedLanguage || 'vi';
 
   const handleOpenProfile = () => {
     setShowDropdown(false);
@@ -92,21 +95,21 @@ export default function Header({
   const leftNavItems = [
     { id: 'menu-intro', label: t('header.menu') || 'THỰC ĐƠN', dropdownTabId: 'menu-intro', icon: HomeIcon },
     { id: 'about', label: t('header.about') || 'VỀ CHÚNG TÔI', icon: InformationCircleIcon },
-    { id: 'nhuong-quyen', label: 'NHƯỢNG QUYỀN', icon: BuildingStorefrontIcon },
-    { id: 'other-group', label: 'TUYỂN DỤNG & HỖ TRỢ', dropdownTabId: 'other-group', icon: ChatBubbleLeftEllipsisIcon },
+    { id: 'nhuong-quyen', label: t('header.franchise'), icon: BuildingStorefrontIcon },
+    { id: 'other-group', label: t('header.careersSupport'), dropdownTabId: 'other-group', icon: ChatBubbleLeftEllipsisIcon },
   ];
 
   const rightNavItems = [
-    { id: 'news', label: 'TIN TỨC', icon: NewspaperIcon },
+    { id: 'news', label: t('header.news'), icon: NewspaperIcon },
     { id: 'stores', label: t('header.findStore') || 'CỬA HÀNG', icon: MapPinIcon },
   ];
 
   const mobileNavItems = [
     { id: 'order', label: t('header.menu') || 'THỰC ĐƠN', icon: HomeIcon },
-    { id: 'tracking', label: 'TRA CỨU ĐƠN HÀNG', icon: TruckIcon },
-    { id: 'news', label: 'TIN TỨC', icon: NewspaperIcon },
+    { id: 'tracking', label: t('header.tracking'), icon: TruckIcon },
+    { id: 'news', label: t('header.news'), icon: NewspaperIcon },
     { id: 'about', label: t('header.about') || 'VỀ CHÚNG TÔI', icon: InformationCircleIcon },
-    { id: 'nhuong-quyen', label: 'NHƯỢNG QUYỀN', icon: BuildingStorefrontIcon },
+    { id: 'nhuong-quyen', label: t('header.franchise'), icon: BuildingStorefrontIcon },
     { id: 'stores', label: t('header.findStore') || 'TÌM KIẾM CỬA HÀNG', icon: MapPinIcon },
     { id: 'careers', label: t('header.careers') || 'NGHỀ NGHIỆP', icon: BriefcaseIcon },
     { id: 'contact', label: t('header.support') || 'HỖ TRỢ KHÁCH HÀNG', icon: ChatBubbleLeftEllipsisIcon },
@@ -116,7 +119,7 @@ export default function Header({
     <header className="sticky top-0 z-50 bg-[#b22830] shadow-lg border-b border-red-900/40">
       {/* Main Top bar */}
       <div className="mx-auto flex h-[90px] w-full max-w-[1440px] items-center justify-between px-2 sm:px-6 lg:px-8 relative">
-        
+
         {/* ── LEFT NAVIGATION ── */}
         <div className="flex-1 flex items-center justify-start min-w-0">
           <nav className="hidden lg:flex items-center justify-start gap-0.5 xl:gap-1.5">
@@ -147,7 +150,7 @@ export default function Header({
                   <Icon className="h-4 w-4 flex-shrink-0 opacity-90 hidden xl:block" />
                   <span className="text-[11px] xl:text-[12px] uppercase tracking-wider whitespace-nowrap">
 
-                    {item.label}
+                    {ui(item.label)}
                   </span>
                 </button>
 
@@ -161,7 +164,7 @@ export default function Header({
                           const children = categories.filter(c => String(c.ma_danh_muc_cha) === String(parent.ma_danh_muc));
                           return {
                             id: parent.ma_danh_muc,
-                            title: parent.ten_danh_muc,
+                            title: menuCategoryLabel(parent.ten_danh_muc, currentLng),
                             items: children
                           };
                         });
@@ -193,7 +196,7 @@ export default function Header({
                                       document.activeElement?.blur();
                                     }}
                                   >
-                                    {cat.ten_danh_muc}
+                                    {menuCategoryLabel(cat.ten_danh_muc, currentLng)}
                                   </button>
                                 </li>
                               ))}
@@ -211,12 +214,12 @@ export default function Header({
                     <ul className="flex flex-col py-1">
                       <li>
                         <button type="button" onClick={() => onTabChange?.('careers')} className="flex items-center gap-2 w-full text-left px-4 py-3 text-[13px] font-bold text-gray-700 hover:bg-red-50 hover:text-[#b22830] transition-colors">
-                          <BriefcaseIcon className="w-4 h-4" /> Nghề nghiệp
+                          <BriefcaseIcon className="w-4 h-4" /> {t('header.careers')}
                         </button>
                       </li>
                       <li>
                         <button type="button" onClick={() => onTabChange?.('contact')} className="flex items-center gap-2 w-full text-left px-4 py-3 text-[13px] font-bold text-gray-700 hover:bg-red-50 hover:text-[#b22830] transition-colors">
-                          <ChatBubbleLeftEllipsisIcon className="w-4 h-4" /> Hỗ trợ khách hàng
+                          <ChatBubbleLeftEllipsisIcon className="w-4 h-4" /> {t('header.support')}
                         </button>
                       </li>
                     </ul>
@@ -237,11 +240,11 @@ export default function Header({
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
         >
-          <img 
-            src="/hc-assets/logo-footer.png" 
-            alt="Avengers Coffee" 
-            className="h-[64px] sm:h-[72px] w-auto drop-shadow-md brightness-0 invert" 
-            onError={(e) => { e.currentTarget.style.display = 'none'; }} 
+          <img
+            src="/hc-assets/logo-footer.png"
+            alt="Avengers Coffee"
+            className="h-[64px] sm:h-[72px] w-auto drop-shadow-md brightness-0 invert"
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />
         </div>
 
@@ -264,7 +267,7 @@ export default function Header({
               >
                 <Icon className="h-4 w-4 flex-shrink-0 opacity-90 hidden xl:block" />
                 <span className="text-[11px] xl:text-[12px] uppercase tracking-wider whitespace-nowrap">
-                  {item.label}
+                  {ui(item.label)}
                 </span>
               </button>
             );
@@ -276,7 +279,7 @@ export default function Header({
             <button
               type="button"
               onClick={() => i18n.changeLanguage('vi')}
-              title="Tiếng Việt"
+              title={ui("Tiếng Việt")} aria-label={ui("Tiếng Việt")} aria-pressed={currentLng === 'vi'}
               className={`p-1 rounded transition-all cursor-pointer ${
                 currentLng === 'vi' ? 'bg-white shadow-xs scale-105' : 'opacity-60 hover:opacity-100'
               }`}
@@ -286,7 +289,7 @@ export default function Header({
             <button
               type="button"
               onClick={() => i18n.changeLanguage('en')}
-              title="English"
+              title="English" aria-label="English" aria-pressed={currentLng === 'en'}
               className={`p-1 rounded transition-all cursor-pointer ${
                 currentLng === 'en' ? 'bg-white shadow-xs scale-105' : 'opacity-60 hover:opacity-100'
               }`}
@@ -304,7 +307,7 @@ export default function Header({
             }}
             className="group flex items-center gap-2.5 rounded-full bg-white px-5 py-2.5 text-[13px] font-black uppercase tracking-wider text-[#b22830] shadow-md transition-all duration-200 hover:bg-red-50 hover:shadow-lg active:scale-95 cursor-pointer ml-1"
           >
-            <span>{t('header.order') || 'ĐẶT HÀNG'}</span>
+            <span>{t('header.order') || ui("ĐẶT HÀNG")}</span>
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#b22830] transition-transform duration-200 group-hover:translate-x-1 text-white">
               <ArrowRightIcon className="h-3 w-3 stroke-[3]" />
             </span>
@@ -348,13 +351,13 @@ export default function Header({
                     }`}
                   >
                     <ItemIcon className="h-5 w-5 flex-shrink-0" />
-                    {item.label}
+                    {ui(item.label)}
                   </button>
                 );
               })}
 
               <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-4">
-                <span className="text-xs text-white/70 font-semibold">Ngôn ngữ / Language</span>
+                <span className="text-xs text-white/70 font-semibold">{ui("Ngôn ngữ / Language")}</span>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"

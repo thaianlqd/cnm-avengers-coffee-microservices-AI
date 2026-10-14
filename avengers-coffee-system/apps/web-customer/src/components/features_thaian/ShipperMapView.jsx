@@ -1,3 +1,4 @@
+import { uiText as ui, useUiLanguage } from "../../lib/uiText";
 import { useEffect, useRef, useState } from 'react';
 
 /**
@@ -28,6 +29,7 @@ export default function ShipperMapView({
   height = '400px',
   onRouteInfo = null,
 }) {
+  useUiLanguage();
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const shipperMarkerRef = useRef(null);
@@ -243,7 +245,7 @@ export default function ShipperMapView({
   };
 
   // Status text & Popup HTML defined at component scope so multiple useEffects can access them
-  const statusText = 
+  const statusText =
     deliveryStatus === 'IN_TRANSIT' || deliveryStatus === 'DANG_GIAO' ? 'Đang giao tận nơi' :
     deliveryStatus === 'PICKING_UP' ? 'Đang lấy hàng tại quán' :
     deliveryStatus === 'CONFIRMED' ? 'Đã tiếp nhận đơn hàng' :
@@ -336,7 +338,7 @@ export default function ShipperMapView({
 
       // TSP Helper Functions
       const haversine = (lat1, lon1, lat2, lon2) => {
-        const R = 6371; 
+        const R = 6371;
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
         const a =
@@ -607,7 +609,7 @@ export default function ShipperMapView({
   useEffect(() => {
     const L = window._L || window.L;
     if (!L) return;
-    
+
     if (shipperLocation?.latitude && shipperLocation?.longitude && mapRef.current) {
       if (shipperMarkerRef.current) {
         shipperMarkerRef.current.setLatLng([shipperLocation.latitude, shipperLocation.longitude]);
@@ -621,7 +623,7 @@ export default function ShipperMapView({
           .addTo(mapRef.current)
           .bindPopup(shipperPopupHtml);
       }
-      
+
       // Optionally pan map to follow shipper
       if (mapRef.current) {
         mapRef.current.panTo([shipperLocation.latitude, shipperLocation.longitude], { animate: true });
@@ -659,11 +661,11 @@ export default function ShipperMapView({
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             </div>
             <p className="text-[11px] font-bold text-indigo-600 flex items-center gap-1">
-              {deliveryStatus === 'IN_TRANSIT' || deliveryStatus === 'DANG_GIAO' ? 'Đang giao tận nơi' :
-               deliveryStatus === 'PICKING_UP' ? 'Đang lấy hàng tại quán' :
-               deliveryStatus === 'CONFIRMED' ? 'Đã tiếp nhận đơn hàng' :
-               deliveryStatus === 'DELIVERED' || deliveryStatus === 'HOAN_THANH' ? 'Giao hàng thành công' :
-               'Đang kết nối tài xế'}
+              {deliveryStatus === 'IN_TRANSIT' || deliveryStatus === 'DANG_GIAO' ? ui("Đang giao tận nơi") :
+               deliveryStatus === 'PICKING_UP' ? ui("Đang lấy hàng tại quán") :
+               deliveryStatus === 'CONFIRMED' ? ui("Đã tiếp nhận đơn hàng") :
+               deliveryStatus === 'DELIVERED' || deliveryStatus === 'HOAN_THANH' ? ui("Giao hàng thành công") :
+               ui("Đang kết nối tài xế")}
             </p>
           </div>
         </div>
@@ -679,7 +681,7 @@ export default function ShipperMapView({
               <path d="M3 18H17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
             </svg>
           </span>
-          <span>Cửa hàng</span>
+          <span>{ui("Cửa hàng")}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-5 h-5 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 text-white flex items-center justify-center shadow-xs">
@@ -689,7 +691,7 @@ export default function ShipperMapView({
               <path d="M6 17H9.5L13 11H16L18 15H20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
             </svg>
           </span>
-          <span>Tài xế giao hàng</span>
+          <span>{ui("Tài xế giao hàng")}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-5 h-5 rounded-full bg-gradient-to-tr from-rose-600 to-red-500 text-white flex items-center justify-center shadow-xs">
@@ -697,7 +699,7 @@ export default function ShipperMapView({
               <path d="M3 10L12 3L21 10V19.5C21 20.3 20.3 21 19.5 21H15V15H9V21H4.5C3.7 21 3 20.3 3 19.5V10Z" fill="currentColor"/>
             </svg>
           </span>
-          <span>Điểm nhận hàng</span>
+          <span>{ui("Điểm nhận hàng")}</span>
         </div>
       </div>
 
@@ -706,7 +708,7 @@ export default function ShipperMapView({
         <div className="absolute inset-0 z-[1001] flex items-center justify-center bg-gray-50">
           <div className="text-center">
             <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-            <p className="text-xs font-bold text-gray-600">Đang tải bản đồ...</p>
+            <p className="text-xs font-bold text-gray-600">{ui("Đang tải bản đồ...")}</p>
           </div>
         </div>
       )}
@@ -715,9 +717,7 @@ export default function ShipperMapView({
       {leafletLoaded && !shipperLocation?.latitude && (
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-amber-50/95 backdrop-blur-sm border border-amber-200 rounded-xl px-4 py-2 shadow-sm">
           <p className="text-xs font-bold text-amber-800 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            Chưa có vị trí tài xế. Đang chờ kết nối...
-          </p>
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />{ui("Chưa có vị trí tài xế. Đang chờ kết nối...")}</p>
         </div>
       )}
 

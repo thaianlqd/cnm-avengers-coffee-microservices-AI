@@ -1,0 +1,5 @@
+PASS GET /health/live
+PASS GET /health/ready
+PASS GET /menu/danh-muc
+PASS GET /menu/san-pham
+curl: (28) Operation timed out after 15004 milliseconds with 0 bytes received

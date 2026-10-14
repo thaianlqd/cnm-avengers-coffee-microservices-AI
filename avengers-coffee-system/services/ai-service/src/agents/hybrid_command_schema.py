@@ -119,7 +119,7 @@ def failure(code, path=''):
         'failure_field': path.rsplit('/', 1)[-1] or None}
 
 
-def validate_envelope(raw):
+def validate_envelope(raw, *, explicit_customer_action=False):
     """Normalize shapes only; validate all commands before commerce can start."""
     value, rules, parsed = normalize_arguments(raw, {}, 'hybrid')
     if not parsed:
@@ -131,7 +131,10 @@ def validate_envelope(raw):
             and isinstance(value.get('commands'), list) and value['commands']):
         value['message'] = None
         rules.append('command_message_null')
-    error = first_failure(value, ENVELOPE)
+    schema = deepcopy(ENVELOPE) if explicit_customer_action else ENVELOPE
+    if explicit_customer_action:
+        schema['properties']['commands']['maxItems'] = 16
+    error = first_failure(value, schema)
     if error:
         code, path = error
         if path.endswith('/intent'):

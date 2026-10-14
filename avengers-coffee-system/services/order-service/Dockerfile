@@ -8,7 +8,7 @@ RUN npm config set registry https://registry.npmmirror.com \
     && npm config set fetch-retry-maxtimeout 120000
 
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 COPY . .
 RUN npm run build
@@ -22,7 +22,7 @@ RUN npm config set registry https://registry.npmmirror.com \
     && npm config set fetch-retry-maxtimeout 120000
 
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
 
@@ -37,7 +37,7 @@ RUN npm config set registry https://registry.npmmirror.com \
     && npm config set fetch-timeout 300000
 
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 COPY tsconfig*.json nest-cli.json ./
 

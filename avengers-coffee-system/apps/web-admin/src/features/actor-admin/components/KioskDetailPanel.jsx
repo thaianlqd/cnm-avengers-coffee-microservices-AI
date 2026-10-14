@@ -88,8 +88,8 @@ export function KioskDetailPanel({ kiosk, onBack, session }) {
       </button>
 
       <div style={{ marginBottom: '2rem' }}>
-        <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: '#0f172a' }}>{kiosk.ten_chi_nhanh}</h2>
-        <p style={{ margin: 0, color: '#64748b' }}>Mã: <strong style={{ color: '#4f46e5' }}>{kiosk.ma_chi_nhanh}</strong> • Địa chỉ: {kiosk.dia_chi}</p>
+        <h2 style={{ margin: 0, fontSize: 24, fontWeight: 600, color: '#0f172a' }}>{kiosk.ten_chi_nhanh}</h2>
+        <p style={{ margin: 0, color: '#64748b' }}>Mã: <strong style={{ color: 'var(--primary)' }}>{kiosk.ma_chi_nhanh}</strong> • Địa chỉ: {kiosk.dia_chi}</p>
       </div>
 
       <div style={{ display: 'flex', borderBottom: '2px solid #f1f5f9', marginBottom: '1.5rem' }}>
@@ -109,17 +109,17 @@ export function KioskDetailPanel({ kiosk, onBack, session }) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginTop: '1rem' }}>
             <div style={{ background: '#fff7ed', padding: '1.5rem', borderRadius: 16, border: '1px solid #fed7aa', display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ color: '#ea580c', fontSize: 14, fontWeight: 700 }}>DOANH THU HÔM NAY</div>
-              <div style={{ color: '#431407', fontSize: 32, fontWeight: 800 }}>0 ₫</div>
+              <div style={{ color: '#431407', fontSize: 32, fontWeight: 600 }}>0 ₫</div>
               <div style={{ color: '#9a3412', fontSize: 13 }}>Chưa có dữ liệu giao dịch</div>
             </div>
-            <div style={{ background: '#f0fdf4', padding: '1.5rem', borderRadius: 16, border: '1px solid #bbf7d0', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ color: '#16a34a', fontSize: 14, fontWeight: 700 }}>ĐƠN HÀNG HOÀN THÀNH</div>
-              <div style={{ color: '#14532d', fontSize: 32, fontWeight: 800 }}>0</div>
-              <div style={{ color: '#166534', fontSize: 13 }}>Tỷ lệ thành công: 0%</div>
+            <div style={{ background: '#eff6ff', padding: '1.5rem', borderRadius: 16, border: '1px solid #bfdbfe', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ color: '#2563eb', fontSize: 14, fontWeight: 700 }}>ĐƠN HÀNG HOÀN THÀNH</div>
+              <div style={{ color: '#1e3a8a', fontSize: 32, fontWeight: 600 }}>0</div>
+              <div style={{ color: '#1e40af', fontSize: 13 }}>Tỷ lệ thành công: 0%</div>
             </div>
             <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: 16, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ color: '#475569', fontSize: 14, fontWeight: 700 }}>COMBO NGUYÊN LIỆU TỒN</div>
-              <div style={{ color: '#0f172a', fontSize: 32, fontWeight: 800 }}>{combos.filter(c => c.trang_thai === 'RECEIVED').length}</div>
+              <div style={{ color: '#0f172a', fontSize: 32, fontWeight: 600 }}>{combos.filter(c => c.trang_thai === 'RECEIVED').length}</div>
               <div style={{ color: '#334155', fontSize: 13 }}>Đã nhận trong tháng này</div>
             </div>
           </div>
@@ -150,10 +150,10 @@ export function KioskDetailPanel({ kiosk, onBack, session }) {
                         {(s.ho_ten || s.ten_dang_nhap).charAt(0).toUpperCase()}
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 800, color: '#431407', fontSize: 14 }}>{s.ho_ten || s.ten_dang_nhap}</div>
+                        <div style={{ fontWeight: 600, color: '#431407', fontSize: 14 }}>{s.ho_ten || s.ten_dang_nhap}</div>
                         <div style={{ fontSize: 12, color: '#9a3412' }}>@{s.ten_dang_nhap}</div>
                       </div>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 20, background: '#dcfce7', color: '#16a34a' }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 20, background: '#dbeafe', color: '#2563eb' }}>
                         Hoạt động
                       </span>
                     </div>
@@ -188,7 +188,7 @@ export function KioskDetailPanel({ kiosk, onBack, session }) {
                         <strong style={{ display: 'block', fontSize: 15 }}>{c.ten_combo}</strong>
                         <span style={{ fontSize: 13, color: '#64748b' }}>Giao lúc: {new Date(c.thoi_gian_giao).toLocaleString('vi-VN')}</span>
                       </div>
-                      <span style={{ padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: c.trang_thai === 'RECEIVED' ? '#dcfce7' : '#fff7ed', color: c.trang_thai === 'RECEIVED' ? '#16a34a' : '#ea580c' }}>
+                      <span style={{ padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: c.trang_thai === 'RECEIVED' ? '#dbeafe' : '#fff7ed', color: c.trang_thai === 'RECEIVED' ? '#2563eb' : '#ea580c' }}>
                         {c.trang_thai === 'RECEIVED' ? 'Đã nhận' : 'Chờ xác nhận'}
                       </span>
                     </div>

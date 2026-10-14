@@ -1,0 +1,103 @@
+{
+  "method": "mocked API, isolated Chromium; no real login/backend writes",
+  "actors": {
+    "manager": {
+      "pages": [
+        {
+          "label": "Tổng quan",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        }
+      ],
+      "errors": [],
+      "accent": "#0e75b5",
+      "sidebar_color": "rgb(23, 27, 36)",
+      "font": "Inter, -apple-system, \"system-ui\", \"Segoe UI\", Arial, sans-serif",
+      "charts": 5,
+      "selected_menu": {
+        "background": "rgb(14, 117, 181)",
+        "color": "rgb(255, 255, 255)"
+      },
+      "mobile_overflow": []
+    },
+    "admin": {
+      "pages": [
+        {
+          "label": "Dashboard hệ thống",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        }
+      ],
+      "errors": [],
+      "accent": "#2563eb",
+      "sidebar_color": "rgb(20, 24, 32)",
+      "font": "Inter, -apple-system, \"system-ui\", \"Segoe UI\", Arial, sans-serif",
+      "charts": 4,
+      "selected_menu": {
+        "background": "rgb(37, 99, 235)",
+        "color": "rgb(255, 255, 255)"
+      },
+      "form_previews": [
+        {
+          "name": "admin-category-popup",
+          "mobile_overflow": []
+        },
+        {
+          "name": "admin-membership-form",
+          "mobile_overflow": []
+        },
+        {
+          "name": "admin-branch-form",
+          "mobile_overflow": []
+        }
+      ],
+      "mobile_overflow": []
+    },
+    "accountant": {
+      "pages": [
+        {
+          "label": "Tổng quan tài chính",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        }
+      ],
+      "errors": [],
+      "accent": "#475569",
+      "sidebar_color": "rgb(23, 27, 36)",
+      "font": "Inter, -apple-system, \"system-ui\", \"Segoe UI\", Arial, sans-serif",
+      "charts": 4,
+      "selected_menu": {
+        "background": "rgb(71, 85, 105)",
+        "color": "rgb(255, 255, 255)"
+      },
+      "mobile_overflow": []
+    }
+  },
+  "login": {
+    "manager_in_partner_rejected": true,
+    "admin": {
+      "src": "/images/login/admin-coffee.jpg",
+      "loaded": true
+    },
+    "manager": {
+      "src": "/images/login/manager-cafe.jpg",
+      "loaded": true
+    },
+    "staff": {
+      "src": "/images/login/staff-barista.jpg",
+      "loaded": true
+    },
+    "partner": {
+      "src": "/images/login/partner-kiosk.jpg",
+      "loaded": true
+    },
+    "accountant": {
+      "src": "/images/login/accountant-desk.jpg",
+      "loaded": true
+    }
+  },
+  "failures": []
+}

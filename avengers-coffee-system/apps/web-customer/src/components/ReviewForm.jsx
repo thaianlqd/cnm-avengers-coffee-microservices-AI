@@ -1,12 +1,13 @@
+import { uiText as ui, useUiLanguage } from "../lib/uiText";
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/apiClient';
 import { queryKeys } from '../lib/queryKeys';
 import { StarIcon } from '@heroicons/react/24/solid';
 
-export default function ReviewForm({ 
-  productId, 
-  userId, 
+export default function ReviewForm({
+  productId,
+  userId,
   orderId,
   initialReview = null,
   onClose = () => {},
@@ -14,6 +15,7 @@ export default function ReviewForm({
   onDeleted = () => {},
   productName = ''
 }) {
+  useUiLanguage();
   const [rating, setRating] = useState(initialReview?.so_sao || 0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState(initialReview?.binh_luan || '');
@@ -97,19 +99,14 @@ export default function ReviewForm({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200]">
       <div className="bg-white rounded-2xl p-6 max-w-md w-[90vw] shadow-2xl">
-        <h3 className="text-lg font-black uppercase text-gray-800 mb-2">
-          Đánh giá {productName}
+        <h3 className="text-lg font-black uppercase text-gray-800 mb-2">{ui("Đánh giá ")}{productName}
         </h3>
-        <p className="text-xs font-semibold text-gray-500 mb-4">
-          Chia sẻ ý kiến của bạn để giúp cải thiện sản phẩm
-        </p>
+        <p className="text-xs font-semibold text-gray-500 mb-4">{ui("Chia sẻ ý kiến của bạn để giúp cải thiện sản phẩm")}</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Star Rating */}
           <div>
-            <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">
-              Đánh giá
-            </p>
+            <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">{ui("Đánh giá")}</p>
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -131,26 +128,24 @@ export default function ReviewForm({
               ))}
             </div>
             <p className="mt-1 text-xs font-semibold text-gray-500">
-              {rating > 0 ? `${rating} sao` : 'Chưa chọn'}
+              {rating > 0 ? `${rating} sao` : ui("Chưa chọn")}
             </p>
           </div>
 
           {/* Comment */}
           <div>
-            <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">
-              Bình luận
-            </p>
+            <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">{ui("Bình luận")}</p>
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               rows={4}
               className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-tch-orange resize-none"
-              placeholder="Chia sẻ trải nghiệm của bạn..."
+              placeholder={ui("Chia sẻ trải nghiệm của bạn...")}
             />
           </div>
 
           {/* Error */}
-          {error && <p className="text-sm font-semibold text-red-600">{error}</p>}
+          {error && <p className="text-sm font-semibold text-red-600">{ui(error)}</p>}
 
           {/* Actions */}
           <div className="flex gap-3">
@@ -160,10 +155,10 @@ export default function ReviewForm({
               className="flex-1 rounded-xl bg-tch-orange px-3 py-3 text-sm font-black uppercase tracking-wide text-white disabled:bg-gray-300"
             >
               {saveReviewMutation.isPending
-                ? 'Đang lưu...'
+                ? ui("Đang lưu...")
                 : initialReview
-                ? 'Cập nhật'
-                : 'Gửi đánh giá'}
+                ? ui("Cập nhật")
+                : ui("Gửi đánh giá")}
             </button>
             {initialReview && (
               <button
@@ -172,16 +167,14 @@ export default function ReviewForm({
                 disabled={deleteReviewMutation.isPending}
                 className="rounded-xl border border-red-200 bg-white px-3 py-3 text-sm font-black uppercase tracking-wide text-red-600 disabled:opacity-50"
               >
-                {deleteReviewMutation.isPending ? 'Xóa...' : 'Xóa'}
+                {deleteReviewMutation.isPending ? ui("Xóa...") : ui("Xóa")}
               </button>
             )}
             <button
               type="button"
               onClick={onClose}
               className="rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-black uppercase tracking-wide text-gray-600"
-            >
-              Đóng
-            </button>
+            >{ui("Đóng")}</button>
           </div>
         </form>
       </div>

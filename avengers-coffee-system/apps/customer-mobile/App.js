@@ -1,5 +1,5 @@
 import 'react-native-gesture-handler'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { Platform, View, StyleSheet } from 'react-native'
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native'
@@ -8,6 +8,8 @@ import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { UserProvider } from './src/context/UserContext'
 import { AppNavigator } from './src/navigation/AppNavigator'
+import { FulfillmentProvider } from './src/context/FulfillmentContext'
+import { FeedbackProvider } from './src/context/FeedbackContext'
 import { colors } from './src/theme'
 
 const queryClient = new QueryClient({
@@ -33,16 +35,26 @@ const navigationTheme = {
 }
 
 export default function App() {
+  useEffect(() => {
+    if (Platform.OS !== 'web') return
+    const style = document.createElement('style')
+    style.textContent = `input[data-customer-input], textarea[data-customer-input] { outline: none !important; box-shadow: none !important; }
+      div:has(> input[data-customer-input]:focus-visible), div:has(> textarea[data-customer-input]:focus-visible) { border-color: #b22830; }
+      input[data-customer-input]:focus, textarea[data-customer-input]:focus { border-color: #b22830; }
+      input[data-customer-input]:focus-visible, textarea[data-customer-input]:focus-visible { background-color: #fff; }`
+    document.head.appendChild(style)
+    return () => style.remove()
+  }, [])
   return (
     <GestureHandlerRootView style={styles.root}>
       <View style={styles.webContainer}>
         <SafeAreaProvider>
           <QueryClientProvider client={queryClient}>
             <UserProvider>
-              <NavigationContainer theme={navigationTheme}>
+              <FulfillmentProvider><FeedbackProvider><NavigationContainer theme={navigationTheme} documentTitle={{ formatter: (options, route) => `${options?.title || route?.name || 'Trang chủ'} | Highlands Coffee` }}>
                 <AppNavigator />
-                <StatusBar style="light" />
-              </NavigationContainer>
+                <StatusBar style="dark" />
+              </NavigationContainer></FeedbackProvider></FulfillmentProvider>
             </UserProvider>
           </QueryClientProvider>
         </SafeAreaProvider>

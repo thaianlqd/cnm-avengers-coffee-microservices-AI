@@ -142,7 +142,7 @@ export function PosRefundVoidModal({
               <AlertTriangle size={20} color="#dc2626" />
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '800', color: '#991b1b' }}>
+              <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '600', color: '#991b1b' }}>
                 Hoàn Tiền Mặt &amp; Hủy Giao Dịch POS
               </h2>
               <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.76rem', color: '#7f1d1d' }}>
@@ -188,23 +188,23 @@ export function PosRefundVoidModal({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              backgroundColor: '#f0fdf4',
-              border: '1px solid #bbf7d0',
+              backgroundColor: '#eff6ff',
+              border: '1px solid #bfdbfe',
               borderRadius: '10px',
               padding: '0.65rem 0.85rem',
               fontSize: '0.78rem',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#166534' }}>
-              <Clock size={15} color="#16a34a" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#1e40af' }}>
+              <Clock size={15} color="#2563eb" />
               <span>
                 Ca Kiosk đang mở lúc: <strong>{shiftOpenTimeFormatted}</strong>
               </span>
             </div>
             <span
               style={{
-                backgroundColor: '#dcfce7',
-                color: '#15803d',
+                backgroundColor: '#dbeafe',
+                color: '#1d4ed8',
                 padding: '0.15rem 0.5rem',
                 borderRadius: '6px',
                 fontWeight: '700',
@@ -229,7 +229,7 @@ export function PosRefundVoidModal({
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                <span style={{ fontSize: '0.82rem', fontWeight: '800', color: '#0f172a' }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: '600', color: '#0f172a' }}>
                   Đơn #{order.ma_don_hang?.slice(0, 8)?.toUpperCase()}
                 </span>
                 <span
@@ -333,7 +333,7 @@ export function PosRefundVoidModal({
               </div>
             </div>
 
-            <span style={{ fontSize: '1.15rem', fontWeight: '900', color: '#c2410c', flexShrink: 0 }}>
+            <span style={{ fontSize: '1.15rem', fontWeight: '600', color: '#c2410c', flexShrink: 0 }}>
               {fmtMoney(tongTien)}
             </span>
           </div>

@@ -1,0 +1,8 @@
+{
+  "run_id": "5k-20261014T035219Z-8016fb",
+  "started_at": "2026-10-14T03:52:19.754141+00:00",
+  "requested_instance_type": "c7g.xlarge",
+  "key_pair_id": "key-09c8c3b9a284f1cac",
+  "sg_id": "sg-0ecc871df772f6d96",
+  "error": "AWS ec2/run-instances failed: InvalidParameterCombination: The specified instance type is not eligible for Free Tier. For a list of Free Tier instance types, run 'describe-instance-types' with the filter 'free-tier-eligible=true'."
+}

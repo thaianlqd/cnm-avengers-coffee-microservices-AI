@@ -83,7 +83,6 @@ const SearchableBranchSelect = ({ branches, value, onChange }) => {
           alignItems: 'center',
           cursor: 'pointer',
           fontSize: '0.875rem', 
-          fontSize: '0.875rem', 
           color: '#0f172a', 
           fontWeight: '500',
           padding: '0'
@@ -149,8 +148,8 @@ const SearchableBranchSelect = ({ branches, value, onChange }) => {
                   cursor: 'pointer', 
                   fontSize: '0.875rem',
                   fontWeight: '500',
-                  background: value === (branch.code || branch.ma_chi_nhanh) ? '#eff6ff' : 'transparent',
-                  color: value === (branch.code || branch.ma_chi_nhanh) ? '#1d4ed8' : '#334155'
+                  background: value === (branch.code || branch.ma_chi_nhanh) ? 'var(--primary-light)' : 'transparent',
+                  color: value === (branch.code || branch.ma_chi_nhanh) ? 'var(--primary-hover)' : '#334155'
                 }}
                 onMouseEnter={e => { if (value !== (branch.code || branch.ma_chi_nhanh)) e.target.style.background = '#f8fafc' }}
                 onMouseLeave={e => { if (value !== (branch.code || branch.ma_chi_nhanh)) e.target.style.background = 'transparent' }}
@@ -244,7 +243,7 @@ export function AdminUserManagementPanel({
       <div ref={formRef} className="system-admin-card" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', boxShadow: '0 8px 24px -4px rgba(15, 23, 42, 0.06)' }}>
         <div style={{ padding: '1.1rem 1.5rem', backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTopLeftRadius: '15px', borderTopRightRadius: '15px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: editingUserId ? '#eff6ff' : '#ecfdf5', color: editingUserId ? '#2563eb' : '#059669', border: editingUserId ? '1px solid #bfdbfe' : '1px solid #a7f3d0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: editingUserId ? 'var(--primary-light)' : '#eff6ff', color: editingUserId ? 'var(--primary)' : '#2563eb', border: editingUserId ? '1px solid #bfdbfe' : '1px solid #bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {editingUserId ? <Edit3 size={20} /> : <UserPlus size={20} />}
             </div>
             <div>
@@ -276,7 +275,7 @@ export function AdminUserManagementPanel({
               <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                 Tên đăng nhập (Username) <span style={{ color: '#ef4444' }}>*</span>
               </label>
-              <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+              <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                 <User size={16} color="#64748b" style={{ flexShrink: 0 }} />
                 <input
                   type="text"
@@ -293,7 +292,7 @@ export function AdminUserManagementPanel({
               <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                 Họ và tên nhân viên <span style={{ color: '#ef4444' }}>*</span>
               </label>
-              <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+              <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                 <UserCheck size={16} color="#64748b" style={{ flexShrink: 0 }} />
                 <input
                   type="text"
@@ -310,7 +309,7 @@ export function AdminUserManagementPanel({
               <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                 Địa chỉ Email
               </label>
-              <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+              <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                 <Mail size={16} color="#64748b" style={{ flexShrink: 0 }} />
                 <input
                   type="email"
@@ -327,7 +326,7 @@ export function AdminUserManagementPanel({
               <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                 Mật khẩu {editingUserId ? '(để trống nếu không đổi)' : '*'}
               </label>
-              <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+              <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                 <Lock size={16} color="#64748b" style={{ flexShrink: 0 }} />
                 <input
                   type="password"
@@ -344,8 +343,8 @@ export function AdminUserManagementPanel({
               <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                 Phân quyền Vai trò <span style={{ color: '#ef4444' }}>*</span>
               </label>
-              <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
-                <ShieldCheck size={16} color="#4f46e5" style={{ flexShrink: 0 }} />
+              <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                <ShieldCheck size={16} color="var(--primary)" style={{ flexShrink: 0 }} />
                 <select
                   style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', fontWeight: '500', cursor: 'pointer' }}
                   value={safeUserForm.vai_tro || 'STAFF'}
@@ -366,7 +365,7 @@ export function AdminUserManagementPanel({
               <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                 Lọc theo Thành phố
               </label>
-              <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+              <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                 <MapPin size={16} color="#64748b" style={{ flexShrink: 0 }} />
                 <select
                   style={{ flex: 1, border: 'none', outline: 'none', fontSize: '0.875rem', color: '#0f172a', fontWeight: '500', background: 'transparent', cursor: 'pointer', minWidth: 0 }}
@@ -389,7 +388,7 @@ export function AdminUserManagementPanel({
               <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                 Chi nhánh làm việc
               </label>
-              <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+              <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                 <Store size={16} color="#64748b" style={{ flexShrink: 0 }} />
                 <SearchableBranchSelect
                   branches={filteredBranchOptions}
@@ -405,7 +404,7 @@ export function AdminUserManagementPanel({
                 <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                   Trạng thái tài khoản
                 </label>
-                <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                   <Activity size={16} color="#64748b" style={{ flexShrink: 0 }} />
                   <select
                     style={{ flex: 1, width: '100%', height: '100%', border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.875rem', color: '#0f172a', fontWeight: '500', cursor: 'pointer' }}
@@ -449,12 +448,12 @@ export function AdminUserManagementPanel({
       <div style={{ backgroundColor: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
         <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', backgroundColor: '#ffffff' }}>
           <h2 style={{ fontSize: '0.95rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-            <UsersIcon size={18} color="#4f46e5" /> Danh sách người dùng hệ thống ({totalUsers})
+            <UsersIcon size={18} color="var(--primary)" /> Danh sách người dùng hệ thống ({totalUsers})
           </h2>
 
           {/* SEARCH & FILTERS */}
           <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', height: '38px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.75rem', gap: '0.5rem', width: '220px' }}>
+            <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '38px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.75rem', gap: '0.5rem', width: '220px' }}>
               <Search size={15} color="#64748b" style={{ flexShrink: 0 }} />
               <input
                 style={{ flex: 1, border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.8125rem', color: '#0f172a' }}
@@ -552,7 +551,7 @@ export function AdminUserManagementPanel({
                       {/* Name & Avatar & Username */}
                       <td style={{ padding: '0.85rem 1rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                          <div style={{ width: '34px', height: '34px', borderRadius: '50%', backgroundColor: '#e0e7ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.85rem', flexShrink: 0 }}>
+                          <div style={{ width: '34px', height: '34px', borderRadius: '50%', backgroundColor: 'var(--primary-subtle)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', fontSize: '0.85rem', flexShrink: 0 }}>
                             {avatarLetter}
                           </div>
                           <div>
@@ -571,11 +570,11 @@ export function AdminUserManagementPanel({
                       <td style={{ padding: '0.85rem 1rem' }}>
                         {(() => {
                           const roleMeta = {
-                            ADMIN: { bg: '#f5f3ff', color: '#7c3aed', border: '#ddd6fe', label: 'Quản trị HQ' },
-                            MANAGER: { bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe', label: 'Quản lý cửa hàng' },
-                            STAFF: { bg: '#ecfdf5', color: '#059669', border: '#a7f3d0', label: 'Nhân viên cửa hàng' },
+                            ADMIN: { bg: 'var(--primary-light)', color: 'var(--primary)', border: '#ddd6fe', label: 'Quản trị HQ' },
+                            MANAGER: { bg: 'var(--primary-light)', color: 'var(--primary)', border: '#bfdbfe', label: 'Quản lý cửa hàng' },
+                            STAFF: { bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe', label: 'Nhân viên cửa hàng' },
                             FRANCHISEE: { bg: '#fffbeb', color: '#b45309', border: '#fde68a', label: 'Đối tác Kiosk' },
-                            FRANCHISE_STAFF: { bg: '#f0fdf4', color: '#0d9488', border: '#99f6e4', label: 'Nhân viên Kiosk' },
+                            FRANCHISE_STAFF: { bg: '#eff6ff', color: '#0284c7', border: '#bae6fd', label: 'Nhân viên Kiosk' },
                             ACCOUNTANT: { bg: '#f0f9ff', color: '#0284c7', border: '#bae6fd', label: 'Kế toán chuỗi' },
                           }[item?.vai_tro] || { bg: '#f1f5f9', color: '#475569', border: '#e2e8f0', label: item?.vai_tro || 'Nhân sự' }
                           return (
@@ -586,7 +585,7 @@ export function AdminUserManagementPanel({
                                 padding: '0.25rem 0.65rem',
                                 borderRadius: '9999px',
                                 fontSize: '0.72rem',
-                                fontWeight: '800',
+                                fontWeight: '600',
                                 backgroundColor: roleMeta.bg,
                                 color: roleMeta.color,
                                 border: `1px solid ${roleMeta.border}`
@@ -609,12 +608,12 @@ export function AdminUserManagementPanel({
                             borderRadius: '9999px',
                             fontSize: '0.72rem',
                             fontWeight: '700',
-                            backgroundColor: item?.trang_thai === 'ACTIVE' ? '#ecfdf5' : '#fef2f2',
-                            color: item?.trang_thai === 'ACTIVE' ? '#059669' : '#dc2626',
-                            border: item?.trang_thai === 'ACTIVE' ? '1px solid #a7f3d0' : '1px solid #fecaca'
+                            backgroundColor: item?.trang_thai === 'ACTIVE' ? '#eff6ff' : '#fef2f2',
+                            color: item?.trang_thai === 'ACTIVE' ? '#2563eb' : '#dc2626',
+                            border: item?.trang_thai === 'ACTIVE' ? '1px solid #bfdbfe' : '1px solid #fecaca'
                           }}
                         >
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: item?.trang_thai === 'ACTIVE' ? '#10b981' : '#ef4444' }}></span>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: item?.trang_thai === 'ACTIVE' ? '#3b82f6' : '#ef4444' }}></span>
                           {item?.trang_thai === 'ACTIVE' ? 'Hoạt động' : 'Tạm khóa'}
                         </span>
                       </td>

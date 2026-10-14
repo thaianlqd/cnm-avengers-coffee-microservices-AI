@@ -1,0 +1,9 @@
+Deleting one gateway Pod: api-gateway-7dcfb96878-rtntw
+pod "api-gateway-7dcfb96878-rtntw" deleted from avengers-coffee namespace
+pod/api-gateway-7dcfb96878-rtntw condition met
+deployment "api-gateway" successfully rolled out
+NAME                           READY   STATUS    RESTARTS   AGE   IP             NODE                    NOMINATED NODE   READINESS GATES
+api-gateway-7dcfb96878-tj6fs   1/1     Running   0          7s    10.244.0.244   desktop-control-plane   <none>           <none>
+api-gateway-7dcfb96878-tvrsc   1/1     Running   0          46m   10.244.0.207   desktop-control-plane   <none>           <none>
+Availability samples: 60 failed: 0 report: /var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/avengers-availability.XXXXXX.SqR9iu09sW
+PASS

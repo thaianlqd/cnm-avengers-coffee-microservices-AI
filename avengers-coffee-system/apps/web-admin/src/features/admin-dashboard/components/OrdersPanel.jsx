@@ -33,7 +33,7 @@ import {
   RotateCcw
 } from 'lucide-react'
 
-const PAGE_SIZE = 8
+const PAGE_SIZE = 10
 
 const STAGE_CLASS = {
   MOI_TAO: 'stage-new',
@@ -422,8 +422,8 @@ export function OrdersPanel({
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.85rem' }}>
         
         <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <CheckCircle2 size={18} color="#059669" />
+          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <CheckCircle2 size={18} color="#2563eb" />
           </div>
           <div style={{ overflow: 'hidden' }}>
             <span style={{ fontSize: '0.78125rem', color: '#64748b', fontWeight: '600', whiteSpace: 'nowrap', display: 'block' }}>Đơn hoàn thành</span>
@@ -442,12 +442,12 @@ export function OrdersPanel({
         </div>
 
         <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Coins size={18} color="#2563eb" />
+          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Coins size={18} color="var(--primary)" />
           </div>
           <div style={{ overflow: 'hidden' }}>
             <span style={{ fontSize: '0.78125rem', color: '#64748b', fontWeight: '600', whiteSpace: 'nowrap', display: 'block' }}>Tiền mặt thu vào</span>
-            <strong style={{ display: 'block', fontSize: '1.05rem', color: '#2563eb', marginTop: '0.05rem' }}>{fmtMoney(financeSummary.tienMatThuVao)}</strong>
+            <strong style={{ display: 'block', fontSize: '1.05rem', color: 'var(--primary)', marginTop: '0.05rem' }}>{fmtMoney(financeSummary.tienMatThuVao)}</strong>
           </div>
         </div>
 
@@ -462,12 +462,12 @@ export function OrdersPanel({
         </div>
 
         <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Wallet size={18} color="#16a34a" />
+          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Wallet size={18} color="#2563eb" />
           </div>
           <div style={{ overflow: 'hidden' }}>
             <span style={{ fontSize: '0.78125rem', color: '#64748b', fontWeight: '600', whiteSpace: 'nowrap', display: 'block' }}>Tiền mặt thực thu</span>
-            <strong style={{ display: 'block', fontSize: '1.05rem', color: '#16a34a', marginTop: '0.05rem' }}>{fmtMoney(financeSummary.tienMatThucThu)}</strong>
+            <strong style={{ display: 'block', fontSize: '1.05rem', color: '#2563eb', marginTop: '0.05rem' }}>{fmtMoney(financeSummary.tienMatThucThu)}</strong>
           </div>
         </div>
 
@@ -478,7 +478,7 @@ export function OrdersPanel({
         
         {/* Row 1: Search & Counter */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', height: '38px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.75rem', gap: '0.5rem', flex: 1, minWidth: '240px' }}>
+          <div className="console-search-field" style={{ display: 'flex', alignItems: 'center', height: '38px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.75rem', gap: '0.5rem', flex: 1, minWidth: '240px' }}>
             <Search size={15} color="#64748b" style={{ flexShrink: 0 }} />
             <input
               style={{ flex: 1, border: 'none', outline: 'none', backgroundColor: 'transparent', background: 'transparent', padding: 0, fontSize: '0.8125rem', color: '#0f172a' }}
@@ -604,6 +604,7 @@ export function OrdersPanel({
           return (
             <article
               key={order.ma_don_hang}
+              className="console-order-card"
               style={{
                 backgroundColor: '#ffffff',
                 border: '1px solid #e2e8f0',
@@ -617,10 +618,10 @@ export function OrdersPanel({
               }}
             >
               {/* Order Header Info */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.65rem' }}>
+              <div className="console-order-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.65rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <strong style={{ fontSize: '0.92rem', fontWeight: '800', color: '#0f172a', letterSpacing: '0.01em' }}>
+                    <strong style={{ fontSize: '0.92rem', fontWeight: '600', color: '#0f172a', letterSpacing: '0.01em' }}>
                       #{order.ma_don_hang.slice(0, 8).toUpperCase()}
                     </strong>
                     
@@ -635,7 +636,7 @@ export function OrdersPanel({
                     )}
 
                     {order.loai_don_hang === 'GIAO_TAN_NOI' && (
-                      <span style={{ padding: '0.15rem 0.55rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: '700', backgroundColor: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#fff7ed' : '#e0e7ff', color: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#c2410c' : '#4338ca', border: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '1px solid #ffedd5' : '1px solid #c7d2fe', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                      <span style={{ padding: '0.15rem 0.55rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: '700', backgroundColor: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#fff7ed' : 'var(--primary-subtle)', color: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '#c2410c' : 'var(--primary-hover)', border: order.phuong_thuc_giao_hang === 'LALAMOVE' ? '1px solid #ffedd5' : '1px solid #e8cdbb', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
                         <Truck size={11} /> {order.phuong_thuc_giao_hang === 'LALAMOVE' ? 'Lalamove' : 'Shipper Nội Bộ'}
                       </span>
                     )}
@@ -708,15 +709,15 @@ export function OrdersPanel({
                       padding: '0 0.75rem',
                       borderRadius: '6px',
                       border: '1px solid #bfdbfe',
-                      backgroundColor: '#eff6ff',
-                      color: '#2563eb',
+                      backgroundColor: 'var(--primary-light)',
+                      color: 'var(--primary)',
                       fontSize: '0.76rem',
                       fontWeight: '600',
                       cursor: coTheSuaDon(order) ? 'pointer' : 'not-allowed',
                       opacity: coTheSuaDon(order) ? 1 : 0.4
                     }}
                   >
-                    <Edit3 size={13} color="#2563eb" /> Sửa đơn
+                    <Edit3 size={13} color="var(--primary)" /> Sửa đơn
                   </button>
 
                   {/* Delete button */}
@@ -758,7 +759,7 @@ export function OrdersPanel({
                         padding: '0 0.85rem',
                         borderRadius: '6px',
                         border: 'none',
-                        backgroundColor: '#2563eb',
+                        backgroundColor: 'var(--primary)',
                         color: '#ffffff',
                         fontSize: '0.76rem',
                         fontWeight: '700',
@@ -784,7 +785,7 @@ export function OrdersPanel({
                         padding: '0 0.85rem',
                         borderRadius: '6px',
                         border: 'none',
-                        backgroundColor: '#059669',
+                        backgroundColor: '#2563eb',
                         color: '#ffffff',
                         fontSize: '0.76rem',
                         fontWeight: '700',
@@ -952,7 +953,7 @@ export function OrdersPanel({
                         onFocus={(e) => e.target.select()}
                         placeholder="0"
                       />
-                      <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.72rem', fontWeight: '700', color: editCashInsufficient ? '#dc2626' : '#059669' }}>
+                      <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.72rem', fontWeight: '700', color: editCashInsufficient ? '#dc2626' : '#2563eb' }}>
                         {editCashInsufficient ? '⚠️ Tiền khách đưa chưa đủ' : `Tiền thối khách: ${fmtMoney(editChange)}`}
                       </p>
                     </div>

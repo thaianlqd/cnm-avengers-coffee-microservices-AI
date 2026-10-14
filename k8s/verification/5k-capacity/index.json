@@ -1,0 +1,65 @@
+[
+  {
+    "directory": "5k-20261014T033215Z-690d4f",
+    "instance_id": null,
+    "instance_type": null,
+    "setup_error": "aws operation failed (252); output suppressed",
+    "cleanup_verified": true
+  },
+  {
+    "directory": "5k-20261014T033407Z-33ba70",
+    "instance_id": null,
+    "instance_type": null,
+    "setup_error": "aws operation failed (254); output suppressed",
+    "cleanup_verified": true
+  },
+  {
+    "directory": "5k-20261014T033547Z-e50200",
+    "instance_id": null,
+    "instance_type": null,
+    "setup_error": "AWS ec2/run-instances failed: InvalidParameterCombination: The specified instance type is not eligible for Free Tier. For a list of Free Tier instance types, run 'describe-instance-types' with the filter 'free-tier-eligible=true'.",
+    "cleanup_verified": true
+  },
+  {
+    "directory": "5k-20261014T034500Z-6a545c",
+    "instance_id": "i-0ca9729bcb525e445",
+    "instance_type": "m7i-flex.large",
+    "setup_error": "ssh operation failed (255); output suppressed",
+    "cleanup_verified": true
+  },
+  {
+    "directory": "5k-20261014T035219Z-8016fb",
+    "instance_id": null,
+    "instance_type": null,
+    "setup_error": "AWS ec2/run-instances failed: InvalidParameterCombination: The specified instance type is not eligible for Free Tier. For a list of Free Tier instance types, run 'describe-instance-types' with the filter 'free-tier-eligible=true'.",
+    "cleanup_verified": true
+  },
+  {
+    "directory": "5k-20261014T035344Z-233a50",
+    "instance_id": "i-0427aab6664c6c0b7",
+    "instance_type": "m7i-flex.large",
+    "setup_error": "ssh operation failed (255); output suppressed",
+    "cleanup_verified": true
+  },
+  {
+    "directory": "5k-20261014T040220Z-46d1e1",
+    "instance_id": "i-021114122c139c390",
+    "instance_type": "m7i-flex.large",
+    "setup_error": "SSH unavailable",
+    "cleanup_verified": true
+  },
+  {
+    "directory": "5k-20261014T042117Z-7be899",
+    "instance_id": "i-00d7a6b3c1b6d0bef",
+    "instance_type": "m7i-flex.large",
+    "setup_error": "KeyboardInterrupt",
+    "cleanup_verified": true
+  },
+  {
+    "directory": "5k-20261014T043856Z-6d555f",
+    "instance_id": "i-0103ed421c9b50c5d",
+    "instance_type": "m7i-flex.large",
+    "setup_error": null,
+    "cleanup_verified": true
+  }
+]

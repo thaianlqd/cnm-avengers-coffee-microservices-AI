@@ -9,6 +9,8 @@ const reactPath=require.resolve('react');
 await build({entryPoints:['src/components/features_thaian/NearbyBranchChecker.jsx'],bundle:true,platform:'node',format:'cjs',outfile:output,jsx:'automatic',external:['react','react-dom/server','react/jsx-runtime'],plugins:[{name:'fixtures',setup(b){
   b.onResolve({filter:/node_modules\/react\/index\.js$/},()=>({path:reactPath,external:true}));
   b.onResolve({filter:/^react$/},a=>a.namespace==='fixture'?undefined:{path:'hooks',namespace:'fixture'});
+  // Copy is tested in browser QA; keep deterministic Vietnamese text in this SSR business fixture.
+  b.onResolve({filter:/uiText$/},()=>({path:'ui-copy',namespace:'fixture'}));
   b.onResolve({filter:/apiClient$/},()=>({path:'api',namespace:'fixture'}));
   b.onResolve({filter:/geocodingService$/},()=>({path:'geo',namespace:'fixture'}));
   b.onLoad({filter:/.*/,namespace:'fixture'},({path})=>({loader:'js',contents:{
@@ -16,6 +18,7 @@ await build({entryPoints:['src/components/features_thaian/NearbyBranchChecker.js
       let slot=0;export const useState=initial=>{const index=slot++;const f=globalThis.branchFixture;
         return [index===0?f.inventory:index===1?!!f.loading:initial,value=>f.updates.push({index,value})];};
       export const useEffect=(effect,deps)=>globalThis.branchFixture.effects.push({effect,deps});`,
+    'ui-copy': `export const uiText=(source,values={})=>{if(typeof source!=='string')return source;for(const[k,v]of Object.entries(values))source=source.split('{{'+k+'}}').join(String(v));return source;}; export const uiLocale=()=> 'vi-VN'; export const useUiLanguage=()=>{};`,
     api:`export const apiClient={get:async()=>{throw new Error('synthetic inventory failure')}};`,
     geo:`export const MAX_DELIVERY_RADIUS_KM=5;export const resolveBranchCoordinates=b=>b.coords;
       export const calculateDistanceKm=(a,b,c,d)=>c;`,
@@ -46,13 +49,13 @@ try{
   console.log('PASS partial card explains exact products; only closest compatible branch receives delivery');
   const unknown={inventory:{A:null,B:null,C:null},selected:'A'};
   const unknownHtml=render(unknown);statusEffect(unknown);
-  assert.equal(unknown.buttons.A.disabled,true);assert.ok(unknownHtml.includes('Chưa xác minh'));
+  assert.equal(unknown.buttons.A.disabled,true);assert.ok(unknownHtml.includes('Chưa đọc được'));
   assert.equal(unknown.stock[0].canOrder,false);assert.equal(unknown.stock[0].reason,'AVAILABILITY_UNVERIFIED');
   assert.deepEqual(unknown.selections,[]);
   // The real fetch catch must store unknown rather than an empty successful response.
   unknown.effects.find(entry=>entry.deps?.length===2).effect();
   await new Promise(resolve=>setImmediate(resolve));
-  assert.deepEqual(unknown.updates.find(update=>update.index===0).value,{A:null,B:null,C:null});
+  assert.deepEqual(unknown.updates.filter(update=>update.index===0).at(-1).value,{A:null,B:null,C:null});
   console.log('PASS failed inventory requests stay unknown and block selection/checkout');
   const loading={inventory:{A:[],B:[],C:[]},loading:true};render(loading);statusEffect(loading);
   assert.equal(loading.stock[0].canOrder,false);assert.deepEqual(loading.selections,[]);

@@ -1,20 +1,22 @@
+import { uiText as ui, useUiLanguage, uiLocale } from "../../lib/uiText";
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/apiClient';
 import { queryKeys } from '../../lib/queryKeys';
-import { 
-  GiftIcon, 
-  StarIcon, 
-  CheckBadgeIcon, 
-  CalendarIcon, 
-  ArrowRightIcon, 
-  TruckIcon, 
-  CheckCircleIcon, 
-  ExclamationTriangleIcon, 
-  SparklesIcon 
+import {
+  GiftIcon,
+  StarIcon,
+  CheckBadgeIcon,
+  CalendarIcon,
+  ArrowRightIcon,
+  TruckIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 
 export default function MembershipPage({ user, onNavigate }) {
+  useUiLanguage();
   const userId = user?.ma_nguoi_dung || user?.maNguoiDung || null;
   const queryClient = useQueryClient();
   const [birthDaySelect, setBirthDaySelect] = useState('01');
@@ -50,7 +52,7 @@ export default function MembershipPage({ user, onNavigate }) {
         const event = new CustomEvent('birthday-voucher-received', { detail: { data } });
         window.dispatchEvent(event);
       } else {
-        alert('Cập nhật ngày sinh thành công! 🎉');
+        alert(ui("Cập nhật ngày sinh thành công! 🎉"));
       }
     },
     onError: (err) => {
@@ -62,14 +64,12 @@ export default function MembershipPage({ user, onNavigate }) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[500px] bg-[#fafaf9] p-6 text-center">
         <StarIcon className="h-16 w-16 text-gray-400 mb-4 animate-bounce" />
-        <h2 className="text-2xl font-black uppercase text-gray-800 mb-2">Hạng thành viên</h2>
-        <p className="text-gray-500 mb-6 max-w-md">Vui lòng đăng nhập để xem thông tin hạng thành viên và các quyền lợi đặc biệt dành riêng cho bạn.</p>
-        <button 
+        <h2 className="text-2xl font-black uppercase text-gray-800 mb-2">{ui("Hạng thành viên")}</h2>
+        <p className="text-gray-500 mb-6 max-w-md">{ui("Vui lòng đăng nhập để xem thông tin hạng thành viên và các quyền lợi đặc biệt dành riêng cho bạn.")}</p>
+        <button
           onClick={() => onNavigate('login')}
           className="bg-[#1a8b46] hover:bg-[#156e37] text-white px-8 py-3 rounded-full font-bold transition-all shadow-lg"
-        >
-          Đăng nhập ngay
-        </button>
+        >{ui("Đăng nhập ngay")}</button>
       </div>
     );
   }
@@ -89,9 +89,7 @@ export default function MembershipPage({ user, onNavigate }) {
 
   if (isError) {
     return (
-      <div className="max-w-[1240px] mx-auto px-4 py-16 text-center text-red-600 font-semibold">
-        Đã có lỗi xảy ra khi tải thông tin thành viên. Vui lòng thử lại sau.
-      </div>
+      <div className="max-w-[1240px] mx-auto px-4 py-16 text-center text-red-600 font-semibold">{ui("Đã có lỗi xảy ra khi tải thông tin thành viên. Vui lòng thử lại sau.")}</div>
     );
   }
 
@@ -129,7 +127,7 @@ export default function MembershipPage({ user, onNavigate }) {
     isBirthMonth = (birthMonth === currentMonth);
   }
 
-  const hasBirthdayVoucher = Array.isArray(voucher_ca_nhan) && voucher_ca_nhan.some(v => 
+  const hasBirthdayVoucher = Array.isArray(voucher_ca_nhan) && voucher_ca_nhan.some(v =>
     v.ma_khuyen_mai?.startsWith('BD_') || v.loai_su_kien === 'BIRTHDAY'
   );
 
@@ -190,7 +188,7 @@ export default function MembershipPage({ user, onNavigate }) {
   };
 
   const nextTier = tatCaHang.find(h => h.diem > diem_loyalty);
-  const phanTramLenHang = hang_hien_tai?.diem_can_len_hang 
+  const phanTramLenHang = hang_hien_tai?.diem_can_len_hang
     ? Math.min(100, Math.round(((diem_loyalty - hang_hien_tai.diem_bat_dau_hang) / (hang_hien_tai.diem_can_len_hang - hang_hien_tai.diem_bat_dau_hang)) * 100))
     : 100;
 
@@ -200,12 +198,8 @@ export default function MembershipPage({ user, onNavigate }) {
       <section className="bg-gradient-to-b from-red-50/40 via-white to-[#fcfbf9] border-b border-gray-100">
         <div className="mx-auto max-w-[1240px] px-4 py-12 md:px-6 md:py-14">
           <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#b22830]">Avengers Coffee Loyalty Club</p>
-          <h1 className="mt-3 text-3xl font-black uppercase tracking-tight text-[#2b2b2b] md:text-5xl font-sans">
-            Đặc quyền thành viên
-          </h1>
-          <p className="mt-3 max-w-[780px] text-sm font-semibold leading-relaxed text-gray-500 md:text-base">
-            Chi tiêu tích lũy, nâng hạng ngay hôm nay để mở khóa các đặc quyền, voucher sinh nhật, quà tặng lên hạng và nhiều ưu đãi độc quyền.
-          </p>
+          <h1 className="mt-3 text-3xl font-black uppercase tracking-tight text-[#2b2b2b] md:text-5xl font-sans">{ui("Đặc quyền thành viên")}</h1>
+          <p className="mt-3 max-w-[780px] text-sm font-semibold leading-relaxed text-gray-500 md:text-base">{ui("Chi tiêu tích lũy, nâng hạng ngay hôm nay để mở khóa các đặc quyền, voucher sinh nhật, quà tặng lên hạng và nhiều ưu đãi độc quyền.")}</p>
         </div>
       </section>
 
@@ -221,9 +215,8 @@ export default function MembershipPage({ user, onNavigate }) {
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
                   <div className="inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.2em] bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-white font-black shadow-sm">
-                    <CheckBadgeIcon className="w-3.5 h-3.5 text-amber-300" /> THẺ HỘI VIÊN CHÍNH THỨC
-                  </div>
-                  <h2 className="text-2xl md:text-3xl font-black uppercase tracking-wider text-white mt-1">{hang_hien_tai?.hang || 'Thành viên'}</h2>
+                    <CheckBadgeIcon className="w-3.5 h-3.5 text-amber-300" />{ui(" THẺ HỘI VIÊN CHÍNH THỨC")}</div>
+                  <h2 className="text-2xl md:text-3xl font-black uppercase tracking-wider text-white mt-1">{hang_hien_tai?.hang || ui("Thành viên")}</h2>
                 </div>
                 <div className="drop-shadow-xl">
                   {renderTierIcon(hang_hien_tai?.ma_hang, "w-14 h-14 md:w-16 md:h-16")}
@@ -244,12 +237,12 @@ export default function MembershipPage({ user, onNavigate }) {
 
               <div className="flex justify-between items-end border-t border-white/20 pt-4">
                 <div>
-                  <p className="text-[9px] uppercase tracking-[0.18em] text-white/60 font-black">Chủ sở hữu</p>
-                  <p className="text-sm md:text-base font-black mt-0.5 text-white tracking-wide">{user?.ho_ten || user?.hoTen || 'Quý khách'}</p>
+                  <p className="text-[9px] uppercase tracking-[0.18em] text-white/60 font-black">{ui("Chủ sở hữu")}</p>
+                  <p className="text-sm md:text-base font-black mt-0.5 text-white tracking-wide">{user?.ho_ten || user?.hoTen || ui("Quý khách")}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[9px] uppercase tracking-[0.18em] text-white/60 font-black">Điểm xét hạng</p>
-                  <p className="text-xl md:text-2xl font-black mt-0.5 text-white tracking-tight">{diem_loyalty.toLocaleString('vi-VN')} <span className="text-xs font-bold text-white/70">PTS</span></p>
+                  <p className="text-[9px] uppercase tracking-[0.18em] text-white/60 font-black">{ui("Điểm xét hạng")}</p>
+                  <p className="text-xl md:text-2xl font-black mt-0.5 text-white tracking-tight">{diem_loyalty.toLocaleString(uiLocale())} <span className="text-xs font-bold text-white/70">PTS</span></p>
                 </div>
               </div>
             </div>
@@ -263,16 +256,9 @@ export default function MembershipPage({ user, onNavigate }) {
                 <div className="flex items-start gap-3">
                   <span className="text-2xl mt-0.5">⚠️</span>
                   <div className="space-y-1">
-                    <h4 className="font-black text-xs md:text-sm text-amber-950 uppercase tracking-wide">
-                      Thông báo tạm điều chỉnh Hạng do chưa đủ chi tiêu duy trì tháng
-                    </h4>
-                    <p className="text-xs text-amber-900 leading-relaxed font-semibold">
-                      Bạn đã tích lũy đủ <strong>{diem_loyalty.toLocaleString('vi-VN')} điểm</strong> xét hạng (Đạt mốc <strong>Hạng {hang_hien_tai?.hang_xet_the_diem}</strong>).
-                      Tuy nhiên, hạng {hang_hien_tai?.hang_xet_the_diem} yêu cầu chi tiêu tối thiểu <strong>{hang_hien_tai?.chi_tieu_can_de_giu_hang?.toLocaleString('vi-VN')}đ/tháng</strong> để giữ hạng & đặc quyền.
-                    </p>
-                    <p className="text-xs text-amber-950 font-extrabold bg-amber-100/80 p-2 rounded-xl border border-amber-200/80 inline-block mt-1">
-                      💡 Đã chi tiêu tháng này: {chi_tieu_thang_nay.toLocaleString('vi-VN')}đ (Còn thiếu {con_thieu_thang_nay.toLocaleString('vi-VN')}đ). Hạng của bạn tạm thời chuyển về <strong>Hạng {hang_hien_tai?.hang}</strong> cho đến khi đạt đủ mức chi tiêu duy trì.
-                    </p>
+                    <h4 className="font-black text-xs md:text-sm text-amber-950 uppercase tracking-wide">{ui("Thông báo tạm điều chỉnh Hạng do chưa đủ chi tiêu duy trì tháng")}</h4>
+                    <p className="text-xs text-amber-900 leading-relaxed font-semibold">{ui("Bạn đã tích lũy đủ ")}<strong>{diem_loyalty.toLocaleString(uiLocale())}{ui(" điểm")}</strong>{ui(" xét hạng (Đạt mốc ")}<strong>{ui("Hạng ")}{hang_hien_tai?.hang_xet_the_diem}</strong>{ui("). Tuy nhiên, hạng ")}{hang_hien_tai?.hang_xet_the_diem}{ui(" yêu cầu chi tiêu tối thiểu ")}<strong>{hang_hien_tai?.chi_tieu_can_de_giu_hang?.toLocaleString(uiLocale())}{ui("đ/tháng")}</strong>{ui(" để giữ hạng & đặc quyền.")}</p>
+                    <p className="text-xs text-amber-950 font-extrabold bg-amber-100/80 p-2 rounded-xl border border-amber-200/80 inline-block mt-1">{ui("💡 Đã chi tiêu tháng này: ")}{chi_tieu_thang_nay.toLocaleString(uiLocale())}{ui("đ (Còn thiếu ")}{con_thieu_thang_nay.toLocaleString(uiLocale())}{ui("đ). Hạng của bạn tạm thời chuyển về ")}<strong>{ui("Hạng ")}{hang_hien_tai?.hang}</strong>{ui(" cho đến khi đạt đủ mức chi tiêu duy trì.")}</p>
                   </div>
                 </div>
               </div>
@@ -280,17 +266,12 @@ export default function MembershipPage({ user, onNavigate }) {
 
             <div className="flex items-center justify-between">
               <h3 className="text-xs md:text-sm font-black text-gray-900 uppercase tracking-wider flex items-center gap-2">
-                <SparklesIcon className="w-4 h-4 text-[#b22830]" />
-                Tiến trình nâng hạng thành viên
-              </h3>
+                <SparklesIcon className="w-4 h-4 text-[#b22830]" />{ui("Tiến trình nâng hạng thành viên")}</h3>
               {nextTier ? (
-                <span className="text-[11px] font-black text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200 shadow-2xs">
-                  Cần thêm <strong className="text-amber-900 font-black">{(nextTier.diem - diem_loyalty).toLocaleString('vi-VN')} điểm</strong> ➔ {nextTier.ten}
+                <span className="text-[11px] font-black text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200 shadow-2xs">{ui("Cần thêm ")}<strong className="text-amber-900 font-black">{(nextTier.diem - diem_loyalty).toLocaleString(uiLocale())}{ui(" điểm")}</strong> ➔ {nextTier.ten}
                 </span>
               ) : (
-                <span className="text-[11px] font-black text-rose-700 bg-rose-50 px-3 py-1 rounded-full border border-rose-200 shadow-2xs">
-                  👑 Hạng cao nhất đạt được!
-                </span>
+                <span className="text-[11px] font-black text-rose-700 bg-rose-50 px-3 py-1 rounded-full border border-rose-200 shadow-2xs">{ui("👑 Hạng cao nhất đạt được!")}</span>
               )}
             </div>
 
@@ -322,7 +303,7 @@ export default function MembershipPage({ user, onNavigate }) {
                       {tStep.name}
                     </span>
                     <span className="text-[9px] font-semibold text-gray-400">
-                      {tStep.minPts.toLocaleString('vi-VN')} PTS
+                      {tStep.minPts.toLocaleString(uiLocale())} PTS
                     </span>
                   </div>
                 );
@@ -330,38 +311,38 @@ export default function MembershipPage({ user, onNavigate }) {
             </div>
 
             <div className="h-3.5 w-full rounded-full bg-gray-100 p-0.5 overflow-hidden border border-gray-200/80 shadow-inner relative">
-              <div 
-                className="h-full bg-gradient-to-r from-[#b22830] via-amber-500 to-yellow-400 rounded-full transition-all duration-1000 shadow-sm" 
+              <div
+                className="h-full bg-gradient-to-r from-[#b22830] via-amber-500 to-yellow-400 rounded-full transition-all duration-1000 shadow-sm"
                 style={{ width: `${phanTramLenHang}%` }}
               />
             </div>
 
             <div className="mt-2 flex justify-between text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-              <span>{hang_hien_tai?.hang} ({diem_loyalty.toLocaleString('vi-VN')} điểm xét hạng)</span>
-              {nextTier && <span>{nextTier.ten} ({nextTier.diem.toLocaleString('vi-VN')} điểm)</span>}
+              <span>{hang_hien_tai?.hang} ({diem_loyalty.toLocaleString(uiLocale())}{ui(" điểm xét hạng)")}</span>
+              {nextTier && <span>{nextTier.ten} ({nextTier.diem.toLocaleString(uiLocale())}{ui(" điểm)")}</span>}
             </div>
 
             {/* Quick stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mt-5 pt-4 border-t border-gray-100 text-center">
               <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-100">
-                <p className="text-[10px] text-amber-800 font-bold uppercase tracking-wider">Điểm xét hạng</p>
-                <p className="text-lg font-black text-amber-900 mt-0.5">{diem_loyalty.toLocaleString('vi-VN')}</p>
-                <p className="text-[9px] text-amber-700/70 font-medium mt-0.5">Dùng để giữ & lên hạng</p>
+                <p className="text-[10px] text-amber-800 font-bold uppercase tracking-wider">{ui("Điểm xét hạng")}</p>
+                <p className="text-lg font-black text-amber-900 mt-0.5">{diem_loyalty.toLocaleString(uiLocale())}</p>
+                <p className="text-[9px] text-amber-700/70 font-medium mt-0.5">{ui("Dùng để giữ & lên hạng")}</p>
               </div>
               <div className="p-3 bg-rose-50/60 rounded-xl border border-rose-100">
-                <p className="text-[10px] text-rose-800 font-bold uppercase tracking-wider">Điểm khả dụng</p>
-                <p className="text-lg font-black text-[#c41230] mt-0.5">{diem_kha_dung.toLocaleString('vi-VN')}</p>
-                <p className="text-[9px] text-rose-700/70 font-medium mt-0.5">Quay thưởng & đổi quà</p>
+                <p className="text-[10px] text-rose-800 font-bold uppercase tracking-wider">{ui("Điểm khả dụng")}</p>
+                <p className="text-lg font-black text-[#c41230] mt-0.5">{diem_kha_dung.toLocaleString(uiLocale())}</p>
+                <p className="text-[9px] text-rose-700/70 font-medium mt-0.5">{ui("Quay thưởng & đổi quà")}</p>
               </div>
               <div className="p-3 bg-gray-50 rounded-xl border border-gray-150">
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Chi tiêu lũy kế</p>
-                <p className="text-base font-black text-gray-800 mt-0.5">{tong_chi_tieu.toLocaleString('vi-VN')} đ</p>
-                <p className="text-[9px] text-gray-400 font-medium mt-0.5">Tất cả đơn thành công</p>
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{ui("Chi tiêu lũy kế")}</p>
+                <p className="text-base font-black text-gray-800 mt-0.5">{tong_chi_tieu.toLocaleString(uiLocale())}{ui(" đ")}</p>
+                <p className="text-[9px] text-gray-400 font-medium mt-0.5">{ui("Tất cả đơn thành công")}</p>
               </div>
               <div className="p-3 bg-emerald-50/60 rounded-xl border border-emerald-100">
-                <p className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider">Hệ số tích điểm</p>
+                <p className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider">{ui("Hệ số tích điểm")}</p>
                 <p className="text-lg font-black text-emerald-900 mt-0.5">x{quyen_loi_hien_tai?.he_so_diem || 1}</p>
-                <p className="text-[9px] text-emerald-700/70 font-medium mt-0.5">{dat_dieu_kien_dac_quyen ? 'Đang kích hoạt' : 'Hệ số gốc (x1.0)'}</p>
+                <p className="text-[9px] text-emerald-700/70 font-medium mt-0.5">{dat_dieu_kien_dac_quyen ? ui("Đang kích hoạt") : ui("Hệ số gốc (x1.0)")}</p>
               </div>
             </div>
 
@@ -375,21 +356,21 @@ export default function MembershipPage({ user, onNavigate }) {
                     ) : (
                       <ExclamationTriangleIcon className="w-4 h-4 text-amber-500 shrink-0" />
                     )}
-                    <span className="text-xs font-bold text-gray-900">Chi tiêu duy trì tháng</span>
-                    <span className="text-[10px] text-gray-500 font-medium">({chi_tieu_toi_thieu_thang.toLocaleString('vi-VN')}đ)</span>
+                    <span className="text-xs font-bold text-gray-900">{ui("Chi tiêu duy trì tháng")}</span>
+                    <span className="text-[10px] text-gray-500 font-medium">({chi_tieu_toi_thieu_thang.toLocaleString(uiLocale())}{ui("đ)")}</span>
                   </div>
                   <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full ${dat_dieu_kien_dac_quyen ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white'}`}>
-                    {dat_dieu_kien_dac_quyen ? 'Đã đạt' : `Còn thiếu ${con_thieu_thang_nay.toLocaleString('vi-VN')}đ`}
+                    {dat_dieu_kien_dac_quyen ? ui("Đã đạt") : ui("Còn thiếu {{v0}}đ", {v0:con_thieu_thang_nay.toLocaleString(uiLocale())})}
                   </span>
                 </div>
 
                 {/* Progress bar */}
                 <div className="mt-2 text-[10px] font-medium text-gray-500 flex justify-between mb-1">
-                  <span>Đã đạt {chi_tieu_thang_nay.toLocaleString('vi-VN')}đ</span>
-                  <span>Mục tiêu {chi_tieu_toi_thieu_thang.toLocaleString('vi-VN')}đ</span>
+                  <span>{ui("Đã đạt ")}{chi_tieu_thang_nay.toLocaleString(uiLocale())}{ui("đ")}</span>
+                  <span>{ui("Mục tiêu ")}{chi_tieu_toi_thieu_thang.toLocaleString(uiLocale())}{ui("đ")}</span>
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-gray-200/80 overflow-hidden">
-                  <div 
+                  <div
                     className={`h-full rounded-full transition-all duration-500 ${dat_dieu_kien_dac_quyen ? 'bg-emerald-500' : 'bg-amber-500'}`}
                     style={{ width: `${Math.min(100, Math.round((chi_tieu_thang_nay / chi_tieu_toi_thieu_thang) * 100))}%` }}
                   />
@@ -401,10 +382,10 @@ export default function MembershipPage({ user, onNavigate }) {
             <div className="mt-2.5 flex items-center justify-between text-xs bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-100/70">
               <div className="flex items-center gap-2">
                 <TruckIcon className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span className="font-bold text-gray-800 text-xs">Freeship hạng {hang_hien_tai?.hang}</span>
+                <span className="font-bold text-gray-800 text-xs">{ui("Freeship hạng ")}{hang_hien_tai?.hang}</span>
               </div>
               <span className="font-black text-emerald-700 text-xs">
-                {quyen_loi_hien_tai?.freeship || 'Không hỗ trợ'}
+                {quyen_loi_hien_tai?.freeship || ui("Không hỗ trợ")}
               </span>
             </div>
           </div>
@@ -412,16 +393,14 @@ export default function MembershipPage({ user, onNavigate }) {
           {/* Interactive Wheel Banner */}
           <div className="bg-gradient-to-r from-[#b22830] via-red-700 to-[#a38043] rounded-2xl p-5 md:p-6 text-white relative overflow-hidden shadow-lg shadow-red-950/10 flex flex-col md:flex-row md:items-center justify-between gap-5">
             <div className="space-y-1 max-w-md z-10">
-              <span className="bg-white/20 text-[9px] px-2 py-0.5 rounded-full font-extrabold tracking-wider uppercase">Tính năng giải trí</span>
-              <h3 className="text-lg md:text-xl font-black uppercase leading-tight tracking-wide">Vòng quay may mắn</h3>
-              <p className="text-xs text-white/90 font-medium">Dùng 100 điểm khả dụng của bạn để thử vận may nhận voucher 50K hoặc các món nước miễn phí!</p>
+              <span className="bg-white/20 text-[9px] px-2 py-0.5 rounded-full font-extrabold tracking-wider uppercase">{ui("Tính năng giải trí")}</span>
+              <h3 className="text-lg md:text-xl font-black uppercase leading-tight tracking-wide">{ui("Vòng quay may mắn")}</h3>
+              <p className="text-xs text-white/90 font-medium">{ui("Dùng 100 điểm khả dụng của bạn để thử vận may nhận voucher 50K hoặc các món nước miễn phí!")}</p>
             </div>
-            <button 
+            <button
               onClick={() => onNavigate('lucky-wheel')}
               className="bg-white text-[#b22830] hover:bg-gray-50 font-black px-4 py-2.5 rounded-full text-xs shadow-md transition-all self-start md:self-auto flex items-center gap-1.5 whitespace-nowrap z-10 cursor-pointer border-none active:scale-95"
-            >
-              Quy đổi & Quay ngay 
-              <ArrowRightIcon className="h-3.5 w-3.5" />
+            >{ui("Quy đổi & Quay ngay")}<ArrowRightIcon className="h-3.5 w-3.5" />
             </button>
             <div className="absolute -right-16 -bottom-16 w-48 h-48 rounded-full border-8 border-white/10 opacity-20"></div>
           </div>
@@ -433,7 +412,7 @@ export default function MembershipPage({ user, onNavigate }) {
           <div className="bg-white rounded-2xl border border-gray-200/80 p-5 md:p-6 shadow-2xs">
             <div className="flex items-center gap-2.5 mb-4">
               <CalendarIcon className="h-5 w-5 text-[#b22830]" />
-              <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Voucher Sinh Nhật</h3>
+              <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">{ui("Voucher Sinh Nhật")}</h3>
             </div>
 
             {ngay_sinh ? (
@@ -443,51 +422,42 @@ export default function MembershipPage({ user, onNavigate }) {
                     <p className="font-black text-sm flex items-center gap-1.5 animate-bounce">
                       🎂 Happy Birthday! 🎉
                     </p>
-                    <p className="mt-1.5 text-gray-700 font-bold leading-relaxed">
-                      Avengers House chúc bạn tuổi mới ngập tràn niềm vui, hạnh phúc và thành công! 🥳
-                    </p>
+                    <p className="mt-1.5 text-gray-700 font-bold leading-relaxed">{ui("Avengers House chúc bạn tuổi mới ngập tràn niềm vui, hạnh phúc và thành công! 🥳")}</p>
                     {hasBirthdayVoucher ? (
-                      <p className="mt-2 text-emerald-700 font-extrabold flex items-center gap-1">
-                        🎁 Đã nhận voucher ưu đãi sinh nhật trong kho!
-                      </p>
+                      <p className="mt-2 text-emerald-700 font-extrabold flex items-center gap-1">{ui("🎁 Đã nhận voucher ưu đãi sinh nhật trong kho!")}</p>
                     ) : (
-                      <p className="mt-2 text-gray-500 font-semibold leading-relaxed">
-                        Hệ thống đã chuẩn bị voucher đặc biệt cho bạn.
-                      </p>
+                      <p className="mt-2 text-gray-500 font-semibold leading-relaxed">{ui("Hệ thống đã chuẩn bị voucher đặc biệt cho bạn.")}</p>
                     )}
                   </div>
                 ) : isBirthMonth ? (
                   <div className="bg-red-50/40 border border-red-100/50 rounded-xl p-4 text-[#b22830] text-xs">
-                    <p className="font-black text-sm">Tháng sinh nhật của bạn! 🎈</p>
-                    <p className="mt-1.5 text-gray-600 font-bold leading-relaxed">
-                      Ngày sinh: {new Date(ngay_sinh).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                    <p className="font-black text-sm">{ui("Tháng sinh nhật của bạn! 🎈")}</p>
+                    <p className="mt-1.5 text-gray-600 font-bold leading-relaxed">{ui("Ngày sinh: ")}{new Date(ngay_sinh).toLocaleDateString(uiLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' })}
                     </p>
                     {hasBirthdayVoucher ? (
                       <div className="mt-2.5 p-2 bg-emerald-50 border border-emerald-100 rounded-lg text-emerald-800 font-bold flex items-center gap-1.5">
                         <span className="text-base">✓</span>
-                        <span>Đã nhận voucher ưu đãi sinh nhật!</span>
+                        <span>{ui("Đã nhận voucher ưu đãi sinh nhật!")}</span>
                       </div>
                     ) : (
-                      <p className="mt-1.5 text-gray-500 font-semibold leading-relaxed">
-                        Hệ thống đang chuẩn bị voucher ưu đãi gửi tặng bạn.
-                      </p>
+                      <p className="mt-1.5 text-gray-500 font-semibold leading-relaxed">{ui("Hệ thống đang chuẩn bị voucher ưu đãi gửi tặng bạn.")}</p>
                     )}
                   </div>
                 ) : (
                   <div className="bg-red-50/30 border border-red-100/50 rounded-xl p-4 text-[#b22830] text-xs">
-                    <p className="font-black text-sm">Ngày sinh: {new Date(ngay_sinh).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
-                    <p className="mt-1.5 text-gray-500 font-semibold leading-relaxed">Hệ thống sẽ tự động gửi voucher giảm giá lên đến {quyen_loi_hien_tai?.voucher_sinh_nhat || '40%'} vào tháng sinh nhật của bạn.</p>
+                    <p className="font-black text-sm">{ui("Ngày sinh: ")}{new Date(ngay_sinh).toLocaleDateString(uiLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
+                    <p className="mt-1.5 text-gray-500 font-semibold leading-relaxed">{ui("Hệ thống sẽ tự động gửi voucher giảm giá lên đến ")}{quyen_loi_hien_tai?.voucher_sinh_nhat || '40%'}{ui(" vào tháng sinh nhật của bạn.")}</p>
                   </div>
                 )}
               </div>
             ) : (
               <div className="space-y-3">
-                <p className="text-xs text-gray-500 font-semibold leading-relaxed">Thiết lập ngày sinh nhật để nhận voucher ưu đãi bất ngờ từ Avengers Coffee Loyalty Program.</p>
+                <p className="text-xs text-gray-500 font-semibold leading-relaxed">{ui("Thiết lập ngày sinh nhật để nhận voucher ưu đãi bất ngờ từ Avengers Coffee Loyalty Program.")}</p>
                 {isEditingBirthday ? (
                   <form onSubmit={handleUpdateBirthday} className="space-y-3">
                     <div className="grid grid-cols-3 gap-2">
                       <div>
-                        <p className="mb-1 text-[10px] font-bold text-gray-400 uppercase">Ngày</p>
+                        <p className="mb-1 text-[10px] font-bold text-gray-400 uppercase">{ui("Ngày")}</p>
                         <select
                           value={birthDaySelect}
                           onChange={(e) => setBirthDaySelect(e.target.value)}
@@ -500,7 +470,7 @@ export default function MembershipPage({ user, onNavigate }) {
                         </select>
                       </div>
                       <div>
-                        <p className="mb-1 text-[10px] font-bold text-gray-400 uppercase">Tháng</p>
+                        <p className="mb-1 text-[10px] font-bold text-gray-400 uppercase">{ui("Tháng")}</p>
                         <select
                           value={birthMonthSelect}
                           onChange={(e) => setBirthMonthSelect(e.target.value)}
@@ -513,7 +483,7 @@ export default function MembershipPage({ user, onNavigate }) {
                         </select>
                       </div>
                       <div>
-                        <p className="mb-1 text-[10px] font-bold text-gray-400 uppercase">Năm</p>
+                        <p className="mb-1 text-[10px] font-bold text-gray-400 uppercase">{ui("Năm")}</p>
                         <select
                           value={birthYearSelect}
                           onChange={(e) => setBirthYearSelect(e.target.value)}
@@ -527,29 +497,23 @@ export default function MembershipPage({ user, onNavigate }) {
                       </div>
                     </div>
                     <div className="flex gap-2 pt-1">
-                      <button 
+                      <button
                         type="submit"
                         disabled={updateBirthdayMutation.isPending}
                         className="flex-1 bg-[#b22830] hover:bg-[#8f1d24] text-white py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all disabled:bg-gray-300 cursor-pointer border-none"
-                      >
-                        Lưu ngày sinh
-                      </button>
-                      <button 
+                      >{ui("Lưu ngày sinh")}</button>
+                      <button
                         type="button"
                         onClick={() => setIsEditingBirthday(false)}
                         className="px-4 border border-gray-200 hover:bg-gray-50 text-gray-600 rounded-xl text-xs font-bold transition-all cursor-pointer bg-white"
-                      >
-                        Hủy
-                      </button>
+                      >{ui("Hủy")}</button>
                     </div>
                   </form>
                 ) : (
-                  <button 
+                  <button
                     onClick={() => setIsEditingBirthday(true)}
                     className="w-full border border-[#b22830] text-[#b22830] hover:bg-red-50/20 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer bg-white"
-                  >
-                    Thiết lập ngày sinh
-                  </button>
+                  >{ui("Thiết lập ngày sinh")}</button>
                 )}
               </div>
             )}
@@ -557,11 +521,9 @@ export default function MembershipPage({ user, onNavigate }) {
 
           {/* Personal Vouchers list */}
           <div className="bg-white rounded-2xl border border-gray-200/80 p-5 md:p-6 shadow-2xs">
-            <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide mb-4">Voucher cá nhân ({voucher_ca_nhan.length})</h3>
+            <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide mb-4">{ui("Voucher cá nhân (")}{voucher_ca_nhan.length})</h3>
             {voucher_ca_nhan.length === 0 ? (
-              <div className="text-center py-8 text-gray-400 text-xs font-semibold leading-relaxed">
-                Bạn chưa có voucher cá nhân nào.<br/>Hãy nâng hạng hoặc quy đổi lượt quay để tích lũy voucher nhé!
-              </div>
+              <div className="text-center py-8 text-gray-400 text-xs font-semibold leading-relaxed">{ui("Bạn chưa có voucher cá nhân nào.")}<br/>{ui("Hãy nâng hạng hoặc quy đổi lượt quay để tích lũy voucher nhé!")}</div>
             ) : (
               <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
                 {voucher_ca_nhan.map((v) => (
@@ -569,13 +531,13 @@ export default function MembershipPage({ user, onNavigate }) {
                     <div className="flex justify-between items-start gap-2">
                       <h4 className="text-xs font-black text-gray-800 uppercase leading-snug">{v.ten_khuyen_mai}</h4>
                       <span className="bg-[#c41230] text-white text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider whitespace-nowrap">
-                        {v.loai_khuyen_mai === 'FREE_ITEM' ? 'Tặng kèm' : 'Giảm giá'}
+                        {v.loai_khuyen_mai === 'FREE_ITEM' ? ui("Tặng kèm") : ui("Giảm giá")}
                       </span>
                     </div>
                     <p className="text-[11px] text-gray-500 mt-1 font-semibold leading-relaxed">{v.mo_ta}</p>
                     <div className="flex justify-between items-center mt-2.5 pt-2.5 border-t border-gray-100/80">
                       <span className="text-[11px] font-mono font-black text-[#c41230] select-all cursor-pointer bg-red-50 px-2 py-0.5 rounded border border-red-100">{v.ma_khuyen_mai}</span>
-                      <span className="text-[9px] text-gray-400 font-bold">HSD: {new Date(v.ngay_ket_thuc).toLocaleDateString('vi-VN')}</span>
+                      <span className="text-[9px] text-gray-400 font-bold">HSD: {new Date(v.ngay_ket_thuc).toLocaleDateString(uiLocale())}</span>
                     </div>
                   </div>
                 ))}
@@ -591,26 +553,22 @@ export default function MembershipPage({ user, onNavigate }) {
           <div className="border-b border-gray-100 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-2">
             <div>
               <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight flex items-center gap-2">
-                <CheckBadgeIcon className="w-5 h-5 text-[#b22830]" />
-                Bảng đối chiếu đặc quyền các hạng thành viên
-              </h3>
-              <p className="text-xs text-gray-500 mt-1 font-semibold">Đặc quyền được đồng bộ trực tiếp từ hệ thống thiết lập của quản trị viên (Admin Panel)</p>
+                <CheckBadgeIcon className="w-5 h-5 text-[#b22830]" />{ui("Bảng đối chiếu đặc quyền các hạng thành viên")}</h3>
+              <p className="text-xs text-gray-500 mt-1 font-semibold">{ui("Đặc quyền được đồng bộ trực tiếp từ hệ thống thiết lập của quản trị viên (Admin Panel)")}</p>
             </div>
-            <span className="text-[10px] font-black uppercase text-gray-400 bg-gray-100 px-3 py-1 rounded-full self-start md:self-auto">
-              Cập nhật mới nhất 2026
-            </span>
+            <span className="text-[10px] font-black uppercase text-gray-400 bg-gray-100 px-3 py-1 rounded-full self-start md:self-auto">{ui("Cập nhật mới nhất 2026")}</span>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[750px]">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50/80">
-                  <th className="py-3.5 px-4 text-[10px] font-black text-gray-600 uppercase tracking-wider">Hạng thành viên</th>
-                  <th className="py-3.5 px-4 text-[10px] font-black text-gray-600 uppercase tracking-wider text-center">Mốc điểm lên hạng</th>
-                  <th className="py-3.5 px-4 text-[10px] font-black text-gray-600 uppercase tracking-wider text-center">Duy trì / Tháng</th>
-                  <th className="py-3.5 px-4 text-[10px] font-black text-gray-600 uppercase tracking-wider text-center">Hệ số tích điểm</th>
-                  <th className="py-3.5 px-4 text-[10px] font-black text-gray-600 uppercase tracking-wider">Voucher Sinh Nhật</th>
-                  <th className="py-3.5 px-4 text-[10px] font-black text-gray-600 uppercase tracking-wider">Miễn Phí Giao Hàng</th>
+                  <th className="py-3.5 px-4 text-[10px] font-black text-gray-600 uppercase tracking-wider">{ui("Hạng thành viên")}</th>
+                  <th className="py-3.5 px-4 text-[10px] font-black text-gray-600 uppercase tracking-wider text-center">{ui("Mốc điểm lên hạng")}</th>
+                  <th className="py-3.5 px-4 text-[10px] font-black text-gray-600 uppercase tracking-wider text-center">{ui("Duy trì / Tháng")}</th>
+                  <th className="py-3.5 px-4 text-[10px] font-black text-gray-600 uppercase tracking-wider text-center">{ui("Hệ số tích điểm")}</th>
+                  <th className="py-3.5 px-4 text-[10px] font-black text-gray-600 uppercase tracking-wider">{ui("Voucher Sinh Nhật")}</th>
+                  <th className="py-3.5 px-4 text-[10px] font-black text-gray-600 uppercase tracking-wider">{ui("Miễn Phí Giao Hàng")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -625,22 +583,19 @@ export default function MembershipPage({ user, onNavigate }) {
                         <div className="flex items-center flex-wrap gap-2">
                           <span className="text-xs md:text-sm font-black text-gray-900 tracking-wide">{hang.ten}</span>
                           {isCurrent && (
-                            <span className="text-[9px] bg-[#b22830] text-white px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider shadow-xs whitespace-nowrap inline-flex items-center shrink-0">
-                              Hạng hiện tại
-                            </span>
+                            <span className="text-[9px] bg-[#b22830] text-white px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider shadow-xs whitespace-nowrap inline-flex items-center shrink-0">{ui("Hạng hiện tại")}</span>
                           )}
                         </div>
                       </td>
                       <td className="py-4 px-4 text-center text-xs font-black text-gray-800">
-                        {Number(hang.diem || 0).toLocaleString('vi-VN')} <span className="text-[10px] font-semibold text-gray-400">PTS</span>
+                        {Number(hang.diem || 0).toLocaleString(uiLocale())} <span className="text-[10px] font-semibold text-gray-400">PTS</span>
                       </td>
                       <td className="py-4 px-4 text-center text-xs font-bold text-gray-600">
                         {minSpendMonthly > 0 ? (
                           <span className="bg-amber-50 text-amber-800 border border-amber-200/80 px-2.5 py-1 rounded-lg text-[11px]">
-                            {minSpendMonthly.toLocaleString('vi-VN')}đ/tháng
-                          </span>
+                            {minSpendMonthly.toLocaleString(uiLocale())}{ui("đ/tháng")}</span>
                         ) : (
-                          <span className="text-gray-400 text-[11px]">Không yêu cầu</span>
+                          <span className="text-gray-400 text-[11px]">{ui("Không yêu cầu")}</span>
                         )}
                       </td>
                       <td className="py-4 px-4 text-center">
@@ -651,13 +606,13 @@ export default function MembershipPage({ user, onNavigate }) {
                       <td className="py-4 px-4 text-xs text-gray-700 font-semibold">
                         <div className="flex items-center gap-1.5">
                           <GiftIcon className="w-4 h-4 text-amber-500 shrink-0" />
-                          <span>{hang.voucher_sinh_nhat || 'Giảm 10% (tối đa 20.000đ)'}</span>
+                          <span>{hang.voucher_sinh_nhat || ui("Giảm 10% (tối đa 20.000đ)")}</span>
                         </div>
                       </td>
                       <td className="py-4 px-4 text-xs text-gray-700 font-semibold">
                         <div className="flex items-center gap-1.5">
                           <TruckIcon className="w-4 h-4 text-emerald-600 shrink-0" />
-                          <span>{hang.freeship || 'Không hỗ trợ'}</span>
+                          <span>{hang.freeship || ui("Không hỗ trợ")}</span>
                         </div>
                       </td>
                     </tr>

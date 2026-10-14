@@ -1,0 +1,140 @@
+{
+  "host": "Load Avg: 3.86, 4.51, 5.03 \nCPU usage: 15.14% user, 18.54% sys, 66.30% idle \nPhysMem: 15G used (1864M wired, 7902M compressor), 75M unused.\nVM: 236T vsize, 5684M framework vsize, 2150693(0) swapins, 2682950(0) swapouts.",
+  "swap": "vm.swapusage: total = 7168.00M  used = 6376.31M  free = 791.69M  (encrypted)",
+  "host_processes_by_cpu": [
+    {
+      "pid": 1617,
+      "cpu": 87.3,
+      "rss_KiB": 2174576,
+      "name": "com.apple.Virtualization.VirtualMachine"
+    },
+    {
+      "pid": 1636,
+      "cpu": 13.6,
+      "rss_KiB": 120896,
+      "name": "Docker Desktop Helper (Renderer)"
+    },
+    {
+      "pid": 603,
+      "cpu": 10.6,
+      "rss_KiB": 164672,
+      "name": "com.docker.backend"
+    },
+    {
+      "pid": 5508,
+      "cpu": 9.2,
+      "rss_KiB": 306368,
+      "name": "Google Chrome Helper (Renderer)"
+    },
+    {
+      "pid": 155,
+      "cpu": 8.1,
+      "rss_KiB": 40400,
+      "name": "WindowServer"
+    },
+    {
+      "pid": 2293,
+      "cpu": 4.4,
+      "rss_KiB": 72048,
+      "name": "Google Chrome Helper"
+    },
+    {
+      "pid": 173,
+      "cpu": 3.3,
+      "rss_KiB": 16016,
+      "name": "coreaudiod"
+    },
+    {
+      "pid": 24909,
+      "cpu": 1.9,
+      "rss_KiB": 143648,
+      "name": "Google Chrome Helper (Renderer)"
+    },
+    {
+      "pid": 295,
+      "cpu": 1.6,
+      "rss_KiB": 32288,
+      "name": "com.apple.DriverKit-AppleBCMWLAN"
+    },
+    {
+      "pid": 29168,
+      "cpu": 1.4,
+      "rss_KiB": 128272,
+      "name": "Google Chrome Helper (Renderer)"
+    }
+  ],
+  "network_counters": [
+    {
+      "interface": "anpi0",
+      "rx_bytes": 0,
+      "tx_bytes": 0
+    },
+    {
+      "interface": "anpi2",
+      "rx_bytes": 0,
+      "tx_bytes": 0
+    },
+    {
+      "interface": "anpi1",
+      "rx_bytes": 0,
+      "tx_bytes": 0
+    },
+    {
+      "interface": "en4",
+      "rx_bytes": 0,
+      "tx_bytes": 0
+    },
+    {
+      "interface": "en5",
+      "rx_bytes": 0,
+      "tx_bytes": 0
+    },
+    {
+      "interface": "en6",
+      "rx_bytes": 0,
+      "tx_bytes": 0
+    },
+    {
+      "interface": "en1",
+      "rx_bytes": 0,
+      "tx_bytes": 0
+    },
+    {
+      "interface": "en2",
+      "rx_bytes": 0,
+      "tx_bytes": 0
+    },
+    {
+      "interface": "en3",
+      "rx_bytes": 0,
+      "tx_bytes": 0
+    },
+    {
+      "interface": "ap1",
+      "rx_bytes": 0,
+      "tx_bytes": 0
+    },
+    {
+      "interface": "en0",
+      "rx_bytes": 3937516891,
+      "tx_bytes": 4757537791
+    },
+    {
+      "interface": "bridge0",
+      "rx_bytes": 0,
+      "tx_bytes": 0
+    },
+    {
+      "interface": "awdl0",
+      "rx_bytes": 717244,
+      "tx_bytes": 1038244
+    },
+    {
+      "interface": "llw0",
+      "rx_bytes": 0,
+      "tx_bytes": 0
+    }
+  ],
+  "docker_resources": "8 8319770624",
+  "docker_stats": "avengers_db 0.00% 36.39MiB / 7.748GiB\navengers_redis 0.63% 4.168MiB / 128MiB\navengers_mq 0.43% 105.4MiB / 512MiB\ndelivery-api-gateway 0.10% 305.8MiB / 7.748GiB\ndelivery-ai-agent-service 0.26% 17.24MiB / 7.748GiB\ndelivery-payment-service 0.23% 344.1MiB / 7.748GiB\ndelivery-analytics-service 0.16% 288.8MiB / 7.748GiB\ndelivery-notification-service 0.64% 385.9MiB / 7.748GiB\ndelivery-tracking-service 1.25% 553.2MiB / 7.748GiB\ndelivery-order-service 0.13% 484.7MiB / 7.748GiB\ndelivery-core-service 0.79% 418.7MiB / 7.748GiB\ndelivery-auth-service 0.22% 510.5MiB / 7.748GiB\ndelivery-kafka 1.82% 258.4MiB / 7.748GiB\ndelivery-redis 0.56% 11.93MiB / 7.748GiB\ndelivery-zookeeper 0.45% 83.49MiB / 7.748GiB\n"
+}

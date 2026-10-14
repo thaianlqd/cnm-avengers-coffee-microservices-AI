@@ -1,3 +1,4 @@
+import { randomUUID } from 'expo-crypto'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const SESSION_KEY = 'avengers_user_session'
@@ -44,16 +45,10 @@ export async function getStoredToken() {
 }
 
 export async function getGuestUserId() {
-  const GUEST_KEY = 'avengers_anon_guest_id'
-  try {
-    let anonId = await AsyncStorage.getItem(GUEST_KEY)
-    if (!anonId) {
-      anonId = `guest_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
-      await AsyncStorage.setItem(GUEST_KEY, anonId)
-    }
-    return anonId
-  } catch {
-    return `guest_${Date.now()}`
-  }
+  const key = 'avengers_anon_guest_id'
+  const current = await AsyncStorage.getItem(key).catch(() => null)
+  if (/^anon-[0-9a-f-]{36}$/i.test(current || '')) return current
+  const id = `anon-${randomUUID()}`
+  await AsyncStorage.setItem(key, id).catch(() => {})
+  return id
 }
-

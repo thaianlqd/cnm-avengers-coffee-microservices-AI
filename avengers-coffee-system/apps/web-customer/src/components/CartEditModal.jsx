@@ -1,10 +1,12 @@
+import { uiText as ui, useUiLanguage, uiLocale } from "../lib/uiText";
 import React, { useState, useEffect } from 'react';
 import { XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { useCart } from '../context/CartContext';
 
 export default function CartEditModal({ cartItem, product, isOpen, onClose, onSave }) {
+  useUiLanguage();
   const { updateCartItemOptions } = useCart();
-  
+
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedLuongDa, setSelectedLuongDa] = useState('');
   const [selectedDoNgot, setSelectedDoNgot] = useState('');
@@ -88,13 +90,13 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose, onSa
     return extra;
   }, [hasDynamicVariants, product?.bien_the, dynamicSelections]);
 
-  const basePrice = (selectedSize && availableSizes[selectedSize] !== undefined) 
-    ? Number(availableSizes[selectedSize]) 
+  const basePrice = (selectedSize && availableSizes[selectedSize] !== undefined)
+    ? Number(availableSizes[selectedSize])
     : Number(product?.gia_ban || product?.price || 30000);
 
   const toppingsPrice = selectedToppings.reduce((acc, t) => acc + Number(availableToppings[t] || 0), 0);
   const loaiSuaPrice = (selectedLoaiSua && availableLoaiSua[selectedLoaiSua] !== undefined) ? Number(availableLoaiSua[selectedLoaiSua]) : 0;
-  
+
   const finalPrice = hasDynamicVariants
     ? Number(product?.gia_ban || product?.price || 30000) + dynamicPrice
     : basePrice + toppingsPrice + loaiSuaPrice;
@@ -153,10 +155,10 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose, onSa
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white w-full max-w-2xl max-h-[90vh] rounded-[24px] overflow-hidden shadow-2xl relative flex flex-col animate-in zoom-in duration-300">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50">
-          <h2 className="text-xl font-bold text-gray-800">Chỉnh sửa món</h2>
+          <h2 className="text-xl font-bold text-gray-800">{ui("Chỉnh sửa món")}</h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
             <XMarkIcon className="h-6 w-6 text-gray-500" />
           </button>
@@ -170,7 +172,7 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose, onSa
             </div>
             <div>
               <h3 className="font-bold text-lg text-gray-800">{product.ten_san_pham}</h3>
-              <p className="text-[#b22830] font-bold text-xl">{finalPrice.toLocaleString('vi-VN')}đ</p>
+              <p className="text-[#b22830] font-bold text-xl">{finalPrice.toLocaleString(uiLocale())}{ui("đ")}</p>
             </div>
           </div>
 
@@ -183,17 +185,17 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose, onSa
                 if (optionKeys.length === 0) return null;
 
                 return (
-                  <div key={attrName}>
-                    <span className="block text-sm font-bold text-gray-700 mb-2">{attrName}:</span>
+                  <div key={ui(attrName)}>
+                    <span className="block text-sm font-bold text-gray-700 mb-2">{ui(attrName)}:</span>
                     <div className="flex flex-wrap gap-2">
                       {optionKeys.map((opt) => {
-                        const isSelected = isMulti 
+                        const isSelected = isMulti
                           ? (dynamicSelections[attrName] || []).includes(opt)
                           : dynamicSelections[attrName] === opt;
 
                         return (
                           <button
-                            key={opt}
+                            key={ui(opt)}
                             type="button"
                             onClick={() => {
                               if (isMulti) {
@@ -219,7 +221,7 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose, onSa
                             }`}
                           >
                             {isMulti && isSelected && <CheckIcon className="w-4 h-4" />}
-                            {opt} {optionsObj[opt] > 0 ? `(+${Number(optionsObj[opt]).toLocaleString('vi-VN')}đ)` : ''}
+                            {ui(opt)} {optionsObj[opt] > 0 ? ui("(+{{v0}}đ)", {v0:Number(optionsObj[opt]).toLocaleString(uiLocale())}) : ''}
                           </button>
                         );
                       })}
@@ -232,11 +234,11 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose, onSa
                 {/* Kích thước */}
                 {sizeKeys.length > 0 && (
                   <div>
-                    <span className="block text-sm font-bold text-gray-700 mb-2">Kích thước:</span>
+                    <span className="block text-sm font-bold text-gray-700 mb-2">{ui("Kích thước:")}</span>
                     <div className="flex flex-wrap gap-2">
                       {sizeKeys.map((sz) => (
                         <button
-                          key={sz}
+                          key={ui(sz)}
                           type="button"
                           onClick={() => setSelectedSize(sz)}
                           className={`px-4 py-2 rounded-lg border font-bold text-sm transition-all ${
@@ -245,7 +247,7 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose, onSa
                               : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
                           }`}
                         >
-                          {sz} {availableSizes[sz] > 0 ? `(+${availableSizes[sz].toLocaleString('vi-VN')}đ)` : ''}
+                          {ui(sz)} {availableSizes[sz] > 0 ? ui("(+{{v0}}đ)", {v0:availableSizes[sz].toLocaleString(uiLocale())}) : ''}
                         </button>
                       ))}
                     </div>
@@ -255,7 +257,7 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose, onSa
                 {/* Lượng đá */}
                 {ldKeys.length > 0 && (
                   <div>
-                    <span className="block text-sm font-bold text-gray-700 mb-2">Lượng đá:</span>
+                    <span className="block text-sm font-bold text-gray-700 mb-2">{ui("Lượng đá:")}</span>
                     <div className="flex flex-wrap gap-2">
                       {ldKeys.map((ld) => (
                         <button
@@ -278,7 +280,7 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose, onSa
                 {/* Độ ngọt */}
                 {dnKeys.length > 0 && (
                   <div>
-                    <span className="block text-sm font-bold text-gray-700 mb-2">Độ ngọt:</span>
+                    <span className="block text-sm font-bold text-gray-700 mb-2">{ui("Độ ngọt:")}</span>
                     <div className="flex flex-wrap gap-2">
                       {dnKeys.map((dn) => (
                         <button
@@ -301,7 +303,7 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose, onSa
                 {/* Loại sữa */}
                 {lsKeys.length > 0 && (
                   <div>
-                    <span className="block text-sm font-bold text-gray-700 mb-2">Loại sữa:</span>
+                    <span className="block text-sm font-bold text-gray-700 mb-2">{ui("Loại sữa:")}</span>
                     <div className="flex flex-wrap gap-2">
                       {lsKeys.map((ls) => (
                         <button
@@ -314,7 +316,7 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose, onSa
                               : 'border-gray-300 text-gray-700 hover:border-[#b22830]'
                           }`}
                         >
-                          {ls} {availableLoaiSua[ls] >= 0 ? `(+${Number(availableLoaiSua[ls]).toLocaleString('vi-VN')}đ)` : ''}
+                          {ls} {availableLoaiSua[ls] >= 0 ? ui("(+{{v0}}đ)", {v0:Number(availableLoaiSua[ls]).toLocaleString(uiLocale())}) : ''}
                         </button>
                       ))}
                     </div>
@@ -324,7 +326,7 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose, onSa
                 {/* Toppings */}
                 {toppingKeys.length > 0 && (
                   <div>
-                    <span className="block text-sm font-bold text-gray-700 mb-2">Thêm Topping:</span>
+                    <span className="block text-sm font-bold text-gray-700 mb-2">{ui("Thêm Topping:")}</span>
                     <div className="flex flex-wrap gap-2">
                       {toppingKeys.map((tp) => {
                         const isSelected = selectedToppings.includes(tp);
@@ -346,8 +348,7 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose, onSa
                             }`}
                           >
                             {isSelected && <CheckIcon className="w-4 h-4" />}
-                            {tp} (+{Number(availableToppings[tp]).toLocaleString('vi-VN')}đ)
-                          </button>
+                            {tp} (+{Number(availableToppings[tp]).toLocaleString(uiLocale())}{ui("đ)")}</button>
                         );
                       })}
                     </div>
@@ -364,16 +365,12 @@ export default function CartEditModal({ cartItem, product, isOpen, onClose, onSa
             type="button"
             onClick={onClose}
             className="px-6 py-2.5 rounded-xl border border-gray-300 font-bold text-gray-700 hover:bg-gray-100 transition-colors"
-          >
-            Hủy
-          </button>
+          >{ui("Hủy")}</button>
           <button
             type="button"
             onClick={handleUpdate}
             className="px-6 py-2.5 rounded-xl bg-[#b22830] text-white font-bold shadow-md hover:bg-[#911e25] transition-colors"
-          >
-            Cập nhật giỏ hàng
-          </button>
+          >{ui("Cập nhật giỏ hàng")}</button>
         </div>
       </div>
     </div>

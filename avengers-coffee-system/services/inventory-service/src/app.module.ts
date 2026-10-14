@@ -1,3 +1,4 @@
+import { HealthController } from './health.controller';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Client } from 'pg';
@@ -50,7 +51,7 @@ const inventorySchema = process.env.DB_SCHEMA || 'inventory';
     }),
     InventoryModule,
   ],
-  controllers: [AppController],
+  controllers: [HealthController, AppController],
   providers: [AppService],
 })
 export class AppModule { }

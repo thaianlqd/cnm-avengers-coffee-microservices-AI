@@ -1,0 +1,33 @@
+{
+  "started_at": "2026-10-13T17:46:35.057637+00:00",
+  "vus": 250,
+  "think_seconds": 3,
+  "cache_ms": 5000,
+  "accept_encoding": "legacy identity (header absent)",
+  "ramp_seconds": 60,
+  "hold_seconds": 120,
+  "down_seconds": 30,
+  "k6_version": "k6 v0.57.0 (commit/50afd82c18, go1.23.6, darwin/arm64)",
+  "source_head": "9cc558034d5190decd88188818d04d7962c0645e",
+  "generator_rlimit_nofile": [
+    1048575,
+    9223372036854775807
+  ],
+  "host_fd_limit": "maxfiles    256            unlimited",
+  "host_cpu_count": "8",
+  "workload_sha256": "bbdb588301541dbcd0998d00b3da84282152aa7e79912865208c27baa296da3f",
+  "k6_sha256": "e234ca660a9c73b8dafd7d0cbbf4f7edeb4eebcc5ab55a60b6483db2b4658fe7",
+  "gateway_policy": {
+    "GATEWAY_REQUEST_LOGGING": "false",
+    "GATEWAY_PROXY_KEEP_ALIVE": "false",
+    "GATEWAY_MAX_REQUESTS_PER_SOCKET": "0"
+  },
+  "gateway_runtime": {
+    "node": "v20.20.2",
+    "arch": "arm64"
+  },
+  "load_started_at": "2026-10-13T17:46:54.967997+00:00",
+  "k6_exit": 0,
+  "load_finished_at": "2026-10-13T17:50:28.351638+00:00",
+  "finished_at": "2026-10-13T17:54:55.699172+00:00"
+}

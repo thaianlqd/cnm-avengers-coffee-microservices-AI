@@ -1,0 +1,662 @@
+[
+  {
+    "path": "K8S_5K_CAPACITY_REPORT.md",
+    "lines": 266,
+    "sha256": "42720fcbafbf92464f22f26e31323e362e47975e156f5be27da8eb909375789d"
+  },
+  {
+    "path": "K8S_CAPACITY_REPORT.md",
+    "lines": 320,
+    "sha256": "cbf46fbbbdc728da69f71f7ba2e60ebad1f6eb22bb807ce882246d317c967484"
+  },
+  {
+    "path": "K8S_DEMO_GUIDE.md",
+    "lines": 344,
+    "sha256": "591e346396027d02f61ee19d9a77783b3a388e10a538e5fabf64dcbb0d863b9c"
+  },
+  {
+    "path": "K8S_VERIFICATION_REPORT.md",
+    "lines": 342,
+    "sha256": "e29f544c33a2d284944068ef9c4a4803fa3bb0beb62297138bb6198f1262e000"
+  },
+  {
+    "path": "avengers-coffee-system/api-gateway/gateway-root/src/app.controller.spec.ts",
+    "lines": 22,
+    "sha256": "88faf5523fd7f5dae5a6c78be2dd1709eb6c20ee82c64fc399f8a2e8fb767527"
+  },
+  {
+    "path": "avengers-coffee-system/api-gateway/gateway-root/src/app.controller.ts",
+    "lines": 12,
+    "sha256": "260f889b9e2b69f77be1155348eb345166aec664b3efff6720053c6844a41f28"
+  },
+  {
+    "path": "avengers-coffee-system/api-gateway/gateway-root/src/app.module.ts",
+    "lines": 11,
+    "sha256": "e25b0e3fb27e38859628b862ac5ec701371e60214334f5be7894bfbe58784ea6"
+  },
+  {
+    "path": "avengers-coffee-system/api-gateway/gateway-root/src/app.service.ts",
+    "lines": 8,
+    "sha256": "eaf8514ce110fa428a93a27408df4d06d133dbd9ed0a775c315ddfdd507853a9"
+  },
+  {
+    "path": "avengers-coffee-system/api-gateway/gateway-root/src/gateway-http-policy.spec.ts",
+    "lines": 15,
+    "sha256": "4e483e3078da3a2d7fbaca137ef03e2a3fa443a7821966faa5b0b7e0b1254815"
+  },
+  {
+    "path": "avengers-coffee-system/api-gateway/gateway-root/src/gateway-http-policy.ts",
+    "lines": 28,
+    "sha256": "42f9478a5714b6ae84af8a3ae843ba2936c54ef93e1dd9e09a14b73385aba7fa"
+  },
+  {
+    "path": "avengers-coffee-system/api-gateway/gateway-root/src/health.controller.spec.ts",
+    "lines": 12,
+    "sha256": "137897521286f5a1d0792a6d9525e5c2c1cc08256087ad216406e8abc429054a"
+  },
+  {
+    "path": "avengers-coffee-system/api-gateway/gateway-root/src/health.controller.ts",
+    "lines": 14,
+    "sha256": "ac74917b20896f3df4630899aec185a64af5e521c9c9c3f1df5fc8b6f4a22b65"
+  },
+  {
+    "path": "avengers-coffee-system/api-gateway/gateway-root/src/main.ts",
+    "lines": 115,
+    "sha256": "346fbe6bd6c57a72a8d36466be66e5984e559c796dda996930207faa784eb743"
+  },
+  {
+    "path": "avengers-coffee-system/api-gateway/gateway-root/src/proxy-agents.spec.ts",
+    "lines": 96,
+    "sha256": "8664d3bc5bb6eb68959530006a66593eb567a01054c6f9796dd62a926f9d91f9"
+  },
+  {
+    "path": "avengers-coffee-system/api-gateway/gateway-root/src/proxy-agents.ts",
+    "lines": 38,
+    "sha256": "320f09f7a25ffe5ebe7928868141b7a4d134f01059bf0cb4b6c66c60918007c9"
+  },
+  {
+    "path": "avengers-coffee-system/api-gateway/gateway-root/src/request-logging.spec.ts",
+    "lines": 25,
+    "sha256": "6c4104ba29c0222e33db2ad8fd1295f55b7d16387e6cc840e8e6026372b88f82"
+  },
+  {
+    "path": "avengers-coffee-system/api-gateway/gateway-root/src/request-logging.ts",
+    "lines": 19,
+    "sha256": "1814167bf0f317676319dce93a6f349da654f94a9d26756e5ae295013e41a85c"
+  },
+  {
+    "path": "avengers-coffee-system/apps/web-customer/src/App.jsx",
+    "lines": 2318,
+    "sha256": "9a2e760f3d9a6527ea77739b3221d1e02e77b12669f7074c6df3d2314a9a227f"
+  },
+  {
+    "path": "avengers-coffee-system/services/identity-service/src/health.controller.ts",
+    "lines": 45,
+    "sha256": "8a780f2e89767398a37217121b3acfc9a0789c62dc5b2cdc0f50e6e2375504ec"
+  },
+  {
+    "path": "avengers-coffee-system/services/identity-service/src/main.ts",
+    "lines": 14,
+    "sha256": "664deeb10813e8b31bec212f9a27aafc42a5b2c2fbe1b93a0026dc5ffb2659a6"
+  },
+  {
+    "path": "avengers-coffee-system/services/identity-service/src/modules/user/user.controller.ts",
+    "lines": 547,
+    "sha256": "3906059673bf3fa1f5e832af17d5b0a87f2a862be687434008237835ba879176"
+  },
+  {
+    "path": "avengers-coffee-system/services/identity-service/src/modules/user/user.service.ts",
+    "lines": 3290,
+    "sha256": "8c543dae592fa470e4d7478c759dbf584400246f8d0e0f248c5bddcf2e9e52c4"
+  },
+  {
+    "path": "avengers-coffee-system/services/identity-service/src/public-browse-cache.ts",
+    "lines": 44,
+    "sha256": "7b81a4c4f37b5a3adcb38ee867967735f0d9681fa838b6afc74385e03dfbb3cb"
+  },
+  {
+    "path": "avengers-coffee-system/services/menu-service/src/health.controller.ts",
+    "lines": 43,
+    "sha256": "577353d6e27abc039524e7aebc6f9cb5189655e5e163be5a01bf3e7c045f201f"
+  },
+  {
+    "path": "avengers-coffee-system/services/menu-service/src/main.ts",
+    "lines": 14,
+    "sha256": "7e03d60487ef94c4965b0ad0f560eb182c31317335ce7c9c39c5714646c50c7b"
+  },
+  {
+    "path": "avengers-coffee-system/services/menu-service/src/modules/menu/menu.controller.ts",
+    "lines": 31,
+    "sha256": "1dc899f2827e9d4e08cdea737422346711e8b25bf41d67529665ec659655a3c1"
+  },
+  {
+    "path": "avengers-coffee-system/services/menu-service/src/modules/menu/menu.service.ts",
+    "lines": 28,
+    "sha256": "9401064530961da65c6a886d926707fa663efd28e4b2b5c347da588033c56f8a"
+  },
+  {
+    "path": "avengers-coffee-system/services/menu-service/src/public-browse-cache.ts",
+    "lines": 44,
+    "sha256": "7b81a4c4f37b5a3adcb38ee867967735f0d9681fa838b6afc74385e03dfbb3cb"
+  },
+  {
+    "path": "avengers-coffee-system/services/news-service/src/health.controller.ts",
+    "lines": 43,
+    "sha256": "577353d6e27abc039524e7aebc6f9cb5189655e5e163be5a01bf3e7c045f201f"
+  },
+  {
+    "path": "avengers-coffee-system/services/news-service/src/main.ts",
+    "lines": 30,
+    "sha256": "34f1e87962117a03f30740a89d3d582b1f1ba4b84a49660812d218aa4cf227eb"
+  },
+  {
+    "path": "avengers-coffee-system/services/news-service/src/modules/news/news.controller.ts",
+    "lines": 152,
+    "sha256": "ec4e33081d6854a5e4bc283373526a19f1865cb5c594bc032a924cd9b5196869"
+  },
+  {
+    "path": "avengers-coffee-system/services/news-service/src/modules/news/news.service.ts",
+    "lines": 200,
+    "sha256": "45a5d449a937910250d7d8f2f133f62ca9e8e0c24ae669d9bfd3fcfd1eb3801c"
+  },
+  {
+    "path": "avengers-coffee-system/services/news-service/src/public-browse-cache.ts",
+    "lines": 44,
+    "sha256": "7b81a4c4f37b5a3adcb38ee867967735f0d9681fa838b6afc74385e03dfbb3cb"
+  },
+  {
+    "path": "k8s/base/ai-service/deployment.yaml",
+    "lines": 77,
+    "sha256": "9be2e964ed3de6e779b85afc3d199c60232f4b31ee042d9469ba47aa9a954ac9"
+  },
+  {
+    "path": "k8s/base/ai-service/kustomization.yaml",
+    "lines": 5,
+    "sha256": "2237ec3375f88871a58160c1761c69c227a02db72dd0c00b23cf6e9ba318bb38"
+  },
+  {
+    "path": "k8s/base/ai-service/service.yaml",
+    "lines": 17,
+    "sha256": "5c9f5082033f0762ce774cc6d9b13d1996264701ace9c39df7560be6aba5443a"
+  },
+  {
+    "path": "k8s/base/api-gateway/deployment.yaml",
+    "lines": 83,
+    "sha256": "cf5c22e6829ace7d1fe54d6a19d92f1ec4308c1fb2f9ecea901912cf2e57a43b"
+  },
+  {
+    "path": "k8s/base/api-gateway/kustomization.yaml",
+    "lines": 6,
+    "sha256": "73afc21a26d60fec4f67fa5cbd70b085ee6b1d0aaf2bc4ffc1fd9e01442f4f80"
+  },
+  {
+    "path": "k8s/base/api-gateway/pdb.yaml",
+    "lines": 14,
+    "sha256": "bdaaa9ab301d78c4088614d81794afc6df42206827b4748d6891b12e0f514763"
+  },
+  {
+    "path": "k8s/base/api-gateway/service.yaml",
+    "lines": 17,
+    "sha256": "6c30873e5f88f6aa7b256a977e96b1961eee7d53596fbaf5dedb7386820fc136"
+  },
+  {
+    "path": "k8s/base/configmap.yaml",
+    "lines": 22,
+    "sha256": "1cbb6e6a41e94fd43bf3353b28a6edc317a03f375de2a3e0080d3dbc6ce3fa66"
+  },
+  {
+    "path": "k8s/base/identity-service/deployment.yaml",
+    "lines": 77,
+    "sha256": "96e3f28da4e88e6ae92575a9077a9f46dee6461e90b00378b3b855f8b8b6e503"
+  },
+  {
+    "path": "k8s/base/identity-service/kustomization.yaml",
+    "lines": 5,
+    "sha256": "2237ec3375f88871a58160c1761c69c227a02db72dd0c00b23cf6e9ba318bb38"
+  },
+  {
+    "path": "k8s/base/identity-service/service.yaml",
+    "lines": 17,
+    "sha256": "44834a96e82678f267a9f2d257d59613c71b2d2f43e87671dce24ea3fb61b711"
+  },
+  {
+    "path": "k8s/base/inventory-service/deployment.yaml",
+    "lines": 77,
+    "sha256": "55c0edcf39e1eb5c13a2ea699a93ec0bdce8aba80330fd8a4f30f07e0c65c8f3"
+  },
+  {
+    "path": "k8s/base/inventory-service/kustomization.yaml",
+    "lines": 5,
+    "sha256": "2237ec3375f88871a58160c1761c69c227a02db72dd0c00b23cf6e9ba318bb38"
+  },
+  {
+    "path": "k8s/base/inventory-service/service.yaml",
+    "lines": 17,
+    "sha256": "a61c1f0a62c38d1a69b8ab6ba5abc582b0125d2e51db3e184ab11eb13443fdc6"
+  },
+  {
+    "path": "k8s/base/kustomization.yaml",
+    "lines": 14,
+    "sha256": "cb49c179cf791212fadff9c7b6b5de454f061e53e3a6498a75696af8f275b6b1"
+  },
+  {
+    "path": "k8s/base/menu-service/deployment.yaml",
+    "lines": 102,
+    "sha256": "9933d37e6d1982cd7bb3bd609d2e2ceec1090399bbba430e6ec746d88fa25f45"
+  },
+  {
+    "path": "k8s/base/menu-service/kustomization.yaml",
+    "lines": 5,
+    "sha256": "2237ec3375f88871a58160c1761c69c227a02db72dd0c00b23cf6e9ba318bb38"
+  },
+  {
+    "path": "k8s/base/menu-service/service.yaml",
+    "lines": 17,
+    "sha256": "63e211ffb39d59b2534eb0111e6d88c64d7396ae20bc7b7d3e7c8cd0ff41c007"
+  },
+  {
+    "path": "k8s/base/namespace.yaml",
+    "lines": 8,
+    "sha256": "e3f01c32e6eea06e142799a2659d4df300095d2d60a4f38dc2a3508e684bb9be"
+  },
+  {
+    "path": "k8s/base/news-service/deployment.yaml",
+    "lines": 102,
+    "sha256": "9dd1d10265dec9b15b21491473a287c3990c4d9d23ca04eb8d389cac3a6c227f"
+  },
+  {
+    "path": "k8s/base/news-service/kustomization.yaml",
+    "lines": 5,
+    "sha256": "2237ec3375f88871a58160c1761c69c227a02db72dd0c00b23cf6e9ba318bb38"
+  },
+  {
+    "path": "k8s/base/news-service/service.yaml",
+    "lines": 17,
+    "sha256": "e761d61e8e6276cfb2bbc3c8f41af3923dfd44a86cfb0a7b0608c49a9c8207b6"
+  },
+  {
+    "path": "k8s/base/order-service/deployment.yaml",
+    "lines": 77,
+    "sha256": "53b0c403fdd75ed80b0a932b13e3b70f51dd7899f8656decfabed2f82e0df050"
+  },
+  {
+    "path": "k8s/base/order-service/kustomization.yaml",
+    "lines": 5,
+    "sha256": "2237ec3375f88871a58160c1761c69c227a02db72dd0c00b23cf6e9ba318bb38"
+  },
+  {
+    "path": "k8s/base/order-service/service.yaml",
+    "lines": 21,
+    "sha256": "2ae3f98573cc4a96a95b5958a5c9878c3c6ae583cb47c667603bf83f79698157"
+  },
+  {
+    "path": "k8s/base/web-customer/deployment.yaml",
+    "lines": 67,
+    "sha256": "f3397b7122173de52c0abad7680fd5178c8ea18da13d5fa072f23820dc3856a5"
+  },
+  {
+    "path": "k8s/base/web-customer/kustomization.yaml",
+    "lines": 5,
+    "sha256": "2237ec3375f88871a58160c1761c69c227a02db72dd0c00b23cf6e9ba318bb38"
+  },
+  {
+    "path": "k8s/base/web-customer/service.yaml",
+    "lines": 17,
+    "sha256": "cfe1f04b00121d5f2e88391cf595ef58d4def0be2f3f2679cbd1e6bfa1743d9a"
+  },
+  {
+    "path": "k8s/overlays/docker-desktop/api-gateway-exposure.yaml",
+    "lines": 10,
+    "sha256": "deb5073d5301ff3219bf77eba9f0a3cf62af80b0fe79e7157460a8a8861c428a"
+  },
+  {
+    "path": "k8s/overlays/docker-desktop/hpa.yaml",
+    "lines": 119,
+    "sha256": "e7d3acc2a55affd6e1b737455530a083057e215f351d29defcd885752ce1bec3"
+  },
+  {
+    "path": "k8s/overlays/docker-desktop/kustomization.yaml",
+    "lines": 22,
+    "sha256": "63ff3c7872ef02fe24ed591b550d23eb2af54d605f10319acfc7865a8d2ea197"
+  },
+  {
+    "path": "k8s/overlays/docker-desktop/order-service-exposure.yaml",
+    "lines": 10,
+    "sha256": "91f57a84cb3d60fced3b6a73b1f987a776326a343a7784871c4ed41b9879d98b"
+  },
+  {
+    "path": "k8s/overlays/docker-desktop/web-customer-exposure.yaml",
+    "lines": 10,
+    "sha256": "a36ba3f482ffeda812869f63a6000dd09c2b2a39ccd5d69632819aaa3c5ec6b1"
+  },
+  {
+    "path": "load-tests/k6/README.md",
+    "lines": 137,
+    "sha256": "d77f1550d7cade23276884d71a43f381fca609a397b153d2c83200041e5a24b5"
+  },
+  {
+    "path": "load-tests/k6/customer-browse-3k.js",
+    "lines": 72,
+    "sha256": "a20876cc25e03840a5453e20c5accd6dcfa2a0315f6bde67b73d629e84a84217"
+  },
+  {
+    "path": "load-tests/k6/customer-browse-5k.js",
+    "lines": 72,
+    "sha256": "459b51aecc33a57234dfcfff612708e5760084956fd3fb17714d9f23233ba3f3"
+  },
+  {
+    "path": "load-tests/k6/customer-browse-capacity.js",
+    "lines": 70,
+    "sha256": "bbdb588301541dbcd0998d00b3da84282152aa7e79912865208c27baa296da3f"
+  },
+  {
+    "path": "load-tests/k6/customer-browse.js",
+    "lines": 70,
+    "sha256": "64bec53696c086c65c3b2fc3792105bca46af2bb2526b660083014108cb42f5d"
+  },
+  {
+    "path": "scripts/aws-k6/README.md",
+    "lines": 193,
+    "sha256": "987c908892c85d39fb8edfb0220ee778c3cc0b2f90eb4f8b6a575cc0ab511438"
+  },
+  {
+    "path": "scripts/aws-k6/analyze-3k.py",
+    "lines": 120,
+    "sha256": "90dfc32d74cb13c3ec31ef69223cad4969f762a9e1c2b64e2f0749e56138d128"
+  },
+  {
+    "path": "scripts/aws-k6/analyze.py",
+    "lines": 94,
+    "sha256": "a1b9c3550e15257004b0ba0097e2cfd9d56f2e447e96f5740160f94d86615ee4"
+  },
+  {
+    "path": "scripts/aws-k6/archive-3k.py",
+    "lines": 61,
+    "sha256": "42288b50a76df5af0fb567a69f7314fc102f71556e4b13391459cd66f85668fc"
+  },
+  {
+    "path": "scripts/aws-k6/archive.py",
+    "lines": 54,
+    "sha256": "7c9296f1eeb83b267116058bb8cbc5fe5c113ed9bbf1c99eedc8f011dd242c10"
+  },
+  {
+    "path": "scripts/aws-k6/bootstrap.sh",
+    "lines": 28,
+    "sha256": "57053e12edc4f159cdc8c7f8c9214a9ea44764f1c4e59539223a5167bb3ddbe0"
+  },
+  {
+    "path": "scripts/aws-k6/control-3k.cjs",
+    "lines": 49,
+    "sha256": "9e8404d5055734fa8b954380d442a7b4d7803f9b246d8ee140b1b100d26e433f"
+  },
+  {
+    "path": "scripts/aws-k6/control-3k.test.cjs",
+    "lines": 24,
+    "sha256": "a75e0ff272ab3340d9c4c32b7af4d38bd386fb811b8a7d81be54315adaac59fe"
+  },
+  {
+    "path": "scripts/aws-k6/control-server.cjs",
+    "lines": 49,
+    "sha256": "ac2cd65571a6a4375d3360109e8a01aed9b453c1923dbecb7fafb143ed2e39d9"
+  },
+  {
+    "path": "scripts/aws-k6/control-server.test.cjs",
+    "lines": 24,
+    "sha256": "5bc7987cb303dd74930575bfab06ff17a6b022ce03a4d8e625e8e3bf7fa095ad"
+  },
+  {
+    "path": "scripts/aws-k6/control-worker.py",
+    "lines": 66,
+    "sha256": "8ba1fadb0d3dd3b83a63bdbcf678ea46d86b97c9f86b1ef3515e4306415e1087"
+  },
+  {
+    "path": "scripts/aws-k6/egress-3k.py",
+    "lines": 40,
+    "sha256": "49cb1157437f138a34180f9386c7d04d4c9e3d0ed752e26ff9d4d24cb6d18f6f"
+  },
+  {
+    "path": "scripts/aws-k6/https-session.py",
+    "lines": 159,
+    "sha256": "cc2b35b6dfc7179a9ce4afbe24eb567df148c0170dcc08af710dfb70a775e419"
+  },
+  {
+    "path": "scripts/aws-k6/legacy-3k.py",
+    "lines": 82,
+    "sha256": "876554ff47ac0299c0433a2c76961815c1122607f00d81a4d66ba4d30ad32fcf"
+  },
+  {
+    "path": "scripts/aws-k6/metrics-3k.py",
+    "lines": 31,
+    "sha256": "03f06fcb9c94b3299648b1281c906767c24944bd9de396bbff5ebf5daa55e14f"
+  },
+  {
+    "path": "scripts/aws-k6/network-3k.py",
+    "lines": 74,
+    "sha256": "93fe149e04b51786d90ef893bdf1f93b3385e544bffcad21ad766003355d9b08"
+  },
+  {
+    "path": "scripts/aws-k6/phase-3k.py",
+    "lines": 270,
+    "sha256": "a3b54ad042af7a689b6119c349ae46b8e0255f252560b614d062b1d812457b01"
+  },
+  {
+    "path": "scripts/aws-k6/public-ingress.cjs",
+    "lines": 53,
+    "sha256": "bffe14f076212845884311534b992edf7851bedb9cc364b8a9ea29c7261547e1"
+  },
+  {
+    "path": "scripts/aws-k6/public-ingress.test.cjs",
+    "lines": 26,
+    "sha256": "a4782048eefdff017986d5dc8c3be7d20f488d64f20a1c341760f5bef5183516"
+  },
+  {
+    "path": "scripts/aws-k6/remote-metrics.py",
+    "lines": 26,
+    "sha256": "932de8cbb72da1e9b130977f13db63caca51c3c5dde24a47fd53108a46c52233"
+  },
+  {
+    "path": "scripts/aws-k6/sample-path.py",
+    "lines": 23,
+    "sha256": "594611da0e145ad7de8fadf8d1a5a472a0e4ff6dac0301ee894687a564836cb9"
+  },
+  {
+    "path": "scripts/aws-k6/session.py",
+    "lines": 377,
+    "sha256": "108b6bf00fb0d92ad28e428b917df0b1e272f081bdb55fb260665a95cc311cf5"
+  },
+  {
+    "path": "scripts/aws-k6/test_adequacy3k.py",
+    "lines": 15,
+    "sha256": "909d75049c5312425d45b910a427c0b3bbcd9c438d163559f80873bd9884406e"
+  },
+  {
+    "path": "scripts/aws-k6/test_analyze.py",
+    "lines": 16,
+    "sha256": "7f8e78d923c2353e2bef4d74db9e5bfe4e9b8efe08063f6e88b0dbdea32bc250"
+  },
+  {
+    "path": "scripts/aws-k6/test_egress3k.py",
+    "lines": 14,
+    "sha256": "addf9de6884a251375ea750a3acb5231bd366cc65d5c83a5e8e63bbd976dff28"
+  },
+  {
+    "path": "scripts/aws-k6/test_phase3k.py",
+    "lines": 30,
+    "sha256": "56d0439ef92c70102eabe63acb9ef5b93e0adad281258b52f164b8957e3f16e3"
+  },
+  {
+    "path": "scripts/aws-k6/test_session.py",
+    "lines": 41,
+    "sha256": "30b272efcee1cbf78b89209e37bcd5f76bd9ad1eea4ac78c76cd5a999aca4a4d"
+  },
+  {
+    "path": "scripts/aws-k6/worker-3k.py",
+    "lines": 68,
+    "sha256": "655a6652446f69295480c08862857de0958a40eec46c64f3d2f351651d30e42c"
+  },
+  {
+    "path": "scripts/k8s/archive-capacity.py",
+    "lines": 72,
+    "sha256": "615436942494655f47725d8aeb0006bab61bc10346b14f1be10b916781daf7c0"
+  },
+  {
+    "path": "scripts/k8s/build-images.sh",
+    "lines": 6,
+    "sha256": "38998b20ea6c91f256a95a6e8609e54132a8c920fff0788a3d5a0af3776b3008"
+  },
+  {
+    "path": "scripts/k8s/capacity-test.sh",
+    "lines": 6,
+    "sha256": "60208804507318f1e077d05fa8dd0e124f33992e382f7576bae4120cde8b8aa4"
+  },
+  {
+    "path": "scripts/k8s/capacity.py",
+    "lines": 333,
+    "sha256": "e9ade1694f08b969fa42fc795320069a621ca494a2ec1e760d472f10378aa578"
+  },
+  {
+    "path": "scripts/k8s/check-connectivity.sh",
+    "lines": 18,
+    "sha256": "3e10c8bff378b5f4faab8b37693a1a11109e853047dadf7169c74444f3a608df"
+  },
+  {
+    "path": "scripts/k8s/common.sh",
+    "lines": 17,
+    "sha256": "79e5d8f1b300d4b6bfa0a3144ccb7a3090edbbe1b4cf5a63edafb6061e2c25e9"
+  },
+  {
+    "path": "scripts/k8s/create-secrets.sh",
+    "lines": 8,
+    "sha256": "a8cab31f6d35ac0367b6920580f82f0e4d680b2f1b962b0cc30314e442923548"
+  },
+  {
+    "path": "scripts/k8s/demo-availability.sh",
+    "lines": 35,
+    "sha256": "16fb708aa79a281d8157d05e801a3b7533fa73de96419eadc222ec65391cd954"
+  },
+  {
+    "path": "scripts/k8s/demo-rollout.sh",
+    "lines": 7,
+    "sha256": "02f9ac5dfa110574480818114622e1a4df7ed9852c57dda8bba84e839c1cd4c5"
+  },
+  {
+    "path": "scripts/k8s/demo-self-healing.sh",
+    "lines": 11,
+    "sha256": "9de3a7d8c9bb50a618391a300b08d0daf0d1f9c23444684880c5b564369e10da"
+  },
+  {
+    "path": "scripts/k8s/deploy.sh",
+    "lines": 22,
+    "sha256": "bfb210723917ec85f3f25dabcb935d51af17e28bd27fefa8c5321ac8553999de"
+  },
+  {
+    "path": "scripts/k8s/environment.py",
+    "lines": 253,
+    "sha256": "a676e3a9dc283ce6627c08a3cced709dde1cac4787f3e233f3dc253bf9e078a5"
+  },
+  {
+    "path": "scripts/k8s/inspect-k6-http.cjs",
+    "lines": 51,
+    "sha256": "778e67f823b3511db25d22a6cf1a9964e2022db4aa0fc1d1b0f28e2bb35e60ad"
+  },
+  {
+    "path": "scripts/k8s/inspect-public-encoding.cjs",
+    "lines": 41,
+    "sha256": "417ddd64bef50a0d6d68b3ad2d63d2e806dac06cfb46b47347e4c818db16e5a2"
+  },
+  {
+    "path": "scripts/k8s/install-k6-local.sh",
+    "lines": 34,
+    "sha256": "80f3108486d9571ad49a068bf003ecd7a99876d57c81222ea8d2f7f32e84fdc7"
+  },
+  {
+    "path": "scripts/k8s/load-test.sh",
+    "lines": 41,
+    "sha256": "5f84f73e1d0c19c578fb9e9f3abd3264c7d99579aebdb18fd2d637a6054aa3b4"
+  },
+  {
+    "path": "scripts/k8s/observe-hpa.py",
+    "lines": 49,
+    "sha256": "c0678235a9663b89c867e2ff9d4b445e8e0760e079e482a51c81a2d9c993f873"
+  },
+  {
+    "path": "scripts/k8s/port-forward.sh",
+    "lines": 16,
+    "sha256": "f0f7e09892c4b47c74103d5be64890396d4db924ebf5386103dc0cce3e36635d"
+  },
+  {
+    "path": "scripts/k8s/preflight.sh",
+    "lines": 36,
+    "sha256": "e6c74c1b37f176fa803a91a0e4da1eea0b7f38030045b7bc088821561f39f4c7"
+  },
+  {
+    "path": "scripts/k8s/smoke.sh",
+    "lines": 14,
+    "sha256": "af9be23da7d9a55a6283181265bb00f5f129fece49728b792fb42e7df05d8add"
+  },
+  {
+    "path": "scripts/k8s/start-infra.sh",
+    "lines": 6,
+    "sha256": "eb5352f23dadf76f0b20b98e4d61399266494ecbc54fe4940d540c8394adc7db"
+  },
+  {
+    "path": "scripts/k8s/status.sh",
+    "lines": 8,
+    "sha256": "80cd3524e3ffbc9b8792871376a760a062202e2491344099f566697048cd4ffe"
+  },
+  {
+    "path": "scripts/k8s/summarize-capacity.py",
+    "lines": 119,
+    "sha256": "42d7d5d9b518ed782797686d80bae7ed01a4875dfa77cde2b410cfe86c32efe8"
+  },
+  {
+    "path": "scripts/k8s/teardown.sh",
+    "lines": 5,
+    "sha256": "e99500b01a0ca8b65637a38928b9893326b3a32643e63e3d0f98125af8644512"
+  },
+  {
+    "path": "scripts/k8s/test-public-socket.cjs",
+    "lines": 39,
+    "sha256": "417bd13b73669fd385c9691423a1d5c8f67666d7e144aea1ee877536700c9bfd"
+  },
+  {
+    "path": "scripts/k8s/test-socket-redis.cjs",
+    "lines": 112,
+    "sha256": "7f50931ab42839b24c9e14d31e7a7fc9053b5d1b86e064d278b7c312f2e3c4d8"
+  },
+  {
+    "path": "scripts/k8s/tests/test_capacity.py",
+    "lines": 59,
+    "sha256": "b59c7cd7c586ab6229e51e0771a29e78ba79a74fa214cedac754da1697b2947e"
+  },
+  {
+    "path": "scripts/k8s/tests/test_environment.py",
+    "lines": 136,
+    "sha256": "1240b5a714366d898f41dae0b3b71e20514f40bac841e50d4f68fb613fecfb91"
+  },
+  {
+    "path": "scripts/k8s/tests/test_rendered.py",
+    "lines": 40,
+    "sha256": "660b5ca0ae28425ae2ff526158d408e6d625dc7b6cac1ce46992b1279b5b792d"
+  },
+  {
+    "path": "scripts/k8s/validate-rendered.rb",
+    "lines": 95,
+    "sha256": "14411493f67b766bda89dbe04feb4073fed8b62e814420db193e46a67ba5abb3"
+  },
+  {
+    "path": "scripts/k8s/validate.sh",
+    "lines": 5,
+    "sha256": "e1f8d23fa2c6107ca05bee3ba6fc8036de9c4b66d3fea2ef37cb39d8cca6cb17"
+  },
+  {
+    "path": "scripts/k8s/verify-local.py",
+    "lines": 83,
+    "sha256": "855a158bc49bd6a96ff5d60cc26a27bbf64a945b7172e2fdf09645cba90f202d"
+  },
+  {
+    "path": "scripts/k8s/wait-ready.sh",
+    "lines": 6,
+    "sha256": "edda5f0f902b3c55666c2c44a394c2b35f619e134d6212de8e34723f48931aae"
+  }
+]

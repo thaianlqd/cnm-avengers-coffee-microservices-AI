@@ -1,8 +1,9 @@
-import { 
-  XMarkIcon, 
-  TrashIcon, 
-  ArrowLongRightIcon, 
-  ArrowLongLeftIcon, 
+import { uiText as ui, useUiLanguage, uiLocale } from "../../lib/uiText";
+import {
+  XMarkIcon,
+  TrashIcon,
+  ArrowLongRightIcon,
+  ArrowLongLeftIcon,
   TagIcon,
   ShoppingBagIcon,
   CreditCardIcon,
@@ -64,18 +65,19 @@ function tachDiaChiDayDu(rawAddress) {
   return { city: '', ward: '', street: raw };
 }
 
-export default function CartPage({ 
-  products = [], 
-  onBackToHome, 
-  voucherItems: initialVouchers = [], 
-  suggestedPastries = [], 
+export default function CartPage({
+  products = [],
+  onBackToHome,
+  voucherItems: initialVouchers = [],
+  suggestedPastries = [],
   onAddToCart,
   onLogin
 }) {
+  useUiLanguage();
   const { cart, removeFromCart, updateCartQuantity, activeUserId, refreshCart } = useCart();
   const [editingItem, setEditingItem] = useState(null);
   const queryClient = useQueryClient();
-  
+
   const [deliveryMode, setDeliveryMode] = useState(() => {
     const storedTableId = sessionStorage.getItem('qr_tableId');
     return storedTableId ? 'DUNG_TAI_CHO' : null;
@@ -249,13 +251,13 @@ export default function CartPage({
   };
 
   const showEmailError = guestEmailTouched && (!guestEmail.trim() || !isValidEmail(guestEmail));
-  const emailErrorMessage = !guestEmail.trim() 
-    ? 'Vui lòng nhập Email nhận đơn' 
+  const emailErrorMessage = !guestEmail.trim()
+    ? 'Vui lòng nhập Email nhận đơn'
     : (!isValidEmail(guestEmail) ? 'Định dạng Email chưa chính xác' : '');
 
   const showPhoneError = guestPhoneTouched && (!guestPhone.trim() || !isValidPhone(guestPhone));
-  const phoneErrorMessage = !guestPhone.trim() 
-    ? 'Vui lòng nhập Số điện thoại' 
+  const phoneErrorMessage = !guestPhone.trim()
+    ? 'Vui lòng nhập Số điện thoại'
     : (!isValidPhone(guestPhone) ? 'Số điện thoại cần 10 số (bắt đầu bằng 0)' : '');
 
   const handleAddressSelect = useCallback((item) => {
@@ -629,29 +631,29 @@ export default function CartPage({
   useEffect(() => {
     if (publicBranchPayload?.items?.length > 0) {
       const allBranches = publicBranchPayload.items;
-      
+
       // Lọc các chi nhánh cùng Thành phố với địa chỉ giao hàng
       const cityMatches = allBranches.filter(b => {
         const bCity = String(b.thanh_pho || b.dia_chi || '').toLowerCase();
         const userCity = String(addressForm.city || '').toLowerCase();
         if (!userCity) return false;
-        
+
         if (bCity.includes(userCity)) return true;
-        
+
         // Smarter matching for HCM and HN
-        if ((userCity.includes('hồ chí minh') || userCity.includes('hcm')) && 
+        if ((userCity.includes('hồ chí minh') || userCity.includes('hcm')) &&
             (bCity.includes('hồ chí minh') || bCity.includes('hcm'))) {
           return true;
         }
-        
-        if ((userCity.includes('hà nội') || userCity.includes('ha noi')) && 
+
+        if ((userCity.includes('hà nội') || userCity.includes('ha noi')) &&
             (bCity.includes('hà nội') || bCity.includes('hn') || bCity.includes('ha noi'))) {
           return true;
         }
-        
+
         return false;
       });
-      
+
       // Nếu có chi nhánh cùng quận/huyện thì ưu tiên (nếu sau này có dữ liệu quận)
       let targetBranch = cityMatches.length > 0 ? cityMatches[0] : allBranches[0];
 
@@ -712,8 +714,8 @@ export default function CartPage({
           targetBranch = bestBranch;
         } else {
           // Fallback to string matching for nationwide districts without coordinates
-          const exactMatch = cityMatches.find(b => 
-            String(b.quan_huyen || '').toLowerCase() === userDistKey || 
+          const exactMatch = cityMatches.find(b =>
+            String(b.quan_huyen || '').toLowerCase() === userDistKey ||
             String(b.dia_chi || '').toLowerCase().includes(userDistKey)
           );
           if (exactMatch) {
@@ -735,7 +737,7 @@ export default function CartPage({
             const currentBranch = allBranches.find(b => (b.ma_chi_nhanh || b.co_so_ma || b.branch_code) === selectedBranch);
             const currentBranchCity = String(currentBranch?.thanh_pho || currentBranch?.dia_chi || '').toLowerCase();
             const userCity = String(addressForm.city || '').toLowerCase();
-            
+
             if (userCity && !currentBranchCity.includes(userCity)) {
               setSelectedBranch(branchId);
             }
@@ -809,8 +811,8 @@ export default function CartPage({
         phuong_thuc_thanh_toan: phuongThuc,
         khung_gio_giao: computedKhungGio,
         phi_giao_hang: deliveryMode === 'GIAO_TAN_NOI' ? phiGiaoHangThucTe : 0,
-        dia_chi_giao_hang: deliveryMode === 'GIAO_TAN_NOI' 
-          ? diaChiDayDu 
+        dia_chi_giao_hang: deliveryMode === 'GIAO_TAN_NOI'
+          ? diaChiDayDu
           : (deliveryMode === 'LAY_TAI_QUAN' ? 'Khách lấy tại quán' : (deliveryMode === 'KIOSK' ? 'Mua tại Kiosk' : 'Khách dùng tại chỗ')),
         ghi_chu: ghiChu.trim() || 'Dat tu web-customer',
         ma_voucher: voucherResult?.ma_voucher || voucherResult?.ma_khuyen_mai || undefined,
@@ -1037,26 +1039,24 @@ export default function CartPage({
       <div className="max-w-[1240px] mx-auto">
         {/* Breadcrumb */}
         <nav className="text-[13px] font-bold uppercase tracking-wider text-gray-400 mb-6 flex items-center gap-2">
-          <button 
-            onClick={() => onBackToHome?.()} 
+          <button
+            onClick={() => onBackToHome?.()}
             className="hover:text-[#c41230] transition-colors"
-          >
-            Trang chủ
-          </button>
+          >{ui("Trang chủ")}</button>
           <span className="text-gray-300">&gt;</span>
-          <span className="text-gray-800">{step === 1 ? 'Giỏ hàng' : 'Thanh toán'}</span>
+          <span className="text-gray-800">{step === 1 ? ui("Giỏ hàng") : ui("Thanh toán")}</span>
         </nav>
 
         {/* Header Title */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-extrabold uppercase text-[#1a1a1a] tracking-tight font-serif leading-none">
-              {step === 1 ? 'Giỏ hàng của bạn' : 'Thông tin thanh toán'}
+              {step === 1 ? ui("Giỏ hàng của bạn") : ui("Thông tin thanh toán")}
             </h1>
             <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-2">
-              {step === 1 
-                ? `Bạn đang có ${cart.reduce((s, i) => s + i.so_luong, 0)} món đồ uống & bánh trong giỏ` 
-                : 'Hoàn tất địa chỉ và chọn phương thức thanh toán phù hợp'}
+              {step === 1
+                ? ui("Bạn đang có {{v0}} món đồ uống & bánh trong giỏ", {v0:cart.reduce((s, i) => s + i.so_luong, 0)})
+                : ui("Hoàn tất địa chỉ và chọn phương thức thanh toán phù hợp")}
             </p>
           </div>
         </div>
@@ -1066,14 +1066,14 @@ export default function CartPage({
           <div className="flex items-center justify-between max-w-2xl mx-auto relative">
             {/* Background Line */}
             <div className="absolute top-1/2 left-8 right-8 h-1 bg-gray-100 -translate-y-1/2 z-0 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-[#c41230] to-amber-500 transition-all duration-500 ease-out" 
+              <div
+                className="h-full bg-gradient-to-r from-[#c41230] to-amber-500 transition-all duration-500 ease-out"
                 style={{ width: step === 1 ? '0%' : '50%' }}
               />
             </div>
 
             {/* Step 1 */}
-            <button 
+            <button
               type="button"
               onClick={() => setStep(1)}
               className="flex flex-col items-center gap-2 relative z-10 group cursor-pointer"
@@ -1083,13 +1083,12 @@ export default function CartPage({
               }`}>
                 <ShoppingBagIcon className="w-5 h-5 stroke-[2.5]" />
               </div>
-              <span className={`text-[11px] sm:text-xs font-black uppercase tracking-wider ${step >= 1 ? 'text-[#c41230]' : 'text-gray-400'}`}>
-                1. Giỏ hàng {cart.length > 0 && `(${cart.reduce((sum, i) => sum + i.so_luong, 0)})`}
+              <span className={`text-[11px] sm:text-xs font-black uppercase tracking-wider ${step >= 1 ? 'text-[#c41230]' : 'text-gray-400'}`}>{ui("1. Giỏ hàng ")}{cart.length > 0 && `(${cart.reduce((sum, i) => sum + i.so_luong, 0)})`}
               </span>
             </button>
 
             {/* Step 2 */}
-            <button 
+            <button
               type="button"
               onClick={handleCheckoutClick}
               disabled={cart.length === 0}
@@ -1100,9 +1099,7 @@ export default function CartPage({
               }`}>
                 <CreditCardIcon className="w-5 h-5 stroke-[2.5]" />
               </div>
-              <span className={`text-[11px] sm:text-xs font-black uppercase tracking-wider ${step >= 2 ? 'text-[#c41230]' : 'text-gray-400'}`}>
-                2. Thanh toán
-              </span>
+              <span className={`text-[11px] sm:text-xs font-black uppercase tracking-wider ${step >= 2 ? 'text-[#c41230]' : 'text-gray-400'}`}>{ui("2. Thanh toán")}</span>
             </button>
 
             {/* Step 3 */}
@@ -1110,9 +1107,7 @@ export default function CartPage({
               <div className="w-11 h-11 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center font-extrabold text-sm shadow-sm">
                 <SparklesIcon className="w-5 h-5 stroke-[2.5]" />
               </div>
-              <span className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-gray-400">
-                3. Hoàn tất
-              </span>
+              <span className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-gray-400">{ui("3. Hoàn tất")}</span>
             </div>
           </div>
         </div>
@@ -1127,18 +1122,17 @@ export default function CartPage({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="text-xs sm:text-sm font-extrabold uppercase tracking-wide text-red-950">
-                      Đặc quyền Freeship hạng {memberTierName}
+                    <h4 className="text-xs sm:text-sm font-extrabold uppercase tracking-wide text-red-950">{ui("Đặc quyền Freeship hạng ")}{memberTierName}
                     </h4>
                     <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-red-100 text-red-900 rounded-full border border-red-200/80">VIP</span>
                   </div>
                   <p className="text-xs font-semibold text-red-900/90 mt-1">
                     {isFreeshipEligible ? (
-                      <span className="text-emerald-700 font-bold">Đã đủ điều kiện Freeship! Giảm ngay {giamPhiShipHanh.toLocaleString('vi-VN')}đ phí giao hàng</span>
+                      <span className="text-emerald-700 font-bold">{ui("Đã đủ điều kiện Freeship! Giảm ngay ")}{giamPhiShipHanh.toLocaleString(uiLocale())}{ui("đ phí giao hàng")}</span>
                     ) : memberFreeshipMinOrder > total ? (
-                      <span>Mua thêm <strong className="text-[#c41230] font-extrabold">{(memberFreeshipMinOrder - total).toLocaleString('vi-VN')}đ</strong> để được giảm ngay <strong className="text-emerald-700 font-extrabold">{memberFreeshipVal.toLocaleString('vi-VN')}đ</strong> phí ship</span>
+                      <span>{ui("Mua thêm ")}<strong className="text-[#c41230] font-extrabold">{(memberFreeshipMinOrder - total).toLocaleString(uiLocale())}{ui("đ")}</strong>{ui(" để được giảm ngay ")}<strong className="text-emerald-700 font-extrabold">{memberFreeshipVal.toLocaleString(uiLocale())}{ui("đ")}</strong>{ui(" phí ship")}</span>
                     ) : (
-                      <span>Đơn từ {memberFreeshipMinOrder.toLocaleString('vi-VN')}đ sẽ nhận ưu đãi Freeship {memberFreeshipVal.toLocaleString('vi-VN')}đ</span>
+                      <span>{ui("Đơn từ ")}{memberFreeshipMinOrder.toLocaleString(uiLocale())}{ui("đ sẽ nhận ưu đãi Freeship ")}{memberFreeshipVal.toLocaleString(uiLocale())}{ui("đ")}</span>
                     )}
                   </p>
                 </div>
@@ -1146,11 +1140,11 @@ export default function CartPage({
               {memberFreeshipMinOrder > 0 && (
                 <div className="w-full sm:w-56 shrink-0 space-y-1.5 bg-white/80 p-3 rounded-2xl border border-amber-200/80 shadow-xs">
                   <div className="flex justify-between text-[11px] font-bold text-red-900">
-                    <span>Tiến trình Freeship</span>
+                    <span>{ui("Tiến trình Freeship")}</span>
                     <span className="text-emerald-700 font-black">{Math.min(100, Math.round((total / memberFreeshipMinOrder) * 100))}%</span>
                   </div>
                   <div className="h-2.5 w-full bg-red-100 rounded-full overflow-hidden border border-red-200">
-                    <div 
+                    <div
                       className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all duration-500"
                       style={{ width: `${Math.min(100, (total / memberFreeshipMinOrder) * 100)}%` }}
                     />
@@ -1164,23 +1158,19 @@ export default function CartPage({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Cột trái: Chi tiết Giỏ hàng HOẶC Form thông tin thanh toán */}
           <div className="lg:col-span-7 xl:col-span-8">
-            
+
             {step === 1 ? (
               <>
               {/* BƯỚC 1: DANH SÁCH GIỎ HÀNG */}
               <div className="bg-white rounded-[24px] p-6 md:p-8 border border-[#e8e2da] shadow-xs space-y-6">
                 {cart.length === 0 ? (
                   <div className="py-20 text-center space-y-4">
-                    <h3 className="text-xl font-bold text-gray-800 font-serif">Giỏ hàng của bạn đang trống</h3>
-                    <p className="text-gray-500 text-sm max-w-sm mx-auto">
-                      Hãy khám phá thực đơn cà phê thơm nồng & bánh tươi ra lò để lấp đầy giỏ hàng nhé!
-                    </p>
+                    <h3 className="text-xl font-bold text-gray-800 font-serif">{ui("Giỏ hàng của bạn đang trống")}</h3>
+                    <p className="text-gray-500 text-sm max-w-sm mx-auto">{ui("Hãy khám phá thực đơn cà phê thơm nồng & bánh tươi ra lò để lấp đầy giỏ hàng nhé!")}</p>
                     <button
                       onClick={() => onBackToHome?.()}
                       className="mt-2 px-8 py-3.5 bg-[#c41230] text-white font-extrabold text-xs uppercase tracking-widest rounded-full hover:bg-[#a30f28] transition-all shadow-md hover:shadow-lg"
-                    >
-                      Khám phá Thực đơn
-                    </button>
+                    >{ui("Khám phá Thực đơn")}</button>
                   </div>
                 ) : (
                   cart.map((item, idx) => {
@@ -1188,21 +1178,21 @@ export default function CartPage({
                       .some(product => product.product_id === String(item.ma_san_pham));
 
                     return (
-                    <div 
-                      key={`${item.ma_san_pham}-${item.size}`} 
+                    <div
+                      key={`${item.ma_san_pham}-${item.size}`}
                       className={`flex flex-col sm:flex-row gap-5 items-start relative ${
                         idx < cart.length - 1 ? 'pb-6 border-b border-gray-100' : ''
                       }`}
                     >
                       {/* Khung ảnh nền xám nhạt bo tròn */}
                       <div className="w-24 h-24 sm:w-28 sm:h-28 bg-[#f4f0eb] rounded-[20px] overflow-hidden flex-shrink-0 flex items-center justify-center border border-[#e8e2da] shadow-inner group">
-                        <img 
-                          src={item.hinh_anh_url} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-                          alt={item.ten_san_pham} 
+                        <img
+                          src={item.hinh_anh_url}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          alt={item.ten_san_pham}
                         />
                       </div>
-                      
+
                       {/* Chi tiết sản phẩm */}
                       <div className="flex-1 min-w-0 flex flex-col justify-between min-h-[6rem] sm:min-h-[7rem] pr-0 sm:pr-24">
                         <div className="space-y-1.5">
@@ -1218,18 +1208,15 @@ export default function CartPage({
                               </span>
                             )}
                             {item.loai_sua && (
-                              <span className="px-2.5 py-0.5 bg-gray-50 text-gray-700 border border-gray-200 rounded-full text-[11px]">
-                                Sữa: {item.loai_sua}
+                              <span className="px-2.5 py-0.5 bg-gray-50 text-gray-700 border border-gray-200 rounded-full text-[11px]">{ui("Sữa: ")}{item.loai_sua}
                               </span>
                             )}
                             {item.luong_da && (
-                              <span className="px-2.5 py-0.5 bg-gray-50 text-gray-700 border border-gray-200 rounded-full text-[11px]">
-                                Đá: {item.luong_da}
+                              <span className="px-2.5 py-0.5 bg-gray-50 text-gray-700 border border-gray-200 rounded-full text-[11px]">{ui("Đá: ")}{item.luong_da}
                               </span>
                             )}
                             {item.do_ngot && (
-                              <span className="px-2.5 py-0.5 bg-gray-50 text-gray-700 border border-gray-200 rounded-full text-[11px]">
-                                Ngọt: {item.do_ngot}
+                              <span className="px-2.5 py-0.5 bg-gray-50 text-gray-700 border border-gray-200 rounded-full text-[11px]">{ui("Ngọt: ")}{item.do_ngot}
                               </span>
                             )}
                             {item.toppings && item.toppings.length > 0 && (
@@ -1256,19 +1243,15 @@ export default function CartPage({
                             onClick={() => setEditingItem(item)}
                             className="mt-2 inline-flex items-center gap-1.5 text-[#b22830] font-extrabold text-xs hover:underline w-fit bg-[#b22830]/5 px-2.5 py-1 rounded-lg border border-[#b22830]/15"
                           >
-                            <PencilIcon className="w-3.5 h-3.5" /> Chỉnh sửa tùy chọn
-                          </button>
+                            <PencilIcon className="w-3.5 h-3.5" />{ui(" Chỉnh sửa tùy chọn")}</button>
                         </div>
 
                         {/* Giá tiền */}
                         <div className="mt-3">
                           <p className="text-[#1a1a1a] font-black text-xl">
-                            {Number(item.gia_ban).toLocaleString('vi-VN')}đ
-                          </p>
+                            {Number(item.gia_ban).toLocaleString(uiLocale())}{ui("đ")}</p>
                           {isOutOfStock && step === 2 && (
-                            <div className="mt-1.5 text-[11px] font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-100 inline-block">
-                              Tạm hết hàng tại chi nhánh này
-                            </div>
+                            <div className="mt-1.5 text-[11px] font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-100 inline-block">{ui("Tạm hết hàng tại chi nhánh này")}</div>
                           )}
                         </div>
                       </div>
@@ -1280,7 +1263,7 @@ export default function CartPage({
                           type="button"
                           onClick={() => removeFromCart(item)}
                           className="text-gray-400 hover:text-red-600 transition-colors p-2 rounded-full hover:bg-red-50"
-                          aria-label={`Xóa ${item.ten_san_pham}`}
+                          aria-label={ui("Xóa {{v0}}", {v0:item.ten_san_pham})}
                         >
                           <TrashIcon className="h-5 w-5 stroke-[2]" />
                         </button>
@@ -1316,17 +1299,15 @@ export default function CartPage({
                 <div className="bg-white rounded-[24px] p-6 md:p-8 border border-[#e8e2da] shadow-xs mt-6">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h2 className="text-lg font-bold text-[#1a1a1a] tracking-wide">
-                        Gợi ý dùng kèm
-                      </h2>
-                      <p className="text-xs text-gray-500 mt-0.5">Thêm bánh ngọt &amp; đồ nhắm hợp khẩu vị cùng giỏ hàng</p>
+                      <h2 className="text-lg font-bold text-[#1a1a1a] tracking-wide">{ui("Gợi ý dùng kèm")}</h2>
+                      <p className="text-xs text-gray-500 mt-0.5">{ui("Thêm bánh ngọt & đồ nhắm hợp khẩu vị cùng giỏ hàng")}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex overflow-x-auto gap-4 pb-2 custom-scrollbar">
                     {suggestedPastries.map((p) => (
-                      <div 
-                        key={p.ma_san_pham || p.id} 
+                      <div
+                        key={p.ma_san_pham || p.id}
                         className="w-[280px] sm:w-[310px] flex-shrink-0 flex items-center p-3.5 rounded-[20px] border border-gray-200 hover:border-[#c41230] transition-all bg-white cursor-pointer group shadow-xs hover:shadow-md"
                         onClick={() => onAddToCart?.(p)}
                       >
@@ -1334,7 +1315,7 @@ export default function CartPage({
                         <div className="w-18 h-18 rounded-2xl bg-[#faf7f4] flex items-center justify-center p-1.5 flex-shrink-0 overflow-hidden border border-gray-100">
                           <img src={p.hinh_anh_url || p.img} alt={p.ten_san_pham || p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         </div>
-                        
+
                         {/* Thông tin */}
                         <div className="flex flex-col justify-between h-full flex-1 min-w-0 pl-3">
                           <h3 className="text-xs sm:text-sm font-bold text-[#282828] line-clamp-2 leading-tight mb-1">
@@ -1342,11 +1323,8 @@ export default function CartPage({
                           </h3>
                           <div className="flex items-center justify-between mt-2">
                             <span className="text-xs font-black text-[#c41230]">
-                              {Number(p.gia_ban || p.price || 0).toLocaleString('vi-VN')}đ
-                            </span>
-                            <span className="px-3 py-1 bg-[#c41230] text-white text-[11px] font-extrabold rounded-full flex items-center gap-1 hover:bg-[#a30f28] transition-colors shadow-xs">
-                              + Thêm ❯
-                            </span>
+                              {Number(p.gia_ban || p.price || 0).toLocaleString(uiLocale())}{ui("đ")}</span>
+                            <span className="px-3 py-1 bg-[#c41230] text-white text-[11px] font-extrabold rounded-full flex items-center gap-1 hover:bg-[#a30f28] transition-colors shadow-xs">{ui("+ Thêm ❯")}</span>
                           </div>
                         </div>
                       </div>
@@ -1366,18 +1344,16 @@ export default function CartPage({
                   className="inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-[#c41230] transition-colors bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200"
                 >
                   <ArrowLongLeftIcon className="h-4 w-4" />
-                  <span>Quay lại sửa giỏ hàng</span>
+                  <span>{ui("Quay lại sửa giỏ hàng")}</span>
                 </button>
 
-                <h2 className="text-xl font-black text-[#1a1a1a] uppercase tracking-wide pb-4 border-b border-gray-100 font-serif">
-                  Thông tin giao hàng &amp; Thanh toán
-                </h2>
-                
+                <h2 className="text-xl font-black text-[#1a1a1a] uppercase tracking-wide pb-4 border-b border-gray-100 font-serif">{ui("Thông tin giao hàng & Thanh toán")}</h2>
+
                 <div className="mb-6">
                   <DeliveryModeSelector selectedMode={deliveryMode} onChange={handleDeliveryModeChange} />
                 </div>
 
-                {!deliveryMode && <p className="text-sm text-gray-600">Bạn chọn hình thức nhận hàng để tiếp tục nhé.</p>}
+                {!deliveryMode && <p className="text-sm text-gray-600">{ui("Bạn chọn hình thức nhận hàng để tiếp tục nhé.")}</p>}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Cột trái form: Địa chỉ */}
                   <div className="space-y-4">
@@ -1389,13 +1365,11 @@ export default function CartPage({
 
                     {!deliveryMode ? null : deliveryMode === 'GIAO_TAN_NOI' ? (
                       <>
-                        <h3 className="text-xs font-black uppercase text-[#c41230] tracking-widest">
-                          Địa chỉ giao hàng
-                        </h3>
+                        <h3 className="text-xs font-black uppercase text-[#c41230] tracking-widest">{ui("Địa chỉ giao hàng")}</h3>
 
                         {isLoggedInUser && savedAddresses.length ? (
                           <div className="flex flex-col gap-1.5">
-                            <label className="text-xs font-bold text-gray-500">Địa chỉ đã lưu</label>
+                            <label className="text-xs font-bold text-gray-500">{ui("Địa chỉ đã lưu")}</label>
                             <select
                               value={savedAddresses.find((item) => item.dia_chi_day_du === diaChiDayDu || String(item.id) === addressForm.savedAddressId)?.id || ''}
                               onChange={(e) => {
@@ -1428,10 +1402,10 @@ export default function CartPage({
                               }}
                               className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/20 transition-all cursor-pointer"
                             >
-                              <option value="">Chọn địa chỉ đã lưu</option>
+                              <option value="">{ui("Chọn địa chỉ đã lưu")}</option>
                               {savedAddresses.map((item) => (
                                 <option key={item.id} value={item.id}>
-                                  {item.ten_dia_chi || item.dia_chi_day_du}{item.mac_dinh ? ' (mặc định)' : ''}
+                                  {item.ten_dia_chi || item.dia_chi_day_du}{item.mac_dinh ? ui(" (mặc định)") : ''}
                                 </option>
                               ))}
                             </select>
@@ -1440,7 +1414,7 @@ export default function CartPage({
 
                         {/* Ô nhập Số nhà, tên đường thông minh (gợi ý dropdown bản đồ + nút lấy GPS) */}
                         <AddressAutocompleteInput
-                          label="Số nhà, tên đường / Địa chỉ nhận hàng"
+                          label={ui("Số nhà, tên đường / Địa chỉ nhận hàng")}
                           value={addressForm.street}
                           onChange={(street) => {
                             setAddressForm((prev) => ({ ...prev, street }));
@@ -1453,7 +1427,7 @@ export default function CartPage({
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {/* Thành phố */}
                           <div className="flex flex-col gap-1.5">
-                            <label className="text-xs font-bold text-gray-500">Tỉnh / Thành phố</label>
+                            <label className="text-xs font-bold text-gray-500">{ui("Tỉnh / Thành phố")}</label>
                             <select
                               value={addressForm.city}
                               onChange={(e) => {
@@ -1464,7 +1438,7 @@ export default function CartPage({
                               }}
                               className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-xs font-bold text-gray-800 outline-none focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/20 transition-all cursor-pointer truncate"
                             >
-                              <option value="">-- Chọn Tỉnh / Thành phố --</option>
+                              <option value="">{ui("-- Chọn Tỉnh / Thành phố --")}</option>
                               {cityOptions.map((city) => (
                                 <option key={city} value={city}>
                                   {city}
@@ -1475,7 +1449,7 @@ export default function CartPage({
 
                           {/* Phường / Xã */}
                           <div className="flex flex-col gap-1.5">
-                            <label className="text-xs font-bold text-gray-500">Phường / Xã</label>
+                            <label className="text-xs font-bold text-gray-500">{ui("Phường / Xã")}</label>
                             <select
                               value={addressForm.ward}
                               onChange={(e) => {
@@ -1484,7 +1458,7 @@ export default function CartPage({
                               }}
                               className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-xs font-bold text-gray-800 outline-none focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/20 transition-all cursor-pointer truncate"
                             >
-                              <option value="">-- Chọn Phường / Xã --</option>
+                              <option value="">{ui("-- Chọn Phường / Xã --")}</option>
                               {wardOptions.map((ward) => (
                                 <option key={ward} value={ward}>
                                   {ward}
@@ -1507,23 +1481,21 @@ export default function CartPage({
                       </>
                     ) : (
                       <>
-                        <h3 className="text-xs font-black uppercase text-[#c41230] tracking-widest">
-                          Chọn cửa hàng nhận đồ
-                        </h3>
-                        <BranchSelector 
-                          branches={availableLocations} 
-                          selectedBranch={selectedBranch} 
-                          onChange={setSelectedBranch} 
+                        <h3 className="text-xs font-black uppercase text-[#c41230] tracking-widest">{ui("Chọn cửa hàng nhận đồ")}</h3>
+                        <BranchSelector
+                          branches={availableLocations}
+                          selectedBranch={selectedBranch}
+                          onChange={setSelectedBranch}
                         />
                         {deliveryMode === 'DUNG_TAI_CHO' && (
                           <div className="flex flex-col gap-1.5 mt-4">
-                            <label className="text-xs font-bold text-gray-500">Số bàn (không bắt buộc)</label>
+                            <label className="text-xs font-bold text-gray-500">{ui("Số bàn (không bắt buộc)")}</label>
                             <div className="relative">
                               <input
                                 type="text"
                                 value={tableNumber}
                                 onChange={(e) => setTableNumber(e.target.value)}
-                                placeholder="Ví dụ: Bàn 12"
+                                placeholder={ui("Ví dụ: Bàn 12")}
                                 className={`w-full rounded-xl border ${tableNumber ? 'border-emerald-600 bg-emerald-50/50 text-emerald-900' : 'border-gray-200 bg-white'} px-4 py-3 text-sm font-bold outline-none focus:border-[#c41230] transition-colors`}
                               />
                             </div>
@@ -1533,8 +1505,8 @@ export default function CartPage({
                           <div className="mt-4 flex items-center gap-3 rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-emerald-900">
                             <span className="text-xl">📍</span>
                             <div>
-                              <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">Đang phục vụ tại bàn</p>
-                              <p className="text-xs font-semibold">Bạn đang ngồi tại <strong>Bàn {tableNumber}</strong>. Nhân viên sẽ mang nước ra tận bàn!</p>
+                              <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">{ui("Đang phục vụ tại bàn")}</p>
+                              <p className="text-xs font-semibold">{ui("Bạn đang ngồi tại ")}<strong>{ui("Bàn ")}{tableNumber}</strong>{ui(". Nhân viên sẽ mang nước ra tận bàn!")}</p>
                             </div>
                           </div>
                         )}
@@ -1548,12 +1520,10 @@ export default function CartPage({
                       <div className="bg-[#faf7f4] border border-[#e8e2da] rounded-[20px] p-5 space-y-4 mb-2 shadow-2xs">
                         <div className="flex items-center justify-between">
                           <h3 className="text-xs font-black uppercase text-[#c41230] tracking-widest flex items-center gap-1.5">
-                            <span>Thông tin khách hàng</span>
+                            <span>{ui("Thông tin khách hàng")}</span>
                             <span className="text-red-600 font-bold">*</span>
                           </h3>
-                          <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
-                            Bắt buộc cả hai
-                          </span>
+                          <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">{ui("Bắt buộc cả hai")}</span>
                         </div>
 
                         <div className="flex flex-col gap-3.5">
@@ -1561,7 +1531,7 @@ export default function CartPage({
                           <div className="flex flex-col gap-1">
                             <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
                               <span className="flex items-center gap-1">
-                                <span>Email nhận đơn</span>
+                                <span>{ui("Email nhận đơn")}</span>
                                 <span className="text-red-600 font-bold">*</span>
                               </span>
                               {showEmailError && (
@@ -1578,7 +1548,7 @@ export default function CartPage({
                                 setGuestEmail(e.target.value);
                                 if (thongBao) setThongBao('');
                               }}
-                              placeholder="Ví dụ: nguyenvan@gmail.com"
+                              placeholder={ui("Ví dụ: nguyenvan@gmail.com")}
                               className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm font-semibold outline-none transition-all ${
                                 showEmailError
                                   ? 'border-red-500 bg-red-50/20 text-red-900 focus:ring-2 focus:ring-red-500/20'
@@ -1591,7 +1561,7 @@ export default function CartPage({
                           <div className="flex flex-col gap-1">
                             <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
                               <span className="flex items-center gap-1">
-                                <span>Số điện thoại liên hệ</span>
+                                <span>{ui("Số điện thoại liên hệ")}</span>
                                 <span className="text-red-600 font-bold">*</span>
                               </span>
                               {showPhoneError && (
@@ -1608,7 +1578,7 @@ export default function CartPage({
                                 setGuestPhone(e.target.value);
                                 if (thongBao) setThongBao('');
                               }}
-                              placeholder="Ví dụ: 0987654321"
+                              placeholder={ui("Ví dụ: 0987654321")}
                               className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm font-semibold outline-none transition-all ${
                                 showPhoneError
                                   ? 'border-red-500 bg-red-50/20 text-red-900 focus:ring-2 focus:ring-red-500/20'
@@ -1620,27 +1590,25 @@ export default function CartPage({
 
                         <p className="text-[11px] text-gray-500 font-medium leading-relaxed flex items-start gap-1">
                           <span className="text-red-600 font-bold">*</span>
-                          <span>Bắt buộc nhập cả Email và Số điện thoại để hệ thống gửi thông báo đơn hàng và liên hệ giao hàng.</span>
+                          <span>{ui("Bắt buộc nhập cả Email và Số điện thoại để hệ thống gửi thông báo đơn hàng và liên hệ giao hàng.")}</span>
                         </p>
                       </div>
                     )}
 
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-bold text-gray-500">Ghi chú cho quầy pha chế / Shipper</label>
+                      <label className="text-xs font-bold text-gray-500">{ui("Ghi chú cho quầy pha chế / Shipper")}</label>
                       <textarea
                         value={ghiChu}
                         onChange={(e) => setGhiChu(e.target.value)}
                         rows={2}
                         className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-[#c41230] focus:ring-2 focus:ring-[#c41230]/20 resize-none transition-all"
-                        placeholder="Ví dụ: ít đá, ngọt vừa, giao trước 11h30..."
+                        placeholder={ui("Ví dụ: ít đá, ngọt vừa, giao trước 11h30...")}
                       />
                     </div>
 
                     {/* PAYMENT METHOD SELECTION CARDS GRID */}
                     <div className="space-y-2 pt-2">
-                      <h3 className="text-xs font-black uppercase text-[#c41230] tracking-widest">
-                        Phương thức thanh toán
-                      </h3>
+                      <h3 className="text-xs font-black uppercase text-[#c41230] tracking-widest">{ui("Phương thức thanh toán")}</h3>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                         {/* VNPAY */}
@@ -1656,9 +1624,9 @@ export default function CartPage({
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-black text-[#1a1a1a]">VNPAY</span>
-                              <span className="text-[9px] font-black uppercase tracking-wider text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Thẻ / App</span>
+                              <span className="text-[9px] font-black uppercase tracking-wider text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">{ui("Thẻ / App")}</span>
                             </div>
-                            <p className="text-[11px] font-semibold text-gray-500">ATM, Visa, QR Ngân Hàng</p>
+                            <p className="text-[11px] font-semibold text-gray-500">{ui("ATM, Visa, QR Ngân Hàng")}</p>
                           </div>
                           <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${phuongThuc === 'VNPAY' ? 'border-[#c41230] bg-[#c41230] text-white' : 'border-gray-300'}`}>
                             {phuongThuc === 'VNPAY' && <CheckIcon className="w-3 h-3 stroke-[3]" />}
@@ -1677,10 +1645,10 @@ export default function CartPage({
                         >
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-black text-[#1a1a1a]">Ngân Hàng QR</span>
+                              <span className="text-xs font-black text-[#1a1a1a]">{ui("Ngân Hàng QR")}</span>
                               <span className="text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">VietQR</span>
                             </div>
-                            <p className="text-[11px] font-semibold text-gray-500">Quét mã chuyển khoản tự động</p>
+                            <p className="text-[11px] font-semibold text-gray-500">{ui("Quét mã chuyển khoản tự động")}</p>
                           </div>
                           <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${phuongThuc === 'NGAN_HANG_QR' ? 'border-[#c41230] bg-[#c41230] text-white' : 'border-gray-300'}`}>
                             {phuongThuc === 'NGAN_HANG_QR' && <CheckIcon className="w-3 h-3 stroke-[3]" />}
@@ -1701,12 +1669,11 @@ export default function CartPage({
                           >
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <span className="text-xs font-black text-[#1a1a1a]">Ví Avengers</span>
+                                <span className="text-xs font-black text-[#1a1a1a]">{ui("Ví Avengers")}</span>
                                 <span className="text-[9px] font-extrabold text-[#b22830] bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
-                                  {Number(walletData?.wallet?.balance || 0).toLocaleString('vi-VN')}đ
-                                </span>
+                                  {Number(walletData?.wallet?.balance || 0).toLocaleString(uiLocale())}{ui("đ")}</span>
                               </div>
-                              <p className="text-[11px] font-semibold text-gray-500">Trừ trực tiếp số dư ví</p>
+                              <p className="text-[11px] font-semibold text-gray-500">{ui("Trừ trực tiếp số dư ví")}</p>
                             </div>
                             <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${phuongThuc === 'VI_DIEN_TU' ? 'border-[#c41230] bg-[#c41230] text-white' : 'border-gray-300'}`}>
                               {phuongThuc === 'VI_DIEN_TU' && <CheckIcon className="w-3 h-3 stroke-[3]" />}
@@ -1726,10 +1693,10 @@ export default function CartPage({
                         >
                           <div className="space-y-1">
                             <span className="text-xs font-black text-[#1a1a1a]">
-                              {deliveryMode === 'GIAO_TAN_NOI' ? 'Tiền mặt COD' : 'Thanh toán tại quầy'}
+                              {deliveryMode === 'GIAO_TAN_NOI' ? ui("Tiền mặt COD") : ui("Thanh toán tại quầy")}
                             </span>
                             <p className="text-[11px] font-semibold text-gray-500">
-                              {deliveryMode === 'GIAO_TAN_NOI' ? 'Thanh toán cho shipper khi nhận' : 'Cà thẻ / tiền mặt tại quầy'}
+                              {deliveryMode === 'GIAO_TAN_NOI' ? ui("Thanh toán cho shipper khi nhận") : ui("Cà thẻ / tiền mặt tại quầy")}
                             </p>
                           </div>
                           <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${phuongThuc === 'THANH_TOAN_KHI_NHAN_HANG' ? 'border-[#c41230] bg-[#c41230] text-white' : 'border-gray-300'}`}>
@@ -1747,47 +1714,44 @@ export default function CartPage({
           {/* Cột phải: Order Summary Sticky Sidebar */}
           <div className="lg:col-span-5 xl:col-span-4 space-y-6 lg:sticky lg:top-24">
             <div className="bg-white rounded-[24px] p-6 md:p-8 border border-[#e8e2da] shadow-sm">
-              <h2 className="text-lg font-black text-[#1a1a1a] uppercase mb-6 tracking-wide pb-4 border-b border-gray-100 font-serif">
-                Tóm tắt đơn hàng
-              </h2>
+              <h2 className="text-lg font-black text-[#1a1a1a] uppercase mb-6 tracking-wide pb-4 border-b border-gray-100 font-serif">{ui("Tóm tắt đơn hàng")}</h2>
 
               <div className="space-y-4">
                 {/* Tạm tính */}
                 <div className="flex justify-between items-center text-sm font-semibold text-gray-600">
-                  <span>Tạm tính ({cart.reduce((s, i) => s + i.so_luong, 0)} món)</span>
-                  <span className="text-[#1a1a1a] font-extrabold">{(cartQuote?.subtotal ?? total).toLocaleString('vi-VN')}đ</span>
+                  <span>{ui("Tạm tính (")}{cart.reduce((s, i) => s + i.so_luong, 0)}{ui(" món)")}</span>
+                  <span className="text-[#1a1a1a] font-extrabold">{(cartQuote?.subtotal ?? total).toLocaleString(uiLocale())}{ui("đ")}</span>
                 </div>
 
                 {/* Giảm giá voucher */}
                 {discountAmount > 0 ? (
                   <div className="flex justify-between items-center text-sm font-semibold text-red-600">
-                    <span>Voucher giảm giá</span>
-                    <span className="font-extrabold">-{discountAmount.toLocaleString('vi-VN')}đ</span>
+                    <span>{ui("Voucher giảm giá")}</span>
+                    <span className="font-extrabold">-{discountAmount.toLocaleString(uiLocale())}{ui("đ")}</span>
                   </div>
                 ) : (
                   <div className="flex justify-between items-center text-sm font-semibold text-gray-500">
-                    <span>Voucher giảm giá</span>
-                    <span className="text-[#1a1a1a] font-extrabold">0đ</span>
+                    <span>{ui("Voucher giảm giá")}</span>
+                    <span className="text-[#1a1a1a] font-extrabold">{ui("0đ")}</span>
                   </div>
                 )}
 
                 {/* Phí giao hàng chỉ thuộc checkout sau khi chọn hình thức nhận. */}
                 {step === 2 && deliveryMode && <div className="flex flex-col gap-1">
                   <div className="flex justify-between items-center text-sm font-semibold text-gray-600">
-                    <span>Phí giao hàng</span>
+                    <span>{ui("Phí giao hàng")}</span>
                     {deliveryMode !== 'GIAO_TAN_NOI' ? (
-                      <span className="text-emerald-600 font-extrabold">Miễn phí</span>
+                      <span className="text-emerald-600 font-extrabold">{ui("Miễn phí")}</span>
                     ) : (
                       <div className="text-right flex items-center gap-2">
                         {giamPhiShipHanh > 0 && (
                           <span className="text-xs font-semibold text-gray-400 line-through">
-                            {phiGiaoHangGoc.toLocaleString('vi-VN')}đ
-                          </span>
+                            {phiGiaoHangGoc.toLocaleString(uiLocale())}{ui("đ")}</span>
                         )}
                         {phiGiaoHangThucTe === 0 ? (
-                          <span className="text-emerald-600 font-extrabold">Miễn phí</span>
+                          <span className="text-emerald-600 font-extrabold">{ui("Miễn phí")}</span>
                         ) : (
-                          <span className="text-[#1a1a1a] font-extrabold">{phiGiaoHangThucTe.toLocaleString('vi-VN')}đ</span>
+                          <span className="text-[#1a1a1a] font-extrabold">{phiGiaoHangThucTe.toLocaleString(uiLocale())}{ui("đ")}</span>
                         )}
                       </div>
                     )}
@@ -1797,13 +1761,12 @@ export default function CartPage({
                   {deliveryMode === 'GIAO_TAN_NOI' && (
                     isFreeshipEligible ? (
                       <p className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 mt-1 flex items-center justify-between">
-                        <span>Đã áp dụng Freeship hạng {memberTierName}</span>
-                        <span>-{giamPhiShipHanh.toLocaleString('vi-VN')}đ</span>
+                        <span>{ui("Đã áp dụng Freeship hạng ")}{memberTierName}</span>
+                        <span>-{giamPhiShipHanh.toLocaleString(uiLocale())}{ui("đ")}</span>
                       </p>
                     ) : (
                       memberFreeshipVal > 0 && memberFreeshipMinOrder > total && (
-                        <p className="text-[11px] font-semibold text-[#b22830] bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 mt-1">
-                          Mua thêm {(memberFreeshipMinOrder - total).toLocaleString('vi-VN')}đ để tự động Freeship {memberFreeshipVal.toLocaleString('vi-VN')}đ hạng {memberTierName}
+                        <p className="text-[11px] font-semibold text-[#b22830] bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 mt-1">{ui("Mua thêm ")}{(memberFreeshipMinOrder - total).toLocaleString(uiLocale())}{ui("đ để tự động Freeship ")}{memberFreeshipVal.toLocaleString(uiLocale())}{ui("đ hạng ")}{memberTierName}
                         </p>
                       )
                     )
@@ -1815,18 +1778,16 @@ export default function CartPage({
                 {/* Tổng cộng */}
                 <div className="flex justify-between items-end">
                   <div>
-                    <span className="text-sm font-black text-[#1a1a1a] uppercase block">Tổng thanh toán</span>
-                    <span className="text-[11px] text-gray-400 font-semibold">(Đã bao gồm VAT & phí)</span>
+                    <span className="text-sm font-black text-[#1a1a1a] uppercase block">{ui("Tổng thanh toán")}</span>
+                    <span className="text-[11px] text-gray-400 font-semibold">{ui("(Đã bao gồm VAT & phí)")}</span>
                   </div>
                   <div className="text-right">
                     {discountAmount > 0 && (
                       <p className="text-xs font-semibold text-gray-400 line-through">
-                        {total.toLocaleString('vi-VN')}đ
-                      </p>
+                        {total.toLocaleString(uiLocale())}{ui("đ")}</p>
                     )}
                     <span className="text-2xl sm:text-3xl font-black text-[#c41230] tracking-tight">
-                      {tongTienSauGiam.toLocaleString('vi-VN')}đ
-                    </span>
+                      {tongTienSauGiam.toLocaleString(uiLocale())}{ui("đ")}</span>
                   </div>
                 </div>
               </div>
@@ -1840,19 +1801,15 @@ export default function CartPage({
                         <span className="text-xs font-black text-emerald-800 uppercase tracking-wide truncate">
                           {voucherResult.ma_voucher || voucherResult.ma_khuyen_mai}
                         </span>
-                        <span className="text-[9px] font-black uppercase text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">Đã áp dụng</span>
+                        <span className="text-[9px] font-black uppercase text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">{ui("Đã áp dụng")}</span>
                       </div>
-                      <p className="text-[11px] font-bold text-emerald-700 truncate mt-0.5">
-                        Tiết kiệm {discountAmount.toLocaleString('vi-VN')}đ cho đơn hàng
-                      </p>
+                      <p className="text-[11px] font-bold text-emerald-700 truncate mt-0.5">{ui("Tiết kiệm ")}{discountAmount.toLocaleString(uiLocale())}{ui("đ cho đơn hàng")}</p>
                     </div>
-                    <button 
-                      type="button" 
-                      onClick={xoaVoucher} 
+                    <button
+                      type="button"
+                      onClick={xoaVoucher}
                       className="rounded-xl bg-white px-3 py-1.5 text-xs font-black text-red-500 border border-red-200 shadow-xs shrink-0 hover:bg-red-50 transition-colors"
-                    >
-                      Bỏ dùng
-                    </button>
+                    >{ui("Bỏ dùng")}</button>
                   </div>
                 ) : (
                   <div className="relative flex items-center bg-[#faf7f4] rounded-full border border-gray-200 pr-1 pl-4 h-[48px] overflow-hidden focus-within:border-[#c41230] focus-within:ring-2 focus-within:ring-[#c41230]/20 transition-all">
@@ -1862,7 +1819,7 @@ export default function CartPage({
                       onChange={(e) => { setVoucherCode(e.target.value.toUpperCase()); setVoucherError(''); }}
                       onKeyDown={(e) => e.key === 'Enter' && apDungVoucher()}
                       className="flex-1 h-full bg-transparent border-none outline-none text-xs sm:text-sm font-semibold uppercase text-gray-800 placeholder-gray-400"
-                      placeholder="MÃ GIẢM GIÁ"
+                      placeholder={ui("MÃ GIẢM GIÁ")}
                     />
                     <button
                       type="button"
@@ -1870,7 +1827,7 @@ export default function CartPage({
                       disabled={isCheckingVoucher}
                       className="rounded-full bg-[#1a1a1a] hover:bg-[#c41230] text-white font-black text-xs uppercase px-5 h-[38px] flex items-center justify-center shrink-0 transition-colors disabled:opacity-60 cursor-pointer shadow-xs"
                     >
-                      {isCheckingVoucher ? '...' : 'Áp dụng'}
+                      {isCheckingVoucher ? '...' : ui("Áp dụng")}
                     </button>
                   </div>
                 )}
@@ -1882,14 +1839,12 @@ export default function CartPage({
               {/* MÃ GIẢM GIÁ KHẢ DỤNG - TICKET STUB CARDS DESIGN */}
               <div className="mt-6">
                 <div className="flex justify-between items-center mb-3 px-1">
-                  <h2 className="text-xs font-black uppercase text-gray-700 tracking-wider">
-                    Mã giảm giá dành cho bạn
-                  </h2>
+                  <h2 className="text-xs font-black uppercase text-gray-700 tracking-wider">{ui("Mã giảm giá dành cho bạn")}</h2>
                 </div>
-                
+
                 {(!voucherItems || voucherItems.length === 0) ? (
                   <div className="text-center py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                    <p className="text-xs text-gray-500 italic">Không có mã giảm giá khả dụng</p>
+                    <p className="text-xs text-gray-500 italic">{ui("Không có mã giảm giá khả dụng")}</p>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-4">
@@ -1897,7 +1852,7 @@ export default function CartPage({
                     {personalVouchers.length > 0 && (
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-1.5 px-0.5">
-                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#b22830]">Dành riêng cho bạn</span>
+                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#b22830]">{ui("Dành riêng cho bạn")}</span>
                         </div>
                         {personalVouchers.map((v) => {
                           const code = v.ma_khuyen_mai || v.ma_voucher || v.code;
@@ -1905,31 +1860,31 @@ export default function CartPage({
                           const isPercent = type.includes('PERCENT');
                           const rawVal = Number(v.gia_tri || v.val || 0);
                           const valueText = isPercent ? `${rawVal}%` : (rawVal >= 1000 ? `${Math.round(rawVal / 1000)}K` : `${rawVal || 10}K`);
-                          
+
                           let badgeLabel = `GIẢM ${valueText}`;
                           if (type.includes('FREE_ITEM') || String(code).toUpperCase().includes('TOPPING') || String(v.ten_khuyen_mai).toUpperCase().includes('TOPPING')) {
                             badgeLabel = 'FREE TOPPING';
                           }
 
                           return (
-                            <div 
-                              key={code} 
-                              className="relative flex bg-gradient-to-r from-amber-50/80 to-amber-100/50 border border-amber-200 rounded-[16px] overflow-hidden shadow-xs hover:shadow-md hover:border-amber-400 transition-all cursor-pointer group" 
+                            <div
+                              key={code}
+                              className="relative flex bg-gradient-to-r from-amber-50/80 to-amber-100/50 border border-amber-200 rounded-[16px] overflow-hidden shadow-xs hover:shadow-md hover:border-amber-400 transition-all cursor-pointer group"
                               onClick={() => { setVoucherCode(code); apDungVoucher(code); }}
                             >
                               {/* Left Badge */}
                               <div className="w-18 bg-[#b22830] text-white p-2.5 flex flex-col items-center justify-center shrink-0 text-center relative border-r border-dashed border-red-300">
                                 <span className="text-[10px] font-black tracking-wider uppercase leading-tight">{badgeLabel}</span>
                               </div>
-                              
+
                               {/* Content */}
                               <div className="flex-1 p-3 flex flex-col justify-center min-w-0">
                                 <div className="flex items-center gap-1.5 mb-0.5">
                                   <span className="px-2 py-0.5 bg-red-100/80 text-[#b22830] text-[10px] font-black rounded uppercase tracking-wider">{code}</span>
                                 </div>
-                                <h5 className="text-xs font-extrabold text-gray-900 truncate leading-snug">{v.ten_khuyen_mai || v.mo_ta || `Voucher quà tặng`}</h5>
+                                <h5 className="text-xs font-extrabold text-gray-900 truncate leading-snug">{v.ten_khuyen_mai || v.mo_ta || ui("Voucher quà tặng", {})}</h5>
                                 <p className="text-[10px] font-semibold text-[#b22830] mt-0.5">
-                                  {v.ngay_ket_thuc || v.han_su_dung ? `HSD: ${new Date(v.ngay_ket_thuc || v.han_su_dung).toLocaleDateString('vi-VN')}` : 'Hạn sử dụng dài'}
+                                  {v.ngay_ket_thuc || v.han_su_dung ? `HSD: ${new Date(v.ngay_ket_thuc || v.han_su_dung).toLocaleDateString(uiLocale())}` : ui("Hạn sử dụng dài")}
                                 </p>
                               </div>
 
@@ -1939,9 +1894,7 @@ export default function CartPage({
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); setVoucherCode(code); apDungVoucher(code); }}
                                   className="px-3 py-1 bg-[#b22830] hover:bg-[#8f1b23] text-white font-extrabold text-[11px] rounded-full shadow-xs transition-colors"
-                                >
-                                  Dùng
-                                </button>
+                                >{ui("Dùng")}</button>
                               </div>
                             </div>
                           );
@@ -1953,7 +1906,7 @@ export default function CartPage({
                     {publicVouchers.length > 0 && (
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-1.5 px-0.5">
-                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-700">Khuyến mãi hệ thống</span>
+                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-700">{ui("Khuyến mãi hệ thống")}</span>
                         </div>
                         {publicVouchers.map((v) => {
                           const code = v.ma_khuyen_mai || v.ma_voucher || v.code;
@@ -1961,31 +1914,31 @@ export default function CartPage({
                           const isPercent = type.includes('PERCENT');
                           const rawVal = Number(v.gia_tri || v.val || 0);
                           const valueText = isPercent ? `${rawVal}%` : (rawVal >= 1000 ? `${Math.round(rawVal / 1000)}K` : `${rawVal || 10}K`);
-                          
+
                           let badgeLabel = `GIẢM ${valueText}`;
                           if (type.includes('FREE_ITEM') || String(code).toUpperCase().includes('TOPPING') || String(v.ten_khuyen_mai).toUpperCase().includes('TOPPING')) {
                             badgeLabel = 'FREE TOPPING';
                           }
 
                           return (
-                            <div 
-                              key={code} 
-                              className="relative flex bg-white border border-[#f5cbb8] rounded-[16px] overflow-hidden shadow-xs hover:shadow-md hover:border-[#e15923] transition-all cursor-pointer group" 
+                            <div
+                              key={code}
+                              className="relative flex bg-white border border-[#f5cbb8] rounded-[16px] overflow-hidden shadow-xs hover:shadow-md hover:border-[#e15923] transition-all cursor-pointer group"
                               onClick={() => { setVoucherCode(code); apDungVoucher(code); }}
                             >
                               {/* Left Badge */}
                               <div className="w-18 bg-[#fff6f0] text-[#e15923] p-2.5 flex flex-col items-center justify-center shrink-0 text-center relative border-r border-dashed border-[#fcdbc7]">
                                 <span className="text-[10px] font-black tracking-wider uppercase leading-tight">{badgeLabel}</span>
                               </div>
-                              
+
                               {/* Content */}
                               <div className="flex-1 p-3 flex flex-col justify-center min-w-0">
                                 <div className="flex items-center gap-1.5 mb-0.5">
                                   <span className="px-2 py-0.5 bg-[#feeee3] text-[#e15923] text-[10px] font-black rounded uppercase tracking-wider">{code}</span>
                                 </div>
-                                <h5 className="text-xs font-extrabold text-[#282828] truncate leading-snug">{v.ten_khuyen_mai || v.mo_ta || `Giảm ${valueText}`}</h5>
+                                <h5 className="text-xs font-extrabold text-[#282828] truncate leading-snug">{v.ten_khuyen_mai || v.mo_ta || ui("Giảm {{v0}}", {v0:valueText})}</h5>
                                 <p className="text-[10px] font-semibold text-gray-500 mt-0.5">
-                                  {v.ngay_ket_thuc || v.han_su_dung ? `HSD: ${new Date(v.ngay_ket_thuc || v.han_su_dung).toLocaleDateString('vi-VN')}` : 'Không giới hạn'}
+                                  {v.ngay_ket_thuc || v.han_su_dung ? `HSD: ${new Date(v.ngay_ket_thuc || v.han_su_dung).toLocaleDateString(uiLocale())}` : ui("Không giới hạn")}
                                 </p>
                               </div>
 
@@ -1995,9 +1948,7 @@ export default function CartPage({
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); setVoucherCode(code); apDungVoucher(code); }}
                                   className="px-3 py-1 bg-[#e15923] hover:bg-[#c44919] text-white font-extrabold text-[11px] rounded-full shadow-xs transition-colors"
-                                >
-                                  Dùng
-                                </button>
+                                >{ui("Dùng")}</button>
                               </div>
                             </div>
                           );
@@ -2016,16 +1967,14 @@ export default function CartPage({
                   disabled={cart.length === 0}
                   className="w-full mt-6 py-4 bg-[#1a1a1a] hover:bg-[#c41230] text-white rounded-full font-black uppercase text-xs sm:text-sm tracking-widest shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span>{isLoggedInUser ? 'Tiến hành thanh toán' : 'Đăng nhập để thanh toán'}</span>
+                  <span>{isLoggedInUser ? ui("Tiến hành thanh toán") : ui("Đăng nhập để thanh toán")}</span>
                   <ArrowLongRightIcon className="h-5 w-5 stroke-[2.5]" />
                 </button>
               ) : (
                 <>
                   {['LAY_TAI_QUAN', 'DUNG_TAI_CHO'].includes(deliveryMode) && selectedBranch
                     && selectedBranchAvailability.unverified_products.length > 0 && (
-                    <p className="mt-4 text-xs text-amber-700">
-                      Chưa xác minh được tình trạng món tại cửa hàng. Vui lòng thử lại.
-                    </p>
+                    <p className="mt-4 text-xs text-amber-700">{ui("Chưa xác minh được tình trạng món tại cửa hàng. Vui lòng thử lại.")}</p>
                   )}
                   {deliveryMode === 'GIAO_TAN_NOI' && !stockValidation.canOrder && stockValidation.message && (
                     <div className="mt-4 p-3 rounded-2xl bg-red-50 border border-red-200 text-center">
@@ -2036,9 +1985,7 @@ export default function CartPage({
                   )}
 
                   {deliveryMode !== 'GIAO_TAN_NOI' && isAnyItemOutOfStock && (
-                    <p className="mt-4 text-xs font-bold text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-100 text-center">
-                      Có món trong giỏ hàng đã hết hàng tại chi nhánh này. Vui lòng kiểm tra lại giỏ hàng!
-                    </p>
+                    <p className="mt-4 text-xs font-bold text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-100 text-center">{ui("Có món trong giỏ hàng đã hết hàng tại chi nhánh này. Vui lòng kiểm tra lại giỏ hàng!")}</p>
                   )}
 
                   <button
@@ -2049,11 +1996,11 @@ export default function CartPage({
                     {khoiTaoThanhToanMutation.isPending ? (
                       <>
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Đang tạo đơn hàng...</span>
+                        <span>{ui("Đang tạo đơn hàng...")}</span>
                       </>
                     ) : (
                       <>
-                        <span>{pendingCheckoutRetry ? 'Thử lại đơn đã gửi' : 'Xác nhận & Đặt hàng'}</span>
+                        <span>{pendingCheckoutRetry ? ui("Thử lại đơn đã gửi") : ui("Xác nhận & Đặt hàng")}</span>
                         <CheckIcon className="w-5 h-5 stroke-[3]" />
                       </>
                     )}
@@ -2064,8 +2011,8 @@ export default function CartPage({
               {/* Error messages */}
               {thongBao && (
                 <div className={`mt-4 p-3.5 rounded-2xl text-xs font-bold text-center border ${
-                  thongBao.includes('thành công') 
-                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+                  thongBao.includes('thành công')
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                     : 'bg-red-50 text-red-700 border-red-200'
                 }`}>
                   {thongBao}
@@ -2082,32 +2029,24 @@ export default function CartPage({
                   </div>
 
                   <div className="space-y-1">
-                    <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 text-[11px] font-black tracking-wider uppercase rounded-full">
-                      Giao dịch hoàn tất
-                    </span>
-                    <h3 className="text-lg font-black text-emerald-900 tracking-tight">
-                      THANH TOÁN THÀNH CÔNG!
-                    </h3>
-                    <p className="text-xs text-gray-500 font-medium">
-                      Hệ thống đã nhận được tiền chuyển khoản SePay và tự động xác nhận đơn.
-                    </p>
+                    <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 text-[11px] font-black tracking-wider uppercase rounded-full">{ui("Giao dịch hoàn tất")}</span>
+                    <h3 className="text-lg font-black text-emerald-900 tracking-tight">{ui("THANH TOÁN THÀNH CÔNG!")}</h3>
+                    <p className="text-xs text-gray-500 font-medium">{ui("Hệ thống đã nhận được tiền chuyển khoản SePay và tự động xác nhận đơn.")}</p>
                   </div>
 
                   <div className="text-left space-y-2.5 text-xs bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm">
                     <p className="flex justify-between items-center py-1 border-b border-gray-100">
-                      <span className="text-gray-500">Mã tham chiếu:</span> 
+                      <span className="text-gray-500">{ui("Mã tham chiếu:")}</span>
                       <span className="font-black text-gray-800 font-mono tracking-wide">{qrData.ma_tham_chieu}</span>
                     </p>
                     <p className="flex justify-between items-center py-1 border-b border-gray-100">
-                      <span className="text-gray-500">Số tiền đã nhận:</span> 
-                      <span className="font-black text-emerald-600 text-base">{Number(qrData.so_tien).toLocaleString('vi-VN')}đ</span>
+                      <span className="text-gray-500">{ui("Số tiền đã nhận:")}</span>
+                      <span className="font-black text-emerald-600 text-base">{Number(qrData.so_tien).toLocaleString(uiLocale())}{ui("đ")}</span>
                     </p>
                     <p className="flex justify-between items-center pt-1">
-                      <span className="text-gray-500">Trạng thái đơn:</span> 
+                      <span className="text-gray-500">{ui("Trạng thái đơn:")}</span>
                       <span className="inline-flex items-center gap-1.5 font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full text-[11px]">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Đã xác nhận & Chờ pha chế
-                      </span>
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>{ui("Đã xác nhận & Chờ pha chế")}</span>
                     </p>
                   </div>
 
@@ -2119,22 +2058,20 @@ export default function CartPage({
                       }}
                       className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      <span>Xem Lịch Sử Đơn Hàng</span>
+                      <span>{ui("Xem Lịch Sử Đơn Hàng")}</span>
                       <ArrowLongRightIcon className="w-4 h-4 stroke-[2.5]" />
                     </button>
-                    <p className="text-[11px] text-gray-400">Đơn hàng đang được chuẩn bị tại chi nhánh</p>
+                    <p className="text-[11px] text-gray-400">{ui("Đơn hàng đang được chuẩn bị tại chi nhánh")}</p>
                   </div>
                 </div>
               ) : (
                 <div className="bg-white rounded-[24px] p-6 border border-[#e8e2da] shadow-md text-center animate-in fade-in duration-300 space-y-4">
-                  <h3 className="text-sm font-black text-[#1a1a1a] uppercase tracking-wide pb-2 border-b border-gray-100 font-serif">
-                    Quét mã QR để thanh toán đơn hàng
-                  </h3>
-                  
+                  <h3 className="text-sm font-black text-[#1a1a1a] uppercase tracking-wide pb-2 border-b border-gray-100 font-serif">{ui("Quét mã QR để thanh toán đơn hàng")}</h3>
+
                   <div className="relative inline-block p-3 border border-gray-200 rounded-2xl bg-white shadow-inner">
                     <img
                       src={qrImageUrl || qrData.qr_img_url}
-                      alt="QR ngân hàng"
+                      alt={ui("QR ngân hàng")}
                       className="w-48 h-48 mx-auto rounded-xl"
                       onError={() => {
                         if (qrData?.qr_fallback_url && qrImageUrl !== qrData.qr_fallback_url) {
@@ -2146,18 +2083,18 @@ export default function CartPage({
 
                   <div className="text-left space-y-2 text-xs text-gray-600 bg-gray-50 p-4 rounded-2xl border border-gray-100">
                     <p className="flex justify-between">
-                      <span>Mã tham chiếu:</span> 
+                      <span>{ui("Mã tham chiếu:")}</span>
                       <span className="font-black text-gray-800">{qrData.ma_tham_chieu}</span>
                     </p>
                     <p className="flex justify-between">
-                      <span>Số tiền cần chuyển:</span> 
-                      <span className="font-black text-[#c41230] text-sm">{Number(qrData.so_tien).toLocaleString('vi-VN')}đ</span>
+                      <span>{ui("Số tiền cần chuyển:")}</span>
+                      <span className="font-black text-[#c41230] text-sm">{Number(qrData.so_tien).toLocaleString(uiLocale())}{ui("đ")}</span>
                     </p>
                   </div>
-                  
+
                   <div className="flex items-center justify-center gap-2 text-xs font-bold text-emerald-700 bg-emerald-50 py-2.5 px-3 rounded-xl border border-emerald-100">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                    <span>Hệ thống đang tự động xác thực thanh toán qua Sepay...</span>
+                    <span>{ui("Hệ thống đang tự động xác thực thanh toán qua Sepay...")}</span>
                   </div>
                 </div>
               )

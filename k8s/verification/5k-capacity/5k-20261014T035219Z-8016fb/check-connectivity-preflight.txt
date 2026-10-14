@@ -1,0 +1,1 @@
+PASS Pod service DNS, DB schemas, Redis/RabbitMQ host bridge

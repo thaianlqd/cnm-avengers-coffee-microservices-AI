@@ -1,0 +1,21 @@
+/* Converts authored UI copy only. Never rewrites option values, API enums or user/server content. */
+const fs=require('fs'),path=require('path'),parser=require('@babel/parser'),traverse=require('@babel/traverse').default;
+const write=process.argv.includes('--write'), phrases=new Map();
+const authoredKeys=new Set(fs.readFileSync('src/locales/ui.en.tsv','utf8').split('\n').map(line=>line.split('\t')[0].trim().replace(/\s+/g,' ').toLowerCase()));
+const vietnamese=s=>Boolean(s.trim())&&(/đ/i.test(s)||/[\u0300-\u036f]/.test(s.normalize('NFD'))||authoredKeys.has(s.trim().replace(/\s+/g,' ').toLowerCase()));
+const norm=s=>s.trim().replace(/\s+/g,' ');
+function clean(text){const lines=text.split(/\r\n|\n|\r/);let last=0;lines.forEach((line,i)=>{if(/[^ \t]/.test(line))last=i;});let value='';lines.forEach((line,i)=>{line=line.replace(/\t/g,' ');if(i>0)line=line.replace(/^ +/,'');if(i<lines.length-1)line=line.replace(/ +$/,'');if(line){if(i!==last)line+=' ';value+=line;}});return value;}
+function walk(dir){for(const ent of fs.readdirSync(dir,{withFileTypes:true})){const file=path.join(dir,ent.name);if(ent.isDirectory())walk(file);else if(file.endsWith('.jsx'))convert(file);}}
+function convert(file){const source=fs.readFileSync(file,'utf8'),edits=[];const ast=parser.parse(source,{sourceType:'module',plugins:['jsx']});
+ const add=(start,end,s,args='')=>{if(!vietnamese(s)||!norm(s))return;const key=norm(s);if(!phrases.has(key))phrases.set(key,new Set());phrases.get(key).add(file);edits.push({start,end,text:'ui('+JSON.stringify(s)+(args?', '+args:'')+')'});};
+ const isCopy=q=>{const c=q.findParent(n=>n.isJSXExpressionContainer());if(!c)return false;const attr=c.parentPath;if(attr.isJSXAttribute()&&(!['placeholder','title','aria-label','alt','label'].includes(attr.node.name.name)))return false; if(q.findParent(n=>n.isCallExpression()&&['t','ui'].includes(n.node.callee.name)))return false;return ['JSXExpressionContainer','ConditionalExpression','LogicalExpression'].includes(q.parent.type);};
+ traverse(ast,{
+  JSXText(q){const s=clean(q.node.value);if(vietnamese(s)){add(q.node.start,q.node.end,s);edits[edits.length-1].text='{'+edits[edits.length-1].text+'}';}},
+  StringLiteral(q){if(q.parent.type==='JSXAttribute'&&['placeholder','title','aria-label','alt','label'].includes(q.parent.name.name)){if(vietnamese(q.node.value)){add(q.node.start,q.node.end,q.node.value);edits[edits.length-1].text='{'+edits[edits.length-1].text+'}';}}else if(isCopy(q))add(q.node.start,q.node.end,q.node.value);else if(q.parent.type==='CallExpression'&&['alert','confirm','Error'].includes(q.parent.callee.name))add(q.node.start,q.node.end,q.node.value);},
+  TemplateLiteral(q){if(!isCopy(q))return;const text=q.node.quasis.map((part,i)=>part.value.cooked+(i<q.node.expressions.length?'{{v'+i+'}}':'')).join('');if(!vietnamese(text))return;const args='{'+q.node.expressions.map((e,i)=>'v'+i+':'+source.slice(e.start,e.end)).join(',')+'}';add(q.node.start,q.node.end,text,args);q.skip();}
+ });
+ if(!write||!edits.length)return;
+ traverse(ast,{Function(q){let name=q.node.id?.name;if(!name&&q.parent.type==='VariableDeclarator')name=q.parent.id.name;if(!/^[A-Z]/.test(name||'')||q.node.body.type!=='BlockStatement')return;if(!JSON.stringify(q.node.body).includes('JSX')||source.slice(q.node.body.start,q.node.body.end).includes('useUiLanguage()'))return;edits.push({start:q.node.body.start+1,end:q.node.body.start+1,text:'\n  useUiLanguage();'});}});
+ let dest=source;edits.sort((a,b)=>b.start-a.start).forEach(e=>dest=dest.slice(0,e.start)+e.text+dest.slice(e.end));let rel=path.relative(path.dirname(file),'src/lib/uiText').replaceAll('\\','/');if(!rel.startsWith('.'))rel='./'+rel;if(!dest.includes('uiText as ui'))dest='import { uiText as ui, useUiLanguage } from '+JSON.stringify(rel)+';\n'+dest;else if(dest.includes('useUiLanguage()')&&!/import[^;]*useUiLanguage/.test(dest))dest=dest.replace('uiText as ui','uiText as ui, useUiLanguage');fs.writeFileSync(file,dest);
+}
+walk('src/pages');walk('src/components');convert('src/App.jsx');fs.writeFileSync('/tmp/customer-ui-phrases.json',JSON.stringify(Object.fromEntries([...phrases].map(([key,files])=>[key,[...files]])),null,2));console.log('UI phrases',phrases.size,'write',write);

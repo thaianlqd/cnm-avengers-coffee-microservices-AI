@@ -70,7 +70,7 @@ function CustomQuestionTypeDropdown({ value, onChange }) {
           width: '100%',
           padding: '0.45rem 0.75rem',
           borderRadius: '10px',
-          border: isOpen ? '2px solid #4f46e5' : '1px solid #cbd5e1',
+          border: isOpen ? '2px solid var(--primary)' : '1px solid #cbd5e1',
           backgroundColor: '#ffffff',
           color: '#0f172a',
           fontWeight: '700',
@@ -85,10 +85,10 @@ function CustomQuestionTypeDropdown({ value, onChange }) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
-          <SelectedIcon size={16} color="#4f46e5" style={{ flexShrink: 0 }} />
+          <SelectedIcon size={16} color="var(--primary)" style={{ flexShrink: 0 }} />
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedOpt.label}</span>
         </div>
-        <ChevronDown size={16} color={isOpen ? '#4f46e5' : '#64748b'} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease', flexShrink: 0 }} />
+        <ChevronDown size={16} color={isOpen ? 'var(--primary)' : '#64748b'} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease', flexShrink: 0 }} />
       </button>
 
       {isOpen && (
@@ -122,8 +122,8 @@ function CustomQuestionTypeDropdown({ value, onChange }) {
                 style={{
                   padding: '0.55rem 0.75rem',
                   borderRadius: '8px',
-                  backgroundColor: isSelected ? '#e0e7ff' : 'transparent',
-                  color: isSelected ? '#4f46e5' : '#334155',
+                  backgroundColor: isSelected ? 'var(--primary-subtle)' : 'transparent',
+                  color: isSelected ? 'var(--primary)' : '#334155',
                   fontWeight: isSelected ? '700' : '600',
                   fontSize: '0.8125rem',
                   cursor: 'pointer',
@@ -140,10 +140,10 @@ function CustomQuestionTypeDropdown({ value, onChange }) {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-                  <OptIcon size={16} color={isSelected ? '#4f46e5' : '#64748b'} style={{ flexShrink: 0 }} />
+                  <OptIcon size={16} color={isSelected ? 'var(--primary)' : '#64748b'} style={{ flexShrink: 0 }} />
                   <span>{opt.label}</span>
                 </div>
-                {isSelected && <Check size={16} color="#4f46e5" />}
+                {isSelected && <Check size={16} color="var(--primary)" />}
               </div>
             );
           })}
@@ -483,11 +483,11 @@ export function ManagerSurveyPanel({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {isEditing ? (
             /* FORM EDITOR STUDIO */
-            <form onSubmit={handleSaveForm} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <form className="workspace-form" onSubmit={handleSaveForm} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div className="system-admin-card" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', boxShadow: '0 8px 24px -4px rgba(15, 23, 42, 0.06)', overflow: 'hidden' }}>
                 <div style={{ padding: '1.1rem 1.5rem', backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: editingFormId ? '#eff6ff' : '#ecfdf5', color: editingFormId ? '#2563eb' : '#059669', border: editingFormId ? '1px solid #bfdbfe' : '1px solid #a7f3d0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: editingFormId ? 'var(--primary-light)' : '#eff6ff', color: editingFormId ? 'var(--primary)' : '#2563eb', border: editingFormId ? '1px solid #bfdbfe' : '1px solid #bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {editingFormId ? <Edit3 size={20} /> : <Plus size={20} />}
                     </div>
                     <div>
@@ -513,7 +513,7 @@ export function ManagerSurveyPanel({
                       <label style={{ color: '#334155', fontWeight: '600', fontSize: '0.8125rem' }}>
                         Tiêu đề khảo sát <span style={{ color: '#ef4444' }}>*</span>
                       </label>
-                      <div style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
+                      <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem' }}>
                         <Tag size={16} color="#64748b" style={{ flexShrink: 0 }} />
                         <input
                           type="text"
@@ -549,13 +549,13 @@ export function ManagerSurveyPanel({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.25rem' }}>
                   <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Layers size={18} color="#4f46e5" /> Danh sách câu hỏi ({questions.length})
+                    <Layers size={18} color="var(--primary)" /> Danh sách câu hỏi ({questions.length})
                   </h3>
                   <button
                     type="button"
                     onClick={handleAddQuestion}
                     style={{
-                      background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
+                      background: 'linear-gradient(135deg, var(--primary) 0%, #3730a3 100%)',
                       color: '#ffffff',
                       border: 'none',
                       padding: '0.45rem 1.1rem',
@@ -597,12 +597,12 @@ export function ManagerSurveyPanel({
                               minWidth: '32px',
                               minHeight: '32px',
                               borderRadius: '50%',
-                              backgroundColor: '#e0e7ff',
-                              color: '#4f46e5',
+                              backgroundColor: 'var(--primary-subtle)',
+                              color: 'var(--primary)',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              fontWeight: '800',
+                              fontWeight: '600',
                               fontSize: '0.8125rem',
                               flexShrink: 0
                             }}
@@ -698,7 +698,7 @@ export function ManagerSurveyPanel({
                               borderRadius: '6px',
                               fontSize: '0.75rem',
                               fontWeight: '600',
-                              color: '#4f46e5',
+                              color: 'var(--primary)',
                               cursor: 'pointer'
                             }}
                           >
@@ -759,7 +759,7 @@ export function ManagerSurveyPanel({
                       style={{
                         backgroundColor: '#ffffff',
                         border: '1px solid #e2e8f0',
-                        borderLeft: `5px solid ${form.trang_thai ? '#10b981' : '#94a3b8'}`,
+                        borderLeft: `5px solid ${form.trang_thai ? '#3b82f6' : '#94a3b8'}`,
                         borderRadius: '16px',
                         padding: '1.35rem',
                         boxShadow: '0 4px 16px -2px rgba(15, 23, 42, 0.05)',
@@ -773,7 +773,7 @@ export function ManagerSurveyPanel({
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
                         <div style={{ flex: 1 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569', backgroundColor: '#f1f5f9', padding: '0.15rem 0.5rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#475569', backgroundColor: '#f1f5f9', padding: '0.15rem 0.5rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
                               #{form.id}
                             </span>
                             <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700', color: '#0f172a', lineHeight: 1.35 }}>
@@ -787,18 +787,18 @@ export function ManagerSurveyPanel({
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '0.35rem',
-                            backgroundColor: form.trang_thai ? '#ecfdf5' : '#f1f5f9',
-                            color: form.trang_thai ? '#059669' : '#64748b',
+                            backgroundColor: form.trang_thai ? '#eff6ff' : '#f1f5f9',
+                            color: form.trang_thai ? '#2563eb' : '#64748b',
                             fontSize: '0.75rem',
                             fontWeight: '700',
                             padding: '0.25rem 0.65rem',
                             borderRadius: '9999px',
-                            border: form.trang_thai ? '1px solid #a7f3d0' : '1px solid #e2e8f0',
+                            border: form.trang_thai ? '1px solid #bfdbfe' : '1px solid #e2e8f0',
                             whiteSpace: 'nowrap',
                             flexShrink: 0
                           }}
                         >
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: form.trang_thai ? '#10b981' : '#94a3b8' }}></span>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: form.trang_thai ? '#3b82f6' : '#94a3b8' }}></span>
                           {form.trang_thai ? 'Đang hoạt động' : 'Tạm dừng'}
                         </span>
                       </div>
@@ -806,7 +806,7 @@ export function ManagerSurveyPanel({
                       {/* Form Reward / Description box */}
                       {form.mo_ta && (
                         <div style={{ backgroundColor: '#f8fafc', borderRadius: '10px', padding: '0.65rem 0.85rem', border: '1px solid #f1f5f9', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                          <Gift size={16} color="#2563eb" style={{ flexShrink: 0, marginTop: '2px' }} />
+                          <Gift size={16} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
                           <p style={{ margin: 0, fontSize: '0.8125rem', color: '#334155', lineHeight: 1.45 }}>
                             {form.mo_ta}
                           </p>
@@ -816,7 +816,7 @@ export function ManagerSurveyPanel({
                       {/* Metadata Row with Lucide SVG Icons */}
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78125rem', color: '#64748b', borderTop: '1px solid #f1f5f9', paddingTop: '0.75rem', gap: '0.75rem', flexWrap: 'wrap' }}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', backgroundColor: '#f1f5f9', padding: '0.25rem 0.6rem', borderRadius: '8px' }}>
-                          <HelpCircle size={14} color="#4f46e5" />
+                          <HelpCircle size={14} color="var(--primary)" />
                           <strong style={{ color: '#334155' }}>{form.cau_hoi?.length || 0}</strong> câu hỏi
                         </div>
 
@@ -836,9 +836,9 @@ export function ManagerSurveyPanel({
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: '0.35rem',
-                              backgroundColor: '#ecfdf5',
-                              color: '#059669',
-                              border: '1px solid #a7f3d0',
+                              backgroundColor: '#eff6ff',
+                              color: '#2563eb',
+                              border: '1px solid #bfdbfe',
                               padding: '0.4rem 0.85rem',
                               borderRadius: '8px',
                               fontSize: '0.78125rem',
@@ -848,7 +848,7 @@ export function ManagerSurveyPanel({
                             }}
                             title="Kích hoạt biểu mẫu này"
                           >
-                            <CheckCircle2 size={14} color="#059669" />
+                            <CheckCircle2 size={14} color="#2563eb" />
                             <span>Kích hoạt</span>
                           </button>
                         )}
@@ -860,8 +860,8 @@ export function ManagerSurveyPanel({
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '0.35rem',
-                            backgroundColor: '#eff6ff',
-                            color: '#2563eb',
+                            backgroundColor: 'var(--primary-light)',
+                            color: 'var(--primary)',
                             border: '1px solid #bfdbfe',
                             padding: '0.4rem 0.85rem',
                             borderRadius: '8px',
@@ -872,7 +872,7 @@ export function ManagerSurveyPanel({
                           }}
                           title="Chỉnh sửa biểu mẫu"
                         >
-                          <Edit3 size={14} color="#2563eb" />
+                          <Edit3 size={14} color="var(--primary)" />
                           <span>Sửa</span>
                         </button>
 
@@ -915,7 +915,7 @@ export function ManagerSurveyPanel({
           {/* SEARCH & CSV EXPORT HEADER BAR */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', backgroundColor: '#ffffff', padding: '1rem 1.25rem', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: '280px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', height: '40px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem', flex: 1 }}>
+              <div className="workspace-field" style={{ display: 'flex', alignItems: 'center', height: '40px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 0.85rem', gap: '0.65rem', flex: 1 }}>
                 <Search size={16} color="#64748b" style={{ flexShrink: 0 }} />
                 <input
                   type="text"
@@ -941,7 +941,7 @@ export function ManagerSurveyPanel({
               type="button"
               onClick={exportResponsesToCSV}
               style={{
-                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
                 color: '#ffffff',
                 border: 'none',
                 height: '40px',
@@ -953,7 +953,7 @@ export function ManagerSurveyPanel({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)'
+                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)'
               }}
             >
               <FileSpreadsheet size={18} color="#ffffff" />
@@ -994,7 +994,7 @@ export function ManagerSurveyPanel({
                           </td>
                           <td style={{ padding: '0.85rem 1rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                              <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#e0e7ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '0.8rem', flexShrink: 0 }}>
+                              <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--primary-subtle)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '0.8rem', flexShrink: 0 }}>
                                 {(resp.ten_nguoi_dung || 'K')[0].toUpperCase()}
                               </div>
                               <div>
@@ -1005,7 +1005,7 @@ export function ManagerSurveyPanel({
                           </td>
                           <td style={{ padding: '0.85rem 1rem' }}>
                             {resp.ma_don_hang ? (
-                              <span style={{ fontFamily: 'monospace', fontWeight: '700', color: '#2563eb', backgroundColor: '#eff6ff', padding: '0.15rem 0.5rem', borderRadius: '6px', fontSize: '0.78rem' }}>
+                              <span style={{ fontFamily: 'monospace', fontWeight: '700', color: 'var(--primary)', backgroundColor: 'var(--primary-light)', padding: '0.15rem 0.5rem', borderRadius: '6px', fontSize: '0.78rem' }}>
                                 #{resp.ma_don_hang}
                               </span>
                             ) : (
@@ -1022,9 +1022,9 @@ export function ManagerSurveyPanel({
                             <button
                               type="button"
                               onClick={() => setSelectedResponse(resp)}
-                              style={{ backgroundColor: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.78125rem', fontWeight: '600', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                              style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)', border: '1px solid #bfdbfe', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.78125rem', fontWeight: '600', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
                             >
-                              <Eye size={14} color="#2563eb" /> Xem
+                              <Eye size={14} color="var(--primary)" /> Xem
                             </button>
                           </td>
                         </tr>
@@ -1060,7 +1060,7 @@ export function ManagerSurveyPanel({
                         height: '32px',
                         borderRadius: '6px',
                         border: pageNum === currentPage ? 'none' : '1px solid #cbd5e1',
-                        backgroundColor: pageNum === currentPage ? '#4f46e5' : '#ffffff',
+                        backgroundColor: pageNum === currentPage ? 'var(--primary)' : '#ffffff',
                         color: pageNum === currentPage ? '#ffffff' : '#334155',
                         fontWeight: '700',
                         fontSize: '0.8125rem',
@@ -1121,7 +1121,7 @@ export function ManagerSurveyPanel({
                     </div>
                     <div>
                       <span style={{ color: '#64748b', display: 'block' }}>Mã đơn hàng</span>
-                      <strong style={{ color: '#2563eb' }}>{selectedResponse.ma_don_hang ? `#${selectedResponse.ma_don_hang}` : 'Không có'}</strong>
+                      <strong style={{ color: 'var(--primary)' }}>{selectedResponse.ma_don_hang ? `#${selectedResponse.ma_don_hang}` : 'Không có'}</strong>
                     </div>
                   </div>
 
@@ -1133,7 +1133,7 @@ export function ManagerSurveyPanel({
 
                     {(selectedResponse.tra_loi || []).map((ans, idx) => (
                       <div key={idx} style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                        <span style={{ fontSize: '0.78125rem', fontWeight: '700', color: '#4f46e5' }}>
+                        <span style={{ fontSize: '0.78125rem', fontWeight: '700', color: 'var(--primary)' }}>
                           Câu {idx + 1}: {ans.cau_hoi_tieu_de}
                         </span>
                         <div style={{ fontSize: '0.9rem', fontWeight: '600', color: typeof ans.cau_tra_loi === 'number' ? '#d97706' : '#0f172a', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -1180,7 +1180,7 @@ export function ManagerSurveyPanel({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', backgroundColor: '#ffffff', padding: '1rem 1.25rem', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
             <div>
               <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <BarChart3 size={18} color="#4f46e5" /> Thống Kê Tổng Quan Theo Từng Câu Hỏi
+                <BarChart3 size={18} color="var(--primary)" /> Thống Kê Tổng Quan Theo Từng Câu Hỏi
               </h3>
               <span style={{ fontSize: '0.78125rem', color: '#64748b' }}>
                 Biểu đồ phân bổ tỷ lệ câu trả lời dạng thống kê trực quan
@@ -1204,8 +1204,8 @@ export function ManagerSurveyPanel({
           {/* OVERVIEW STATS PILLS */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
             <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1.1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: '#e0e7ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <MessageSquare size={22} color="#4f46e5" />
+              <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'var(--primary-subtle)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <MessageSquare size={22} color="var(--primary)" />
               </div>
               <div>
                 <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>TỔNG PHẢN HỒI NỘP</span>
@@ -1226,12 +1226,12 @@ export function ManagerSurveyPanel({
             </div>
 
             <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1.1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CheckCircle2 size={22} color="#059669" />
+              <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CheckCircle2 size={22} color="#2563eb" />
               </div>
               <div>
                 <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>TỔNG SỐ CÂU HỎI</span>
-                <strong style={{ display: 'block', fontSize: '1.25rem', color: '#059669', marginTop: '0.15rem' }}>{targetQuestions.length} câu hỏi</strong>
+                <strong style={{ display: 'block', fontSize: '1.25rem', color: '#2563eb', marginTop: '0.15rem' }}>{targetQuestions.length} câu hỏi</strong>
               </div>
             </div>
           </div>
@@ -1265,7 +1265,7 @@ export function ManagerSurveyPanel({
                   {/* Question Title & Meta Header */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                      <span style={{ backgroundColor: '#4f46e5', color: '#ffffff', fontSize: '0.75rem', fontWeight: '800', padding: '0.2rem 0.55rem', borderRadius: '6px' }}>
+                      <span style={{ backgroundColor: 'var(--primary)', color: '#ffffff', fontSize: '0.75rem', fontWeight: '600', padding: '0.2rem 0.55rem', borderRadius: '6px' }}>
                         Câu {qIdx + 1}
                       </span>
                       <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '700', color: '#0f172a' }}>
@@ -1277,7 +1277,7 @@ export function ManagerSurveyPanel({
                       <span style={{ fontSize: '0.75rem', color: '#475569', backgroundColor: '#f1f5f9', padding: '0.2rem 0.6rem', borderRadius: '9999px', fontWeight: '700' }}>
                         {q.loai === 'rating' ? 'Đánh giá sao' : q.loai === 'choice' ? 'Trắc nghiệm' : q.loai === 'checkbox' ? 'Hộp kiểm' : q.loai === 'dropdown' ? 'Menu thả xuống' : 'Văn bản'}
                       </span>
-                      <span style={{ fontSize: '0.75rem', color: '#059669', backgroundColor: '#ecfdf5', padding: '0.2rem 0.6rem', borderRadius: '9999px', fontWeight: '700' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#2563eb', backgroundColor: '#eff6ff', padding: '0.2rem 0.6rem', borderRadius: '9999px', fontWeight: '700' }}>
                         {qAnswers.length} lượt trả lời
                       </span>
                     </div>
@@ -1338,7 +1338,7 @@ export function ManagerSurveyPanel({
                                 style={{
                                   width: `${pct}%`,
                                   height: '100%',
-                                  background: 'linear-gradient(90deg, #4f46e5 0%, #3730a3 100%)',
+                                  background: 'linear-gradient(90deg, var(--primary) 0%, #3730a3 100%)',
                                   borderRadius: '9999px',
                                   transition: 'width 0.4s ease'
                                 }}

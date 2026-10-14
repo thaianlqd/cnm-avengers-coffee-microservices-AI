@@ -1,3 +1,4 @@
+import { uiText as ui, useUiLanguage, uiLocale } from "../lib/uiText";
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { ShoppingCartIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
@@ -10,6 +11,7 @@ export default function FavoriteDrawer({
   onRemoveFavorite,
   isWorking = false,
 }) {
+  useUiLanguage();
   if (!isOpen) return null;
 
   return (
@@ -19,8 +21,8 @@ export default function FavoriteDrawer({
       <aside className="fixed right-0 top-0 z-[120] h-full w-full max-w-[420px] bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
           <div>
-            <p className="text-[11px] font-black uppercase tracking-widest text-rose-500">Danh sách yêu thích</p>
-            <h2 className="text-lg font-black text-gray-800">{items.length} món đang lưu</h2>
+            <p className="text-[11px] font-black uppercase tracking-widest text-rose-500">{ui("Danh sách yêu thích")}</p>
+            <h2 className="text-lg font-black text-gray-800">{items.length}{ui(" món đang lưu")}</h2>
           </div>
           <button
             type="button"
@@ -35,7 +37,7 @@ export default function FavoriteDrawer({
           {items.length === 0 ? (
             <div className="mt-16 text-center">
               <HeartSolidIcon className="mx-auto h-10 w-10 text-rose-300" />
-              <p className="mt-3 text-sm font-bold text-gray-500">Bạn chưa có món nào trong danh sách yêu thích.</p>
+              <p className="mt-3 text-sm font-bold text-gray-500">{ui("Bạn chưa có món nào trong danh sách yêu thích.")}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -50,10 +52,9 @@ export default function FavoriteDrawer({
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-black text-gray-800">{item.ten_san_pham}</p>
                       <p className="mt-1 text-sm font-black text-tch-orange">
-                        {Number(item.gia_ban || 0).toLocaleString('vi-VN')} đ
-                      </p>
+                        {Number(item.gia_ban || 0).toLocaleString(uiLocale())}{ui(" đ")}</p>
                       <p className="mt-1 text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                        {item?.danhMuc?.ten_danh_muc || item.danh_muc || 'Sản phẩm'}
+                        {item?.danhMuc?.ten_danh_muc || item.danh_muc || ui("Sản phẩm")}
                       </p>
                     </div>
                   </div>
@@ -65,9 +66,7 @@ export default function FavoriteDrawer({
                       className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-tch-orange px-3 py-2 text-[11px] font-black uppercase tracking-wide text-white shadow-md shadow-orange-200 disabled:bg-gray-300"
                       disabled={isWorking}
                     >
-                      <ShoppingCartIcon className="h-4 w-4" />
-                      Thêm vào giỏ
-                    </button>
+                      <ShoppingCartIcon className="h-4 w-4" />{ui("Thêm vào giỏ")}</button>
                     <button
                       type="button"
                       onClick={() => onRemoveFavorite?.(item)}
@@ -90,7 +89,7 @@ export default function FavoriteDrawer({
             disabled={!items.length || isWorking}
             className="w-full rounded-xl bg-black px-4 py-3 text-sm font-black uppercase tracking-wider text-white disabled:bg-gray-300"
           >
-            {isWorking ? 'Đang xử lý...' : 'Thêm tất cả vào giỏ'}
+            {isWorking ? ui("Đang xử lý...") : ui("Thêm tất cả vào giỏ")}
           </button>
         </div>
       </aside>

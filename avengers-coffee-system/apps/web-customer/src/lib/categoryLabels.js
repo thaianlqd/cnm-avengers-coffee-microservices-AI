@@ -1,0 +1,2 @@
+const CATEGORY_EN = { 'trà': 'Tea', 'cà phê': 'Coffee', 'thức uống đá xay': 'Ice blended', 'bánh & đồ ăn': 'Food & bakery', 'thẻ quà tặng': 'Gift card', 'khác': 'Others', 'bánh mặn': 'Savoury bakery', 'bánh ngọt': 'Cakes', 'cà phê phin': 'Vietnamese coffee', 'trà sữa': 'Milk tea', 'trà trái cây': 'Fruit tea', 'trà shan': 'Shan tea', 'bánh trung thu': 'Mooncakes', 'ưu đãi riêng bạn': 'Your offers' };
+export const menuCategoryLabel = (name, lang) => lang === 'en' ? (CATEGORY_EN[String(name || '').toLowerCase()] || name) : name;

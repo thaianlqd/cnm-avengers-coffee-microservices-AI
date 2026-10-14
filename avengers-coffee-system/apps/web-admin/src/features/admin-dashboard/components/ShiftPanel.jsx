@@ -37,17 +37,17 @@ const HISTORY_FILTERS = [
 
 function getDiffStyle(diff) {
   if (diff === null || diff === undefined) return { bg: '#f8fafc', color: '#64748b', border: '#e2e8f0', icon: CheckCircle2 }
-  if (diff > 0) return { bg: '#ecfdf5', color: '#047857', border: '#a7f3d0', icon: TrendingUp, text: 'Thừa tiền' }
+  if (diff > 0) return { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe', icon: TrendingUp, text: 'Thừa tiền' }
   if (diff < 0) return { bg: '#fef2f2', color: '#b91c1c', border: '#fecaca', icon: AlertTriangle, text: 'Thiếu tiền' }
-  return { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe', icon: CheckCircle2, text: 'Chuẩn 0đ' }
+  return { bg: 'var(--primary-light)', color: 'var(--primary-hover)', border: '#bfdbfe', icon: CheckCircle2, text: 'Chuẩn 0đ' }
 }
 
 function getApprovalBadgeStyle(status) {
   if (status === 'APPROVED') {
     return {
-      background: '#d1fae5',
-      color: '#047857',
-      border: '1px solid #a7f3d0',
+      background: '#dbeafe',
+      color: '#1d4ed8',
+      border: '1px solid #bfdbfe',
       icon: CheckCircle2,
       label: 'Đã duyệt'
     }
@@ -135,7 +135,7 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <span style={{
             fontSize: '0.8rem',
-            fontWeight: '800',
+            fontWeight: '600',
             color: '#1e293b',
             background: '#f1f5f9',
             padding: '0.2rem 0.5rem',
@@ -152,7 +152,7 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
             alignItems: 'center',
             gap: '0.3rem'
           }}>
-            <User size={14} color="#2563eb" /> {item.staff_name || 'Không xác định'}
+            <User size={14} color="var(--primary)" /> {item.staff_name || 'Không xác định'}
           </span>
 
           <span style={{
@@ -185,8 +185,8 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
                 padding: '0.35rem 0.65rem',
                 borderRadius: '6px',
                 border: 'none',
-                background: lockedForStaff ? '#e2e8f0' : '#eff6ff',
-                color: lockedForStaff ? '#94a3b8' : '#2563eb',
+                background: lockedForStaff ? '#e2e8f0' : 'var(--primary-light)',
+                color: lockedForStaff ? '#94a3b8' : 'var(--primary)',
                 fontSize: '0.775rem',
                 fontWeight: '600',
                 cursor: lockedForStaff ? 'not-allowed' : 'pointer'
@@ -323,7 +323,7 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
                 padding: '0.4rem 0.85rem',
                 borderRadius: '6px',
                 border: 'none',
-                background: '#10b981',
+                background: '#3b82f6',
                 color: '#ffffff',
                 fontSize: '0.8rem',
                 fontWeight: '700',
@@ -375,7 +375,7 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
 
             <div style={{ background: '#f8fafc', padding: '0.45rem 0.6rem', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
               <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>Thực thu mặt</span>
-              <strong style={{ fontSize: '0.825rem', color: '#059669' }}>{fmtMoney(item.cash_revenue)}</strong>
+              <strong style={{ fontSize: '0.825rem', color: '#2563eb' }}>{fmtMoney(item.cash_revenue)}</strong>
             </div>
 
             <div style={{ background: '#f8fafc', padding: '0.45rem 0.6rem', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
@@ -421,7 +421,7 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
             <div style={{
               fontSize: '0.775rem',
               color: '#1e293b',
-              background: '#eff6ff',
+              background: 'var(--primary-light)',
               padding: '0.4rem 0.6rem',
               borderRadius: '6px',
               marginBottom: '0.4rem',
@@ -430,7 +430,7 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
               alignItems: 'center',
               gap: '0.35rem'
             }}>
-              <ShieldCheck size={13} color="#2563eb" style={{ flexShrink: 0 }} />
+              <ShieldCheck size={13} color="var(--primary)" style={{ flexShrink: 0 }} />
               <span>Manager: {item.approval_note}</span>
             </div>
           )}
@@ -474,7 +474,7 @@ function ShiftHistoryItem({ item, canApprove, canEdit, approvingShiftId, onDelet
                     padding: '0.45rem 0.85rem',
                     borderRadius: '6px',
                     border: 'none',
-                    background: '#10b981',
+                    background: '#3b82f6',
                     color: '#ffffff',
                     fontSize: '0.8rem',
                     fontWeight: '700',
@@ -604,7 +604,7 @@ export function ShiftPanel({
             }}>
               <ShieldCheck size={22} color="#38bdf8" />
               <div>
-                <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: '#ffffff' }}>
+                <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '600', color: '#ffffff' }}>
                   Kiểm tra biên bản chốt ca
                 </h2>
                 <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.8rem', opacity: 0.85 }}>
@@ -620,8 +620,8 @@ export function ShiftPanel({
                 gap: '0.35rem',
                 padding: '0.25rem 0.65rem',
                 borderRadius: '9999px',
-                background: '#eff6ff',
-                color: '#2563eb',
+                background: 'var(--primary-light)',
+                color: 'var(--primary)',
                 fontSize: '0.8rem',
                 fontWeight: '700',
                 marginBottom: '0.85rem'
@@ -633,28 +633,28 @@ export function ShiftPanel({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.65rem' }}>
                 <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                   <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Tổng số biên bản</span>
-                  <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0f172a', marginTop: '0.1rem' }}>
+                  <div style={{ fontSize: '1.25rem', fontWeight: '600', color: '#0f172a', marginTop: '0.1rem' }}>
                     {approvalSummary.total}
                   </div>
                 </div>
 
                 <div style={{ background: '#fef3c7', padding: '0.75rem', borderRadius: '10px', border: '1px solid #fde68a' }}>
                   <span style={{ fontSize: '0.75rem', color: '#b45309' }}>Chờ phê duyệt</span>
-                  <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#b45309', marginTop: '0.1rem' }}>
+                  <div style={{ fontSize: '1.25rem', fontWeight: '600', color: '#b45309', marginTop: '0.1rem' }}>
                     {approvalSummary.pending}
                   </div>
                 </div>
 
-                <div style={{ background: '#d1fae5', padding: '0.75rem', borderRadius: '10px', border: '1px solid #a7f3d0' }}>
-                  <span style={{ fontSize: '0.75rem', color: '#047857' }}>Đã chấp thuận</span>
-                  <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#047857', marginTop: '0.1rem' }}>
+                <div style={{ background: '#dbeafe', padding: '0.75rem', borderRadius: '10px', border: '1px solid #bfdbfe' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#1d4ed8' }}>Đã chấp thuận</span>
+                  <div style={{ fontSize: '1.25rem', fontWeight: '600', color: '#1d4ed8', marginTop: '0.1rem' }}>
                     {approvalSummary.approved}
                   </div>
                 </div>
 
                 <div style={{ background: '#fee2e2', padding: '0.75rem', borderRadius: '10px', border: '1px solid #fca5a5' }}>
                   <span style={{ fontSize: '0.75rem', color: '#b91c1c' }}>Đã từ chối</span>
-                  <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#b91c1c', marginTop: '0.1rem' }}>
+                  <div style={{ fontSize: '1.25rem', fontWeight: '600', color: '#b91c1c', marginTop: '0.1rem' }}>
                     {approvalSummary.rejected}
                   </div>
                 </div>
@@ -674,7 +674,7 @@ export function ShiftPanel({
             }}>
               <Clock size={22} color="#ffffff" />
               <div>
-                <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: '#ffffff' }}>
+                <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '600', color: '#ffffff' }}>
                   Chốt ca làm việc
                 </h2>
                 <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.8rem', opacity: 0.9 }}>
@@ -813,7 +813,7 @@ export function ShiftPanel({
                   {/* Card 3: Kỳ vọng cuối ca */}
                   <div style={{ background: '#ffffff', padding: '0.5rem 0.65rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '0.725rem', color: '#64748b' }}>Kỳ vọng cuối ca</span>
-                    <strong style={{ fontSize: '0.9rem', display: 'block', color: '#2563eb', fontWeight: '800', marginTop: '0.1rem' }}>
+                    <strong style={{ fontSize: '0.9rem', display: 'block', color: 'var(--primary)', fontWeight: '600', marginTop: '0.1rem' }}>
                       {fmtMoney(expectedClose)}
                     </strong>
                   </div>
@@ -843,7 +843,7 @@ export function ShiftPanel({
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: '#2563eb',
+                      color: 'var(--primary)',
                       fontSize: '0.775rem',
                       fontWeight: '600',
                       cursor: 'pointer',
@@ -922,9 +922,9 @@ export function ShiftPanel({
                 <div style={{
                   padding: '0.6rem 0.75rem',
                   borderRadius: '8px',
-                  background: '#ecfdf5',
-                  border: '1px solid #a7f3d0',
-                  color: '#047857',
+                  background: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                  color: '#1d4ed8',
                   fontSize: '0.8rem',
                   display: 'flex',
                   alignItems: 'center',
@@ -949,7 +949,7 @@ export function ShiftPanel({
                   fontSize: '0.925rem',
                   fontWeight: '700',
                   cursor: Boolean(existingShift) ? 'not-allowed' : 'pointer',
-                  boxShadow: Boolean(existingShift) ? 'none' : '0 4px 10px rgba(16, 185, 129, 0.25)',
+                  boxShadow: Boolean(existingShift) ? 'none' : '0 4px 10px rgba(59, 130, 246, 0.25)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -993,15 +993,15 @@ export function ShiftPanel({
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <ClipboardList size={20} color="var(--primary)" />
-            <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: '#0f172a' }}>
+            <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '600', color: '#0f172a' }}>
               {isApprovalMode ? 'Biên bản chờ kiểm tra' : 'Lịch sử ca đã chốt'}
             </h2>
           </div>
           <span style={{
             fontSize: '0.775rem',
             fontWeight: '700',
-            background: '#eff6ff',
-            color: '#2563eb',
+            background: 'var(--primary-light)',
+            color: 'var(--primary)',
             padding: '0.2rem 0.55rem',
             borderRadius: '9999px'
           }}>

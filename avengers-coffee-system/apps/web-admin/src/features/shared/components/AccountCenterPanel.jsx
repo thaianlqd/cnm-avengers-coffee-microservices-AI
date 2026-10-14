@@ -1,3 +1,4 @@
+import { readWorkspaceSession, saveWorkspaceSession } from '../../../lib/workspaceAuth'
 import { useEffect, useMemo, useState } from 'react'
 import { io } from 'socket.io-client'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
@@ -187,11 +188,11 @@ export function AccountCenterPanel({ session }) {
         hoTen: payload?.user?.ho_ten || profileForm.hoTen,
         email: payload?.user?.email || profileForm.email,
       }
-      const rawSession = window.localStorage.getItem('adminSession')
+      const rawSession = JSON.stringify(readWorkspaceSession())
       if (rawSession) {
         try {
           const parsed = JSON.parse(rawSession)
-          window.localStorage.setItem('adminSession', JSON.stringify({ ...parsed, user: mergedUser }))
+          saveWorkspaceSession({ ...parsed, user: mergedUser })
         } catch {
           // Ignore storage parsing failures.
         }
@@ -280,7 +281,7 @@ export function AccountCenterPanel({ session }) {
   const displayName = profileForm.hoTen || session?.user?.hoTen || session?.user?.tenDangNhap || 'System Admin'
 
   return (
-    <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
+    <div className="workspace-account" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
       
       {/* Sleek Top Banner Header */}
       <div style={{
@@ -290,7 +291,7 @@ export function AccountCenterPanel({ session }) {
         padding: '1.25rem 1.5rem',
         display: 'flex',
         alignItems: 'center',
-        justify: 'space-between',
+        justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: '1rem',
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)'
@@ -302,7 +303,7 @@ export function AccountCenterPanel({ session }) {
               <img
                 src={profileForm.avatarUrl}
                 alt="Avatar"
-                style={{ width: '3.5rem', height: '3.5rem', borderRadius: '50%', objectFit: 'cover', border: '2px solid #6366f1', display: 'block' }}
+                style={{ width: '3.5rem', height: '3.5rem', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)', display: 'block' }}
               />
             ) : (
               <div style={{
@@ -313,12 +314,12 @@ export function AccountCenterPanel({ session }) {
                 color: 'var(--primary)',
                 display: 'flex',
                 alignItems: 'center',
-                justify: 'center',
+                justifyContent: 'center',
                 fontWeight: '700',
                 fontSize: '1.35rem',
                 lineHeight: 1,
                 textAlign: 'center',
-                border: '2px solid #c7d2fe',
+                border: '2px solid var(--primary-subtle)',
                 boxSizing: 'border-box'
               }}>
                 {displayName.charAt(0).toUpperCase()}
@@ -332,8 +333,8 @@ export function AccountCenterPanel({ session }) {
                 {displayName}
               </h1>
               <span style={{
-                backgroundColor: userRole === 'ADMIN' ? '#f5f3ff' : '#eff6ff',
-                color: userRole === 'ADMIN' ? '#7c3aed' : '#2563eb',
+                backgroundColor: userRole === 'ADMIN' ? 'var(--primary-light)' : 'var(--primary-light)',
+                color: userRole === 'ADMIN' ? 'var(--primary)' : 'var(--primary)',
                 border: userRole === 'ADMIN' ? '1px solid #ddd6fe' : '1px solid #bfdbfe',
                 fontSize: '0.7rem',
                 fontWeight: '700',
@@ -359,7 +360,7 @@ export function AccountCenterPanel({ session }) {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <div style={{ backgroundColor: '#f8fafc', padding: '0.4rem 0.75rem', borderRadius: '6px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <ShieldCheck size={16} color="#10b981" />
+            <ShieldCheck size={16} color="#3b82f6" />
             <span style={{ fontSize: '0.78125rem', color: '#0f172a', fontWeight: '600' }}>Tài khoản An toàn</span>
           </div>
         </div>
@@ -456,13 +457,13 @@ export function AccountCenterPanel({ session }) {
             <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Thông tin tài khoản {session?.user?.tenDangNhap}</span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '1.5rem', alignItems: 'start' }}>
             {/* Left Column: Form Inputs */}
             <div>
               {profileState.loading ? <p style={{ fontSize: '0.8125rem', color: '#64748b' }}>Đang tải thông tin...</p> : null}
 
-              <form onSubmit={saveProfile} style={{ display: 'grid', gap: '1rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <form className="workspace-form" onSubmit={saveProfile} style={{ display: 'grid', gap: '1rem' }}>
+                <div className="workspace-account-fields">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                     <label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#334155' }}>Họ tên đầy đủ</label>
                     <input
@@ -508,7 +509,7 @@ export function AccountCenterPanel({ session }) {
                 ) : null}
 
                 {profileState.success ? (
-                  <p style={{ margin: 0, color: '#059669', fontSize: '0.8125rem', backgroundColor: '#ecfdf5', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #a7f3d0', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                  <p style={{ margin: 0, color: '#2563eb', fontSize: '0.8125rem', backgroundColor: '#eff6ff', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #bfdbfe', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                     <CheckCircle2 size={16} /> {profileState.success}
                   </p>
                 ) : null}
@@ -525,7 +526,7 @@ export function AccountCenterPanel({ session }) {
             <div style={{ backgroundColor: '#f8fafc', padding: '1.25rem', borderRadius: '10px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center', textAlign: 'center' }}>
               <span style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#475569', alignSelf: 'flex-start' }}>Xem trước ảnh đại diện</span>
               
-              <div style={{ width: '5.5rem', height: '5.5rem', borderRadius: '50%', overflow: 'hidden', border: '3px solid #6366f1', boxShadow: '0 4px 10px rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--primary-light)' }}>
+              <div style={{ width: '5.5rem', height: '5.5rem', borderRadius: '50%', overflow: 'hidden', border: '3px solid var(--primary)', boxShadow: '0 4px 10px rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--primary-light)' }}>
                 {profileForm.avatarUrl ? (
                   <img src={profileForm.avatarUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
@@ -549,7 +550,7 @@ export function AccountCenterPanel({ session }) {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: '#64748b' }}>Xác thực tài khoản:</span>
-                  <span style={{ fontWeight: '600', color: '#10b981' }}>Đã xác thực ✓</span>
+                  <span style={{ fontWeight: '600', color: '#3b82f6' }}>Đã xác thực ✓</span>
                 </div>
               </div>
 
@@ -571,10 +572,10 @@ export function AccountCenterPanel({ session }) {
             <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Đảm bảo an toàn hệ thống</span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '1.5rem', alignItems: 'start' }}>
             {/* Left Column: Password Form */}
             <div>
-              <form onSubmit={changePassword} style={{ display: 'grid', gap: '1rem' }}>
+              <form className="workspace-form" onSubmit={changePassword} style={{ display: 'grid', gap: '1rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                   <label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#334155' }}>Mật khẩu hiện tại</label>
                   <input
@@ -585,7 +586,7 @@ export function AccountCenterPanel({ session }) {
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="workspace-account-fields">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                     <label style={{ fontSize: '0.78125rem', fontWeight: '600', color: '#334155' }}>Mật khẩu mới</label>
                     <input
@@ -614,7 +615,7 @@ export function AccountCenterPanel({ session }) {
                 ) : null}
 
                 {passwordState.success ? (
-                  <p style={{ margin: 0, color: '#059669', fontSize: '0.8125rem', backgroundColor: '#ecfdf5', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #a7f3d0', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                  <p style={{ margin: 0, color: '#2563eb', fontSize: '0.8125rem', backgroundColor: '#eff6ff', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #bfdbfe', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                     <CheckCircle2 size={16} /> {passwordState.success}
                   </p>
                 ) : null}
@@ -651,11 +652,11 @@ export function AccountCenterPanel({ session }) {
 
       {/* TAB 3: Notifications Center */}
       {activeTab === 'notifications' && (
-        <section className="system-admin-card" style={{ borderTop: '3px solid #10b981' }}>
+        <section className="system-admin-card" style={{ borderTop: '3px solid #3b82f6' }}>
           <div style={{ marginBottom: '1rem', paddingBottom: '0.65rem', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
               <h2 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Bell size={17} color="#10b981" /> Trung tâm thông báo hệ thống
+                <Bell size={17} color="#3b82f6" /> Trung tâm thông báo hệ thống
               </h2>
               <span style={{
                 backgroundColor: unreadCount > 0 ? '#fee2e2' : '#f1f5f9',
@@ -698,7 +699,7 @@ export function AccountCenterPanel({ session }) {
                   padding: '0.75rem 0.9rem',
                   borderRadius: '8px',
                   border: item.da_doc ? '1px solid #e2e8f0' : '1px solid #bfdbfe',
-                  backgroundColor: item.da_doc ? '#ffffff' : '#eff6ff',
+                  backgroundColor: item.da_doc ? '#ffffff' : 'var(--primary-light)',
                   display: 'flex',
                   alignItems: 'flex-start',
                   justifyContent: 'space-between',
@@ -709,7 +710,7 @@ export function AccountCenterPanel({ session }) {
                 <div style={{ flexGrow: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
                     {!item.da_doc ? (
-                      <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#2563eb', display: 'inline-block' }}></span>
+                      <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: 'var(--primary)', display: 'inline-block' }}></span>
                     ) : null}
                     <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: '600', color: '#0f172a' }}>
                       {item.tieu_de || 'Thông báo hệ thống'}

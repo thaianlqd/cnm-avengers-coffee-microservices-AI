@@ -150,15 +150,15 @@ export function AdminKioskManagementPanel({ session }) {
     switch (status) {
       case 'DANG_HOAT_DONG':
         return (
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '700', backgroundColor: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }}></span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '700', backgroundColor: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe' }}>
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#3b82f6' }}></span>
             Đang hoạt động
           </span>
         )
       case 'CHO_KY_HOP_DONG':
         return (
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '700', backgroundColor: '#eef2ff', color: '#4f46e5', border: '1px solid #c7d2fe' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#6366f1' }}></span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '700', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', border: '1px solid #e8cdbb' }}>
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--primary)' }}></span>
             Chờ ký hợp đồng
           </span>
         )
@@ -330,10 +330,10 @@ export function AdminKioskManagementPanel({ session }) {
                             height: '22px',
                             borderRadius: '50%',
                             fontSize: '0.7rem',
-                            fontWeight: '800',
-                            backgroundColor: k.xep_hang === 'S' ? '#fef08a' : k.xep_hang === 'A' ? '#dcfce7' : k.xep_hang === 'B' ? '#ffedd5' : '#fee2e2',
-                            color: k.xep_hang === 'S' ? '#854d0e' : k.xep_hang === 'A' ? '#166534' : k.xep_hang === 'B' ? '#9a3412' : '#991b1b',
-                            border: `1px solid ${k.xep_hang === 'S' ? '#eab308' : k.xep_hang === 'A' ? '#22c55e' : k.xep_hang === 'B' ? '#f97316' : '#ef4444'}`
+                            fontWeight: '600',
+                            backgroundColor: k.xep_hang === 'S' ? '#fef08a' : k.xep_hang === 'A' ? '#dbeafe' : k.xep_hang === 'B' ? '#ffedd5' : '#fee2e2',
+                            color: k.xep_hang === 'S' ? '#854d0e' : k.xep_hang === 'A' ? '#1e40af' : k.xep_hang === 'B' ? '#9a3412' : '#991b1b',
+                            border: `1px solid ${k.xep_hang === 'S' ? '#eab308' : k.xep_hang === 'A' ? '#3b82f6' : k.xep_hang === 'B' ? '#f97316' : '#ef4444'}`
                           }}
                           title={`Điểm đánh giá: ${k.diem_danh_gia || 0}`}
                         >
@@ -374,7 +374,7 @@ export function AdminKioskManagementPanel({ session }) {
                     <button
                       type="button"
                       onClick={() => setContractModal(k)}
-                      style={{ marginTop: '0.45rem', background: 'none', border: 'none', padding: 0, color: '#2563eb', textDecoration: 'underline', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                      style={{ marginTop: '0.45rem', background: 'none', border: 'none', padding: 0, color: 'var(--primary)', textDecoration: 'underline', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
                     >
                       Xem bản in hợp đồng →
                     </button>
@@ -430,7 +430,7 @@ export function AdminKioskManagementPanel({ session }) {
                           alert('Lỗi: ' + e.message);
                         }
                       }}
-                      style={{ height: '32px', padding: '0 0.75rem', borderRadius: '6px', border: '1px solid #c7d2fe', backgroundColor: '#e0e7ff', color: '#4338ca', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}
+                      style={{ height: '32px', padding: '0 0.75rem', borderRadius: '6px', border: '1px solid #e8cdbb', backgroundColor: 'var(--primary-subtle)', color: 'var(--primary-hover)', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}
                     >
                       Ký HĐ & Thiết Lập
                     </button>
@@ -465,7 +465,7 @@ export function AdminKioskManagementPanel({ session }) {
                           alert('Lỗi: ' + e.message);
                         }
                       }}
-                      style={{ height: '32px', padding: '0 0.75rem', borderRadius: '6px', border: '1px solid #a7f3d0', backgroundColor: '#ecfdf5', color: '#059669', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}
+                      style={{ height: '32px', padding: '0 0.75rem', borderRadius: '6px', border: '1px solid #bfdbfe', backgroundColor: '#eff6ff', color: '#2563eb', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}
                     >
                       🎉 Khai trương Kiosk
                     </button>
@@ -518,7 +518,7 @@ export function AdminKioskManagementPanel({ session }) {
                         })
                         loadKiosks()
                       }}
-                      style={{ height: '32px', padding: '0 0.75rem', borderRadius: '6px', border: '1px solid #a7f3d0', backgroundColor: '#ecfdf5', color: '#059669', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}
+                      style={{ height: '32px', padding: '0 0.75rem', borderRadius: '6px', border: '1px solid #bfdbfe', backgroundColor: '#eff6ff', color: '#2563eb', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}
                     >
                       Mở lại hoạt động
                     </button>
@@ -610,7 +610,7 @@ export function AdminKioskManagementPanel({ session }) {
           <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', width: '100%', maxWidth: '720px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden' }}>
             <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
               <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                <FileText size={18} color="#4f46e5" /> Hợp Đồng Nhượng Quyền Thương Mại
+                <FileText size={18} color="var(--primary)" /> Hợp Đồng Nhượng Quyền Thương Mại
               </h3>
               <button
                 type="button"
@@ -661,12 +661,12 @@ export function AdminKioskManagementPanel({ session }) {
                     <td style={{ width: '50%' }}>
                       <div style={{ fontWeight: 'bold' }}>ĐẠI DIỆN BÊN A</div>
                       <div style={{ fontStyle: 'italic', fontSize: '0.75rem' }}>(Ký, đóng dấu điện tử)</div>
-                      <div style={{ marginTop: '2.5rem', fontWeight: 'bold', color: '#2563eb' }}>[ĐÃ KÝ ĐIỆN TỬ]</div>
+                      <div style={{ marginTop: '2.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>[ĐÃ KÝ ĐIỆN TỬ]</div>
                     </td>
                     <td style={{ width: '50%' }}>
                       <div style={{ fontWeight: 'bold' }}>ĐẠI DIỆN BÊN B</div>
                       <div style={{ fontStyle: 'italic', fontSize: '0.75rem' }}>(Ký, ghi rõ họ tên)</div>
-                      <div style={{ marginTop: '2.5rem', fontWeight: 'bold', color: '#059669' }}>[ĐÃ KÝ ĐIỆN TỬ]</div>
+                      <div style={{ marginTop: '2.5rem', fontWeight: 'bold', color: '#2563eb' }}>[ĐÃ KÝ ĐIỆN TỬ]</div>
                     </td>
                   </tr>
                 </tbody>
@@ -709,7 +709,7 @@ export function AdminKioskManagementPanel({ session }) {
                     printWindow.close()
                   }, 500)
                 }}
-                style={{ height: '38px', padding: '0 1.25rem', borderRadius: '8px', border: 'none', backgroundColor: '#2563eb', color: '#ffffff', cursor: 'pointer', fontWeight: '700', fontSize: '0.8125rem', display: 'inline-flex', alignItems: 'center', gap: '0.45rem', boxShadow: '0 4px 10px rgba(37, 99, 235, 0.25)' }}
+                style={{ height: '38px', padding: '0 1.25rem', borderRadius: '8px', border: 'none', backgroundColor: 'var(--primary)', color: '#ffffff', cursor: 'pointer', fontWeight: '700', fontSize: '0.8125rem', display: 'inline-flex', alignItems: 'center', gap: '0.45rem', boxShadow: '0 4px 10px rgba(37, 99, 235, 0.25)' }}
               >
                 <Printer size={15} /> In / Lưu Hợp Đồng
               </button>

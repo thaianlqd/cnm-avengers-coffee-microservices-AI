@@ -1,0 +1,218 @@
+{
+  "directory": "20261014T044352Z-baseline-250",
+  "started_at": "2026-10-14T04:43:52.074039+00:00",
+  "vus": 250,
+  "think_seconds": 3,
+  "cache_ms": 5000,
+  "accept_encoding": "gzip",
+  "ramp_seconds": 60,
+  "hold_seconds": 120,
+  "down_seconds": 30,
+  "target_url": "https://genres-links-expansys-agrees.trycloudflare.com",
+  "target_classification": "EC2 -> HTTPS Quick Tunnel -> GET allowlist -> Mac IPv4 Kubernetes LoadBalancer",
+  "instance_id": "i-0103ed421c9b50c5d",
+  "instance_type": "m7i-flex.large",
+  "aws_region": "ap-southeast-2",
+  "k6_version": "k6 v2.3.0 (commit/e088784614, go1.26.8, linux/amd64)",
+  "k6_sha256": "e001bbf39ba67424a85c9c8516440ba5c73ecf7a6021be96c76194380c15f260",
+  "source_head": "443fb99696e4fdaaea043776e8c49416b1fd1fbf",
+  "workload_sha256": "459b51aecc33a57234dfcfff612708e5760084956fd3fb17714d9f23233ba3f3",
+  "load_started_at": "2026-10-14T04:44:16.213425+00:00",
+  "load_finished_at": "2026-10-14T04:47:51.975808+00:00",
+  "artifact_delivery_finished_at": "2026-10-14T04:47:53.972994+00:00",
+  "k6_exit": 99,
+  "finished_at": "2026-10-14T04:52:52.516515+00:00",
+  "status": "FAIL",
+  "http_pass": false,
+  "stable": true,
+  "violations": [],
+  "smoke_after_exit": 0,
+  "requests": 24664,
+  "rps": 115.6213458992181,
+  "successful_rps": 114.60408057079893,
+  "failure_rate": 0.008798248459292897,
+  "checks_rate": 0.9912017515407071,
+  "p95_ms": 3011.7222304,
+  "hold_metrics": {
+    "menu_categories_ms{phase:hold}": {
+      "avg": 448.8141630306683,
+      "p(50)": 350.185945,
+      "p(95)": 1026.1992435,
+      "max": 2881.340937
+    },
+    "public_branches_ms{phase:hold}": {
+      "avg": 2375.681957331838,
+      "p(50)": 2402.699397,
+      "p(95)": 4232.339542,
+      "max": 6922.736139
+    },
+    "http_reqs{phase:hold}": {
+      "count": 16953,
+      "rate": 79.47326780041536
+    },
+    "menu_products_ms{phase:hold}": {
+      "avg": 688.480711550306,
+      "p(50)": 655.123823,
+      "p(95)": 1193.8883342,
+      "max": 2685.258945
+    },
+    "http_req_failed{phase:hold}": {
+      "rate": 0.012800094378576063,
+      "passes": 217,
+      "fails": 16736
+    },
+    "checks{phase:hold}": {
+      "rate": 0.9871999056214239,
+      "passes": 50208,
+      "fails": 651
+    },
+    "public_news_ms{phase:hold}": {
+      "avg": 513.3975973114219,
+      "p(50)": 453.762381,
+      "p(95)": 980.5621093999998,
+      "max": 2300.400326
+    },
+    "http_req_duration{phase:hold}": {
+      "avg": 1005.9569978483449,
+      "p(50)": 558.160852,
+      "p(95)": 3224.8346724,
+      "max": 6922.736139
+    }
+  },
+  "hold_rps": 141.275,
+  "route_p95_ms": {
+    "menu_products_ms": 1156.8858495,
+    "public_branches_ms": 4061.5917787500002,
+    "menu_categories_ms": 917.1369354999999,
+    "public_news_ms": 917.6406462499999
+  },
+  "peaks_per_pod_and_node": {
+    "desktop-control-plane": {
+      "cpu_m": 2028,
+      "ram_Mi": 2001
+    },
+    "ai-service": {
+      "cpu_m": 24,
+      "ram_Mi": 137
+    },
+    "api-gateway": {
+      "cpu_m": 176,
+      "ram_Mi": 34
+    },
+    "identity-service": {
+      "cpu_m": 220,
+      "ram_Mi": 56
+    },
+    "inventory-service": {
+      "cpu_m": 18,
+      "ram_Mi": 45
+    },
+    "menu-service": {
+      "cpu_m": 160,
+      "ram_Mi": 46
+    },
+    "news-service": {
+      "cpu_m": 68,
+      "ram_Mi": 51
+    },
+    "order-service": {
+      "cpu_m": 29,
+      "ram_Mi": 80
+    },
+    "web-customer": {
+      "cpu_m": 1,
+      "ram_Mi": 9
+    }
+  },
+  "peaks_aggregate_service": {
+    "ai-service": {
+      "cpu_m": 24,
+      "ram_Mi": 137
+    },
+    "api-gateway": {
+      "cpu_m": 623,
+      "ram_Mi": 134
+    },
+    "identity-service": {
+      "cpu_m": 395,
+      "ram_Mi": 149
+    },
+    "inventory-service": {
+      "cpu_m": 18,
+      "ram_Mi": 45
+    },
+    "menu-service": {
+      "cpu_m": 317,
+      "ram_Mi": 170
+    },
+    "news-service": {
+      "cpu_m": 68,
+      "ram_Mi": 51
+    },
+    "order-service": {
+      "cpu_m": 29,
+      "ram_Mi": 80
+    },
+    "web-customer": {
+      "cpu_m": 1,
+      "ram_Mi": 9
+    }
+  },
+  "hpa_peak": {
+    "api-gateway": 4,
+    "identity-service": 3,
+    "menu-service": 4
+  },
+  "new_restarts": {},
+  "new_probe_failures": [
+    {
+      "object": "identity-service-5774bb6df7-bp49n",
+      "message": "Startup probe failed: Get \"http://10.244.0.29:3001/health/live\": dial tcp 10.244.0.29:3001: connect: connection refused",
+      "count": 1
+    },
+    {
+      "object": "menu-service-7cf979fcc-dsrhm",
+      "message": "Startup probe failed: Get \"http://10.244.0.30:3003/health/live\": dial tcp 10.244.0.30:3003: connect: connection refused",
+      "count": 1
+    }
+  ],
+  "gateway_quota_counters": {
+    "7e785962-8360-4448-9700-93e488f386d7": {
+      "periods": 2165,
+      "throttled_periods": 34,
+      "fraction": 0.015704387990762125,
+      "throttled_usec": 1771567
+    },
+    "d2c777ce-9468-4d77-b82a-3c9a01d31a0e": {
+      "periods": 2139,
+      "throttled_periods": 26,
+      "fraction": 0.012155212716222535,
+      "throttled_usec": 944564
+    },
+    "670f5af7-e893-429c-a853-bf1cfd6e49d0": {
+      "periods": 1694,
+      "throttled_periods": 55,
+      "fraction": 0.032467532467532464,
+      "throttled_usec": 3474406
+    },
+    "2ce956e8-c29b-49ad-b44a-d88d60c56880": {
+      "periods": 1529,
+      "throttled_periods": 46,
+      "fraction": 0.030085022890778287,
+      "throttled_usec": 3143477
+    }
+  },
+  "host_busy_peak_percent": 96.6,
+  "k6_cpu_peak_one_core_percent": 0,
+  "k6_rss_peak_KiB": 0,
+  "observer_samples": 43,
+  "k6_open_fds_peak": 0,
+  "transport_error_mentions": {
+    "request timeout": 0,
+    "EOF": 0,
+    "too many open files": 0,
+    "cannot assign requested address": 0,
+    "Insufficient VUs": 0,
+    "connection refused": 0
+  }
+}

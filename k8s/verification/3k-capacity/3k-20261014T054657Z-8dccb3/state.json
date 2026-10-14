@@ -1,0 +1,18 @@
+{
+  "run_id": "3k-20261014T054657Z-8dccb3",
+  "started_at": "2026-10-14T05:46:57.139612+00:00",
+  "requested_instance_type": "m7i-flex.large",
+  "bootstrap_mode": "https-userdata",
+  "target_url": "http://127.0.0.1:13300",
+  "data_path": "independent reverse SSH, loopback EC2 -> Mac GET allowlist -> IPv4 Docker LoadBalancer",
+  "key_pair_id": "key-0a3c7ee38d166b08c",
+  "instance_id": "i-00eba98d0766d0e2f",
+  "launched_at": "2026-10-14T05:47:42+00:00",
+  "ami": "ami-0f5e1e0151e5b95ed",
+  "instance_type": "m7i-flex.large",
+  "architecture": "x86_64",
+  "az": "ap-southeast-2a",
+  "root_delete_on_termination": true,
+  "sg_id": "sg-0e5f9f32657b163a5",
+  "error": "Reverse SSH unavailable (no data traffic sent)"
+}

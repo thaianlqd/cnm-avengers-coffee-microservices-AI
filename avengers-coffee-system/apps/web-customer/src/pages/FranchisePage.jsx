@@ -1,3 +1,5 @@
+import { uiText as ui, useUiLanguage, uiLocale } from "../lib/uiText";
+import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/apiClient';
@@ -183,6 +185,9 @@ const getStatusBadge = (stt) => {
 };
 
 export default function FranchisePage({ onNavigate }) {
+  useUiLanguage();
+  const { i18n } = useTranslation();
+  const copy = (vi, en) => i18n.resolvedLanguage === 'en' ? en : vi;
   const queryClient = useQueryClient();
   const [form, setForm] = useState(DEFAULT_FORM);
   const [submitting, setSubmitting] = useState(false);
@@ -231,8 +236,8 @@ export default function FranchisePage({ onNavigate }) {
   // Gắn rating vào kiosks
   const kiosksWithRating = useMemo(() => {
     return kiosks.map(k => {
-      const stats = branchStats.find(s => s.ma_chi_nhanh === k.ma_kiosk) 
-                 || branchStats.find(s => s.ma_chi_nhanh === k.id) 
+      const stats = branchStats.find(s => s.ma_chi_nhanh === k.ma_kiosk)
+                 || branchStats.find(s => s.ma_chi_nhanh === k.id)
                  || branchStats.find(s => s.ma_chi_nhanh === k.ma_chi_nhanh);
       return {
         ...k,
@@ -318,7 +323,7 @@ export default function FranchisePage({ onNavigate }) {
       let vi_do = null;
       let kinh_do = null;
       const apiKey = import.meta.env.VITE_VIETMAP_API_KEY;
-      
+
       if (apiKey) {
         try {
           const fullAddress = `${form.dia_chi_mat_bang}, ${form.phuong_xa}, ${form.thanh_pho}`;
@@ -381,7 +386,7 @@ export default function FranchisePage({ onNavigate }) {
   };
 
   const handleCancelApplication = async (id) => {
-    if (!confirm('Bạn có chắc chắn muốn hủy hồ sơ đăng ký này không? Hành động này không thể hoàn tác!')) return;
+    if (!confirm(ui("Bạn có chắc chắn muốn hủy hồ sơ đăng ký này không? Hành động này không thể hoàn tác!"))) return;
     try {
       const res = await apiClient.patch(`/franchise/ho-so/${id}/huy`);
       alert(`Thành công!\n\n${res.data?.message || 'Đã hủy hồ sơ thành công'}`);
@@ -393,11 +398,11 @@ export default function FranchisePage({ onNavigate }) {
   };
 
   return (
-    <div style={{ fontFamily: 'Inter, "Segoe UI", system-ui, -apple-system, sans-serif', background: '#fdfbf7', minHeight: '100vh', color: '#1f2937' }}>
+    <div style={{ fontFamily: 'var(--font-sans)', background: '#fdfbf7', minHeight: '100vh', color: '#1f2937' }}>
       {/* ── HERO BANNER ──────────────────────────────────────────── */}
       <section
         style={{
-          background: '#5e0b0f',
+          background: 'linear-gradient(90deg, rgba(66, 9, 14, .92), rgba(66, 9, 14, .65)), url(/hc-assets/1_1.jpg) center / cover',
           padding: '88px 24px 104px',
           textAlign: 'center',
           position: 'relative',
@@ -446,22 +451,22 @@ export default function FranchisePage({ onNavigate }) {
               marginBottom: 24,
             }}
           >
-            Cơ Hội Nhượng Quyền Avengers Coffee
+            {copy('Cơ Hội Nhượng Quyền Avengers Coffee', 'Franchise with Avengers Coffee')}
           </div>
 
           <h1
             style={{
               color: '#ffffff',
               fontSize: 'clamp(32px, 5.2vw, 56px)',
-              fontWeight: 900,
+              fontWeight: 700,
               lineHeight: 1.18,
               margin: '0 0 20px',
               letterSpacing: '-0.02em',
             }}
           >
-            Cùng Avengers Coffee
+            {copy('Cùng Avengers Coffee', 'With Avengers Coffee')}
             <br />
-            <span style={{ color: '#ffffff' }}>Xây Dựng Tương Lai</span>
+            <span style={{ color: '#ffffff' }}>{copy('Xây Dựng Tương Lai', 'Build your next chapter')}</span>
           </h1>
 
           <p
@@ -474,7 +479,7 @@ export default function FranchisePage({ onNavigate }) {
               fontWeight: 400,
             }}
           >
-            Gia nhập hệ thống nhượng quyền của chúng tôi — thương hiệu cà phê được tin yêu hàng đầu. Chúng tôi cung cấp mô hình kinh doanh đã được kiểm chứng và đồng hành hỗ trợ toàn diện.
+            {copy('Gia nhập hệ thống nhượng quyền của chúng tôi — thương hiệu cà phê được tin yêu hàng đầu. Chúng tôi cung cấp mô hình kinh doanh đã được kiểm chứng và đồng hành hỗ trợ toàn diện.', 'Explore our franchise formats, investment options and support. Find the right fit and submit your application below.')}
           </p>
 
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -491,11 +496,11 @@ export default function FranchisePage({ onNavigate }) {
                 fontSize: 15,
                 borderRadius: 12,
                 textDecoration: 'none',
-                boxShadow: '0 6px 20px rgba(180, 83, 9, 0.45)',
+                boxShadow: 'none',
                 transition: 'transform 0.15s ease, box-shadow 0.15s ease',
               }}
             >
-              Đăng Ký Ngay
+              {copy('Đăng Ký Ngay', 'Apply now')}
             </a>
 
             <button
@@ -515,7 +520,7 @@ export default function FranchisePage({ onNavigate }) {
                 transition: 'background 0.2s ease, border-color 0.2s ease',
               }}
             >
-              Tra Cứu và Hủy Hồ Sơ
+              {copy('Tra Cứu và Hủy Hồ Sơ', 'Check your application')}
             </button>
           </div>
         </div>
@@ -538,8 +543,8 @@ export default function FranchisePage({ onNavigate }) {
                 borderRight: i < 3 ? '1px solid #f1f5f9' : 'none',
               }}
             >
-              <div style={{ fontSize: 32, fontWeight: 900, color: '#8f1b23', letterSpacing: '-0.02em' }}>{s.n}</div>
-              <div style={{ fontSize: 14, color: '#64748b', marginTop: 6, fontWeight: 500 }}>{s.label}</div>
+              <div style={{ fontSize: 32, fontWeight: 700, color: '#8f1b23', letterSpacing: '-0.02em' }}>{s.n}</div>
+              <div style={{ fontSize: 14, color: '#64748b', marginTop: 6, fontWeight: 500 }}>{ui(s.label)}</div>
             </div>
           ))}
         </div>
@@ -561,10 +566,8 @@ export default function FranchisePage({ onNavigate }) {
               letterSpacing: '0.06em',
               marginBottom: 12,
             }}
-          >
-            Các gói đầu tư
-          </div>
-          <h2 style={{ fontSize: 34, fontWeight: 900, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>Chọn Mô Hình Phù Hợp</h2>
+          >{ui("Các gói đầu tư")}</div>
+          <h2 style={{ fontSize: 34, fontWeight: 700, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>{ui("Chọn Mô Hình Phù Hợp")}</h2>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 28 }}>
@@ -591,8 +594,8 @@ export default function FranchisePage({ onNavigate }) {
                 <div style={{ background: pkg.gradient, padding: '26px 26px 22px', borderBottom: `1px solid ${pkg.border}` }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                     <div>
-                      <div style={{ fontSize: 21, fontWeight: 900, color: pkg.color }}>{pkg.name}</div>
-                      <div style={{ marginTop: 10, fontSize: 28, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>{pkg.invest}</div>
+                      <div style={{ fontSize: 21, fontWeight: 700, color: pkg.color }}>{pkg.name}</div>
+                      <div style={{ marginTop: 10, fontSize: 28, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.02em' }}>{pkg.invest}</div>
                       <div style={{ fontSize: 13, color: '#475569', marginTop: 2, fontWeight: 500 }}>{pkg.investDetail}</div>
                     </div>
                     <div
@@ -618,7 +621,7 @@ export default function FranchisePage({ onNavigate }) {
                       { label: 'Phí duy trì', v: pkg.royalty },
                     ].map((item, i) => (
                       <div key={i} style={{ fontSize: 13 }}>
-                        <div style={{ color: '#64748b', fontSize: 12 }}>{item.label}</div>
+                        <div style={{ color: '#64748b', fontSize: 12 }}>{ui(item.label)}</div>
                         <div style={{ fontWeight: 700, color: '#1e293b', marginTop: 2 }}>{item.v}</div>
                       </div>
                     ))}
@@ -627,9 +630,7 @@ export default function FranchisePage({ onNavigate }) {
 
                 {/* Body card */}
                 <div style={{ padding: '24px 26px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: '#64748b', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    Chi tiết hạng mục đầu tư
-                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: '#64748b', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{ui("Chi tiết hạng mục đầu tư")}</div>
 
                   <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {pkg.features.map((f, i) => (
@@ -638,32 +639,30 @@ export default function FranchisePage({ onNavigate }) {
                           <span style={{ width: 6, height: 6, borderRadius: '50%', background: pkg.color, flexShrink: 0 }} />
                           <span>{f.name}</span>
                         </div>
-                        <span style={{ fontWeight: 700, color: '#1e293b', flexShrink: 0 }}>{f.price.toLocaleString('vi-VN')} đ</span>
+                        <span style={{ fontWeight: 700, color: '#1e293b', flexShrink: 0 }}>{f.price.toLocaleString(uiLocale())}{ui(" đ")}</span>
                       </li>
                     ))}
                   </ul>
 
                   {/* Combo nguyên liệu */}
                   <div style={{ marginTop: 20, padding: '14px', background: '#f8fafc', borderRadius: 12, border: '1px solid #e2e8f0' }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: '#475569', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Combo Nguyên Liệu Đầu Kỳ
-                    </div>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: '#475569', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{ui("Combo Nguyên Liệu Đầu Kỳ")}</div>
                     {pkg.combos.map((c, idx) => (
                       <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ color: '#1e293b', fontWeight: 700 }}>{c.name}</span>
-                          <span style={{ color: '#8f1b23', fontWeight: 800 }}>{c.gia.toLocaleString('vi-VN')} đ</span>
+                          <span style={{ color: '#8f1b23', fontWeight: 800 }}>{c.gia.toLocaleString(uiLocale())}{ui(" đ")}</span>
                         </div>
                         {c.ingredients &&
                           c.ingredients.map((ing, ingIdx) => (
                             <div key={ingIdx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, paddingLeft: 8, color: '#64748b' }}>
                               <span>• {ing.name}</span>
-                              <span>{ing.price.toLocaleString('vi-VN')} đ</span>
+                              <span>{ing.price.toLocaleString(uiLocale())}{ui(" đ")}</span>
                             </div>
                           ))}
                       </div>
                     ))}
-                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6, fontStyle: 'italic' }}>* Ước tính pha chế khoảng {pkg.combos[0].ly} ly đồ uống</div>
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6, fontStyle: 'italic' }}>{ui("* Ước tính pha chế khoảng ")}{pkg.combos[0].ly}{ui(" ly đồ uống")}</div>
                   </div>
 
                   {/* Tổng cộng */}
@@ -677,10 +676,9 @@ export default function FranchisePage({ onNavigate }) {
                       alignItems: 'center',
                     }}
                   >
-                    <div style={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>TỔNG CỘNG DỰ KIẾN</div>
-                    <div style={{ fontSize: 19, fontWeight: 900, color: pkg.color }}>
-                      {(pkg.features.reduce((sum, f) => sum + f.price, 0) + (pkg.combos[0]?.gia || 0)).toLocaleString('vi-VN')} đ
-                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>{ui("TỔNG CỘNG DỰ KIẾN")}</div>
+                    <div style={{ fontSize: 19, fontWeight: 700, color: pkg.color }}>
+                      {(pkg.features.reduce((sum, f) => sum + f.price, 0) + (pkg.combos[0]?.gia || 0)).toLocaleString(uiLocale())}{ui(" đ")}</div>
                   </div>
 
                   {/* Nút hành động */}
@@ -705,7 +703,7 @@ export default function FranchisePage({ onNavigate }) {
                       boxShadow: isSelected ? '0 4px 14px rgba(143, 27, 35, 0.3)' : 'none',
                     }}
                   >
-                    {isSelected ? 'Đã chọn gói này' : 'Chọn gói này'}
+                    {isSelected ? ui("Đã chọn gói này") : ui("Chọn gói này")}
                   </button>
                 </div>
               </div>
@@ -731,10 +729,8 @@ export default function FranchisePage({ onNavigate }) {
                 letterSpacing: '0.06em',
                 marginBottom: 12,
               }}
-            >
-              Quy trình hợp tác
-            </div>
-            <h2 style={{ fontSize: 34, fontWeight: 900, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>4 Bước Đơn Giản</h2>
+            >{ui("Quy trình hợp tác")}</div>
+            <h2 style={{ fontSize: 34, fontWeight: 700, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>{ui("4 Bước Đơn Giản")}</h2>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
@@ -766,14 +762,13 @@ export default function FranchisePage({ onNavigate }) {
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontSize: 16,
-                        fontWeight: 900,
+                        fontWeight: 700,
                         flexShrink: 0,
                       }}
                     >
                       {step.n}
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: isActive ? '#8f1b23' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Bước {step.n}
+                    <div style={{ fontSize: 13, fontWeight: 800, color: isActive ? '#8f1b23' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{ui("Bước ")}{step.n}
                     </div>
                   </div>
 
@@ -802,17 +797,15 @@ export default function FranchisePage({ onNavigate }) {
               letterSpacing: '0.06em',
               marginBottom: 12,
             }}
-          >
-            Hệ thống đối tác
-          </div>
-          <h2 style={{ fontSize: 34, fontWeight: 900, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>Mạng Lưới Kiosk Avengers</h2>
+          >{ui("Hệ thống đối tác")}</div>
+          <h2 style={{ fontSize: 34, fontWeight: 700, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>{ui("Mạng Lưới Kiosk Avengers")}</h2>
         </div>
 
         {/* Thanh Filter (Top Bar) giống Stores */}
-        <div style={{ 
-          background: '#ffffff', 
-          padding: '16px 24px', 
-          borderRadius: 16, 
+        <div style={{
+          background: '#ffffff',
+          padding: '16px 24px',
+          borderRadius: 16,
           boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
           border: '1px solid #e2e8f0',
           marginBottom: 24,
@@ -842,7 +835,7 @@ export default function FranchisePage({ onNavigate }) {
                 backgroundSize: '10px'
               }}
             >
-              <option value="">Tất cả Thành phố</option>
+              <option value="">{ui("Tất cả Thành phố")}</option>
               {availableCities.map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
@@ -851,18 +844,18 @@ export default function FranchisePage({ onNavigate }) {
 
           {/* Ô Tìm kiếm với Autocomplete */}
           <div style={{ flex: '3 1 400px', position: 'relative' }} ref={searchInputRef}>
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
               border: '1.5px solid #cbd5e1',
               borderRadius: 12,
               padding: '10px 16px',
               background: '#ffffff'
             }}>
               <MagnifyingGlassIcon style={{ width: 20, height: 20, color: '#64748b', marginRight: 10 }} />
-              <input 
+              <input
                 type="text"
-                placeholder="Tìm kiếm Kiosk (Tên đường, phường, cửa hàng)..."
+                placeholder={ui("Tìm kiếm Kiosk (Tên đường, phường, cửa hàng)...")}
                 value={searchKiosk}
                 onChange={(e) => {
                   setSearchKiosk(e.target.value);
@@ -872,7 +865,7 @@ export default function FranchisePage({ onNavigate }) {
                 style={{ flex: 1, border: 'none', outline: 'none', fontSize: 14 }}
               />
               {searchKiosk && (
-                <XMarkIcon 
+                <XMarkIcon
                   style={{ width: 18, height: 18, color: '#94a3b8', cursor: 'pointer' }}
                   onClick={() => {
                     setSearchKiosk('');
@@ -900,7 +893,7 @@ export default function FranchisePage({ onNavigate }) {
               }}>
                 {filteredKiosks.length > 0 ? (
                   filteredKiosks.map(k => (
-                    <div 
+                    <div
                       key={k.id}
                       onClick={() => {
                         setSelectedKiosk(k);
@@ -926,9 +919,7 @@ export default function FranchisePage({ onNavigate }) {
                     </div>
                   ))
                 ) : (
-                  <div style={{ padding: '24px', textAlign: 'center', color: '#64748b', fontSize: 14 }}>
-                    Không tìm thấy Kiosk nào phù hợp
-                  </div>
+                  <div style={{ padding: '24px', textAlign: 'center', color: '#64748b', fontSize: 14 }}>{ui("Không tìm thấy Kiosk nào phù hợp")}</div>
                 )}
               </div>
             )}
@@ -951,9 +942,7 @@ export default function FranchisePage({ onNavigate }) {
             {/* Danh sách cửa hàng */}
             <div style={{ width: 360, overflowY: 'auto', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', flexShrink: 0, background: '#f8fafc' }}>
               <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#ffffff', position: 'sticky', top: 0, zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: '#334155' }}>
-                  Tìm được <span style={{ color: '#8f1b23' }}>{filteredKiosks.length}</span> Kiosk
-                </span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#334155' }}>{ui("Tìm được ")}<span style={{ color: '#8f1b23' }}>{filteredKiosks.length}</span>{ui(" Kiosk")}</span>
               </div>
 
               {filteredKiosks.map((kiosk) => {
@@ -973,21 +962,21 @@ export default function FranchisePage({ onNavigate }) {
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 12 }}>
                       <div style={{ fontWeight: 800, fontSize: 15, color: isSelected ? '#8f1b23' : '#0f172a', lineHeight: 1.4 }}>{kiosk.ten_kiosk}</div>
-                      <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: 4, 
-                        background: '#fffbeb', 
-                        padding: '4px 8px', 
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        background: '#fffbeb',
+                        padding: '4px 8px',
                         borderRadius: 8,
                         border: '1px solid #fef3c7',
                         flexShrink: 0
                       }}>
                         <StarSolid style={{ width: 14, height: 14, color: '#fbbf24' }} />
                         <span style={{ fontSize: 12, fontWeight: 800, color: '#92400e' }}>
-                          {kiosk.reviewCount > 0 
-                            ? <>{Number(kiosk.rating).toFixed(1)} <span style={{ fontWeight: 600, color: '#d97706' }}>({kiosk.reviewCount})</span></> 
-                            : <span style={{ fontWeight: 600, color: '#d97706' }}>Chưa có đánh giá</span>}
+                          {kiosk.reviewCount > 0
+                            ? <>{Number(kiosk.rating).toFixed(1)} <span style={{ fontWeight: 600, color: '#d97706' }}>({kiosk.reviewCount})</span></>
+                            : <span style={{ fontWeight: 600, color: '#d97706' }}>{ui("Chưa có đánh giá")}</span>}
                         </span>
                       </div>
                     </div>
@@ -999,7 +988,7 @@ export default function FranchisePage({ onNavigate }) {
                     </div>
                     {isSelected && (
                       <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(188, 40, 48, 0.2)', display: 'flex', gap: 10 }}>
-                        <button 
+                        <button
                           onClick={async (e) => {
                             e.stopPropagation();
                             setViewKiosk(kiosk);
@@ -1017,10 +1006,8 @@ export default function FranchisePage({ onNavigate }) {
                           style={{ flex: 1, padding: '10px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 12, cursor: 'pointer', transition: 'background 0.2s' }}
                           onMouseEnter={(e) => e.currentTarget.style.background = '#d97706'}
                           onMouseLeave={(e) => e.currentTarget.style.background = '#f59e0b'}
-                        >
-                          XEM ĐÁNH GIÁ
-                        </button>
-                        <button 
+                        >{ui("XEM ĐÁNH GIÁ")}</button>
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setIsReviewModalOpen(true);
@@ -1028,24 +1015,20 @@ export default function FranchisePage({ onNavigate }) {
                           style={{ flex: 1, padding: '10px', background: '#8f1b23', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 12, cursor: 'pointer', transition: 'background 0.2s' }}
                           onMouseEnter={(e) => e.currentTarget.style.background = '#73141a'}
                           onMouseLeave={(e) => e.currentTarget.style.background = '#8f1b23'}
-                        >
-                          ĐÁNH GIÁ CHI NHÁNH NÀY
-                        </button>
+                        >{ui("ĐÁNH GIÁ CHI NHÁNH NÀY")}</button>
                       </div>
                     )}
                   </div>
                 );
               })}
 
-              {isLoadingKiosks && <div style={{ padding: 24, textAlign: 'center', color: '#64748b', fontSize: 14 }}>Đang tải danh sách cửa hàng...</div>}
+              {isLoadingKiosks && <div style={{ padding: 24, textAlign: 'center', color: '#64748b', fontSize: 14 }}>{ui("Đang tải danh sách cửa hàng...")}</div>}
 
-              {errorMsg && <div style={{ padding: 24, textAlign: 'center', color: '#dc2626', fontSize: 14 }}>{errorMsg}</div>}
+              {errorMsg && <div style={{ padding: 24, textAlign: 'center', color: '#dc2626', fontSize: 14 }}>{ui(errorMsg)}</div>}
 
               {!isLoadingKiosks && !errorMsg && filteredKiosks.length === 0 && (
-                <div style={{ padding: 36, textAlign: 'center', color: '#64748b', fontSize: 14, lineHeight: 1.6 }}>
-                  Hệ thống đang cập nhật danh sách cửa hàng.
-                  <br />
-                  <span style={{ fontSize: 13, color: '#8f1b23', fontWeight: 700 }}>Hãy trở thành đối tác đầu tiên của chúng tôi!</span>
+                <div style={{ padding: 36, textAlign: 'center', color: '#64748b', fontSize: 14, lineHeight: 1.6 }}>{ui("Hệ thống đang cập nhật danh sách cửa hàng.")}<br />
+                  <span style={{ fontSize: 13, color: '#8f1b23', fontWeight: 700 }}>{ui("Hãy trở thành đối tác đầu tiên của chúng tôi!")}</span>
                 </div>
               )}
             </div>
@@ -1054,16 +1037,14 @@ export default function FranchisePage({ onNavigate }) {
             <div style={{ flex: 1, background: '#f8fafc', position: 'relative' }}>
               {selectedKiosk ? (
                 <iframe
-                  title={`Bản đồ ${selectedKiosk.ten_kiosk}`}
+                  title={ui("Bản đồ {{v0}}", {v0:selectedKiosk.ten_kiosk})}
                   src={buildMapEmbedUrl(`${selectedKiosk.dia_chi}, ${selectedKiosk.phuong_xa}, ${selectedKiosk.thanh_pho}`)}
                   style={{ width: '100%', height: '100%', border: 'none' }}
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                 />
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8', fontSize: 15 }}>
-                  Chọn một cửa hàng trong danh sách để xem vị trí bản đồ
-                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8', fontSize: 15 }}>{ui("Chọn một cửa hàng trong danh sách để xem vị trí bản đồ")}</div>
               )}
             </div>
           </div>
@@ -1076,9 +1057,7 @@ export default function FranchisePage({ onNavigate }) {
               <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', margin: '0 0 12px' }}>
                 Kiosk: {selectedKiosk.ten_kiosk}
               </h3>
-              <p style={{ color: '#64748b', fontSize: 14, margin: 0, maxWidth: 600, lineHeight: 1.6 }}>
-                Tại Kiosk, chúng tôi cam kết mang đến đồ uống chất lượng với không gian vệ sinh sạch sẽ, đáp ứng nhu cầu thưởng thức cà phê tiện lợi của bạn mỗi ngày. Hãy nhấp vào <strong>ĐÁNH GIÁ CHI NHÁNH NÀY</strong> ở danh sách bên trên nếu bạn muốn để lại phản hồi cho chúng tôi!
-              </p>
+              <p style={{ color: '#64748b', fontSize: 14, margin: 0, maxWidth: 600, lineHeight: 1.6 }}>{ui("Tại Kiosk, chúng tôi cam kết mang đến đồ uống chất lượng với không gian vệ sinh sạch sẽ, đáp ứng nhu cầu thưởng thức cà phê tiện lợi của bạn mỗi ngày. Hãy nhấp vào ")}<strong>{ui("ĐÁNH GIÁ CHI NHÁNH NÀY")}</strong>{ui(" ở danh sách bên trên nếu bạn muốn để lại phản hồi cho chúng tôi!")}</p>
             </div>
           </div>
         )}
@@ -1100,12 +1079,9 @@ export default function FranchisePage({ onNavigate }) {
                 letterSpacing: '0.06em',
                 marginBottom: 12,
               }}
-            >
-              Bắt đầu hành trình
-            </div>
-            <h2 style={{ fontSize: 34, fontWeight: 900, color: '#0f172a', margin: '0 0 14px', letterSpacing: '-0.02em' }}>Đăng Ký Hồ Sơ Nhượng Quyền</h2>
-            <p style={{ color: '#64748b', fontSize: 15, margin: 0, lineHeight: 1.6 }}>
-              Chúng tôi sẽ phản hồi trong vòng <strong>24 giờ làm việc</strong>. Thư xác nhận sẽ được gửi về hộp thư tiếp nhận <strong style={{ color: '#8f1b23' }}>{COMPANY_EMAIL}</strong>.
+            >{ui("Bắt đầu hành trình")}</div>
+            <h2 style={{ fontSize: 34, fontWeight: 700, color: '#0f172a', margin: '0 0 14px', letterSpacing: '-0.02em' }}>{ui("Đăng Ký Hồ Sơ Nhượng Quyền")}</h2>
+            <p style={{ color: '#64748b', fontSize: 15, margin: 0, lineHeight: 1.6 }}>{ui("Chúng tôi sẽ phản hồi trong vòng ")}<strong>{ui("24 giờ làm việc")}</strong>{ui(". Thư xác nhận sẽ được gửi về hộp thư tiếp nhận ")}<strong style={{ color: '#8f1b23' }}>{COMPANY_EMAIL}</strong>.
             </p>
           </div>
 
@@ -1134,22 +1110,22 @@ export default function FranchisePage({ onNavigate }) {
                   letterSpacing: '0.05em',
                 }}
               >
-                {result.success ? 'Tiếp nhận thành công' : 'Gửi hồ sơ chưa thành công'}
+                {result.success ? ui("Tiếp nhận thành công") : ui("Gửi hồ sơ chưa thành công")}
               </div>
 
-              <h3 style={{ fontSize: 22, fontWeight: 900, color: result.success ? '#15803d' : '#b91c1c', margin: '0 0 12px' }}>
-                {result.success ? 'Hồ sơ đã được tiếp nhận thành công' : 'Đã xảy ra lỗi khi gửi hồ sơ'}
+              <h3 style={{ fontSize: 22, fontWeight: 700, color: result.success ? '#15803d' : '#b91c1c', margin: '0 0 12px' }}>
+                {result.success ? ui("Hồ sơ đã được tiếp nhận thành công") : ui("Đã xảy ra lỗi khi gửi hồ sơ")}
               </h3>
 
               <p style={{ color: result.success ? '#166534' : '#991b1b', fontSize: 15, lineHeight: 1.6, margin: '0 0 24px' }}>{result.message}</p>
 
               {result.success && (
                 <div style={{ padding: '20px 24px', background: '#ffffff', borderRadius: 14, border: '1px solid #bbf7d0', marginBottom: 24, textAlign: 'left' }}>
-                  <div style={{ fontSize: 14, color: '#15803d', fontWeight: 800, marginBottom: 10 }}>Các bước tiếp theo:</div>
+                  <div style={{ fontSize: 14, color: '#15803d', fontWeight: 800, marginBottom: 10 }}>{ui("Các bước tiếp theo:")}</div>
                   <ul style={{ margin: 0, padding: '0 0 0 18px', color: '#334155', fontSize: 14, lineHeight: 2 }}>
-                    <li>Thư xác nhận đã được gửi đến hộp thư của quý khách</li>
-                    <li>Đội ngũ tư vấn sẽ liên hệ trực tiếp trong vòng 24 giờ làm việc</li>
-                    <li>Quý khách vui lòng chuẩn bị thông tin mặt bằng và nguồn vốn dự kiến để được tư vấn chính xác nhất</li>
+                    <li>{ui("Thư xác nhận đã được gửi đến hộp thư của quý khách")}</li>
+                    <li>{ui("Đội ngũ tư vấn sẽ liên hệ trực tiếp trong vòng 24 giờ làm việc")}</li>
+                    <li>{ui("Quý khách vui lòng chuẩn bị thông tin mặt bằng và nguồn vốn dự kiến để được tư vấn chính xác nhất")}</li>
                   </ul>
                 </div>
               )}
@@ -1168,16 +1144,14 @@ export default function FranchisePage({ onNavigate }) {
                   boxShadow: result.success ? '0 4px 14px rgba(21, 128, 61, 0.3)' : '0 4px 14px rgba(185, 28, 28, 0.3)',
                 }}
               >
-                {result.success ? 'Trở về trang nhượng quyền' : 'Thử lại'}
+                {result.success ? ui("Trở về trang nhượng quyền") : ui("Thử lại")}
               </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} style={{ background: '#ffffff', padding: '40px 36px', borderRadius: 24, boxShadow: '0 16px 40px -12px rgba(0, 0, 0, 0.08)', border: '1px solid #e2e8f0' }}>
               {/* Chọn mô hình gói đầu tư */}
               <div style={{ marginBottom: 26 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: '#475569', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Mô hình nhượng quyền quan tâm *
-                </label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: '#475569', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{ui("Mô hình nhượng quyền quan tâm *")}</label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 12 }}>
                   {PACKAGES.map((pkg) => {
                     const isSelected = form.goi_kiosk === pkg.id;
@@ -1214,7 +1188,7 @@ export default function FranchisePage({ onNavigate }) {
                   { name: 'so_dien_thoai', label: 'Số điện thoại liên hệ *', placeholder: 'Ví dụ: 0912345678', required: true },
                 ].map((field) => (
                   <div key={field.name}>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>{field.label}</label>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>{ui(field.label)}</label>
                     <input
                       name={field.name}
                       value={form[field.name]}
@@ -1239,7 +1213,7 @@ export default function FranchisePage({ onNavigate }) {
 
               {/* Email */}
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Hộp thư điện tử nhận thông tin *</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>{ui("Hộp thư điện tử nhận thông tin *")}</label>
                 <input
                   name="email"
                   type="email"
@@ -1259,17 +1233,17 @@ export default function FranchisePage({ onNavigate }) {
                     outline: 'none',
                   }}
                 />
-                <div style={{ fontSize: 12, color: '#64748b', marginTop: 6 }}>Thư xác nhận và thông tin tài khoản quản trị sẽ gửi về địa chỉ thư này</div>
+                <div style={{ fontSize: 12, color: '#64748b', marginTop: 6 }}>{ui("Thư xác nhận và thông tin tài khoản quản trị sẽ gửi về địa chỉ thư này")}</div>
               </div>
 
               {/* Địa chỉ mặt bằng */}
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Địa chỉ mặt bằng dự kiến *</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>{ui("Địa chỉ mặt bằng dự kiến *")}</label>
                 <input
                   name="dia_chi_mat_bang"
                   value={form.dia_chi_mat_bang}
                   onChange={handleChange}
-                  placeholder="Số nhà, Tên đường"
+                  placeholder={ui("Số nhà, Tên đường")}
                   required
                   style={{
                     width: '100%',
@@ -1288,13 +1262,13 @@ export default function FranchisePage({ onNavigate }) {
               {/* Tỉnh thành, Phường xã, Diện tích */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 18 }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Tỉnh, Thành phố *</label>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>{ui("Tỉnh, Thành phố *")}</label>
                   <input
                     list="provinces-list"
                     name="thanh_pho"
                     value={form.thanh_pho}
                     onChange={handleChangeProvince}
-                    placeholder="Chọn hoặc nhập Tỉnh/Thành phố..."
+                    placeholder={ui("Chọn hoặc nhập Tỉnh/Thành phố...")}
                     required
                     style={{
                       width: '100%',
@@ -1318,13 +1292,13 @@ export default function FranchisePage({ onNavigate }) {
 
 
                 <div>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Phường, Xã *</label>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>{ui("Phường, Xã *")}</label>
                   <input
                     list="wards-list"
                     name="phuong_xa"
                     value={form.phuong_xa}
                     onChange={handleChange}
-                    placeholder="Chọn hoặc nhập Phường/Xã..."
+                    placeholder={ui("Chọn hoặc nhập Phường/Xã...")}
                     required
                     disabled={!form.thanh_pho}
                     style={{
@@ -1347,7 +1321,7 @@ export default function FranchisePage({ onNavigate }) {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Diện tích (m²)</label>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>{ui("Diện tích (m²)")}</label>
                   <input
                     name="dien_tich_m2"
                     type="number"
@@ -1371,13 +1345,13 @@ export default function FranchisePage({ onNavigate }) {
 
               {/* Ghi chú */}
               <div style={{ marginBottom: 28 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Ghi chú thêm</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 8 }}>{ui("Ghi chú thêm")}</label>
                 <textarea
                   name="ghi_chu"
                   value={form.ghi_chu}
                   onChange={handleChange}
                   rows={3}
-                  placeholder="Kinh nghiệm kinh doanh, câu hỏi hoặc yêu cầu cần tư vấn chi tiết..."
+                  placeholder={ui("Kinh nghiệm kinh doanh, câu hỏi hoặc yêu cầu cần tư vấn chi tiết...")}
                   style={{
                     width: '100%',
                     padding: '12px 14px',
@@ -1412,12 +1386,10 @@ export default function FranchisePage({ onNavigate }) {
                   transition: 'background 0.2s ease, transform 0.15s ease',
                 }}
               >
-                {submitting ? 'Đang gửi hồ sơ...' : 'Nộp Hồ Sơ Đăng Ký'}
+                {submitting ? ui("Đang gửi hồ sơ...") : ui("Nộp Hồ Sơ Đăng Ký")}
               </button>
 
-              <p style={{ textAlign: 'center', fontSize: 12, color: '#94a3b8', margin: '16px 0 0', lineHeight: 1.6 }}>
-                Bằng cách gửi biểu mẫu này, quý khách đồng ý để chúng tôi liên hệ tư vấn. Mọi thông tin được cam kết bảo mật theo chính sách thương hiệu.
-              </p>
+              <p style={{ textAlign: 'center', fontSize: 12, color: '#94a3b8', margin: '16px 0 0', lineHeight: 1.6 }}>{ui("Bằng cách gửi biểu mẫu này, quý khách đồng ý để chúng tôi liên hệ tư vấn. Mọi thông tin được cam kết bảo mật theo chính sách thương hiệu.")}</p>
             </form>
           )}
         </div>
@@ -1426,10 +1398,8 @@ export default function FranchisePage({ onNavigate }) {
       {/* ── THÔNG TIN LIÊN HỆ TRỰC TIẾP ─────────────────────── */}
       <section style={{ background: '#0f172a', padding: '54px 24px', textAlign: 'center', color: '#ffffff' }}>
         <div style={{ maxWidth: 640, margin: '0 auto' }}>
-          <h3 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 10px', color: '#ffffff' }}>Muốn tư vấn trực tiếp?</h3>
-          <p style={{ color: '#94a3b8', fontSize: 15, margin: '0 0 28px', lineHeight: 1.6 }}>
-            Liên hệ trực tiếp với bộ phận phát triển nhượng quyền Avengers Coffee
-          </p>
+          <h3 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 10px', color: '#ffffff' }}>{ui("Muốn tư vấn trực tiếp?")}</h3>
+          <p style={{ color: '#94a3b8', fontSize: 15, margin: '0 0 28px', lineHeight: 1.6 }}>{ui("Liên hệ trực tiếp với bộ phận phát triển nhượng quyền Avengers Coffee")}</p>
 
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
             <a
@@ -1496,7 +1466,7 @@ export default function FranchisePage({ onNavigate }) {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
-              <h3 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: '#0f172a' }}>Tra Cứu Hồ Sơ Đăng Ký</h3>
+              <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#0f172a' }}>{ui("Tra Cứu Hồ Sơ Đăng Ký")}</h3>
               <button
                 onClick={() => {
                   setShowLookup(false);
@@ -1514,15 +1484,13 @@ export default function FranchisePage({ onNavigate }) {
                   color: '#64748b',
                   cursor: 'pointer',
                 }}
-              >
-                Đóng
-              </button>
+              >{ui("Đóng")}</button>
             </div>
 
             <form onSubmit={handleLookup} style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
               <input
                 type="tel"
-                placeholder="Nhập số điện thoại đã đăng ký..."
+                placeholder={ui("Nhập số điện thoại đã đăng ký...")}
                 value={lookupPhone}
                 onChange={(e) => setLookupPhone(e.target.value)}
                 style={{
@@ -1551,7 +1519,7 @@ export default function FranchisePage({ onNavigate }) {
                   boxShadow: '0 4px 12px rgba(143, 27, 35, 0.3)',
                 }}
               >
-                {lookupLoading ? 'Đang tìm...' : 'Tra cứu'}
+                {lookupLoading ? ui("Đang tìm...") : ui("Tra cứu")}
               </button>
             </form>
 
@@ -1591,14 +1559,11 @@ export default function FranchisePage({ onNavigate }) {
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12, gap: 12 }}>
                         <div>
-                          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 16 }}>
-                            Hồ sơ ngày {new Date(hs.ngay_tao).toLocaleDateString('vi-VN')}
+                          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 16 }}>{ui("Hồ sơ ngày ")}{new Date(hs.ngay_tao).toLocaleDateString(uiLocale())}
                           </div>
-                          <div style={{ fontSize: 13, color: '#475569', marginTop: 4 }}>
-                            Khu vực: {hs.phuong_xa}, {hs.thanh_pho}
+                          <div style={{ fontSize: 13, color: '#475569', marginTop: 4 }}>{ui("Khu vực: ")}{hs.phuong_xa}, {hs.thanh_pho}
                           </div>
-                          <div style={{ fontSize: 13, color: '#475569', marginTop: 2 }}>
-                            Mô hình đăng ký: <strong style={{ color: '#8f1b23' }}>{pkgName}</strong>
+                          <div style={{ fontSize: 13, color: '#475569', marginTop: 2 }}>{ui("Mô hình đăng ký: ")}<strong style={{ color: '#8f1b23' }}>{pkgName}</strong>
                           </div>
                         </div>
 
@@ -1614,7 +1579,7 @@ export default function FranchisePage({ onNavigate }) {
                             whiteSpace: 'nowrap',
                           }}
                         >
-                          {badge.label}
+                          {ui(badge.label)}
                         </div>
                       </div>
 
@@ -1630,7 +1595,7 @@ export default function FranchisePage({ onNavigate }) {
                             marginBottom: 12,
                           }}
                         >
-                          <i>Ghi chú từ hệ thống:</i> {hs.ghi_chu}
+                          <i>{ui("Ghi chú từ hệ thống:")}</i> {hs.ghi_chu}
                         </div>
                       )}
 
@@ -1646,7 +1611,7 @@ export default function FranchisePage({ onNavigate }) {
                             marginBottom: 12,
                           }}
                         >
-                          <i>Lý do từ chối:</i> {hs.ly_do_tu_choi}
+                          <i>{ui("Lý do từ chối:")}</i> {hs.ly_do_tu_choi}
                         </div>
                       )}
 
@@ -1667,17 +1632,13 @@ export default function FranchisePage({ onNavigate }) {
                               boxShadow: '0 4px 12px rgba(220, 38, 38, 0.25)',
                               transition: 'background 0.15s ease',
                             }}
-                          >
-                            Hủy đăng ký hồ sơ
-                          </button>
+                          >{ui("Hủy đăng ký hồ sơ")}</button>
                         </div>
                       )}
 
                       {hs.trang_thai === 'DA_DUYET' && (
                         <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 14, textAlign: 'right' }}>
-                          <span style={{ fontSize: 13, color: '#15803d', fontWeight: 700 }}>
-                            Hồ sơ đã được duyệt và cấp tài khoản. Quý khách vui lòng đăng nhập Cổng Nhượng Quyền để quản lý hoặc gửi yêu cầu hoàn cọc.
-                          </span>
+                          <span style={{ fontSize: 13, color: '#15803d', fontWeight: 700 }}>{ui("Hồ sơ đã được duyệt và cấp tài khoản. Quý khách vui lòng đăng nhập Cổng Nhượng Quyền để quản lý hoặc gửi yêu cầu hoàn cọc.")}</span>
                         </div>
                       )}
                     </div>
@@ -1701,7 +1662,7 @@ export default function FranchisePage({ onNavigate }) {
             address: `${selectedKiosk.dia_chi}, ${selectedKiosk.phuong_xa}, ${selectedKiosk.thanh_pho}`,
           }}
           onSuccess={() => {
-            alert('Cảm ơn bạn đã đánh giá cửa hàng!');
+            alert(ui("Cảm ơn bạn đã đánh giá cửa hàng!"));
             setIsReviewModalOpen(false);
             queryClient.invalidateQueries(['branch-reviews-stats']);
           }}
@@ -1714,33 +1675,33 @@ export default function FranchisePage({ onNavigate }) {
           <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', width: '100%', maxWidth: '600px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden' }}>
             <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
               <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                <StarSolid style={{ width: 18, height: 18, color: '#eab308' }} /> Đánh Giá Khách Hàng - {viewKiosk.ten_kiosk} ({viewKiosk.ma_kiosk})
+                <StarSolid style={{ width: 18, height: 18, color: '#eab308' }} />{ui(" Đánh Giá Khách Hàng - ")}{viewKiosk.ten_kiosk} ({viewKiosk.ma_kiosk})
               </h3>
               <button type="button" onClick={() => setIsViewReviewModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
                 <XMarkIcon style={{ width: 24, height: 24 }} />
               </button>
             </div>
-            
+
             <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
               {isLoadingViewReviews ? (
-                <div style={{ textAlign: 'center', color: '#64748b', fontSize: '0.875rem' }}>Đang tải danh sách đánh giá...</div>
+                <div style={{ textAlign: 'center', color: '#64748b', fontSize: '0.875rem' }}>{ui("Đang tải danh sách đánh giá...")}</div>
               ) : viewReviewsData.length === 0 ? (
-                <div style={{ textAlign: 'center', color: '#64748b', fontSize: '0.875rem' }}>Kiosk này chưa có đánh giá nào.</div>
+                <div style={{ textAlign: 'center', color: '#64748b', fontSize: '0.875rem' }}>{ui("Kiosk này chưa có đánh giá nào.")}</div>
               ) : (
                 <>
                   <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: '600', color: '#92400e' }}>Đánh giá trung bình:</span>
+                    <span style={{ fontWeight: '600', color: '#92400e' }}>{ui("Đánh giá trung bình:")}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <strong style={{ fontSize: '1.1rem', color: '#b45309' }}>{Number(viewKiosk.rating).toFixed(1)} / 5.0</strong>
-                      <span style={{ fontSize: '0.85rem', color: '#d97706' }}>({viewKiosk.reviewCount} đánh giá)</span>
+                      <span style={{ fontSize: '0.85rem', color: '#d97706' }}>({viewKiosk.reviewCount}{ui(" đánh giá)")}</span>
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {viewReviewsData.map((rv, idx) => (
                     <div key={idx} style={{ padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '8px', backgroundColor: '#f8fafc' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                        <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>{rv.ten_nguoi_dung || 'Khách hàng ẩn danh'}</strong>
-                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{new Date(rv.ngay_tao).toLocaleDateString('vi-VN')}</span>
+                        <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>{rv.ten_nguoi_dung || ui("Khách hàng ẩn danh")}</strong>
+                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{new Date(rv.ngay_tao).toLocaleDateString(uiLocale())}</span>
                       </div>
                       <div style={{ display: 'flex', gap: '4px', marginBottom: '0.5rem' }}>
                         {Array.from({ length: 5 }).map((_, i) => (

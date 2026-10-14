@@ -1,0 +1,149 @@
+{
+  "observed_at": "2026-10-14T04:42:30.969480+00:00",
+  "samples": [
+    {
+      "route": "/menu/danh-muc",
+      "repeat": 0,
+      "http_code": 200,
+      "dns_s": 0.004035,
+      "connect_s": 0.005164,
+      "tls_s": 0.024134,
+      "ttfb_s": 3.509973,
+      "total_s": 3.510072,
+      "wire_bytes": 455.0,
+      "bytes_per_s": 129.0
+    },
+    {
+      "route": "/menu/danh-muc",
+      "repeat": 1,
+      "http_code": 200,
+      "dns_s": 0.000567,
+      "connect_s": 0.001745,
+      "tls_s": 0.022044,
+      "ttfb_s": 0.32772,
+      "total_s": 0.327823,
+      "wire_bytes": 455.0,
+      "bytes_per_s": 1387.0
+    },
+    {
+      "route": "/menu/danh-muc",
+      "repeat": 2,
+      "http_code": 200,
+      "dns_s": 0.000586,
+      "connect_s": 0.002139,
+      "tls_s": 0.022596,
+      "ttfb_s": 0.296619,
+      "total_s": 0.296715,
+      "wire_bytes": 455.0,
+      "bytes_per_s": 1533.0
+    },
+    {
+      "route": "/menu/san-pham",
+      "repeat": 0,
+      "http_code": 200,
+      "dns_s": 0.000544,
+      "connect_s": 0.001677,
+      "tls_s": 0.021832,
+      "ttfb_s": 0.956719,
+      "total_s": 0.957029,
+      "wire_bytes": 13198.0,
+      "bytes_per_s": 13790.0
+    },
+    {
+      "route": "/menu/san-pham",
+      "repeat": 1,
+      "http_code": 200,
+      "dns_s": 0.00053,
+      "connect_s": 0.002134,
+      "tls_s": 0.022388,
+      "ttfb_s": 0.316942,
+      "total_s": 0.317598,
+      "wire_bytes": 13198.0,
+      "bytes_per_s": 41555.0
+    },
+    {
+      "route": "/menu/san-pham",
+      "repeat": 2,
+      "http_code": 200,
+      "dns_s": 0.00055,
+      "connect_s": 0.001753,
+      "tls_s": 0.022068,
+      "ttfb_s": 0.299453,
+      "total_s": 0.299803,
+      "wire_bytes": 13198.0,
+      "bytes_per_s": 44022.0
+    },
+    {
+      "route": "/users/branches/public",
+      "repeat": 0,
+      "http_code": 200,
+      "dns_s": 0.000538,
+      "connect_s": 0.002138,
+      "tls_s": 0.021058,
+      "ttfb_s": 1.364089,
+      "total_s": 1.365618,
+      "wire_bytes": 80793.0,
+      "bytes_per_s": 59162.0
+    },
+    {
+      "route": "/users/branches/public",
+      "repeat": 1,
+      "http_code": 200,
+      "dns_s": 0.000558,
+      "connect_s": 0.001778,
+      "tls_s": 0.020727,
+      "ttfb_s": 2.566436,
+      "total_s": 2.766863,
+      "wire_bytes": 80793.0,
+      "bytes_per_s": 29200.0
+    },
+    {
+      "route": "/users/branches/public",
+      "repeat": 2,
+      "http_code": 200,
+      "dns_s": 0.000606,
+      "connect_s": 0.001884,
+      "tls_s": 0.021165,
+      "ttfb_s": 0.379141,
+      "total_s": 0.456757,
+      "wire_bytes": 80793.0,
+      "bytes_per_s": 176883.0
+    },
+    {
+      "route": "/news?limit=100",
+      "repeat": 0,
+      "http_code": 200,
+      "dns_s": 0.000566,
+      "connect_s": 0.001834,
+      "tls_s": 0.021221,
+      "ttfb_s": 0.950877,
+      "total_s": 0.950998,
+      "wire_bytes": 2702.0,
+      "bytes_per_s": 2841.0
+    },
+    {
+      "route": "/news?limit=100",
+      "repeat": 1,
+      "http_code": 200,
+      "dns_s": 0.000613,
+      "connect_s": 0.001726,
+      "tls_s": 0.020712,
+      "ttfb_s": 2.331681,
+      "total_s": 2.331798,
+      "wire_bytes": 2702.0,
+      "bytes_per_s": 1158.0
+    },
+    {
+      "route": "/news?limit=100",
+      "repeat": 2,
+      "http_code": 200,
+      "dns_s": 0.000587,
+      "connect_s": 0.001735,
+      "tls_s": 0.020403,
+      "ttfb_s": 2.326495,
+      "total_s": 2.326646,
+      "wire_bytes": 2702.0,
+      "bytes_per_s": 1161.0
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "status": "ABORTED before load",
+  "reason": "Pre-load Web homepage smoke returned 404; zero k6 traffic; later recheck returned 200."
+}

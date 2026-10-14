@@ -170,17 +170,17 @@ export function ManagerCustomerCarePanel({
             width: '42px',
             height: '42px',
             borderRadius: '12px',
-            background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+            background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
             color: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 10px rgba(16, 185, 129, 0.3)'
+            boxShadow: '0 4px 10px rgba(59, 130, 246, 0.3)'
           }}>
             <MessageSquare size={24} />
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '800', color: '#0f172a' }}>
+            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600', color: '#0f172a' }}>
               Phản hồi & Chăm sóc Khách hàng
             </h2>
             <span style={{ fontSize: '0.825rem', color: '#64748b' }}>
@@ -207,12 +207,12 @@ export function ManagerCustomerCarePanel({
           gap: '0.85rem',
           boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
         }}>
-          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <MessageCircle size={20} />
           </div>
           <div>
             <span style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500' }}>Tổng đánh giá</span>
-            <strong style={{ fontSize: '1.3rem', fontWeight: '800', color: '#1e293b', display: 'block' }}>{stats.total} lượt</strong>
+            <strong style={{ fontSize: '1.3rem', fontWeight: '600', color: '#1e293b', display: 'block' }}>{stats.total} lượt</strong>
           </div>
         </div>
 
@@ -231,7 +231,7 @@ export function ManagerCustomerCarePanel({
           </div>
           <div>
             <span style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500' }}>Chờ phản hồi</span>
-            <strong style={{ fontSize: '1.3rem', fontWeight: '800', color: '#d97706', display: 'block' }}>{stats.unreplied} đánh giá</strong>
+            <strong style={{ fontSize: '1.3rem', fontWeight: '600', color: '#d97706', display: 'block' }}>{stats.unreplied} đánh giá</strong>
           </div>
         </div>
 
@@ -245,12 +245,12 @@ export function ManagerCustomerCarePanel({
           gap: '0.85rem',
           boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
         }}>
-          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <CheckCircle2 size={20} />
           </div>
           <div>
             <span style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500' }}>Đã phản hồi</span>
-            <strong style={{ fontSize: '1.3rem', fontWeight: '800', color: '#059669', display: 'block' }}>{stats.replied} đánh giá</strong>
+            <strong style={{ fontSize: '1.3rem', fontWeight: '600', color: '#2563eb', display: 'block' }}>{stats.replied} đánh giá</strong>
           </div>
         </div>
 
@@ -269,7 +269,7 @@ export function ManagerCustomerCarePanel({
           </div>
           <div>
             <span style={{ fontSize: '0.775rem', color: '#64748b', fontWeight: '500' }}>Đánh giá 1-3 sao</span>
-            <strong style={{ fontSize: '1.3rem', fontWeight: '800', color: '#ef4444', display: 'block' }}>{stats.lowRating} đánh giá</strong>
+            <strong style={{ fontSize: '1.3rem', fontWeight: '600', color: '#ef4444', display: 'block' }}>{stats.lowRating} đánh giá</strong>
           </div>
         </div>
       </div>
@@ -334,13 +334,13 @@ export function ManagerCustomerCarePanel({
                   style={{
                     padding: '0.4rem 0.85rem',
                     borderRadius: '8px',
-                    border: isActive ? '1px solid #10b981' : '1px solid #e2e8f0',
-                    background: isActive ? '#10b981' : '#ffffff',
+                    border: isActive ? '1px solid #3b82f6' : '1px solid #e2e8f0',
+                    background: isActive ? '#3b82f6' : '#ffffff',
                     color: isActive ? '#ffffff' : '#475569',
                     fontWeight: isActive ? '700' : '500',
                     fontSize: '0.825rem',
                     cursor: 'pointer',
-                    boxShadow: isActive ? '0 2px 4px rgba(16, 185, 129, 0.2)' : 'none',
+                    boxShadow: isActive ? '0 2px 4px rgba(59, 130, 246, 0.2)' : 'none',
                     transition: 'all 0.15s ease'
                   }}
                 >
@@ -355,7 +355,7 @@ export function ManagerCustomerCarePanel({
       {/* Loading & Error States */}
       {reviewsState.loading && (
         <div style={{ textAlign: 'center', padding: '3.5rem 1.5rem', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', color: '#64748b' }}>
-          <RefreshCw size={32} color="#10b981" style={{ animation: 'spin 1s linear infinite', marginBottom: '0.75rem' }} />
+          <RefreshCw size={32} color="#3b82f6" style={{ animation: 'spin 1s linear infinite', marginBottom: '0.75rem' }} />
           <h4 style={{ margin: 0 }}>Đang tải danh sách đánh giá...</h4>
         </div>
       )}
@@ -420,7 +420,7 @@ export function ManagerCustomerCarePanel({
                     </div>
 
                     <div>
-                      <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '800', color: '#0f172a' }}>
+                      <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '600', color: '#0f172a' }}>
                         {productName}
                       </h3>
                       <span style={{ fontSize: '0.8rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.15rem' }}>
@@ -437,9 +437,9 @@ export function ManagerCustomerCarePanel({
                       fontWeight: '700',
                       padding: '0.25rem 0.65rem',
                       borderRadius: '9999px',
-                      background: hasManagerReply ? '#d1fae5' : '#fef3c7',
-                      color: hasManagerReply ? '#047857' : '#b45309',
-                      border: hasManagerReply ? '1px solid #a7f3d0' : '1px solid #fde68a',
+                      background: hasManagerReply ? '#dbeafe' : '#fef3c7',
+                      color: hasManagerReply ? '#1d4ed8' : '#b45309',
+                      border: hasManagerReply ? '1px solid #bfdbfe' : '1px solid #fde68a',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.25rem'
@@ -474,18 +474,18 @@ export function ManagerCustomerCarePanel({
                 {/* Current Manager Reply (If exists) */}
                 {hasManagerReply && !isExpanded && (
                   <div style={{
-                    background: '#ecfdf5',
-                    border: '1px solid #a7f3d0',
+                    background: '#eff6ff',
+                    border: '1px solid #bfdbfe',
                     borderRadius: '12px',
                     padding: '0.85rem 1rem',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '0.35rem'
                   }}>
-                    <span style={{ fontSize: '0.775rem', fontWeight: '700', color: '#047857', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                      <CheckCircle2 size={14} color="#059669" /> Phản hồi từ Quản lý:
+                    <span style={{ fontSize: '0.775rem', fontWeight: '700', color: '#1d4ed8', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <CheckCircle2 size={14} color="#2563eb" /> Phản hồi từ Quản lý:
                     </span>
-                    <p style={{ margin: 0, fontSize: '0.9rem', color: '#064e3b', lineHeight: 1.5, fontWeight: '600' }}>
+                    <p style={{ margin: 0, fontSize: '0.9rem', color: '#1e3a8a', lineHeight: 1.5, fontWeight: '600' }}>
                       {review.phan_hoi_quan_ly}
                     </p>
                   </div>
@@ -508,12 +508,12 @@ export function ManagerCustomerCarePanel({
                       padding: '0.55rem 1rem',
                       borderRadius: '8px',
                       border: 'none',
-                      background: '#10b981',
+                      background: '#3b82f6',
                       color: '#ffffff',
                       fontSize: '0.85rem',
                       fontWeight: '700',
                       cursor: 'pointer',
-                      boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)',
+                      boxShadow: '0 2px 4px rgba(59, 130, 246, 0.2)',
                       transition: 'all 0.15s ease'
                     }}
                   >
@@ -589,12 +589,12 @@ export function ManagerCustomerCarePanel({
                           padding: '0.55rem 1.1rem',
                           borderRadius: '8px',
                           border: 'none',
-                          background: '#10b981',
+                          background: '#3b82f6',
                           color: '#ffffff',
                           fontSize: '0.85rem',
                           fontWeight: '700',
                           cursor: replyingReviewId === String(review.id) || !draft.trim() ? 'not-allowed' : 'pointer',
-                          boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)'
+                          boxShadow: '0 2px 4px rgba(59, 130, 246, 0.2)'
                         }}
                       >
                         <Send size={14} />
@@ -658,7 +658,7 @@ export function ManagerCustomerCarePanel({
                     height: '34px',
                     borderRadius: '8px',
                     border: 'none',
-                    background: safePage === p ? '#10b981' : 'transparent',
+                    background: safePage === p ? '#3b82f6' : 'transparent',
                     color: safePage === p ? '#ffffff' : '#64748b',
                     fontWeight: safePage === p ? '700' : '500',
                     fontSize: '0.85rem',

@@ -1,0 +1,212 @@
+{
+  "directory": "20261013T145359.475913Z-logging-off-500",
+  "started_at": "2026-10-13T14:53:59.647366+00:00",
+  "vus": 500,
+  "think_seconds": 3,
+  "cache_ms": 5000,
+  "ramp_seconds": 60,
+  "hold_seconds": 120,
+  "down_seconds": 30,
+  "k6_version": "k6 v0.57.0 (commit/50afd82c18, go1.23.6, darwin/arm64)",
+  "source_head": "9cc558034d5190decd88188818d04d7962c0645e",
+  "generator_rlimit_nofile": [
+    1048575,
+    9223372036854775807
+  ],
+  "host_fd_limit": "maxfiles    256            unlimited",
+  "host_cpu_count": "8",
+  "workload_sha256": "206e5d73be79baab3720469b23c97a57aa811ff4def43d08a075e02ce364d3f0",
+  "load_started_at": "2026-10-13T14:54:19.378867+00:00",
+  "k6_exit": 0,
+  "load_finished_at": "2026-10-13T14:57:52.898445+00:00",
+  "finished_at": "2026-10-13T15:02:45.219778+00:00",
+  "http_pass": true,
+  "stable": true,
+  "violations": [],
+  "status": "STABLE PASS",
+  "smoke_after_exit": 0,
+  "requests": 83480,
+  "rps": 392.0879488777058,
+  "successful_rps": 392.0879488777058,
+  "failure_rate": 0,
+  "checks_rate": 1,
+  "p95_ms": 933.61465,
+  "hold_metrics": {
+    "http_reqs{phase:hold}": {
+      "count": 61784,
+      "rate": 290.18641391303515
+    },
+    "checks{phase:hold}": {
+      "rate": 1,
+      "passes": 123568,
+      "fails": 0
+    },
+    "http_req_failed{phase:hold}": {
+      "rate": 0,
+      "passes": 0,
+      "fails": 61784
+    },
+    "http_req_duration{phase:hold}": {
+      "avg": 215.90850712158505,
+      "p(50)": 109.81299999999999,
+      "p(95)": 790.9839499999998,
+      "max": 3783.774
+    }
+  },
+  "hold_rps": 514.8666666666667,
+  "route_p95_ms": {
+    "public_branches_ms": 1435.2524999999998,
+    "menu_categories_ms": 547.73135,
+    "menu_products_ms": 619.7528,
+    "public_news_ms": 752.8953
+  },
+  "peaks_per_pod_and_node": {
+    "desktop-control-plane": {
+      "cpu_m": 3556,
+      "ram_Mi": 2222
+    },
+    "ai-service": {
+      "cpu_m": 70,
+      "ram_Mi": 216
+    },
+    "api-gateway": {
+      "cpu_m": 439,
+      "ram_Mi": 40
+    },
+    "identity-service": {
+      "cpu_m": 202,
+      "ram_Mi": 82
+    },
+    "inventory-service": {
+      "cpu_m": 10,
+      "ram_Mi": 41
+    },
+    "menu-service": {
+      "cpu_m": 180,
+      "ram_Mi": 45
+    },
+    "news-service": {
+      "cpu_m": 145,
+      "ram_Mi": 46
+    },
+    "order-service": {
+      "cpu_m": 14,
+      "ram_Mi": 56
+    },
+    "web-customer": {
+      "cpu_m": 2,
+      "ram_Mi": 7
+    }
+  },
+  "peaks_aggregate_service": {
+    "ai-service": {
+      "cpu_m": 70,
+      "ram_Mi": 216
+    },
+    "api-gateway": {
+      "cpu_m": 1663,
+      "ram_Mi": 137
+    },
+    "identity-service": {
+      "cpu_m": 403,
+      "ram_Mi": 176
+    },
+    "inventory-service": {
+      "cpu_m": 10,
+      "ram_Mi": 41
+    },
+    "menu-service": {
+      "cpu_m": 494,
+      "ram_Mi": 177
+    },
+    "news-service": {
+      "cpu_m": 145,
+      "ram_Mi": 46
+    },
+    "order-service": {
+      "cpu_m": 14,
+      "ram_Mi": 56
+    },
+    "web-customer": {
+      "cpu_m": 2,
+      "ram_Mi": 7
+    }
+  },
+  "hpa_peak": {
+    "api-gateway": 4,
+    "identity-service": 3,
+    "menu-service": 4
+  },
+  "new_restarts": {},
+  "new_probe_failures": [
+    {
+      "object": "identity-service-5774bb6df7-qkw2w",
+      "message": "Startup probe failed: Get \"http://10.244.0.140:3001/health/live\": dial tcp 10.244.0.140:3001: connect: connection refused",
+      "count": 1
+    },
+    {
+      "object": "menu-service-7cf979fcc-6jfkx",
+      "message": "Startup probe failed: Get \"http://10.244.0.141:3003/health/live\": dial tcp 10.244.0.141:3003: connect: connection refused",
+      "count": 1
+    },
+    {
+      "object": "identity-service-5774bb6df7-m9dhn",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+      "count": 2
+    },
+    {
+      "object": "identity-service-5774bb6df7-lcxsz",
+      "message": "Startup probe failed: Get \"http://10.244.0.144:3001/health/live\": dial tcp 10.244.0.144:3001: connect: connection refused",
+      "count": 1
+    },
+    {
+      "object": "menu-service-7cf979fcc-cn6rb",
+      "message": "Startup probe failed: Get \"http://10.244.0.146:3003/health/live\": dial tcp 10.244.0.146:3003: connect: connection refused",
+      "count": 1
+    },
+    {
+      "object": "menu-service-7cf979fcc-j6m8j",
+      "message": "Startup probe failed: Get \"http://10.244.0.145:3003/health/live\": dial tcp 10.244.0.145:3003: connect: connection refused",
+      "count": 1
+    }
+  ],
+  "gateway_quota_counters": {
+    "90f50a7d-0864-4f62-8d99-8d8e67c6c5fc": {
+      "periods": 2188,
+      "throttled_periods": 911,
+      "fraction": 0.4163619744058501,
+      "throttled_usec": 32605881
+    },
+    "316e87ee-475d-44d7-acbd-ac6cddcb2a5e": {
+      "periods": 2138,
+      "throttled_periods": 987,
+      "fraction": 0.4616463985032741,
+      "throttled_usec": 54237145
+    },
+    "b7b2e253-bf27-44c5-aa28-eaff00091b24": {
+      "periods": 1900,
+      "throttled_periods": 809,
+      "fraction": 0.42578947368421055,
+      "throttled_usec": 35035631
+    },
+    "d30ecc84-d925-4a60-ac6d-483a852efdb1": {
+      "periods": 1882,
+      "throttled_periods": 1035,
+      "fraction": 0.5499468650371945,
+      "throttled_usec": 64120126
+    }
+  },
+  "host_busy_peak_percent": 100.0,
+  "k6_cpu_peak_one_core_percent": 292.0,
+  "k6_rss_peak_KiB": 464272,
+  "observer_samples": 43,
+  "k6_open_fds_peak": 278,
+  "transport_error_mentions": {
+    "request timeout": 0,
+    "EOF": 0,
+    "too many open files": 0,
+    "cannot assign requested address": 0,
+    "Insufficient VUs": 0,
+    "connection refused": 0
+  }
+}

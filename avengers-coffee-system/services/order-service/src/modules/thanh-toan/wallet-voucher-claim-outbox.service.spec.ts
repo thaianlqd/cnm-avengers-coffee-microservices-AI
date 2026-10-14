@@ -1,6 +1,20 @@
 import { WalletVoucherClaimOutboxService } from './wallet-voucher-claim-outbox.service';
 
 describe('durable wallet voucher claim delivery', () => {
+  it('does not start a mutation worker in the read-only Kubernetes demo', () => {
+    const before = process.env.K8S_DEMO_READ_ONLY;
+    process.env.K8S_DEMO_READ_ONLY = 'true';
+    try {
+      const service = new WalletVoucherClaimOutboxService({ manager: { query: jest.fn() } } as any, {} as any);
+      const processPending = jest.spyOn(service, 'processPending');
+      service.onModuleInit();
+      service.onModuleDestroy();
+      expect(processPending).not.toHaveBeenCalled();
+    } finally {
+      if (before === undefined) delete process.env.K8S_DEMO_READ_ONLY;
+      else process.env.K8S_DEMO_READ_ONLY = before;
+    }
+  });
   it('records the claim in the payment transaction and retries an Identity failure once', async () => {
     const claim = { order_id: 'order-1', customer_id: 'user-1', voucher_code: 'SAVE20', discount_amount: 62600 };
     let scheduled: typeof claim | null = null;

@@ -1,0 +1,302 @@
+{
+  "method": "mocked API, isolated Chromium; no real login/backend writes",
+  "actors": {
+    "partner": {
+      "pages": [
+        {
+          "label": "Tổng quan Kiosk",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Bán hàng POS",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Quản lý nhân viên",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Phân ca làm việc",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Ca trực & Chốt ca",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Đơn bán hàng",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Thực đơn",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Ví điện tử",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Đặt Combo",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Lịch sử nhập",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Công nợ",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Royalty",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Mở rộng chi nhánh",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        }
+      ],
+      "errors": [],
+      "accent": "#007cad",
+      "sidebar_color": "rgb(23, 27, 36)",
+      "font": "Inter, -apple-system, \"system-ui\", \"Segoe UI\", Arial, sans-serif",
+      "selected_menu": {
+        "background": "rgb(0, 124, 173)",
+        "color": "rgb(255, 255, 255)"
+      },
+      "mobile_overflow": []
+    },
+    "accountant": {
+      "pages": [
+        {
+          "label": "Tổng quan tài chính",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Quản lý nhượng quyền",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Dòng tiền & đối soát",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        }
+      ],
+      "errors": [],
+      "accent": "#1764d8",
+      "sidebar_color": "rgb(23, 27, 36)",
+      "font": "Inter, -apple-system, \"system-ui\", \"Segoe UI\", Arial, sans-serif",
+      "selected_menu": {
+        "background": "rgb(23, 100, 216)",
+        "color": "rgb(255, 255, 255)"
+      },
+      "mobile_overflow": []
+    },
+    "admin": {
+      "pages": [
+        {
+          "label": "Dashboard hệ thống",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Danh mục sản phẩm",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Thực đơn",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Khuyến mãi & voucher",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Quản lý khách hàng",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Hạng thành viên",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Khảo sát & phản hồi",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Chi nhánh",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Nhân viên giao hàng",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Kiosk nhượng quyền",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Kiosk vệ tinh",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Tài khoản hệ thống",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Email & SMTP",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        },
+        {
+          "label": "Hồ sơ & bảo mật",
+          "overflow": [],
+          "recovery": 0,
+          "mobile_overflow": []
+        }
+      ],
+      "errors": [],
+      "accent": "#2563eb",
+      "sidebar_color": "rgb(20, 24, 32)",
+      "font": "Inter, -apple-system, \"system-ui\", \"Segoe UI\", Arial, sans-serif",
+      "selected_menu": {
+        "background": "rgb(37, 99, 235)",
+        "color": "rgb(255, 255, 255)"
+      },
+      "form_previews": [
+        {
+          "name": "admin-category-popup",
+          "mobile_overflow": []
+        },
+        {
+          "name": "admin-membership-form",
+          "mobile_overflow": []
+        },
+        {
+          "name": "admin-branch-form",
+          "mobile_overflow": []
+        }
+      ],
+      "mobile_overflow": []
+    }
+  },
+  "login": {
+    "manager_in_partner_rejected": true,
+    "admin": {
+      "src": "/images/login/admin-coffee.jpg",
+      "loaded": true,
+      "geometry": {
+        "photo_width": 1440,
+        "photo_height": 1000,
+        "card_left": 902.40625,
+        "card_width": 480,
+        "viewport": 1440,
+        "horizontal_overflow": false
+      }
+    },
+    "manager": {
+      "src": "/images/login/manager-cafe.jpg",
+      "loaded": true,
+      "geometry": {
+        "photo_width": 1440,
+        "photo_height": 1000,
+        "card_left": 902.40625,
+        "card_width": 480,
+        "viewport": 1440,
+        "horizontal_overflow": false
+      }
+    },
+    "staff": {
+      "src": "/images/login/staff-barista.jpg",
+      "loaded": true,
+      "geometry": {
+        "photo_width": 1440,
+        "photo_height": 1000,
+        "card_left": 902.40625,
+        "card_width": 480,
+        "viewport": 1440,
+        "horizontal_overflow": false
+      }
+    },
+    "partner": {
+      "src": "/images/login/partner-kiosk.jpg",
+      "loaded": true,
+      "geometry": {
+        "photo_width": 1440,
+        "photo_height": 1000,
+        "card_left": 902.40625,
+        "card_width": 480,
+        "viewport": 1440,
+        "horizontal_overflow": false
+      }
+    },
+    "accountant": {
+      "src": "/images/login/accountant-desk.jpg",
+      "loaded": true,
+      "geometry": {
+        "photo_width": 1440,
+        "photo_height": 1000,
+        "card_left": 902.40625,
+        "card_width": 480,
+        "viewport": 1440,
+        "horizontal_overflow": false
+      }
+    }
+  },
+  "failures": []
+}

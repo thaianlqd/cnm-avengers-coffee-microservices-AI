@@ -1,15 +1,18 @@
+import TextInput from '../components/TextInput'
+import Alert from '../lib/alert'
+import { notificationPresentation } from '../lib/notificationPresentation.mjs'
+import Modal from '../components/AppModal'
+import Image from '../components/CachedImage'
 import React, { useEffect, useState } from 'react'
 import {
   View,
   Text,
   StyleSheet,
   Pressable,
-  TextInput,
+
   ScrollView,
-  Alert,
+
   ActivityIndicator,
-  Image,
-  Modal,
   Platform,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -30,7 +33,7 @@ import { colors, spacing, shadows, radius } from '../theme'
 const MEMBERSHIP_CONFIG = {
   MEMBER:  { label: 'Thành viên', color: '#9ca3af', bg: '#f9fafb', gradient: ['#9ca3af', '#6b7280'], icon: '🎖️' },
   SILVER:  { label: 'Bạc',        color: '#64748b', bg: '#f8fafc', gradient: ['#94a3b8', '#64748b'], icon: '🥈' },
-  GOLD:    { label: 'Vàng',       color: '#d97706', bg: '#fffbeb', gradient: ['#fbbf24', '#d97706'], icon: '🥇' },
+  GOLD:    { label: 'Vàng',       color: '#d97706', bg: '#f3f4f6', gradient: ['#fbbf24', '#d97706'], icon: '🥇' },
   DIAMOND: { label: 'Kim Cương',  color: '#0ea5e9', bg: '#f0f9ff', gradient: ['#38bdf8', '#0ea5e9'], icon: '💎' },
 }
 
@@ -57,11 +60,12 @@ function StarRating({ rating, onRate, size = 24 }) {
   )
 }
 
-export function ProfileScreen({ navigation }) {
+export function ProfileScreen({ navigation, route }) {
   const { user, logout, updateSession } = useUser()
   const userId = getUserId(user)
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState('menu')
+  useEffect(() => { if (route?.params?.initialTab) { setActiveTab(route.params.initialTab); navigation.setParams({ initialTab: null }) } }, [route?.params?.initialTab, navigation])
   const [profileForm, setProfileForm] = useState({ ho_ten: '', so_dien_thoai: '', avatar_url: '' })
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
   const [addressForm, setAddressForm] = useState({ tenDiaChi: '', diaChiDayDu: '', ghiChu: '', macDinh: false })
@@ -79,7 +83,7 @@ export function ProfileScreen({ navigation }) {
   })
 
   const addressesQuery = useQuery({
-    queryKey: ['customer', 'addresses', userId],
+    queryKey: ['customer', 'addresses', userId, 'profile'],
     queryFn: async () => {
       const response = await apiClient.get(`/users/${userId}/addresses`)
       return safeArray(response).map(normalizeAddress)
@@ -125,13 +129,15 @@ export function ProfileScreen({ navigation }) {
   })
 
   const profile = profileQuery.data || null
+  const accountAvatar = profile ? profile.avatar_url : user?.avatar_url
+  const [notificationFilter, setNotificationFilter] = useState('all')
   const addresses = addressesQuery.data || []
   const loyalty = loyaltyQuery.data || null
   const reviews = reviewsQuery.data || []
   const notifications = safeArray(notificationsQuery.data?.items || notificationsQuery.data)
   const unreadCount = Number(notificationsQuery.data?.unreadCount || 0)
   const vouchers = safeArray(vouchersQuery.data)
-  
+
   const isLoggedIn = user && getUserId(user) !== 'guest-customer' && !String(getUserId(user)).startsWith('anon-')
 
   const diemLoyalty = Number(loyalty?.diem ?? user?.loyalty_points ?? 0)
@@ -283,9 +289,18 @@ export function ProfileScreen({ navigation }) {
     }
   }
 
+  const openNotification = async notification => {
+    try {
+      await apiClient.patch(`/customers/${userId}/notifications/${notification.id || notification.ma_thong_bao}/read`)
+      await queryClient.invalidateQueries({ queryKey: ['customer', 'notifications', userId] })
+      const data = typeof notification.du_lieu === 'string' ? JSON.parse(notification.du_lieu) : notification.du_lieu
+      if (data?.ma_don_hang) navigation.navigate('Orders')
+    } catch (error) { Alert.alert('Chưa cập nhật được', error?.response?.data?.message || 'Vui lòng thử lại.') }
+  }
+
   const renderBackHeader = (title) => (
     <View style={styles.subHeaderRow}>
-      <Pressable onPress={() => setActiveTab('menu')} style={styles.subHeaderBackBtn}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Quay lại tài khoản" onPress={() => setActiveTab('menu')} style={styles.subHeaderBackBtn}>
         <Ionicons name="arrow-back" size={24} color="#1e293b" />
       </Pressable>
       <Text style={styles.subHeaderTitle}>{title}</Text>
@@ -307,7 +322,7 @@ export function ProfileScreen({ navigation }) {
                   onPress={() => navigation?.navigate('Login')}
                   style={({ pressed }) => [styles.primaryBtn, { width: '100%', marginTop: 20 }, pressed && { opacity: 0.85 }]}
                 >
-                  <LinearGradient colors={['#ea8025', '#d4560e']} style={styles.primaryBtnGradient}>
+                  <LinearGradient colors={['#b22830', '#8d1f27']} style={styles.primaryBtnGradient}>
                     <Ionicons name="log-in-outline" size={20} color="#fff" />
                     <Text style={styles.primaryBtnText}>Đăng nhập / Đăng ký</Text>
                   </LinearGradient>
@@ -318,11 +333,13 @@ export function ProfileScreen({ navigation }) {
             {/* Loyalty Card if logged in */}
             {isLoggedIn && (
               <View
-                style={[styles.loyaltyCard, { backgroundColor: '#fff' }]}
+                style={[styles.loyaltyCard, { backgroundColor: colors.primary }]} testID="account-member-card"
               >
+                <View pointerEvents="none" style={styles.cardOrbit} /><View pointerEvents="none" style={[styles.cardOrbit, styles.cardOrbitSmall]} />
+                <Text style={styles.cardEyebrow}>HIGHLANDS • YOUR DAILY MOMENT</Text>
                 <View style={styles.headerTop}>
-                  {user?.avatar_url ? (
-                    <Image source={{ uri: user.avatar_url }} style={styles.headerAvatar} />
+                  {accountAvatar ? (
+                    <Image source={{ uri: accountAvatar }} style={styles.headerAvatar} accessibilityLabel="Ảnh đại diện tài khoản" alt="Ảnh đại diện tài khoản" testID="account-avatar" />
                   ) : (
                     <View style={styles.headerAvatarFallback}>
                       <Text style={styles.headerAvatarText}>
@@ -332,7 +349,7 @@ export function ProfileScreen({ navigation }) {
                   )}
                   <View style={styles.headerInfo}>
                     <Text style={styles.headerName}>{getUserDisplayName(user)}</Text>
-                    <Text style={styles.headerEmail}>{profile?.email || user?.email || ''}</Text>
+                    <Text numberOfLines={1} style={styles.headerEmail}>{profile?.email || user?.email || ''}</Text>
                   </View>
                   <View style={styles.tierBadge}>
                     <Text style={styles.tierBadgeText}>{tierConfig.icon} {tierConfig.label}</Text>
@@ -345,8 +362,8 @@ export function ProfileScreen({ navigation }) {
                     <Text style={styles.loyaltyLabel}>Điểm tích lũy</Text>
                   </View>
                   <View style={styles.loyaltyDivider} />
-                  <View>
-                    <Text style={styles.loyaltyMemberId}>{profile?.ma_nguoi_dung || userId}</Text>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text numberOfLines={1} ellipsizeMode="middle" selectable style={styles.loyaltyMemberId}>{profile?.ma_nguoi_dung || userId}</Text>
                     <Text style={styles.loyaltyLabel}>Mã thành viên</Text>
                   </View>
                 </View>
@@ -370,26 +387,26 @@ export function ProfileScreen({ navigation }) {
             <View style={styles.gridContainer}>
               <Pressable style={styles.gridItem} onPress={() => isLoggedIn ? navigation?.navigate('Orders') : navigation?.navigate('Login')}>
                 <View style={styles.gridIconWrap}>
-                  <Ionicons name="document-text-outline" size={24} color="#ea8025" />
+                  <Ionicons name="document-text-outline" size={24} color="#b22830" />
                   {!isLoggedIn && <View style={styles.lockIconGrid}><Ionicons name="lock-closed" size={10} color="#fff" /></View>}
                 </View>
                 <Text style={styles.gridText}>Lịch sử đơn hàng</Text>
               </Pressable>
               <Pressable style={styles.gridItem}>
                 <View style={styles.gridIconWrap}>
-                  <Ionicons name="shield-checkmark-outline" size={24} color="#ea8025" />
+                  <Ionicons name="shield-checkmark-outline" size={24} color="#b22830" />
                 </View>
                 <Text style={styles.gridText}>Điều khoản</Text>
               </Pressable>
               <Pressable style={styles.gridItem}>
                 <View style={styles.gridIconWrap}>
-                  <Ionicons name="cart-outline" size={24} color="#ea8025" />
+                  <Ionicons name="cart-outline" size={24} color="#b22830" />
                 </View>
                 <Text style={styles.gridText}>Tìm kiếm đơn hàng</Text>
               </Pressable>
               <Pressable style={styles.gridItem} onPress={() => isLoggedIn ? navigation?.navigate('Vouchers') : navigation?.navigate('Login')}>
                 <View style={styles.gridIconWrap}>
-                  <Ionicons name="gift-outline" size={24} color="#ea8025" />
+                  <Ionicons name="gift-outline" size={24} color="#b22830" />
                   {!isLoggedIn && <View style={styles.lockIconGrid}><Ionicons name="lock-closed" size={10} color="#fff" /></View>}
                 </View>
                 <Text style={styles.gridText}>Ưu đãi riêng bạn</Text>
@@ -400,37 +417,37 @@ export function ProfileScreen({ navigation }) {
             <Text style={styles.listSectionTitle}>Tiện ích & Trợ giúp</Text>
             <View style={styles.listCard}>
               <Pressable style={styles.listItem} onPress={() => navigation?.navigate('Membership')}>
-                <Ionicons name="ribbon-outline" size={20} color="#ea8025" />
+                <Ionicons name="ribbon-outline" size={20} color="#b22830" />
                 <Text style={styles.listItemText}>Đặc quyền hạng thẻ</Text>
                 <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
               </Pressable>
               <View style={styles.listDivider} />
               <Pressable style={styles.listItem} onPress={() => navigation?.navigate('LuckyWheel')}>
-                <Ionicons name="sparkles-outline" size={20} color="#ea8025" />
+                <Ionicons name="sparkles-outline" size={20} color="#b22830" />
                 <Text style={styles.listItemText}>Vòng quay may mắn</Text>
                 <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
               </Pressable>
               <View style={styles.listDivider} />
               <Pressable style={styles.listItem} onPress={() => navigation?.navigate('GiftCard')}>
-                <Ionicons name="card-outline" size={20} color="#ea8025" />
+                <Ionicons name="card-outline" size={20} color="#b22830" />
                 <Text style={styles.listItemText}>Thẻ quà tặng (GiftCard)</Text>
                 <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
               </Pressable>
               <View style={styles.listDivider} />
               <Pressable style={styles.listItem} onPress={() => navigation?.navigate('Support')}>
-                <Ionicons name="help-circle-outline" size={20} color="#ea8025" />
+                <Ionicons name="help-circle-outline" size={20} color="#b22830" />
                 <Text style={styles.listItemText}>Trung tâm hỗ trợ & FAQ</Text>
                 <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
               </Pressable>
               <View style={styles.listDivider} />
               <Pressable style={styles.listItem} onPress={() => navigation?.navigate('Survey')}>
-                <Ionicons name="star-outline" size={20} color="#ea8025" />
+                <Ionicons name="star-outline" size={20} color="#b22830" />
                 <Text style={styles.listItemText}>Khảo sát & Góp ý trải nghiệm</Text>
                 <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
               </Pressable>
               <View style={styles.listDivider} />
               <Pressable style={styles.listItem} onPress={() => navigation?.navigate('About')}>
-                <Ionicons name="information-circle-outline" size={20} color="#ea8025" />
+                <Ionicons name="information-circle-outline" size={20} color="#b22830" />
                 <Text style={styles.listItemText}>Về Avengers Coffee</Text>
                 <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
               </Pressable>
@@ -488,7 +505,7 @@ export function ProfileScreen({ navigation }) {
                 {avatarPreview ? (
                   <Image source={{ uri: avatarPreview }} style={styles.avatarImage} />
                 ) : (
-                  <LinearGradient colors={['#f26b1d', '#d4560e']} style={styles.avatarFallback}>
+                  <LinearGradient colors={['#b22830', '#8d1f27']} style={styles.avatarFallback}>
                     <Text style={styles.avatarFallbackText}>
                       {String(getUserDisplayName(user))[0]?.toUpperCase() || '☕'}
                     </Text>
@@ -544,7 +561,7 @@ export function ProfileScreen({ navigation }) {
                 disabled={updateProfileMutation.isPending}
                 style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.88 }]}
               >
-                <LinearGradient colors={['#f26b1d', '#d4560e']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.primaryBtnGradient}>
+                <LinearGradient colors={['#b22830', '#8d1f27']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.primaryBtnGradient}>
                   {updateProfileMutation.isPending ? (
                     <ActivityIndicator color="#fff" size="small" />
                   ) : (
@@ -599,7 +616,7 @@ export function ProfileScreen({ navigation }) {
                 disabled={changePasswordMutation.isPending}
                 style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.88 }]}
               >
-                <LinearGradient colors={['#f26b1d', '#d4560e']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.primaryBtnGradient}>
+                <LinearGradient colors={['#b22830', '#8d1f27']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.primaryBtnGradient}>
                   {changePasswordMutation.isPending ? (
                     <ActivityIndicator color="#fff" size="small" />
                   ) : (
@@ -666,7 +683,7 @@ export function ProfileScreen({ navigation }) {
                             macDinh: address.mac_dinh,
                           })
                         }}
-                        style={[styles.addressActionBtn, { backgroundColor: '#fff9f5', borderColor: '#ffe0c8' }]}
+                        style={[styles.addressActionBtn, { backgroundColor: '#f4f5f7', borderColor: '#e5e7eb' }]}
                       >
                         <Ionicons name="pencil-outline" size={13} color={colors.primary} />
                         <Text style={[styles.addressActionText, { color: colors.primary }]}>Sửa</Text>
@@ -743,7 +760,7 @@ export function ProfileScreen({ navigation }) {
                   disabled={saveAddressMutation.isPending}
                   style={({ pressed }) => [styles.primaryBtn, { flex: 2 }, pressed && { opacity: 0.88 }]}
                 >
-                  <LinearGradient colors={['#f26b1d', '#d4560e']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.primaryBtnGradient}>
+                  <LinearGradient colors={['#b22830', '#8d1f27']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.primaryBtnGradient}>
                     {saveAddressMutation.isPending ? (
                       <ActivityIndicator color="#fff" size="small" />
                     ) : (
@@ -770,6 +787,22 @@ export function ProfileScreen({ navigation }) {
           </View>
         )
 
+      case 'notifications': {
+        const visibleNotifications = notifications.filter(n => notificationFilter === 'all' || !(n.da_doc ?? n.is_read))
+        return <View style={styles.tabContent}>{renderBackHeader('Thông báo')}
+          <View style={styles.notificationToolbar}>
+            <View style={styles.notificationFilters}>{[['all', 'Tất cả'], ['unread', `Chưa đọc${unreadCount ? ` · ${unreadCount}` : ''}`]].map(([id, label]) => <Pressable key={id} accessibilityRole="tab" accessibilityState={{ selected: notificationFilter === id }} onPress={() => setNotificationFilter(id)} style={[styles.notificationFilter, notificationFilter === id && styles.notificationFilterActive]}><Text style={[styles.notificationFilterText, notificationFilter === id && { color: '#fff' }]}>{label}</Text></Pressable>)}</View>
+            {unreadCount > 0 && <Pressable accessibilityLabel="Đọc tất cả thông báo" disabled={markAllReadMutation.isPending} onPress={() => markAllReadMutation.mutate()} style={{ padding: 8 }}><Ionicons name="checkmark-done-outline" size={22} color={colors.primary} /></Pressable>}
+          </View>
+          {notificationsQuery.isPending ? <View style={styles.emptyCard}><ActivityIndicator color={colors.primary} /><Text style={styles.emptyText}>Đang tải thông báo…</Text></View> : notificationsQuery.isError ? <Pressable style={styles.emptyCard} onPress={() => notificationsQuery.refetch()}><Ionicons name="cloud-offline-outline" size={32} color={colors.muted} /><Text style={styles.emptyTitle}>Chưa tải được thông báo</Text><Text style={styles.emptyText}>Chạm để thử lại</Text></Pressable> : !visibleNotifications.length ? <View style={styles.emptyCard}><Ionicons name="notifications-off-outline" size={36} color={colors.primary} /><Text style={styles.emptyTitle}>{notificationFilter === 'unread' ? 'Bạn đã đọc hết thông báo' : 'Chưa có thông báo'}</Text><Text style={styles.emptyText}>Cập nhật đơn hàng và ưu đãi sẽ xuất hiện tại đây.</Text></View> : <View style={styles.notificationList}>{visibleNotifications.map(n => {
+            const item = notificationPresentation(n), unread = !(n.da_doc ?? n.is_read)
+            return <Pressable key={n.id || n.ma_thong_bao} accessibilityRole="button" accessibilityLabel={`${unread ? 'Chưa đọc. ' : ''}${item.title}. ${item.body}`} onPress={() => openNotification(n)} style={[styles.notificationRow, unread && styles.notificationUnread]}>
+              <View style={styles.notificationIcon}><Ionicons name={item.icon} size={21} color={colors.primary} /></View>
+              <View style={{ flex: 1, minWidth: 0, gap: 5 }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Text style={styles.notificationTitle}>{item.title}</Text>{unread && <View style={styles.notificationUnreadDot} />}</View><Text style={styles.notificationBody}>{item.body}</Text><Text style={styles.notificationDate}>{formatDateOnly(n.ngay_tao || n.created_at)}</Text></View>
+            </Pressable>
+          })}</View>}
+        </View>
+      }
       case 'reviews':
         return (
           <View style={styles.tabContent}>
@@ -819,12 +852,12 @@ export function ProfileScreen({ navigation }) {
         <View style={styles.mainHeader}>
           <Text style={styles.mainHeaderTitle}>Tài khoản</Text>
           <View style={styles.mainHeaderRight}>
-            <Pressable style={styles.headerIconBtn} onPress={() => isLoggedIn ? navigation?.navigate('Vouchers') : navigation?.navigate('Login')}>
-              <Ionicons name="ticket-outline" size={22} color="#ea8025" />
+            <Pressable accessibilityLabel="Ưu đãi của tôi" style={styles.headerIconBtn} onPress={() => isLoggedIn ? navigation?.navigate('Vouchers') : navigation?.navigate('Login')}>
+              <Ionicons name="ticket-outline" size={22} color="#b22830" />
               {vouchers.length > 0 && <View style={styles.headerIconDot} />}
             </Pressable>
-            <Pressable style={styles.headerIconBtn} onPress={() => isLoggedIn ? navigation?.navigate('Notifications') : navigation?.navigate('Login')}>
-              <Ionicons name="notifications-outline" size={22} color="#ea8025" />
+            <Pressable accessibilityLabel="Mở thông báo" style={styles.headerIconBtn} onPress={() => isLoggedIn ? setActiveTab('notifications') : navigation?.navigate('Login')}>
+              <Ionicons name="notifications-outline" size={22} color="#b22830" />
               {unreadCount > 0 && <View style={styles.headerIconDot} />}
             </Pressable>
           </View>
@@ -871,7 +904,7 @@ export function ProfileScreen({ navigation }) {
                 }}
                 style={[styles.primaryBtn, { flex: 1 }]}
               >
-                <LinearGradient colors={['#f26b1d', '#d4560e']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.primaryBtnGradient}>
+                <LinearGradient colors={['#b22830', '#8d1f27']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.primaryBtnGradient}>
                   <Text style={styles.primaryBtnText}>Áp dụng</Text>
                 </LinearGradient>
               </Pressable>
@@ -916,11 +949,11 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: colors.cream,
+    backgroundColor: "#fff",
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: colors.primary,
+    borderColor: "#ffffff70",
   },
   headerAvatarText: {
     fontSize: 22,
@@ -932,29 +965,30 @@ const styles = StyleSheet.create({
   },
   headerName: {
     fontSize: 18,
-    fontWeight: '900',
-    color: colors.text,
+    fontWeight: "700",
+    color: "#fff",
   },
   headerEmail: {
     fontSize: 12,
-    color: colors.muted,
+    color: "#ffffffcc",
     marginTop: 2,
   },
   tierBadge: {
-    backgroundColor: '#fff7ed',
+    backgroundColor: "#ffffff20",
     borderRadius: radius.full,
-    paddingHorizontal: 12,
+    paddingHorizontal: 9,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: '#ffedd5',
+    borderColor: "#ffffff40",
   },
   tierBadgeText: {
     fontSize: 11,
     fontWeight: '900',
-    color: '#ea8025',
+    color: "#fff",
   },
   loyaltyCard: {
-    backgroundColor: '#fff',
+    overflow: 'hidden',
+    backgroundColor: colors.primary,
     borderRadius: radius.xl,
     padding: spacing.md,
     borderWidth: 1,
@@ -962,7 +996,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 2,
   },
@@ -972,12 +1006,12 @@ const styles = StyleSheet.create({
   },
   loyaltyPoints: {
     fontSize: 26,
-    fontWeight: '900',
-    color: colors.primary,
+    fontWeight: "700",
+    color: "#fff",
   },
   loyaltyLabel: {
     fontSize: 11,
-    color: colors.muted,
+    color: "#ffffffb8",
     marginTop: 2,
   },
   loyaltyDivider: {
@@ -987,9 +1021,9 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.lg,
   },
   loyaltyMemberId: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: colors.text,
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#fff",
   },
   loyaltyProgress: {
     gap: 6,
@@ -1000,23 +1034,23 @@ const styles = StyleSheet.create({
   },
   loyaltyProgressText: {
     fontSize: 11,
-    color: colors.muted,
+    color: "#ffffffcc",
     fontWeight: '600',
   },
   loyaltyProgressBar: {
     height: 6,
-    backgroundColor: colors.cream,
+    backgroundColor: "#ffffff30",
     borderRadius: radius.full,
     overflow: 'hidden',
   },
   loyaltyProgressFill: {
     height: '100%',
-    backgroundColor: colors.primary,
+    backgroundColor: "#fff",
     borderRadius: radius.full,
   },
   maxTierText: {
     fontSize: 13,
-    color: colors.primary,
+    color: "#fff",
     fontWeight: '800',
     textAlign: 'center',
   },
@@ -1034,8 +1068,8 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f1f5f9',
   },
   mainHeaderTitle: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 20,
+    fontWeight: "700",
     color: '#1e293b',
   },
   mainHeaderRight: {
@@ -1045,14 +1079,14 @@ const styles = StyleSheet.create({
   },
   headerIconBtn: {
     position: 'relative',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#fff7ed',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#f4f5f7",
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#ffedd5',
+    borderColor: "#e9eaed",
   },
   headerIconDot: {
     position: 'absolute',
@@ -1184,22 +1218,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   subHeaderTitle: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 20,
+    fontWeight: "700",
     color: '#1e293b',
   },
   loyaltyCard: {
+    overflow: 'hidden',
     borderRadius: radius.xl,
     padding: spacing.lg,
     gap: spacing.md,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 4,
   },
 
-  // Content
+  cardEyebrow: { fontSize: 9, letterSpacing: 1.2, fontWeight: '600', color: '#ffffffb8' },
+  cardOrbit: { position: 'absolute', width: 225, height: 225, borderRadius: 113, right: -100, top: -70, borderWidth: 1, borderColor: '#ffffff20' },
+  cardOrbitSmall: { width: 165, height: 165, borderRadius: 83, right: -70, top: -35 },
+  notificationToolbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  notificationFilters: { flexDirection: 'row', gap: 8 },
+  notificationFilter: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, backgroundColor: '#eeeff2' },
+  notificationFilterActive: { backgroundColor: colors.primary },
+  notificationFilterText: { fontSize: 12, fontWeight: '600', color: '#626773' },
+  notificationList: { backgroundColor: '#fff', borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: '#edeef0' },
+  notificationRow: { padding: 16, flexDirection: 'row', gap: 12, borderBottomWidth: 1, borderBottomColor: '#edeef0' },
+  notificationUnread: { backgroundColor: '#faf7f8' },
+  notificationIcon: { width: 40, height: 40, borderRadius: 13, backgroundColor: '#f3eef0', alignItems: 'center', justifyContent: 'center' },
+  notificationTitle: { flex: 1, fontSize: 13, lineHeight: 19, fontWeight: '600', color: '#24272d' },
+  notificationBody: { fontSize: 12, lineHeight: 19, color: '#69707a' },
+  notificationDate: { fontSize: 10, color: '#8c929b', marginTop: 3 },
+  notificationUnreadDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primary },
   // Content
   content: {
     flex: 1,
@@ -1600,7 +1650,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.borderLight,
   },
   notifItemUnread: {
-    backgroundColor: '#fff9f5',
+    backgroundColor: '#f4f5f7',
     borderRadius: radius.md,
     paddingHorizontal: 8,
   },

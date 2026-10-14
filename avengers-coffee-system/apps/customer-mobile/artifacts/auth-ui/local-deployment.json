@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-13",
+  "environment": "local-only",
+  "identity_image": "sha256:c0023cd0ad9d03a6f2cd5737424cfc97d5adaa2f42fb68db8889867eba842177",
+  "rollback_image": "avengers-identity:before-mobile-auth-20261013",
+  "allowed_google_audiences": 1,
+  "google_auth_library": "10.9.1",
+  "gateway_empty_google_request": 400,
+  "gateway_empty_forgot_request": 400,
+  "smtp_delivery_tested_live": false,
+  "google_oauth_tested_live": false,
+  "signed_native_build_tested": false,
+  "source_preview": "http://127.0.0.1:8090"
+}

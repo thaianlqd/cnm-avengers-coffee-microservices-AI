@@ -1,3 +1,4 @@
+import ScreenHeader from '../components/ScreenHeader'
 import React from 'react'
 import { View, Text, StyleSheet, ScrollView, Pressable, Linking, Alert } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -24,13 +25,7 @@ export function SupportScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#1a0c05', '#3d1a08']} style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={12}>
-          <Ionicons name="chevron-back" size={24} color="#fff" />
-        </Pressable>
-        <Text style={styles.headerTitle}>Hỗ Trợ & Trợ Giúp</Text>
-        <View style={{ width: 40 }} />
-      </LinearGradient>
+      <ScreenHeader title="Hỗ trợ" onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Contact Quick Action Buttons */}
@@ -52,12 +47,12 @@ export function SupportScreen() {
           </Pressable>
         </View>
 
-        <Pressable onPress={() => navigation.navigate('Chat')} style={styles.chatCard}>
-          <LinearGradient colors={['#f26b1d', '#c41230']} style={styles.chatCardGradient}>
+        <Pressable onPress={() => navigation.navigate('Chat', { mode: 'staff' })} style={styles.chatCard}>
+          <LinearGradient colors={['#b22830', '#c41230']} style={styles.chatCardGradient}>
             <Ionicons name="sparkles" size={26} color="#fff" />
             <View style={{ flex: 1 }}>
-              <Text style={styles.chatCardTitle}>Trò chuyện với AI Support</Text>
-              <Text style={styles.chatCardSub}>Giải đáp thắc mắc & trợ giúp đặt hàng tức thì</Text>
+              <Text style={styles.chatCardTitle}>Nhắn tin với chúng mình</Text>
+              <Text style={styles.chatCardSub}>Nhân viên hỗ trợ & trợ lý AI trong cùng một nơi</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#fff" />
           </LinearGradient>

@@ -1,9 +1,11 @@
+import { uiText as ui, useUiLanguage } from "../lib/uiText";
 import React, { useState } from 'react';
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import { StarIcon as StarOutline, XMarkIcon, BuildingStorefrontIcon } from '@heroicons/react/24/outline';
 import { apiClient } from '../lib/apiClient';
 
 export default function BranchReviewModal({ isOpen, onClose, branchData, orderData, onSuccess }) {
+  useUiLanguage();
   const [diemTongQuan, setDiemTongQuan] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
   const [phucVu, setPhucVu] = useState(5);
@@ -134,9 +136,9 @@ export default function BranchReviewModal({ isOpen, onClose, branchData, orderDa
             <BuildingStorefrontIcon className="w-7 h-7 text-white" />
           </div>
 
-          <h3 className="text-xl font-black uppercase tracking-wide">Đánh Giá Chi Nhánh</h3>
+          <h3 className="text-xl font-black uppercase tracking-wide">{ui("Đánh Giá Chi Nhánh")}</h3>
           <p className="text-white/80 text-xs font-medium mt-1 truncate">
-            {branchName} {orderData?.ma_don_hang ? `• Đơn hàng #${orderData.ma_don_hang}` : ''}
+            {branchName} {orderData?.ma_don_hang ? ui("• Đơn hàng #{{v0}}", {v0:orderData.ma_don_hang}) : ''}
           </p>
         </div>
 
@@ -144,15 +146,13 @@ export default function BranchReviewModal({ isOpen, onClose, branchData, orderDa
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-5 flex-1">
           {errorMsg && (
             <div className="bg-red-50 text-red-700 text-xs font-semibold p-3 rounded-xl border border-red-200">
-              ⚠️ {errorMsg}
+              ⚠️ {ui(errorMsg)}
             </div>
           )}
 
           {/* Overall Rating */}
           <div className="text-center bg-amber-50/60 p-4 rounded-2xl border border-amber-100">
-            <label className="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-2">
-              Trải nghiệm tổng quan của bạn
-            </label>
+            <label className="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-2">{ui("Trải nghiệm tổng quan của bạn")}</label>
             <div className="flex justify-center gap-2 my-1">
               {[1, 2, 3, 4, 5].map((star) => {
                 const active = star <= (hoverRating || diemTongQuan);
@@ -175,19 +175,17 @@ export default function BranchReviewModal({ isOpen, onClose, branchData, orderDa
               })}
             </div>
             <p className="text-xs font-bold text-amber-800 mt-1">
-              {diemTongQuan === 5 && '😍 Rất tuyệt vời!'}
-              {diemTongQuan === 4 && '😊 Hài lòng!'}
-              {diemTongQuan === 3 && '😐 Bình thường'}
-              {diemTongQuan === 2 && '🙁 Chưa hài lòng'}
-              {diemTongQuan === 1 && '😡 Rất tệ'}
+              {diemTongQuan === 5 && ui("😍 Rất tuyệt vời!")}
+              {diemTongQuan === 4 && ui("😊 Hài lòng!")}
+              {diemTongQuan === 3 && ui("😐 Bình thường")}
+              {diemTongQuan === 2 && ui("🙁 Chưa hài lòng")}
+              {diemTongQuan === 1 && ui("😡 Rất tệ")}
             </p>
           </div>
 
           {/* Detailed Criteria */}
           <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-              Đánh giá chi tiết tiêu chí
-            </h4>
+            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{ui("Đánh giá chi tiết tiêu chí")}</h4>
             {renderStarsSelector(phucVu, setPhucVu, 'Thái độ phục vụ')}
             {renderStarsSelector(veSinh, setVeSinh, 'Không gian & Vệ sinh')}
             {renderStarsSelector(tocDo, setTocDo, 'Tốc độ lên món')}
@@ -196,13 +194,11 @@ export default function BranchReviewModal({ isOpen, onClose, branchData, orderDa
 
           {/* Comment box */}
           <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1">
-              Nhận xét / Góp ý cho chi nhánh (Không bắt buộc)
-            </label>
+            <label className="block text-xs font-bold text-gray-700 mb-1">{ui("Nhận xét / Góp ý cho chi nhánh (Không bắt buộc)")}</label>
             <textarea
               value={nhanXet}
               onChange={(e) => setNhanXet(e.target.value)}
-              placeholder="Chia sẻ chi tiết trải nghiệm của bạn tại quán để chi nhánh phục vụ tốt hơn..."
+              placeholder={ui("Chia sẻ chi tiết trải nghiệm của bạn tại quán để chi nhánh phục vụ tốt hơn...")}
               rows={3}
               className="w-full text-xs p-3 rounded-2xl border border-gray-200 outline-none focus:border-[#b22830] focus:ring-1 focus:ring-[#b22830] transition-all resize-none"
             />
@@ -214,15 +210,13 @@ export default function BranchReviewModal({ isOpen, onClose, branchData, orderDa
               type="button"
               onClick={onClose}
               className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-xs rounded-full transition-all"
-            >
-              Hủy
-            </button>
+            >{ui("Hủy")}</button>
             <button
               type="submit"
               disabled={isSubmitting}
               className="flex-1 py-3 bg-[#b22830] hover:bg-[#800f14] text-white font-bold text-xs rounded-full shadow-lg shadow-red-200 transition-all disabled:opacity-50"
             >
-              {isSubmitting ? 'Đang gửi...' : 'Gửi Đánh Giá'}
+              {isSubmitting ? ui("Đang gửi...") : ui("Gửi Đánh Giá")}
             </button>
           </div>
         </form>

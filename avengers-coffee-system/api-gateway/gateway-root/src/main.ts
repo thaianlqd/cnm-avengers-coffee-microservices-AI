@@ -1,27 +1,33 @@
 import { NestFactory } from '@nestjs/core';
 import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
 import { AppModule } from './app.module';
+import { createRequestLogger } from './request-logging';
+import { ProxyAgents } from './proxy-agents';
+import { configureGatewayHttpServer } from './gateway-http-policy';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.enableShutdownHooks();
 
   app.enableCors();
 
-  app.use((req, res, next) => {
-    console.log(`[Gateway] Incoming Request: ${req.method} ${req.originalUrl} from ${req.headers.origin || 'unknown origin'}`);
-    next();
-  });
+  app.use(createRequestLogger(process.env));
 
   const httpAdapter = app.getHttpAdapter().getInstance();
 
   // Timeout configuration: 120 seconds to handle slow remote DB (Supabase) and external API calls
   const PROXY_TIMEOUT = 120000; // 120 seconds
+  const proxyAgents = new ProxyAgents(process.env);
+  const proxyResponseHook = configureGatewayHttpServer(app.getHttpServer(), process.env);
+  const proxyResponseEvents = proxyResponseHook ? { proxyRes: proxyResponseHook } : {};
+  const upstream = (target: string) => ({ target, agent: proxyAgents.forTarget(target) });
+  app.getHttpServer().once('close', () => proxyAgents.destroy());
 
   httpAdapter.use(
     createProxyMiddleware({
-      target: process.env.IDENTITY_SERVICE_URL || 'http://localhost:3001',
+      ...upstream(process.env.IDENTITY_SERVICE_URL || 'http://localhost:3001'),
       changeOrigin: true,
-      on: { proxyReq: fixRequestBody },
+      on: { proxyReq: fixRequestBody, ...proxyResponseEvents },
           pathFilter: ['/auth', '/users', '/promotions', '/franchise', '/admin', '/wallet'],
           timeout: PROXY_TIMEOUT,
           proxyTimeout: PROXY_TIMEOUT,
@@ -31,9 +37,9 @@ async function bootstrap() {
 
   httpAdapter.use(
     createProxyMiddleware({
-      target: process.env.MENU_SERVICE_URL || 'http://localhost:3003',
+      ...upstream(process.env.MENU_SERVICE_URL || 'http://localhost:3003'),
       changeOrigin: true,
-      on: { proxyReq: fixRequestBody },
+      on: { proxyReq: fixRequestBody, ...proxyResponseEvents },
       pathFilter: ['/menu'],
       timeout: PROXY_TIMEOUT,
       proxyTimeout: PROXY_TIMEOUT,
@@ -42,9 +48,9 @@ async function bootstrap() {
 
   httpAdapter.use(
     createProxyMiddleware({
-      target: process.env.ORDER_SERVICE_URL || 'http://localhost:3005',
+      ...upstream(process.env.ORDER_SERVICE_URL || 'http://localhost:3005'),
       changeOrigin: true,
-      on: { proxyReq: fixRequestBody },
+      on: { proxyReq: fixRequestBody, ...proxyResponseEvents },
       pathFilter: [
         '/cart',
         '/orders',
@@ -71,9 +77,9 @@ async function bootstrap() {
 
   httpAdapter.use(
     createProxyMiddleware({
-      target: process.env.INVENTORY_SERVICE_URL || 'http://localhost:3004',
+      ...upstream(process.env.INVENTORY_SERVICE_URL || 'http://localhost:3004'),
       changeOrigin: true,
-      on: { proxyReq: fixRequestBody },
+      on: { proxyReq: fixRequestBody, ...proxyResponseEvents },
       pathFilter: ['/inventory'],
       timeout: PROXY_TIMEOUT,
       proxyTimeout: PROXY_TIMEOUT,
@@ -82,9 +88,9 @@ async function bootstrap() {
 
   httpAdapter.use(
     createProxyMiddleware({
-      target: process.env.AI_SERVICE_URL || 'http://localhost:8000',
+      ...upstream(process.env.AI_SERVICE_URL || 'http://localhost:8000'),
       changeOrigin: true,
-      on: { proxyReq: fixRequestBody },
+      on: { proxyReq: fixRequestBody, ...proxyResponseEvents },
       pathFilter: ['/ai'],
       timeout: PROXY_TIMEOUT,
       proxyTimeout: PROXY_TIMEOUT,
@@ -93,9 +99,10 @@ async function bootstrap() {
 
   httpAdapter.use(
     createProxyMiddleware({
-      target: process.env.NEWS_SERVICE_URL || 'http://localhost:3006',
+      ...upstream(process.env.NEWS_SERVICE_URL || 'http://localhost:3006'),
       changeOrigin: true,
       pathFilter: ['/news', '/uploads/news'],
+      on: proxyResponseEvents,
       timeout: PROXY_TIMEOUT,
       proxyTimeout: PROXY_TIMEOUT,
     }),

@@ -1,0 +1,19 @@
+{
+  "source": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-southeast-2/index.csv",
+  "prices": [
+    {
+      "SKU": "YZS4YR3ZPHD427K5",
+      "EffectiveDate": "2026-10-01",
+      "PricePerUnit": "0.1197000000",
+      "Unit": "Hrs"
+    }
+  ],
+  "guest_stop_minutes": 230,
+  "controller_stop_minutes": 225,
+  "initial_generators": 1,
+  "max_generators_authorized": 3,
+  "additional_generator_requires_measured_adequacy_evidence": true,
+  "projected_credit_limit_usd": 5,
+  "compute_plus_ebs_ipv4_transfer_reserve_upper_usd": 2.5,
+  "actual_bill_verified": false
+}

@@ -1,8 +1,10 @@
+import { uiText as ui, useUiLanguage } from "../../../lib/uiText";
 import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NAV_ITEMS } from '../constants';
 
 export const GiftCardHeader = ({ activePage, onNavigate }) => {
+  useUiLanguage();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { t, i18n } = useTranslation();
   const currentLng = i18n.language || 'vi';
@@ -63,16 +65,16 @@ export const GiftCardHeader = ({ activePage, onNavigate }) => {
 
         {/* Flags - side by side */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          <button 
+          <button
             onClick={() => i18n.changeLanguage('vi')}
-            title="Tiếng Việt" 
+            title={ui("Tiếng Việt")}
             className={`transition-all hover:scale-110 rounded-[2px] ${currentLng === 'vi' ? 'ring-[1.5px] ring-white ring-offset-2 ring-offset-[#b22830] opacity-100' : 'opacity-60 hover:opacity-100'}`}
           >
             <img src="https://flagcdn.com/w40/vn.png" alt="VN" className="h-[18px] rounded-[1px] shadow-sm w-auto block" />
           </button>
-          <button 
+          <button
             onClick={() => i18n.changeLanguage('en')}
-            title="English" 
+            title="English"
             className={`transition-all hover:scale-110 rounded-[2px] ml-2 ${currentLng === 'en' ? 'ring-[1.5px] ring-white ring-offset-2 ring-offset-[#b22830] opacity-100' : 'opacity-60 hover:opacity-100'}`}
           >
             <img src="https://flagcdn.com/w40/gb.png" alt="EN" className="h-[18px] rounded-[1px] shadow-sm w-auto block" />

@@ -1,0 +1,137 @@
+# Customer browse load
+
+Run from the repository root after `scripts/k8s/smoke.sh` passes. Install k6 locally
+with `brew install k6`, or use the checksum-verified pinned helper
+`bash scripts/k8s/install-k6-local.sh` (macOS arm64, gitignored local binary). The default load uses 20 → 50 → 100 → 200 → 0 VUs over
+three minutes. The generator and servers share one Mac; watch Activity Monitor and
+`kubectl --context docker-desktop top pods -n avengers-coffee` throughout.
+
+```bash
+PROFILE=smoke k6 run load-tests/k6/customer-browse.js
+BASE_URL=http://localhost:3000 SUMMARY_FILE=/tmp/k6-customer.json k6 run load-tests/k6/customer-browse.js
+# Smaller first load if the laptop is busy:
+STEP1_VUS=30 STEP2_VUS=50 STEP3_VUS=100 k6 run load-tests/k6/customer-browse.js
+# Optional extra stage, never enabled by default:
+STEP4_VUS=300 k6 run load-tests/k6/customer-browse.js
+```
+
+Override `WARMUP_VUS`, `STEP1_VUS`, `STEP2_VUS`, `STEP3_VUS`, `STEP4_VUS`,
+`THINK_SECONDS`, `SMOKE_VUS`, `SMOKE_DURATION`, `BASE_URL`, or `SUMMARY_FILE`.
+Thresholds are failed requests <2%, checks >98%, p95 <1500 ms. A failing threshold
+is a failure; do not adjust it to manufacture green results.
+
+Routes were audited in the actual controllers: `/menu/danh-muc`, `/menu/san-pham`,
+`/users/branches/public`, and `/news`. No orders, wallets, vouchers, payments, or
+provider calls are generated. Authenticated/order scenarios are deliberately
+excluded from this first browsing demo.
+
+Watch HPA and Pods in another terminal. Cached reads may be too cheap to reach
+the CPU target; scaling is **not guaranteed** by a VU count. Record actual CPU,
+replicas, HTTP failures, and latency. Port-forward routes to one selected Pod and
+cannot demonstrate Service load balancing; use LoadBalancer URLs for that demo.
+
+
+For this Docker Desktop setup, qualify using **native k6 → localhost**, the same
+public network path as the browser. Container k6 → host.docker.internal has
+reproduced transport timeouts under high load even with successful local HTTP
+probes. The failed benchmarks remain in `k8s/verification/`; do not use that path
+as the default classroom demo until separately qualified.
+
+```bash
+bash scripts/k8s/install-k6-local.sh
+bash scripts/k8s/load-test.sh smoke
+bash scripts/k8s/load-test.sh moderate
+# Observe through the load + cooldown without changing replicas:
+python3 scripts/k8s/observe-hpa.py --seconds 480
+```
+
+Run stable throughput qualification first, then self-healing/rollout availability
+as separate measurements. A 60-request availability pass does not cancel k6
+failures during combined stress/fault injection.
+
+## Independent capacity qualification
+
+The separate `customer-browse-capacity.js` profile uses the same four public GET
+routes and HTTP/JSON checks. Each run ramps from zero for 60s, holds one target
+for 120s, and ramps down for 30s, with 3s think time per four-request iteration.
+It keeps the original thresholds and also applies them to the sustained phase.
+The moderate classroom profile is unchanged.
+
+```bash
+export K8S_DB_MODE=existing
+bash scripts/k8s/capacity-test.sh 1000 --label baseline
+# Separate browser-like transport variant; preserve the identity results:
+CAPACITY_ACCEPT_ENCODING=gzip bash scripts/k8s/capacity-test.sh 1000 --label gzip
+# Run the next level only after reviewing this result; stop at the first failure.
+python3 scripts/k8s/summarize-capacity.py
+```
+
+The harness requires two consecutive snapshots at baseline 2/1/1, valid HPA
+metrics, healthy node conditions, unchanged read-only/5s-cache flags, and smoke
+before load. Cooldown is natural and bounded to 720s. It repeats cooldown and
+smoke after load. New restarts, OOM, CrashLoopBackOff, node pressure, invalid
+metrics or missing observer evidence reject stability even if HTTP passes.
+Normal HPA scale-down termination is recorded without being counted as an
+overload restart. Expected scale-up startup probe failures remain visible.
+The harness refuses duplicate customer Compose applications and stops its own
+generator if they appear during a run; infra Compose services remain running.
+
+The default encoding preserves the original k6 workload (no `Accept-Encoding`
+header). k6 0.57.0 on this machine did not negotiate gzip automatically.
+`CAPACITY_ACCEPT_ENCODING=gzip` requests the existing server compression and k6
+still decodes and checks the complete JSON. These are **separate transport
+variants**, not interchangeable before/after application results. Keep encoding
+fixed throughout each ladder and both confirmation runs. The public payload size
+and digest diagnostic is `node scripts/k8s/inspect-public-encoding.cjs`.
+
+Gateway demo policy disables request logs. The two connection experiments remain
+opt-in and are **disabled in the final demo** (`GATEWAY_PROXY_KEEP_ALIVE=false`,
+`GATEWAY_MAX_REQUESTS_PER_SOCKET=0`): higher throughput did not qualify stable
+capacity. The pool experiment bounds 128 active / 16 idle per origin and retires
+eligible idle sockets after 30s; it does not guarantee request-level balancing.
+The client-budget experiment renews connections after completed responses.
+Proxy timeouts, payloads, cache, probes, HPA and resources are unchanged.
+Production request logging defaults off, development on.
+
+Evidence is stored in unique timestamped directories under
+`/tmp/avengers-k8s-capacity` (override `K8S_CAPACITY_RESULTS`). It includes k6
+summary/log, timestamps, image IDs/resources/probes, sanitized Pod/HPA/node/event
+snapshots, top metrics, restart deltas, Gateway cgroup CPU/OOM counters, host CPU/
+memory, k6 CPU/RSS and descriptor counts. No sensitive app env, Secret, credential, query
+text or application log is exported. Process sampling stores executable names,
+not arguments. `analysis.json` distinguishes per-Pod peaks from simultaneous
+aggregate service peaks. Metrics are samples and cannot prove the absolute peak.
+
+`K6_BIN` selects a native binary; otherwise the pinned local 0.57.0 binary is
+used. `CAPACITY_RAMP_SECONDS` supports 30..60 and `CAPACITY_HOLD_SECONDS` 60..120;
+keep durations identical for comparisons. Target is bounded to 1..5000 and the
+qualified URL to localhost:3000. No automatic staircase or unlimited retry loop
+is provided. Review [the capacity report](../../K8S_CAPACITY_REPORT.md) for the
+measured limit, failed attempts and host/generator constraints.
+
+Final qualification on this shared Mac: **250 VUs passed twice**, 0% errors,
+p95 488.5 / 415.0ms. 500 VUs did not repeat consistently. Archived `.jsonl.gz`
+and `.log.gz` evidence can also be reanalyzed directly:
+
+```bash
+python3 scripts/k8s/summarize-capacity.py k8s/verification/capacity
+```
+
+## External browser-like 5k phase
+
+`customer-browse-5k.js` is a separate gzip profile with full JSON item checks,
+fixed think=3s, the current frontend's `/news?limit=100`, and global/hold quality
+gates. Use the [AWS helper workflow](../../scripts/aws-k6/README.md), not a local
+staircase. [The 14 October report](../../K8S_5K_CAPACITY_REPORT.md) records a
+250-VU first-level FAIL through Quick Tunnel (217 HTTP 429, p95 3011.7ms); higher
+levels were not attempted. No stable external max or 5k qualification was established.
+Both legacy moderate 200-VU regression attempts also failed latency in the
+current shared environment; prior local 250-VU results remain historical evidence.
+## Phase 3K follow-up
+
+`customer-browse-3k.js` giữ mix bốn route, full JSON/gzip và think 3s của phase
+external, thêm p99 và chỉ chấp nhận loopback reverse SSH được nối tới Mac thật.
+Quick Tunnel data URL bị từ chối. [Report 3K](../../K8S_3K_CAPACITY_REPORT.md):
+legacy clean 200 PASS một lượt (p95 1.044,8ms), nhưng external 250 chưa chạy vì
+data-plane setup không kết nối được; chưa có external max stable/3K qualification.
+Đọc prerequisite/network stop trong report trước khi launch; không retry mù.

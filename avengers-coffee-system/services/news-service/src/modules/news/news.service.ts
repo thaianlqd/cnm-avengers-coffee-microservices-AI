@@ -12,6 +12,8 @@ export class NewsService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
+    // A browse/scaling demo must never clear or seed the existing remote DB.
+    if (process.env.K8S_DEMO_READ_ONLY === 'true') return;
     try {
       await this.articleRepository.clear();
       const defaultArticles = [
@@ -113,7 +115,7 @@ Bên cạnh chất lượng đồ uống chuẩn vị, trải nghiệm dịch v�
     const article = await this.articleRepository.findOne({
       where: { id, is_published: true },
     });
-    if (article) {
+    if (article && process.env.K8S_DEMO_READ_ONLY !== 'true') {
       // Increment views
       await this.articleRepository.increment({ id }, 'views', 1);
       article.views += 1;

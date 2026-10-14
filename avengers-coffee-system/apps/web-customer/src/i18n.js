@@ -356,20 +356,35 @@ const resources = {
   }
 };
 
-i18n
-  .use(initReactI18next)
-  .init({
-    resources,
-    lng: localStorage.getItem('i18nextLng') || 'vi',
-    fallbackLng: "vi",
-    interpolation: {
-      escapeValue: false
-    }
-  });
-
-// Lưu vào localStorage khi có thay đổi
-i18n.on('languageChanged', (lng) => {
-  localStorage.setItem('i18nextLng', lng);
+const extra = {
+  vi: {
+    common: { loading: 'Đang tải…', loadError: 'Trang chưa tải được. Bạn tải lại để thử nhé.', retry: 'Tải lại trang' },
+    campaign: { title: 'Ưu đãi cà phê', close: 'Đóng quảng cáo', image: 'Cà phê Phin Sữa Đá', action: 'Khám phá thực đơn' },
+    header: { franchise: 'Nhượng quyền', careersSupport: 'Tuyển dụng & Hỗ trợ', news: 'Tin tức', tracking: 'Tra cứu đơn hàng', trackingShort: 'Tra cứu đơn', greeting: 'Xin chào, {{name}}' }
+  },
+  en: {
+    common: { loading: 'Loading…', loadError: 'This page could not be loaded. Please try reloading.', retry: 'Reload page' },
+    campaign: { title: 'Coffee highlights', close: 'Close promotion', image: 'Vietnamese iced milk coffee', action: 'Explore the menu' },
+    header: { franchise: 'Franchise', careersSupport: 'Careers & Support', news: 'News', tracking: 'Track an order', trackingShort: 'Track order', greeting: 'Hello, {{name}}' }
+  }
+};
+for (const lang of ['vi', 'en']) {
+  for (const [section, values] of Object.entries(extra[lang])) {
+    resources[lang].translation[section] = { ...resources[lang].translation[section], ...values };
+  }
+}
+const normalizeLanguage = value => String(value || '').toLowerCase().startsWith('en') ? 'en' : 'vi';
+let savedLanguage = 'vi';
+try { savedLanguage = normalizeLanguage(localStorage.getItem('i18nextLng')); } catch { /* Storage may be disabled. */ }
+i18n.use(initReactI18next).init({
+  resources, lng: savedLanguage, supportedLngs: ['vi', 'en'], nonExplicitSupportedLngs: true,
+  fallbackLng: 'vi', load: 'languageOnly', interpolation: { escapeValue: false }
 });
-
+const persistLanguage = lng => {
+  const language = normalizeLanguage(lng);
+  document.documentElement.lang = language;
+  try { localStorage.setItem('i18nextLng', language); } catch { /* Keep this session working. */ }
+};
+persistLanguage(savedLanguage);
+i18n.on('languageChanged', persistLanguage);
 export default i18n;

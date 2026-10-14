@@ -1,10 +1,11 @@
+import { uiText as ui, useUiLanguage, uiLocale } from "../../lib/uiText";
 import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/apiClient';
 import { queryKeys } from '../../lib/queryKeys';
-import { 
-  StarIcon as StarOutlineIcon, 
-  TicketIcon as TicketOutlineIcon, 
+import {
+  StarIcon as StarOutlineIcon,
+  TicketIcon as TicketOutlineIcon,
   ArrowPathIcon,
   SparklesIcon,
   GiftIcon as GiftOutlineIcon,
@@ -19,6 +20,7 @@ import {
 import { StarIcon as StarSolidIcon, TrophyIcon as TrophySolidIcon, GiftIcon as GiftSolidIcon } from '@heroicons/react/24/solid';
 
 export default function LuckyWheelPage({ user, onNavigate }) {
+  useUiLanguage();
   const userId = user?.ma_nguoi_dung || user?.maNguoiDung || null;
   const queryClient = useQueryClient();
   const wheelRef = useRef(null);
@@ -57,7 +59,7 @@ export default function LuckyWheelPage({ user, onNavigate }) {
 
       if (index === -1) {
         setIsSpinning(false);
-        alert('Lỗi xác định giải thưởng.');
+        alert(ui("Lỗi xác định giải thưởng."));
         return;
       }
 
@@ -71,7 +73,7 @@ export default function LuckyWheelPage({ user, onNavigate }) {
       const currentMod = currentRotation % 360;
       const diff = (targetAngleInCircle - currentMod + 360) % 360;
       const newRotation = currentRotation + extraRounds + (diff === 0 ? 360 : diff);
-      
+
       setCurrentRotation(newRotation);
 
       setTimeout(() => {
@@ -90,7 +92,7 @@ export default function LuckyWheelPage({ user, onNavigate }) {
   // Mapper to replace flat emojis with premium vector icons
   const getPrizeIcon = (emoji, className = "w-5 h-5") => {
     if (!emoji) return <GiftOutlineIcon className={className} />;
-    
+
     const emojiStr = String(emoji);
     if (emojiStr.includes('🎫')) return <TicketOutlineIcon className={className} />;
     if (emojiStr.includes('🏷️')) return <TagIcon className={className} />;
@@ -98,7 +100,7 @@ export default function LuckyWheelPage({ user, onNavigate }) {
     if (emojiStr.includes('👑')) return <TrophySolidIcon className={className} />;
     if (emojiStr.includes('🏆')) return <TrophySolidIcon className={className} />;
     if (emojiStr.includes('⭐')) return <StarSolidIcon className={className} />;
-    
+
     return <GiftOutlineIcon className={className} />;
   };
 
@@ -106,14 +108,12 @@ export default function LuckyWheelPage({ user, onNavigate }) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[500px] bg-[#fafaf9] p-6 text-center">
         <SparklesIcon className="h-16 w-16 text-[#c89a58] mb-4 animate-pulse" />
-        <h2 className="text-2xl font-black uppercase text-gray-800 mb-2">Vòng quay may mắn</h2>
-        <p className="text-gray-500 mb-6 max-w-md">Vui lòng đăng nhập để tham gia vòng quay và quy đổi điểm thưởng lấy những phần quà cực khủng.</p>
-        <button 
+        <h2 className="text-2xl font-black uppercase text-gray-800 mb-2">{ui("Vòng quay may mắn")}</h2>
+        <p className="text-gray-500 mb-6 max-w-md">{ui("Vui lòng đăng nhập để tham gia vòng quay và quy đổi điểm thưởng lấy những phần quà cực khủng.")}</p>
+        <button
           onClick={() => onNavigate('login')}
           className="bg-[#b22830] hover:bg-[#8f1d24] text-white px-8 py-3 rounded-full font-bold transition-all shadow-lg active:scale-95 transform"
-        >
-          Đăng nhập ngay
-        </button>
+        >{ui("Đăng nhập ngay")}</button>
       </div>
     );
   }
@@ -142,7 +142,7 @@ export default function LuckyWheelPage({ user, onNavigate }) {
       const val = Number(prize.gia_tri || 0);
       if (val > 0) {
         if (val <= 100) return `Giảm ${val}%`;
-        if (val >= 1000) return `Voucher ${(val / 1000).toLocaleString('vi-VN')}K`;
+        if (val >= 1000) return `Voucher ${(val / 1000).toLocaleString(uiLocale())}K`;
       }
       if (name.startsWith('TPL_') || name.startsWith('WHEEL_')) return 'Voucher Giảm Giá';
     }
@@ -156,14 +156,10 @@ export default function LuckyWheelPage({ user, onNavigate }) {
         <div className="mx-auto max-w-[1240px] px-4 py-8 md:px-6">
           <div className="flex items-center gap-1.5">
             <SparklesIcon className="w-4 h-4 text-amber-600" />
-            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#b22830]">MINI GAME & ĐẶC QUYỀN MỤC THƯỞNG</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#b22830]">{ui("MINI GAME & ĐẶC QUYỀN MỤC THƯỞNG")}</p>
           </div>
-          <h1 className="mt-2 text-3xl font-black uppercase tracking-tight text-gray-900 md:text-4xl font-sans">
-            VÒNG QUAY MAY MẮN
-          </h1>
-          <p className="mt-2 max-w-[780px] text-xs font-semibold leading-relaxed text-gray-500 md:text-sm">
-            Dùng <strong className="text-gray-900">{cost} điểm khả dụng</strong> để tham gia quay thưởng (không ảnh hưởng điểm xét hạng thành viên). Cơ hội 100% trúng thưởng điểm, voucher tiền mặt hoặc ưu đãi độc quyền.
-          </p>
+          <h1 className="mt-2 text-3xl font-black uppercase tracking-tight text-gray-900 md:text-4xl font-sans">{ui("VÒNG QUAY MAY MẮN")}</h1>
+          <p className="mt-2 max-w-[780px] text-xs font-semibold leading-relaxed text-gray-500 md:text-sm">{ui("Dùng ")}<strong className="text-gray-900">{cost}{ui(" điểm khả dụng")}</strong>{ui(" để tham gia quay thưởng (không ảnh hưởng điểm xét hạng thành viên). Cơ hội 100% trúng thưởng điểm, voucher tiền mặt hoặc ưu đãi độc quyền.")}</p>
         </div>
       </section>
 
@@ -182,13 +178,13 @@ export default function LuckyWheelPage({ user, onNavigate }) {
           <div className="relative w-[340px] h-[340px] md:w-[420px] md:h-[420px] rounded-full border-[12px] border-amber-600/90 bg-[#b22830] ring-4 ring-amber-400/50 shadow-2xl p-1 flex items-center justify-center">
             {/* Outer gold accent line */}
             <div className="absolute inset-0 rounded-full border-[2px] border-amber-300/80 pointer-events-none z-10 m-[-6px]"></div>
-            
-            <div 
+
+            <div
               ref={wheelRef}
               className="w-full h-full rounded-full overflow-hidden relative transition-transform duration-[5000ms] cubic-bezier(0.1, 0.8, 0.1, 1) border-2 border-amber-700/50"
-              style={{ 
+              style={{
                 transform: `rotate(${currentRotation}deg)`,
-                backgroundImage: prizes.length > 0 
+                backgroundImage: prizes.length > 0
                   ? `conic-gradient(${prizes.map((p, i) => `${p.mau} ${i * 45}deg ${(i + 1) * 45}deg`).join(', ')})`
                   : 'none'
               }}
@@ -198,10 +194,10 @@ export default function LuckyWheelPage({ user, onNavigate }) {
                 const angle = idx * 45 + 22.5; // Center of segment
                 const displayName = formatPrizeName(prize);
                 return (
-                  <div 
+                  <div
                     key={prize.id}
                     className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-white origin-center select-none"
-                    style={{ 
+                    style={{
                       transform: `rotate(${angle}deg)`,
                     }}
                   >
@@ -220,7 +216,7 @@ export default function LuckyWheelPage({ user, onNavigate }) {
 
             {/* Inner Center Pin & SPIN Button */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-white rounded-full shadow-2xl flex items-center justify-center border-4 border-amber-400 z-20 hover:scale-105 transition-transform duration-200">
-              <button 
+              <button
                 onClick={handleSpin}
                 disabled={isSpinning}
                 className="w-[78px] h-[78px] bg-gradient-to-br from-[#c41230] via-[#b22830] to-[#80071c] hover:from-[#d11535] hover:to-[#910a22] text-white rounded-full flex flex-col items-center justify-center font-black uppercase tracking-widest text-[11px] shadow-lg active:scale-95 transition-all disabled:from-gray-300 disabled:to-gray-400 cursor-pointer border-none"
@@ -238,18 +234,16 @@ export default function LuckyWheelPage({ user, onNavigate }) {
           <div className="mt-6 text-center bg-white py-3.5 px-8 rounded-2xl border border-gray-200/80 shadow-2xs flex flex-col items-center gap-2">
             <div className="flex items-center gap-6">
               <div>
-                <p className="text-[9px] text-gray-400 font-extrabold uppercase tracking-wider">Điểm khả dụng của bạn</p>
-                <p className="text-base font-black text-[#b22830] mt-0.5">{diemKhaDung.toLocaleString('vi-VN')} điểm</p>
+                <p className="text-[9px] text-gray-400 font-extrabold uppercase tracking-wider">{ui("Điểm khả dụng của bạn")}</p>
+                <p className="text-base font-black text-[#b22830] mt-0.5">{diemKhaDung.toLocaleString(uiLocale())}{ui(" điểm")}</p>
               </div>
               <div className="h-7 w-px bg-gray-200"></div>
               <div>
-                <p className="text-[9px] text-gray-400 font-extrabold uppercase tracking-wider">Chi phí / lượt quay</p>
-                <p className="text-base font-black text-amber-700 mt-0.5">{cost} điểm</p>
+                <p className="text-[9px] text-gray-400 font-extrabold uppercase tracking-wider">{ui("Chi phí / lượt quay")}</p>
+                <p className="text-base font-black text-amber-700 mt-0.5">{cost}{ui(" điểm")}</p>
               </div>
             </div>
-            <p className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-3 py-0.5 rounded-full border border-emerald-200/80">
-              Sử dụng điểm khả dụng để quay (Không bị trừ điểm tích lũy xét hạng)
-            </p>
+            <p className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-3 py-0.5 rounded-full border border-emerald-200/80">{ui("Sử dụng điểm khả dụng để quay (Không bị trừ điểm tích lũy xét hạng)")}</p>
           </div>
         </div>
 
@@ -261,21 +255,20 @@ export default function LuckyWheelPage({ user, onNavigate }) {
                 <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 border border-amber-200/50">
                   <TrophySolidIcon className="w-4 h-4 text-amber-600" />
                 </div>
-                <h3 className="text-xs md:text-sm font-extrabold text-gray-900 uppercase tracking-wide">Cơ cấu giải thưởng</h3>
+                <h3 className="text-xs md:text-sm font-extrabold text-gray-900 uppercase tracking-wide">{ui("Cơ cấu giải thưởng")}</h3>
               </div>
               <span className="text-[10px] font-extrabold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/70">
-                {prizes.length} phần quà
-              </span>
+                {prizes.length}{ui(" phần quà")}</span>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-2">
               {prizes.map((prize) => (
-                <div 
-                  key={prize.id} 
+                <div
+                  key={prize.id}
                   className="flex items-center justify-between p-2 px-2.5 rounded-xl bg-gray-50/80 border border-gray-200/60 hover:border-amber-300 hover:bg-amber-50/20 transition-all duration-200"
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    <span 
+                    <span
                       className="w-6 h-6 rounded-md flex items-center justify-center text-white shrink-0 shadow-2xs"
                       style={{ backgroundColor: prize.mau || '#b22830' }}
                     >
@@ -298,20 +291,20 @@ export default function LuckyWheelPage({ user, onNavigate }) {
               <div className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center text-[#b22830] border border-red-100">
                 <InformationCircleIcon className="w-4 h-4 text-[#b22830]" />
               </div>
-              <h3 className="text-xs md:text-sm font-extrabold text-gray-900 uppercase tracking-wide">Thể lệ tham gia</h3>
+              <h3 className="text-xs md:text-sm font-extrabold text-gray-900 uppercase tracking-wide">{ui("Thể lệ tham gia")}</h3>
             </div>
             <ul className="text-[11px] text-gray-600 space-y-2 font-medium leading-snug">
               <li className="flex items-start gap-2">
                 <CheckCircleIcon className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
-                <span>Mỗi lượt quay tiêu tốn <strong className="text-gray-900">{cost} điểm khả dụng</strong> (không ảnh hưởng điểm xét hạng).</span>
+                <span>{ui("Mỗi lượt quay tiêu tốn ")}<strong className="text-gray-900">{cost}{ui(" điểm khả dụng")}</strong>{ui(" (không ảnh hưởng điểm xét hạng).")}</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircleIcon className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
-                <span>Voucher nhận được có HSD 14 ngày, tự động thêm vào kho quà cá nhân.</span>
+                <span>{ui("Voucher nhận được có HSD 14 ngày, tự động thêm vào kho quà cá nhân.")}</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircleIcon className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
-                <span>Tỷ lệ trúng thưởng 100%, có thể sử dụng voucher ngay khi tạo đơn hàng.</span>
+                <span>{ui("Tỷ lệ trúng thưởng 100%, có thể sử dụng voucher ngay khi tạo đơn hàng.")}</span>
               </li>
             </ul>
           </div>
@@ -324,37 +317,35 @@ export default function LuckyWheelPage({ user, onNavigate }) {
           <div className="bg-white rounded-[24px] max-w-sm w-full p-8 text-center relative overflow-hidden shadow-2xl border border-red-100 animate-scale-up">
             {/* Sparkles effect */}
             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#b22830] via-[#c89a58] to-[#b22830]"></div>
-            
+
             <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mx-auto my-4 border border-red-100 shadow-inner animate-bounce text-[#b22830]">
               {getPrizeIcon(prizeResult.giai_thuong?.icon, "w-10 h-10")}
             </div>
-            
-            <h3 className="text-xl font-black text-gray-800 uppercase tracking-wide">Chúc mừng bạn!</h3>
-            <p className="text-xs text-gray-500 mt-2 font-medium">Bạn đã may mắn quay trúng phần quà:</p>
-            
+
+            <h3 className="text-xl font-black text-gray-800 uppercase tracking-wide">{ui("Chúc mừng bạn!")}</h3>
+            <p className="text-xs text-gray-500 mt-2 font-medium">{ui("Bạn đã may mắn quay trúng phần quà:")}</p>
+
             <div className="my-5 py-3 px-6 rounded-xl bg-red-50/50 border border-red-100/50 inline-block font-black text-base text-[#b22830] shadow-sm">
               {prizeResult.giai_thuong?.ten}
             </div>
 
             {prizeResult.voucher_code && (
               <div className="mb-6 bg-[#fcfbf9] border border-gray-200/50 rounded-xl p-3.5 shadow-inner">
-                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Mã voucher của bạn</p>
+                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">{ui("Mã voucher của bạn")}</p>
                 <p className="text-sm font-black text-[#b22830] tracking-wider select-all mt-1 bg-white border border-dashed border-red-200 px-3 py-1 rounded inline-block">{prizeResult.voucher_code}</p>
-                <p className="text-[10px] text-gray-400 mt-1.5 font-medium leading-normal">Đã được thêm tự động vào danh sách ưu đãi của bạn.</p>
+                <p className="text-[10px] text-gray-400 mt-1.5 font-medium leading-normal">{ui("Đã được thêm tự động vào danh sách ưu đãi của bạn.")}</p>
               </div>
             )}
 
             <div className="flex gap-3">
-              <button 
+              <button
                 onClick={() => {
                   setShowResultModal(false);
                   handleSpin();
                 }}
                 className="flex-1 bg-[#b22830] hover:bg-[#8f1d24] text-white py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer border-none shadow-sm active:scale-95 transform"
-              >
-                Quay tiếp
-              </button>
-              <button 
+              >{ui("Quay tiếp")}</button>
+              <button
                 onClick={() => {
                   setShowResultModal(false);
                   onNavigate('membership');
@@ -365,7 +356,7 @@ export default function LuckyWheelPage({ user, onNavigate }) {
               </button>
             </div>
 
-            <button 
+            <button
               onClick={() => setShowResultModal(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold text-base cursor-pointer border-none bg-transparent hover:scale-110 transition-transform"
             >

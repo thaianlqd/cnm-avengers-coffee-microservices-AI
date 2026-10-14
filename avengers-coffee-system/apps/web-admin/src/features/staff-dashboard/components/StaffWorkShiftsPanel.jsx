@@ -202,7 +202,7 @@ export function StaffWorkShiftsPanel({
             <Calendar size={24} />
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '800', color: '#0f172a' }}>
+            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600', color: '#0f172a' }}>
               Lịch Làm Việc Cá Nhân
             </h2>
             <span style={{ fontSize: '0.825rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -228,7 +228,7 @@ export function StaffWorkShiftsPanel({
 
         <div style={{ background: '#ffffff', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
           <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Đi làm tuần này</span>
-          <strong style={{ fontSize: '1.25rem', display: 'block', color: '#2563eb', marginTop: '0.1rem' }}>
+          <strong style={{ fontSize: '1.25rem', display: 'block', color: 'var(--primary)', marginTop: '0.1rem' }}>
             {summary.attendedDaysWeek} ngày
           </strong>
         </div>
@@ -318,7 +318,7 @@ export function StaffWorkShiftsPanel({
               padding: '0.65rem 1rem',
               borderRadius: '9px',
               border: 'none',
-              background: activeTab === TABS.HISTORY ? '#10b981' : 'transparent',
+              background: activeTab === TABS.HISTORY ? '#3b82f6' : 'transparent',
               color: activeTab === TABS.HISTORY ? '#ffffff' : '#64748b',
               fontWeight: activeTab === TABS.HISTORY ? '700' : '500',
               fontSize: '0.875rem',
@@ -341,7 +341,7 @@ export function StaffWorkShiftsPanel({
               padding: '0.65rem 1rem',
               borderRadius: '9px',
               border: 'none',
-              background: activeTab === TABS.SCHEDULE ? '#10b981' : 'transparent',
+              background: activeTab === TABS.SCHEDULE ? '#3b82f6' : 'transparent',
               color: activeTab === TABS.SCHEDULE ? '#ffffff' : '#64748b',
               fontWeight: activeTab === TABS.SCHEDULE ? '700' : '500',
               fontSize: '0.875rem',
@@ -360,7 +360,7 @@ export function StaffWorkShiftsPanel({
 
       {/* Tab 1: Form đăng ký ca mới */}
       {enableRequestTabs && activeTab === TABS.REQUEST && (
-        <form
+        <form className="workspace-form"
           onSubmit={async (event) => {
             event.preventDefault()
             if (typeof onRequestShift !== 'function') return
@@ -389,7 +389,7 @@ export function StaffWorkShiftsPanel({
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <PlusCircle size={18} color="var(--primary)" /> Đăng ký nguyện vọng ca làm việc
             </h3>
             <span style={{
@@ -540,7 +540,7 @@ export function StaffWorkShiftsPanel({
           padding: '1.5rem',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)'
         }}>
-          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <History size={18} color="var(--primary)" /> Lịch sử các yêu cầu đăng ký ca
           </h3>
 
@@ -673,7 +673,7 @@ export function StaffWorkShiftsPanel({
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: '#0f172a' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '600', color: '#0f172a' }}>
                       {selectedShiftDetails.ten_ca}
                     </h3>
                     <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '600' }}>
@@ -702,7 +702,7 @@ export function StaffWorkShiftsPanel({
 
                   <div style={{ background: '#f8fafc', padding: '0.65rem 0.85rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Check-out</span>
-                    <strong style={{ fontSize: '0.9rem', display: 'block', color: '#2563eb', marginTop: '0.1rem' }}>
+                    <strong style={{ fontSize: '0.9rem', display: 'block', color: 'var(--primary)', marginTop: '0.1rem' }}>
                       {selectedShiftDetails.check_out_at ? new Date(selectedShiftDetails.check_out_at).toLocaleString('vi-VN') : 'Chưa điểm danh'}
                     </strong>
                   </div>

@@ -1,3 +1,4 @@
+import { getAdminSession } from '../../../lib/adminFetch'
 import React, { useState, useEffect, useMemo } from 'react';
 import { API_BASE_URL } from '../../admin-dashboard/constants';
 import {
@@ -80,7 +81,7 @@ export default function StaffDeliveryPanel() {
   // Helpers to read session info
   const getSession = () => {
     try {
-      return JSON.parse(window.localStorage.getItem('adminSession') || '{}');
+      return getAdminSession() || {};
     } catch {
       return {};
     }
@@ -653,18 +654,18 @@ export default function StaffDeliveryPanel() {
       }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Truck size={22} color="#4F46E5" />
+            <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Truck size={22} color="var(--primary)" />
             </div>
             <div>
-              <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '800', color: '#0F172A', letterSpacing: '-0.02em' }}>
+              <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600', color: '#0F172A', letterSpacing: '-0.02em' }}>
                 Quản lý Shipper & Đội Ngũ Tài Xế
               </h1>
               <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.82rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <Store size={14} color="#64748B" />
                 Cơ sở: <strong style={{ color: '#1E293B' }}>{getBranchDisplayName()}</strong>
                 <span style={{ color: '#CBD5E1' }}>•</span>
-                Mã: <code style={{ backgroundColor: '#F1F5F9', padding: '1px 6px', borderRadius: '4px', color: '#4F46E5', fontWeight: '600' }}>{getBranchCode()}</code>
+                Mã: <code style={{ backgroundColor: '#F1F5F9', padding: '1px 6px', borderRadius: '4px', color: 'var(--primary)', fontWeight: '600' }}>{getBranchCode()}</code>
               </p>
             </div>
           </div>
@@ -682,7 +683,7 @@ export default function StaffDeliveryPanel() {
                 height: '38px',
                 padding: '0 1.1rem',
                 borderRadius: '10px',
-                backgroundColor: '#16A34A',
+                backgroundColor: '#2563eb',
                 color: '#FFFFFF',
                 border: 'none',
                 fontSize: '0.82rem',
@@ -691,8 +692,8 @@ export default function StaffDeliveryPanel() {
                 boxShadow: '0 2px 6px rgba(22, 163, 74, 0.25)',
                 transition: 'all 0.15s',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#15803D')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#16A34A')}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#1d4ed8')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#2563eb')}
             >
               <UserPlus size={16} /> Thêm tài xế mới
             </button>
@@ -753,21 +754,21 @@ export default function StaffDeliveryPanel() {
             fontWeight: activeTab === 'orders' ? '700' : '600',
             cursor: 'pointer',
             backgroundColor: activeTab === 'orders' ? '#FFFFFF' : 'transparent',
-            color: activeTab === 'orders' ? '#4F46E5' : '#475569',
+            color: activeTab === 'orders' ? 'var(--primary)' : '#475569',
             boxShadow: activeTab === 'orders' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
             transition: 'all 0.15s',
           }}
         >
-          <Package size={17} color={activeTab === 'orders' ? '#4F46E5' : '#64748B'} />
+          <Package size={17} color={activeTab === 'orders' ? 'var(--primary)' : '#64748B'} />
           Đơn Đang Giao
           {deliveries.length > 0 && (
             <span style={{
-              backgroundColor: activeTab === 'orders' ? '#EEF2FF' : '#CBD5E1',
-              color: activeTab === 'orders' ? '#4F46E5' : '#334155',
+              backgroundColor: activeTab === 'orders' ? 'var(--primary-light)' : '#CBD5E1',
+              color: activeTab === 'orders' ? 'var(--primary)' : '#334155',
               padding: '0.1rem 0.5rem',
               borderRadius: '9999px',
               fontSize: '0.72rem',
-              fontWeight: '800'
+              fontWeight: '600'
             }}>
               {deliveries.length}
             </span>
@@ -789,12 +790,12 @@ export default function StaffDeliveryPanel() {
             fontWeight: activeTab === 'cod' ? '700' : '600',
             cursor: 'pointer',
             backgroundColor: activeTab === 'cod' ? '#FFFFFF' : 'transparent',
-            color: activeTab === 'cod' ? '#4F46E5' : '#475569',
+            color: activeTab === 'cod' ? 'var(--primary)' : '#475569',
             boxShadow: activeTab === 'cod' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
             transition: 'all 0.15s',
           }}
         >
-          <Receipt size={17} color={activeTab === 'cod' ? '#4F46E5' : '#64748B'} />
+          <Receipt size={17} color={activeTab === 'cod' ? 'var(--primary)' : '#64748B'} />
           Đối Soát Tiền Thu Hộ COD
           {pendingCodCount > 0 && (
             <span style={{
@@ -803,7 +804,7 @@ export default function StaffDeliveryPanel() {
               padding: '0.1rem 0.55rem',
               borderRadius: '9999px',
               fontSize: '0.72rem',
-              fontWeight: '800',
+              fontWeight: '600',
               border: '1px solid #FDE68A'
             }}>
               {pendingCodCount} chờ duyệt
@@ -827,21 +828,21 @@ export default function StaffDeliveryPanel() {
               fontWeight: activeTab === 'shippers' ? '700' : '600',
               cursor: 'pointer',
               backgroundColor: activeTab === 'shippers' ? '#FFFFFF' : 'transparent',
-              color: activeTab === 'shippers' ? '#4F46E5' : '#475569',
+              color: activeTab === 'shippers' ? 'var(--primary)' : '#475569',
               boxShadow: activeTab === 'shippers' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
               transition: 'all 0.15s',
             }}
           >
-            <Bike size={17} color={activeTab === 'shippers' ? '#4F46E5' : '#64748B'} />
+            <Bike size={17} color={activeTab === 'shippers' ? 'var(--primary)' : '#64748B'} />
             Đội Ngũ Tài Xế Cơ Sở
             {branchShippers.length > 0 && (
               <span style={{
-                backgroundColor: activeTab === 'shippers' ? '#EEF2FF' : '#CBD5E1',
-                color: activeTab === 'shippers' ? '#4F46E5' : '#334155',
+                backgroundColor: activeTab === 'shippers' ? 'var(--primary-light)' : '#CBD5E1',
+                color: activeTab === 'shippers' ? 'var(--primary)' : '#334155',
                 padding: '0.1rem 0.5rem',
                 borderRadius: '9999px',
                 fontSize: '0.72rem',
-                fontWeight: '800'
+                fontWeight: '600'
               }}>
                 {branchShippers.length}
               </span>
@@ -863,7 +864,7 @@ export default function StaffDeliveryPanel() {
               </div>
               <div>
                 <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: '600' }}>Đang Chuẩn Bị</span>
-                <div style={{ fontSize: '1.35rem', fontWeight: '800', color: '#0F172A' }}>{ordersPreparingCount} đơn</div>
+                <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#0F172A' }}>{ordersPreparingCount} đơn</div>
               </div>
             </div>
 
@@ -873,17 +874,17 @@ export default function StaffDeliveryPanel() {
               </div>
               <div>
                 <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: '600' }}>Đang Giao Hàng</span>
-                <div style={{ fontSize: '1.35rem', fontWeight: '800', color: '#0F172A' }}>{ordersDeliveringCount} đơn</div>
+                <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#0F172A' }}>{ordersDeliveringCount} đơn</div>
               </div>
             </div>
 
             <div style={{ backgroundColor: '#FFFFFF', padding: '1.15rem 1.25rem', borderRadius: '14px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Receipt size={24} color="#16A34A" />
+              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Receipt size={24} color="#2563eb" />
               </div>
               <div>
                 <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: '600' }}>Tổng Thu Hộ COD</span>
-                <div style={{ fontSize: '1.35rem', fontWeight: '800', color: '#16A34A' }}>{totalCodInTransit.toLocaleString()} đ</div>
+                <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#2563eb' }}>{totalCodInTransit.toLocaleString()} đ</div>
               </div>
             </div>
           </div>
@@ -917,9 +918,9 @@ export default function StaffDeliveryPanel() {
                     fontSize: '0.78rem',
                     fontWeight: '700',
                     cursor: 'pointer',
-                    backgroundColor: orderStatusFilter === tab.id ? '#4F46E5' : '#FFFFFF',
+                    backgroundColor: orderStatusFilter === tab.id ? 'var(--primary)' : '#FFFFFF',
                     color: orderStatusFilter === tab.id ? '#FFFFFF' : '#475569',
-                    borderColor: orderStatusFilter === tab.id ? '#4F46E5' : '#E2E8F0',
+                    borderColor: orderStatusFilter === tab.id ? 'var(--primary)' : '#E2E8F0',
                     transition: 'all 0.15s',
                   }}
                 >
@@ -969,7 +970,7 @@ export default function StaffDeliveryPanel() {
               gap: '0.5rem',
             }}>
               <div style={{ width: '52px', height: '52px', borderRadius: '26px', backgroundColor: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CheckCircle2 size={28} color="#16A34A" />
+                <CheckCircle2 size={28} color="#2563eb" />
               </div>
               <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: '700', color: '#1E293B' }}>
                 Không có đơn hàng nào cần điều phối
@@ -1002,7 +1003,7 @@ export default function StaffDeliveryPanel() {
                     {/* Cột 1: Thông tin Đơn hàng & Khách hàng */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-                        <strong style={{ fontSize: '0.92rem', color: '#4F46E5', fontWeight: '800', letterSpacing: '0.5px' }}>
+                        <strong style={{ fontSize: '0.92rem', color: 'var(--primary)', fontWeight: '600', letterSpacing: '0.5px' }}>
                           #{order.ma_don_hang.slice(0, 8).toUpperCase()}
                         </strong>
                         <span style={{
@@ -1010,9 +1011,9 @@ export default function StaffDeliveryPanel() {
                           fontWeight: '700',
                           padding: '0.2rem 0.6rem',
                           borderRadius: '6px',
-                          backgroundColor: isLalamove ? '#FFF7ED' : '#EEF2FF',
-                          color: isLalamove ? '#C2410C' : '#4338CA',
-                          border: `1px solid ${isLalamove ? '#FFEDD5' : '#C7D2FE'}`,
+                          backgroundColor: isLalamove ? '#FFF7ED' : 'var(--primary-light)',
+                          color: isLalamove ? '#C2410C' : 'var(--primary-hover)',
+                          border: `1px solid ${isLalamove ? '#FFEDD5' : '#e8cdbb'}`,
                         }}>
                           {isLalamove ? 'Dịch vụ Lalamove' : 'Shipper Nội Bộ'}
                         </span>
@@ -1031,7 +1032,7 @@ export default function StaffDeliveryPanel() {
                     {/* Cột 2: Tiền COD & Trạng Thái Đơn */}
                     <div style={{ borderLeft: '1px solid #F1F5F9', paddingLeft: '1rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                       <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: '600' }}>TIỀN THU HỘ COD</span>
-                      <span style={{ fontSize: '1.05rem', color: '#0F172A', fontWeight: '800' }}>
+                      <span style={{ fontSize: '1.05rem', color: '#0F172A', fontWeight: '600' }}>
                         {Number(order.tong_tien || 0).toLocaleString()} đ
                       </span>
                       <span style={{
@@ -1057,9 +1058,9 @@ export default function StaffDeliveryPanel() {
                       {lalamoveLinks[order.ma_don_hang] ? (
                         <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
                           <span style={{
-                            backgroundColor: '#ECFDF5',
-                            color: '#059669',
-                            border: '1px solid #A7F3D0',
+                            backgroundColor: '#eff6ff',
+                            color: '#2563eb',
+                            border: '1px solid #bfdbfe',
                             padding: '0.35rem 0.75rem',
                             borderRadius: '8px',
                             fontSize: '0.78rem',
@@ -1079,7 +1080,7 @@ export default function StaffDeliveryPanel() {
                               padding: '0 0.75rem',
                               borderRadius: '8px',
                               backgroundColor: '#FFFFFF',
-                              color: '#2563EB',
+                              color: 'var(--primary)',
                               border: '1px solid #BFDBFE',
                               fontSize: '0.78rem',
                               fontWeight: '700',
@@ -1106,7 +1107,7 @@ export default function StaffDeliveryPanel() {
                               border: '1px solid #CBD5E1',
                             }}>
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.35rem' }}>
-                                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#4F46E5', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                                   <Bike size={14} /> Chọn tài xế cơ sở
                                 </span>
                                 <button
@@ -1145,8 +1146,8 @@ export default function StaffDeliveryPanel() {
                                         opacity: assigningOrderId === order.ma_don_hang ? 0.6 : 1,
                                       }}
                                     >
-                                      <div style={{ width: '28px', height: '28px', borderRadius: '14px', backgroundColor: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                        <Bike size={14} color="#4F46E5" />
+                                      <div style={{ width: '28px', height: '28px', borderRadius: '14px', backgroundColor: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                        <Bike size={14} color="var(--primary)" />
                                       </div>
                                       <div style={{ flex: 1, minWidth: 0 }}>
                                         <div style={{ fontSize: '0.78rem', fontWeight: '700', color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -1156,7 +1157,7 @@ export default function StaffDeliveryPanel() {
                                           {s.phone || s.vehicle_plate || `@${s.username}`}
                                         </div>
                                       </div>
-                                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#16A34A', flexShrink: 0 }} />
+                                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#2563eb', flexShrink: 0 }} />
                                     </button>
                                   ))
                               )}
@@ -1189,15 +1190,15 @@ export default function StaffDeliveryPanel() {
                               gap: '0.4rem',
                               padding: '0.35rem 0.75rem',
                               borderRadius: '8px',
-                              backgroundColor: '#F0FDF4',
-                              border: '1px solid #BBF7D0',
+                              backgroundColor: '#eff6ff',
+                              border: '1px solid #bfdbfe',
                             }}>
-                              <Bike size={14} color="#15803D" />
+                              <Bike size={14} color="#1d4ed8" />
                               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <span style={{ fontSize: '0.78rem', fontWeight: '700', color: '#166534' }}>
+                                <span style={{ fontSize: '0.78rem', fontWeight: '700', color: '#1e40af' }}>
                                   Đang giao bởi: {assignedShipperInfo[order.ma_don_hang].name || assignedShipperInfo[order.ma_don_hang].id}
                                 </span>
-                                <span style={{ fontSize: '0.65rem', color: '#15803D' }}>
+                                <span style={{ fontSize: '0.65rem', color: '#1d4ed8' }}>
                                   {assignedShipperInfo[order.ma_don_hang].phone} {assignedShipperInfo[order.ma_don_hang].vehicle_plate ? `• ${assignedShipperInfo[order.ma_don_hang].vehicle_plate}` : ''}
                                 </span>
                               </div>
@@ -1213,7 +1214,7 @@ export default function StaffDeliveryPanel() {
                                 fontSize: '0.78rem',
                                 fontWeight: '700',
                                 cursor: 'pointer',
-                                backgroundColor: '#4F46E5',
+                                backgroundColor: 'var(--primary)',
                                 color: '#FFFFFF',
                                 border: 'none',
                                 display: 'inline-flex',
@@ -1271,7 +1272,7 @@ export default function StaffDeliveryPanel() {
               </div>
               <div>
                 <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: '600' }}>Chờ Quản Lý Duyệt</span>
-                <div style={{ fontSize: '1.35rem', fontWeight: '800', color: '#D97706' }}>
+                <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#D97706' }}>
                   {totalCodPendingAmount.toLocaleString()} đ
                 </div>
                 <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>{pendingCodCount} phiếu nộp</span>
@@ -1279,12 +1280,12 @@ export default function StaffDeliveryPanel() {
             </div>
 
             <div style={{ backgroundColor: '#FFFFFF', padding: '1.15rem 1.25rem', borderRadius: '14px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CheckCircle2 size={24} color="#16A34A" />
+              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CheckCircle2 size={24} color="#2563eb" />
               </div>
               <div>
                 <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: '600' }}>Đã Xác Nhận Đủ</span>
-                <div style={{ fontSize: '1.35rem', fontWeight: '800', color: '#16A34A' }}>
+                <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#2563eb' }}>
                   {totalCodConfirmedToday.toLocaleString()} đ
                 </div>
                 <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Đã nộp vào quỹ cơ sở</span>
@@ -1292,12 +1293,12 @@ export default function StaffDeliveryPanel() {
             </div>
 
             <div style={{ backgroundColor: '#FFFFFF', padding: '1.15rem 1.25rem', borderRadius: '14px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Receipt size={24} color="#4F46E5" />
+              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Receipt size={24} color="var(--primary)" />
               </div>
               <div>
                 <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: '600' }}>Tổng Số Phiếu Ghi Nhận</span>
-                <div style={{ fontSize: '1.35rem', fontWeight: '800', color: '#0F172A' }}>
+                <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#0F172A' }}>
                   {codRemits.length} phiếu
                 </div>
                 <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Theo lịch sử đối soát</span>
@@ -1341,9 +1342,9 @@ export default function StaffDeliveryPanel() {
                       fontWeight: '700',
                       cursor: 'pointer',
                       border: '1px solid',
-                      backgroundColor: isSelected ? '#1E40AF' : '#FFFFFF',
+                      backgroundColor: isSelected ? 'var(--primary)' : '#FFFFFF',
                       color: isSelected ? '#FFFFFF' : '#475569',
-                      borderColor: isSelected ? '#1E40AF' : '#E2E8F0',
+                      borderColor: isSelected ? 'var(--primary)' : '#E2E8F0',
                       transition: 'all 0.15s',
                     }}
                   >
@@ -1422,11 +1423,11 @@ export default function StaffDeliveryPanel() {
                         </td>
                         <td style={{ padding: '0.85rem 1rem', fontWeight: '700', color: '#0F172A' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <Bike size={15} color="#4F46E5" />
+                            <Bike size={15} color="var(--primary)" />
                             <span>{r.shipper_name || r.shipper_id?.slice(0, 8)}</span>
                           </div>
                         </td>
-                        <td style={{ padding: '0.85rem 1rem', fontWeight: '800', color: '#16A34A', fontSize: '0.98rem' }}>
+                        <td style={{ padding: '0.85rem 1rem', fontWeight: '600', color: '#2563eb', fontSize: '0.98rem' }}>
                           {Number(r.amount || 0).toLocaleString()} đ
                         </td>
                         <td style={{ padding: '0.85rem 1rem', color: '#64748B', fontSize: '0.78rem', maxWidth: '180px' }}>
@@ -1441,9 +1442,9 @@ export default function StaffDeliveryPanel() {
                             borderRadius: '9999px',
                             fontSize: '0.74rem',
                             fontWeight: '700',
-                            backgroundColor: isPending ? '#FEF3C7' : isConfirmed ? '#DCFCE7' : '#FEE2E2',
-                            color: isPending ? '#B45309' : isConfirmed ? '#15803D' : '#DC2626',
-                            border: `1px solid ${isPending ? '#FDE68A' : isConfirmed ? '#86EFAC' : '#FECACA'}`,
+                            backgroundColor: isPending ? '#FEF3C7' : isConfirmed ? '#dbeafe' : '#FEE2E2',
+                            color: isPending ? '#B45309' : isConfirmed ? '#1d4ed8' : '#DC2626',
+                            border: `1px solid ${isPending ? '#FDE68A' : isConfirmed ? '#93c5fd' : '#FECACA'}`,
                           }}>
                             {isPending ? <Clock size={12} /> : isConfirmed ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
                             {isPending ? 'Chờ xác nhận' : isConfirmed ? 'Đã nhận tiền' : 'Đã từ chối'}
@@ -1464,7 +1465,7 @@ export default function StaffDeliveryPanel() {
                                   borderRadius: '8px',
                                   fontSize: '0.76rem',
                                   fontWeight: '700',
-                                  backgroundColor: '#16A34A',
+                                  backgroundColor: '#2563eb',
                                   color: '#FFFFFF',
                                   border: 'none',
                                   cursor: 'pointer',
@@ -1519,23 +1520,23 @@ export default function StaffDeliveryPanel() {
           {/* Thẻ Thống Kê Tài Xế (KPIs) */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
             <div style={{ backgroundColor: '#FFFFFF', padding: '1.15rem 1.25rem', borderRadius: '14px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Users size={24} color="#4F46E5" />
+              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Users size={24} color="var(--primary)" />
               </div>
               <div>
                 <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: '600' }}>Tổng Đội Ngũ Tài Xế</span>
-                <div style={{ fontSize: '1.35rem', fontWeight: '800', color: '#0F172A' }}>{branchShippers.length} tài xế</div>
+                <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#0F172A' }}>{branchShippers.length} tài xế</div>
                 <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Phân quyền trực thuộc cơ sở</span>
               </div>
             </div>
 
             <div style={{ backgroundColor: '#FFFFFF', padding: '1.15rem 1.25rem', borderRadius: '14px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Bike size={24} color="#16A34A" />
+              <div style={{ width: '46px', height: '46px', borderRadius: '12px', backgroundColor: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Bike size={24} color="#2563eb" />
               </div>
               <div>
                 <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: '600' }}>Sẵn Sàng Nhận Đơn</span>
-                <div style={{ fontSize: '1.35rem', fontWeight: '800', color: '#16A34A' }}>{activeShippersCount} tài xế</div>
+                <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#2563eb' }}>{activeShippersCount} tài xế</div>
                 <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Đang trực tuyến trên ứng dụng</span>
               </div>
             </div>
@@ -1546,7 +1547,7 @@ export default function StaffDeliveryPanel() {
               </div>
               <div>
                 <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: '600' }}>Ngoại Tuyến / Tạm Nghỉ</span>
-                <div style={{ fontSize: '1.35rem', fontWeight: '800', color: '#64748B' }}>
+                <div style={{ fontSize: '1.35rem', fontWeight: '600', color: '#64748B' }}>
                   {branchShippers.length - activeShippersCount} tài xế
                 </div>
                 <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Chưa mở ứng dụng</span>
@@ -1583,9 +1584,9 @@ export default function StaffDeliveryPanel() {
                     fontSize: '0.78rem',
                     fontWeight: '700',
                     cursor: 'pointer',
-                    backgroundColor: shipperStatusFilter === tab.id ? '#4F46E5' : '#FFFFFF',
+                    backgroundColor: shipperStatusFilter === tab.id ? 'var(--primary)' : '#FFFFFF',
                     color: shipperStatusFilter === tab.id ? '#FFFFFF' : '#475569',
-                    borderColor: shipperStatusFilter === tab.id ? '#4F46E5' : '#E2E8F0',
+                    borderColor: shipperStatusFilter === tab.id ? 'var(--primary)' : '#E2E8F0',
                     transition: 'all 0.15s',
                   }}
                 >
@@ -1678,12 +1679,12 @@ export default function StaffDeliveryPanel() {
                             width: '44px',
                             height: '44px',
                             borderRadius: '22px',
-                            backgroundColor: '#EEF2FF',
+                            backgroundColor: 'var(--primary-light)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                           }}>
-                            <Bike size={22} color="#4F46E5" />
+                            <Bike size={22} color="var(--primary)" />
                           </div>
                           <span style={{
                             position: 'absolute',
@@ -1692,13 +1693,13 @@ export default function StaffDeliveryPanel() {
                             width: '12px',
                             height: '12px',
                             borderRadius: '6px',
-                            backgroundColor: isActive ? '#16A34A' : '#94A3B8',
+                            backgroundColor: isActive ? '#2563eb' : '#94A3B8',
                             border: '2px solid #FFFFFF',
                           }} />
                         </div>
 
                         <div>
-                          <div style={{ fontSize: '0.98rem', fontWeight: '800', color: '#0F172A' }}>
+                          <div style={{ fontSize: '0.98rem', fontWeight: '600', color: '#0F172A' }}>
                             {s.full_name}
                           </div>
                           <div style={{ fontSize: '0.75rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -1714,9 +1715,9 @@ export default function StaffDeliveryPanel() {
                         borderRadius: '9999px',
                         fontSize: '0.72rem',
                         fontWeight: '700',
-                        backgroundColor: isActive ? '#DCFCE7' : '#F1F5F9',
-                        color: isActive ? '#15803D' : '#64748B',
-                        border: `1px solid ${isActive ? '#86EFAC' : '#E2E8F0'}`,
+                        backgroundColor: isActive ? '#dbeafe' : '#F1F5F9',
+                        color: isActive ? '#1d4ed8' : '#64748B',
+                        border: `1px solid ${isActive ? '#93c5fd' : '#E2E8F0'}`,
                       }}>
                         {isActive ? 'Đang hoạt động' : 'Tạm ngưng'}
                       </span>
@@ -1777,16 +1778,16 @@ export default function StaffDeliveryPanel() {
                           gap: '0.4rem',
                           height: '34px',
                           borderRadius: '8px',
-                          backgroundColor: '#EEF2FF',
-                          color: '#4F46E5',
-                          border: '1px solid #C7D2FE',
+                          backgroundColor: 'var(--primary-light)',
+                          color: 'var(--primary)',
+                          border: '1px solid #e8cdbb',
                           fontSize: '0.78rem',
                           fontWeight: '700',
                           cursor: 'pointer',
                           transition: 'all 0.15s',
                         }}
-                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#E0E7FF')}
-                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#EEF2FF')}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary-subtle)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary-light)')}
                       >
                         <Edit3 size={14} /> Sửa thông tin
                       </button>
@@ -1861,7 +1862,7 @@ export default function StaffDeliveryPanel() {
               backgroundColor: '#F8FAFC',
             }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '800', color: '#0F172A' }}>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '600', color: '#0F172A' }}>
                   Cập Nhật Thông Tin Tài Xế
                 </h3>
                 <span style={{ fontSize: '0.75rem', color: '#64748B' }}>
@@ -1878,7 +1879,7 @@ export default function StaffDeliveryPanel() {
             </div>
 
             {/* Modal Form */}
-            <form onSubmit={handleSaveEditShipper} style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
+            <form className="workspace-form" onSubmit={handleSaveEditShipper} style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
                   Họ và tên tài xế *
@@ -2000,7 +2001,7 @@ export default function StaffDeliveryPanel() {
                     padding: '0.55rem 1.35rem',
                     borderRadius: '8px',
                     border: 'none',
-                    backgroundColor: '#16A34A',
+                    backgroundColor: '#2563eb',
                     color: '#FFFFFF',
                     fontSize: '0.82rem',
                     fontWeight: '700',
@@ -2049,7 +2050,7 @@ export default function StaffDeliveryPanel() {
               </div>
 
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0F172A' }}>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600', color: '#0F172A' }}>
                   Xác Nhận Reset Tài Khoản
                 </h3>
                 <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5 }}>
@@ -2138,12 +2139,12 @@ export default function StaffDeliveryPanel() {
             overflow: 'hidden',
           }}>
             <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '24px', backgroundColor: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CheckCircle2 size={24} color="#16A34A" />
+              <div style={{ width: '48px', height: '48px', borderRadius: '24px', backgroundColor: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CheckCircle2 size={24} color="#2563eb" />
               </div>
 
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0F172A' }}>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600', color: '#0F172A' }}>
                   Reset Tài Khoản Thành Công!
                 </h3>
                 <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.82rem', color: '#64748B' }}>
@@ -2167,7 +2168,7 @@ export default function StaffDeliveryPanel() {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.8rem', color: '#64748B' }}>Mật khẩu mới:</span>
-                  <code style={{ fontSize: '1rem', fontWeight: '800', color: '#16A34A', backgroundColor: '#DCFCE7', padding: '2px 8px', borderRadius: '6px' }}>
+                  <code style={{ fontSize: '1rem', fontWeight: '600', color: '#2563eb', backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '6px' }}>
                     {resetResult.password}
                   </code>
                 </div>
@@ -2193,7 +2194,7 @@ export default function StaffDeliveryPanel() {
                     cursor: 'pointer',
                   }}
                 >
-                  {copiedKey ? <CheckCheck size={16} color="#16A34A" /> : <Copy size={16} />}
+                  {copiedKey ? <CheckCheck size={16} color="#2563eb" /> : <Copy size={16} />}
                   {copiedKey ? 'Đã sao chép!' : 'Sao chép thông tin'}
                 </button>
                 <button
@@ -2204,7 +2205,7 @@ export default function StaffDeliveryPanel() {
                     padding: '0.6rem',
                     borderRadius: '8px',
                     border: 'none',
-                    backgroundColor: '#4F46E5',
+                    backgroundColor: 'var(--primary)',
                     color: '#FFFFFF',
                     fontSize: '0.82rem',
                     fontWeight: '700',
@@ -2254,7 +2255,7 @@ export default function StaffDeliveryPanel() {
               backgroundColor: '#F8FAFC',
             }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '800', color: '#0F172A' }}>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '600', color: '#0F172A' }}>
                   Thêm Tài Xế Mới
                 </h3>
                 <span style={{ fontSize: '0.75rem', color: '#64748B' }}>
@@ -2270,7 +2271,7 @@ export default function StaffDeliveryPanel() {
               </button>
             </div>
 
-            <form onSubmit={handleCreateNewShipper} style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
+            <form className="workspace-form" onSubmit={handleCreateNewShipper} style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
@@ -2394,7 +2395,7 @@ export default function StaffDeliveryPanel() {
                     padding: '0.55rem 1.35rem',
                     borderRadius: '8px',
                     border: 'none',
-                    backgroundColor: '#16A34A',
+                    backgroundColor: '#2563eb',
                     color: '#FFFFFF',
                     fontSize: '0.82rem',
                     fontWeight: '700',

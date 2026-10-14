@@ -1,5 +1,7 @@
+import TextInput from '../components/TextInput'
+import Alert from '../lib/alert'
 /**
- * ChatScreen.js — AI Chat Assistant Siêu Xịn
+ * Customer chat using the web Agent contract
  * Features:
  * - Rich message rendering: product cards, order cards, store cards, image, quick replies
  * - AI-powered ordering flow (search → customize → cart → payment)
@@ -7,19 +9,19 @@
  * - Store info with directions link
  * - Voice ordering
  */
-import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   View,
   Text,
   StyleSheet,
   Pressable,
-  TextInput,
+
   FlatList,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Animated,
-  Alert,
+
   Image,
   ScrollView,
   Linking,
@@ -27,11 +29,19 @@ import {
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { Audio } from 'expo-av'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useUser } from '../context/UserContext'
 import apiClient from '../lib/apiClient'
-import { getUserDisplayName, getUserId, safeArray } from '../lib/customerData'
-import { colors, spacing, shadows, radius } from '../theme'
+import { formatDateOnly, getUserDisplayName, safeArray } from '../lib/customerData'
+import StaffChatPanel from './StaffChatPanel'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { colors, shadows } from '../theme'
+import useAgentChat from '../hooks/useAgentChat'
+import ChatRichText from '../components/ChatRichText'
+import ChatActions, { CheckoutCard } from '../components/ChatActions'
+import CustomerChoicePanel, { SelectionTray } from '../components/CustomerChoicePanel'
+import { productIdentity, toggleProductSelection, selectionAction, actionMessage } from '../../../web-customer/src/components/customerChoices'
+import { branchDistanceLabel } from '../../../web-customer/src/components/chatWidgetActions'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 function formatTime(value) {
@@ -54,10 +64,10 @@ function formatCurrency(amount) {
 
 function getOrderStatusLabel(status) {
   const labels = {
-    CHO_XAC_NHAN: { label: 'Vừa tạo', color: '#f59e0b', bg: '#fef3c7', icon: 'time-outline' },
+    CHO_XAC_NHAN: { label: 'Vừa tạo', color: '#f59e0b', bg: '#f3f4f6', icon: 'time-outline' },
     DA_XAC_NHAN: { label: 'Đã xác nhận', color: '#3b82f6', bg: '#eff6ff', icon: 'checkmark-circle-outline' },
     DANG_CHUAN_BI: { label: 'Đang chuẩn bị', color: '#8b5cf6', bg: '#f5f3ff', icon: 'cafe-outline' },
-    DANG_GIAO: { label: 'Đang giao', color: '#ea8025', bg: '#fff7ed', icon: 'bicycle-outline' },
+    DANG_GIAO: { label: 'Đang giao', color: '#b22830', bg: '#f3f4f6', icon: 'bicycle-outline' },
     HOAN_THANH: { label: 'Hoàn thành', color: '#22c55e', bg: '#f0fdf4', icon: 'checkmark-done-circle-outline' },
     DA_HUY: { label: 'Đã huỷ', color: '#ef4444', bg: '#fef2f2', icon: 'close-circle-outline' },
   }
@@ -74,28 +84,23 @@ const QUICK_REPLIES = [
   { id: 'payment', label: 'Thanh toán', icon: 'card-outline', text: 'Phương thức thanh toán nào được hỗ trợ?' },
 ]
 
-// ─── AI LOCAL HANDLER ────────────────────────────────────────────────────────
-// Xử lý thông minh tại client để generate rich messages
-function detectIntent(text) {
-  const t = text.toLowerCase().trim()
-  if (/(đơn|order|đặt rồi|trạng thái|theo dõi|giao hàng)/.test(t)) return 'orders'
-  if (/(cửa hàng|chi nhánh|địa chỉ|địa điểm|gần đây|ở đâu)/.test(t)) return 'stores'
-  if (/(menu|thực đơn|đồ uống|coffee|cà phê|trà|sữa|đồ ăn|bánh|xem)/.test(t)) return 'menu'
-  if (/(khuyến mãi|voucher|giảm giá|ưu đãi|mã)/.test(t)) return 'voucher'
-  if (/(thanh toán|payment|vnpay|tiền mặt|ví|momo|atm)/.test(t)) return 'payment'
-  if (/(đặt|mua|cho tôi|order|lấy|muốn|cần)\s+\d*\s*(ly|cái|phần|suất)/.test(t)) return 'order_intent'
-  if (/(đặt|mua|cho tôi|order|lấy|muốn|cần)/.test(t)) return 'order_intent'
-  return 'chat'
-}
-
 // ─── RICH MESSAGE TYPES ─────────────────────────────────────────────────────
 
 // Product Card dạng mini (trong chat)
-function ProductMiniCard({ product, onAddToCart }) {
+function ProductMiniCard({ product, index, grouped, chat, selected, onAddToCart, onDetail }) {
+  const name = product.ten_san_pham || product.product_name || product.name
+  const seed = product.gia_ban ?? product.final_price ?? product.price
+  const seedPrice = seed != null && Number.isFinite(Number(seed)) && Number(seed) > 0 ? Number(seed) : null
+  const id = product.product_id || product.ma_san_pham || product.id
+  const priceQuery = useQuery({
+    queryKey: ['customer', 'agent-product-price', chat.conversationId, id],
+    queryFn: () => chat.controller.price(name), enabled: seedPrice == null && Boolean(name), retry: false,
+  })
+  const price = seedPrice ?? (priceQuery.data?.status === 'ok' ? priceQuery.data.products?.find(p => p.product_name === name)?.final_price : null)
   return (
     <Pressable
       style={richStyles.productCard}
-      onPress={() => onAddToCart && onAddToCart(product)}
+      onPress={() => onDetail(id)}
     >
       {product.hinh_anh_url ? (
         <Image source={{ uri: product.hinh_anh_url }} style={richStyles.productImg} resizeMode="cover" />
@@ -105,11 +110,13 @@ function ProductMiniCard({ product, onAddToCart }) {
         </View>
       )}
       <View style={richStyles.productInfo}>
-        <Text style={richStyles.productName} numberOfLines={2}>{product.ten_san_pham}</Text>
-        <Text style={richStyles.productPrice}>{formatCurrency(product.gia_ban)}</Text>
+        <Text style={richStyles.productName} numberOfLines={2}>{product.display_index || index + 1}. {name}</Text>
+        <Text style={richStyles.productPrice}>{Number.isFinite(Number(price)) && price != null ? formatCurrency(price) : 'Chưa xác minh được giá'}</Text>
+        <Text style={{ fontSize: 11, color: '#64748b', marginTop: 3 }}>{product.danh_muc || product.ten_danh_muc || product.category}{grouped && product.group_display_index ? ` · ${product.menu_bucket === 'food' ? 'Bánh' : 'Nước'} số ${product.group_display_index}` : ''}</Text>
+        <Text style={{ fontSize: 11, color: colors.primary, marginTop: 5 }}>Xem chi tiết →</Text>
       </View>
-      <Pressable style={richStyles.productAddBtn} onPress={() => onAddToCart && onAddToCart(product)}>
-        <Ionicons name="add" size={18} color="#fff" />
+      <Pressable disabled={chat.busy || price == null} accessibilityRole="button" accessibilityLabel={`${selected ? 'Bỏ chọn' : 'Chọn'} ${name}`} accessibilityState={{ selected }} style={[richStyles.productAddBtn, (chat.busy || price == null) && { opacity: 0.4 }]} onPress={event => { event.stopPropagation(); onAddToCart(product) }}>
+        <Ionicons name={selected ? 'checkmark' : 'add'} size={18} color="#fff" />
       </Pressable>
     </Pressable>
   )
@@ -143,12 +150,17 @@ function OrderMiniCard({ order, onTrack }) {
 }
 
 // Store mini card (trong chat)
-function StoreMiniCard({ branch }) {
+function StoreMiniCard({ branch, index, onChoose }) {
+  const name = branch.ten_chi_nhanh || branch.branch_name || branch.name
+  const address = branch.dia_chi || branch.address
+  const phone = branch.so_dien_thoai || branch.phone
+  const available = !branch.availability_status || branch.availability_status === 'available'
+  const mapUrl = /^https?:\/\//i.test(branch.map_url || '') ? branch.map_url : null
   const openMaps = () => {
-    if (branch.map_url) Linking.openURL(branch.map_url).catch(() => {})
+    if (mapUrl) Linking.openURL(mapUrl).catch(() => {})
   }
   const call = () => {
-    if (branch.so_dien_thoai) Linking.openURL(`tel:${branch.so_dien_thoai}`).catch(() => {})
+    if (phone) Linking.openURL(`tel:${phone}`).catch(() => {})
   }
   return (
     <View style={richStyles.storeCard}>
@@ -157,21 +169,24 @@ function StoreMiniCard({ branch }) {
           <Ionicons name="storefront-outline" size={18} color={colors.primary} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={richStyles.storeName} numberOfLines={2}>{branch.ten_chi_nhanh}</Text>
-          <Text style={richStyles.storeAddr} numberOfLines={2}>{branch.dia_chi}</Text>
+          <Text style={richStyles.storeName} numberOfLines={2}>{index + 1}. {name}</Text>
+          <Text style={richStyles.storeAddr} numberOfLines={2}>{address}</Text>
           {branch.gio_mo_cua && (
             <Text style={richStyles.storeHours}>🕐 {branch.gio_mo_cua} – {branch.gio_dong_cua}</Text>
           )}
         </View>
       </View>
+      <Text style={{ fontSize: 11, color: colors.muted }}>{branchDistanceLabel(branch)}</Text>
+      {branch.availability_status && <Text style={{ fontSize: 12, color: available ? '#15803d' : colors.primary }}>{available ? 'Còn đủ tất cả món trong giỏ' : branch.availability_status === 'unknown' ? 'Chưa đọc được tình trạng bán; chưa thể chọn' : `Tạm ngưng: ${(branch.unavailable_products || []).join(', ') || 'một số món trong giỏ'}`}</Text>}
+      <Pressable disabled={!available} onPress={() => onChoose(`Tôi chọn chi nhánh ${name}`)} style={{ paddingVertical: 9, opacity: available ? 1 : 0.5 }}><Text style={{ color: colors.primary }}>Chọn cửa hàng này</Text></Pressable>
       <View style={richStyles.storeActions}>
-        {branch.so_dien_thoai && (
+        {phone && (
           <Pressable style={richStyles.storeBtn} onPress={call}>
             <Ionicons name="call-outline" size={13} color={colors.primary} />
             <Text style={richStyles.storeBtnText}>Gọi ngay</Text>
           </Pressable>
         )}
-        {branch.map_url && (
+        {mapUrl && (
           <Pressable style={[richStyles.storeBtn, richStyles.storeBtnPrimary]} onPress={openMaps}>
             <Ionicons name="navigate-outline" size={13} color="#fff" />
             <Text style={[richStyles.storeBtnText, { color: '#fff' }]}>Chỉ đường</Text>
@@ -182,34 +197,8 @@ function StoreMiniCard({ branch }) {
   )
 }
 
-// Info card cho Payment methods
-function PaymentInfoCard() {
-  const methods = [
-    { icon: 'card-outline', color: '#0ea5e9', label: 'VNPAY', desc: 'Thẻ ATM / Internet Banking' },
-    { icon: 'qr-code-outline', color: '#3b82f6', label: 'QR Code', desc: 'Quét mã ngân hàng' },
-    { icon: 'wallet-outline', color: '#ea8025', label: 'Ví Avengers', desc: 'Nạp tiền, nhận hoàn xu' },
-    { icon: 'cash-outline', color: '#22c55e', label: 'Tiền mặt', desc: 'Thanh toán khi nhận hàng' },
-  ]
-  return (
-    <View style={richStyles.infoCard}>
-      <Text style={richStyles.infoCardTitle}>Phương thức thanh toán</Text>
-      {methods.map(m => (
-        <View key={m.label} style={richStyles.infoRow}>
-          <View style={[richStyles.infoIcon, { backgroundColor: m.color + '20' }]}>
-            <Ionicons name={m.icon} size={16} color={m.color} />
-          </View>
-          <View>
-            <Text style={richStyles.infoRowLabel}>{m.label}</Text>
-            <Text style={richStyles.infoRowDesc}>{m.desc}</Text>
-          </View>
-        </View>
-      ))}
-    </View>
-  )
-}
-
 // Voucher info card
-function VoucherInfoCard({ vouchers = [] }) {
+function VoucherInfoCard({ vouchers = [], onChoose }) {
   return (
     <View style={richStyles.infoCard}>
       <Text style={richStyles.infoCardTitle}>Ưu đãi đang có</Text>
@@ -233,21 +222,21 @@ function VoucherInfoCard({ vouchers = [] }) {
         }
 
         const minSpend = v.gia_tri_don_toi_thieu ? ` • Đơn từ ${Math.round(v.gia_tri_don_toi_thieu / 1000)}k` : ''
-        const expiry = v.ngay_ket_thuc ? `HSD: ${formatDateOnly(v.ngay_ket_thuc)}` : 'HSD: Dùng ngay'
+        const expiry = v.ngay_ket_thuc ? `HSD: ${formatDateOnly(v.ngay_ket_thuc)}` : 'HSD: chưa có thông tin'
 
         return (
-          <View key={i} style={richStyles.voucherRow}>
+          <Pressable key={i} onPress={() => onChoose(`Áp dụng mã ${code}`)} style={richStyles.voucherRow}>
             <View style={richStyles.voucherBadge}>
               <Text style={richStyles.voucherBadgeText}>{badgeText}</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={richStyles.voucherName} numberOfLines={1}>{name}</Text>
               <Text style={richStyles.voucherCode}>
-                Mã: <Text style={{ fontWeight: '800', color: '#ea8025' }}>{code}</Text>{minSpend}
+                Mã: <Text style={{ fontWeight: '800', color: '#b22830' }}>{code}</Text>{minSpend}
               </Text>
               <Text style={{ fontSize: 10, color: '#94a3b8', marginTop: 2 }}>{expiry}</Text>
             </View>
-          </View>
+          </Pressable>
         )
       })}
     </View>
@@ -255,13 +244,17 @@ function VoucherInfoCard({ vouchers = [] }) {
 }
 
 // ─── AI BUBBLE (Rich content) ─────────────────────────────────────────────────
-function AIBubble({ message, onProductAdd, onOrderTrack, onQuickReply }) {
-  const { text, type, products, orders, stores, vouchers } = message
+function AIBubble({ message, chat, selectedProducts, onProductAdd, onProductDetail, onOrderTrack, onQuickReply, onLogin }) {
+  const { text, products, orders, stores, vouchers } = message
+  const groups = new Map()
+  ;(products || []).forEach(product => { const bucket = product.menu_bucket || 'unknown'; if (!groups.has(bucket)) groups.set(bucket, []); groups.get(bucket).push(product) })
+  const grouped = groups.size > 1
+  const groupLabels = { food: 'Bánh & đồ ăn', drink: 'Đồ uống', topping: 'Topping', unknown: 'Các món khác' }
 
   return (
     <View style={styles.aiBubbleWrap}>
       {/* Avatar */}
-      <LinearGradient colors={['#ea8025', '#c45c10']} style={styles.aiAvatar}>
+      <LinearGradient colors={[colors.primary, colors.primary]} style={styles.aiAvatar}>
         <Ionicons name="sparkles" size={16} color="#fff" />
       </LinearGradient>
 
@@ -269,7 +262,8 @@ function AIBubble({ message, onProductAdd, onOrderTrack, onQuickReply }) {
         {/* Text message */}
         {!!text && (
           <View style={styles.aiBubble}>
-            <Text style={styles.aiBubbleText}>{text}</Text>
+            <ChatRichText text={text} style={styles.aiBubbleText} />
+            {!!message.time && <Text style={styles.aiBubbleTime}>{formatTime(message.time)}</Text>}
           </View>
         )}
 
@@ -277,9 +271,7 @@ function AIBubble({ message, onProductAdd, onOrderTrack, onQuickReply }) {
         {products && products.length > 0 && (
           <View style={richStyles.richBlock}>
             <Text style={richStyles.richBlockTitle}>Sản phẩm phù hợp</Text>
-            {products.map((p, i) => (
-              <ProductMiniCard key={i} product={p} onAddToCart={onProductAdd} />
-            ))}
+            {[...groups].map(([bucket, rows]) => <View key={bucket}>{grouped && <Text style={richStyles.richBlockTitle}>{groupLabels[bucket] || groupLabels.unknown}</Text>}{rows.map((p, i) => <ProductMiniCard key={p.product_id || i} index={i} grouped={grouped} chat={chat} selected={selectedProducts.some(row => productIdentity(row) === productIdentity(p) && row.snapshot === message.selectionSnapshot)} product={p} onAddToCart={product => onProductAdd(product, message.selectionSnapshot)} onDetail={onProductDetail} />)}</View>)}
           </View>
         )}
 
@@ -298,23 +290,23 @@ function AIBubble({ message, onProductAdd, onOrderTrack, onQuickReply }) {
           <View style={richStyles.richBlock}>
             <Text style={richStyles.richBlockTitle}>Cửa hàng của chúng tôi</Text>
             {stores.map((s, i) => (
-              <StoreMiniCard key={i} branch={s} />
+              <StoreMiniCard key={i} index={i} branch={s} onChoose={onQuickReply} />
             ))}
           </View>
         )}
 
         {/* Payment info */}
-        {type === 'payment' && <PaymentInfoCard />}
+        <ChatActions message={message} chat={chat} onReply={onQuickReply} onLogin={onLogin} />
 
         {/* Vouchers */}
-        {type === 'voucher' && <VoucherInfoCard vouchers={vouchers || []} />}
+        {!!vouchers?.length && <VoucherInfoCard vouchers={vouchers} onChoose={onQuickReply} />}
 
         {/* Quick reply buttons */}
         {message.quickReplies && message.quickReplies.length > 0 && (
           <View style={styles.quickRepliesWrap}>
             {message.quickReplies.map(qr => (
               <Pressable key={qr.id} style={styles.quickReplyChip} onPress={() => onQuickReply(qr.text)}>
-                {qr.icon && <Ionicons name={qr.icon} size={14} color="#ea8025" style={{ marginRight: 4 }} />}
+                {qr.icon && <Ionicons name={qr.icon} size={14} color="#b22830" style={{ marginRight: 4 }} />}
                 <Text style={styles.quickReplyText}>{qr.label}</Text>
               </Pressable>
             ))}
@@ -379,19 +371,19 @@ function TypingIndicator() {
       Animated.loop(
         Animated.sequence([
           Animated.delay(delay),
-          Animated.timing(dot, { toValue: -6, duration: 300, useNativeDriver: true }),
-          Animated.timing(dot, { toValue: 0, duration: 300, useNativeDriver: true }),
+          Animated.timing(dot, { toValue: -6, duration: 300, useNativeDriver: Platform.OS !== 'web' }),
+          Animated.timing(dot, { toValue: 0, duration: 300, useNativeDriver: Platform.OS !== 'web' }),
           Animated.delay(600),
         ])
       ).start()
     animate(dot1, 0)
     animate(dot2, 150)
     animate(dot3, 300)
-  }, [])
+  }, [dot1, dot2, dot3])
 
   return (
     <View style={styles.aiBubbleWrap}>
-      <LinearGradient colors={['#ea8025', '#c45c10']} style={styles.aiAvatar}>
+      <LinearGradient colors={[colors.primary, colors.primary]} style={styles.aiAvatar}>
         <Ionicons name="sparkles" size={16} color="#fff" />
       </LinearGradient>
       <View style={[styles.aiBubble, { flexDirection: 'row', gap: 4, paddingVertical: 14, paddingHorizontal: 16 }]}>
@@ -412,11 +404,11 @@ function MicPulse() {
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(scale, { toValue: 1.25, duration: 500, useNativeDriver: true }),
-        Animated.timing(scale, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.timing(scale, { toValue: 1.25, duration: 500, useNativeDriver: Platform.OS !== 'web' }),
+        Animated.timing(scale, { toValue: 1, duration: 500, useNativeDriver: Platform.OS !== 'web' }),
       ])
     ).start()
-  }, [])
+  }, [scale])
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
       <LinearGradient colors={['#ef4444', '#dc2626']} style={styles.micPulseGrad}>
@@ -427,29 +419,51 @@ function MicPulse() {
 }
 
 // ─── MAIN SCREEN ──────────────────────────────────────────────────────────────
-export function ChatScreen({ navigation }) {
-  const { user } = useUser()
-  const userId = getUserId(user)
-  const userName = getUserDisplayName(user)
-  const queryClient = useQueryClient()
+export function ChatScreen({ navigation, route }) {
+  const { activeUserId } = useUser()
+  return <ChatWorkspace key={activeUserId} navigation={navigation} route={route} />
+}
+function ChatWorkspace({ navigation, route }) {
+  const { activeUserId, user } = useUser()
+  const chat = useAgentChat(activeUserId, getUserDisplayName(user), navigation)
+  const [selectedProducts, setSelectedProducts] = useState([])
+  const [mode, setMode] = useState(route?.params?.mode === 'staff' ? 'staff' : 'ai')
+  const insets = useSafeAreaInsets()
+  useEffect(() => { if (route?.params?.mode) setMode(route.params.mode === 'staff' ? 'staff' : 'ai') }, [route?.params?.mode])
+  return <View style={{ flex: 1, backgroundColor: '#fff', paddingTop: insets.top }}><View style={{ flexDirection: 'row', padding: 10, gap: 8, borderBottomWidth: 1, borderColor: '#eee' }}>{[['ai','Trợ lý AI','sparkles-outline'],['staff','Nhân viên','headset-outline']].map(([id,label,icon])=><Pressable key={id} accessibilityRole="tab" accessibilityLabel={label} accessibilityState={{ selected: mode === id }} onPress={()=>setMode(id)} style={{ flex: 1, padding: 11, backgroundColor: mode === id ? colors.primary : '#f5f5f5', borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}><Ionicons name={icon} size={17} color={mode===id?'#fff':'#555'}/><Text style={{ fontSize: 13, fontWeight: '500', color: mode===id?'#fff':'#555' }}>{label}</Text></Pressable>)}</View>{mode==='staff'?<StaffChatPanel navigation={navigation}/>:<AIChatPanel navigation={navigation} chat={chat} selectedProducts={selectedProducts} setSelectedProducts={setSelectedProducts}/>}</View>
+}
+function AIChatPanel({ navigation, chat, selectedProducts, setSelectedProducts }) {
+  const localMessages = chat.messages, isTyping = chat.busy
+  const { activeUserId } = useUser()
+  const userId = activeUserId
   const flatListRef = useRef(null)
 
   const [inputText, setInputText] = useState('')
-  const [isTyping, setIsTyping] = useState(false)
-  const [localMessages, setLocalMessages] = useState([]) // AI messages (local)
-  const [conversationId, setConversationId] = useState(null)
   const fadeAnim = useRef(new Animated.Value(0)).current
 
   // Voice
   const [isRecording, setIsRecording] = useState(false)
   const [voiceLoading, setVoiceLoading] = useState(false)
   const recordingRef = useRef(null)
+  const speechRef = useRef(null)
+  const recordingRequested = useRef(false)
 
   useEffect(() => {
-    Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start()
+    // Wait for the rich cards/text to finish layout before scrolling the last answer into view.
+    const timer = globalThis.setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 250)
+    return () => globalThis.clearTimeout(timer)
+  }, [localMessages.length, isTyping])
+  useEffect(() => () => {
+    recordingRequested.current = false
+    speechRef.current?.abort()
+    recordingRef.current?.stopAndUnloadAsync().catch(() => {})
   }, [])
 
-  // ─── Load products for suggestions ───────────────────────────────────────
+  useEffect(() => {
+    Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: Platform.OS !== 'web' }).start()
+  }, [fadeAnim])
+
+  // ─── Load catalog only for images of server-selected cards ───────────────────────────────────────
   const productsQuery = useQuery({
     queryKey: ['customer', 'products-all'],
     queryFn: async () => {
@@ -459,312 +473,67 @@ export function ChatScreen({ navigation }) {
     staleTime: 5 * 60 * 1000,
   })
 
-  const branchesQuery = useQuery({
-    queryKey: ['customer', 'branches-all'],
-    queryFn: async () => {
-      const res = await apiClient.get('/users/branches/public')
-      return safeArray(res?.items || res)
-    },
-    staleTime: 5 * 60 * 1000,
-  })
-
-  const ordersQuery = useQuery({
-    queryKey: ['customer', 'orders', userId],
-    queryFn: async () => {
-      const res = await apiClient.get(`/customers/${userId}/orders?limit=5`)
-      return safeArray(res?.items || res)
-    },
-    enabled: Boolean(userId) && !String(userId).startsWith('anon-'),
-    staleTime: 30 * 1000,
-  })
-
-  const vouchersQuery = useQuery({
-    queryKey: ['customer', 'vouchers'],
-    queryFn: async () => {
-      const res = await apiClient.get('/vouchers?trang_thai=ACTIVE&limit=10')
-      return safeArray(res?.items || res)
-    },
-    staleTime: 2 * 60 * 1000,
-  })
-
-  // ─── Open conversation ────────────────────────────────────────────────────
-  const openConvMutation = useMutation({
-    mutationFn: async () =>
-      apiClient.post('/chat/conversations/open', {
-        customer_user_id: userId,
-        customer_name: userName,
-      }),
-    onSuccess: (data) => {
-      if (data?.conversation?.ma_hoi_thoai) setConversationId(data.conversation.ma_hoi_thoai)
-    },
-  })
-
-  useEffect(() => {
-    if (userId && !conversationId) openConvMutation.mutate()
-  }, [userId])
-
-  // ─── Server messages ──────────────────────────────────────────────────────
-  const serverMsgQuery = useQuery({
-    queryKey: ['chat', 'messages', conversationId],
-    queryFn: async () =>
-      apiClient.get(
-        `/chat/conversations/${conversationId}/messages?user_id=${encodeURIComponent(userId)}&role=CUSTOMER`
-      ),
-    enabled: Boolean(conversationId),
-    refetchInterval: 5000,
-    staleTime: 3000,
-  })
-
-  const serverMessages = serverMsgQuery.data?.items || []
-
-  // ─── Add AI greeting on first load ───────────────────────────────────────
-  useEffect(() => {
-    if (localMessages.length === 0) {
-      setLocalMessages([
-        {
-          id: 'greeting',
-          role: 'ai',
-          text: `Xin chào${userName && userName !== 'Khách' ? ` ${userName}` : ''}! Mình là trợ lý AI của Avengers Coffee.\n\nMình có thể giúp bạn:`,
-          quickReplies: QUICK_REPLIES.slice(0, 4),
-        },
-      ])
-    }
-  }, [])
-
-  // ─── Send to server ───────────────────────────────────────────────────────
-  const sendServerMsg = useMutation({
-    mutationFn: async (content) =>
-      apiClient.post(`/chat/conversations/${conversationId}/messages`, {
-        sender_user_id: userId,
-        sender_name: userName,
-        sender_role: 'CUSTOMER',
-        content,
-      }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['chat', 'messages', conversationId] }),
-  })
-
-  // ─── Add to cart ──────────────────────────────────────────────────────────
-  const addToCartMutation = useMutation({
-    mutationFn: async (product) =>
-      apiClient.post('/cart', {
-        ma_nguoi_dung: userId,
-        ma_san_pham: product.id || product.ma_san_pham,
-        ten_san_pham: product.ten_san_pham,
-        gia_ban: product.gia_ban,
-        hinh_anh_url: product.hinh_anh_url,
-        size: 'Nhỏ',
-        so_luong: 1,
-      }),
-    onSuccess: (_, product) => {
-      queryClient.invalidateQueries({ queryKey: ['customer', 'cart', userId] })
-      appendAIMessage({
-        id: Date.now() + 'cart',
-        role: 'ai',
-        text: `✅ Đã thêm **${product.ten_san_pham}** vào giỏ hàng!\n\nBạn có muốn tiếp tục chọn thêm món hay vào giỏ để thanh toán?`,
-        quickReplies: [
-          { id: 'more', label: '➕ Thêm món khác', text: 'Tôi muốn xem thêm menu' },
-          { id: 'cart', label: '🛒 Vào giỏ hàng', text: 'Tôi muốn thanh toán ngay' },
-        ],
-      })
-    },
-    onError: () => {
-      appendAIMessage({ id: Date.now() + 'err', role: 'ai', text: '😢 Không thể thêm vào giỏ. Vui lòng thử lại!' })
-    },
-  })
-
-  // ─── Helpers ──────────────────────────────────────────────────────────────
-  function appendAIMessage(msg) {
-    setLocalMessages(prev => [...prev, msg])
-    setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 200)
-  }
-
-  function appendUserMessage(text) {
-    const msg = { id: `user-${Date.now()}`, role: 'user', text, time: formatTime(new Date()) }
-    setLocalMessages(prev => [...prev, msg])
-    setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100)
-  }
-
-  // ─── Process user message (Direct AI API call + Rich UI Cards) ───────────
-  async function processMessage(text) {
-    appendUserMessage(text)
-    setIsTyping(true)
-
-    try {
-      const history = localMessages
-        .slice(-6)
-        .map((m) => `${m.role === 'user' ? userName : 'AI'}: ${m.text || ''}`)
-        .join('\n')
-
-      const textLower = text.toLowerCase()
-
-      // Direct navigation if requested
-      if (/giỏ hàng|thanh toán ngay|checkout/.test(textLower)) {
-        setTimeout(() => navigation.navigate('Cart'), 800)
-      }
-      if (/tất cả đơn|xem đơn|lịch sử/.test(textLower)) {
-        setTimeout(() => navigation.navigate('Orders'), 800)
-      }
-
-      // Order intent check if user is placing an order
-      if (/(đặt|mua|order|cho tôi|lấy)\s*(\d+)?/.test(textLower)) {
-        try {
-          const orderRes = await apiClient.post('/ai/chat/order-intent', { text, user_id: userId, history })
-          const d = orderRes?.data || orderRes
-          if (d?.can_order && d?.items?.length > 0) {
-            appendAIMessage({
-              id: Date.now() + 'ai-order',
-              role: 'ai',
-              text: d.message || `Mình nhận thấy bạn muốn đặt hàng. Tổng tạm tính khoảng ${Number(d.estimated_total || 0).toLocaleString('vi-VN')}đ.`,
-              quickReplies: [{ id: 'cart', label: '🛒 Vào giỏ hàng', text: 'Xem giỏ hàng' }],
-            })
-            return
-          }
-        } catch { /* proceed to main AI chat */ }
-      }
-
-      // Call primary AI Chat API (/ai/chat)
-      const chatRes = await apiClient.post('/ai/chat', {
-        user_id: userId,
-        user_name: userName,
-        content: text,
-        history,
-      })
-
-      const resData = chatRes?.data || chatRes
-      let replyText = resData?.reply || resData?.message
-
-      if (replyText) {
-        const productsAll = productsQuery.data || []
-        const branchesAll = branchesQuery.data || []
-        const ordersAll = ordersQuery.data || []
-        const vouchersAll = vouchersQuery.data || []
-
-        let stores = resData.stores
-        let products = resData.products
-        let vouchers = resData.vouchers
-        let orders = resData.orders
-        let type = resData.type
-
-        // 1. Store cards
-        if ((!stores || stores.length === 0) && (/(cửa hàng|chi nhánh|địa chỉ|ở đâu|gần đây)/.test(textLower) || /(cửa hàng|chi nhánh|địa chỉ)/.test(replyText.toLowerCase()))) {
-          stores = branchesAll.slice(0, 4)
-        }
-
-        // 2. Product cards
-        if ((!products || products.length === 0) && (/(thực đơn|menu|đồ uống|cà phê|phê|trà|sữa|đồ ăn|bánh|matcha|latte|có gì ngon|món|xem menu|đặt)/.test(textLower) || /(sản phẩm|đồ uống|menu|món|matcha|latte)/.test(replyText.toLowerCase()))) {
-          let prods = productsAll
-          const searchKeys = ['matcha', 'latte', 'americano', 'trà sữa', 'bánh', 'cà phê', 'phin', 'espresso', 'cold brew', 'trà']
-          const matchedKey = searchKeys.find((k) => textLower.includes(k) || replyText.toLowerCase().includes(k))
-          if (matchedKey && prods.length > 0) {
-            const filtered = prods.filter((p) =>
-              (p.ten_san_pham || '').toLowerCase().includes(matchedKey) ||
-              (p.ten_danh_muc || p.danh_muc || '').toLowerCase().includes(matchedKey)
-            )
-            if (filtered.length > 0) prods = filtered
-          }
-          products = prods.slice(0, 6)
-        }
-
-        // 3. Voucher cards
-        if ((!vouchers || vouchers.length === 0) && (/(khuyến mãi|voucher|giảm giá|ưu đãi|mã)/.test(textLower) || /(voucher|khuyến mãi|ưu đãi)/.test(replyText.toLowerCase()))) {
-          vouchers = vouchersAll.slice(0, 4)
-          type = 'voucher'
-        }
-
-        // 4. Order cards
-        if ((!orders || orders.length === 0) && (/(đơn hàng|đơn của tôi|trạng thái.*đơn|theo dõi.*đơn|giao chưa)/.test(textLower) || /(đơn hàng)/.test(replyText.toLowerCase()))) {
-          orders = ordersAll.slice(0, 3)
-        }
-
-        // 5. Payment info
-        if (/(thanh toán|payment|vnpay|ví|momo|atm)/.test(textLower)) {
-          type = 'payment'
-        }
-
-        // Clean up bullet list text lines if cards are present
-        const hasCards = Boolean(products?.length || stores?.length || vouchers?.length || orders?.length)
-        if (hasCards) {
-          const lines = replyText.split('\n')
-          const nonBulletLines = lines.filter((l) => {
-            const trimmed = l.trim()
-            if (/^\s*[-*•\d+.]\s+/.test(l)) return false
-            if (/^\*\*.+\*\*:?$/.test(trimmed)) return false
-            return true
-          })
-          const cleaned = nonBulletLines.join('\n').replace(/\n{3,}/g, '\n\n').trim()
-          if (cleaned) replyText = cleaned
-        }
-
-        appendAIMessage({
-          id: Date.now() + 'ai',
-          role: 'ai',
-          text: replyText,
-          type,
-          products,
-          orders,
-          stores,
-          vouchers,
-          quickReplies: QUICK_REPLIES.slice(0, 3),
-        })
-        return
-      }
-    } catch (e) {
-      console.error('[ChatScreen Mobile] AI API error:', e)
-    } finally {
-      setIsTyping(false)
-    }
-
-    // Fallback response
-    appendAIMessage({
-      id: Date.now() + 'fallback',
-      role: 'ai',
-      text: 'Xin lỗi, mình chưa thể xử lý yêu cầu này ngay bây giờ. Vui lòng thử lại câu hỏi nhé!',
-      quickReplies: QUICK_REPLIES.slice(0, 4),
-    })
-  }
-
-  // ─── Handlers ─────────────────────────────────────────────────────────────
-  const handleSend = useCallback(async () => {
+  const processMessage = (text, productId, action) => chat.ready && chat.controller.send(text, productId, productsQuery.data || [], action)
+  const handleSend = async () => {
     const text = inputText.trim()
-    if (!text) return
+    if (!text || isTyping || !chat.ready) return
     setInputText('')
     await processMessage(text)
-  }, [inputText, conversationId, userId])
-
-  const handleQuickReply = useCallback((text) => {
-    processMessage(text)
-  }, [conversationId, userId, productsQuery.data, branchesQuery.data, ordersQuery.data])
-
-  const handleProductAdd = useCallback((product) => {
-    if (!userId || String(userId).startsWith('anon-')) {
-      Alert.alert('Cần đăng nhập', 'Vui lòng đăng nhập để thêm vào giỏ hàng')
-      return
-    }
-    addToCartMutation.mutate(product)
-  }, [userId])
-
-  const handleOrderTrack = useCallback((order) => {
-    navigation.navigate('Orders')
-  }, [navigation])
+  }
+  const handleQuickReply = text => processMessage(text)
+  const handleProductAdd = (product, snapshot) => {
+    const id = productIdentity(product), name = product.ten_san_pham || product.product_name || product.name
+    if (snapshot) setSelectedProducts(prev => toggleProductSelection(prev, product, snapshot))
+    else if (id && name) processMessage(`Thêm ${name} vào giỏ`, id)
+  }
+  const submitSelection = async () => {
+    try {
+      const action = selectionAction(selectedProducts)
+      await processMessage(actionMessage(action, selectedProducts), null, action)
+      if (!chat.controller.snapshot().lastError) setSelectedProducts([])
+    } catch (error) { Alert.alert('Chọn món', error.message) }
+  }
+  const handleOrderTrack = () => navigation.navigate('Orders')
+  const handleProductDetail = productId => navigation.navigate('ProductDetail', { productId })
 
   // ─── Voice ────────────────────────────────────────────────────────────────
   const startRecording = async () => {
+    if (isTyping || voiceLoading || recordingRequested.current) return
+    recordingRequested.current = true
+    if (Platform.OS === 'web') {
+      const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition
+      if (!Recognition) { recordingRequested.current = false; Alert.alert('Giọng nói', 'Trình duyệt chưa hỗ trợ nhận diện giọng nói. Vui lòng dùng Google Chrome.'); return }
+      const recognition = new Recognition()
+      recognition.lang = 'vi-VN'; recognition.interimResults = false; recognition.maxAlternatives = 1
+      recognition.onresult = event => { const text = event.results?.[0]?.[0]?.transcript; if (text) processMessage(text) }
+      recognition.onerror = () => { Alert.alert('Giọng nói', 'Chưa nhận được giọng nói. Bạn hãy thử lại.') }
+      recognition.onend = () => { speechRef.current = null; recordingRequested.current = false; setIsRecording(false); setVoiceLoading(false) }
+      speechRef.current = recognition
+      try { recognition.start(); setIsRecording(true) }
+      catch { speechRef.current = null; recordingRequested.current = false; setIsRecording(false) }
+      return
+    }
     try {
       const { status } = await Audio.requestPermissionsAsync()
       if (status !== 'granted') {
+        recordingRequested.current = false
         Alert.alert('Cần quyền mic', 'Hãy cấp quyền microphone để dùng tính năng giọng nói.')
         return
       }
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true })
       const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY)
+      if (!recordingRequested.current) { await recording.stopAndUnloadAsync(); return }
       recordingRef.current = recording
       setIsRecording(true)
-    } catch (err) {
+    } catch {
+      recordingRequested.current = false
       Alert.alert('Lỗi', 'Không thể bật microphone!')
     }
   }
 
   const stopRecordingAndProcess = async () => {
+    recordingRequested.current = false
+    if (speechRef.current) { speechRef.current.stop(); setIsRecording(false); return }
     if (!recordingRef.current) return
     setIsRecording(false)
     setVoiceLoading(true)
@@ -778,6 +547,7 @@ export function ChatScreen({ navigation }) {
       formData.append('audio', { uri, name: 'audio.m4a', type: 'audio/m4a' })
       formData.append('user_id', userId || '')
       formData.append('language', 'vi')
+      formData.append('transcription_only', 'true')
 
       const result = await apiClient.postForm('/ai/voice-order', formData)
       if (result?.transcript) {
@@ -791,41 +561,8 @@ export function ChatScreen({ navigation }) {
   }
 
   // ─── Combine local + server messages ─────────────────────────────────────
-  const allMessages = useMemo(() => {
-    const result = []
-    let lastDate = ''
-
-    // Server messages (staff chat)
-    const staffMsgs = serverMessages
-      .filter(m => m.vai_tro_nguoi_gui === 'STAFF' || m.vai_tro_nguoi_gui === 'MANAGER')
-      .map(m => ({ ...m, _source: 'staff' }))
-
-    // Customer server messages
-    const customerServerMsgs = serverMessages
-      .filter(m => m.vai_tro_nguoi_gui === 'CUSTOMER')
-      .map(m => ({ ...m, _source: 'customerServer' }))
-
-    // Merge local + server by date logic (simplified: append local at end)
-    const combined = [
-      ...localMessages,
-      ...staffMsgs,
-    ]
-
-    // Add date separators for staff messages
-    for (const msg of combined) {
-      if (msg._source === 'staff') {
-        const d = formatDate(msg.ngay_tao)
-        if (d && d !== lastDate) {
-          result.push({ type: 'date', date: d, id: `date-${d}` })
-          lastDate = d
-        }
-      }
-      result.push(msg)
-    }
-    return result
-  }, [localMessages, serverMessages])
-
-  const isLoading = openConvMutation.isPending
+  const allMessages = localMessages
+  const isLoading = !chat.ready
 
   return (
     <Animated.View style={[styles.screen, { opacity: fadeAnim }]}>
@@ -835,20 +572,18 @@ export function ChatScreen({ navigation }) {
           <Ionicons name="arrow-back" size={22} color="#1e293b" />
         </Pressable>
         <View style={styles.headerInfo}>
-          <LinearGradient colors={['#ea8025', '#c45c10']} style={styles.headerAvatar}>
+          <LinearGradient colors={[colors.primary, colors.primary]} style={styles.headerAvatar}>
             <Ionicons name="sparkles" size={20} color="#fff" />
           </LinearGradient>
           <View style={styles.onlineDot} />
-          <View>
-            <Text style={styles.headerTitle}>Trợ lý Avengers Coffee</Text>
-            <Text style={styles.headerSubtitle}>🟢 Luôn sẵn sàng hỗ trợ bạn</Text>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text numberOfLines={1} style={styles.headerTitle}>Trợ lý Avengers Coffee</Text>
+            <Text numberOfLines={1} style={styles.headerSubtitle}>Gợi ý món & giải đáp với AI</Text>
           </View>
         </View>
-        <Pressable style={styles.voiceBadge} onPressIn={startRecording} onPressOut={stopRecordingAndProcess}>
-          <Ionicons name={isRecording ? 'stop' : 'mic-outline'} size={16} color={isRecording ? '#ef4444' : colors.primary} />
-          <Text style={[styles.voiceBadgeText, isRecording && { color: '#ef4444' }]}>
-            {isRecording ? 'Đang nghe...' : 'Voice'}
-          </Text>
+        <Pressable accessibilityLabel="Hội thoại mới" disabled={isTyping} onPress={() => chat.controller.reset(chat.greeting)} style={styles.backBtn}><Ionicons name="refresh-outline" size={18} color={colors.primary} /></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Ghi âm tin nhắn" style={styles.backBtn} onPressIn={startRecording} onPressOut={stopRecordingAndProcess}>
+          <Ionicons name={isRecording ? 'stop' : 'mic-outline'} size={18} color={isRecording ? '#ef4444' : colors.primary} />
         </Pressable>
       </View>
 
@@ -871,14 +606,18 @@ export function ChatScreen({ navigation }) {
             contentContainerStyle={styles.messagesList}
             showsVerticalScrollIndicator={false}
             onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            ListFooterComponent={isTyping ? <TypingIndicator /> : null}
+            ListFooterComponent={<View>{isTyping && <TypingIndicator />}{chat.productConfiguration?.items?.length > 0 && <CustomerChoicePanel key={chat.productConfiguration.snapshot} configuration={chat.productConfiguration} busy={isTyping} onSubmit={action => processMessage(actionMessage(action, chat.productConfiguration.items), null, action)} />}<CheckoutCard pending={chat.pendingOrder} busy={isTyping} onConfirm={() => chat.controller.confirm()} /></View>}
             renderItem={({ item }) => {
               if (item.type === 'date') return <DateSeparator date={item.date} />
               if (item._source === 'staff') return <StaffBubble message={item} />
-              if (item.role === 'user') return <UserBubble text={item.text} time={item.time} />
+              if (item.role === 'user') return <UserBubble text={item.text} time={formatTime(item.time)} />
               if (item.role === 'ai') return (
                 <AIBubble
                   message={item}
+                  chat={chat}
+                  selectedProducts={selectedProducts}
+                  onProductDetail={handleProductDetail}
+                  onLogin={() => navigation.navigate('Login')}
                   onProductAdd={handleProductAdd}
                   onOrderTrack={handleOrderTrack}
                   onQuickReply={handleQuickReply}
@@ -887,6 +626,8 @@ export function ChatScreen({ navigation }) {
               return null
             }}
           />
+
+          <SelectionTray selected={selectedProducts} busy={isTyping} onRemove={product => setSelectedProducts(prev => prev.filter(row => productIdentity(row) !== productIdentity(product)))} onSubmit={submitSelection} />
 
           {/* Recording overlay */}
           {isRecording && (
@@ -931,9 +672,10 @@ export function ChatScreen({ navigation }) {
                 placeholder="Hỏi AI về menu, giá, khuyến mãi..."
                 placeholderTextColor="#94a3b8"
                 multiline
-                maxLength={500}
+                maxLength={2000}
                 style={styles.textInput}
                 onSubmitEditing={handleSend}
+                onKeyPress={event => { if (Platform.OS === 'web' && event.nativeEvent.key === 'Enter' && !event.nativeEvent.shiftKey) { event.preventDefault(); handleSend() } }}
                 blurOnSubmit={false}
               />
             </View>
@@ -958,12 +700,14 @@ export function ChatScreen({ navigation }) {
 
             {/* Send button */}
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Gửi tin nhắn"
               onPress={handleSend}
-              disabled={!inputText.trim() || sendServerMsg.isPending}
+              disabled={!inputText.trim() || isTyping}
               style={[styles.iconBtn, !inputText.trim() && { opacity: 0.5 }]}
             >
               <LinearGradient
-                colors={inputText.trim() ? ['#ea8025', '#c45c10'] : ['#e2e8f0', '#cbd5e1']}
+                colors={inputText.trim() ? [colors.primary, colors.primary] : ['#e2e8f0', '#cbd5e1']}
                 style={styles.iconBtnGrad}
               >
                 <Ionicons name="send" size={16} color={inputText.trim() ? '#fff' : '#94a3b8'} />
@@ -1024,14 +768,14 @@ const richStyles = StyleSheet.create({
   productPrice: {
     fontSize: 13,
     fontWeight: '900',
-    color: '#ea8025',
+    color: '#b22830',
     marginTop: 4,
   },
   productAddBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#ea8025',
+    backgroundColor: '#b22830',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -1068,19 +812,19 @@ const richStyles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  orderTotal: { fontSize: 15, fontWeight: '900', color: '#ea8025' },
+  orderTotal: { fontSize: 15, fontWeight: '900', color: '#b22830' },
   trackBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#f3f4f6',
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderWidth: 1,
     borderColor: '#fdba74',
   },
-  trackBtnText: { fontSize: 12, fontWeight: '700', color: '#ea8025' },
+  trackBtnText: { fontSize: 12, fontWeight: '700', color: '#b22830' },
   // Store card
   storeCard: {
     backgroundColor: '#fff',
@@ -1096,7 +840,7 @@ const richStyles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -1111,18 +855,18 @@ const richStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#f3f4f6',
     borderRadius: 10,
     paddingVertical: 8,
     borderWidth: 1,
     borderColor: '#fdba74',
   },
   storeBtnPrimary: {
-    backgroundColor: '#ea8025',
-    borderColor: '#ea8025',
+    backgroundColor: '#b22830',
+    borderColor: '#b22830',
     flex: 1.5,
   },
-  storeBtnText: { fontSize: 12, fontWeight: '700', color: '#ea8025' },
+  storeBtnText: { fontSize: 12, fontWeight: '700', color: '#b22830' },
   // Info card
   infoCard: {
     backgroundColor: '#f8fafc',
@@ -1143,14 +887,14 @@ const richStyles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 10,
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#fdba74',
     flexShrink: 0,
   },
-  voucherBadgeText: { fontSize: 12, fontWeight: '900', color: '#ea8025', textAlign: 'center' },
+  voucherBadgeText: { fontSize: 12, fontWeight: '900', color: '#b22830', textAlign: 'center' },
   voucherName: { fontSize: 13, fontWeight: '700', color: '#1e293b' },
   voucherCode: { fontSize: 11, color: '#64748b', marginTop: 2 },
 })
@@ -1161,7 +905,7 @@ const styles = StyleSheet.create({
 
   // Header
   header: {
-    paddingTop: 52,
+    paddingTop: 12,
     paddingHorizontal: 16,
     paddingBottom: 12,
     backgroundColor: '#fff',
@@ -1204,7 +948,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#f3f4f6',
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -1258,7 +1002,7 @@ const styles = StyleSheet.create({
   // User bubble
   userBubbleRow: { alignSelf: 'flex-end', marginBottom: 14, maxWidth: '80%' },
   userBubble: {
-    backgroundColor: '#ea8025',
+    backgroundColor: '#b22830',
     borderRadius: 18,
     borderBottomRightRadius: 4,
     paddingHorizontal: 14,
@@ -1272,14 +1016,14 @@ const styles = StyleSheet.create({
   quickReplyChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#f3f4f6',
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderWidth: 1,
     borderColor: '#fdba74',
   },
-  quickReplyText: { fontSize: 12, fontWeight: '700', color: '#ea8025' },
+  quickReplyText: { fontSize: 12, fontWeight: '700', color: '#b22830' },
 
   // Date separator
   dateSeparator: { flexDirection: 'row', alignItems: 'center', gap: 8, marginVertical: 12 },

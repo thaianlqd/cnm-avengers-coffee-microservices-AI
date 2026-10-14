@@ -1,8 +1,9 @@
+import { uiText as ui, useUiLanguage } from "../../lib/uiText";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { 
-  MapPinIcon, 
-  MagnifyingGlassIcon, 
-  XMarkIcon, 
+import {
+  MapPinIcon,
+  MagnifyingGlassIcon,
+  XMarkIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/solid';
 import { searchAddressSuggestions, getCurrentLocation, reverseGeocode } from '../../lib/geocodingService';
@@ -14,6 +15,7 @@ export default function AddressAutocompleteInput({
   onSelectAddress,
   placeholder = 'Nhập số nhà, tên đường (Ví dụ: 28 Nguyễn Văn Linh)...',
 }) {
+  useUiLanguage();
   const [query, setQuery] = useState(value || '');
   const [suggestions, setSuggestions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -148,12 +150,12 @@ export default function AddressAutocompleteInput({
           {isLocating ? (
             <>
               <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" />
-              <span>Đang định vị GPS...</span>
+              <span>{ui("Đang định vị GPS...")}</span>
             </>
           ) : (
             <>
               <MapPinIcon className="w-3.5 h-3.5 text-blue-600" />
-              <span>Lấy vị trí GPS</span>
+              <span>{ui("Lấy vị trí GPS")}</span>
             </>
           )}
         </button>
@@ -202,8 +204,8 @@ export default function AddressAutocompleteInput({
       {isOpen && suggestions.length > 0 && (
         <div className="absolute left-0 right-0 top-full mt-1.5 max-h-[260px] overflow-y-auto rounded-xl bg-white border border-gray-200 shadow-[0_12px_36px_rgba(0,0,0,0.16)] py-1.5 z-50 divide-y divide-gray-100 animate-fadeIn">
           <div className="px-3 py-1 bg-gray-50 text-[10px] font-extrabold uppercase tracking-wider text-gray-500 flex items-center justify-between">
-            <span>Gợi ý địa chỉ trên bản đồ</span>
-            <span className="text-gray-400 font-normal">Bấm để tự động điền</span>
+            <span>{ui("Gợi ý địa chỉ trên bản đồ")}</span>
+            <span className="text-gray-400 font-normal">{ui("Bấm để tự động điền")}</span>
           </div>
 
           {suggestions.map((item) => (

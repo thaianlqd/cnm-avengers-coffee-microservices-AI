@@ -1,9 +1,12 @@
+import { Header, IconButton, Skeleton, EmptyState, Reveal } from '../components/Experience'
+import { useIsFocused } from '@react-navigation/native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import React, { useState } from 'react'
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
+
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
@@ -42,18 +45,20 @@ function formatRelativeTime(dateStr) {
 export function NotificationScreen({ navigation }) {
   const { shipper } = useShipper()
   const queryClient = useQueryClient()
+  const focused = useIsFocused()
   const [filter, setFilter] = useState('ALL')
 
   const {
     data: notifData,
     isLoading,
+    isError,
     refetch,
     isRefetching,
   } = useQuery({
     queryKey: ['shipper-notifications', shipper?.id],
     queryFn: () => apiClient.get(`/shippers/${shipper.id}/notifications`),
-    enabled: !!shipper?.id,
-    refetchInterval: 30000,
+    enabled: focused && !!shipper?.id,
+    refetchInterval: focused ? 30000 : false,
     select: (res) => (Array.isArray(res) ? res : res?.items || res?.data || []),
   })
 
@@ -69,7 +74,7 @@ export function NotificationScreen({ navigation }) {
     const isRead = item.da_doc !== false && item.is_read !== false
 
     return (
-      <View style={[styles.card, !isRead && styles.cardUnread]}>
+      <Reveal><View style={[styles.card, !isRead && styles.cardUnread]}>
         <View style={[styles.iconWrap, { backgroundColor: meta.bg }]}>
           <Ionicons name={meta.icon} size={22} color={meta.color} />
         </View>
@@ -85,7 +90,7 @@ export function NotificationScreen({ navigation }) {
           </Text>
           <Text style={styles.time}>{formatRelativeTime(item.created_at || item.tao_luc)}</Text>
         </View>
-      </View>
+      </View></Reveal>
     )
   }
 
@@ -97,19 +102,8 @@ export function NotificationScreen({ navigation }) {
   ]
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <View>
-          <Text style={styles.headerTitle}>Thông báo</Text>
-          {notifications.length > 0 && (
-            <Text style={styles.headerSub}>{notifications.length} thông báo</Text>
-          )}
-        </View>
-        <View style={{ width: 40 }} />
-      </View>
+    <SafeAreaView edges={['top','left','right']} style={styles.safeArea}>
+      <Header title="Thông báo" subtitle={`${notifications.length} thông báo`} onBack={() => navigation.goBack()} right={<IconButton name="refresh-outline" label="Làm mới thông báo" onPress={refetch} />} />
 
       {/* Filter Tabs */}
       <View style={styles.filterRow}>
@@ -127,11 +121,10 @@ export function NotificationScreen({ navigation }) {
       </View>
 
       {isLoading ? (
-        <View style={styles.loading}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      ) : (
+        <Skeleton />
+      ) : isError ? <EmptyState title="Chưa tải được thông báo" description="Kiểm tra kết nối và thử lại." retry={refetch} /> : (
         <FlatList
+          initialNumToRender={6} maxToRenderPerBatch={6} windowSize={5}
           data={filteredNotifs}
           keyExtractor={(item, index) => String(item.id || index)}
           renderItem={renderItem}

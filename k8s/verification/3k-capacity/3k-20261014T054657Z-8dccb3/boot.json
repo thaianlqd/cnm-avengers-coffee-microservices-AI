@@ -1,0 +1,13 @@
+{
+  "observed_at": "2026-10-14T05:48:02.588404+00:00",
+  "phase": "ready",
+  "k6_version": "k6 v2.3.0 (commit/e088784614, go1.26.8, linux/amd64)",
+  "k6_sha256": "e001bbf39ba67424a85c9c8516440ba5c73ecf7a6021be96c76194380c15f260",
+  "architecture": "x86_64",
+  "cpu_count": 2,
+  "memory_KiB": 7962852,
+  "workload_sha256": "a20876cc25e03840a5453e20c5accd6dcfa2a0315f6bde67b73d629e84a84217",
+  "ssh_listener_ready": true,
+  "fd_soft": 65536,
+  "fd_hard": 524288
+}

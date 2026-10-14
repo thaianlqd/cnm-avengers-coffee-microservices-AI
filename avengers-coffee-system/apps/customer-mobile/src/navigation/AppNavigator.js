@@ -1,5 +1,7 @@
-import React from 'react'
-import { ActivityIndicator, View, Text, StyleSheet, Platform } from 'react-native'
+import { useCart } from '../hooks/useCart'
+import React, { useState, useEffect } from 'react'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { ActivityIndicator, View, Text, StyleSheet, Platform, Pressable, Image } from 'react-native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { Ionicons } from '@expo/vector-icons'
@@ -7,7 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { useQuery } from '@tanstack/react-query'
 import { useUser } from '../context/UserContext'
 import apiClient from '../lib/apiClient'
-import { getUserId, normalizeCartItem, safeArray } from '../lib/customerData'
+import { getUserId, normalizeCartItem, normalizeProduct, safeArray } from '../lib/customerData'
 import { colors, shadows, radius } from '../theme'
 import { LoginScreen } from '../screens/LoginScreen'
 import { HomeScreen } from '../screens/HomeScreen'
@@ -26,14 +28,16 @@ import { GiftCardScreen } from '../screens/GiftCardScreen'
 import { AboutScreen } from '../screens/AboutScreen'
 import { SupportScreen } from '../screens/SupportScreen'
 import { SurveyScreen } from '../screens/SurveyScreen'
+import { ProductDetailScreen } from '../screens/ProductDetailScreen'
 
 const Stack = createNativeStackNavigator()
 const Tabs = createBottomTabNavigator()
 
 const TAB_ICONS = {
-  Home: { focused: 'sparkles', unfocused: 'sparkles-outline' },
+  Home: { focused: 'home', unfocused: 'home-outline' },
   Menu: { focused: 'cafe', unfocused: 'cafe-outline' },
   Cart: { focused: 'bag-handle', unfocused: 'bag-handle-outline' },
+  StoresTab: { focused: 'storefront', unfocused: 'storefront-outline' },
   Profile: { focused: 'person-circle', unfocused: 'person-circle-outline' },
 }
 
@@ -47,30 +51,19 @@ function TabBarIcon({ routeName, color, size, focused }) {
 }
 
 function MainTabs() {
-  const { user } = useUser()
-  const userId = getUserId(user)
-
-  const cartCountQuery = useQuery({
-    queryKey: ['customer', 'cart', userId, 'count'],
-    queryFn: async () => {
-      const response = await apiClient.get(`/cart/${userId}`)
-      return safeArray(response).map(normalizeCartItem).reduce((sum, item) => sum + Number(item.so_luong || 0), 0)
-    },
-    enabled: Boolean(userId),
-    staleTime: 10 * 1000,
-  })
-
-  const cartCount = cartCountQuery.data || 0
+  const insets = useSafeAreaInsets()
+  const { count: cartCount } = useCart()
 
   return (
-    <Tabs.Navigator
+    <Tabs.Navigator backBehavior="history"
       screenOptions={({ route }) => ({
         headerShown: false,
+        tabBarLabelPosition: 'below-icon',
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: '#8e8e93',
         tabBarStyle: {
-          height: Platform.OS === 'ios' ? 84 : 68,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+          height: 56 + Math.max(insets.bottom, 10),
+          paddingBottom: Math.max(insets.bottom, 10),
           paddingTop: 8,
           backgroundColor: '#ffffff',
           borderTopColor: colors.borderLight,
@@ -120,53 +113,35 @@ function MainTabs() {
           },
         }}
       />
+      <Tabs.Screen name="StoresTab" component={StoresScreen} options={{ title: 'Cửa hàng' }} />
       <Tabs.Screen
         name="Profile"
         component={ProfileScreen}
         options={{ title: 'Tài khoản' }}
       />
+      {Object.entries({ Orders: OrdersScreen, Vouchers: VouchersScreen, Stores: StoresScreen, News: NewsScreen, Wallet: WalletScreen, Membership: MembershipScreen, LuckyWheel: LuckyWheelScreen, GiftCard: GiftCardScreen, About: AboutScreen, Support: SupportScreen, Survey: SurveyScreen, Chat: ChatScreen, ProductDetail: ProductDetailScreen }).map(([name, component]) => <Tabs.Screen key={name} name={name} component={component} options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, title: ({ Orders: 'Đơn hàng', Vouchers: 'Ưu đãi', News: 'Tin tức', ProductDetail: 'Chi tiết sản phẩm' })[name] || name }} />)}
     </Tabs.Navigator>
   )
 }
 
 export function AppNavigator() {
   const { user, hydrated } = useUser()
-
-  if (!hydrated) {
-    return (
-      <View style={styles.loadingWrap}>
-        <LinearGradient
-          colors={['#1a0c05', '#3d1a08', '#f26b1d']}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={styles.loadingGradient}
-        >
-          <View style={styles.logoBadge}>
-            <Text style={styles.loadingEmoji}>☕</Text>
-          </View>
-          <ActivityIndicator size="large" color="#fff" />
-          <Text style={styles.loadingText}>Đang kết nối Avengers Coffee...</Text>
-          <Text style={styles.loadingBrand}>AVENGERS COFFEE</Text>
-        </LinearGradient>
-      </View>
-    )
+  const [introDone, setIntroDone] = useState(false), [booted, setBooted] = useState(false)
+  useEffect(() => { const timer = setTimeout(() => setIntroDone(true), 200); return () => clearTimeout(timer) }, [])
+  useQuery({ queryKey: ['customer', 'menu-products-all'], queryFn: async () => safeArray(await apiClient.get('/menu/san-pham', { timeout: 12000 })).map(p => ({ ...normalizeProduct(p), danh_muc_id: String(p.danhMuc?.ma_danh_muc || p.danh_muc_id || ''), trang_thai: Boolean(p.trang_thai) })), enabled: hydrated, staleTime: 60000, retry: false })
+  useEffect(() => { if (hydrated && introDone) setBooted(true) }, [hydrated, introDone])
+  if (!booted) {
+    return <View style={{ flex: 1, backgroundColor: '#b22830', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <Image source={require('../../assets/branding/splash-logo.png')} accessibilityLabel="Highlands Coffee" style={{ width: 200, height: 154 }} resizeMode="contain" />
+      <ActivityIndicator color="#fff" />
+      <Text style={{ color: '#f2dfe1', marginTop: 16, fontSize: 13 }}>Một ly cà phê. Một khoảnh khắc của bạn.</Text>
+    </View>
   }
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       <Stack.Screen name="Tabs" component={MainTabs} />
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Chat" component={ChatScreen} />
-      <Stack.Screen name="Wallet" component={WalletScreen} />
-      <Stack.Screen name="Orders" component={OrdersScreen} />
-      <Stack.Screen name="Vouchers" component={VouchersScreen} />
-      <Stack.Screen name="Stores" component={StoresScreen} />
-      <Stack.Screen name="News" component={NewsScreen} />
-      <Stack.Screen name="Membership" component={MembershipScreen} />
-      <Stack.Screen name="LuckyWheel" component={LuckyWheelScreen} />
-      <Stack.Screen name="GiftCard" component={GiftCardScreen} />
-      <Stack.Screen name="About" component={AboutScreen} />
-      <Stack.Screen name="Support" component={SupportScreen} />
-      <Stack.Screen name="Survey" component={SurveyScreen} />
+      <Stack.Screen name="Login" component={LoginScreen} options={{ gestureEnabled: false }} />
     </Stack.Navigator>
   )
 }
@@ -180,7 +155,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tabIconWrapActive: {
-    backgroundColor: '#fff4ed',
+    backgroundColor: '#f8eeee',
   },
   loadingWrap: {
     flex: 1,

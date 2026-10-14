@@ -318,6 +318,7 @@ export class AppController {
   @Roles('STAFF', 'MANAGER', 'ADMIN', 'FRANCHISEE', 'FRANCHISE_STAFF')
   @Get('staff/orders')
   getStaffOrders(
+    @CurrentUser() currentUser: AuthUser | null,
     @Query('status') status?: string,
     @Query('payment_status') paymentStatus?: string,
     @Query('payment_method') paymentMethod?: string,
@@ -328,6 +329,8 @@ export class AppController {
     @Query('limit') limit?: string,
     @Query('page') page?: string,
   ) {
+    const allBranches = String(branchCode || '').trim().toUpperCase() === 'ALL';
+    if (allBranches && currentUser?.role !== 'ADMIN') throw new ForbiddenException('Chỉ ADMIN được đọc đơn toàn hệ thống');
     return this.thanhToanService.layDanhSachDonHangChoStaff({
       status,
       paymentStatus,
@@ -338,7 +341,7 @@ export class AppController {
       dateTo,
       limit: limit ? parseInt(limit, 10) : undefined,
       page: page ? parseInt(page, 10) : undefined,
-    });
+    }, allBranches);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

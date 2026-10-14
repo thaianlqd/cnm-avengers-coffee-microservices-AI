@@ -1,0 +1,40 @@
+{
+  "method": "Chromium + mocked API and Google SDK, no real email/provider/authentication",
+  "runtime_errors": [],
+  "screens": {
+    "320": [
+      "login",
+      "register",
+      "forgot"
+    ],
+    "390": [
+      "login",
+      "register",
+      "forgot"
+    ],
+    "480": [
+      "login",
+      "register",
+      "forgot"
+    ],
+    "1440": [
+      "login",
+      "register",
+      "forgot"
+    ]
+  },
+  "register_posts": 1,
+  "google_success_posts": 1,
+  "google_exchange_attempts": 3,
+  "google_cancel_no_session": true,
+  "popup_error": true,
+  "invalid_session_rejected": true,
+  "otp_delivery_error_cooldown": true,
+  "password_whitespace_preserved": true,
+  "otp_validation_error_success": true,
+  "otp_resend_cooldown": true,
+  "session_restored": true,
+  "guest_cart_merge": true,
+  "base_url": "http://127.0.0.1:8090",
+  "static_export_checked": true
+}

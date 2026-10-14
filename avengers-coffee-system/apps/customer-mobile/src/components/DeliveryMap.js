@@ -1,0 +1,56 @@
+import useDeliveryRoute from '../hooks/useDeliveryRoute'
+import RouteSummary from './RouteSummary'
+import React, { useEffect, useRef, useState } from 'react'
+import { View, Text, Pressable, StyleSheet, Platform } from 'react-native'
+import MapView, { Marker, AnimatedRegion, Polyline } from 'react-native-maps'
+import { Ionicons } from '@expo/vector-icons'
+import { coordinate } from '../lib/trackingSession'
+import { colors } from '../theme'
+
+export default function DeliveryMap({ delivery }) {
+  const route = useDeliveryRoute(delivery)
+  const map = useRef(null), marker = useRef(null), fitted = useRef(false)
+  const [follow, setFollow] = useState(true)
+  const driver = coordinate(delivery?.shipper_location)
+  const store = coordinate(delivery?.tracking?.store_location)
+  const destination = coordinate(delivery?.tracking?.destination_location)
+  const first = driver || store || destination
+  const animated = useRef(new AnimatedRegion({ latitude: first?.latitude || 0, longitude: first?.longitude || 0, latitudeDelta: .012, longitudeDelta: .012 })).current
+  const points = [store, destination, driver].filter(Boolean)
+  const fit = () => {
+    if (!points.length) return
+    map.current?.fitToCoordinates(points, { edgePadding: { top: 50, right: 48, bottom: 50, left: 48 }, animated: true })
+  }
+  useEffect(() => {
+    if (!driver) return
+    if (Platform.OS === 'android') marker.current?.animateMarkerToCoordinate(driver, 900)
+    else animated.timing({ ...driver, duration: 900, useNativeDriver: false }).start()
+    if (follow && fitted.current) map.current?.animateCamera({ center: driver }, { duration: 900 })
+  }, [driver?.latitude, driver?.longitude, animated, follow])
+  useEffect(() => {
+    if (!fitted.current && first && map.current) { fit(); fitted.current = true }
+  }, [first?.latitude, first?.longitude])
+  if (!first) return <View style={styles.empty}><Ionicons name="map-outline" size={30} color={colors.muted} /><Text style={styles.emptyText}>Bản đồ sẽ hiển thị khi có vị trí cửa hàng hoặc tài xế.</Text></View>
+  return <View style={{ gap: 8 }}><View style={styles.wrap}>
+    <MapView ref={map} style={StyleSheet.absoluteFill} initialRegion={{ ...first, latitudeDelta: .025, longitudeDelta: .025 }}
+      onMapReady={() => { fit(); fitted.current = true }} onPanDrag={() => setFollow(false)} toolbarEnabled={false}>
+      {route.data && <Polyline coordinates={route.data.coordinates} strokeColor="#507fe5" strokeWidth={5} />}
+      {store && <Marker coordinate={store} title={delivery?.tracking?.branch_name || 'Cửa hàng'} pinColor="#00a77d" />}
+      {destination && <Marker coordinate={destination} title="Địa chỉ giao hàng" pinColor="#ed3f74" />}
+      {driver && <Marker.Animated ref={marker} coordinate={animated} title={delivery?.shipper?.full_name || 'Tài xế'}>
+        <View style={styles.driver}><Ionicons name="bicycle" color="#fff" size={23} /></View>
+      </Marker.Animated>}
+    </MapView>
+    <Pressable style={styles.recenter} accessibilityLabel="Đưa bản đồ về hành trình đơn hàng" onPress={() => { setFollow(true); fit() }}><Ionicons name="locate-outline" size={22} color={colors.primary} /></Pressable>
+
+  </View><RouteSummary route={route} delivery={delivery} /></View>
+}
+const styles = StyleSheet.create({
+  wrap: { height: 280, borderRadius: 12, overflow: 'hidden', backgroundColor: '#eee' },
+  driver: { backgroundColor: '#7945ff', padding: 8, borderRadius: 22, borderWidth: 2, borderColor: '#fff' },
+  recenter: { position: 'absolute', right: 12, top: 12, backgroundColor: '#fff', borderRadius: 8, padding: 10, elevation: 3 },
+  legend: { position: 'absolute', bottom: 10, left: 10, right: 10, padding: 8, backgroundColor: '#fffffff0', borderRadius: 6 },
+  legendText: { fontSize: 11, color: colors.text, textAlign: 'center' },
+  empty: { height: 200, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg, padding: 24, borderRadius: 12, gap: 12 },
+  emptyText: { color: colors.muted, fontSize: 14, textAlign: 'center', lineHeight: 22 },
+})

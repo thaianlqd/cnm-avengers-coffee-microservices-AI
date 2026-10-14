@@ -63,7 +63,7 @@ class PanelErrorBoundary extends Component {
             style={{
               padding: '0.6rem 1.25rem',
               borderRadius: '10px',
-              background: '#10b981',
+              background: '#3b82f6',
               color: '#ffffff',
               border: 'none',
               fontWeight: '600',
@@ -469,12 +469,12 @@ function AdminMenuManagementPanelContent({
                 <table className="menu-table">
                   <thead>
                     <tr>
-                      <th style={{ width: '26%' }}>Sản phẩm</th>
-                      <th style={{ width: '15%' }}>Danh mục</th>
-                      <th style={{ width: '15%' }}>Giá bán</th>
-                      <th style={{ width: '14%' }}>Trạng thái</th>
+                      <th style={{ width: '30%' }}>Sản phẩm</th>
+                      <th style={{ width: '14%' }}>Danh mục</th>
+                      <th style={{ width: '12%' }}>Giá bán</th>
+                      <th style={{ width: '17%' }}>Trạng thái</th>
                       <th style={{ width: '15%' }}>Nhãn đặc trưng</th>
-                      <th style={{ width: '15%', textAlign: 'center' }}>Thao tác</th>
+                      <th style={{ width: '12%', textAlign: 'center' }}>Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -883,10 +883,10 @@ function AdminMenuManagementPanelContent({
                               className="menu-btn menu-btn--success menu-btn--sm"
                               onClick={() => addOptionToGroup(attrName)}
                               style={{
-                                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                                 color: '#ffffff',
                                 border: 'none',
-                                boxShadow: '0 2px 6px rgba(16, 185, 129, 0.25)'
+                                boxShadow: '0 2px 6px rgba(59, 130, 246, 0.25)'
                               }}
                             >
                               <Plus size={14} color="#ffffff" />
@@ -936,10 +936,10 @@ function AdminMenuManagementPanelContent({
                           className="menu-btn menu-btn--success menu-btn--sm"
                           onClick={addAttributeGroup}
                           style={{
-                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                             color: '#ffffff',
                             border: 'none',
-                            boxShadow: '0 2px 6px rgba(16, 185, 129, 0.25)'
+                            boxShadow: '0 2px 6px rgba(59, 130, 246, 0.25)'
                           }}
                         >
                           <Plus size={14} color="#ffffff" />
@@ -1063,7 +1063,7 @@ function AdminMenuManagementPanelContent({
                   className="menu-btn menu-btn--success"
                   disabled={savingMenu || !String(safeMenuForm.name || '').trim() || !safeMenuForm.category_code}
                   style={{
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
                     color: '#ffffff',
                     border: 'none',
                     height: '40px',
@@ -1075,7 +1075,7 @@ function AdminMenuManagementPanelContent({
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.4rem',
-                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
+                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)'
                   }}
                 >
                   {savingMenu ? (

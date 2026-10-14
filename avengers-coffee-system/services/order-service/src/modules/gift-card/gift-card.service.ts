@@ -20,6 +20,7 @@ export class GiftCardService {
   ) {}
 
   async onModuleInit() {
+    if (process.env.K8S_DEMO_READ_ONLY === 'true') return;
     const count = await this.themeRepo.count();
     if (count === 0) {
       this.logger.log('Seeding initial Gift Card Themes...');

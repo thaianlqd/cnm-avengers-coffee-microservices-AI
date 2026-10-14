@@ -1,47 +1,53 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { uiText as ui, useUiLanguage, uiLocale } from "./lib/uiText";
+import React, { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { io } from 'socket.io-client';
+import PageErrorBoundary from './components/PageErrorBoundary';
+import ScrollExperience from './components/ScrollExperience';
+import CampaignPopup from './components/CampaignPopup';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import OrderFooter from './components/OrderFooter';
 import ProductCard from './components/ProductCard';
-import LoginPage from './pages/Login';
-import ProductDetailModal from './components/ProductDetailModal';
-import CartPage from './pages/Cart';
+const LoginPage = lazy(() => import('./pages/Login'));
+import QuickViewModal from './components/QuickViewModal';
+const CartPage = lazy(() => import('./pages/Cart'));
 import FavoriteDrawer from './components/FavoriteDrawer';
 import OrderHistoryModal from './components/OrderHistoryModal';
 import ChatWidget from './components/ChatWidget';
 import { accountId, getGuestSessionId } from './lib/guestSession';
 import Home from './pages/Home';
-import About from './pages/About';
-import Support from './pages/Support';
-import StoresPage from './pages/Stores';
-import NewsPage from './pages/News';
-import NewsDetailPage from './pages/NewsDetailPage';
-import OrderPage from './pages/Order';
-import ProductDetailPage from './pages/ProductDetail';
-import ProfilePageContent from './components/ProfilePageContent';
-import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
-import ChinhSachDatHangPage from './pages/ChinhSachDatHang';
-import LienHePage from './pages/LienHe';
-import MenuIntroPage from './pages/MenuIntro';
-import CareersPage from './pages/Careers';
-import MembershipPage from './pages/Membership';
-import LuckyWheelPage from './pages/LuckyWheel';
-import GiftCardPage from './pages/GiftCard';
-import FranchisePage from './pages/FranchisePage';
-import OrderLookupPage from './pages/features_thaian/OrderLookupPage';
-import OrderTrackingPage from './pages/features_thaian/OrderTrackingPage';
+const About = lazy(() => import('./pages/About'));
+const Support = lazy(() => import('./pages/Support'));
+const StoresPage = lazy(() => import('./pages/Stores'));
+const NewsPage = lazy(() => import('./pages/News'));
+const NewsDetailPage = lazy(() => import('./pages/NewsDetailPage'));
+const OrderPage = lazy(() => import('./pages/Order'));
+const ProductDetailPage = lazy(() => import('./pages/ProductDetail'));
+const ProfilePageContent = lazy(() => import('./components/ProfilePageContent'));
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
+const ChinhSachDatHangPage = lazy(() => import('./pages/ChinhSachDatHang'));
+const LienHePage = lazy(() => import('./pages/LienHe'));
+const MenuIntroPage = lazy(() => import('./pages/MenuIntro'));
+const CareersPage = lazy(() => import('./pages/Careers'));
+const MembershipPage = lazy(() => import('./pages/Membership'));
+const LuckyWheelPage = lazy(() => import('./pages/LuckyWheel'));
+const GiftCardPage = lazy(() => import('./pages/GiftCard'));
+const FranchisePage = lazy(() => import('./pages/FranchisePage'));
+const OrderLookupPage = lazy(() => import('./pages/features_thaian/OrderLookupPage'));
+const OrderTrackingPage = lazy(() => import('./pages/features_thaian/OrderTrackingPage'));
 import { CartProvider, useCart } from './context/CartContext'; // File mới bước 2
-import { apiClient } from './lib/apiClient';
+import { apiClient, clearPublicReadCache } from './lib/apiClient';
 import { queryKeys } from './lib/queryKeys';
 import SurveyPopup from './components/SurveyPopup';
-import SurveyPage from './pages/Survey';
+const SurveyPage = lazy(() => import('./pages/Survey'));
 import { normalizeNewsArticle } from './lib/news';
 import { buildAddressOptionsFromBranches, getAddressSelectionDefaults, normalizeAddressSelection } from './lib/addressOptions';
 import { UserCircleIcon, KeyIcon, MapPinIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
+const normalizeTab = tab => ({giftcard:'gift-card',franchise:'nhuong-quyen','order-lookup':'tra-cuu-don',checkout:'cart',support:'contact','privacy-policy':'privacy'})[tab] || tab;
+const EMPTY_ITEMS = Object.freeze([]);
 const FALLBACK_BANNER_URL = '/hc-assets/HCO_7825_AME__SUMMERDI_DC_BANNER_1920x926.jpg';
 
 // Exact same banners from Highlands Coffee HTML file
@@ -125,7 +131,7 @@ function taoDiaChiDayDu(addressForm) {
 
 function formatVoucherDate(value) {
   if (!value) return 'Không giới hạn';
-  return new Date(value).toLocaleString('vi-VN', {
+  return new Date(value).toLocaleString(uiLocale(), {
     hour: '2-digit',
     minute: '2-digit',
     day: '2-digit',
@@ -141,13 +147,13 @@ function formatVoucherValue(voucher) {
   if (type === 'PERCENT') {
     const cap = Number(voucher?.giam_toi_da || 0);
     if (cap > 0) {
-      return `Giam ${value}% (toi da ${cap.toLocaleString('vi-VN')}d)`;
+      return `Giam ${value}% (toi da ${cap.toLocaleString(uiLocale())}d)`;
     }
     return `Giam ${value}%`;
   }
 
   if (type === 'FIXED') {
-    return `Giam ${value.toLocaleString('vi-VN')}d`;
+    return `Giam ${value.toLocaleString(uiLocale())}d`;
   }
 
   if (type === 'FREE_ITEM') {
@@ -329,6 +335,7 @@ function HorizontalProductCarousel({
   imageClassName,
   compact = false,
 }) {
+  useUiLanguage();
   const [itemsPerPage, setItemsPerPage] = useState(getCarouselItemsPerPage());
   const [pageIndex, setPageIndex] = useState(0);
 
@@ -358,7 +365,7 @@ function HorizontalProductCarousel({
         type="button"
         onClick={() => setPageIndex((prev) => Math.max(0, prev - 1))}
         className="tch-hscroll-arrow left-2"
-        aria-label="Xem sản phẩm trước"
+        aria-label={ui("Xem sản phẩm trước")}
         disabled={!canGoPrev}
       >
         <ChevronLeftIcon className="h-5 w-5" />
@@ -379,8 +386,7 @@ function HorizontalProductCarousel({
                 <div className="min-w-0 text-left">
                   <p className={`truncate font-black text-gray-900 ${compact ? 'text-sm' : 'mt-4 text-lg'}`}>{p.ten_san_pham}</p>
                   <p className={`font-black text-[#1a8b46] ${compact ? 'mt-1 text-xs' : 'mt-2 text-xl'}`}>
-                    {Number(p.gia_ban).toLocaleString('vi-VN')} đ
-                  </p>
+                    {Number(p.gia_ban).toLocaleString(uiLocale())}{ui(" đ")}</p>
                 </div>
               </button>
             </div>
@@ -391,7 +397,7 @@ function HorizontalProductCarousel({
         type="button"
         onClick={() => setPageIndex((prev) => Math.min(totalPages - 1, prev + 1))}
         className="tch-hscroll-arrow right-2"
-        aria-label="Xem sản phẩm tiếp theo"
+        aria-label={ui("Xem sản phẩm tiếp theo")}
         disabled={!canGoNext}
       >
         <ChevronRightIcon className="h-5 w-5" />
@@ -412,12 +418,13 @@ function HorizontalProductCarousel({
 }
 
 function HomeBannerSlider() {
+  useUiLanguage();
   const [currentSlide, setCurrentSlide] = useState(0);
   const slides = HC_BANNER_SLIDES;
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
+      if (document.visibilityState === 'visible' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 4500);
     return () => clearInterval(interval);
   }, [slides.length]);
@@ -425,6 +432,7 @@ function HomeBannerSlider() {
   return (
     <div className="hc-banner-slider relative w-full overflow-hidden">
       <img
+        decoding="async" fetchPriority="high"
         src={slides[currentSlide]}
         alt={`Banner ${currentSlide + 1}`}
         className="w-full aspect-[2/1] md:aspect-[1920/926] object-cover block hc-fade-in"
@@ -432,6 +440,7 @@ function HomeBannerSlider() {
           e.currentTarget.src = FALLBACK_BANNER_URL;
         }}
       />
+      <div className="holiday-ornaments" aria-hidden="true"><i className="holiday-bauble" /><i className="holiday-bauble gold" /></div>
       <div className="hc-banner-dots">
         {slides.map((_, idx) => (
           <button
@@ -462,6 +471,7 @@ function HomeBannerSlider() {
 }
 
 function AppContent() {
+  useUiLanguage();
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -479,7 +489,7 @@ function AppContent() {
       localStorage.removeItem('qr_tableId');
       localStorage.removeItem('qr_storeId');
     }
-    return params.get('tab') || (tableId ? 'order' : 'home'); // redirect to order if scanned QR
+    return normalizeTab(params.get('tab') || (tableId ? 'order' : 'home')); // redirect to order if scanned QR
   });
   const [trackingOrderId, setTrackingOrderId] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -566,7 +576,7 @@ function AppContent() {
       const res = await apiClient.get(`/ai/recommend/${encodeURIComponent(aiTargetUserId)}?limit=3`);
       return res.data;
     },
-    enabled: true,
+    enabled: ['home','order','cart'].includes(activeTab),
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 0,
@@ -578,6 +588,7 @@ function AppContent() {
       const res = await apiClient.get('/ai/behavior/insights?branch_code=ALL&limit=5&days=30');
       return res.data;
     },
+    enabled: ['home','order'].includes(activeTab),
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 0,
@@ -656,7 +667,7 @@ function AppContent() {
   };
 
   const {
-    data: products = [],
+    data: products = EMPTY_ITEMS,
     isLoading: isProductsLoading,
     isError: isProductsError,
   } = useQuery({
@@ -707,8 +718,10 @@ function AppContent() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const currentTab = params.get('tab') || 'home';
+    const currentTab = normalizeTab(params.get('tab') || 'home');
     const currentProdId = params.get('productId') || '';
+    // Preserve a product deep link while the catalog is loading.
+    if (activeTab === 'product-detail' && !selectedProductForPage && currentProdId) return;
 
     const targetProdId = activeTab === 'product-detail' && selectedProductForPage
       ? String(selectedProductForPage.ma_san_pham || selectedProductForPage.id || selectedProductForPage.maSanPham)
@@ -761,7 +774,7 @@ function AppContent() {
   }, [products, activeTab, selectedProductForPage]);
 
   const {
-    data: categories = [],
+    data: categories = EMPTY_ITEMS,
     isLoading: isCategoriesLoading,
     isError: isCategoriesError,
   } = useQuery({
@@ -802,10 +815,16 @@ function AppContent() {
       case 'order-history': tabName = t('header.orders', 'Lịch sử đơn hàng'); break;
       case 'news': tabName = t('header.news', 'Tin tức'); break;
       case 'stores': tabName = t('header.findStore', 'Hệ thống cửa hàng'); break;
+      case 'contact': tabName = t('header.support'); break;
+      case 'nhuong-quyen': tabName = t('header.franchise'); break;
+      case 'careers': tabName = t('header.careers'); break;
+      case 'tra-cuu-don':
+      case 'tracking': tabName = t('header.tracking'); break;
       case 'about': tabName = t('header.about', 'Về chúng tôi'); break;
       case 'lucky-wheel': tabName = t('header.luckyWheel', 'Vòng quay may mắn'); break;
       case 'news-detail': tabName = t('header.newsDetail', 'Tin tức'); break;
       case 'vouchers': tabName = t('order.voucherHub', 'Kho Voucher'); break;
+      case 'gift-card':
       case 'giftcard': tabName = t('header.giftCard', 'Thẻ quà tặng'); break;
       case 'login': tabName = t('header.login', 'Đăng nhập'); break;
       case 'membership': tabName = t('header.account', 'Thành viên'); break;
@@ -814,7 +833,7 @@ function AppContent() {
     }
 
     document.title = `${tabName} | Avengers Coffee`;
-  }, [activeTab, selectedCatId, categories, selectedProductForPage]);
+  }, [activeTab, selectedCatId, categories, selectedProductForPage, t]);
 
   const loading = isProductsLoading || isCategoriesLoading;
   const hasMenuError = isProductsError || isCategoriesError;
@@ -981,11 +1000,11 @@ function AppContent() {
     const paymentStatus = params.get('payment_status');
     const callbackOrderId = params.get('ma_don_hang') || '';
     if (paymentStatus === 'success') {
-      alert('Thanh toán đơn hàng thành công. Cảm ơn bạn!');
+      alert(ui("Thanh toán đơn hàng thành công. Cảm ơn bạn!"));
       triggerSurveyCheck(callbackOrderId);
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (paymentStatus === 'failed') {
-      alert('Thanh toán đơn hàng thất bại hoặc bị hủy.');
+      alert(ui("Thanh toán đơn hàng thất bại hoặc bị hủy."));
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
@@ -1082,7 +1101,7 @@ function AppContent() {
     await syncCartWithUser(null);
     // Sau khi user = null, query voucher sẽ re-fetch với anonymous (không có user_id)
     queryClient.invalidateQueries({ queryKey: queryKeys.voucherList });
-    alert('Hẹn gặp lại bạn tại Avengers House! ☕');
+    alert(ui("Hẹn gặp lại bạn tại Avengers House! ☕"));
   };
 
   const handleUserUpdated = (updatedUser) => {
@@ -1150,6 +1169,7 @@ function AppContent() {
       }
 
       if (notificationType === 'SYSTEM') {
+        clearPublicReadCache();
         queryClient.invalidateQueries({ queryKey: queryKeys.menuProducts });
         queryClient.invalidateQueries({ queryKey: queryKeys.menuCategories });
         queryClient.invalidateQueries({ queryKey: ['news', 'all'] });
@@ -1202,9 +1222,6 @@ function AppContent() {
     setIsDetailOpen(true);
   };
 
-  const handleQuickAdd = (product) => {
-    addToCart(user, product, 1, 'Nhỏ');
-  };
 
   const filteredProducts = useMemo(() => {
     let list = [...products];
@@ -1413,7 +1430,7 @@ function AppContent() {
 
   const handleToggleFavorite = (product) => {
     if (!userId) {
-      setIsAuthOpen(true);
+      setActiveTab('login');
       return;
     }
     toggleFavoriteMutation.mutate(product);
@@ -1421,7 +1438,7 @@ function AppContent() {
 
   const handleOpenFavorites = () => {
     if (!user) {
-      setIsAuthOpen(true);
+      setActiveTab('login');
       return;
     }
     setIsFavoriteOpen(true);
@@ -1542,13 +1559,13 @@ function AppContent() {
     const trackElement = topTabsTrackRef.current;
     const activeTabElement = topTabRefs.current[activeMainSectionId];
     if (!trackElement || !activeTabElement) {
-      setActiveTabUnderlineStyle((prev) => ({ ...prev, opacity: 0 }));
+      setActiveTabUnderlineStyle(prev => prev.opacity === 0 ? prev : { ...prev, opacity: 0 });
       return;
     }
 
     const left = activeTabElement.offsetLeft;
     const width = activeTabElement.offsetWidth;
-    setActiveTabUnderlineStyle({ left, width, opacity: 1 });
+    setActiveTabUnderlineStyle(prev => prev.left === left && prev.width === width && prev.opacity === 1 ? prev : { left, width, opacity: 1 });
 
     const scrollContainer = topTabsScrollRef.current;
     if (scrollContainer) {
@@ -1588,7 +1605,7 @@ function AppContent() {
       setCopiedVoucherCode(String(code));
     } catch {
       setCopiedVoucherCode('');
-      alert('Không thể sao chép mã, vui lòng thử lại.');
+      alert(ui("Không thể sao chép mã, vui lòng thử lại."));
     }
   };
 
@@ -1697,7 +1714,11 @@ function AppContent() {
         />
       )}
 
-      <main className="flex-grow">
+      <ScrollExperience pageKey={activeTab} />
+      <CampaignPopup activeTab={activeTab} onOrder={() => setActiveTab('order')} />
+      <main className="flex-grow" data-customer-content>
+        <PageErrorBoundary pageKey={activeTab} message={t('common.loadError')} retry={t('common.retry')}>
+        <Suspense fallback={<div className="page-loading" role="status">{t('common.loading')}</div>}>
         {activeTab === 'home' ? (
           <Home
             setActiveTab={setActiveTab}
@@ -1721,7 +1742,7 @@ function AppContent() {
         ) : activeTab === 'careers' ? (
           <CareersPage />
         ) : activeTab === 'contact' ? (
-          <Support />
+          <Support onNavigate={setActiveTab} />
         ) : activeTab === 'news' ? (
           selectedNewsArticleId ? (
             <NewsDetailPage
@@ -1745,6 +1766,10 @@ function AppContent() {
           )
         ) : activeTab === 'stores' ? (
           <StoresPage />
+        ) : activeTab === 'membership' ? (
+          <MembershipPage user={user} />
+        ) : activeTab === 'lucky-wheel' ? (
+          <LuckyWheelPage user={user} />
         ) : activeTab === 'survey' ? (
           <SurveyPage onBackToHome={() => { setActiveTab('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
         ) : activeTab === 'vouchers' ? (
@@ -1752,12 +1777,8 @@ function AppContent() {
             <section className="border-b border-gray-100 bg-gradient-to-b from-[#e8f5ee] via-white to-[#f0faf4]">
               <div className="mx-auto max-w-[1240px] px-4 py-14 md:px-6 md:py-16">
                 <p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#1a8b46]">Voucher Center</p>
-                <h1 className="mt-4 text-4xl font-black uppercase tracking-tight text-[#1f1f1f] md:text-6xl font-sans">
-                  Khuyến mãi dành cho bạn
-                </h1>
-                <p className="mt-4 max-w-[780px] text-base font-semibold leading-relaxed text-[#4d433c] md:text-lg">
-                  Cập nhật danh sách mã ưu đãi đang hoạt động. Nhấn vào mã để sao chép nhanh và áp dụng khi đặt hàng.
-                </p>
+                <h1 className="mt-4 text-4xl font-black uppercase tracking-tight text-[#1f1f1f] md:text-6xl font-sans">{ui("Khuyến mãi dành cho bạn")}</h1>
+                <p className="mt-4 max-w-[780px] text-base font-semibold leading-relaxed text-[#4d433c] md:text-lg">{ui("Cập nhật danh sách mã ưu đãi đang hoạt động. Nhấn vào mã để sao chép nhanh và áp dụng khi đặt hàng.")}</p>
 
                 <div className="mt-8 flex flex-wrap items-center gap-3">
                   {[
@@ -1777,7 +1798,7 @@ function AppContent() {
                           : 'border-gray-200 bg-white text-[#1a8b46] hover:border-[#1a8b46]'
                           }`}
                       >
-                        {item.label}
+                        {ui(item.label)}
                       </button>
                     );
                   })}
@@ -1794,12 +1815,12 @@ function AppContent() {
                 </div>
               ) : isVoucherError ? (
                 <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-semibold text-red-700">
-                  {voucherError?.response?.data?.message || 'Không thể tải danh sách voucher lúc này.'}
+                  {voucherError?.response?.data?.message || ui("Không thể tải danh sách voucher lúc này.")}
                 </div>
               ) : filteredVoucherItems.length === 0 ? (
                 <div className="rounded-[28px] border border-dashed border-gray-200 bg-gray-50 px-6 py-12 text-center">
-                  <p className="text-sm font-black uppercase tracking-[0.2em] text-[#1a8b46]">Chưa có voucher phù hợp</p>
-                  <p className="mt-2 text-sm font-semibold text-gray-500">Thử đổi bộ lọc hoặc quay lại sau để cập nhật ưu đãi mới nhất.</p>
+                  <p className="text-sm font-black uppercase tracking-[0.2em] text-[#1a8b46]">{ui("Chưa có voucher phù hợp")}</p>
+                  <p className="mt-2 text-sm font-semibold text-gray-500">{ui("Thử đổi bộ lọc hoặc quay lại sau để cập nhật ưu đãi mới nhất.")}</p>
                 </div>
               ) : (
                 <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -1829,53 +1850,52 @@ function AppContent() {
                               disabled={isLocked}
                               onClick={() => handleCopyVoucherCode(voucher.ma_khuyen_mai)}
                               className={`rounded-xl border px-3 py-2 text-xs font-black uppercase tracking-[0.2em] ${isLocked ? 'border-gray-400 bg-gray-100 text-gray-400 cursor-not-allowed' : 'border-[#1a8b46] bg-white text-[#1a8b46]'}`}
-                              title={isLocked ? 'Không thể dùng do chưa đủ hạng' : 'Sao chép mã'}
+                              title={isLocked ? ui("Không thể dùng do chưa đủ hạng") : ui("Sao chép mã")}
                             >
-                              {isLocked ? '🔒 Khóa' : voucher.ma_khuyen_mai}
+                              {isLocked ? ui("🔒 Khóa") : voucher.ma_khuyen_mai}
                             </button>
                             <div className="flex gap-1.5 items-center">
                               {voucher.hang_toi_thieu && (
-                                <span className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] ${getTierBadgeStyle(voucher.hang_toi_thieu)}`}>
-                                  Hạng {voucher.hang_toi_thieu}
+                                <span className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] ${getTierBadgeStyle(voucher.hang_toi_thieu)}`}>{ui("Hạng ")}{voucher.hang_toi_thieu}
                                 </span>
                               )}
                               <span className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] ${typeMeta.className}`}>
-                                {typeMeta.label}
+                                {ui(typeMeta.label)}
                               </span>
                             </div>
                           </div>
                           {!isLocked && copiedVoucherCode === voucher.ma_khuyen_mai ? (
-                            <p className="mt-2 text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">Đã sao chép mã</p>
+                            <p className="mt-2 text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">{ui("Đã sao chép mã")}</p>
                           ) : null}
                         </div>
 
                         <div className="p-5">
-                          <h3 className="text-xl font-black uppercase leading-tight text-[#1f1f1f]">{voucher.ten_khuyen_mai || 'Voucher ưu đãi'}</h3>
+                          <h3 className="text-xl font-black uppercase leading-tight text-[#1f1f1f]">{voucher.ten_khuyen_mai || ui("Voucher ưu đãi")}</h3>
                           <p className="mt-2 text-base font-black text-[#c41230]">{formatVoucherValue(voucher)}</p>
                           <p className="mt-2 min-h-[44px] text-sm font-semibold leading-relaxed text-[#5b524b]">
-                            {voucher.mo_ta || 'Áp dụng cho đơn hàng hợp lệ theo điều kiện của chương trình.'}
+                            {voucher.mo_ta || ui("Áp dụng cho đơn hàng hợp lệ theo điều kiện của chương trình.")}
                           </p>
 
                           <div className="mt-4 grid grid-cols-2 gap-3 text-xs font-semibold text-[#5d544d]">
                             <div className="rounded-xl bg-[#f0faf4] p-3">
-                              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#1a8b46]">Đơn tối thiểu</p>
-                              <p className="mt-1 text-sm font-black text-[#3f3731]">{Number(voucher.gia_tri_don_toi_thieu || 0).toLocaleString('vi-VN')}d</p>
+                              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#1a8b46]">{ui("Đơn tối thiểu")}</p>
+                              <p className="mt-1 text-sm font-black text-[#3f3731]">{Number(voucher.gia_tri_don_toi_thieu || 0).toLocaleString(uiLocale())}d</p>
                             </div>
                             <div className="rounded-xl bg-[#f0faf4] p-3">
-                              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#1a8b46]">Còn lại</p>
-                              <p className="mt-1 text-sm font-black text-[#3f3731]">{hasLimit ? `${Number(remaining || 0).toLocaleString('vi-VN')} lượt` : 'Vô hạn'}</p>
+                              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#1a8b46]">{ui("Còn lại")}</p>
+                              <p className="mt-1 text-sm font-black text-[#3f3731]">{hasLimit ? ui("{{v0}} lượt", {v0:Number(remaining || 0).toLocaleString(uiLocale())}) : ui("Vô hạn")}</p>
                             </div>
                           </div>
 
                           <div className="mt-4 space-y-1.5 text-[12px] font-semibold text-[#5f5650]">
-                            <p>Bắt đầu: {formatVoucherDate(voucher.ngay_bat_dau)}</p>
-                            <p>Kết thúc: {formatVoucherDate(voucher.ngay_ket_thuc)}</p>
-                            {userId ? <p>Đã dùng: {Number(voucher.da_dung_boi_ban || 0)} lần</p> : null}
+                            <p>{ui("Bắt đầu: ")}{formatVoucherDate(voucher.ngay_bat_dau)}</p>
+                            <p>{ui("Kết thúc: ")}{formatVoucherDate(voucher.ngay_ket_thuc)}</p>
+                            {userId ? <p>{ui("Đã dùng: ")}{Number(voucher.da_dung_boi_ban || 0)}{ui(" lần")}</p> : null}
                           </div>
 
                           <div className="mt-4 flex flex-wrap gap-2">
                             <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${isOut ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'}`}>
-                              {isOut ? 'Hết lượt' : 'Còn hiệu lực'}
+                              {isOut ? ui("Hết lượt") : ui("Còn hiệu lực")}
                             </span>
                             {userId ? (
                               <span
@@ -1887,15 +1907,13 @@ function AppContent() {
                                   }`}
                               >
                                 {isLocked
-                                  ? `Yêu cầu hạng ${voucher.hang_toi_thieu} trở lên`
+                                  ? ui("Yêu cầu hạng {{v0}} trở lên", {v0:voucher.hang_toi_thieu})
                                   : canUse
-                                    ? 'Bạn có thể dùng'
-                                    : 'Bạn đã đạt giới hạn'}
+                                    ? ui("Bạn có thể dùng")
+                                    : ui("Bạn đã đạt giới hạn")}
                               </span>
                             ) : (
-                              <span className="rounded-full bg-[#eef7ff] px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#1f6fb2]">
-                                Đăng nhập để theo dõi lượt dùng
-                              </span>
+                              <span className="rounded-full bg-[#eef7ff] px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#1f6fb2]">{ui("Đăng nhập để theo dõi lượt dùng")}</span>
                             )}
                           </div>
                         </div>
@@ -1946,7 +1964,7 @@ function AppContent() {
             userName={user?.ho_ten || user?.hoTen || user?.full_name || user?.username || user?.ten_dang_nhap || user?.email}
             onOpenAccount={() => setActiveTab('login')}
             onViewDetail={handleViewDetail}
-            onQuickAdd={handleQuickAdd}
+            onAddToCart={(prod, qty, size, opts) => addToCart(user, prod, qty, size, opts)}
             isFavoriteProduct={isFavoriteProduct}
             onToggleFavorite={handleToggleFavorite}
             searchKeyword={searchKeyword}
@@ -2017,13 +2035,14 @@ function AppContent() {
                 onBackToHome={() => setActiveTab('order')}
                 voucherItems={voucherItems}
                 suggestedPastries={suggestedPastries}
-                onAddToCart={(prod, qty, size, opts) => addToCart(user, prod, qty || 1, size || 'Nhỏ', opts)}
+                onAddToCart={(prod, qty, size, opts) => addToCart(user, prod, qty || 1, size, opts)}
               />
             ) : activeTab === 'product-detail' ? (
               <ProductDetailPage
+                key={selectedProductForPage?.ma_san_pham}
                 product={selectedProductForPage}
                 products={products}
-                onAddToCart={(prod, qty, size, opts) => addToCart(user, prod, qty || 1, size || 'Nhỏ', opts)}
+                onAddToCart={(prod, qty, size, opts) => addToCart(user, prod, qty || 1, size, opts)}
                 onBack={() => setActiveTab('order')}
                 onNavigate={setActiveTab}
               />
@@ -2045,14 +2064,16 @@ function AppContent() {
             ) : null}
           </OrderPage>
         ) : null}
+      </Suspense>
+        </PageErrorBoundary>
       </main>
 
-      <ProductDetailModal
+      {isDetailOpen && selectedProduct && <QuickViewModal
+        key={selectedProduct.ma_san_pham}
         product={selectedProduct}
-        isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
-        user={user}
-      />
+        onAddToCart={(prod, qty, size, opts) => addToCart(user, prod, qty, size, opts)}
+      />}
 
       <FavoriteDrawer
         isOpen={isFavoriteOpen}
@@ -2113,8 +2134,8 @@ function AppContent() {
       {activeTab === 'gift-card' ? null : ['order', 'login', 'chinh-sach-dat-hang', 'lien-he', 'profile', 'cart', 'product-detail', 'tra-cuu-don', 'tracking'].includes(activeTab) ? <OrderFooter onNavigate={setActiveTab} /> : <Footer onTabChange={setActiveTab} />}
       {guestMergeError && user && (
         <div role="alert" className="fixed bottom-4 left-4 z-[160] max-w-sm rounded-xl border border-amber-200 bg-white p-4 shadow-lg">
-          <p className="text-sm text-amber-800">Chưa xác nhận được việc đồng bộ giỏ khách: {guestMergeError}</p>
-          <button className="mt-2 font-bold text-[#B22830]" onClick={() => syncCartWithUser(user)}>Thử đồng bộ lại</button>
+          <p className="text-sm text-amber-800">{ui("Chưa xác nhận được việc đồng bộ giỏ khách: ")}{guestMergeError}</p>
+          <button className="mt-2 font-bold text-[#B22830]" onClick={() => syncCartWithUser(user)}>{ui("Thử đồng bộ lại")}</button>
         </div>
       )}
       <ChatWidget key={accountId(user) || getGuestSessionId()} user={user} socketUrl={socketUrl} onLogin={() => {
@@ -2125,11 +2146,11 @@ function AppContent() {
 
       {notificationToast ? (
         <div className="fixed bottom-6 right-6 z-[150] w-[92vw] max-w-sm rounded-2xl border border-green-100 bg-white/95 p-4 shadow-2xl shadow-green-100 backdrop-blur">
-          <p className="text-[11px] font-black uppercase tracking-widest text-[#1a8b46]">Thông báo mới</p>
+          <p className="text-[11px] font-black uppercase tracking-widest text-[#1a8b46]">{ui("Thông báo mới")}</p>
           <p className="mt-1 text-sm font-black text-gray-800">{notificationToast.title}</p>
           <p className="mt-1 text-xs font-semibold text-gray-500">{notificationToast.message}</p>
           {notificationToast.branchName ? (
-            <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-gray-600">Cơ sở xử lý: {notificationToast.branchName}</p>
+            <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-gray-600">{ui("Cơ sở xử lý: ")}{notificationToast.branchName}</p>
           ) : null}
         </div>
       ) : null}
@@ -2157,21 +2178,15 @@ function AppContent() {
               🎂🎈🎉
             </div>
 
-            <h3 className="text-2xl font-black uppercase text-[#8c252a] tracking-tight mb-2 font-sans">
-              Chúc Mừng Sinh Nhật!
-            </h3>
+            <h3 className="text-2xl font-black uppercase text-[#8c252a] tracking-tight mb-2 font-sans">{ui("Chúc Mừng Sinh Nhật!")}</h3>
 
             <p className="text-[#c89a58] font-black text-sm uppercase tracking-widest mb-6">
               Avengers House Special Gift
             </p>
 
             <div className="bg-amber-50/70 border border-amber-100/50 rounded-2xl p-5 mb-6 w-full shadow-inner">
-              <p className="text-sm font-semibold text-gray-700 leading-relaxed">
-                Nhân dịp tháng sinh nhật của bạn, Avengers House xin gửi tặng bạn một món quà đặc biệt. Một **Voucher mừng sinh nhật** đã được gửi vào kho voucher cá nhân của bạn!
-              </p>
-              <div className="mt-4 py-2 px-4 bg-[#8c252a] text-white font-black text-sm rounded-xl tracking-wider uppercase inline-block shadow-md">
-                QUÀ TẶNG THÀNH VIÊN
-              </div>
+              <p className="text-sm font-semibold text-gray-700 leading-relaxed">{ui("Nhân dịp tháng sinh nhật của bạn, Avengers House xin gửi tặng bạn một món quà đặc biệt. Một **Voucher mừng sinh nhật** đã được gửi vào kho voucher cá nhân của bạn!")}</p>
+              <div className="mt-4 py-2 px-4 bg-[#8c252a] text-white font-black text-sm rounded-xl tracking-wider uppercase inline-block shadow-md">{ui("QUÀ TẶNG THÀNH VIÊN")}</div>
             </div>
 
             <div className="flex flex-col gap-3 w-full">
@@ -2183,16 +2198,12 @@ function AppContent() {
                   setIsOrderHistoryOpen(false);
                 }}
                 className="w-full py-3.5 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm uppercase tracking-wider rounded-xl transition-all shadow-lg active:scale-98 transform cursor-pointer border-none"
-              >
-                Xem quà tặng của tôi
-              </button>
+              >{ui("Xem quà tặng của tôi")}</button>
               <button
                 type="button"
                 onClick={() => setShowBirthdayVoucherModal(false)}
                 className="w-full py-3 hover:bg-gray-100 text-gray-500 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer border-none bg-transparent"
-              >
-                Đóng
-              </button>
+              >{ui("Đóng")}</button>
             </div>
           </div>
         </div>
@@ -2208,21 +2219,15 @@ function AppContent() {
               </svg>
             </div>
 
-            <h3 className="text-2xl font-black text-[#1a1a1a] uppercase tracking-wide mb-3 font-serif">
-              Đồng bộ đơn hàng
-            </h3>
+            <h3 className="text-2xl font-black text-[#1a1a1a] uppercase tracking-wide mb-3 font-serif">{ui("Đồng bộ đơn hàng")}</h3>
 
             <p className="text-[#c89a58] font-black text-sm uppercase tracking-widest mb-6">
               Avengers Coffee Member Sync
             </p>
 
             <div className="bg-[#faf7f4] border border-[#e8e2da] rounded-2xl p-5 mb-6 w-full text-left">
-              <p className="text-sm font-semibold text-gray-700 leading-relaxed">
-                Chào mừng bạn gia nhập! Chúng tôi tìm thấy <strong>{linkOrderCount} đơn hàng</strong> chưa gán tài khoản khớp với Email hoặc Số điện thoại của bạn.
-              </p>
-              <p className="text-xs text-gray-500 mt-2 font-medium">
-                Bạn có muốn liên kết các đơn hàng này vào tài khoản để theo dõi lịch sử đơn và tích lũy điểm thành viên không?
-              </p>
+              <p className="text-sm font-semibold text-gray-700 leading-relaxed">{ui("Chào mừng bạn gia nhập! Chúng tôi tìm thấy ")}<strong>{linkOrderCount}{ui(" đơn hàng")}</strong>{ui(" chưa gán tài khoản khớp với Email hoặc Số điện thoại của bạn.")}</p>
+              <p className="text-xs text-gray-500 mt-2 font-medium">{ui("Bạn có muốn liên kết các đơn hàng này vào tài khoản để theo dõi lịch sử đơn và tích lũy điểm thành viên không?")}</p>
             </div>
 
             <div className="flex flex-col gap-3 w-full font-sans">
@@ -2235,21 +2240,21 @@ function AppContent() {
                     ...linkOrderPayload,
                     confirmLink: true
                   }).then(() => {
-                    alert('Liên kết đơn hàng thành công!');
+                    alert(ui("Liên kết đơn hàng thành công!"));
                     localStorage.removeItem('avengers_guest_session_id');
                     localStorage.removeItem('avengers_anon_user_id');
                     queryClient.invalidateQueries({ queryKey: queryKeys.orderHistoryRoot });
                     setShowLinkOrderPrompt(false);
                   }).catch((err) => {
                     console.error('Lỗi khi xác nhận liên kết đơn hàng:', err);
-                    alert('Có lỗi xảy ra khi liên kết đơn hàng.');
+                    alert(ui("Có lỗi xảy ra khi liên kết đơn hàng."));
                   }).finally(() => {
                     setIsLinkingOrders(false);
                   });
                 }}
                 className="w-full py-3.5 bg-[#8c252a] hover:bg-[#731c20] disabled:bg-gray-400 text-white font-black text-sm uppercase tracking-wider rounded-xl transition-all shadow-lg active:scale-98 transform cursor-pointer border-none"
               >
-                {isLinkingOrders ? 'Đang liên kết...' : 'Liên kết ngay'}
+                {isLinkingOrders ? ui("Đang liên kết...") : ui("Liên kết ngay")}
               </button>
               <button
                 type="button"
@@ -2260,9 +2265,7 @@ function AppContent() {
                   setShowLinkOrderPrompt(false);
                 }}
                 className="w-full py-3 hover:bg-gray-100 text-gray-500 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer border-none bg-transparent"
-              >
-                Để sau / Bỏ qua
-              </button>
+              >{ui("Để sau / Bỏ qua")}</button>
             </div>
           </div>
         </div>
@@ -2287,7 +2290,7 @@ class AppErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div style={{ padding: '40px', fontFamily: 'sans-serif', background: '#fff0f0', minHeight: '100vh', color: '#c00' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 'bold' }}>⚠️ Lỗi hiển thị React (Runtime Error)</h1>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold' }}>{ui("⚠️ Lỗi hiển thị React (Runtime Error)")}</h1>
           <p style={{ marginTop: '16px', fontSize: '18px', fontWeight: 'bold' }}>{String(this.state.error)}</p>
           <pre style={{ marginTop: '16px', background: '#fff', padding: '16px', borderRadius: '8px', overflow: 'auto', border: '1px solid #fcc', fontSize: '13px', color: '#333' }}>
             {this.state.error?.stack || this.state.errorInfo?.componentStack}
@@ -2295,9 +2298,7 @@ class AppErrorBoundary extends React.Component {
           <button
             onClick={() => window.location.reload()}
             style={{ marginTop: '20px', padding: '10px 20px', background: '#c00', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-          >
-            Tải lại trang
-          </button>
+          >{ui("Tải lại trang")}</button>
         </div>
       );
     }
@@ -2306,6 +2307,7 @@ class AppErrorBoundary extends React.Component {
 }
 
 export default function App() {
+  useUiLanguage();
   return (
     <CartProvider>
       <AppErrorBoundary>

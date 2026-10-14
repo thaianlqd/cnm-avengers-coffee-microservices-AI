@@ -1,8 +1,9 @@
+import { getAdminAccessToken } from '../../lib/adminFetch'
 import { useState, useEffect, useCallback } from 'react'
 import { API_BASE_URL } from '../admin-dashboard/constants'
 
 const apiFetch = async (path, opts = {}) => {
-  const t = localStorage.getItem('adminSession') ? JSON.parse(localStorage.getItem('adminSession')).token : ''
+  const t = getAdminAccessToken() || ''
   const res = await fetch(API_BASE_URL + path, {
     ...opts,
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${t}`, ...opts.headers }
@@ -15,7 +16,7 @@ const apiFetch = async (path, opts = {}) => {
 }
 
 const LOAI_PHIEU = {
-  THU: { label: 'Thu', color: '#16a34a', bg: '#f0fdf4' },
+  THU: { label: 'Thu', color: '#2563eb', bg: '#eff6ff' },
   CHI: { label: 'Chi', color: '#dc2626', bg: '#fef2f2' },
 }
 
@@ -81,19 +82,19 @@ export function DongTienTab() {
   const danh_sach = Array.isArray(data?.danh_sach) ? data.danh_sach : []
 
   return (
-    <div>
+    <div className="workspace-cashflow">
       <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 200, padding: '16px 20px', borderRadius: 10, background: '#fff', border: '1px solid #e5e7eb' }}>
           <div style={{ fontSize: 13, color: '#6b7280', fontWeight: 600 }}>TỔNG THU</div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: '#16a34a', marginTop: 4 }}>{fmtMoney(tong_thu)}</div>
+          <div style={{ fontSize: 24, fontWeight: 600, color: '#2563eb', marginTop: 4 }}>{fmtMoney(tong_thu)}</div>
         </div>
         <div style={{ flex: 1, minWidth: 200, padding: '16px 20px', borderRadius: 10, background: '#fff', border: '1px solid #e5e7eb' }}>
           <div style={{ fontSize: 13, color: '#6b7280', fontWeight: 600 }}>TỔNG CHI</div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: '#dc2626', marginTop: 4 }}>{fmtMoney(tong_chi)}</div>
+          <div style={{ fontSize: 24, fontWeight: 600, color: 'var(--text-main)', marginTop: 4 }}>{fmtMoney(tong_chi)}</div>
         </div>
-        <div style={{ flex: 1, minWidth: 200, padding: '16px 20px', borderRadius: 10, background: '#1e3a8a', border: '1px solid #1e40af' }}>
-          <div style={{ fontSize: 13, color: '#93c5fd', fontWeight: 600 }}>TỒN QUỸ (THỰC TẾ)</div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: '#fff', marginTop: 4 }}>{fmtMoney(ton_quy)}</div>
+        <div style={{ flex: 1, minWidth: 200, padding: '16px 20px', borderRadius: 10, background: 'var(--primary-light)', border: '1px solid var(--primary-subtle)' }}>
+          <div style={{ fontSize: 13, color: 'var(--primary)', fontWeight: 600 }}>TỒN QUỸ (THỰC TẾ)</div>
+          <div style={{ fontSize: 24, fontWeight: 600, color: 'var(--primary)', marginTop: 4 }}>{fmtMoney(ton_quy)}</div>
         </div>
       </div>
 
@@ -112,13 +113,13 @@ export function DongTienTab() {
         </select>
 
         <button style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }} onClick={load}>Tải lại</button>
-        <button style={{ padding: '8px 12px', borderRadius: 6, border: 'none', background: '#1e40af', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }} onClick={() => setForm({ loai_phieu: 'THU', danh_muc: 'KHAC', so_tien: '', ghi_chu: '' })}>+ Lập Phiếu</button>
+        <button style={{ padding: '8px 12px', borderRadius: 6, border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }} onClick={() => setForm({ loai_phieu: 'THU', danh_muc: 'KHAC', so_tien: '', ghi_chu: '' })}>+ Lập Phiếu</button>
       </div>
 
-      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 12, background: msg.type === 'success' ? '#f0fdf4' : '#fef2f2', color: msg.type === 'success' ? '#16a34a' : '#dc2626', fontWeight: 600 }}>{msg.text} <button onClick={() => setMsg(null)} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}>×</button></div>}
+      {msg && <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 12, background: msg.type === 'success' ? '#eff6ff' : '#fef2f2', color: msg.type === 'success' ? '#2563eb' : '#dc2626', fontWeight: 600 }}>{msg.text} <button onClick={() => setMsg(null)} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}>×</button></div>}
 
       {loading ? <div style={{ textAlign: 'center', padding: 40 }}>Đang tải...</div> : (
-        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px' }}>
+        <div className="console-table-scroll"><table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px' }}>
           <thead>
             <tr style={{ fontSize: 12, color: '#6b7280', textAlign: 'left' }}>
               <th style={{ padding: '0 12px' }}>Thời gian</th>
@@ -153,14 +154,14 @@ export function DongTienTab() {
               </tr>
             )}
           </tbody>
-        </table>
+        </table></div>
       )}
 
       {form && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
-          <div style={{ background: '#fff', padding: 24, borderRadius: 12, minWidth: 400, boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: '#fff', padding: 24, borderRadius: 12, width: 'min(440px, calc(100vw - 32px))', minWidth: 0, boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
             <h2 style={{ marginTop: 0, marginBottom: 16, fontSize: 18, fontWeight: 700 }}>Lập Phiếu Thu / Chi</h2>
-            <form onSubmit={submitForm} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <form className="workspace-form" onSubmit={submitForm} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Loại phiếu</label>
                 <select value={form.loai_phieu} onChange={e => setForm(f => ({ ...f, loai_phieu: e.target.value }))} style={{ padding: '8px', borderRadius: 6, border: '1px solid #d1d5db', width: '100%' }}>
@@ -188,7 +189,7 @@ export function DongTienTab() {
 
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
                 <button type="button" onClick={() => setForm(null)} style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer', fontWeight: 600 }}>Hủy</button>
-                <button type="submit" style={{ padding: '8px 16px', borderRadius: 6, border: 'none', background: '#16a34a', color: '#fff', cursor: 'pointer', fontWeight: 600 }}>Lưu Phiếu</button>
+                <button type="submit" style={{ padding: '8px 16px', borderRadius: 6, border: 'none', background: '#2563eb', color: '#fff', cursor: 'pointer', fontWeight: 600 }}>Lưu Phiếu</button>
               </div>
             </form>
           </div>

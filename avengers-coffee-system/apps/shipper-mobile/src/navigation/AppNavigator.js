@@ -1,5 +1,6 @@
 import React from 'react'
 import { ActivityIndicator, View, Text, StyleSheet } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { Ionicons } from '@expo/vector-icons'
@@ -36,8 +37,9 @@ function TabBarIcon({ routeName, color, size, focused }) {
 }
 
 function MainTabs() {
+  const insets = useSafeAreaInsets()
   return (
-    <Tabs.Navigator
+    <Tabs.Navigator backBehavior="history"
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
@@ -46,12 +48,13 @@ function MainTabs() {
           backgroundColor: colors.card,
           borderTopColor: colors.borderLight,
           borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
+          height: 64 + insets.bottom,
+          paddingBottom: Math.max(8, insets.bottom),
           paddingTop: 8,
         },
+        tabBarLabelPosition: 'below-icon',
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '600',
         },
         tabBarIcon: ({ color, size, focused }) => (
@@ -59,10 +62,19 @@ function MainTabs() {
         ),
       })}
     >
-      <Tabs.Screen name="Home" component={HomeScreen} options={{ title: 'Nhận Đơn' }} />
+      <Tabs.Screen name="Home" component={HomeScreen} options={{ title: 'Công việc' }} />
       <Tabs.Screen name="Wallet" component={WalletScreen} options={{ title: 'Ví & COD' }} />
-      <Tabs.Screen name="History" component={HistoryScreen} options={{ title: 'Lịch Sử' }} />
-      <Tabs.Screen name="Profile" component={ProfileScreen} options={{ title: 'Hồ Sơ' }} />
+      <Tabs.Screen name="History" component={HistoryScreen} options={{ title: 'Lịch sử' }} />
+      <Tabs.Screen name="Profile" component={ProfileScreen} options={{ title: 'Hồ sơ' }} />
+          <Tabs.Screen name="OrderDetail" component={OrderDetailScreen} options={{ title: 'Chi tiết đơn', unmountOnBlur: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
+          <Tabs.Screen name="Map" component={MapScreen} options={{ title: 'Hành trình', unmountOnBlur: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
+          <Tabs.Screen name="Report" component={ReportScreen} options={{ title: 'Thu nhập', unmountOnBlur: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
+          <Tabs.Screen name="Schedule" component={ScheduleScreen} options={{ title: 'Lịch làm việc', unmountOnBlur: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
+          <Tabs.Screen name="BatchOrder" component={BatchOrderScreen} options={{ title: 'Giao ghép', unmountOnBlur: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
+          <Tabs.Screen name="BatchRoute" component={BatchRouteScreen} options={{ title: 'Lộ trình ghép', unmountOnBlur: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
+          <Tabs.Screen name="Exception" component={ExceptionScreen} options={{ title: 'Báo cáo ngoại lệ', unmountOnBlur: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
+          <Tabs.Screen name="Vehicle" component={VehicleScreen} options={{ title: 'Phương tiện', unmountOnBlur: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
+          <Tabs.Screen name="Notification" component={NotificationScreen} options={{ title: 'Thông báo', unmountOnBlur: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
     </Tabs.Navigator>
   )
 }
@@ -86,15 +98,7 @@ export function AppNavigator() {
       ) : (
         <>
           <Stack.Screen name="Main" component={MainTabs} />
-          <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
-          <Stack.Screen name="Map" component={MapScreen} />
-          <Stack.Screen name="Report" component={ReportScreen} />
-          <Stack.Screen name="Schedule" component={ScheduleScreen} />
-          <Stack.Screen name="BatchOrder" component={BatchOrderScreen} />
-          <Stack.Screen name="BatchRoute" component={BatchRouteScreen} />
-          <Stack.Screen name="Exception" component={ExceptionScreen} />
-          <Stack.Screen name="Vehicle" component={VehicleScreen} />
-          <Stack.Screen name="Notification" component={NotificationScreen} />
+
         </>
       )}
     </Stack.Navigator>
@@ -104,7 +108,7 @@ export function AppNavigator() {
 const styles = StyleSheet.create({
   loadingWrap: {
     flex: 1,
-    backgroundColor: colors.darkBg,
+    backgroundColor: colors.primaryDark,
     alignItems: 'center',
     justifyContent: 'center',
   },
