@@ -108,10 +108,3 @@ patches:
     - op: add
       path: /data/DB_POOL_IDLE_TIMEOUT_MS
       value: '30000'
-- target:
-    kind: Deployment
-    name: api-gateway
-  patch: |-
-    - op: replace
-      path: /spec/template/spec/containers/0/resources/limits/cpu
-      value: 750m

@@ -16,7 +16,7 @@ integer bounds 1000–60000). This is independent of the 2000ms readiness connec
 allowance. Cache TTL, pool max=2, workload, resources and HPA remain unchanged.
 The experiment is pending same-load 250 VU validation.
 
-Measured Gateway burst experiment: CPU limit 500m -> 750m, request stays75m,
-HPA2–4 unchanged. Diagnostic500 showed up to31.2% throttled periods and0.914s
-throttled time per5s interval on one Gateway container; average CPU was below
-limit. This is pending SAME500 validation, not a proven fix or a default change.
+Gateway CPU750m experiment rejected: normal500 had a single STABLE PASS, but
+long500 failed wholep951841.97/hold2421.21ms with adequate generators and no
+restart. CPU limit restored to baseline500m; request75m/HPA2–4 unchanged.
+Historical experiment/evidence retained. Poolidle30000 remains separate.
