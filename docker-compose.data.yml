@@ -314,6 +314,25 @@ services:
     networks:
       - data-network
   # =========================================
+  # REDIS — Cache & Session Store cho Data Platform
+  # =========================================
+  redis-analytics:
+    image: redis:7-alpine
+    container_name: avengers_analytics_redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - avengers_analytics_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - data-network
+
+  # =========================================
   # ANALYTICS BACKEND & AI SERVICE (FastAPI)
   # =========================================
   analytics-api:
@@ -325,6 +344,8 @@ services:
       postgres-analytics:
         condition: service_healthy
       minio:
+        condition: service_healthy
+      redis-analytics:
         condition: service_healthy
     env_file:
       - ./data-platform/.env
@@ -361,7 +382,7 @@ services:
       DATA_ANALYST_CAPACITY_CHART_POINTS: "500"
       DATA_ANALYST_CAPACITY_RESPONSE_BYTES: "1000000"
       DATA_ANALYST_CAPACITY_SESSION_BYTES: "1000000"
-      DATA_ANALYST_REDIS_URL: ${DATA_ANALYST_REDIS_URL:-redis://host.docker.internal:6379/2}
+      DATA_ANALYST_REDIS_URL: ${DATA_ANALYST_REDIS_URL:-redis://redis-analytics:6379/2}
       DATA_ANALYST_REPORT_SQL_MODE: ${DATA_ANALYST_REPORT_SQL_MODE:-disabled}
       DATA_ANALYST_REPORT_ADMIN_TOKEN: ${DATA_ANALYST_REPORT_ADMIN_TOKEN:-}
       # Optional source access is metadata-only; analytical SQL always uses postgres-analytics.
@@ -409,6 +430,7 @@ volumes:
   avengers_kafka_data:
   avengers_minio_data:
   avengers_airflow_data:
+  avengers_analytics_redis_data:
 networks:
   data-network:
     driver: bridge

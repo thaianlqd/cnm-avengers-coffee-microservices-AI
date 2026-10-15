@@ -16,7 +16,7 @@ GEMINI_MODELS = tuple(
     model.strip()
     for model in os.getenv(
         "GEMINI_MODELS",
-        "gemini-3.8-flash,gemini-2.5-flash,gemini-2.5-pro",
+        "gemini-3.1-flash-lite,gemini-3.5-flash-lite,gemini-flash-lite-latest",
     ).split(",")
     if model.strip()
 )
@@ -123,7 +123,7 @@ def call_groq(prompt: str, system_instruction: str = "") -> Optional[Dict[str, A
                         {"role": "user", "content": prompt},
                     ],
                     "response_format": {"type": "json_object"},
-                    "max_tokens": 3500,
+                    "max_tokens": 8192,
                     "temperature": 0.1,
                 },
                 timeout=25,
@@ -201,7 +201,7 @@ def call_bounded_llm(prompt: str, response_schema=None):
                 response = requests.post('https://api.groq.com/openai/v1/chat/completions',
                     headers={'Authorization': f'Bearer {key}'}, json={'model': model,
                     'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': prompt}],
-                    'response_format': {'type': 'json_object'}, 'max_tokens': 3500, 'temperature': 0}, timeout=25)
+                    'response_format': {'type': 'json_object'}, 'max_tokens': 8192, 'temperature': 0}, timeout=25)
                 body = response.json() if response.ok else {}
                 raw = body.get('choices', [{}])[0].get('message', {}).get('content', '')
                 usage = body.get('usage', {})

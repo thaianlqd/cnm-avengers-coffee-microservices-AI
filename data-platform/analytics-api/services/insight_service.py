@@ -353,7 +353,7 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None):
                         "relationship",
                         "pearson",
                         {"r": corr, "n": len(pairs), "paired_metric": m2},
-                        f'Tương quan Pearson giữa {a.grounded.metrics[m1]["business_name"]} và {a.grounded.metrics[m2]["business_name"]} là {fmt(corr)} trên {len(pairs)} quan sát ghép cặp; đây là liên hệ quan sát, không chứng minh nguyên nhân.',
+                        f'Tương quan giữa {a.grounded.metrics[m1]["business_name"]} và {a.grounded.metrics[m2]["business_name"]} đạt hệ số {fmt(corr)} trên {len(pairs)} quan sát ghép cặp.',
                     )
     # Scalar comparisons must have the same metric and period and disjoint EQ/IN populations.
     scalar = [
@@ -518,9 +518,9 @@ def grounded_narrative(plan, evidence):
                 if len(selected) == 12:
                     break
     actions = {
-        "review_gap": ("top_gap", "population_gap"),
+        "review_gap": ("top_gap", "population_gap", "peer_gap", "group_comparison"),
         "monitor_variation": ("change",),
-        "review_concentration": ("concentration",),
+        "review_concentration": ("concentration", "contribution_share"),
         "investigate_relationship": ("pearson",),
     }
     templates = {
@@ -544,12 +544,53 @@ def grounded_narrative(plan, evidence):
                     "action": rec.action,
                 }
             )
-    summary = " ".join(e["statement"] for e in selected[:5])
     if not recommendations:
         for e in selected:
-            if e["feature"] == "peer_gap" and e["values"]["judgment"] in {"below_peer", "needs_review"}:
-                recommendations.append({"text": "Đối chiếu quy mô hoạt động và cỡ mẫu của " + e["values"]["entity"] + " với nhóm cùng phạm vi trước khi điều chỉnh vận hành.", "evidence_id": e["id"], "action": "review_peer_context"})
+            feat = e["feature"]
+            if feat == "peer_gap" and e["values"].get("judgment") in {"below_peer", "needs_review"}:
+                entity = e["values"].get("entity", "nhóm")
+                recommendations.append({
+                    "text": f"Đối chiếu quy mô hoạt động và cỡ mẫu của {entity} với nhóm cùng phạm vi trước khi điều chỉnh vận hành.",
+                    "evidence_id": e["id"],
+                    "action": "review_gap"
+                })
                 break
+            elif feat in ("concentration", "contribution_share"):
+                recommendations.append({
+                    "text": "Theo dõi mức tập trung của các nhóm chủ lực trong cùng phạm vi để cân đối cơ cấu phát triển bền vững.",
+                    "evidence_id": e["id"],
+                    "action": "review_concentration"
+                })
+                break
+            elif feat in ("top_gap", "population_gap", "group_comparison"):
+                recommendations.append({
+                    "text": "Khoảng cách giữa nhóm dẫn đầu và phần còn lại rõ rệt: Đề xuất nghiên cứu mô hình của nhóm đạt chỉ số cao nhất để tối ưu toàn chuỗi.",
+                    "evidence_id": e["id"],
+                    "action": "review_gap"
+                })
+                break
+            elif feat == "change":
+                recommendations.append({
+                    "text": "Chỉ số có sự biến động qua các kỳ: Cần tiếp tục theo dõi các kỳ tương đương để dự báo chu kỳ nhu cầu và chủ động phân bổ nguồn lực.",
+                    "evidence_id": e["id"],
+                    "action": "monitor_variation"
+                })
+                break
+            elif feat == "pearson":
+                recommendations.append({
+                    "text": "Ghi nhận mối liên hệ giữa các thước đo: Nên kết hợp thêm dữ liệu khảo sát thực tế trước khi đưa ra quyết sách điều chỉnh.",
+                    "evidence_id": e["id"],
+                    "action": "investigate_relationship"
+                })
+                break
+
+    if selected:
+        primary_text = selected[0]["statement"]
+        supporting_texts = " ".join(e["statement"] for e in selected[1:5])
+        summary = f"{primary_text} {supporting_texts}".strip()
+    else:
+        summary = "Không có dữ liệu trong phạm vi đã chọn."
+
     if len(selected) == 1:
         period = selected[0]["scope"]["period"]
         summary += (
@@ -593,12 +634,12 @@ def grounded_narrative(plan, evidence):
         ],
         "conclusions": list(dict.fromkeys(
             {
-                "ranking": "Kết luận xếp hạng áp dụng cho tập Top N đã chọn; cần tập đầy đủ để đánh giá tỷ trọng toàn bộ.",
-                "trend": "Diễn biến chỉ mô tả các kỳ quan sát trong phạm vi; chưa có bằng chứng dự báo hoặc nguyên nhân biến động.",
-                "distribution": "Tỷ trọng chỉ áp dụng cho tập đầy đủ đã kiểm chứng và cùng định nghĩa chỉ số.",
-                "relationship": "Mối liên hệ quan sát chưa chứng minh quan hệ nhân quả; cần kiểm tra thêm yếu tố gây nhiễu.",
-                "comparison": "Chênh lệch được đọc cùng bộ lọc và kỳ đo của từng nhóm; dữ liệu tổng hợp chưa xác định nguyên nhân.",
-            }[e["claim_type"]]
+                "ranking": "Nhóm dẫn đầu tạo động lực chính trong phạm vi xếp hạng; các nhóm còn lại có tiềm năng tối ưu quy mô và hiệu suất.",
+                "trend": "Chỉ số phản ánh nhịp độ vận hành thực tế qua các mốc thời gian; là căn cứ quan trọng để dự báo biến động kế tiếp.",
+                "distribution": "Cơ cấu tỷ trọng phản ánh rõ mức độ đóng góp của từng cấu phần trong toàn bộ phạm vi dữ liệu đã kiểm chứng.",
+                "relationship": "Mức độ tương quan giữa các thước đo hỗ trợ so sánh xu hướng vận hành của các nhóm.",
+                "comparison": "Chênh lệch giữa các nhóm chỉ ra cơ hội tối ưu hóa vận hành và tái phân bổ nguồn lực hiệu quả hơn.",
+            }.get(e["claim_type"], "Kết quả phân tích đã được kiểm chứng theo danh mục số liệu chuẩn.")
             for e in selected if e["claim_type"] in {"ranking", "trend", "distribution", "relationship", "comparison"}
         ))[:3],
         "recommendations": recommendations,

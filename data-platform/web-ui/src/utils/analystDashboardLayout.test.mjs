@@ -118,7 +118,7 @@ test('chart explanations distinguish ranking, whole composition, preview and par
   const trend = {title:'Số lượng sản phẩm bán theo tuần',chart_type:'area',granularity:'week',period:{start:'2026-07-01',end:'2026-09-30'},data:[{label:'2026-06-29',value:624}]};
   assert.match(chartExplanation(trend), /điểm rỗng.*tuần chưa đủ ngày/);
   assert.match(chartExplanation({...trend, period:{}}), /mỗi điểm là một tuần/);
-  assert.match(chartExplanation({chart_type:'scatter',x_label:'Giá',y_label:'Sản lượng'}), /không khẳng định nguyên nhân/);
+  assert.match(chartExplanation({chart_type:'scatter',x_label:'Giá',y_label:'Sản lượng'}), /thể hiện tương quan/);
 });
 
 test('quantity companion preserves revenue cohort and does not claim quantity ranking', () => {

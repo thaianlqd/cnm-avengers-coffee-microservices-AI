@@ -11,7 +11,7 @@ def explain_analysis(artifacts, catalog, charts=(), evidence=()):
         "trend": "Kiểm tra diễn biến theo thời gian",
         "distribution": "Đo cơ cấu đóng góp của tập dữ liệu",
         "cross_tab": "Đối chiếu đồng thời hai chiều phân tích",
-        "relationship": "Kiểm tra mối liên hệ quan sát, không kết luận nhân quả",
+        "relationship": "Đối chiếu tương quan giữa hai chỉ số",
         "detail": "Đối chiếu các bản ghi chi tiết",
     }
     visual_reasons = {
@@ -26,7 +26,7 @@ def explain_analysis(artifacts, catalog, charts=(), evidence=()):
         "grouped_bar": "So sánh các nhóm và chuỗi cùng đơn vị",
         "stacked_bar": "Đối chiếu đóng góp của các thành phần cùng đơn vị",
         "stacked_100": "So sánh cơ cấu phần trăm trong từng nhóm đầy đủ",
-        "scatter": "Quan sát quan hệ giữa hai đại lượng; không chứng minh nhân quả",
+        "scatter": "Biểu đồ phân tán đối chiếu giữa hai chỉ số",
     }
     explanations = []
     for id, a in artifacts.items():
@@ -47,7 +47,7 @@ def explain_analysis(artifacts, catalog, charts=(), evidence=()):
             "parent_id": a.query.parent_id,
             "purpose": a.query.purpose,
             "population_relation": a.query.population_relation,
-            "population_note": ("Phân tích liên quan dùng điều kiện đo lường riêng của chỉ số; giữ nguyên bộ lọc và thời gian đã chọn. Không suy ra tỷ trọng hoặc quan hệ nhân quả với phần chính."
+            "population_note": ("Chỉ số đối chiếu theo điều kiện riêng của danh mục; giữ nguyên bộ lọc và thời gian."
                                 if a.query.population_relation == "related" else None),
             "supporting_reason": objectives[a.query.operation] if a.query.role == "supporting" else None,
             "subject": r["subjects"][a.query.subject]["business_name"],

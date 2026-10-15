@@ -104,7 +104,7 @@ export function dashboardHighlights(report = {}) {
       const op = (report.analysis_explanation || []).find(o => o.query_id === e.scope_ref);
       const metric = op?.metrics?.find(m => m.id === e.metric);
       return { label: metric?.label || e.metric, value: e.values.value, unit: e.unit,
-        sub_text: metric?.business_filters?.length ? 'Điều kiện: ' + metric.business_filters.map(f => (Array.isArray(f.value) ? f.value : [f.value]).map(businessCategory).join(', ')).join(' · ') : op?.population_note || 'Toàn phạm vi đã chọn', evidence_id: e.id,
+        sub_text: metric?.business_filters?.length ? 'Điều kiện: ' + metric.business_filters.map(f => (Array.isArray(f.value) ? f.value : [f.value]).map(businessCategory).join(', ')).join(' · ') : 'Toàn phạm vi đã chọn', evidence_id: e.id,
         scope_ref: e.scope_ref, metric:e.metric, feature: 'scalar' };
     });
   if (scalarCards.length) {
@@ -236,7 +236,7 @@ export function chartExplanation(chart = {}) {
     const partial = (chart.data || []).some(r => bucketCoverage(r.label, chart.granularity, chart.period)?.partial);
     return `Diễn biến ${title}${type === 'multi_line' ? ' theo từng nhóm' : ''}; ${partial ? `điểm rỗng là ${interval} chưa đủ ngày, biến động chỉ đối chiếu kỳ đầy đủ` : `mỗi điểm là một ${interval} quan sát`}.`;
   }
-  if (type === 'scatter') return `Mỗi điểm là một ${(chart.observation_label || 'quan sát').toLowerCase()}, ghép cặp ${(chart.x_label || '').toLowerCase()} và ${(chart.y_label || '').toLowerCase()}; mối liên hệ không khẳng định nguyên nhân.`;
+  if (type === 'scatter') return `Mỗi điểm là một ${(chart.observation_label || 'quan sát').toLowerCase()}, thể hiện tương quan giữa ${(chart.x_label || '').toLowerCase()} và ${(chart.y_label || '').toLowerCase()}.`;
   if (type === 'heatmap') return `So sánh ${title} theo ${dimension} và ${(chart.series_label || 'nhóm').toLowerCase()}; màu đậm hơn thể hiện giá trị cao hơn.`;
   if (type === 'stacked_100') return `Tỷ trọng từng nhóm trong mỗi ${dimension}; tổng các thành phần của mỗi cột bằng 100%.`;
   if (type === 'stacked_bar') return `Các phần màu thể hiện đóng góp của từng nhóm vào ${title} theo ${dimension}.`;

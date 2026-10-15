@@ -35,6 +35,8 @@ SQL_WORDS = {
     "FALSE", "FILTER", "FROM", "GROUP", "HAVING", "HOUR", "IN", "INTERVAL",
     "IS", "LIMIT", "NOT", "NULL", "NULLS", "FIRST", "LAST", "AT", "TIME", "ZONE", "ON", "OR", "ORDER", "OVER",
     "PARTITION", "ROWS", "THEN", "TRUE", "WHEN", "WHERE", "WITH",
+    "YEAR", "MONTH", "DAY", "MINUTE", "SECOND", "QUARTER", "WEEK", "DOW", "DOY",
+    "ISODOW", "ISOYEAR", "BOTH", "LEADING", "TRAILING",
 }
 TABLE_ALIAS_STOP_WORDS = SQL_WORDS | {
     "CROSS", "FULL", "INNER", "JOIN", "LEFT", "OFFSET", "RIGHT", "UNION",
@@ -233,11 +235,31 @@ def _identifier(value: str) -> str:
     return value.strip().strip('"').lower()
 
 
+def _mask_scalar_from_expressions(sql: str) -> str:
+    """Mask EXTRACT(...), TRIM(...), SUBSTRING(...) with spaces so scalar FROM is never confused with table FROM."""
+    chars = list(sql)
+    for m in re.finditer(r'(?i)\b(?:EXTRACT|TRIM|SUBSTRING|SUBSTR)\s*\(', sql):
+        start = m.start()
+        depth = 0
+        i = m.end() - 1  # at '('
+        while i < len(sql):
+            if sql[i] == '(':
+                depth += 1
+            elif sql[i] == ')':
+                depth -= 1
+                if depth == 0:
+                    for j in range(start, i + 1):
+                        chars[j] = ' '
+                    break
+            i += 1
+    return "".join(chars)
+
+
 def _cte_names(sql: str) -> Set[str]:
     identifier = r'(?:"[^"]+"|[A-Za-z_][A-Za-z0-9_$]*)'
     return {
         _identifier(match.group(1))
-        for match in re.finditer(rf'(?:\bWITH\b|,)\s*({identifier})\s+AS\s*\(', sql, re.IGNORECASE)
+        for match in re.finditer(rf'(?:\bWITH\b|,)\s*({identifier})(?:\s*\([^)]*\))?\s+AS\s*\(', sql, re.IGNORECASE)
     }
 
 
@@ -248,8 +270,8 @@ def _table_references(sql: str) -> Tuple[Set[str], Dict[str, str]]:
         rf'(?:\s+(?:AS\s+)?({identifier}))?',
         re.IGNORECASE,
     )
-    # Mask EXTRACT(... FROM ...) expressions so scalar FROM is never confused with table FROM
-    sql_masked = re.sub(r'(?i)\bEXTRACT\s*\([^)]+\)', lambda m: ' ' * len(m.group(0)), sql)
+    # Mask scalar expressions (EXTRACT, TRIM, SUBSTRING) so scalar FROM is never confused with table FROM
+    sql_masked = _mask_scalar_from_expressions(sql)
     ctes = _cte_names(sql)
     tables: Set[str] = set()
     aliases: Dict[str, str] = {}
@@ -353,22 +375,33 @@ def validate_ai_query_scope(sql: str, allowed_tables: Mapping[str, Set[str]]) ->
     # PostgreSQL's EXTRACT(... FROM alias.column) contains a FROM token that is
     # not a table clause. It is safe to discard only when the qualifier is an
     # alias already bound to an allowlisted physical table.
+    unqualified_map = {t.split('.')[-1]: t for t in normalized_policy if t.count('.') >= 1}
     expression_sources = {
         table for table in referenced_tables
         if "." in table
-        and aliases.get(table.split(".", 1)[0]) in normalized_policy
+        and (aliases.get(table.split(".", 1)[0]) in normalized_policy or unqualified_map.get(aliases.get(table.split(".", 1)[0], "")) in normalized_policy)
         and table not in normalized_policy
+        and unqualified_map.get(table) not in normalized_policy
     }
     referenced_tables -= expression_sources
-    unknown_tables = sorted(table for table in referenced_tables if table not in normalized_policy)
+    resolved_tables = set()
+    unknown_tables = []
+    for table in referenced_tables:
+        if table in normalized_policy:
+            resolved_tables.add(table)
+        elif table in unqualified_map and unqualified_map[table] in normalized_policy:
+            resolved_tables.add(unqualified_map[table])
+        else:
+            unknown_tables.append(table)
+    unknown_tables.sort()
     if unknown_tables:
         raise SqlSafetyError(
             "SQL AI tham chiếu bảng ngoài phạm vi semantic resolver: " + ", ".join(unknown_tables)
         )
-    if not referenced_tables:
+    if not resolved_tables:
         raise SqlSafetyError("SQL AI phải tham chiếu ít nhất một bảng đã được semantic resolver chọn.")
 
-    safe_columns = set().union(*(normalized_policy[table] for table in referenced_tables))
+    safe_columns = set().union(*(normalized_policy[table] for table in resolved_tables))
     output_aliases = {
         _identifier(match.group(1))
         for match in re.finditer(r'\bAS\s+("[^"]+"|[A-Za-z_][A-Za-z0-9_$]*)', analysis, re.IGNORECASE)
@@ -387,7 +420,8 @@ def validate_ai_query_scope(sql: str, allowed_tables: Mapping[str, Set[str]]) ->
             for match in triples:
                 table = f"{_identifier(match.group(1))}.{_identifier(match.group(2))}"
                 column = _identifier(match.group(3))
-                if table not in normalized_policy or column not in normalized_policy[table]:
+                mapped_table = unqualified_map.get(table, table)
+                if mapped_table not in normalized_policy or column not in normalized_policy[mapped_table]:
                     raise SqlSafetyError(f"Cột '{table}.{column}' không nằm trong allowlist của AI.")
             remainder = re.sub(rf'{identifier}\s*\.\s*{identifier}\s*\.\s*{identifier}', ' ', remainder)
 
@@ -399,8 +433,10 @@ def validate_ai_query_scope(sql: str, allowed_tables: Mapping[str, Set[str]]) ->
                 if table and table.startswith("cte:"):
                     if column not in output_aliases:
                         raise SqlSafetyError(f"Cột CTE '{qualifier}.{column}' không được khai báo bởi truy vấn con.")
-                elif not table or table not in normalized_policy or column not in normalized_policy[table]:
-                    raise SqlSafetyError(f"Cột '{qualifier}.{column}' không nằm trong allowlist của AI.")
+                else:
+                    mapped_table = unqualified_map.get(table, table) if table else None
+                    if not mapped_table or mapped_table not in normalized_policy or column not in normalized_policy[mapped_table]:
+                        raise SqlSafetyError(f"Cột '{qualifier}.{column}' không nằm trong allowlist của AI.")
             remainder = re.sub(rf'{identifier}\s*\.\s*{identifier}', ' ', remainder)
             remainder = re.sub(r'::\s*[A-Za-z_][A-Za-z0-9_]*(?:\s*\[\s*\])?', ' ', remainder)
             remainder = re.sub(rf'\b{identifier}\s*(?=\()', ' ', remainder)
@@ -489,14 +525,21 @@ def validate_sql_ast_security(sql: str, allowed_tables: Mapping[str, Set[str]]) 
         name = fn.name.upper() if isinstance(fn, exp.Anonymous) else fn.sql_name()
         if name not in functions:
             raise SqlSafetyError('Function is outside the analytical allowlist')
+    unqualified_map = {t.split('.')[-1]: t for t in allowed_tables if t.count('.') >= 1}
     for scope in traverse_scope(tree):
         sources = scope.selected_sources
         bound = {}
         for alias, (_, source) in sources.items():
             if isinstance(source, exp.Table):
-                name = source.db+'.'+source.name
-                if name not in allowed_tables: raise SqlSafetyError('Table is outside the analytical allowlist')
-                bound[alias] = allowed_tables[name]
+                raw_name = f"{source.db}.{source.name}" if source.db else source.name
+                norm_name = _identifier(raw_name)
+                resolved_table = (
+                    norm_name if norm_name in allowed_tables
+                    else unqualified_map.get(norm_name)
+                )
+                if not resolved_table or resolved_table not in allowed_tables:
+                    raise SqlSafetyError(f'Table is outside the analytical allowlist: {raw_name}')
+                bound[alias] = allowed_tables[resolved_table]
             elif isinstance(source, Scope): bound[alias] = set(source.expression.named_selects)
             else: raise SqlSafetyError('Unsupported SQL source')
         aliases = {projection.alias for projection in scope.expression.selects if projection.alias}
