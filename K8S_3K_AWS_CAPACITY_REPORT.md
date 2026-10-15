@@ -158,9 +158,9 @@ semantics and measurement limitations. This is preparatory instrumentation, not 
 performance fix. Its capacity overhead still requires measurement; do not use it as
 proof of the 500 VU root cause. Historical 250/500 results and rejected 750m experiment
 remain unchanged. 1000–3000 and both long 3K qualifications remain NOT RUN.
-No merge/main/branch_thaian modification. Checkpoint committed locally on features_k8s. Push is BLOCKED by GitHub HTTPS
-authentication failure; SSH fallback also failed strict host verification. No credentials
-or remote config were changed. Remote remains at 063efc49 until authentication is restored.
+No merge/main/branch_thaian modification. Checkpoint committed on features_k8s. Initial push failed authentication; user then
+authorized GitHub CLI via browser as thaianlqd. Push succeeded and remote SHA was
+verified at 4ebb424730f02a64f0772c59b6c373f8118734ee. Phase remains paused.
 
 Checkpoint validation: **228 PASS + 1 historical SKIP**; all four backend builds PASS;
 local 22-resource semantic render PASS; AWS template render PASS (14 resources).

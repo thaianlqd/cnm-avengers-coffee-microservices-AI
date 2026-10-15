@@ -1,9 +1,10 @@
 # Paused by user — 15/10/2026
 
 Instrumentation checkpoint: `89539f671748dba9befaceb61b21f28bb0727ee3`.
-Push BLOCKED: HTTPS invalid username/token; gh unavailable; SSH strict host key
-verification failed. Local commits are preserved. Remote still `063efc4990d664d7a2e3843fb3ce87fa6126be48`.
-Next delivery action: after valid GitHub authentication, `git push origin features_k8s`.
+GitHub authentication restored via browser device flow as `thaianlqd`.
+Push verified: origin/features_k8s reached `4ebb424730f02a64f0772c59b6c373f8118734ee`.
+This follow-up documentation commit records the resolved delivery blocker; current
+checkpoint SHA is `git log -1`. Phase remains paused by user.
 Do not provision AWS while paused.
 
 User requested stopping the resumed phase and committing/pushing the current checkpoint.
