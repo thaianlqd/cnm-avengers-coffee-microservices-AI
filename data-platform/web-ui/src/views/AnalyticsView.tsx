@@ -77,7 +77,7 @@ export const AnalyticsView: React.FC = () => {
     fetch('/api/ai/capabilities', { signal: controller.signal }).then(r => r.ok ? r.json() : null).then(setAiCapabilities).catch(() => {});
     return () => controller.abort();
   }, []);
-  const aiInput = (prompt: string) => analysisInputPayload({ question: prompt, context: aiAnalysisContext, expectation: aiAnalysisExpectation, moduleId: activeModule?.module_id, time: aiTimeRange, start: aiStart, end: aiEnd });
+  const aiInput = (prompt: string) => analysisInputPayload({ question: prompt, context: aiAnalysisContext, expectation: aiAnalysisExpectation, moduleId: activeModule?.module_id, time: aiTimeRange, start: aiStart, end: aiEnd, depth: 'focused' });
   const [aiStatus, setAiStatus] = useState<any | null>(null);
 
   // Step 1: Pre-analysis proposal state
@@ -277,7 +277,7 @@ export const AnalyticsView: React.FC = () => {
       const data = await response.json();
       if (['needs_clarification', 'error'].includes(data.status)) {
         setGeneratedReport(data);
-        setAiStep(3);
+        setAiStep(2);
         showToast(data.message || 'Yêu cầu cần được xem lại', data.status === 'error' ? 'error' : 'info');
       } else if (data.status === 'proposal_ready') {
         const planObj = data.proposal || data;
@@ -295,7 +295,7 @@ export const AnalyticsView: React.FC = () => {
           what_is_known: [], what_is_missing: [message],
           resolution_guidance: 'Giữ nguyên câu hỏi và thử lại sau khi kết nối được khôi phục.',
           suggested_actions: [{ type: 'retry', label: 'Thử lại' }] } });
-      setAiStep(3);
+      setAiStep(2);
       showToast(message, 'error');
     } finally {
       planningInFlight.current = false;
@@ -345,7 +345,7 @@ export const AnalyticsView: React.FC = () => {
           {
             id: 'init-msg',
             sender: 'assistant',
-            text: `Em đã khởi tạo xong báo cáo "${data.title || 'Phân tích dữ liệu'}". Nếu bạn muốn tinh chỉnh bất kỳ chi tiết nào (đổi loại biểu đồ, lọc theo chi nhánh/khu vực, thêm chỉ số KPI, viết lại khuyến nghị sắc bén hơn...), hãy nhập góp ý ngay bên dưới nhé!`,
+            text: `Em đã khởi tạo xong báo cáo "${data.title || 'Phân tích dữ liệu'}". Nếu bạn muốn tinh chỉnh bất kỳ chi tiết nào (đổi loại biểu đồ, lọc theo chi nhánh/khu vực, thêm chỉ số cần theo dõi, viết lại khuyến nghị sắc bén hơn...), hãy nhập góp ý ngay bên dưới nhé!`,
             time: timeStr
           }
         ]);
@@ -355,8 +355,21 @@ export const AnalyticsView: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Lỗi sinh báo cáo AI:', err);
-      setGeneratedReport(null);
-      showToast(err.message || 'Không thể tạo module phân tích', 'error');
+      const message = err.message || 'Không thể tạo module phân tích';
+      setGeneratedReport({
+        status: 'error',
+        outcome: 'SYSTEM_ERROR',
+        message,
+        issue: {
+          category: 'SYSTEM_UNAVAILABLE',
+          title: 'Chưa thể hoàn tất phân tích',
+          what_is_known: [],
+          what_is_missing: [message],
+          resolution_guidance: 'Hãy thử lại hoặc chỉnh sửa câu hỏi để tạo lại kế hoạch.',
+          suggested_actions: [{ type: 'retry', label: 'Thử lại' }]
+        }
+      });
+      showToast(message, 'error');
     } finally {
       setIsGeneratingAi(false);
     }
@@ -1125,10 +1138,6 @@ export const AnalyticsView: React.FC = () => {
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug">
               {reportHeading(rep)}
             </h2>
-            {!!rep.provenance?.semantic_history?.length && <p className="text-xs text-slate-600">Đã áp dụng tinh chỉnh: {rep.provenance.semantic_history[rep.provenance.semantic_history.length - 1].feedback}</p>}
-            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-              {rep.analysis_spec ? 'Các góc nhìn từ dữ liệu trong phạm vi bạn đã chọn.' : rep.description || rep.interpreted_request || 'Bản phân tích chuyên sâu tự động lưu trữ trên hệ thống.'}
-            </p>
           </div>
 
           {/* Tier 3: Action Toolbar - Organized by functional intent */}
@@ -1256,7 +1265,7 @@ export const AnalyticsView: React.FC = () => {
         {showSqlCode && (rep.sql || rep.sql_query) && (
           <div className="bg-slate-900 rounded-xl p-4 text-slate-200 font-mono text-xs overflow-x-auto border border-slate-800 shadow-sm">
             <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">
-              <span className="text-slate-400 text-[11px]">CÂU LỆNH SQL ĐƯỢC TỰ ĐỘNG SINH & THỰC THI (TẦNG SILVER)</span>
+              <span className="text-slate-400 text-[11px]">Câu Lệnh SQL Tự Động Sinh & Thực Thi</span>
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(
@@ -1273,18 +1282,18 @@ export const AnalyticsView: React.FC = () => {
             </div>
             {rep.sql ? Object.entries(rep.sql).map(([name, sql]) => (
               <div key={name} className="mb-4 last:mb-0">
-                <div className="text-sky-300 uppercase mb-1">-- {name}</div>
+                <div className="text-sky-300 mb-1">-- {name}</div>
                 <pre className="text-emerald-300 whitespace-pre-wrap">{String(sql)}</pre>
               </div>
             )) : <pre className="text-emerald-300 whitespace-pre-wrap">{rep.sql_query}</pre>}
           </div>
         )}
 
-        {/* SECTION 1: Dashboard tự động sinh */}
+        {/* Dashboard Tự Động Sinh */}
         <div className="space-y-4">
           <div>
             <h3 className="text-base font-bold text-slate-800 tracking-tight">
-              1. Dashboard tự động sinh
+              Bảng Điều Khiển Tự Động
             </h3>
             <AnalystDashboardSummary report={rep} />
           </div>
@@ -1302,7 +1311,7 @@ export const AnalyticsView: React.FC = () => {
                 const displayVal = sanitizeKpiDisplayValue(card.value, rep.table_data?.rows?.[0], card);
                 return (
                   <div key={idx} className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs hover:border-emerald-300 transition-colors flex flex-col justify-between min-h-[96px]">
-                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 truncate" title={card.label}>
+                    <div className="text-[11px] font-semibold text-slate-400 truncate" title={card.label}>
                       {card.label}
                     </div>
                     <div className="my-1 flex items-baseline gap-1.5 overflow-hidden">
@@ -1321,7 +1330,7 @@ export const AnalyticsView: React.FC = () => {
           ) : !rep.analysis_spec && rep.kpis && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <div className="text-[11px] font-semibold text-slate-400">
                   Doanh thu phân tích
                 </div>
                 <div className="text-xl sm:text-2xl font-black text-slate-800 mt-1 flex items-baseline gap-1">
@@ -1336,7 +1345,7 @@ export const AnalyticsView: React.FC = () => {
               </div>
 
               <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <div className="text-[11px] font-semibold text-slate-400">
                   Tổng số lượng đơn
                 </div>
                 <div className="text-xl sm:text-2xl font-black text-slate-800 mt-1">
@@ -1348,7 +1357,7 @@ export const AnalyticsView: React.FC = () => {
               </div>
 
               <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <div className="text-[11px] font-semibold text-slate-400">
                   Giá trị đơn trung bình (AOV)
                 </div>
                 <div className="text-xl sm:text-2xl font-black text-slate-800 mt-1">
@@ -1360,7 +1369,7 @@ export const AnalyticsView: React.FC = () => {
               </div>
 
               <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <div className="text-[11px] font-semibold text-slate-400">
                   Tỷ lệ hoàn thành đơn
                 </div>
                 <div className="text-xl sm:text-2xl font-black text-emerald-600 mt-1">
@@ -1383,15 +1392,12 @@ export const AnalyticsView: React.FC = () => {
         ))}
         <AnalystEvidence report={rep} />
 
-        {/* SECTION 2: Các phát hiện chính */}
+        {/* Các Phát Hiện Chính */}
         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
           <div className="border-b border-slate-100 pb-2">
             <h3 className="text-base font-bold text-slate-800 tracking-tight">
-              2. Các phát hiện chính
+              Các Phát Hiện Chính
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Các tín hiệu định lượng nổi bật được tính từ kết quả đã kiểm chứng, kèm phạm vi và bằng chứng.
-            </p>
           </div>
 
           <div className="overflow-x-auto">
@@ -1459,7 +1465,7 @@ export const AnalyticsView: React.FC = () => {
           </div>
         </div>
 
-        {/* SECTION 3: Phân tích Dữ liệu Chi tiết */}
+        {/* Phân Tích Dữ Liệu Chi Tiết */}
         {rep.table_data?.artifact_ref && <AnalystResultTable result={rep.table_data} title={rep.table_data.title} sessionId={rep.session_id} queryId={rep.table_data.query_id} />}
         {rep.table_data && !rep.table_data.artifact_ref && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -1467,7 +1473,7 @@ export const AnalyticsView: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="text-base font-bold text-slate-800 tracking-tight">
-                    3. {rep.table_data.title || 'Phân tích Dữ liệu Chi tiết'}
+                    {rep.table_data.title || 'Phân Tích Dữ Liệu Chi Tiết'}
                   </h3>
                   {rep.table_data.columns && rep.table_data.columns.length > 0 && (
                     <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1.5 shadow-2xs">
@@ -1557,22 +1563,18 @@ export const AnalyticsView: React.FC = () => {
           </div>
         )}
 
-        {/* SECTION 4: Insight được AI Agent suy luận */}
+        {/* Nhận Định Bổ Sung */}
         {rep.ai_insights && Array.isArray(rep.ai_insights) && rep.ai_insights.some((insight: any) => typeof insight !== 'string' || !(rep.key_findings || []).some((f: any) => f.finding === insight)) && (
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
             <div className="border-b border-slate-100 pb-2">
               <h3 className="text-base font-bold text-slate-800 tracking-tight">
-                4. Nhận định bổ sung
+                Nhận Định Bổ Sung
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Các nhận định bổ sung gắn với kết quả kiểm chứng; cần phân tích thêm để kết luận nguyên nhân.
-              </p>
             </div>
 
             <div className="space-y-3.5">
               {rep.ai_insights.filter((insight: any) => typeof insight !== 'string' || !(rep.key_findings || []).some((f: any) => f.finding === insight)).map((insight: any, idx: number) => {
-                const numStr = String(idx + 1).padStart(2, '0');
-                let title = `Nhận định chiến lược ${numStr}`;
+                let title = 'Nhận định chiến lược';
                 let content = typeof insight === 'object' && insight !== null
                   ? ((insight as any).insight || (insight as any).text || (insight as any).content || Object.values(insight)[0] || '')
                   : String(insight);
@@ -1585,8 +1587,10 @@ export const AnalyticsView: React.FC = () => {
 
                 return (
                   <div key={idx} className="flex items-start space-x-4 p-4 rounded-xl border border-slate-200/90 bg-slate-50/50 hover:bg-slate-50 transition-colors">
-                    <div className="w-10 h-10 rounded-xl bg-slate-800 text-white font-mono font-black text-sm flex items-center justify-center flex-shrink-0 shadow-2xs">
-                      {numStr}
+                    <div className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center flex-shrink-0 shadow-2xs">
+                      <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
@@ -1658,7 +1662,7 @@ export const AnalyticsView: React.FC = () => {
           {/* Lịch sử trao đổi tinh chỉnh (Phase 4.1: Rich Conversation Panel) */}
           {refinementChat.length > 0 && (
             <div className="mt-4 pt-3 border-t border-slate-100 space-y-2.5 max-h-72 overflow-y-auto pr-1">
-              <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              <div className="text-[11px] font-semibold text-slate-500">
                 Lịch sử trao đổi & Tinh chỉnh:
               </div>
               {refinementChat.map((msg) => (
@@ -2045,7 +2049,7 @@ export const AnalyticsView: React.FC = () => {
             {/* Table Body */}
             <div className="flex-1 overflow-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-medium border-b border-slate-100 sticky top-0 z-10">
+                <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-100 sticky top-0 z-10">
                   <tr>
                     <th className="px-4 py-3 w-10">#</th>
                     <th className="px-4 py-3">Mã điểm bán</th>
@@ -2560,11 +2564,8 @@ export const AnalyticsView: React.FC = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-4 mb-6">
                   <div>
                     <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                      Trợ lý AI Phân tích Dữ liệu
+                      Trợ lý phân tích dữ liệu
                     </h2>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Truy vấn ngôn ngữ tự nhiên và tự động lập kế hoạch báo cáo chuyên sâu
-                    </p>
                   </div>
                   <div role="status" className="text-[11px] text-slate-500 self-start sm:self-auto space-y-1">
                     <p>Kho dữ liệu: {aiStatus?.system_readiness?.warehouse_available === true ? 'Sẵn sàng' : aiStatus?.system_readiness?.warehouse_available === false ? 'Chưa sẵn sàng' : 'Chưa kiểm tra'}</p>
@@ -2584,7 +2585,7 @@ export const AnalyticsView: React.FC = () => {
                         key={idx}
                         onClick={() => {
                           setAiPrompt(tpl.prompt);
-                          handleOneClick(tpl.prompt);
+                          handleProposePlan(tpl.prompt);
                         }}
                         disabled={isProposingPlan || isGeneratingAi}
                         className="px-3.5 py-1.5 rounded-xl text-xs font-medium bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer text-slate-700 disabled:opacity-50"
@@ -2595,10 +2596,9 @@ export const AnalyticsView: React.FC = () => {
                   </div>
                 </div>
 
-                <button onClick={() => handleProposePlan()} disabled={isProposingPlan || isGeneratingAi || !aiPrompt.trim()} className="text-xs text-slate-500 underline disabled:opacity-50">Xem kế hoạch trước</button>
                 {/* Smart Omnibox Chat Input */}
                 <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 focus-within:bg-white focus-within:border-slate-400 focus-within:ring-2 focus-within:ring-slate-200/60 transition-all">
-                  <AnalysisInputForm prompt={aiPrompt} time={aiTimeRange} context={aiAnalysisContext} expectation={aiAnalysisExpectation} start={aiStart} end={aiEnd} disabled={isProposingPlan || isGeneratingAi} onPrompt={setAiPrompt} onTime={setAiTimeRange} onContext={setAiAnalysisContext} onExpectation={setAiAnalysisExpectation} onStart={setAiStart} onEnd={setAiEnd} onSubmit={() => handleOneClick()} />
+                  <AnalysisInputForm prompt={aiPrompt} time={aiTimeRange} context={aiAnalysisContext} expectation={aiAnalysisExpectation} start={aiStart} end={aiEnd} disabled={isProposingPlan || isGeneratingAi} onPrompt={setAiPrompt} onTime={setAiTimeRange} onContext={setAiAnalysisContext} onExpectation={setAiAnalysisExpectation} onStart={setAiStart} onEnd={setAiEnd} onSubmit={() => handleProposePlan()} />
                   <div className="flex justify-end gap-3 pt-3 border-t border-slate-200/60 mt-3">
                     {/* Submit Actions */}
                     <div className="flex items-center space-x-2.5 self-end sm:self-auto">
@@ -2614,11 +2614,11 @@ export const AnalyticsView: React.FC = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => handleOneClick()}
+                        onClick={() => handleProposePlan()}
                         disabled={isProposingPlan || isGeneratingAi || !aiPrompt.trim()}
                         className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-medium shadow-xs transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                       >
-                        Phân tích
+                        Lập kế hoạch
                       </button>
                     </div>
                   </div>
@@ -2684,14 +2684,24 @@ export const AnalyticsView: React.FC = () => {
                 <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-xs">
                   <div className="w-6 h-6 rounded-full border-2 border-slate-900 border-t-transparent animate-spin mx-auto mb-3"></div>
                   <h4 className="text-sm font-semibold text-slate-800">Đang đọc yêu cầu và kiểm tra kế hoạch phân tích...</h4>
-                  <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-                    Hệ thống đang đối chiếu danh mục dữ liệu và tự sửa phần diễn giải chưa hợp lệ. Dịch vụ AI có thể cần đến 30 giây để phản hồi; câu hỏi của bạn đang được xử lý.
-                  </p>
                 </div>
               )}
 
-              {/* Empty state if user jumped to step 2 with no plan */}
-              {!isProposingPlan && !aiPlan && (
+              {/* Clarification or Error in Step 2 */}
+              {!isProposingPlan && ['needs_clarification', 'error'].includes(generatedReport?.status) && (
+                <AnalysisClarification
+                  response={generatedReport}
+                  onSnapshot={answer => { setAiPrompt(answer); setAiTimeRange('all_time'); setAiStep(1); }}
+                  onModule={module => { setActiveModule(module); setAiStep(1); }}
+                  onUpdate={() => { setActiveModule(null); setAiStep(1); }}
+                  onChoice={(answer) => handleProposePlan(`${aiPrompt}. ${answer}`)}
+                  onEdit={() => setAiStep(1)}
+                  onRetry={() => handleProposePlan()}
+                />
+              )}
+
+              {/* Empty state if user jumped to step 2 with no plan and no error */}
+              {!isProposingPlan && !aiPlan && !['needs_clarification', 'error'].includes(generatedReport?.status) && (
                 <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-xs">
                   <h4 className="text-sm font-semibold text-slate-800">Chưa có kế hoạch phân tích</h4>
                   <button
@@ -2715,9 +2725,6 @@ export const AnalyticsView: React.FC = () => {
                       <span className="text-xs font-semibold text-slate-900">
                         Kế hoạch phân tích đề xuất
                       </span>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Kiểm tra các thành phần trước khi thực thi
-                      </p>
                     </div>
                     <span className="text-xs font-medium text-slate-400">
                       Nguồn: Tầng Silver Lake
@@ -2728,9 +2735,6 @@ export const AnalyticsView: React.FC = () => {
                     <h3 className="text-base font-semibold text-slate-900 leading-snug">
                       {aiPlan.title}
                     </h3>
-                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                      {aiPlan.summary_intent}
-                    </p>
                   </div>
 
                   <AnalystEvidence report={{ analysis_explanation: aiPlan.analysis_explanation || [] }} />
@@ -2764,7 +2768,7 @@ export const AnalyticsView: React.FC = () => {
                     {/* 2. Planned KPIs */}
                     <div className="bg-slate-50/60 rounded-xl border border-slate-200/70 p-4">
                       <div className="text-xs font-semibold text-slate-800 mb-2.5">
-                        Chỉ số KPI dự kiến
+                        Chỉ số dự kiến
                       </div>
                       <div className="space-y-2">
                         {(aiPlan.planned_kpis || []).map((kpi: any, idx: number) => (
@@ -2813,12 +2817,12 @@ export const AnalyticsView: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-slate-700">
                       {(aiPlan.report_sections || [
-                        '1. Tóm tắt điều hành',
-                        '2. Biểu đồ phù hợp với dữ liệu đã kiểm chứng',
-                        '3. Bảng các phát hiện chính',
-                        '4. Bảng phân tích dữ liệu chi tiết',
-                        '5. Nhận định chuyên sâu từ AI',
-                        '6. Kết luận & khuyến nghị',
+                        'Tóm tắt điều hành',
+                        'Biểu đồ phù hợp với dữ liệu đã kiểm chứng',
+                        'Bảng các phát hiện chính',
+                        'Bảng phân tích dữ liệu chi tiết',
+                        'Nhận định chuyên sâu từ AI',
+                        'Kết luận & khuyến nghị',
                       ]).map((sec: string, sIdx: number) => (
                         <div
                           key={sIdx}
@@ -2877,9 +2881,6 @@ export const AnalyticsView: React.FC = () => {
                   <h4 className="text-sm font-bold text-slate-800">
                     {jobStages[jobStage] || 'Đang hoàn tất báo cáo'}
                   </h4>
-                  <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-                    Hệ thống tự kiểm tra yêu cầu, lấy dữ liệu và dựng báo cáo. Bạn có thể tải lại trang để tiếp tục theo dõi tác vụ.
-                  </p>
                 </div>
               )}
 
@@ -2888,9 +2889,9 @@ export const AnalyticsView: React.FC = () => {
                   onSnapshot={answer => { setAiPrompt(answer); setAiTimeRange('all_time'); setAiStep(1); }}
                   onModule={module => { setActiveModule(module); setAiStep(1); }}
                   onUpdate={() => { setActiveModule(null); setAiStep(1); }}
-                  onChoice={(answer) => handleOneClick(`${aiPrompt}. ${answer}`)}
+                  onChoice={(answer) => handleProposePlan(`${aiPrompt}. ${answer}`)}
                   onEdit={() => setAiStep(1)}
-                  onRetry={() => handleOneClick(undefined, pendingJob.current || undefined)} />
+                  onRetry={() => handleProposePlan()} />
               )}
 
               {isGeneratingAi && <button onClick={handleResetToNewPrompt} className="text-sm text-slate-600 underline">Dừng phân tích</button>}
@@ -2933,9 +2934,6 @@ export const AnalyticsView: React.FC = () => {
                   <h2 className="text-xl font-bold text-slate-900 tracking-tight">
                     Quản lý Báo cáo
                   </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Kho lưu trữ và tải xuống các báo cáo phân tích đã xuất bản
-                  </p>
                 </div>
 
                 <div className="flex items-center space-x-2.5">
@@ -3050,8 +3048,8 @@ export const AnalyticsView: React.FC = () => {
                             </td>
 
                             <td className="px-4 py-3.5 text-center whitespace-nowrap">
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-sky-50 text-sky-700 border border-sky-200/70 font-mono tracking-wide uppercase">
-                                DOCX
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-sky-50 text-sky-700 border border-sky-200/70 font-mono tracking-wide">
+                                Docx
                               </span>
                             </td>
 

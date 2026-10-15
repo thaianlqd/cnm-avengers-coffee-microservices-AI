@@ -118,9 +118,6 @@ export const AiAssistantView: React.FC = () => {
               <h2 className="text-base font-bold text-slate-800">
                 Trợ lý AI Phân tích Dữ liệu và Khởi tạo Module
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Nhập câu hỏi hoặc yêu cầu nghiệp vụ để AI tự động trích xuất kho Marts, tạo biểu đồ và thiết lập báo cáo phân tích theo thời gian thực.
-              </p>
             </div>
           </div>
           <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 flex items-center self-start sm:self-auto">
@@ -195,8 +192,9 @@ export const AiAssistantView: React.FC = () => {
       {isGeneratingAi && (
         <div className="bg-white rounded-xl border border-slate-200 p-12 text-center shadow-sm">
           <div className="w-12 h-12 rounded-full border-3 border-emerald-600 border-t-transparent animate-spin mx-auto mb-4"></div>
-          <h4 className="text-sm font-bold text-slate-800">Trí tuệ nhân tạo đang xây dựng module phân tích...</h4>
-          <p className="text-xs text-slate-500 mt-1">Đang phân tích schema, trích xuất dữ liệu kho Marts và khởi tạo các biểu đồ trực quan</p>
+          <div className="text-sm font-bold text-slate-800">
+            Trí tuệ nhân tạo đang xây dựng module phân tích...
+          </div>
         </div>
       )}
 
@@ -206,15 +204,12 @@ export const AiAssistantView: React.FC = () => {
           {/* Module Header Bar */}
           <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
-                Báo cáo Phân tích Thông minh
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Báo Cáo Phân Tích Thông Minh
               </span>
               <h3 className="text-base font-bold text-slate-800 mt-1">
-                {generatedReport.title || 'Báo cáo Phân tích AI Tùy biến'}
+                {generatedReport.title || 'Báo Cáo Phân Tích AI Tùy Biến'}
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {generatedReport.description}
-              </p>
             </div>
 
             <div className="flex items-center space-x-2.5">
@@ -238,7 +233,7 @@ export const AiAssistantView: React.FC = () => {
           {showSqlCode && generatedReport.sql_query && (
             <div className="bg-slate-900 rounded-xl p-4 text-slate-200 font-mono text-xs overflow-x-auto border border-slate-800 shadow-sm">
               <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">
-                <span className="text-slate-400 text-[11px]">CÂU LỆNH SQL ĐƯỢC TỰ ĐỘNG SINH VÀ THỰC THI TRÊN DATABASE THẬT</span>
+                <span className="text-slate-400 text-[11px]">Câu Lệnh SQL Tự Động Sinh Và Thực Thi Trên Cơ Sở Dữ Liệu</span>
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(generatedReport.sql_query);
@@ -256,9 +251,9 @@ export const AiAssistantView: React.FC = () => {
           {/* Executive Takeaways / Insights */}
           {generatedReport.ai_insights && Array.isArray(generatedReport.ai_insights) && (
             <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center">
+              <h4 className="text-xs font-bold text-slate-800 mb-3 flex items-center">
                 <SparklesIcon className="w-4 h-4 text-emerald-600 mr-2" />
-                Đánh giá chuyên sâu và Khuyến nghị điều hành từ AI
+                Đánh Giá Chuyên Sâu Và Khuyến Nghị Điều Hành Từ AI
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                 {generatedReport.ai_insights.map((insight: string, idx: number) => {
@@ -270,7 +265,7 @@ export const AiAssistantView: React.FC = () => {
                   const style = headers[idx % headers.length];
                   return (
                     <div key={idx} className={`p-4 rounded-xl border border-slate-200 ${style.border}`}>
-                      <h5 className="text-xs font-bold text-slate-800 mb-1.5">{style.title}</h5>
+                      <div className="text-xs font-bold text-slate-800 mb-1.5">{style.title}</div>
                       <p className="text-xs text-slate-600 font-medium leading-relaxed">
                         {insight}
                       </p>
@@ -285,7 +280,7 @@ export const AiAssistantView: React.FC = () => {
           {generatedReport.kpis && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <div className="text-[11px] font-semibold text-slate-500">
                   Doanh thu phân tích
                 </div>
                 <div className="text-lg sm:text-xl font-bold text-slate-800 mt-1 flex items-baseline gap-1">
@@ -298,7 +293,7 @@ export const AiAssistantView: React.FC = () => {
               </div>
 
               <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <div className="text-[11px] font-semibold text-slate-500">
                   Tổng số lượng đơn
                 </div>
                 <div className="text-lg sm:text-xl font-bold text-slate-800 mt-1">
@@ -310,7 +305,7 @@ export const AiAssistantView: React.FC = () => {
               </div>
 
               <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <div className="text-[11px] font-semibold text-slate-500">
                   Giá trị đơn trung bình
                 </div>
                 <div className="text-lg sm:text-xl font-bold text-slate-800 mt-1">
@@ -322,7 +317,7 @@ export const AiAssistantView: React.FC = () => {
               </div>
 
               <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <div className="text-[11px] font-semibold text-slate-500">
                   Tỷ lệ hoàn thành đơn
                 </div>
                 <div className="text-lg sm:text-xl font-bold text-emerald-600 mt-1">
@@ -340,14 +335,11 @@ export const AiAssistantView: React.FC = () => {
             {/* Trend Chart (7 cols) */}
             <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between">
               <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                    Xu hướng biến động theo thời gian
-                  </h4>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Biểu đồ đường thời gian thực từ dữ liệu truy vấn</p>
-                </div>
+                <h4 className="text-xs font-bold text-slate-800">
+                  Xu Hướng Biến Động Theo Thời Gian
+                </h4>
                 <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
-                  Thời gian thực
+                  Thời Gian Thực
                 </span>
               </div>
               <div className="flex-1 w-full pt-1">
@@ -371,12 +363,9 @@ export const AiAssistantView: React.FC = () => {
             {/* Breakdown Chart (5 cols) */}
             <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between">
               <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                    Cơ cấu phân bổ danh mục và sản phẩm
-                  </h4>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Tỷ trọng đóng góp trong module phân tích</p>
-                </div>
+                <h4 className="text-xs font-bold text-slate-800">
+                  Cơ Cấu Phân Bổ Danh Mục Và Sản Phẩm
+                </h4>
               </div>
               <div className="my-auto py-2">
                 {generatedReport.donut_chart && generatedReport.donut_chart.length > 0 ? (
@@ -412,13 +401,13 @@ export const AiAssistantView: React.FC = () => {
           {generatedReport.table_data && (
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="px-5 py-3.5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                    {generatedReport.table_data.title || 'Dữ liệu chi tiết trích xuất'}
+                <div className="flex items-center space-x-2">
+                  <h4 className="text-xs font-bold text-slate-800">
+                    {generatedReport.table_data.title || 'Dữ Liệu Chi Tiết Trích Xuất'}
                   </h4>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    Tổng cộng {generatedReport.table_data.rows?.length || 0} bản ghi dữ liệu hợp lệ
-                  </p>
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium">
+                    {generatedReport.table_data.rows?.length || 0} bản ghi
+                  </span>
                 </div>
 
                 <div className="relative">

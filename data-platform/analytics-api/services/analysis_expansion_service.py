@@ -25,7 +25,7 @@ def estimated_views(operations, catalog):
 
 def analysis_depth(intent, index, ui):
     if ui.get('analysis_depth_explicit'):
-        return 'deep' if ui['analysis_depth'] == 'focused' else ui['analysis_depth']
+        return ui['analysis_depth']
     if ui.get('request_breadth') == 'deep':
         return 'deep'
     from services.analytical_resolver import digest, requirement_meaning
@@ -41,6 +41,8 @@ def analysis_depth(intent, index, ui):
     if len(domains)>=2 or len(requested)>=5 or len(requested)>=3 and len(metrics)>=3 or (
             'ranking' in shapes and 'trend' in shapes and shapes & {'distribution','comparison','aggregate'}):
         return 'comprehensive'
+    if ui.get('analysis_depth') == 'focused':
+        return 'focused'
     return 'deep'
 
 
@@ -51,7 +53,7 @@ def supporting_candidates(resolver, requested):
     Resolver and preflight independently enforce population/time/capacity.
     """
     depth=resolver.ui.get('server_supporting_expansion')
-    if depth not in {'deep','comprehensive'}:
+    if depth not in {'focused','deep','comprehensive'}:
         return []
     from services.analytical_resolver import digest, requirement_meaning
     candidates=[]
@@ -66,21 +68,19 @@ def supporting_candidates(resolver, requested):
                 candidates.append(IntentRequirement(id='support_'+digest([req.id,'trend'])[:24],
                     goal='Diễn biến trong phạm vi đã chọn',supporting_for=req.id,metric_ids=historical,
                     analysis_kind='trend',filters=req.filters,time=req.time))
-                # A catalog enum is a bounded segmentation axis. A segmented
-                # time series answers a different question from the total trend.
-                for dim in req.dimension_ids:
-                    definition=resolver.catalog.registry['dimensions'][dim]
-                    if definition.get('enum') and len(definition['enum'])<=16 and not any(f.dimension==dim for f in req.filters):
-                        candidates.append(IntentRequirement(id='support_'+digest([req.id,'segmented_trend',dim])[:24],
-                            goal='Diễn biến theo '+definition['business_name'],supporting_for=req.id,
-                            metric_ids=[m for m in historical if dim in resolver.index.metrics[m]['dimensions']],
-                            dimension_ids=[dim],analysis_kind='trend',filters=req.filters,time=req.time))
+                # Segmented time series answers a different question from total trend.
+                if depth in {'deep','comprehensive'}:
+                    for dim in req.dimension_ids:
+                        definition=resolver.catalog.registry['dimensions'][dim]
+                        if definition.get('enum') and len(definition['enum'])<=16 and not any(f.dimension==dim for f in req.filters):
+                            candidates.append(IntentRequirement(id='support_'+digest([req.id,'segmented_trend',dim])[:24],
+                                goal='Diễn biến theo '+definition['business_name'],supporting_for=req.id,
+                                metric_ids=[m for m in historical if dim in resolver.index.metrics[m]['dimensions']],
+                                dimension_ids=[dim],analysis_kind='trend',filters=req.filters,time=req.time))
             domains=[d for d,p in resolver.index.domains.items() if set(req.metric_ids)&set(p['metric_refs'])]
             related=sorted({m for d in domains for m in resolver.index.domains[d]['metric_refs']
                 if m in resolver.index.metrics and any(set(resolver.index.metrics[m]['subjects']) &
                     set(resolver.index.metrics[n]['subjects']) for n in req.metric_ids)})
-            # Prefer additive totals and catalog averages; ranking remains based
-            # solely on the requested criterion. No composite performance score.
             ms=list(dict.fromkeys(req.metric_ids+related))[:3]
             candidates.append(IntentRequirement(id='support_'+digest([req.id,'scope_kpis',ms])[:24],
                 goal='Chỉ số toàn phạm vi',supporting_for=req.id,metric_ids=ms,
@@ -107,11 +107,11 @@ def supporting_candidates(resolver, requested):
                     analysis_kind='distribution' if resolver.ui.get('minimum_visuals')
                         and all(resolver.catalog.registry['metrics'][m].get('additive') for m in allowed) else 'aggregate',
                     filters=req.filters,time=req.time))
-            # Snapshot domains may have no timeline. Their approved companion
-            # metrics and relationship lenses provide useful additional views.
+            # Analytical lenses - snapshot domains without timeline may use relationship lenses
+            allowed_ops = {'aggregate','distribution','ranking','relationship'} if not historical else {'aggregate','distribution','ranking'}
             for lens in profile['analytical_lenses']:
                 b=lens.get('blueprint') or {};ms=b.get('default_metric_refs',[]);ds=b.get('default_grouping') or []
-                if not ms or not ds or b.get('default_operation') not in {'aggregate','distribution','ranking','relationship'}:
+                if not ms or not ds or b.get('default_operation') not in allowed_ops:
                     continue
                 if set(ms)<=set(req.metric_ids) and b['default_operation']!='relationship':
                     continue

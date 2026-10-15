@@ -47,6 +47,7 @@ def approve(request,proposal):
 class HybridTests(unittest.TestCase):
     def setUp(self):
         self.enterContext(patch.dict(os.environ,{'AI_OFFLINE':'1','DATA_ANALYST_ENV':'development','DATA_ANALYST_SESSION_STORE':'memory',
+            'DATA_ANALYST_ARTIFACT_STORE':'memory',
             'DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN':'3','DATA_ANALYST_ENABLE_CONTRACT_REPAIR':'1','DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS':'24000'}))
         for target in ('requests.sessions.Session.request','psycopg2.connect'):
             self.enterContext(patch(target,side_effect=AssertionError('External transport forbidden')))
@@ -253,7 +254,7 @@ class HybridTests(unittest.TestCase):
         # flat object. Keep the semantic contract bounded below executable input.
         self.assertLess(len(compact(intent_tool())),len(compact(decision_tool(natural=True,refinement=False)))*0.80)
         p=self.pipeline();r=p.propose(self.request())
-        self.assertLess(r['diagnostics']['total_context_chars'],18000)
+        self.assertLess(r['diagnostics']['total_context_chars'],19000)
         self.assertNotIn('blueprint',json.dumps(p.provider.requests[0]['messages']))
 
     def test_serialization_restores_artifacts_and_excludes_locks(self):

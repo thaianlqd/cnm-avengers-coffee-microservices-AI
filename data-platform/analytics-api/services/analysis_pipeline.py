@@ -34,6 +34,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "requested_scope_too_large",
         "historical_metric_unavailable",
         "forecast_unsupported",
+        "max_tokens_exceeded",
     }
     messages = {
         'job_busy': 'Hệ thống đang xử lý tối đa số bài toán đồng thời. Vui lòng thử lại sau; chưa có lượt gọi AI cho yêu cầu này.',
@@ -68,6 +69,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "domain_metadata_invalid": "Danh mục miền dữ liệu chưa hợp lệ. Vui lòng kiểm tra metadata trên máy chủ.",
         "approval_required": "Vui lòng lập và xác nhận kế hoạch phân tích trước khi thực thi.",
         "invalid_analysis_contract": "AI đã trả lời nhưng kế hoạch phân tích chưa hợp lệ. Vui lòng thử lập lại kế hoạch.",
+        "max_tokens_exceeded": "Kế hoạch phân tích vượt quá giới hạn token đầu ra của AI. Hãy thu gọn câu hỏi hoặc chia nhỏ bài toán để hệ thống tạo báo cáo.",
         "provider_call_budget_exceeded": "Hệ thống đã chặn lượt gọi AI vượt giới hạn của yêu cầu này. Bạn có thể chủ động lập lại kế hoạch.",
         "one_shot_context_budget_exceeded": "Hệ thống chưa chuẩn bị được đầy đủ ngữ cảnh dữ liệu để lập kế hoạch. Vui lòng thử lại.",
         "semantic_manifest_budget_exceeded": "Hệ thống chưa chuẩn bị được đầy đủ danh mục dữ liệu trong dung lượng lập kế hoạch hiện tại.",

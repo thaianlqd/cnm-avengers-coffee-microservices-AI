@@ -383,7 +383,13 @@ if prior then
 else
  if tonumber(ARGV[1]) ~= 0 then return -1 end
  redis.call('ZREMRANGEBYSCORE', KEYS[2], '-inf', ARGV[5])
- if redis.call('ZCARD', KEYS[2]) >= tonumber(ARGV[6]) then return -3 end
+ if redis.call('ZCARD', KEYS[2]) >= tonumber(ARGV[6]) then
+  local oldest = redis.call('ZRANGE', KEYS[2], 0, 0)
+  if oldest[1] then
+   redis.call('DEL', oldest[1])
+   redis.call('ZREM', KEYS[2], oldest[1])
+  end
+ end
 end
 redis.call('SET', KEYS[1], ARGV[2], 'EX', ARGV[3])
 redis.call('ZADD', KEYS[2], tonumber(ARGV[5])+tonumber(ARGV[3]), KEYS[1])

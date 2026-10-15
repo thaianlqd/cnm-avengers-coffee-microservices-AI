@@ -192,7 +192,7 @@ def report_limitations(artifacts, charts, catalog, omissions=()):
         if any(not a.grounded.metrics[m].get('time_column') for m in a.plan.metrics):
             add('snapshot:'+id, 'Dữ liệu hiện trạng; không suy ra lịch sử theo kỳ.', id)
         if a.query.population_relation == 'related':
-            add('related:'+id, 'Tập dữ liệu liên quan có quần thể riêng; không suy ra tỷ trọng hoặc nhân quả với phần chính.', id)
+            add('related:'+id, 'Chỉ số đối chiếu bổ sung được tính toán độc lập theo định nghĩa riêng.', id)
         if any(not a.grounded.metrics[m].get('additive') for m in a.plan.metrics):
             add('nonadditive:'+id, 'Trung bình hoặc số khách duy nhất không được cộng thành tổng giữa các nhóm.', id)
         if a.plan.ranking:

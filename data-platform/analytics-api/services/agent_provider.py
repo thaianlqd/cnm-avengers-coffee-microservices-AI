@@ -388,7 +388,7 @@ class NativeAgentProvider:
                 }
             ],
             "toolConfig": {"functionCallingConfig": {"mode": "ANY"}},
-            "generationConfig": {"temperature": 0, "maxOutputTokens": 3500},
+            "generationConfig": {"temperature": 0, "maxOutputTokens": 8192},
         }
         if len(tools) == 1 and tools[0]["name"] in {"submit_analysis_intent", "submit_analysis_delta"} and os.getenv("DATA_ANALYST_INTENT_TRANSPORT", "json") == "json":
             body.pop("tools")
@@ -459,7 +459,7 @@ class NativeAgentProvider:
             ],
             "tool_choice": "required",
             "temperature": 0,
-            "max_tokens": 3500,
+            "max_tokens": 8192,
         }
 
     def _remember_gemini_compat_calls(self, raw):
@@ -505,7 +505,7 @@ class NativeAgentProvider:
         gemini_models = (
             [self.gemini_model]
             if self.gemini_model
-            else list(dict.fromkeys(llm_service.GEMINI_MODELS))[:3 if self.legacy_policy else 1]
+            else list(dict.fromkeys(llm_service.GEMINI_MODELS))[:3]
         )
         providers = deque(
             ("gemini", llm_service.GEMINI_API_KEY, m, i)
@@ -587,7 +587,7 @@ class NativeAgentProvider:
                             ],
                             "tool_choice": "required",
                             "temperature": 0,
-                            "max_tokens": 3500,
+                            "max_tokens": 8192,
                         },
                         timeout=timeout,
                     )
@@ -607,6 +607,13 @@ class NativeAgentProvider:
                         for i, part in enumerate(parts)
                         if "functionCall" in part
                     ]
+                    candidate = body.get("candidates", [{}])[0]
+                    finish_reason = candidate.get("finishReason")
+                    if finish_reason == "MAX_TOKENS":
+                        logger.warning("Gemini reached MAX_TOKENS limit")
+                        attempt["error_category"] = "max_tokens_exceeded"
+                        from services.analysis_catalog import AnalysisError
+                        raise AnalysisError("max_tokens_exceeded", "Kế hoạch phân tích vượt quá giới hạn token đầu ra của AI. Hãy thu gọn câu hỏi hoặc chia nhỏ bài toán để hệ thống tạo báo cáo.")
                     if "responseJsonSchema" in payload.get("generationConfig", {}):
                         content = "".join(p.get("text", "") for p in parts if not p.get("thought"))
                         calls = [{"id":"semantic_json", "name":tools[0]["name"], "arguments":json.loads(content)}]
@@ -625,6 +632,12 @@ class NativeAgentProvider:
                         "output": usage.get("candidatesTokenCount"),
                     }
                 else:
+                    finish_reason = body.get("choices", [{}])[0].get("finish_reason")
+                    if finish_reason == "length":
+                        logger.warning("Groq reached token length limit")
+                        attempt["error_category"] = "max_tokens_exceeded"
+                        from services.analysis_catalog import AnalysisError
+                        raise AnalysisError("max_tokens_exceeded", "Kế hoạch phân tích vượt quá giới hạn token đầu ra của AI. Hãy thu gọn câu hỏi hoặc chia nhỏ bài toán để hệ thống tạo báo cáo.")
                     raw = body["choices"][0]["message"].get("tool_calls", [])
                     calls = [
                         {
@@ -658,11 +671,11 @@ class NativeAgentProvider:
             except requests.exceptions.ConnectionError:
                 attempt["error_category"] = "provider_connection"
             except (ValueError, IndexError, KeyError, TypeError) as exc:
-                if getattr(exc, "category", None) in {"provider_call_budget_exceeded", "one_shot_context_budget_exceeded", "planning_timeout"}:
+                if getattr(exc, "category", None) in {"provider_call_budget_exceeded", "one_shot_context_budget_exceeded", "planning_timeout", "max_tokens_exceeded"}:
                     raise
                 attempt["error_category"] = "invalid_tool_response"
             except Exception as exc:
-                if getattr(exc, "category", None) in {"provider_call_budget_exceeded", "one_shot_context_budget_exceeded", "planning_timeout"}:
+                if getattr(exc, "category", None) in {"provider_call_budget_exceeded", "one_shot_context_budget_exceeded", "planning_timeout", "max_tokens_exceeded"}:
                     raise
                 attempt.setdefault("error_category", "provider_unavailable")
             attempt["latency_ms"] = round((time.perf_counter() - started) * 1000, 2)
@@ -682,8 +695,6 @@ class NativeAgentProvider:
                 attempt.get("quota_scopes", []),
                 attempt.get("retry_after_seconds"),
             )
-            if not self.legacy_policy:
-                break
             if provider == "gemini":
                 if attempt.get("http_status") == 503 and not transient_retried:
                     # Retry the same signed continuation once. No model hop,
@@ -694,11 +705,15 @@ class NativeAgentProvider:
                     continue
                 retry_configured_model = (
                     attempt["error_category"]
-                    in {"provider_model_not_found", "provider_daily_quota"}
+                    in {"provider_model_not_found", "provider_daily_quota", "provider_http"}
                     and not self.gemini_model
                     and index + 1 < len(gemini_models)
                 )
-                self.primary_failed = not retry_configured_model
+                if retry_configured_model:
+                    continue
+                self.primary_failed = True
+            if not self.legacy_policy:
+                break
         return {
             "calls": None,
             "attempts": attempts,

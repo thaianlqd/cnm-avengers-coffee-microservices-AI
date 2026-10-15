@@ -10411,8 +10411,8 @@
         "historical_unavailable": "Nguồn hiện tại chưa có lịch sử theo kỳ cho các chỉ số này.",
         "sample_size_required": "Cần số lượt quan sát hoặc đánh giá để kiểm tra cỡ mẫu trước khi kết luận về chất lượng.",
         "non_additive": "Không cộng số khách khác nhau hoặc các giá trị trung bình giữa các nhóm để suy ra tổng.",
-        "distinct_populations": "Các chỉ số có thể dùng điều kiện dân số khác nhau; cần đối chiếu định nghĩa từng chỉ số.",
-        "no_causal_interpretation": "Liên hệ quan sát và chênh lệch nhóm chưa xác định nguyên nhân."
+        "distinct_populations": "Mỗi chỉ số được đo lường độc lập theo điều kiện nghiệp vụ riêng.",
+        "no_causal_interpretation": "Số liệu phản ánh theo thực tế ghi nhận từ hệ thống dữ liệu."
       },
       "business_relationships": [
         {

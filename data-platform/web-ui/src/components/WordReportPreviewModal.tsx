@@ -95,11 +95,8 @@ export const WordReportPreviewModal: React.FC<WordReportPreviewModalProps> = ({
         <div className="px-6 py-4 bg-white border-b border-slate-200 flex items-center justify-between flex-shrink-0">
           <div>
             <h3 className="font-semibold text-slate-900 text-sm sm:text-base leading-tight">
-              Bản xem trước Báo cáo Word
+              Bản Xem Trước Báo Cáo Word
             </h3>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              Định dạng chuẩn trang A4 tương thích Microsoft Word (.docx)
-            </p>
           </div>
 
           <div className="flex items-center space-x-3">
@@ -126,19 +123,16 @@ export const WordReportPreviewModal: React.FC<WordReportPreviewModalProps> = ({
           <div className="w-full max-w-[820px] mx-auto bg-white rounded-md shadow-2xl border border-slate-300 p-8 sm:p-14 text-slate-800 font-sans text-xs leading-relaxed space-y-7 min-h-[1100px] mb-8">
             
             {/* Header Running Head */}
-            <div className="border-b border-slate-200 pb-2 flex items-center justify-between text-[10px] text-slate-400 font-medium tracking-wider uppercase">
-              <span className="text-[#1E3A8A] font-semibold">AVENGERS COFFEE SUPPLY CHAIN & DATA PLATFORM</span>
-              <span>DỮ LIỆU TẦNG SILVER</span>
+            <div className="border-b border-slate-200 pb-2 flex items-center justify-between text-[10px] text-slate-400 font-medium">
+              <span className="text-[#1E3A8A] font-semibold">Avengers Coffee Supply Chain & Data Platform</span>
+              <span>Dữ Liệu Tầng Silver</span>
             </div>
 
             {/* Document Title */}
-            <div className="space-y-1 pt-1">
-              <h1 className="text-xl sm:text-2xl font-bold text-[#1E3A8A] tracking-tight uppercase leading-snug">
-                BÁO CÁO PHÂN TÍCH: {rawTitle}
+            <div className="pt-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#1E3A8A] tracking-tight leading-snug">
+                Báo Cáo Phân Tích: {rawTitle}
               </h1>
-              <p className="text-xs text-slate-500 font-normal">
-                Tài liệu phân tích tự động trích xuất từ Kho dữ liệu Silver Lake
-              </p>
             </div>
 
             {/* Document Metadata Box */}
@@ -161,10 +155,10 @@ export const WordReportPreviewModal: React.FC<WordReportPreviewModalProps> = ({
               </div>
             </div>
 
-            {/* Section I: Executive Summary */}
+            {/* Section: Executive Summary */}
             <div className="space-y-2">
-              <h2 className="text-xs font-bold text-[#1E3A8A] uppercase tracking-wider">
-                I. TỔNG QUAN ĐIỀU HÀNH
+              <h2 className="text-xs font-bold text-[#1E3A8A]">
+                Tổng Quan Điều Hành
               </h2>
               <div className="border-l-4 border-emerald-600 bg-slate-50/90 rounded-r-lg p-4 border-y border-r border-slate-200/80 space-y-1.5">
                 <p className="text-xs sm:text-[13px] text-slate-700 leading-relaxed font-normal whitespace-pre-line">
@@ -173,10 +167,10 @@ export const WordReportPreviewModal: React.FC<WordReportPreviewModalProps> = ({
               </div>
             </div>
 
-            {/* Section II: KPI Cards */}
+            {/* Section: KPI Cards */}
             <div className="space-y-2.5">
-              <h2 className="text-xs font-bold text-[#1E3A8A] uppercase tracking-wider">
-                II. CÁC CHỈ SỐ HIỆU SUẤT CỐT LÕI
+              <h2 className="text-xs font-bold text-[#1E3A8A]">
+                Các Chỉ Số Hiệu Suất Cốt Lõi
               </h2>
               <div className={`grid grid-cols-2 ${kpiCards.length >= 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-3`}>
                 {kpiCards.length > 0 ? (
@@ -188,7 +182,7 @@ export const WordReportPreviewModal: React.FC<WordReportPreviewModalProps> = ({
                         key={idx} 
                         className="bg-[#F8FAFC] border border-slate-200 border-t-4 border-t-[#1E3A8A] rounded p-3 flex flex-col justify-between min-h-[85px]"
                       >
-                        <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 truncate" title={card.label}>
+                        <div className="text-[10px] font-medium text-slate-500 truncate" title={card.label}>
                           {card.label}
                         </div>
                         <div className="my-1 flex items-baseline gap-1 overflow-hidden">
@@ -211,10 +205,10 @@ export const WordReportPreviewModal: React.FC<WordReportPreviewModalProps> = ({
               </div>
             </div>
 
-            {/* Section III: Key Findings Table */}
+            {/* Section: Key Findings Table */}
             <div className="space-y-2.5">
-              <h2 className="text-xs font-bold text-[#1E3A8A] uppercase tracking-wider">
-                III. CÁC PHÁT HIỆN TRỌNG YẾU
+              <h2 className="text-xs font-bold text-[#1E3A8A]">
+                Các Phát Hiện Trọng Yếu
               </h2>
               <div className="border border-slate-200 rounded overflow-hidden">
                 <table className="w-full text-left border-collapse text-xs">
@@ -232,7 +226,7 @@ export const WordReportPreviewModal: React.FC<WordReportPreviewModalProps> = ({
                         return (
                           <tr key={idx} className={idx % 2 === 1 ? 'bg-[#F8FAFC]' : 'bg-white'}>
                             <td className="px-3.5 py-2.5 font-medium text-slate-900">
-                              {item.finding || item.name || `Phát hiện ${idx + 1}`}
+                              {item.finding || item.name || 'Phát hiện trọng yếu'}
                             </td>
                             <td className="px-3.5 py-2.5 font-mono font-medium text-emerald-700 whitespace-nowrap">
                               {rowVal} {item.unit || ''}
@@ -255,12 +249,12 @@ export const WordReportPreviewModal: React.FC<WordReportPreviewModalProps> = ({
               </div>
             </div>
 
-            {/* Section IV: Charts Section */}
+            {/* Section: Charts Section */}
             {charts.length > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xs font-bold text-[#1E3A8A] uppercase tracking-wider">
-                    IV. TRỰC QUAN HÓA SỐ LIỆU ĐA CHIỀU
+                  <h2 className="text-xs font-bold text-[#1E3A8A]">
+                    Trực Quan Hóa Số Liệu Đa Chiều
                   </h2>
                   <span className="text-[10px] text-slate-500 font-medium">
                     {charts.length} biểu đồ tương tác
@@ -292,12 +286,7 @@ export const WordReportPreviewModal: React.FC<WordReportPreviewModalProps> = ({
                     return (
                       <div key={idx} className={`${spanClass} border border-slate-200 rounded-xl p-4 bg-[#F8FAFC] flex flex-col justify-between min-h-[320px] shadow-2xs`}>
                         <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
-                          <div>
-                            <span className="font-semibold text-slate-900 text-xs">{ch.title}</span>
-                            {ch.purpose && (
-                              <p className="text-[10px] text-slate-400 mt-0.5">{ch.purpose}</p>
-                            )}
-                          </div>
+                          <span className="font-semibold text-slate-900 text-xs">{ch.title}</span>
                           <div className="flex items-center gap-1.5 shrink-0">
                             {ch.unit && (
                               <span className="text-[10px] font-mono text-slate-400">
@@ -370,11 +359,11 @@ export const WordReportPreviewModal: React.FC<WordReportPreviewModalProps> = ({
               </div>
             )}
 
-            {/* Section V: Detailed Data Table */}
+            {/* Section: Detailed Data Table */}
             {tableData && tableData.columns && (
               <div className="space-y-2.5">
-                <h2 className="text-xs font-bold text-[#1E3A8A] uppercase tracking-wider">
-                  V. {tableData.title ? tableData.title.toUpperCase() : 'DỮ LIỆU CHI TIẾT'}
+                <h2 className="text-xs font-bold text-[#1E3A8A]">
+                  {tableData.title || 'Dữ Liệu Chi Tiết'}
                 </h2>
                 <div className="border border-slate-200 rounded overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
@@ -409,16 +398,15 @@ export const WordReportPreviewModal: React.FC<WordReportPreviewModalProps> = ({
               </div>
             )}
 
-            {/* Section VI: Strategic Insights */}
+            {/* Section: Strategic Insights */}
             {aiInsights.length > 0 && (
               <div className="space-y-2.5">
-                <h2 className="text-xs font-bold text-[#1E3A8A] uppercase tracking-wider">
-                  VI. NHẬN ĐỊNH CHIẾN LƯỢC & HÀM Ý KINH DOANH
+                <h2 className="text-xs font-bold text-[#1E3A8A]">
+                  Nhận Định Chiến Lược & Hàm Ý Kinh Doanh
                 </h2>
                 <div className="space-y-2">
                   {aiInsights.map((insight: any, idx: number) => {
-                    const numStr = String(idx + 1).padStart(2, '0');
-                    let title = `Nhận định ${numStr}`;
+                    let title = 'Nhận định chuyên sâu';
                     let content = typeof insight === 'object' && insight !== null
                       ? ((insight as any).insight || (insight as any).text || (insight as any).content || Object.values(insight)[0] || '')
                       : String(insight);
@@ -431,11 +419,9 @@ export const WordReportPreviewModal: React.FC<WordReportPreviewModalProps> = ({
 
                     return (
                       <div key={idx} className="p-3 bg-[#F8FAFC] border border-slate-200 rounded flex items-start space-x-3">
-                        <div className="w-6 h-6 rounded bg-[#1E3A8A] text-white font-mono font-medium text-xs flex items-center justify-center shrink-0">
-                          {numStr}
-                        </div>
+                        <div className="w-2 h-2 rounded-full bg-[#1E3A8A] mt-1.5 shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-slate-900 text-xs">{title}</h4>
+                          <div className="font-semibold text-slate-900 text-xs">{title}</div>
                           <p className="text-slate-600 text-[11px] mt-0.5 leading-relaxed">{content}</p>
                         </div>
                       </div>
@@ -445,25 +431,25 @@ export const WordReportPreviewModal: React.FC<WordReportPreviewModalProps> = ({
               </div>
             )}
 
-            {/* Section VII: Conclusions & Recommendations */}
+            {/* Section: Conclusions & Recommendations */}
             <div className="space-y-3 pt-1">
-              <h2 className="text-xs font-bold text-[#1E3A8A] uppercase tracking-wider">
-                VII. KẾT LUẬN & KHUYẾN NGHỊ HÀNH ĐỘNG
+              <h2 className="text-xs font-bold text-[#1E3A8A]">
+                Kết Luận & Khuyến Nghị Hành Động
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-3 bg-white border border-slate-200 rounded space-y-1">
-                  <h4 className="font-semibold text-slate-800 text-xs">
-                    Kết luận tự động
-                  </h4>
+                  <div className="font-semibold text-slate-800 text-xs">
+                    Kết Luận Tự Động
+                  </div>
                   <p className="text-slate-600 text-[11px] leading-relaxed">
                     {conclusions || 'Hệ thống đã khớp lệnh truy vấn thành công. Các chỉ số ghi nhận xu hướng ổn định và phản ánh trung thực thực trạng vận hành chuỗi.'}
                   </p>
                 </div>
 
                 <div className="p-3 bg-white border border-slate-200 rounded space-y-1">
-                  <h4 className="font-semibold text-slate-800 text-xs">
-                    Khuyến nghị điều hành
-                  </h4>
+                  <div className="font-semibold text-slate-800 text-xs">
+                    Khuyến Nghị Điều Hành
+                  </div>
                   <p className="text-slate-600 text-[11px] leading-relaxed">
                     {recommendations || 'Tiếp tục tối ưu hóa index trên các trường mã sản phẩm và thời gian tại tầng Silver để gia tăng tốc độ phản hồi truy vấn phân tích.'}
                   </p>
@@ -474,7 +460,7 @@ export const WordReportPreviewModal: React.FC<WordReportPreviewModalProps> = ({
             {/* Document Running Footer */}
             <div className="border-t border-slate-200 pt-3 flex items-center justify-between text-[10px] text-slate-400">
               <span>Tài liệu nội bộ bảo mật • Bản quyền thuộc Avengers Coffee Data Platform</span>
-              <span>Trang 1 / 1 • Định dạng Microsoft Word (.docx)</span>
+              <span>Định dạng Microsoft Word (.docx)</span>
             </div>
 
           </div>
