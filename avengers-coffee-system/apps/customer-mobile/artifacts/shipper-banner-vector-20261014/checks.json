@@ -1,0 +1,19 @@
+{
+  "orderTests": 227,
+  "webCustomerTests": 80,
+  "customerMobileTests": 34,
+  "webAdminTests": 23,
+  "shipperTests": 7,
+  "totalUnitTests": 371,
+  "apiKeysUsedForTests": false,
+  "orderServiceBuild": "PASS",
+  "webCustomerBuild": "PASS",
+  "webAdminBuild": "PASS",
+  "customerExpoWebIosAndroidExport": "PASS",
+  "shipperExpoWebIosAndroidExport": "PASS",
+  "orderContainerUpdated": true,
+  "commitPush": false,
+  "nativeDeviceVisualQa": false,
+  "providerStyleAndRouteQa": "offline fixtures",
+  "lint": "changed web files only; customer React compiler/unused rules disabled, admin runtime config"
+}

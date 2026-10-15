@@ -1,8 +1,12 @@
+import { systemBranches, newestShippers } from '../../../lib/shipperManagement.mjs'
+import { PaginatedList } from '../../../components/console/CompactPagination'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
 import { getAdminAccessToken, getAdminSession } from '../../../lib/adminFetch'
 import {
-  Bike,
+  Motorbike,
+  Eye,
+  EyeOff,
   Truck,
   Car,
   Users,
@@ -200,11 +204,15 @@ export function AdminShipperPanel({ branchOptions = [] }) {
   const [form, setForm] = useState({ ...BLANK_FORM })
   const [editingId, setEditingId] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [createdId, setCreatedId] = useState(null)
+  const createdIdRef = useRef(null)
+  const loadVersion = useRef(0)
   const [searchQ, setSearchQ] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [filterBranch, setFilterBranch] = useState('')
   const [internalBranches, setInternalBranches] = useState([])
-  const effectiveBranches = branchOptions.length > 0 ? branchOptions : internalBranches
+  const effectiveBranches = systemBranches(branchOptions.length > 0 ? branchOptions : internalBranches)
 
   useEffect(() => {
     if (branchOptions.length === 0) {
@@ -214,7 +222,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
           if (Array.isArray(list)) {
             setInternalBranches(list.map(b => ({
               code: b.ma_chi_nhanh || b.ma_co_so || b.code || b.id,
-              name: b.ten_chi_nhanh || b.ten_co_so || b.name || b.code
+              name: b.ten_chi_nhanh || b.ten_co_so || b.name || b.code, loai_diem_ban:b.loai_diem_ban
             })))
           }
         })
@@ -249,6 +257,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
   const [codConfirming, setCodConfirming] = useState(null)
 
   const loadShippers = useCallback(async () => {
+    const version = ++loadVersion.current
     setShippersLoading(true)
     setShippersError(null)
     try {
@@ -257,11 +266,12 @@ export function AdminShipperPanel({ branchOptions = [] }) {
       if (filterStatus) q.set('status', filterStatus)
       if (filterBranch) q.set('branch_code', filterBranch)
       const res = await apiFetch(`/shippers/all?${q.toString()}`)
-      setShippers(Array.isArray(res) ? res : res?.items || res?.data || [])
+      if (version !== loadVersion.current) return
+      setShippers(newestShippers(Array.isArray(res) ? res : res?.items || res?.data || [],createdIdRef.current))
     } catch (e) {
-      setShippersError(e.message)
+      if (version === loadVersion.current) setShippersError(e.message)
     } finally {
-      setShippersLoading(false)
+      if (version === loadVersion.current) setShippersLoading(false)
     }
   }, [searchQ, filterStatus, filterBranch])
 
@@ -327,7 +337,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
     }
   }
 
-  useEffect(() => { loadShippers() }, [loadShippers])
+  useEffect(() => { loadShippers() }, [loadShippers,createdId])
   useEffect(() => {
     if (activeTab === 'config') loadConfig()
     if (activeTab === 'kpi') loadKpi()
@@ -342,6 +352,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
       alert('Vui lòng nhập đầy đủ Username và Họ tên')
       return
     }
+    if (!effectiveBranches.some(b => (b.code || b.id) === form.branch_code)) { alert('Bạn chọn một chi nhánh hệ thống để phụ trách nhé.'); return }
     setSaving(true)
     try {
       if (editingId) {
@@ -356,18 +367,24 @@ export function AdminShipperPanel({ branchOptions = [] }) {
         alert('Đã cập nhật thông tin nhân viên giao hàng!')
       } else {
         if (!form.password) { alert('Cần nhập mật khẩu khi tạo tài khoản mới'); setSaving(false); return }
-        await apiFetch('/shippers', {
+        const created = await apiFetch('/shippers', {
           method: 'POST',
           body: JSON.stringify({
             ...form,
             phone: form.phone_number,
           }),
         })
+        ++loadVersion.current
+        createdIdRef.current = created.id
+        setCreatedId(created.id)
+        setShippers(previous => newestShippers([created,...previous.filter(row => row.id !== created.id)],created.id))
+        setSearchQ(''); setFilterStatus(''); setFilterBranch('')
         alert('Tạo tài khoản giao hàng thành công!')
       }
       setForm({ ...BLANK_FORM })
       setEditingId(null)
-      loadShippers()
+      setShowPassword(false)
+      if (editingId) loadShippers()
     } catch (e) {
       alert('Lỗi: ' + e.message)
     } finally {
@@ -428,8 +445,8 @@ export function AdminShipperPanel({ branchOptions = [] }) {
 
   const getVehicleIcon = (type) => {
     if (type === 'CAR') return <Car size={16} style={{ color: 'var(--primary)' }} />
-    if (type === 'BICYCLE') return <Bike size={16} style={{ color: '#2563eb' }} />
-    return <Bike size={16} style={{ color: '#d97706' }} />
+    if (type === 'BICYCLE') return <Motorbike size={16} style={{ color: '#2563eb' }} />
+    return <Motorbike size={16} style={{ color: '#d97706' }} />
   }
 
   return (
@@ -585,13 +602,14 @@ export function AdminShipperPanel({ branchOptions = [] }) {
 
               <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#475569' }}>Mật khẩu {editingId ? '(Bỏ trống nếu không đổi)' : '*'}</span>
-                <input
-                  type="password"
+                <div style={{position:'relative'}}><input
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
                   value={form.password || ''}
                   onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
                   placeholder="••••••••"
-                  style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.875rem' }}
-                />
+                  style={{ width:'100%', padding: '0.5rem 2.75rem 0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.875rem' }}
+                /><button type="button" aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)} style={{ position:'absolute',right:6,top:4,width:32,height:32,padding:0,display:'grid',placeItems:'center',border:0,boxShadow:'none',background:'transparent',color:'#64748b',cursor:'pointer' }}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div>
               </label>
 
               <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
@@ -603,7 +621,6 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                 >
                   <option value="MOTORBIKE">Xe máy</option>
                   <option value="CAR">Ô tô</option>
-                  <option value="BICYCLE">Xe đạp</option>
                 </select>
               </label>
 
@@ -692,7 +709,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {shippers.map(s => {
+                  <PaginatedList items={shippers} resetKey={JSON.stringify([filterStatus,filterBranch,searchQ,activeTab,createdId])} layout="table" columns={8}>{s => {
                     const st = SHIPPER_STATUS_CONFIG[s.status] || SHIPPER_STATUS_CONFIG.INACTIVE
                     return (
                       <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -824,7 +841,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                         </td>
                       </tr>
                     )
-                  })}
+                  }}</PaginatedList>
                 </tbody>
               </table>
               {shippers.length === 0 && !shippersLoading && (
@@ -1077,7 +1094,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {kpiData.shippers.map((s, i) => {
+                      <PaginatedList items={kpiData.shippers} resetKey={JSON.stringify([filterStatus,filterBranch,searchQ,activeTab,createdId])} layout="table" columns={6}>{(s, i) => {
                         const total = (s.delivered || 0) + (s.failed || 0)
                         const rate = total > 0 ? Math.round(s.delivered / total * 100) : 0
                         return (
@@ -1115,7 +1132,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                             </td>
                           </tr>
                         )
-                      })}
+                      }}</PaginatedList>
                     </tbody>
                   </table>
                 </div>
@@ -1258,7 +1275,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {financeData.payments.map((p, i) => (
+                  <PaginatedList items={financeData.payments} resetKey={JSON.stringify([filterStatus,filterBranch,searchQ,activeTab,createdId])} layout="table" columns={6}>{(p, i) => (
                     <tr key={p.id || i} style={{ borderBottom: '1px solid #f1f5f9' }}>
                       <td style={{ padding: '0.85rem 1rem', fontWeight: '700', color: '#0f172a' }}>
                         {p.shipper_name || p.shipper_id?.slice(0, 8)}
@@ -1290,7 +1307,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                         {fmtDate(p.paid_at)}
                       </td>
                     </tr>
-                  ))}
+                  )}</PaginatedList>
                 </tbody>
               </table>
             ) : (
@@ -1402,7 +1419,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {codRemits.map((r, i) => {
+                    <PaginatedList items={codRemits} resetKey={JSON.stringify([filterStatus,filterBranch,searchQ,activeTab,createdId])} layout="table" columns={7}>{(r, i) => {
                       const isPending = r.status === 'PENDING'
                       const isConfirmed = r.status === 'CONFIRMED'
                       return (
@@ -1511,7 +1528,7 @@ export function AdminShipperPanel({ branchOptions = [] }) {
                           </td>
                         </tr>
                       )
-                    })}
+                    }}</PaginatedList>
                   </tbody>
                 </table>
               </div>

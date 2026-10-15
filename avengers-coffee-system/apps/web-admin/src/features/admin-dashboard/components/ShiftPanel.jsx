@@ -1,3 +1,4 @@
+import { PageNumbers } from '../../../components/console/CompactPagination'
 import React, { useMemo, useState } from 'react'
 import {
   Clock,
@@ -1110,26 +1111,7 @@ export function ShiftPanel({
             </button>
 
             <div style={{ display: 'flex', gap: '0.2rem' }}>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setHistoryPage(p)}
-                  style={{
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    background: safePage === p ? 'var(--primary)' : 'transparent',
-                    color: safePage === p ? '#ffffff' : '#64748b',
-                    fontWeight: safePage === p ? '700' : '500',
-                    fontSize: '0.775rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {p}
-                </button>
-              ))}
+              <PageNumbers page={safePage} totalPages={totalPages} onChange={setHistoryPage} />
             </div>
 
             <button

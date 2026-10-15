@@ -9,7 +9,7 @@ export function coordinate(value) {
 export function isTerminal(data) {
   return ['HOAN_THANH', 'DA_HUY'].includes(data?.order?.trang_thai_don_hang)
 }
-export function createTrackingSession({ orderId, fetchTracking, connectSocket, onChange, clock = { now: Date.now, setTimeout, clearTimeout } }) {
+export function createTrackingSession({ orderId, fetchTracking, connectSocket, onChange, clock = { now: Date.now, setTimeout: (callback, delay) => globalThis.setTimeout(callback, delay), clearTimeout: timer => globalThis.clearTimeout(timer) } }) {
   let active = false, generation = 0, data = null, socket = null, timer = null, controller = null, busy = false
   let connected = false, subscribed = false, lastGps = 0, lastGpsTimestamp = 0, lastRefresh = 0, receivedAt = null, error = null
   const publish = () => onChange({ data, loading: busy && !data, refreshing: busy && Boolean(data), error, receivedAt, live: connected && subscribed && Boolean(lastGps) && clock.now() - lastGps < 45000 })

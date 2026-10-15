@@ -3,6 +3,18 @@ import assert from 'node:assert/strict'
 import { coordinate, createTrackingSession } from '../src/lib/trackingSession.js'
 
 const tick = () => new Promise(resolve => setImmediate(resolve))
+test('default browser timers retain their global receiver when tracking schedules and stops', async () => {
+  const savedSet = globalThis.setTimeout, savedClear = globalThis.clearTimeout
+  const calls = []
+  globalThis.setTimeout = function (_callback, delay) { assert.equal(this,globalThis); calls.push(delay); return 123 }
+  globalThis.clearTimeout = function (timer) { assert.equal(this,globalThis); calls.push(timer) }
+  try {
+    const socket = { on() {}, removeAllListeners() {}, disconnect() {} }
+    const session = createTrackingSession({ orderId:'fixture',fetchTracking:async () => ({ order:{ ma_don_hang:'fixture',trang_thai_don_hang:'DANG_GIAO' } }),connectSocket:() => socket,onChange() {} })
+    session.start(); await tick(); session.stop()
+    assert.deepEqual(calls,[30000,123])
+  } finally { globalThis.setTimeout = savedSet; globalThis.clearTimeout = savedClear }
+})
 function fixture(fetch) {
   let now = 100000, serial = 0, calls = 0
   const timers = new Map(), sockets = [], changes = []

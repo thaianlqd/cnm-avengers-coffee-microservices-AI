@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-14",
+  "tests": {
+    "customer_and_mobile": 86,
+    "admin_unit_ssr": 21,
+    "order_service": 220,
+    "failed": 0,
+    "total": 327
+  },
+  "builds": {
+    "web_customer_vite": "PASS",
+    "web_admin_vite": "PASS",
+    "customer_expo_web_ios_android": "PASS",
+    "shipper_expo_web_ios_android": "PASS",
+    "order_nest_and_docker": "PASS"
+  },
+  "quantity_ui": {
+    "web": "PASS",
+    "expo_web": "PASS",
+    "select_quantities": [
+      2,
+      2
+    ],
+    "configure_quantities": [
+      3,
+      2
+    ],
+    "api_mocked": true
+  },
+  "inbox_menu_regression_ui": {
+    "passed": 5,
+    "failed": 0
+  },
+  "pagination": {
+    "newly_paginated_lists": 33,
+    "numbered_controls": "at most 5 page buttons + ellipses",
+    "manager_review_test": {
+      "total_items": 200,
+      "last_page": 34,
+      "last_items": [
+        199,
+        200
+      ],
+      "result": "PASS"
+    }
+  },
+  "deployment": {
+    "service": "order-service",
+    "scope": "Docker Compose local only",
+    "startup_complete": true,
+    "ERROR_logs": 0
+  },
+  "keys_used_for_tests": "fixture-only",
+  "live_api_provider_payment_or_customer_messages": false,
+  "agent_commit_push": false,
+  "limitations": [
+    "iOS/Android bundles compile, physical devices/emulators not exercised.",
+    "Map tiles and road geometry are synthetic fixtures; actual provider service quality and GPS permissions were not tested.",
+    "Pagination uses existing fetched datasets and leaves current API scope/limits intact."
+  ],
+  "maps_and_actor_ui": {
+    "passed": 8,
+    "failed": 0,
+    "tabs_checked": 59,
+    "real_api_requests_sent": 0
+  }
+}

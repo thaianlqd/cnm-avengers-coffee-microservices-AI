@@ -2,6 +2,10 @@
 export const MAX_SELECTED_PRODUCTS = 16;
 export const productIdentity = product => String(product.product_id || product.ma_san_pham || product.id);
 export const productName = product => product.ten_san_pham || product.product_name || product.name;
+export function updateProductQuantity(selected, product, quantity) {
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99) return selected;
+  return selected.map(row => productIdentity(row) === productIdentity(product) ? { ...row, quantity } : row);
+}
 export function toggleProductSelection(selected, product, snapshot) {
   const id = productIdentity(product);
   const exists = selected.some(row => productIdentity(row) === id && row.snapshot === snapshot);
@@ -22,6 +26,7 @@ export function toggleOption(choices, group, value) {
   if (!group.field || !group.values.includes(value)) return choices;
   if (group.multiple) {
     const current = choices[group.field] || [];
+    if (!current.includes(value) && current.length >= 16) return choices;
     return { ...choices, [group.field]: current.includes(value) ? current.filter(row => row !== value) : [...current, value] };
   }
   const next = { ...choices };

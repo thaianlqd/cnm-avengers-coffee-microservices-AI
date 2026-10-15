@@ -74,7 +74,7 @@ export default function CartPage({
   onLogin
 }) {
   useUiLanguage();
-  const { cart, removeFromCart, updateCartQuantity, activeUserId, refreshCart } = useCart();
+  const { cart, cartWritePending, removeFromCart, updateCartQuantity, activeUserId, refreshCart } = useCart();
   const [editingItem, setEditingItem] = useState(null);
   const queryClient = useQueryClient();
 
@@ -230,6 +230,11 @@ export default function CartPage({
   });
   const [ghiChu, setGhiChu] = useState('');
   const [thongBao, setThongBao] = useState('');
+  const runCartWrite = async action => {
+    try { await action(); }
+    catch (error) { setThongBao(error?.response?.data?.message || ui('Chưa cập nhật được giỏ hàng. Vui lòng thử lại.')); }
+  };
+
   const [qrData, setQrData] = useState(null);
   const [qrImageUrl, setQrImageUrl] = useState('');
   const [qrOrderId, setQrOrderId] = useState(null);
@@ -759,7 +764,7 @@ export default function CartPage({
         if (geo && geo.lat && geo.lng) {
           setUserCoordinates({ lat: geo.lat, lng: geo.lng });
         }
-      } catch {}
+      } catch { /* Keep the entered address when geocoding is unavailable. */ }
     }, 600);
 
     return () => clearTimeout(timer);
@@ -801,7 +806,7 @@ export default function CartPage({
             targetLat = Number(geo.lat);
             targetLng = Number(geo.lng);
           }
-        } catch {}
+        } catch { /* Keep the entered address when geocoding is unavailable. */ }
       }
 
       const payload = {
@@ -873,6 +878,7 @@ export default function CartPage({
 
   const pendingCheckoutRetry = Boolean(checkoutRequestRef.current && !checkoutRequestRef.current.completed);
   const khoiTaoThanhToan = async () => {
+    if (cartWritePending) return;
     if (!isLoggedInUser) { requestLogin(); return; }
     if (checkoutBusyRef.current) return;
     if (!deliveryMode || !phuongThuc) {
@@ -1261,7 +1267,8 @@ export default function CartPage({
                         {/* Nút xóa màu đỏ */}
                         <button
                           type="button"
-                          onClick={() => removeFromCart(item)}
+                          disabled={cartWritePending}
+                          onClick={() => runCartWrite(() => removeFromCart(item))}
                           className="text-gray-400 hover:text-red-600 transition-colors p-2 rounded-full hover:bg-red-50"
                           aria-label={ui("Xóa {{v0}}", {v0:item.ten_san_pham})}
                         >
@@ -1272,7 +1279,9 @@ export default function CartPage({
                         <div className="flex items-center justify-between bg-[#faf7f4] border border-gray-200 rounded-full py-1.5 px-3 w-[100px] sm:w-[110px] shadow-xs select-none">
                           <button
                             type="button"
-                            onClick={() => updateCartQuantity(item, -1)}
+                            disabled={cartWritePending}
+                            aria-label={ui("Giảm số lượng")}
+                            onClick={() => runCartWrite(() => updateCartQuantity(item, -1))}
                             className="w-7 h-7 rounded-full bg-white text-gray-600 hover:text-[#c41230] font-extrabold text-[15px] flex items-center justify-center shadow-xs transition-colors"
                           >
                             -
@@ -1282,7 +1291,9 @@ export default function CartPage({
                           </span>
                           <button
                             type="button"
-                            onClick={() => updateCartQuantity(item, 1)}
+                            disabled={cartWritePending}
+                            aria-label={ui("Tăng số lượng")}
+                            onClick={() => runCartWrite(() => updateCartQuantity(item, 1))}
                             className="w-7 h-7 rounded-full bg-white text-gray-600 hover:text-[#c41230] font-extrabold text-[15px] flex items-center justify-center shadow-xs transition-colors"
                           >
                             +
@@ -1990,7 +2001,7 @@ export default function CartPage({
 
                   <button
                     onClick={khoiTaoThanhToan}
-                    disabled={!deliveryMode || !phuongThuc || ((deliveryMode === 'LAY_TAI_QUAN' || deliveryMode === 'DUNG_TAI_CHO') && !selectedBranch) || (!pendingCheckoutRetry && ((isLoggedInUser && deliveryMode !== 'KIOSK' && (isQuotingCart || cartQuoteError || !cartQuote)) || (deliveryMode !== 'GIAO_TAN_NOI' && isAnyItemOutOfStock) || (deliveryMode === 'GIAO_TAN_NOI' && !stockValidation.canOrder))) || khoiTaoThanhToanMutation.isPending}
+                    disabled={cartWritePending || !deliveryMode || !phuongThuc || ((deliveryMode === 'LAY_TAI_QUAN' || deliveryMode === 'DUNG_TAI_CHO') && !selectedBranch) || (!pendingCheckoutRetry && ((isLoggedInUser && deliveryMode !== 'KIOSK' && (isQuotingCart || cartQuoteError || !cartQuote)) || (deliveryMode !== 'GIAO_TAN_NOI' && isAnyItemOutOfStock) || (deliveryMode === 'GIAO_TAN_NOI' && !stockValidation.canOrder))) || khoiTaoThanhToanMutation.isPending}
                     className="w-full mt-6 py-4 bg-[#c41230] hover:bg-[#a30f28] text-white rounded-full font-black uppercase text-xs sm:text-sm tracking-widest shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {khoiTaoThanhToanMutation.isPending ? (

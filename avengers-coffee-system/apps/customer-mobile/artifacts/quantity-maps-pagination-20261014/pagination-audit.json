@@ -1,0 +1,134 @@
+[
+  {
+    "file": "features/actor-admin/components/AdminSatelliteKioskPanel.jsx",
+    "list": "filteredKiosks"
+  },
+  {
+    "file": "features/actor-admin/components/AdminSatelliteKioskPanel.jsx",
+    "list": "stats.theo_cum || []"
+  },
+  {
+    "file": "features/actor-admin/components/AdminSatelliteKioskPanel.jsx",
+    "list": "cluster.diem_ban"
+  },
+  {
+    "file": "features/actor-admin/components/AdminSatelliteKioskPanel.jsx",
+    "list": "zones"
+  },
+  {
+    "file": "features/actor-admin/components/AdminShipperPanel.jsx",
+    "list": "shippers"
+  },
+  {
+    "file": "features/actor-admin/components/AdminShipperPanel.jsx",
+    "list": "kpiData.shippers"
+  },
+  {
+    "file": "features/actor-admin/components/AdminShipperPanel.jsx",
+    "list": "financeData.payments"
+  },
+  {
+    "file": "features/actor-admin/components/AdminShipperPanel.jsx",
+    "list": "codRemits"
+  },
+  {
+    "file": "features/actor-admin/components/BranchDetailReviewsView.jsx",
+    "list": "filteredItems"
+  },
+  {
+    "file": "features/actor-admin/components/KioskDetailPanel.jsx",
+    "list": "staffList"
+  },
+  {
+    "file": "features/actor-admin/components/KioskDetailPanel.jsx",
+    "list": "combos"
+  },
+  {
+    "file": "features/admin-dashboard/components/TableManagementPanel.jsx",
+    "list": "filteredTables"
+  },
+  {
+    "file": "features/admin-dashboard/components/TableManagementPanel.jsx",
+    "list": "activeOrders"
+  },
+  {
+    "file": "features/franchise/DongTienTab.jsx",
+    "list": "danh_sach"
+  },
+  {
+    "file": "features/franchise/FranchiseStaffPortal.jsx",
+    "list": "myShiftRequests"
+  },
+  {
+    "file": "features/franchise/FranchiseStaffPortal.jsx",
+    "list": "kioskShiftHistory"
+  },
+  {
+    "file": "features/franchise/FranchiseePortal.jsx",
+    "list": "subStaffList.filter(s => { const matchKiosk = !staffKioskFilter || s.kiosk_id === staffKioskFilter || s.co_so_ma === staffKioskFil"
+  },
+  {
+    "file": "features/franchise/FranchiseePortal.jsx",
+    "list": "kioskShiftHistory"
+  },
+  {
+    "file": "features/franchise/FranchiseePortal.jsx",
+    "list": "posOrders"
+  },
+  {
+    "file": "features/franchise/FranchiseePortal.jsx",
+    "list": "availableCombos"
+  },
+  {
+    "file": "features/franchise/FranchiseePortal.jsx",
+    "list": "donTheoKiosk"
+  },
+  {
+    "file": "features/franchise/FranchiseePortal.jsx",
+    "list": "walletInfo.giao_dich"
+  },
+  {
+    "file": "features/franchise/FranchiseePortal.jsx",
+    "list": "congNoTheoKiosk"
+  },
+  {
+    "file": "features/franchise/FranchiseePortal.jsx",
+    "list": "royaltyTheoKiosk"
+  },
+  {
+    "file": "features/franchise/FranchiseePortal.jsx",
+    "list": "filtered"
+  },
+  {
+    "file": "features/franchise/FranchiseePortal.jsx",
+    "list": "reviews"
+  },
+  {
+    "file": "features/manager-dashboard/components/ManagerShipperPanel.jsx",
+    "list": "shippers"
+  },
+  {
+    "file": "features/manager-dashboard/components/ManagerShipperPanel.jsx",
+    "list": "pendingOrders"
+  },
+  {
+    "file": "features/manager-dashboard/components/ManagerShipperPanel.jsx",
+    "list": "exceptions"
+  },
+  {
+    "file": "features/staff-dashboard/components/KioskComboReceiver.jsx",
+    "list": "displayed"
+  },
+  {
+    "file": "features/staff-dashboard/features_thaian/StaffDeliveryPanel.jsx",
+    "list": "filteredDeliveries"
+  },
+  {
+    "file": "features/staff-dashboard/features_thaian/StaffDeliveryPanel.jsx",
+    "list": "codRemits"
+  },
+  {
+    "file": "features/staff-dashboard/features_thaian/StaffDeliveryPanel.jsx",
+    "list": "filteredShippers"
+  }
+]

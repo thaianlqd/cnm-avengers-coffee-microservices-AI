@@ -1,3 +1,4 @@
+import { PaginatedList } from '../../../components/console/CompactPagination'
 import { useState, useEffect, useCallback } from 'react'
 import { API_BASE_URL } from '../../admin-dashboard/constants'
 import { getAdminAccessToken } from '../../../lib/adminFetch'
@@ -281,7 +282,7 @@ export function ManagerShipperPanel({ session }) {
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
-              {shippers.map((shipper) => (
+              <PaginatedList items={shippers} resetKey={activeTab}>{(shipper) => (
                 <div key={shipper.id} style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
@@ -324,7 +325,7 @@ export function ManagerShipperPanel({ session }) {
                     </span>
                   )}
                 </div>
-              ))}
+              )}</PaginatedList>
             </div>
           )}
 
@@ -419,7 +420,7 @@ export function ManagerShipperPanel({ session }) {
                 style={{ height: '34px', padding: '0 0.65rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.78125rem', fontWeight: '600', color: '#0f172a' }}
               >
                 <option value="">— Chọn Shipper —</option>
-                {shippers.map((s) => (
+                {onlineShippers.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.full_name || s.username} · {s.status === 'ACTIVE' ? 'Online' : 'Offline'} · {s.active_delivery_count || 0} đơn đang giao
                   </option>
@@ -433,7 +434,7 @@ export function ManagerShipperPanel({ session }) {
               type="button"
               className="btn-save-green"
               onClick={handleAssign}
-              disabled={!assigningOrderId || !assigningShipperId || isAssigning}
+              disabled={!assigningOrderId || !onlineShippers.some(shipper => shipper.id === assigningShipperId) || isAssigning}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', height: '34px', padding: '0 1.1rem', borderRadius: '6px', fontSize: '0.78125rem', fontWeight: '700', cursor: 'pointer' }}
             >
               <Check size={14} /> {isAssigning ? 'Đang phân công...' : 'Xác Nhận Phân Công'}
@@ -465,7 +466,7 @@ export function ManagerShipperPanel({ session }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {pendingOrders.slice(0, 10).map((o) => (
+                    <PaginatedList items={pendingOrders} resetKey={activeTab} layout="table" columns={4}>{(o) => (
                       <tr key={o.ma_don_hang} style={{ borderBottom: '1px solid #f1f5f9' }}>
                         <td style={{ padding: '0.55rem 0.65rem', fontWeight: '700', color: 'var(--primary)' }}>#{String(o.ma_don_hang || '').slice(0, 8).toUpperCase()}</td>
                         <td style={{ padding: '0.55rem 0.65rem', color: '#334155' }}>{o.dia_chi_giao_hang || 'Chưa có địa chỉ'}</td>
@@ -476,7 +477,7 @@ export function ManagerShipperPanel({ session }) {
                         </td>
                         <td style={{ padding: '0.55rem 0.65rem', color: '#64748b', fontSize: '0.72rem' }}>{fmtDateTime(o.tao_luc)}</td>
                       </tr>
-                    ))}
+                    )}</PaginatedList>
                   </tbody>
                 </table>
               </div>
@@ -498,7 +499,7 @@ export function ManagerShipperPanel({ session }) {
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
-              {exceptions.map((exc) => {
+              <PaginatedList items={exceptions} resetKey={activeTab}>{(exc) => {
                 const isHandling = handlingExceptionId === exc.id
                 return (
                   <div key={exc.id} style={{ backgroundColor: '#ffffff', border: '1px solid #fde68a', borderLeft: '4px solid #d97706', borderRadius: '12px', padding: '1rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -558,7 +559,7 @@ export function ManagerShipperPanel({ session }) {
                     </div>
                   </div>
                 )
-              })}
+              }}</PaginatedList>
             </div>
           )}
         </div>

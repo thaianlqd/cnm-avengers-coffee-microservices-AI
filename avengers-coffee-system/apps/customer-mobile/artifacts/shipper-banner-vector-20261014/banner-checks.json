@@ -1,0 +1,35 @@
+{
+  "results": [
+    {
+      "tab": "home",
+      "imageOnly": true,
+      "distinctSlides": 4,
+      "responsive": "PASS"
+    },
+    {
+      "tab": "order",
+      "imageOnly": true,
+      "distinctSlides": 4,
+      "responsive": "PASS"
+    },
+    {
+      "app": "mobile",
+      "fourSlidesEach": "PASS"
+    },
+    {
+      "app": "admin",
+      "passwordToggle": true,
+      "kiosksExcluded": true,
+      "noBicycle": true,
+      "createdFirstPage": true
+    },
+    {
+      "app": "shipper",
+      "staleConfiguredLanIgnored": true,
+      "login": "PASS"
+    }
+  ],
+  "errors": [],
+  "realApiRequests": 0,
+  "keys": "fixtures only"
+}

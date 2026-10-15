@@ -549,7 +549,7 @@ export function useSystemAdmin() {
 
   const branchOptions = useMemo(() => {
     const rows = (branchesState.items || []).filter((item) => item.trang_thai === 'ACTIVE')
-    return rows.map((item) => ({ code: item.ma_chi_nhanh, name: item.ten_chi_nhanh, thanh_pho: item.thanh_pho }))
+    return rows.map((item) => ({ code: item.ma_chi_nhanh, name: item.ten_chi_nhanh, loai_diem_ban: item.loai_diem_ban, thanh_pho: item.thanh_pho }))
   }, [branchesState.items])
 
   const branchNameMap = useMemo(() => {

@@ -27,13 +27,13 @@ export const colors = {
   online: '#00A86B',
 
   // Backgrounds
-  bg: '#F5F6F8',             // Light grey (iOS-like)
+  bg: '#FFFFFF',             // White canvas; red is reserved for emphasis
   surface: '#FFFFFF',
   card: '#FFFFFF',
   darkBg: '#1A1A2E',
   headerBg: '#B42332',       // Red header
   background: {
-    default: '#F5F6F8',
+    default: '#FFFFFF',
     paper: '#FFFFFF',
     surface: '#FFFFFF',
   },

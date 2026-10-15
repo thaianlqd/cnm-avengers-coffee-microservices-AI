@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { toggleProductSelection, selectionAction, initialChoices, toggleOption, missingChoices, configurationAction } from './customerChoices.js';
+import { toggleProductSelection, updateProductQuantity, selectionAction, initialChoices, toggleOption, missingChoices, configurationAction } from './customerChoices.js';
 import { selectAgentTurn } from './agentTurn.js';
 const coffee = { product_id: '38', product_name: 'Cà Phê Sữa Đá' };
 const hot = { product_id: '39', product_name: 'Cà Phê Sữa Nóng' };
@@ -9,6 +9,14 @@ const item = { ...coffee, groups: [
   { name: 'Topping', field: 'toppings', multiple: true, values: ['Hạt Sen', 'Foam'] },
   { name: 'Lượng đá', field: 'ice', values: ['Ít đá', 'Bình thường'] },
 ] };
+test('selection quantities are independent, bounded and preserved by the batch request', () => {
+  let selected = toggleProductSelection(toggleProductSelection([], coffee, 'snapshot'), hot, 'snapshot');
+  selected = updateProductQuantity(selected, coffee, 3);
+  selected = updateProductQuantity(selected, hot, 2);
+  assert.deepEqual(selectionAction(selected).items, [{ product_id:'38',quantity:3 },{ product_id:'39',quantity:2 }]);
+  for (const invalid of [0,-1,100,1.5,'2',NaN]) assert.equal(updateProductQuantity(selected, coffee, invalid), selected);
+  assert.equal(updateProductQuantity(selected, coffee,99)[0].quantity,99);
+});
 test('plus queues/removes products and a single batch keeps canonical IDs and quantities', () => {
   let selected = toggleProductSelection([], coffee, 'snapshot');
   selected = toggleProductSelection(selected, hot, 'snapshot');
@@ -37,6 +45,14 @@ test('explicit defaults discard unsubmitted drafts; normal submit retains choice
   const drafts = { '38': { quantity: 2, choices: { size: 'Vừa', toppings: ['Foam'] } } };
   assert.deepEqual(configurationAction(config, drafts).items[0].options, drafts['38'].choices);
   assert.deepEqual(configurationAction(config, drafts, true).items[0], { product_id: '38', quantity: 2, options: {}, use_defaults: true });
+});
+test('optional single choices can be cleared and multi-select stays within the server limit', () => {
+  let choices = toggleOption({}, item.groups[2], 'Ít đá');
+  choices = toggleOption(choices, item.groups[2], 'Ít đá');
+  assert.deepEqual(choices, {});
+  const group = { field: 'toppings', multiple: true, values: Array.from({ length: 17 }, (_, i) => `Topping ${i}`) };
+  for (const value of group.values) choices = toggleOption(choices, group, value);
+  assert.equal(choices.toppings.length, 16);
 });
 test('retry identity binds every tick and batch member, while key order remains immaterial', () => {
   const request = { text: 'Áp dụng tùy chọn', sessionId: 'customer', conversationId: 'conversation', uiAction: { type: 'configure_products', snapshot: 'same', items: [{ product_id: '38', options: { size: 'Vừa', ice: 'Ít đá' } }] } };

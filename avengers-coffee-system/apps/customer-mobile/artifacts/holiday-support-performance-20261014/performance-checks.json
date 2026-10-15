@@ -1,0 +1,42 @@
+{
+  "results": [
+    {
+      "name": "before",
+      "cartAddCompleteMs": 1343,
+      "extraCartReads": 1,
+      "menuBrowseBranchReads": 1,
+      "fixtureCartGetDelayMs": 1000,
+      "fixtureWriteDelayMs": 200
+    },
+    {
+      "name": "after",
+      "cartAddCompleteMs": 327,
+      "extraCartReads": 0,
+      "menuBrowseBranchReads": 0,
+      "fixtureCartGetDelayMs": 1000,
+      "fixtureWriteDelayMs": 200
+    },
+    {
+      "tab": "home",
+      "responsive": "PASS",
+      "apiFixtureRequests": 6
+    },
+    {
+      "tab": "other-group",
+      "responsive": "PASS",
+      "apiFixtureRequests": 8
+    },
+    {
+      "tab": "stores",
+      "responsive": "PASS",
+      "apiFixtureRequests": 6
+    },
+    {
+      "tab": "mobile home/menu/stores",
+      "result": "PASS"
+    }
+  ],
+  "errors": [],
+  "realApiRequests": 0,
+  "keysUsed": "fixture only"
+}

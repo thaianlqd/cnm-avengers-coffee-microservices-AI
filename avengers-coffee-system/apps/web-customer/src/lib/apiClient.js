@@ -31,7 +31,7 @@ apiClient.interceptors.request.use((config) => {
 
 // Auto-logout khi token hết hạn (401)
 apiClient.interceptors.response.use(
-  (response) => { if (!['get','head','options'].includes(response.config?.method)) publicReads.clear(); return response; },
+  (response) => { if (!['get','head','options'].includes(response.config?.method) && /^\/(menu|users\/branches|branch-reviews)(\/|$)/.test(response.config?.url || '')) publicReads.clear(); return response; },
   (error) => {
     if (error?.response?.status === 401 && !isGuestSessionId(error?.config?.guestSessionId)) {
       // Xóa token + user đã lưu

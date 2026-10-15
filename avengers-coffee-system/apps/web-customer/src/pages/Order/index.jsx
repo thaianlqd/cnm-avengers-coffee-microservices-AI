@@ -1,3 +1,4 @@
+import ChristmasBanner from '../../components/ChristmasBanner';
 import { uiText as ui, useUiLanguage, uiLocale } from "../../lib/uiText";
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -46,44 +47,22 @@ const MENU_ICONS = [
   '/hc-assets/menu_icon_11.png',
 ];
 
-const BANNER_IMAGES = [
-  '/hc-assets/slider_1.jpg',
-  'https://bizweb.dktcdn.net/100/487/455/themes/917232/assets/slider_2.jpg?1784168867138',
-  'https://bizweb.dktcdn.net/100/487/455/themes/917232/assets/slider_3.jpg?1784168867138'
-];
-
-function BannerSlider() {
-  useUiLanguage();
-  const [currentIndex, setCurrentIndex] = useState(0);
-
+function BannerSlider() { return <ChristmasBanner compact />; }
+function SaleCountdown({ copy }) {
+  const [timeLeft, setTimeLeft] = useState({ hours: 22, minutes: 9, seconds: 47 });
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % BANNER_IMAGES.length);
-    }, 4000);
+      if (document.visibilityState !== 'visible') return;
+      setTimeLeft(({ hours, minutes, seconds }) => {
+        const remaining = Math.max(0, hours * 3600 + minutes * 60 + seconds - 1);
+        return { hours: Math.floor(remaining / 3600), minutes: Math.floor(remaining / 60) % 60, seconds: remaining % 60 };
+      });
+    }, 1000);
     return () => clearInterval(timer);
   }, []);
-
-  return (
-    <div className="w-full relative group bg-[#42a853] rounded-2xl overflow-hidden shadow-sm flex items-center justify-center aspect-[16/9]">
-      {BANNER_IMAGES.map((img, idx) => (
-        <img loading="lazy" decoding="async"
-          key={idx}
-          src={img}
-          alt={`Banner ${idx + 1}`}
-          className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000 ${idx === currentIndex ? 'opacity-100' : 'opacity-0'}`}
-        />
-      ))}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-        {BANNER_IMAGES.map((_, idx) => (
-          <button
-            key={idx}
-            onClick={() => setCurrentIndex(idx)}
-            className={`w-2.5 h-2.5 rounded-full transition-colors border-none p-0 cursor-pointer ${idx === currentIndex ? 'bg-white' : 'bg-white/50 hover:bg-white/80'}`}
-          />
-        ))}
-      </div>
-    </div>
-  );
+  return <div className="flex gap-2.5 md:ml-6 items-center" aria-label={copy('Thời gian còn lại', 'Time remaining')}>
+    {Object.entries(timeLeft).map(([key,value],i) => <React.Fragment key={key}>{i > 0 && <span className="text-[#b22830] font-bold">:</span>}<div className="flex flex-col items-center justify-center w-10 h-10 border border-[#b22830] rounded-full text-[#b22830] bg-white"><span className="text-sm font-bold leading-none">{String(value).padStart(2,'0')}</span><span className="text-[8px] font-bold">{copy({hours:'Giờ',minutes:'Phút',seconds:'Giây'}[key],key)}</span></div></React.Fragment>)}
+  </div>;
 }
 
 export default function OrderPage({
@@ -150,28 +129,6 @@ export default function OrderPage({
   const [searchViewMode, setSearchViewMode] = useState('list'); // 'list' | 'grid'
   const [isSearchBoxOpen, setIsSearchBoxOpen] = useState(false);
   const [copiedVoucherCode, setCopiedVoucherCode] = useState(null);
-
-  // Flash Sale Timer Logic
-  const [timeLeft, setTimeLeft] = useState({ hours: 22, minutes: 9, seconds: 47 });
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        let { hours, minutes, seconds } = prev;
-        if (seconds > 0) seconds--;
-        else {
-          seconds = 59;
-          if (minutes > 0) minutes--;
-          else {
-            minutes = 59;
-            if (hours > 0) hours--;
-            else hours = 24;
-          }
-        }
-        return { hours, minutes, seconds };
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   const flashSaleProducts = [
     {
@@ -313,9 +270,11 @@ export default function OrderPage({
         }
       }
     };
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    let frame = null;
+    const schedule = () => { if (frame == null) frame = requestAnimationFrame(() => { frame = null; handleScroll(); }); };
+    window.addEventListener('scroll', schedule, { passive: true });
     handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => { window.removeEventListener('scroll', schedule); cancelAnimationFrame(frame); };
   }, [menuSections]);
 
   const handleCopyVoucherCode = (code) => {
@@ -969,22 +928,7 @@ export default function OrderPage({
                         </h2>
                         <p className="text-gray-500 text-[13px] mt-1">{copy('Sản phẩm sẽ trở về giá gốc khi hết giờ', 'Prices return to normal when the offer ends')}</p>
                       </div>
-                      <div className="flex gap-2.5 md:ml-6 items-center">
-                        <div className="flex flex-col items-center justify-center w-10 h-10 border border-[#b22830] rounded-full text-[#b22830] bg-white">
-                          <span className="text-sm font-bold leading-none">{String(timeLeft.hours).padStart(2, '0')}</span>
-                          <span className="text-[8px] font-bold">{copy('Giờ', 'Hours')}</span>
-                        </div>
-                        <span className="text-[#b22830] font-bold mb-1">:</span>
-                        <div className="flex flex-col items-center justify-center w-10 h-10 border border-[#b22830] rounded-full text-[#b22830] bg-white">
-                          <span className="text-sm font-bold leading-none">{String(timeLeft.minutes).padStart(2, '0')}</span>
-                          <span className="text-[8px] font-bold">{copy('Phút', 'Minutes')}</span>
-                        </div>
-                        <span className="text-[#b22830] font-bold mb-1">:</span>
-                        <div className="flex flex-col items-center justify-center w-10 h-10 border border-[#b22830] rounded-full text-[#b22830] bg-white">
-                          <span className="text-sm font-bold leading-none">{String(timeLeft.seconds).padStart(2, '0')}</span>
-                          <span className="text-[8px] font-bold">{copy('Giây', 'Seconds')}</span>
-                        </div>
-                      </div>
+                      <SaleCountdown copy={copy} />
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-8">

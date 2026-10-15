@@ -1,3 +1,4 @@
+import { PaginatedList } from '../../../components/console/CompactPagination'
 import React, { useMemo, useState } from 'react'
 import {
   Coffee,
@@ -263,7 +264,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
         gap: '1.25rem',
         marginTop: '1.5rem'
       }}>
-        {filteredTables.map(tableId => {
+        <PaginatedList items={filteredTables} resetKey={JSON.stringify([filterStatus,searchQuery])}>{tableId => {
           const activeOrders = activeOrdersByTable[tableId] || []
           const isOccupied = activeOrders.length > 0
           const primaryOrder = activeOrders[0]
@@ -407,7 +408,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
               </div>
             </div>
           )
-        })}
+        }}</PaginatedList>
       </div>
     )
   }
@@ -559,7 +560,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
             {activeModalTab === 'orders' ? (
               isOccupied ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  {activeOrders.map((order) => (
+                  <PaginatedList items={activeOrders} resetKey={selectedTable}>{(order) => (
                     <div
                       key={order.ma_don_hang}
                       style={{
@@ -703,7 +704,7 @@ export function TableManagementPanel({ ordersState, onUpdateStatus, session }) {
                         </button>
                       </div>
                     </div>
-                  ))}
+                  )}</PaginatedList>
                 </div>
               ) : (
                 <div style={{

@@ -20,9 +20,8 @@ import apiClient from '../lib/apiClient'
 import { colors, radius, spacing, shadows, typography } from '../theme'
 
 const VEHICLE_TYPES = [
-  { id: 'MOTORBIKE', label: 'Xe máy', icon: 'bicycle-outline', color: '#10B981' },
+  { id: 'MOTORBIKE', label: 'Xe máy', icon: 'navigate-outline', color: '#10B981' },
   { id: 'CAR', label: 'Ô tô', icon: 'car-outline', color: '#3B82F6' },
-  { id: 'BICYCLE', label: 'Xe đạp', icon: 'bicycle-outline', color: '#8B5CF6' },
 ]
 
 const VEHICLE_CONDITIONS = [

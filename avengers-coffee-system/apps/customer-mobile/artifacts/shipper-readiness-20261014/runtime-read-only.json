@@ -1,0 +1,9 @@
+{
+  "shipperFound": true,
+  "statusObserved": "INACTIVE",
+  "availableOrders": 1,
+  "assignedDeliveries": 0,
+  "picturedOrderInPool": true,
+  "oldDeliveryDetailEndpointStatus": 404,
+  "realApiWrites": 0
+}

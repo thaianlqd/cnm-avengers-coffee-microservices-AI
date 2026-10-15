@@ -1,0 +1,52 @@
+{
+  "results": [
+    {
+      "width": 1440,
+      "height": 900,
+      "centered": true,
+      "bounds": {
+        "x": 500,
+        "y": 148.140625,
+        "width": 440,
+        "height": 603.71875
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "centered": true,
+      "bounds": {
+        "x": 23.40625,
+        "y": 180.65625,
+        "width": 343.1875,
+        "height": 482.671875
+      }
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "centered": true,
+      "bounds": {
+        "x": 202,
+        "y": 23.40625,
+        "width": 440,
+        "height": 343.1875
+      }
+    },
+    {
+      "width": 1971,
+      "height": 951,
+      "centered": true,
+      "bounds": {
+        "x": 765.5,
+        "y": 173.640625,
+        "width": 440,
+        "height": 603.71875
+      }
+    }
+  ],
+  "closeButton": "PASS",
+  "realApiRequests": 0,
+  "apiKeysUsed": false,
+  "errors": []
+}

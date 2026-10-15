@@ -1,3 +1,5 @@
+import BatchRouteMap from '../components/BatchRouteMap'
+import { nativeTileUrl, detailedNativeStyle } from '../../../shared-ui/nativeBasemap'
 import React, { useState, useEffect, useRef } from 'react'
 import {
   View,
@@ -12,6 +14,7 @@ import {
   Alert,
   Modal,
   Image,
+  useWindowDimensions,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -27,19 +30,21 @@ import { colors, radius, spacing, shadows, typography } from '../theme'
 import { formatCurrency } from '../lib/shipperData'
 
 // Load react-native-maps chỉ trên native
-let MapView = null, Marker = null, Polyline = null, AnimatedRegion = null
+let MapView = null, Marker = null, Polyline = null, AnimatedRegion = null, UrlTile = null
 if (Platform.OS !== 'web') {
   try {
     const maps = require('react-native-maps')
     MapView = maps.default
     Marker = maps.Marker
     Polyline = maps.Polyline
+    UrlTile = maps.UrlTile
     AnimatedRegion = maps.AnimatedRegion
   } catch (e) {}
 }
 
 const simulationEnabled = process.env.EXPO_PUBLIC_ENABLE_DELIVERY_SIMULATION === 'true'
-const VIETMAP_API_KEY = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || 'dbdd3165b3cb0d85239a7f59f410a9fa925974c4a6d4c54b';
+const VIETMAP_API_KEY = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
+const tileUrl = nativeTileUrl(process.env.EXPO_PUBLIC_VIETMAP_TILE_KEY);
 const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN || '';
 
 // ─── Haversine distance (km) ───────────────────────────────────────
@@ -126,6 +131,7 @@ function formatWatermarkTime() {
 }
 
 export function BatchRouteScreen({ route, navigation }) {
+  const { height: screenHeight } = useWindowDimensions()
   const { batch, deliveries: deliveriesParam, storeLat, storeLng, storeName, shopLat: routeShopLat, shopLng: routeShopLng, shopName: routeShopName } = route.params || {}
 
   const deliveries = typeof deliveriesParam === 'string' ? JSON.parse(deliveriesParam) : (deliveriesParam || batch?.deliveries || [])
@@ -326,7 +332,7 @@ export function BatchRouteScreen({ route, navigation }) {
           // Nếu hai điểm cách nhau < 50 mét (0.05km), không gọi OSRM nữa.
           // Vì OSRM là bản đồ xe ô tô/xe máy, nếu 2 điểm nằm ở 2 bên đường quốc lộ có lươn cứng,
           // nó sẽ bắt xe máy chạy vòng 3.5km để quay đầu! Shipper giao chung cư thì đi bộ cho lẹ.
-          if (distStraight < 0.05) {
+          if (distStraight < 0.05 || !VIETMAP_API_KEY) {
             segments.push(fallbackSegment)
             continue
           }
@@ -643,10 +649,13 @@ export function BatchRouteScreen({ route, navigation }) {
           ref={mapRef}
           style={styles.map}
           initialRegion={{ latitude: centerLat, longitude: centerLng, latitudeDelta: latDelta, longitudeDelta: lngDelta }}
+          onMapReady={() => mapRef.current?.fitToCoordinates(optimizedRoute.map(p=>({latitude:p.lat,longitude:p.lng})),{edgePadding:{top:65,left:55,right:55,bottom:screenHeight*.55},animated:false})}
           showsUserLocation={false}
           showsCompass={true}
+          customMapStyle={detailedNativeStyle} showsPointsOfInterest showsBuildings mapType={tileUrl && Platform.OS === 'android' ? 'none' : 'standard'}
         >
 
+          {tileUrl && UrlTile && <UrlTile urlTemplate={tileUrl} tileSize={512} maximumZ={19} maximumNativeZ={19} minimumZ={1} zIndex={-1} />}
           {/* Các điểm dừng theo thứ tự tối ưu */}
           {optimizedRoute.map((point, idx) => {
             const isCompleted = idx < currentStepIndex
@@ -726,7 +735,7 @@ export function BatchRouteScreen({ route, navigation }) {
             </>
           )}
         </MapView>
-      ) : (
+      ) : Platform.OS === 'web' && optimizedRoute.length > 0 ? <BatchRouteMap stops={optimizedRoute} coordinates={unifiedRouteCoordinates} currentStep={currentStepIndex} /> : (
         <View style={styles.mapPlaceholder}>
           <Ionicons name="map-outline" size={48} color={colors.muted} />
           <Text style={styles.mapPlaceholderText}>
@@ -735,6 +744,7 @@ export function BatchRouteScreen({ route, navigation }) {
         </View>
       )}
 
+      {Platform.OS !== 'web' && tileUrl && <Text style={{position:'absolute',top:5,right:5,fontSize:10,backgroundColor:'#fffffff0',paddingHorizontal:4}}>© Vietmap</Text>}
       {/* ─── Panel dưới ─────────────────────────────────────────── */}
       <Animated.View style={[styles.bottomPanel, { transform: [{ translateY: slideAnim }], opacity: opacityAnim }]}>
 
@@ -1143,7 +1153,7 @@ const styles = StyleSheet.create({
   // Bottom Panel
   bottomPanel: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    maxHeight: '65%',
+    maxHeight: '50%',
     backgroundColor: '#F8FAFC',
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
     overflow: 'hidden', ...shadows.lg,

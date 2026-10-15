@@ -8,7 +8,6 @@ import {
 } from 'react-native'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
-import { LinearGradient } from 'expo-linear-gradient'
 import { useShipper } from '../context/ShipperContext'
 import apiClient from '../lib/apiClient'
 import { colors, radius, spacing, shadows, typography } from '../theme'
@@ -179,12 +178,8 @@ export function WalletScreen({ navigation }) {
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} tintColor={colors.primary} />}
       >
         {/* Main Balance Card */}
-        <LazySection minHeight={160}><LinearGradient
-          colors={colors.gradientDark}
-          style={styles.balanceCard}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-        >
-          <Text style={styles.balanceLabel}>Số dư ví Shipper</Text>
+        <LazySection minHeight={160}><View style={styles.balanceCard}>
+          <View style={{flexDirection:'row',alignItems:'center',gap:8,marginBottom:8}}><Ionicons name="wallet-outline" size={18} color={colors.primary} /><Text style={styles.balanceLabel}>Số dư ví Shipper</Text></View>
           <Text style={styles.balanceValue}>{walletLoading || walletError ? '—' : formatCurrency(balance)}</Text>
 
           <View style={styles.statsRow}>
@@ -200,10 +195,10 @@ export function WalletScreen({ navigation }) {
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Text style={styles.statLabel}>Đánh giá</Text>
-              <Text style={styles.statValue}>⭐ {Number(stats?.rating || shipper?.rating || 0).toFixed(1)}</Text>
+              <Text style={styles.statValue}>{Number(stats?.rating || shipper?.rating || 0).toFixed(1)}</Text>
             </View>
           </View>
-        </LinearGradient></LazySection>
+        </View></LazySection>
 
         {/* COD Card */}
         <LazySection minHeight={160}><View style={[styles.card, styles.codCard]}>
@@ -293,10 +288,10 @@ export function WalletScreen({ navigation }) {
           <Text style={styles.sectionTitle}>Thao tác nhanh</Text>
           <View style={styles.actionsGrid}>
             {[
-              { icon: 'bar-chart', label: 'Đối soát\nthu nhập', onPress: () => navigation.navigate('Report'), color: colors.primary },
-              { icon: 'document-text', label: 'Phí giao\nđã ghi nhận', onPress: () => scrollRef.current?.scrollTo({ y: transactionY, animated: false }), color: colors.info },
-              { icon: 'calendar', label: 'Lịch\nlàm việc', onPress: () => navigation.navigate('Schedule'), color: colors.success },
-              { icon: 'help-circle', label: 'Thông báo\ncủa bạn', onPress: () => navigation.navigate('Notification'), color: colors.warning },
+              { icon: 'bar-chart-outline', label: 'Thu nhập', onPress: () => navigation.navigate('Report'), color: colors.primary },
+              { icon: 'receipt-outline', label: 'Phí giao', onPress: () => scrollRef.current?.scrollTo({ y: transactionY, animated: false }), color: colors.info },
+              { icon: 'calendar-outline', label: 'Lịch làm', onPress: () => navigation.navigate('Schedule'), color: colors.success },
+              { icon: 'notifications-outline', label: 'Thông báo', onPress: () => navigation.navigate('Notification'), color: colors.warning },
             ].map((action, i) => (
               <TouchableOpacity key={i} style={styles.actionBtn} onPress={action.onPress}>
                 <View style={[styles.actionIcon, { backgroundColor: action.color + '20' }]}>
@@ -345,24 +340,24 @@ const styles = StyleSheet.create({
   scroll: { padding: spacing.md, paddingBottom: spacing.xxl },
 
   // Balance
-  balanceCard: { borderRadius: radius.xl, padding: spacing.lg, marginBottom: spacing.lg, ...shadows.primary },
-  balanceLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 14, marginBottom: spacing.xs },
-  balanceValue: { color: colors.surface, fontSize: 32, fontWeight: '700', marginBottom: spacing.lg },
+  balanceCard: { borderRadius: 12, padding: 18, marginBottom: 14,backgroundColor:'#fff',borderWidth:1,borderColor:'#e6e8ec' },
+  balanceLabel: { color: colors.muted, fontSize: 12 },
+  balanceValue: { color: colors.text, fontSize: 30, fontWeight: '700', marginBottom: spacing.lg },
   statsRow: {
     flexDirection: 'row', alignItems: 'center', paddingTop: spacing.md,
-    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.2)',
+    borderTopWidth: 1, borderTopColor: '#edf0f2',
   },
   statItem: { flex: 1, alignItems: 'center' },
-  statDivider: { width: 1, height: 36, backgroundColor: 'rgba(255,255,255,0.2)' },
-  statLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 11, marginBottom: 4, textAlign: 'center' },
-  statValue: { color: colors.surface, fontSize: 15, fontWeight: '700', textAlign: 'center' },
+  statDivider: { width: 1, height: 36, backgroundColor: '#edf0f2' },
+  statLabel: { color: colors.muted, fontSize: 11, marginBottom: 4, textAlign: 'center' },
+  statValue: { color: colors.text, fontSize: 15, fontWeight: '700', textAlign: 'center' },
 
   // Cards
   card: {
-    backgroundColor: colors.surface, borderRadius: radius.lg,
-    padding: spacing.lg, marginBottom: spacing.lg, ...shadows.sm,
+    backgroundColor: colors.surface, borderRadius: 12,
+    padding: 16, marginBottom: 14, borderWidth:1,borderColor:'#e6e8ec',
   },
-  codCard: { borderLeftWidth: 4, borderLeftColor: colors.warning },
+  codCard: { },
   cardHeaderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm },
   cardIconWrap: {
     width: 44, height: 44, borderRadius: 22, backgroundColor: colors.warningBg,
@@ -388,14 +383,14 @@ const styles = StyleSheet.create({
   actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   actionBtn: {
     flex: 1, minWidth: '22%', alignItems: 'center',
-    backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.md, ...shadows.sm,
+    backgroundColor: colors.surface, borderRadius: 10, paddingVertical:12,paddingHorizontal:4,
   },
-  actionIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm },
+  actionIcon: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm },
   actionLabel: { ...typography.caption, color: colors.text, textAlign: 'center', fontWeight: '600' },
 
   // Transactions
   txSection: {
-    backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg, ...shadows.sm,
+    backgroundColor: colors.surface, borderRadius: 12, padding: 16,borderWidth:1,borderColor:'#e6e8ec',
   },
   sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
   sectionCount: { ...typography.caption, color: colors.muted },

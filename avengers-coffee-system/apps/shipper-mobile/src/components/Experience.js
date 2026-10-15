@@ -44,12 +44,12 @@ export function Skeleton({ count = 3 }) {
 export const ui = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff', borderBottomWidth: 1, borderColor: colors.borderLight },
-  title: { fontSize: 20, fontWeight: '700', color: colors.text },
+  title: { fontSize: 18, fontWeight: '700', color: colors.text },
   heading: { fontSize: 17, fontWeight: '700', color: colors.text },
   caption: { fontSize: 12, color: colors.textSecondary, lineHeight: 18 },
-  card: { backgroundColor: '#fff', padding: 16, borderRadius: 18, borderWidth: 1, borderColor: '#e9ecf0' },
-  icon: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#f6f7f9', alignItems: 'center', justifyContent: 'center' },
-  button: { minHeight: 48, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: colors.primary, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center' },
+  card: { backgroundColor: '#fff', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#e9ecf0' },
+  icon: { width: 40, height: 40, borderRadius: 10, backgroundColor: colors.primaryBg, alignItems: 'center', justifyContent: 'center' },
+  button: { minHeight: 48, borderRadius: 9, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: colors.primary, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center' },
   empty: { padding: 28, alignItems: 'center', gap: 12 },
   emptyIcon: { width: 72, height: 72, borderRadius: 24, backgroundColor: colors.primaryBg, alignItems: 'center', justifyContent: 'center' },
 })

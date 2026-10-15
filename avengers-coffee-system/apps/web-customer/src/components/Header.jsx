@@ -1,3 +1,4 @@
+import { preloadPage } from '../lib/pageModules';
 import { uiText as ui, useUiLanguage, uiLocale } from "../lib/uiText";
 import { menuCategoryLabel } from '../lib/categoryLabels';
 import { useState } from 'react';
@@ -131,6 +132,7 @@ export default function Header({
               <div key={item.id} className="group relative flex h-full items-center">
                 <button
                   type="button"
+                  onPointerEnter={() => preloadPage(item.id)} onFocus={() => preloadPage(item.id)}
                   onClick={() => {
                     onTabChange?.(item.id);
                     if (item.id === 'order' || item.id === 'menu-intro') {
@@ -258,7 +260,7 @@ export default function Header({
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => onTabChange?.(item.id)}
+                  onPointerEnter={() => preloadPage(item.id)} onFocus={() => preloadPage(item.id)} onClick={() => onTabChange?.(item.id)}
                   className={`relative flex items-center gap-1.5 px-1.5 py-1.5 rounded-xl transition-all duration-200 cursor-pointer ${
                   isActive
                     ? 'bg-white/20 text-white font-bold shadow-xs'

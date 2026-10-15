@@ -1,3 +1,4 @@
+import HolidayMenuBanner from '../components/home/HolidayMenuBanner'
 import TextInput from '../components/TextInput'
 import Pagination, { usePagination } from '../components/Pagination'
 import Reveal, { useListReveal } from '../components/Reveal'
@@ -765,6 +766,7 @@ export function MenuScreen({ navigation, route }) {
         </ScrollView>
         <View style={catalogStyles.heading}><View style={{ flex: 1 }}><Text style={catalogStyles.title}>{categoryTitle}</Text><Text style={{ color: colors.muted, fontSize: 11, marginTop: 3 }}>{displayedProducts.length} món</Text></View>{[{ value: false, icon: 'list-outline', label: 'Hiển thị danh sách' }, { value: true, icon: 'grid-outline', label: 'Hiển thị hai cột' }].map(v => <Pressable key={v.label} onPress={() => setGrid(v.value)} accessibilityLabel={v.label} style={{ padding: 9 }}><Ionicons name={v.icon} size={20} color={grid === v.value ? colors.primary : '#bbb'} /></Pressable>)}</View>
         {isLoading ? <ActivityIndicator style={{ margin: 32 }} color={colors.primary} /> : categoriesQuery.isError || productsQuery.isError ? <Pressable onPress={() => { categoriesQuery.refetch(); productsQuery.refetch() }} style={{ padding: 24 }}><Text>Chưa tải được thực đơn. Chạm để thử lại.</Text></Pressable> : <FlatList
+          ListHeaderComponent={!search && !activeCategory ? <HolidayMenuBanner /> : null}
           ref={productListRef} key={grid ? 'grid' : 'list'} numColumns={grid ? 2 : 1} data={paging.items} keyExtractor={item => String(item.ma_san_pham)}
           renderItem={grid ? renderGridProduct : info => <Reveal visible={reveal.visible.has(String(info.item.id))}>{renderProductRow(info)}</Reveal>} onViewableItemsChanged={reveal.onViewableItemsChanged} viewabilityConfig={reveal.viewabilityConfig} style={{ flex: 1 }} contentContainerStyle={{ padding: 12, paddingBottom: 24 }} columnWrapperStyle={grid ? { gap: 12 } : undefined}
           initialNumToRender={8} maxToRenderPerBatch={6} windowSize={5} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}

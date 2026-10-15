@@ -1,3 +1,4 @@
+import { confirmedCart } from '../lib/cartReconciliation';
 import { createContext, useContext, useEffect, useMemo, useState, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/apiClient';
@@ -9,6 +10,7 @@ const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
+  const [writeCount, setWriteCount] = useState(0);
   const queryClient = useQueryClient();
   const [guestMergeError, setGuestMergeError] = useState('');
   const mergingRef = useRef(null);
@@ -16,7 +18,8 @@ export const CartProvider = ({ children }) => {
   const ownerRevision = useRef(0);
   const trackCartWrite = async (promise) => {
     pendingCartWrites.current.add(promise);
-    try { return await promise; } finally { pendingCartWrites.current.delete(promise); }
+    setWriteCount(count => count + 1);
+    try { return await promise; } finally { pendingCartWrites.current.delete(promise); setWriteCount(count => count - 1); }
   };
 
   const layMaNguoiDungKhach = () => {
@@ -79,6 +82,14 @@ export const CartProvider = ({ children }) => {
     });
   }, [serverCartData, activeUserId]);
 
+  const publishWrite = async (owner, response) => {
+    const key = queryKeys.cartByUser(owner);
+    const accepted = confirmedCart(response, owner, queryClient.getQueryData(key));
+    if (!accepted) return queryClient.invalidateQueries({ queryKey: key });
+    await queryClient.cancelQueries({ queryKey: key });
+    queryClient.setQueryData(key, previous => confirmedCart(response, owner, previous));
+  };
+
   const themVaoGioMutation = useMutation({
     mutationFn: async (item) => {
       const response = await apiClient.post('/cart', item, cartRequestConfig(item.ma_nguoi_dung));
@@ -87,23 +98,25 @@ export const CartProvider = ({ children }) => {
   });
 
   const xoaKhoiGioMutation = useMutation({
-    mutationFn: async (cartItemId) => {
-      await apiClient.delete(`/cart/${cartItemId}`, cartRequestConfig(activeUserId));
+    mutationFn: async ({ cartItemId, owner }) => {
+      const response = await apiClient.delete(`/cart/${cartItemId}`, cartRequestConfig(owner));
+      return response.data;
     },
   });
 
   const xoaToanBoGioMutation = useMutation({
     mutationFn: async (userId) => {
-      await apiClient.delete(`/cart/clear/${userId}`, cartRequestConfig(userId));
+      const response = await apiClient.delete(`/cart/clear/${userId}`, cartRequestConfig(userId));
+      return response.data;
     },
   });
 
   const clearCart = async () => {
     if (activeUserId) {
-      await trackCartWrite(xoaToanBoGioMutation.mutateAsync(activeUserId));
-      await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(activeUserId) });
+      const owner = activeUserId;
+      const response = await trackCartWrite(xoaToanBoGioMutation.mutateAsync(owner));
+      await publishWrite(owner, response);
     }
-    setCart([]);
   };
 
   const reorderItems = async (orderId, operationId) => {
@@ -112,7 +125,7 @@ export const CartProvider = ({ children }) => {
       ...cartRequestConfig(activeUserId), headers: { ...cartRequestConfig(activeUserId)?.headers,
         'x-idempotency-key': operationId },
     }));
-    await refreshCart();
+    await publishWrite(activeUserId, response.data);
     return response.data;
   };
 
@@ -148,16 +161,16 @@ export const CartProvider = ({ children }) => {
     };
 
     if (maNguoiDung) {
-      await trackCartWrite(themVaoGioMutation.mutateAsync(item));
-      await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(maNguoiDung) });
+      const response = await trackCartWrite(themVaoGioMutation.mutateAsync(item));
+      await publishWrite(maNguoiDung, response);
     }
   };
 
   const patchCartItem = async (item, patch) => {
     if (!item?.id) throw new Error('Không tìm thấy mã dòng giỏ hàng. Vui lòng tải lại giỏ.');
-    await trackCartWrite(apiClient.patch(`/cart/${item.id}`, patch, cartRequestConfig(activeUserId)));
-    await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(activeUserId) });
-    window.dispatchEvent(new CustomEvent('refresh-cart'));
+    const owner = activeUserId;
+    const response = await trackCartWrite(apiClient.patch(`/cart/${item.id}`, patch, cartRequestConfig(owner)));
+    await publishWrite(owner, response.data);
   };
 
   const changeCartItemSize = async (itemOrProductId, currentSize, nextSize) => {
@@ -174,9 +187,9 @@ export const CartProvider = ({ children }) => {
       : cart.find((row) => row.ma_san_pham === itemOrProductId && (!size || row.size === size));
     if (!item) return;
     if (item.id) {
-      await trackCartWrite(xoaKhoiGioMutation.mutateAsync(item.id));
-      await queryClient.invalidateQueries({ queryKey: queryKeys.cartByUser(activeUserId) });
-      window.dispatchEvent(new CustomEvent('refresh-cart'));
+      const owner = activeUserId;
+      const response = await trackCartWrite(xoaKhoiGioMutation.mutateAsync({ cartItemId:item.id, owner }));
+      await publishWrite(owner, response);
       return;
     }
     setCart((previous) => previous.filter((row) => row !== item));
@@ -210,11 +223,7 @@ export const CartProvider = ({ children }) => {
     if (!item) return;
     const quantity = Number(item.so_luong) + Number(delta);
     if (quantity <= 0) return removeFromCart(item);
-    try {
-      await patchCartItem(item, { quantity });
-    } catch (e) {
-      console.error('Không thể đồng bộ số lượng giỏ hàng với máy chủ:', e);
-    }
+    await patchCartItem(item, { quantity });
   };
 
   const syncCartWithUser = async (user) => {
@@ -274,6 +283,7 @@ export const CartProvider = ({ children }) => {
     <CartContext.Provider
       value={{
         cart,
+        cartWritePending: writeCount > 0,
         addToCart,
         removeFromCart,
         updateCartQuantity,

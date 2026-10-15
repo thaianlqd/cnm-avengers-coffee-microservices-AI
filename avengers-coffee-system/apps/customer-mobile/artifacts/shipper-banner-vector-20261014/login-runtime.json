@@ -1,0 +1,8 @@
+{
+  "existingAccountOnly": true,
+  "httpStatus": 201,
+  "durationMs": 123,
+  "tokenPresent": true,
+  "shipperPresent": true,
+  "apiKeysUsed": false
+}

@@ -1,3 +1,5 @@
+import OrderRouteCard from '../components/OrderRouteCard'
+import AvailableOrderDetail from './AvailableOrderDetail'
 import { LazyScrollView, LazySection } from '../components/LazyScrollView'
 import React, { useState } from 'react'
 import {
@@ -18,7 +20,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
-import { LinearGradient } from 'expo-linear-gradient'
 import { useShipper } from '../context/ShipperContext'
 import apiClient from '../lib/apiClient'
 import { colors, radius, spacing, shadows, typography } from '../theme'
@@ -29,7 +30,10 @@ import { openGoogleMapsNavigation } from '../lib/navigationHelper'
 import { Header, IconButton, Skeleton } from '../components/Experience'
 import { startBackgroundLocationTracking } from '../lib/backgroundLocationManager'
 
-export function OrderDetailScreen({ route, navigation }) {
+export function OrderDetailScreen(props) {
+  return props.route.params?.orderId ? <AvailableOrderDetail {...props} /> : <AssignedDeliveryDetail {...props} />
+}
+function AssignedDeliveryDetail({ route, navigation }) {
   const { deliveryId } = route.params
   const { shipper } = useShipper()
   const queryClient = useQueryClient()
@@ -168,7 +172,7 @@ export function OrderDetailScreen({ route, navigation }) {
     const steps = [
       { id: 'PENDING', label: 'Chờ lấy', icon: 'cube-outline' },
       { id: 'PICKING_UP', label: 'Đang lấy', icon: 'storefront-outline' },
-      { id: 'IN_TRANSIT', label: 'Đang giao', icon: 'bicycle-outline' },
+      { id: 'IN_TRANSIT', label: 'Đang giao', icon: 'navigate-outline' },
       { id: 'DELIVERED', label: 'Hoàn thành', icon: 'checkmark-circle-outline' },
     ]
     const currentIndex = steps.findIndex(s => s.id === (delivery.status === 'CONFIRMED' ? 'PENDING' : delivery.status))
@@ -291,51 +295,7 @@ export function OrderDetailScreen({ route, navigation }) {
           {renderStepper()}
         </View></LazySection>
 
-        <LazySection minHeight={160}><View style={styles.card}>
-          <View style={styles.cardSectionHeader}>
-            <Ionicons name="map" size={18} color={colors.primary} />
-            <Text style={styles.sectionTitle}>Hành trình</Text>
-          </View>
-
-          <View style={styles.addressContainer}>
-            <View style={styles.addressRow}>
-              <View style={[styles.addressIconWrap, { backgroundColor: '#F3F4F6' }]}>
-                <Ionicons name="storefront" size={16} color={colors.textSecondary} />
-              </View>
-              <View style={styles.addressContent}>
-                <Text style={styles.addressLabel}>{branchInfo.name}</Text>
-                <Text style={styles.addressValue}>{branchInfo.address || delivery.pickup_address}</Text>
-              </View>
-            </View>
-            <View style={styles.addressLine} />
-            <View style={styles.addressRow}>
-              <View style={[styles.addressIconWrap, { backgroundColor: colors.primaryBg }]}>
-                <Ionicons name="location" size={16} color={colors.primary} />
-              </View>
-              <View style={styles.addressContent}>
-                <Text style={styles.addressLabel}>Điểm giao hàng</Text>
-                <Text style={styles.addressValue}>{customerAddress || 'Chưa cập nhật'}</Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.mapActionsRow}>
-            <TouchableOpacity
-              style={[styles.actionChip, { flex: 1, marginRight: 8, backgroundColor: colors.bg }]}
-              onPress={() => navigation.navigate('Map', { delivery })}
-            >
-              <Ionicons name="map-outline" size={18} color={colors.text} />
-              <Text style={[styles.actionChipText, { color: colors.text }]}>Xem bản đồ</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionChip, { flex: 1, backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#93C5FD' }]}
-              onPress={() => openNavigation(customerAddress)}
-            >
-              <Ionicons name="navigate" size={18} color="#2563EB" />
-              <Text style={[styles.actionChipText, { color: '#2563EB', fontWeight: '700' }]}>Mở Google Maps</Text>
-            </TouchableOpacity>
-          </View>
-        </View></LazySection>
+        <View style={{marginBottom:16}}><OrderRouteCard order={{...delivery,delivery_address:customerAddress}} storeName={branchInfo.name} storeAddress={branchInfo.address} onMap={()=>navigation.navigate('Map',{delivery})} /></View>
 
         {/* Customer Info */}
         {(delivery.customer_name || delivery.customer_phone) && (
@@ -474,7 +434,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.md,
     marginBottom: spacing.md,
-    ...shadows.sm,
     borderWidth: 1,
     borderColor: colors.borderLight,
   },
@@ -494,7 +453,7 @@ const styles = StyleSheet.create({
     width: 36, height: 36, borderRadius: 18, backgroundColor: colors.borderLight,
     alignItems: 'center', justifyContent: 'center', marginBottom: spacing.xs,
   },
-  stepCurrent: { borderWidth: 2, borderColor: colors.primaryLight, ...shadows.primary },
+  stepCurrent: { borderWidth: 2, borderColor: colors.primaryLight },
   stepLabel: { fontSize: 10, color: colors.muted, textAlign: 'center', fontWeight: '600' },
   stepLabelActive: { color: colors.primary, fontWeight: '700' },
   stepLine: { flex: 1, height: 2, backgroundColor: colors.borderLight, marginHorizontal: -8, marginTop: -15 },

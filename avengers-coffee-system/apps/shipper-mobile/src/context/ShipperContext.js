@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react'
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import apiClient, { clearAuthToken, setAuthToken } from '../lib/apiClient'
 import { clearShipperSession, loadShipperSession, saveShipperSession } from '../lib/storage'
 
@@ -12,6 +12,16 @@ export function ShipperProvider({ children }) {
   const [shipper, setShipper] = useState(null)
   const [token, setToken] = useState(null)
   const [hydrated, setHydrated] = useState(false)
+  const profileVersion = useRef(0), statusPending = useRef(false)
+  const readProfile = useCallback(async (id, sessionToken) => {
+    const version = profileVersion.current
+    if (statusPending.current) return null
+    const fresh = await apiClient.get(`/shippers/${id}/profile`)
+    if (version !== profileVersion.current || statusPending.current || !(fresh?.id || fresh?.username)) return null
+    setShipper(fresh)
+    await saveShipperSession(fresh, sessionToken)
+    return fresh
+  }, [])
 
   useEffect(() => {
     ; (async () => {
@@ -23,11 +33,7 @@ export function ShipperProvider({ children }) {
         setHydrated(true)
         // Refresh fresh shipper profile in background to get latest branch_code
         try {
-          const fresh = await apiClient.get(`/shippers/${session.shipper.id}/profile`).catch(() => null)
-          if (fresh && (fresh.id || fresh.username)) {
-            setShipper(fresh)
-            await saveShipperSession(fresh, session.token)
-          }
+          await readProfile(session.shipper.id, session.token)
         } catch (e) {
           console.warn('Failed to sync latest profile:', e?.message || e)
         }
@@ -37,7 +43,7 @@ export function ShipperProvider({ children }) {
         setHydrated(true)
       }
     })()
-  }, [])
+  }, [readProfile])
 
   const login = async ({ username, password }) => {
     const response = await apiClient.post('/shippers/login', {
@@ -52,6 +58,7 @@ export function ShipperProvider({ children }) {
       throw new Error('Đăng nhập thất bại: Backend không trả về token hoặc thông tin shipper')
     }
 
+    ++profileVersion.current
     setShipper(nextShipper)
     setToken(nextToken)
     await setAuthToken(nextToken)
@@ -61,22 +68,25 @@ export function ShipperProvider({ children }) {
   }
 
   const updateStatus = async (status) => {
-    if (!shipper) return
-    await apiClient.patch(`/shippers/${shipper.id}/status`, { status })
-    const updatedShipper = { ...shipper, status }
-    setShipper(updatedShipper)
-    await saveShipperSession(updatedShipper, token)
+    if (!shipper || statusPending.current) return
+    const version = ++profileVersion.current
+    statusPending.current = true
+    try {
+      await apiClient.patch(`/shippers/${shipper.id}/status`, { status })
+      if (version !== profileVersion.current) return
+      const updated = { ...shipper, status }
+      setShipper(updated)
+      await saveShipperSession(updated, token)
+    } finally { statusPending.current = false }
   }
 
   const refreshProfile = useCallback(async () => {
     if (!shipper?.id) return null
-    const profile = await apiClient.get(`/shippers/${shipper.id}/profile`)
-    setShipper(profile)
-    await saveShipperSession(profile, token)
-    return profile
-  }, [shipper?.id, token])
+    return readProfile(shipper.id, token)
+  }, [shipper?.id, token, readProfile])
 
   const logout = async () => {
+    ++profileVersion.current
     setShipper(null)
     setToken(null)
     await clearAuthToken()

@@ -68,7 +68,7 @@ try {
       if (path === '/chat/conversations') data = { items: conversations };
       if (path.match(/\/chat\/conversations\/[^/]+\/messages$/)) {
         const id = path.split('/').at(-2);
-        if (request.method() === 'POST') { const row = message(id, body.content, body.sender_role, `sent-${calls.length}`); allMessages[id].push(row); data = { message: row, conversation: { ...conversations.find(row => row.ma_hoi_thoai === id), tin_nhan_cuoi: body.content, vai_tro_nguoi_gui_cuoi: body.sender_role } }; }
+        if (request.method() === 'POST') { const row = message(id, body.content, body.sender_role, `sent-${calls.length}`); allMessages[id].push(row); data = { message: row, conversation: { ...conversations.find(row => row.ma_hoi_thoai === id), tin_nhan_cuoi: body.content, vai_tro_nguoi_gui_cuoi: body.sender_role, so_tin_nhan_chua_doc_nhan_su: 0 } }; }
         else data = { items: allMessages[id] || [] };
       }
       if (path.endsWith('/read')) data = { conversation: { ...conversations.find(row => row.ma_hoi_thoai === path.split('/').at(-2)), so_tin_nhan_chua_doc_nhan_su: 0 } };
@@ -93,17 +93,26 @@ try {
     if (app === 'customer_web') await input.press('Enter'); else await page.getByRole('button', { name: 'Gửi tin nhắn', exact: true }).click();
     await page.getByRole('button', { name: 'Chọn Cà Phê Sữa Đá', exact: true }).click();
     await page.getByRole('button', { name: 'Chọn Cà Phê Sữa Nóng', exact: true }).click();
+    await page.getByRole('button', { name: 'Tăng số lượng Cà Phê Sữa Đá', exact: true }).click();
+    await page.getByRole('button', { name: 'Tăng số lượng Cà Phê Sữa Nóng', exact: true }).click();
     assert.equal(calls.filter(call => call.path === '/ai/agent/chat').length, 1, 'Plus must queue locally');
     await page.screenshot({ path: `${output}/${app}-selection.png` });
     await page.getByRole('button', { name: 'Tiếp tục với 2 món →', exact: true }).click();
     const apply = page.getByRole('button', { name: 'Thêm 2 món vào giỏ', exact: true });
     await apply.waitFor(); assert(await apply.isDisabled());
+    await page.getByRole('button', { name: 'Tăng số lượng Cà Phê Sữa Đá', exact: true }).click();
     if (app === 'customer_web') {
       for (const article of await page.locator('.customer-choice-panel article').all()) await article.getByRole('radio', { name: 'Vừa', exact: true }).check();
-      await page.locator('.customer-choice-panel article').first().getByRole('checkbox', { name: 'Hạt Sen', exact: true }).check();
+      const first = page.locator('.customer-choice-panel article').first();
+      await first.getByRole('radio', { name: 'Ít đá', exact: true }).check();
+      await first.getByRole('radio', { name: 'Ít đá', exact: true }).click();
+      assert(!(await first.getByRole('radio', { name: 'Ít đá', exact: true }).isChecked()));
+      await first.getByRole('checkbox', { name: 'Hạt Sen', exact: true }).check();
     } else {
       await page.getByRole('radio', { name: 'Cà Phê Sữa Đá · Kích thước · Vừa', exact: true }).click();
       await page.getByRole('radio', { name: 'Cà Phê Sữa Nóng · Kích thước · Vừa', exact: true }).click();
+      await page.getByRole('radio', { name: 'Cà Phê Sữa Đá · Lượng đá · Ít đá', exact: true }).click();
+      await page.getByRole('radio', { name: 'Cà Phê Sữa Đá · Lượng đá · Ít đá', exact: true }).click();
       await page.getByRole('checkbox', { name: 'Cà Phê Sữa Đá · Topping · Hạt Sen', exact: true }).click();
     }
     assert(await apply.isEnabled());
@@ -112,6 +121,8 @@ try {
     await apply.click(); await page.getByText('Đã thêm các món bạn chọn vào giỏ.', { exact: false }).first().waitFor();
     const turns = calls.filter(call => call.path === '/ai/agent/chat');
     assert.equal(turns.length, 3); assert.equal(turns[1].body.ui_action.items.length, 2);
+    assert.deepEqual(turns[1].body.ui_action.items.map(item => item.quantity), [2,2]);
+    assert.deepEqual(turns[2].body.ui_action.items.map(item => item.quantity), [3,2]);
     assert.deepEqual(turns[2].body.ui_action.items[0].options, { size: 'Vừa', toppings: ['Hạt Sen'] });
     assert.deepEqual(turns[2].body.ui_action.items[1].options, { size: 'Vừa' });
     assert.equal(await apply.count(), 0);
@@ -122,6 +133,7 @@ try {
   for (const app of ['staff_web', 'staff_mobile']) {
     const { page, context, calls, origin } = await pageFor(app, 1440);
     await page.goto(`${origin}/?workspace=manager`);
+    await page.getByLabel('2 tin nhắn chưa đọc', { exact: true }).waitFor();
     await page.getByRole('button', { name: 'Mở trang tin nhắn khách hàng', exact: true }).click();
     if (app === 'staff_web') await page.locator('.support-conversation').filter({ hasText: 'Khách An' }).click();
     else await page.getByRole('button', { name: 'Hội thoại Khách An', exact: true }).click();
@@ -131,7 +143,7 @@ try {
     await page.getByText('Chào bạn, mình đã nhận được yêu cầu.', { exact: false }).last().waitFor();
     assert(calls.some(call => call.method === 'POST' && call.path === '/chat/conversations/conv-a/messages'));
     await page.waitForTimeout(600);
-    if (app === 'staff_web') console.log('Inbox name layout', await page.locator('.support-conversation b').evaluateAll(nodes => nodes.map(node => ({ text: node.textContent, box: node.getBoundingClientRect().toJSON(), display: getComputedStyle(node).display, visibility: getComputedStyle(node).visibility, color: getComputedStyle(node).color, parent: node.parentElement.getBoundingClientRect().toJSON() }))));
+    if (app === 'staff_web') assert(await page.locator('.support-conversation b').evaluateAll(nodes => nodes.every(node => getComputedStyle(node).color !== 'rgb(255, 255, 255)')), 'Customer names must remain readable on the white sidebar');
     await page.screenshot({ path: `${output}/${app}-inbox-1440.png` });
     if (app === 'staff_web') await page.locator('.support-conversation').filter({ hasText: 'Khách Bình' }).click();
     else await page.getByRole('button', { name: 'Hội thoại Khách Bình', exact: true }).click();
@@ -141,6 +153,19 @@ try {
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await page.screenshot({ path: `${output}/${app}-inbox-390.png` });
     results.push({ app, result: 'PASS', mockedReply: true }); await context.close();
+  }
+  for (const app of ['staff_web', 'staff_mobile']) {
+    const { page, context, calls, origin } = await pageFor(app, 390, 'STAFF');
+    await page.goto(`${origin}/?workspace=staff`);
+    await page.getByRole('button', { name: 'Mở trang tin nhắn khách hàng', exact: true }).click();
+    if (app === 'staff_web') await page.locator('.support-conversation').filter({ hasText: 'Khách An' }).click();
+    else await page.getByRole('button', { name: 'Hội thoại Khách An', exact: true }).click();
+    await page.getByLabel('Tin nhắn trả lời khách', { exact: true }).fill('Nhân viên đã nhận yêu cầu của bạn.');
+    await page.getByLabel('Tin nhắn trả lời khách', { exact: true }).press('Enter');
+    await page.getByText('Nhân viên đã nhận yêu cầu của bạn.', { exact: true }).last().waitFor();
+    assert(calls.some(call => call.method === 'POST' && call.body?.sender_role === 'STAFF'));
+    results.push({ app, role: 'STAFF', result: 'PASS', mockedReply: true });
+    await context.close();
   }
   const { page, context, origin } = await pageFor('staff_web', 1440, 'ADMIN');
   await page.goto(`${origin}/?workspace=admin`); await page.getByRole('button', { name: 'Thực đơn', exact: true }).click();

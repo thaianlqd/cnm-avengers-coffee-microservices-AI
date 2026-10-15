@@ -1,0 +1,38 @@
+{
+  "results": [
+    {
+      "app": "web",
+      "tab": "home",
+      "noControls": true,
+      "intervalMs": 10000,
+      "rotated": true
+    },
+    {
+      "app": "web",
+      "tab": "order",
+      "noControls": true,
+      "intervalMs": 10000,
+      "rotated": true
+    },
+    {
+      "app": "mobile",
+      "homeAndMenuNoControls": true,
+      "intervalMs": 10000,
+      "rotated": true
+    },
+    {
+      "app": "shipper",
+      "workWalletHistoryProfilePreview": "PASS",
+      "widths": [
+        320,
+        390,
+        600
+      ],
+      "readinessVisibleWhenScrolling": true,
+      "realWrites": 0
+    }
+  ],
+  "errors": [],
+  "apiKeysUsed": false,
+  "realApiRequests": 0
+}

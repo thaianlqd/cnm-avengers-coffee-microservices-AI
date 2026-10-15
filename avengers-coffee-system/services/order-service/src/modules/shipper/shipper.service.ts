@@ -30,17 +30,22 @@ export class ShipperService {
   ) {}
 
   private branchCache: { data: any[]; expiresAt: number } | null = null;
+  private requireReadyForOrders(shipper: Shipper) {
+    if (shipper.status !== 'ACTIVE') {
+      throw new BadRequestException('Tài xế chưa bật Sẵn sàng nhận đơn. Vui lòng chọn tài xế đang sẵn sàng.');
+    }
+  }
   private readonly IDENTITY_SERVICE_URL = process.env.IDENTITY_SERVICE_URL || 'http://identity-service:3001';
 
-  async layDanhSachChiNhanh(): Promise<any[]> {
+  async layDanhSachChiNhanh(forceRefresh = false): Promise<any[]> {
     const now = Date.now();
-    if (this.branchCache && this.branchCache.expiresAt > now && this.branchCache.data?.length > 0) {
+    if (!forceRefresh && this.branchCache && this.branchCache.expiresAt > now && this.branchCache.data?.length > 0) {
       return this.branchCache.data;
     }
     try {
-      let response = await fetch(`${this.IDENTITY_SERVICE_URL}/users/branches/public`).catch(() => null);
+      let response = await fetch(`${this.IDENTITY_SERVICE_URL}/users/branches/public`, { signal:AbortSignal.timeout(2000) }).catch(() => null);
       if (!response || !response.ok) {
-        response = await fetch(`${this.IDENTITY_SERVICE_URL}/branches/public`).catch(() => null);
+        response = await fetch(`${this.IDENTITY_SERVICE_URL}/branches/public`, { signal:AbortSignal.timeout(2000) }).catch(() => null);
       }
       if (response && response.ok) {
         const json: any = await response.json();
@@ -201,7 +206,7 @@ export class ShipperService {
         full_name: `Shipper ${usernameSlug}`,
         phone: `09${Date.now().toString().slice(-8)}`,
         email: null,
-        status: 'ACTIVE',
+        status: 'INACTIVE',
         branch_code: 'HCM_DIEN_BIEN_PHU',
         rating: 4.8,
         password: normalizedPassword,
@@ -237,7 +242,7 @@ export class ShipperService {
 
     await this.shipperRepo.update(
       { id: shipperId },
-      { current_latitude: numLat, current_longitude: numLng, status: 'ACTIVE' },
+      { current_latitude: numLat, current_longitude: numLng },
     );
 
     // Broadcast vị trí tài xế qua WebSocket tới khách và xóa cache Redis để thông tin luôn cập nhật tức thì
@@ -279,6 +284,9 @@ export class ShipperService {
   }
 
   async updateShipperStatus(shipperId: string, status: 'ACTIVE' | 'INACTIVE' | 'ON_BREAK') {
+    if (!['ACTIVE', 'INACTIVE', 'ON_BREAK'].includes(status)) {
+      throw new BadRequestException('Trạng thái nhận đơn không hợp lệ.');
+    }
     await this.shipperRepo.update({ id: shipperId }, { status });
     return { success: true, status };
   }
@@ -440,6 +448,8 @@ export class ShipperService {
       }
       throw new BadRequestException('Đơn hàng này đã được Shipper khác nhận');
     }
+
+    this.requireReadyForOrders(shipper);
 
     // Hủy delivery record cũ nếu có (FAILED/CANCELLED/DELIVERED)
     if (existing) {
@@ -848,7 +858,7 @@ export class ShipperService {
   }
 
   async updateVehicle(shipperId: string, vehicleType: string, vehiclePlate: string) {
-    await this.shipperRepo.update({ id: shipperId }, { vehicle_type: vehicleType, vehicle_plate: vehiclePlate });
+    await this.shipperRepo.update({ id: shipperId }, { vehicle_type: this.supportedVehicle(vehicleType), vehicle_plate: vehiclePlate });
     return { success: true, message: 'Vehicle updated' };
   }
 
@@ -890,21 +900,43 @@ export class ShipperService {
     if (searchKeyword) {
       query.andWhere('(s.full_name ILIKE :q OR s.username ILIKE :q OR s.phone ILIKE :q)', { q: `%${searchKeyword}%` });
     }
-    return query.orderBy('s.status', 'ASC').getMany();
+    return query.orderBy('s.created_at', 'DESC').addOrderBy('s.id', 'DESC').getMany();
+  }
+
+  private async requireSystemBranch(value: unknown) {
+    const code = String(value || '').trim().toUpperCase();
+    if (!code) throw new BadRequestException('Vui lòng chọn chi nhánh hệ thống phụ trách.');
+    let rows = await this.layDanhSachChiNhanh();
+    let branch = rows.find(b => String(b.ma_chi_nhanh || b.code || '').toUpperCase() === code);
+    if (!branch) { rows = await this.layDanhSachChiNhanh(true); branch = rows.find(b => String(b.ma_chi_nhanh || b.code || '').toUpperCase() === code); }
+    if (!branch || (branch.loai_diem_ban && branch.loai_diem_ban !== 'CHI_NHANH_CHINH') || /^kiosk\b/i.test(branch.ten_chi_nhanh || branch.name || '') || /^(KSK|KVT|KIOSK)([-_]|$)/i.test(code) || (branch.trang_thai && branch.trang_thai !== 'ACTIVE')) {
+      throw new BadRequestException('Tài xế cửa hàng chỉ phụ trách chi nhánh hệ thống, không chọn kiosk nhượng quyền.');
+    }
+    return code;
+  }
+
+  private supportedVehicle(value: unknown) {
+    const type = String(value || 'MOTORBIKE').toUpperCase();
+    if (!['MOTORBIKE','CAR'].includes(type)) throw new BadRequestException('Chọn xe máy hoặc ô tô để giao hàng.');
+    return type;
   }
 
   async createShipper(data: any) {
     const existing = await this.shipperRepo.findOne({ where: { username: data.username } });
     if (existing) throw new BadRequestException('Tên đăng nhập (username) đã tồn tại');
 
+    const branchCode = await this.requireSystemBranch(data.branch_code);
+    const password = String(data.password || '').trim();
+    if (password.length < 6) throw new BadRequestException('Mật khẩu cần ít nhất 6 ký tự.');
     const shipper = this.shipperRepo.create({
-      username: data.username,
+      username: String(data.username || '').trim(),
+      password,
       full_name: data.full_name,
       phone: data.phone || data.phone_number || '0900000000',
       email: data.email || null,
-      branch_code: data.branch_code || 'MAC_DINH_CHI',
-      status: data.status || 'ACTIVE',
-      vehicle_type: data.vehicle_type || 'MOTORBIKE',
+      branch_code: branchCode,
+      status: 'INACTIVE',
+      vehicle_type: this.supportedVehicle(data.vehicle_type),
       vehicle_plate: data.vehicle_plate || '59X1-12345',
     });
     return this.shipperRepo.save(shipper);
@@ -926,9 +958,9 @@ export class ShipperService {
       shipper.phone = data.phone || data.phone_number || '';
     }
     if (data.email !== undefined) shipper.email = data.email;
-    if (data.branch_code !== undefined) shipper.branch_code = data.branch_code;
+    if (data.branch_code !== undefined) shipper.branch_code = await this.requireSystemBranch(data.branch_code);
     if (data.status) shipper.status = data.status;
-    if (data.vehicle_type) shipper.vehicle_type = data.vehicle_type;
+    if (data.vehicle_type) shipper.vehicle_type = this.supportedVehicle(data.vehicle_type);
     if (data.vehicle_plate) shipper.vehicle_plate = data.vehicle_plate;
     if (data.password) shipper.password = String(data.password).trim();
 
@@ -941,7 +973,7 @@ export class ShipperService {
 
     const defaultPass = String(newPassword || '123456').trim();
     shipper.password = defaultPass;
-    shipper.status = 'ACTIVE';
+    shipper.status = 'INACTIVE';
     await this.shipperRepo.save(shipper);
 
     // Xóa cache nhóm đơn kẹt trong Redis để reset sạch phiên giao dịch
@@ -1058,6 +1090,7 @@ export class ShipperService {
 
     const shipper = await this.shipperRepo.findOne({ where: { id: shipperId } });
     if (!shipper) throw new NotFoundException('Shipper không tồn tại');
+    this.requireReadyForOrders(shipper);
 
     // Chặn nếu nhân viên gán đơn khác chi nhánh của shipper
     if (shipper.branch_code && donHang.co_so_ma) {
@@ -1390,6 +1423,7 @@ export class ShipperService {
 
     const shipper = await this.shipperRepo.findOne({ where: { id: shipperId } });
     if (!shipper) throw new NotFoundException('Tài xế không tồn tại.');
+    this.requireReadyForOrders(shipper);
 
     const branches = await this.layDanhSachChiNhanh();
     const acceptedDeliveries: any[] = [];

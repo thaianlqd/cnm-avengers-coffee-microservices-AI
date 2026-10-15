@@ -13,7 +13,7 @@ import WalletTopupCard from './WalletTopupCard';
 import ChatRichText from './ChatRichText';
 import { isCheckoutConfirmation, agentProducts, pendingCheckout } from './agentContract';
 import CustomerChoicePanel, { SelectionTray } from './CustomerChoicePanel';
-import { toggleProductSelection, selectionAction, actionMessage } from './customerChoices';
+import { toggleProductSelection, updateProductQuantity, selectionAction, actionMessage } from './customerChoices';
 import { ChatBubbleLeftRightIcon, BuildingStorefrontIcon, PhoneIcon, MapPinIcon, CreditCardIcon, WalletIcon, BanknotesIcon, QrCodeIcon, ClockIcon } from '@heroicons/react/24/outline';
 import { walletTopupRequest, walletAmountError, createWalletTopup, pollWalletTopup, latestWalletTopup, latestWalletTopupOffer, latestWalletTopupReady, refreshWalletTopupOffer } from './walletTopup';
 import { CheckCircleIcon, CheckIcon } from '@heroicons/react/24/solid';
@@ -621,7 +621,7 @@ function isStaffChatMessage(msg) {
 }
 
 // ─── Main Chat Widget Component ───────────────────────────────────────────────
-export default function ChatWidget({ user, socketUrl, onLogin }) {
+export default function ChatWidget({ user, socketUrl, onLogin, initialMode = null }) {
   useUiLanguage();
   const { i18n } = useTranslation();
   const copy = (vi, en) => i18n.resolvedLanguage === 'en' ? en : vi;
@@ -964,6 +964,11 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
     window.addEventListener('avengers:open-chat', open);
     return () => window.removeEventListener('avengers:open-chat', open);
   }, [openChat]);
+
+  const initialOpenHandled = useRef(false);
+  useEffect(() => {
+    if (initialMode && !initialOpenHandled.current) { initialOpenHandled.current = true; openChat(initialMode); }
+  }, [initialMode, openChat]);
 
   const handleResetChat = useCallback(async () => {
     if (window.confirm('Bắt đầu cuộc trò chuyện AI mới? Giỏ hàng của bạn sẽ được giữ nguyên.')) {
@@ -1740,7 +1745,7 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
             <div ref={bottomRef} />
           </div>
 
-          {chatMode === 'AI' && <SelectionTray selected={selectedProducts} busy={sending || isTyping} onRemove={product => setSelectedProducts(prev => prev.filter(row => row.product_id !== product.product_id))} onSubmit={submitSelectedProducts} />}
+          {chatMode === 'AI' && <SelectionTray onQuantityChange={(product, quantity) => setSelectedProducts(prev => updateProductQuantity(prev, product, quantity))} selected={selectedProducts} busy={sending || isTyping} onRemove={product => setSelectedProducts(prev => prev.filter(row => row.product_id !== product.product_id))} onSubmit={submitSelectedProducts} />}
 
           {/* Reply-to Bar */}
           {replyTo && (

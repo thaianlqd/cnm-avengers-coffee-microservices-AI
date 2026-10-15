@@ -1,0 +1,111 @@
+{
+  "results": [
+    {
+      "app": "customer_web",
+      "map": "PASS",
+      "fixtureRoutes": true
+    },
+    {
+      "app": "customer_mobile",
+      "map": "PASS",
+      "fixtureRoutes": true
+    },
+    {
+      "app": "shipper",
+      "map": "PASS",
+      "fixtureRoutes": true
+    },
+    {
+      "workspace": "admin",
+      "pagination": "PASS",
+      "tabsChecked": [
+        "Dashboard hệ thống",
+        "Danh mục sản phẩm",
+        "Thực đơn",
+        "Khuyến mãi & voucher",
+        "Quản lý khách hàng",
+        "Hạng thành viên",
+        "Khảo sát & phản hồi",
+        "Chi nhánh",
+        "Nhân viên giao hàng",
+        "Kiosk nhượng quyền",
+        "Kiosk vệ tinh",
+        "Tài khoản hệ thống",
+        "Email & SMTP",
+        "Hồ sơ & bảo mật"
+      ]
+    },
+    {
+      "workspace": "manager",
+      "pagination": "PASS",
+      "tabsChecked": [
+        "Tổng quan",
+        "Đơn hàng",
+        "Bán hàng POS",
+        "Giao hàng",
+        "Bàn & khu vực",
+        "Chốt ca",
+        "Thực đơn",
+        "Tin tức",
+        "Lịch làm của tôi",
+        "Tin nhắn khách hàng",
+        "Duyệt chốt ca",
+        "Nhân viên",
+        "Lịch làm nhân viên",
+        "Nhân viên giao hàng",
+        "Đánh giá khách hàng",
+        "Khảo sát",
+        "Kiosk vệ tinh",
+        "Hồ sơ & bảo mật"
+      ]
+    },
+    {
+      "workspace": "staff",
+      "pagination": "PASS",
+      "tabsChecked": [
+        "Tổng quan",
+        "Đơn hàng",
+        "Bán hàng POS",
+        "Giao hàng",
+        "Bàn & khu vực",
+        "Chốt ca",
+        "Thực đơn",
+        "Tin tức",
+        "Lịch làm của tôi",
+        "Tin nhắn khách hàng",
+        "Hồ sơ & bảo mật"
+      ]
+    },
+    {
+      "workspace": "partner",
+      "pagination": "PASS",
+      "tabsChecked": [
+        "Tổng quan Kiosk",
+        "Bán hàng POS",
+        "Quản lý nhân viên",
+        "Phân ca làm việc",
+        "Ca trực & Chốt ca",
+        "Đơn bán hàng",
+        "Thực đơn",
+        "Ví điện tử",
+        "Đặt Combo",
+        "Lịch sử nhập",
+        "Công nợ",
+        "Royalty",
+        "Mở rộng chi nhánh"
+      ]
+    },
+    {
+      "workspace": "accountant",
+      "pagination": "PASS",
+      "tabsChecked": [
+        "Tổng quan tài chính",
+        "Quản lý nhượng quyền",
+        "Dòng tiền & đối soát"
+      ]
+    }
+  ],
+  "realApiRequestsSent": 0,
+  "keys": "fixture-only",
+  "errors": []
+}

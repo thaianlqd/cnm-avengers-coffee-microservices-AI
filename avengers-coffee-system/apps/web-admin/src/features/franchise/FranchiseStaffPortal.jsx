@@ -1,3 +1,4 @@
+import { PaginatedList } from '../../components/console/CompactPagination'
 import { WorkspaceSearch } from '../../components/console/WorkspaceNavigation'
 import { AdminNotificationBell } from '../shared/components/AdminNotificationBell'
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
@@ -1823,7 +1824,7 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {myShiftRequests.slice(0, 15).map((req) => {
+                  <PaginatedList items={myShiftRequests} resetKey={tab}>{(req) => {
                     const isPending = req.trang_thai_yeu_cau === 'PENDING'
                     const isApproved = req.trang_thai_yeu_cau === 'APPROVED' || !req.trang_thai_yeu_cau
                     const isRejected = req.trang_thai_yeu_cau === 'REJECTED'
@@ -1908,7 +1909,7 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                         </div>
                       </div>
                     )
-                  })}
+                  }}</PaginatedList>
                 </div>
               )}
             </div>
@@ -2126,7 +2127,7 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {kioskShiftHistory.map((s) => {
+                  <PaginatedList items={kioskShiftHistory} resetKey={tab}>{(s) => {
                     const isOpen = s.trang_thai === 'OPEN'
                     const openTime = s.thoi_gian_mo_ca ? new Date(s.thoi_gian_mo_ca).toLocaleString('vi-VN') : '—'
                     const closeTime = s.thoi_gian_dong_ca ? new Date(s.thoi_gian_dong_ca).toLocaleString('vi-VN') : '—'
@@ -2191,7 +2192,7 @@ export function FranchiseStaffPortal({ session, onLogout }) {
                         </div>
                       </div>
                     )
-                  })}
+                  }}</PaginatedList>
                 </div>
               )}
             </div>
