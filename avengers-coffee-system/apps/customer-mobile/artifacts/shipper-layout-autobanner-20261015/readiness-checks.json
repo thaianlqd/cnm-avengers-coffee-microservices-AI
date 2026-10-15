@@ -1,0 +1,27 @@
+{
+  "results": [
+    {
+      "scenario": "denied GPS + stale profile + preview then accept",
+      "result": "PASS"
+    },
+    {
+      "scenario": "accept directly from card, no parent preview event",
+      "result": "PASS"
+    },
+    {
+      "scenario": "failed status save stays offline with visible error",
+      "result": "PASS"
+    },
+    {
+      "scenario": "accept conflict visible in home",
+      "result": "PASS"
+    },
+    {
+      "scenario": "accept conflict visible in preview",
+      "result": "PASS"
+    }
+  ],
+  "errors": [],
+  "realApiWrites": 0,
+  "apiKeysUsed": false
+}

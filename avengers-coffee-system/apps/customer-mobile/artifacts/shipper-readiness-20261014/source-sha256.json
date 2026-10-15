@@ -1,0 +1,7 @@
+{
+  "avengers-coffee-system/apps/shipper-mobile/src/context/ShipperContext.js": "886bb7b75ce900ff0328a15e991b59f8f4308c334670a502bd1597f4a0eb2e5c",
+  "avengers-coffee-system/apps/shipper-mobile/src/screens/HomeScreen.js": "422c0463e05839f0804b1529db1661da8e2b086497137c5786fc68133d3d32a1",
+  "avengers-coffee-system/apps/shipper-mobile/src/screens/OrderDetailScreen.js": "79dc7eef2c9c39408a2ccc4e8349f5ffb07b62711beb597115e48e5a32eec89a",
+  "avengers-coffee-system/apps/shipper-mobile/src/screens/AvailableOrderDetail.js": "b23c0179dd4ce54a5ece5d7c2de9f74bdc66fa0b28f552b85b23c1bf2ac91ff7",
+  "scripts/verification/shipper-readiness-ui.mjs": "c70dae8ce49ded6361c0c76864c2480783c54b8471f3110bcecb27645c9c5690"
+}

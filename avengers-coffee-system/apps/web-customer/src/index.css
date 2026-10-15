@@ -333,7 +333,7 @@ h6,
 }
 :focus-visible { outline: 2px solid #b22830; outline-offset: 4px; }
 .page-loading { min-height: 45vh; display: grid; place-items: center; color: #b22830; }
-.campaign-dialog { padding: 0; border: 0; border-radius: 4px; width: min(440px, 88vw); max-height: 88dvh; overflow: auto; background: #fff; box-shadow: 0 20px 80px #0004; }
+.campaign-dialog { position: fixed; inset: 0; margin: auto; padding: 0; border: 0; border-radius: 4px; width: min(440px, 88vw); max-height: 88dvh; overflow: auto; background: #fff; box-shadow: 0 20px 80px #0004; }
 .campaign-dialog::backdrop { background: #0009; }
 .campaign-dialog img { display: block; width: 100%; max-height: 76dvh; object-fit: contain; background: #5e0b0f; }
 .campaign-close { position: sticky; float: right; top: 8px; margin: 8px 8px -44px 0; z-index: 1; width: 36px; height: 36px; border-radius: 50%; background: white; color: #222; font-size: 28px; line-height: 1; cursor: pointer; box-shadow: 0 2px 8px #0003; }

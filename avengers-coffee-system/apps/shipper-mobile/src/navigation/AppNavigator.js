@@ -27,7 +27,7 @@ const Tabs = createBottomTabNavigator()
 
 function TabBarIcon({ routeName, color, size, focused }) {
   const ICONS = {
-    Home: { focused: 'bicycle', unfocused: 'bicycle-outline' },
+    Home: { focused: 'navigate', unfocused: 'navigate-outline' },
     Wallet: { focused: 'wallet', unfocused: 'wallet-outline' },
     History: { focused: 'time', unfocused: 'time-outline' },
     Profile: { focused: 'person-circle', unfocused: 'person-circle-outline' },
@@ -48,7 +48,7 @@ function MainTabs() {
           backgroundColor: colors.card,
           borderTopColor: colors.borderLight,
           borderTopWidth: 1,
-          height: 64 + insets.bottom,
+          height: 60 + insets.bottom,
           paddingBottom: Math.max(8, insets.bottom),
           paddingTop: 8,
         },
@@ -58,7 +58,7 @@ function MainTabs() {
           fontWeight: '600',
         },
         tabBarIcon: ({ color, size, focused }) => (
-          <TabBarIcon routeName={route.name} color={color} size={size} focused={focused} />
+          <TabBarIcon routeName={route.name} color={color} size={23} focused={focused} />
         ),
       })}
     >

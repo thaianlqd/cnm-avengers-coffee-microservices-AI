@@ -1,0 +1,47 @@
+{
+  "unitTests": {
+    "webCustomer": 80,
+    "customerMobile": 34,
+    "total": 114,
+    "failed": 0
+  },
+  "builds": [
+    "web-customer Vite",
+    "customer-mobile web/iOS/Android Hermes",
+    "shipper-mobile web",
+    "web-admin Vite",
+    "admin-mobile web"
+  ],
+  "entryMainJavaScriptBytes": {
+    "before": 794484,
+    "after": 621621
+  },
+  "offlineChatInboxScenariosPassed": 7,
+  "realAIMapProviderCallsInTests": 0,
+  "userApiKeysUsedForTests": false,
+  "runtimeLogs": {
+    "window": "20 minutes",
+    "containers": [
+      "avengers_web_customer",
+      "avengers_api_gateway",
+      "avengers_order_service"
+    ],
+    "errorLines": [
+      0,
+      0,
+      0
+    ]
+  },
+  "readOnlyLocalGatewaySamplesSeconds": {
+    "/menu/san-pham": 3.331049,
+    "/menu/danh-muc": 0.075888,
+    "/users/branches/public": 1.161216
+  },
+  "liveDatabaseWrites": 0,
+  "nativeDeviceRuntimeTested": false,
+  "offlineMapActorScenariosPassed": 8,
+  "actorTabsRendered": 59,
+  "mobileProductCardsVisibleImmediately": true,
+  "confirmedCartQuantityPatchUi": "PASS (2 items, busy controls, no redundant GET)",
+  "offlinePagePerformanceScenariosPassed": 6
+}

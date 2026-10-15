@@ -2,30 +2,11 @@ import axios from 'axios'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Platform, NativeModules } from 'react-native'
 
+import { resolveShipperEndpoint } from './endpointConfig.mjs'
 export function getApiBaseUrl() {
-  if (Platform.OS === 'web') {
-    return process.env.EXPO_PUBLIC_API_URL_WEB || process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'
-  }
-
-  // 1. Lấy IP máy dev trực tiếp từ scriptURL của Metro bundler
-  try {
-    const scriptURL = NativeModules?.SourceCode?.scriptURL
-    if (scriptURL) {
-      const match = scriptURL.match(/https?:\/\/([^:\/]+)/)
-      if (match && match[1] && match[1] !== 'localhost' && match[1] !== '127.0.0.1') {
-        return `http://${match[1]}:3000`
-      }
-    }
-  } catch (_) {}
-
-  // 2. Kiểm tra biến môi trường (bỏ qua nếu là IP cũ 192.168.1.157)
-  const envUrl = process.env.EXPO_PUBLIC_API_URL
-  if (envUrl && !envUrl.includes('192.168.1.157')) {
-    return envUrl
-  }
-
-  // 3. Fallback IP LAN máy hiện tại
-  return 'http://192.168.1.167:3000'
+  return resolveShipperEndpoint({ platform:Platform.OS, webUrl:process.env.EXPO_PUBLIC_API_URL_WEB,
+    apiUrl:process.env.EXPO_PUBLIC_API_URL, pageUrl:typeof window !== 'undefined' ? window.location.href : null,
+    scriptUrl:NativeModules?.SourceCode?.scriptURL })
 }
 
 export function getSocketUrl() {
@@ -57,7 +38,7 @@ let queuePromise = Promise.resolve()
 apiClient.interceptors.request.use(
   async (config) => {
     const activeBaseUrl = getApiBaseUrl()
-    if (!config.baseURL || config.baseURL.includes('192.168.1.157')) {
+    if (!config.baseURL || config.baseURL === API_BASE_URL) {
       config.baseURL = activeBaseUrl
     }
 
@@ -81,7 +62,7 @@ apiClient.interceptors.request.use(
         console.error('Failed to load auth token:', error)
       }
     }
-    if (authToken) {
+    if (authToken && config.url !== '/shippers/login') {
       config.headers = config.headers || {}
       config.headers.Authorization = `Bearer ${authToken}`
     }
@@ -109,7 +90,7 @@ apiClient.interceptors.response.use(
     }
     const fullUrl = `${error.config?.baseURL || ''}${error.config?.url || ''}`
     console.warn(`[apiClient Error] ⚠️ ${error.config?.method?.toUpperCase()} ${fullUrl}: ${error.message}`)
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && error.config?.url !== '/shippers/login') {
       authToken = null
       await AsyncStorage.removeItem(TOKEN_KEY)
     }

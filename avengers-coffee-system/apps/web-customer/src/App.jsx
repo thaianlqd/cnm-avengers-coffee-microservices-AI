@@ -14,23 +14,26 @@ const LoginPage = lazy(() => import('./pages/Login'));
 import QuickViewModal from './components/QuickViewModal';
 const CartPage = lazy(() => import('./pages/Cart'));
 import FavoriteDrawer from './components/FavoriteDrawer';
-import OrderHistoryModal from './components/OrderHistoryModal';
-import ChatWidget from './components/ChatWidget';
+const OrderHistoryModal = lazy(() => import('./components/OrderHistoryModal'));
+import ChristmasBanner from './components/ChristmasBanner';
+import { pageModules, preloadPage } from './lib/pageModules';
+const CommunityPage = lazy(pageModules['other-group']);
+import ChatWidget from './components/DeferredChat';
 import { accountId, getGuestSessionId } from './lib/guestSession';
 import Home from './pages/Home';
 const About = lazy(() => import('./pages/About'));
-const Support = lazy(() => import('./pages/Support'));
-const StoresPage = lazy(() => import('./pages/Stores'));
+const Support = lazy(pageModules['contact']);
+const StoresPage = lazy(pageModules['stores']);
 const NewsPage = lazy(() => import('./pages/News'));
 const NewsDetailPage = lazy(() => import('./pages/NewsDetailPage'));
-const OrderPage = lazy(() => import('./pages/Order'));
+const OrderPage = lazy(pageModules['order']);
 const ProductDetailPage = lazy(() => import('./pages/ProductDetail'));
 const ProfilePageContent = lazy(() => import('./components/ProfilePageContent'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const ChinhSachDatHangPage = lazy(() => import('./pages/ChinhSachDatHang'));
 const LienHePage = lazy(() => import('./pages/LienHe'));
 const MenuIntroPage = lazy(() => import('./pages/MenuIntro'));
-const CareersPage = lazy(() => import('./pages/Careers'));
+const CareersPage = lazy(pageModules['careers']);
 const MembershipPage = lazy(() => import('./pages/Membership'));
 const LuckyWheelPage = lazy(() => import('./pages/LuckyWheel'));
 const GiftCardPage = lazy(() => import('./pages/GiftCard'));
@@ -48,18 +51,7 @@ import { UserCircleIcon, KeyIcon, MapPinIcon, ChevronLeftIcon, ChevronRightIcon 
 
 const normalizeTab = tab => ({giftcard:'gift-card',franchise:'nhuong-quyen','order-lookup':'tra-cuu-don',checkout:'cart',support:'contact','privacy-policy':'privacy'})[tab] || tab;
 const EMPTY_ITEMS = Object.freeze([]);
-const FALLBACK_BANNER_URL = '/hc-assets/HCO_7825_AME__SUMMERDI_DC_BANNER_1920x926.jpg';
-
-// Exact same banners from Highlands Coffee HTML file
-const HC_BANNER_SLIDES = [
-  'https://www.highlandscoffee.com.vn/vnt_upload/news/08_2026/mooncake_catalog_01.png',
-  '/hc-assets/HCO_7824_1000_STORE_DC_MWB.jpg',
-  '/hc-assets/HCO_7825_SUMMERDI_DC_BANNER_1920x926.jpg',
-  '/hc-assets/HCO_7825_AME__SUMMERDI_DC_BANNER_1920x926.jpg',
-  '/hc-assets/HCO_7801_MISMATCHES_DISCOUNT_FA_MWB_1920x926_1.png',
-  '/hc-assets/HCO_7820_MATCHA_LAUNCH_DC_MWB_1920X926.jpg',
-];
-
+const FALLBACK_BANNER_URL = '/campaigns/highlands-christmas-office.jpg';
 // Highlands Coffee section images (from local _files folder)
 const HC_IMG = {
   appPromo: '/hc-assets/Website_bannerr.png',
@@ -417,62 +409,17 @@ function HorizontalProductCarousel({
   );
 }
 
-function HomeBannerSlider() {
-  useUiLanguage();
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const slides = HC_BANNER_SLIDES;
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (document.visibilityState === 'visible' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 4500);
-    return () => clearInterval(interval);
-  }, [slides.length]);
-
-  return (
-    <div className="hc-banner-slider relative w-full overflow-hidden">
-      <img
-        decoding="async" fetchPriority="high"
-        src={slides[currentSlide]}
-        alt={`Banner ${currentSlide + 1}`}
-        className="w-full aspect-[2/1] md:aspect-[1920/926] object-cover block hc-fade-in"
-        onError={(e) => {
-          e.currentTarget.src = FALLBACK_BANNER_URL;
-        }}
-      />
-      <div className="holiday-ornaments" aria-hidden="true"><i className="holiday-bauble" /><i className="holiday-bauble gold" /></div>
-      <div className="hc-banner-dots">
-        {slides.map((_, idx) => (
-          <button
-            key={idx}
-            type="button"
-            onClick={() => setCurrentSlide(idx)}
-            className={`hc-banner-dot ${idx === currentSlide ? 'active' : ''}`}
-            aria-label={`Slide ${idx + 1}`}
-          />
-        ))}
-      </div>
-      <button
-        type="button"
-        onClick={() => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)}
-        className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/80 p-2.5 text-gray-800 shadow-md transition-all hover:bg-white"
-      >
-        <ChevronLeftIcon className="h-5 w-5" />
-      </button>
-      <button
-        type="button"
-        onClick={() => setCurrentSlide((prev) => (prev + 1) % slides.length)}
-        className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/80 p-2.5 text-gray-800 shadow-md transition-all hover:bg-white"
-      >
-        <ChevronRightIcon className="h-5 w-5" />
-      </button>
-    </div>
-  );
-}
+function HomeBannerSlider({ onOrder }) { return <ChristmasBanner onOrder={onOrder} />; }
 
 function AppContent() {
   useUiLanguage();
   const { t } = useTranslation();
+  useEffect(() => {
+    const warm = () => preloadPage('order');
+    const idle = window.requestIdleCallback?.(warm, { timeout: 3000 });
+    const timer = idle == null ? setTimeout(warm, 1500) : null;
+    return () => { if (idle != null) window.cancelIdleCallback?.(idle); clearTimeout(timer); };
+  }, []);
   const [activeTab, setActiveTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
 
@@ -791,6 +738,7 @@ function AppContent() {
   useEffect(() => {
     let tabName = 'Trang chủ';
     switch (activeTab) {
+      case 'other-group': tabName = ui('Tuyển dụng & hỗ trợ'); break;
       case 'home': tabName = t('order.home', 'Trang chủ'); break;
       case 'order': {
         if (selectedCatId === 'all') {
@@ -884,7 +832,7 @@ function AppContent() {
       const response = await apiClient.get('/users/branches/public');
       return response.data;
     },
-    enabled: ['stores', 'order', 'checkout', 'profile'].includes(activeTab),
+    enabled: ['stores', 'cart', 'checkout', 'profile'].includes(activeTab),
     staleTime: 60 * 1000,
     refetchInterval: 120 * 1000,
   });
@@ -900,7 +848,7 @@ function AppContent() {
       const res = await fetch('/provinces.json');
       return res.json();
     },
-    enabled: ['stores', 'order', 'checkout', 'profile'].includes(activeTab),
+    enabled: ['stores', 'cart', 'checkout', 'profile'].includes(activeTab),
     staleTime: Infinity,
   });
 
@@ -1739,6 +1687,8 @@ function AppContent() {
           />
         ) : activeTab === 'about' ? (
           <About setActiveTab={setActiveTab} />
+        ) : activeTab === 'other-group' ? (
+          <CommunityPage onNavigate={setActiveTab} />
         ) : activeTab === 'careers' ? (
           <CareersPage />
         ) : activeTab === 'contact' ? (
@@ -2084,11 +2034,11 @@ function AppContent() {
         onRemoveFavorite={handleToggleFavorite}
         isWorking={toggleFavoriteMutation.isPending}
       />
-      <OrderHistoryModal
+      {isOrderHistoryOpen && <Suspense fallback={<div className="page-loading" role="status">{t('common.loading')}</div>}><OrderHistoryModal
         isOpen={isOrderHistoryOpen}
         onClose={handleCloseOrderHistory}
         user={user}
-      />
+      /></Suspense>}
 
       <SurveyPopup
         isOpen={isSurveyOpen}

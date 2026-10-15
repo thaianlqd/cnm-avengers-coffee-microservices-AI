@@ -10,7 +10,7 @@ export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider, categorie
     <>
       {/* ── 1. HERO BANNER SLIDER (exact HC banners) ── */}
       <section className="w-full overflow-hidden bg-white">
-        <HomeBannerSlider />
+        <HomeBannerSlider onOrder={() => setActiveTab('order')} />
       </section>
 
       {/* Khoảng trắng giữa slider và promo */}
@@ -56,7 +56,7 @@ export default function Home({ setActiveTab, HC_IMG, HomeBannerSlider, categorie
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             {[
               { img: HC_IMG.dongHanh1, label: t('home.orderNow'), action: 'order' },
-              { img: HC_IMG.dongHanh2, label: t('home.careers'), action: 'stores' },
+              { img: HC_IMG.dongHanh2, label: t('home.careers'), action: 'careers' },
               { img: HC_IMG.dongHanh3, label: t('home.news'), action: 'news' },
             ].map((item, idx) => (
               <div key={idx} className="flex flex-col items-center cursor-pointer group" onClick={() => setActiveTab(item.action)}>

@@ -621,7 +621,7 @@ function isStaffChatMessage(msg) {
 }
 
 // ─── Main Chat Widget Component ───────────────────────────────────────────────
-export default function ChatWidget({ user, socketUrl, onLogin }) {
+export default function ChatWidget({ user, socketUrl, onLogin, initialMode = null }) {
   useUiLanguage();
   const { i18n } = useTranslation();
   const copy = (vi, en) => i18n.resolvedLanguage === 'en' ? en : vi;
@@ -964,6 +964,11 @@ export default function ChatWidget({ user, socketUrl, onLogin }) {
     window.addEventListener('avengers:open-chat', open);
     return () => window.removeEventListener('avengers:open-chat', open);
   }, [openChat]);
+
+  const initialOpenHandled = useRef(false);
+  useEffect(() => {
+    if (initialMode && !initialOpenHandled.current) { initialOpenHandled.current = true; openChat(initialMode); }
+  }, [initialMode, openChat]);
 
   const handleResetChat = useCallback(async () => {
     if (window.confirm('Bắt đầu cuộc trò chuyện AI mới? Giỏ hàng của bạn sẽ được giữ nguyên.')) {

@@ -1,0 +1,18 @@
+{
+  "results": [
+    {
+      "app": "shipper",
+      "workWalletHistoryProfilePreview": "PASS",
+      "widths": [
+        320,
+        390,
+        600
+      ],
+      "readinessVisibleWhenScrolling": true,
+      "realWrites": 0
+    }
+  ],
+  "errors": [],
+  "apiKeysUsed": false,
+  "realApiRequests": 0
+}

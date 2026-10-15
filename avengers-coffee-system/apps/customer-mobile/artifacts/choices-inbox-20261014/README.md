@@ -1,5 +1,15 @@
 # Chọn món trong chat và inbox nhân sự — 14/10/2026
 
+Cập nhật màu: [shipper nền trắng và điểm nhấn đỏ](../shipper-white-red-20261015/README.md).
+
+Cập nhật tiếp theo: [header có ảnh, đơn hàng có bản đồ và layout shipper theo ảnh tham khảo](../shipper-reference-layout-20261015/README.md).
+
+Cập nhật 15/10: [layout chỉ shipper mobile và banner tự chuyển 10 giây trên web/mobile](../shipper-layout-autobanner-20261015/README.md).
+
+Cập nhật nhận đơn shipper: [tách quyền GPS khỏi readiness, sửa xem trước đơn mới và lỗi 404](../shipper-readiness-20261014/README.md).
+
+Cập nhật tiếp theo: [banner toàn ảnh, bản đồ vector và sửa đăng nhập/quản lý shipper](../shipper-banner-vector-20261014/README.md).
+
 Web và mobile dùng chung mô hình lựa chọn món và mô hình hội thoại nhân sự. Bản cập nhật này tiếp nối phần đồng bộ Agent/mobile, màu nền customer, Leaflet và banner shipper trong [báo cáo trước](../chat-parity-20261014/README.md).
 
 ## Cách dùng

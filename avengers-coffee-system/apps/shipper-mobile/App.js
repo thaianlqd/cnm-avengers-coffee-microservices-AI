@@ -37,7 +37,7 @@ const navigationTheme = {
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <View style={{ flex: 1, backgroundColor: '#e9ecf1', alignItems: 'center' }}><View style={{ width: '100%', maxWidth: Platform.OS === 'web' ? 480 : undefined, flex: 1, backgroundColor: colors.bg }}><SafeAreaProvider>
+      <View style={{ flex: 1, backgroundColor: '#FFFFFF', alignItems: 'center' }}><View style={{ width: '100%', maxWidth: Platform.OS === 'web' ? 480 : undefined, flex: 1, backgroundColor: colors.bg }}><SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <ShipperProvider>
             <NavigationContainer theme={navigationTheme}>

@@ -30,7 +30,8 @@ describe('Shipper readiness is explicit and shared by all dispatch paths', () =>
   });
   test('account creation and password reset cannot make a driver available implicitly', async () => {
     shipperRepo.findOne.mockResolvedValueOnce(null);
-    const created = await service.createShipper({ username:'new',full_name:'New',status:'ACTIVE' });
+    jest.spyOn(service, 'layDanhSachChiNhanh').mockResolvedValue([{ ma_chi_nhanh:'D9',loai_diem_ban:'CHI_NHANH_CHINH',trang_thai:'ACTIVE' }]);
+    const created = await service.createShipper({ username:'new',full_name:'New',status:'ACTIVE',branch_code:'D9',password:'secret-new' });
     expect((created as any).status).toBe('INACTIVE');
     shipperRepo.findOne.mockResolvedValue({ id:'s1',status:'ACTIVE',username:'fixture' });
     const reset = await service.resetAccount('s1','fixture-password');

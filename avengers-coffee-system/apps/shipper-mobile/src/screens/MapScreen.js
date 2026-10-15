@@ -1,3 +1,4 @@
+import { nativeTileUrl, detailedNativeStyle } from '../../../shared-ui/nativeBasemap'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import React, { useState, useEffect, useRef } from 'react'
 import { View, StyleSheet, TouchableOpacity, Text,  Linking, Platform, Alert, ScrollView, Modal, Image, Animated, useWindowDimensions } from 'react-native'
@@ -13,13 +14,14 @@ import { formatBranchFullTitle, formatBranchAddress, setGlobalBranchList } from 
 import { openGoogleMapsNavigation } from '../lib/navigationHelper'
 import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '../lib/backgroundLocationManager'
 
-let MapView, Marker, Polyline
+let MapView, Marker, Polyline, UrlTile
 if (Platform.OS !== 'web') {
   try {
     const maps = require('react-native-maps')
     MapView = maps.default
     Marker = maps.Marker
     Polyline = maps.Polyline
+    UrlTile = maps.UrlTile
   } catch (e) {
     console.warn('react-native-maps not found')
   }
@@ -39,6 +41,7 @@ if (Platform.OS !== 'web') {
 
 const simulationEnabled = process.env.EXPO_PUBLIC_ENABLE_DELIVERY_SIMULATION === 'true'
 const VIETMAP_API_KEY = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
+const tileUrl = nativeTileUrl(process.env.EXPO_PUBLIC_VIETMAP_TILE_KEY);
 
 
 function formatETA(distanceKm) {
@@ -515,11 +518,13 @@ export function MapScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
+      {tileUrl && <Text style={{position:'absolute',right:5,top:5,zIndex:100,fontSize:10,backgroundColor:'#fffffff0',paddingHorizontal:4}}>© Vietmap</Text>}
       {MapView && mapRegion.latitude != null && mapRegion.longitude != null && (
-        <MapView ref={nativeMap} style={styles.map} initialRegion={mapRegion} showsUserLocation={true} showsMyLocationButton={false} onMapReady={() => {
+        <MapView ref={nativeMap} style={styles.map} initialRegion={mapRegion} showsUserLocation={true} showsMyLocationButton={false} customMapStyle={detailedNativeStyle} showsPointsOfInterest showsBuildings mapType={tileUrl && Platform.OS === 'android' ? 'none' : 'standard'} onMapReady={() => {
           const points = [[storeLat,storeLng],[destLat,destLng]].filter(p => p.every(v => v != null && Number.isFinite(v))).map(([latitude,longitude]) => ({latitude,longitude}));
           if (points.length) nativeMap.current?.fitToCoordinates(points,{ edgePadding:{ top:140,left:50,right:50,bottom:windowHeight*.35 },animated:true });
         }}>
+          {tileUrl && UrlTile && <UrlTile urlTemplate={tileUrl} tileSize={512} maximumZ={19} maximumNativeZ={19} minimumZ={1} zIndex={-1} />}
           {storeLat != null && storeLng != null && <Marker anchor={{ x:.5,y:1 }} coordinate={{ latitude: storeLat, longitude: storeLng }} title="Cửa hàng Avengers" description="Lấy hàng tại đây">
             <JourneyPin kind="store" />
           </Marker>}
@@ -631,7 +636,7 @@ export function MapScreen({ route, navigation }) {
 
       <ScrollView style={[styles.footerPanel,{ maxHeight:expanded ? '54%' : '34%' }]} contentContainerStyle={{ paddingBottom: spacing.xxl + 24 }} showsVerticalScrollIndicator={false}>
         {/* THANH CHỈ DẪN ĐIỀU HƯỚNG CHI TIẾT (ĐƯỢC ĐƯA XUỐNG DƯỚI) */}
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel={expanded ? 'Thu gọn chi tiết chuyến' : 'Mở rộng chi tiết chuyến'} onPress={() => setExpanded(value => !value)} style={{ paddingBottom:12 }}><View style={{ alignSelf:'center',width:40,height:4,borderRadius:8,backgroundColor:'#d4deeb',marginBottom:12 }} /><View style={{ flexDirection:'row',gap:8,alignItems:'center' }}><Text style={{ flex:1,fontSize:13,fontWeight:'700',color:'#805dc8' }}>{journeyProgress(delivery?.status,Boolean(location)).label}</Text><Ionicons name={expanded ? 'chevron-down' : 'chevron-up'} size={19} color="#8798ac" /></View></TouchableOpacity>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={expanded ? 'Thu gọn chi tiết chuyến' : 'Mở rộng chi tiết chuyến'} onPress={() => setExpanded(value => !value)} style={{ paddingBottom:12 }}><View style={{ alignSelf:'center',width:40,height:4,borderRadius:8,backgroundColor:'#d4deeb',marginBottom:12 }} /><View style={{ flexDirection:'row',gap:8,alignItems:'center' }}><Text style={{ flex:1,fontSize:13,fontWeight:'700',color:'#b12637' }}>{journeyProgress(delivery?.status,Boolean(location)).label}</Text><Ionicons name={expanded ? 'chevron-down' : 'chevron-up'} size={19} color="#8798ac" /></View></TouchableOpacity>
         <JourneyProgress step={journeyProgress(delivery?.status,Boolean(location)).step} />
         {currentStepText ? (
           <View style={styles.navInstructionCard}>
@@ -1043,20 +1048,20 @@ const styles = StyleSheet.create({
     position: 'absolute', bottom: 0, left: 0, right: 0,
     maxHeight: '54%',
     backgroundColor: colors.surface, paddingHorizontal: spacing.md, paddingTop: spacing.md,
-    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    borderTopLeftRadius: 22, borderTopRightRadius: 22,
     ...shadows.lg,
     borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)',
   },
 
   navInstructionCard: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#1E1B4B',
+    backgroundColor: '#63313a',
     padding: 12, borderRadius: 16, marginBottom: 12,
     ...shadows.md,
   },
   navInstructionIconWrap: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#3730A3',
+    backgroundColor: '#884552',
     alignItems: 'center', justifyContent: 'center',
     marginRight: 10,
   },

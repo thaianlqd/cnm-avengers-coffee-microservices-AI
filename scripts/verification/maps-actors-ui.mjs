@@ -1,3 +1,4 @@
+import { vectorBasemapFixture } from './vectorBasemapFixture.mjs';
 // Built app QA. API, routing, tiles and sockets are fixtures; no live keys/accounts.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
@@ -27,12 +28,12 @@ const errors=[],results=[];let browser,activePage;
 try{
  await Promise.all(Object.values(servers).map(s=>new Promise(r=>s.listen(0,'127.0.0.1',r))));
  const origins=Object.fromEntries(Object.entries(servers).map(([app,s])=>[app,`http://127.0.0.1:${s.address().port}`]));
- browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_EXECUTABLE?{executablePath:process.env.CHROMIUM_EXECUTABLE}:{})});
+ browser=await chromium.launch({headless:true,args:['--enable-unsafe-swiftshader'],...(process.env.CHROMIUM_EXECUTABLE?{executablePath:process.env.CHROMIUM_EXECUTABLE}:{})});
  const logo=await readFile(resolve('avengers-coffee-system/apps/customer-mobile/assets/branding/logo.png'));
  const leaflet=await readFile(resolve('avengers-coffee-system/apps/customer-mobile/node_modules/leaflet/dist/leaflet.js'));
  const leafletCss=await readFile(resolve('avengers-coffee-system/apps/customer-mobile/node_modules/leaflet/dist/leaflet.css'));
  async function pageFor(app,width=390,role='MANAGER'){
-  const ctx=await browser.newContext({viewport:{width,height:1000},serviceWorkers:'block'}),calls=[];
+  const ctx=await browser.newContext({viewport:{width,height:1000},serviceWorkers:'block',reducedMotion:'reduce'}),calls=[];
   await ctx.routeWebSocket('**/*',s=>s.close());
   await ctx.addInitScript(({app,role,driver})=>{
    if(app==='admin'){sessionStorage.setItem('adminSession',JSON.stringify({token:'fixture-only-token',user:{id:'fixture-actor',maNguoiDung:'fixture-actor',tenDangNhap:'fixture',hoTen:'Kiểm thử',vaiTro:role,vai_tro:role,coSoMa:'D9',coSoTen:'Highlands Coffee D9'}}))}
@@ -45,6 +46,7 @@ try{
    const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'*','Access-Control-Allow-Methods':'*'};
    if(req.method()==='OPTIONS')return route.fulfill({status:204,headers});
    if(url.hostname==='unpkg.com')return route.fulfill({body:path.endsWith('.css')?leafletCss:leaflet,contentType:path.endsWith('.css')?'text/css':'text/javascript',headers});
+   if(url.hostname==='maps.vietmap.vn' && path.endsWith('/style.json'))return route.fulfill({json:vectorBasemapFixture,headers});
    if(/maps\.vietmap|tile\.openstreetmap/.test(url.hostname)&&!path.includes('/api/route'))return route.fulfill({body:tile,contentType:'image/svg+xml',headers});
    if(/\.(png|jpg|jpeg)$/.test(path))return route.fulfill({body:logo,contentType:'image/png',headers});
    calls.push({method:req.method(),path});
@@ -53,6 +55,7 @@ try{
    else if(path==='/menu/san-pham'||path==='/menu/danh-muc'||path==='/menu/categories')data=[];
    else if(path==='/users/branches/public')data=[branch];
    else if(path.startsWith('/shippers/delivery/tracking/'))data=tracking;
+   else if(path.endsWith('/active-batch'))data={active:true,batch:{id:'batch-fixture',batch_code:'BATCH-QA',store_name:branch.ten_chi_nhanh,store_address:branch.dia_chi,store_latitude:10.802,store_longitude:106.625,deliveries:[delivery,{...delivery,id:'fixture-delivery-2',ma_don_hang:'fixture-order-002',delivery_latitude:10.807,delivery_longitude:106.626,customer_name:'Khách kiểm thử 2'}]}};
    else if(path==='/shippers/all')data=shippers;
    else if(path==='/shippers/available-orders')data=[];
    else if(path.endsWith('/profile')&&path.startsWith('/shippers/'))data=driver;
@@ -77,13 +80,39 @@ try{
  for(const app of ['customer_web','customer_mobile','shipper']){
   const {page,ctx,origin}=await pageFor(app);
   await page.goto(app==='customer_web'?`${origin}/?tab=tracking&code=AC-FIXTURE`:origin);
-  if(app==='customer_mobile'){await page.getByText('Đơn hàng',{exact:true}).first().click();await page.getByText('Theo dõi',{exact:true}).first().click()}
+  if(app==='customer_mobile'){await page.evaluate(()=>document.fonts.ready);await page.getByText('Đơn hàng',{exact:true}).first().locator('..').click();await page.getByText('Theo dõi',{exact:true}).first().click()}
   if(app==='shipper'){await page.getByText('Đang giao · 1',{exact:true}).click();await page.getByText('Tiếp tục giao',{exact:true}).first().click();await page.getByText('Xem bản đồ',{exact:true}).first().click()}
+  await page.locator('[data-basemap="vector-street"]').waitFor(); assert.equal(await page.locator('.maplibregl-canvas').count(),1);
   await page.getByText('1.7 km',{exact:true}).first().waitFor();await page.getByText('~6 phút',{exact:true}).first().waitFor();
-  await page.getByText('1.7 km',{exact:true}).first().scrollIntoViewIfNeeded();await page.waitForTimeout(500);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
-  await page.screenshot({path:`${output}/${app}-journey-390.png`});
-  await page.setViewportSize({width:1000,height:900});await page.waitForTimeout(400);await page.screenshot({path:`${output}/${app}-journey-1000.png`});
-  results.push({app,map:'PASS',fixtureRoutes:true});await ctx.close();
+  await (app==='customer_web' ? page.locator('[aria-label="Hành trình giao hàng"]') : page.getByText('1.7 km',{exact:true}).first()).scrollIntoViewIfNeeded();await page.waitForTimeout(500);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  if(app==='customer_web')await page.evaluate(()=>window.scrollBy(0,-130));await page.screenshot({path:`${output}/${app}-journey-390.png`});
+  await page.setViewportSize({width:1000,height:900});if(app==='customer_web')await page.locator('[aria-label="Hành trình giao hàng"]').scrollIntoViewIfNeeded();await page.waitForTimeout(400);if(app==='customer_web')await page.evaluate(()=>window.scrollBy(0,-130));await page.screenshot({path:`${output}/${app}-journey-1000.png`});
+  results.push({app,map:'PASS',basemap:'real MapLibre vector renderer / offline style',fixtureRoutes:true});await ctx.close();
+ }
+ {
+  const {page,ctx,origin}=await pageFor('customer_web',1000);
+  let rejected = false;
+  await ctx.route('https://maps.vietmap.vn/maps/styles/**',route=>{rejected=true;return route.fulfill({status:403,json:{message:'Fixture vector unavailable'},headers:{'Access-Control-Allow-Origin':'*'}});});
+  await page.goto(`${origin}/?tab=tracking&code=AC-FIXTURE`);
+  await page.getByText('1.7 km',{exact:true}).first().waitFor();
+  await page.waitForFunction(()=>document.querySelector('[data-basemap]')?.dataset.basemap==='raster' && document.querySelectorAll('.leaflet-tile-loaded').length>0);
+  await page.waitForTimeout(1000);assert(rejected);assert.equal(await page.locator('.maplibregl-canvas').count(),0);
+  await page.getByRole('button',{name:'Định tâm hành trình',exact:true}).click();
+  results.push({app:'customer_web',vectorUnavailableRasterFallback:'PASS',measuredRoutePreserved:true});await ctx.close();
+ }
+ {
+  const {page,ctx,origin}=await pageFor('shipper',390);
+  await ctx.grantPermissions(['geolocation']);await ctx.setGeolocation({latitude:10.803,longitude:106.624});
+  await page.goto(origin);await page.getByText('Ghép tuyến',{exact:true}).first().click();
+  await page.getByText('Xem Bản Đồ Lộ Trình Tối Ưu',{exact:true}).click();
+  await page.getByLabel('Bản đồ hành trình giao ghép',{exact:true}).waitFor();
+  await page.locator('[data-basemap="vector-street"]').waitFor();
+  assert.equal(await page.locator('.leaflet-marker-icon').count(),4);
+  await page.getByText('Lộ Trình Giao Hàng',{exact:true}).waitFor();
+  await page.waitForTimeout(650);
+  assert(await page.getByText('Lộ Trình Giao Hàng',{exact:true}).evaluate(el=>{const r=el.getBoundingClientRect();return [...document.elementsFromPoint(r.left+r.width/2,r.top+r.height/2)].includes(el);}));
+  await page.screenshot({path:`${output}/shipper-batch-journey-390.png`});
+  results.push({app:'shipper',batchVectorMap:'PASS',waypoints:4});await ctx.close();
  }
  for(const [workspace,role,tab]of [['admin','ADMIN','Nhân viên giao hàng'],['manager','MANAGER','Giao hàng'],['staff','STAFF','Giao hàng'],['partner','FRANCHISEE','Lịch sử nhập'],['accountant','ACCOUNTANT','Dòng tiền & đối soát']]){
   const{page,ctx,origin}=await pageFor('admin',1440,role);await page.goto(`${origin}/?workspace=${workspace}`);
@@ -110,5 +139,5 @@ try{
   results.push({workspace,pagination:'PASS',tabsChecked:tabs.map(name=>name.trim())});await ctx.close();
  }
  assert.deepEqual(errors,[]);const report={results,realApiRequestsSent:0,keys:'fixture-only',errors};await writeFile(`${output}/checks.json`,JSON.stringify(report,null,2));console.log(JSON.stringify(report));
-}catch(e){console.error('Offline QA failed:',e.message,JSON.stringify(errors));if(activePage&&!activePage.isClosed()){await activePage.screenshot({path:`${output}/failure.png`}).catch(()=>{});console.error((await activePage.locator('body').innerText()).slice(-2000))}throw e}
+}catch(e){console.error('Offline QA failed:',e.message,JSON.stringify(errors));if(activePage&&!activePage.isClosed())console.error(await activePage.evaluate(()=>({gl:typeof window.maplibregl,adapter:typeof window.L?.maplibreGL,supported:window.maplibregl?.supported?.(),basemaps:[...document.querySelectorAll('[data-basemap]')].map(e=>e.dataset.basemap),scripts:[...document.scripts].map(e=>e.src).filter(s=>s.includes('map-libs'))}))); if(activePage&&!activePage.isClosed()){await activePage.screenshot({path:`${output}/failure.png`}).catch(()=>{});console.error((await activePage.locator('body').innerText()).slice(-2000))}throw e}
 finally{await browser?.close();await Promise.all(Object.values(servers).map(s=>new Promise(r=>s.close(r))))}

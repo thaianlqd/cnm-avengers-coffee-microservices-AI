@@ -1,3 +1,4 @@
+import LocationMap from '../../components/LocationMap';
 import { uiText as ui, useUiLanguage, uiLocale } from "../../lib/uiText";
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -48,10 +49,6 @@ function normalizeCityName(value) {
   return original;
 }
 
-function buildMapEmbedUrl(address) {
-  return `https://www.google.com/maps?q=${encodeURIComponent(String(address || ''))}&output=embed`;
-}
-
 export default function StoresPage() {
   useUiLanguage();
   const { t } = useTranslation();
@@ -86,7 +83,7 @@ export default function StoresPage() {
   }, [branchStatsPayload]);
 
   const stores = useMemo(() => {
-    return (publicBranchPayload?.items || []).map((branch, index) => {
+    return (Array.isArray(publicBranchPayload) ? publicBranchPayload : publicBranchPayload?.items || []).map((branch, index) => {
       const openTime = String(branch?.gio_mo_cua || '').trim();
       const closeTime = String(branch?.gio_dong_cua || '').trim();
       const fallbackHours = openTime || closeTime ? `${openTime || '--:--'} - ${closeTime || '--:--'}` : '07:00 - 22:00';
@@ -96,6 +93,7 @@ export default function StoresPage() {
 
       return {
         id: code,
+        latitude: branch.latitude ?? branch.vi_do, longitude: branch.longitude ?? branch.kinh_do,
         code,
         city,
         name: String(branch?.ten_chi_nhanh || '').trim() || `Chi nhánh ${index + 1}`,
@@ -112,6 +110,8 @@ export default function StoresPage() {
   const [selectedCity, setSelectedCity] = useState('ALL');
   const [selectedType, setSelectedType] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [visibleCount, setVisibleCount] = useState(20);
+  useEffect(() => setVisibleCount(20), [selectedCity,selectedType,searchQuery]);
   const [selectedStore, setSelectedStore] = useState(null);
   const [detailedStore, setDetailedStore] = useState(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -267,7 +267,7 @@ export default function StoresPage() {
                     {t('stores.writeReview')}
                   </button>
                   <a
-                    href={buildMapEmbedUrl(detailedStore.address)}
+                    href={'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(detailedStore.address)}
                     target="_blank"
                     rel="noreferrer"
                     className="flex-1 bg-[#5c3a21] hover:bg-[#4a2e1a] text-white text-xs font-black uppercase py-3 rounded-full transition-all text-center flex items-center justify-center gap-2"
@@ -458,9 +458,9 @@ export default function StoresPage() {
       </div>
 
       {/* Main Content (Split View: Sidebar Left, Clean Map Right) */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Left Sidebar */}
-        <div className="w-[420px] flex-shrink-0 bg-white border-r border-gray-200 flex flex-col shadow-sm">
+        <div className="w-full md:w-[380px] max-h-[420px] md:max-h-none flex-shrink-0 bg-white border-r border-gray-200 flex flex-col shadow-sm">
           <div className="bg-[#f2f2f2] px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <p className="text-gray-600 font-medium italic text-[15px] flex items-center gap-2">
               <BuildingStorefrontIcon className="w-4 h-4 text-gray-500" />
@@ -469,7 +469,7 @@ export default function StoresPage() {
           </div>
 
           <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
-            {filteredStores.map(store => {
+            {filteredStores.slice(0,visibleCount).map(store => {
               const isSelected = selectedStore?.id === store.id;
               return (
                 <div
@@ -554,6 +554,7 @@ export default function StoresPage() {
                 </div>
               );
             })}
+            {filteredStores.length > visibleCount && <button type="button" onClick={() => setVisibleCount(n => n + 20)} className="w-full p-4 text-sm font-bold text-[#a52a32]">{ui("Xem thêm cửa hàng")}</button>}
             {filteredStores.length === 0 && !isStoresLoading && (
               <div className="p-8 text-center text-gray-500 text-sm space-y-2">
                 <BuildingStorefrontIcon className="w-10 h-10 text-gray-300 mx-auto" />
@@ -564,16 +565,9 @@ export default function StoresPage() {
         </div>
 
         {/* Right Map View — 100% Clean Google Map without any overlapping popups */}
-        <div className="flex-1 bg-gray-100 relative">
+        <div className="flex-1 min-h-[380px] bg-gray-100 relative">
           {selectedStore ? (
-            <iframe
-              key={selectedStore.id}
-              title={ui("Bản đồ {{v0}}", {v0:selectedStore.name})}
-              src={buildMapEmbedUrl(selectedStore.address)}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              className="w-full h-full border-none"
-            />
+            <LocationMap branches={filteredStores} selected={selectedStore} onSelect={setSelectedStore} tileKey={import.meta.env.VITE_VIETMAP_TILE_KEY} />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-400 bg-[#e5e3df]">
               <div className="text-center space-y-2">
