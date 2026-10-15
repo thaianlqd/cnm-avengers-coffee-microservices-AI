@@ -1,3 +1,43 @@
+# Paused by user — 15/10/2026
+
+User requested stopping the resumed phase and committing/pushing the current checkpoint.
+No AWS resources were provisioned and no new benchmark was run in this resume.
+Branch/worktree: `features_k8s` in the dedicated `-k8s` worktree below.
+Starting/current pre-checkpoint SHA: `063efc4990d664d7a2e3843fb3ce87fa6126be48`;
+checkpoint SHA: see `git log -1` (this document is committed with the instrumentation).
+Verified remote main baseline: `9eaf3b0b72f88acd7356ad71b2f7373ed3c2f36b`.
+Fetch succeeded; features local == remote, main is an ancestor. No merge needed.
+
+Added opt-in `CAPACITY_DIAGNOSTICS=true` instrumentation to Gateway/Identity/Menu/News:
+fixed public-route aggregates every 30 seconds, event-loop histogram, Gateway upstream
+headers/body timing, cache hit/refresh/coalescing/wait/load/JSON/gzip,
+DB pool acquire, physical connect, and pg promise-query timing. No SQL/parameters,
+bodies, headers, credentials or PII logged. Diagnostics are disabled by default;
+AWS overlay does not enable them automatically. Cache TTL/pool/resources unchanged.
+Query timing includes wire/server/row decoding; acquire can include physical connect.
+No isolated server SQL execution or row materialization measurement yet. Gateway spans start at proxyReq (after socket assignment); socket queue/connect
+time is not measured by this checkpoint. Byte metrics use sums/max; time buckets are not
+meaningful for byte counters. Histograms are fixed buckets, not exact percentiles.
+The k6 profile now also records per-route waiting/TTFB trends; workload SHA changed,
+so record fresh provenance before the next run. HTTP/check tags and thresholds unchanged.
+
+**Instrumentation is unit/build checked, NOT validated under capacity load.**
+No bottleneck claim, tuning result, overhead claim or new qualification follows from it.
+Next exact action after resume: inspect checkpoint; measure diagnostic overhead; collect
+fresh prices/budget/source provenance and fresh RunId before provisioning; deploy this
+instrumentation and run SAME 500 VU with adequate generators. Separate route/cache/DB/
+upstream timing before one-variable tuning. No 1000+ before repeatable valid 500 PASS.
+
+AWS preflight inventory 2026-10-15: 0 owned EC2 (including stopped), 0 SG, 0 EBS,
+0 keypairs using all four ownership tags across RunIds. No new control/benchmark
+endpoint was started. Incremental AWS resource usage in this resume: zero.
+Maximum repeatably stable remains 250 VU; first valid failure remains 500 VU.
+750m Gateway experiment remains rejected; final retained limit 500m.
+Main and branch_thaian untouched. User handles any merge.
+
+---
+Historical handoff (preserved):
+
 # FEATURES_K8S — AWS qualification handoff, 14/10/2026
 
 **Experiment hiện tại đã kết thúc và AWS sạch. 3K NOT QUALIFIED.**
@@ -27,3 +67,8 @@ Estimated incremental compute/EBS/IPv4 $1.9076,
 chưa itemize transfer/notactualbill. Hard phase budget$5: reestimate trước khi tiếp tục.
 Target<=4/generators<=3; không EKS/RDS/NAT/planupgrade/IAM/destructiveDB/publicappports.
 User tự final merge. Historical handoff giữ trong evidence và Git history.
+
+Checkpoint validation: **228 PASS + 1 historical SKIP**; all four backend builds PASS;
+local 22-resource semantic render PASS; AWS template render PASS (14 resources).
+`git diff --check` and staged secret review PASS. No diagnostic overhead/load
+validation performed. Evidence: `k8s/verification/3k-aws-capacity/resume-20261015-instrumentation/checkpoint.json`.

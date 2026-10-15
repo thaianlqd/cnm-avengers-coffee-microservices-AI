@@ -143,3 +143,24 @@ upstream/event-loop timing tại500. Một primary variable, same-load rerun; kh
 1000+ trước repeatable valid500PASS. Fresh fleet cần RunId/cost/eligibility/provenance
 mới; reestimate remaining$5 budget trước khi tạo. User tự final merge.
 [Qualification](k8s/verification/3k-aws-capacity/3k-aws-20261014T140730Z-e7a0d2/qualification.json), [historical paused report](k8s/verification/3k-aws-capacity/3k-aws-20261014T140730Z-e7a0d2/historical-K8S_3K_AWS_CAPACITY_REPORT.md).
+
+## Resume checkpoint — 15/10/2026, paused by user
+
+Reused the clean dedicated features_k8s worktree at starting SHA `063efc4990d664d7a2e3843fb3ce87fa6126be48`.
+Fetched origin; main baseline is still `9eaf3b0b72f88acd7356ad71b2f7373ed3c2f36b`, an ancestor.
+AWS ownership inventory returned EC2/SG/EBS/keypairs all zero. No resource creation,
+control endpoint, image build/deployment or benchmark occurred before the user paused.
+Incremental resource cost estimate for this resume: $0; not an invoice statement.
+
+Added disabled-by-default, fixed-size 30-second route/cache/DB/event-loop/upstream
+instrumentation and per-route k6 TTFB trends. See FEATURES_K8S_RESUME.md for exact
+semantics and measurement limitations. This is preparatory instrumentation, not a
+performance fix. Its capacity overhead still requires measurement; do not use it as
+proof of the 500 VU root cause. Historical 250/500 results and rejected 750m experiment
+remain unchanged. 1000–3000 and both long 3K qualifications remain NOT RUN.
+No merge/main/branch_thaian modification. Checkpoint committed/pushed on features_k8s.
+
+Checkpoint validation: **228 PASS + 1 historical SKIP**; all four backend builds PASS;
+local 22-resource semantic render PASS; AWS template render PASS (14 resources).
+`git diff --check` and staged secret review PASS. No diagnostic overhead/load
+validation performed. Evidence: `k8s/verification/3k-aws-capacity/resume-20261015-instrumentation/checkpoint.json`.

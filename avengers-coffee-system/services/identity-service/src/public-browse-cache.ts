@@ -1,3 +1,5 @@
+import { performance } from 'node:perf_hooks';
+import { diagnosticEnabled, record, timed } from './capacity-diagnostics';
 import { gzipSync } from 'node:zlib';
 import type { Request, Response } from 'express';
 /** Small, bounded public-read cache only for the explicit read-only demo.
@@ -16,10 +18,17 @@ export class PublicBrowseCache {
     let entry = this.responses.get(key);
     if (!entry || entry.expires <= Date.now()) {
       let pending = this.responsePending.get(key);
+      record(pending ? 'cache_coalesced' : 'cache_refresh', 1);
       if (!pending) {
-        pending = Promise.resolve().then(load).then(value => {
+        pending = Promise.resolve().then(() => timed('load', load)).then(value => {
+          const serializeStart = diagnosticEnabled ? performance.now() : 0;
           const body = Buffer.from(JSON.stringify(value));
-          const result = { expires: Date.now() + ttl, body, gzip: gzipSync(body) };
+          record('serialize', performance.now() - serializeStart);
+          const gzipStart = diagnosticEnabled ? performance.now() : 0;
+          const compressed = gzipSync(body);
+          record('gzip', performance.now() - gzipStart);
+          record('identity_bytes', body.length); record('gzip_bytes', compressed.length);
+          const result = { expires: Date.now() + ttl, body, gzip: compressed };
           if (this.responses.size >= 16 && !this.responses.has(key)) {
             this.responses.delete(this.responses.keys().next().value!);
           }
@@ -28,8 +37,8 @@ export class PublicBrowseCache {
         }).finally(() => { this.responsePending.delete(key); });
         this.responsePending.set(key, pending);
       }
-      entry = await pending;
-    }
+      entry = await timed('cache_wait', () => pending!);
+    } else { record('cache_hit', 1); }
     res.type('application/json');
     res.vary('Accept-Encoding');
     res.setHeader('Cache-Control', 'no-store');
