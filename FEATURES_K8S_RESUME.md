@@ -1,5 +1,11 @@
 # Paused by user — 15/10/2026
 
+Instrumentation checkpoint: `89539f671748dba9befaceb61b21f28bb0727ee3`.
+Push BLOCKED: HTTPS invalid username/token; gh unavailable; SSH strict host key
+verification failed. Local commits are preserved. Remote still `063efc4990d664d7a2e3843fb3ce87fa6126be48`.
+Next delivery action: after valid GitHub authentication, `git push origin features_k8s`.
+Do not provision AWS while paused.
+
 User requested stopping the resumed phase and committing/pushing the current checkpoint.
 No AWS resources were provisioned and no new benchmark was run in this resume.
 Branch/worktree: `features_k8s` in the dedicated `-k8s` worktree below.
