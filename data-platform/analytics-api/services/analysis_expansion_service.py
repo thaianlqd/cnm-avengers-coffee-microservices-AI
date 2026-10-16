@@ -4,9 +4,45 @@ from services.semantic_manifest_service import NON_ADDITIVE_SEMANTICS
 from services.analytical_capacity_planner import AnalyticalCapacityContract
 
 
-def dashboard_policy(catalog):
-    """Server-owned floor for every analytical dashboard, never model advice."""
-    return catalog.registry.get('dashboard_policy', {'minimum_views': 4, 'target_views': 5})
+def dashboard_policy(catalog, depth=None):
+    """Server-owned floor for every analytical dashboard, never model advice.
+
+    V3.2: depth selects a governed budget for SUPPORTING evidence only
+    (focused → requested views only; comprehensive → widest relevant context).
+    Without a depth the historical deep policy applies.
+    """
+    policy = catalog.registry.get('dashboard_policy', {'minimum_views': 4, 'target_views': 5})
+    budget = (policy.get('depth_budgets') or {}).get(depth or 'deep')
+    if not budget:
+        return policy
+    target = {'focused': 2, 'deep': policy.get('target_views', 5),
+              'comprehensive': catalog.registry.get('max_charts', 8)}[depth or 'deep']
+    return {**policy, 'minimum_views': budget['minimum_views'], 'target_views': max(target, budget['minimum_views']),
+            'max_supporting_operations': budget['max_supporting_operations'],
+            'related_domains': budget.get('related_domains', True), 'segmented_trends': budget.get('segmented_trends', True),
+            'max_segment_dimensions': budget.get('max_segment_dimensions', 0)}
+
+
+def mission_relevant(candidate, parent_metrics, catalog, mission_id):
+    """Mission evidence contract for an optional supporting view (V3.2 §41-43).
+
+    A supporting view must stay inside the mission's governed evidence: risk
+    missions use only governed risk-signal metrics; other missions only the
+    requested metrics and the mission's allowed analytical kinds. Free text
+    (no mission) keeps the historical supporting policy.
+    """
+    mission = next((m for m in catalog.registry.get('analysis_missions', []) if m['id'] == mission_id), None)
+    rule = ((mission or {}).get('input_contract') or {}).get('supporting')
+    if not rule:
+        return True
+    if candidate.analysis_kind not in set(rule.get('kinds', [])):
+        return False
+    if rule.get('metrics') == 'risk_signals':
+        allowed = {s['metric'] for s in catalog.registry.get('risk_signals', [])}
+        allowed |= {s['observation_metric'] for s in catalog.registry.get('risk_signals', []) if s.get('observation_metric')}
+    else:
+        allowed = set(parent_metrics)
+    return bool(candidate.metric_ids) and set(candidate.metric_ids) <= allowed
 
 
 def estimated_views(operations, catalog):
@@ -70,7 +106,7 @@ def supporting_candidates(resolver, requested):
                     goal='Diễn biến trong phạm vi đã chọn',supporting_for=req.id,metric_ids=historical,
                     analysis_kind='trend',filters=req.filters,time=req.time))
                 # Segmented time series answers a different question from total trend.
-                if depth in {'deep','comprehensive'}:
+                if dashboard_policy(resolver.catalog, depth).get('segmented_trends', depth in {'deep','comprehensive'}):
                     for dim in req.dimension_ids:
                         definition=resolver.catalog.registry['dimensions'][dim]
                         if definition.get('enum') and len(definition['enum'])<=16 and not any(f.dimension==dim for f in req.filters):
@@ -86,6 +122,28 @@ def supporting_candidates(resolver, requested):
             candidates.append(IntentRequirement(id='support_'+digest([req.id,'scope_kpis',ms])[:24],
                 goal='Chỉ số toàn phạm vi',supporting_for=req.id,metric_ids=ms,
                 analysis_kind='aggregate',derived_features=['scalar'],filters=req.filters,time=req.time))
+        # V3.2 related-axis discovery: a whole-scope time series is explored
+        # along governed diagnostic dimensions of its own domain. Depth sets how
+        # many axes (focused 0 · deep 1 · comprehensive 3); never other metrics.
+        segments=dashboard_policy(resolver.catalog,depth).get('max_segment_dimensions',0)
+        timeline=[m for m in req.metric_ids if resolver.index.metrics[m]['historical']]
+        if segments and timeline and not req.dimension_ids and (req.analysis_kind=='trend' or req.granularity):
+            owners=[p for p in resolver.index.domains.values() if set(timeline)&set(p['metric_refs'])]
+            diagnostic=list(dict.fromkeys(d for p in owners for d in p['diagnostic_dimensions']))
+            chosen=0
+            for dim in diagnostic:
+                definition=resolver.catalog.registry['dimensions'].get(dim,{})
+                # A dimension pinned by the metric's own business filter (e.g.
+                # completed orders only) cannot segment that metric meaningfully.
+                allowed=[m for m in timeline if dim in resolver.index.metrics[m]['dimensions'] and not any(
+                    f.get('dimension')==dim for f in resolver.catalog.registry['metrics'][m].get('business_filters',[]))]
+                if (chosen>=segments or not allowed or not definition.get('enum') or len(definition['enum'])>16
+                        or any(f.dimension==dim for f in req.filters)):
+                    continue
+                chosen+=1
+                candidates.append(IntentRequirement(id='support_'+digest([req.id,'axis_trend',dim])[:24],
+                    goal='Diễn biến theo '+definition['business_name'],supporting_for=req.id,metric_ids=allowed,
+                    dimension_ids=[dim],analysis_kind='trend',granularity=req.granularity,filters=req.filters,time=req.time))
         domains=[d for d,p in resolver.index.domains.items() if set(req.metric_ids) & set(p['metric_refs'])]
         for domain in sorted(domains):
             profile=resolver.index.domains[domain]
@@ -119,7 +177,7 @@ def supporting_candidates(resolver, requested):
                 candidates.append(IntentRequirement(id='support_'+digest([req.id,domain,lens['id']])[:24],
                     goal='Góc nhìn bổ sung · '+lens['business_label'],domain_id=domain,supporting_for=req.id,
                     metric_ids=ms,dimension_ids=ds,analysis_kind=b['default_operation'],filters=req.filters,time=req.time))
-            for related in profile['related_domains']:
+            for related in (profile['related_domains'] if dashboard_policy(resolver.catalog, depth).get('related_domains', True) else []):
                 child=resolver.index.domains.get(related,{})
                 for lens in child.get('analytical_lenses',[]):
                     b=lens.get('blueprint') or {}

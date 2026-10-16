@@ -62,10 +62,18 @@ class DashboardMinimumTests(f.unittest.TestCase):
                 if not any(self.catalog.registry['metrics'][m].get('time_column') for m in ms):
                     self.assertFalse(any(q['operation']=='trend' for q in report['analytical_queries']))
 
-    def test_explicit_focused_setting_cannot_bypass_the_floor(self):
+    def test_explicit_focused_setting_is_a_real_smaller_budget(self):
+        # V3.2 §78 supersedes V2.12: "Tập trung" shows the requested views only
+        # (floor 1), "Phân tích sâu" keeps the 4-view floor. Verification follows
+        # the server-recorded depth, so focused is not reported as incomplete.
         p,proposal,report=self.report(f.requirement(),analysis_depth='focused')
-        self.check_dashboard(report)
-        self.assertEqual(proposal['diagnostics']['minimum_visuals'],4)
+        self.assertEqual(proposal['diagnostics']['minimum_visuals'],1)
+        self.assertEqual(proposal['diagnostics']['supporting_operation_count'],0)
+        depth=next(c for c in report['quality_assessment']['verification_checks'] if c['id']=='analysis_depth_coverage')
+        self.assertEqual(depth['status'],'passed')
+        _,deep,deep_report=self.report(f.requirement(),analysis_depth='deep')
+        self.assertEqual(deep['diagnostics']['minimum_visuals'],4)
+        self.assertLess(len(report['charts']),len(deep_report['charts']))
 
     def test_old_or_truncated_simple_report_cannot_hide_missing_views(self):
         p,proposal,report=self.report(f.requirement())

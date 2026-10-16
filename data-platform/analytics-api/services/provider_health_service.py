@@ -29,4 +29,12 @@ def provider_health():
         out={k:v for k,v in _state.items() if k not in {'observed_monotonic','consecutive_failures'}}
         if time.monotonic()-_state['observed_monotonic'] > FRESH_SECONDS:
             out['state']='unknown'
-    return dict(configured=configured,**out)
+    # V3.2 credential pool (sanitized: no key, slot or identifier is exposed).
+    from services import provider_credential_router as credentials
+    pool=credentials.status()
+    if out['state'] in {'unavailable','degraded'} and out.get('last_failure_category') in {'provider_rate_limited','provider_daily_quota'}:
+        out['state']='rate_limited'
+    if pool['recent_failover'] and out['state']=='available':
+        out['state']='degraded'  # "Đang chuyển dự phòng": answered via the secondary credential
+    return dict(configured=configured,credential_failover_configured=pool['secondary_configured'],
+                credential_failover_recent=pool['recent_failover'],**out)

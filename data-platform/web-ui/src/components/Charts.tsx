@@ -30,7 +30,7 @@ export const SeriesBarChart: React.FC<{ data: any[]; series: any[]; stacked?: bo
         const start = stacked ? offset : 0; if (stacked) offset += v;
         const width = slot * .8 / (stacked ? 1 : Math.max(active.length, 1));
         const x = 60 + i * slot + (stacked ? 0 : j * width);
-        return <rect key={s.key} x={x} y={Math.min(y(start), y(start + v))} width={Math.max(1, width - 2)} height={Math.abs(y(start + v) - y(start))} rx={3} fill={active.length === 1 ? row.color || s.color || '#2563eb' : s.color || '#2563eb'}><title>{`${row.label}: ${s.label} — ${formatChartValue(v, unit ? ` ${unit}` : '')}`}</title></rect>;
+        return <rect key={s.key} x={x} y={Math.min(y(start), y(start + v))} width={Math.max(1, width - 2)} height={Math.abs(y(start + v) - y(start))} rx={3} tabIndex={0} className="outline-none transition-opacity duration-150 motion-reduce:transition-none hover:opacity-80 focus:opacity-80" fill={active.length === 1 ? row.color || s.color || '#2563eb' : s.color || '#2563eb'}><title>{`${row.label}: ${s.label} — ${formatChartValue(v, unit ? ` ${unit}` : '')}`}</title></rect>;
       })}<text x={60 + i * slot + slot * .4} y="276" fontSize="11" fill="#64748b" textAnchor="middle">{tickIndices(data.length, 6).includes(i) ? String(row.label).slice(0, 12) : ''}</text></g>; })}
     </svg>
   </div>;
@@ -54,17 +54,31 @@ export const ScatterChart: React.FC<{ data: any[]; xLabel?: string; yLabel?: str
   </svg>;
 };
 
-export const AnalystHorizontalBars: React.FC<{ data: any[]; unit: string; color: string; ranking?: boolean }> = ({ data, unit, color, ranking }) => {
+// V3.2 risk threshold (server-governed): red = breach, amber = within warning margin, green = healthy.
+const RISK_COLORS = { red: '#e11d48', amber: '#f59e0b', green: '#10b981' };
+export function riskTone(value: number, threshold?: any) {
+  if (!threshold || !Number.isFinite(value)) return null;
+  const { value: t, operator, margin = 0 } = threshold;
+  const above = operator === 'gt' || operator === 'gte';
+  const breach = operator === 'gt' ? value > t : operator === 'gte' ? value >= t : operator === 'lt' ? value < t : value <= t;
+  if (breach) return 'red';
+  return (above ? value >= t - margin : value <= t + margin) && margin > 0 ? 'amber' : 'green';
+}
+
+export const AnalystHorizontalBars: React.FC<{ data: any[]; unit: string; color: string; ranking?: boolean; threshold?: any }> = ({ data, unit, color, ranking, threshold }) => {
   const [page, setPage] = useState(1);
   const pageSize = 10, pages = Math.max(1, Math.ceil(data.length / pageSize)), activePage = Math.min(page, pages);
-  const low = Math.min(0, ...data.map(r => r.value).filter(Number.isFinite)), high = Math.max(0, ...data.map(r => r.value).filter(Number.isFinite));
+  const values = [...data.map(r => r.value), ...(threshold ? [threshold.value] : [])].filter(Number.isFinite);
+  const low = Math.min(0, ...values), high = Math.max(0, ...values);
   const span = high - low || 1, origin = -low / span * 100;
+  const mark = threshold ? (threshold.value - low) / span * 100 : null;
   return <div className="min-h-[260px]">
-    <div className="space-y-3">{data.slice((activePage - 1) * pageSize, activePage * pageSize).map((row: any, i: number) => <div key={i} className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)_4rem] gap-3 items-center text-xs min-h-[20px]" title={`${row.label}: ${formatChartValue(row.value, unit ? ` ${unit}` : '')}`}>
+    {threshold && <p className="mb-3 text-[11px] text-slate-500"><span className="inline-block w-3 border-t-2 border-dashed border-slate-500 align-middle mr-1" />Ngưỡng {threshold.label}: {threshold.symbol} {formatChartValue(threshold.value, unit ? ` ${unit}` : '')} · <span style={{ color: RISK_COLORS.red }}>■</span> vượt ngưỡng <span style={{ color: RISK_COLORS.amber }}>■</span> sát ngưỡng <span style={{ color: RISK_COLORS.green }}>■</span> an toàn</p>}
+    <div className="space-y-3">{data.slice((activePage - 1) * pageSize, activePage * pageSize).map((row: any, i: number) => { const tone = riskTone(row.value, threshold); return <div key={i} tabIndex={0} aria-label={`${row.label}: ${formatChartValue(row.value, unit ? ` ${unit}` : '')}${tone === 'red' ? ' — vượt ngưỡng' : ''}`} data-risk-tone={tone || undefined} className="group grid grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)_4rem] gap-3 items-center text-xs min-h-[20px] rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400" title={`${row.label}: ${formatChartValue(row.value, unit ? ` ${unit}` : '')}`}>
       <div className="text-slate-600 leading-relaxed break-words">{ranking && <span className="text-slate-400 mr-2">{row.rank_position ?? (activePage - 1) * pageSize + i + 1}.</span>}{row.label}</div>
-      <div className="relative h-2.5 rounded-full bg-slate-100"><span className="absolute inset-y-0 rounded-full" style={{ left: `${row.value < 0 ? origin + row.value / span * 100 : origin}%`, width: `${Math.abs(row.value) / span * 100}%`, background: row.color || color }} />{low < 0 && <span className="absolute -top-1 h-4 border-l border-slate-400" style={{ left: `${origin}%` }} />}</div>
+      <div className="relative h-2.5 rounded-full bg-slate-100"><span className="absolute inset-y-0 rounded-full transition-[filter] duration-150 motion-reduce:transition-none group-hover:brightness-90" style={{ left: `${row.value < 0 ? origin + row.value / span * 100 : origin}%`, width: `${Math.abs(row.value) / span * 100}%`, background: tone ? RISK_COLORS[tone as keyof typeof RISK_COLORS] : row.color || color }} />{low < 0 && <span className="absolute -top-1 h-4 border-l border-slate-400" style={{ left: `${origin}%` }} />}{mark != null && <span data-risk-threshold className="absolute -top-1.5 h-5 border-l-2 border-dashed border-slate-600" style={{ left: `${mark}%` }} />}</div>
       <span className="text-slate-700 font-medium tabular-nums text-right">{unit === '%' ? `${row.value.toLocaleString('vi-VN', { maximumFractionDigits: 2 })}%` : axisValue(row.value)}</span>
-    </div>)}</div>
+    </div>; })}</div>
     {pages > 1 && <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400"><span>{(activePage - 1) * pageSize + 1}–{Math.min(activePage * pageSize, data.length)}/{data.length} nhóm hiển thị</span><div className="flex gap-3"><button aria-label="Nhóm trước" disabled={activePage === 1} onClick={() => setPage(activePage - 1)} className="disabled:opacity-25 text-slate-600">←</button><button aria-label="Nhóm tiếp theo" disabled={activePage === pages} onClick={() => setPage(activePage + 1)} className="disabled:opacity-25 text-slate-600">→</button></div></div>}
   </div>;
 };
@@ -76,7 +90,7 @@ export const AnalystChart: React.FC<{ chart: any }> = ({ chart }) => {
   if (chart.chart_type === 'heatmap') return <HeatmapChart data={data} valueSuffix={unit ? ` ${unit}` : ''} xLabel={chart.x_label || 'Chiều phân tích'} yLabel={chart.series_label || 'Nhóm phân tích'} />;
   if (chart.chart_type === 'multi_line') return <SeriesLineChart data={data} series={chart.series || []} unit={unit} granularity={chart.granularity} period={chart.period} />;
   if (chart.chart_type === 'donut') return <DonutChart data={chart.grouped_categories ? data : compositionData(data).data} centerLabel="Tổng trong phạm vi" valueSuffix={unit ? ` ${unit}` : ''} size={170} />;
-  if (chart.chart_type === 'horizontal_bar') return <AnalystHorizontalBars data={data} unit={unit} color={color} ranking={chart.selection === 'Top N'} />;
+  if (chart.chart_type === 'horizontal_bar' || (chart.risk_threshold && chart.chart_type === 'bar')) return <AnalystHorizontalBars data={data} unit={unit} color={color} ranking={chart.selection === 'Top N'} threshold={chart.risk_threshold} />;
   if (['line', 'area'].includes(chart.chart_type)) return <SeriesLineChart data={data.map((r: any) => ({ label: r.label, series_1: r.value }))} series={[{ key: 'series_1', label: conciseChartTitle(chart), color }]} unit={unit} area={chart.chart_type === 'area'} granularity={chart.granularity} period={chart.period} />;
   return <SeriesBarChart data={data.map((r: any) => ({ label: r.label, series_1: r.value, color: r.color || color }))} series={[{ key: 'series_1', label: conciseChartTitle(chart), color }]} unit={unit} />;
 };
@@ -98,7 +112,7 @@ export const SeriesLineChart: React.FC<{ data: any[]; series: any[]; unit?: stri
         data.forEach((r, i) => { if (Number.isFinite(r[s.key])) segment.push(i); else if (segment.length) { segments.push(segment); segment = []; } });
         if (segment.length) segments.push(segment);
         return <g key={s.key}>{area && segments.map((indices, i) => <path key={i} d={`M ${x(indices[0])} ${y(0)} ${indices.map(index => `L ${x(index)} ${y(data[index][s.key])}`).join(' ')} L ${x(indices[indices.length - 1])} ${y(0)} Z`} fill={s.color || '#6366f1'} opacity=".12" />)}<path d={path} fill="none" stroke={s.color || '#6366f1'} strokeWidth="2" />{data.map((r, i) => i > 0 && (coverage[i]?.partial || coverage[i - 1]?.partial) && Number.isFinite(r[s.key]) && Number.isFinite(data[i - 1][s.key])
-          ? <line key={`partial-${i}`} data-partial-segment x1={x(i - 1)} y1={y(data[i - 1][s.key])} x2={x(i)} y2={y(r[s.key])} stroke="white" strokeWidth="3" strokeDasharray="5 4" /> : null)}{data.map((r, i) => Number.isFinite(r[s.key]) ? <circle key={i} cx={x(i)} cy={y(r[s.key])} r={coverage[i]?.partial ? 4 : 3} fill={coverage[i]?.partial ? 'white' : s.color || '#6366f1'} stroke={s.color || '#6366f1'} strokeWidth="1.5"><title>{`${r.label}: ${s.label} — ${formatChartValue(r[s.key], unit ? ` ${unit}` : '')}${periodNote(i)}`}</title></circle> : null)}</g>;
+          ? <line key={`partial-${i}`} data-partial-segment x1={x(i - 1)} y1={y(data[i - 1][s.key])} x2={x(i)} y2={y(r[s.key])} stroke="white" strokeWidth="3" strokeDasharray="5 4" /> : null)}{data.map((r, i) => Number.isFinite(r[s.key]) ? <circle key={i} cx={x(i)} cy={y(r[s.key])} r={coverage[i]?.partial ? 4 : 3} fill={coverage[i]?.partial ? 'white' : s.color || '#6366f1'} stroke={s.color || '#6366f1'} strokeWidth="1.5" tabIndex={0} className="outline-none transition-[stroke-width] duration-150 motion-reduce:transition-none hover:[stroke-width:3] focus:[stroke-width:3]"><title>{`${r.label}: ${s.label} — ${formatChartValue(r[s.key], unit ? ` ${unit}` : '')}${periodNote(i)}`}</title></circle> : null)}</g>;
       })}
       {tickIndices(data.length).map(i => <text key={i} x={x(i)} y="278" fontSize="11" fill="#64748b" textAnchor={i === 0 ? 'start' : i === data.length - 1 ? 'end' : 'middle'}><title>{data[i].label}{periodNote(i)}</title>{timeTick(data[i].label, String(data[0].label).slice(0, 4) !== String(data[data.length - 1].label).slice(0, 4))}{coverage[i]?.partial ? '*' : ''}</text>)}
     </svg>

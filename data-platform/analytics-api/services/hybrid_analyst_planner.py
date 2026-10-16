@@ -142,6 +142,15 @@ class HybridAnalystPlanner(OneShotPlanner):
         error = ResolutionIssues(issues)
         if no_progress or (unknown and not repaired):
             error.category = "semantic_resolution_failed"
+        locked = {l["metric_id"] for l in getattr(self, "metric_locks", [])}
+        drift = [i for i in issues if i.get("code") in {"explicit_metrics_missing", "explicit_metric_definition_mismatch"}
+                 and locked & set(i.get("candidate_ids") or i.get("protected_metric_ids") or [])]
+        if drift:
+            # Preflight resolved this phrase with high confidence; the
+            # interpretation did not keep it. Name the conflict, do not guess.
+            error.category = "semantic_contract_drift"
+            self.diagnostics.update(failure_stage="SEMANTIC_CONTRACT", semantic_contract_conflicts=[
+                {"locked_metric": sorted(locked & set(i.get("candidate_ids") or [])), "code": i["code"]} for i in drift])
         self.diagnostics["capability_status"] = "INVALID_CONTRACT"
         return error
 
@@ -182,7 +191,7 @@ class HybridAnalystPlanner(OneShotPlanner):
         selected=packet.candidates['candidate_domains']
         required=[c['id'] for c in candidates if c['protected']]
         payload = {"question":question,"reference_date":self.reference.isoformat(),"timezone":self.catalog.registry["timezone"],
-            "ui":{k:v for k,v in context.items() if k not in {"semantic_intent","original_question","current_visuals","revision","initial_semantic_intent","semantic_history"}},
+            "ui":{k:v for k,v in context.items() if k not in {"semantic_intent","original_question","current_visuals","revision","initial_semantic_intent","semantic_history","guided_intent","analysis_mission"}},
             "semantic_candidate_packet":packet.wire(),
             "features":{id:meta['shape'] for id,meta in self.catalog.registry.get('derived_features',{}).items()},
             "unavailable_definitions":self.catalog.registry.get('unsupported_capabilities',{})}
@@ -192,6 +201,12 @@ class HybridAnalystPlanner(OneShotPlanner):
             if m in index.metrics and self.catalog.registry["metrics"][m].get("forecast",{}).get("forecastable")}
         if forecastable:
             payload["forecast_capabilities"]=dict(sorted(forecastable.items()))
+        locks=getattr(self,'metric_locks',[])
+        if locks:
+            # V3.2 protected preflight contract: explicit generic phrases are
+            # already resolved; the interpreter fills only unresolved fields.
+            payload["semantic_preflight_contract"]={"locked_metrics":{l["phrase"]:l["metric_id"] for l in locks},
+                "rule":"A locked phrase means that metric unless the user explicitly named a specialized metric."}
         if context.get("semantic_intent"):
             payload["current_intent"] = AnalysisIntentEnvelope.model_validate(context["semantic_intent"]).model_dump(mode='json',exclude_none=True,exclude_defaults=True)
         self.diagnostics.update(candidate_packet_chars=packet.chars,
@@ -411,7 +426,12 @@ class HybridAnalystPlanner(OneShotPlanner):
             if intent_fingerprint(replayed,self.reference,self.catalog) != intent_fingerprint(AnalysisIntentEnvelope.model_validate(context["semantic_intent"]),self.reference,self.catalog):
                 raise AnalysisError("stale_approval","Semantic history differs from stored meaning")
         else:
-            self.anchors=request_anchors(prompt,self.catalog,context)
+            # A guided contract already carries canonical IDs; its display text
+            # is an echo and is not re-interpreted (V3.2 guided mode).
+            self.anchors=request_anchors("" if context.get("guided_intent") else prompt,self.catalog,context)
+        from services.semantic_preflight_contract import metric_locks
+        self.metric_locks=[] if refinement or context.get("guided_intent") else metric_locks(self.anchors,self.catalog.registry)
+        self.diagnostics["semantic_metric_locks"]=[{k:l[k] for k in ("phrase","metric_id")} for l in self.metric_locks]
         from services.request_anchors import population_filters
         population_filters(self.anchors,self.catalog)  # Reject unavailable scope before spending an AI call.
         accepted_delta = None
@@ -456,29 +476,45 @@ class HybridAnalystPlanner(OneShotPlanner):
                 if observer:
                     observer('planning' if kind == 'primary' else 'repairing', {})
                 response={};repeated_output=False
+                guided=context.get("guided_intent")
                 try:
+                    if guided is not None and kind != 'primary':
+                        raise AnalysisError('guided_contract_invalid','Guided contract cannot be repaired by a provider')
                     if kind != 'primary' and not self.turn.budget.recovery_available():
                         raise AnalysisError('semantic_intent_invalid','No useful window remains for semantic repair')
-                    self.diagnostics[{"primary":"primary_call_count","repair":"semantic_repair_count","resolution":"targeted_resolution_count","transport":"transport_retry_count"}[kind]]+=1
-                    if kind == 'resolution':
-                        self.diagnostics['semantic_repair_count']+=1
-                    self.diagnostics.setdefault('provider_call_reasons',[]).append(CALL_REASONS[kind])
-                    provider_started=time.perf_counter()
-                    provider_wall_started=time.monotonic()
-                    response=self.turn.invoke(system=system,messages=[{"role":"user","content":compact(payload)}],tools=tools) or {}
-                    latency=round((time.perf_counter()-provider_started)*1000,2)
-                    stage='provider_primary_ms' if kind=='primary' else 'provider_repair_ms' if kind in {'repair','resolution'} else 'provider_transport_retry_ms'
-                    self.diagnostics[stage]=self.diagnostics.get(stage,0)+latency
-                    attempts=response.get("attempts",[])
-                    for recorded_attempt in attempts:
-                        recorded_attempt['latency_ms']=max(recorded_attempt.get('latency_ms',0),
-                            round((time.monotonic()-provider_wall_started)*1000,2))
-                    if len(attempts)>1:
-                        raise AnalysisError("provider_transport_nested","Nested transport attempts forbidden")
-                    self.diagnostics["provider_calls"].extend(attempts)
-                    self.diagnostics["agent_rounds"]=self.turn.budget.used
-                    self.turn.budget.remaining()
-                    raw=self.read_response(response,delta=tools[0]["name"] == "submit_analysis_delta")
+                    if guided is not None:
+                        # Deterministic contract → same validation/resolution path, 0 provider calls.
+                        raw=deepcopy(guided)
+                        self.diagnostics.update(guided_contract_used=True,provider_status="not_called")
+                    else:
+                        self.diagnostics[{"primary":"primary_call_count","repair":"semantic_repair_count","resolution":"targeted_resolution_count","transport":"transport_retry_count"}[kind]]+=1
+                        if kind == 'resolution':
+                            self.diagnostics['semantic_repair_count']+=1
+                        self.diagnostics.setdefault('provider_call_reasons',[]).append(CALL_REASONS[kind])
+                        provider_started=time.perf_counter()
+                        provider_wall_started=time.monotonic()
+                        response=self.turn.invoke(system=system,messages=[{"role":"user","content":compact(payload)}],tools=tools) or {}
+                        latency=round((time.perf_counter()-provider_started)*1000,2)
+                        stage='provider_primary_ms' if kind=='primary' else 'provider_repair_ms' if kind in {'repair','resolution'} else 'provider_transport_retry_ms'
+                        self.diagnostics[stage]=self.diagnostics.get(stage,0)+latency
+                        attempts=response.get("attempts",[])
+                        for recorded_attempt in attempts:
+                            recorded_attempt['latency_ms']=max(recorded_attempt.get('latency_ms',0),
+                                round((time.monotonic()-provider_wall_started)*1000,2))
+                        # One logical call may contain exactly one bounded credential
+                        # failover (V3.2); any other nested transport is forbidden.
+                        if len(attempts)>2 or (len(attempts)==2 and not attempts[1].get('credential_failover')):
+                            raise AnalysisError("provider_transport_nested","Nested transport attempts forbidden")
+                        self.diagnostics["provider_calls"].extend(attempts)
+                        self.diagnostics["logical_provider_calls"]=self.diagnostics.get("logical_provider_calls",0)+1
+                        self.diagnostics["provider_http_attempts"]=self.diagnostics.get("provider_http_attempts",0)+len(attempts)
+                        if any(a.get('credential_failover') for a in attempts):
+                            self.diagnostics["credential_failover_used"]=True
+                        if attempts and attempts[-1].get("credential_slot"):
+                            self.diagnostics["credential_slot"]=attempts[-1]["credential_slot"]
+                        self.diagnostics["agent_rounds"]=self.turn.budget.used
+                        self.turn.budget.remaining()
+                        raw=self.read_response(response,delta=tools[0]["name"] == "submit_analysis_delta")
                     # A repair answer identical to an earlier answer cannot progress.
                     outputs=self.diagnostics.setdefault('provider_output_digests',[])
                     repeated_output=digest(raw) in outputs
@@ -525,6 +561,11 @@ class HybridAnalystPlanner(OneShotPlanner):
                         from services.request_anchors import normalize_explicit_metrics
                         intent,metrics=normalize_explicit_metrics(intent,self.anchors,self.catalog)
                         completed += metrics
+                        from services.semantic_preflight_contract import enforce_metric_locks
+                        intent,locked,conflicts=enforce_metric_locks(intent,self.metric_locks,self.catalog)
+                        completed += locked
+                        if conflicts:
+                            self.diagnostics.setdefault('semantic_lock_conflicts',[]).extend(conflicts)
                         from services.request_anchors import complete_default_time, complete_explicit_time
                         intent,explicit_times=complete_explicit_time(intent,self.anchors)
                         completed += explicit_times
@@ -596,13 +637,24 @@ class HybridAnalystPlanner(OneShotPlanner):
                     from services.analysis_expansion_service import analysis_depth, dashboard_policy
                     depth=analysis_depth(resolved['intent'],resolver.index,{**context,
                         'request_breadth':self.anchors.get('analysis_breadth')})
-                    context['minimum_visuals']=dashboard_policy(self.catalog)['minimum_views']
+                    context['minimum_visuals']=dashboard_policy(self.catalog,depth)['minimum_views']
                     context['server_supporting_expansion']=depth
                     resolved=resolver.resolve(resolved['intent'])
+                    if context.get('analysis_mission'):
+                        # Mission reports are judged on relevant planned views, not a
+                        # generic count: the floor is what the mission can honestly show.
+                        from services.analysis_expansion_service import estimated_views
+                        context['minimum_visuals']=min(context['minimum_visuals'],max(1,estimated_views(resolved['operations'],self.catalog)))
                     self.diagnostics['resolver_latency_ms']=round((time.perf_counter()-resolution_started)*1000,2)
                     break
                 except (ResolutionIssues,ValidationError) as error:
                     self.diagnostics["contract_rejection_count"]+=1
+                    if context.get("guided_intent") is not None:
+                        # A guided contract is server-built; a rejection is a typed
+                        # contract failure, never an occasion for an AI repair call.
+                        self.diagnostics.update(failure_stage="SEMANTIC_CONTRACT",capability_status="INVALID_CONTRACT",
+                            contract_issues=error.issues if isinstance(error,ResolutionIssues) else [])
+                        raise AnalysisError("guided_contract_invalid","Guided contract failed governed validation") from None
                     new_issues=error.issues if isinstance(error,ResolutionIssues) else [{"requirement_id":None,"field":"envelope","code":"invalid_intent_shape"}]
                     # A rejected repair never changes the target authority of
                     # the next call. In particular it cannot unlock a frozen r1.
@@ -748,7 +800,10 @@ class HybridAnalystPlanner(OneShotPlanner):
                             resolver_diagnostic=getattr(error,'resolver_diagnostic',{}))
                     last=(response.get("attempts") or [{}])[-1]
                     delay=min(2,last.get('retry_after_seconds',0.15))+random.uniform(0,0.1)
-                    transient=(self.diagnostics['transport_retry_count']==0 and
+                    # Both credentials already failed inside this logical call:
+                    # a typed provider error, never another round (V3.2 §39).
+                    exhausted=any(a.get('credential_failover') for a in response.get("attempts") or [])
+                    transient=(not exhausted and self.diagnostics['transport_retry_count']==0 and
                         self.turn.budget.transport_retry_allowed(last,delay))
                     format_repair = error.category == "provider_invalid_json"
                     if not (transient or format_repair) or attempt+1>=self.turn.budget.max_calls or not self.turn.budget.recovery_available(delay if transient else 0):

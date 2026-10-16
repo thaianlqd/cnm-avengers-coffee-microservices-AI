@@ -141,8 +141,10 @@ def mission_catalog(registry, metrics, coverage, lenses):
             status, reason = "partial", "Dữ liệu cập nhật theo đợt đang trễ; dự báo sẽ kèm cảnh báo độ mới dữ liệu."
         elif need.get("relationship"):
             status, reason = "partial", "Chỉ hỗ trợ quan hệ giữa các chỉ số trong cùng một nhóm phân tích (ví dụ shipper)."
+        from services.mission_contract_service import contracts
         out.append({**{k: m[k] for k in ("id", "label", "description", "operations", "result_tabs", "chart_forms", "kpi_cards", "template", "examples")},
                     "caveat": m.get("caveat"), "follow_ups": m.get("follow_ups", []),
+                    "input_contract": contracts(registry).get(m["id"]),
                     "status": status, "reason": reason, "metrics": eligible})
     return out
 

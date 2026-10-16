@@ -1,3 +1,3 @@
-export function preflightView(result: any, state?: { pending?: boolean; error?: string }): { tone: string; status: string; label: string; blocked: boolean; chips: Array<{ kind: string; label: string; hint?: string }>; findings: any[] };
-export function applyFix(question: string, fix: any, maxChars?: number): { question?: string; time?: any } | null;
+export function preflightView(result: any, state?: { pending?: boolean; error?: string }): { tone: string; status: string; state?: string; label: string; blocked: boolean; guided?: any; chips: Array<{ kind: string; label: string; hint?: string }>; findings: any[] };
+export function applyFix(question: string, fix: any, maxChars?: number): { question?: string; time?: any; mission?: string } | null;
 export function createPreflightClient(options: { fetchImpl: (url: string, init: any) => Promise<any>; debounceMs?: number; onResult?: (result: any, error: string | null, id: number) => void; onPending?: (pending: boolean) => void; setTimer?: (fn: () => void, ms: number) => any; clearTimer?: (id: any) => void; url?: string }): { request: (payload: any) => void; cancel: () => void; readonly sequence: number };

@@ -57,6 +57,12 @@ _TYPES = {
     "result_contract": ("RESULT_VALIDATION_FAILED", "EXECUTION_FAILURE", False),
     "quality_verification": ("RESULT_VALIDATION_FAILED", "EXECUTION_FAILURE", False),
     "job_busy": ("CAPACITY_BUSY", "SYSTEM_FAILURE", True),
+    # V3.2: deterministic prechecks and protected semantic contracts.
+    "unrecognized_question": ("UNRECOGNIZED_QUESTION", "UNSUPPORTED_CAPABILITY", False),
+    "mission_mismatch": ("MISSION_MISMATCH", "SUPPORTED_BUT_NEEDS_CLARIFICATION", False),
+    "guided_contract_invalid": ("GUIDED_CONTRACT_INVALID", "SUPPORTED_BUT_NEEDS_CLARIFICATION", False),
+    "semantic_contract_drift": ("SEMANTIC_CONTRACT_DRIFT", "UNDERSTANDING_FAILURE", False),
+    "analysis_mission_unknown": ("GUIDED_CONTRACT_INVALID", "SUPPORTED_BUT_NEEDS_CLARIFICATION", False),
 }
 _AMBIGUOUS = {
     "clarification", "blueprint_ambiguous", "capacity_requires_choice", "requested_scope_too_large", "query_scope",
@@ -99,7 +105,34 @@ GUIDANCE = {
     "PLAN_REVIEW_REQUIRED": ("Cần lập lại kế hoạch", "Dữ liệu hoặc phiên phân tích đã thay đổi.", "replan"),
     "CAPACITY_BUSY": ("Hệ thống đang bận", "Hệ thống đang xử lý tối đa số tác vụ đồng thời.", "retry_later"),
     "INTERNAL_ERROR": ("Lỗi xử lý của hệ thống", "Máy chủ gặp lỗi xử lý; chưa có kết quả phân tích.", "report_reference"),
+    "UNRECOGNIZED_QUESTION": ("Chưa nhận ra bài toán phân tích",
+        "Chưa nhận ra nội dung phân tích dữ liệu trong câu hỏi.", "edit_question"),
+    "MISSION_MISMATCH": ("Yêu cầu chưa phù hợp với nhiệm vụ đang chọn",
+        "Câu hỏi thuộc một nhiệm vụ phân tích khác với nhiệm vụ đang chọn.", "switch_mission"),
+    "GUIDED_CONTRACT_INVALID": ("Cấu hình phân tích chưa hợp lệ",
+        "Lựa chọn chỉ số, chiều hoặc phạm vi chưa khớp danh mục được quản trị.", "edit_selection"),
+    "SEMANTIC_CONTRACT_DRIFT": ("Diễn giải chưa khớp danh mục dữ liệu",
+        "Diễn giải của AI khác với chỉ số đã nhận diện chắc chắn trong câu hỏi; hệ thống không tự đoán.", "edit_question"),
 }
+
+# V3.2 user-facing failure stage: the UI text must match where it failed.
+_STAGES = {
+    "UNRECOGNIZED_QUESTION": "PRECHECK_FAILURE", "MISSION_MISMATCH": "PRECHECK_FAILURE",
+    "RESTRICTED_REQUEST": "PRECHECK_FAILURE", "GUIDED_CONTRACT_INVALID": "SEMANTIC_CONTRACT_FAILURE",
+    "PROVIDER_RATE_LIMITED": "PROVIDER_QUOTA_FAILURE",
+    "PROVIDER_UNAVAILABLE": "PROVIDER_TRANSPORT_FAILURE", "PROVIDER_TIMEOUT": "PROVIDER_TRANSPORT_FAILURE",
+    "PROVIDER_AUTH_ERROR": "PROVIDER_TRANSPORT_FAILURE", "PROVIDER_INVALID_RESPONSE": "SEMANTIC_INTERPRETATION_FAILURE",
+    "SEMANTIC_RESOLUTION_FAILED": "SEMANTIC_INTERPRETATION_FAILURE", "SEMANTIC_CONTRACT_INVALID": "SEMANTIC_CONTRACT_FAILURE",
+    "SEMANTIC_CONTRACT_DRIFT": "SEMANTIC_CONTRACT_FAILURE", "QUERY_COMPILATION_FAILED": "QUERY_COMPILATION_FAILURE",
+    "QUERY_EXECUTION_FAILED": "QUERY_EXECUTION_FAILURE", "QUERY_TIMEOUT": "QUERY_EXECUTION_FAILURE",
+    "RESULT_VALIDATION_FAILED": "RESULT_VALIDATION_FAILURE", "FORECAST_EXECUTION_FAILED": "FORECAST_FAILURE",
+    "FORECAST_INSUFFICIENT_HISTORY": "FORECAST_FAILURE", "FORECAST_UNAVAILABLE": "SEMANTIC_CONTRACT_FAILURE",
+}
+
+
+def analysis_stage(error_type):
+    """Coarse V3.2 stage for one typed failure (PRECHECK … FORECAST)."""
+    return _STAGES.get(error_type, "SYSTEM_FAILURE")
 
 
 def classify(category, diagnostics=None):

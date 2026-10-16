@@ -278,7 +278,7 @@ class DomainIntelligence:
         return {"status": "ready", "version": "3.0", "fingerprint": self.catalog.fingerprint,
                 "registry_fingerprint": getattr(self.catalog, "registry_fingerprint", None),
                 "domains": domains,
-                "analysis_depths": [{"id": "focused", "label": "Tập trung"}, {"id": "deep", "label": "Phân tích sâu"}, {"id": "comprehensive", "label": "Phân tích toàn diện"}],
+                "analysis_depths": depth_options(self.catalog),
                 "time_presets": [{"id": id, "label": label} for id, label in TIME_PRESETS.items()],
                 "scope_types": scope_types, **workspace}
 
@@ -504,6 +504,26 @@ class DomainIntelligence:
 TIME_PRESETS = {"auto": "Tự động", "today": "Hôm nay", "7d": "7 ngày qua", "30d": "30 ngày qua",
                 "current_month": "Tháng này", "previous_month": "Tháng trước", "current_quarter": "Quý này",
                 "previous_quarter": "Quý trước", "all_time": "Toàn bộ thời gian", "custom": "Tùy chọn"}
+
+def depth_options(catalog):
+    """V3.2: what each depth really adds, from the governed depth budgets."""
+    from services.analysis_expansion_service import dashboard_policy
+    labels = {"focused": "Tập trung", "deep": "Phân tích sâu", "comprehensive": "Phân tích toàn diện"}
+    out = []
+    for id, label in labels.items():
+        p = dashboard_policy(catalog, id)
+        parts = ["chỉ các góc nhìn trả lời trực tiếp câu hỏi"] if not p.get("max_supporting_operations") else [
+            f"thêm tối đa {p['max_supporting_operations']} góc nhìn hỗ trợ đúng phạm vi"]
+        if p.get("max_segment_dimensions"):
+            parts.append(f"tự tìm {p['max_segment_dimensions']} chiều diễn biến liên quan")
+        if p.get("related_domains") and p.get("max_supporting_operations"):
+            parts.append("đối chiếu miền dữ liệu liên quan")
+        out.append({"id": id, "label": label, "minimum_views": p["minimum_views"], "target_views": p["target_views"],
+                    "max_supporting_operations": p.get("max_supporting_operations"),
+                    "max_segment_dimensions": p.get("max_segment_dimensions", 0),
+                    "description": label + ": " + "; ".join(parts) + "."})
+    return out
+
 
 DEPTH_POLICIES = {
     "focused": {"supports": 1, "packs": 1, "domain_chars": 1800, "body_chars": 24000, "target_views": [2, 4]},

@@ -415,7 +415,11 @@ def assess_report(report, catalog, *, artifacts=None):
         # evaluation was fully delivered.
         ui=context.get('ui_constraints',{})
         from services.analysis_expansion_service import dashboard_policy
-        minimum = max(dashboard_policy(catalog)['minimum_views'], ui.get('minimum_visuals',0))
+        # V3.2: the floor follows the server-recorded depth budget (focused may
+        # legitimately show only the requested views); unknown depth → deep.
+        policy_minimum = dashboard_policy(catalog, ui.get('server_supporting_expansion'))['minimum_views']
+        minimum = (min(policy_minimum, ui.get('minimum_visuals', policy_minimum)) if ui.get('analysis_mission')
+                   else max(policy_minimum, ui.get('minimum_visuals', 0)))
         if minimum:
             valid_views=sum(c['valid'] for c in charts)
             measurements.append(check('analysis_depth_coverage','Độ đầy đủ góc nhìn',min(valid_views,minimum),minimum,

@@ -31,7 +31,7 @@ const render = (Component, values) => renderToStaticMarkup(React.createElement(C
 
 // V3.1: the question form has one field; Ngữ cảnh/Mong muốn were removed from
 // the normal UI (they overlapped with the question and caused contradictions).
-// Time, scope and depth moved to ScopeDepthBar (tested in workspace.test.mjs).
+// Time, scope and depth moved to AnalysisScopePanel (tested in workspace.test.mjs).
 test('V3.1 question form: one required question, no context/expectation fields', () => {
   const html = render(Form, { prompt: 'Doanh thu', disabled: false, maxChars: 8000, onPrompt: () => {}, onSubmit: () => {} });
   assert.equal((html.match(/data-analysis-input=/g) || []).length, 1);

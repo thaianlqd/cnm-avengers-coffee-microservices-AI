@@ -132,7 +132,9 @@ export function capabilityGroups(capabilities, search = '') {
   return (capabilities?.domains || []).map(d => ({
     id: d.id, label: d.label, purpose: d.purpose, caveats: d.caveats || [],
     metrics: (d.metrics || []).filter(m => match(d.label) || match(m.label) || match(m.definition) || (m.dimensions || []).some(x => match(x.label)))
-      .map(m => ({ ...m, badges: [m.historical ? 'Có xu hướng' : 'Hiện tại', ...(m.forecastable ? ['Dự báo được'] : [])] })),
+      .map(m => ({ ...m, badges: [m.historical ? 'Có xu hướng' : 'Hiện tại', ...(m.forecastable ? ['Dự báo được'] : []),
+        ...((capabilities?.risk_signals || []).some(s => s.metric === m.id) ? ['Tín hiệu rủi ro'] : []),
+        ...(m.dimensions && !m.dimensions.length ? ['Chỉ toàn phạm vi'] : [])] })),
     examples: d.example_questions || [],
   })).filter(g => g.metrics.length);
 }
@@ -213,4 +215,21 @@ export function riskRows(result) {
 
 export function riskBreachChart(result) {
   return (result?.signals || []).filter(s => s.breakdown?.groups_in_breach).map(s => ({ label: s.label, value: s.breakdown.groups_in_breach }));
+}
+
+/** V3.2 Risk report summary: status, top entities and deterministic drill-downs (0 AI calls). */
+export function riskSummary(result) {
+  const signals = result?.signals || [];
+  const breached = signals.filter(s => s.status === 'red');
+  // A healthy whole-scope value must not hide groups in breach.
+  const entities = signals.filter(s => s.breakdown?.groups_in_breach).flatMap(s => (s.breakdown?.worst || []).map(w => ({ signal: s.label, label: w.label ?? w.group ?? w.value_label, value: formatValue(w.value, s.unit) })))
+    .filter(e => e.label != null).slice(0, 3);
+  const followUps = signals.filter(s => s.status === 'red' || s.breakdown?.groups_in_breach).slice(0, 2).flatMap(s => [
+    { mission: 'ranking', text: `Top 5 ${String(s.breakdown?.dimension_label || 'chi nhánh').toLowerCase()} có ${String(s.metric_label).toLowerCase()} ${s.bad_direction === 'below' ? 'thấp' : 'cao'} nhất` },
+    ...(s.historical ? [{ mission: 'trend', text: `Xu hướng ${String(s.metric_label).toLowerCase()} theo tuần` }] : []),
+  ]);
+  const status = breached.length ? 'red' : signals.some(s => s.status === 'yellow') ? 'yellow' : signals.length ? 'green' : 'gray';
+  return { status, breached: breached.length, total: signals.filter(s => !['no_data', 'not_applicable'].includes(s.status)).length,
+    headline: breached.length ? `${breached.length} tín hiệu vượt ngưỡng cần kiểm tra` : entities.length ? 'Toàn phạm vi trong ngưỡng nhưng có nhóm vượt ngưỡng' : signals.some(s => s.status === 'yellow') ? 'Không vượt ngưỡng, có tín hiệu sát ngưỡng' : 'Các tín hiệu đều trong ngưỡng',
+    entities, followUps: [...new Map(followUps.map(f => [f.text, f])).values()].slice(0, 4) };
 }

@@ -125,10 +125,17 @@ def coverage_for(coverage, sources):
 
 # --- Main -------------------------------------------------------------------
 
-def run(question, time_range=None, analysis_scope=None, analysis_mission=None, reference=None, catalog=None, coverage=None):
+def _vocabulary_hits(text, phrases):
+    return [p for p in phrases if p and re.search(r"(?<!\w)" + re.escape(value_text(p)) + r"(?!\w)", text)]
+
+
+def run(question, time_range=None, analysis_scope=None, analysis_mission=None, reference=None, catalog=None, coverage=None,
+        input_mode=None, guided_contract=None):
     from services.request_anchors import request_anchors
     from services.time_resolution_service import parse_time, resolve_time
     from services import data_coverage_service
+    from services import mission_contract_service as missions
+    from services.semantic_preflight_contract import canonical_anchor, contract_from_preflight, alias_policy
     started = time.perf_counter()
     catalog = catalog or preflight_catalog()
     coverage = coverage if coverage is not None else data_coverage_service.peek()
@@ -174,26 +181,44 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
 
     understood = {"metrics": [], "dimensions": [], "filters": [], "time": None, "forecast": None,
                   "mission": {"id": mission["id"], "label": mission["label"]} if mission else None, "unsupported": []}
+    anchors = {"metrics": [], "dimensions": [], "values": [], "rankings": [], "granularities": []}
+    periods, forecast_requested = [], False
     if question.strip() and not blocked_length:
         anchors = request_anchors(question, catalog, {})
         metrics = r["metrics"]
-        # One entry per mentioned phrase: the governed metric whose label is the
-        # phrase itself is primary; other candidates stay visible alternatives.
-        mentions, ambiguous = [], []
+        # One entry per mentioned phrase. A governed canonical alias anchors its
+        # owner (V3.2); otherwise the metric whose label IS the phrase is
+        # primary. Specialized siblings are listed, not presented as equals.
+        mentions, ambiguous, canonical_mentions = [], [], []
         for a in anchors["metrics"]:
+            owner = canonical_anchor(a, r)
             exact = [m for m in a["candidate_ids"] if value_text(metrics[m]["business_name"]) == a["phrase"]]
-            primary = (exact or a["candidate_ids"])[0]
+            primary = owner or (exact or a["candidate_ids"])[0]
             if any(primary == p for p, _ in mentions):
                 continue
             mentions.append((primary, a))
-            if len(a["candidate_ids"]) > 1:
+            if owner and len(a["candidate_ids"]) > 1:
+                canonical_mentions.append((primary, a))
+            elif len(a["candidate_ids"]) > 1:
                 ambiguous.append((primary, a))
         metric_ids = [p for p, _ in mentions]
+        canonical_ids = {p for p, _ in canonical_mentions}
         understood["metrics"] = [{"id": m, "label": metrics[m]["business_name"], "unit": metrics[m]["unit"],
                                   "historical": bool(metrics[m].get("time_column")),
                                   "forecastable": bool((metrics[m].get("forecast") or {}).get("forecastable")),
-                                  "alternatives": [{"id": c, "label": metrics[c]["business_name"]} for c in a["candidate_ids"] if c != m]}
+                                  "canonical": m in canonical_ids,
+                                  # Same-name candidates only for genuinely ambiguous phrases.
+                                  "alternatives": [] if m in canonical_ids else
+                                      [{"id": c, "label": metrics[c]["business_name"]} for c in a["candidate_ids"] if c != m],
+                                  "specialized": [{"id": c, "label": metrics[c]["business_name"]} for c in a["candidate_ids"] if c != m]
+                                      if m in canonical_ids else []}
                                  for m, a in mentions]
+        for primary, a in canonical_mentions:
+            phrase = question[slice(*_span(index, a["start"], a["end"]))]
+            findings.append(finding("info", "canonical_metric",
+                f"“{phrase}” được hiểu là {metrics[primary]['business_name'].lower()} (chỉ số chuẩn). "
+                "Chỉ số chuyên biệt như " + ", ".join(metrics[c]["business_name"].lower() for c in a["candidate_ids"] if c != primary)[:160]
+                + " chỉ dùng khi bạn nêu rõ.", metric=primary))
         dims = list(dict.fromkeys(d for a in anchors["dimensions"] for d in a["candidate_ids"]))
         understood["dimensions"] = [{"id": d, "label": r["dimensions"][d]["business_name"]} for d in dims]
         labels = lambda d, v: r["dimensions"][d].get("value_labels", {}).get(str(v), v)
@@ -346,17 +371,140 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
         if mission and mission.get("caveat"):
             findings.append(finding("info", "mission_caveat", mission["caveat"]))
 
+    # --- V3.2 honest recognition, mission semantics and guided contracts ---
+    inferred, guided, state = None, None, None
+    recognition = {"business": [], "analytical": []}
+    if question.strip() and not blocked_length:
+        missions_by_id = {m["id"]: m for m in r.get("analysis_missions", [])}
+        signals = missions.mission_signals(text, r)
+        inferred = missions.infer_mission(text, r)
+        business = [*(m["id"] for m in understood["metrics"]), *(d["id"] for d in understood["dimensions"]),
+                    *(f["dimension"] for f in understood["filters"]), *(u["id"] for u in understood["unsupported"]),
+                    *(f["concept"] for f in findings if f["code"] == "privacy_blocked"),
+                    *_vocabulary_hits(text, ws.get("business_signal_vocabulary", [])),
+                    *(["overview"] if "overview" in signals else [])]
+        analytical = [*(["time"] if periods else []), *(["granularity"] if anchors.get("granularities") else []),
+                      *(["ranking"] if anchors.get("rankings") else []), *(["forecast"] if forecast_requested else []),
+                      *sorted(m for m in signals if m != "overview")]
+        recognition = {"business": sorted(set(map(str, business))), "analytical": sorted(set(analytical))}
+        vague = _vocabulary_hits(text, ws.get("vague_quality_terms", []))
+        if not business and not analytical:
+            findings.append(finding("block", "unrecognized_question", "Chưa nhận ra nội dung phân tích dữ liệu trong câu hỏi.",
+                                    [{"label": "Mở “Hỏi được gì?” để chọn chỉ số", "kind": "advice"}]))
+            state = "BLOCKED"
+        elif not business:
+            missing = (mission or {}).get("input_contract", {}).get("required") or ["metric"]
+            findings.append(finding("block", "analysis_target_missing",
+                "Cần nêu chỉ số hoặc đối tượng cần phân tích (ví dụ doanh thu, số đơn, tỷ lệ hủy đơn).",
+                [{"label": "Chọn chỉ số trong “Hỏi được gì?”", "kind": "advice"}], missing=[s for s in missing if s != "time"]))
+            state = "NEEDS_INPUT"
+        elif understood["unsupported"] and not understood["metrics"]:
+            # Only an ungoverned concept was asked for: AI cannot answer it, so never spend a call.
+            concept = next(f for f in findings if f["code"] == "unsupported_concept")
+            findings.append(finding("block", "unsupported_only",
+                "Câu hỏi chỉ nêu khái niệm chưa có định nghĩa được quản trị; hãy chọn một chỉ số gần nhất để phân tích.",
+                concept["fixes"], nearest=concept.get("nearest", []), missing=["metric"]))
+            state = "NEEDS_INPUT"
+        elif vague and not understood["metrics"] and not understood["unsupported"]:
+            dims = [d["id"] for d in understood["dimensions"]]
+            options = [m for p in r["domain_intelligence"]["profiles"].values() for l in p["analytical_lenses"]
+                       if not dims or set(dims) & set(l["dimension_refs"]) for m in l["metric_refs"] if m in r["metrics"]]
+            options = list(dict.fromkeys(options))[:3]
+            findings.append(finding("block", "metric_needed",
+                f"“{vague[0]}” cần một tiêu chí đo lường. Hãy chọn chỉ số dùng để đánh giá.",
+                [{"label": f"Theo {r['metrics'][m]['business_name'].lower()}", "kind": "replace_question",
+                  "question": f"{question.rstrip(' ?')} theo {r['metrics'][m]['business_name'].lower()}"} for m in options],
+                missing=["metric"]))
+            state = "NEEDS_INPUT"
+        if mission and missions.mission_mismatch(mission["id"], inferred, r):
+            target = missions_by_id[inferred["id"]]
+            findings.append(finding("block", "mission_mismatch",
+                f"Câu hỏi là bài toán “{target['label']}”, nhưng nhiệm vụ đang chọn là “{mission['label']}”.",
+                [{"label": f"Chuyển sang {target['label']}", "kind": "switch_mission", "mission": target["id"]},
+                 {"label": f"Viết lại câu hỏi cho {mission['label']}", "kind": "rewrite_for_mission", "mission": mission["id"]}],
+                selected=mission["id"], inferred=inferred["id"]))
+            state = state or "NEEDS_INPUT"
+        understood["inferred_mission"] = ({"id": inferred["id"], "label": missions_by_id[inferred["id"]]["label"]}
+                                          if inferred and inferred.get("id") else None)
+    if input_mode == "guided" and guided_contract is not None and not blocked_length:
+        try:
+            slots = missions.validate_guided(catalog, (mission or {}).get("id"), guided_contract,
+                                             scope_filters=(analysis_scope or {}).get("filters") or [])
+            guided = {"source": "builder", "slots": slots}
+        except missions.GuidedContractError as error:
+            findings.append(finding("block", "guided_contract_invalid", str(error),
+                                    field=error.field))
     unique = {}
     for f in findings:
         unique.setdefault((f["code"], f["message"]), f)
     findings = sorted(unique.values(), key=lambda f: {"block": 0, "warn": 1, "info": 2}[f["level"]])
     blocked = any(f["level"] == "block" for f in findings)
-    return {"version": VERSION, "status": "blocked" if blocked else "warning" if any(f["level"] == "warn" for f in findings) else "ok",
-            "can_submit": not blocked, "understood": understood, "findings": findings,
+    if blocked:
+        # "AI sẽ diễn giải" is false advice once the request cannot be sent.
+        findings = [f for f in findings if f["code"] != "no_metric_detected"]
+    if not guided and not blocked and question.strip() and not blocked_length:
+        guided = auto_guided(understood, anchors, findings, mission, inferred, r)
+    if blocked:
+        state = state or "BLOCKED"
+    elif guided:
+        state = "READY_GUIDED"
+    else:
+        state = "READY_FOR_AI"
+    labels = ws.get("preflight_states", {})
+    label_key = ("MISMATCH" if any(f["code"] == "mission_mismatch" for f in findings)
+                 else "UNRECOGNIZED" if any(f["code"] == "unrecognized_question" for f in findings) else state)
+    contract = contract_from_preflight(understood, anchors, r, (mission or {}).get("id"), inferred)
+    return {"version": "3.2.0", "status": "blocked" if blocked else "warning" if any(f["level"] == "warn" for f in findings) else "ok",
+            "state": state, "state_label": labels.get(label_key, label_key), "can_submit": not blocked,
+            "understood": understood, "findings": findings, "recognition": recognition,
+            "guided_contract": guided, "semantic_contract": contract,
             "provider_calls": 0, "warehouse_queries": 0,
             "coverage_status": (coverage or {}).get("status", "not_loaded"),
             "registry_fingerprint": catalog.registry_fingerprint,
             "elapsed_ms": round((time.perf_counter() - started) * 1000, 2)}
+
+
+def auto_guided(understood, anchors, findings, mission, inferred, registry):
+    """Free text whose every required field is deterministically known (V3.2 §74).
+
+    Only forecast and single-metric trends qualify; any warning, filter,
+    ambiguity or extra grouping keeps the request on the AI path.
+    """
+    target = (mission or {}).get("id") or (inferred or {}).get("id")
+    if (inferred or {}).get("id") and target != inferred["id"]:
+        return None
+    ms = understood["metrics"]
+    if target == "risk_watch" and (mission or {}).get("id") == "risk_watch":
+        # Default Risk Watch = every governed signal, deterministic (0 AI calls).
+        risk_metrics = {s["metric"] for s in registry.get("risk_signals", [])}
+        if all(m["id"] in risk_metrics for m in ms) and not understood["dimensions"]:
+            return {"source": "auto_upgrade", "slots": {"mission": "risk_watch",
+                    "signals": [s["id"] for s in registry.get("risk_signals", [])
+                                if not ms or s["metric"] in {m["id"] for m in ms}]},
+                    # Scope named in the question is grounded by Risk Watch itself.
+                    "question_filters": understood["filters"]}
+        return None
+    if any(f["level"] == "warn" for f in findings) or understood["filters"] or understood["unsupported"]:
+        return None
+    if len(ms) != 1 or ms[0]["alternatives"] or len(anchors.get("metrics", [])) != 1:
+        return None
+    metric = ms[0]["id"]
+    if target == "forecast":
+        f = understood.get("forecast") or {}
+        spec = (registry["metrics"][metric].get("forecast") or {})
+        if (not f.get("requested") or not f.get("horizon") or f.get("unit") not in spec.get("cadences", [])
+                or understood["dimensions"] or f["horizon"] > spec["max_horizon"][f["unit"]]):
+            return None
+        return {"source": "auto_upgrade", "slots": {"mission": "forecast", "metric": metric,
+                                                    "horizon": f["horizon"], "cadence": f["unit"]}}
+    if target == "trend":
+        cadences = {g for a in anchors.get("granularities", []) for g in a["candidate_ids"]}
+        if (len(cadences) != 1 or understood["dimensions"] or not registry["metrics"][metric].get("time_column")
+                or (understood.get("time") or {}).get("source") != "question"):
+            return None
+        return {"source": "auto_upgrade", "slots": {"mission": "trend", "metric": metric, "granularity": next(iter(cadences))},
+                "time": {"start": understood["time"]["start"], "end": understood["time"]["end"]}}
+    return None
 
 
 class RateLimiter:

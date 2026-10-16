@@ -1,0 +1,130 @@
+// V3.2 mission workspace logic. Pure functions, no fetch: the server owns
+// contracts, metrics, compatibility and validation; this module only keeps the
+// UI state consistent with the selected mission and builds payloads.
+
+import { missionMetrics, monthOptions } from './workspacePresentation.mjs';
+
+export const FREE_TEXT = '__free_text__';
+
+/** Mission switch never carries the old mission's question into the new one. */
+export function switchMissionDraft(drafts = {}, from, to, current = {}) {
+  const fromKey = from || FREE_TEXT, toKey = to || FREE_TEXT;
+  const saved = { ...drafts, [fromKey]: { prompt: current.prompt || '', guided: current.guided || null } };
+  const next = saved[toKey] || { prompt: '', guided: null };
+  return { drafts: saved, prompt: next.prompt, guided: next.guided,
+    // Everything derived from the old mission is stale and must be cleared.
+    reset: { preflight: true, risk: true, plan: true, report: true, clarification: true } };
+}
+
+/** The mission's governed input contract (from /capabilities). */
+export function missionContract(capabilities, missionId) {
+  const mission = (capabilities?.missions || []).find(m => m.id === missionId);
+  return mission?.input_contract || null;
+}
+
+/** Ordered controls a mission shows; only slots its contract declares. */
+export function missionControls(capabilities, missionId) {
+  const contract = missionContract(capabilities, missionId);
+  if (!contract) return [];
+  const slots = new Set([...(contract.required || []), ...(contract.optional || [])]);
+  const order = ['direction', 'n', 'metric', 'metric_b', 'dimension', 'group_a', 'group_b', 'granularity', 'horizon', 'cadence', 'signals', 'time', 'scope'];
+  return order.filter(s => slots.has(s)).map(id => ({ id, required: (contract.required || []).includes(id) }));
+}
+
+const lower = text => (text || '').charAt(0).toLowerCase() + (text || '').slice(1);
+
+/** Guided period options → request time ranges (never free-form text). */
+export function periodOptions(capabilities) {
+  return [
+    ...monthOptions(capabilities).map(m => {
+      const [y, mo] = m.id.split('-').map(Number);
+      const last = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+      return { id: m.id, label: m.label, phrase: m.phrase, time: { mode: 'custom', start: `${m.id}-01`, end: `${m.id}-${String(last).padStart(2, '0')}` } };
+    }),
+    { id: '30d', label: '30 ngày gần nhất', phrase: '30 ngày gần nhất', time: { mode: '30d' } },
+    { id: '7d', label: '7 ngày gần nhất', phrase: '7 ngày gần nhất', time: { mode: '7d' } },
+    { id: 'all_time', label: 'Toàn bộ dữ liệu', phrase: 'toàn bộ thời gian', time: { mode: 'all_time' } },
+  ];
+}
+
+/** Default slots for a mission, all from server metadata. */
+export function defaultSlots(capabilities, missionId) {
+  const metrics = missionMetrics(capabilities, missionId);
+  const metric = metrics[0];
+  const cadence = metric?.forecast?.cadences?.includes('month') ? 'month' : metric?.forecast?.cadences?.[0];
+  const period = periodOptions(capabilities)[1] || periodOptions(capabilities)[0];
+  return { metric: metric?.id || '', metric_b: '', dimension: '', group_a: '', group_b: '', n: 5, direction: 'top',
+    granularity: 'week', cadence: cadence || '', horizon: cadence ? Math.min(3, metric.forecast.max_horizon[cadence]) : 3,
+    period: period?.id || 'all_time', signals: (capabilities?.risk_signals || []).filter(s => s.available).map(s => s.id) };
+}
+
+/** Values a compare group may take for a dimension (labels or scope values). */
+export function dimensionValues(capabilities, dimension) {
+  const labelled = capabilities?.dimension_value_labels?.[dimension];
+  if (labelled) return labelled.map(v => ({ value: String(v.value), label: v.label }));
+  const scope = (capabilities?.scope_types || []).find(s => s.id === dimension);
+  return (scope?.values || []).map(v => ({ value: String(v), label: String(v) }));
+}
+
+/**
+ * Build the guided payload fragment + a human-readable echo, or a reason it
+ * is incomplete. The echo is display only; the server validates the contract.
+ */
+export function buildGuided(capabilities, missionId, slots = {}) {
+  const contract = missionContract(capabilities, missionId);
+  if (!contract) return { ready: false, missing: ['mission'] };
+  const metrics = Object.fromEntries((capabilities?.metrics || []).map(m => [m.id, m]));
+  const required = (contract.required || []).filter(s => s !== 'time' && s !== 'scope');
+  const missing = required.filter(s => slots[s] === undefined || slots[s] === '' || slots[s] === null || (Array.isArray(slots[s]) && !slots[s].length));
+  if (missionId === 'compare' && slots.group_a && slots.group_a === slots.group_b) missing.push('group_b');
+  if (missing.length) return { ready: false, missing };
+  const period = periodOptions(capabilities).find(p => p.id === slots.period) || periodOptions(capabilities).at(-1);
+  const metric = metrics[slots.metric], metricB = metrics[slots.metric_b];
+  const dimension = (metric?.dimensions || []).find(d => d.id === slots.dimension);
+  const label = id => (dimensionValues(capabilities, slots.dimension).find(v => v.value === id) || {}).label || id;
+  const contractOut = {};
+  for (const s of [...(contract.required || []), ...(contract.optional || [])]) {
+    if (['time', 'scope', 'period'].includes(s) || slots[s] === undefined || slots[s] === '' || slots[s] === null) continue;
+    contractOut[s] = slots[s];
+  }
+  const time = (contract.time_control || 'period') === 'period' ? period.phrase : '';
+  const g = capabilities?.phrases?.granularity?.[slots.granularity] || '';
+  const cad = capabilities?.phrases?.cadence?.[slots.cadence] || slots.cadence;
+  const m = lower(metric?.label), d = lower(dimension?.label);
+  const text = {
+    overview: `Tình hình ${m} ${time}`,
+    compare: `So sánh ${m} theo ${d} giữa ${label(slots.group_a)} và ${label(slots.group_b)} ${time}`,
+    ranking: `${slots.direction === 'bottom' ? 'Bottom' : 'Top'} ${slots.n} ${d} theo ${m} ${time}`,
+    trend: `Xu hướng ${m} ${g} ${time}`,
+    composition: `Cơ cấu ${m} theo ${d} ${time}`,
+    forecast: `Dự báo ${m} ${slots.horizon} ${cad} tới`,
+    risk_watch: `Kiểm tra rủi ro vận hành ${time}`,
+    relationship: `Liên hệ giữa ${m} và ${lower(metricB?.label)} theo ${d} ${time}`,
+  }[missionId] || '';
+  return { ready: true, question: text.replace(/\s+/g, ' ').trim(), contract: contractOut,
+    time: (contract.time_control || 'period') === 'period' ? period.time : { mode: 'auto' } };
+}
+
+/** A guided contract is valid only while the visible question is its own echo. */
+export function guidedActive(guided, prompt) {
+  return Boolean(guided?.contract && guided.question && (prompt || '').trim() === guided.question);
+}
+
+/** Request fragment for the V3.2 workspace (guided or free text). */
+export function workspaceRequestFields(guided, prompt) {
+  return guidedActive(guided, prompt)
+    ? { input_mode: 'guided', guided_contract: guided.contract, allow_deterministic_upgrade: true }
+    : { input_mode: 'free_text', allow_deterministic_upgrade: true };
+}
+
+/** Scope recognized from the question (server preflight), shown instead of a default picker. */
+export function detectedScope(preflight) {
+  const u = preflight?.understood || {};
+  const filters = (u.filters || []).map(f => ({ kind: 'filter', label: `${f.label}: ${f.display}` }));
+  const axes = (u.dimensions || []).map(d => ({ kind: 'axis', label: `Theo ${String(d.label).toLowerCase()}` }));
+  return { filters, axes, summary: filters.length ? filters.map(f => f.label).join(' · ') : 'Toàn hệ thống (chưa nêu phạm vi trong câu hỏi)' };
+}
+
+export function depthOptions(capabilities) {
+  return (capabilities?.analysis_depths || []).map(d => ({ ...d, short: String(d.label).replace('Phân tích toàn diện', 'Toàn diện') }));
+}

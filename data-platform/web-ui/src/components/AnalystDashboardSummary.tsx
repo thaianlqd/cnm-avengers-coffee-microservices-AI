@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { AnalysisQualityScore } from './AnalysisQualityScore';
 import { AnalystChart } from './Charts';
 import { chartAccent, conciseChartTitle, dashboardCharts, dashboardPrimaryCharts, dashboardChartTabs, dashboardHighlights, dashboardFindings, initialChartType, chartExplanation, businessCategory } from '../utils/analystDashboardLayout.mjs';
 import { formatChartValue } from '../utils/aiChartConfig.mjs';
@@ -8,6 +7,8 @@ import { groupDifference, kpiStrip, missionTabs, orderChartsByMission, reportCon
 import { KpiStrip } from './workspace/KpiStrip';
 import { FollowUpChips } from './workspace/FollowUpChips';
 import { ForecastPanel } from './ForecastPanel';
+import { ChartInsight, ChartSource } from './report/ChartInsight';
+import { VerificationPanel } from './report/VerificationPanel';
 
 /** "Xem dữ liệu": rows rendered only once opened (keeps paged charts honest). */
 const ChartData: React.FC<{ chart: any }> = ({ chart }) => {
@@ -33,6 +34,7 @@ const ChartCard: React.FC<{ chart: any; compact?: boolean; span: string; editing
         <details className="text-xs text-slate-600 leading-relaxed"><summary data-chart-explanation className="cursor-pointer">Cách đọc biểu đồ</summary><p className="mt-1 max-w-md">{chartExplanation({ ...chart, chart_type: type })}</p></details>
         {definition && <details className="text-xs text-slate-600 leading-relaxed"><summary data-metric-definition className="cursor-pointer">Định nghĩa chỉ số</summary><p className="mt-1 max-w-md">{definition}</p></details>}
         {!!chart.data?.length && <ChartData chart={chart} />}
+        <ChartSource chart={chart} />
         </div>
         {chart.role === 'supporting' && <span className="inline-block mt-2 rounded-full bg-teal-50 px-2 py-1 text-[10px] font-medium text-teal-700">Góc nhìn bổ sung</span>}
       </div>
@@ -45,6 +47,7 @@ const ChartCard: React.FC<{ chart: any; compact?: boolean; span: string; editing
       </details>
     </div>
     <div className="h-[320px] overflow-auto flex-1 flex flex-col justify-center min-w-0"><AnalystChart chart={{ ...chart, chart_type: type, accent_color: accent }} /></div>
+    <ChartInsight insight={chart.insight} />
     {chart.time_note && <p className="text-[11px] leading-relaxed text-amber-700 mt-4">{chart.time_note}</p>}
     {chart.ranking_note && <p className="text-[11px] leading-relaxed text-slate-600 mt-4">{chart.ranking_note}</p>}
     {chart.value_transform === 'contribution_share' && chart.evidence_refs?.[0] && <a className="text-xs text-blue-600 mt-4" href={`#evidence-${encodeURIComponent(chart.evidence_refs[0])}`}>Đối chiếu tử số và mẫu số ↗</a>}
@@ -66,10 +69,19 @@ export const AnalystViews: React.FC<{ charts?: any[]; onChartTypeChange?: (id: s
   </section>)}
 </div>;
 
-export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChartTypeChange?: (id: string, type: string) => void; capabilities?: any; onFollowUp?: (question: string) => void }> = ({ report, editing, onChartTypeChange, capabilities, onFollowUp }) => {
+const REPORT_TABS = [['report', 'Báo cáo'], ['verification', 'Kiểm chứng & nguồn'], ['data', 'Dữ liệu / SQL'], ['export', 'Lưu & xuất']] as const;
+
+/**
+ * V3.2 report: the business report is clean (answer → KPIs → relevant charts →
+ * limitations → next questions); verification/provenance, data/SQL and
+ * save/export live in their own tabs.
+ */
+export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChartTypeChange?: (id: string, type: string) => void; capabilities?: any; onFollowUp?: (question: string) => void;
+  initialTab?: 'report' | 'verification' | 'data' | 'export'; onSave?: () => void; onExport?: () => void }> = ({ report, editing, onChartTypeChange, capabilities, onFollowUp, initialTab = 'report', onSave, onExport }) => {
   const [showAll, setShowAll] = useState(false);
   const [view, setView] = useState('all');
-  useEffect(() => { setView('all'); setShowAll(false); }, [report.session_id, report.revision]);
+  const [tab, setTab] = useState<string>(initialTab);
+  useEffect(() => { setView('all'); setShowAll(false); setTab(initialTab); }, [report.session_id, report.revision]);
   const [resultId, setResultId] = useState<string | null>(null);
   // Governed value labels (e.g. ISO weekday 1 → "Thứ Hai") come from capabilities.
   const valueLabels = capabilities?.dimension_value_labels || {};
@@ -82,11 +94,13 @@ export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChar
   const activeResult = results.find(([id]) => id === resultId) || results.find(([,data]: any) => (data.total_rows ?? data.rows?.length) > 1) || results[0];
   const forecasts = (report.forecasts || []).length > 0;
   const tabs = missionTabs(dashboardChartTabs(ordered), report.mission_layout, { forecast: forecasts });
-  const activeTab = tabs.find(tab => tab.id === view) || tabs[0];
+  const activeTab = tabs.find(t => t.id === view) || tabs[0];
   const visibleCharts = view === 'all' ? [...(showAll ? ordered : primary)] : activeTab.charts;
-  const minimum = Math.max(4, report.quality_assessment?.verification_checks?.find((c: any) => c.id === 'analysis_depth_coverage')?.total || report.diagnostics?.minimum_visuals || 0);
+  const minimum = Math.max(report.verification ? 1 : 4, report.quality_assessment?.verification_checks?.find((c: any) => c.id === 'analysis_depth_coverage')?.total || report.diagnostics?.minimum_visuals || 0);
   const context = reportContext(report, capabilities);
   const definitions: Record<string, string> = Object.fromEntries((report.analysis_explanation || []).flatMap((o: any) => (o.metrics || []).map((m: any) => [m.id, m.business_meaning])));
+  const caveats = [...new Set((report.charts || []).flatMap((c: any) => c.insight?.caveats || []))].slice(0, 4) as string[];
+  const sql = report.sql ? Object.entries(report.sql).map(([name, text]) => `-- ${name}\n${text}`).join('\n\n') : report.sql_query;
   return <div className="space-y-5">
     <section data-report-context className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600 grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-4">
       {context.mission && <p><span className="text-slate-400">Nhiệm vụ:</span> <strong className="text-slate-800">{context.mission}</strong></p>}
@@ -94,22 +108,32 @@ export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChar
       <p><span className="text-slate-400">Thời gian:</span> {context.time}</p>
       {!!context.sources.length && <p className="truncate" title={context.sources.join(' · ')}><span className="text-slate-400">Nguồn:</span> {context.sources.join(' · ')}</p>}
     </section>
+    <div role="tablist" aria-label="Phần báo cáo" className="flex flex-wrap gap-1 border-b border-slate-200">{REPORT_TABS.map(([id, label]) =>
+      <button key={id} type="button" role="tab" id={`report-tab-${id}`} aria-selected={tab === id} aria-controls={`report-panel-${id}`} onClick={() => setTab(id)} data-report-tab={id}
+        className={`-mb-px border-b-2 px-3 py-2 text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${tab === id ? 'border-emerald-500 text-emerald-800' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>{label}</button>)}</div>
+    {tab === 'report' && <div id="report-panel-report" role="tabpanel" aria-labelledby="report-tab-report" className="space-y-5">
+    {!!report.short_answer?.length && <section data-short-answer className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4"><h3 className="text-xs font-semibold text-emerald-900 mb-1.5">Trả lời ngắn</h3>
+      <ul className="space-y-1 text-sm text-slate-800 leading-relaxed">{report.short_answer.map((t: string, i: number) => <li key={i}>{t}</li>)}</ul></section>}
     {report.mission_layout?.caveat && <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">{report.mission_layout.caveat}</p>}
     {!!report.data_warnings?.length && <details className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800"><summary className="cursor-pointer font-medium">{report.data_warnings.length} lưu ý về dữ liệu · Xem chi tiết</summary><ul className="mt-2 space-y-1">{report.data_warnings.map((w: string, i: number) => <li key={i}>{w}</li>)}</ul></details>}
     <KpiStrip cards={kpiStrip(highlights, report)} />
     {!!findings.length && <section className="rounded-xl border border-slate-200 bg-white p-4"><h3 className="text-xs font-semibold text-slate-900 mb-3">Điểm nổi bật</h3><div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">{findings.map((f: any, i: number) => <div key={i} className="text-xs text-slate-600 leading-relaxed"><span className="inline-block w-1.5 h-1.5 bg-teal-500 rounded-full mr-2" />{f.text}{f.evidence_id && <a href={`#evidence-${encodeURIComponent(f.evidence_id)}`} className="block text-blue-600 mt-1">Đối chiếu dữ liệu ↗</a>}</div>)}</div></section>}
-    <div className="flex flex-wrap gap-2 items-center justify-between"><h3 className="text-sm font-semibold text-slate-900">Các góc nhìn phân tích</h3><span className="text-xs text-slate-400">{selected.charts.length} biểu đồ{selected.duplicateCount ? ` · ${selected.duplicateCount} góc nhìn trùng đã gộp` : ''}</span></div>
+    <div className="flex flex-wrap gap-2 items-center justify-between"><h3 className="text-sm font-semibold text-slate-900">Các góc nhìn phân tích</h3><span className="text-xs text-slate-400">{selected.charts.length} biểu đồ{selected.duplicateCount ? ` · ${selected.duplicateCount} góc nhìn trùng đã gộp` : ''}{report.mission_evidence?.dropped?.length ? ` · ${report.mission_evidence.dropped.length} góc nhìn không liên quan đã lọc` : ''}</span></div>
     {minimum > selected.charts.length && <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">Mới có {selected.charts.length}/{minimum} góc nhìn cần thiết. Báo cáo phân tích chưa đầy đủ biểu đồ; xem các giới hạn trong mục kiểm chứng.</p>}
-    {tabs.length > 1 && <div role="tablist" aria-label="Góc nhìn biểu đồ" className="flex flex-wrap gap-2">{tabs.map(tab => <button key={tab.id} id={`chart-tab-${tab.id}`} role="tab" aria-selected={activeTab.id === tab.id} aria-controls="analysis-chart-panel" onClick={() => setView(tab.id)} className={`rounded-lg border px-3 py-2 text-xs ${activeTab.id === tab.id ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-600'}`}>{tab.label}{tab.id === 'forecast' ? '' : ` · ${tab.charts.length}`}</button>)}</div>}
+    {tabs.length > 1 && <div role="tablist" aria-label="Góc nhìn biểu đồ" className="flex flex-wrap gap-2">{tabs.map(t => <button key={t.id} id={`chart-tab-${t.id}`} role="tab" aria-selected={activeTab.id === t.id} aria-controls="analysis-chart-panel" onClick={() => setView(t.id)} className={`rounded-lg border px-3 py-2 text-xs ${activeTab.id === t.id ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-600'}`}>{t.label}{t.id === 'forecast' ? '' : ` · ${t.charts.length}`}</button>)}</div>}
     <div id="analysis-chart-panel" role={tabs.length > 1 ? 'tabpanel' : undefined} aria-labelledby={tabs.length > 1 ? `chart-tab-${activeTab.id}` : undefined} className="space-y-4">
     {(view === 'forecast' || (view === 'all' && report.analysis_mission === 'forecast')) && <ForecastPanel forecasts={report.forecasts} coverage={capabilities?.data_coverage} />}
     {view !== 'forecast' && <AnalystViews charts={visibleCharts} compact editing={editing} onChartTypeChange={onChartTypeChange} definitions={definitions} />}
     {view === 'all' && forecasts && report.analysis_mission !== 'forecast' && <ForecastPanel forecasts={report.forecasts} coverage={capabilities?.data_coverage} />}
     </div>
-    {!selected.charts.length && !forecasts && <div role="status" className="rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600 leading-relaxed">Chưa có biểu đồ phù hợp được kiểm chứng cho kết quả này. Xem bảng dữ liệu đối chiếu và mục kiểm chứng bên dưới để biết phần trình bày còn thiếu.</div>}
+    {!selected.charts.length && !forecasts && <div role="status" className="rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600 leading-relaxed">Chưa có biểu đồ phù hợp được kiểm chứng cho kết quả này. Xem bảng dữ liệu trong tab “Dữ liệu / SQL” và mục “Kiểm chứng & nguồn”.</div>}
     {view === 'all' && selected.charts.length > primary.length && <button onClick={() => setShowAll(!showAll)} className="w-full rounded-xl border border-slate-200 py-3 text-xs text-slate-600 hover:bg-white">{showAll ? 'Thu gọn biểu đồ' : `Xem thêm ${selected.charts.length - primary.length} góc nhìn chi tiết`}</button>}
+    {!!caveats.length && <section data-report-limitations className="rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600"><h3 className="font-semibold text-slate-900 mb-2">Giới hạn quan trọng</h3><ul className="space-y-1">{caveats.map((c, i) => <li key={i}>• {c}</li>)}</ul></section>}
     {onFollowUp && <FollowUpChips items={report.follow_up_questions} onPick={onFollowUp} disabled={editing} />}
-    <AnalysisQualityScore assessment={report.quality_assessment} />
+    <p className="text-[11px] text-slate-400">Chi tiết kiểm chứng, nguồn và SQL nằm ở các tab bên trên; báo cáo chỉ hiển thị góc nhìn gắn với yêu cầu của bạn.</p>
+    </div>}
+    {tab === 'verification' && <div id="report-panel-verification" role="tabpanel" aria-labelledby="report-tab-verification"><VerificationPanel report={report} /></div>}
+    {tab === 'data' && <div id="report-panel-data" role="tabpanel" aria-labelledby="report-tab-data" className="space-y-5">
     {!!results.length && <section className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
       <div className="flex justify-between gap-3"><h3 className="text-sm font-semibold text-slate-900">Bảng dữ liệu đối chiếu</h3><span className="text-xs text-slate-400">{results.length} phần phân tích</span></div>
       <div role="tablist" aria-label="Bảng kết quả phân tích" className="flex flex-wrap gap-2">{results.map(([id], index) => {
@@ -118,8 +142,16 @@ export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChar
       })}</div>
       {activeResult && <div role="tabpanel"><AnalystResultTable key={activeResult[0]} result={activeResult[1]} valueLabels={valueLabels} sessionId={report.session_id} queryId={activeResult[0]} title={report.analysis_explanation?.find((o: any) => o.query_id === activeResult[0])?.lens_label} /></div>}
     </section>}
+    {sql && <details className="rounded-2xl border border-slate-200 bg-white p-4"><summary className="cursor-pointer text-sm font-semibold text-slate-700">SQL do máy chủ biên dịch (read-only)</summary><pre className="mt-3 bg-slate-900 text-slate-200 p-4 rounded-xl text-xs overflow-auto">{sql}</pre></details>}
     <details className="rounded-2xl border border-slate-200 bg-white p-4"><summary className="cursor-pointer text-sm font-semibold text-slate-700">Diễn giải đầy đủ</summary><div className="text-sm text-slate-600 leading-relaxed mt-4"><p>{report.executive_summary}</p><AnalystOptionalNarrative report={report} /></div></details>
     <AnalystEvidence report={report} />
+    </div>}
+    {tab === 'export' && <div id="report-panel-export" role="tabpanel" aria-labelledby="report-tab-export" className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3 text-xs text-slate-600">
+      <p>Bản Word gồm câu hỏi, phạm vi, thời gian, KPI, nhận định có bằng chứng, biểu đồ liên quan kèm nhận định và các giới hạn; chi tiết kiểm chứng nằm ở phụ lục.</p>
+      <p>Báo cáo lưu kèm dấu vân tay danh mục, phiên bản kiểm chứng, định nghĩa chỉ số và ánh xạ biểu đồ → yêu cầu để xem lại về sau.</p>
+      <div className="flex flex-wrap gap-2">{onSave && <button type="button" onClick={onSave} className="rounded-lg bg-slate-900 px-3 py-2 font-semibold text-white">Lưu báo cáo</button>}
+        {onExport && <button type="button" onClick={onExport} className="rounded-lg border border-slate-300 px-3 py-2 font-semibold text-slate-700">Xem & xuất Word</button>}</div>
+    </div>}
   </div>;
 };
 

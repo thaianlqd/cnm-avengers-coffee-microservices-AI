@@ -433,8 +433,21 @@ def render(v, a, index, max_categories=100):
         output["title"] = f"Top {a.plan.ranking.top_n} — " + output["title"]
         if metric != a.plan.ranking.metric:
             output["title"] += " trong tập xếp hạng theo " + a.grounded.metrics[a.plan.ranking.metric]["business_name"]
+    # V3.2: a title names its grouping axis; two views of one metric must not
+    # look identical ("Doanh thu" vs "Doanh thu theo chi nhánh").
+    axes = " và ".join(a.grounded.dimensions[d]["business_name"].lower() for d in visible_dimensions(a)
+                       if d in a.grounded.dimensions)
+    if a.plan.ranking:
+        if axes:
+            output["title"] += " theo " + axes
     elif a.plan.kind == "trend":
         output["title"] += " theo " + {"day": "ngày", "week": "tuần", "month": "tháng", "quarter": "quý", "year": "năm"}[a.plan.granularity]
+        if axes:
+            output["title"] += ", chia theo " + axes
+    elif axes:
+        output["title"] += " theo " + axes
+    if v.chart_type in ("donut", "stacked_100") and not output["title"].startswith("Tỷ trọng"):
+        output["title"] = "Tỷ trọng " + output["title"][:1].lower() + output["title"][1:]
     output["title"] += " — " + population_label(a)
     output.update(selection="Top N" if a.plan.ranking else "limited" if a.plan.explicit_limit else "complete", layout="wide" if v.chart_type in ("line", "area", "multi_line", "heatmap", "scatter") else "standard")
     if a.plan.kind == "trend":

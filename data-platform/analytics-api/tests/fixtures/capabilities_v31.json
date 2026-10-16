@@ -1,8 +1,8 @@
 {
  "status": "ready",
  "version": "3.0",
- "fingerprint": "b27d7ad922a2ff490dc62a8514b38fa0177866b8dc7e1628f45394865036cd5e",
- "registry_fingerprint": "722036ee22fbf2f7c7bf7365be7abc16337137c172da15e24d699f90356403db",
+ "fingerprint": "97b9471d50633e64685f20d2f9855305230b68a27ade136af6cd1074a125d30b",
+ "registry_fingerprint": "4fe247e56bc34eb4c69ebaa31bab946f8976c9933127fbd8d09a3ec494f35a88",
  "domains": [
   {
    "id": "orders",
@@ -2489,15 +2489,30 @@
  "analysis_depths": [
   {
    "id": "focused",
-   "label": "Tập trung"
+   "label": "Tập trung",
+   "minimum_views": 1,
+   "target_views": 2,
+   "max_supporting_operations": 0,
+   "max_segment_dimensions": 0,
+   "description": "Tập trung: chỉ các góc nhìn trả lời trực tiếp câu hỏi."
   },
   {
    "id": "deep",
-   "label": "Phân tích sâu"
+   "label": "Phân tích sâu",
+   "minimum_views": 4,
+   "target_views": 5,
+   "max_supporting_operations": 6,
+   "max_segment_dimensions": 1,
+   "description": "Phân tích sâu: thêm tối đa 6 góc nhìn hỗ trợ đúng phạm vi; tự tìm 1 chiều diễn biến liên quan; đối chiếu miền dữ liệu liên quan."
   },
   {
    "id": "comprehensive",
-   "label": "Phân tích toàn diện"
+   "label": "Phân tích toàn diện",
+   "minimum_views": 6,
+   "target_views": 8,
+   "max_supporting_operations": 8,
+   "max_segment_dimensions": 3,
+   "description": "Phân tích toàn diện: thêm tối đa 8 góc nhìn hỗ trợ đúng phạm vi; tự tìm 3 chiều diễn biến liên quan; đối chiếu miền dữ liệu liên quan."
   }
  ],
  "time_presets": [
@@ -2576,7 +2591,11 @@
     "Bình Dương",
     "Đồng Nai",
     "Khánh Hòa",
-    "Quảng Ninh"
+    "Quảng Ninh",
+    "Thừa Thiên - Huế",
+    "Bà Rịa - Vũng Tàu",
+    "Thanh Hóa",
+    "Kiên Giang"
    ],
    "searchable": false
   },
@@ -4640,6 +4659,35 @@
     "previous_period",
     "forecast"
    ],
+   "input_contract": {
+    "required": [
+     "metric",
+     "time"
+    ],
+    "optional": [
+     "dimension",
+     "scope"
+    ],
+    "time_control": "period",
+    "max_scope_filters": 2,
+    "chart_roles": [
+     "kpi",
+     "trend",
+     "breakdown",
+     "ranking"
+    ],
+    "evidence_roles": [
+     "scalar",
+     "trend",
+     "breakdown"
+    ],
+    "depth": true,
+    "accepts_intents": [
+     "overview",
+     "trend",
+     "composition"
+    ]
+   },
    "status": "available",
    "reason": null,
    "metrics": [
@@ -4731,6 +4779,32 @@
     "drilldown",
     "previous_period"
    ],
+   "input_contract": {
+    "required": [
+     "metric",
+     "dimension",
+     "group_a",
+     "group_b",
+     "time"
+    ],
+    "optional": [
+     "scope"
+    ],
+    "time_control": "period",
+    "max_scope_filters": 2,
+    "chart_roles": [
+     "group_kpi",
+     "comparison",
+     "difference_table"
+    ],
+    "evidence_roles": [
+     "group_gap"
+    ],
+    "depth": true,
+    "accepts_intents": [
+     "compare"
+    ]
+   },
    "status": "available",
    "reason": null,
    "metrics": [
@@ -4818,6 +4892,33 @@
     "trend",
     "drilldown"
    ],
+   "input_contract": {
+    "required": [
+     "metric",
+     "dimension",
+     "n",
+     "direction",
+     "time"
+    ],
+    "optional": [
+     "scope"
+    ],
+    "time_control": "period",
+    "max_scope_filters": 2,
+    "chart_roles": [
+     "ranking",
+     "rank_table",
+     "contribution"
+    ],
+    "evidence_roles": [
+     "leader",
+     "top_gap"
+    ],
+    "depth": true,
+    "accepts_intents": [
+     "ranking"
+    ]
+   },
    "status": "available",
    "reason": null,
    "metrics": [
@@ -4903,6 +5004,30 @@
     "drilldown",
     "compare"
    ],
+   "input_contract": {
+    "required": [
+     "metric",
+     "granularity",
+     "time"
+    ],
+    "optional": [
+     "scope"
+    ],
+    "time_control": "period",
+    "max_scope_filters": 2,
+    "chart_roles": [
+     "time_series",
+     "period_change"
+    ],
+    "evidence_roles": [
+     "change",
+     "change_pct"
+    ],
+    "depth": true,
+    "accepts_intents": [
+     "trend"
+    ]
+   },
    "status": "available",
    "reason": null,
    "metrics": [
@@ -4983,6 +5108,30 @@
     "ranking",
     "trend"
    ],
+   "input_contract": {
+    "required": [
+     "metric",
+     "dimension",
+     "time"
+    ],
+    "optional": [
+     "scope"
+    ],
+    "time_control": "period",
+    "max_scope_filters": 2,
+    "chart_roles": [
+     "part_to_whole",
+     "breakdown"
+    ],
+    "evidence_roles": [
+     "contribution_share",
+     "concentration"
+    ],
+    "depth": true,
+    "accepts_intents": [
+     "composition"
+    ]
+   },
    "status": "available",
    "reason": null,
    "metrics": [
@@ -5057,6 +5206,29 @@
     "trend",
     "drilldown"
    ],
+   "input_contract": {
+    "required": [
+     "metric",
+     "horizon",
+     "cadence"
+    ],
+    "optional": [
+     "scope"
+    ],
+    "time_control": "history",
+    "max_scope_filters": 1,
+    "chart_roles": [
+     "forecast",
+     "history"
+    ],
+    "evidence_roles": [
+     "forecast_backtest"
+    ],
+    "depth": true,
+    "accepts_intents": [
+     "forecast"
+    ]
+   },
    "status": "available",
    "reason": null,
    "metrics": [
@@ -5102,6 +5274,29 @@
     "drilldown",
     "trend"
    ],
+   "input_contract": {
+    "required": [
+     "time"
+    ],
+    "optional": [
+     "scope",
+     "signals"
+    ],
+    "time_control": "period",
+    "max_scope_filters": 2,
+    "chart_roles": [
+     "risk_threshold",
+     "risk_breakdown",
+     "risk_trend"
+    ],
+    "evidence_roles": [
+     "risk_signal"
+    ],
+    "depth": true,
+    "accepts_intents": [
+     "risk_watch"
+    ]
+   },
    "status": "available",
    "reason": null,
    "metrics": [
@@ -5148,6 +5343,28 @@
     "ranking",
     "drilldown"
    ],
+   "input_contract": {
+    "required": [
+     "metric",
+     "metric_b",
+     "dimension"
+    ],
+    "optional": [
+     "time"
+    ],
+    "time_control": "period",
+    "max_scope_filters": 2,
+    "chart_roles": [
+     "scatter"
+    ],
+    "evidence_roles": [
+     "relationship_strength"
+    ],
+    "depth": true,
+    "accepts_intents": [
+     "relationship"
+    ]
+   },
    "status": "partial",
    "reason": "Chỉ hỗ trợ quan hệ giữa các chỉ số trong cùng một nhóm phân tích (ví dụ shipper).",
    "metrics": [

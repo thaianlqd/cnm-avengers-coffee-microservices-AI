@@ -105,10 +105,61 @@ class AnalysisPipeline:
                     "analysis_scope",
                     "branch",
                     "date_range",
+                    "input_mode",
+                    "guided_contract",
+                    "allow_deterministic_upgrade",
                 )
             },
             sort_keys=True,
         )
+
+    def guided_context(self, request, catalog, reference, context):
+        """V3.2: deterministic intent for a guided (or safely upgradable) request.
+
+        Guided slots are re-validated against the registry; nothing from the
+        browser is trusted. Free text is upgraded only when the server's own
+        preflight resolves every required field with no ambiguity.
+        """
+        from services import mission_contract_service as missions
+        from services.workspace_service import require_mission
+        self.semantic_info.update(input_mode=getattr(request, "input_mode", "free_text"), guided_contract_used=False)
+        if getattr(request, "input_mode", "free_text") == "guided":
+            mission = require_mission(catalog.registry, request.analysis_mission)
+            if not mission or not request.guided_contract:
+                raise AnalysisError("guided_contract_invalid", "Guided request needs a mission and its contract")
+            slots = missions.validate_guided(catalog, mission["id"], request.guided_contract.model_dump(exclude_none=True),
+                                             scope_filters=context.get("required_filters") or [])
+            source, period = "builder", context.get("required_period")
+        elif (getattr(request, "allow_deterministic_upgrade", False) and request.natural_input
+              and not request.analysis_module_id and not request.analysis_module_name):
+            from services import preflight_service, data_coverage_service
+            pf = preflight_service.run(request.prompt, request.time_range.model_dump(mode="json") if request.time_range else None,
+                                       request.analysis_scope.model_dump(mode="json") if request.analysis_scope else None,
+                                       request.analysis_mission, reference, catalog=catalog, coverage=data_coverage_service.peek())
+            # Server-side precheck (never trust the browser's preflight): nonsense
+            # and mission contradictions stop before any provider call.
+            for code in ("unrecognized_question", "mission_mismatch", "analysis_target_missing", "metric_needed"):
+                if any(f["code"] == code for f in pf.get("findings", [])):
+                    self.semantic_info.update(preflight_state=pf.get("state"), failure_stage="PRECHECK")
+                    raise AnalysisError("unrecognized_question" if code == "unrecognized_question" else
+                                        "mission_mismatch" if code == "mission_mismatch" else "clarification",
+                                        "Deterministic precheck rejected the request")
+            guided = pf.get("guided_contract") or {}
+            if pf.get("state") != "READY_GUIDED" or guided.get("source") != "auto_upgrade" or guided.get("question_filters"):
+                self.semantic_info["preflight_state"] = pf.get("state")
+                return
+            slots, source = guided["slots"], "auto_upgrade"
+            period = context.get("required_period") or guided.get("time")
+            if period and context.get("required_period") is None and guided.get("time"):
+                # The question's own explicit window becomes the authoritative period.
+                context["required_period"] = {"start": period["start"], "end": period["end"]}
+            self.semantic_info["preflight_state"] = pf.get("state")
+        else:
+            return
+        context["guided_intent"] = missions.guided_intent(catalog, slots, period)
+        self.semantic_info.update(guided_contract_used=True, guided_source=source,
+                                  guided_slots={k: v for k, v in slots.items() if k != "signals"},
+                                  preflight_state="READY_GUIDED")
 
     def reference(self, request, catalog):
         from services.analysis_understanding import catalog_today
@@ -142,6 +193,10 @@ class AnalysisPipeline:
         }
         context.update(natural_input=request.natural_input)
         self.record_mission(request, catalog)
+        if self.semantic_info.get("analysis_mission"):
+            # V3.2: the selected mission bounds supporting evidence (never the
+            # requested meaning). Kept out of the interpreter payload.
+            context["analysis_mission"] = self.semantic_info["analysis_mission"]
         if request.natural_input:
             context.update(analysis_context=request.analysis_context, analysis_expectation=request.analysis_expectation)
         ui = request.time_range
@@ -396,6 +451,7 @@ class AnalysisPipeline:
         catalog = self.catalog()
         reference = self.reference(request, catalog)
         context = self.ui_context(request, catalog, reference)
+        self.guided_context(request, catalog, reference, context)
         self.semantic_info.update(local_metadata_ms=round((time.perf_counter()-self.started)*1000,2),
             catalog_fingerprint_prefix=catalog.fingerprint[:12])
         previous, concepts, module = {}, [], None
@@ -586,6 +642,7 @@ class AnalysisPipeline:
                 return self.report(artifacts, plan, catalog, session, reference)
         reference = self.reference(request, catalog)
         context = self.ui_context(request, catalog, reference)
+        self.guided_context(request, catalog, reference, context)
         artifacts, plan = self.agent(catalog, reference).run(request.prompt, context)
         self.enforce_ui(artifacts, context)
         session = create_session(request.prompt, request.domain or "auto", owner_id=self.owner_id)
@@ -715,6 +772,19 @@ class AnalysisPipeline:
             catalog=catalog,
             minimum_visuals=self.semantic_info.get('minimum_visuals',0),
         )
+        # V3.2 mission evidence contract: every visible chart maps to a requirement;
+        # charts outside the mission's governed evidence or over the depth budget
+        # for SUPPORTING views are dropped (values are never altered).
+        from services import chart_relevance_service
+        mission_hint = self.semantic_info.get("analysis_mission") or (session.ui_constraints or {}).get("analysis_mission")
+        coverage_map = self.semantic_info.get("resolved_requirement_coverage") or session.requirement_coverage
+        relevance = None
+        if coverage_map:
+            relevance = chart_relevance_service.apply(dashboard, artifacts, catalog, mission_id=mission_hint,
+                depth=self.semantic_info.get("analysis_depth", session.analysis_depth), coverage=coverage_map,
+                intent=self.semantic_info.get("semantic_intent") or session.semantic_intent, evidence=evidence)
+            self.semantic_info.update(dropped_irrelevant_charts=relevance["dropped_irrelevant_charts"],
+                                      dropped_budget_charts=len(relevance["dropped"]) - relevance["dropped_irrelevant_charts"])
         if session.natural_input:
             for a in artifacts.values():
                 if a.query.role != "requested":
@@ -740,6 +810,12 @@ class AnalysisPipeline:
         # Forecast numbers are computed here from verified history only.
         from services.forecast_service import report_forecasts
         forecasts = report_forecasts(artifacts, self.semantic_info.get("resolved_requirement_coverage"), catalog, reference)
+        # V3.2 deterministic chart insights (0 provider calls) and a short answer
+        # built only from verified, evidence-referenced facts of primary charts.
+        from services.chart_insight_service import chart_insights
+        insights = chart_insights(dashboard["charts"], artifacts, catalog, reference, mission_hint)
+        short_answer = [f["text"] for c in dashboard["charts"] if c.get("relevance_role", "primary") == "primary"
+                        for f in (c.get("insight") or {}).get("key_facts", [])[:1]][:3]
         from services.analytical_capacity_planner import AnalyticalCapacityContract
         from services.result_artifact_store import artifact_store, fingerprint, serialized
         capacity_contract = AnalyticalCapacityContract.from_env()
@@ -845,6 +921,10 @@ class AnalysisPipeline:
             "analysis_mission": mission["id"] if mission else None,
             "mission_layout": mission_layout(mission, dashboard["charts"]),
             "follow_up_questions": follow_up_questions(artifacts, catalog, mission),
+            "chart_insights": insights,
+            "short_answer": short_answer,
+            "mission_evidence": relevance,
+            "input_mode": self.semantic_info.get("input_mode", "free_text"),
             "evidence": evidence,
             "analysis_explanation": explain_analysis(
                 artifacts, catalog, dashboard["charts"], evidence
@@ -949,6 +1029,32 @@ class AnalysisPipeline:
         bound_response(response, capacity_contract)
         self.semantic_info["failure_stage"] = "QUALITY_VERIFICATION"
         response["quality_assessment"] = assess_report(response, catalog, artifacts=artifacts)
+        from services import verification_reconciliation_service as verification
+        from services.chart_insight_service import verify_insights
+        structural = verification.reconcile(artifacts, catalog, runner=None)
+        relevance_check = chart_relevance_service.verify(response["charts"], artifacts, catalog, mission_id=mission_hint,
+                                                         coverage=coverage_map) if coverage_map else {"total": 0, "passed": 0, "charts": []}
+        response["verification"] = verification.verification_report(
+            reconciliation=structural, relevance=relevance_check,
+            grounding_result=verification.grounding(safe_plan["claims"], evidence, verify_insights(insights, artifacts)),
+            forecasts=forecasts, requirement_coverage=coverage_map, internal_score=response["quality_assessment"].get("score"))
+        response["verification"]["snapshot"] = {"registry_fingerprint": catalog.registry_fingerprint,
+            "catalog_fingerprint": catalog.fingerprint, "verification_version": verification.VERSION,
+            "metric_definitions": {m: catalog.registry["metrics"][m].get("business_definition") for a in artifacts.values()
+                                   for m in a.plan.metrics if m in catalog.registry["metrics"]},
+            "chart_requirements": {c["id"]: c.get("requirement_id") for c in response["charts"]},
+            "reference_date": reference.isoformat()}
+        self.semantic_info.update(verification_status=response["verification"]["status"],
+                                  chart_count=len(response["charts"]))
+        response["diagnostics"].update({k: self.semantic_info.get(k) for k in (
+            "verification_status", "dropped_irrelevant_charts", "input_mode", "guided_contract_used", "preflight_state",
+            "logical_provider_calls", "provider_http_attempts", "credential_failover_used") if k in self.semantic_info})
+        # V3.2 sanitized telemetry (no question text, key, slot value or SQL).
+        import logging as telemetry_logging  # report() also imports logging locally below
+        telemetry_logging.getLogger('ai-analytics').info('[V32Telemetry] %s', json.dumps({k: self.semantic_info.get(k) for k in (
+            "input_mode", "analysis_mission", "preflight_state", "guided_contract_used", "guided_source", "logical_provider_calls",
+            "provider_http_attempts", "credential_failover_used", "semantic_repair_count", "chart_count",
+            "dropped_irrelevant_charts", "verification_status", "analysis_depth")}, default=str))
         if response["quality_context"]["version"] == "2.8" and response["quality_assessment"]["status"] == "not_scored":
             raise AnalysisError("quality_verification","Report provenance failed independent verification")
         self.semantic_info["failure_stage"] = None
@@ -976,6 +1082,40 @@ class AnalysisPipeline:
         from services.session_service import save_session
         save_session(session)
         return response
+
+    def reconcile(self, session_id):
+        """V3.2 independent numeric/ranking oracle for an approved report.
+
+        Read-only aggregate queries compiled from the same governed metric
+        definitions but a different query shape; 0 provider calls. Run on demand
+        (verification tab) so report generation cost is unchanged.
+        """
+        from services.verification_reconciliation_service import OracleRunner, reconcile
+        from services.result_artifact_store import artifact_store
+        session = get_session(session_id)
+        if not session or not session.approved:
+            raise AnalysisError("session", "Validated server session required")
+        self.check_owner(session)
+        catalog = self.catalog()
+        if session.schema_fingerprint != catalog.fingerprint:
+            raise AnalysisError("schema_changed", "Refresh proposal")
+        reference = date.fromisoformat(session.agent_reference_date)
+        artifacts = {}
+        for id, a in session.agent_artifacts.items():
+            if a.result is None and a.result_ref:
+                a.result = artifact_store().get(a.result_ref)
+            artifacts[id] = a
+        agent = self.agent(catalog, reference, previous=session.agent_artifacts,
+                           known_concepts=session.agent_state.get("resolved_concepts", []))
+        agent.queries.ui_context = deepcopy(session.ui_constraints)
+        runner = OracleRunner(agent.queries)
+        result = reconcile(artifacts, catalog, runner)
+        result.update(provider_calls=0, measured_at=datetime.now().astimezone().isoformat(),
+                      registry_fingerprint=catalog.registry_fingerprint, session_revision=session.revision)
+        session.diagnostics = {**(session.diagnostics or {}), "independent_reconciliation": deepcopy(result)}
+        from services.session_service import save_session
+        save_session(session)
+        return result
 
     def restore_hybrid_meaning(self, session):
         if session.semantic_intent:

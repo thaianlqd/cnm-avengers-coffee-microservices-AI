@@ -474,7 +474,7 @@ class AnalyticalResolver:
             baseline_ui={k:v for k,v in self.ui.items() if k!='server_supporting_expansion'}
             baseline=AnalyticalResolver(self.catalog,self.reference,baseline_ui).resolve(
                 AnalysisIntentEnvelope(decision='analyze',requirements=requested))
-            from services.analysis_expansion_service import supporting_candidates, dashboard_policy, estimated_views
+            from services.analysis_expansion_service import supporting_candidates, dashboard_policy, estimated_views, mission_relevant
             from services.analytical_capacity_planner import AnalyticalCapacityContract
             from services.semantic_tools import SemanticTools
             from services.analytical_tool_contract import canonicalize
@@ -487,8 +487,11 @@ class AnalyticalResolver:
             signatures={identity(op) for op in baseline['operations']}
             selected=[]; added=0
             planned_views=estimated_views(baseline['operations'],self.catalog)
-            target_views=dashboard_policy(self.catalog)['target_views']
-            support_limit=6 if self.ui.get('minimum_visuals') else 3
+            policy=dashboard_policy(self.catalog,self.ui.get('server_supporting_expansion'))
+            target_views=policy['target_views']
+            support_limit=policy.get('max_supporting_operations',6 if self.ui.get('minimum_visuals') else 3)
+            parent_metrics={r.id:set(r.metric_ids) for r in requested}
+            mission_id=self.ui.get('analysis_mission')
             capacity=min(8,AnalyticalCapacityContract.from_env().operations)
             for candidate in supporting_candidates(self,baseline['intent'].requirements):
                 if ('executed_supporting_ids' in self.ui and
@@ -498,6 +501,8 @@ class AnalyticalResolver:
                     continue
                 if len(requested)+len(selected)>=16 or added>=support_limit:
                     break
+                if not mission_relevant(candidate,parent_metrics.get(candidate.supporting_for,set()),self.catalog,mission_id):
+                    continue
                 if planned_views>=target_views and 'scalar' not in candidate.derived_features:
                     continue
                 try:
@@ -524,7 +529,11 @@ class AnalyticalResolver:
         ordered = sorted(intent.requirements, key=lambda r: bool(r.supporting_for))
         requested_ops = {}
         support_count = 0
-        support_limit=6 if self.ui.get('minimum_visuals') else 3
+        from services.analysis_expansion_service import dashboard_policy as _policy
+        support_limit=(_policy(self.catalog,self.ui.get('server_supporting_expansion')).get('max_supporting_operations')
+            if self.ui.get('server_supporting_expansion') else None)
+        if support_limit is None:
+            support_limit=6 if self.ui.get('minimum_visuals') else 3
         from services.semantic_tools import SemanticTools
         scope_tools = SemanticTools(self.catalog, None)
         for raw in ordered:

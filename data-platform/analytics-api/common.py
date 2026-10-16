@@ -61,6 +61,26 @@ class AiAnalysisScope(BaseModel):
         return self
 
 
+class AiGuidedContract(BaseModel):
+    """V3.2 guided mission slots: canonical IDs chosen in the mission builder.
+
+    Never trusted: the server re-validates every field against the registry and
+    the mission input contract before building a deterministic intent.
+    """
+    model_config = ConfigDict(extra="forbid")
+    metric: Optional[str] = Field(default=None, max_length=64, pattern=r"^[a-z][a-z0-9_]{0,63}$")
+    metric_b: Optional[str] = Field(default=None, max_length=64, pattern=r"^[a-z][a-z0-9_]{0,63}$")
+    dimension: Optional[str] = Field(default=None, max_length=64, pattern=r"^[a-z][a-z0-9_]{0,63}$")
+    group_a: Optional[str] = Field(default=None, min_length=1, max_length=120)
+    group_b: Optional[str] = Field(default=None, min_length=1, max_length=120)
+    n: Optional[int] = Field(default=None, ge=1, le=100)
+    direction: Optional[Literal["top", "bottom"]] = None
+    granularity: Optional[Literal["day", "week", "month", "quarter", "year"]] = None
+    horizon: Optional[int] = Field(default=None, ge=1, le=366)
+    cadence: Optional[Literal["day", "week", "month"]] = None
+    signals: Optional[List[str]] = Field(default=None, max_length=12)
+
+
 class AiTextToReportRequest(BaseModel):
     refresh: bool = False
     proposal_revision: Optional[int] = None
@@ -82,6 +102,12 @@ class AiTextToReportRequest(BaseModel):
     domain: Optional[str] = Field(default="auto", pattern=r"^[a-z][a-z0-9_]{0,63}$")
     # V3.1 optional UX hint (dashboard organization); never semantic authority.
     analysis_mission: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z_]{0,31}$")
+    # V3.2: guided mission contract (0 provider calls) or free text. A guided
+    # request needs a mission; free text may be upgraded server-side only when
+    # the deterministic preflight resolves every required field.
+    input_mode: Literal["free_text", "guided"] = "free_text"
+    guided_contract: Optional[AiGuidedContract] = None
+    allow_deterministic_upgrade: bool = False
     # Session ID for tracking conversation across report generation and refinement turns.
     session_id: Optional[str] = None
     # Legacy filters remain accepted for older clients.
@@ -127,6 +153,8 @@ class AiPreflightRequest(BaseModel):
     analysis_scope: Optional[AiPreflightScope] = None
     analysis_mission: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z_]{0,31}$")
     reference_date: Optional[date] = None
+    input_mode: Optional[Literal["free_text", "guided"]] = None
+    guided_contract: Optional[AiGuidedContract] = None
 
 
 class AiRiskWatchRequest(BaseModel):

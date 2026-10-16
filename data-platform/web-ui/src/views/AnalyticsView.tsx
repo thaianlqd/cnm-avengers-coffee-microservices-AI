@@ -6,6 +6,7 @@ import { AnalysisMeaning } from '../components/AnalysisMeaning';
 import { AnalysisModules, AnalysisModuleSummary } from '../components/AnalysisModules';
 import { AnalystWorkspace } from '../components/workspace/AnalystWorkspace';
 import { analysisInputPayload } from '../utils/analysisInput.mjs';
+import { switchMissionDraft, workspaceRequestFields, type GuidedDraft } from '../utils/missionWorkspace.mjs';
 import { analysisPlanLabel } from '../utils/analysisPresentation.mjs';
 import { reportHeading } from '../utils/analystDashboardLayout.mjs';
 import { runAnalysisJob, jobStorageKey, jobStages } from '../utils/analysisJobs.mjs';
@@ -67,6 +68,9 @@ export const AnalyticsView: React.FC = () => {
   const [aiStep, setAiStep] = useState<1 | 2 | 3>(1);
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiMission, setAiMission] = useState<string | null>(null);
+  // V3.2: guided mission contract + an independent draft per mission.
+  const [aiGuided, setAiGuided] = useState<GuidedDraft | null>(null);
+  const missionDrafts = useRef<Record<string, any>>({});
   const [activeModule, setActiveModule] = useState<AnalysisModuleSummary | null>(null);
   const [aiTimeRange, setAiTimeRange] = useState('auto');
   const [aiDomain, setAiDomain] = useState('auto');
@@ -81,7 +85,8 @@ export const AnalyticsView: React.FC = () => {
     return () => controller.abort();
   }, []);
   // V3.1: question + time + scope + depth (+ optional mission hint); no context/expectation fields.
-  const aiInput = (prompt: string) => analysisInputPayload({ question: prompt, moduleId: activeModule?.module_id, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiAnalysisDepth, mission: aiMission });
+  const aiInput = (prompt: string) => ({ ...analysisInputPayload({ question: prompt, moduleId: activeModule?.module_id, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiAnalysisDepth, mission: aiMission }),
+    ...(activeModule ? {} : workspaceRequestFields(aiGuided, prompt)) });
   const [aiStatus, setAiStatus] = useState<any | null>(null);
 
   // Step 1: Pre-analysis proposal state
@@ -145,6 +150,7 @@ export const AnalyticsView: React.FC = () => {
     setIsGeneratingAi(false);
     setPendingClarification(null);
     setAiPrompt('');
+    setAiGuided(null);
     setAiPlan(null);
     setGeneratedReport(null);
     setReportVersions([]);
@@ -1205,7 +1211,8 @@ export const AnalyticsView: React.FC = () => {
           {rep.prompt && reportHeading(rep) !== rep.prompt && <details className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600"><summary className="cursor-pointer font-medium">Câu hỏi phân tích đầy đủ</summary><p className="mt-3 leading-relaxed">{rep.prompt}</p></details>}
           <AnalysisMeaning interpretation={rep.interpretation} compact />
           {showSqlCode && (rep.sql || rep.sql_query) && <pre className="bg-slate-900 text-slate-200 p-4 rounded-xl text-xs overflow-auto">{rep.sql ? Object.entries(rep.sql).map(([name, sql]) => `-- ${name}\n${sql}`).join('\n\n') : rep.sql_query}</pre>}
-          <AnalystDashboard report={rep} capabilities={aiCapabilities} editing={isRefining} onFollowUp={isFromSavedList ? undefined : q => { setAiPrompt(q); setAiStep(1); }} onChartTypeChange={rep.session_id ? (id, type) => handleFollowUpRefine('Đổi cách trình bày biểu đồ', rep, [{ chart_id: id, chart_type: type }]) : undefined} />
+          <AnalystDashboard report={rep} capabilities={aiCapabilities} editing={isRefining} onFollowUp={isFromSavedList ? undefined : q => { setAiPrompt(q); setAiGuided(null); setAiStep(1); }} onChartTypeChange={rep.session_id ? (id, type) => handleFollowUpRefine('Đổi cách trình bày biểu đồ', rep, [{ chart_id: id, chart_type: type }]) : undefined}
+            onSave={isFromSavedList ? undefined : handleSaveAiReport} onExport={() => handleOpenDocxPreview(rep)} />
         </> : <>
         {/* SECTION: Data Warnings / Sanity Alerts (Phase 3.3) */}
         {rep.data_warnings && rep.data_warnings.length > 0 && (
@@ -2539,8 +2546,22 @@ export const AnalyticsView: React.FC = () => {
           {aiStep === 1 && (
             <div className="space-y-6">
               <AnalystWorkspace capabilities={aiCapabilities} status={aiStatus} disabled={isProposingPlan || isGeneratingAi}
-                value={{ prompt: aiPrompt, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiAnalysisDepth, mission: aiMission }}
-                onChange={patch => { if ('prompt' in patch) { setAiPrompt(patch.prompt || ''); if (!patch.prompt) setAiPlan(null); } if ('time' in patch) setAiTimeRange(patch.time || 'auto'); if ('start' in patch) setAiStart(patch.start || ''); if ('end' in patch) setAiEnd(patch.end || ''); if ('scope' in patch) setAiScope(patch.scope); if ('depth' in patch) setAiAnalysisDepth(patch.depth || 'deep'); if ('mission' in patch) setAiMission(patch.mission ?? null); }}
+                value={{ prompt: aiPrompt, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiAnalysisDepth, mission: aiMission, guided: aiGuided }}
+                onChange={patch => {
+                  if ('mission' in patch && (patch.mission ?? null) !== aiMission) {
+                    // Mission switch = a mission-consistent workspace: restore that mission's own
+                    // draft and clear everything derived from the previous mission.
+                    const next = switchMissionDraft(missionDrafts.current, aiMission, patch.mission ?? null, { prompt: aiPrompt, guided: aiGuided });
+                    missionDrafts.current = next.drafts;
+                    setAiMission(patch.mission ?? null); setAiPrompt('prompt' in patch ? patch.prompt || '' : next.prompt);
+                    setAiGuided('prompt' in patch ? null : next.guided); setAiPlan(null); setPendingClarification(null); setGeneratedReport(null);
+                    return;
+                  }
+                  if ('prompt' in patch) { setAiPrompt(patch.prompt || ''); if (!patch.prompt) setAiPlan(null); }
+                  if ('guided' in patch) setAiGuided(patch.guided ?? null);
+                  if ('time' in patch) setAiTimeRange(patch.time || 'auto'); if ('start' in patch) setAiStart(patch.start || ''); if ('end' in patch) setAiEnd(patch.end || '');
+                  if ('scope' in patch) setAiScope(patch.scope); if ('depth' in patch) setAiAnalysisDepth(patch.depth || 'deep');
+                }}
                 onSubmit={() => handleProposePlan()}>
                 {/* Recent Questions Pill Bar */}
                 {chatHistory.length > 0 && (

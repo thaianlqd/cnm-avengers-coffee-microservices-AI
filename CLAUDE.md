@@ -32,8 +32,9 @@ web/mobile (React+Vite, Expo) và `data-platform` (AI Data Analyst / BI: Kafka, 
 - Mobile Expo: `npm run lint`, `node --test tests/*.test.mjs` (customer/shipper-mobile). Không có typecheck (JS thuần).
 - web-admin: `npm run lint`, `npm test`, `npm run build` · web-customer: `npm run lint`, `npm run build`.
 - data-platform/analytics-api: `docker compose -f docker-compose.data.yml exec -T analytics-api python -m tools.run_tests_v29`
-  (runner cô lập env; baseline V3.1: 876 test, 4 lỗi có sẵn). Eval: `... python -m evals.semantic_eval_v30 --mode offline`.
+  (runner cô lập env; baseline V3.2: 913 test, 4 lỗi có sẵn). Eval: `... python -m evals.semantic_eval_v30 --mode offline`.
   data-platform/web-ui: `npm run typecheck`, `npm run build`, `node --test src/utils/*.test.mjs`.
+  **Ưu tiên** `.claude/scripts/dp-test.sh backend|module tests.<m>|web|eval|all` — chỉ in tóm tắt + lỗi (tiết kiệm token).
 - Stack: `docker compose up -d --build <service>` · data: `docker compose -f docker-compose.data.yml up -d`. Không bao giờ `down -v`.
 
 ## Tài liệu (đọc khi cần, đừng nạp cả file)
@@ -47,4 +48,5 @@ web/mobile (React+Vite, Expo) và `data-platform` (AI Data Analyst / BI: Kafka, 
 - Không đọc/in `.env` hay secret; không lệnh phá hủy; không hoàn tác thay đổi không do mình tạo.
 - Chatbot: LLM chỉ hiểu ý; giá/tồn kho/giỏ/voucher/thanh toán/quyền ghi thuộc server. Mỗi lỗi sửa phải có test tái hiện.
 - Test mặc định offline; gọi LLM thật chỉ khi PLAN yêu cầu rõ.
+- Tiết kiệm token: `.claude/rules/token-budget.md` (đọc theo đoạn, output rút gọn, không spawn agent khi không được yêu cầu).
 - Skills: `/execute-plan`, `/verify-changes`, `/debug-failure`, `/review-changes`, `/explain-system`; subagent `code-reviewer`.

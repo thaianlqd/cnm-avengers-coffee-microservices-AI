@@ -183,9 +183,9 @@ class RefinementQualityTests(unittest.TestCase):
         from docx import Document
         _,_,report=self.report()
         text=' '.join(p.text for p in Document(generate_report_docx(report)).paragraphs)
-        self.assertIn('Độ chính xác đối chứng: Chưa đo',text)
+        self.assertIn('Đối chiếu độc lập: Chưa đo',text)  # V3.2 §53 wording
         self.assertNotIn('100/100',text)
-        self.assertIn('Điểm kiểm chứng tổng: 90/100',text)
+        self.assertIn('Mức hoàn tất kiểm chứng nội bộ: 90/100 (không phải độ chính xác AI)',text)  # V3.2 §53
         self.assertIn('Xác suất trả lời đúng: Chưa hiệu chuẩn',text)
 
 

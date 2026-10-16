@@ -703,13 +703,26 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
 
     doc.add_paragraph().paragraph_format.space_after = Pt(10)
 
+    # V3.2: short answer first, from verified evidence-referenced facts only.
+    for line in (report_data.get("short_answer") or [])[:3]:
+        doc.add_paragraph(str(line), style="List Bullet")
     quality = report_data.get("quality_assessment") or {}
     doc.add_heading("Mức độ kiểm chứng", level=2)
+    verification = report_data.get("verification") or {}
+    for metric in verification.get("metrics", []):
+        if metric.get("total"):
+            doc.add_paragraph(f"{metric['label']}: {metric['passed']}/{metric['total']}")
+    if verification:
+        doc.add_paragraph(f"Đối chiếu độc lập: {verification.get('independent_oracle_label', 'Chưa đo đối chiếu độc lập')}.")
     if quality.get('measurement_mode') == 'evidence_checks':
         if quality.get('score_method') and quality.get('score') is not None:
-            doc.add_paragraph(f"Điểm kiểm chứng tổng: {quality['score']:g}/100")
+            # Internal completeness index — explicitly NOT AI accuracy (V3.2 §53).
+            doc.add_paragraph(f"Mức hoàn tất kiểm chứng nội bộ: {quality['score']:g}/100 (không phải độ chính xác AI)")
             doc.add_paragraph(quality['score_method']['formula'])
-        doc.add_paragraph('Độ chính xác đối chứng: Chưa đo. Xác suất trả lời đúng: Chưa hiệu chuẩn.')
+        if not verification:
+            doc.add_paragraph('Đối chiếu độc lập: Chưa đo. Xác suất trả lời đúng: Chưa hiệu chuẩn.')
+        else:
+            doc.add_paragraph('Xác suất trả lời đúng: Chưa hiệu chuẩn.')
         for check in quality.get('verification_checks', []):
             if check['total']:
                 doc.add_paragraph(f"{check['label']}: {check['passed']}/{check['total']} đạt. {check['summary']}")
@@ -940,6 +953,16 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
                 p_img.paragraph_format.space_before = Pt(2)
                 p_img.paragraph_format.space_after = Pt(4)
                 p_img.add_run().add_picture(chart_img_buf, width=Inches(6.2))
+            insight = chart.get("insight") or {}
+            if insight:
+                # V3.2 "Nhận định từ biểu đồ" (deterministic, evidence-backed).
+                lines = [insight.get("why_relevant"), *(f.get("text") for f in insight.get("key_facts", [])[:3]),
+                         insight.get("interpretation"), *(f"Lưu ý: {c}" for c in insight.get("caveats", [])[:2])]
+                for line in [l for l in lines if l]:
+                    p_insight = doc.add_paragraph(style="List Bullet")
+                    p_insight.paragraph_format.space_after = Pt(1)
+                    run = p_insight.add_run(str(line))
+                    run.font.size = Pt(9)
             else:
                 # Text summary fallback
                 cdata = chart.get("data", [])

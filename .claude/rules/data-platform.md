@@ -17,7 +17,7 @@ paths:
 ## Lệnh (đã kiểm chứng 2026-10-15)
 - Toàn bộ test analytics-api (runner chuẩn, cô lập env của container, ~7,5 phút):
   `docker compose -f docker-compose.data.yml exec -T analytics-api python -m tools.run_tests_v29`
-  - Baseline 16/10/2026 (sau V3.1): **876 test, 4 lỗi có sẵn** (V3.0: 810) (`test_default_native_budget_blocks_reentry_without_reset`,
+  - Baseline 16/10/2026 (sau V3.2): **913 test, 4 lỗi có sẵn** (V3.1: 876, V3.0: 810) (`test_default_native_budget_blocks_reentry_without_reset`,
     `test_distribution_and_correlation_observational`, `test_native_provider_gemini_signature_and_groq_fallback`,
     `test_native_transport_failure_never_retries_or_falls_back`).
   - ĐỪNG dùng `unittest discover` trực tiếp: env của container (provider policy, Redis) gây ~200 lỗi giả.

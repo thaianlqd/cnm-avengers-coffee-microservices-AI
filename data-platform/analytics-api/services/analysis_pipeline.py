@@ -109,6 +109,11 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "unsupported": "Yêu cầu này chưa thể phân tích bằng các chỉ số và quan hệ dữ liệu hiện có.",
         "clarification": "Có một phần phạm vi phân tích cần xác nhận. Vui lòng làm rõ yêu cầu.",
         "not_analytical_request": "Chưa có yêu cầu phân tích dữ liệu trong nội dung bạn nhập. Hãy nêu điều muốn tìm hiểu, ví dụ: Doanh thu theo chi nhánh trong 30 ngày gần nhất.",
+        "unrecognized_question": "Chưa nhận ra nội dung phân tích dữ liệu trong câu hỏi. Hãy nêu chỉ số hoặc đối tượng cần phân tích.",
+        "mission_mismatch": "Câu hỏi thuộc một nhiệm vụ phân tích khác với nhiệm vụ đang chọn. Hãy chuyển nhiệm vụ hoặc viết lại câu hỏi.",
+        "guided_contract_invalid": "Cấu hình phân tích đã chọn chưa khớp danh mục dữ liệu được quản trị. Hãy chọn lại chỉ số, chiều hoặc phạm vi; hệ thống không gọi AI để đoán.",
+        "analysis_mission_unknown": "Nhiệm vụ phân tích không hợp lệ. Hãy chọn lại nhiệm vụ.",
+        "semantic_contract_drift": "Diễn giải chưa khớp danh mục dữ liệu: AI chọn chỉ số khác với chỉ số đã nhận diện chắc chắn trong câu hỏi. Hệ thống dừng thay vì tự đoán; hãy nêu rõ chỉ số cần dùng.",
         "semantic_intent_invalid": "Hệ thống chưa hoàn tất diễn giải sau các lượt phục hồi nội bộ. Yêu cầu của bạn được giữ nguyên; đây là lỗi xử lý của hệ thống.",
         "stale_approval": "Kế hoạch hoặc phiên bản đã thay đổi. Vui lòng duyệt lại đề xuất hiện tại.",
         "session_storage": "Kho phiên phân tích chưa sẵn sàng. Hệ thống chưa thực thi kế hoạch.",
@@ -179,8 +184,10 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
               'result_contract':'RESULT_VALIDATION', 'execution':'SQL_EXECUTION',
               'quality_verification':'QUALITY_VERIFICATION', 'dashboard_contract':'DASHBOARD_PLANNING',
               'semantic_intent_invalid':'SEMANTIC_INTENT', 'provider_invalid_json':'PROVIDER_FORMAT'}
-    from services.error_taxonomy import classify, is_provider_transport
+    from services.error_taxonomy import classify, is_provider_transport, analysis_stage
     typed = classify(category, layer_diagnostics)
+    if category in {"provider_rate_limited", "provider_daily_quota"} and (layer_diagnostics or {}).get("credential_failover_used"):
+        message = "Dịch vụ AI đang giới hạn quota trên cả thông tin xác thực chính và dự phòng. Câu hỏi chưa được diễn giải; hãy thử lại sau."
     stage = (layer_diagnostics or {}).get('failure_stage') or stages.get(category) or (
         'PROVIDER_TRANSPORT' if is_provider_transport(category) else 'PLAN_VALIDATION')
     actions = {'capacity_requires_choice':'ask_scope_or_granularity_choice',
@@ -197,6 +204,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         known['interpretation'] = structured['known_interpretation']
     return {
         "outcome": outcome,
+        "analysis_stage": analysis_stage(typed["error_type"]),
         "error_type": typed["error_type"],
         "analysis_state": typed["analysis_state"],
         "retryable": typed["retryable"],
@@ -240,6 +248,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         'failure': dict(stage=stage, code=category, user_impact=outcome,
             what_is_known=known, what_failed=category,
             retry_helps=typed['retryable'], error_type=typed['error_type'], analysis_state=typed['analysis_state'],
+            analysis_stage=analysis_stage(typed['error_type']),
             guidance=dict(title=typed['title'], description=typed['description'], next_action=typed['next_action']),
             needs_user_input=outcome=='NEEDS_INPUT', recommended_server_action=actions.get(category,
                 'request_clarification' if outcome=='NEEDS_INPUT' else 'inspect_failed_stage')),

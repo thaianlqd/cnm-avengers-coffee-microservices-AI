@@ -103,6 +103,19 @@ def result_page(session_id: str, query_id: str, request: Request, response: Resp
                             safe_failure(error)['message']) from None
 
 
+@router.post('/sessions/{session_id}/reconcile')
+def reconcile_report(session_id: str, request: Request, response: Response):
+    """V3.2 independent oracle for one approved report (read-only, 0 AI calls)."""
+    if not session_id or len(session_id) > 128:
+        raise HTTPException(404, 'Phiên phân tích không hợp lệ.')
+    pipeline = AnalysisPipeline(owner_id=browser_owner(request, response))
+    try:
+        return pipeline.reconcile(session_id)
+    except AnalysisError as error:
+        code = 404 if error.category in {'session', 'ownership'} else 409 if error.category == 'schema_changed' else 503
+        raise HTTPException(code, safe_failure(error)['message']) from None
+
+
 def _invoke(action, payload, owner_id=None):
     if hasattr(payload, "prompt") and not payload.prompt.strip():
         raise HTTPException(
@@ -211,7 +224,9 @@ def ai_preflight(payload: AiPreflightRequest, request: Request = None, response:
         raise HTTPException(status_code=429, detail="Kiểm tra câu hỏi quá nhanh; vui lòng thử lại sau giây lát.")
     return preflight_service.run(payload.question, payload.time.model_dump(mode="json") if payload.time else None,
                                  payload.analysis_scope.model_dump(mode="json") if payload.analysis_scope else None,
-                                 payload.analysis_mission, payload.reference_date, catalog=catalog)
+                                 payload.analysis_mission, payload.reference_date, catalog=catalog,
+                                 input_mode=payload.input_mode,
+                                 guided_contract=payload.guided_contract.model_dump(exclude_none=True) if payload.guided_contract else None)
 
 
 @router.post("/risk-watch")

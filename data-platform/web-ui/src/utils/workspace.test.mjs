@@ -60,11 +60,14 @@ test('template builder offers only compatible metrics and fills a Vietnamese que
   assert.equal(buildQuestion(caps, 'forecast', { metric: 'revenue', horizon: 3, cadence: 'month' }), 'Dự báo doanh thu 3 tháng tới');
   assert.equal(buildQuestion(caps, 'trend', { metric: 'order_cancellation_rate', granularity: 'week' }), 'Tỷ lệ hủy đơn theo tuần');
   assert.equal(buildQuestion(caps, 'compare', { metric: 'revenue' }), '');  // missing required slots
-  const Builder = component('../components/workspace/MissionPicker.tsx', 'QuestionTemplateBuilder');
-  const html = render(Builder, { capabilities: caps, mission: 'forecast', onFill: () => {} });
-  assert.ok(html.includes('Điền vào câu hỏi'));
+  // V3.2: the mission builder renders only the mission's contract slots and
+  // emits canonical IDs (guided contract), not text for the AI to rediscover.
+  const Builder = component('../components/workspace/MissionInputBuilder.tsx', 'MissionInputBuilder');
+  const html = render(Builder, { capabilities: caps, mission: 'forecast', onApply: () => {} });
+  assert.ok(html.includes('Dùng cấu hình này')); assert.ok(html.includes('không cần AI diễn giải'));
   assert.ok(!html.includes('Tỷ lệ hủy đơn'));  // not forecastable → not offered
   assert.ok(html.includes('tối đa 6'));
+  assert.ok(!html.includes('aria-label="Chiều phân tích"'));  // forecast has no grouping control
 });
 
 test('suggestion chips are real example questions, filtered by mission', () => {
@@ -79,7 +82,7 @@ test('"Hỏi được gì?" lists 16 groups with badges, dimensions, search and 
   assert.equal(groups.length, 16);
   const revenue = groups.flatMap(g => g.metrics).find(m => m.id === 'revenue');
   assert.deepEqual(revenue.badges, ['Có xu hướng', 'Dự báo được']);
-  assert.deepEqual(groups.flatMap(g => g.metrics).find(m => m.id === 'low_stock_count').badges, ['Hiện tại']);
+  assert.deepEqual(groups.flatMap(g => g.metrics).find(m => m.id === 'low_stock_count').badges, ['Hiện tại', 'Tín hiệu rủi ro']);  // V3.2: risk-signal badge
   assert.ok(capabilityGroups(caps, 'hủy đơn').flatMap(g => g.metrics).some(m => m.id === 'order_cancellation_rate'));
   assert.ok(unsupportedItems(caps).some(u => u.id === 'profit_margin' && u.nearest.length));
   const Drawer = component('../components/workspace/CapabilityDrawer.tsx', 'CapabilityDrawer');
@@ -121,12 +124,17 @@ test('preflight client debounces, cancels stale requests and never applies old r
   assert.deepEqual(results.map(r => r?.question), ['fresh']);
 });
 
-test('scope/depth bar uses server presets, scope types and depth ids; no context/expectation', () => {
-  const Bar = component('../components/workspace/ScopeDepthBar.tsx', 'ScopeDepthBar');
-  const html = render(Bar, { capabilities: caps, time: 'auto', start: '', end: '', scope: { mode: 'auto', filters: [] }, depth: 'deep', onTime() {}, onStart() {}, onEnd() {}, onScope() {}, onDepth() {} });
-  assert.ok(html.includes('Theo câu hỏi'));
+test('scope panel recognizes scope from the question; depth explains what it adds; no context/expectation', () => {
+  const Panel = component('../components/workspace/AnalysisScopePanel.tsx', 'AnalysisScopePanel');
+  const props = { capabilities: caps, preflight: null, showTime: true, showDepth: true, time: 'auto', start: '', end: '', scope: { mode: 'auto', filters: [] }, depth: 'deep', onTime() {}, onStart() {}, onEnd() {}, onScope() {}, onDepth() {} };
+  const html = render(Panel, props);
+  assert.ok(html.includes('Theo câu hỏi')); assert.ok(html.includes('Tự nhận diện từ câu hỏi'));
+  assert.ok(!html.includes('aria-label="Loại phạm vi"'));  // no default "Sản phẩm" picker until narrowing is requested
   for (const depth of caps.analysis_depths) assert.ok(html.includes(depth.label.replace('Phân tích toàn diện', 'Toàn diện')));
+  assert.ok(html.includes('data-depth-description'));
   assert.equal((html.match(/data-analysis-input=/g) || []).length, 3);
+  const detected = render(Panel, { ...props, preflight: { understood: { filters: [{ label: 'Thành phố', display: 'Hà Nội' }], dimensions: [{ label: 'Chi nhánh' }] } } });
+  assert.ok(detected.includes('Thành phố: Hà Nội')); assert.ok(detected.includes('Theo chi nhánh'));
   for (const removed of ['Ngữ cảnh phân tích', 'Mong muốn phân tích']) assert.ok(!html.includes(removed));
   const Workspace = component('../components/workspace/AnalystWorkspace.tsx', 'AnalystWorkspace');
   const page = render(Workspace, { capabilities: caps, status: null, value: { prompt: '', time: 'auto', start: '', end: '', scope: { mode: 'auto', filters: [] }, depth: 'deep', mission: null }, disabled: false, onChange() {}, onSubmit() {} });

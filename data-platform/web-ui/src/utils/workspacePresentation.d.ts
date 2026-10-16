@@ -21,3 +21,4 @@ export function metricDefinition(capabilities: any, metricId: string): { label: 
 export function riskRows(result: any): any[];
 export function riskBreachChart(result: any): Array<{ label: string; value: number }>;
 export function templateDefaults(capabilities: any, missionId: string, metric: any): Record<string, any>;
+export function riskSummary(result: any): { status: string; breached: number; total: number; headline: string; entities: Array<{ signal: string; label: string; value: string }>; followUps: Array<{ mission: string; text: string }> };

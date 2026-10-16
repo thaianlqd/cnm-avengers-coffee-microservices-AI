@@ -1,6 +1,6 @@
 import React from 'react';
 
-/** V3.1: one question field. Time/scope/depth live in ScopeDepthBar; the old
+/** V3.1: one question field. Time/scope/depth live in AnalysisScopePanel; the old
  * context/expectation fields were removed because the planner prioritizes the
  * question and they produced contradictions. */
 export const AnalysisInputForm: React.FC<{ prompt: string; disabled: boolean; maxChars?: number; blocked?: boolean;

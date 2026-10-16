@@ -3191,6 +3191,12 @@
             "id": "voucher_effectiveness",
             "label": "Số đơn, doanh thu và giảm giá chỉ mô tả việc dùng voucher. Chưa có chi phí đầy đủ hoặc nhóm đối chứng độc lập; không kết luận ROI hay tác động tăng doanh thu. Số đơn dùng voucher gồm mọi trạng thái; doanh thu và giảm giá chỉ gồm HOAN_THANH/DANG_GIAO."
           }
+        ],
+        "qualifier_dimensions": [
+          "promotion",
+          "promotion_id",
+          "redeemed_promotion",
+          "redeemed_promotion_code"
         ]
       },
       "discount_amount": {
@@ -3317,6 +3323,12 @@
             "id": "voucher_effectiveness",
             "label": "Số đơn, doanh thu và giảm giá chỉ mô tả việc dùng voucher. Chưa có chi phí đầy đủ hoặc nhóm đối chứng độc lập; không kết luận ROI hay tác động tăng doanh thu. Số đơn dùng voucher gồm mọi trạng thái; doanh thu và giảm giá chỉ gồm HOAN_THANH/DANG_GIAO."
           }
+        ],
+        "qualifier_dimensions": [
+          "promotion",
+          "promotion_id",
+          "redeemed_promotion",
+          "redeemed_promotion_code"
         ]
       },
       "quantity_sold": {
@@ -3440,6 +3452,11 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
+        ],
+        "qualifier_dimensions": [
+          "product",
+          "product_id",
+          "category"
         ]
       },
       "product_revenue": {
@@ -3496,6 +3513,11 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
+        ],
+        "qualifier_dimensions": [
+          "product",
+          "product_id",
+          "category"
         ]
       },
       "store_revenue": {
@@ -3575,7 +3597,13 @@
           "non_negative": true,
           "allowed_dimensions": [],
           "constraints": "Dự báo toàn phạm vi đã lọc; không dự báo theo nhóm."
-        }
+        },
+        "qualifier_dimensions": [
+          "store",
+          "store_id",
+          "city",
+          "store_type"
+        ]
       },
       "store_order_count": {
         "business_name": "Số đơn chi nhánh",
@@ -3644,7 +3672,13 @@
           "non_negative": true,
           "allowed_dimensions": [],
           "constraints": "Dự báo toàn phạm vi đã lọc; không dự báo theo nhóm."
-        }
+        },
+        "qualifier_dimensions": [
+          "store",
+          "store_id",
+          "city",
+          "store_type"
+        ]
       },
       "store_aov": {
         "business_name": "AOV chi nhánh",
@@ -3902,6 +3936,12 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
+        ],
+        "qualifier_dimensions": [
+          "payment_method",
+          "payment_gateway",
+          "payment_transaction_status",
+          "payment_status"
         ]
       },
       "total_deliveries": {
@@ -3958,7 +3998,10 @@
           "sao",
           "driver_rating",
           "Điểm đánh giá trung bình",
-          "driver rating"
+          "driver rating",
+          "điểm đánh giá shipper",
+          "đánh giá shipper",
+          "điểm shipper"
         ],
         "expression": "AVG(silver.shipper.diem_danh_gia)",
         "source": "silver.shipper",
@@ -5109,7 +5152,10 @@
           "tỷ lệ đơn hủy",
           "tỉ lệ đơn hủy",
           "order cancellation rate",
-          "cancellation rate"
+          "cancellation rate",
+          "tỷ lệ hủy",
+          "tỉ lệ hủy",
+          "tỷ lệ huỷ"
         ],
         "expression": "ROUND(100.0 * COUNT(*) FILTER (WHERE silver.don_hang.trang_thai_don_hang = 'DA_HUY') / NULLIF(COUNT(*), 0), 2)",
         "source": "silver.don_hang",
@@ -12611,7 +12657,30 @@
     "dashboard_policy": {
       "minimum_views": 4,
       "target_views": 5,
-      "default_depth": "deep"
+      "default_depth": "deep",
+      "depth_budgets": {
+        "focused": {
+          "minimum_views": 1,
+          "max_supporting_operations": 0,
+          "related_domains": false,
+          "segmented_trends": false,
+          "max_segment_dimensions": 0
+        },
+        "deep": {
+          "minimum_views": 4,
+          "max_supporting_operations": 6,
+          "related_domains": true,
+          "segmented_trends": true,
+          "max_segment_dimensions": 1
+        },
+        "comprehensive": {
+          "minimum_views": 6,
+          "max_supporting_operations": 8,
+          "related_domains": true,
+          "segmented_trends": true,
+          "max_segment_dimensions": 3
+        }
+      }
     },
     "ranking_partition_qualifiers": [
       "trong mỗi",
@@ -12766,7 +12835,49 @@
           "trend",
           "previous_period",
           "forecast"
-        ]
+        ],
+        "input_contract": {
+          "required": [
+            "metric",
+            "time"
+          ],
+          "optional": [
+            "dimension",
+            "scope"
+          ],
+          "time_control": "period",
+          "accepts_intents": [
+            "overview",
+            "trend",
+            "composition"
+          ],
+          "intent_vocabulary": [
+            "tình hình",
+            "tổng quan",
+            "tổng thể",
+            "bức tranh chung"
+          ],
+          "chart_roles": [
+            "kpi",
+            "trend",
+            "breakdown",
+            "ranking"
+          ],
+          "evidence_roles": [
+            "scalar",
+            "trend",
+            "breakdown"
+          ],
+          "supporting": {
+            "metrics": "requested",
+            "kinds": [
+              "aggregate",
+              "trend",
+              "distribution",
+              "ranking"
+            ]
+          }
+        }
       },
       {
         "id": "compare",
@@ -12812,7 +12923,44 @@
           "trend",
           "drilldown",
           "previous_period"
-        ]
+        ],
+        "input_contract": {
+          "required": [
+            "metric",
+            "dimension",
+            "group_a",
+            "group_b",
+            "time"
+          ],
+          "optional": [
+            "scope"
+          ],
+          "time_control": "period",
+          "accepts_intents": [
+            "compare"
+          ],
+          "intent_vocabulary": [
+            "so sánh",
+            "đối chiếu",
+            "so với",
+            "chênh lệch giữa"
+          ],
+          "chart_roles": [
+            "group_kpi",
+            "comparison",
+            "difference_table"
+          ],
+          "evidence_roles": [
+            "group_gap"
+          ],
+          "supporting": {
+            "metrics": "requested",
+            "kinds": [
+              "trend",
+              "aggregate"
+            ]
+          }
+        }
       },
       {
         "id": "ranking",
@@ -12854,7 +13002,50 @@
           "composition",
           "trend",
           "drilldown"
-        ]
+        ],
+        "input_contract": {
+          "required": [
+            "metric",
+            "dimension",
+            "n",
+            "direction",
+            "time"
+          ],
+          "optional": [
+            "scope"
+          ],
+          "time_control": "period",
+          "accepts_intents": [
+            "ranking"
+          ],
+          "intent_vocabulary": [
+            "top",
+            "xếp hạng",
+            "đứng đầu",
+            "bán chạy nhất",
+            "cao nhất",
+            "thấp nhất",
+            "nhiều nhất",
+            "ít nhất"
+          ],
+          "chart_roles": [
+            "ranking",
+            "rank_table",
+            "contribution"
+          ],
+          "evidence_roles": [
+            "leader",
+            "top_gap"
+          ],
+          "supporting": {
+            "metrics": "requested",
+            "kinds": [
+              "distribution",
+              "trend",
+              "aggregate"
+            ]
+          }
+        }
       },
       {
         "id": "trend",
@@ -12894,7 +13085,43 @@
           "forecast",
           "drilldown",
           "compare"
-        ]
+        ],
+        "input_contract": {
+          "required": [
+            "metric",
+            "granularity",
+            "time"
+          ],
+          "optional": [
+            "scope"
+          ],
+          "time_control": "period",
+          "accepts_intents": [
+            "trend"
+          ],
+          "intent_vocabulary": [
+            "xu hướng",
+            "diễn biến",
+            "biến động",
+            "tăng trưởng",
+            "theo thời gian"
+          ],
+          "chart_roles": [
+            "time_series",
+            "period_change"
+          ],
+          "evidence_roles": [
+            "change",
+            "change_pct"
+          ],
+          "supporting": {
+            "metrics": "requested",
+            "kinds": [
+              "trend",
+              "aggregate"
+            ]
+          }
+        }
       },
       {
         "id": "composition",
@@ -12935,7 +13162,44 @@
         "follow_ups": [
           "ranking",
           "trend"
-        ]
+        ],
+        "input_contract": {
+          "required": [
+            "metric",
+            "dimension",
+            "time"
+          ],
+          "optional": [
+            "scope"
+          ],
+          "time_control": "period",
+          "accepts_intents": [
+            "composition"
+          ],
+          "intent_vocabulary": [
+            "cơ cấu",
+            "tỷ trọng",
+            "tỉ trọng",
+            "phân bổ",
+            "đóng góp"
+          ],
+          "chart_roles": [
+            "part_to_whole",
+            "breakdown"
+          ],
+          "evidence_roles": [
+            "contribution_share",
+            "concentration"
+          ],
+          "supporting": {
+            "metrics": "requested",
+            "kinds": [
+              "distribution",
+              "trend",
+              "aggregate"
+            ]
+          }
+        }
       },
       {
         "id": "forecast",
@@ -12975,7 +13239,41 @@
         "follow_ups": [
           "trend",
           "drilldown"
-        ]
+        ],
+        "input_contract": {
+          "required": [
+            "metric",
+            "horizon",
+            "cadence"
+          ],
+          "optional": [
+            "scope"
+          ],
+          "time_control": "history",
+          "max_scope_filters": 1,
+          "accepts_intents": [
+            "forecast"
+          ],
+          "intent_vocabulary": [
+            "dự báo",
+            "dự đoán",
+            "forecast",
+            "prediction"
+          ],
+          "chart_roles": [
+            "forecast",
+            "history"
+          ],
+          "evidence_roles": [
+            "forecast_backtest"
+          ],
+          "supporting": {
+            "metrics": "requested",
+            "kinds": [
+              "trend"
+            ]
+          }
+        }
       },
       {
         "id": "risk_watch",
@@ -13013,7 +13311,41 @@
         "follow_ups": [
           "drilldown",
           "trend"
-        ]
+        ],
+        "input_contract": {
+          "required": [
+            "time"
+          ],
+          "optional": [
+            "scope",
+            "signals"
+          ],
+          "time_control": "period",
+          "accepts_intents": [
+            "risk_watch"
+          ],
+          "intent_vocabulary": [
+            "rủi ro",
+            "cảnh báo",
+            "bất thường",
+            "vượt ngưỡng"
+          ],
+          "chart_roles": [
+            "risk_threshold",
+            "risk_breakdown",
+            "risk_trend"
+          ],
+          "evidence_roles": [
+            "risk_signal"
+          ],
+          "supporting": {
+            "metrics": "risk_signals",
+            "kinds": [
+              "aggregate",
+              "trend"
+            ]
+          }
+        }
       },
       {
         "id": "relationship",
@@ -13052,7 +13384,37 @@
         "follow_ups": [
           "ranking",
           "drilldown"
-        ]
+        ],
+        "input_contract": {
+          "required": [
+            "metric",
+            "metric_b",
+            "dimension"
+          ],
+          "optional": [
+            "time"
+          ],
+          "time_control": "period",
+          "accepts_intents": [
+            "relationship"
+          ],
+          "intent_vocabulary": [
+            "mối quan hệ",
+            "quan hệ giữa",
+            "tương quan",
+            "liên hệ giữa"
+          ],
+          "chart_roles": [
+            "scatter"
+          ],
+          "evidence_roles": [
+            "relationship_strength"
+          ],
+          "supporting": {
+            "metrics": "requested",
+            "kinds": []
+          }
+        }
       }
     ],
     "risk_signals": [
@@ -13253,7 +13615,65 @@
           "requests": 6,
           "window_seconds": 60
         }
+      },
+      "business_signal_vocabulary": [
+        "bán",
+        "bán được",
+        "bán chạy",
+        "kinh doanh",
+        "hiệu quả",
+        "vận hành",
+        "hoạt động",
+        "cửa hàng",
+        "quán",
+        "khách",
+        "khách hàng",
+        "món",
+        "ly",
+        "đồ uống",
+        "nhân viên",
+        "shipper",
+        "kiosk",
+        "chi nhánh",
+        "đơn",
+        "giao hàng",
+        "tồn kho",
+        "khuyến mãi",
+        "voucher",
+        "thanh toán",
+        "đánh giá",
+        "ca làm"
+      ],
+      "vague_quality_terms": [
+        "tốt nhất",
+        "kém nhất",
+        "tệ nhất",
+        "ngon nhất",
+        "hiệu quả nhất",
+        "tốt",
+        "kém",
+        "tệ"
+      ],
+      "preflight_states": {
+        "READY_GUIDED": "Đã đủ thông tin để phân tích",
+        "READY_FOR_AI": "Có thể gửi để AI diễn giải",
+        "NEEDS_INPUT": "Cần bổ sung thông tin",
+        "BLOCKED": "Chưa thể gửi yêu cầu này",
+        "MISMATCH": "Yêu cầu chưa phù hợp với nhiệm vụ đang chọn",
+        "UNRECOGNIZED": "Chưa nhận ra bài toán phân tích"
       }
+    },
+    "metric_alias_policy": {
+      "canonical": {
+        "doanh thu": "revenue",
+        "doanh số": "revenue",
+        "số đơn": "order_count"
+      },
+      "ambiguous": [
+        "chuyến giao",
+        "điểm đánh giá trung bình",
+        "doanh thu món"
+      ]
     }
   }
 }

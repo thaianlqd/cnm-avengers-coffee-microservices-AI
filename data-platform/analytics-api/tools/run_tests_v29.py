@@ -18,7 +18,7 @@ class IsolatedResult(unittest.TextTestResult):
 
 
 if __name__=='__main__':
-    config={k:v for k,v in os.environ.items() if k not in {'DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN','DATA_ANALYST_ENABLE_CONTRACT_REPAIR'}}
+    config={k:v for k,v in os.environ.items() if k not in {'DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN','DATA_ANALYST_ENABLE_CONTRACT_REPAIR','DATA_ANALYST_GEMINI_SECONDARY_KEY'}}
     config.update(AI_OFFLINE='1',DATA_ANALYST_ENV='development',DATA_ANALYST_SESSION_STORE='memory',DATA_ANALYST_ARTIFACT_STORE='memory')
     with patch.dict(os.environ, config, clear=True):
         suite=unittest.defaultTestLoader.discover('tests')

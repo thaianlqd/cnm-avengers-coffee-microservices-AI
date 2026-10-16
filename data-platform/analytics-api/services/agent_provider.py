@@ -507,10 +507,18 @@ class NativeAgentProvider:
             if self.gemini_model
             else list(dict.fromkeys(llm_service.GEMINI_MODELS))[:3]
         )
+        # V3.2 credential pool (production policy only): primary Data Platform
+        # credential, plus at most one bounded failover to an injected secondary.
+        from services import provider_credential_router as credentials
+        slots = credentials.credential_plan() if not self.legacy_policy else [("primary", llm_service.GEMINI_API_KEY)]
+        first_slot, first_key = slots[0] if slots else ("primary", llm_service.GEMINI_API_KEY)
+        secondary = next((k for slot, k in slots if slot == "secondary" and slot != first_slot), None)
         providers = deque(
-            ("gemini", llm_service.GEMINI_API_KEY, m, i)
+            ("gemini", first_key, m, i)
             for i, m in enumerate(gemini_models)
         )
+        slot_of = {}
+        failover_used = False
         if self.legacy_policy and os.getenv("AI_AGENT_GROQ_FALLBACK", "1").lower() in ("1", "true", "yes"):
             providers.append(
                 ("groq", llm_service.GROQ_API_KEY, "openai/gpt-oss-120b", 0)
@@ -518,7 +526,8 @@ class NativeAgentProvider:
         transient_retried = False
         while providers:
             provider, key, model, index = providers.popleft()
-            if not key or not model or (provider == "gemini" and self.primary_failed):
+            failover = slot_of.pop((provider, model, index, "failover"), False)
+            if not key or not model or (provider == "gemini" and self.primary_failed and not failover):
                 continue
             started = time.perf_counter()
             attempt = {
@@ -527,6 +536,11 @@ class NativeAgentProvider:
                 "status": "failed",
                 "tokens": {"input": None, "output": None},
             }
+            if provider == "gemini" and not self.legacy_policy:
+                # Slot names only; key values/identifiers never leave this scope.
+                attempt["credential_slot"] = "secondary" if failover else first_slot
+                if failover:
+                    attempt["credential_failover"] = True
             try:
                 if provider == "gemini" and self.gemini_api_style == "openai":
                     payload = self._gemini_compat_body(system, messages, tools, model)
@@ -537,7 +551,10 @@ class NativeAgentProvider:
                         )
                     )
                     if call_budget:
-                        call_budget.consume(len(json.dumps(payload, ensure_ascii=False, separators=(",", ":"))))
+                        if failover:
+                            call_budget.remaining(reserve=3)  # same logical call: deadline only, no new allowance
+                        else:
+                            call_budget.consume(len(json.dumps(payload, ensure_ascii=False, separators=(",", ":"))))
                         timeout=call_budget.http_timeout() or timeout
                     response = requests.post(
                         "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
@@ -557,7 +574,10 @@ class NativeAgentProvider:
                         )
                     )
                     if call_budget:
-                        call_budget.consume(len(json.dumps(payload, ensure_ascii=False, separators=(",", ":"))))
+                        if failover:
+                            call_budget.remaining(reserve=3)  # same logical call: deadline only, no new allowance
+                        else:
+                            call_budget.consume(len(json.dumps(payload, ensure_ascii=False, separators=(",", ":"))))
                         timeout=call_budget.http_timeout() or timeout
                     response = requests.post(
                         f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
@@ -695,8 +715,22 @@ class NativeAgentProvider:
                 attempt.get("quota_scopes", []),
                 attempt.get("retry_after_seconds"),
             )
+            if provider == "gemini" and not self.legacy_policy:
+                credentials.record_failure(attempt.get("credential_slot"), attempt)
+                if secondary and not failover_used and credentials.eligible(attempt):
+                    # One credential failover for the SAME request/model. Not a
+                    # semantic repair, not a model hop; never a third attempt.
+                    failover_used = True
+                    credentials.record_failover()
+                    slot_of[(provider, model, index, "failover")] = True
+                    providers.appendleft((provider, secondary, model, index))
+                    continue
+                if failover:
+                    # Both credentials failed: typed provider failure immediately.
+                    self.primary_failed = True
+                    break
             if provider == "gemini":
-                if attempt.get("http_status") == 503 and not transient_retried:
+                if attempt.get("http_status") == 503 and not transient_retried and not failover_used:
                     # Retry the same signed continuation once. No model hop,
                     # recursive retry, new agent round or analytical execution.
                     transient_retried = True

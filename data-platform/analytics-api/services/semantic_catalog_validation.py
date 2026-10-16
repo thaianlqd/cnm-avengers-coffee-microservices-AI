@@ -169,6 +169,15 @@ def validate_catalog(overlay, strict=False):
         validate_profiles(r)
         from services.workspace_service import validate_workspace
         validate_workspace(r)
+        from services.mission_contract_service import validate_contracts
+        validate_contracts(r)
+        from services.semantic_preflight_contract import validate_alias_policy
+        validate_alias_policy(r)
+        budgets=policy.get('depth_budgets',{})
+        if budgets and (set(budgets)!={'focused','deep','comprehensive'} or any(
+                type(b.get('minimum_views')) is not int or type(b.get('max_supporting_operations')) is not int
+                or not 1<=b['minimum_views']<=r.get('max_charts',8) for b in budgets.values())):
+            raise ValueError('Invalid analysis depth budgets')
         return True
     except (KeyError,ValueError,TypeError):
         raise AnalysisError('domain_metadata_invalid','Semantic catalog references or relationships are invalid') from None

@@ -49,7 +49,7 @@ test('per-group bars show stored ranks and empty chart sections explain missing 
   assert.equal((html.match(/mr-2">1\./g) || []).length, 2);
   const empty = renderToStaticMarkup(React.createElement(AnalystDashboard, { report: { charts: [] } }));
   assert.ok(empty.includes('Chưa có biểu đồ phù hợp được kiểm chứng'));
-  assert.ok(empty.includes('bảng dữ liệu đối chiếu'));
+  assert.ok(empty.includes('Dữ liệu / SQL'));  // V3.2: tables live in the data tab
 });
 
 test('large population chart discloses display subset and complete analytical coverage', () => {
@@ -256,7 +256,9 @@ test('dashboard opens with up to six primary views and keeps all result tables i
   const { AnalystDashboard } = compile('../components/AnalystDashboardSummary.tsx');
   const html = render(AnalystDashboard, { report: { charts: Array.from({ length: 9 }, (_, i) => ({ id: `c${i}`, role: i < 3 ? 'requested' : 'supporting', title: `Chart ${i}`, chart_type: 'bar', data: [{ label: 'A', value: i }] })), result_sets: { all: { columns: ['value'], rows: [{ value: 1 }] } } } });
   assert.equal((html.match(/<article/g) || []).length, 6);
-  assert.ok(html.includes('Xem thêm 3 góc nhìn chi tiết')); assert.ok(html.includes('Bảng dữ liệu')); assert.ok(html.includes('Diễn giải đầy đủ'));
+  assert.ok(html.includes('Xem thêm 3 góc nhìn chi tiết'));
+  const data = render(AnalystDashboard, { initialTab: 'data', report: { charts: [], result_sets: { all: { columns: ['value'], rows: [{ value: 1 }] } } } });
+  assert.ok(data.includes('Bảng dữ liệu')); assert.ok(data.includes('Diễn giải đầy đủ'));
   assert.ok(!html.includes('open=""'));
 });
 
@@ -278,7 +280,7 @@ test('compact dashboard uses one responsive grid across different story sections
 
 test('overview displays equal trend and composition cards and a visible result table', () => {
   const { AnalystDashboard } = compile('../components/AnalystDashboardSummary.tsx');
-  const html = render(AnalystDashboard,{report:{charts:[
+  const html = render(AnalystDashboard,{initialTab:'data',report:{charts:[
     {id:'mix',chart_type:'donut',title:'Cơ cấu',data:[{label:'A',value:40},{label:'B',value:60}]},
     {id:'trend',chart_type:'line',title:'Diễn biến',data:[{label:'2026-09-01',value:100}]},
   ],result_sets:{q:{columns:['order_type','revenue'],column_labels:{order_type:'Hình thức nhận hàng',revenue:'Doanh thu'},rows:[{order_type:'DUNG_TAI_CHO',revenue:249482000}]}}}});
@@ -321,7 +323,7 @@ for (const count of [1, 3, 4, 5, 6]) {
 
 test('provider status is shown separately from local readiness and generic failure', () => {
   const source=readFileSync(new URL('../components/workspace/AnalystWorkspace.tsx',import.meta.url),'utf8');  // V3.1: status lives in the workspace
-  for (const label of ['Kho dữ liệu:', 'Semantic catalog:', 'AI provider:', 'Chưa kiểm tra', 'Không ổn định']) assert.ok(source.includes(label));
+  for (const label of ['Kho dữ liệu:', 'Semantic catalog:', 'AI provider:', 'Chưa kiểm tra', 'Đang chuyển dự phòng', 'Giới hạn quota', 'Không khả dụng']) assert.ok(source.includes(label));  // V3.2 §118 labels
   const error=render(AnalysisClarification,{response:{status:'error',diagnostics:{error_category:'provider_timeout'},message:'Provider chậm'}});
   const clarification=render(AnalysisClarification,{response:{status:'needs_clarification',message:'Chọn chỉ số'}});
   assert.match(error,/border-rose-200/);assert.match(clarification,/border-amber-200/);

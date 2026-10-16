@@ -285,10 +285,12 @@ class SemanticTruthV30Tests(unittest.TestCase):
         with self.assertRaises(AnalysisError) as caught:
             p.propose(self.request("Doanh thu theo thành phố"))
         self.assertEqual(provider.call_count, 2)
-        self.assertEqual(caught.exception.category, "semantic_resolution_failed")
+        # V3.2 §31: "doanh thu" is a preflight-locked canonical metric, so the
+        # repeated omission is typed as semantic contract drift (still no retry).
+        self.assertEqual(caught.exception.category, "semantic_contract_drift")
         self.assertEqual(p.semantic_info["semantic_stop_reason"], "no_progress")
         failure = safe_failure(caught.exception, p.calls, p.semantic_info)
-        self.assertEqual(failure["error_type"], "SEMANTIC_RESOLUTION_FAILED")
+        self.assertEqual(failure["error_type"], "SEMANTIC_CONTRACT_DRIFT")
         self.assertFalse(failure["retryable"])
         self.assertNotIn("khôi phục kết nối", json.dumps(failure, ensure_ascii=False))
 
