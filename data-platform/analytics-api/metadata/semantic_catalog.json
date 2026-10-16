@@ -90,7 +90,13 @@
         }
       },
       "analytical_role": "fact",
-      "source_of_truth": "silver_warehouse"
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "FULL_FACT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
     },
     "silver.chi_tiet_don_hang": {
       "business_name": "Chi tiết từng món trong đơn",
@@ -155,7 +161,13 @@
         }
       },
       "analytical_role": "fact",
-      "source_of_truth": "silver_warehouse"
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "FULL_FACT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
     },
     "silver.san_pham": {
       "business_name": "Thực đơn món đồ uống và sản phẩm",
@@ -220,7 +232,13 @@
         }
       },
       "analytical_role": "dimension",
-      "source_of_truth": "silver_warehouse"
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "SNAPSHOT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
     },
     "silver.danh_muc": {
       "business_name": "Danh mục phân loại thực đơn",
@@ -257,7 +275,13 @@
         }
       },
       "analytical_role": "dimension",
-      "source_of_truth": "silver_warehouse"
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "SNAPSHOT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
     },
     "silver.bien_the_san_pham": {
       "business_name": "Biến thể món (Size & Phụ thu)",
@@ -298,7 +322,13 @@
         }
       },
       "analytical_role": "fact",
-      "source_of_truth": "silver_warehouse"
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "SNAPSHOT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
     },
     "silver.chi_nhanh": {
       "business_name": "Mạng lưới chi nhánh cửa hàng",
@@ -367,7 +397,13 @@
         }
       },
       "analytical_role": "dimension",
-      "source_of_truth": "silver_warehouse"
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "SNAPSHOT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
     },
     "silver.khu_vuc": {
       "business_name": "Phân vùng địa lý và khu vực kinh doanh",
@@ -390,7 +426,13 @@
         }
       },
       "analytical_role": "fact",
-      "source_of_truth": "silver_warehouse"
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "SNAPSHOT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
     },
     "silver.khuyen_mai": {
       "business_name": "Chương trình khuyến mãi và Voucher giảm giá",
@@ -451,7 +493,13 @@
         }
       },
       "analytical_role": "fact",
-      "source_of_truth": "silver_warehouse"
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "SNAPSHOT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
     },
     "silver.voucher": {
       "business_name": "Voucher ưu đãi (Alias của silver.khuyen_mai)",
@@ -512,7 +560,13 @@
         }
       },
       "analytical_role": "fact",
-      "source_of_truth": "silver_warehouse"
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "SNAPSHOT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
     },
     "silver.nguoi_dung": {
       "business_name": "Khách hàng và hội viên thân thiết",
@@ -569,7 +623,13 @@
         }
       },
       "analytical_role": "fact",
-      "source_of_truth": "silver_warehouse"
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "SNAPSHOT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
     },
     "silver.giao_dich_thanh_toan": {
       "business_name": "Giao dịch qua cổng thanh toán",
@@ -610,7 +670,13 @@
         }
       },
       "analytical_role": "fact",
-      "source_of_truth": "silver_warehouse"
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "FULL_FACT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
     },
     "silver.shipper": {
       "business_name": "Đội ngũ tài xế và hiệu suất giao hàng",
@@ -653,7 +719,13 @@
         }
       },
       "analytical_role": "fact",
-      "source_of_truth": "silver_warehouse"
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "SNAPSHOT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
     },
     "silver.ton_kho_san_pham": {
       "business_name": "Tồn kho sản phẩm tại từng chi nhánh",
@@ -706,7 +778,13 @@
         }
       },
       "analytical_role": "fact",
-      "source_of_truth": "silver_warehouse"
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "SNAPSHOT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
     },
     "silver.danh_gia_san_pham": {
       "business_name": "Đánh giá chất lượng sản phẩm từ khách hàng",
@@ -767,7 +845,13 @@
         }
       },
       "analytical_role": "fact",
-      "source_of_truth": "silver_warehouse"
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "FULL_FACT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
     },
     "silver.danh_gia_chi_nhanh": {
       "business_name": "Đánh giá chất lượng dịch vụ chi nhánh",
@@ -816,7 +900,13 @@
         }
       },
       "analytical_role": "fact",
-      "source_of_truth": "silver_warehouse"
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "FULL_FACT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
     },
     "silver.ca_lam_viec_nhan_vien": {
       "business_name": "Ca làm việc và chấm công nhân sự",
@@ -881,7 +971,13 @@
         }
       },
       "analytical_role": "fact",
-      "source_of_truth": "silver_warehouse"
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "FULL_FACT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
     },
     "silver.ca_doi_soat": {
       "business_name": "Đối soát kết ca thu ngân và chênh lệch tiền két",
@@ -962,7 +1058,13 @@
         }
       },
       "analytical_role": "fact",
-      "source_of_truth": "silver_warehouse"
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "FULL_FACT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
     },
     "silver.khao_sat_phan_hoi": {
       "business_name": "Khảo sát ý kiến và phản hồi khách hàng",
@@ -1011,7 +1113,13 @@
         }
       },
       "analytical_role": "fact",
-      "source_of_truth": "silver_warehouse"
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "FULL_FACT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
     },
     "silver.yeu_thich_san_pham": {
       "business_name": "Món uống yêu thích (Wishlist khách hàng)",
@@ -1060,7 +1168,131 @@
         }
       },
       "analytical_role": "fact",
-      "source_of_truth": "silver_warehouse"
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "FULL_FACT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
+    },
+    "silver.giao_hang": {
+      "business_name": "Chuyến giao hàng của shipper",
+      "description": "Mỗi dòng là một lần phân công giao một đơn cho một shipper, gồm trạng thái chuyến, thời điểm nhận chuyến, lấy hàng, kết thúc và phí giao. Không gồm địa chỉ, tọa độ, ghi chú hay ảnh bằng chứng.",
+      "primary_key": [
+        "ma_giao_hang"
+      ],
+      "joins": [
+        {
+          "to_table": "silver.shipper",
+          "on": "silver.giao_hang.ma_shipper = silver.shipper.ma_shipper"
+        },
+        {
+          "to_table": "silver.don_hang",
+          "on": "silver.giao_hang.ma_don_hang = silver.don_hang.ma_don_hang"
+        }
+      ],
+      "columns": {
+        "ma_giao_hang": {
+          "type": "uuid",
+          "description": "Mã chuyến giao (UUID)"
+        },
+        "ma_don_hang": {
+          "type": "uuid",
+          "description": "Mã đơn hàng được giao (UUID)"
+        },
+        "ma_shipper": {
+          "type": "uuid",
+          "description": "Mã shipper nhận chuyến (UUID)"
+        },
+        "trang_thai_giao_hang": {
+          "type": "text",
+          "description": "Trạng thái chuyến: 'PENDING', 'CONFIRMED', 'PICKING_UP', 'IN_TRANSIT' (đang xử lý); 'DELIVERED' (giao thành công); 'FAILED' (shipper báo thất bại); 'CANCELLED' (chuyến bị hủy do hủy đơn hoặc phân công lại)"
+        },
+        "thoi_gian_nhan_chuyen": {
+          "type": "timestamp without time zone",
+          "description": "Thời điểm shipper được phân công/nhận chuyến"
+        },
+        "thoi_gian_lay_hang": {
+          "type": "timestamp without time zone",
+          "description": "Thời điểm lấy hàng tại cửa hàng"
+        },
+        "thoi_gian_ket_thuc": {
+          "type": "timestamp without time zone",
+          "description": "Thời điểm chuyến kết thúc (giao xong hoặc bị hủy)"
+        },
+        "thoi_gian_du_kien_phut": {
+          "type": "integer",
+          "description": "Thời gian giao dự kiến (phút)"
+        },
+        "phi_giao_hang": {
+          "type": "numeric",
+          "description": "Phí giao hàng của chuyến (VNĐ)"
+        },
+        "giao_ghep": {
+          "type": "boolean",
+          "description": "Chuyến được ghép cùng chuyến khác"
+        }
+      },
+      "analytical_role": "fact",
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "FULL_FACT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
+    },
+    "silver.khuyen_mai_su_dung": {
+      "business_name": "Lượt sử dụng khuyến mãi",
+      "description": "Mỗi dòng là một lượt áp dụng mã khuyến mãi (sổ sử dụng của dịch vụ định danh) kèm tên chương trình và chi nhánh của đơn. Không gồm mã khách hàng hay mã đơn.",
+      "primary_key": [
+        "ma_su_dung"
+      ],
+      "joins": [
+        {
+          "to_table": "silver.chi_nhanh",
+          "on": "silver.khuyen_mai_su_dung.co_so_ma = silver.chi_nhanh.ma_chi_nhanh"
+        }
+      ],
+      "columns": {
+        "ma_su_dung": {
+          "type": "integer",
+          "description": "Mã lượt sử dụng"
+        },
+        "ma_khuyen_mai": {
+          "type": "text",
+          "description": "Mã khuyến mãi/voucher đã áp dụng"
+        },
+        "ten_khuyen_mai": {
+          "type": "text",
+          "description": "Tên chương trình khuyến mãi"
+        },
+        "loai_khuyen_mai": {
+          "type": "text",
+          "description": "Loại khuyến mãi"
+        },
+        "co_so_ma": {
+          "type": "text",
+          "description": "Mã chi nhánh của đơn đã áp dụng (NULL nếu lượt không khớp đơn)"
+        },
+        "so_tien_giam": {
+          "type": "numeric",
+          "description": "Số tiền giảm của lượt (VNĐ)"
+        },
+        "ngay_su_dung": {
+          "type": "timestamp without time zone",
+          "description": "Thời điểm sử dụng khuyến mãi"
+        }
+      },
+      "analytical_role": "fact",
+      "source_of_truth": "silver_warehouse",
+      "source_scope": "FULL_FACT",
+      "freshness": {
+        "mode": "batch",
+        "pipeline": "data-sync",
+        "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
+      }
     }
   },
   "business_rules": [
@@ -1152,7 +1384,8 @@
       "DI_TRE",
       "VE_SOM",
       "VANG_MAT",
-      "ASSIGNED"
+      "ASSIGNED",
+      "NGHI_PHEP"
     ],
     "silver.ca_doi_soat.trang_thai_phe_duyet": [
       "DA_PHE_DUYET",
@@ -2736,7 +2969,30 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
-        ]
+        ],
+        "forecast": {
+          "forecastable": true,
+          "cadences": [
+            "day",
+            "week",
+            "month"
+          ],
+          "min_history": {
+            "day": 28,
+            "week": 12,
+            "month": 6
+          },
+          "max_horizon": {
+            "day": 31,
+            "week": 13,
+            "month": 6
+          },
+          "missing_data_policy": "zero_fill",
+          "aggregation": "sum",
+          "non_negative": true,
+          "allowed_dimensions": [],
+          "constraints": "Dự báo toàn phạm vi đã lọc; không dự báo theo nhóm."
+        }
       },
       "order_count": {
         "business_name": "Số lượng đơn",
@@ -2786,7 +3042,30 @@
         ],
         "non_anchor_aliases": [
           "đơn hàng"
-        ]
+        ],
+        "forecast": {
+          "forecastable": true,
+          "cadences": [
+            "day",
+            "week",
+            "month"
+          ],
+          "min_history": {
+            "day": 28,
+            "week": 12,
+            "month": 6
+          },
+          "max_horizon": {
+            "day": 31,
+            "week": 13,
+            "month": 6
+          },
+          "missing_data_policy": "zero_fill",
+          "aggregation": "sum",
+          "non_negative": true,
+          "allowed_dimensions": [],
+          "constraints": "Dự báo toàn phạm vi đã lọc; không dự báo theo nhóm."
+        }
       },
       "aov": {
         "business_name": "Giá trị đơn trung bình",
@@ -3273,7 +3552,30 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
-        ]
+        ],
+        "forecast": {
+          "forecastable": true,
+          "cadences": [
+            "day",
+            "week",
+            "month"
+          ],
+          "min_history": {
+            "day": 28,
+            "week": 12,
+            "month": 6
+          },
+          "max_horizon": {
+            "day": 31,
+            "week": 13,
+            "month": 6
+          },
+          "missing_data_policy": "zero_fill",
+          "aggregation": "sum",
+          "non_negative": true,
+          "allowed_dimensions": [],
+          "constraints": "Dự báo toàn phạm vi đã lọc; không dự báo theo nhóm."
+        }
       },
       "store_order_count": {
         "business_name": "Số đơn chi nhánh",
@@ -3319,7 +3621,30 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
-        ]
+        ],
+        "forecast": {
+          "forecastable": true,
+          "cadences": [
+            "day",
+            "week",
+            "month"
+          ],
+          "min_history": {
+            "day": 28,
+            "week": 12,
+            "month": 6
+          },
+          "max_horizon": {
+            "day": 31,
+            "week": 13,
+            "month": 6
+          },
+          "missing_data_policy": "zero_fill",
+          "aggregation": "sum",
+          "non_negative": true,
+          "allowed_dimensions": [],
+          "constraints": "Dự báo toàn phạm vi đã lọc; không dự báo theo nhóm."
+        }
       },
       "store_aov": {
         "business_name": "AOV chi nhánh",
@@ -3873,7 +4198,10 @@
           "điểm phục vụ",
           "avg_store_rating",
           "Điểm phục vụ trung bình",
-          "avg store rating"
+          "avg store rating",
+          "điểm đánh giá chi nhánh",
+          "đánh giá chi nhánh",
+          "điểm đánh giá trung bình"
         ],
         "expression": "ROUND(AVG(silver.danh_gia_chi_nhanh.so_sao), 2)",
         "source": "silver.danh_gia_chi_nhanh",
@@ -3919,7 +4247,9 @@
           "số đánh giá quán",
           "store_review_count",
           "Số lượt đánh giá quán",
-          "store review count"
+          "store review count",
+          "lượt đánh giá chi nhánh",
+          "số lượt đánh giá chi nhánh"
         ],
         "expression": "COUNT(*)",
         "source": "silver.danh_gia_chi_nhanh",
@@ -4406,6 +4736,723 @@
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Không cộng kết quả các nhóm; cần tính lại trên quần thể gốc.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
+        ]
+      },
+      "delivery_count": {
+        "business_name": "Số chuyến giao",
+        "aliases": [
+          "delivery_count",
+          "Số chuyến giao",
+          "chuyến giao",
+          "lượt giao hàng",
+          "số lần giao"
+        ],
+        "expression": "COUNT(*)",
+        "source": "silver.giao_hang",
+        "grain": "delivery",
+        "time_column": "silver.giao_hang.thoi_gian_nhan_chuyen",
+        "unit": "lượt",
+        "subjects": [
+          "delivery_assignments"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true,
+        "description": "Số chuyến giao ở mức chuyến giao; đơn vị lượt.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "count",
+        "business_meaning": "Mọi chuyến được phân công, theo ngày nhận chuyến.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ chuyến giao",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend",
+          "ranking"
+        ],
+        "business_definition": "Đếm mọi chuyến được phân công theo thời điểm nhận chuyến, gồm mọi trạng thái.",
+        "aggregation_behavior": "Số bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "delivery"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Không dùng mart Top-N của dashboard để tính chỉ số toàn hệ thống."
+        ],
+        "known_caveats": [
+          "CANCELLED gồm chuyến bị hủy do hủy đơn hoặc phân công lại, không chỉ lỗi của shipper; FAILED là chuyến shipper báo thất bại."
+        ],
+        "compatible_dimensions": [
+          "driver_id",
+          "delivery_status",
+          "store",
+          "store_id",
+          "city",
+          "store_type",
+          "order_type",
+          "payment_method"
+        ],
+        "forecast": {
+          "forecastable": true,
+          "cadences": [
+            "day",
+            "week",
+            "month"
+          ],
+          "min_history": {
+            "day": 28,
+            "week": 12,
+            "month": 6
+          },
+          "max_horizon": {
+            "day": 31,
+            "week": 13,
+            "month": 6
+          },
+          "missing_data_policy": "zero_fill",
+          "aggregation": "sum",
+          "non_negative": true,
+          "allowed_dimensions": [],
+          "constraints": "Dự báo toàn phạm vi đã lọc; không dự báo theo nhóm."
+        }
+      },
+      "delivered_count": {
+        "business_name": "Số chuyến giao thành công",
+        "aliases": [
+          "delivered_count",
+          "Số chuyến giao thành công",
+          "chuyến giao xong"
+        ],
+        "expression": "COUNT(*) FILTER (WHERE silver.giao_hang.trang_thai_giao_hang = 'DELIVERED')",
+        "source": "silver.giao_hang",
+        "grain": "delivery",
+        "time_column": "silver.giao_hang.thoi_gian_nhan_chuyen",
+        "unit": "lượt",
+        "subjects": [
+          "delivery_assignments"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true,
+        "description": "Số chuyến giao thành công ở mức chuyến giao; đơn vị lượt.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "conditional_count",
+        "business_meaning": "Chuyến DELIVERED, theo ngày nhận chuyến.",
+        "historical_capability": "historical",
+        "population_definition": "Chuyến giao có trạng thái DELIVERED",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend",
+          "ranking"
+        ],
+        "business_definition": "Đếm chuyến có trạng thái DELIVERED theo thời điểm nhận chuyến.",
+        "aggregation_behavior": "Số bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "delivery"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Không dùng mart Top-N của dashboard để tính chỉ số toàn hệ thống."
+        ],
+        "known_caveats": [
+          "CANCELLED gồm chuyến bị hủy do hủy đơn hoặc phân công lại, không chỉ lỗi của shipper; FAILED là chuyến shipper báo thất bại."
+        ],
+        "compatible_dimensions": [
+          "driver_id",
+          "delivery_status",
+          "store",
+          "store_id",
+          "city",
+          "store_type",
+          "order_type",
+          "payment_method"
+        ],
+        "non_anchor_aliases": [
+          "giao thành công"
+        ]
+      },
+      "failed_or_cancelled_delivery_count": {
+        "business_name": "Số chuyến không thành công",
+        "aliases": [
+          "failed_or_cancelled_delivery_count",
+          "Số chuyến không thành công",
+          "chuyến thất bại",
+          "giao không thành công"
+        ],
+        "expression": "COUNT(*) FILTER (WHERE silver.giao_hang.trang_thai_giao_hang IN ('FAILED', 'CANCELLED'))",
+        "source": "silver.giao_hang",
+        "grain": "delivery",
+        "time_column": "silver.giao_hang.thoi_gian_nhan_chuyen",
+        "unit": "lượt",
+        "subjects": [
+          "delivery_assignments"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true,
+        "description": "Số chuyến không thành công ở mức chuyến giao; đơn vị lượt.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "conditional_count",
+        "business_meaning": "Chuyến FAILED hoặc CANCELLED, theo ngày nhận chuyến.",
+        "historical_capability": "historical",
+        "population_definition": "Chuyến giao FAILED hoặc CANCELLED",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend",
+          "ranking"
+        ],
+        "business_definition": "Đếm chuyến đã kết thúc nhưng không giao thành công (FAILED hoặc CANCELLED).",
+        "aggregation_behavior": "Số bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "delivery"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Không dùng mart Top-N của dashboard để tính chỉ số toàn hệ thống."
+        ],
+        "known_caveats": [
+          "CANCELLED gồm chuyến bị hủy do hủy đơn hoặc phân công lại, không chỉ lỗi của shipper; FAILED là chuyến shipper báo thất bại."
+        ],
+        "compatible_dimensions": [
+          "driver_id",
+          "delivery_status",
+          "store",
+          "store_id",
+          "city",
+          "store_type",
+          "order_type",
+          "payment_method"
+        ],
+        "non_anchor_aliases": [
+          "chuyến bị hủy"
+        ]
+      },
+      "delivery_success_rate": {
+        "business_name": "Tỷ lệ giao thành công",
+        "aliases": [
+          "delivery_success_rate",
+          "Tỷ lệ giao thành công",
+          "tỷ lệ giao thành công",
+          "tỉ lệ giao thành công",
+          "hiệu suất giao thành công",
+          "delivery success rate"
+        ],
+        "expression": "ROUND(100.0 * COUNT(*) FILTER (WHERE silver.giao_hang.trang_thai_giao_hang = 'DELIVERED') / NULLIF(COUNT(*), 0), 2)",
+        "source": "silver.giao_hang",
+        "grain": "delivery",
+        "time_column": "silver.giao_hang.thoi_gian_nhan_chuyen",
+        "unit": "%",
+        "subjects": [
+          "delivery_assignments"
+        ],
+        "business_filters": [
+          {
+            "dimension": "delivery_status",
+            "operator": "in",
+            "value": [
+              "DELIVERED",
+              "FAILED",
+              "CANCELLED"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "additive": false,
+        "description": "Tỷ lệ giao thành công ở mức chuyến giao; đơn vị %.",
+        "quality_direction": "higher_better",
+        "aggregation_semantics": "ratio",
+        "business_meaning": "DELIVERED / chuyến đã kết thúc (DELIVERED, FAILED, CANCELLED); không cộng tỷ lệ nhóm.",
+        "historical_capability": "historical",
+        "population_definition": "Chuyến giao đã kết thúc: DELIVERED, FAILED, CANCELLED",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend",
+          "ranking"
+        ],
+        "business_definition": "Phần trăm chuyến giao thành công trên các chuyến đã kết thúc (DELIVERED, FAILED, CANCELLED); chuyến đang xử lý không vào mẫu số.",
+        "aggregation_behavior": "Tính lại theo công thức danh mục trên từng nhóm; không cộng hoặc lấy trung bình các tỷ lệ nhóm.",
+        "additivity_by_dimension": {
+          "disjoint_groups": false,
+          "overlapping_groups": false,
+          "across_time": false,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "delivery"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Không dùng mart Top-N của dashboard để tính chỉ số toàn hệ thống.",
+          "Không cộng hoặc lấy trung bình tỷ lệ của các nhóm; cần tính lại trên toàn quần thể."
+        ],
+        "known_caveats": [
+          "CANCELLED gồm chuyến bị hủy do hủy đơn hoặc phân công lại, không chỉ lỗi của shipper; FAILED là chuyến shipper báo thất bại."
+        ],
+        "value_range": [
+          0,
+          100
+        ],
+        "numerator": "Chuyến DELIVERED",
+        "denominator": "Chuyến DELIVERED + FAILED + CANCELLED",
+        "compatible_dimensions": [
+          "driver_id",
+          "delivery_status",
+          "store",
+          "store_id",
+          "city",
+          "store_type",
+          "order_type",
+          "payment_method"
+        ]
+      },
+      "avg_delivery_minutes": {
+        "business_name": "Thời gian giao trung bình",
+        "aliases": [
+          "avg_delivery_minutes",
+          "Thời gian giao trung bình",
+          "thời gian giao trung bình",
+          "tốc độ giao",
+          "thời lượng giao"
+        ],
+        "expression": "ROUND(AVG(EXTRACT(EPOCH FROM (silver.giao_hang.thoi_gian_ket_thuc - silver.giao_hang.thoi_gian_lay_hang)) / 60.0), 1)",
+        "source": "silver.giao_hang",
+        "grain": "delivery",
+        "time_column": "silver.giao_hang.thoi_gian_nhan_chuyen",
+        "unit": "phút",
+        "subjects": [
+          "delivery_assignments"
+        ],
+        "business_filters": [
+          {
+            "dimension": "delivery_status",
+            "operator": "eq",
+            "value": "DELIVERED"
+          }
+        ],
+        "non_negative": true,
+        "additive": false,
+        "description": "Thời gian giao trung bình ở mức chuyến giao; đơn vị phút.",
+        "quality_direction": "lower_better",
+        "aggregation_semantics": "average",
+        "business_meaning": "Phút từ lấy hàng đến giao xong, chỉ chuyến DELIVERED.",
+        "historical_capability": "historical",
+        "population_definition": "Chuyến giao DELIVERED có thời điểm lấy hàng và kết thúc",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend",
+          "ranking"
+        ],
+        "business_definition": "Trung bình số phút từ lúc lấy hàng đến lúc giao xong, chỉ trên chuyến DELIVERED có đủ hai mốc thời gian.",
+        "aggregation_behavior": "Tính lại theo công thức danh mục trên từng nhóm; không cộng hoặc lấy trung bình các tỷ lệ nhóm.",
+        "additivity_by_dimension": {
+          "disjoint_groups": false,
+          "overlapping_groups": false,
+          "across_time": false,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "delivery"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Không dùng mart Top-N của dashboard để tính chỉ số toàn hệ thống.",
+          "Không cộng hoặc lấy trung bình tỷ lệ của các nhóm; cần tính lại trên toàn quần thể."
+        ],
+        "known_caveats": [
+          "CANCELLED gồm chuyến bị hủy do hủy đơn hoặc phân công lại, không chỉ lỗi của shipper; FAILED là chuyến shipper báo thất bại."
+        ],
+        "required_non_null": [
+          "silver.giao_hang.thoi_gian_lay_hang",
+          "silver.giao_hang.thoi_gian_ket_thuc"
+        ],
+        "compatible_dimensions": [
+          "driver_id",
+          "delivery_status",
+          "store",
+          "store_id",
+          "city",
+          "store_type",
+          "order_type",
+          "payment_method"
+        ]
+      },
+      "order_cancellation_rate": {
+        "business_name": "Tỷ lệ hủy đơn",
+        "aliases": [
+          "order_cancellation_rate",
+          "Tỷ lệ hủy đơn",
+          "tỷ lệ hủy đơn",
+          "tỉ lệ hủy đơn",
+          "tỷ lệ huỷ đơn",
+          "tỷ lệ đơn hủy",
+          "tỉ lệ đơn hủy",
+          "order cancellation rate",
+          "cancellation rate"
+        ],
+        "expression": "ROUND(100.0 * COUNT(*) FILTER (WHERE silver.don_hang.trang_thai_don_hang = 'DA_HUY') / NULLIF(COUNT(*), 0), 2)",
+        "source": "silver.don_hang",
+        "grain": "order",
+        "time_column": "silver.don_hang.ngay_tao",
+        "unit": "%",
+        "subjects": [
+          "orders"
+        ],
+        "business_filters": [
+          {
+            "dimension": "order_status",
+            "operator": "in",
+            "value": [
+              "HOAN_THANH",
+              "DA_HUY"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "additive": false,
+        "description": "Tỷ lệ hủy đơn ở mức order; đơn vị %.",
+        "quality_direction": "lower_better",
+        "aggregation_semantics": "ratio",
+        "business_meaning": "DA_HUY / đơn đã kết thúc (HOAN_THANH, DA_HUY); không cộng tỷ lệ nhóm.",
+        "historical_capability": "historical",
+        "population_definition": "Đơn đã kết thúc theo vòng đời order-service: HOAN_THANH, DA_HUY",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend",
+          "ranking"
+        ],
+        "business_definition": "Phần trăm đơn bị hủy (DA_HUY) trên các đơn đã kết thúc (HOAN_THANH + DA_HUY) theo ngày tạo đơn; đơn đang xử lý không vào mẫu số.",
+        "aggregation_behavior": "Tính lại theo công thức danh mục trên từng nhóm; không cộng hoặc lấy trung bình các tỷ lệ nhóm.",
+        "additivity_by_dimension": {
+          "disjoint_groups": false,
+          "overlapping_groups": false,
+          "across_time": false,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "order"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Không cộng hoặc lấy trung bình tỷ lệ của các nhóm; cần tính lại trên toàn quần thể."
+        ],
+        "known_caveats": [
+          "Đơn còn đang xử lý (MOI_TAO, DA_XAC_NHAN, DANG_CHUAN_BI, DANG_GIAO) tại lần đồng bộ không vào mẫu số; kỳ gần nhất có thể thay đổi khi các đơn này kết thúc."
+        ],
+        "value_range": [
+          0,
+          100
+        ],
+        "numerator": "Đơn DA_HUY",
+        "denominator": "Đơn HOAN_THANH + DA_HUY",
+        "compatible_dimensions": [
+          "order_status",
+          "store",
+          "store_id",
+          "city",
+          "store_type",
+          "order_type",
+          "payment_method",
+          "weekday",
+          "hour"
+        ]
+      },
+      "order_completion_rate": {
+        "business_name": "Tỷ lệ hoàn thành đơn",
+        "aliases": [
+          "order_completion_rate",
+          "Tỷ lệ hoàn thành đơn",
+          "tỷ lệ hoàn thành đơn",
+          "tỉ lệ hoàn thành đơn",
+          "tỷ lệ đơn hoàn thành",
+          "tỉ lệ đơn hoàn thành",
+          "order completion rate",
+          "completion rate"
+        ],
+        "expression": "ROUND(100.0 * COUNT(*) FILTER (WHERE silver.don_hang.trang_thai_don_hang = 'HOAN_THANH') / NULLIF(COUNT(*), 0), 2)",
+        "source": "silver.don_hang",
+        "grain": "order",
+        "time_column": "silver.don_hang.ngay_tao",
+        "unit": "%",
+        "subjects": [
+          "orders"
+        ],
+        "business_filters": [
+          {
+            "dimension": "order_status",
+            "operator": "in",
+            "value": [
+              "HOAN_THANH",
+              "DA_HUY"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "additive": false,
+        "description": "Tỷ lệ hoàn thành đơn ở mức order; đơn vị %.",
+        "quality_direction": "higher_better",
+        "aggregation_semantics": "ratio",
+        "business_meaning": "HOAN_THANH / đơn đã kết thúc (HOAN_THANH, DA_HUY); không cộng tỷ lệ nhóm.",
+        "historical_capability": "historical",
+        "population_definition": "Đơn đã kết thúc theo vòng đời order-service: HOAN_THANH, DA_HUY",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend",
+          "ranking"
+        ],
+        "business_definition": "Phần trăm đơn hoàn thành (HOAN_THANH) trên các đơn đã kết thúc (HOAN_THANH + DA_HUY) theo ngày tạo đơn; đơn đang xử lý không vào mẫu số.",
+        "aggregation_behavior": "Tính lại theo công thức danh mục trên từng nhóm; không cộng hoặc lấy trung bình các tỷ lệ nhóm.",
+        "additivity_by_dimension": {
+          "disjoint_groups": false,
+          "overlapping_groups": false,
+          "across_time": false,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "order"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Không cộng hoặc lấy trung bình tỷ lệ của các nhóm; cần tính lại trên toàn quần thể."
+        ],
+        "known_caveats": [
+          "Đơn còn đang xử lý (MOI_TAO, DA_XAC_NHAN, DANG_CHUAN_BI, DANG_GIAO) tại lần đồng bộ không vào mẫu số; kỳ gần nhất có thể thay đổi khi các đơn này kết thúc."
+        ],
+        "value_range": [
+          0,
+          100
+        ],
+        "numerator": "Đơn HOAN_THANH",
+        "denominator": "Đơn HOAN_THANH + DA_HUY",
+        "compatible_dimensions": [
+          "order_status",
+          "store",
+          "store_id",
+          "city",
+          "store_type",
+          "order_type",
+          "payment_method",
+          "weekday",
+          "hour"
+        ]
+      },
+      "late_shift_rate": {
+        "business_name": "Tỷ lệ ca đi trễ",
+        "aliases": [
+          "late_shift_rate",
+          "Tỷ lệ ca đi trễ",
+          "tỷ lệ ca đi trễ",
+          "tỷ lệ đi trễ",
+          "tỉ lệ đi trễ",
+          "tỷ lệ ca trễ",
+          "tỷ lệ nhân viên đi trễ",
+          "late shift rate"
+        ],
+        "expression": "ROUND(100.0 * COUNT(*) FILTER (WHERE silver.ca_lam_viec_nhan_vien.trang_thai_cham_cong = 'DI_TRE') / NULLIF(COUNT(*), 0), 2)",
+        "source": "silver.ca_lam_viec_nhan_vien",
+        "grain": "shift",
+        "time_column": "silver.ca_lam_viec_nhan_vien.ngay_lam_viec",
+        "unit": "%",
+        "subjects": [
+          "staff_shifts"
+        ],
+        "business_filters": [
+          {
+            "dimension": "attendance_status",
+            "operator": "in",
+            "value": [
+              "DUNG_GIO",
+              "DI_TRE",
+              "VE_SOM"
+            ]
+          }
+        ],
+        "non_negative": true,
+        "additive": false,
+        "description": "Tỷ lệ ca đi trễ ở mức shift; đơn vị %.",
+        "quality_direction": "lower_better",
+        "aggregation_semantics": "ratio",
+        "business_meaning": "DI_TRE / ca đã chấm công vào ca (DUNG_GIO, DI_TRE, VE_SOM); không cộng tỷ lệ nhóm.",
+        "historical_capability": "historical",
+        "population_definition": "Ca đã chấm công vào ca: DUNG_GIO, DI_TRE, VE_SOM",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend",
+          "ranking"
+        ],
+        "business_definition": "Phần trăm ca đi trễ (DI_TRE) trên các ca đã chấm công vào ca (DUNG_GIO, DI_TRE, VE_SOM) theo ngày làm; ca chưa chấm công (ASSIGNED), nghỉ phép (NGHI_PHEP) hoặc vắng mặt (VANG_MAT) không vào mẫu số.",
+        "aggregation_behavior": "Tính lại theo công thức danh mục trên từng nhóm; không cộng hoặc lấy trung bình các tỷ lệ nhóm.",
+        "additivity_by_dimension": {
+          "disjoint_groups": false,
+          "overlapping_groups": false,
+          "across_time": false,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "shift"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Không cộng hoặc lấy trung bình tỷ lệ của các nhóm; cần tính lại trên toàn quần thể."
+        ],
+        "known_caveats": [
+          "Ca vắng mặt không tính là đi trễ; xem số ca theo trạng thái chấm công để đánh giá vắng mặt."
+        ],
+        "value_range": [
+          0,
+          100
+        ],
+        "numerator": "Ca DI_TRE",
+        "denominator": "Ca DUNG_GIO + DI_TRE + VE_SOM",
+        "compatible_dimensions": [
+          "attendance_status",
+          "shift_name",
+          "store",
+          "store_id",
+          "city",
+          "store_type"
+        ]
+      },
+      "large_cash_discrepancy_shift_count": {
+        "business_name": "Số ca lệch tiền lớn",
+        "aliases": [
+          "large_cash_discrepancy_shift_count",
+          "Số ca lệch tiền lớn",
+          "số ca lệch tiền lớn",
+          "ca lệch tiền lớn",
+          "ca lệch quỹ lớn",
+          "ca chênh lệch tiền lớn"
+        ],
+        "expression": "COUNT(*) FILTER (WHERE silver.ca_doi_soat.chenh_lech > 500000 OR silver.ca_doi_soat.chenh_lech < -500000)",
+        "source": "silver.ca_doi_soat",
+        "grain": "cash_shift",
+        "time_column": "silver.ca_doi_soat.ngay_tao",
+        "unit": "ca",
+        "subjects": [
+          "cashier_reconciliation"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true,
+        "description": "Số ca lệch tiền lớn ở mức cash_shift; đơn vị ca.",
+        "quality_direction": "lower_better",
+        "aggregation_semantics": "conditional_count",
+        "business_meaning": "Số ca đối soát có |chênh lệch| > 500.000 VND (ngưỡng mặc định hệ thống, cấu hình trong danh mục).",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ ca đối soát; đếm ca có |chênh lệch| > 500.000 VND",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend",
+          "ranking"
+        ],
+        "business_definition": "Đếm ca đối soát có giá trị tuyệt đối chênh lệch tiền mặt lớn hơn 500.000 VND/ca. 500.000 VND là ngưỡng mặc định hệ thống, không phải chuẩn nghiệp vụ phổ quát.",
+        "aggregation_behavior": "Số bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "cash_shift"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả."
+        ],
+        "known_caveats": [
+          "Ngưỡng 500.000 VND/ca là mặc định hệ thống, có thể cấu hình; chênh lệch có dấu xem ở chỉ số Chênh lệch tiền."
+        ],
+        "compatible_dimensions": [
+          "store",
+          "store_id",
+          "city",
+          "store_type"
+        ]
+      },
+      "promotion_redemption_count": {
+        "business_name": "Lượt sử dụng khuyến mãi",
+        "aliases": [
+          "promotion_redemption_count",
+          "Lượt sử dụng khuyến mãi",
+          "lượt sử dụng khuyến mãi",
+          "lượt dùng khuyến mãi",
+          "số lượt dùng khuyến mãi",
+          "lượt áp dụng khuyến mãi",
+          "promotion redemptions"
+        ],
+        "expression": "COUNT(*)",
+        "source": "silver.khuyen_mai_su_dung",
+        "grain": "redemption",
+        "time_column": "silver.khuyen_mai_su_dung.ngay_su_dung",
+        "unit": "lượt",
+        "subjects": [
+          "promotion_redemptions"
+        ],
+        "business_filters": [],
+        "non_negative": true,
+        "additive": true,
+        "description": "Lượt sử dụng khuyến mãi ở mức redemption; đơn vị lượt.",
+        "quality_direction": "contextual",
+        "aggregation_semantics": "count",
+        "business_meaning": "Mỗi lượt áp dụng mã khuyến mãi được ghi trong sổ sử dụng khuyến mãi, theo ngày sử dụng.",
+        "historical_capability": "historical",
+        "population_definition": "Toàn bộ lượt sử dụng khuyến mãi đã ghi nhận",
+        "recommended_uses": [
+          "overview",
+          "comparison",
+          "trend",
+          "ranking"
+        ],
+        "business_definition": "Số lượt sử dụng khuyến mãi theo sổ sử dụng của dịch vụ định danh (một dòng mỗi lượt), theo ngày sử dụng.",
+        "aggregation_behavior": "Số bản ghi thuộc quần thể đã lọc.",
+        "additivity_by_dimension": {
+          "disjoint_groups": true,
+          "overlapping_groups": false,
+          "across_time": true,
+          "condition": "Chỉ cộng các nhóm không giao nhau, cùng đơn vị và cùng định nghĩa quần thể."
+        },
+        "valid_grains": [
+          "redemption"
+        ],
+        "invalid_uses": [
+          "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
+          "Không phải số đơn có voucher trên đơn hàng; hai nguồn ghi nhận khác nhau."
+        ],
+        "known_caveats": [
+          "Khác chỉ số Số đơn dùng voucher (mã voucher ghi trên đơn); lượt không khớp đơn sẽ không có chi nhánh."
+        ],
+        "compatible_dimensions": [
+          "redeemed_promotion",
+          "redeemed_promotion_code",
+          "store",
+          "store_id",
+          "city",
+          "store_type"
         ]
       }
     },
@@ -4978,7 +6025,8 @@
           "DI_TRE",
           "VE_SOM",
           "VANG_MAT",
-          "ASSIGNED"
+          "ASSIGNED",
+          "NGHI_PHEP"
         ],
         "value_grounding": {
           "mode": "enum",
@@ -5153,6 +6201,108 @@
           ]
         ],
         "cardinality_hint": 3
+      },
+      "delivery_status": {
+        "table": "silver.giao_hang",
+        "column": "trang_thai_giao_hang",
+        "business_name": "Trạng thái chuyến giao",
+        "aliases": [
+          "delivery_status",
+          "trạng thái giao hàng",
+          "trạng thái chuyến giao"
+        ],
+        "role": "dimension",
+        "enum": [
+          "PENDING",
+          "CONFIRMED",
+          "PICKING_UP",
+          "IN_TRANSIT",
+          "DELIVERED",
+          "FAILED",
+          "CANCELLED"
+        ],
+        "value_grounding": {
+          "mode": "enum",
+          "max_candidates": 8
+        },
+        "business_meaning": "Trạng thái của từng chuyến giao, khác trạng thái đơn hàng.",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "enumerated"
+      },
+      "weekday": {
+        "table": "silver.don_hang",
+        "column": "ngay_tao",
+        "business_name": "Thứ trong tuần",
+        "aliases": [
+          "weekday",
+          "Thứ trong tuần",
+          "thứ trong tuần",
+          "ngày trong tuần",
+          "day of week"
+        ],
+        "role": "dimension",
+        "expression": "EXTRACT(ISODOW FROM silver.don_hang.ngay_tao)",
+        "value_grounding": {
+          "mode": "lookup",
+          "max_candidates": 8
+        },
+        "value_labels": {
+          "1": "Thứ Hai",
+          "2": "Thứ Ba",
+          "3": "Thứ Tư",
+          "4": "Thứ Năm",
+          "5": "Thứ Sáu",
+          "6": "Thứ Bảy",
+          "7": "Chủ nhật"
+        },
+        "business_meaning": "Thứ trong tuần theo ISO (1 = Thứ Hai … 7 = Chủ nhật) của ngày tạo đơn.",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
+      },
+      "redeemed_promotion": {
+        "table": "silver.khuyen_mai_su_dung",
+        "column": "ten_khuyen_mai",
+        "business_name": "Chương trình khuyến mãi đã dùng",
+        "aliases": [
+          "redeemed_promotion",
+          "Chương trình khuyến mãi đã dùng",
+          "chương trình khuyến mãi đã dùng",
+          "khuyến mãi đã dùng"
+        ],
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "lookup",
+          "max_candidates": 8
+        },
+        "business_meaning": "Tên chương trình của lượt sử dụng; nhiều mã có thể cùng một tên chương trình và được gộp theo tên.",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
+      },
+      "redeemed_promotion_code": {
+        "table": "silver.khuyen_mai_su_dung",
+        "column": "ma_khuyen_mai",
+        "business_name": "Mã khuyến mãi đã dùng",
+        "aliases": [
+          "redeemed_promotion_code",
+          "Mã khuyến mãi đã dùng",
+          "mã khuyến mãi đã dùng"
+        ],
+        "role": "dimension",
+        "value_grounding": {
+          "mode": "lookup",
+          "max_candidates": 8
+        },
+        "business_meaning": "Mã khuyến mãi của từng lượt sử dụng.",
+        "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
+        "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
+        "hierarchies": [],
+        "cardinality_hint": "unknown_until_result"
       }
     },
     "subjects": {
@@ -5185,7 +6335,9 @@
           "revenue",
           "order_count",
           "aov",
-          "purchasing_customer_count"
+          "purchasing_customer_count",
+          "order_cancellation_rate",
+          "order_completion_rate"
         ],
         "detail_columns": [
           "order_id",
@@ -5660,7 +6812,8 @@
         "default_dimension": "shift_name",
         "metrics": [
           "shift_count",
-          "late_count"
+          "late_count",
+          "late_shift_rate"
         ],
         "detail_columns": [
           "shift_name"
@@ -5699,7 +6852,8 @@
         "metrics": [
           "total_cash_difference",
           "system_cash_revenue",
-          "reconciled_shifts"
+          "reconciled_shifts",
+          "large_cash_discrepancy_shift_count"
         ],
         "detail_columns": [
           "store"
@@ -5815,6 +6969,65 @@
         "detail_source": "silver.don_hang",
         "detail_time_column": "silver.don_hang.ngay_tao",
         "detail_grain": "order"
+      },
+      "delivery_assignments": {
+        "business_name": "Chuyến giao hàng",
+        "aliases": [
+          "chuyến giao",
+          "giao hàng",
+          "tỷ lệ giao",
+          "hiệu suất giao hàng",
+          "delivery assignments"
+        ],
+        "source": "silver.giao_hang",
+        "grain": "delivery",
+        "default_dimension": "driver_id",
+        "metrics": [
+          "delivery_count",
+          "delivered_count",
+          "failed_or_cancelled_delivery_count",
+          "delivery_success_rate",
+          "avg_delivery_minutes"
+        ],
+        "detail_columns": [
+          "driver_id",
+          "delivery_status"
+        ],
+        "time_column": "silver.giao_hang.thoi_gian_nhan_chuyen",
+        "tables": [
+          "silver.giao_hang",
+          "silver.shipper",
+          "silver.don_hang"
+        ],
+        "detail_source": "silver.giao_hang",
+        "detail_time_column": "silver.giao_hang.thoi_gian_nhan_chuyen",
+        "detail_grain": "delivery"
+      },
+      "promotion_redemptions": {
+        "business_name": "Lượt sử dụng khuyến mãi",
+        "aliases": [
+          "lượt dùng khuyến mãi",
+          "lượt sử dụng khuyến mãi",
+          "promotion_redemptions",
+          "Lượt sử dụng khuyến mãi"
+        ],
+        "source": "silver.khuyen_mai_su_dung",
+        "grain": "redemption",
+        "default_dimension": "redeemed_promotion",
+        "metrics": [
+          "promotion_redemption_count"
+        ],
+        "detail_columns": [
+          "redeemed_promotion"
+        ],
+        "time_column": "silver.khuyen_mai_su_dung.ngay_su_dung",
+        "tables": [
+          "silver.khuyen_mai_su_dung",
+          "silver.chi_nhanh"
+        ],
+        "detail_source": "silver.khuyen_mai_su_dung",
+        "detail_time_column": "silver.khuyen_mai_su_dung.ngay_su_dung",
+        "detail_grain": "redemption"
       }
     },
     "timezone": "Asia/Ho_Chi_Minh",
@@ -6000,7 +7213,9 @@
             "revenue",
             "order_count",
             "aov",
-            "purchasing_customer_count"
+            "purchasing_customer_count",
+            "order_cancellation_rate",
+            "order_completion_rate"
           ],
           "dimension_refs": [
             "order_id",
@@ -6008,7 +7223,8 @@
             "city",
             "payment_method",
             "order_type",
-            "order_status"
+            "order_status",
+            "weekday"
           ],
           "analytical_lenses": [
             {
@@ -6024,7 +7240,8 @@
                 "city",
                 "store",
                 "payment_method",
-                "order_type"
+                "order_type",
+                "weekday"
               ],
               "supports_time_series": true,
               "supports_ranking": true,
@@ -6069,6 +7286,9 @@
                   ],
                   [
                     "order_type"
+                  ],
+                  [
+                    "weekday"
                   ]
                 ],
                 "requires_historical_data": false,
@@ -6120,7 +7340,8 @@
                 "city",
                 "store",
                 "order_status",
-                "order_type"
+                "order_type",
+                "weekday"
               ],
               "supports_time_series": true,
               "supports_ranking": true,
@@ -6166,6 +7387,9 @@
                   ],
                   [
                     "order_type"
+                  ],
+                  [
+                    "weekday"
                   ]
                 ],
                 "requires_historical_data": false,
@@ -6451,6 +7675,94 @@
                 "Cơ cấu kênh bán trong phạm vi đã chọn?",
                 "Phân tích cơ cấu kênh bán trong phạm vi đã chọn."
               ]
+            },
+            {
+              "id": "order_fulfilment",
+              "business_label": "Hủy và hoàn thành đơn",
+              "business_question": "Tỷ lệ hủy và hoàn thành đơn trong phạm vi đã chọn?",
+              "metric_refs": [
+                "order_cancellation_rate",
+                "order_completion_rate"
+              ],
+              "dimension_refs": [
+                "store",
+                "city",
+                "order_type",
+                "payment_method",
+                "weekday"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": false,
+              "recommended_drilldowns": [
+                "store",
+                "city",
+                "order_type"
+              ],
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "orders",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend"
+                ],
+                "allowed_metric_refs": [
+                  "order_cancellation_rate",
+                  "order_completion_rate"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "order_cancellation_rate"
+                ],
+                "required_grouping": [],
+                "default_grouping": [],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "store"
+                  ],
+                  [
+                    "city"
+                  ],
+                  [
+                    "order_type"
+                  ],
+                  [
+                    "payment_method"
+                  ],
+                  [
+                    "weekday"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": true,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "stores"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "non_additive"
+                ],
+                "cross_tab_grouping_refs": []
+              },
+              "example_intents": [
+                "Tỷ lệ hủy đơn theo chi nhánh?",
+                "Tỷ lệ hoàn thành đơn theo tuần?"
+              ]
             }
           ],
           "health_signals": [
@@ -6529,7 +7841,8 @@
             "order_volume",
             "sales_trend",
             "buying_customers",
-            "channel_mix"
+            "channel_mix",
+            "order_fulfilment"
           ],
           "business_caveats": [
             "no_causal_interpretation",
@@ -7868,14 +9181,15 @@
         "promotions": {
           "domain_id": "promotions",
           "business_label": "Khuyến mãi và voucher",
-          "short_business_purpose": "Đơn có voucher, giảm giá và doanh thu tập voucher; không có ROI hay mẫu số phát hành.",
+          "short_business_purpose": "Đơn có voucher, giảm giá, doanh thu tập voucher và lượt sử dụng khuyến mãi; không có ROI hay mẫu số phát hành.",
           "model_aliases": [
             "voucher",
             "khuyến mãi",
             "ưu đãi"
           ],
           "primary_subjects": [
-            "promotions"
+            "promotions",
+            "promotion_redemptions"
           ],
           "primary_entities": [
             "promotion",
@@ -7885,12 +9199,14 @@
           "metric_refs": [
             "voucher_revenue",
             "discount_amount",
-            "voucher_order_count"
+            "voucher_order_count",
+            "promotion_redemption_count"
           ],
           "dimension_refs": [
             "promotion",
             "store",
-            "city"
+            "city",
+            "redeemed_promotion"
           ],
           "analytical_lenses": [
             {
@@ -8223,6 +9539,84 @@
                 "Diễn biến sử dụng voucher trong phạm vi đã chọn?",
                 "Phân tích diễn biến sử dụng voucher trong phạm vi đã chọn."
               ]
+            },
+            {
+              "id": "promotion_redemption",
+              "business_label": "Lượt sử dụng khuyến mãi",
+              "business_question": "Lượt sử dụng khuyến mãi trong phạm vi đã chọn?",
+              "metric_refs": [
+                "promotion_redemption_count"
+              ],
+              "dimension_refs": [
+                "redeemed_promotion",
+                "store",
+                "city"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "redeemed_promotion",
+                "store",
+                "city"
+              ],
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "promotion_redemptions",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution"
+                ],
+                "allowed_metric_refs": [
+                  "promotion_redemption_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "promotion_redemption_count"
+                ],
+                "required_grouping": [],
+                "default_grouping": [],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "redeemed_promotion"
+                  ],
+                  [
+                    "store"
+                  ],
+                  [
+                    "city"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": true,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "orders"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation"
+                ],
+                "cross_tab_grouping_refs": []
+              },
+              "example_intents": [
+                "Chương trình khuyến mãi nào được dùng nhiều nhất?",
+                "Lượt dùng khuyến mãi theo tháng?"
+              ]
             }
           ],
           "health_signals": [
@@ -8283,7 +9677,8 @@
             "voucher_usage",
             "voucher_revenue",
             "discount_amount",
-            "voucher_trend"
+            "voucher_trend",
+            "promotion_redemption"
           ],
           "business_caveats": [
             "no_causal_interpretation",
@@ -8619,24 +10014,33 @@
         "delivery": {
           "domain_id": "delivery",
           "business_label": "Giao hàng và shipper",
-          "short_business_purpose": "Hiện trạng tổng chuyến tích lũy và điểm shipper; không có ngày chuyến, SLA, thời lượng hay tỷ lệ thành công.",
+          "short_business_purpose": "Chuyến giao theo ngày nhận chuyến: số chuyến, tỷ lệ thành công, thời gian giao; điểm và tổng chuyến shipper hiện tại.",
           "model_aliases": [
             "giao hàng",
             "shipper",
             "tài xế"
           ],
           "primary_subjects": [
-            "delivery"
+            "delivery",
+            "delivery_assignments"
           ],
           "primary_entities": [
             "driver_id"
           ],
           "metric_refs": [
             "total_deliveries",
-            "driver_rating"
+            "driver_rating",
+            "delivery_count",
+            "delivered_count",
+            "failed_or_cancelled_delivery_count",
+            "delivery_success_rate",
+            "avg_delivery_minutes"
           ],
           "dimension_refs": [
-            "driver_id"
+            "driver_id",
+            "delivery_status",
+            "store",
+            "city"
           ],
           "analytical_lenses": [
             {
@@ -8835,6 +10239,166 @@
                 "Liên hệ chuyến và điểm trong phạm vi đã chọn?",
                 "Phân tích liên hệ chuyến và điểm trong phạm vi đã chọn."
               ]
+            },
+            {
+              "id": "delivery_success",
+              "business_label": "Tỷ lệ giao thành công",
+              "business_question": "Tỷ lệ giao thành công trong phạm vi đã chọn?",
+              "metric_refs": [
+                "delivery_success_rate",
+                "delivered_count",
+                "failed_or_cancelled_delivery_count"
+              ],
+              "dimension_refs": [
+                "driver_id",
+                "store",
+                "city"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": false,
+              "recommended_drilldowns": [
+                "driver_id",
+                "store"
+              ],
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "delivery_assignments",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend"
+                ],
+                "allowed_metric_refs": [
+                  "delivery_success_rate",
+                  "delivered_count",
+                  "failed_or_cancelled_delivery_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "delivery_success_rate"
+                ],
+                "required_grouping": [],
+                "default_grouping": [],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "driver_id"
+                  ],
+                  [
+                    "store"
+                  ],
+                  [
+                    "city"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": true,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "orders"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "non_additive"
+                ],
+                "cross_tab_grouping_refs": []
+              },
+              "example_intents": [
+                "Tỷ lệ giao thành công của shipper?",
+                "Tỷ lệ giao thành công theo cửa hàng?"
+              ]
+            },
+            {
+              "id": "delivery_outcomes",
+              "business_label": "Kết quả chuyến giao",
+              "business_question": "Số chuyến giao theo trạng thái?",
+              "metric_refs": [
+                "delivery_count"
+              ],
+              "dimension_refs": [
+                "delivery_status",
+                "driver_id",
+                "store"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "driver_id",
+                "store"
+              ],
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "delivery_assignments",
+                "default_operation": "distribution",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution"
+                ],
+                "allowed_metric_refs": [
+                  "delivery_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "delivery_count"
+                ],
+                "required_grouping": [],
+                "default_grouping": [
+                  "delivery_status"
+                ],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "delivery_status"
+                  ],
+                  [
+                    "driver_id"
+                  ],
+                  [
+                    "store"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": true,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "orders"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation"
+                ],
+                "cross_tab_grouping_refs": []
+              },
+              "example_intents": [
+                "Số chuyến giao theo trạng thái?",
+                "Số chuyến giao theo tuần?"
+              ]
             }
           ],
           "health_signals": [
@@ -8860,19 +10424,23 @@
             }
           ],
           "diagnostic_dimensions": [
-            "driver_id"
+            "driver_id",
+            "delivery_status"
           ],
           "drilldown_hierarchies": [],
           "comparison_semantics": [
+            "previous_period",
             "peer_average",
             "peer_median",
             "between_selected_groups"
           ],
-          "related_domains": [],
+          "related_domains": [
+            "orders"
+          ],
           "supporting_analysis_capabilities": [
-            "delivery_volume",
-            "shipper_rating",
-            "shipper_relationship"
+            "delivery_outcomes",
+            "delivery_success",
+            "delivery_volume"
           ],
           "business_caveats": [
             "no_causal_interpretation",
@@ -9463,7 +11031,7 @@
         "staff_shifts": {
           "domain_id": "staff_shifts",
           "business_label": "Ca làm và chấm công",
-          "short_business_purpose": "Số ca và ca trễ theo ngày làm; số ca trễ chưa phải tỷ lệ.",
+          "short_business_purpose": "Số ca, ca trễ và tỷ lệ ca đi trễ (trên ca đã chấm công) theo ngày làm.",
           "model_aliases": [
             "ca làm",
             "chấm công",
@@ -9478,7 +11046,8 @@
           ],
           "metric_refs": [
             "shift_count",
-            "late_count"
+            "late_count",
+            "late_shift_rate"
           ],
           "dimension_refs": [
             "shift_name",
@@ -9656,6 +11225,84 @@
                 "Chấm công trong phạm vi đã chọn?",
                 "Phân tích chấm công trong phạm vi đã chọn."
               ]
+            },
+            {
+              "id": "late_rate",
+              "business_label": "Tỷ lệ ca đi trễ",
+              "business_question": "Tỷ lệ ca đi trễ trong phạm vi đã chọn?",
+              "metric_refs": [
+                "late_shift_rate"
+              ],
+              "dimension_refs": [
+                "shift_name",
+                "store",
+                "city"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": false,
+              "recommended_drilldowns": [
+                "shift_name",
+                "store",
+                "city"
+              ],
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "staff_shifts",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend"
+                ],
+                "allowed_metric_refs": [
+                  "late_shift_rate"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "late_shift_rate"
+                ],
+                "required_grouping": [],
+                "default_grouping": [],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "shift_name"
+                  ],
+                  [
+                    "store"
+                  ],
+                  [
+                    "city"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": true,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "stores"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation",
+                  "non_additive"
+                ],
+                "cross_tab_grouping_refs": []
+              },
+              "example_intents": [
+                "Tỷ lệ đi trễ theo chi nhánh?",
+                "Tỷ lệ ca đi trễ theo tháng?"
+              ]
             }
           ],
           "health_signals": [
@@ -9704,7 +11351,8 @@
           ],
           "supporting_analysis_capabilities": [
             "shift_volume",
-            "attendance"
+            "attendance",
+            "late_rate"
           ],
           "business_caveats": [
             "no_causal_interpretation"
@@ -9729,7 +11377,8 @@
           "metric_refs": [
             "total_cash_difference",
             "system_cash_revenue",
-            "reconciled_shifts"
+            "reconciled_shifts",
+            "large_cash_discrepancy_shift_count"
           ],
           "dimension_refs": [
             "store",
@@ -9896,6 +11545,79 @@
                 "Quy mô đối soát trong phạm vi đã chọn?",
                 "Phân tích quy mô đối soát trong phạm vi đã chọn."
               ]
+            },
+            {
+              "id": "cash_discrepancy_risk",
+              "business_label": "Ca lệch tiền lớn",
+              "business_question": "Số ca lệch tiền lớn trong phạm vi đã chọn?",
+              "metric_refs": [
+                "large_cash_discrepancy_shift_count"
+              ],
+              "dimension_refs": [
+                "store",
+                "city"
+              ],
+              "supports_time_series": true,
+              "supports_ranking": true,
+              "supports_comparison": true,
+              "supports_distribution": true,
+              "recommended_drilldowns": [
+                "store",
+                "city"
+              ],
+              "related_lens_refs": [],
+              "blueprint": {
+                "subject": "cashier_reconciliation",
+                "default_operation": "aggregate",
+                "allowed_operations": [
+                  "aggregate",
+                  "ranking",
+                  "trend",
+                  "distribution"
+                ],
+                "allowed_metric_refs": [
+                  "large_cash_discrepancy_shift_count"
+                ],
+                "required_metric_refs": [],
+                "default_metric_refs": [
+                  "large_cash_discrepancy_shift_count"
+                ],
+                "required_grouping": [],
+                "default_grouping": [],
+                "allowed_groupings": [
+                  [],
+                  [
+                    "store"
+                  ],
+                  [
+                    "city"
+                  ]
+                ],
+                "requires_historical_data": false,
+                "allowed_granularities": [
+                  "day",
+                  "week",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "default_granularity": "week",
+                "ranking_default_direction": "DESC",
+                "ranking_default_top_n": 10,
+                "requires_complete_population": true,
+                "population_group": "metric_defined",
+                "related_domain_refs": [
+                  "stores"
+                ],
+                "critical_caveats": [
+                  "no_causal_interpretation"
+                ],
+                "cross_tab_grouping_refs": []
+              },
+              "example_intents": [
+                "Chi nhánh nào có ca lệch tiền lớn?",
+                "Số ca lệch tiền lớn theo tháng?"
+              ]
             }
           ],
           "health_signals": [
@@ -9952,7 +11674,8 @@
           ],
           "supporting_analysis_capabilities": [
             "cash_difference",
-            "cash_activity"
+            "cash_activity",
+            "cash_discrepancy_risk"
           ],
           "business_caveats": [
             "no_causal_interpretation"
@@ -10266,7 +11989,8 @@
           "dimension_refs": [
             "hour",
             "store",
-            "city"
+            "city",
+            "weekday"
           ],
           "analytical_lenses": [
             {
@@ -10279,7 +12003,8 @@
               "dimension_refs": [
                 "hour",
                 "store",
-                "city"
+                "city",
+                "weekday"
               ],
               "supports_time_series": true,
               "supports_ranking": true,
@@ -10322,6 +12047,9 @@
                   ],
                   [
                     "city"
+                  ],
+                  [
+                    "weekday"
                   ]
                 ],
                 "requires_historical_data": false,
@@ -10801,14 +12529,6 @@
         ],
         "reason": "definition_unavailable",
         "limitation": "Chưa có chi phí marketing để tính ROI thực sự."
-      },
-      "order_completion_rate": {
-        "aliases": [
-          "tỷ lệ hoàn thành đơn",
-          "tỷ lệ hoàn thành"
-        ],
-        "reason": "definition_unavailable",
-        "limitation": "Danh mục hiện tại chưa có định nghĩa tỷ lệ hoàn thành đơn được duyệt; có thể đối chiếu số đơn theo trạng thái."
       }
     },
     "equivalent_metric_groups": [
@@ -10901,6 +12621,639 @@
       "mỗi danh mục",
       "mỗi thành phố",
       "mỗi chi nhánh"
-    ]
+    ],
+    "presentation_marts": {
+      "gold.shipper_performance": {
+        "source_scope": "TOP_N_MART",
+        "top_n": 20,
+        "ordering": "completed DESC",
+        "population": "20 shipper có nhiều chuyến DELIVERED nhất tại lần chạy gold gần nhất",
+        "global_aggregate_safe": false,
+        "analytics_use": "dashboard_only",
+        "known_caveats": [
+          "Không phải toàn bộ shipper; không dùng để tính tỷ lệ toàn hệ thống.",
+          "Cột failed chỉ đếm trạng thái FAILED; chuyến CANCELLED không được tính.",
+          "success_rate dùng mẫu số gồm cả chuyến đang xử lý."
+        ]
+      },
+      "gold.top_products": {
+        "source_scope": "TOP_N_MART",
+        "top_n": 20,
+        "ordering": "total_quantity DESC",
+        "population": "20 sản phẩm bán nhiều nhất",
+        "global_aggregate_safe": false,
+        "analytics_use": "dashboard_only",
+        "known_caveats": []
+      },
+      "gold.revenue_daily": {
+        "source_scope": "FILTERED_MART",
+        "population": "30 ngày gần nhất có doanh thu (đơn HOAN_THANH, DANG_GIAO) tại lần chạy gold",
+        "global_aggregate_safe": false,
+        "analytics_use": "dashboard_only",
+        "known_caveats": [
+          "Chỉ 30 ngày có doanh thu gần nhất; không phải toàn bộ lịch sử.",
+          "Ngày cuối có thể chưa đồng bộ đủ."
+        ]
+      },
+      "gold.kpi_summary": {
+        "source_scope": "FULL_AGGREGATE",
+        "population": "Toàn hệ thống tại lần chạy gold",
+        "global_aggregate_safe": true,
+        "analytics_use": "dashboard_only",
+        "known_caveats": [
+          "Ảnh chụp tại lần chạy gold; không có lịch sử."
+        ]
+      },
+      "gold.customer_segments": {
+        "source_scope": "FULL_AGGREGATE",
+        "population": "Khách có tài khoản và có ít nhất một đơn tại lần chạy gold",
+        "global_aggregate_safe": false,
+        "analytics_use": "dashboard_only",
+        "known_caveats": [
+          "Phân khúc theo số đơn trọn đời; không gồm đơn khách vãng lai.",
+          "Ảnh chụp tại lần chạy gold; không có lịch sử."
+        ]
+      },
+      "gold.order_status_distribution": {
+        "source_scope": "FULL_AGGREGATE",
+        "population": "Toàn bộ đơn tại lần chạy gold",
+        "global_aggregate_safe": true,
+        "analytics_use": "dashboard_only",
+        "known_caveats": [
+          "Ảnh chụp tại lần chạy gold; không có lịch sử."
+        ]
+      },
+      "gold.payment_methods_distribution": {
+        "source_scope": "FULL_AGGREGATE",
+        "population": "Toàn bộ đơn tại lần chạy gold",
+        "global_aggregate_safe": false,
+        "analytics_use": "dashboard_only",
+        "known_caveats": [
+          "Cột revenue cộng mọi trạng thái đơn, kể cả đơn hủy; khác chỉ số Doanh thu chuẩn.",
+          "Cột count là số đơn (đơn vị đơn)."
+        ]
+      },
+      "gold.branch_taste_profile": {
+        "source_scope": "FULL_AGGREGATE",
+        "population": "Dòng món của đơn hợp lệ theo chi nhánh, món và cỡ tại lần chạy gold",
+        "global_aggregate_safe": false,
+        "analytics_use": "dashboard_only",
+        "known_caveats": [
+          "Gộp theo chi nhánh × món × cỡ; avg_order_value là trung bình theo dòng món, không phải AOV chuẩn."
+        ]
+      },
+      "gold.menu_overview": {
+        "source_scope": "FULL_AGGREGATE",
+        "population": "Toàn bộ món và mọi dòng đơn (kể cả đơn hủy)",
+        "global_aggregate_safe": false,
+        "analytics_use": "dashboard_only",
+        "known_caveats": [
+          "total_sold/total_revenue gồm cả đơn hủy; khác chỉ số Doanh thu sản phẩm chuẩn.",
+          "Danh mục trống được hiển thị mặc định là Cà phê."
+        ]
+      },
+      "gold.stores_overview": {
+        "source_scope": "FULL_AGGREGATE",
+        "population": "Toàn bộ chi nhánh và mọi đơn của chi nhánh",
+        "global_aggregate_safe": false,
+        "analytics_use": "dashboard_only",
+        "known_caveats": [
+          "total_orders đếm mọi trạng thái đơn; doanh thu chỉ đơn HOAN_THANH, DANG_GIAO.",
+          "Thành phố trống được hiển thị mặc định là TP.HCM."
+        ]
+      }
+    },
+    "analysis_missions": [
+      {
+        "id": "overview",
+        "label": "Tổng quan",
+        "description": "Tình hình một chỉ số: KPI toàn phạm vi, diễn biến và cơ cấu chính.",
+        "operations": [
+          "aggregate",
+          "trend",
+          "distribution"
+        ],
+        "metric_requirements": {},
+        "result_tabs": [
+          "all",
+          "trend",
+          "composition",
+          "comparison"
+        ],
+        "chart_forms": [
+          "kpi",
+          "line",
+          "bar",
+          "donut"
+        ],
+        "kpi_cards": [
+          3,
+          4
+        ],
+        "template": {
+          "slots": [
+            "metric",
+            "time"
+          ],
+          "text": "Tình hình {metric} {time} thế nào?"
+        },
+        "examples": [
+          "Tình hình doanh thu tháng 9 năm 2026 thế nào?",
+          "Tình hình giao hàng tháng 9 năm 2026 thế nào?"
+        ],
+        "follow_ups": [
+          "drilldown",
+          "trend",
+          "previous_period",
+          "forecast"
+        ]
+      },
+      {
+        "id": "compare",
+        "label": "So sánh",
+        "description": "So sánh A với B theo một chiều hoặc hai kỳ: chênh lệch tuyệt đối và %.",
+        "operations": [
+          "aggregate",
+          "ranking"
+        ],
+        "metric_requirements": {
+          "dimension": true
+        },
+        "result_tabs": [
+          "comparison",
+          "all",
+          "trend"
+        ],
+        "chart_forms": [
+          "kpi",
+          "grouped_bar",
+          "bar",
+          "table"
+        ],
+        "kpi_cards": [
+          2,
+          4
+        ],
+        "template": {
+          "slots": [
+            "metric",
+            "dimension",
+            "value_a",
+            "value_b",
+            "time"
+          ],
+          "text": "So sánh {metric} theo {dimension} giữa {value_a} và {value_b} {time}"
+        },
+        "examples": [
+          "So sánh doanh thu Hồ Chí Minh và Hà Nội tháng 9 năm 2026",
+          "So sánh tỷ lệ hủy đơn giữa các loại điểm bán"
+        ],
+        "follow_ups": [
+          "trend",
+          "drilldown",
+          "previous_period"
+        ]
+      },
+      {
+        "id": "ranking",
+        "label": "Xếp hạng",
+        "description": "Top/Bottom N theo một chỉ số, kèm tỷ trọng đóng góp và khoảng cách với hạng sau.",
+        "operations": [
+          "ranking"
+        ],
+        "metric_requirements": {
+          "dimension": true
+        },
+        "result_tabs": [
+          "ranking",
+          "composition",
+          "all"
+        ],
+        "chart_forms": [
+          "horizontal_bar",
+          "table"
+        ],
+        "kpi_cards": [
+          2,
+          3
+        ],
+        "template": {
+          "slots": [
+            "n",
+            "dimension",
+            "metric",
+            "time"
+          ],
+          "text": "Top {n} {dimension} theo {metric} {time}"
+        },
+        "examples": [
+          "Top 10 chi nhánh theo doanh thu tháng 9 năm 2026",
+          "Top 5 món bán chạy nhất 30 ngày gần nhất"
+        ],
+        "follow_ups": [
+          "composition",
+          "trend",
+          "drilldown"
+        ]
+      },
+      {
+        "id": "trend",
+        "label": "Xu hướng",
+        "description": "Diễn biến theo ngày/tuần/tháng; kỳ chưa trọn được đánh dấu.",
+        "operations": [
+          "trend"
+        ],
+        "metric_requirements": {
+          "historical": true
+        },
+        "result_tabs": [
+          "trend",
+          "all"
+        ],
+        "chart_forms": [
+          "line",
+          "area"
+        ],
+        "kpi_cards": [
+          2,
+          3
+        ],
+        "template": {
+          "slots": [
+            "metric",
+            "granularity",
+            "time"
+          ],
+          "text": "{metric} {granularity} {time}"
+        },
+        "examples": [
+          "Doanh thu theo tuần trong 3 tháng gần nhất",
+          "Tỷ lệ giao thành công theo tháng năm 2026"
+        ],
+        "follow_ups": [
+          "forecast",
+          "drilldown",
+          "compare"
+        ]
+      },
+      {
+        "id": "composition",
+        "label": "Cơ cấu",
+        "description": "Phân bổ một chỉ số cộng được theo nhóm và mức độ tập trung.",
+        "operations": [
+          "distribution"
+        ],
+        "metric_requirements": {
+          "additive": true,
+          "dimension": true
+        },
+        "result_tabs": [
+          "composition",
+          "all"
+        ],
+        "chart_forms": [
+          "donut",
+          "stacked_100",
+          "bar"
+        ],
+        "kpi_cards": [
+          2,
+          3
+        ],
+        "template": {
+          "slots": [
+            "metric",
+            "dimension",
+            "time"
+          ],
+          "text": "Cơ cấu {metric} theo {dimension} {time}"
+        },
+        "examples": [
+          "Cơ cấu doanh thu theo kênh bán tháng 9 năm 2026",
+          "Cơ cấu số đơn theo phương thức thanh toán"
+        ],
+        "follow_ups": [
+          "ranking",
+          "trend"
+        ]
+      },
+      {
+        "id": "forecast",
+        "label": "Dự báo",
+        "description": "Dự báo thống kê tất định từ lịch sử đã kiểm chứng (khoảng 80%, kiểm tra lùi).",
+        "operations": [
+          "trend"
+        ],
+        "metric_requirements": {
+          "forecastable": true
+        },
+        "result_tabs": [
+          "forecast",
+          "trend",
+          "all"
+        ],
+        "chart_forms": [
+          "forecast_line",
+          "table"
+        ],
+        "kpi_cards": [
+          2,
+          3
+        ],
+        "template": {
+          "slots": [
+            "metric",
+            "horizon",
+            "cadence"
+          ],
+          "text": "Dự báo {metric} {horizon} {cadence} tới"
+        },
+        "examples": [
+          "Dự báo doanh thu 3 tháng tới",
+          "Dự báo số đơn 4 tuần tới"
+        ],
+        "follow_ups": [
+          "trend",
+          "drilldown"
+        ]
+      },
+      {
+        "id": "risk_watch",
+        "label": "Rủi ro & cảnh báo",
+        "description": "So sánh chỉ số chuẩn với ngưỡng mặc định hệ thống; không có điểm rủi ro tổng hợp.",
+        "operations": [
+          "aggregate"
+        ],
+        "metric_requirements": {
+          "risk_signal": true
+        },
+        "result_tabs": [
+          "risk",
+          "all"
+        ],
+        "chart_forms": [
+          "risk_table",
+          "bar"
+        ],
+        "kpi_cards": [
+          3,
+          4
+        ],
+        "template": {
+          "slots": [
+            "scope",
+            "time"
+          ],
+          "text": "Rủi ro {scope} {time}"
+        },
+        "examples": [
+          "Rủi ro các kiosk tháng 9 năm 2026",
+          "Cảnh báo vận hành tại Hà Nội tháng 9 năm 2026"
+        ],
+        "follow_ups": [
+          "drilldown",
+          "trend"
+        ]
+      },
+      {
+        "id": "relationship",
+        "label": "Tương quan",
+        "description": "Quan hệ quan sát giữa hai chỉ số trên cùng đơn vị quan sát; không phải nhân quả.",
+        "operations": [
+          "relationship"
+        ],
+        "metric_requirements": {
+          "relationship": true
+        },
+        "result_tabs": [
+          "comparison",
+          "all"
+        ],
+        "chart_forms": [
+          "scatter",
+          "table"
+        ],
+        "kpi_cards": [
+          2,
+          2
+        ],
+        "template": {
+          "slots": [
+            "metric",
+            "metric_b",
+            "dimension"
+          ],
+          "text": "Liên hệ giữa {metric} và {metric_b} theo {dimension}"
+        },
+        "examples": [
+          "Liên hệ giữa tổng chuyến và điểm đánh giá của shipper"
+        ],
+        "caveat": "Tương quan không phải nhân quả; chỉ mô tả quan hệ quan sát được trong dữ liệu.",
+        "follow_ups": [
+          "ranking",
+          "drilldown"
+        ]
+      }
+    ],
+    "risk_signals": [
+      {
+        "id": "order_cancellation_high",
+        "label": "Tỷ lệ hủy đơn cao",
+        "metric": "order_cancellation_rate",
+        "operator": "gt",
+        "threshold": 8,
+        "warning_margin": 2
+      },
+      {
+        "id": "delivery_success_low",
+        "label": "Tỷ lệ giao thành công thấp",
+        "metric": "delivery_success_rate",
+        "operator": "lt",
+        "threshold": 90,
+        "warning_margin": 3
+      },
+      {
+        "id": "cash_discrepancy_high",
+        "label": "Có ca lệch tiền lớn (> 500.000 VND/ca)",
+        "metric": "large_cash_discrepancy_shift_count",
+        "operator": "gt",
+        "threshold": 0,
+        "warning_margin": 0
+      },
+      {
+        "id": "late_shift_high",
+        "label": "Tỷ lệ ca đi trễ cao",
+        "metric": "late_shift_rate",
+        "operator": "gt",
+        "threshold": 15,
+        "warning_margin": 3
+      },
+      {
+        "id": "low_stock_exists",
+        "label": "Có sản phẩm dưới mức cảnh báo tồn kho",
+        "metric": "low_stock_count",
+        "operator": "gt",
+        "threshold": 0,
+        "warning_margin": 0
+      },
+      {
+        "id": "store_rating_low",
+        "label": "Điểm đánh giá chi nhánh thấp",
+        "metric": "avg_store_rating",
+        "operator": "lt",
+        "threshold": 3.5,
+        "warning_margin": 0.3,
+        "observation_metric": "store_review_count",
+        "minimum_observations": 5
+      }
+    ],
+    "workspace": {
+      "version": "3.1",
+      "threshold_policy": "Ngưỡng là mặc định hệ thống, có thể cấu hình trong danh mục; không phải chuẩn nghiệp vụ phổ quát.",
+      "limits": {
+        "max_requirements": 6,
+        "max_ranking_n": 100
+      },
+      "freshness": {
+        "stale_after_hours": 48
+      },
+      "preflight": {
+        "rate_limit": {
+          "requests": 40,
+          "window_seconds": 10
+        },
+        "debounce_ms": 400
+      },
+      "time_phrases": {
+        "month": "tháng {month} năm {year}",
+        "year": "năm {year}",
+        "rolling_days": "{n} ngày gần nhất",
+        "all_time": "toàn bộ thời gian"
+      },
+      "granularity_phrases": {
+        "day": "theo ngày",
+        "week": "theo tuần",
+        "month": "theo tháng",
+        "quarter": "theo quý"
+      },
+      "forecast_cadence_labels": {
+        "day": "ngày",
+        "week": "tuần",
+        "month": "tháng"
+      },
+      "forecast_horizon_grammar": "(?P<amount>\\d{1,3})\\s+(?P<unit>ngay|tuan|thang|nam)\\s+(?:toi|sau|tiep theo|tiep|sap toi)",
+      "forecast_unit_aliases": {
+        "ngay": "day",
+        "tuan": "week",
+        "thang": "month",
+        "nam": "year"
+      },
+      "grouping_markers": [
+        "theo tung",
+        "theo moi",
+        "tung",
+        "moi",
+        "theo"
+      ],
+      "sensitive_request_concepts": [
+        {
+          "id": "contact",
+          "aliases": [
+            "số điện thoại",
+            "sđt",
+            "email",
+            "địa chỉ email",
+            "thư điện tử"
+          ],
+          "message": "Thông tin liên hệ cá nhân (số điện thoại, email) không được cung cấp cho phân tích AI."
+        },
+        {
+          "id": "address",
+          "aliases": [
+            "địa chỉ nhà",
+            "địa chỉ giao hàng",
+            "địa chỉ khách hàng",
+            "tọa độ",
+            "vị trí giao hàng"
+          ],
+          "message": "Địa chỉ và vị trí cá nhân không được cung cấp cho phân tích AI."
+        },
+        {
+          "id": "identity",
+          "aliases": [
+            "họ tên khách hàng",
+            "tên khách hàng",
+            "căn cước",
+            "cccd",
+            "cmnd",
+            "biển số xe",
+            "mật khẩu"
+          ],
+          "message": "Danh tính và thông tin định danh cá nhân không được cung cấp; hãy phân tích ở mức tổng hợp."
+        }
+      ],
+      "unsupported_nearest": {
+        "marketing_roi": [
+          "voucher_revenue",
+          "discount_amount",
+          "promotion_redemption_count"
+        ]
+      },
+      "unsupported_concepts": {
+        "profit_margin": {
+          "aliases": [
+            "lợi nhuận",
+            "biên lợi nhuận",
+            "lãi gộp",
+            "giá vốn",
+            "profit",
+            "COGS",
+            "gross margin"
+          ],
+          "reason": "definition_unavailable",
+          "limitation": "Kho chỉ có giá bán, không có giá vốn hay chi phí nên không tính được lợi nhuận.",
+          "nearest_metrics": [
+            "revenue",
+            "product_revenue",
+            "discount_amount"
+          ]
+        },
+        "customer_sentiment": {
+          "aliases": [
+            "cảm xúc khách hàng",
+            "phân tích cảm xúc",
+            "sentiment"
+          ],
+          "reason": "definition_unavailable",
+          "limitation": "Chưa có chỉ số cảm xúc được duyệt từ nội dung phản hồi.",
+          "nearest_metrics": [
+            "avg_store_rating",
+            "avg_product_rating",
+            "survey_response_count"
+          ]
+        },
+        "customer_happiness_index": {
+          "aliases": [
+            "chỉ số hạnh phúc",
+            "chỉ số hài lòng",
+            "CSAT",
+            "NPS"
+          ],
+          "reason": "definition_unavailable",
+          "limitation": "Chưa có chỉ số hài lòng/hạnh phúc được duyệt; có điểm đánh giá và số phản hồi khảo sát.",
+          "nearest_metrics": [
+            "avg_store_rating",
+            "avg_product_rating",
+            "survey_response_count"
+          ]
+        }
+      },
+      "risk_watch": {
+        "rate_limit": {
+          "requests": 6,
+          "window_seconds": 60
+        }
+      }
+    }
   }
 }

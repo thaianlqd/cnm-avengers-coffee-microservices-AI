@@ -127,11 +127,13 @@ test('AnalyticsView wires actual dashboard components and no static scope claim'
 
 test('natural fields replace depth configuration and approval reuses submitted input', () => {
   const source = readFileSync(new URL('../views/AnalyticsView.tsx', import.meta.url), 'utf8');
-  assert.ok(source.includes('question: prompt, context: aiAnalysisContext, expectation: aiAnalysisExpectation'));
+  // V3.1: question + time + scope + depth + optional mission; the overlapping
+  // context/expectation fields were removed from the normal workflow.
+  assert.ok(source.includes('analysisInputPayload({ question: prompt, moduleId: activeModule?.module_id, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiAnalysisDepth, mission: aiMission })'));
   assert.ok(source.includes('body: JSON.stringify(submittedInput)'));
   assert.ok(source.includes('aiPlan?.submittedInput || aiInput(promptToSend)'));
   const form = readFileSync(new URL('../components/AnalysisInputForm.tsx', import.meta.url), 'utf8');
-  assert.ok(form.includes('Mong muốn phân tích')); assert.ok(!form.includes('Độ sâu phân tích'));
+  assert.ok(!form.includes('Mong muốn phân tích')); assert.ok(!form.includes('Ngữ cảnh phân tích')); assert.ok(!form.includes('Độ sâu phân tích'));
 });
 
 test('deep planning and related population evidence explain their actual scope', () => {
@@ -235,7 +237,7 @@ test('refinement wire sends revision and explicit visual action without full his
 });
 
 test('one-shot guard failures have safe business headings', () => {
-  for (const [category, heading] of [['provider_call_budget_exceeded', 'Yêu cầu đã đạt giới hạn lượt AI'], ['one_shot_context_budget_exceeded', 'Phạm vi yêu cầu quá lớn'], ['dashboard_contract', 'Cách trình bày chưa phù hợp với dữ liệu']]) {
+  for (const [category, heading] of [['provider_call_budget_exceeded', 'Chưa ánh xạ được yêu cầu vào danh mục dữ liệu'], ['one_shot_context_budget_exceeded', 'Phạm vi yêu cầu quá lớn'], ['dashboard_contract', 'Cách trình bày chưa phù hợp với dữ liệu']]) {
     const html = render(AnalysisClarification, { response: { status: 'error', diagnostics: { error_category: category } } });
     assert.ok(html.includes(heading)); assert.ok(!html.includes(category));
   }
@@ -318,7 +320,7 @@ for (const count of [1, 3, 4, 5, 6]) {
 }
 
 test('provider status is shown separately from local readiness and generic failure', () => {
-  const source=readFileSync(new URL('../views/AnalyticsView.tsx',import.meta.url),'utf8');
+  const source=readFileSync(new URL('../components/workspace/AnalystWorkspace.tsx',import.meta.url),'utf8');  // V3.1: status lives in the workspace
   for (const label of ['Kho dữ liệu:', 'Semantic catalog:', 'AI provider:', 'Chưa kiểm tra', 'Không ổn định']) assert.ok(source.includes(label));
   const error=render(AnalysisClarification,{response:{status:'error',diagnostics:{error_category:'provider_timeout'},message:'Provider chậm'}});
   const clarification=render(AnalysisClarification,{response:{status:'needs_clarification',message:'Chọn chỉ số'}});

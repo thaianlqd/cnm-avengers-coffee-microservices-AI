@@ -119,9 +119,10 @@ class AnalysisJobTests(f.unittest.TestCase):
         key=uuid4().hex;r=self.request('Doanh thu theo thành phố')
         job=jobs.submit(r,'owner-a',key);result=self.wait(jobs,job['job_id'])
         self.assertEqual(result['state'],'failed')
-        self.assertEqual(result['provider_call_count'],3)
+        # V3.0: the identical second answer is no progress, so only 2 calls.
+        self.assertEqual(result['provider_call_count'],2)
         self.assertEqual(jobs.submit(r,'owner-a',key)['job_id'],job['job_id'])
-        self.assertEqual(sum(p.provider.call_count for p in self.pipelines),3)
+        self.assertEqual(sum(p.provider.call_count for p in self.pipelines),2)
 
     def test_partial_scope_stops_before_sql(self):
         supported=f.requirement(derived_features=[],time=None)

@@ -170,7 +170,8 @@ class ReliabilityTests(f.unittest.TestCase):
         wrong=f.envelope(f.requirement(ranking={'limit':5,'metric_id':'product_revenue'},derived_features=[]))
         p=self.pipeline(f.scripted(wrong,wrong,wrong))
         with self.assertRaises(AnalysisError):p.propose(self.request(PRODUCT_30D))
-        self.assertEqual(p.provider.call_count,3)
+        # V3.0: the repeated identical ordering is no progress (2, not 3 calls).
+        self.assertEqual(p.provider.call_count,2)
         p.executor.assert_not_called()
 
     def test_broad_expansion_is_metadata_owned_and_verified(self):

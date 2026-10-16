@@ -70,7 +70,9 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "approval_required": "Vui lòng lập và xác nhận kế hoạch phân tích trước khi thực thi.",
         "invalid_analysis_contract": "AI đã trả lời nhưng kế hoạch phân tích chưa hợp lệ. Vui lòng thử lập lại kế hoạch.",
         "max_tokens_exceeded": "Kế hoạch phân tích vượt quá giới hạn token đầu ra của AI. Hãy thu gọn câu hỏi hoặc chia nhỏ bài toán để hệ thống tạo báo cáo.",
-        "provider_call_budget_exceeded": "Hệ thống đã chặn lượt gọi AI vượt giới hạn của yêu cầu này. Bạn có thể chủ động lập lại kế hoạch.",
+        "provider_call_budget_exceeded": "Hệ thống đã dùng hết số lượt diễn giải cho câu hỏi này mà chưa ánh xạ được yêu cầu; gửi lại nguyên câu sẽ không giúp ích. Hãy diễn đạt lại chỉ số, phạm vi hoặc thời gian.",
+        "provider_transport_nested": "Kết nối tới dịch vụ AI bị gián đoạn trong lúc diễn giải. Vui lòng thử lại.",
+        "semantic_resolution_failed": "Hệ thống đã dừng diễn giải vì lượt sửa không tiến triển; chưa chạy truy vấn nào. Hãy diễn đạt lại chỉ số, phạm vi hoặc thời gian, hoặc chọn một phân tích được hỗ trợ.",
         "one_shot_context_budget_exceeded": "Hệ thống chưa chuẩn bị được đầy đủ ngữ cảnh dữ liệu để lập kế hoạch. Vui lòng thử lại.",
         "semantic_manifest_budget_exceeded": "Hệ thống chưa chuẩn bị được đầy đủ danh mục dữ liệu trong dung lượng lập kế hoạch hiện tại.",
         "context_configuration": "Giới hạn ngữ cảnh trên máy chủ chưa hợp lệ.",
@@ -81,7 +83,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "execution": "Truy vấn phân tích chưa thực thi thành công. Vui lòng thử lại sau.",
         "quality_verification": "Nguồn gốc hoặc phạm vi báo cáo chưa vượt qua kiểm chứng độc lập. Hệ thống chưa tạo báo cáo hoàn chỉnh.",
         "result_contract": "Kết quả dữ liệu chưa vượt qua kiểm chứng nên chưa thể tạo báo cáo.",
-        "unsupported_metric": "Chỉ số yêu cầu chưa có định nghĩa trong danh mục dữ liệu hiện tại.",
+        "unsupported_metric": "Hiện dữ liệu phân tích chưa hỗ trợ chỉ số này: chỉ số yêu cầu chưa có định nghĩa trong danh mục dữ liệu hiện tại.",
         "forecast_unsupported": "Dữ liệu và phương pháp hiện có chưa hỗ trợ dự báo. Bạn có thể yêu cầu xu hướng quan sát của các kỳ đã có dữ liệu.",
         "metric_ambiguous": "Cần chọn chỉ số đánh giá, chẳng hạn doanh thu, số đơn hoặc điểm đánh giá theo dữ liệu khả dụng.",
         "filter_value_unknown": "Giá trị lọc chưa có trong dữ liệu. Hãy kiểm tra tên thành phố, chi nhánh hoặc đối tượng trong phạm vi yêu cầu.",
@@ -177,8 +179,10 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
               'result_contract':'RESULT_VALIDATION', 'execution':'SQL_EXECUTION',
               'quality_verification':'QUALITY_VERIFICATION', 'dashboard_contract':'DASHBOARD_PLANNING',
               'semantic_intent_invalid':'SEMANTIC_INTENT', 'provider_invalid_json':'PROVIDER_FORMAT'}
+    from services.error_taxonomy import classify, is_provider_transport
+    typed = classify(category, layer_diagnostics)
     stage = (layer_diagnostics or {}).get('failure_stage') or stages.get(category) or (
-        'PROVIDER_TRANSPORT' if category.startswith('provider_') else 'PLAN_VALIDATION')
+        'PROVIDER_TRANSPORT' if is_provider_transport(category) else 'PLAN_VALIDATION')
     actions = {'capacity_requires_choice':'ask_scope_or_granularity_choice',
                'artifact_store_unavailable':'restore_storage_without_semantic_retry',
                'artifact_expired':'refresh_approved_query', 'artifact_integrity':'reject_artifact_and_refresh',
@@ -193,6 +197,9 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         known['interpretation'] = structured['known_interpretation']
     return {
         "outcome": outcome,
+        "error_type": typed["error_type"],
+        "analysis_state": typed["analysis_state"],
+        "retryable": typed["retryable"],
         "quality_assessment": not_scored(message),
         "issue": issue,
         "status": (
@@ -207,8 +214,8 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
             structured.get("known_interpretation") if structured else None
         ),
         "diagnostics": {
-            "provider_status": "failed" if category.startswith("provider_") else "success" if any(a.get("status") == "success" for a in provider_calls or []) else "not_started",
-            "provider_error_category": category if category.startswith("provider_") else None,
+            "provider_status": "failed" if is_provider_transport(category) else "success" if any(a.get("status") == "success" for a in provider_calls or []) else "not_started",
+            "provider_error_category": category if is_provider_transport(category) else None,
             "agent_contract_status": "invalid" if category in {"invalid_analysis_contract", "duplicate_invalid_tool_call", "analysis_spec_invalid"} else "valid",
             "agent_contract_error": category if category in {"invalid_analysis_contract", "duplicate_invalid_tool_call", "analysis_spec_invalid"} else None,
             "semantic_status": "unsupported" if category.startswith("unsupported") else "clarification" if category in clarification_categories else "not_started",
@@ -232,7 +239,8 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "charts": [],
         'failure': dict(stage=stage, code=category, user_impact=outcome,
             what_is_known=known, what_failed=category,
-            retry_helps=category in {'provider_timeout','provider_connection','provider_http','provider_rate_limited'},
+            retry_helps=typed['retryable'], error_type=typed['error_type'], analysis_state=typed['analysis_state'],
+            guidance=dict(title=typed['title'], description=typed['description'], next_action=typed['next_action']),
             needs_user_input=outcome=='NEEDS_INPUT', recommended_server_action=actions.get(category,
                 'request_clarification' if outcome=='NEEDS_INPUT' else 'inspect_failed_stage')),
     }

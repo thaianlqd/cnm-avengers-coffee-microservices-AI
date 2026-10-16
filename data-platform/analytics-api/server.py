@@ -69,6 +69,10 @@ def _background_init_warehouse_views():
 def on_startup():
     from services.readiness_service import catalog_probe
     catalog_probe(False)
+    # V3.1: cached data coverage/freshness for the Analyst Workspace; requests
+    # (capabilities, typing-time preflight) only read this snapshot.
+    from services.data_coverage_service import start_background_refresh
+    start_background_refresh()
     if os.getenv("ANALYTICS_INITIALIZE_WAREHOUSE_ON_STARTUP", "false").lower() != "true":
         logger.info("Warehouse bootstrap disabled; serving existing schemas without startup DDL.")
         return

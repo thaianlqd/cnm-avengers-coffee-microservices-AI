@@ -19,13 +19,35 @@ from services.domain_intelligence_service import DEPTH_POLICIES
 from services.agent_provider import NativeAgentProvider
 
 logger = logging.getLogger("ai-analytics")
-SYSTEM = """Extract Vietnamese analytical meaning as one intent envelope, one requirement per distinct user goal. Use candidate metric/dimension IDs; lens_hint is advisory. No SQL, subjects, executable IDs, parents, query roles, coverage mappings, charts or reasoning. Preserve metrics, filters, time, ranking and requested features. Question overrides context/expectation; structured UI scope/time overrides question. Omitted time means all_time. Preserve incompatible populations separately. Unavailable definitions such as forecasts or ROI without costs stay explicit with controlled reasons. Clarify only genuinely missing meaning. Top N is a selected cohort; contribution_share requires a verified denominator. Never invent values, causes or history. Return requested work; server chooses supporting views. Population disclosures do not imply grouping. Averages cannot have additive shares. Separate whole-scope scalar KPIs from grouped views. Companion metrics do not change the ranking criterion."""
+SYSTEM = """Extract Vietnamese analytical meaning as one intent envelope, one requirement per distinct user goal. Use candidate metric/dimension IDs; lens_hint is advisory. No SQL, subjects, executable IDs, parents, query roles, coverage mappings, charts or reasoning. Preserve metrics, filters, time, ranking and requested features. Question overrides context/expectation; structured UI scope/time overrides question. Omitted time means all_time. Preserve incompatible populations separately. Unavailable definitions such as ROI without costs stay explicit with controlled reasons. Clarify only genuinely missing meaning. Top N is a selected cohort; contribution_share requires a verified denominator. Never invent values, causes or history. Return requested work; server chooses supporting views. Population disclosures do not imply grouping. Averages cannot have additive shares. Separate whole-scope scalar KPIs from grouped views. Companion metrics do not change the ranking criterion."""
 REPAIR_SYSTEM = """Repair ONLY the identified semantic fields/requirements. Return one intent envelope with requirement id and only the corrected fields. Omitted fields are preserved by the server. Do not resend unaffected requirements. Correct ALL supplied conflicts together. When removing a feature, also remove its feature_metrics entry; feature_metrics is a full replacement map, not a nested patch. For a shape conflict, retain protected_features and move the conflicting feature to a new requirement with its valid shape, original filters and original time. Do not alter the existing trend cadence or grouping to accommodate a whole-scope feature. For an omitted derived feature, add it to a compatible existing requirement using only id and derived_features, preserving existing features. Add a new requirement only for genuinely omitted analytical work. All other fields are frozen. Use the bounded vocabulary or state a genuine clarification/limitation. No SQL, executable graph, reasoning or results."""
 SYSTEM += " A user instruction not to conclude ROI/causality is a guardrail, not a request to calculate ROI. For a feature applying to one of several displayed metrics, use feature_metrics. A table of catalog aggregations is aggregate, not raw detail. Greetings or text without an analytical goal use clarification reason not_analytical_request and missing_fields:[analysis_goal]."
 SYSTEM += " No optional features for dashboard count. Top N entity goes in dimension_ids; per_group only for an explicit independent partition. Totals/trends have no entity grouping unless requested. Status disclosure adds no filter; preserve catalog populations."
 SYSTEM += " Bind metrics separately for each user clause. Do not copy every KPI metric into every requested view. Retain companion metrics only where requested. For whole-scope totals use scalar; selected_total is only for a ranking criterion."
+SYSTEM += " Concept without candidate metric: decision unsupported. Vague superlative (tốt nhất, ngon nhất) without metric: clarification metric_ambiguous."
+SYSTEM += " Future forecast of one metric: forecast{horizon,unit}; time=history window; never output values; not in forecast_capabilities=unsupported."
 SYSTEM += " For broad or multi-faceted questions, synthesize into 3-5 core strategic requirements (maximum 6). Never generate more than 6 requirements. Pair each metric only with its compatible dimensions. Group complementary metrics with the same population and grouping into a single requirement rather than fragmenting into separate single-metric requirements."
 REPAIR_SYSTEM += " Each named target must include its corrected fields, never id alone. expected is the authoritative replacement for an exact grouping/ranking/time mismatch. Remove unrequested conflicting optional features instead of adding work; retain protected_features. Empty dimension_ids means a whole-scope time trend."
+
+
+CALL_REASONS = {"primary": "INITIAL_UNDERSTANDING", "repair": "CONTRACT_REPAIR",
+                "resolution": "CONTRACT_REPAIR", "transport": "TRANSPORT_RETRY"}
+
+
+def issue_fingerprint(issues):
+    """Canonical unresolved semantic state.
+
+    Only (requirement, field, code) count. Proposed IDs and values are excluded,
+    so renaming an unavailable concept is never mistaken for repair progress.
+    """
+    return sorted({(str(i.get("requirement_id")), str(i.get("field")), str(i.get("code"))) for i in issues})
+
+
+def semantic_repair_limit():
+    value = os.getenv("DATA_ANALYST_MAX_SEMANTIC_REPAIRS", "2").strip()
+    if value not in {"0", "1", "2"}:
+        raise AnalysisError("provider_policy", "Invalid semantic repair allowance")
+    return int(value)
 
 
 def apply_delta(intent, raw):
@@ -91,6 +113,38 @@ class HybridAnalystPlanner(OneShotPlanner):
             failure_stage=None,failure_requirement_id=None,failure_field=None,failure_code=None)
         self.resolved = None
 
+    def related_capabilities(self, limit=6):
+        """Supported metrics from the retrieved domains, as follow-up choices."""
+        r = self.catalog.registry
+        index = AnalyticalResolver(self.catalog, self.reference).index
+        domains = self.diagnostics.get("detailed_domain_ids") or []
+        ids = [m for d in domains for m in index.domains.get(d, {}).get("metric_refs", []) if m in index.metrics]
+        return [{"label": r["metrics"][m]["business_name"], "followup": r["metrics"][m]["business_name"]}
+                for m in dict.fromkeys(ids)][:limit]
+
+    def terminal_semantic_error(self, issues, no_progress, repaired=True):
+        """Typed terminal outcome once bounded repair cannot help.
+
+        A concept is called unsupported only after a repair turn, given the
+        governed candidates, still proposed an unknown ID; a first-turn typo
+        that could not be repaired (no budget/limit 0) is a resolution failure.
+        """
+        unknown = [i for i in issues if i.get("code") == "unknown_semantic_id"]
+        if repaired and unknown and len(unknown) == len(issues):
+            # The model kept proposing concepts absent from the governed
+            # registry. That is a capability gap, not a provider failure.
+            category = "unsupported_metric" if any(i.get("field") == "metric_ids" for i in unknown) else "unsupported_dimension"
+            self.diagnostics.update(capability_status="UNSUPPORTED", semantic_stop_reason="unknown_capability",
+                unsupported_concepts=sorted({c for issues in self.diagnostics.get("semantic_issue_history", [])
+                    for i in issues if i.get("code") == "unknown_semantic_id" for c in i.get("unknown_ids", [])})[:6])
+            return AnalysisError(category, "Requested capability is not in the governed registry",
+                                 choices=self.related_capabilities())
+        error = ResolutionIssues(issues)
+        if no_progress or (unknown and not repaired):
+            error.category = "semantic_resolution_failed"
+        self.diagnostics["capability_status"] = "INVALID_CONTRACT"
+        return error
+
     def vocabulary(self, domains=None):
         index = AnalyticalResolver(self.catalog,self.reference).index
         domains = set(domains or index.domains)
@@ -132,6 +186,12 @@ class HybridAnalystPlanner(OneShotPlanner):
             "semantic_candidate_packet":packet.wire(),
             "features":{id:meta['shape'] for id,meta in self.catalog.registry.get('derived_features',{}).items()},
             "unavailable_definitions":self.catalog.registry.get('unsupported_capabilities',{})}
+        # Forecast bounds only for metrics of the retrieved candidate domains.
+        forecastable={m:",".join(f"{u}<={n}" for u,n in self.catalog.registry["metrics"][m]["forecast"]["max_horizon"].items())
+            for d in selected for m in index.domains.get(d,{}).get("metric_refs",[])
+            if m in index.metrics and self.catalog.registry["metrics"][m].get("forecast",{}).get("forecastable")}
+        if forecastable:
+            payload["forecast_capabilities"]=dict(sorted(forecastable.items()))
         if context.get("semantic_intent"):
             payload["current_intent"] = AnalysisIntentEnvelope.model_validate(context["semantic_intent"]).model_dump(mode='json',exclude_none=True,exclude_defaults=True)
         self.diagnostics.update(candidate_packet_chars=packet.chars,
@@ -188,9 +248,24 @@ class HybridAnalystPlanner(OneShotPlanner):
                 issues.append(entry)
             raise ResolutionIssues(issues) from None
         if intent.decision!="analyze":
+            if intent.decision=="unsupported":
+                # A capability gap needs no model explanation: the server owns the
+                # typed outcome, so a missing clarification object is not repaired.
+                forecast=any(r.forecast for r in intent.requirements)
+                error=AnalysisError("forecast_unsupported" if forecast else "unsupported_metric","Controlled semantic limitation",
+                    choices=self.related_capabilities())
+                self.diagnostics.update(capability_status="UNSUPPORTED",semantic_stop_reason="model_declared_unsupported")
+                error.missing_fields=[f for f in (intent.clarification.missing_fields if intent.clarification else [])
+                    if f in {'metric_ids','dimension_ids','time','filters','analysis_goal','ranking','granularity'}]
+                raise error
             if not intent.clarification:
                 raise ResolutionIssues([{"requirement_id":None,"field":"clarification","code":"clarification_required"}])
-            error=AnalysisError("unsupported_metric" if intent.decision=="unsupported" else intent.clarification.reason,"Controlled semantic limitation")
+            reason=intent.clarification.reason
+            # One concrete clarification: offer the governed metrics as choices.
+            error=AnalysisError(reason,"Controlled semantic limitation",
+                choices=self.related_capabilities() if reason=="metric_ambiguous" else None)
+            if reason=="metric_ambiguous":
+                self.diagnostics.update(capability_status="AMBIGUOUS")
             allowed={'metric_ids','dimension_ids','time','filters','analysis_goal','ranking','granularity'}
             error.missing_fields=[f for f in intent.clarification.missing_fields if f in allowed]
             raise error
@@ -380,13 +455,14 @@ class HybridAnalystPlanner(OneShotPlanner):
                 observer = request_observer.get()
                 if observer:
                     observer('planning' if kind == 'primary' else 'repairing', {})
-                response={}
+                response={};repeated_output=False
                 try:
                     if kind != 'primary' and not self.turn.budget.recovery_available():
                         raise AnalysisError('semantic_intent_invalid','No useful window remains for semantic repair')
                     self.diagnostics[{"primary":"primary_call_count","repair":"semantic_repair_count","resolution":"targeted_resolution_count","transport":"transport_retry_count"}[kind]]+=1
                     if kind == 'resolution':
                         self.diagnostics['semantic_repair_count']+=1
+                    self.diagnostics.setdefault('provider_call_reasons',[]).append(CALL_REASONS[kind])
                     provider_started=time.perf_counter()
                     provider_wall_started=time.monotonic()
                     response=self.turn.invoke(system=system,messages=[{"role":"user","content":compact(payload)}],tools=tools) or {}
@@ -398,11 +474,15 @@ class HybridAnalystPlanner(OneShotPlanner):
                         recorded_attempt['latency_ms']=max(recorded_attempt.get('latency_ms',0),
                             round((time.monotonic()-provider_wall_started)*1000,2))
                     if len(attempts)>1:
-                        raise AnalysisError("provider_call_budget_exceeded","Nested transport attempts forbidden")
+                        raise AnalysisError("provider_transport_nested","Nested transport attempts forbidden")
                     self.diagnostics["provider_calls"].extend(attempts)
                     self.diagnostics["agent_rounds"]=self.turn.budget.used
                     self.turn.budget.remaining()
                     raw=self.read_response(response,delta=tools[0]["name"] == "submit_analysis_delta")
+                    # A repair answer identical to an earlier answer cannot progress.
+                    outputs=self.diagnostics.setdefault('provider_output_digests',[])
+                    repeated_output=digest(raw) in outputs
+                    outputs.append(digest(raw))
                     if kind == "primary" and isinstance(raw.get("requirements"), list):
                         self.raw_requirements = {r["id"]:deepcopy(r) for r in raw["requirements"] if isinstance(r,dict) and isinstance(r.get("id"),str)}
                     if refinement and tools[0]["name"] == "submit_analysis_delta":
@@ -575,10 +655,23 @@ class HybridAnalystPlanner(OneShotPlanner):
                         self.diagnostics.setdefault('recovery_progress', []).append(dict(
                             resolved_issue_count=len(old_codes-new_codes), new_issue_count=len(new_codes-old_codes),
                             repeated_issue_count=len(old_codes & new_codes)))
-                    if attempt+1>=self.turn.budget.max_calls:
-                        raise ResolutionIssues(new_issues) from None
-                    if not self.turn.budget.recovery_available():
-                        raise ResolutionIssues(new_issues) from None
+                    # Progress-aware repair: a repair returning an already seen
+                    # unresolved state stops before another provider call.
+                    fingerprint=issue_fingerprint(new_issues)
+                    seen=self.diagnostics.setdefault('semantic_issue_fingerprints',[])
+                    # Same fingerprint still counts as progress when fewer
+                    # unknown IDs remain (one of two bad metrics was fixed).
+                    unknown_counts=self.diagnostics.setdefault('semantic_unknown_id_counts',[])
+                    unknown_count=sum(len(i.get('unknown_ids') or [None]) for i in new_issues if i.get('code')=='unknown_semantic_id')
+                    narrowed=bool(unknown_counts) and unknown_count<unknown_counts[-1]
+                    no_progress=kind in {'repair','resolution'} and (repeated_output or (fingerprint in seen and not narrowed))
+                    seen.append(fingerprint); unknown_counts.append(unknown_count)
+                    repairs_exhausted=self.diagnostics['contract_repair_count']>=semantic_repair_limit()
+                    if (no_progress or repairs_exhausted or attempt+1>=self.turn.budget.max_calls
+                            or not self.turn.budget.recovery_available()):
+                        self.diagnostics['semantic_stop_reason']=('no_progress' if no_progress else
+                            'repair_limit' if repairs_exhausted else 'provider_budget')
+                        raise self.terminal_semantic_error(new_issues,no_progress,repaired=kind in {'repair','resolution'}) from None
                     targets={i.get("requirement_id") for i in issues}
                     rejected=[r.model_dump(mode="json",exclude_none=True,exclude_defaults=True) for r in previous.requirements if r.id in targets] if previous else []
                     # Include malformed affected siblings too: valid semantic
@@ -760,4 +853,4 @@ class HybridAnalystPlanner(OneShotPlanner):
                 provider_attempt_categories=[a.get('error_category','success') for a in self.diagnostics['provider_calls']],
                 resolver_ms=self.diagnostics.get('resolver_latency_ms',0),
                 provider_ms=sum(self.diagnostics.get(k,0) for k in ('provider_primary_ms','provider_repair_ms','provider_transport_retry_ms')))
-            logger.info("[AnalystPlanningTurn] %s",json.dumps({k:self.diagnostics.get(k) for k in ("provider_call_count","primary_call_count","semantic_repair_count","targeted_resolution_count","transport_retry_count","total_context_chars","repair_context_chars","schema_chars","planning_latency_ms")}))
+            logger.info("[AnalystPlanningTurn] %s",json.dumps({k:self.diagnostics.get(k) for k in ("request_id","provider_call_count","provider_call_reasons","primary_call_count","semantic_repair_count","targeted_resolution_count","transport_retry_count","semantic_stop_reason","capability_status","detailed_domain_ids","total_context_chars","repair_context_chars","schema_chars","resolver_latency_ms","compiler_latency_ms","planning_latency_ms","terminal_error")}))

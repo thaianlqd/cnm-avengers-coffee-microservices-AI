@@ -138,7 +138,9 @@ class RecoveryTests(fixture.unittest.TestCase):
         self.assertEqual(failure['outcome'],'SYSTEM_ERROR')
         text=json.dumps(failure['issue'],ensure_ascii=False)
         self.assertIn('sắp thứ tự',text);self.assertIn('ngoài phần cần sửa',text)
-        self.assertIn('Giữ nguyên câu hỏi',text);self.assertIn('Doanh thu sản phẩm',text)
+        # V3.0: repeated rejected repair is no progress; resubmitting unchanged cannot help.
+        self.assertIn('Gửi lại nguyên câu sẽ không giúp ích',text);self.assertIn('Doanh thu sản phẩm',text)
+        self.assertEqual(failure['error_type'],'SEMANTIC_RESOLUTION_FAILED');self.assertFalse(failure['retryable'])
         self.assertEqual(p.semantic_info['root_contract_issues'][0]['code'],'ranking_metric_required')
         p.executor.assert_not_called()
 

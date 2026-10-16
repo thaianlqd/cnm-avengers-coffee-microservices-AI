@@ -94,7 +94,7 @@ class OneShotTests(unittest.TestCase):
         for name in ("requests.sessions.Session.request", "psycopg2.connect"):
             guard = patch(name, side_effect=AssertionError("External calls forbidden"))
             guard.start(); self.addCleanup(guard.stop)
-        config = patch.dict(os.environ, {"DATA_ANALYST_SEMANTIC_MANIFEST_MAX_CHARS": "10000", "DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS": "24000"})
+        config = patch.dict(os.environ, {"DATA_ANALYST_SEMANTIC_MANIFEST_MAX_CHARS": "14000", "DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS": "24000"})
         config.start(); self.addCleanup(config.stop)
         self.catalog = AnalysisCatalog(physical_metadata())
 
@@ -450,7 +450,7 @@ class OneShotTests(unittest.TestCase):
             self.assertNotIn(old, raw)
         self.assertEqual(len(request["messages"]), 1)
         manifest = json.loads(request["messages"][0]["content"])["manifest"]
-        self.assertEqual(len(manifest["subjects"]), 16)
+        self.assertEqual(len(manifest["subjects"]), 18)  # V3.0: + delivery_assignments fact; V3.1: + promotion_redemptions
         self.assertTrue(manifest["complete"])
         self.assertLessEqual(r["diagnostics"]["total_context_chars"], 24000)
         self.assertIsNone(r["diagnostics"]["input_tokens"])

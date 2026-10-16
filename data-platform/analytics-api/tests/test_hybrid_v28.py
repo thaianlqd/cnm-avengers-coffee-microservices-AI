@@ -104,7 +104,8 @@ class HybridTests(unittest.TestCase):
         req=requirement(metric_ids=['aov'],dimension_ids=['city'],analysis_kind='aggregate',ranking=None,derived_features=[],time=None)
         p=self.pipeline(scripted(envelope(req),envelope(req),envelope(req)))
         with self.assertRaises(AnalysisError) as caught:p.propose(self.request('Doanh thu theo thành phố'))
-        self.assertEqual(p.provider.call_count,3);p.executor.assert_not_called()
+        # V3.0: the identical second answer is no progress; no third call.
+        self.assertEqual(p.provider.call_count,2);p.executor.assert_not_called()
         failure=safe_failure(caught.exception,p.calls,p.semantic_info)
         self.assertEqual(failure['outcome'],'SYSTEM_ERROR');self.assertIsNone(failure['quality_assessment']['score'])
 
@@ -210,7 +211,7 @@ class HybridTests(unittest.TestCase):
 
     def test_catalog_index_property_every_metric_dimension_lens(self):
         index=compatibility_index(self.catalog)
-        self.assertEqual(len(index.metrics),33);self.assertEqual(len(index.lenses),38)
+        self.assertEqual(len(index.metrics),43);self.assertEqual(len(index.lenses),44)  # V3.0: +5 delivery metrics, +2 lenses; V3.1: +5 metrics, +4 lenses
         for metric,definition in index.metrics.items():
             for lens in index.lenses:
                 req=requirement(metric_ids=[metric],dimension_ids=[],ranking=None,derived_features=[],analysis_kind='aggregate',time=None,lens_hint=lens)
@@ -361,7 +362,10 @@ class HybridTests(unittest.TestCase):
         from services import llm_service
         bad=envelope(requirement(granularity='fortnight'))
         bodies=[{'candidates':[{'content':{'parts':[{'text':'private reasoning','thought':True},{'text':json.dumps(value)}]}}],
-                 'usageMetadata':{'promptTokenCount':100,'candidatesTokenCount':20}} for value in [bad,bad,envelope(requirement(granularity=None))]]
+                 'usageMetadata':{'promptTokenCount':100,'candidatesTokenCount':20}} for value in [bad,
+                 # V3.0: an identical second answer would stop (no progress). The second
+                 # repair changes state (untargeted time edit), so a third call is allowed.
+                 envelope(requirement(granularity=None,time={'kind':'relative','mode':'all_time'})),envelope(requirement(granularity=None))]]
         responses=[Mock(ok=True,json=Mock(return_value=b)) for b in bodies]
         with patch.dict(os.environ,{'AI_OFFLINE':'0','GEMINI_API_STYLE':'native','DATA_ANALYST_INTENT_TRANSPORT':'json','DATA_ANALYST_RECOVERY_MODEL':'configured-recovery'}),patch.object(llm_service,'GEMINI_API_KEY','fixture-key'),patch.object(llm_service,'GEMINI_MODELS',['fixture-primary']),patch('services.agent_provider.requests.post',side_effect=responses) as transport:
             p=self.pipeline(NativeAgentProvider());proposal=p.propose(self.request())

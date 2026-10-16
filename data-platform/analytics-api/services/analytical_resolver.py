@@ -57,7 +57,7 @@ def plan_fingerprint(operations, coverage, catalog_fingerprint):
     def meaning(op):
         return {k:v for k,v in op.items() if k not in {"id", "parent_id", "replaces", "changed_fields"}}
     requirements = [{"state": c["state"], "reason": c.get("reason"),
-                     "features": c["derived_features"],
+                     "features": c["derived_features"], **({"forecast": c["forecast"]} if c.get("forecast") else {}),
                      "operations": sorted((meaning(by_id[id]) for id in c["operation_ids"]), key=digest)} for c in coverage]
     unique={digest(r):r for r in requirements}
     return digest([VERSION, catalog_fingerprint, [unique[k] for k in sorted(unique)]])
@@ -233,9 +233,28 @@ class AnalyticalResolver:
         choices.sort(key=lambda c: (c[1] is None, c[0], c[1] or ""))
         return choices
 
+    def forecast_requirement(self, req):
+        """Governed forecast capability is checked before any repair or SQL.
+
+        A forecast is a trend of exactly one forecastable metric over the
+        filtered scope; the server later computes the projected numbers.
+        """
+        from services.forecast_service import validate_request
+        if len(req.metric_ids) != 1 or any(m not in self.catalog.registry["metrics"] for m in req.metric_ids):
+            if len(req.metric_ids) != 1:
+                raise AnalysisError("forecast_unsupported", "A forecast covers exactly one metric")
+            return req  # Unknown IDs keep the normal unknown_semantic_id path.
+        if req.dimension_ids or req.ranking:
+            raise AnalysisError("forecast_unsupported", "Grouped or ranked forecasts are not supported")
+        validate_request(self.catalog, req.metric_ids[0], req.forecast.unit, req.forecast.horizon)
+        return req.model_copy(update={"analysis_kind": "trend", "granularity": req.forecast.unit,
+                                      "derived_features": [], "feature_metrics": {}})
+
     def resolve_requirement(self, raw):
         req = self.normalize(raw)
         self.validate_time(req)
+        if req.forecast and req.availability == "requested":
+            req = self.forecast_requirement(req)
         if req.availability != "requested":
             if not req.reason:
                 raise ResolutionIssues([self.issue(req,"reason","limitation_reason_required")])
@@ -243,7 +262,10 @@ class AnalyticalResolver:
         issues = []
         for field, ids, known in (("metric_ids",req.metric_ids,self.catalog.registry["metrics"]), ("dimension_ids",req.dimension_ids,self.catalog.registry["dimensions"]), ("filters",[f.dimension for f in req.filters],self.catalog.registry["dimensions"])):
             if any(id not in known for id in ids):
-                issues.append(self.issue(req,field,"unknown_semantic_id",candidate_ids=sorted(known)))
+                # Proposed IDs are diagnostics only; they never enter issue
+                # fingerprints, so renaming an unknown concept is not progress.
+                unknown=[id[:64] for id in ids if id not in known][:6]
+                issues.append(self.issue(req,field,"unknown_semantic_id",candidate_ids=sorted(known),unknown_ids=unknown))
         if issues:
             raise ResolutionIssues(issues)
         if any(m not in self.index.metrics for m in req.metric_ids):
@@ -539,7 +561,8 @@ class AnalyticalResolver:
                 seen.add((key,req.id))
                 normalized.append(req); operations.extend(ops); bindings.extend(features)
                 coverage.append({"requirement_id":req.id,"state":state,"reason":reason,"operation_ids":[op["id"] for op in ops],
-                                 "derived_features":req.derived_features,"goal":req.goal})
+                                 "derived_features":req.derived_features,"goal":req.goal,
+                                 **({"forecast":req.forecast.model_dump(mode="json")} if req.forecast and state=="RESOLVED" else {})})
             except ResolutionIssues as error:
                 if raw.supporting_for:
                     req = raw.model_copy(update={'availability':'unsupported','reason':'definition_unavailable'})

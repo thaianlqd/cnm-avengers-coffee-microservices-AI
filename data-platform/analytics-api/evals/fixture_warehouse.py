@@ -65,6 +65,10 @@ class FixtureWarehouse:
                 return exp.Anonymous(this='EVAL_PERIOD',expressions=[exp.Literal.string(str(n.args['unit']).strip("'\"").lower()),n.this])
             if isinstance(n, exp.Extract) and str(n.this).upper()=='HOUR':
                 return exp.Cast(this=exp.Anonymous(this='STRFTIME',expressions=[exp.Literal.string('%H'),n.expression]),to=exp.DataType.build('INT'))
+            if isinstance(n, exp.Extract) and str(n.this).upper()=='ISODOW':
+                # SQLite %w is 0=Sunday..6; ISO weekday is 1=Monday..7=Sunday.
+                weekday=exp.Cast(this=exp.Anonymous(this='STRFTIME',expressions=[exp.Literal.string('%w'),n.expression]),to=exp.DataType.build('INT'))
+                return exp.Add(this=exp.Paren(this=exp.Mod(this=exp.Paren(this=exp.Add(this=weekday,expression=exp.Literal.number(6))),expression=exp.Literal.number(7))),expression=exp.Literal.number(1))
             return n
         tree=tree.transform(translate)
         query=tree.sql(dialect='sqlite')

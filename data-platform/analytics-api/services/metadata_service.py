@@ -290,6 +290,13 @@ def get_local_metadata(force: bool = False) -> Dict[str, Any]:
     return meta
 
 
+def peek_local_metadata() -> Optional[Dict[str, Any]]:
+    """Last introspected warehouse layout (possibly expired) without any I/O."""
+    with _lock:
+        entry = _cache.get("local")
+        return entry["value"] if entry else None
+
+
 def get_source_metadata(force: bool = False) -> Dict[str, Any]:
     return _cached("source", SOURCE_TTL_SECONDS, lambda: _introspect(_source_conn, SOURCE_SCHEMAS), force)
 

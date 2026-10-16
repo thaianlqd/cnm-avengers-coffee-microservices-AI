@@ -1,11 +1,13 @@
 """Bounded dependency checks, separate from process liveness. Never provider/DDL."""
 import json
+import logging
 import os
 import time
 from contextlib import contextmanager
 
-VERSION = '2.13.0'
+VERSION = '3.0.0'
 _catalog_cache = (0, False)
+_registry_drift = None
 
 
 def warehouse_connection():
@@ -33,8 +35,8 @@ def catalog_probe(physical_required):
     from services.domain_intelligence_service import validate_profiles
     overlay = json.loads(CATALOG_PATH.read_text())
     registry=overlay['analysis_registry']
-    from services.semantic_catalog_validation import validate_catalog
-    validate_catalog(overlay)
+    from services.semantic_catalog_validation import validate_catalog, registry_drift
+    validate_catalog(overlay, strict=True)
     if not physical_required:
         return bool(registry['metrics'] and registry['dimensions'])
     if _catalog_cache[0] > time.monotonic():
@@ -51,6 +53,13 @@ def catalog_probe(physical_required):
             conn.close()
     catalog = AnalysisCatalog(_introspect(connection, ['silver']))
     ready = bool(compatibility_index(catalog).metrics)
+    # Schema drift is surfaced, never silently ignored. Drifted capabilities are
+    # already excluded from the executable index, so the rest stays usable.
+    global _registry_drift
+    _registry_drift = registry_drift(catalog)
+    if _registry_drift:
+        # Physical table/column names stay in server logs, not the public probe.
+        logging.getLogger(__name__).warning("[RegistryDrift] %s", json.dumps(_registry_drift[:50], ensure_ascii=False, default=str))
     _catalog_cache = (time.monotonic()+60, ready)
     return ready
 
@@ -81,6 +90,13 @@ def readiness():
         AnalyticalCapacityContract.from_env()
     except Exception:
         config = False
+    try:
+        # V3.1: an invalid repair allowance is a configuration error at
+        # readiness, not something discovered on the first semantic failure.
+        from services.hybrid_analyst_planner import semantic_repair_limit
+        semantic_repair_limit()
+    except Exception:
+        config = False
     result = dict(status='not_ready',service='avengers-analytics-api',version=VERSION,
         session_backend=session,artifact_backend=artifact,backend_configuration_valid=config,
         redis_required='redis' in {session,artifact}, redis_available=None,
@@ -104,5 +120,9 @@ def readiness():
         result['catalog_ready'] = False
     ready = config and result['catalog_ready'] and (not result['redis_required'] or result['redis_available']) and (
         not warehouse_required or result['warehouse_available'])
+    result['registry_drift'] = None if _registry_drift is None else dict(
+        status='consistent' if not _registry_drift else 'drift_detected',
+        issue_count=len(_registry_drift),
+        codes=sorted({i.get('code') for i in _registry_drift}))
     result['status'] = 'ready' if ready else 'not_ready'
     return result

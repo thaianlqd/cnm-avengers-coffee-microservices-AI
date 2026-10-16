@@ -1,5 +1,6 @@
 """Exact metadata and numeric/UI coverage guards; never an analytical router."""
 import re
+from functools import lru_cache
 from services.value_grounding_service import value_text, aliases_for, dimension_values
 
 
@@ -26,12 +27,19 @@ def metric_equivalents(catalog):
     return result
 
 
+@lru_cache(maxsize=16384)
+def _phrase_pattern(phrase):
+    # Hundreds of governed phrases exceed re's internal 512-pattern cache;
+    # recompiling them dominated latency. Same pattern, compiled once.
+    return re.compile(r"(?<!\w)" + re.escape(phrase) + r"(?!\w)")
+
+
 def exact_mentions(text, vocabulary):
     matches = []
     for phrase, ids in vocabulary.items():
         if not phrase or len(phrase) < 3:
             continue
-        for match in re.finditer(r"(?<!\w)" + re.escape(phrase) + r"(?!\w)", text):
+        for match in _phrase_pattern(phrase).finditer(text):
             matches.append((match.start(), match.end(), phrase, sorted(ids)))
     # Prefer a qualified business phrase over a contained generic alias.
     return [{"phrase": phrase, "candidate_ids": ids, "start":start, "end":end} for start, end, phrase, ids in matches

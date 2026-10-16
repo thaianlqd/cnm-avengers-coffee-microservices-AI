@@ -1,0 +1,5575 @@
+{
+ "status": "ready",
+ "version": "3.0",
+ "fingerprint": "b27d7ad922a2ff490dc62a8514b38fa0177866b8dc7e1628f45394865036cd5e",
+ "registry_fingerprint": "722036ee22fbf2f7c7bf7365be7abc16337137c172da15e24d699f90356403db",
+ "domains": [
+  {
+   "id": "orders",
+   "label": "Đơn hàng và doanh thu",
+   "purpose": "Quy mô bán hàng, khách mua và kênh phục vụ.",
+   "historical": true,
+   "caveats": [
+    "Số liệu phản ánh theo thực tế ghi nhận từ hệ thống dữ liệu.",
+    "Không cộng số khách khác nhau hoặc các giá trị trung bình giữa các nhóm để suy ra tổng.",
+    "Mỗi chỉ số được đo lường độc lập theo điều kiện nghiệp vụ riêng."
+   ],
+   "metrics": [
+    {
+     "id": "revenue",
+     "label": "Doanh thu",
+     "unit": "VND",
+     "historical": true,
+     "forecastable": true,
+     "domain": "orders",
+     "semantic_type": "sum",
+     "additive": true,
+     "current": false,
+     "forecast": {
+      "cadences": [
+       "day",
+       "week",
+       "month"
+      ],
+      "max_horizon": {
+       "day": 31,
+       "week": 13,
+       "month": 6
+      },
+      "min_history": {
+       "day": 28,
+       "week": 12,
+       "month": 6
+      }
+     },
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+     "dimensions": [
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "weekday",
+       "label": "Thứ trong tuần"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "promotion",
+       "label": "Khuyến mãi"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Quy mô doanh thu trong phạm vi đã chọn?",
+      "Diễn biến bán hàng trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "order_count",
+     "label": "Số lượng đơn",
+     "unit": "đơn",
+     "historical": true,
+     "forecastable": true,
+     "domain": "orders",
+     "semantic_type": "count",
+     "additive": true,
+     "current": false,
+     "forecast": {
+      "cadences": [
+       "day",
+       "week",
+       "month"
+      ],
+      "max_horizon": {
+       "day": 31,
+       "week": 13,
+       "month": 6
+      },
+      "min_history": {
+       "day": 28,
+       "week": 12,
+       "month": 6
+      }
+     },
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Đếm mọi đơn theo ngày tạo, gồm cả đơn hủy; không dùng làm mẫu số AOV của tập đơn hợp lệ.",
+     "dimensions": [
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "order_status",
+       "label": "Trạng thái đơn"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "weekday",
+       "label": "Thứ trong tuần"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "promotion",
+       "label": "Khuyến mãi"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Lượng đơn và trạng thái trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "aov",
+     "label": "Giá trị đơn trung bình",
+     "unit": "VND",
+     "historical": true,
+     "forecastable": false,
+     "domain": "orders",
+     "semantic_type": "average",
+     "additive": false,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Tổng giá trị chia số đơn trong cùng tập HOAN_THANH/DANG_GIAO. Không cộng hoặc lấy trung bình các AOV nhóm.",
+     "dimensions": [
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "weekday",
+       "label": "Thứ trong tuần"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "promotion",
+       "label": "Khuyến mãi"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Quy mô doanh thu trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "purchasing_customer_count",
+     "label": "Số khách mua hàng",
+     "unit": "khách",
+     "historical": true,
+     "forecastable": false,
+     "domain": "orders",
+     "semantic_type": "distinct_count",
+     "additive": false,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Đếm người dùng duy nhất có đơn HOAN_THANH/DANG_GIAO trong phạm vi; cùng khách có thể mua ở nhiều điểm bán, không cộng khách giữa nhóm.",
+     "dimensions": [
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "weekday",
+       "label": "Thứ trong tuần"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "promotion",
+       "label": "Khuyến mãi"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Quy mô doanh thu trong phạm vi đã chọn?",
+      "Khách mua trong kỳ trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "order_cancellation_rate",
+     "label": "Tỷ lệ hủy đơn",
+     "unit": "%",
+     "historical": true,
+     "forecastable": false,
+     "domain": "orders",
+     "semantic_type": "ratio",
+     "additive": false,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "lower_better",
+     "value_range": [
+      0,
+      100
+     ],
+     "definition": "Phần trăm đơn bị hủy (DA_HUY) trên các đơn đã kết thúc (HOAN_THANH + DA_HUY) theo ngày tạo đơn; đơn đang xử lý không vào mẫu số.",
+     "dimensions": [
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "weekday",
+       "label": "Thứ trong tuần"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Tỷ lệ hủy đơn theo chi nhánh?"
+     ]
+    },
+    {
+     "id": "order_completion_rate",
+     "label": "Tỷ lệ hoàn thành đơn",
+     "unit": "%",
+     "historical": true,
+     "forecastable": false,
+     "domain": "orders",
+     "semantic_type": "ratio",
+     "additive": false,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "higher_better",
+     "value_range": [
+      0,
+      100
+     ],
+     "definition": "Phần trăm đơn hoàn thành (HOAN_THANH) trên các đơn đã kết thúc (HOAN_THANH + DA_HUY) theo ngày tạo đơn; đơn đang xử lý không vào mẫu số.",
+     "dimensions": [
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "weekday",
+       "label": "Thứ trong tuần"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Tỷ lệ hủy đơn theo chi nhánh?"
+     ]
+    }
+   ],
+   "operations": [
+    "aggregate",
+    "cross_tab",
+    "distribution",
+    "ranking",
+    "trend"
+   ],
+   "example_questions": [
+    "Quy mô doanh thu trong phạm vi đã chọn?",
+    "Lượng đơn và trạng thái trong phạm vi đã chọn?",
+    "Diễn biến bán hàng trong phạm vi đã chọn?"
+   ],
+   "freshness": [
+    "batch"
+   ]
+  },
+  {
+   "id": "order_items",
+   "label": "Dòng món trong đơn",
+   "purpose": "Sản lượng và thành tiền ở mức dòng món.",
+   "historical": true,
+   "caveats": [
+    "Số liệu phản ánh theo thực tế ghi nhận từ hệ thống dữ liệu.",
+    "Mỗi chỉ số được đo lường độc lập theo điều kiện nghiệp vụ riêng."
+   ],
+   "metrics": [
+    {
+     "id": "quantity_sold",
+     "label": "Số lượng sản phẩm bán",
+     "unit": "sản phẩm",
+     "historical": true,
+     "forecastable": false,
+     "domain": "order_items",
+     "semantic_type": "sum",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Tổng số lượng trên dòng món thuộc đơn HOAN_THANH/DANG_GIAO; đếm số đơn vị bán, không phải số sản phẩm khác nhau.",
+     "dimensions": [
+      {
+       "id": "product",
+       "label": "Sản phẩm"
+      },
+      {
+       "id": "category",
+       "label": "Danh mục"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "promotion",
+       "label": "Khuyến mãi"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Sản lượng món trong phạm vi đã chọn?",
+      "Sản phẩm bán chạy trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "item_revenue",
+     "label": "Doanh thu món",
+     "unit": "VND",
+     "historical": true,
+     "forecastable": false,
+     "domain": "order_items",
+     "semantic_type": "sum",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Tổng thành tiền dòng món thuộc đơn HOAN_THANH/DANG_GIAO; không mặc định bằng tổng tiền đơn.",
+     "dimensions": [
+      {
+       "id": "product",
+       "label": "Sản phẩm"
+      },
+      {
+       "id": "category",
+       "label": "Danh mục"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "promotion",
+       "label": "Khuyến mãi"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Thành tiền món trong phạm vi đã chọn?"
+     ]
+    }
+   ],
+   "operations": [
+    "aggregate",
+    "cross_tab",
+    "distribution",
+    "ranking",
+    "trend"
+   ],
+   "example_questions": [
+    "Sản lượng món trong phạm vi đã chọn?",
+    "Thành tiền món trong phạm vi đã chọn?"
+   ],
+   "freshness": [
+    "batch"
+   ]
+  },
+  {
+   "id": "products",
+   "label": "Sản phẩm",
+   "purpose": "Sản lượng và doanh thu dòng món; không đồng nhất doanh thu đơn.",
+   "historical": true,
+   "caveats": [
+    "Số liệu phản ánh theo thực tế ghi nhận từ hệ thống dữ liệu.",
+    "Mỗi chỉ số được đo lường độc lập theo điều kiện nghiệp vụ riêng."
+   ],
+   "metrics": [
+    {
+     "id": "quantity_sold",
+     "label": "Số lượng sản phẩm bán",
+     "unit": "sản phẩm",
+     "historical": true,
+     "forecastable": false,
+     "domain": "order_items",
+     "semantic_type": "sum",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Tổng số lượng trên dòng món thuộc đơn HOAN_THANH/DANG_GIAO; đếm số đơn vị bán, không phải số sản phẩm khác nhau.",
+     "dimensions": [
+      {
+       "id": "product",
+       "label": "Sản phẩm"
+      },
+      {
+       "id": "category",
+       "label": "Danh mục"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "promotion",
+       "label": "Khuyến mãi"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Sản lượng món trong phạm vi đã chọn?",
+      "Sản phẩm bán chạy trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "product_revenue",
+     "label": "Doanh thu sản phẩm",
+     "unit": "VND",
+     "historical": true,
+     "forecastable": false,
+     "domain": "products",
+     "semantic_type": "sum",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Tổng thành tiền dòng sản phẩm thuộc đơn HOAN_THANH/DANG_GIAO; không mặc định đối soát bằng doanh thu cấp đơn.",
+     "dimensions": [
+      {
+       "id": "product",
+       "label": "Sản phẩm"
+      },
+      {
+       "id": "category",
+       "label": "Danh mục"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "promotion",
+       "label": "Khuyến mãi"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Doanh thu sản phẩm trong phạm vi đã chọn?"
+     ]
+    }
+   ],
+   "operations": [
+    "aggregate",
+    "cross_tab",
+    "distribution",
+    "ranking",
+    "trend"
+   ],
+   "example_questions": [
+    "Sản phẩm bán chạy trong phạm vi đã chọn?",
+    "Doanh thu sản phẩm trong phạm vi đã chọn?",
+    "Diễn biến sản lượng trong phạm vi đã chọn?"
+   ],
+   "freshness": [
+    "batch"
+   ]
+  },
+  {
+   "id": "stores",
+   "label": "Chi nhánh và điểm bán",
+   "purpose": "Đối chiếu nhiều tín hiệu cùng kỳ; quy mô khác nhau chưa chứng minh tốt/kém.",
+   "historical": true,
+   "caveats": [
+    "Số liệu phản ánh theo thực tế ghi nhận từ hệ thống dữ liệu.",
+    "Không cộng số khách khác nhau hoặc các giá trị trung bình giữa các nhóm để suy ra tổng.",
+    "Mỗi chỉ số được đo lường độc lập theo điều kiện nghiệp vụ riêng."
+   ],
+   "metrics": [
+    {
+     "id": "store_revenue",
+     "label": "Doanh thu chi nhánh",
+     "unit": "VND",
+     "historical": true,
+     "forecastable": true,
+     "domain": "stores",
+     "semantic_type": "sum",
+     "additive": true,
+     "current": false,
+     "forecast": {
+      "cadences": [
+       "day",
+       "week",
+       "month"
+      ],
+      "max_horizon": {
+       "day": 31,
+       "week": 13,
+       "month": 6
+      },
+      "min_history": {
+       "day": 28,
+       "week": 12,
+       "month": 6
+      }
+     },
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Tổng giá trị đơn HOAN_THANH/DANG_GIAO theo điểm bán, theo ngày tạo đơn.",
+     "dimensions": [
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "promotion",
+       "label": "Khuyến mãi"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Tín hiệu doanh thu chi nhánh trong phạm vi đã chọn?",
+      "Diễn biến chi nhánh trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "store_order_count",
+     "label": "Số đơn chi nhánh",
+     "unit": "đơn",
+     "historical": true,
+     "forecastable": true,
+     "domain": "stores",
+     "semantic_type": "count",
+     "additive": true,
+     "current": false,
+     "forecast": {
+      "cadences": [
+       "day",
+       "week",
+       "month"
+      ],
+      "max_horizon": {
+       "day": 31,
+       "week": 13,
+       "month": 6
+      },
+      "min_history": {
+       "day": 28,
+       "week": 12,
+       "month": 6
+      }
+     },
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Đếm mọi đơn của điểm bán, gồm cả đơn hủy; không thay thế số đơn hợp lệ khi tính AOV.",
+     "dimensions": [
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "promotion",
+       "label": "Khuyến mãi"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Lượng đơn chi nhánh trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "store_aov",
+     "label": "AOV chi nhánh",
+     "unit": "VND",
+     "historical": true,
+     "forecastable": false,
+     "domain": "stores",
+     "semantic_type": "average",
+     "additive": false,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Trung bình giá trị đơn HOAN_THANH/DANG_GIAO của điểm bán; cần trọng số số đơn hợp lệ để gộp giữa các điểm bán.",
+     "dimensions": [
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "promotion",
+       "label": "Khuyến mãi"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Tín hiệu doanh thu chi nhánh trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "purchasing_customer_count",
+     "label": "Số khách mua hàng",
+     "unit": "khách",
+     "historical": true,
+     "forecastable": false,
+     "domain": "orders",
+     "semantic_type": "distinct_count",
+     "additive": false,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Đếm người dùng duy nhất có đơn HOAN_THANH/DANG_GIAO trong phạm vi; cùng khách có thể mua ở nhiều điểm bán, không cộng khách giữa nhóm.",
+     "dimensions": [
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "weekday",
+       "label": "Thứ trong tuần"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "promotion",
+       "label": "Khuyến mãi"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Quy mô doanh thu trong phạm vi đã chọn?",
+      "Khách mua trong kỳ trong phạm vi đã chọn?"
+     ]
+    }
+   ],
+   "operations": [
+    "aggregate",
+    "cross_tab",
+    "distribution",
+    "ranking",
+    "trend"
+   ],
+   "example_questions": [
+    "Tín hiệu doanh thu chi nhánh trong phạm vi đã chọn?",
+    "Lượng đơn chi nhánh trong phạm vi đã chọn?",
+    "Diễn biến chi nhánh trong phạm vi đã chọn?"
+   ],
+   "freshness": [
+    "batch"
+   ]
+  },
+  {
+   "id": "customers",
+   "label": "Khách đăng ký và hội viên",
+   "purpose": "Khách đăng ký theo ngày tạo; chi tiêu và điểm là hiện trạng, không phải khách mua trong kỳ.",
+   "historical": true,
+   "caveats": [
+    "Số liệu phản ánh theo thực tế ghi nhận từ hệ thống dữ liệu."
+   ],
+   "metrics": [
+    {
+     "id": "customer_count",
+     "label": "Số khách",
+     "unit": "khách",
+     "historical": true,
+     "forecastable": false,
+     "domain": "customers",
+     "semantic_type": "distinct_count",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Đếm định danh khách đăng ký vai trò CUSTOMER theo ngày tạo tài khoản; không phải số khách đã mua. Chỉ cộng nhóm khách không giao nhau.",
+     "dimensions": [
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "loyalty_points",
+       "label": "Điểm thành viên"
+      }
+     ],
+     "examples": [
+      "Khách đăng ký trong phạm vi đã chọn?",
+      "Diễn biến đăng ký trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "total_spent",
+     "label": "Tổng chi tiêu tích lũy",
+     "unit": "VND",
+     "historical": false,
+     "forecastable": false,
+     "domain": "customers",
+     "semantic_type": "sum",
+     "additive": true,
+     "current": true,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Tổng trường chi tiêu tích lũy hiện tại trên tài khoản CUSTOMER; chưa có lịch sử theo kỳ, không phải chi tiêu phát sinh trong kỳ đăng ký.",
+     "dimensions": [
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "loyalty_points",
+       "label": "Điểm thành viên"
+      }
+     ],
+     "examples": [
+      "Chi tiêu tích lũy hiện tại trong phạm vi đã chọn?"
+     ]
+    }
+   ],
+   "operations": [
+    "aggregate",
+    "cross_tab",
+    "distribution",
+    "ranking",
+    "trend"
+   ],
+   "example_questions": [
+    "Khách đăng ký trong phạm vi đã chọn?",
+    "Diễn biến đăng ký trong phạm vi đã chọn?",
+    "Chi tiêu tích lũy hiện tại trong phạm vi đã chọn?"
+   ],
+   "freshness": [
+    "batch"
+   ]
+  },
+  {
+   "id": "promotions",
+   "label": "Khuyến mãi và voucher",
+   "purpose": "Đơn có voucher, giảm giá, doanh thu tập voucher và lượt sử dụng khuyến mãi; không có ROI hay mẫu số phát hành.",
+   "historical": true,
+   "caveats": [
+    "Số liệu phản ánh theo thực tế ghi nhận từ hệ thống dữ liệu.",
+    "Mỗi chỉ số được đo lường độc lập theo điều kiện nghiệp vụ riêng."
+   ],
+   "metrics": [
+    {
+     "id": "voucher_revenue",
+     "label": "Doanh thu đơn có khuyến mãi",
+     "unit": "VND",
+     "historical": true,
+     "forecastable": false,
+     "domain": "promotions",
+     "semantic_type": "sum",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Tổng giá trị đơn HOAN_THANH/DANG_GIAO có mã voucher; mô tả tập đơn dùng voucher, chưa chứng minh hiệu quả tăng thêm.",
+     "dimensions": [
+      {
+       "id": "promotion",
+       "label": "Khuyến mãi"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Doanh thu tập đơn voucher trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "discount_amount",
+     "label": "Tổng tiền đã giảm giá",
+     "unit": "VND",
+     "historical": true,
+     "forecastable": false,
+     "domain": "promotions",
+     "semantic_type": "sum",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Tổng số tiền giảm trên đơn HOAN_THANH/DANG_GIAO có mã voucher; không phải chi phí đầy đủ của chiến dịch.",
+     "dimensions": [
+      {
+       "id": "promotion",
+       "label": "Khuyến mãi"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Số tiền giảm trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "voucher_order_count",
+     "label": "Số đơn áp dụng khuyến mãi",
+     "unit": "đơn",
+     "historical": true,
+     "forecastable": false,
+     "domain": "promotions",
+     "semantic_type": "count",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Đếm đơn có mã voucher ở mọi trạng thái; khác quần thể doanh thu đơn voucher hợp lệ.",
+     "dimensions": [
+      {
+       "id": "promotion",
+       "label": "Khuyến mãi"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Số đơn dùng voucher trong phạm vi đã chọn?",
+      "Diễn biến sử dụng voucher trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "promotion_redemption_count",
+     "label": "Lượt sử dụng khuyến mãi",
+     "unit": "lượt",
+     "historical": true,
+     "forecastable": false,
+     "domain": "promotions",
+     "semantic_type": "count",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Số lượt sử dụng khuyến mãi theo sổ sử dụng của dịch vụ định danh (một dòng mỗi lượt), theo ngày sử dụng.",
+     "dimensions": [
+      {
+       "id": "redeemed_promotion",
+       "label": "Chương trình khuyến mãi đã dùng"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Chương trình khuyến mãi nào được dùng nhiều nhất?"
+     ]
+    }
+   ],
+   "operations": [
+    "aggregate",
+    "cross_tab",
+    "distribution",
+    "ranking",
+    "trend"
+   ],
+   "example_questions": [
+    "Số đơn dùng voucher trong phạm vi đã chọn?",
+    "Doanh thu tập đơn voucher trong phạm vi đã chọn?",
+    "Số tiền giảm trong phạm vi đã chọn?"
+   ],
+   "freshness": [
+    "batch"
+   ]
+  },
+  {
+   "id": "payments",
+   "label": "Giao dịch thanh toán",
+   "purpose": "Giao dịch theo ngày giao dịch; không đồng nhất đơn hàng hay doanh thu bán hàng.",
+   "historical": true,
+   "caveats": [
+    "Số liệu phản ánh theo thực tế ghi nhận từ hệ thống dữ liệu.",
+    "Mỗi chỉ số được đo lường độc lập theo điều kiện nghiệp vụ riêng."
+   ],
+   "metrics": [
+    {
+     "id": "payment_count",
+     "label": "Số giao dịch",
+     "unit": "lượt",
+     "historical": true,
+     "forecastable": false,
+     "domain": "payments",
+     "semantic_type": "count",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Đếm mọi giao dịch theo ngày tạo giao dịch, gồm mọi trạng thái; không mặc định bằng số đơn thanh toán thành công.",
+     "dimensions": [
+      {
+       "id": "payment_gateway",
+       "label": "Cổng thanh toán"
+      },
+      {
+       "id": "payment_status",
+       "label": "Trạng thái thanh toán"
+      },
+      {
+       "id": "payment_transaction_status",
+       "label": "Trạng thái giao dịch"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "promotion",
+       "label": "Khuyến mãi"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Cơ cấu giao dịch trong phạm vi đã chọn?",
+      "Diễn biến thanh toán trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "payment_revenue",
+     "label": "Doanh thu thanh toán",
+     "unit": "VND",
+     "historical": true,
+     "forecastable": false,
+     "domain": "payments",
+     "semantic_type": "sum",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Tổng số tiền giao dịch theo ngày tạo giao dịch, gồm mọi trạng thái; không mặc định là doanh thu thuần hoặc dòng tiền thành công.",
+     "dimensions": [
+      {
+       "id": "payment_gateway",
+       "label": "Cổng thanh toán"
+      },
+      {
+       "id": "payment_status",
+       "label": "Trạng thái thanh toán"
+      },
+      {
+       "id": "payment_transaction_status",
+       "label": "Trạng thái giao dịch"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "promotion",
+       "label": "Khuyến mãi"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Giá trị giao dịch trong phạm vi đã chọn?",
+      "Diễn biến thanh toán trong phạm vi đã chọn?"
+     ]
+    }
+   ],
+   "operations": [
+    "aggregate",
+    "cross_tab",
+    "distribution",
+    "ranking",
+    "trend"
+   ],
+   "example_questions": [
+    "Cơ cấu giao dịch trong phạm vi đã chọn?",
+    "Giá trị giao dịch trong phạm vi đã chọn?",
+    "Diễn biến thanh toán trong phạm vi đã chọn?"
+   ],
+   "freshness": [
+    "batch"
+   ]
+  },
+  {
+   "id": "delivery",
+   "label": "Giao hàng và shipper",
+   "purpose": "Chuyến giao theo ngày nhận chuyến: số chuyến, tỷ lệ thành công, thời gian giao; điểm và tổng chuyến shipper hiện tại.",
+   "historical": true,
+   "caveats": [
+    "Số liệu phản ánh theo thực tế ghi nhận từ hệ thống dữ liệu.",
+    "Chỉ số phản ánh hiện trạng tại thời điểm quan sát; không suy ra diễn biến quá khứ.",
+    "Nguồn hiện tại chưa có lịch sử theo kỳ cho các chỉ số này.",
+    "Không cộng số khách khác nhau hoặc các giá trị trung bình giữa các nhóm để suy ra tổng.",
+    "Cần số lượt quan sát hoặc đánh giá để kiểm tra cỡ mẫu trước khi kết luận về chất lượng."
+   ],
+   "metrics": [
+    {
+     "id": "total_deliveries",
+     "label": "Tổng chuyến giao",
+     "unit": "lượt",
+     "historical": false,
+     "forecastable": false,
+     "domain": "delivery",
+     "semantic_type": "sum",
+     "additive": true,
+     "current": true,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Tổng bộ đếm chuyến giao tích lũy hiện tại của shipper; chưa có nhật ký chuyến hoặc lịch sử theo kỳ.",
+     "dimensions": [
+      {
+       "id": "driver_id",
+       "label": "Mã người giao"
+      }
+     ],
+     "examples": [
+      "Tổng chuyến hiện tại trong phạm vi đã chọn?",
+      "Liên hệ chuyến và điểm trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "driver_rating",
+     "label": "Điểm đánh giá trung bình",
+     "unit": "điểm",
+     "historical": false,
+     "forecastable": false,
+     "domain": "delivery",
+     "semantic_type": "average",
+     "additive": false,
+     "current": true,
+     "forecast": null,
+     "quality_direction": "higher_better",
+     "value_range": null,
+     "definition": "Trung bình trường điểm đánh giá hiện tại của shipper; chưa có cỡ mẫu đánh giá và lịch sử từng chuyến.",
+     "dimensions": [
+      {
+       "id": "driver_id",
+       "label": "Mã người giao"
+      }
+     ],
+     "examples": [
+      "Điểm shipper hiện tại trong phạm vi đã chọn?",
+      "Liên hệ chuyến và điểm trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "delivery_count",
+     "label": "Số chuyến giao",
+     "unit": "lượt",
+     "historical": true,
+     "forecastable": true,
+     "domain": "delivery",
+     "semantic_type": "count",
+     "additive": true,
+     "current": false,
+     "forecast": {
+      "cadences": [
+       "day",
+       "week",
+       "month"
+      ],
+      "max_horizon": {
+       "day": 31,
+       "week": 13,
+       "month": 6
+      },
+      "min_history": {
+       "day": 28,
+       "week": 12,
+       "month": 6
+      }
+     },
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Đếm mọi chuyến được phân công theo thời điểm nhận chuyến, gồm mọi trạng thái.",
+     "dimensions": [
+      {
+       "id": "delivery_status",
+       "label": "Trạng thái chuyến giao"
+      },
+      {
+       "id": "driver_id",
+       "label": "Mã người giao"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Số chuyến giao theo trạng thái?"
+     ]
+    },
+    {
+     "id": "delivered_count",
+     "label": "Số chuyến giao thành công",
+     "unit": "lượt",
+     "historical": true,
+     "forecastable": false,
+     "domain": "delivery",
+     "semantic_type": "conditional_count",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Đếm chuyến có trạng thái DELIVERED theo thời điểm nhận chuyến.",
+     "dimensions": [
+      {
+       "id": "driver_id",
+       "label": "Mã người giao"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Tỷ lệ giao thành công của shipper?"
+     ]
+    },
+    {
+     "id": "failed_or_cancelled_delivery_count",
+     "label": "Số chuyến không thành công",
+     "unit": "lượt",
+     "historical": true,
+     "forecastable": false,
+     "domain": "delivery",
+     "semantic_type": "conditional_count",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Đếm chuyến đã kết thúc nhưng không giao thành công (FAILED hoặc CANCELLED).",
+     "dimensions": [
+      {
+       "id": "driver_id",
+       "label": "Mã người giao"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Tỷ lệ giao thành công của shipper?"
+     ]
+    },
+    {
+     "id": "delivery_success_rate",
+     "label": "Tỷ lệ giao thành công",
+     "unit": "%",
+     "historical": true,
+     "forecastable": false,
+     "domain": "delivery",
+     "semantic_type": "ratio",
+     "additive": false,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "higher_better",
+     "value_range": [
+      0,
+      100
+     ],
+     "definition": "Phần trăm chuyến giao thành công trên các chuyến đã kết thúc (DELIVERED, FAILED, CANCELLED); chuyến đang xử lý không vào mẫu số.",
+     "dimensions": [
+      {
+       "id": "driver_id",
+       "label": "Mã người giao"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Tỷ lệ giao thành công của shipper?"
+     ]
+    },
+    {
+     "id": "avg_delivery_minutes",
+     "label": "Thời gian giao trung bình",
+     "unit": "phút",
+     "historical": true,
+     "forecastable": false,
+     "domain": "delivery",
+     "semantic_type": "average",
+     "additive": false,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "lower_better",
+     "value_range": null,
+     "definition": "Trung bình số phút từ lúc lấy hàng đến lúc giao xong, chỉ trên chuyến DELIVERED có đủ hai mốc thời gian.",
+     "dimensions": [
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": []
+    }
+   ],
+   "operations": [
+    "aggregate",
+    "distribution",
+    "ranking",
+    "relationship",
+    "trend"
+   ],
+   "example_questions": [
+    "Tổng chuyến hiện tại trong phạm vi đã chọn?",
+    "Điểm shipper hiện tại trong phạm vi đã chọn?",
+    "Liên hệ chuyến và điểm trong phạm vi đã chọn?"
+   ],
+   "freshness": [
+    "batch"
+   ]
+  },
+  {
+   "id": "inventory",
+   "label": "Tồn kho",
+   "purpose": "Vị trí tồn và mức cảnh báo hiện tại; chưa có lịch sử tồn.",
+   "historical": false,
+   "caveats": [
+    "Số liệu phản ánh theo thực tế ghi nhận từ hệ thống dữ liệu.",
+    "Chỉ số phản ánh hiện trạng tại thời điểm quan sát; không suy ra diễn biến quá khứ.",
+    "Nguồn hiện tại chưa có lịch sử theo kỳ cho các chỉ số này."
+   ],
+   "metrics": [
+    {
+     "id": "stock_quantity",
+     "label": "Số lượng tồn kho",
+     "unit": "đơn vị",
+     "historical": false,
+     "forecastable": false,
+     "domain": "inventory",
+     "semantic_type": "sum",
+     "additive": true,
+     "current": true,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Tổng số lượng tồn hiện tại của các vị trí sản phẩm tại điểm bán; chưa có lịch sử biến động tồn.",
+     "dimensions": [
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "product",
+       "label": "Sản phẩm"
+      },
+      {
+       "id": "category",
+       "label": "Danh mục"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Vị trí tồn trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "low_stock_count",
+     "label": "Số món dưới định mức",
+     "unit": "lượt",
+     "historical": false,
+     "forecastable": false,
+     "domain": "inventory",
+     "semantic_type": "conditional_count",
+     "additive": true,
+     "current": true,
+     "forecast": null,
+     "quality_direction": "lower_better",
+     "value_range": null,
+     "definition": "Đếm vị trí tồn có số lượng nhỏ hơn hoặc bằng mức cảnh báo; không phải tỷ lệ thiếu hàng hoặc số đơn mất bán.",
+     "dimensions": [
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "product",
+       "label": "Sản phẩm"
+      },
+      {
+       "id": "category",
+       "label": "Danh mục"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Dưới định mức trong phạm vi đã chọn?"
+     ]
+    }
+   ],
+   "operations": [
+    "aggregate",
+    "cross_tab",
+    "distribution",
+    "ranking"
+   ],
+   "example_questions": [
+    "Vị trí tồn trong phạm vi đã chọn?",
+    "Dưới định mức trong phạm vi đã chọn?"
+   ],
+   "freshness": [
+    "batch"
+   ]
+  },
+  {
+   "id": "product_reviews",
+   "label": "Đánh giá sản phẩm",
+   "purpose": "Điểm quan sát và số lượt; cần đọc cùng cỡ mẫu.",
+   "historical": true,
+   "caveats": [
+    "Số liệu phản ánh theo thực tế ghi nhận từ hệ thống dữ liệu.",
+    "Không cộng số khách khác nhau hoặc các giá trị trung bình giữa các nhóm để suy ra tổng.",
+    "Cần số lượt quan sát hoặc đánh giá để kiểm tra cỡ mẫu trước khi kết luận về chất lượng."
+   ],
+   "metrics": [
+    {
+     "id": "avg_product_rating",
+     "label": "Điểm đánh giá trung bình",
+     "unit": "điểm",
+     "historical": true,
+     "forecastable": false,
+     "domain": "product_reviews",
+     "semantic_type": "average",
+     "additive": false,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "higher_better",
+     "value_range": null,
+     "definition": "Trung bình số sao đánh giá sản phẩm, làm tròn hai chữ số; đọc cùng số lượt đánh giá, không cộng trung bình nhóm.",
+     "dimensions": [
+      {
+       "id": "product",
+       "label": "Sản phẩm"
+      },
+      {
+       "id": "category",
+       "label": "Danh mục"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "promotion",
+       "label": "Khuyến mãi"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Phản hồi sản phẩm trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "review_count",
+     "label": "Số lượt đánh giá",
+     "unit": "lượt",
+     "historical": true,
+     "forecastable": false,
+     "domain": "product_reviews",
+     "semantic_type": "count",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Đếm bản ghi đánh giá sản phẩm theo ngày tạo đánh giá; không phải số người đánh giá duy nhất.",
+     "dimensions": [
+      {
+       "id": "product",
+       "label": "Sản phẩm"
+      },
+      {
+       "id": "category",
+       "label": "Danh mục"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "promotion",
+       "label": "Khuyến mãi"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Phản hồi sản phẩm trong phạm vi đã chọn?"
+     ]
+    }
+   ],
+   "operations": [
+    "aggregate",
+    "cross_tab",
+    "ranking",
+    "trend"
+   ],
+   "example_questions": [
+    "Phản hồi sản phẩm trong phạm vi đã chọn?"
+   ],
+   "freshness": [
+    "batch"
+   ]
+  },
+  {
+   "id": "store_reviews",
+   "label": "Đánh giá chi nhánh",
+   "purpose": "Điểm dịch vụ và số lượt; không suy ra nguyên nhân.",
+   "historical": true,
+   "caveats": [
+    "Số liệu phản ánh theo thực tế ghi nhận từ hệ thống dữ liệu.",
+    "Không cộng số khách khác nhau hoặc các giá trị trung bình giữa các nhóm để suy ra tổng.",
+    "Cần số lượt quan sát hoặc đánh giá để kiểm tra cỡ mẫu trước khi kết luận về chất lượng."
+   ],
+   "metrics": [
+    {
+     "id": "avg_store_rating",
+     "label": "Điểm phục vụ trung bình",
+     "unit": "điểm",
+     "historical": true,
+     "forecastable": false,
+     "domain": "store_reviews",
+     "semantic_type": "average",
+     "additive": false,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "higher_better",
+     "value_range": null,
+     "definition": "Trung bình số sao đánh giá chi nhánh, làm tròn hai chữ số; đọc cùng cỡ mẫu đánh giá, không cộng trung bình nhóm.",
+     "dimensions": [
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Phản hồi chi nhánh trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "store_review_count",
+     "label": "Số lượt đánh giá quán",
+     "unit": "lượt",
+     "historical": true,
+     "forecastable": false,
+     "domain": "store_reviews",
+     "semantic_type": "count",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Đếm bản ghi đánh giá chi nhánh theo ngày tạo đánh giá; không phải số khách duy nhất.",
+     "dimensions": [
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Phản hồi chi nhánh trong phạm vi đã chọn?"
+     ]
+    }
+   ],
+   "operations": [
+    "aggregate",
+    "cross_tab",
+    "ranking",
+    "trend"
+   ],
+   "example_questions": [
+    "Phản hồi chi nhánh trong phạm vi đã chọn?"
+   ],
+   "freshness": [
+    "batch"
+   ]
+  },
+  {
+   "id": "staff_shifts",
+   "label": "Ca làm và chấm công",
+   "purpose": "Số ca, ca trễ và tỷ lệ ca đi trễ (trên ca đã chấm công) theo ngày làm.",
+   "historical": true,
+   "caveats": [
+    "Số liệu phản ánh theo thực tế ghi nhận từ hệ thống dữ liệu."
+   ],
+   "metrics": [
+    {
+     "id": "shift_count",
+     "label": "Tổng số ca làm",
+     "unit": "lượt",
+     "historical": true,
+     "forecastable": false,
+     "domain": "staff_shifts",
+     "semantic_type": "count",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Đếm bản ghi ca nhân viên theo ngày làm việc; không phải số nhân viên duy nhất hoặc giờ công.",
+     "dimensions": [
+      {
+       "id": "shift_name",
+       "label": "Ca làm"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Quy mô ca làm trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "late_count",
+     "label": "Số ca đi trễ",
+     "unit": "lượt",
+     "historical": true,
+     "forecastable": false,
+     "domain": "staff_shifts",
+     "semantic_type": "conditional_count",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "lower_better",
+     "value_range": null,
+     "definition": "Đếm ca có trạng thái chấm công DI_TRE theo ngày làm việc; chưa chuẩn hóa theo tổng ca nên không gọi là tỷ lệ đi trễ.",
+     "dimensions": [
+      {
+       "id": "shift_name",
+       "label": "Ca làm"
+      },
+      {
+       "id": "attendance_status",
+       "label": "Trạng thái chấm công"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Chấm công trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "late_shift_rate",
+     "label": "Tỷ lệ ca đi trễ",
+     "unit": "%",
+     "historical": true,
+     "forecastable": false,
+     "domain": "staff_shifts",
+     "semantic_type": "ratio",
+     "additive": false,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "lower_better",
+     "value_range": [
+      0,
+      100
+     ],
+     "definition": "Phần trăm ca đi trễ (DI_TRE) trên các ca đã chấm công vào ca (DUNG_GIO, DI_TRE, VE_SOM) theo ngày làm; ca chưa chấm công (ASSIGNED), nghỉ phép (NGHI_PHEP) hoặc vắng mặt (VANG_MAT) không vào mẫu số.",
+     "dimensions": [
+      {
+       "id": "shift_name",
+       "label": "Ca làm"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Tỷ lệ đi trễ theo chi nhánh?"
+     ]
+    }
+   ],
+   "operations": [
+    "aggregate",
+    "cross_tab",
+    "distribution",
+    "ranking",
+    "trend"
+   ],
+   "example_questions": [
+    "Quy mô ca làm trong phạm vi đã chọn?",
+    "Chấm công trong phạm vi đã chọn?",
+    "Tỷ lệ đi trễ theo chi nhánh?"
+   ],
+   "freshness": [
+    "batch"
+   ]
+  },
+  {
+   "id": "cashier_reconciliation",
+   "label": "Đối soát thu ngân",
+   "purpose": "Chênh lệch tiền có dấu; tổng bù trừ không đo mức sai lệch tuyệt đối.",
+   "historical": true,
+   "caveats": [
+    "Số liệu phản ánh theo thực tế ghi nhận từ hệ thống dữ liệu."
+   ],
+   "metrics": [
+    {
+     "id": "total_cash_difference",
+     "label": "Tổng tiền chênh lệch",
+     "unit": "VND",
+     "historical": true,
+     "forecastable": false,
+     "domain": "cashier_reconciliation",
+     "semantic_type": "sum",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Tổng chênh lệch tiền mặt có dấu theo ngày tạo ca đối soát; số âm và dương có thể bù nhau, không phải tổng độ lệch tuyệt đối.",
+     "dimensions": [
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Chênh lệch tiền có dấu trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "system_cash_revenue",
+     "label": "Doanh thu tiền mặt hệ thống",
+     "unit": "VND",
+     "historical": true,
+     "forecastable": false,
+     "domain": "cashier_reconciliation",
+     "semantic_type": "sum",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Tổng trường tiền mặt hệ thống theo ngày tạo ca đối soát; khác quần thể doanh thu đơn hàng.",
+     "dimensions": [
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Quy mô đối soát trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "reconciled_shifts",
+     "label": "Số ca đã đối soát",
+     "unit": "lượt",
+     "historical": true,
+     "forecastable": false,
+     "domain": "cashier_reconciliation",
+     "semantic_type": "count",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Đếm ca đối soát theo ngày tạo ca, không suy ra tất cả ca đã được phê duyệt.",
+     "dimensions": [
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Quy mô đối soát trong phạm vi đã chọn?"
+     ]
+    },
+    {
+     "id": "large_cash_discrepancy_shift_count",
+     "label": "Số ca lệch tiền lớn",
+     "unit": "ca",
+     "historical": true,
+     "forecastable": false,
+     "domain": "cashier_reconciliation",
+     "semantic_type": "conditional_count",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "lower_better",
+     "value_range": null,
+     "definition": "Đếm ca đối soát có giá trị tuyệt đối chênh lệch tiền mặt lớn hơn 500.000 VND/ca. 500.000 VND là ngưỡng mặc định hệ thống, không phải chuẩn nghiệp vụ phổ quát.",
+     "dimensions": [
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Chi nhánh nào có ca lệch tiền lớn?"
+     ]
+    }
+   ],
+   "operations": [
+    "aggregate",
+    "cross_tab",
+    "distribution",
+    "ranking",
+    "trend"
+   ],
+   "example_questions": [
+    "Chênh lệch tiền có dấu trong phạm vi đã chọn?",
+    "Quy mô đối soát trong phạm vi đã chọn?",
+    "Chi nhánh nào có ca lệch tiền lớn?"
+   ],
+   "freshness": [
+    "batch"
+   ]
+  },
+  {
+   "id": "customer_surveys",
+   "label": "Khảo sát khách hàng",
+   "purpose": "Số phản hồi khảo sát; chưa có thang điểm hài lòng chuẩn.",
+   "historical": true,
+   "caveats": [
+    "Số liệu phản ánh theo thực tế ghi nhận từ hệ thống dữ liệu."
+   ],
+   "metrics": [
+    {
+     "id": "survey_response_count",
+     "label": "Số lượt phản hồi khảo sát",
+     "unit": "lượt",
+     "historical": true,
+     "forecastable": false,
+     "domain": "customer_surveys",
+     "semantic_type": "count",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Đếm phản hồi khảo sát theo ngày tạo, chưa có mẫu số người được mời nên không tính tỷ lệ phản hồi.",
+     "dimensions": [
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Lượng phản hồi trong phạm vi đã chọn?"
+     ]
+    }
+   ],
+   "operations": [
+    "aggregate",
+    "cross_tab",
+    "distribution",
+    "ranking",
+    "trend"
+   ],
+   "example_questions": [
+    "Lượng phản hồi trong phạm vi đã chọn?"
+   ],
+   "freshness": [
+    "batch"
+   ]
+  },
+  {
+   "id": "wishlist_favorites",
+   "label": "Sản phẩm yêu thích",
+   "purpose": "Lượt lưu yêu thích; không phải lượng bán.",
+   "historical": true,
+   "caveats": [
+    "Số liệu phản ánh theo thực tế ghi nhận từ hệ thống dữ liệu."
+   ],
+   "metrics": [
+    {
+     "id": "favorite_count",
+     "label": "Số lượt thả tim yêu thích",
+     "unit": "lượt",
+     "historical": true,
+     "forecastable": false,
+     "domain": "wishlist_favorites",
+     "semantic_type": "count",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Đếm bản ghi yêu thích sản phẩm theo ngày tạo; thể hiện quan tâm, không phải mua hàng hoặc chuyển đổi.",
+     "dimensions": [
+      {
+       "id": "product",
+       "label": "Sản phẩm"
+      },
+      {
+       "id": "category",
+       "label": "Danh mục"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      }
+     ],
+     "examples": [
+      "Quan tâm sản phẩm trong phạm vi đã chọn?"
+     ]
+    }
+   ],
+   "operations": [
+    "aggregate",
+    "cross_tab",
+    "distribution",
+    "ranking",
+    "trend"
+   ],
+   "example_questions": [
+    "Quan tâm sản phẩm trong phạm vi đã chọn?"
+   ],
+   "freshness": [
+    "batch"
+   ]
+  },
+  {
+   "id": "hourly",
+   "label": "Khung giờ bán hàng",
+   "purpose": "Lượng đơn theo giờ tạo đơn tại múi giờ kinh doanh.",
+   "historical": true,
+   "caveats": [
+    "Số liệu phản ánh theo thực tế ghi nhận từ hệ thống dữ liệu."
+   ],
+   "metrics": [
+    {
+     "id": "hourly_orders",
+     "label": "Số đơn theo giờ",
+     "unit": "đơn",
+     "historical": true,
+     "forecastable": false,
+     "domain": "hourly",
+     "semantic_type": "count",
+     "additive": true,
+     "current": false,
+     "forecast": null,
+     "quality_direction": "contextual",
+     "value_range": null,
+     "definition": "Đếm mọi đơn theo giờ của ngày tạo đơn, gồm cả đơn hủy; chưa chuẩn hóa theo số ngày quan sát.",
+     "dimensions": [
+      {
+       "id": "hour",
+       "label": "Giờ"
+      },
+      {
+       "id": "store",
+       "label": "Chi nhánh"
+      },
+      {
+       "id": "city",
+       "label": "Thành phố"
+      },
+      {
+       "id": "weekday",
+       "label": "Thứ trong tuần"
+      },
+      {
+       "id": "customer_role",
+       "label": "Vai trò"
+      },
+      {
+       "id": "payment_method",
+       "label": "Phương thức thanh toán"
+      },
+      {
+       "id": "promotion",
+       "label": "Khuyến mãi"
+      },
+      {
+       "id": "order_type",
+       "label": "Hình thức nhận hàng"
+      },
+      {
+       "id": "store_type",
+       "label": "Loại điểm bán"
+      }
+     ],
+     "examples": [
+      "Lưu lượng theo giờ trong phạm vi đã chọn?"
+     ]
+    }
+   ],
+   "operations": [
+    "aggregate",
+    "cross_tab",
+    "distribution",
+    "ranking",
+    "trend"
+   ],
+   "example_questions": [
+    "Lưu lượng theo giờ trong phạm vi đã chọn?"
+   ],
+   "freshness": [
+    "batch"
+   ]
+  }
+ ],
+ "analysis_depths": [
+  {
+   "id": "focused",
+   "label": "Tập trung"
+  },
+  {
+   "id": "deep",
+   "label": "Phân tích sâu"
+  },
+  {
+   "id": "comprehensive",
+   "label": "Phân tích toàn diện"
+  }
+ ],
+ "time_presets": [
+  {
+   "id": "auto",
+   "label": "Tự động"
+  },
+  {
+   "id": "today",
+   "label": "Hôm nay"
+  },
+  {
+   "id": "7d",
+   "label": "7 ngày qua"
+  },
+  {
+   "id": "30d",
+   "label": "30 ngày qua"
+  },
+  {
+   "id": "current_month",
+   "label": "Tháng này"
+  },
+  {
+   "id": "previous_month",
+   "label": "Tháng trước"
+  },
+  {
+   "id": "current_quarter",
+   "label": "Quý này"
+  },
+  {
+   "id": "previous_quarter",
+   "label": "Quý trước"
+  },
+  {
+   "id": "all_time",
+   "label": "Toàn bộ thời gian"
+  },
+  {
+   "id": "custom",
+   "label": "Tùy chọn"
+  }
+ ],
+ "scope_types": [
+  {
+   "id": "product",
+   "label": "Sản phẩm",
+   "values": [],
+   "searchable": true
+  },
+  {
+   "id": "category",
+   "label": "Danh mục",
+   "values": [],
+   "searchable": true
+  },
+  {
+   "id": "store",
+   "label": "Chi nhánh",
+   "values": [],
+   "searchable": true
+  },
+  {
+   "id": "city",
+   "label": "Thành phố",
+   "values": [
+    "Hồ Chí Minh",
+    "Hà Nội",
+    "Đà Nẵng",
+    "Cần Thơ",
+    "Hải Phòng",
+    "Nghệ An",
+    "Bắc Ninh",
+    "Lâm Đồng",
+    "Bình Dương",
+    "Đồng Nai",
+    "Khánh Hòa",
+    "Quảng Ninh"
+   ],
+   "searchable": false
+  },
+  {
+   "id": "customer_role",
+   "label": "Vai trò",
+   "values": [],
+   "searchable": true
+  },
+  {
+   "id": "payment_method",
+   "label": "Phương thức thanh toán",
+   "values": [
+    "TIEN_MAT",
+    "NGAN_HANG_QR",
+    "THE_NGAN_HANG",
+    "CHUYEN_KHOAN",
+    "THANH_TOAN_KHI_NHAN_HANG",
+    "VI_DIEN_TU",
+    "VNPAY"
+   ],
+   "searchable": false
+  },
+  {
+   "id": "promotion",
+   "label": "Khuyến mãi",
+   "values": [],
+   "searchable": true
+  },
+  {
+   "id": "payment_gateway",
+   "label": "Cổng thanh toán",
+   "values": [],
+   "searchable": true
+  },
+  {
+   "id": "driver_id",
+   "label": "Mã người giao",
+   "values": [],
+   "searchable": true
+  },
+  {
+   "id": "order_type",
+   "label": "Hình thức nhận hàng",
+   "values": [
+    "TAI_CHO",
+    "DUNG_TAI_CHO",
+    "LAY_TAI_QUAN",
+    "MANG_DI",
+    "GIAO_TAN_NOI"
+   ],
+   "searchable": false
+  },
+  {
+   "id": "store_type",
+   "label": "Loại điểm bán",
+   "values": [
+    "CHI_NHANH_CHINH",
+    "KIOSK_NHUONG_QUYEN",
+    "KIOSK_VE_TINH"
+   ],
+   "searchable": false
+  }
+ ],
+ "workspace_version": "3.1",
+ "metrics": [
+  {
+   "id": "revenue",
+   "label": "Doanh thu",
+   "domain": "orders",
+   "unit": "VND",
+   "semantic_type": "sum",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": true,
+   "forecast": {
+    "cadences": [
+     "day",
+     "week",
+     "month"
+    ],
+    "max_horizon": {
+     "day": 31,
+     "week": 13,
+     "month": 6
+    },
+    "min_history": {
+     "day": 28,
+     "week": 12,
+     "month": 6
+    }
+   },
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Tổng giá trị đơn HOAN_THANH hoặc DANG_GIAO, theo ngày tạo đơn; không bao gồm đơn hủy.",
+   "dimensions": [
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "weekday",
+     "label": "Thứ trong tuần"
+    },
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    },
+    {
+     "id": "promotion",
+     "label": "Khuyến mãi"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Quy mô doanh thu trong phạm vi đã chọn?",
+    "Diễn biến bán hàng trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "order_count",
+   "label": "Số lượng đơn",
+   "domain": "orders",
+   "unit": "đơn",
+   "semantic_type": "count",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": true,
+   "forecast": {
+    "cadences": [
+     "day",
+     "week",
+     "month"
+    ],
+    "max_horizon": {
+     "day": 31,
+     "week": 13,
+     "month": 6
+    },
+    "min_history": {
+     "day": 28,
+     "week": 12,
+     "month": 6
+    }
+   },
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Đếm mọi đơn theo ngày tạo, gồm cả đơn hủy; không dùng làm mẫu số AOV của tập đơn hợp lệ.",
+   "dimensions": [
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "order_status",
+     "label": "Trạng thái đơn"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "weekday",
+     "label": "Thứ trong tuần"
+    },
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "promotion",
+     "label": "Khuyến mãi"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Lượng đơn và trạng thái trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "aov",
+   "label": "Giá trị đơn trung bình",
+   "domain": "orders",
+   "unit": "VND",
+   "semantic_type": "average",
+   "additive": false,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Tổng giá trị chia số đơn trong cùng tập HOAN_THANH/DANG_GIAO. Không cộng hoặc lấy trung bình các AOV nhóm.",
+   "dimensions": [
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "weekday",
+     "label": "Thứ trong tuần"
+    },
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    },
+    {
+     "id": "promotion",
+     "label": "Khuyến mãi"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Quy mô doanh thu trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "purchasing_customer_count",
+   "label": "Số khách mua hàng",
+   "domain": "orders",
+   "unit": "khách",
+   "semantic_type": "distinct_count",
+   "additive": false,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Đếm người dùng duy nhất có đơn HOAN_THANH/DANG_GIAO trong phạm vi; cùng khách có thể mua ở nhiều điểm bán, không cộng khách giữa nhóm.",
+   "dimensions": [
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "weekday",
+     "label": "Thứ trong tuần"
+    },
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    },
+    {
+     "id": "promotion",
+     "label": "Khuyến mãi"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Quy mô doanh thu trong phạm vi đã chọn?",
+    "Khách mua trong kỳ trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "order_cancellation_rate",
+   "label": "Tỷ lệ hủy đơn",
+   "domain": "orders",
+   "unit": "%",
+   "semantic_type": "ratio",
+   "additive": false,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "lower_better",
+   "value_range": [
+    0,
+    100
+   ],
+   "definition": "Phần trăm đơn bị hủy (DA_HUY) trên các đơn đã kết thúc (HOAN_THANH + DA_HUY) theo ngày tạo đơn; đơn đang xử lý không vào mẫu số.",
+   "dimensions": [
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "weekday",
+     "label": "Thứ trong tuần"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Tỷ lệ hủy đơn theo chi nhánh?"
+   ]
+  },
+  {
+   "id": "order_completion_rate",
+   "label": "Tỷ lệ hoàn thành đơn",
+   "domain": "orders",
+   "unit": "%",
+   "semantic_type": "ratio",
+   "additive": false,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "higher_better",
+   "value_range": [
+    0,
+    100
+   ],
+   "definition": "Phần trăm đơn hoàn thành (HOAN_THANH) trên các đơn đã kết thúc (HOAN_THANH + DA_HUY) theo ngày tạo đơn; đơn đang xử lý không vào mẫu số.",
+   "dimensions": [
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "weekday",
+     "label": "Thứ trong tuần"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Tỷ lệ hủy đơn theo chi nhánh?"
+   ]
+  },
+  {
+   "id": "quantity_sold",
+   "label": "Số lượng sản phẩm bán",
+   "domain": "order_items",
+   "unit": "sản phẩm",
+   "semantic_type": "sum",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Tổng số lượng trên dòng món thuộc đơn HOAN_THANH/DANG_GIAO; đếm số đơn vị bán, không phải số sản phẩm khác nhau.",
+   "dimensions": [
+    {
+     "id": "product",
+     "label": "Sản phẩm"
+    },
+    {
+     "id": "category",
+     "label": "Danh mục"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "promotion",
+     "label": "Khuyến mãi"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Sản lượng món trong phạm vi đã chọn?",
+    "Sản phẩm bán chạy trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "item_revenue",
+   "label": "Doanh thu món",
+   "domain": "order_items",
+   "unit": "VND",
+   "semantic_type": "sum",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Tổng thành tiền dòng món thuộc đơn HOAN_THANH/DANG_GIAO; không mặc định bằng tổng tiền đơn.",
+   "dimensions": [
+    {
+     "id": "product",
+     "label": "Sản phẩm"
+    },
+    {
+     "id": "category",
+     "label": "Danh mục"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "promotion",
+     "label": "Khuyến mãi"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Thành tiền món trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "product_revenue",
+   "label": "Doanh thu sản phẩm",
+   "domain": "products",
+   "unit": "VND",
+   "semantic_type": "sum",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Tổng thành tiền dòng sản phẩm thuộc đơn HOAN_THANH/DANG_GIAO; không mặc định đối soát bằng doanh thu cấp đơn.",
+   "dimensions": [
+    {
+     "id": "product",
+     "label": "Sản phẩm"
+    },
+    {
+     "id": "category",
+     "label": "Danh mục"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "promotion",
+     "label": "Khuyến mãi"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Doanh thu sản phẩm trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "store_revenue",
+   "label": "Doanh thu chi nhánh",
+   "domain": "stores",
+   "unit": "VND",
+   "semantic_type": "sum",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": true,
+   "forecast": {
+    "cadences": [
+     "day",
+     "week",
+     "month"
+    ],
+    "max_horizon": {
+     "day": 31,
+     "week": 13,
+     "month": 6
+    },
+    "min_history": {
+     "day": 28,
+     "week": 12,
+     "month": 6
+    }
+   },
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Tổng giá trị đơn HOAN_THANH/DANG_GIAO theo điểm bán, theo ngày tạo đơn.",
+   "dimensions": [
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "promotion",
+     "label": "Khuyến mãi"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Tín hiệu doanh thu chi nhánh trong phạm vi đã chọn?",
+    "Diễn biến chi nhánh trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "store_order_count",
+   "label": "Số đơn chi nhánh",
+   "domain": "stores",
+   "unit": "đơn",
+   "semantic_type": "count",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": true,
+   "forecast": {
+    "cadences": [
+     "day",
+     "week",
+     "month"
+    ],
+    "max_horizon": {
+     "day": 31,
+     "week": 13,
+     "month": 6
+    },
+    "min_history": {
+     "day": 28,
+     "week": 12,
+     "month": 6
+    }
+   },
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Đếm mọi đơn của điểm bán, gồm cả đơn hủy; không thay thế số đơn hợp lệ khi tính AOV.",
+   "dimensions": [
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "promotion",
+     "label": "Khuyến mãi"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Lượng đơn chi nhánh trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "store_aov",
+   "label": "AOV chi nhánh",
+   "domain": "stores",
+   "unit": "VND",
+   "semantic_type": "average",
+   "additive": false,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Trung bình giá trị đơn HOAN_THANH/DANG_GIAO của điểm bán; cần trọng số số đơn hợp lệ để gộp giữa các điểm bán.",
+   "dimensions": [
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "promotion",
+     "label": "Khuyến mãi"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Tín hiệu doanh thu chi nhánh trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "customer_count",
+   "label": "Số khách",
+   "domain": "customers",
+   "unit": "khách",
+   "semantic_type": "distinct_count",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Đếm định danh khách đăng ký vai trò CUSTOMER theo ngày tạo tài khoản; không phải số khách đã mua. Chỉ cộng nhóm khách không giao nhau.",
+   "dimensions": [
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    },
+    {
+     "id": "loyalty_points",
+     "label": "Điểm thành viên"
+    }
+   ],
+   "examples": [
+    "Khách đăng ký trong phạm vi đã chọn?",
+    "Diễn biến đăng ký trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "total_spent",
+   "label": "Tổng chi tiêu tích lũy",
+   "domain": "customers",
+   "unit": "VND",
+   "semantic_type": "sum",
+   "additive": true,
+   "historical": false,
+   "current": true,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Tổng trường chi tiêu tích lũy hiện tại trên tài khoản CUSTOMER; chưa có lịch sử theo kỳ, không phải chi tiêu phát sinh trong kỳ đăng ký.",
+   "dimensions": [
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    },
+    {
+     "id": "loyalty_points",
+     "label": "Điểm thành viên"
+    }
+   ],
+   "examples": [
+    "Chi tiêu tích lũy hiện tại trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "voucher_revenue",
+   "label": "Doanh thu đơn có khuyến mãi",
+   "domain": "promotions",
+   "unit": "VND",
+   "semantic_type": "sum",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Tổng giá trị đơn HOAN_THANH/DANG_GIAO có mã voucher; mô tả tập đơn dùng voucher, chưa chứng minh hiệu quả tăng thêm.",
+   "dimensions": [
+    {
+     "id": "promotion",
+     "label": "Khuyến mãi"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Doanh thu tập đơn voucher trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "discount_amount",
+   "label": "Tổng tiền đã giảm giá",
+   "domain": "promotions",
+   "unit": "VND",
+   "semantic_type": "sum",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Tổng số tiền giảm trên đơn HOAN_THANH/DANG_GIAO có mã voucher; không phải chi phí đầy đủ của chiến dịch.",
+   "dimensions": [
+    {
+     "id": "promotion",
+     "label": "Khuyến mãi"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Số tiền giảm trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "voucher_order_count",
+   "label": "Số đơn áp dụng khuyến mãi",
+   "domain": "promotions",
+   "unit": "đơn",
+   "semantic_type": "count",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Đếm đơn có mã voucher ở mọi trạng thái; khác quần thể doanh thu đơn voucher hợp lệ.",
+   "dimensions": [
+    {
+     "id": "promotion",
+     "label": "Khuyến mãi"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Số đơn dùng voucher trong phạm vi đã chọn?",
+    "Diễn biến sử dụng voucher trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "promotion_redemption_count",
+   "label": "Lượt sử dụng khuyến mãi",
+   "domain": "promotions",
+   "unit": "lượt",
+   "semantic_type": "count",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Số lượt sử dụng khuyến mãi theo sổ sử dụng của dịch vụ định danh (một dòng mỗi lượt), theo ngày sử dụng.",
+   "dimensions": [
+    {
+     "id": "redeemed_promotion",
+     "label": "Chương trình khuyến mãi đã dùng"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Chương trình khuyến mãi nào được dùng nhiều nhất?"
+   ]
+  },
+  {
+   "id": "payment_count",
+   "label": "Số giao dịch",
+   "domain": "payments",
+   "unit": "lượt",
+   "semantic_type": "count",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Đếm mọi giao dịch theo ngày tạo giao dịch, gồm mọi trạng thái; không mặc định bằng số đơn thanh toán thành công.",
+   "dimensions": [
+    {
+     "id": "payment_gateway",
+     "label": "Cổng thanh toán"
+    },
+    {
+     "id": "payment_status",
+     "label": "Trạng thái thanh toán"
+    },
+    {
+     "id": "payment_transaction_status",
+     "label": "Trạng thái giao dịch"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "promotion",
+     "label": "Khuyến mãi"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Cơ cấu giao dịch trong phạm vi đã chọn?",
+    "Diễn biến thanh toán trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "payment_revenue",
+   "label": "Doanh thu thanh toán",
+   "domain": "payments",
+   "unit": "VND",
+   "semantic_type": "sum",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Tổng số tiền giao dịch theo ngày tạo giao dịch, gồm mọi trạng thái; không mặc định là doanh thu thuần hoặc dòng tiền thành công.",
+   "dimensions": [
+    {
+     "id": "payment_gateway",
+     "label": "Cổng thanh toán"
+    },
+    {
+     "id": "payment_status",
+     "label": "Trạng thái thanh toán"
+    },
+    {
+     "id": "payment_transaction_status",
+     "label": "Trạng thái giao dịch"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "promotion",
+     "label": "Khuyến mãi"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Giá trị giao dịch trong phạm vi đã chọn?",
+    "Diễn biến thanh toán trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "total_deliveries",
+   "label": "Tổng chuyến giao",
+   "domain": "delivery",
+   "unit": "lượt",
+   "semantic_type": "sum",
+   "additive": true,
+   "historical": false,
+   "current": true,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Tổng bộ đếm chuyến giao tích lũy hiện tại của shipper; chưa có nhật ký chuyến hoặc lịch sử theo kỳ.",
+   "dimensions": [
+    {
+     "id": "driver_id",
+     "label": "Mã người giao"
+    }
+   ],
+   "examples": [
+    "Tổng chuyến hiện tại trong phạm vi đã chọn?",
+    "Liên hệ chuyến và điểm trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "driver_rating",
+   "label": "Điểm đánh giá trung bình",
+   "domain": "delivery",
+   "unit": "điểm",
+   "semantic_type": "average",
+   "additive": false,
+   "historical": false,
+   "current": true,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "higher_better",
+   "value_range": null,
+   "definition": "Trung bình trường điểm đánh giá hiện tại của shipper; chưa có cỡ mẫu đánh giá và lịch sử từng chuyến.",
+   "dimensions": [
+    {
+     "id": "driver_id",
+     "label": "Mã người giao"
+    }
+   ],
+   "examples": [
+    "Điểm shipper hiện tại trong phạm vi đã chọn?",
+    "Liên hệ chuyến và điểm trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "delivery_count",
+   "label": "Số chuyến giao",
+   "domain": "delivery",
+   "unit": "lượt",
+   "semantic_type": "count",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": true,
+   "forecast": {
+    "cadences": [
+     "day",
+     "week",
+     "month"
+    ],
+    "max_horizon": {
+     "day": 31,
+     "week": 13,
+     "month": 6
+    },
+    "min_history": {
+     "day": 28,
+     "week": 12,
+     "month": 6
+    }
+   },
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Đếm mọi chuyến được phân công theo thời điểm nhận chuyến, gồm mọi trạng thái.",
+   "dimensions": [
+    {
+     "id": "delivery_status",
+     "label": "Trạng thái chuyến giao"
+    },
+    {
+     "id": "driver_id",
+     "label": "Mã người giao"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Số chuyến giao theo trạng thái?"
+   ]
+  },
+  {
+   "id": "delivered_count",
+   "label": "Số chuyến giao thành công",
+   "domain": "delivery",
+   "unit": "lượt",
+   "semantic_type": "conditional_count",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Đếm chuyến có trạng thái DELIVERED theo thời điểm nhận chuyến.",
+   "dimensions": [
+    {
+     "id": "driver_id",
+     "label": "Mã người giao"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Tỷ lệ giao thành công của shipper?"
+   ]
+  },
+  {
+   "id": "failed_or_cancelled_delivery_count",
+   "label": "Số chuyến không thành công",
+   "domain": "delivery",
+   "unit": "lượt",
+   "semantic_type": "conditional_count",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Đếm chuyến đã kết thúc nhưng không giao thành công (FAILED hoặc CANCELLED).",
+   "dimensions": [
+    {
+     "id": "driver_id",
+     "label": "Mã người giao"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Tỷ lệ giao thành công của shipper?"
+   ]
+  },
+  {
+   "id": "delivery_success_rate",
+   "label": "Tỷ lệ giao thành công",
+   "domain": "delivery",
+   "unit": "%",
+   "semantic_type": "ratio",
+   "additive": false,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "higher_better",
+   "value_range": [
+    0,
+    100
+   ],
+   "definition": "Phần trăm chuyến giao thành công trên các chuyến đã kết thúc (DELIVERED, FAILED, CANCELLED); chuyến đang xử lý không vào mẫu số.",
+   "dimensions": [
+    {
+     "id": "driver_id",
+     "label": "Mã người giao"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Tỷ lệ giao thành công của shipper?"
+   ]
+  },
+  {
+   "id": "avg_delivery_minutes",
+   "label": "Thời gian giao trung bình",
+   "domain": "delivery",
+   "unit": "phút",
+   "semantic_type": "average",
+   "additive": false,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "lower_better",
+   "value_range": null,
+   "definition": "Trung bình số phút từ lúc lấy hàng đến lúc giao xong, chỉ trên chuyến DELIVERED có đủ hai mốc thời gian.",
+   "dimensions": [
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": []
+  },
+  {
+   "id": "stock_quantity",
+   "label": "Số lượng tồn kho",
+   "domain": "inventory",
+   "unit": "đơn vị",
+   "semantic_type": "sum",
+   "additive": true,
+   "historical": false,
+   "current": true,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Tổng số lượng tồn hiện tại của các vị trí sản phẩm tại điểm bán; chưa có lịch sử biến động tồn.",
+   "dimensions": [
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "product",
+     "label": "Sản phẩm"
+    },
+    {
+     "id": "category",
+     "label": "Danh mục"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Vị trí tồn trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "low_stock_count",
+   "label": "Số món dưới định mức",
+   "domain": "inventory",
+   "unit": "lượt",
+   "semantic_type": "conditional_count",
+   "additive": true,
+   "historical": false,
+   "current": true,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "lower_better",
+   "value_range": null,
+   "definition": "Đếm vị trí tồn có số lượng nhỏ hơn hoặc bằng mức cảnh báo; không phải tỷ lệ thiếu hàng hoặc số đơn mất bán.",
+   "dimensions": [
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "product",
+     "label": "Sản phẩm"
+    },
+    {
+     "id": "category",
+     "label": "Danh mục"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Dưới định mức trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "avg_product_rating",
+   "label": "Điểm đánh giá trung bình",
+   "domain": "product_reviews",
+   "unit": "điểm",
+   "semantic_type": "average",
+   "additive": false,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "higher_better",
+   "value_range": null,
+   "definition": "Trung bình số sao đánh giá sản phẩm, làm tròn hai chữ số; đọc cùng số lượt đánh giá, không cộng trung bình nhóm.",
+   "dimensions": [
+    {
+     "id": "product",
+     "label": "Sản phẩm"
+    },
+    {
+     "id": "category",
+     "label": "Danh mục"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "promotion",
+     "label": "Khuyến mãi"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Phản hồi sản phẩm trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "review_count",
+   "label": "Số lượt đánh giá",
+   "domain": "product_reviews",
+   "unit": "lượt",
+   "semantic_type": "count",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Đếm bản ghi đánh giá sản phẩm theo ngày tạo đánh giá; không phải số người đánh giá duy nhất.",
+   "dimensions": [
+    {
+     "id": "product",
+     "label": "Sản phẩm"
+    },
+    {
+     "id": "category",
+     "label": "Danh mục"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "promotion",
+     "label": "Khuyến mãi"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Phản hồi sản phẩm trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "avg_store_rating",
+   "label": "Điểm phục vụ trung bình",
+   "domain": "store_reviews",
+   "unit": "điểm",
+   "semantic_type": "average",
+   "additive": false,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "higher_better",
+   "value_range": null,
+   "definition": "Trung bình số sao đánh giá chi nhánh, làm tròn hai chữ số; đọc cùng cỡ mẫu đánh giá, không cộng trung bình nhóm.",
+   "dimensions": [
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Phản hồi chi nhánh trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "store_review_count",
+   "label": "Số lượt đánh giá quán",
+   "domain": "store_reviews",
+   "unit": "lượt",
+   "semantic_type": "count",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Đếm bản ghi đánh giá chi nhánh theo ngày tạo đánh giá; không phải số khách duy nhất.",
+   "dimensions": [
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Phản hồi chi nhánh trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "shift_count",
+   "label": "Tổng số ca làm",
+   "domain": "staff_shifts",
+   "unit": "lượt",
+   "semantic_type": "count",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Đếm bản ghi ca nhân viên theo ngày làm việc; không phải số nhân viên duy nhất hoặc giờ công.",
+   "dimensions": [
+    {
+     "id": "shift_name",
+     "label": "Ca làm"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Quy mô ca làm trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "late_count",
+   "label": "Số ca đi trễ",
+   "domain": "staff_shifts",
+   "unit": "lượt",
+   "semantic_type": "conditional_count",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "lower_better",
+   "value_range": null,
+   "definition": "Đếm ca có trạng thái chấm công DI_TRE theo ngày làm việc; chưa chuẩn hóa theo tổng ca nên không gọi là tỷ lệ đi trễ.",
+   "dimensions": [
+    {
+     "id": "shift_name",
+     "label": "Ca làm"
+    },
+    {
+     "id": "attendance_status",
+     "label": "Trạng thái chấm công"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Chấm công trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "late_shift_rate",
+   "label": "Tỷ lệ ca đi trễ",
+   "domain": "staff_shifts",
+   "unit": "%",
+   "semantic_type": "ratio",
+   "additive": false,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "lower_better",
+   "value_range": [
+    0,
+    100
+   ],
+   "definition": "Phần trăm ca đi trễ (DI_TRE) trên các ca đã chấm công vào ca (DUNG_GIO, DI_TRE, VE_SOM) theo ngày làm; ca chưa chấm công (ASSIGNED), nghỉ phép (NGHI_PHEP) hoặc vắng mặt (VANG_MAT) không vào mẫu số.",
+   "dimensions": [
+    {
+     "id": "shift_name",
+     "label": "Ca làm"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Tỷ lệ đi trễ theo chi nhánh?"
+   ]
+  },
+  {
+   "id": "total_cash_difference",
+   "label": "Tổng tiền chênh lệch",
+   "domain": "cashier_reconciliation",
+   "unit": "VND",
+   "semantic_type": "sum",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Tổng chênh lệch tiền mặt có dấu theo ngày tạo ca đối soát; số âm và dương có thể bù nhau, không phải tổng độ lệch tuyệt đối.",
+   "dimensions": [
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Chênh lệch tiền có dấu trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "system_cash_revenue",
+   "label": "Doanh thu tiền mặt hệ thống",
+   "domain": "cashier_reconciliation",
+   "unit": "VND",
+   "semantic_type": "sum",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Tổng trường tiền mặt hệ thống theo ngày tạo ca đối soát; khác quần thể doanh thu đơn hàng.",
+   "dimensions": [
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Quy mô đối soát trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "reconciled_shifts",
+   "label": "Số ca đã đối soát",
+   "domain": "cashier_reconciliation",
+   "unit": "lượt",
+   "semantic_type": "count",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Đếm ca đối soát theo ngày tạo ca, không suy ra tất cả ca đã được phê duyệt.",
+   "dimensions": [
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Quy mô đối soát trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "large_cash_discrepancy_shift_count",
+   "label": "Số ca lệch tiền lớn",
+   "domain": "cashier_reconciliation",
+   "unit": "ca",
+   "semantic_type": "conditional_count",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "lower_better",
+   "value_range": null,
+   "definition": "Đếm ca đối soát có giá trị tuyệt đối chênh lệch tiền mặt lớn hơn 500.000 VND/ca. 500.000 VND là ngưỡng mặc định hệ thống, không phải chuẩn nghiệp vụ phổ quát.",
+   "dimensions": [
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Chi nhánh nào có ca lệch tiền lớn?"
+   ]
+  },
+  {
+   "id": "survey_response_count",
+   "label": "Số lượt phản hồi khảo sát",
+   "domain": "customer_surveys",
+   "unit": "lượt",
+   "semantic_type": "count",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Đếm phản hồi khảo sát theo ngày tạo, chưa có mẫu số người được mời nên không tính tỷ lệ phản hồi.",
+   "dimensions": [
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Lượng phản hồi trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "favorite_count",
+   "label": "Số lượt thả tim yêu thích",
+   "domain": "wishlist_favorites",
+   "unit": "lượt",
+   "semantic_type": "count",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Đếm bản ghi yêu thích sản phẩm theo ngày tạo; thể hiện quan tâm, không phải mua hàng hoặc chuyển đổi.",
+   "dimensions": [
+    {
+     "id": "product",
+     "label": "Sản phẩm"
+    },
+    {
+     "id": "category",
+     "label": "Danh mục"
+    },
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    }
+   ],
+   "examples": [
+    "Quan tâm sản phẩm trong phạm vi đã chọn?"
+   ]
+  },
+  {
+   "id": "hourly_orders",
+   "label": "Số đơn theo giờ",
+   "domain": "hourly",
+   "unit": "đơn",
+   "semantic_type": "count",
+   "additive": true,
+   "historical": true,
+   "current": false,
+   "forecastable": false,
+   "forecast": null,
+   "quality_direction": "contextual",
+   "value_range": null,
+   "definition": "Đếm mọi đơn theo giờ của ngày tạo đơn, gồm cả đơn hủy; chưa chuẩn hóa theo số ngày quan sát.",
+   "dimensions": [
+    {
+     "id": "hour",
+     "label": "Giờ"
+    },
+    {
+     "id": "store",
+     "label": "Chi nhánh"
+    },
+    {
+     "id": "city",
+     "label": "Thành phố"
+    },
+    {
+     "id": "weekday",
+     "label": "Thứ trong tuần"
+    },
+    {
+     "id": "customer_role",
+     "label": "Vai trò"
+    },
+    {
+     "id": "payment_method",
+     "label": "Phương thức thanh toán"
+    },
+    {
+     "id": "promotion",
+     "label": "Khuyến mãi"
+    },
+    {
+     "id": "order_type",
+     "label": "Hình thức nhận hàng"
+    },
+    {
+     "id": "store_type",
+     "label": "Loại điểm bán"
+    }
+   ],
+   "examples": [
+    "Lưu lượng theo giờ trong phạm vi đã chọn?"
+   ]
+  }
+ ],
+ "missions": [
+  {
+   "id": "overview",
+   "label": "Tổng quan",
+   "description": "Tình hình một chỉ số: KPI toàn phạm vi, diễn biến và cơ cấu chính.",
+   "operations": [
+    "aggregate",
+    "trend",
+    "distribution"
+   ],
+   "result_tabs": [
+    "all",
+    "trend",
+    "composition",
+    "comparison"
+   ],
+   "chart_forms": [
+    "kpi",
+    "line",
+    "bar",
+    "donut"
+   ],
+   "kpi_cards": [
+    3,
+    4
+   ],
+   "template": {
+    "slots": [
+     "metric",
+     "time"
+    ],
+    "text": "Tình hình {metric} {time} thế nào?"
+   },
+   "examples": [
+    "Tình hình doanh thu tháng 9 năm 2026 thế nào?",
+    "Tình hình giao hàng tháng 9 năm 2026 thế nào?"
+   ],
+   "caveat": null,
+   "follow_ups": [
+    "drilldown",
+    "trend",
+    "previous_period",
+    "forecast"
+   ],
+   "status": "available",
+   "reason": null,
+   "metrics": [
+    "revenue",
+    "order_count",
+    "aov",
+    "purchasing_customer_count",
+    "order_cancellation_rate",
+    "order_completion_rate",
+    "quantity_sold",
+    "item_revenue",
+    "product_revenue",
+    "store_revenue",
+    "store_order_count",
+    "store_aov",
+    "customer_count",
+    "total_spent",
+    "voucher_revenue",
+    "discount_amount",
+    "voucher_order_count",
+    "promotion_redemption_count",
+    "payment_count",
+    "payment_revenue",
+    "total_deliveries",
+    "driver_rating",
+    "delivery_count",
+    "delivered_count",
+    "failed_or_cancelled_delivery_count",
+    "delivery_success_rate",
+    "avg_delivery_minutes",
+    "stock_quantity",
+    "low_stock_count",
+    "avg_product_rating",
+    "review_count",
+    "avg_store_rating",
+    "store_review_count",
+    "shift_count",
+    "late_count",
+    "late_shift_rate",
+    "total_cash_difference",
+    "system_cash_revenue",
+    "reconciled_shifts",
+    "large_cash_discrepancy_shift_count",
+    "survey_response_count",
+    "favorite_count",
+    "hourly_orders"
+   ]
+  },
+  {
+   "id": "compare",
+   "label": "So sánh",
+   "description": "So sánh A với B theo một chiều hoặc hai kỳ: chênh lệch tuyệt đối và %.",
+   "operations": [
+    "aggregate",
+    "ranking"
+   ],
+   "result_tabs": [
+    "comparison",
+    "all",
+    "trend"
+   ],
+   "chart_forms": [
+    "kpi",
+    "grouped_bar",
+    "bar",
+    "table"
+   ],
+   "kpi_cards": [
+    2,
+    4
+   ],
+   "template": {
+    "slots": [
+     "metric",
+     "dimension",
+     "value_a",
+     "value_b",
+     "time"
+    ],
+    "text": "So sánh {metric} theo {dimension} giữa {value_a} và {value_b} {time}"
+   },
+   "examples": [
+    "So sánh doanh thu Hồ Chí Minh và Hà Nội tháng 9 năm 2026",
+    "So sánh tỷ lệ hủy đơn giữa các loại điểm bán"
+   ],
+   "caveat": null,
+   "follow_ups": [
+    "trend",
+    "drilldown",
+    "previous_period"
+   ],
+   "status": "available",
+   "reason": null,
+   "metrics": [
+    "revenue",
+    "order_count",
+    "aov",
+    "purchasing_customer_count",
+    "order_cancellation_rate",
+    "order_completion_rate",
+    "quantity_sold",
+    "item_revenue",
+    "product_revenue",
+    "store_revenue",
+    "store_order_count",
+    "store_aov",
+    "customer_count",
+    "total_spent",
+    "voucher_revenue",
+    "discount_amount",
+    "voucher_order_count",
+    "promotion_redemption_count",
+    "payment_count",
+    "payment_revenue",
+    "total_deliveries",
+    "driver_rating",
+    "delivery_count",
+    "delivered_count",
+    "failed_or_cancelled_delivery_count",
+    "delivery_success_rate",
+    "avg_delivery_minutes",
+    "stock_quantity",
+    "low_stock_count",
+    "avg_product_rating",
+    "review_count",
+    "avg_store_rating",
+    "store_review_count",
+    "shift_count",
+    "late_count",
+    "late_shift_rate",
+    "total_cash_difference",
+    "system_cash_revenue",
+    "reconciled_shifts",
+    "large_cash_discrepancy_shift_count",
+    "survey_response_count",
+    "favorite_count",
+    "hourly_orders"
+   ]
+  },
+  {
+   "id": "ranking",
+   "label": "Xếp hạng",
+   "description": "Top/Bottom N theo một chỉ số, kèm tỷ trọng đóng góp và khoảng cách với hạng sau.",
+   "operations": [
+    "ranking"
+   ],
+   "result_tabs": [
+    "ranking",
+    "composition",
+    "all"
+   ],
+   "chart_forms": [
+    "horizontal_bar",
+    "table"
+   ],
+   "kpi_cards": [
+    2,
+    3
+   ],
+   "template": {
+    "slots": [
+     "n",
+     "dimension",
+     "metric",
+     "time"
+    ],
+    "text": "Top {n} {dimension} theo {metric} {time}"
+   },
+   "examples": [
+    "Top 10 chi nhánh theo doanh thu tháng 9 năm 2026",
+    "Top 5 món bán chạy nhất 30 ngày gần nhất"
+   ],
+   "caveat": null,
+   "follow_ups": [
+    "composition",
+    "trend",
+    "drilldown"
+   ],
+   "status": "available",
+   "reason": null,
+   "metrics": [
+    "revenue",
+    "order_count",
+    "aov",
+    "purchasing_customer_count",
+    "order_cancellation_rate",
+    "order_completion_rate",
+    "quantity_sold",
+    "item_revenue",
+    "product_revenue",
+    "store_revenue",
+    "store_order_count",
+    "store_aov",
+    "customer_count",
+    "total_spent",
+    "voucher_revenue",
+    "discount_amount",
+    "voucher_order_count",
+    "promotion_redemption_count",
+    "payment_count",
+    "payment_revenue",
+    "total_deliveries",
+    "driver_rating",
+    "delivery_count",
+    "delivered_count",
+    "failed_or_cancelled_delivery_count",
+    "delivery_success_rate",
+    "avg_delivery_minutes",
+    "stock_quantity",
+    "low_stock_count",
+    "avg_product_rating",
+    "review_count",
+    "avg_store_rating",
+    "store_review_count",
+    "shift_count",
+    "late_count",
+    "late_shift_rate",
+    "total_cash_difference",
+    "system_cash_revenue",
+    "reconciled_shifts",
+    "large_cash_discrepancy_shift_count",
+    "survey_response_count",
+    "favorite_count",
+    "hourly_orders"
+   ]
+  },
+  {
+   "id": "trend",
+   "label": "Xu hướng",
+   "description": "Diễn biến theo ngày/tuần/tháng; kỳ chưa trọn được đánh dấu.",
+   "operations": [
+    "trend"
+   ],
+   "result_tabs": [
+    "trend",
+    "all"
+   ],
+   "chart_forms": [
+    "line",
+    "area"
+   ],
+   "kpi_cards": [
+    2,
+    3
+   ],
+   "template": {
+    "slots": [
+     "metric",
+     "granularity",
+     "time"
+    ],
+    "text": "{metric} {granularity} {time}"
+   },
+   "examples": [
+    "Doanh thu theo tuần trong 3 tháng gần nhất",
+    "Tỷ lệ giao thành công theo tháng năm 2026"
+   ],
+   "caveat": null,
+   "follow_ups": [
+    "forecast",
+    "drilldown",
+    "compare"
+   ],
+   "status": "available",
+   "reason": null,
+   "metrics": [
+    "revenue",
+    "order_count",
+    "aov",
+    "purchasing_customer_count",
+    "order_cancellation_rate",
+    "order_completion_rate",
+    "quantity_sold",
+    "item_revenue",
+    "product_revenue",
+    "store_revenue",
+    "store_order_count",
+    "store_aov",
+    "customer_count",
+    "voucher_revenue",
+    "discount_amount",
+    "voucher_order_count",
+    "promotion_redemption_count",
+    "payment_count",
+    "payment_revenue",
+    "delivery_count",
+    "delivered_count",
+    "failed_or_cancelled_delivery_count",
+    "delivery_success_rate",
+    "avg_delivery_minutes",
+    "avg_product_rating",
+    "review_count",
+    "avg_store_rating",
+    "store_review_count",
+    "shift_count",
+    "late_count",
+    "late_shift_rate",
+    "total_cash_difference",
+    "system_cash_revenue",
+    "reconciled_shifts",
+    "large_cash_discrepancy_shift_count",
+    "survey_response_count",
+    "favorite_count",
+    "hourly_orders"
+   ]
+  },
+  {
+   "id": "composition",
+   "label": "Cơ cấu",
+   "description": "Phân bổ một chỉ số cộng được theo nhóm và mức độ tập trung.",
+   "operations": [
+    "distribution"
+   ],
+   "result_tabs": [
+    "composition",
+    "all"
+   ],
+   "chart_forms": [
+    "donut",
+    "stacked_100",
+    "bar"
+   ],
+   "kpi_cards": [
+    2,
+    3
+   ],
+   "template": {
+    "slots": [
+     "metric",
+     "dimension",
+     "time"
+    ],
+    "text": "Cơ cấu {metric} theo {dimension} {time}"
+   },
+   "examples": [
+    "Cơ cấu doanh thu theo kênh bán tháng 9 năm 2026",
+    "Cơ cấu số đơn theo phương thức thanh toán"
+   ],
+   "caveat": null,
+   "follow_ups": [
+    "ranking",
+    "trend"
+   ],
+   "status": "available",
+   "reason": null,
+   "metrics": [
+    "revenue",
+    "order_count",
+    "quantity_sold",
+    "item_revenue",
+    "product_revenue",
+    "store_revenue",
+    "store_order_count",
+    "customer_count",
+    "total_spent",
+    "voucher_revenue",
+    "discount_amount",
+    "voucher_order_count",
+    "promotion_redemption_count",
+    "payment_count",
+    "payment_revenue",
+    "total_deliveries",
+    "delivery_count",
+    "delivered_count",
+    "failed_or_cancelled_delivery_count",
+    "stock_quantity",
+    "low_stock_count",
+    "review_count",
+    "store_review_count",
+    "shift_count",
+    "late_count",
+    "total_cash_difference",
+    "system_cash_revenue",
+    "reconciled_shifts",
+    "large_cash_discrepancy_shift_count",
+    "survey_response_count",
+    "favorite_count",
+    "hourly_orders"
+   ]
+  },
+  {
+   "id": "forecast",
+   "label": "Dự báo",
+   "description": "Dự báo thống kê tất định từ lịch sử đã kiểm chứng (khoảng 80%, kiểm tra lùi).",
+   "operations": [
+    "trend"
+   ],
+   "result_tabs": [
+    "forecast",
+    "trend",
+    "all"
+   ],
+   "chart_forms": [
+    "forecast_line",
+    "table"
+   ],
+   "kpi_cards": [
+    2,
+    3
+   ],
+   "template": {
+    "slots": [
+     "metric",
+     "horizon",
+     "cadence"
+    ],
+    "text": "Dự báo {metric} {horizon} {cadence} tới"
+   },
+   "examples": [
+    "Dự báo doanh thu 3 tháng tới",
+    "Dự báo số đơn 4 tuần tới"
+   ],
+   "caveat": null,
+   "follow_ups": [
+    "trend",
+    "drilldown"
+   ],
+   "status": "available",
+   "reason": null,
+   "metrics": [
+    "revenue",
+    "order_count",
+    "store_revenue",
+    "store_order_count",
+    "delivery_count"
+   ]
+  },
+  {
+   "id": "risk_watch",
+   "label": "Rủi ro & cảnh báo",
+   "description": "So sánh chỉ số chuẩn với ngưỡng mặc định hệ thống; không có điểm rủi ro tổng hợp.",
+   "operations": [
+    "aggregate"
+   ],
+   "result_tabs": [
+    "risk",
+    "all"
+   ],
+   "chart_forms": [
+    "risk_table",
+    "bar"
+   ],
+   "kpi_cards": [
+    3,
+    4
+   ],
+   "template": {
+    "slots": [
+     "scope",
+     "time"
+    ],
+    "text": "Rủi ro {scope} {time}"
+   },
+   "examples": [
+    "Rủi ro các kiosk tháng 9 năm 2026",
+    "Cảnh báo vận hành tại Hà Nội tháng 9 năm 2026"
+   ],
+   "caveat": null,
+   "follow_ups": [
+    "drilldown",
+    "trend"
+   ],
+   "status": "available",
+   "reason": null,
+   "metrics": [
+    "order_cancellation_rate",
+    "delivery_success_rate",
+    "large_cash_discrepancy_shift_count",
+    "late_shift_rate",
+    "low_stock_count",
+    "avg_store_rating"
+   ]
+  },
+  {
+   "id": "relationship",
+   "label": "Tương quan",
+   "description": "Quan hệ quan sát giữa hai chỉ số trên cùng đơn vị quan sát; không phải nhân quả.",
+   "operations": [
+    "relationship"
+   ],
+   "result_tabs": [
+    "comparison",
+    "all"
+   ],
+   "chart_forms": [
+    "scatter",
+    "table"
+   ],
+   "kpi_cards": [
+    2,
+    2
+   ],
+   "template": {
+    "slots": [
+     "metric",
+     "metric_b",
+     "dimension"
+    ],
+    "text": "Liên hệ giữa {metric} và {metric_b} theo {dimension}"
+   },
+   "examples": [
+    "Liên hệ giữa tổng chuyến và điểm đánh giá của shipper"
+   ],
+   "caveat": "Tương quan không phải nhân quả; chỉ mô tả quan hệ quan sát được trong dữ liệu.",
+   "follow_ups": [
+    "ranking",
+    "drilldown"
+   ],
+   "status": "partial",
+   "reason": "Chỉ hỗ trợ quan hệ giữa các chỉ số trong cùng một nhóm phân tích (ví dụ shipper).",
+   "metrics": [
+    "driver_rating",
+    "total_deliveries"
+   ]
+  }
+ ],
+ "risk_signals": [
+  {
+   "id": "order_cancellation_high",
+   "label": "Tỷ lệ hủy đơn cao",
+   "metric": "order_cancellation_rate",
+   "metric_label": "Tỷ lệ hủy đơn",
+   "unit": "%",
+   "operator": "gt",
+   "operator_symbol": ">",
+   "threshold": 8,
+   "warning_margin": 2,
+   "bad_direction": "above",
+   "definition": "Phần trăm đơn bị hủy (DA_HUY) trên các đơn đã kết thúc (HOAN_THANH + DA_HUY) theo ngày tạo đơn; đơn đang xử lý không vào mẫu số.",
+   "historical": true,
+   "threshold_kind": "system_default",
+   "configurable": true,
+   "observation_metric": null,
+   "minimum_observations": null,
+   "available": true
+  },
+  {
+   "id": "delivery_success_low",
+   "label": "Tỷ lệ giao thành công thấp",
+   "metric": "delivery_success_rate",
+   "metric_label": "Tỷ lệ giao thành công",
+   "unit": "%",
+   "operator": "lt",
+   "operator_symbol": "<",
+   "threshold": 90,
+   "warning_margin": 3,
+   "bad_direction": "below",
+   "definition": "Phần trăm chuyến giao thành công trên các chuyến đã kết thúc (DELIVERED, FAILED, CANCELLED); chuyến đang xử lý không vào mẫu số.",
+   "historical": true,
+   "threshold_kind": "system_default",
+   "configurable": true,
+   "observation_metric": null,
+   "minimum_observations": null,
+   "available": true
+  },
+  {
+   "id": "cash_discrepancy_high",
+   "label": "Có ca lệch tiền lớn (> 500.000 VND/ca)",
+   "metric": "large_cash_discrepancy_shift_count",
+   "metric_label": "Số ca lệch tiền lớn",
+   "unit": "ca",
+   "operator": "gt",
+   "operator_symbol": ">",
+   "threshold": 0,
+   "warning_margin": 0,
+   "bad_direction": "above",
+   "definition": "Đếm ca đối soát có giá trị tuyệt đối chênh lệch tiền mặt lớn hơn 500.000 VND/ca. 500.000 VND là ngưỡng mặc định hệ thống, không phải chuẩn nghiệp vụ phổ quát.",
+   "historical": true,
+   "threshold_kind": "system_default",
+   "configurable": true,
+   "observation_metric": null,
+   "minimum_observations": null,
+   "available": true
+  },
+  {
+   "id": "late_shift_high",
+   "label": "Tỷ lệ ca đi trễ cao",
+   "metric": "late_shift_rate",
+   "metric_label": "Tỷ lệ ca đi trễ",
+   "unit": "%",
+   "operator": "gt",
+   "operator_symbol": ">",
+   "threshold": 15,
+   "warning_margin": 3,
+   "bad_direction": "above",
+   "definition": "Phần trăm ca đi trễ (DI_TRE) trên các ca đã chấm công vào ca (DUNG_GIO, DI_TRE, VE_SOM) theo ngày làm; ca chưa chấm công (ASSIGNED), nghỉ phép (NGHI_PHEP) hoặc vắng mặt (VANG_MAT) không vào mẫu số.",
+   "historical": true,
+   "threshold_kind": "system_default",
+   "configurable": true,
+   "observation_metric": null,
+   "minimum_observations": null,
+   "available": true
+  },
+  {
+   "id": "low_stock_exists",
+   "label": "Có sản phẩm dưới mức cảnh báo tồn kho",
+   "metric": "low_stock_count",
+   "metric_label": "Số món dưới định mức",
+   "unit": "lượt",
+   "operator": "gt",
+   "operator_symbol": ">",
+   "threshold": 0,
+   "warning_margin": 0,
+   "bad_direction": "above",
+   "definition": "Đếm vị trí tồn có số lượng nhỏ hơn hoặc bằng mức cảnh báo; không phải tỷ lệ thiếu hàng hoặc số đơn mất bán.",
+   "historical": false,
+   "threshold_kind": "system_default",
+   "configurable": true,
+   "observation_metric": null,
+   "minimum_observations": null,
+   "available": true
+  },
+  {
+   "id": "store_rating_low",
+   "label": "Điểm đánh giá chi nhánh thấp",
+   "metric": "avg_store_rating",
+   "metric_label": "Điểm phục vụ trung bình",
+   "unit": "điểm",
+   "operator": "lt",
+   "operator_symbol": "<",
+   "threshold": 3.5,
+   "warning_margin": 0.3,
+   "bad_direction": "below",
+   "definition": "Trung bình số sao đánh giá chi nhánh, làm tròn hai chữ số; đọc cùng cỡ mẫu đánh giá, không cộng trung bình nhóm.",
+   "historical": true,
+   "threshold_kind": "system_default",
+   "configurable": true,
+   "observation_metric": "store_review_count",
+   "minimum_observations": 5,
+   "available": true
+  }
+ ],
+ "unsupported": [
+  {
+   "id": "marketing_roi",
+   "concepts": [
+    "ROI",
+    "marketing ROI"
+   ],
+   "reason": "definition_unavailable",
+   "limitation": "Chưa có chi phí marketing để tính ROI thực sự.",
+   "nearest": [
+    {
+     "id": "voucher_revenue",
+     "label": "Doanh thu đơn có khuyến mãi"
+    },
+    {
+     "id": "discount_amount",
+     "label": "Tổng tiền đã giảm giá"
+    },
+    {
+     "id": "promotion_redemption_count",
+     "label": "Lượt sử dụng khuyến mãi"
+    }
+   ]
+  },
+  {
+   "id": "profit_margin",
+   "concepts": [
+    "lợi nhuận",
+    "biên lợi nhuận",
+    "lãi gộp",
+    "giá vốn",
+    "profit",
+    "COGS",
+    "gross margin"
+   ],
+   "reason": "definition_unavailable",
+   "limitation": "Kho chỉ có giá bán, không có giá vốn hay chi phí nên không tính được lợi nhuận.",
+   "nearest": [
+    {
+     "id": "revenue",
+     "label": "Doanh thu"
+    },
+    {
+     "id": "product_revenue",
+     "label": "Doanh thu sản phẩm"
+    },
+    {
+     "id": "discount_amount",
+     "label": "Tổng tiền đã giảm giá"
+    }
+   ]
+  },
+  {
+   "id": "customer_sentiment",
+   "concepts": [
+    "cảm xúc khách hàng",
+    "phân tích cảm xúc",
+    "sentiment"
+   ],
+   "reason": "definition_unavailable",
+   "limitation": "Chưa có chỉ số cảm xúc được duyệt từ nội dung phản hồi.",
+   "nearest": [
+    {
+     "id": "avg_store_rating",
+     "label": "Điểm phục vụ trung bình"
+    },
+    {
+     "id": "avg_product_rating",
+     "label": "Điểm đánh giá trung bình"
+    },
+    {
+     "id": "survey_response_count",
+     "label": "Số lượt phản hồi khảo sát"
+    }
+   ]
+  },
+  {
+   "id": "customer_happiness_index",
+   "concepts": [
+    "chỉ số hạnh phúc",
+    "chỉ số hài lòng",
+    "CSAT",
+    "NPS"
+   ],
+   "reason": "definition_unavailable",
+   "limitation": "Chưa có chỉ số hài lòng/hạnh phúc được duyệt; có điểm đánh giá và số phản hồi khảo sát.",
+   "nearest": [
+    {
+     "id": "avg_store_rating",
+     "label": "Điểm phục vụ trung bình"
+    },
+    {
+     "id": "avg_product_rating",
+     "label": "Điểm đánh giá trung bình"
+    },
+    {
+     "id": "survey_response_count",
+     "label": "Số lượt phản hồi khảo sát"
+    }
+   ]
+  }
+ ],
+ "limits": {
+  "max_requirements": 6,
+  "max_question_chars": 8000,
+  "max_dimensions": 4,
+  "max_ranking_n": 100,
+  "max_charts": 8,
+  "forecast": {
+   "revenue": {
+    "cadences": [
+     "day",
+     "week",
+     "month"
+    ],
+    "max_horizon": {
+     "day": 31,
+     "week": 13,
+     "month": 6
+    },
+    "min_history": {
+     "day": 28,
+     "week": 12,
+     "month": 6
+    }
+   },
+   "order_count": {
+    "cadences": [
+     "day",
+     "week",
+     "month"
+    ],
+    "max_horizon": {
+     "day": 31,
+     "week": 13,
+     "month": 6
+    },
+    "min_history": {
+     "day": 28,
+     "week": 12,
+     "month": 6
+    }
+   },
+   "store_revenue": {
+    "cadences": [
+     "day",
+     "week",
+     "month"
+    ],
+    "max_horizon": {
+     "day": 31,
+     "week": 13,
+     "month": 6
+    },
+    "min_history": {
+     "day": 28,
+     "week": 12,
+     "month": 6
+    }
+   },
+   "store_order_count": {
+    "cadences": [
+     "day",
+     "week",
+     "month"
+    ],
+    "max_horizon": {
+     "day": 31,
+     "week": 13,
+     "month": 6
+    },
+    "min_history": {
+     "day": 28,
+     "week": 12,
+     "month": 6
+    }
+   },
+   "delivery_count": {
+    "cadences": [
+     "day",
+     "week",
+     "month"
+    ],
+    "max_horizon": {
+     "day": 31,
+     "week": 13,
+     "month": 6
+    },
+    "min_history": {
+     "day": 28,
+     "week": 12,
+     "month": 6
+    }
+   }
+  },
+  "preflight": {
+   "rate_limit": {
+    "requests": 40,
+    "window_seconds": 10
+   },
+   "debounce_ms": 400
+  }
+ },
+ "data_coverage": {
+  "status": "ready",
+  "overall": {
+   "min_date": "2026-01-01",
+   "max_date": "2026-10-16"
+  },
+  "facts": {
+   "silver.don_hang": {
+    "label": "Đơn hàng",
+    "min_date": "2026-01-01",
+    "max_date": "2026-10-16"
+   },
+   "silver.giao_hang": {
+    "label": "Chuyến giao hàng",
+    "min_date": "2026-01-01",
+    "max_date": "2026-10-14"
+   },
+   "silver.ca_lam_viec_nhan_vien": {
+    "label": "Ca làm",
+    "min_date": "2026-01-01",
+    "max_date": "2026-10-02"
+   }
+  },
+  "freshness": {
+   "mode": "batch",
+   "label": "Cập nhật theo đợt",
+   "last_sync": "2026-10-16T04:29:15+00:00",
+   "stale": false
+  }
+ },
+ "threshold_policy": "Ngưỡng là mặc định hệ thống, có thể cấu hình trong danh mục; không phải chuẩn nghiệp vụ phổ quát.",
+ "default_depth": "deep",
+ "phrases": {
+  "time": {
+   "month": "tháng {month} năm {year}",
+   "year": "năm {year}",
+   "rolling_days": "{n} ngày gần nhất",
+   "all_time": "toàn bộ thời gian"
+  },
+  "granularity": {
+   "day": "theo ngày",
+   "week": "theo tuần",
+   "month": "theo tháng",
+   "quarter": "theo quý"
+  },
+  "cadence": {
+   "day": "ngày",
+   "week": "tuần",
+   "month": "tháng"
+  }
+ },
+ "dimension_value_labels": {
+  "store_type": [
+   {
+    "value": "CHI_NHANH_CHINH",
+    "label": "Chi nhánh chính"
+   },
+   {
+    "value": "KIOSK_NHUONG_QUYEN",
+    "label": "Kiosk nhượng quyền"
+   },
+   {
+    "value": "KIOSK_VE_TINH",
+    "label": "Kiosk vệ tinh"
+   }
+  ],
+  "weekday": [
+   {
+    "value": 1,
+    "label": "Thứ Hai"
+   },
+   {
+    "value": 2,
+    "label": "Thứ Ba"
+   },
+   {
+    "value": 3,
+    "label": "Thứ Tư"
+   },
+   {
+    "value": 4,
+    "label": "Thứ Năm"
+   },
+   {
+    "value": 5,
+    "label": "Thứ Sáu"
+   },
+   {
+    "value": 6,
+    "label": "Thứ Bảy"
+   },
+   {
+    "value": 7,
+    "label": "Chủ nhật"
+   }
+  ]
+ }
+}

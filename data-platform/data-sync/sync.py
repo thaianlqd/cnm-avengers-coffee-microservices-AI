@@ -650,6 +650,27 @@ WAREHOUSE_VIEWS = [
         """,
     ),
     (
+        # Complete delivery-assignment fact (one row per assignment). Address,
+        # coordinates, notes and proof images are deliberately not exposed.
+        # delivered_at is the terminal timestamp for DELIVERED and CANCELLED.
+        "silver.giao_hang",
+        """
+        CREATE OR REPLACE VIEW silver.giao_hang AS
+        SELECT
+            id AS ma_giao_hang,
+            ma_don_hang,
+            shipper_id AS ma_shipper,
+            status AS trang_thai_giao_hang,
+            assigned_at AS thoi_gian_nhan_chuyen,
+            picked_up_at AS thoi_gian_lay_hang,
+            delivered_at AS thoi_gian_ket_thuc,
+            estimated_time_minutes AS thoi_gian_du_kien_phut,
+            delivery_fee AS phi_giao_hang,
+            is_batched AS giao_ghep
+        FROM orders.shipper_delivery;
+        """,
+    ),
+    (
         "silver.ton_kho_san_pham",
         """
         CREATE OR REPLACE VIEW silver.ton_kho_san_pham AS
@@ -691,6 +712,25 @@ WAREHOUSE_VIEWS = [
         """
         CREATE OR REPLACE VIEW silver.voucher AS
         SELECT * FROM silver.khuyen_mai;
+        """,
+    ),
+    (
+        # Promotion redemption ledger (one row per usage). The customer id and
+        # order id are deliberately not exposed; only the store of the order.
+        "silver.khuyen_mai_su_dung",
+        """
+        CREATE OR REPLACE VIEW silver.khuyen_mai_su_dung AS
+        SELECT
+            u.id AS ma_su_dung,
+            u.ma_khuyen_mai,
+            km.ten_khuyen_mai,
+            km.loai_khuyen_mai,
+            dh.co_so_ma,
+            u.so_tien_giam,
+            u.ngay_su_dung
+        FROM identity.khuyen_mai_su_dung u
+        LEFT JOIN silver.khuyen_mai km ON km.ma_khuyen_mai = u.ma_khuyen_mai
+        LEFT JOIN orders.don_hang dh ON dh.ma_don_hang::text = u.ma_don_hang;
         """,
     ),
     (

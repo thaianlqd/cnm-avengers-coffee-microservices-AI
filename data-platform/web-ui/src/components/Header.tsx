@@ -29,7 +29,7 @@ export const Header: React.FC = () => {
       <div className="flex items-center space-x-5">
         <div className="flex items-center space-x-2 text-xs text-slate-500">
           <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span className="text-[11px] font-medium tracking-tight">Dữ liệu thời gian thực</span>
+          <span className="text-[11px] font-medium tracking-tight" title="Kho phân tích được đồng bộ định kỳ (data-sync), không phải thời gian thực">Cập nhật theo đợt</span>
         </div>
 
         <div className="h-4 w-px bg-slate-200" />

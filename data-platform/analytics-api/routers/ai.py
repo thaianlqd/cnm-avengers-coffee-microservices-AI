@@ -8,7 +8,9 @@ from fastapi import APIRouter, Body, HTTPException, Query, Request, Response
 from services.browser_owner import browser_owner
 from common import (
     AiFeedbackRequest,
+    AiPreflightRequest,
     AiReportRefineRequest,
+    AiRiskWatchRequest,
     AiSummarizeRequest,
     AiTextToReportRequest,
 )
@@ -167,14 +169,103 @@ def ai_status():
 
 @router.get("/capabilities")
 def ai_capabilities():
+    from services import data_coverage_service
     try:
-        return DomainIntelligence(AnalysisCatalog(get_local_metadata())).capabilities()
+        # Coverage is the cached background snapshot; this request never
+        # queries the warehouse for MIN/MAX bounds.
+        coverage = data_coverage_service.peek() or {"status": "loading", "overall": {"min_date": None, "max_date": None},
+            "facts": {}, "freshness": {"mode": "batch", "label": "Cập nhật theo đợt", "last_sync": None, "stale": None}}
+        return DomainIntelligence(AnalysisCatalog(get_local_metadata())).capabilities(coverage=coverage)
     except AnalysisError as error:
         if error.category == "domain_metadata_invalid":
             raise HTTPException(status_code=503, detail="Danh mục miền dữ liệu chưa hợp lệ.") from None
         raise HTTPException(status_code=503, detail="Danh mục dữ liệu chưa sẵn sàng.") from None
     except Exception:
         raise HTTPException(status_code=503, detail="Danh mục dữ liệu chưa sẵn sàng.") from None
+
+
+_preflight_limiter = None
+_risk_limiter = None
+
+
+def _limiter(current, catalog, name, default):
+    from services import preflight_service
+    if current is None:
+        policy = catalog.registry.get("workspace", {}).get(name, {}).get("rate_limit", {})
+        current = preflight_service.RateLimiter(policy.get("requests", default[0]), policy.get("window_seconds", default[1]))
+    return current
+
+
+@router.post("/preflight")
+def ai_preflight(payload: AiPreflightRequest, request: Request = None, response: Response = None):
+    """Deterministic advisory check while typing: 0 provider calls, 0 warehouse queries."""
+    global _preflight_limiter
+    from services import preflight_service
+    try:
+        catalog = preflight_service.preflight_catalog()
+    except Exception:
+        raise HTTPException(status_code=503, detail="Danh mục dữ liệu chưa sẵn sàng.") from None
+    _preflight_limiter = _limiter(_preflight_limiter, catalog, "preflight", (40, 10))
+    # Stable, validated per-browser key (origin-checked; a malformed cookie is replaced).
+    if not _preflight_limiter.allow(browser_owner(request, response) or "internal"):
+        raise HTTPException(status_code=429, detail="Kiểm tra câu hỏi quá nhanh; vui lòng thử lại sau giây lát.")
+    return preflight_service.run(payload.question, payload.time.model_dump(mode="json") if payload.time else None,
+                                 payload.analysis_scope.model_dump(mode="json") if payload.analysis_scope else None,
+                                 payload.analysis_mission, payload.reference_date, catalog=catalog)
+
+
+@router.post("/risk-watch")
+def ai_risk_watch(payload: AiRiskWatchRequest, request: Request = None, response: Response = None):
+    """Governed risk signals for an explicit user action. Read-only; 0 provider calls."""
+    from services import risk_watch_service
+    from services.analysis_contract import TimeScope
+    from services.analysis_understanding import catalog_today
+    from services.time_resolution_service import parse_time, resolve_time
+    from services.request_anchors import request_anchors
+    from datetime import timedelta
+    global _risk_limiter
+    owner = browser_owner(request, response) or "internal"
+    try:
+        catalog = AnalysisCatalog(get_local_metadata())
+        _risk_limiter = _limiter(_risk_limiter, catalog, "risk_watch", (6, 60))
+        if not _risk_limiter.allow(owner):
+            raise HTTPException(status_code=429, detail="Kiểm tra rủi ro quá thường xuyên; vui lòng thử lại sau.")
+        r = catalog.registry
+        reference = payload.reference_date or catalog_today(r["timezone"])
+        scope = payload.analysis_scope.model_dump(mode="json") if payload.analysis_scope else None
+        ui = payload.time.mode if payload.time else "auto"
+        period = None
+        if ui in {"current_month", "previous_month", "current_quarter", "previous_quarter", "current_year", "previous_year", "all_time"}:
+            period = TimeScope(mode=ui, timezone=r["timezone"])
+        elif ui == "custom":
+            period = TimeScope(mode="custom", start=payload.time.start, end=payload.time.end, timezone=r["timezone"])
+        elif ui in {"today", "7d", "30d"}:
+            days = {"today": 1, "7d": 7, "30d": 30}[ui]
+            period = TimeScope(mode="custom", start=reference - timedelta(days=days - 1), end=reference, timezone=r["timezone"])
+        elif payload.question.strip():
+            # Deterministic metadata grammar only (same as preflight); no model.
+            parts = parse_time(payload.question, r["interpretation"], r["timezone"], reference)["recognized_time_parts"]
+            if parts:
+                period = resolve_time(parts[0], reference, r["timezone"])[0]
+            if not scope:
+                values = [v for v in request_anchors(payload.question, catalog, {})["values"]
+                          if r["dimensions"][v["dimension"]].get("scope_selectable")]
+                grouped = {}
+                for v in values:
+                    grouped.setdefault(v["dimension"], []).append(v["value"])
+                if grouped:
+                    scope = {"mode": "selected", "filters": [{"dimension": d, "operator": "in", "value": vs} for d, vs in grouped.items()]}
+        return risk_watch_service.evaluate(catalog, scope, period, payload.breakdown, reference=reference, lookup=lookup_dimension_values)
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=422, detail="Khoảng thời gian không hợp lệ cho kiểm tra rủi ro.") from None
+    except AnalysisError as error:
+        if error.category in {"query_scope", "filter_value_unknown"}:
+            raise HTTPException(status_code=422, detail="Phạm vi đã chọn không hợp lệ cho kiểm tra rủi ro.") from None
+        raise HTTPException(status_code=503, detail="Chưa thể tính tín hiệu rủi ro.") from None
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=503, detail="Chưa thể tính tín hiệu rủi ro.") from None
 
 
 @router.get("/scope-values")

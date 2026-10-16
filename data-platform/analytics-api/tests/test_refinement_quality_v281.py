@@ -111,7 +111,8 @@ class RefinementQualityTests(unittest.TestCase):
         p.executor.reset_mock()
         with self.assertRaises(AnalysisError):self.refine(p,req,report)
         p.executor.assert_not_called()
-        self.assertEqual(p.provider.call_count,3)
+        # V3.0: identical repair delta is no progress (2, not 3 calls).
+        self.assertEqual(p.provider.call_count,2)
         session = get_session(req.session_id)
         self.assertEqual(session.owner_id,'owner-a')
         self.assertEqual(session.semantic_intent,report['semantic_intent'])

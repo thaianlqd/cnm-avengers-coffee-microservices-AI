@@ -80,6 +80,8 @@ class AiTextToReportRequest(BaseModel):
     context: Optional[str] = ""
     time_range: Optional[AiTimeRange] = Field(default=None, validation_alias=AliasChoices("time", "time_range"))
     domain: Optional[str] = Field(default="auto", pattern=r"^[a-z][a-z0-9_]{0,63}$")
+    # V3.1 optional UX hint (dashboard organization); never semantic authority.
+    analysis_mission: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z_]{0,31}$")
     # Session ID for tracking conversation across report generation and refinement turns.
     session_id: Optional[str] = None
     # Legacy filters remain accepted for older clients.
@@ -101,6 +103,39 @@ class AiTextToReportRequest(BaseModel):
         if not str(data.get("question", data.get("prompt", ""))).strip():
             raise ValueError("Question is required")
         return data
+
+
+class AiPreflightTime(BaseModel):
+    """Lenient on purpose: an invalid custom range is a preflight finding, not a 422."""
+    model_config = ConfigDict(extra="forbid")
+    mode: Literal["auto", "today", "7d", "30d", "current_month", "previous_month", "current_quarter", "previous_quarter", "current_year", "previous_year", "all_time", "custom"] = "auto"
+    start: Optional[date] = None
+    end: Optional[date] = None
+
+
+class AiPreflightScope(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    mode: Literal["auto", "all", "selected"] = "auto"
+    filters: List[Filter] = Field(default_factory=list, max_length=12)
+
+
+class AiPreflightRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    # Bounded above the analysis limit so an over-long draft is reported, not rejected.
+    question: str = Field(default="", max_length=20000)
+    time: Optional[AiPreflightTime] = None
+    analysis_scope: Optional[AiPreflightScope] = None
+    analysis_mission: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z_]{0,31}$")
+    reference_date: Optional[date] = None
+
+
+class AiRiskWatchRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    question: str = Field(default="", max_length=8000)
+    time: Optional[AiTimeRange] = None
+    analysis_scope: Optional[AiAnalysisScope] = None
+    breakdown: Optional[Literal["store", "city", "store_type"]] = "store"
+    reference_date: Optional[date] = None
 
 
 class AiSummarizeRequest(BaseModel):

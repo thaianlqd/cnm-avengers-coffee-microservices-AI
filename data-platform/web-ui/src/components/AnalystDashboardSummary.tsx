@@ -4,17 +4,36 @@ import { AnalystChart } from './Charts';
 import { chartAccent, conciseChartTitle, dashboardCharts, dashboardPrimaryCharts, dashboardChartTabs, dashboardHighlights, dashboardFindings, initialChartType, chartExplanation, businessCategory } from '../utils/analystDashboardLayout.mjs';
 import { formatChartValue } from '../utils/aiChartConfig.mjs';
 import { analysisChartGroups, analysisChartSpan, analysisPlanLabel } from '../utils/analysisPresentation.mjs';
+import { groupDifference, kpiStrip, missionTabs, orderChartsByMission, reportContext } from '../utils/workspacePresentation.mjs';
+import { KpiStrip } from './workspace/KpiStrip';
+import { FollowUpChips } from './workspace/FollowUpChips';
+import { ForecastPanel } from './ForecastPanel';
 
-const ChartCard: React.FC<{ chart: any; compact?: boolean; span: string; editing?: boolean; onChartTypeChange?: (id: string, type: string) => void }> = ({ chart, compact, span, editing, onChartTypeChange }) => {
+/** "Xem dữ liệu": rows rendered only once opened (keeps paged charts honest). */
+const ChartData: React.FC<{ chart: any }> = ({ chart }) => {
+  const [open, setOpen] = useState(false);
+  return <details className="text-xs text-slate-600" onToggle={e => setOpen(e.currentTarget.open)}><summary data-chart-data className="cursor-pointer">Xem dữ liệu</summary>
+    {open && <table className="mt-1 text-[11px]"><tbody>{chart.data.slice(0, 50).map((r: any, i: number) => <tr key={i}><td className="pr-3 py-0.5">{businessCategory(r.label)}</td><td className="text-right tabular-nums">{formatChartValue(r.value, chart.unit ? ` ${chart.unit}` : '')}</td></tr>)}</tbody></table>}
+  </details>;
+};
+
+const ChartCard: React.FC<{ chart: any; compact?: boolean; span: string; editing?: boolean; onChartTypeChange?: (id: string, type: string) => void; definition?: string }> = ({ chart, compact, span, editing, onChartTypeChange, definition }) => {
   const [type, setType] = useState(initialChartType(chart));
   useEffect(() => setType(initialChartType(chart)), [chart.id, chart.chart_type, chart.query_id]);
   const accent = chartAccent(chart);
+  // Two-group comparison: deterministic difference from the verified chart rows.
+  const difference = !chart.series && ['bar', 'horizontal_bar'].includes(type) && chart.data?.length === 2 && chart.selection !== 'Top N' ? groupDifference(chart.data, 'label', 'value', chart.unit) : null;
   const types = chart.value_transform ? [] : ['bar', 'horizontal_bar'].includes(type) ? ['horizontal_bar', 'bar'] : ['line', 'area'].includes(type) ? ['area', 'line'] : [];
   return <article data-dashboard-chart className={`${span} bg-white rounded-2xl border border-slate-200 p-5 min-w-0 w-full h-full flex flex-col`}>
     <div className="flex items-start justify-between gap-3 mb-5">
       <div className="min-w-0"><div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full shrink-0" style={{ background: accent }} /><h5 className="text-sm font-semibold text-slate-900">{conciseChartTitle(chart)}</h5></div>
         <p className="text-[11px] text-slate-500 mt-1.5">{chart.x_label || chart.lens_label || chart.domain_label || 'Trong phạm vi đã chọn'}{chart.unit ? ` · ${chart.unit}` : ''}</p>
-        <details className="text-xs text-slate-600 leading-relaxed mt-2"><summary data-chart-explanation className="cursor-pointer">Cách đọc biểu đồ</summary><p className="mt-1">{chartExplanation({ ...chart, chart_type: type })}</p></details>
+        {difference && <p data-group-difference className="text-xs font-medium text-slate-700 mt-1.5">{difference.text}</p>}
+        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+        <details className="text-xs text-slate-600 leading-relaxed"><summary data-chart-explanation className="cursor-pointer">Cách đọc biểu đồ</summary><p className="mt-1 max-w-md">{chartExplanation({ ...chart, chart_type: type })}</p></details>
+        {definition && <details className="text-xs text-slate-600 leading-relaxed"><summary data-metric-definition className="cursor-pointer">Định nghĩa chỉ số</summary><p className="mt-1 max-w-md">{definition}</p></details>}
+        {!!chart.data?.length && <ChartData chart={chart} />}
+        </div>
         {chart.role === 'supporting' && <span className="inline-block mt-2 rounded-full bg-teal-50 px-2 py-1 text-[10px] font-medium text-teal-700">Góc nhìn bổ sung</span>}
       </div>
       <details className="relative shrink-0 text-xs"><summary aria-label={`Tùy chọn ${conciseChartTitle(chart)}`} className="cursor-pointer list-none rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-50">•••</summary>
@@ -36,8 +55,8 @@ const ChartCard: React.FC<{ chart: any; compact?: boolean; span: string; editing
   </article>;
 };
 
-export const AnalystViews: React.FC<{ charts?: any[]; onChartTypeChange?: (id: string, type: string) => void; editing?: boolean; compact?: boolean }> = ({ charts = [], onChartTypeChange, editing = false, compact = false }) => compact ? <div data-dashboard-grid className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
-  {charts.map((chart, index) => <ChartCard key={chart.id || index} chart={chart} compact span="col-span-1" editing={editing} onChartTypeChange={onChartTypeChange} />)}
+export const AnalystViews: React.FC<{ charts?: any[]; onChartTypeChange?: (id: string, type: string) => void; editing?: boolean; compact?: boolean; definitions?: Record<string, string> }> = ({ charts = [], onChartTypeChange, editing = false, compact = false, definitions = {} }) => compact ? <div data-dashboard-grid className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+  {charts.map((chart, index) => <ChartCard key={chart.id || index} chart={chart} compact span="col-span-1" editing={editing} onChartTypeChange={onChartTypeChange} definition={definitions[chart.metric]} />)}
 </div> : <div className="space-y-5">
   {analysisChartGroups(charts).map(group => <section key={group.role} aria-label={group.title} className="space-y-3">
     <h4 className="text-xs font-semibold text-slate-500">{group.title}</h4>
@@ -47,36 +66,49 @@ export const AnalystViews: React.FC<{ charts?: any[]; onChartTypeChange?: (id: s
   </section>)}
 </div>;
 
-export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChartTypeChange?: (id: string, type: string) => void }> = ({ report, editing, onChartTypeChange }) => {
+export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChartTypeChange?: (id: string, type: string) => void; capabilities?: any; onFollowUp?: (question: string) => void }> = ({ report, editing, onChartTypeChange, capabilities, onFollowUp }) => {
   const [showAll, setShowAll] = useState(false);
   const [view, setView] = useState('all');
   useEffect(() => { setView('all'); setShowAll(false); }, [report.session_id, report.revision]);
   const [resultId, setResultId] = useState<string | null>(null);
-  const selected = dashboardCharts(report.charts || [], report);
-  const primary = dashboardPrimaryCharts(selected.charts);
-  const highlights = dashboardHighlights(report), findings = dashboardFindings(report);
+  // Governed value labels (e.g. ISO weekday 1 → "Thứ Hai") come from capabilities.
+  const valueLabels = capabilities?.dimension_value_labels || {};
+  const labelled = (report.charts || []).map((c: any) => valueLabels[c.x_field] ? { ...c, data: (c.data || []).map((r: any) => ({ ...r, label: valueLabels[c.x_field].find((v: any) => String(v.value) === String(Number(r.label)))?.label ?? r.label })) } : c);
+  const selected = dashboardCharts(labelled, report);
+  const ordered = orderChartsByMission(selected.charts, report.mission_layout);
+  const primary = dashboardPrimaryCharts(ordered);
+  const highlights = dashboardHighlights(report), findings = dashboardFindings(report).slice(0, 3);
   const results = Object.entries(report.result_sets || {});
   const activeResult = results.find(([id]) => id === resultId) || results.find(([,data]: any) => (data.total_rows ?? data.rows?.length) > 1) || results[0];
-  const tabs = dashboardChartTabs(selected.charts);
+  const forecasts = (report.forecasts || []).length > 0;
+  const tabs = missionTabs(dashboardChartTabs(ordered), report.mission_layout, { forecast: forecasts });
   const activeTab = tabs.find(tab => tab.id === view) || tabs[0];
-  const visibleCharts = view === 'all' ? [...(showAll ? selected.charts : primary)] : activeTab.charts;
+  const visibleCharts = view === 'all' ? [...(showAll ? ordered : primary)] : activeTab.charts;
   const minimum = Math.max(4, report.quality_assessment?.verification_checks?.find((c: any) => c.id === 'analysis_depth_coverage')?.total || report.diagnostics?.minimum_visuals || 0);
+  const context = reportContext(report, capabilities);
+  const definitions: Record<string, string> = Object.fromEntries((report.analysis_explanation || []).flatMap((o: any) => (o.metrics || []).map((m: any) => [m.id, m.business_meaning])));
   return <div className="space-y-5">
+    <section data-report-context className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600 grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-4">
+      {context.mission && <p><span className="text-slate-400">Nhiệm vụ:</span> <strong className="text-slate-800">{context.mission}</strong></p>}
+      <p><span className="text-slate-400">Phạm vi:</span> {context.scope}</p>
+      <p><span className="text-slate-400">Thời gian:</span> {context.time}</p>
+      {!!context.sources.length && <p className="truncate" title={context.sources.join(' · ')}><span className="text-slate-400">Nguồn:</span> {context.sources.join(' · ')}</p>}
+    </section>
+    {report.mission_layout?.caveat && <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">{report.mission_layout.caveat}</p>}
     {!!report.data_warnings?.length && <details className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800"><summary className="cursor-pointer font-medium">{report.data_warnings.length} lưu ý về dữ liệu · Xem chi tiết</summary><ul className="mt-2 space-y-1">{report.data_warnings.map((w: string, i: number) => <li key={i}>{w}</li>)}</ul></details>}
-    {!!highlights.length && <div className={`grid grid-cols-1 ${highlights.length === 1 ? 'sm:grid-cols-1' : highlights.length === 3 ? 'sm:grid-cols-2 xl:grid-cols-3' : 'sm:grid-cols-2 xl:grid-cols-4'} gap-3`}>{highlights.map((card: any, i: number) => <section key={card.evidence_id || i} className="rounded-xl border border-slate-200 bg-white p-4 min-w-0">
-      <p className="text-xs text-slate-500 leading-relaxed min-h-[32px]">{card.label}</p>
-      <p className="text-2xl font-semibold tracking-tight text-slate-900 mt-2">{card.unit === '%' ? card.value.toLocaleString('vi-VN', { maximumFractionDigits: 1 }) : card.value.toLocaleString('vi-VN', { maximumFractionDigits: 2 })} <span className="text-xs font-medium text-slate-400">{card.unit}</span></p>
-      <p className="text-[11px] text-slate-500 leading-relaxed mt-2">{card.sub_text || 'Trong phạm vi phân tích'}</p>
-    </section>)}</div>}
-    {!!findings.length && <section className="rounded-xl border border-slate-200 bg-white p-4"><h3 className="text-xs font-semibold text-slate-900 mb-3">Điểm nổi bật</h3><div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">{findings.map((f: any, i: number) => <div key={i} className="text-xs text-slate-600 leading-relaxed"><span className="inline-block w-1.5 h-1.5 bg-teal-500 rounded-full mr-2" />{f.text}{f.evidence_id && <a href={`#evidence-${encodeURIComponent(f.evidence_id)}`} className="block text-blue-600 mt-1">Đối chiếu dữ liệu ↗</a>}</div>)}</div></section>}
+    <KpiStrip cards={kpiStrip(highlights, report)} />
+    {!!findings.length && <section className="rounded-xl border border-slate-200 bg-white p-4"><h3 className="text-xs font-semibold text-slate-900 mb-3">Điểm nổi bật</h3><div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">{findings.map((f: any, i: number) => <div key={i} className="text-xs text-slate-600 leading-relaxed"><span className="inline-block w-1.5 h-1.5 bg-teal-500 rounded-full mr-2" />{f.text}{f.evidence_id && <a href={`#evidence-${encodeURIComponent(f.evidence_id)}`} className="block text-blue-600 mt-1">Đối chiếu dữ liệu ↗</a>}</div>)}</div></section>}
     <div className="flex flex-wrap gap-2 items-center justify-between"><h3 className="text-sm font-semibold text-slate-900">Các góc nhìn phân tích</h3><span className="text-xs text-slate-400">{selected.charts.length} biểu đồ{selected.duplicateCount ? ` · ${selected.duplicateCount} góc nhìn trùng đã gộp` : ''}</span></div>
     {minimum > selected.charts.length && <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">Mới có {selected.charts.length}/{minimum} góc nhìn cần thiết. Báo cáo phân tích chưa đầy đủ biểu đồ; xem các giới hạn trong mục kiểm chứng.</p>}
-    {selected.charts.length > 1 && <div role="tablist" aria-label="Góc nhìn biểu đồ" className="flex flex-wrap gap-2">{tabs.map(tab => <button key={tab.id} id={`chart-tab-${tab.id}`} role="tab" aria-selected={activeTab.id === tab.id} aria-controls="analysis-chart-panel" onClick={() => setView(tab.id)} className={`rounded-lg border px-3 py-2 text-xs ${activeTab.id === tab.id ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-600'}`}>{tab.label} · {tab.charts.length}</button>)}</div>}
-    <div id="analysis-chart-panel" role={selected.charts.length > 1 ? 'tabpanel' : undefined} aria-labelledby={selected.charts.length > 1 ? `chart-tab-${activeTab.id}` : undefined}>
-    <AnalystViews charts={visibleCharts} compact editing={editing} onChartTypeChange={onChartTypeChange} />
+    {tabs.length > 1 && <div role="tablist" aria-label="Góc nhìn biểu đồ" className="flex flex-wrap gap-2">{tabs.map(tab => <button key={tab.id} id={`chart-tab-${tab.id}`} role="tab" aria-selected={activeTab.id === tab.id} aria-controls="analysis-chart-panel" onClick={() => setView(tab.id)} className={`rounded-lg border px-3 py-2 text-xs ${activeTab.id === tab.id ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-600'}`}>{tab.label}{tab.id === 'forecast' ? '' : ` · ${tab.charts.length}`}</button>)}</div>}
+    <div id="analysis-chart-panel" role={tabs.length > 1 ? 'tabpanel' : undefined} aria-labelledby={tabs.length > 1 ? `chart-tab-${activeTab.id}` : undefined} className="space-y-4">
+    {(view === 'forecast' || (view === 'all' && report.analysis_mission === 'forecast')) && <ForecastPanel forecasts={report.forecasts} coverage={capabilities?.data_coverage} />}
+    {view !== 'forecast' && <AnalystViews charts={visibleCharts} compact editing={editing} onChartTypeChange={onChartTypeChange} definitions={definitions} />}
+    {view === 'all' && forecasts && report.analysis_mission !== 'forecast' && <ForecastPanel forecasts={report.forecasts} coverage={capabilities?.data_coverage} />}
     </div>
-    {!selected.charts.length && <div role="status" className="rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600 leading-relaxed">Chưa có biểu đồ phù hợp được kiểm chứng cho kết quả này. Xem bảng dữ liệu đối chiếu và mục kiểm chứng bên dưới để biết phần trình bày còn thiếu.</div>}
+    {!selected.charts.length && !forecasts && <div role="status" className="rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600 leading-relaxed">Chưa có biểu đồ phù hợp được kiểm chứng cho kết quả này. Xem bảng dữ liệu đối chiếu và mục kiểm chứng bên dưới để biết phần trình bày còn thiếu.</div>}
     {view === 'all' && selected.charts.length > primary.length && <button onClick={() => setShowAll(!showAll)} className="w-full rounded-xl border border-slate-200 py-3 text-xs text-slate-600 hover:bg-white">{showAll ? 'Thu gọn biểu đồ' : `Xem thêm ${selected.charts.length - primary.length} góc nhìn chi tiết`}</button>}
+    {onFollowUp && <FollowUpChips items={report.follow_up_questions} onPick={onFollowUp} disabled={editing} />}
     <AnalysisQualityScore assessment={report.quality_assessment} />
     {!!results.length && <section className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
       <div className="flex justify-between gap-3"><h3 className="text-sm font-semibold text-slate-900">Bảng dữ liệu đối chiếu</h3><span className="text-xs text-slate-400">{results.length} phần phân tích</span></div>
@@ -84,14 +116,15 @@ export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChar
         const op = report.analysis_explanation?.find((o: any) => o.query_id === id);
         return <button key={id} role="tab" aria-selected={activeResult?.[0] === id} onClick={() => setResultId(id)} className={`rounded-lg px-3 py-2 text-xs border ${activeResult?.[0] === id ? 'bg-blue-50 text-blue-700 border-blue-200' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>{op ? `${(op.metrics || []).map((m: any) => m.label).join(' · ') || op.lens_label || 'Chi tiết'} — ${op.granularity ? 'Theo ' + ({day:'ngày',week:'tuần',month:'tháng'} as any)[op.granularity] : op.dimensions?.join(' · ') || 'Toàn phạm vi'}` : `Bảng ${index+1}`}</button>;
       })}</div>
-      {activeResult && <div role="tabpanel"><AnalystResultTable key={activeResult[0]} result={activeResult[1]} sessionId={report.session_id} queryId={activeResult[0]} title={report.analysis_explanation?.find((o: any) => o.query_id === activeResult[0])?.lens_label} /></div>}
+      {activeResult && <div role="tabpanel"><AnalystResultTable key={activeResult[0]} result={activeResult[1]} valueLabels={valueLabels} sessionId={report.session_id} queryId={activeResult[0]} title={report.analysis_explanation?.find((o: any) => o.query_id === activeResult[0])?.lens_label} /></div>}
     </section>}
     <details className="rounded-2xl border border-slate-200 bg-white p-4"><summary className="cursor-pointer text-sm font-semibold text-slate-700">Diễn giải đầy đủ</summary><div className="text-sm text-slate-600 leading-relaxed mt-4"><p>{report.executive_summary}</p><AnalystOptionalNarrative report={report} /></div></details>
     <AnalystEvidence report={report} />
   </div>;
 };
 
-export const AnalystResultTable: React.FC<{ result: any; title?: string; sessionId?: string; queryId?: string }> = ({ result, title, sessionId, queryId }) => {
+export const AnalystResultTable: React.FC<{ result: any; title?: string; sessionId?: string; queryId?: string; valueLabels?: Record<string, any[]> }> = ({ result, title, sessionId, queryId, valueLabels = {} }) => {
+  const cellLabel = (column: string, value: any) => valueLabels[column]?.find((v: any) => String(v.value) === String(Number(value)))?.label;
   const [page, setPage] = useState(1), [search, setSearch] = useState('');
   const [remote, setRemote] = useState<any>(null), [loading, setLoading] = useState(false), [error, setError] = useState('');
   const [dimension, setDimension] = useState(''), [value, setValue] = useState('');
@@ -134,7 +167,7 @@ export const AnalystResultTable: React.FC<{ result: any; title?: string; session
     {result.as_of && <p className="text-xs text-slate-500">Dữ liệu quan sát lúc {result.as_of}</p>}
     <div className="overflow-x-auto"><table className="w-full text-left text-xs">
       <thead><tr>{result.columns.map((column: string) => <th className="p-2" key={column}>{result.column_labels?.[column] || 'Trường dữ liệu'}</th>)}</tr></thead>
-      <tbody>{rows.slice((activePage - 1) * pageSize, activePage * pageSize).map((row: any, index: number) => <tr key={index}>{result.columns.map((column: string) => <td className="p-2 border-t border-slate-100" key={column}>{row[column] == null ? '—' : typeof row[column] === 'number' ? row[column].toLocaleString('vi-VN', { maximumFractionDigits: 2 }) : businessCategory(row[column])}</td>)}</tr>)}</tbody>
+      <tbody>{rows.slice((activePage - 1) * pageSize, activePage * pageSize).map((row: any, index: number) => <tr key={index}>{result.columns.map((column: string) => <td className="p-2 border-t border-slate-100" key={column}>{row[column] == null ? '—' : cellLabel(column, row[column]) ?? (typeof row[column] === 'number' ? row[column].toLocaleString('vi-VN', { maximumFractionDigits: 2 }) : businessCategory(row[column]))}</td>)}</tr>)}</tbody>
     </table></div>
     {!rows.length && <p className="text-slate-500 text-xs">Không có dữ liệu trong phạm vi này.</p>}
     <div className="flex items-center gap-3 text-xs text-slate-600">

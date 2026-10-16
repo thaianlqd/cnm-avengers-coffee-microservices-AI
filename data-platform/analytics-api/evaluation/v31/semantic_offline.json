@@ -1,0 +1,219 @@
+{
+  "mode": "offline",
+  "measures_natural_language_understanding": false,
+  "generated_at": "2026-10-16T05:43:56.051253+00:00",
+  "registry_fingerprint": "59293b69725dc7135ddef0a1eafc0bec74f4eb44f77f7a84ee41065e33557b9d",
+  "case_count": 146,
+  "dataset_errors": [],
+  "categories": [
+    "ambiguous",
+    "cash_reconciliation",
+    "comparison",
+    "cross_domain",
+    "delivery",
+    "distribution",
+    "favorites",
+    "filters",
+    "followup",
+    "forecast",
+    "forecast_unsupported",
+    "informal",
+    "inventory",
+    "multi_dimension",
+    "orders_quality",
+    "out_of_scope",
+    "promotions",
+    "ranking",
+    "relative_time",
+    "restricted",
+    "reviews",
+    "shifts",
+    "simple",
+    "surveys",
+    "time_coverage",
+    "trend",
+    "typo",
+    "unsupported",
+    "weekday"
+  ],
+  "retrieval_domain": {
+    "passed": 110,
+    "total": 113,
+    "rate": 0.9735
+  },
+  "retrieval_metric": {
+    "passed": 109,
+    "total": 113,
+    "rate": 0.9646
+  },
+  "regression_retrieval": {
+    "passed": 6,
+    "total": 6,
+    "rate": 1.0
+  },
+  "compile_level2": {
+    "passed": 108,
+    "total": 108,
+    "rate": 1.0
+  },
+  "forecast_capability_rejections": {
+    "passed": 6,
+    "total": 6,
+    "rate": 1.0
+  },
+  "max_context_chars": 12287,
+  "preflight_expectations": {
+    "passed": 17,
+    "total": 17,
+    "rate": 1.0
+  },
+  "unsupported_preflight": {
+    "passed": 5,
+    "total": 5,
+    "rate": 1.0
+  },
+  "failures": [
+    {
+      "id": "ship_12",
+      "status": "SUPPORTED",
+      "category": "delivery",
+      "retrieval": {
+        "domain_ok": true,
+        "metric_ok": false,
+        "context_chars": 3005,
+        "candidate_domains": [
+          "delivery"
+        ],
+        "directory_mode": false
+      },
+      "compile": {
+        "ok": true,
+        "subjects": [
+          "delivery_assignments"
+        ],
+        "states": [
+          "RESOLVED"
+        ]
+      }
+    },
+    {
+      "id": "rev_12",
+      "status": "SUPPORTED",
+      "category": "informal",
+      "retrieval": {
+        "domain_ok": false,
+        "metric_ok": false,
+        "context_chars": 5244,
+        "candidate_domains": [
+          "customer_surveys",
+          "customers",
+          "order_items"
+        ],
+        "directory_mode": false
+      },
+      "compile": {
+        "ok": true,
+        "subjects": [
+          "orders"
+        ],
+        "states": [
+          "RESOLVED"
+        ]
+      }
+    },
+    {
+      "id": "rev_r_02",
+      "status": "SUPPORTED",
+      "category": "ranking",
+      "retrieval": {
+        "domain_ok": false,
+        "metric_ok": false,
+        "context_chars": 3205,
+        "candidate_domains": [
+          "products"
+        ],
+        "directory_mode": false
+      },
+      "compile": {
+        "ok": true,
+        "subjects": [
+          "product_reviews"
+        ],
+        "states": [
+          "RESOLVED"
+        ]
+      }
+    },
+    {
+      "id": "v31_rev_01",
+      "status": "SUPPORTED",
+      "category": "reviews",
+      "retrieval": {
+        "domain_ok": false,
+        "metric_ok": false,
+        "context_chars": 3211,
+        "candidate_domains": [
+          "products"
+        ],
+        "directory_mode": false
+      },
+      "compile": {
+        "ok": true,
+        "subjects": [
+          "product_reviews"
+        ],
+        "states": [
+          "RESOLVED"
+        ]
+      }
+    }
+  ],
+  "by_version": {
+    "3.0": {
+      "case_count": 113,
+      "retrieval_domain": {
+        "passed": 86,
+        "total": 88,
+        "rate": 0.9773
+      },
+      "retrieval_metric": {
+        "passed": 85,
+        "total": 88,
+        "rate": 0.9659
+      },
+      "compile_level2": {
+        "passed": 83,
+        "total": 83,
+        "rate": 1.0
+      },
+      "forecast_capability_rejections": {
+        "passed": 3,
+        "total": 3,
+        "rate": 1.0
+      }
+    },
+    "3.1": {
+      "case_count": 33,
+      "retrieval_domain": {
+        "passed": 24,
+        "total": 25,
+        "rate": 0.96
+      },
+      "retrieval_metric": {
+        "passed": 24,
+        "total": 25,
+        "rate": 0.96
+      },
+      "compile_level2": {
+        "passed": 25,
+        "total": 25,
+        "rate": 1.0
+      },
+      "forecast_capability_rejections": {
+        "passed": 3,
+        "total": 3,
+        "rate": 1.0
+      }
+    }
+  }
+}

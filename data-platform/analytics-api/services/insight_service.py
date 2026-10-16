@@ -40,7 +40,9 @@ def fmt(value):
     )
 
 
-def analytical_features(artifacts, catalog=None, feature_bindings=None):
+def analytical_features(artifacts, catalog=None, feature_bindings=None, as_of=None):
+    """``as_of`` (analysis reference date) closes an open-ended period: the
+    bucket that contains it is still in progress, never a complete period."""
     evidence = []
 
     def add(a, metric, kind, feature, values, statement, partition=None):
@@ -194,7 +196,8 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None):
                     )
                 if a.plan.kind == "trend" and len(pairs) >= 2:
                     # Missing/null buckets are not interpolated or converted to zero.
-                    coverage = [trend_bucket_coverage(r["period"], a.plan.granularity, a.grounded.period) for r, _ in pairs]
+                    window = a.grounded.period if a.grounded.period.get("end") or not as_of else {**a.grounded.period, "end": str(as_of)[:10]}
+                    coverage = [trend_bucket_coverage(r["period"], a.plan.granularity, window) for r, _ in pairs]
                     complete = [p for p, c in zip(pairs, coverage) if not c["partial"]]
                     partial_count = sum(c["partial"] for c in coverage)
                     if len(complete) < 2:

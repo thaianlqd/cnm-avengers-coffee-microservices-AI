@@ -99,4 +99,6 @@ class OverviewDashboardTests(f.unittest.TestCase):
         data['requirements'][0]['metric_ids']=['revenue','order_count']
         p=self.pipeline(f.scripted(data,data,data))
         with self.assertRaises(AnalysisError):p.propose(self.request(OVERVIEW_45D))
-        p.executor.assert_not_called();self.assertEqual(p.provider.call_count,3)
+        # V3.0: an identical repair is no progress; stop before a third call.
+        p.executor.assert_not_called();self.assertEqual(p.provider.call_count,2)
+        self.assertEqual(p.semantic_info['semantic_stop_reason'],'no_progress')

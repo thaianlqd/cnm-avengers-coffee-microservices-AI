@@ -10,7 +10,9 @@ from services.value_grounding_service import dimension_values
 
 _cache = OrderedDict()
 _lock = Lock()
-AGGREGATION_CODES = {"sum": "s", "average": "a", "count": "c", "conditional_count": "f", "distinct_count": "d", "catalog_defined": "x"}
+AGGREGATION_CODES = {"sum": "s", "average": "a", "ratio": "r", "count": "c", "conditional_count": "f", "distinct_count": "d", "catalog_defined": "x"}
+# Averages and ratios are recomputed per group; never summed or averaged across groups.
+NON_ADDITIVE_SEMANTICS = frozenset({"average", "ratio"})
 DIRECTION_CODES = {"higher_better": "h", "lower_better": "l", "neutral": "n", "contextual": "c"}
 
 
@@ -26,7 +28,7 @@ def char_limit(name, default, maximum):
 
 
 def build_manifest(catalog, max_chars=None, subject_priority=()):
-    maximum = max_chars if max_chars is not None else char_limit("DATA_ANALYST_SEMANTIC_MANIFEST_MAX_CHARS", 10000, 20000)
+    maximum = max_chars if max_chars is not None else char_limit("DATA_ANALYST_SEMANTIC_MANIFEST_MAX_CHARS", 14000, 20000)
     key = (catalog.fingerprint, maximum, tuple(subject_priority))
     with _lock:
         if key in _cache:

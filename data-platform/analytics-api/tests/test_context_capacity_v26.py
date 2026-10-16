@@ -41,7 +41,7 @@ class ContextCapacityTests(unittest.TestCase):
         provider=ScriptedProvider([call('submit_analyst_decision',self.decision())]);p=self.pipeline(provider)
         r=p.propose(self.request());d=r['diagnostics'];payload=json.loads(provider.requests[0]['messages'][0]['content'])
         self.assertEqual(provider.call_count,1);p.executor.assert_not_called()
-        self.assertLessEqual(max(d['provider_body_chars'].values()),32000)
+        self.assertLessEqual(max(d['provider_body_chars'].values()),34000)
         self.assertTrue(d['context_budget_expanded']);self.assertTrue(d['blueprint_context_shared'])
         self.assertEqual({c['id'] for c in d['strong_domain_candidates']},{'customers','orders','products','stores','delivery','promotions'})
         self.assertTrue({c['id'] for c in d['strong_domain_candidates']} <= {pack['id'] for pack in payload['domains']['packs']})
@@ -84,7 +84,10 @@ class ContextCapacityTests(unittest.TestCase):
         failure=safe_failure(caught.exception)
         self.assertEqual(failure['issue']['category'],'PLANNING_CAPACITY')
         self.assertNotIn('chia nhỏ',failure['issue']['title'])
-        self.assertTrue(any(a['type']=='retry' for a in failure['issue']['suggested_actions']))
+        # V3.0: the same question deterministically exceeds the same budget, so
+        # retry cannot help; the user narrows the question instead.
+        self.assertFalse(any(a['type']=='retry' for a in failure['issue']['suggested_actions']))
+        self.assertTrue(any(a['type']=='edit_question' for a in failure['issue']['suggested_actions']))
         real_scope=safe_failure(AnalysisError('requested_scope_too_large','fixture'))
         self.assertEqual(real_scope['issue']['category'],'REQUESTED_SCOPE_TOO_LARGE')
 

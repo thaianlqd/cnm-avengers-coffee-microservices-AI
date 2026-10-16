@@ -3,6 +3,7 @@
 from services.analyst_contract import DashboardPlan, DashboardVisual
 from services.insight_service import number, trend_bucket_coverage
 from services.business_labels import dimension_labeler
+from services.semantic_manifest_service import NON_ADDITIVE_SEMANTICS
 import hashlib
 import json
 
@@ -56,7 +57,7 @@ def paired_aggregate(a):
     if a.plan.kind != "aggregate" or a.plan.ranking or a.plan.explicit_limit or len(visible) != 1:
         return None
     totals = [m for m in a.plan.metrics if a.grounded.metrics[m].get("additive")]
-    averages = [m for m in a.plan.metrics if a.grounded.metrics[m].get("aggregation_semantics") == "average"]
+    averages = [m for m in a.plan.metrics if a.grounded.metrics[m].get("aggregation_semantics") in NON_ADDITIVE_SEMANTICS]
     return [totals[0], averages[0]] if totals and averages else None
 
 
@@ -71,7 +72,7 @@ def defaults(artifacts, include_composition=False):
             continue
         same_unit = (len(a.plan.metrics) > 1
             and len({a.grounded.metrics[m]["unit"] for m in a.plan.metrics}) == 1
-            and len({a.grounded.metrics[m].get("aggregation_semantics") == "average" for m in a.plan.metrics}) == 1)
+            and len({a.grounded.metrics[m].get("aggregation_semantics") in NON_ADDITIVE_SEMANTICS for m in a.plan.metrics}) == 1)
         if same_unit and len(visible) == 1 and not a.plan.ranking and a.plan.kind != "trend":
             visuals.append(DashboardVisual(query_id=id, chart_type="grouped_bar", metrics=a.plan.metrics, x_field=visible[0], role=a.query.role, priority=80, purpose="comparison"))
             continue

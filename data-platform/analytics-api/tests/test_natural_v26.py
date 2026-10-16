@@ -57,7 +57,7 @@ class NaturalV26Tests(unittest.TestCase):
     def setUp(self):
         for name in ("requests.sessions.Session.request","psycopg2.connect"):
             guard = patch(name,side_effect=AssertionError("External calls forbidden")); guard.start(); self.addCleanup(guard.stop)
-        config = patch.dict(os.environ,{"AI_OFFLINE":"1","DATA_ANALYST_SEMANTIC_MANIFEST_MAX_CHARS":"10000","DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS":"24000"});config.start();self.addCleanup(config.stop)
+        config = patch.dict(os.environ,{"AI_OFFLINE":"1","DATA_ANALYST_SEMANTIC_MANIFEST_MAX_CHARS":"14000","DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS":"24000"});config.start();self.addCleanup(config.stop)
         self.catalog = AnalysisCatalog(physical_metadata())
         self.repo = MemoryModules()
 
@@ -130,7 +130,7 @@ class NaturalV26Tests(unittest.TestCase):
                         agent=p.agent(self.catalog,date(2026,10,6),proposal=True);agent.queries.enforce_discovery=False
                         agent.queries.prepare({**raw,"role":"requested"})
                     count+=1
-        self.assertEqual(count,38)
+        self.assertEqual(count,44)  # V3.0 delivery lenses; V3.1 order_fulfilment, late_rate, cash_discrepancy_risk, promotion_redemption
 
     def test_synthetic_lens_requires_metadata_group_without_prompt_branch(self):
         overlay=deepcopy(self.catalog.overlay);profile=overlay["analysis_registry"]["domain_intelligence"]["profiles"]["products"]
@@ -295,9 +295,9 @@ class NaturalV26Tests(unittest.TestCase):
         self.assertNotIn("password",json.dumps(response));self.assertTrue(response["issue"]["suggested_actions"])
 
     def test_body_budget_both_adapters_with_multiple_strong_domains(self):
-        self.enterContext(patch.dict(os.environ,{"DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS":"32000"}))
+        self.enterContext(patch.dict(os.environ,{"DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS":"34000"}))  # V3.1 catalog growth (legacy planner)
         for context in ("", "chi nhánh sản phẩm voucher thanh toán", "khách hàng sản phẩm voucher thanh toán giao hàng"):
             p=self.pipeline();r=p.propose(self.request(analysis_context=context,analysis_expectation="Phân tích toàn diện nhiều góc nhìn"))
             self.assertEqual(p.provider.call_count,1)
-            for size in r["diagnostics"]["provider_body_chars"].values():self.assertLessEqual(size,32000)
+            for size in r["diagnostics"]["provider_body_chars"].values():self.assertLessEqual(size,34000)
             self.assertEqual(r["diagnostics"]["contract_repair_count"],0)

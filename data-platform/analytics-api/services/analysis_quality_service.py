@@ -271,7 +271,7 @@ def assess_report(report, catalog, *, artifacts=None):
                 return not_scored('Phép phân tích không khớp kế hoạch đã được máy chủ xác minh.')
     except (ValueError, KeyError, TypeError):
         return not_scored('Ngữ nghĩa hoặc metadata báo cáo chưa vượt qua kiểm chứng.')
-    canonical = {e['id']: e for e in analytical_features(artifacts, catalog, report.get('derived_feature_bindings'))}
+    canonical = {e['id']: e for e in analytical_features(artifacts, catalog, report.get('derived_feature_bindings'), as_of=(report.get('quality_context') or {}).get('reference_date'))}
     # Index per-row feature evidence once; high-cardinality shares must not
     # require a quadratic scan during verification.
     feature_rows = {(e['scope_ref'],e['feature'],e['metric'],json.dumps(e['values'].get('dimensions'),sort_keys=True,default=str))

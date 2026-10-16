@@ -1,9 +1,10 @@
 import { AnalystDashboard, AnalystDashboardSummary, AnalystViews, AnalystResultTable, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence, AnalystPlanningSummary } from '../components/AnalystDashboardSummary';
 import { AnalysisQualityScore } from '../components/AnalysisQualityScore';
 import { AnalysisClarification } from '../components/AnalysisClarification';
+import { ForecastPanel } from '../components/ForecastPanel';
 import { AnalysisMeaning } from '../components/AnalysisMeaning';
 import { AnalysisModules, AnalysisModuleSummary } from '../components/AnalysisModules';
-import { AnalysisInputForm } from '../components/AnalysisInputForm';
+import { AnalystWorkspace } from '../components/workspace/AnalystWorkspace';
 import { analysisInputPayload } from '../utils/analysisInput.mjs';
 import { analysisPlanLabel } from '../utils/analysisPresentation.mjs';
 import { reportHeading } from '../utils/analystDashboardLayout.mjs';
@@ -20,6 +21,8 @@ import {
 } from '../components/Charts';
 import { AnalyticsSubTab } from '../types';
 import { resolveAiChartPresentation } from '../utils/aiChartConfig.mjs';
+import { periodLabel, dailyRevenueSeries, channelSlices as channelBreakdown, chartQuestion } from '../utils/dashboardPresentation.mjs';
+import { SeriesLineChart } from '../components/Charts';
 import { WordReportPreviewModal } from '../components/WordReportPreviewModal';
 
 export const AnalyticsView: React.FC = () => {
@@ -37,7 +40,8 @@ export const AnalyticsView: React.FC = () => {
     analyticsSubTab,
     setAnalyticsSubTab,
     isLoadingMarts,
-    showToast
+    showToast,
+    dateRange
   } = usePlatformStore();
 
   const [activeTab, setActiveTab] = useState<AnalyticsSubTab>(
@@ -62,8 +66,7 @@ export const AnalyticsView: React.FC = () => {
   // ─── AI ASSISTANT 3-STEP REPORT WORKFLOW STATE ───
   const [aiStep, setAiStep] = useState<1 | 2 | 3>(1);
   const [aiPrompt, setAiPrompt] = useState('');
-  const [aiAnalysisContext, setAiAnalysisContext] = useState('');
-  const [aiAnalysisExpectation, setAiAnalysisExpectation] = useState('');
+  const [aiMission, setAiMission] = useState<string | null>(null);
   const [activeModule, setActiveModule] = useState<AnalysisModuleSummary | null>(null);
   const [aiTimeRange, setAiTimeRange] = useState('auto');
   const [aiDomain, setAiDomain] = useState('auto');
@@ -77,7 +80,8 @@ export const AnalyticsView: React.FC = () => {
     fetch('/api/ai/capabilities', { signal: controller.signal }).then(r => r.ok ? r.json() : null).then(setAiCapabilities).catch(() => {});
     return () => controller.abort();
   }, []);
-  const aiInput = (prompt: string) => analysisInputPayload({ question: prompt, context: aiAnalysisContext, expectation: aiAnalysisExpectation, moduleId: activeModule?.module_id, time: aiTimeRange, start: aiStart, end: aiEnd, depth: 'focused' });
+  // V3.1: question + time + scope + depth (+ optional mission hint); no context/expectation fields.
+  const aiInput = (prompt: string) => analysisInputPayload({ question: prompt, moduleId: activeModule?.module_id, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiAnalysisDepth, mission: aiMission });
   const [aiStatus, setAiStatus] = useState<any | null>(null);
 
   // Step 1: Pre-analysis proposal state
@@ -127,32 +131,6 @@ export const AnalyticsView: React.FC = () => {
     return '—';
   };
 
-  const aiPromptTemplates = [
-    {
-      label: 'Top 5 món bán chạy nhất',
-      prompt: 'Top 5 món bán chạy nhất theo số lượng',
-    },
-    {
-      label: 'Tỷ trọng kênh thanh toán',
-      prompt: 'Phân tích cơ cấu và tỷ trọng các phương thức thanh toán',
-    },
-    {
-      label: 'Hiệu suất chuỗi chi nhánh',
-      prompt: 'Đánh giá doanh thu và xếp hạng hiệu suất các chi nhánh',
-    },
-    {
-      label: 'Diễn biến doanh thu 30 ngày',
-      prompt: 'Phân tích xu hướng biến động doanh thu 30 ngày gần nhất',
-    },
-    {
-      label: 'Tần suất mua của hội viên',
-      prompt: 'Phân tích hành vi khách hàng và các hạng hội viên tích điểm loyalty',
-    },
-    {
-      label: 'Đội ngũ giao hàng shipper',
-      prompt: 'Hiệu suất giao hàng và số lượng chuyến của các tài xế',
-    },
-  ];
 
   // Helper to reset and start a fresh question
   const handleResetToNewPrompt = () => {
@@ -222,7 +200,7 @@ export const AnalyticsView: React.FC = () => {
     } catch (error: any) {
       if (controller.signal.aborted || epoch !== jobEpoch.current) return;
       const message = 'Chưa nhận được trạng thái tác vụ. Kết nối lại để tiếp tục tác vụ hiện tại.';
-      setGeneratedReport({ status: 'error', outcome: 'SYSTEM_ERROR', message,
+      setGeneratedReport({ status: 'error', outcome: 'SYSTEM_ERROR', retryable: true, message,
         issue: { category: 'JOB_CONNECTION', title: 'Chưa kết nối được với tác vụ',
           what_is_known: [], what_is_missing: [error.message], resolution_guidance: message,
           suggested_actions: [{ type: 'retry', label: 'Kết nối lại tác vụ' }] } });
@@ -237,8 +215,9 @@ export const AnalyticsView: React.FC = () => {
     try {
       const record = JSON.parse(sessionStorage.getItem(jobStorageKey) || 'null');
       if (record?.key && record?.input) {
-        setAiAnalysisContext(record.input.analysis_context || '');
-        setAiAnalysisExpectation(record.input.analysis_expectation || '');
+        if (record.input.analysis_scope) setAiScope(record.input.analysis_scope);
+        if (record.input.analysis_depth) setAiAnalysisDepth(record.input.analysis_depth);
+        setAiMission(record.input.analysis_mission || null);
         setAiTimeRange(record.input.time?.mode || 'auto');
         setAiStart(record.input.time?.start || ''); setAiEnd(record.input.time?.end || '');
         handleOneClick(undefined, record);
@@ -290,7 +269,7 @@ export const AnalyticsView: React.FC = () => {
     } catch (err: any) {
       console.error('Lỗi đề xuất kế hoạch:', err);
       const message = 'Chưa nhận được phản hồi từ máy chủ phân tích. Hãy kiểm tra kết nối và trạng thái dịch vụ; câu hỏi của bạn được giữ lại.';
-      setGeneratedReport({ status: 'error', outcome: 'SYSTEM_ERROR', message,
+      setGeneratedReport({ status: 'error', outcome: 'SYSTEM_ERROR', retryable: true, message,
         issue: { category: 'SYSTEM_UNAVAILABLE', title: 'Mất kết nối với máy chủ phân tích',
           what_is_known: [], what_is_missing: [message],
           resolution_guidance: 'Giữ nguyên câu hỏi và thử lại sau khi kết nối được khôi phục.',
@@ -822,15 +801,14 @@ export const AnalyticsView: React.FC = () => {
   const aov = Number(kpi.aov ?? 0);
 
   const revenueDaily = marts?.revenue_daily || [];
-  const dailyChartData = revenueDaily.map((r: any) => ({
-    label: String(r.date).slice(-5).replace('/', '-'),
-    value: Number(r.revenue) || 0,
-    secondaryValue: (Number(r.revenue) || 0) * 0.88,
-  }));
-
-  const maxDayRevenue = revenueDaily.reduce((max: number, r: any) => Math.max(max, Number(r.revenue || 0)), 0);
-  const minDayRevenue = revenueDaily.reduce((min: number, r: any) => Math.min(min, Number(r.revenue || Infinity)), Infinity);
-  const avgDayRevenue = revenueDaily.length > 0 ? Math.round(totalRevenue / revenueDaily.length) : 0;
+  // V3.1: real series only (the former "kỳ trước" line was revenue × 0.88);
+  // today's bucket is marked incomplete; average uses complete days only.
+  const dailySeries = dailyRevenueSeries(revenueDaily);
+  const kpiPeriod = periodLabel(dateRange);
+  const maxDayRevenue = dailySeries.peak ?? 0;
+  const avgDayRevenue = dailySeries.average != null ? Math.round(dailySeries.average) : 0;
+  const askAi = (question: string | null) => { if (!question) return; setAiPrompt(question); setStoreActiveTab('ai_assistant'); };
+  const AskAi: React.FC<{ question: string | null }> = ({ question }) => question ? <button type="button" onClick={() => askAi(question)} className="text-[11px] font-medium text-emerald-700 hover:underline">Hỏi trợ lý AI về biểu đồ này</button> : null;
 
   // Hourly traffic from real marts.hourly_sales
   const rawHourly = marts?.hourly_sales || [];
@@ -844,12 +822,7 @@ export const AnalyticsView: React.FC = () => {
   const storeOrders = Number(behavior.store_orders || 0);
   const deliveryOrders = Number(behavior.delivery_orders || 0);
   const totalChannelOrders = storeOrders + deliveryOrders;
-  const channelSlices = totalChannelOrders > 0
-    ? [
-        { label: 'Tại quán và Mang đi', value: storeOrders, color: '#059669' },
-        { label: 'Giao hàng tận nơi', value: deliveryOrders, color: '#0284c7' },
-      ]
-    : [];
+  const channelSlices = channelBreakdown(behavior).slices;
 
   // Weekday sales trend from real orders in marts
   const rawWeekday = marts?.weekday_sales || [];
@@ -1232,7 +1205,7 @@ export const AnalyticsView: React.FC = () => {
           {rep.prompt && reportHeading(rep) !== rep.prompt && <details className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600"><summary className="cursor-pointer font-medium">Câu hỏi phân tích đầy đủ</summary><p className="mt-3 leading-relaxed">{rep.prompt}</p></details>}
           <AnalysisMeaning interpretation={rep.interpretation} compact />
           {showSqlCode && (rep.sql || rep.sql_query) && <pre className="bg-slate-900 text-slate-200 p-4 rounded-xl text-xs overflow-auto">{rep.sql ? Object.entries(rep.sql).map(([name, sql]) => `-- ${name}\n${sql}`).join('\n\n') : rep.sql_query}</pre>}
-          <AnalystDashboard report={rep} editing={isRefining} onChartTypeChange={rep.session_id ? (id, type) => handleFollowUpRefine('Đổi cách trình bày biểu đồ', rep, [{ chart_id: id, chart_type: type }]) : undefined} />
+          <AnalystDashboard report={rep} capabilities={aiCapabilities} editing={isRefining} onFollowUp={isFromSavedList ? undefined : q => { setAiPrompt(q); setAiStep(1); }} onChartTypeChange={rep.session_id ? (id, type) => handleFollowUpRefine('Đổi cách trình bày biểu đồ', rep, [{ chart_id: id, chart_type: type }]) : undefined} />
         </> : <>
         {/* SECTION: Data Warnings / Sanity Alerts (Phase 3.3) */}
         {rep.data_warnings && rep.data_warnings.length > 0 && (
@@ -1297,6 +1270,7 @@ export const AnalyticsView: React.FC = () => {
             </h3>
             <AnalystDashboardSummary report={rep} />
           </div>
+          <ForecastPanel forecasts={rep.forecasts} />
 
           {/* KPI Cards Row */}
           {rep.kpi_cards && Array.isArray(rep.kpi_cards) && rep.kpi_cards.length > 0 ? (
@@ -1745,20 +1719,20 @@ export const AnalyticsView: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
               <div className="text-xs font-medium text-slate-500">
-                Doanh thu toàn chuỗi
+                Doanh thu · {kpiPeriod}
               </div>
               <div className="text-lg sm:text-xl font-semibold text-slate-900 mt-1 flex items-baseline gap-1 whitespace-nowrap">
                 <span>{isLoadingMarts ? 'Đang tải...' : totalRevenue.toLocaleString('vi-VN')}</span>
                 <span className="text-xs font-medium text-slate-500">đ</span>
               </div>
               <div className="text-xs text-emerald-600 font-medium mt-1 truncate">
-                Đỉnh ngày: {maxDayRevenue.toLocaleString('vi-VN')} đ
+                Đỉnh ngày ({kpiPeriod}): {maxDayRevenue.toLocaleString('vi-VN')} đ
               </div>
             </div>
 
             <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
               <div className="text-xs font-medium text-slate-500">
-                Số đơn hàng hoàn tất
+                Số đơn (mọi trạng thái) · {kpiPeriod}
               </div>
               <div className="text-lg sm:text-xl font-semibold text-slate-900 mt-1 whitespace-nowrap">
                 {isLoadingMarts ? 'Đang tải...' : `${totalOrders.toLocaleString('vi-VN')} đơn`}
@@ -1777,20 +1751,20 @@ export const AnalyticsView: React.FC = () => {
                 <span className="text-xs font-medium text-slate-500">đ</span>
               </div>
               <div className="text-xs text-slate-500 font-normal mt-1 truncate">
-                Bình quân {revenueDaily.length} ngày ghi nhận
+                Doanh thu hợp lệ / tổng số đơn · {kpiPeriod}
               </div>
             </div>
 
             <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
               <div className="text-xs font-medium text-slate-500">
-                Doanh thu trung bình ngày
+                Doanh thu trung bình ngày · {kpiPeriod}
               </div>
               <div className="text-lg sm:text-xl font-semibold text-slate-900 mt-1 flex items-baseline gap-1 whitespace-nowrap">
                 <span>{avgDayRevenue.toLocaleString('vi-VN')}</span>
                 <span className="text-xs font-medium text-slate-500">đ</span>
               </div>
               <div className="text-xs text-sky-600 font-medium mt-1 truncate">
-                Liên tục 100% không gián đoạn
+                Trên {dailySeries.completeDays} ngày đã trọn có doanh thu
               </div>
             </div>
           </div>
@@ -1798,40 +1772,43 @@ export const AnalyticsView: React.FC = () => {
           {/* Charts Row 1: Area Trend + Channel Share */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
             {/* Area Chart */}
-            <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs flex flex-col justify-between h-[340px]">
+            <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs flex flex-col gap-1.5 min-h-[340px]">
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <h3 className="text-sm font-semibold text-slate-800">
-                    Diễn biến doanh thu theo ngày (gold.revenue_daily)
+                    Diễn biến doanh thu theo ngày · {kpiPeriod}
                   </h3>
-                  <p className="text-[11px] text-slate-400">Đường nét liền: kỳ này; đường đứt nét: kỳ trước</p>
+                  <p className="text-[11px] text-slate-400">Đơn hoàn thành và đang giao; điểm rỗng/nét đứt là ngày chưa trọn</p>
                 </div>
-                <span className="text-[11px] text-slate-400 font-medium">{dailyChartData.length} mốc</span>
+                <span className="text-[11px] text-slate-400 font-medium">{dailySeries.data.length} ngày có doanh thu</span>
               </div>
-              <div className="flex-1 flex items-center">
-                <SmoothAreaChart data={dailyChartData} height={230} showSecondary={true} valueSuffix=" đ" />
+              <div className="h-[290px] flex items-center">
+                <SeriesLineChart data={dailySeries.data} series={[{ key: 'series_1', label: 'Doanh thu', color: '#059669' }]} unit="đ" area granularity="day" period={dailySeries.period} />
               </div>
+              {dailySeries.notes.map((note: string) => <p key={note} className="text-[11px] text-amber-700">{note}</p>)}
+              <AskAi question={chartQuestion(aiCapabilities, { metric: 'revenue', granularity: 'day', time: (aiCapabilities?.phrases?.time?.rolling_days || '').replace('{n}', '30') })} />
             </div>
 
             {/* Donut Chart Channel */}
-            <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs flex flex-col justify-between h-[340px]">
+            <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs flex flex-col justify-between min-h-[340px]">
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <h3 className="text-sm font-semibold text-slate-800">
                     Cơ cấu kênh bán hàng
                   </h3>
-                  <p className="text-[11px] text-slate-400">Tỷ trọng giữa bán trực tiếp và giao hàng</p>
+                  <p className="text-[11px] text-slate-400">Số đơn bán trực tiếp so với giao hàng</p>
                 </div>
-                <span className="text-[11px] text-slate-400 font-medium">Toàn chuỗi</span>
+                <span className="text-[11px] text-slate-400 font-medium">Đơn vị: đơn</span>
               </div>
               <div className="my-auto py-2">
                 <DonutChart 
                   data={channelSlices} 
-                  centerLabel="Kênh bán" 
-                  centerValue="100%" 
+                  centerLabel="Tổng số đơn"
+                  valueSuffix=" đơn"
                   size={135} 
                 />
               </div>
+              <AskAi question={chartQuestion(aiCapabilities, { metric: 'order_count', dimension: 'order_type' })} />
             </div>
           </div>
 
@@ -1844,13 +1821,14 @@ export const AnalyticsView: React.FC = () => {
                   <h3 className="text-sm font-semibold text-slate-800">
                     Lưu lượng đơn hàng theo khung giờ
                   </h3>
-                  <p className="text-[11px] text-slate-400">Khung giờ cao điểm trưa từ 11h đến 13h</p>
+                  <p className="text-[11px] text-slate-400">{hourlyData.length ? `Cao nhất: ${hourlyData.reduce((a: any, b: any) => b.value > a.value ? b : a).label}` : 'Chưa có dữ liệu'}</p>
                 </div>
                 <span className="text-[11px] text-slate-400 font-medium">Đơn vị: Đơn</span>
               </div>
               <div className="flex-1 flex items-end">
                 <BarChart data={hourlyData} height={220} valueSuffix="đơn" />
               </div>
+              <AskAi question={chartQuestion(aiCapabilities, { metric: 'hourly_orders', dimension: 'hour' })} />
             </div>
 
             {/* Weekday Trend */}
@@ -1860,13 +1838,14 @@ export const AnalyticsView: React.FC = () => {
                   <h3 className="text-sm font-semibold text-slate-800">
                     Phân bổ sản lượng theo ngày trong tuần
                   </h3>
-                  <p className="text-[11px] text-slate-400">Tăng mạnh vào cuối tuần thứ 7 và Chủ nhật</p>
+                  <p className="text-[11px] text-slate-400">{weekdayData.length ? `Cao nhất: ${weekdayData.reduce((a: any, b: any) => b.value > a.value ? b : a).label}` : 'Chưa có dữ liệu'}</p>
                 </div>
                 <span className="text-[11px] text-slate-400 font-medium">Đơn vị: Đơn</span>
               </div>
               <div className="flex-1 flex items-end">
                 <BarChart data={weekdayData} height={220} color="#0284c7" valueSuffix="đơn" />
               </div>
+              <AskAi question={chartQuestion(aiCapabilities, { metric: 'order_count', dimension: 'weekday' })} />
             </div>
           </div>
 
@@ -1876,7 +1855,7 @@ export const AnalyticsView: React.FC = () => {
               <h3 className="text-sm font-semibold text-slate-800">
                 Bảng số liệu đối soát doanh thu chi tiết theo ngày
               </h3>
-              <span className="text-[11px] text-slate-400">Đồng bộ tự động từ gold.revenue_daily</span>
+              <span className="text-[11px] text-slate-400">Đơn hàng trong kỳ đã chọn · cập nhật theo đợt</span>
             </div>
             <div className="flex-1 overflow-y-auto">
               <table className="w-full text-left text-xs">
@@ -2556,74 +2535,13 @@ export const AnalyticsView: React.FC = () => {
           {/* ──────────────────────────────────────────────────────────── */}
           {/* ── BƯỚC 1: ĐẶT CÂU HỎI & CHỌN GỢI Ý PHÂN TÍCH ── */}
           {/* ──────────────────────────────────────────────────────────── */}
-          <AnalysisModules active={activeModule} report={generatedReport} disabled={isProposingPlan || isGeneratingAi || isRefining} rerunTime={aiTimeRange === 'custom' ? (aiStart && aiEnd && aiStart <= aiEnd ? { mode: 'custom', start: aiStart, end: aiEnd } : null) : { mode: aiTimeRange }} onSelect={setActiveModule} onUpdate={inputs => { setAiPrompt(inputs.original_question || ''); setAiAnalysisContext(inputs.analysis_context || ''); setAiAnalysisExpectation(inputs.analysis_expectation || ''); }} onEdit={() => setAiStep(1)} onReport={data => { setGeneratedReport(data); setAiStep(3); if (data.status === 'success') { setReportVersions([{ version: data.revision || 1, label: 'Chạy lại bài toán', report: data, time: new Date().toLocaleTimeString('vi-VN') }]); setActiveVersionIndex(0); setRefinementChat([]); } }} />
+          <AnalysisModules active={activeModule} report={generatedReport} disabled={isProposingPlan || isGeneratingAi || isRefining} rerunTime={aiTimeRange === 'custom' ? (aiStart && aiEnd && aiStart <= aiEnd ? { mode: 'custom', start: aiStart, end: aiEnd } : null) : { mode: aiTimeRange }} onSelect={setActiveModule} onUpdate={inputs => { setAiPrompt(inputs.original_question || ''); }} onEdit={() => setAiStep(1)} onReport={data => { setGeneratedReport(data); setAiStep(3); if (data.status === 'success') { setReportVersions([{ version: data.revision || 1, label: 'Chạy lại bài toán', report: data, time: new Date().toLocaleTimeString('vi-VN') }]); setActiveVersionIndex(0); setRefinementChat([]); } }} />
           {aiStep === 1 && (
             <div className="space-y-6">
-              <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
-                {/* Header info */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-4 mb-6">
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                      Trợ lý phân tích dữ liệu
-                    </h2>
-                  </div>
-                  <div role="status" className="text-[11px] text-slate-500 self-start sm:self-auto space-y-1">
-                    <p>Kho dữ liệu: {aiStatus?.system_readiness?.warehouse_available === true ? 'Sẵn sàng' : aiStatus?.system_readiness?.warehouse_available === false ? 'Chưa sẵn sàng' : 'Chưa kiểm tra'}</p>
-                    <p>Semantic catalog: {aiStatus?.system_readiness?.catalog_ready ? 'Sẵn sàng' : 'Chưa sẵn sàng'}</p>
-                    <p>AI provider: {({ available: 'Sẵn sàng', degraded: 'Không ổn định', unavailable: 'Chưa khả dụng', unknown: 'Chưa kiểm tra' } as any)[aiStatus?.provider_status?.state || 'unknown']}</p>
-                  </div>
-                </div>
-
-                {/* Quick Prompt Suggestions */}
-                <div className="mb-5">
-                  <div className="text-xs font-medium text-slate-500 mb-2.5">
-                    Gợi ý phân tích nhanh:
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {aiPromptTemplates.map((tpl, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => {
-                          setAiPrompt(tpl.prompt);
-                          handleProposePlan(tpl.prompt);
-                        }}
-                        disabled={isProposingPlan || isGeneratingAi}
-                        className="px-3.5 py-1.5 rounded-xl text-xs font-medium bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer text-slate-700 disabled:opacity-50"
-                      >
-                        {tpl.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Smart Omnibox Chat Input */}
-                <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 focus-within:bg-white focus-within:border-slate-400 focus-within:ring-2 focus-within:ring-slate-200/60 transition-all">
-                  <AnalysisInputForm prompt={aiPrompt} time={aiTimeRange} context={aiAnalysisContext} expectation={aiAnalysisExpectation} start={aiStart} end={aiEnd} disabled={isProposingPlan || isGeneratingAi} onPrompt={setAiPrompt} onTime={setAiTimeRange} onContext={setAiAnalysisContext} onExpectation={setAiAnalysisExpectation} onStart={setAiStart} onEnd={setAiEnd} onSubmit={() => handleProposePlan()} />
-                  <div className="flex justify-end gap-3 pt-3 border-t border-slate-200/60 mt-3">
-                    {/* Submit Actions */}
-                    <div className="flex items-center space-x-2.5 self-end sm:self-auto">
-                      {aiPrompt && (
-                        <button
-                          onClick={() => {
-                            setAiPrompt('');
-                            setAiPlan(null);
-                          }}
-                          className="px-3 py-2 text-xs font-medium text-slate-500 hover:text-slate-700 rounded-xl transition-colors cursor-pointer"
-                        >
-                          Xóa
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleProposePlan()}
-                        disabled={isProposingPlan || isGeneratingAi || !aiPrompt.trim()}
-                        className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-medium shadow-xs transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        Lập kế hoạch
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
+              <AnalystWorkspace capabilities={aiCapabilities} status={aiStatus} disabled={isProposingPlan || isGeneratingAi}
+                value={{ prompt: aiPrompt, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiAnalysisDepth, mission: aiMission }}
+                onChange={patch => { if ('prompt' in patch) { setAiPrompt(patch.prompt || ''); if (!patch.prompt) setAiPlan(null); } if ('time' in patch) setAiTimeRange(patch.time || 'auto'); if ('start' in patch) setAiStart(patch.start || ''); if ('end' in patch) setAiEnd(patch.end || ''); if ('scope' in patch) setAiScope(patch.scope); if ('depth' in patch) setAiAnalysisDepth(patch.depth || 'deep'); if ('mission' in patch) setAiMission(patch.mission ?? null); }}
+                onSubmit={() => handleProposePlan()}>
                 {/* Recent Questions Pill Bar */}
                 {chatHistory.length > 0 && (
                   <div className="mt-4 pt-3 border-t border-slate-100 flex items-center space-x-2 overflow-x-auto text-xs pb-1">
@@ -2646,8 +2564,7 @@ export const AnalyticsView: React.FC = () => {
                     ))}
                   </div>
                 )}
-              </div>
-
+              </AnalystWorkspace>
               <AnalystReportReady report={generatedReport} onOpen={() => setAiStep(3)} />
             </div>
           )}

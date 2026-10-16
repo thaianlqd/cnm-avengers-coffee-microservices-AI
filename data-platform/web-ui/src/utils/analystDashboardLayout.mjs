@@ -42,7 +42,12 @@ export function bucketCoverage(label, granularity, period = {}) {
 }
 export function presentationChart(chart, report = {}) {
   const op = (report.analysis_explanation || []).find(o => o.query_id === (chart.query_id || chart.scope_ref));
-  let out = { ...chart, granularity: chart.granularity || op?.granularity, period: chart.period || op?.period };
+  // An open-ended period is closed at the report reference date: the bucket
+  // containing it is still in progress (V3.1), never a complete period.
+  const basePeriod = chart.period || op?.period;
+  const asOf = report.quality_context?.reference_date;
+  const period = basePeriod && !basePeriod.end && asOf ? { ...basePeriod, end: asOf } : basePeriod;
+  let out = { ...chart, granularity: chart.granularity || op?.granularity, period };
   const e = (report.evidence || []).find(e => e.scope_ref === chart.scope_ref && e.metric === chart.metric && e.feature === 'concentration' && e.scope?.selection === 'complete' && !Object.keys(e.scope?.partition || {}).length);
   // Older reports may contain a bar for a complete composition. Evidence must
   // certify the full total; never reinterpret a Top N or a display subset.

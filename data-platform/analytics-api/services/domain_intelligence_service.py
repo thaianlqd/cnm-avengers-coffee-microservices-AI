@@ -229,7 +229,7 @@ class DomainIntelligence:
             raise ToolContractError([issue("operation", "lens_operation_incompatible")])
         validate_materialized(query, lens)
 
-    def capabilities(self):
+    def capabilities(self, coverage=None):
         profiles = self.available()
         scope_types = []
         for id, d in self.catalog.registry["dimensions"].items():
@@ -242,11 +242,45 @@ class DomainIntelligence:
             if not any(id in p["dimension_refs"] for p in profiles.values()):
                 continue
             scope_types.append({"id": id, "label": d["business_name"], "values": dimension_values(self.catalog, id)[:50], "searchable": d.get("value_grounding", {}).get("mode") == "lookup"})
-        return {"status": "ready", "version": "2.7", "fingerprint": self.catalog.fingerprint,
-                "domains": [{"id": id, "label": p["business_label"], "historical": any(self.catalog.registry["metrics"][m].get("time_column") for m in p["metric_refs"]), "caveats": [self.catalog.registry["domain_intelligence"]["caveat_labels"][c] for c in p["business_caveats"]]} for id, p in profiles.items()],
+        r = self.catalog.registry
+
+        def executable(metric):
+            m = r["metrics"][metric]
+            try:
+                self.catalog.check_expression(m["expression"])
+                return m["source"] in self.catalog.tables
+            except AnalysisError:
+                return False
+
+        def describe(id, p):
+            # Generated from governed metadata only; never a separate UI list.
+            metrics = [m for m in p["metric_refs"] if executable(m)]
+            tables = self.catalog.overlay["silver_tables"]
+            freshness = sorted({tables[r["subjects"][s]["source"]].get("freshness", {}).get("mode", "unknown")
+                                for s in p["primary_subjects"] if s in r["subjects"]})
+            return {"id": id, "label": p["business_label"], "purpose": p["short_business_purpose"],
+                    "historical": any(r["metrics"][m].get("time_column") for m in p["metric_refs"]),
+                    "caveats": [r["domain_intelligence"]["caveat_labels"][c] for c in p["business_caveats"]],
+                    "metrics": [{"id": m, "label": r["metrics"][m]["business_name"], "unit": r["metrics"][m]["unit"],
+                                 "historical": bool(r["metrics"][m].get("time_column")),
+                                 "forecastable": bool(r["metrics"][m].get("forecast", {}).get("forecastable"))} for m in metrics],
+                    "operations": sorted({o for l in p["analytical_lenses"] if l.get("blueprint") for o in l["blueprint"]["allowed_operations"]}),
+                    "example_questions": [l["example_intents"][0] for l in p["analytical_lenses"] if l.get("example_intents")][:3],
+                    "freshness": freshness}
+        from services.workspace_service import workspace_capabilities
+        # V3.1 Analyst Workspace metadata (missions, limits, coverage, unsupported,
+        # risk signals, per-metric UI metadata), all derived from the registry.
+        workspace = workspace_capabilities(self, profiles, executable, coverage)
+        by_id = {m["id"]: m for m in workspace["metrics"]}
+        domains = [describe(id, p) for id, p in profiles.items()]
+        for d in domains:
+            d["metrics"] = [{**m, **{k: v for k, v in by_id.get(m["id"], {}).items() if k not in m}} for m in d["metrics"]]
+        return {"status": "ready", "version": "3.0", "fingerprint": self.catalog.fingerprint,
+                "registry_fingerprint": getattr(self.catalog, "registry_fingerprint", None),
+                "domains": domains,
                 "analysis_depths": [{"id": "focused", "label": "Tập trung"}, {"id": "deep", "label": "Phân tích sâu"}, {"id": "comprehensive", "label": "Phân tích toàn diện"}],
                 "time_presets": [{"id": id, "label": label} for id, label in TIME_PRESETS.items()],
-                "scope_types": scope_types}
+                "scope_types": scope_types, **workspace}
 
     def directory(self, profiles):
         # Aliases are used locally by retrieval; subjects/caveats live in packs.

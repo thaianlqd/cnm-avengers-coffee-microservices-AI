@@ -318,10 +318,9 @@ class AnalysisJobs:
             self.finish(job_id, worker, 'completed', report, stages)
         except Exception as error:
             result = self.failure(error, pipeline)
-            category = getattr(error, 'category', 'internal')
-            state = ('insufficient_data' if category == 'insufficient_data' else
-                'unsupported' if category.startswith('unsupported') else
-                'needs_input' if result.get('status') == 'needs_clarification' else 'failed')
+            # Terminal job state follows the typed taxonomy, never a name prefix.
+            state = ({'UNSUPPORTED_CAPABILITY': 'unsupported', 'INSUFFICIENT_DATA': 'insufficient_data'}.get(result.get('analysis_state'))
+                or ('needs_input' if result.get('status') == 'needs_clarification' else 'failed'))
             try:
                 self.finish(job_id, worker, state, result, stages)
             except AnalysisError:

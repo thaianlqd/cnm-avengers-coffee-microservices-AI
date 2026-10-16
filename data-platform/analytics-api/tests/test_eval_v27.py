@@ -71,7 +71,7 @@ class EvalV27Tests(unittest.TestCase):
         self.assertEqual(stability(rows,required_case_ids=['a','b'])['incomplete_cases'],['b'])
         with self.assertRaises(ValueError):stability(rows+[rows[0]])
     def test_synthetic_metadata_audit_all_blueprints(self):
-        r=audit(self.catalog);self.assertEqual(r['errors'],[]);self.assertEqual((r['domain_count'],r['lens_count']),(16,38))
+        r=audit(self.catalog);self.assertEqual(r['errors'],[]);self.assertEqual((r['domain_count'],r['lens_count']),(16,44))  # V3.0 delivery lenses; V3.1 +4 lenses
     def test_production_does_not_import_golden_or_contain_fixture_ids(self):
         from pathlib import Path
         root=Path(__file__).resolve().parent.parent/'services'

@@ -74,7 +74,8 @@ def actionable_issue(error, message, clarification=None, diagnostics=None):
     elif code == "requested_scope_too_large": category = "REQUESTED_SCOPE_TOO_LARGE"
     elif code in {"one_shot_context_budget_exceeded", "semantic_manifest_budget_exceeded", "context_configuration"}: category = "PLANNING_CAPACITY"
     elif code in {"module_needs_review", "schema_changed", "stale_approval"}: category = "PLAN_REVIEW_REQUIRED"
-    elif code in {"invalid_analysis_contract", "analysis_spec_invalid", "semantic_intent_invalid"}: category = "SEMANTIC_INTERPRETATION_ERROR"
+    elif code in {"invalid_analysis_contract", "analysis_spec_invalid", "semantic_intent_invalid", "semantic_resolution_failed",
+                  "provider_call_budget_exceeded", "agent_budget"}: category = "SEMANTIC_INTERPRETATION_ERROR"
     elif code.startswith("unsupported") or code in {"forecast_unsupported", "privacy", "module_privacy", "domain_lens_invalid"}: category = "UNSUPPORTED_ANALYSIS"
     titles = {
         "NEEDS_CLARIFICATION": "Cần thêm một lựa chọn", "HISTORICAL_DATA_UNAVAILABLE": "Chưa có dữ liệu lịch sử",
@@ -97,12 +98,17 @@ def actionable_issue(error, message, clarification=None, diagnostics=None):
     actions += [{"type":"select_module", "label":c["label"], "module_id":c["module_id"]} for c in choices[:8] if isinstance(c,dict) and isinstance(c.get("label"),str) and isinstance(c.get("module_id"),str)]
     if code in {"module_needs_review", "schema_changed"}:
         actions.append({"type": "update_module", "label": "Cập nhật bài toán", "followup": None})
-    if category not in {"SYSTEM_UNAVAILABLE", "SEMANTIC_INTERPRETATION_ERROR", "PLANNING_CAPACITY"}:
+    from services.error_taxonomy import classify, is_provider_transport
+    typed = classify(code, diagnostics)
+    # Retry is offered only when an unchanged resubmission can plausibly
+    # succeed. Deterministic gaps ask for a different question or choice.
+    if typed["retryable"]:
+        actions.append({"type": "retry", "label": "Thử lại", "followup": None})
+    elif typed["next_action"] in {"edit_question", "choose_supported_capability", "change_scope", "answer_clarification", "replan"} or category != "SYSTEM_UNAVAILABLE":
         actions.append({"type": "edit_question", "label": "Chỉnh câu hỏi", "followup": None})
-    if category in {"SYSTEM_UNAVAILABLE", "SEMANTIC_INTERPRETATION_ERROR", "PLANNING_CAPACITY"}:
-        actions.append({"type": "retry", "label": "Lập lại kế hoạch", "followup": None})
     missing = {"metrics": "Chọn chỉ số để đánh giá.", "group_by": "Chọn cách nhóm kết quả.", "granularity": "Chọn nhịp thời gian.", "ranking": "Chọn số lượng kết quả xếp hạng."}.get(getattr(error, "missing", None), message)
     result={"category": category, "title": titles[category], "what_is_known": known,
+            "error_type": None, "retryable": False,
             "what_is_missing": [missing], "suggested_actions": actions}
     if category=='NEEDS_CLARIFICATION':
         fields=getattr(error,'missing_fields',[])
@@ -137,13 +143,19 @@ def actionable_issue(error, message, clarification=None, diagnostics=None):
         if category=='SEMANTIC_INTERPRETATION_ERROR':
             result['what_is_missing']=problems or [missing]
             result['resolution_guidance']='Giữ nguyên câu hỏi. Máy chủ cần sửa phần diễn giải được nêu ở trên; hệ thống chưa chạy các truy vấn báo cáo của lượt này.'
-        elif code.startswith('provider_'):
+            if typed['error_type']=='SEMANTIC_RESOLUTION_FAILED':
+                result['resolution_guidance']='Các lượt diễn giải không tiến triển nên hệ thống đã dừng, chưa chạy truy vấn nào. Gửi lại nguyên câu sẽ không giúp ích; hãy diễn đạt lại chỉ số, phạm vi hoặc thời gian.'
+        elif is_provider_transport(code):
             result['what_is_missing']=[message]
-            result['resolution_guidance']='Giữ nguyên câu hỏi. Cần khôi phục kết nối hoặc cấu hình dịch vụ AI trước khi lập kế hoạch.'
-            if code=='provider_timeout':
-                result['resolution_guidance']='Giữ nguyên câu hỏi. Dịch vụ AI chưa trả lời trong thời gian cho phép; cần kiểm tra độ trễ dịch vụ trước khi chạy lại.'
+            # Connectivity/configuration wording only for genuine provider failures.
+            result['resolution_guidance']={
+                'PROVIDER_TIMEOUT':'Giữ nguyên câu hỏi. Dịch vụ AI hiện phản hồi quá chậm; có thể thử lại sau ít phút.',
+                'PROVIDER_RATE_LIMITED':'Giữ nguyên câu hỏi. Dịch vụ AI đang giới hạn lượt gọi; thử lại sau khi hạn mức được cấp lại.',
+                'PROVIDER_AUTH_ERROR':'Cấu hình xác thực dịch vụ AI trên máy chủ cần được quản trị viên kiểm tra.',
+            }.get(typed['error_type'],'Giữ nguyên câu hỏi. Cần khôi phục kết nối hoặc cấu hình dịch vụ AI trước khi lập kế hoạch.')
             if problems:result['what_is_missing']+=problems
         count=diagnostics.get('provider_call_count')
         if type(count) is int and count>0:
             result['recovery_summary']=f'Đã thực hiện {count} lượt gọi AI trong lần yêu cầu này.'
+    result.update(error_type=typed["error_type"], retryable=typed["retryable"], next_action=typed["next_action"])
     return result

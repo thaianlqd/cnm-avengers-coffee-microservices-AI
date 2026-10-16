@@ -179,7 +179,7 @@ class VerifiableV27Tests(unittest.TestCase):
 
     def test_all_metadata_definitions_examples_and_business_links(self):
         r=self.catalog.registry;intel=DomainIntelligence(self.catalog)
-        self.assertEqual(len(intel.available()),16);self.assertEqual(sum(len(p['analytical_lenses']) for p in intel.available().values()),38)
+        self.assertEqual(len(intel.available()),16);self.assertEqual(sum(len(p['analytical_lenses']) for p in intel.available().values()),44)  # V3.0 delivery lenses; V3.1 +4 lenses
         for m in r['metrics'].values():
             for key in ('business_definition','population_definition','aggregation_behavior','additivity_by_dimension','historical_capability','quality_direction','invalid_uses'):self.assertTrue(m.get(key),key)
         self.assertEqual(r['metrics']['aov']['aggregation_semantics'],'average')

@@ -97,7 +97,8 @@ export const SeriesLineChart: React.FC<{ data: any[]; series: any[]; unit?: stri
         const segments: number[][] = []; let segment: number[] = [];
         data.forEach((r, i) => { if (Number.isFinite(r[s.key])) segment.push(i); else if (segment.length) { segments.push(segment); segment = []; } });
         if (segment.length) segments.push(segment);
-        return <g key={s.key}>{area && segments.map((indices, i) => <path key={i} d={`M ${x(indices[0])} ${y(0)} ${indices.map(index => `L ${x(index)} ${y(data[index][s.key])}`).join(' ')} L ${x(indices[indices.length - 1])} ${y(0)} Z`} fill={s.color || '#6366f1'} opacity=".12" />)}<path d={path} fill="none" stroke={s.color || '#6366f1'} strokeWidth="2" />{data.map((r, i) => Number.isFinite(r[s.key]) ? <circle key={i} cx={x(i)} cy={y(r[s.key])} r={coverage[i]?.partial ? 4 : 3} fill={coverage[i]?.partial ? 'white' : s.color || '#6366f1'} stroke={s.color || '#6366f1'} strokeWidth="1.5"><title>{`${r.label}: ${s.label} — ${formatChartValue(r[s.key], unit ? ` ${unit}` : '')}${periodNote(i)}`}</title></circle> : null)}</g>;
+        return <g key={s.key}>{area && segments.map((indices, i) => <path key={i} d={`M ${x(indices[0])} ${y(0)} ${indices.map(index => `L ${x(index)} ${y(data[index][s.key])}`).join(' ')} L ${x(indices[indices.length - 1])} ${y(0)} Z`} fill={s.color || '#6366f1'} opacity=".12" />)}<path d={path} fill="none" stroke={s.color || '#6366f1'} strokeWidth="2" />{data.map((r, i) => i > 0 && (coverage[i]?.partial || coverage[i - 1]?.partial) && Number.isFinite(r[s.key]) && Number.isFinite(data[i - 1][s.key])
+          ? <line key={`partial-${i}`} data-partial-segment x1={x(i - 1)} y1={y(data[i - 1][s.key])} x2={x(i)} y2={y(r[s.key])} stroke="white" strokeWidth="3" strokeDasharray="5 4" /> : null)}{data.map((r, i) => Number.isFinite(r[s.key]) ? <circle key={i} cx={x(i)} cy={y(r[s.key])} r={coverage[i]?.partial ? 4 : 3} fill={coverage[i]?.partial ? 'white' : s.color || '#6366f1'} stroke={s.color || '#6366f1'} strokeWidth="1.5"><title>{`${r.label}: ${s.label} — ${formatChartValue(r[s.key], unit ? ` ${unit}` : '')}${periodNote(i)}`}</title></circle> : null)}</g>;
       })}
       {tickIndices(data.length).map(i => <text key={i} x={x(i)} y="278" fontSize="11" fill="#64748b" textAnchor={i === 0 ? 'start' : i === data.length - 1 ? 'end' : 'middle'}><title>{data[i].label}{periodNote(i)}</title>{timeTick(data[i].label, String(data[0].label).slice(0, 4) !== String(data[data.length - 1].label).slice(0, 4))}{coverage[i]?.partial ? '*' : ''}</text>)}
     </svg>
@@ -1414,4 +1415,27 @@ export const MultiLineChart: React.FC<MultiLineChartProps> = ({
       </div>
     </div>
   );
+};
+
+/** V3.1 forecast visual: verified history, server forecast, 80% band. Numbers are server-computed. */
+export const ForecastChart: React.FC<{ history: Array<{ period: string; value: number }>; forecast: Array<{ period: string; value: number; lower_80: number; upper_80: number; kind?: string }>; unit?: string; color?: string }> = ({ history, forecast, unit = '', color = '#4f46e5' }) => {
+  const points = [...history.map(h => ({ ...h, type: 'history' })), ...forecast.map(f => ({ ...f, type: f.kind === 'in_progress' ? 'in_progress' : 'forecast' }))];
+  if (!points.length) return <p className="text-xs text-slate-500">Không có dữ liệu dự báo.</p>;
+  const values = points.flatMap((p: any) => [p.value, p.lower_80, p.upper_80].filter(Number.isFinite));
+  const low = Math.min(0, ...values), high = Math.max(0, ...values), span = high - low || 1;
+  const x = (i: number) => 60 + i * 530 / Math.max(1, points.length - 1), y = (v: number) => 245 - (v - low) / span * 215;
+  const start = history.length ? history.length - 1 : 0;
+  const future = points.slice(start);
+  const band = forecast.length ? `M ${x(start)} ${y(future[0].value)} ${forecast.map((f, i) => `L ${x(history.length + i)} ${y(f.upper_80)}`).join(' ')} ${[...forecast].reverse().map((f, i) => `L ${x(history.length + forecast.length - 1 - i)} ${y(f.lower_80)}`).join(' ')} Z` : '';
+  const line = (rows: any[], offset: number) => rows.map((p, i) => `${i ? 'L' : 'M'} ${x(offset + i)} ${y(p.value)}`).join(' ');
+  return <svg viewBox="0 0 620 305" role="img" aria-label="Biểu đồ dự báo" className="w-full">
+    {[low, (low + high) / 2, high].map((v, i) => <g key={i}><line x1="55" x2="595" y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="4 5" /><text x="50" y={y(v)} textAnchor="end" fontSize="11" fill="#64748b">{axisValue(v)}</text></g>)}
+    {band && <path data-forecast-band d={band} fill={color} opacity=".12" />}
+    {history.length > 0 && <path data-history-line d={line(history, 0)} fill="none" stroke="#334155" strokeWidth="2" />}
+    {forecast.length > 0 && <path data-forecast-line d={line(future, start)} fill="none" stroke={color} strokeWidth="2" strokeDasharray="6 4" />}
+    {history.length > 0 && forecast.length > 0 && <line x1={x(start)} x2={x(start)} y1="28" y2="248" stroke="#94a3b8" strokeDasharray="2 4" />}
+    {points.map((p: any, i) => <circle key={i} cx={x(i)} cy={y(p.value)} r={p.type === 'history' ? 2.5 : 3.5} fill={p.type === 'in_progress' ? 'white' : p.type === 'history' ? '#334155' : color} stroke={p.type === 'history' ? '#334155' : color}><title>{`${p.period}: ${formatChartValue(p.value, unit ? ` ${unit}` : '')}${p.type === 'history' ? ' (lịch sử)' : p.type === 'in_progress' ? ' (kỳ đang diễn ra — dự báo)' : ` (dự báo; 80%: ${formatChartValue(p.lower_80, '')} – ${formatChartValue(p.upper_80, '')})`}`}</title></circle>)}
+    {tickIndices(points.length, 6).map(i => <text key={i} x={x(i)} y="278" fontSize="11" fill="#64748b" textAnchor={i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle'}>{timeTick(points[i].period, String(points[0].period).slice(0, 4) !== String(points[points.length - 1].period).slice(0, 4))}</text>)}
+    <g fontSize="11" fill="#475569"><line x1="60" x2="80" y1="296" y2="296" stroke="#334155" strokeWidth="2" /><text x="85" y="300">Lịch sử đã kiểm chứng</text><line x1="230" x2="250" y1="296" y2="296" stroke={color} strokeWidth="2" strokeDasharray="6 4" /><text x="255" y="300">Dự báo</text><rect x="320" y="290" width="16" height="10" fill={color} opacity=".15" /><text x="341" y="300">Khoảng 80%</text></g>
+  </svg>;
 };

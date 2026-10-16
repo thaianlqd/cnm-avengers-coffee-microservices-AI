@@ -29,36 +29,39 @@ const props = { capabilities, prompt: '', context: '', expectation: '', domain: 
   ...Object.fromEntries(['onPrompt', 'onDomain', 'onTime', 'onDepth', 'onStart', 'onEnd', 'onScope', 'onContext', 'onExpectation', 'onSubmit'].map(key => [key, () => {}])) };
 const render = (Component, values) => renderToStaticMarkup(React.createElement(Component, values));
 
-test('exactly four conceptual inputs, optional context/expectation, only question required', () => {
-  const html = render(Form, props);
-  assert.equal((html.match(/data-analysis-input=/g) || []).length, 4);
+// V3.1: the question form has one field; Ngữ cảnh/Mong muốn were removed from
+// the normal UI (they overlapped with the question and caused contradictions).
+// Time, scope and depth moved to ScopeDepthBar (tested in workspace.test.mjs).
+test('V3.1 question form: one required question, no context/expectation fields', () => {
+  const html = render(Form, { prompt: 'Doanh thu', disabled: false, maxChars: 8000, onPrompt: () => {}, onSubmit: () => {} });
+  assert.equal((html.match(/data-analysis-input=/g) || []).length, 1);
   assert.equal((html.match(/required=""/g) || []).length, 1);
-  for (const label of ['Câu hỏi phân tích', 'Thời gian', 'Ngữ cảnh phân tích', 'Mong muốn phân tích']) assert.ok(html.includes(label));
-  for (const internal of ['metric_refs', 'group_by', 'granularity', 'chart_type', 'population_group', 'analysis-domain', 'analysis-depth', 'analysis-scope']) assert.ok(!html.includes(internal));
+  assert.ok(html.includes('Câu hỏi phân tích'));
+  for (const removed of ['Ngữ cảnh phân tích', 'Mong muốn phân tích', 'analysis-context', 'analysis-expectation']) assert.ok(!html.includes(removed));
+  for (const internal of ['metric_refs', 'group_by', 'granularity', 'chart_type', 'population_group']) assert.ok(!html.includes(internal));
 });
-test('AI selects breadth; optional natural expectation has no selector', () => {
-  const html = render(Form, { ...props, expectation: 'Nhiều góc nhìn phù hợp' });
-  assert.ok(html.includes('Nhiều góc nhìn phù hợp'));
-  for (const mode of ['focused', 'deep', 'comprehensive']) assert.ok(!html.includes(`value="${mode}"`));
+test('character count uses the server limit and flags overflow', () => {
+  const ok = render(Form, { prompt: 'abc', disabled: false, maxChars: 8000, onPrompt: () => {}, onSubmit: () => {} });
+  assert.match(ok, /3\/8\.000/);
+  const over = render(Form, { prompt: 'x'.repeat(12), disabled: false, maxChars: 10, onPrompt: () => {}, onSubmit: () => {} });
+  assert.match(over, /text-rose-600/);
 });
-test('custom dates stay within time without adding conceptual inputs', () => {
-  const html = render(Form, { ...props, time: 'custom', start: '2026-09-01', end: '2026-09-30' });
-  assert.equal((html.match(/data-analysis-input=/g) || []).length, 4);
-  assert.equal((html.match(/type="date"/g) || []).length, 2);
-});
-test('time presets work without capability network response', () => {
-  const html = render(Form, { ...props, capabilities: null });
-  for (const mode of ['auto', 'previous_month', 'current_year', 'custom']) assert.ok(html.includes(`value="${mode}"`));
+test('V3.1 payload carries scope, depth and optional mission hint only when set', () => {
+  const scope = { mode: 'selected', filters: [{ dimension: 'store_type', operator: 'in', value: ['KIOSK_VE_TINH'] }] };
+  assert.deepEqual(analysisInputPayload({ question: 'Rủi ro', scope, depth: 'deep', mission: 'risk_watch' }),
+    { question: 'Rủi ro', time: { mode: 'auto' }, analysis_depth: 'deep', analysis_scope: scope, analysis_mission: 'risk_watch' });
+  assert.deepEqual(analysisInputPayload({ question: 'X', scope: { mode: 'auto', filters: [] }, mission: null }), { question: 'X', time: { mode: 'auto' } });
 });
 test('question-only natural payload omits blank optional fields and engine configuration', () => {
   assert.deepEqual(analysisInputPayload({ question: '  Kiểm tra hoạt động  ' }), { question: 'Kiểm tra hoạt động', time: { mode: 'auto' } });
   assert.deepEqual(analysisInputPayload({ question: 'X', context: '  ', expectation: '' }), { question: 'X', time: { mode: 'auto' } });
 });
-test('four natural fields and explicit module selection survive approval unchanged', () => {
+test('compatibility callers may still send context/expectation; module selection survives approval', () => {
   const input = analysisInputPayload({ question: 'Câu hỏi', time: 'current_month', context: 'Hai thành phố', expectation: 'Nhiều góc nhìn', moduleId: 'am_123456789012345678901234' });
   assert.deepEqual(input, { question: 'Câu hỏi', time: { mode: 'current_month' }, analysis_context: 'Hai thành phố', analysis_expectation: 'Nhiều góc nhìn', analysis_module_id: 'am_123456789012345678901234' });
   assert.deepEqual({ ...input, session_id: 'approved' }.question, input.question);
 });
+// Fixed in V3.1: the prompt-mode default now matches the server default (deep).
 test('question-only submission has auto constraints and deep default', () => {
   assert.deepEqual(analysisInputPayload({ prompt: '  Kiểm tra hoạt động  ' }), { prompt: 'Kiểm tra hoạt động', domain: 'auto', time_range: { mode: 'auto' }, analysis_scope: { mode: 'auto', filters: [] }, analysis_depth: 'deep' });
 });

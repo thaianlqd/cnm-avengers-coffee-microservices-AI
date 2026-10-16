@@ -22,7 +22,7 @@ def audit(catalog):
         for field in ('business_definition','population_definition','grain','aggregation_semantics','aggregation_behavior','additivity_by_dimension','historical_capability','quality_direction','invalid_uses'):
             if not m.get(field):errors.append({'kind':'metric','id':id,'reason':'missing_'+field})
         if 'AVG(' in m['expression'].upper() or '/ NULLIF(COUNT(' in m['expression'].upper():
-            if m.get('aggregation_semantics')!='average' or m.get('additive'):errors.append({'kind':'metric','id':id,'reason':'invalid_average_semantics'})
+            if m.get('aggregation_semantics') not in {'average','ratio'} or m.get('additive'):errors.append({'kind':'metric','id':id,'reason':'invalid_average_semantics'})
         if not m.get('time_column') and m.get('historical_capability') not in ('snapshot','snapshot_only','current_snapshot'):
             errors.append({'kind':'metric','id':id,'reason':'false_history'})
     for id,d in r['dimensions'].items():

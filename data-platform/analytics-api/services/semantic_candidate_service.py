@@ -19,6 +19,9 @@ class SemanticCandidatePacket:
 
 def candidate_packet(catalog, index, intelligence, anchors, question, ui, previous=()):
     retrieved = intelligence.candidates(question, ui.get('domain','auto'), 'focused', previous)
+    # Zero-overlap catalog fallbacks are arbitrary (alphabetical); never present
+    # them as evidence. Low-confidence retrieval sends the compact directory.
+    evidenced = [c for c in retrieved if c['match_category'] != 'catalog_candidate' or c['score'] > 0]
     explicit_metrics = {m for a in anchors['metrics'] for m in a['candidate_ids']}
     explicit_dims = {d for kind in ('dimensions','population_scopes') for a in anchors.get(kind,[]) for d in a['candidate_ids']}
     explicit_dims.update(v['dimension'] for v in anchors['values'])
@@ -37,9 +40,16 @@ def candidate_packet(catalog, index, intelligence, anchors, question, ui, previo
         selected.add(ui['required_domain'])
     metrics = set(explicit_metrics)
     if not metrics:
-        selected.update(c['id'] for c in retrieved[:3])
+        selected.update(c['id'] for c in evidenced[:3])
         metrics.update(m for id in selected for m in index.domains[id]['metric_refs'])
     metrics &= index.metrics.keys()
+    # Same-subject siblings of explicit metrics stay visible as id/label only,
+    # so a lexical anchor never hides the governed metric the user meant.
+    # Only an unambiguous anchor narrows the menu; broad anchors already do not.
+    narrow = {a['candidate_ids'][0] for a in anchors['metrics'] if len(a['candidate_ids']) == 1}
+    sibling = {m for x in narrow if x in index.metrics for s in index.metrics[x]['subjects']
+               for m in index.subjects.get(s, {}).get('metrics', []) if m in index.metrics} - metrics
+    directory = [] if metrics else sorted(index.metrics)
     dims = explicit_dims & index.dimensions.keys()
     # Missing axes remain choices for the interpreter, supplied by selected lenses
     # rather than the entire raw-detail directory.
@@ -71,6 +81,8 @@ def candidate_packet(catalog, index, intelligence, anchors, question, ui, previo
         explicit_metric_ids=sorted(explicit_metrics),explicit_dimension_ids=sorted(explicit_dims),
         metrics=meanings,dimensions=[dict(id=d,label=r['dimensions'][d]['business_name'],
             values=dimension_values(catalog,d)) for d in sorted(dims)],
+        **({'related_metrics':[[m,r['metrics'][m]['business_name']] for m in sorted(sibling)]} if sibling else {}),
+        **({'metric_directory':[[m,r['metrics'][m]['business_name']] for m in directory]} if directory else {}),
         equivalent_metrics=[g for g in r.get('equivalent_metric_groups',[]) if set(g) & metrics],
         candidate_domains=sorted(selected),candidate_subjects=sorted(subjects),
         supported_analysis_shapes=['aggregate','ranking','trend','comparison','distribution','cross_tab','relationship','detail'],

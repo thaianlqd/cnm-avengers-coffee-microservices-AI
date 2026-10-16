@@ -17,6 +17,13 @@ class IntentRanking(Contract):
     per_group: list[str] = Field(default_factory=list, max_length=2)
 
 
+# Requested future horizon only; forecast numbers are always server-computed.
+# (A class docstring would be copied into the provider schema on every call.)
+class IntentForecast(Contract):
+    horizon: int = Field(ge=1, le=366)
+    unit: Literal["day", "week", "month"]
+
+
 class IntentRequirement(Contract):
     id: str = Field(pattern=r"^[a-z][a-z0-9_]{0,39}$")
     goal: str = Field(default="Phân tích yêu cầu", min_length=1, max_length=2000,
@@ -39,6 +46,7 @@ class IntentRequirement(Contract):
         description='scalar: ungrouped KPI. selected_total: sum a Top N cohort, never an average.')
     feature_metrics: dict[DerivedFeature, list[str]] = Field(default_factory=dict, max_length=10,
         description='Targets only ACTIVE derived_features within metric_ids. Omit inactive entries and unnecessary maps.')
+    forecast: Optional[IntentForecast] = None
     availability: Literal["requested", "needs_input", "unsupported", "insufficient_data"] = "requested"
     reason: Optional[Literal["historical_data_unavailable", "metric_unavailable",
                              "definition_unavailable", "ambiguous_criterion"]] = None

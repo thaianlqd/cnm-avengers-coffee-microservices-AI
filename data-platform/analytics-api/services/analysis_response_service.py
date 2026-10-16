@@ -62,7 +62,7 @@ def restore_report_presentation(report, artifacts, catalog):
     first = next(iter(report['result_sets'].values()))
     report['table_data']['rows'] = first['rows']
     hydrated = restore_artifacts(report, catalog)
-    evidence = analytical_features(hydrated, catalog, report.get('derived_feature_bindings'))
+    evidence = analytical_features(hydrated, catalog, report.get('derived_feature_bindings'), as_of=(report.get('quality_context') or {}).get('reference_date'))
     report['evidence'] = evidence[:c.evidence_preview]
     report.update(build_dashboard(hydrated, evidence, DashboardPlan.model_validate(report['dashboard_plan_input']), catalog=catalog))
     bound_response(report, c)

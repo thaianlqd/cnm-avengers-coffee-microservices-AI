@@ -1,5 +1,6 @@
 """Deterministic depth and supporting business views from checked metadata."""
 from services.analysis_intent import IntentRequirement
+from services.semantic_manifest_service import NON_ADDITIVE_SEMANTICS
 from services.analytical_capacity_planner import AnalyticalCapacityContract
 
 
@@ -17,7 +18,7 @@ def estimated_views(operations, catalog):
         visible=[d for d in dims if d not in identities]
         if op['operation']=='detail' or not metrics or not visible and op['operation']!='trend':
             continue
-        same_unit=len(metrics)>1 and len({catalog.registry['metrics'][m]['unit'] for m in metrics})==1 and len({catalog.registry['metrics'][m].get('aggregation_semantics')=='average' for m in metrics})==1
+        same_unit=len(metrics)>1 and len({catalog.registry['metrics'][m]['unit'] for m in metrics})==1 and len({catalog.registry['metrics'][m].get('aggregation_semantics') in NON_ADDITIVE_SEMANTICS for m in metrics})==1
         total += 1 if op['operation']=='relationship' or same_unit and (
             len(visible)==1 and op['operation'] not in {'ranking','trend'} or not visible and op['operation']=='trend') else len(metrics)
     return total

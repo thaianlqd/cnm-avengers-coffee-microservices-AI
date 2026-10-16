@@ -32,7 +32,7 @@ class DomainV25Tests(unittest.TestCase):
         for name in ("requests.sessions.Session.request", "psycopg2.connect"):
             guard = patch(name, side_effect=AssertionError("Offline external access forbidden"))
             guard.start(); self.addCleanup(guard.stop)
-        guard = patch.dict(os.environ, {"AI_OFFLINE": "1", "DATA_ANALYST_SEMANTIC_MANIFEST_MAX_CHARS": "10000", "DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS": "24000"})
+        guard = patch.dict(os.environ, {"AI_OFFLINE": "1", "DATA_ANALYST_SEMANTIC_MANIFEST_MAX_CHARS": "14000", "DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS": "24000"})
         guard.start(); self.addCleanup(guard.stop)
         self.catalog = AnalysisCatalog(physical_metadata())
         self.intelligence = DomainIntelligence(self.catalog)
@@ -58,7 +58,8 @@ class DomainV25Tests(unittest.TestCase):
         caps = self.intelligence.capabilities()
         self.assertEqual(len(caps["domains"]), 16)
         self.assertEqual({d["id"] for d in caps["analysis_depths"]}, set(DEPTH_POLICIES))
-        self.assertFalse(next(d for d in caps["domains"] if d["id"] == "delivery")["historical"])
+        # V3.0: the governed delivery-assignment fact has a time dimension.
+        self.assertTrue(next(d for d in caps["domains"] if d["id"] == "delivery")["historical"])
         self.assertNotIn("customer_id", {s["id"] for s in caps["scope_types"]})
         text = compact(caps)
         for forbidden in ("silver.", "expression", "SELECT ", "password", "api_key"):
@@ -107,6 +108,9 @@ class DomainV25Tests(unittest.TestCase):
             self.assertTrue(all("category" not in lens[3] for lens in pack["lenses"]))
             self.assertNotIn("category", {s["id"] for s in intelligence.capabilities()["scope_types"]})
         physical = physical_metadata(); physical["table_map"].pop("silver.shipper")
+        # The assignment fact keeps delivery analysable without the shipper snapshot.
+        self.assertIn("delivery", DomainIntelligence(AnalysisCatalog(physical)).available())
+        physical["table_map"].pop("silver.giao_hang")
         self.assertNotIn("delivery", DomainIntelligence(AnalysisCatalog(physical)).available())
 
     def test_snapshot_lens_cannot_advertise_history_or_nonadditive_distribution(self):

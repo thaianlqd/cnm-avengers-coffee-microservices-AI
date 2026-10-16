@@ -87,7 +87,8 @@ class AnalysisCatalog:
         )
         self.registry = self.overlay["analysis_registry"]
         from services.semantic_catalog_validation import validate_catalog
-        validate_catalog(self.overlay)
+        # The governed production catalog must declare every source scope.
+        validate_catalog(self.overlay, strict=overlay is None)
         self.tables = {
             n: t
             for n, t in physical.get("table_map", {}).items()
@@ -123,6 +124,9 @@ class AnalysisCatalog:
                 default=str,
             ).encode()
         ).hexdigest()
+        # Semantic registry version, independent of physical row/column layout.
+        self.registry_fingerprint = hashlib.sha256(json.dumps(self.overlay, sort_keys=True,
+            ensure_ascii=False, default=str).encode()).hexdigest()
         self.edges = self._relationships()
         self.snapshot_version=physical.get('snapshot_version') or physical.get('refreshed_at')
         self.policy = {

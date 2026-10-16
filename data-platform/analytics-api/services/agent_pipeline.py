@@ -65,6 +65,7 @@ class AnalysisPipeline:
         return {
             "pipeline_version": self.semantic_info.get("pipeline_version", "2.8" if self.planning_mode == "one_shot" else "2.3"),
             "schema_fingerprint": catalog.fingerprint,
+            "registry_fingerprint": catalog.registry_fingerprint,
             **deepcopy(self.semantic_info),
             "provider_call_count": self.semantic_info.get("provider_call_count", len(self.calls)),
             "provider_attempt_count": self.semantic_info.get("provider_attempt_count", len(self.calls)),
@@ -116,6 +117,16 @@ class AnalysisPipeline:
             catalog.registry["timezone"]
         )
 
+    def record_mission(self, request, catalog):
+        # V3.1 UX hint for dashboard organization only. Kept out of the model
+        # context: the question remains the semantic authority.
+        from services.workspace_service import mission_for
+        value = getattr(request, "analysis_mission", None)
+        mission = mission_for(catalog.registry, value)
+        self.semantic_info["analysis_mission"] = mission["id"] if mission else None
+        if value and not mission:
+            self.semantic_info["analysis_mission_ignored"] = value
+
     def ui_context(self, request, catalog, reference):
         # Structured UI scope only; never scan the natural-language request.
         domain = request.domain or "auto"
@@ -130,6 +141,7 @@ class AnalysisPipeline:
             "analysis_depth_explicit": "analysis_depth" in request.model_fields_set,
         }
         context.update(natural_input=request.natural_input)
+        self.record_mission(request, catalog)
         if request.natural_input:
             context.update(analysis_context=request.analysis_context, analysis_expectation=request.analysis_expectation)
         ui = request.time_range
@@ -345,7 +357,7 @@ class AnalysisPipeline:
         session.agent_reference_date = reference.isoformat()
         session.dashboard_plan = plan.model_dump(mode="json")
         evidence = (
-            analytical_features(artifacts, catalog, self.semantic_info.get("derived_feature_bindings"))
+            analytical_features(artifacts, catalog, self.semantic_info.get("derived_feature_bindings"), as_of=reference)
             if all(a.result is not None for a in artifacts.values())
             else []
         )
@@ -488,6 +500,7 @@ class AnalysisPipeline:
     def generate(self, request):
         self.semantic_info['force_refresh'] = bool(getattr(request,'refresh',False))
         catalog = self.catalog()
+        self.record_mission(request, catalog)
         session = get_session(request.session_id) if request.session_id else None
         if request.session_id and not session:
             raise AnalysisError("session", "Session expired")
@@ -630,7 +643,7 @@ class AnalysisPipeline:
             agent.queries.run(agent.queries.prepare(args))  # Revalidate cached rows, no SQL.
         artifacts = agent.queries.artifacts
         plan = DashboardPlan.model_validate(session.dashboard_plan)
-        evidence = analytical_features(artifacts, catalog, self.semantic_info.get("derived_feature_bindings"))
+        evidence = analytical_features(artifacts, catalog, self.semantic_info.get("derived_feature_bindings"), as_of=session.agent_reference_date)
         current = build_dashboard(artifacts, evidence, plan, self.budget.charts, self.budget.categories, self.budget.series,
                                   minimum_visuals=self.semantic_info.get('minimum_visuals',0))
         # Include validated defaults supplied by the dashboard when a prior
@@ -691,7 +704,7 @@ class AnalysisPipeline:
         observer = request_observer.get()
         if observer:
             observer('verifying', {})
-        evidence = analytical_features(artifacts, catalog, self.semantic_info.get("derived_feature_bindings"))
+        evidence = analytical_features(artifacts, catalog, self.semantic_info.get("derived_feature_bindings"), as_of=reference)
         dashboard = build_dashboard(
             artifacts,
             evidence,
@@ -716,7 +729,17 @@ class AnalysisPipeline:
                     reasons = sorted({v["reason"] for v in dashboard["dashboard_plan"]["omitted_visuals"] if v["query_id"] == a.query.id})
                     self.semantic_info.setdefault("table_fallbacks", []).append({"query_id": a.query.id, "reasons": reasons or ["no_eligible_visual"]})
                     self.semantic_info.setdefault("limitations", []).append({"reason": "table_fallback", "message": "Một góc nhìn được trình bày trong bảng dữ liệu đầy đủ vì cấu trúc hoặc số nhóm chưa phù hợp với biểu đồ."})
+        from services.workspace_service import mission_for, mission_layout, follow_up_questions
+        mission_id = self.semantic_info.get("analysis_mission") or (session.ui_constraints or {}).get("analysis_mission")
+        mission = mission_for(catalog.registry, mission_id)
+        if mission:
+            session.ui_constraints = {**(session.ui_constraints or {}), "analysis_mission": mission["id"]}
+            self.semantic_info["analysis_mission"] = mission["id"]
+            dashboard["dashboard_plan"]["analysis_mission"] = mission["id"]
         narrative = grounded_narrative(plan, evidence)
+        # Forecast numbers are computed here from verified history only.
+        from services.forecast_service import report_forecasts
+        forecasts = report_forecasts(artifacts, self.semantic_info.get("resolved_requirement_coverage"), catalog, reference)
         from services.analytical_capacity_planner import AnalyticalCapacityContract
         from services.result_artifact_store import artifact_store, fingerprint, serialized
         capacity_contract = AnalyticalCapacityContract.from_env()
@@ -818,6 +841,10 @@ class AnalysisPipeline:
             **dashboard,
             **narrative,
             "kpis": {},
+            "forecasts": forecasts,
+            "analysis_mission": mission["id"] if mission else None,
+            "mission_layout": mission_layout(mission, dashboard["charts"]),
+            "follow_up_questions": follow_up_questions(artifacts, catalog, mission),
             "evidence": evidence,
             "analysis_explanation": explain_analysis(
                 artifacts, catalog, dashboard["charts"], evidence
@@ -883,6 +910,7 @@ class AnalysisPipeline:
             response["derived_feature_bindings"] = deepcopy(self.semantic_info.get("derived_feature_bindings", []))
             response["provenance"] = {"user_request": session.original_prompt, "semantic_intent_fingerprint": self.semantic_info["semantic_intent_fingerprint"],
                 "resolved_plan_fingerprint": self.semantic_info["resolved_plan_fingerprint"], "catalog_fingerprint":catalog.fingerprint,
+                "registry_fingerprint":catalog.registry_fingerprint,
                 "resolver_version": self.semantic_info["resolver_version"], "quality_verifier_version":quality_version,
                 "result_set_fingerprint":digest(response["result_sets"]),"query_plans":response["query_plans"],
                 "initial_semantic_intent":deepcopy(self.semantic_info.get("initial_semantic_intent", session.initial_semantic_intent)),
