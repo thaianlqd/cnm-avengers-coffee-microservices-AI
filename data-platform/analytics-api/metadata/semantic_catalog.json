@@ -5848,7 +5848,11 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "enumerated"
+        "cardinality_hint": "enumerated",
+        "value_labels": {
+          "DANG_GIAO": "Đang giao",
+          "HOAN_THANH": "Hoàn thành"
+        }
       },
       "payment_method": {
         "table": "silver.don_hang",
@@ -5885,7 +5889,13 @@
           "tiền mặt thực tế",
           "kiểm đếm tiền mặt",
           "tiền mặt kỳ vọng"
-        ]
+        ],
+        "value_labels": {
+          "NGAN_HANG_QR": "Chuyển khoản QR",
+          "THANH_TOAN_KHI_NHAN_HANG": "Thanh toán khi nhận hàng",
+          "VI_DIEN_TU": "Ví điện tử",
+          "VNPAY": "VNPay"
+        }
       },
       "payment_status": {
         "table": "silver.don_hang",
@@ -5904,7 +5914,12 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "value_labels": {
+          "CHO_THANH_TOAN": "Chờ thanh toán",
+          "CHO_THANH_TOAN_KHI_NHAN_HANG": "Chờ thu tiền khi nhận",
+          "DA_THANH_TOAN": "Đã thanh toán"
+        }
       },
       "order_amount": {
         "table": "silver.don_hang",
@@ -6166,7 +6181,12 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "enumerated"
+        "cardinality_hint": "enumerated",
+        "value_labels": {
+          "DUNG_TAI_CHO": "Dùng tại chỗ",
+          "GIAO_TAN_NOI": "Giao tận nơi",
+          "MANG_DI": "Mang đi"
+        }
       },
       "payment_transaction_status": {
         "table": "silver.giao_dich_thanh_toan",
@@ -12877,7 +12897,13 @@
               "ranking"
             ]
           }
-        }
+        },
+        "supporting_forms": [
+          "line",
+          "bar",
+          "donut"
+        ],
+        "max_supporting_per_form": 1
       },
       {
         "id": "compare",
@@ -12960,7 +12986,13 @@
               "aggregate"
             ]
           }
-        }
+        },
+        "supporting_forms": [
+          "line",
+          "grouped_bar",
+          "bar"
+        ],
+        "max_supporting_per_form": 1
       },
       {
         "id": "ranking",
@@ -13045,7 +13077,13 @@
               "aggregate"
             ]
           }
-        }
+        },
+        "supporting_forms": [
+          "line",
+          "horizontal_bar",
+          "bar"
+        ],
+        "max_supporting_per_form": 1
       },
       {
         "id": "trend",
@@ -13121,7 +13159,12 @@
               "aggregate"
             ]
           }
-        }
+        },
+        "supporting_forms": [
+          "line",
+          "bar"
+        ],
+        "max_supporting_per_form": 1
       },
       {
         "id": "composition",
@@ -13199,7 +13242,14 @@
               "aggregate"
             ]
           }
-        }
+        },
+        "supporting_forms": [
+          "donut",
+          "stacked_100",
+          "bar",
+          "line"
+        ],
+        "max_supporting_per_form": 1
       },
       {
         "id": "forecast",
@@ -13273,7 +13323,12 @@
               "trend"
             ]
           }
-        }
+        },
+        "supporting_forms": [
+          "line",
+          "table"
+        ],
+        "max_supporting_per_form": 1
       },
       {
         "id": "risk_watch",
@@ -13345,7 +13400,8 @@
               "trend"
             ]
           }
-        }
+        },
+        "max_supporting_per_form": 1
       },
       {
         "id": "relationship",
@@ -13414,7 +13470,12 @@
             "metrics": "requested",
             "kinds": []
           }
-        }
+        },
+        "supporting_forms": [
+          "scatter",
+          "line"
+        ],
+        "max_supporting_per_form": 1
       }
     ],
     "risk_signals": [

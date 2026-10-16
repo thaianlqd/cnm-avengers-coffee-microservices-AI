@@ -40,3 +40,4 @@ paths:
 - Eval offline (`evals/run_eval*.py`) tự chặn HTTP và `psycopg2.connect` — giữ nguyên cơ chế chặn đó khi sửa eval.
 - Không `down -v` hay xoá volume `avengers_analytics_data`, `avengers_minio_data`, `avengers_kafka_data`, `avengers_airflow_data`.
 - Sửa `init-db/*.sql` hoặc `migrations/` = đổi schema dữ liệu → phải hỏi người dùng trước.
+- **Sau khi đổi web-ui phải build lại container** (`up -d --build web-ui`, port 8501) và xác minh bundle phục vụ có chuỗi mới; `npm run build` cục bộ không cập nhật container. Người dùng chỉ test — luôn kèm kịch bản test thủ công theo tab.

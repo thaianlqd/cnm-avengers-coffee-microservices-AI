@@ -111,3 +111,13 @@ test('Risk Watch summary: status, highest-risk entities and deterministic drill-
   const html = render(Table, { result, onAsk: () => {} });
   assert.ok(html.includes('data-risk-summary')); assert.ok(html.includes('Điểm nên kiểm tra tiếp'));
 });
+
+test('failure card tells the user at which stage it failed (§117), without internals', async () => {
+  const { analysisFailureStage } = await import('./analysisPresentation.mjs');
+  assert.equal(analysisFailureStage({ analysis_stage: 'PROVIDER_QUOTA_FAILURE' }), 'Hạn mức dịch vụ AI');
+  assert.equal(analysisFailureStage({ failure: { analysis_stage: 'SEMANTIC_CONTRACT_FAILURE' } }), 'Đối chiếu danh mục dữ liệu');
+  assert.equal(analysisFailureStage({}), null);
+  const Card = component('../components/AnalysisClarification.tsx', 'AnalysisClarification');
+  const html = render(Card, { response: { status: 'error', analysis_stage: 'PRECHECK_FAILURE', message: 'x' } });
+  assert.ok(html.includes('Giai đoạn: Kiểm tra trước khi gửi'));
+});

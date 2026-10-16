@@ -3776,3 +3776,13 @@ P10 — DONE (kiểm chứng cuối, 16/10/2026):
 - Sửa thêm ở P10: "Phân tích lợi nhuận tháng 9" (chỉ khái niệm chưa quản trị) → NEEDS_INPUT + unsupported_only (§97, 0 lượt AI).
 - git diff --check sạch; quét secret/debug sạch; không đổi ai-service, k8s, docker-compose.yml app.
 - Còn lại: live eval NOT RUN (không chạy để tránh tốn quota); việc xoá ScopeDepthBar.tsx đang ở trạng thái staged.
+P10b — BỔ SUNG SAU RÀ SOÁT PLAN (16/10/2026, sau phản hồi thử UI):
+- Nguyên nhân bản UI cũ: container web-ui chưa build lại → đã `up -d --build web-ui` và kiểm bundle phục vụ (skill execute-plan ghi quy tắc).
+- §14–§21/§45 ngữ pháp biểu đồ theo nhiệm vụ: registry thêm supporting_forms + max_supporting_per_form; chart_relevance_service.grammar_decisions
+  (không lặp góc nhìn, không donut thừa, 1 chart hỗ trợ/dạng); lý do mới duplicate_view, outside_mission_grammar.
+- §15 So sánh: KPI A · B · chênh lệch tuyệt đối · chênh lệch % (compare_cards); §84 Trả lời ngắn không lặp, hai nhóm → câu "cao hơn".
+- KPI một thẻ/một ý nghĩa; nhãn nghiệp vụ cho enum thô (payment_method, order_type, order_status, payment_status) qua value_labels + business_labels;
+  bỏ mã định danh khỏi nhãn Top-N.
+- §117 thẻ lỗi hiện "Giai đoạn: …"; §83 test đơn vị cho toàn bộ metric.
+- Chưa làm / không áp dụng: §76 nhãn "Cần chiều/Cần trường thời gian" (registry không có chỉ số nào bắt buộc chiều); §86 gợi ý tiếp theo của So sánh
+  vẫn dùng mẫu chung (xu hướng/đào sâu/kỳ trước), chưa có "chênh lệch theo tuần".

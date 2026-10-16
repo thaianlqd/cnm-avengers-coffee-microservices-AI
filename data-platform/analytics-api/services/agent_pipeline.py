@@ -814,8 +814,11 @@ class AnalysisPipeline:
         # built only from verified, evidence-referenced facts of primary charts.
         from services.chart_insight_service import chart_insights
         insights = chart_insights(dashboard["charts"], artifacts, catalog, reference, mission_hint)
-        short_answer = [f["text"] for c in dashboard["charts"] if c.get("relevance_role", "primary") == "primary"
-                        for f in (c.get("insight") or {}).get("key_facts", [])[:1]][:3]
+        from services.chart_insight_service import compare_cards, short_answer as build_short_answer
+        short_answer = build_short_answer(dashboard["charts"])
+        cards = compare_cards(dashboard["charts"], artifacts, catalog, mission_hint)
+        if cards:
+            dashboard["kpi_cards"] = cards + [k for k in dashboard.get("kpi_cards", []) if k.get("label") != "Thay đổi giữa hai kỳ quan sát"]
         from services.analytical_capacity_planner import AnalyticalCapacityContract
         from services.result_artifact_store import artifact_store, fingerprint, serialized
         capacity_contract = AnalyticalCapacityContract.from_env()

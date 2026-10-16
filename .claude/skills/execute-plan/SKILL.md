@@ -46,12 +46,21 @@ Gom câu hỏi hỏi một lần. Mọi trường hợp khác: tự chọn mặc
   Không nới test cho xanh, không skip/xoá test.
 
 ## 4. Kết thúc (một lần)
+0. **Triển khai để người dùng test được (bắt buộc, người dùng KHÔNG tự build):** build ở máy ≠ container đang chạy.
+   Đổi `data-platform/web-ui` → `docker compose -f docker-compose.data.yml up -d --build web-ui` (tạo lại cả analytics-api;
+   chỉ chạy khi không có test đang chạy). Đổi analytics-api → code được mount, uvicorn tự reload (kiểm `ps` healthy).
+   Đổi ai-service/NestJS → `docker compose up -d --build <service>`. Sau đó **xác minh bản đang phục vụ**:
+   `J=$(curl -s localhost:8501 | grep -o 'assets/[^"]*\.js' | head -1); curl -s localhost:8501/$J | grep -c "<chuỗi UI mới>"`
+   (và chuỗi UI cũ phải = 0). Không được báo "build PASS" khi chưa làm bước này.
 1. Kiểm chứng toàn phạm vi **một lần**, tuần tự: `dp-test.sh all` (data-platform) / `test-ai-offline.sh` (ai-service).
 2. `git diff --check`; quét secret/debug chỉ trên dòng thêm:
    `git diff | grep -E "^\+" | grep -iE "AIza|sk-|gsk_|password\s*=|console\.log|print\(|breakpoint" | head`.
 3. Tự review nhẹ: `git diff --stat`, chỉ mở diff của file rủi ro (auth, thanh toán, planner, provider). Không spawn agent review
    trừ khi người dùng yêu cầu. Không tự chạy `explain-system`.
-4. Báo cáo cuối theo đúng mẫu PLAN yêu cầu (đọc đúng mục đó theo số dòng đã ghi), lấy số liệu từ file progress.
+4. **Kịch bản test thủ công cho người dùng** (ngắn, theo từng tab/màn hình đã đổi): mỗi ca = bước bấm/nhập cụ thể → kết quả đúng
+   mong đợi → dấu hiệu sai. Ghi vào cuối file progress và đưa trong báo cáo cuối. Người dùng chỉ test, không build.
+5. Rà lại PLAN so với code: mỗi mục "must/required" của PLAN phải có bằng chứng (test, grep, hoặc chuỗi UI); mục nào chưa làm thì nêu rõ.
+6. Báo cáo cuối theo đúng mẫu PLAN yêu cầu (đọc đúng mục đó theo số dòng đã ghi), lấy số liệu từ file progress.
 
 ## Cấm
 Không `git commit/push/reset/stash/clean/rebase/restore`. Không đọc `.env`. Không `docker compose down -v`.

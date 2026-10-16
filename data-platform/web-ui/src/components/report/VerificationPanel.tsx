@@ -52,7 +52,7 @@ export const VerificationPanel: React.FC<{ report: any }> = ({ report }) => {
       <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-1.5"><h4 className="font-semibold text-slate-900">Biểu đồ đúng yêu cầu</h4>
         <p>{v.chart_relevance?.passed}/{v.chart_relevance?.total} biểu đồ ánh xạ đúng yêu cầu, chỉ số và trục.</p>
         {!!dropped.length && <details><summary className="cursor-pointer">{dropped.length} góc nhìn đã được lọc bỏ</summary><ul className="mt-1 space-y-0.5">{dropped.map((d: any, i: number) =>
-          <li key={i}>{d.title || d.chart_id}: {({ outside_mission_evidence: 'ngoài bằng chứng của nhiệm vụ', no_requirement_mapping: 'không gắn với yêu cầu', depth_budget: 'vượt ngân sách độ sâu' } as any)[d.reason] || d.reason}</li>)}</ul></details>}</div>
+          <li key={i}>{d.title || d.chart_id}: {({ outside_mission_evidence: 'ngoài bằng chứng của nhiệm vụ', no_requirement_mapping: 'không gắn với yêu cầu', depth_budget: 'vượt ngân sách độ sâu', outside_mission_grammar: 'không đúng dạng biểu đồ của nhiệm vụ', duplicate_view: 'trùng góc nhìn đã có' } as any)[d.reason] || d.reason}</li>)}</ul></details>}</div>
       <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-1.5"><h4 className="font-semibold text-slate-900">Kiểm tra lùi dự báo</h4>
         {forecast.length ? forecast.map((f, i) => <p key={i}>{f.metric} · {f.method}: {f.errors}; độ phủ khoảng 80%: {f.coverage}.</p>) : <p className="text-slate-500">Báo cáo không có dự báo.</p>}
         <p className="text-slate-400">Dự báo không thể kiểm chứng với tương lai; chất lượng đo bằng kiểm tra lùi, không gọi là “chính xác x%”.</p></div>

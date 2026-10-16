@@ -43,7 +43,8 @@ def _key(row, dims):
 
 def _label(row, dims, catalog):
     parts = []
-    for d in dims:
+    named = [d for d in dims if not (d.endswith("_id") and len(dims) > 1)]  # identity codes are not business labels
+    for d in named or dims:
         value = row.get(d)
         labels = catalog.registry["dimensions"].get(d, {}).get("value_labels", {})
         parts.append(str(labels.get(str(value), value)))
@@ -220,3 +221,44 @@ def verify_insights(insights, artifacts, tolerance=1e-6):
     causal = [b["chart_id"] for b in insights for text in [b.get("interpretation", ""), *[f["text"] for f in b.get("key_facts", [])]]
               if any(t in text.lower() for t in CAUSAL_TERMS)]
     return {"numeric_claims": total, "matched": matched, "unsupported": unsupported, "causal_language": causal}
+
+
+def short_answer(charts, limit=3):
+    """1–3 distinct factual sentences from primary charts; a two-group chart answers with its gap."""
+    out = []
+    for chart in charts:
+        if chart.get("relevance_role", "primary") != "primary":
+            continue
+        facts = (chart.get("insight") or {}).get("key_facts", [])
+        pick = next((f for f in facts if " cao hơn " in f["text"]), facts[0] if facts else None)
+        if pick and pick["text"] not in out:
+            out.append(pick["text"])
+    return out[:limit]
+
+
+def compare_cards(charts, artifacts, catalog, mission_id):
+    """Compare mission KPI strip (§15): A, B, absolute gap, percentage gap — from verified rows only."""
+    if mission_id != "compare":
+        return []
+    for chart in charts:
+        artifact = artifacts.get((chart.get("scope_refs") or [chart.get("scope_ref")])[0])
+        if not artifact or chart.get("relevance_role") != "primary" or artifact.plan.kind == "trend" or not artifact.plan.dimensions:
+            continue
+        metric = artifact.plan.metrics[0]
+        rows = [r for r in artifact.result["rows"] if r.get(metric) is not None]
+        if len(rows) != 2:
+            continue
+        dims = artifact.plan.dimensions
+        a, b = sorted(rows, key=lambda r: -r[metric])
+        unit = catalog.registry["metrics"][metric].get("unit")
+        qid = artifact.query.id
+        cards = [{"label": _label(r, dims, catalog), "value": r[metric], "unit": unit, "metric": metric, "scope_ref": qid,
+                  "evidence_ref": f"{qid}:{metric}:{_key(r, dims)}"} for r in (a, b)]
+        gap = a[metric] - b[metric]
+        cards.append({"label": "Chênh lệch tuyệt đối", "value": gap, "unit": "điểm %" if unit == "%" else unit, "metric": metric,
+                      "scope_ref": qid, "evidence_ref": f"{qid}:{metric}:{_key(a, dims)}-{_key(b, dims)}"})
+        if unit != "%" and b[metric]:
+            cards.append({"label": "Chênh lệch %", "value": gap / abs(b[metric]) * 100, "unit": "%", "metric": metric,
+                          "scope_ref": qid, "evidence_ref": f"{qid}:{metric}:{_key(a, dims)}-{_key(b, dims)}"})
+        return cards
+    return []

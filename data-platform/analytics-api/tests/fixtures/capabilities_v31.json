@@ -1,8 +1,8 @@
 {
  "status": "ready",
  "version": "3.0",
- "fingerprint": "97b9471d50633e64685f20d2f9855305230b68a27ade136af6cd1074a125d30b",
- "registry_fingerprint": "4fe247e56bc34eb4c69ebaa31bab946f8976c9933127fbd8d09a3ec494f35a88",
+ "fingerprint": "b65031d280111de4d6b87a6cd2b75fa1661a6adc3b221b08124351e6530a3314",
+ "registry_fingerprint": "95a7c3f1239979e45255295b2478f230465db25f4d2059938bcb1846d8f889af",
  "domains": [
   {
    "id": "orders",
@@ -5744,6 +5744,62 @@
   }
  },
  "dimension_value_labels": {
+  "order_status": [
+   {
+    "value": "DANG_GIAO",
+    "label": "Đang giao"
+   },
+   {
+    "value": "HOAN_THANH",
+    "label": "Hoàn thành"
+   }
+  ],
+  "payment_method": [
+   {
+    "value": "NGAN_HANG_QR",
+    "label": "Chuyển khoản QR"
+   },
+   {
+    "value": "THANH_TOAN_KHI_NHAN_HANG",
+    "label": "Thanh toán khi nhận hàng"
+   },
+   {
+    "value": "VI_DIEN_TU",
+    "label": "Ví điện tử"
+   },
+   {
+    "value": "VNPAY",
+    "label": "VNPay"
+   }
+  ],
+  "payment_status": [
+   {
+    "value": "CHO_THANH_TOAN",
+    "label": "Chờ thanh toán"
+   },
+   {
+    "value": "CHO_THANH_TOAN_KHI_NHAN_HANG",
+    "label": "Chờ thu tiền khi nhận"
+   },
+   {
+    "value": "DA_THANH_TOAN",
+    "label": "Đã thanh toán"
+   }
+  ],
+  "order_type": [
+   {
+    "value": "DUNG_TAI_CHO",
+    "label": "Dùng tại chỗ"
+   },
+   {
+    "value": "GIAO_TAN_NOI",
+    "label": "Giao tận nơi"
+   },
+   {
+    "value": "MANG_DI",
+    "label": "Mang đi"
+   }
+  ],
   "store_type": [
    {
     "value": "CHI_NHANH_CHINH",

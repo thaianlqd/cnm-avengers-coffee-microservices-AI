@@ -601,3 +601,62 @@ class SuggestionTests(Guarded):
                     r = self.pf(q, analysis_mission=mission["id"])
                     self.assertNotIn("unrecognized_question", self.codes(r))
                     self.assertNotIn("mission_mismatch", self.codes(r), r["findings"])
+
+
+# --- §14–§21/§45 mission output grammar, §84 short answer, governed value labels --------
+
+class MissionGrammarTests(Guarded):
+    def guided(self, mission, question, contract, **extra):
+        return self.report(ScriptedProvider(), question=question, analysis_mission=mission, input_mode="guided",
+                           guided_contract=contract, analysis_depth=extra.pop("depth", "deep"),
+                           time={"mode": "custom", "start": "2026-09-01", "end": "2026-09-30"}, **extra)
+
+    def test_composition_never_repeats_a_view_and_never_adds_unrelated_forms(self):
+        proposal, report = self.guided("composition", "Cơ cấu doanh thu theo phương thức thanh toán tháng 9 năm 2026",
+                                       {"metric": "revenue", "dimension": "payment_method"})
+        self.assertEqual(proposal["diagnostics"]["provider_call_count"], 0)
+        keys = [(c["chart_type"], c.get("query_id"), tuple(c.get("dimension_ids", []))) for c in report["charts"]]
+        self.assertEqual(len(keys), len(set(keys)), keys)
+        dropped = {d["reason"] for d in report["mission_evidence"]["dropped"]}
+        self.assertTrue(dropped <= {"duplicate_view", "outside_mission_grammar", "depth_budget"}, dropped)
+        forms = [c["chart_type"] for c in report["charts"] if c["relevance_role"] == "supporting"]
+        self.assertLessEqual(len([f for f in forms if f == "donut"]), 1)
+
+    def test_overview_uses_one_breakdown_not_a_wall_of_donuts(self):
+        _, report = self.guided("overview", "Tổng quan doanh thu tháng 9 năm 2026", {"metric": "revenue"})
+        donuts = [c for c in report["charts"] if c["chart_type"] == "donut"]
+        self.assertLessEqual(len(donuts), 1, [c["title"] for c in report["charts"]])
+
+    def test_compare_reports_both_groups_gap_and_percentage_gap(self):
+        _, report = self.guided("compare", "So sánh doanh thu Hồ Chí Minh và Hà Nội tháng 9 năm 2026",
+                                {"metric": "revenue", "dimension": "city", "group_a": "Hồ Chí Minh", "group_b": "Hà Nội"})
+        labels = [k["label"] for k in report["kpi_cards"]]
+        self.assertEqual(labels[:2] and sorted(labels[:2]), ["Hà Nội", "Hồ Chí Minh"], labels)
+        self.assertIn("Chênh lệch tuyệt đối", labels); self.assertIn("Chênh lệch %", labels)
+        by = {k["label"]: k["value"] for k in report["kpi_cards"]}
+        self.assertAlmostEqual(by["Chênh lệch tuyệt đối"], abs(by["Hồ Chí Minh"] - by["Hà Nội"]), places=2)
+        self.assertNotIn("donut", [c["chart_type"] for c in report["charts"] if c["relevance_role"] == "primary"])
+        self.assertTrue(report["short_answer"][0].count(" cao hơn ") == 1 and len(report["short_answer"]) == len(set(report["short_answer"])))
+
+    def test_kpi_cards_have_distinct_meanings(self):
+        _, report = self.guided("trend", "Xu hướng doanh thu theo tuần tháng 9 năm 2026", {"metric": "revenue", "granularity": "week"})
+        labels = [k["label"] for k in report["kpi_cards"]]
+        self.assertEqual(len(labels), len(set(labels)), labels)
+
+    def test_governed_value_labels_replace_raw_enum_codes(self):
+        from services.business_labels import dimension_labeler
+        defs = self.registry["dimensions"]
+        label = dimension_labeler(["payment_method"], [], defs)
+        self.assertEqual(label({"payment_method": "THANH_TOAN_KHI_NHAN_HANG"}, "payment_method"), "Thanh toán khi nhận hàng")
+        self.assertEqual(label({"payment_method": "KHONG_BIET"}, "payment_method"), "KHONG_BIET")
+        for mission in self.registry["analysis_missions"]:
+            self.assertIn("max_supporting_per_form", mission)
+
+    def test_every_governed_unit_is_rendered_with_its_own_unit(self):
+        from services.chart_insight_service import fmt
+        for id, metric in self.registry["metrics"].items():
+            unit = metric.get("unit")
+            text = fmt(1234.5 if unit != "%" else 12.5, unit)
+            with self.subTest(metric=id, unit=unit):
+                self.assertTrue(text.endswith("%") if unit == "%" else (("VND" in text) if unit == "VND" else text.endswith(unit)), text)
+                self.assertNotIn("VND", text) if unit not in {"VND"} else None

@@ -105,3 +105,21 @@ export function analysisChartGroups(charts = []) {
 export function analysisChartSpan(chart, index, count) {
   return 'col-span-1';
 }
+
+// V3.2 §117: tell the user at which stage it failed, in business wording (never stack details).
+const STAGES = {
+  PRECHECK_FAILURE: 'Kiểm tra trước khi gửi',
+  PROVIDER_TRANSPORT_FAILURE: 'Kết nối dịch vụ AI',
+  PROVIDER_QUOTA_FAILURE: 'Hạn mức dịch vụ AI',
+  SEMANTIC_INTERPRETATION_FAILURE: 'Diễn giải yêu cầu',
+  SEMANTIC_CONTRACT_FAILURE: 'Đối chiếu danh mục dữ liệu',
+  QUERY_COMPILATION_FAILURE: 'Lập truy vấn',
+  QUERY_EXECUTION_FAILURE: 'Chạy truy vấn',
+  RESULT_VALIDATION_FAILURE: 'Kiểm tra kết quả',
+  FORECAST_FAILURE: 'Dự báo',
+};
+
+export function analysisFailureStage(response = {}) {
+  const stage = response.analysis_stage || response.failure?.analysis_stage;
+  return STAGES[stage] || null;
+}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { AnalysisMeaning } from './AnalysisMeaning';
-import { analysisFailureTitle, analysisFailureActions, analysisFailureTone, analysisFailureReference } from '../utils/analysisPresentation.mjs';
+import { analysisFailureTitle, analysisFailureActions, analysisFailureTone, analysisFailureReference, analysisFailureStage } from '../utils/analysisPresentation.mjs';
 
 /** Normal users see business labels; internal IDs stay in API diagnostics. */
 export const AnalysisClarification: React.FC<{
@@ -21,11 +21,13 @@ export const AnalysisClarification: React.FC<{
   const alert = analysisFailureTone(response) === 'alert';
   const actions = analysisFailureActions(response);
   const reference = analysisFailureReference(response);
+  const stage = analysisFailureStage(response);
   const unsupported = response?.analysis_state === 'UNSUPPORTED_CAPABILITY';
   return (
     <section role={alert ? 'alert' : 'status'} className={`rounded-2xl border p-6 space-y-3 ${alert ? 'border-rose-200 bg-rose-50' : 'border-amber-200 bg-amber-50'}`}>
       <h3 className="text-sm font-semibold text-slate-800">{issue?.title || analysisFailureTitle(response)}</h3>
       <p className="text-sm text-slate-700">{clarification?.user_message || response?.message || 'Hệ thống chưa thể diễn giải yêu cầu lúc này. Vui lòng thử lại.'}</p>
+      {stage && <p data-failure-stage className="text-[11px] font-medium text-slate-500">Giai đoạn: {stage}</p>}
       {issue?.what_is_known?.length > 0 && <div className="text-xs"><strong>Đã nhận diện:</strong> {issue.what_is_known.join(' · ')}</div>}
       {issue?.what_is_missing?.filter((text: string) => text !== (clarification?.user_message || response.message)).map((text: string, index: number) => <p key={index} className="text-xs"><strong>{failed || response.outcome === 'SYSTEM_ERROR' || issue.category === 'PLANNING_CAPACITY' ? 'Thông tin:' : 'Cần bổ sung:'}</strong> {text}</p>)}
       {issue?.recovery_summary && <p className="text-xs text-slate-600">{issue.recovery_summary}</p>}
