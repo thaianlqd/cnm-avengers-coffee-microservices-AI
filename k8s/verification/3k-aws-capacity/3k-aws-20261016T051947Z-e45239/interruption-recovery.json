@@ -1,0 +1,14 @@
+{
+  "observed_at": "2026-10-16T09:57:21.223612+00:00",
+  "local_private_session_directory": "absent after interrupted runtime",
+  "before_recovery_cleanup": {
+    "nonterminated_instances": 0,
+    "volumes": 0,
+    "key_pairs": 0,
+    "security_groups": 2
+  },
+  "last_completed_point": "default-g3-375",
+  "long375": "NOT RUN",
+  "new_fleet_launched": false,
+  "action": "ownership-scoped cleanup of two orphan security groups; no additional AWS compute cost"
+}

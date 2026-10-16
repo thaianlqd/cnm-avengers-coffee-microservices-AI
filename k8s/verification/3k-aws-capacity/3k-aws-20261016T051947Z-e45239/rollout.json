@@ -1,0 +1,389 @@
+{
+  "mode": "rollout",
+  "scope": "AWS API Gateway only; no node HA or versioned image deployment claim",
+  "before": [
+    {
+      "name": "api-gateway-6bf6b5694b-f72vj",
+      "uid": "f8e9b962-db63-4e7c-a607-be26f8ff1b36"
+    },
+    {
+      "name": "api-gateway-6bf6b5694b-q8rd5",
+      "uid": "248db84a-773f-4a3b-8350-1eb60ca70ab3"
+    }
+  ],
+  "action": "kubectl rollout restart deployment/api-gateway; same immutable image",
+  "after": [
+    {
+      "name": "api-gateway-7558f57b5-4xsmt",
+      "uid": "67adef0d-614a-4211-b3da-560d4679a726"
+    },
+    {
+      "name": "api-gateway-7558f57b5-g45mh",
+      "uid": "ce50824a-b90d-4a5e-9cb9-b353392c5ef3"
+    }
+  ],
+  "replacement_observed": true,
+  "http_samples": [
+    {
+      "observed_at": "2026-10-16T05:32:20.320430+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 211.20831700000053
+    },
+    {
+      "observed_at": "2026-10-16T05:32:21.531780+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.961490999993657
+    },
+    {
+      "observed_at": "2026-10-16T05:32:22.537843+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.988775999981044
+    },
+    {
+      "observed_at": "2026-10-16T05:32:23.543925+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.140032999975119
+    },
+    {
+      "observed_at": "2026-10-16T05:32:24.549151+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 4.744073999972898
+    },
+    {
+      "observed_at": "2026-10-16T05:32:25.553980+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 191.87229799990746
+    },
+    {
+      "observed_at": "2026-10-16T05:32:26.745953+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 4.35382600005596
+    },
+    {
+      "observed_at": "2026-10-16T05:32:27.750388+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 4.7393429999829095
+    },
+    {
+      "observed_at": "2026-10-16T05:32:28.755212+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 14.925041999958921
+    },
+    {
+      "observed_at": "2026-10-16T05:32:29.770258+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.14928500001588
+    },
+    {
+      "observed_at": "2026-10-16T05:32:30.775489+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 188.40730199997324
+    },
+    {
+      "observed_at": "2026-10-16T05:32:31.963986+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 6.911616000024878
+    },
+    {
+      "observed_at": "2026-10-16T05:32:32.970981+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 4.685248999976466
+    },
+    {
+      "observed_at": "2026-10-16T05:32:33.975770+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.397595000090405
+    },
+    {
+      "observed_at": "2026-10-16T05:32:34.981245+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 14.942526000027101
+    },
+    {
+      "observed_at": "2026-10-16T05:32:35.996271+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 186.40399599996726
+    },
+    {
+      "observed_at": "2026-10-16T05:32:37.182774+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 6.178253000030054
+    },
+    {
+      "observed_at": "2026-10-16T05:32:38.189293+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.103316000031555
+    },
+    {
+      "observed_at": "2026-10-16T05:32:39.194486+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.710440000029848
+    },
+    {
+      "observed_at": "2026-10-16T05:32:40.200308+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.718766000086362
+    },
+    {
+      "observed_at": "2026-10-16T05:32:41.206133+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 187.81719099990823
+    },
+    {
+      "observed_at": "2026-10-16T05:32:42.394039+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.24116100007177
+    },
+    {
+      "observed_at": "2026-10-16T05:32:43.399367+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.87045199995373
+    },
+    {
+      "observed_at": "2026-10-16T05:32:44.405329+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.961315999911676
+    },
+    {
+      "observed_at": "2026-10-16T05:32:45.411404+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.757605999974658
+    },
+    {
+      "observed_at": "2026-10-16T05:32:46.417247+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 186.4515349999465
+    },
+    {
+      "observed_at": "2026-10-16T05:32:47.603813+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 4.763326999977835
+    },
+    {
+      "observed_at": "2026-10-16T05:32:48.608664+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 4.92746299994451
+    },
+    {
+      "observed_at": "2026-10-16T05:32:49.613677+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 4.527684000095178
+    },
+    {
+      "observed_at": "2026-10-16T05:32:50.618290+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.5127949999587145
+    },
+    {
+      "observed_at": "2026-10-16T05:32:51.623893+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 187.0287169999756
+    },
+    {
+      "observed_at": "2026-10-16T05:32:52.811029+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.099695000012616
+    },
+    {
+      "observed_at": "2026-10-16T05:32:53.816215+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 4.590366999991602
+    },
+    {
+      "observed_at": "2026-10-16T05:32:54.820897+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.0884500000165644
+    },
+    {
+      "observed_at": "2026-10-16T05:32:55.826073+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.737742999940565
+    },
+    {
+      "observed_at": "2026-10-16T05:32:56.831897+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 187.71735600000738
+    },
+    {
+      "observed_at": "2026-10-16T05:32:58.019724+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.341886999985945
+    },
+    {
+      "observed_at": "2026-10-16T05:32:59.025159+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 4.940851000014845
+    },
+    {
+      "observed_at": "2026-10-16T05:33:00.030415+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.81462700006341
+    },
+    {
+      "observed_at": "2026-10-16T05:33:01.036318+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.303779999962899
+    },
+    {
+      "observed_at": "2026-10-16T05:33:02.041765+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 187.6499849998936
+    },
+    {
+      "observed_at": "2026-10-16T05:33:03.229553+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.278422999936083
+    },
+    {
+      "observed_at": "2026-10-16T05:33:04.234918+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 4.25812000003134
+    },
+    {
+      "observed_at": "2026-10-16T05:33:05.239286+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 4.321903999993992
+    },
+    {
+      "observed_at": "2026-10-16T05:33:06.243715+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 4.688340999905449
+    },
+    {
+      "observed_at": "2026-10-16T05:33:07.248488+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 186.83920600005877
+    },
+    {
+      "observed_at": "2026-10-16T05:33:08.435419+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 4.89787999993041
+    },
+    {
+      "observed_at": "2026-10-16T05:33:09.440402+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.411664999996901
+    },
+    {
+      "observed_at": "2026-10-16T05:33:10.446071+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 4.481578000081754
+    },
+    {
+      "observed_at": "2026-10-16T05:33:11.450637+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 4.640463000100681
+    },
+    {
+      "observed_at": "2026-10-16T05:33:12.455367+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 186.61917400004313
+    },
+    {
+      "observed_at": "2026-10-16T05:33:13.642073+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 6.418209000003117
+    },
+    {
+      "observed_at": "2026-10-16T05:33:14.648584+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.19370600000002
+    },
+    {
+      "observed_at": "2026-10-16T05:33:15.653871+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.623146000061752
+    },
+    {
+      "observed_at": "2026-10-16T05:33:16.659587+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 4.9819150000303125
+    },
+    {
+      "observed_at": "2026-10-16T05:33:17.664659+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 186.39499599999
+    },
+    {
+      "observed_at": "2026-10-16T05:33:18.851180+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.253724999988663
+    },
+    {
+      "observed_at": "2026-10-16T05:33:19.856522+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.3301970000347865
+    },
+    {
+      "observed_at": "2026-10-16T05:33:20.861938+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 4.28895899995041
+    },
+    {
+      "observed_at": "2026-10-16T05:33:21.866311+00:00",
+      "status": 200,
+      "json_valid": true,
+      "elapsed_ms": 5.178254999918863
+    }
+  ],
+  "pass": true
+}

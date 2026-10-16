@@ -80,7 +80,7 @@ def merge(folders):
             threshold = 'rate>0.98' if key.startswith('checks') else 'rate<0.02'
             passed = rate > .98 if key.startswith('checks') else rate < .02
         else:
-            out = {'avg': sum(samples) / len(samples), 'p(50)': percentile(samples, .5), 'p(95)': percentile(samples, .95), 'p(99)': percentile(samples, .99), 'max': max(samples)}
+            out = {'avg': sum(samples) / len(samples), 'p(50)': percentile(samples, .5), 'p(90)': percentile(samples, .9), 'p(95)': percentile(samples, .95), 'p(99)': percentile(samples, .99), 'max': max(samples)}
             threshold = 'p(95)<1500' if key.startswith('http_req_duration') else 'p(95)>=0'
             passed = out['p(95)'] < 1500 if key.startswith('http_req_duration') else True
         metrics[key] = {'values': out, 'thresholds': {threshold: {'ok': passed}}}

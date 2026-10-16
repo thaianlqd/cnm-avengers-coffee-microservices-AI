@@ -1,0 +1,8 @@
+{
+  "db_configuration_transfer": "explicit user approval: existing DB host/port/user/password/database/schema/TLS to three ephemeral AWS targets, account 956035085549, ap-southeast-2; encrypted pinned-certificate control; no real payment/email/authentication secret transfer; cleanup required",
+  "max_generators": 3,
+  "data_platform": "leave Mac containers/files/settings unchanged",
+  "previous_cleaned_run": "3k-aws-20261016T050136Z-1eaf34",
+  "previous_cleanup_pass": true,
+  "current_run": "3k-aws-20261016T051947Z-e45239"
+}

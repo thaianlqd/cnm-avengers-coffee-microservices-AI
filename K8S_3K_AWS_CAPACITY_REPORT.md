@@ -1,3 +1,224 @@
+# AWS Kubernetes capacity — kết quả hoàn tất phase ngày 16/10/2026
+
+**3000 VU: NOT VALID / NOT QUALIFIED; không chạy sau lower-level failure.**
+Mức đã có bằng chứng lặp lại được giữ ở **250 VU** (hai normal PASS lịch sử;
+regression 250 mới cũng PASS). **375 VU là highest fresh single normal PASS**,
+đã giữ120s, chưa chạy long/repeat; không nâng nó thành repeatably qualified.
+500 short PASS nhưng long500 FAIL; không giữ lucky short PASS làm500 qualification.
+First unstable default level mới: **500 VU ở long profile**. Đây không phải exact
+application hard ceiling: thời lượng khác nhau và long500 còn thiếu resource coverage.
+
+Phiên runtime bị gián đoạn sau khi375 normal đã hoàn tất. Guest termination guard
+đã giới hạn tuổi máy; lúc khôi phục không còn instance/EBS/keypair, còn hai owned SG.
+Đã cleanup hai SG và xác minh toàn bộ AWS. Không provision fleet thứ ba, không
+chạy lại workload hoặc gọi375 long/3K là PASS. Phase đo có giới hạn đã kết thúc;
+higher/long qualification còn là công việc riêng, không được suy ra từ báo cáo này.
+
+## Source, topology và DataPlatform
+
+Branch `features_k8s`, isolated worktree `cnm-avengers-coffee-microservices-AI-k8s`.
+Starting HEAD/application source `d715ba7423d012e068eb5b447b806c9a4967320b`;
+origin/main được fetch ở `9ab6d638d72f55e8b5c0208a692b5b6252a7a861`. Không merge.
+Không sửa/stash/reset/clean/switch worktree `branch_thaian`; không dừng Compose,
+restart Docker Desktop, bật local Kubernetes hoặc đổi CPU/RAM trên Mac đang chạy
+DataPlatform/Claude. **Local runtime NOT RUN**; local static PASS là kết quả riêng.
+
+Ba target (k3s server + hai agents) và tối đa ba generator, mỗi máy
+m7i-flex.large /2vCPU/8GiB, Ubuntu24.04 amd64, `ap-southeast-2`, native k6 2.3.0
+với official checksum. Generator2/3 chỉ thêm theo measured inadequacy lịch sử có
+SHA trong generator*-inadequacy.json và explicit user approval. Tối đa sáu máy active;
+không upgrade instance/plan/IAM. Application images immutable
+`avengers/<service>:3k-aws-d715ba7423d0`; năm images amd64, tar/image/import hashes
+được giữ trong build-checks/source-manifest/target*-image-import.
+
+Data path: generator private IPv4 → target1 private NodePort30300 → Gateway →
+backend thật. Baseline từ mỗi generator80 requests PASS, tổng240. Không Mac,
+localhost, reverse SSH hoặc Cloudflare trên data path. Cloudflare chỉ làm HTTPS
+control; commands/results được CMS encrypt/sign và recipient cert đối chiếu AWS
+console. SG không có public application ingress; NodePort chỉ nhận generator SG.
+
+User cho phép đúng DB host/port/user/password/database/schema/TLS hiện có vào ba
+AWS target tạm account956035085549 ở vùng trên. Không in/commit credentials; không
+chuyển real payment/email/auth secrets. Startup JWT/INTERNAL/VNPAY placeholders
+sinh riêng trên AWS. Existing Supabase/Postgres TLS, không reset/migrate/seed/restore
+DB; read-only transaction audit năm schema PASS. `K8S_DEMO_READ_ONLY=true` là startup
+mode, không phải SQL permission boundary của cả platform. Workload chỉ bốn GET.
+
+Không đổi application/business logic, payload, TTL, pool size, resources/probes/HPA
+hoặc transport. Giữ Gateway500m/request75m; backend400m; HPA G/I/M2–4/1–3/1–4;
+cache5000ms, poolmax2, AWSidle30000ms (default ngoài AWS5000), keepalivefalse,
+maxRequestsPerSocket0. Diagnostics bật riêng rồi trả false trước default runs.
+750m experiment lịch sử vẫn bị bác bỏ. Snapshot retained-runtime là cấu hình trước
+các default runs; không giả lập final runtime capture sau khi máy đã bị hủy.
+
+## Workload và gates
+
+Workload SHA256 `8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2`.
+Bốn GET tuần tự: `/menu/danh-muc`, `/menu/san-pham`, `/users/branches/public`,
+`/news?limit=100`; full JSON/every-item validation/gzip, think3s. Counts23/118/1215/3;
+branches718448 decoded/80793 gzip bytes. Không pagination/DTO/validation bypass.
+Normal60/120/30 + grace15; long60/300/60 + grace15. VU gồm think time, không phải RPS.
+
+Whole AND hold: failure<2%, checks>98%, p95<1500ms. Stable còn cần generator đủ
+CPU/RAM/FD/socket/ENA, coverage và actual VU timeline (>=95% hold samples ở target);
+đủ HPA/Pod/node metrics trong hold; không restart/OOM/node pressure; post-smoke và
+natural recovery G/I/M2/1/1. Không manual scale-down để tạo recovery PASS.
+Mức500 phải repeat/long PASS trước1000+ theo checkpoint hiện có.
+
+| Point | VU | Hold s | Requests | RPS | Lỗi % | Checks % | p50 ms | p90 ms | p95 ms | Hold p95 ms | p99 ms | Max ms | Kết quả |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| [diagoff-a-250](k8s/verification/3k-aws-capacity/3k-aws-20261016T051947Z-e45239/diagoff-a-250/analysis.json) | 250 | 120 | 48896 | 229.10 | 0.00 | 100.00 | 12.17 | 158.59 | 595.00 | 565.46 | 1066.41 | 2340.85 | STABLE PASS |
+| [diagon-a-250](k8s/verification/3k-aws-capacity/3k-aws-20261016T051947Z-e45239/diagon-a-250/analysis.json) | 250 | 120 | 47760 | 222.84 | 0.00 | 100.00 | 19.27 | 199.18 | 614.13 | 587.90 | 1169.64 | 2351.87 | DIAGNOSTIC (NOT QUALIFICATION) / STABLE PASS |
+| [diagon-g3-500-retry](k8s/verification/3k-aws-capacity/3k-aws-20261016T051947Z-e45239/diagon-g3-500-retry/analysis.json) | 500 | 120 | 70420 | 330.82 | 0.43 | 99.57 | 49.47 | 897.70 | 1908.02 | 2711.17 | 7613.13 | 10076.59 | DIAGNOSTIC (NOT QUALIFICATION) / FAIL |
+| [default-g3-500](k8s/verification/3k-aws-capacity/3k-aws-20261016T051947Z-e45239/default-g3-500/analysis.json) | 500 | 120 | 76500 | 358.19 | 0.60 | 99.40 | 36.55 | 511.24 | 1117.13 | 1334.36 | 8504.31 | 10130.81 | STABLE PASS |
+| [default-long-g3-500](k8s/verification/3k-aws-capacity/3k-aws-20261016T051947Z-e45239/default-long-g3-500/analysis.json) | 500 | 300 | 137269 | 315.57 | 2.21 | 97.79 | 36.39 | 1032.17 | 3363.87 | 3376.06 | 10000.19 | 10143.67 | FAIL |
+| [default-g3-375](k8s/verification/3k-aws-capacity/3k-aws-20261016T051947Z-e45239/default-g3-375/analysis.json) | 375 | 120 | 70636 | 331.68 | 0.00 | 100.00 | 20.36 | 210.41 | 693.40 | 563.58 | 1353.28 | 5735.68 | STABLE PASS |
+
+250: PASS regression; 500: FAIL qualification (long). 1000/1500/2000/2500/3000:
+NOT RUN.375: single normal PASS, repeat/long NOT RUN. Diagnostic rows không đủ tư
+cách qualification dù observed gates PASS. Không average percentiles; merged
+quantiles dùng toàn bộ actual numeric observations và kiểm tra count/start skew.
+
+Long500: generator hợp lệ, lỗi2.2081%/checks97.7919%, latency FAIL, hai original
+post-smoke FAIL. HPA recovery PASS. Tám hold observations có node metrics thiếu:
+52/60 complete samples nhưng maxgap42.634s >15s nên coverage FAIL. Không thay unknown
+bằng zero hoặc bỏ failed requests. Không thể tái dựng đầy đủ tài nguyên trong gap;
+HTTP failure độc lập vẫn có đủ raw numeric evidence. Không coi đây là exact DB ceiling.
+
+## HPA, tài nguyên, VU và transport
+
+G/I/M HPA peak4/3/4. Mọi completed point restart delta0; không thấy OOMKilled,
+CrashLoop hoặc node pressure trong Pod/node status observations. Từng Pod UID và
+metric nằm trong target.jsonl.gz/analysis.json; VU thực và fraction ở target được
+kiểm tra độc lập cho từng generator. Start skew tất cả đều <2s.
+
+| Point | Complete-cluster peak CPU m | RAM MiB | Generator CPU peak | Complete hold samples | Max complete gap | Restart delta |
+|---|---:|---:|---:|---:|---:|---:|
+| diagoff-a-250 | 1378 | 2136 | 59.82% | 24/24 | 5.00s | 0 |
+| diagon-a-250 | 1420 | 2163 | 60.76% | 24/24 | 5.00s | 0 |
+| diagon-g3-500-retry | 2087 | 2193 | 74.05% | 24/24 | 5.00s | 0 |
+| default-g3-500 | 2164 | 2217 | 78.76% | 24/24 | 5.00s | 0 |
+| default-long-g3-500 | 2011 | 2356 | 77.52% | 52/60 | 42.63s | 0 |
+| default-g3-375 | 1709 | 2349 | 61.22% | 24/24 | 5.00s | 0 |
+
+Các peak dưới đây là maxima riêng từng đại lượng trên cửa sổ load/recovery, không
+nhất thiết cùng timestamp/Pod. Không cộng maxima từng node để suy ra cluster peak.
+Metric thiếu bị bỏ khỏi peak calculation, giữ null/blank khi không có complete sum.
+
+| Node / highest observed single Pod by service | CPU m | RAM MiB |
+|---|---:|---:|
+| capacity-target1 | 1489 | 1114 |
+| capacity-target2 | 814 | 749 |
+| capacity-target3 | 492 | 737 |
+| api-gateway | 287 | 44 |
+| identity-service | 143 | 61 |
+| menu-service | 159 | 65 |
+| news-service | 106 | 45 |
+
+Generator CPU peak lớn nhất trong các completed points 78.76%,
+không ba intervals liên tiếp>=90%; RAM/FD/socket/ENA gates PASS. Đây chỉ là tính hợp
+lệ ở250/375/500, không chứng minh ba generator đủ cho3000. Per-generator CPU/RSS/FD/
+RAM/ENA và actual VU peaks trong session-results.json. Không thấy FD/socket exhaustion
+signature; có request timeouts/status0 và HTTP500 như dưới, không xóa khỏi thống kê.
+Host TCP counters không bao phủ Pod network namespaces nên không loại trừ transport.
+
+| Point | Status counts (0 = không nhận HTTP status) |
+|---|---|
+| diagoff-a-250 | {"200": 48896} |
+| diagon-a-250 | {"200": 47760} |
+| diagon-g3-500-retry | {"0": 301, "200": 70114, "500": 5} |
+| default-g3-500 | {"0": 458, "200": 76041, "500": 1} |
+| default-long-g3-500 | {"0": 3024, "200": 134238, "500": 7} |
+| default-g3-375 | {"200": 70636} |
+
+correlation.csv join window5s với observed VUs, lỗi/checks, HPA current/desired,
+Pod/node CPU/RAM và generator CPU/RAM/RSS/FD. CSV p95 là per-generator/per-route;
+không phải global quantile được average. Tổng requests trong CSV khớp100% root k6
+cho từng point. Compact metric-points giữ exact numeric samples, stage-vus giữ
+actual timestamps; lớn raw originals ở ngoài Git trên ephemeral AWS disks.
+
+## Diagnostics và bottleneck còn chưa chứng minh
+
+SAME250 off→on: p95595.00→614.13ms (+3.2%); RPS229.10→222.84 (-2.7%). Chỉ một pair,
+không chứng minh zero overhead hoặc nhân quả; overhead có thể khác ở500. Diagnostic500
+FAIL khác với default short500 PASS; không dùng diagnostic result thay qualification.
+
+Trong34 complete diagnostic30s windows nằm trọn hold500: Identity branches
+acquiremean0.19ms/max1.34ms, querymean1078ms/max1494ms, loadmean1106ms. Query timing gồm
+wire/server/row decoding, chưa tách SQL execution ở DB server. Menu products loadmean738ms;
+cold physical connects~1054ms. News querymean169ms/load171ms, requestmean5.1ms/max207ms
+trong selected hold windows; Gateway upstream News mean232ms/max9893ms. Lifetime News
+request max1376ms khác hold-window max207ms. Đây là surviving-Pod aggregates, không
+request-ID pairing; Gateway spans bắt đầu sau socket assignment nên chưa đo queue/
+connect trước đó. Không chạy SQL EXPLAIN/business-query plan ở phase này.
+
+Diagnostic kernel/cgroup có Gateway500m peak~47.8% throttled periods,1.317s/5s;
+backend400m~10–22%. Có burst/throttle evidence nhưng không đủ để tăng quota:750m
+lịch sử đã không qua long500. ENA allowance deltas0 ở target/generator, không loại
+trừ Pod transport. Các điểm chờ Gateway/upstream, cache-refresh/DB latency và
+metrics-server gap cần tách tiếp; chưa chứng minh một root cause duy nhất. Generator
+không phải bottleneck trong các lượt mới. Không đủ dữ liệu để khẳng định node hoặc
+DB hard ceiling. Giữ nguyên cấu hình, không retry random hoặc bật keepalive blind.
+
+Bước tiếp theo nếu mở phase mới: confirm375 với cùng normal+long, đo socket assignment/
+DNS/connect/upstream timing cùng request với backend/cache/DB và server-side query
+work, kiểm tra metrics-server reachability trong failure window. Chỉ sau bằng chứng
+mới thử một biến, lower regression rồi failed normal+long. Không1000+ trước repeatable500.
+
+## Regression và setup failures
+
+**245 tests PASS +1 historical skip:** backend161 trên AWS (Gateway22/Identity60/
+Menu45/News34), AWS Python57, K8S Python24, Node control/security3. Build năm images
+PASS trên AWS. Không build backend nặng trên Mac. Static local22 resources/tám
+services và AWS14 resources/bốn browse services PASS; immutable runtime tag validation
+đã PASS. Không nâng local runtime thành PASS: local Kubernetes disabled, NOT RUN.
+
+AWS baseline/browse smoke PASS; failed post-smoke của long500 vẫn là FAIL trong bảng.
+Gateway Pod self-healing và same-image rolling restart mỗi lượt60/60 HTTP200 trên
+categories, replacement UID được xác nhận và baseline phục hồi. Không claim versioned
+deployment, node/controlplane HA hoặc runtime đủ tám services. Socket.IO NOT RUN
+hiện tại; historical synthetic PASS giữ riêng, không claim horizontal Order scaling.
+
+Setup-only run `3k-aws-20261016T050136Z-1eaf34` đã build/test nhưng chưa deploy DB/load;
+FINISH được gửi trước khi DB approval tới, cleanup PASS rồi mới mở fresh fleet.
+`diagon-g3-500` đầu chưa chạy k6 vì sampler thiếu directory; dừng owned sampler, sửa
+mkdir và retry cùng fleet. Không gọi các setup failures là application capacity FAIL.
+Hai thiếu export long500 do shell errexit khi failed smoke đã được thu hồi từ original
+raw, không rerun workload. Analyzer được sửa cho observed `<unknown>` và có regression tests;
+final lightweight status/resource reanalysis giữ nguyên toàn bộ HTTP quantiles/counts.
+
+## Cleanup, cost và delivery
+
+Cleanup API PASS tại `2026-10-16T09:58:49.299468+00:00` (16:58 giờ Việt Nam): cả ba known phases,
+tất cả RunIds, nonterminated/stopped instances0, SG0, EBS0, keypairs0, ENIs0.
+Local control listener/processes absent, private control folder absent. Original
+controller exit không quan sát được; không claim finally tự chạy. Guest guard giới
+hạn compute nhưng còn orphan SG sau interruption, đã ownership-scoped cleanup thủ công.
+Không đổi unrelated AWS resources, IAM; không tạo EKS/RDS/NAT/EIP/keypairs.
+
+Official Sydney m7i-flex.large price0.1197USD/h, SKU YZS4YR3ZPHD427K5, observed16/10,
+effective01/10; Pricing API deny nên dùng official public CSV, không đổi IAM.
+Configured150min × max6 machines: compute1.7955 + EBS.10 + IPv4.09 + transfer/
+contingency.75 =2.7355USD; cộng old estimate1.9076 và setup reserve.30 =4.9431USD.
+Đây là planned conservative reservation, không hóa đơn. Actual termination timestamps
+không còn từ describe-instances khi recovery; không bịa actual runtime/cost. Không
+mở thêm fleet sau interruption. [Cleanup/cost/source evidence](k8s/verification/3k-aws-capacity/3k-aws-20261016T051947Z-e45239/README.md).
+
+Chỉ helpers AWS/capacity/tests/docs/evidence thay đổi; không application source hoặc
+Kubernetes resource semantics. Commit/push chỉ `origin/features_k8s`, không merge.
+Exact delivery HEAD được trả ở kết quả Git/final response, không phải image source SHA.
+
+## Câu dùng an toàn trong luận văn
+
+"Trên cluster AWS ba node, workload public browse bốn GET với full JSON validation
+đạt một plateau375 VU trong120 giây,0% lỗi, p95693.40ms và331.68req/s. Mức có bằng
+chứng lặp lại được giữ ở250 VU.500 VU không qua xác nhận dài300 giây;3000 VU chưa
+được qualification. Kết quả không đại diện checkout/payment/auth writes/order/AI,
+assets/browser rendering hoặc3000 người dùng production."
+
+---
+# Historical report — 14/10/2026 (giữ nguyên số liệu, không phải kết quả mới)
+
 # AWS 3K capacity qualification — kết quả ngày 14/10/2026
 
 **3K NOT QUALIFIED. Maximum repeatably stable đã đo: 250 VU, được xác nhận bằng hai lượt normal độc lập.**

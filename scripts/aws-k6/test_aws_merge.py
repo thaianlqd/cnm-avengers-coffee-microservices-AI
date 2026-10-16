@@ -22,11 +22,32 @@ def shard(folder, latencies, second=0):
 
 
 class MergeTests(unittest.TestCase):
+    def test_time_windows_keep_exact_observations_and_route_scope(self):
+        spec=importlib.util.spec_from_file_location('archive',Path(__file__).with_name('archive-aws-points.py'));archive=importlib.util.module_from_spec(spec);spec.loader.exec_module(archive)
+        with tempfile.TemporaryDirectory() as d:
+            d=Path(d);raw=d/'raw.gz';out=d/'windows.gz';rows=[]
+            for metric,value in [('http_reqs',1),('http_req_failed',0),('checks',1),('http_req_duration',10),('http_req_duration',100)]:rows.append({'type':'Point','metric':metric,'data':{'time':'2026-10-14T00:01:02Z','value':value,'tags':{'phase':'hold','name':'public_branches'}}})
+            rows.append({'type':'Point','metric':'http_req_duration','data':{'time':'2026-10-14T00:01:02Z','value':999,'tags':{'phase':'hold','name':'private-route'}}})
+            with gzip.open(raw,'wt') as stream:stream.write(''.join(json.dumps(row)+'\n' for row in rows))
+            self.assertEqual(archive.time_windows(raw,out),1)
+            with gzip.open(out,'rt') as stream:row=json.loads(next(stream))
+            self.assertEqual(row['observed_at'],'2026-10-14T00:01:00+00:00');self.assertEqual(row['p95_ms'],95.5)
+            self.assertEqual(row['latency_sum_ms'],110);self.assertEqual(row['requests'],1)
+    def test_archive_preserves_actual_vus_and_timestamps(self):
+        spec=importlib.util.spec_from_file_location('archive',Path(__file__).with_name('archive-aws-points.py'));archive=importlib.util.module_from_spec(spec);spec.loader.exec_module(archive)
+        with tempfile.TemporaryDirectory() as d:
+            d=Path(d);folder=d/'shard';shard(folder,[10,20])
+            with gzip.open(folder/'http-points.jsonl.gz','at') as stream:stream.write(json.dumps({'type':'Point','metric':'vus','data':{'time':'2026-10-14T00:01:01Z','value':125}})+'\n')
+            result=archive.archive(folder,d/'raw')
+            self.assertEqual(result['actual_vu_peak'],125)
+            with gzip.open(folder/'stage-vus.jsonl.gz','rt') as stream:row=json.loads(next(stream))
+            self.assertEqual(row,{'observed_at':'2026-10-14T00:01:01Z','metric':'vus','value':125})
     def test_quantiles_use_points_not_average_shard_percentiles(self):
         with tempfile.TemporaryDirectory() as d:
             d=Path(d);a=d/'a';b=d/'b';shard(a,[10]*99+[1000]);shard(b,[2000],1)
             summary,meta=m.merge([a,b])
             self.assertEqual(summary['metrics']['http_req_duration']['values']['p(95)'],10)
+            self.assertEqual(summary['metrics']['http_req_duration']['values']['p(90)'],10)
             self.assertEqual(summary['metrics']['http_reqs']['values']['count'],101)
             self.assertEqual(summary['metrics']['checks']['values']['rate'],1)
             self.assertEqual(meta['vus'],250)

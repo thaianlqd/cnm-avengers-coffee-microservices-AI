@@ -1,0 +1,25 @@
+{
+  "observed_at": "2026-10-16T05:00:04.577756+00:00",
+  "region": "ap-southeast-2",
+  "phases": {
+    "3k-aws": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    },
+    "3k-qualification": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    },
+    "5k-qualification": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    }
+  },
+  "pass": true
+}

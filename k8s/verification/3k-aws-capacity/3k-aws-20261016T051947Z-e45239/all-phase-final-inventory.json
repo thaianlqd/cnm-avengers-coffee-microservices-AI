@@ -1,0 +1,31 @@
+{
+  "observed_at": "2026-10-16T09:58:49.299468+00:00",
+  "account": "956035085549",
+  "region": "ap-southeast-2",
+  "all_known_benchmark_phases": {
+    "3k-aws": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    },
+    "3k-qualification": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    },
+    "5k-qualification": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    }
+  },
+  "owned_network_interfaces": {
+    "3k-aws": 0,
+    "3k-qualification": 0,
+    "5k-qualification": 0
+  },
+  "pass": true
+}

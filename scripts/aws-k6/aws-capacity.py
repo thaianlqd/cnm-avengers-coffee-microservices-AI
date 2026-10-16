@@ -41,6 +41,28 @@ def inventory(run):
       'volumes':aws('ec2','describe-volumes','--filters',*f)['Volumes'],
       'key_pairs':aws('ec2','describe-key-pairs','--filters',*f)['KeyPairs']}
 
+def benchmark_inventory():
+    """Read all known benchmark phases, across RunIds; never delete here."""
+    phases = [OWNERS,
+      {'Project':'avengers-coffee','Purpose':'k6-3k-capacity','ManagedBy':'codex-local','Phase':'3k-qualification'},
+      {'Project':'avengers-coffee','Purpose':'k6-capacity','ManagedBy':'codex-local','Phase':'5k-qualification'}]
+    counts = {}
+    for phase in phases:
+        f = [f'Name=tag:{key},Values={value}' for key,value in phase.items()]
+        instances = [i for r in aws('ec2','describe-instances','--filters',*f)['Reservations'] for i in r['Instances']]
+        counts[phase['Phase']] = {
+          'instances':sum(i['State']['Name'] != 'terminated' for i in instances),
+          'security_groups':len(aws('ec2','describe-security-groups','--filters',*f)['SecurityGroups']),
+          'volumes':len(aws('ec2','describe-volumes','--filters',*f)['Volumes']),
+          'key_pairs':len(aws('ec2','describe-key-pairs','--filters',*f)['KeyPairs'])}
+    return counts
+
+def require_clean_benchmark_inventory():
+    counts = benchmark_inventory()
+    if any(value for phase in counts.values() for value in phase.values()):
+        raise ValueError('Existing benchmark resources require ownership-scoped reconciliation before launch')
+    return counts
+
 def cleanup(run):
     resources=inventory(run)
     for group in resources.values():

@@ -1,0 +1,495 @@
+{
+  "vus": 166,
+  "hold_seconds": 300,
+  "requests": 45426,
+  "rps": 104.86309987098555,
+  "failure_rate": 0.02174965878571743,
+  "check_rate": 0.9782503412142826,
+  "p95_ms": 3449.6689005,
+  "hold_p95_ms": 3445.6460110000044,
+  "p99_ms": 10000.113633,
+  "http_pass": false,
+  "restart_delta": 0,
+  "hpa_peak": {
+    "api-gateway": 4,
+    "identity-service": 3,
+    "menu-service": 4
+  },
+  "node_cpu_peak_percent": 74.0,
+  "pending_pod_samples": 3,
+  "target_hold_coverage": {
+    "intervals": 60,
+    "expected_intervals": 60.0,
+    "max_gap_seconds": 5.000284,
+    "sufficient": true
+  },
+  "generator": {
+    "samples": 87,
+    "cpu_busy_peak_percent": 74.77477477477477,
+    "k6_cpu_peak_core_percent": 149.0452016535626,
+    "k6_rss_peak_bytes": 328151040,
+    "k6_fds_peak": 169,
+    "memory_available_min_KiB": 7121224,
+    "network_rx_peak_bytes_s": 5421723.5978712505,
+    "network_tx_peak_bytes_s": 118522.302736378,
+    "cpu_intervals": [
+      {
+        "observed_at": "2026-10-16T06:31:27.773917+00:00",
+        "busy_percent": 2.997002997002997
+      },
+      {
+        "observed_at": "2026-10-16T06:31:32.778731+00:00",
+        "busy_percent": 9.528585757271815
+      },
+      {
+        "observed_at": "2026-10-16T06:31:37.783823+00:00",
+        "busy_percent": 16.53306613226453
+      },
+      {
+        "observed_at": "2026-10-16T06:31:42.789074+00:00",
+        "busy_percent": 23.694779116465863
+      },
+      {
+        "observed_at": "2026-10-16T06:31:47.802746+00:00",
+        "busy_percent": 26.880641925777333
+      },
+      {
+        "observed_at": "2026-10-16T06:31:52.807980+00:00",
+        "busy_percent": 32.397191574724175
+      },
+      {
+        "observed_at": "2026-10-16T06:31:57.818669+00:00",
+        "busy_percent": 46.246246246246244
+      },
+      {
+        "observed_at": "2026-10-16T06:32:02.824081+00:00",
+        "busy_percent": 31.96392785571142
+      },
+      {
+        "observed_at": "2026-10-16T06:32:07.837541+00:00",
+        "busy_percent": 48.09619238476954
+      },
+      {
+        "observed_at": "2026-10-16T06:32:12.842374+00:00",
+        "busy_percent": 39.21765295887663
+      },
+      {
+        "observed_at": "2026-10-16T06:32:17.847522+00:00",
+        "busy_percent": 42.72818455366098
+      },
+      {
+        "observed_at": "2026-10-16T06:32:22.853066+00:00",
+        "busy_percent": 52.80561122244489
+      },
+      {
+        "observed_at": "2026-10-16T06:32:27.859066+00:00",
+        "busy_percent": 62.4248496993988
+      },
+      {
+        "observed_at": "2026-10-16T06:32:32.866024+00:00",
+        "busy_percent": 65.56224899598394
+      },
+      {
+        "observed_at": "2026-10-16T06:32:37.878529+00:00",
+        "busy_percent": 71.77177177177177
+      },
+      {
+        "observed_at": "2026-10-16T06:32:42.884078+00:00",
+        "busy_percent": 61.723446893787575
+      },
+      {
+        "observed_at": "2026-10-16T06:32:47.898374+00:00",
+        "busy_percent": 64.23576423576424
+      },
+      {
+        "observed_at": "2026-10-16T06:32:52.912812+00:00",
+        "busy_percent": 61.03896103896104
+      },
+      {
+        "observed_at": "2026-10-16T06:32:57.919929+00:00",
+        "busy_percent": 67.3
+      },
+      {
+        "observed_at": "2026-10-16T06:33:02.933041+00:00",
+        "busy_percent": 66.33266533066133
+      },
+      {
+        "observed_at": "2026-10-16T06:33:07.938083+00:00",
+        "busy_percent": 69.13827655310621
+      },
+      {
+        "observed_at": "2026-10-16T06:33:12.942920+00:00",
+        "busy_percent": 68.57429718875503
+      },
+      {
+        "observed_at": "2026-10-16T06:33:17.948089+00:00",
+        "busy_percent": 49.497991967871485
+      },
+      {
+        "observed_at": "2026-10-16T06:33:22.953398+00:00",
+        "busy_percent": 30.460921843687373
+      },
+      {
+        "observed_at": "2026-10-16T06:33:27.958881+00:00",
+        "busy_percent": 19.798994974874372
+      },
+      {
+        "observed_at": "2026-10-16T06:33:32.965082+00:00",
+        "busy_percent": 36.409227683049146
+      },
+      {
+        "observed_at": "2026-10-16T06:33:37.978533+00:00",
+        "busy_percent": 51.951951951951955
+      },
+      {
+        "observed_at": "2026-10-16T06:33:42.984080+00:00",
+        "busy_percent": 55.36609829488465
+      },
+      {
+        "observed_at": "2026-10-16T06:33:47.997837+00:00",
+        "busy_percent": 74.77477477477477
+      },
+      {
+        "observed_at": "2026-10-16T06:33:53.010080+00:00",
+        "busy_percent": 59.181636726546905
+      },
+      {
+        "observed_at": "2026-10-16T06:33:58.023337+00:00",
+        "busy_percent": 67.03296703296704
+      },
+      {
+        "observed_at": "2026-10-16T06:34:03.032618+00:00",
+        "busy_percent": 37.91374122367101
+      },
+      {
+        "observed_at": "2026-10-16T06:34:08.037798+00:00",
+        "busy_percent": 9.8
+      },
+      {
+        "observed_at": "2026-10-16T06:34:13.043073+00:00",
+        "busy_percent": 12.625250501002004
+      },
+      {
+        "observed_at": "2026-10-16T06:34:18.057699+00:00",
+        "busy_percent": 22.62262262262262
+      },
+      {
+        "observed_at": "2026-10-16T06:34:23.062752+00:00",
+        "busy_percent": 43.64364364364364
+      },
+      {
+        "observed_at": "2026-10-16T06:34:28.068177+00:00",
+        "busy_percent": 70.41123370110331
+      },
+      {
+        "observed_at": "2026-10-16T06:34:33.072883+00:00",
+        "busy_percent": 57.31462925851704
+      },
+      {
+        "observed_at": "2026-10-16T06:34:38.078076+00:00",
+        "busy_percent": 74.57286432160804
+      },
+      {
+        "observed_at": "2026-10-16T06:34:43.091534+00:00",
+        "busy_percent": 64.03596403596404
+      },
+      {
+        "observed_at": "2026-10-16T06:34:48.097079+00:00",
+        "busy_percent": 64.5
+      },
+      {
+        "observed_at": "2026-10-16T06:34:53.109065+00:00",
+        "busy_percent": 12.212212212212211
+      },
+      {
+        "observed_at": "2026-10-16T06:34:58.114333+00:00",
+        "busy_percent": 17.61761761761762
+      },
+      {
+        "observed_at": "2026-10-16T06:35:03.119320+00:00",
+        "busy_percent": 18.775100401606426
+      },
+      {
+        "observed_at": "2026-10-16T06:35:08.124412+00:00",
+        "busy_percent": 22.645290581162325
+      },
+      {
+        "observed_at": "2026-10-16T06:35:13.130075+00:00",
+        "busy_percent": 62.92585170340681
+      },
+      {
+        "observed_at": "2026-10-16T06:35:18.143074+00:00",
+        "busy_percent": 60.32064128256513
+      },
+      {
+        "observed_at": "2026-10-16T06:35:23.155786+00:00",
+        "busy_percent": 66.4
+      },
+      {
+        "observed_at": "2026-10-16T06:35:28.169848+00:00",
+        "busy_percent": 65.86826347305389
+      },
+      {
+        "observed_at": "2026-10-16T06:35:33.174645+00:00",
+        "busy_percent": 56.813627254509015
+      },
+      {
+        "observed_at": "2026-10-16T06:35:38.181499+00:00",
+        "busy_percent": 67.30190571715146
+      },
+      {
+        "observed_at": "2026-10-16T06:35:43.186243+00:00",
+        "busy_percent": 31.03103103103103
+      },
+      {
+        "observed_at": "2026-10-16T06:35:48.191272+00:00",
+        "busy_percent": 18.455366098294885
+      },
+      {
+        "observed_at": "2026-10-16T06:35:53.196214+00:00",
+        "busy_percent": 29.82982982982983
+      },
+      {
+        "observed_at": "2026-10-16T06:35:58.201295+00:00",
+        "busy_percent": 20.34068136272545
+      },
+      {
+        "observed_at": "2026-10-16T06:36:03.207074+00:00",
+        "busy_percent": 47.15284715284715
+      },
+      {
+        "observed_at": "2026-10-16T06:36:08.220835+00:00",
+        "busy_percent": 67.86786786786787
+      },
+      {
+        "observed_at": "2026-10-16T06:36:13.235000+00:00",
+        "busy_percent": 63.136863136863134
+      },
+      {
+        "observed_at": "2026-10-16T06:36:18.245842+00:00",
+        "busy_percent": 71.3855421686747
+      },
+      {
+        "observed_at": "2026-10-16T06:36:23.260949+00:00",
+        "busy_percent": 66.36726546906188
+      },
+      {
+        "observed_at": "2026-10-16T06:36:28.272084+00:00",
+        "busy_percent": 62.124248496993985
+      },
+      {
+        "observed_at": "2026-10-16T06:36:33.285402+00:00",
+        "busy_percent": 19.91991991991992
+      },
+      {
+        "observed_at": "2026-10-16T06:36:38.290748+00:00",
+        "busy_percent": 8.71743486973948
+      },
+      {
+        "observed_at": "2026-10-16T06:36:43.295740+00:00",
+        "busy_percent": 10.420841683366733
+      },
+      {
+        "observed_at": "2026-10-16T06:36:48.301060+00:00",
+        "busy_percent": 18.57429718875502
+      },
+      {
+        "observed_at": "2026-10-16T06:36:53.305947+00:00",
+        "busy_percent": 14.714714714714715
+      },
+      {
+        "observed_at": "2026-10-16T06:36:58.311195+00:00",
+        "busy_percent": 15.330661322645291
+      },
+      {
+        "observed_at": "2026-10-16T06:37:03.316063+00:00",
+        "busy_percent": 14.457831325301205
+      },
+      {
+        "observed_at": "2026-10-16T06:37:08.321263+00:00",
+        "busy_percent": 20.04008016032064
+      },
+      {
+        "observed_at": "2026-10-16T06:37:13.327088+00:00",
+        "busy_percent": 11.859296482412061
+      },
+      {
+        "observed_at": "2026-10-16T06:37:18.340851+00:00",
+        "busy_percent": 16.916916916916918
+      },
+      {
+        "observed_at": "2026-10-16T06:37:23.345898+00:00",
+        "busy_percent": 11.770623742454728
+      },
+      {
+        "observed_at": "2026-10-16T06:37:28.350946+00:00",
+        "busy_percent": 17.16867469879518
+      },
+      {
+        "observed_at": "2026-10-16T06:37:33.356025+00:00",
+        "busy_percent": 15.461847389558233
+      },
+      {
+        "observed_at": "2026-10-16T06:37:38.361855+00:00",
+        "busy_percent": 12.550200803212851
+      },
+      {
+        "observed_at": "2026-10-16T06:37:43.366782+00:00",
+        "busy_percent": 13.440320962888666
+      },
+      {
+        "observed_at": "2026-10-16T06:37:48.371678+00:00",
+        "busy_percent": 14.228456913827655
+      },
+      {
+        "observed_at": "2026-10-16T06:37:53.376507+00:00",
+        "busy_percent": 7.028112449799197
+      },
+      {
+        "observed_at": "2026-10-16T06:37:58.381546+00:00",
+        "busy_percent": 6.820461384152457
+      },
+      {
+        "observed_at": "2026-10-16T06:38:03.386265+00:00",
+        "busy_percent": 7.422266800401204
+      },
+      {
+        "observed_at": "2026-10-16T06:38:08.392429+00:00",
+        "busy_percent": 5.2
+      },
+      {
+        "observed_at": "2026-10-16T06:38:13.397622+00:00",
+        "busy_percent": 4.709418837675351
+      },
+      {
+        "observed_at": "2026-10-16T06:38:18.402735+00:00",
+        "busy_percent": 3.3033033033033035
+      },
+      {
+        "observed_at": "2026-10-16T06:38:23.407656+00:00",
+        "busy_percent": 2.7081243731193583
+      },
+      {
+        "observed_at": "2026-10-16T06:38:28.412591+00:00",
+        "busy_percent": 0.8
+      },
+      {
+        "observed_at": "2026-10-16T06:38:33.417383+00:00",
+        "busy_percent": 0.3003003003003003
+      }
+    ]
+  },
+  "generator_hold_coverage": {
+    "intervals": 60,
+    "expected_intervals": 60.0,
+    "max_gap_seconds": 5.015107,
+    "sufficient": true
+  },
+  "generator_cpu_saturation_longest_samples": 0,
+  "ena_allowance_deltas": {
+    "enp39s0/bw_in_allowance_exceeded": 0,
+    "enp39s0/bw_out_allowance_exceeded": 0,
+    "enp39s0/pps_allowance_exceeded": 0,
+    "enp39s0/conntrack_allowance_exceeded": 0
+  },
+  "generator_adequate": true,
+  "generator_reasons": [],
+  "target_reasons": [
+    "HTTP thresholds failed",
+    "complete HPA/Pod/node metric evidence missing during hold"
+  ],
+  "post_smoke": true,
+  "natural_recovery": true,
+  "status": "FAIL",
+  "p50_ms": 35.7477385,
+  "p90_ms": null,
+  "max_latency_ms": 10136.494996,
+  "resources": {
+    "nodes": {
+      "capacity-target1": {
+        "cpu_millicores": 1489.0,
+        "memory_MiB": 1114.0
+      },
+      "capacity-target2": {
+        "cpu_millicores": 720.0,
+        "memory_MiB": 659.0
+      },
+      "capacity-target3": {
+        "cpu_millicores": 492.0,
+        "memory_MiB": 621.0
+      }
+    },
+    "pods": {
+      "api-gateway-6857d97df4-nc5n9": {
+        "cpu_millicores": 203.0,
+        "memory_MiB": 42.0
+      },
+      "api-gateway-6857d97df4-ttjvc": {
+        "cpu_millicores": 227.0,
+        "memory_MiB": 43.0
+      },
+      "identity-service-5ff9b98dfb-mq2ll": {
+        "cpu_millicores": 80.0,
+        "memory_MiB": 53.0
+      },
+      "menu-service-9df6f7bd7-8fnvh": {
+        "cpu_millicores": 118.0,
+        "memory_MiB": 45.0
+      },
+      "news-service-56cdc4c9bb-d559d": {
+        "cpu_millicores": 88.0,
+        "memory_MiB": 44.0
+      },
+      "api-gateway-6857d97df4-htjtg": {
+        "cpu_millicores": 265.0,
+        "memory_MiB": 44.0
+      },
+      "api-gateway-6857d97df4-zws7n": {
+        "cpu_millicores": 246.0,
+        "memory_MiB": 43.0
+      },
+      "identity-service-5ff9b98dfb-4z6jr": {
+        "cpu_millicores": 114.0,
+        "memory_MiB": 53.0
+      },
+      "menu-service-9df6f7bd7-wmsz9": {
+        "cpu_millicores": 139.0,
+        "memory_MiB": 45.0
+      },
+      "menu-service-9df6f7bd7-xppw5": {
+        "cpu_millicores": 119.0,
+        "memory_MiB": 65.0
+      },
+      "identity-service-5ff9b98dfb-z54bv": {
+        "cpu_millicores": 84.0,
+        "memory_MiB": 61.0
+      },
+      "menu-service-9df6f7bd7-qqx96": {
+        "cpu_millicores": 92.0,
+        "memory_MiB": 44.0
+      }
+    },
+    "cluster_sampled_peak": {
+      "cpu_millicores": 2011.0,
+      "memory_MiB": 2356.0
+    },
+    "incomplete_node_metric_samples": 10,
+    "complete_node_metric_samples": 122
+  },
+  "complete_metric_hold_coverage": {
+    "intervals": 52,
+    "expected_intervals": 60.0,
+    "max_gap_seconds": 42.63434,
+    "sufficient": false
+  },
+  "vu_stage": {
+    "actual_vu_peak": 166,
+    "hold_target_fraction": 0.9966666666666667,
+    "hold_coverage": {
+      "intervals": 300,
+      "expected_intervals": 60.0,
+      "max_gap_seconds": 1.353714,
+      "sufficient": true
+    }
+  }
+}

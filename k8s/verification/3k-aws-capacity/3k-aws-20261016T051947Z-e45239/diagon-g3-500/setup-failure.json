@@ -1,0 +1,8 @@
+{
+  "observed_at": "2026-10-16T06:03:45.687121+00:00",
+  "classification": "SETUP/OBSERVATION FAILURE; no k6 load started",
+  "error": "Agent /opt/avengers-workload directory absent before installing kernel sampler",
+  "action": "stopped owned observer/kernel sampler on target1; create both helper/output directories before sampler setup; same fleet, no replacement instances",
+  "new_capacity_runs": 0,
+  "monitor_cleanup_requested": true
+}

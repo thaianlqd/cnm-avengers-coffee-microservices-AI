@@ -1,6 +1,11 @@
 # External public-browse capacity
 
-## Phase 3K (current)
+Current AWS private-target workflow and results: [AWS capacity](AWS_CAPACITY.md),
+[latest report](../../K8S_3K_AWS_CAPACITY_REPORT.md), and
+[handoff](../../FEATURES_K8S_RESUME.md). Preserve the existing private data path;
+the Mac/reverse-SSH and Quick Tunnel sections below are historical.
+
+## Historical Mac-target phase 3K
 
 Read [the 3K report](../../K8S_3K_CAPACITY_REPORT.md). Clean legacy 200 recovered
 once (p95 1044.8ms); external load did **not start**. Direct NAT discovery found

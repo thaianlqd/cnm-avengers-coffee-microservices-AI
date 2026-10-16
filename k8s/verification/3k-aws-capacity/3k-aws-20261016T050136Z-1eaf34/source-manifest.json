@@ -1,0 +1,18 @@
+{
+  "branch": "features_k8s",
+  "starting_head": "d715ba7423d012e068eb5b447b806c9a4967320b",
+  "origin_main": "9ab6d638d72f55e8b5c0208a692b5b6252a7a861",
+  "application_source": "d715ba7423d012e068eb5b447b806c9a4967320b",
+  "workload_sha256": "8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2",
+  "helper_changes": "uncommitted lifecycle hardening; application/workload/manifests unchanged",
+  "local_kubernetes": "disabled; preserve DataPlatform",
+  "local_runtime_regression": "NOT RUN",
+  "controller_tests": {
+    "aws_python_pass": 46,
+    "aws_python_skip": 1,
+    "k8s_python_pass": 24,
+    "node_security_pass": 3,
+    "local_render_resources": 22,
+    "aws_render_resources": 14
+  }
+}

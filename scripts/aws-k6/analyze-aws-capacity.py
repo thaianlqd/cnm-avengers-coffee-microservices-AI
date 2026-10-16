@@ -3,6 +3,42 @@
 import datetime as dt,gzip,importlib.util,json,re,sys
 from pathlib import Path
 s=importlib.util.spec_from_file_location('metrics',Path(__file__).with_name('analyze-3k.py'));metrics=importlib.util.module_from_spec(s);s.loader.exec_module(metrics)
+def parsed_resource_metrics(row,kind,memory_index):
+    values=[]
+    for line in row.get(kind,'').splitlines():
+        parts=line.split()
+        if len(parts)<=memory_index:continue
+        try:
+            cpu=float(parts[1][:-1]) if parts[1].endswith('m') else float(parts[1])*1000
+            match=re.fullmatch(r'([0-9.]+)(Ki|Mi|Gi)',parts[memory_index])
+            if not match:continue
+            memory=float(match[1])*{'Ki':1/1024,'Mi':1,'Gi':1024}[match[2]]
+        except ValueError:continue # kubectl top may emit <unknown>; never replace by zero.
+        values.append((parts[0],{'cpu_millicores':cpu,'memory_MiB':memory}))
+    return values
+
+def complete_resource_metrics(row):
+    nodes=parsed_resource_metrics(row,'top_nodes',3);pods=parsed_resource_metrics(row,'top_pods',2)
+    return bool(nodes and pods) and len(nodes)==len(row.get('nodes',[])) and len(pods)==len(row.get('top_pods','').splitlines())
+
+def resource_peaks(rows):
+    nodes={};pods={};cluster={'cpu_millicores':None,'memory_MiB':None};incomplete=0
+    for row in rows:
+        totals={'cpu_millicores':0,'memory_MiB':0}
+        for kind,target,memory_index in [('top_nodes',nodes,3),('top_pods',pods,2)]:
+            for name,values in parsed_resource_metrics(row,kind,memory_index):
+                peak=target.setdefault(name,{'cpu_millicores':0,'memory_MiB':0})
+                for key,value in values.items():
+                    peak[key]=max(peak[key],value)
+                    if kind=='top_nodes':totals[key]+=value
+        # A partial node sum is not a complete cluster observation.
+        node_values=parsed_resource_metrics(row,'top_nodes',3)
+        expected_nodes=len(row['nodes']) if 'nodes' in row else len(row.get('top_nodes','').splitlines())
+        if node_values and len(node_values)==expected_nodes==len(row.get('top_nodes','').splitlines()):
+            for key,value in totals.items():cluster[key]=max(cluster[key] or 0,value)
+        else:incomplete+=1
+    return {'nodes':nodes,'pods':pods,'cluster_sampled_peak':cluster,'incomplete_node_metric_samples':incomplete,'complete_node_metric_samples':len(rows)-incomplete}
+
 def analyze(folder):
     meta=json.loads((folder/'metadata.json').read_text());summary=json.loads((folder/'k6.json').read_text())['metrics']
     rows=list(metrics.lines(folder/'target.jsonl'));samples=list(metrics.lines(folder/'generator.jsonl'))
@@ -33,6 +69,21 @@ def analyze(folder):
     http_pass=all(summary.get(k,{}).get('thresholds') for k in required) and all(t.get('ok') is True for m in summary.values() for t in m.get('thresholds',{}).values())
     if not http_pass:reasons.append('HTTP thresholds failed')
     if not tcov['sufficient']:reasons.append('target hold observer coverage invalid')
+    vu_stage=None
+    if meta.get('generator_count',1)==1:
+        path=folder/'stage-vus.jsonl.gz'
+        if path.exists():
+            all_vus=[r for r in metrics.lines(path) if r['metric']=='vus']
+            hold_vus=[r for r in all_vus if hold_start<=dt.datetime.fromisoformat(r['observed_at'].replace('Z','+00:00'))<=hold_end]
+            coverage=metrics.hold_coverage(hold_vus,hold_start,hold_end)
+            fraction=sum(r['value']==meta['vus'] for r in hold_vus)/len(hold_vus) if hold_vus else 0
+            vu_stage={'actual_vu_peak':max((r['value'] for r in all_vus),default=0),'hold_target_fraction':fraction,'hold_coverage':coverage}
+            if not coverage['sufficient'] or fraction<.95:reasons.append('requested VUs not sustained during hold')
+        else:reasons.append('actual VU timeline missing')
+    expected_hpa={'api-gateway','identity-service','menu-service'}
+    complete=[r for r in rows if r.get('nodes') and r.get('pods') and complete_resource_metrics(r) and {h['name'] for h in r.get('hpa',[])}==expected_hpa]
+    complete_coverage=metrics.hold_coverage(complete,hold_start,hold_end)
+    if not complete_coverage['sufficient']:reasons.append('complete HPA/Pod/node metric evidence missing during hold')
     if not rows:reasons.append('missing target observations')
     initial={p['uid']:sum(c.get('restartCount',0) for c in p.get('containers',[])) for p in rows[0].get('pods',[])} if rows else {}
     restarts={};peak={};node_peak=0;pending=0;invalid_hpa=0
@@ -66,6 +117,7 @@ def analyze(folder):
     def value(name,key):return summary.get(name,{}).get('values',{}).get(key)
     result={'vus':meta['vus'],'hold_seconds':meta['hold_seconds'],'requests':value('http_reqs','count'),'rps':value('http_reqs','rate'),'failure_rate':value('http_req_failed','rate'),'check_rate':value('checks','rate'),'p95_ms':value('http_req_duration','p(95)'),'hold_p95_ms':value('http_req_duration{phase:hold}','p(95)'),'p99_ms':value('http_req_duration','p(99)'), 'http_pass':http_pass,'restart_delta':delta,'hpa_peak':peak,'node_cpu_peak_percent':node_peak,'pending_pod_samples':pending,'target_hold_coverage':tcov,'generator':g,'generator_hold_coverage':gcov,'generator_cpu_saturation_longest_samples':longest,'ena_allowance_deltas':ena_deltas,'generator_adequate':not generator_reasons,'generator_reasons':generator_reasons,'target_reasons':reasons,'post_smoke':smoke.get('passed'),'natural_recovery':recovery.get('passed'),'status':'STABLE PASS' if not reasons and not generator_reasons else 'INVALID GENERATOR' if generator_reasons else 'FAIL'}
     count=meta.get('generator_count',1)
+    result.update(p50_ms=value('http_req_duration','p(50)'),p90_ms=value('http_req_duration','p(90)'),max_latency_ms=value('http_req_duration','max'),resources=resource_peaks(rows),complete_metric_hold_coverage=complete_coverage,vu_stage=vu_stage)
     if count!=1:
         if count not in (2,3) or not isinstance(meta.get('start_skew_seconds'),(int,float)) or not 0<=meta['start_skew_seconds']<=2:
             raise ValueError('invalid distributed synchronization evidence')

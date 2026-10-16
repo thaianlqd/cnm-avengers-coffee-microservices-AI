@@ -1,0 +1,718 @@
+{
+  "deployments": [
+    {
+      "name": "api-gateway",
+      "replicas": 2,
+      "containers": [
+        {
+          "name": "api-gateway",
+          "image": "avengers/api-gateway:3k-aws-d715ba7423d0",
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          },
+          "flags": [
+            {
+              "name": "GATEWAY_REQUEST_LOGGING",
+              "value": "false"
+            },
+            {
+              "name": "GATEWAY_PROXY_KEEP_ALIVE",
+              "value": "false"
+            },
+            {
+              "name": "GATEWAY_MAX_REQUESTS_PER_SOCKET",
+              "value": "0"
+            },
+            {
+              "name": "CAPACITY_DIAGNOSTICS",
+              "value": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "identity-service",
+      "replicas": 1,
+      "containers": [
+        {
+          "name": "identity-service",
+          "image": "avengers/identity-service:3k-aws-d715ba7423d0",
+          "resources": {
+            "limits": {
+              "cpu": "400m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          },
+          "flags": [
+            {
+              "name": "CAPACITY_DIAGNOSTICS",
+              "value": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "menu-service",
+      "replicas": 1,
+      "containers": [
+        {
+          "name": "menu-service",
+          "image": "avengers/menu-service:3k-aws-d715ba7423d0",
+          "resources": {
+            "limits": {
+              "cpu": "400m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          },
+          "flags": [
+            {
+              "name": "CAPACITY_DIAGNOSTICS",
+              "value": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "news-service",
+      "replicas": 1,
+      "containers": [
+        {
+          "name": "news-service",
+          "image": "avengers/news-service:3k-aws-d715ba7423d0",
+          "resources": {
+            "limits": {
+              "cpu": "400m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          },
+          "flags": [
+            {
+              "name": "CAPACITY_DIAGNOSTICS",
+              "value": "false"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "hpa": [
+    {
+      "name": "api-gateway",
+      "spec": {
+        "behavior": {
+          "scaleDown": {
+            "policies": [
+              {
+                "periodSeconds": 60,
+                "type": "Pods",
+                "value": 1
+              }
+            ],
+            "selectPolicy": "Max",
+            "stabilizationWindowSeconds": 120
+          },
+          "scaleUp": {
+            "policies": [
+              {
+                "periodSeconds": 30,
+                "type": "Pods",
+                "value": 1
+              },
+              {
+                "periodSeconds": 30,
+                "type": "Percent",
+                "value": 100
+              }
+            ],
+            "selectPolicy": "Max",
+            "stabilizationWindowSeconds": 0
+          }
+        },
+        "maxReplicas": 4,
+        "metrics": [
+          {
+            "resource": {
+              "name": "cpu",
+              "target": {
+                "averageUtilization": 60,
+                "type": "Utilization"
+              }
+            },
+            "type": "Resource"
+          }
+        ],
+        "minReplicas": 2,
+        "scaleTargetRef": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "name": "api-gateway"
+        }
+      },
+      "status": {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-10-16T05:29:26Z",
+            "message": "recommended size matches current size",
+            "reason": "ReadyForNewScale",
+            "status": "True",
+            "type": "AbleToScale"
+          },
+          {
+            "lastTransitionTime": "2026-10-16T05:47:27Z",
+            "message": "the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)",
+            "reason": "ValidMetricFound",
+            "status": "True",
+            "type": "ScalingActive"
+          },
+          {
+            "lastTransitionTime": "2026-10-16T06:14:28Z",
+            "message": "the desired count is within the acceptable range",
+            "reason": "DesiredWithinRange",
+            "status": "False",
+            "type": "ScalingLimited"
+          }
+        ],
+        "currentMetrics": [
+          {
+            "resource": {
+              "current": {
+                "averageUtilization": 4,
+                "averageValue": "3m"
+              },
+              "name": "cpu"
+            },
+            "type": "Resource"
+          }
+        ],
+        "currentReplicas": 2,
+        "desiredReplicas": 2,
+        "lastScaleTime": "2026-10-16T06:11:43Z"
+      }
+    },
+    {
+      "name": "identity-service",
+      "spec": {
+        "behavior": {
+          "scaleDown": {
+            "policies": [
+              {
+                "periodSeconds": 60,
+                "type": "Pods",
+                "value": 1
+              }
+            ],
+            "selectPolicy": "Max",
+            "stabilizationWindowSeconds": 120
+          },
+          "scaleUp": {
+            "policies": [
+              {
+                "periodSeconds": 30,
+                "type": "Pods",
+                "value": 1
+              },
+              {
+                "periodSeconds": 30,
+                "type": "Percent",
+                "value": 100
+              }
+            ],
+            "selectPolicy": "Max",
+            "stabilizationWindowSeconds": 0
+          }
+        },
+        "maxReplicas": 3,
+        "metrics": [
+          {
+            "resource": {
+              "name": "cpu",
+              "target": {
+                "averageUtilization": 60,
+                "type": "Utilization"
+              }
+            },
+            "type": "Resource"
+          }
+        ],
+        "minReplicas": 1,
+        "scaleTargetRef": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "name": "identity-service"
+        }
+      },
+      "status": {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-10-16T05:29:26Z",
+            "message": "the HPA controller was able to get the target's current scale",
+            "reason": "SucceededGetScale",
+            "status": "True",
+            "type": "AbleToScale"
+          },
+          {
+            "lastTransitionTime": "2026-10-16T06:14:28Z",
+            "message": "the HPA was unable to compute the replica count: failed to get cpu utilization: did not receive metrics for targeted pods (pods might be unready)",
+            "reason": "FailedGetResourceMetric",
+            "status": "False",
+            "type": "ScalingActive"
+          },
+          {
+            "lastTransitionTime": "2026-10-16T06:11:43Z",
+            "message": "the desired count is within the acceptable range",
+            "reason": "DesiredWithinRange",
+            "status": "False",
+            "type": "ScalingLimited"
+          }
+        ],
+        "currentMetrics": [
+          {
+            "type": ""
+          }
+        ],
+        "currentReplicas": 1,
+        "desiredReplicas": 1,
+        "lastScaleTime": "2026-10-16T06:11:43Z"
+      }
+    },
+    {
+      "name": "menu-service",
+      "spec": {
+        "behavior": {
+          "scaleDown": {
+            "policies": [
+              {
+                "periodSeconds": 60,
+                "type": "Pods",
+                "value": 1
+              }
+            ],
+            "selectPolicy": "Max",
+            "stabilizationWindowSeconds": 120
+          },
+          "scaleUp": {
+            "policies": [
+              {
+                "periodSeconds": 30,
+                "type": "Pods",
+                "value": 1
+              },
+              {
+                "periodSeconds": 30,
+                "type": "Percent",
+                "value": 100
+              }
+            ],
+            "selectPolicy": "Max",
+            "stabilizationWindowSeconds": 0
+          }
+        },
+        "maxReplicas": 4,
+        "metrics": [
+          {
+            "resource": {
+              "name": "cpu",
+              "target": {
+                "averageUtilization": 60,
+                "type": "Utilization"
+              }
+            },
+            "type": "Resource"
+          }
+        ],
+        "minReplicas": 1,
+        "scaleTargetRef": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "name": "menu-service"
+        }
+      },
+      "status": {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-10-16T05:29:26Z",
+            "message": "the HPA controller was able to get the target's current scale",
+            "reason": "SucceededGetScale",
+            "status": "True",
+            "type": "AbleToScale"
+          },
+          {
+            "lastTransitionTime": "2026-10-16T06:14:28Z",
+            "message": "the HPA was unable to compute the replica count: failed to get cpu utilization: did not receive metrics for targeted pods (pods might be unready)",
+            "reason": "FailedGetResourceMetric",
+            "status": "False",
+            "type": "ScalingActive"
+          },
+          {
+            "lastTransitionTime": "2026-10-16T06:12:43Z",
+            "message": "the desired count is within the acceptable range",
+            "reason": "DesiredWithinRange",
+            "status": "False",
+            "type": "ScalingLimited"
+          }
+        ],
+        "currentMetrics": [
+          {
+            "type": ""
+          }
+        ],
+        "currentReplicas": 1,
+        "desiredReplicas": 1,
+        "lastScaleTime": "2026-10-16T06:12:43Z"
+      }
+    }
+  ],
+  "common": {
+    "K8S_DB_MODE": "existing",
+    "K8S_DEMO_READ_ONLY": "true",
+    "DB_POOL_IDLE_TIMEOUT_MS": "30000",
+    "DB_PROBE_CONNECTION_TIMEOUT_MS": "2000",
+    "PUBLIC_BROWSE_CACHE_TTL_MS": "5000"
+  },
+  "pods": [
+    {
+      "name": "api-gateway-6857d97df4-nc5n9",
+      "uid": "407220b5-a4a9-47db-83bf-9f711204bc53",
+      "containers": [
+        {
+          "allocatedResources": {
+            "cpu": "75m",
+            "memory": "128Mi"
+          },
+          "containerID": "containerd://619523e17d2ac6e7a1d889985bbba9587cbb419ae67bf76c40909695c8586665",
+          "image": "docker.io/avengers/api-gateway:3k-aws-d715ba7423d0",
+          "imageID": "sha256:67006788b710ef4c524554304ee98b5daf841a14facaf47d7928c43b9ac91620",
+          "lastState": {},
+          "name": "api-gateway",
+          "ready": true,
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          },
+          "restartCount": 0,
+          "started": true,
+          "state": {
+            "running": {
+              "startedAt": "2026-10-16T06:14:27Z"
+            }
+          },
+          "user": {
+            "linux": {
+              "gid": 0,
+              "supplementalGroups": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                6,
+                10,
+                11,
+                20,
+                26,
+                27
+              ],
+              "uid": 0
+            }
+          },
+          "volumeMounts": [
+            {
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+              "name": "kube-api-access-5mrz5",
+              "readOnly": true,
+              "recursiveReadOnly": "Disabled"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "api-gateway-6857d97df4-ttjvc",
+      "uid": "0ca62689-0da9-4fe5-a184-ba00b9965c08",
+      "containers": [
+        {
+          "allocatedResources": {
+            "cpu": "75m",
+            "memory": "128Mi"
+          },
+          "containerID": "containerd://240d5ae20993fcd1ea5c16611320cc914d7278cea4a51d8e9a131993fb1dc6e0",
+          "image": "docker.io/avengers/api-gateway:3k-aws-d715ba7423d0",
+          "imageID": "sha256:67006788b710ef4c524554304ee98b5daf841a14facaf47d7928c43b9ac91620",
+          "lastState": {},
+          "name": "api-gateway",
+          "ready": true,
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          },
+          "restartCount": 0,
+          "started": true,
+          "state": {
+            "running": {
+              "startedAt": "2026-10-16T06:14:21Z"
+            }
+          },
+          "user": {
+            "linux": {
+              "gid": 0,
+              "supplementalGroups": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                6,
+                10,
+                11,
+                20,
+                26,
+                27
+              ],
+              "uid": 0
+            }
+          },
+          "volumeMounts": [
+            {
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+              "name": "kube-api-access-7n6ms",
+              "readOnly": true,
+              "recursiveReadOnly": "Disabled"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "identity-service-5ff9b98dfb-mq2ll",
+      "uid": "196cf088-22b3-4da1-ae7c-3239f105b910",
+      "containers": [
+        {
+          "allocatedResources": {
+            "cpu": "75m",
+            "memory": "128Mi"
+          },
+          "containerID": "containerd://6529f3f148b0633373b3e03ae2b4580caf5d9493a5bcd489d495446f04ba025a",
+          "image": "docker.io/avengers/identity-service:3k-aws-d715ba7423d0",
+          "imageID": "sha256:46af94df3b2e04cf8b39acb855f825490f875cf1320339d706bcf9b59f02118d",
+          "lastState": {},
+          "name": "identity-service",
+          "ready": true,
+          "resources": {
+            "limits": {
+              "cpu": "400m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          },
+          "restartCount": 0,
+          "started": true,
+          "state": {
+            "running": {
+              "startedAt": "2026-10-16T06:14:21Z"
+            }
+          },
+          "user": {
+            "linux": {
+              "gid": 0,
+              "supplementalGroups": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                6,
+                10,
+                11,
+                20,
+                26,
+                27
+              ],
+              "uid": 0
+            }
+          },
+          "volumeMounts": [
+            {
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+              "name": "kube-api-access-4bw7r",
+              "readOnly": true,
+              "recursiveReadOnly": "Disabled"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "menu-service-9df6f7bd7-8fnvh",
+      "uid": "db050573-7c4a-4b21-837d-cf61a58519c0",
+      "containers": [
+        {
+          "allocatedResources": {
+            "cpu": "75m",
+            "memory": "128Mi"
+          },
+          "containerID": "containerd://255ca7dacfe455b504bfee355e822c521fe0a51793141b05374261e2754b4354",
+          "image": "docker.io/avengers/menu-service:3k-aws-d715ba7423d0",
+          "imageID": "sha256:46796c13cf8a253d79ac3ada46b0c542f35e997651b2a90c7f2f2ce172f11c76",
+          "lastState": {},
+          "name": "menu-service",
+          "ready": true,
+          "resources": {
+            "limits": {
+              "cpu": "400m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          },
+          "restartCount": 0,
+          "started": true,
+          "state": {
+            "running": {
+              "startedAt": "2026-10-16T06:14:22Z"
+            }
+          },
+          "user": {
+            "linux": {
+              "gid": 0,
+              "supplementalGroups": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                6,
+                10,
+                11,
+                20,
+                26,
+                27
+              ],
+              "uid": 0
+            }
+          },
+          "volumeMounts": [
+            {
+              "mountPath": "/app/uploads/products",
+              "name": "uploads",
+              "readOnly": true,
+              "recursiveReadOnly": "Disabled"
+            },
+            {
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+              "name": "kube-api-access-6kgk6",
+              "readOnly": true,
+              "recursiveReadOnly": "Disabled"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "news-service-56cdc4c9bb-d559d",
+      "uid": "8955f3a5-5899-4d9a-9958-f03e575431bc",
+      "containers": [
+        {
+          "allocatedResources": {
+            "cpu": "75m",
+            "memory": "128Mi"
+          },
+          "containerID": "containerd://9954b18a6ba4dbb51ffff093c2e6c442451889272d84a0fc8a3364bdc7aeaf17",
+          "image": "docker.io/avengers/news-service:3k-aws-d715ba7423d0",
+          "imageID": "sha256:e02c99115742a5350333baafbfe3a49e5ad25e040132070bfc10ca95022dc3f4",
+          "lastState": {},
+          "name": "news-service",
+          "ready": true,
+          "resources": {
+            "limits": {
+              "cpu": "400m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          },
+          "restartCount": 0,
+          "started": true,
+          "state": {
+            "running": {
+              "startedAt": "2026-10-16T06:14:22Z"
+            }
+          },
+          "user": {
+            "linux": {
+              "gid": 0,
+              "supplementalGroups": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                6,
+                10,
+                11,
+                20,
+                26,
+                27
+              ],
+              "uid": 0
+            }
+          },
+          "volumeMounts": [
+            {
+              "mountPath": "/app/uploads",
+              "name": "uploads",
+              "readOnly": true,
+              "recursiveReadOnly": "Disabled"
+            },
+            {
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+              "name": "kube-api-access-v2blp",
+              "readOnly": true,
+              "recursiveReadOnly": "Disabled"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

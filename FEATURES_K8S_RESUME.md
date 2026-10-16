@@ -1,3 +1,44 @@
+# Kết thúc bounded AWS qualification — 16/10/2026
+
+Branch `features_k8s`, isolated `-k8s` worktree; starting/application HEAD
+`d715ba7423d012e068eb5b447b806c9a4967320b`. Không merge hoặc đụng worktree DataPlatform
+`branch_thaian`, Compose hay Docker Desktop. User đã resume và cho phép<=3 generator
+khi có measured inadequacy, cùng DB-only config egress tới ba AWS target account956035085549,
+ap-southeast-2 qua encrypted authenticated control; các paused instructions lịch sử bên
+dưới đã được supersede bởi lần resume này. Không còn phase đang chạy.
+
+3K NOT VALID/NOT QUALIFIED;1000–3000 NOT RUN. Retained repeatable qualification250VU;
+fresh250 regressionPASS. Highest fresh single normal375VU PASS120s:70636requests,
+331.68RPS,0%fail/checks100%,p95693.40/hold563.58/p991353.28ms.375repeat/long NOT RUN
+vì runtime bị gián đoạn.500 shortPASS nhưng longFAIL:137269requests,315.57RPS,
+2.2081%fail/checks97.7919%,p953363.87/hold3376.06/p9910000.19ms. Generator hợp lệ,
+restart0; hai failed smoke, resource maxgap42.634s được giữ nguyên. Không claim375
+repeatable hoặc exact application/DB ceiling.
+
+Diagnostics đã được load-validated riêng250/500 và trả false. Chỉ một off/on250pair,
+không zero-overhead claim. Không đổi app code/resources/HPA/TTL/pool/transport;
+retained Gateway500m, poolidleAWS30000(default5000), cache5000, keepalivefalse.
+Helpers harden lifecycle/inventory/approved extra generators/SIGTERM/truthful cleanup,
+actual VUs/complete metrics, unknown-as-missing, exactp90/5s route windows. Tests245PASS
++1skip; local22/AWS14 staticPASS. AWS Gateway self-heal/rolling restart60/60HTTP200
+mỗi lượt. Local runtime/Socket.IO NOT RUN hiện tại; historical PASS giữ riêng.
+
+AWS cleanup PASS verified `2026-10-16T09:58:49.299468+00:00`: all known phases/RunIds instance0,
+SG0,EBS0,keypairs0,ENIs0. Guests đã hết, hai orphan SG được cleanup sau interruption;
+control/process/privatefolder absent. Không provision fleet mới khi resume recovery.
+Budget planned combined4.9431USD, actual bill/termination timestamps chưa xác minh;
+không bịa runtime actual. Source/build/compact exact samples/stage/HPA/Pod/node/
+generator/CSV/cleanup có trong [evidence](k8s/verification/3k-aws-capacity/3k-aws-20261016T051947Z-e45239/README.md).
+
+[Latest full report](K8S_3K_AWS_CAPACITY_REPORT.md). Nếu có phase mới: fresh price/budget
+và clean inventory, confirm375normal+long trước; đo Gateway socket/DNS/connect cùng
+backend/cache/DB và metrics-server gap trước tuning một biến. Không1000+ trước500
+repeatably validPASS. Giữ permissions/budget scope, không tự provision từ historical
+commands. Delivery commit dùng `git log -1`; chỉ push origin/features_k8s, không merge.
+
+---
+Historical handoff (không phải active pause):
+
 # Paused by user — 15/10/2026
 
 Instrumentation checkpoint: `89539f671748dba9befaceb61b21f28bb0727ee3`.

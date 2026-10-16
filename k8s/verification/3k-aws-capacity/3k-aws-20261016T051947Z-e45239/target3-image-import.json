@@ -1,0 +1,6 @@
+{
+  "role": "capacity-target3",
+  "k3s": "v1.34.1+k3s1",
+  "image_tar_sha256": "39e68f8422669def9f83d91c0966ea8d47c9fe663480cfd3b494c1085238fe61",
+  "import": "PASS"
+}

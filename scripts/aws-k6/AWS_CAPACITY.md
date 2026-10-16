@@ -21,7 +21,7 @@ A successful probe is only a prerequisite, never a capacity result. Deployment,
 secure secrets, native k6, private baseline, observations and load qualification
 must be implemented/validated before any application capacity claim.
 
-## Paused AWS-target execution
+## AWS-target execution
 
 Read [the handoff](../../FEATURES_K8S_RESUME.md) and
 [the report](../../K8S_3K_AWS_CAPACITY_REPORT.md). The eligibility probe above is
@@ -39,7 +39,7 @@ image on every target. The AWS overlay is a template, not ready for direct apply
 
 Single-generator helpers: aws-network-baseline.py, aws-run-generator.py,
 aws-generator-metrics.py, aws-observe.py, analyze-aws-capacity.py. Stop on first
-failure. No distributed aggregation exists yet; do not average percentiles.
+failure. Distributed execution below merges actual observations; never average percentiles.
 
 ## Distributed generator qualification
 
@@ -68,3 +68,61 @@ gates. HTTP thresholds use merged whole/hold observations. Never averagep95.
 observations and original hashes in compact gzip format; the merger can replay
 them. Full rawoutput stays outside Git. Archive logs/observers as gzip, and
 include source/image/config/workload provenance, runtimecost and finalcleanup.
+
+
+## Lifecycle guards and explicitly approved generator additions
+
+`start` defaults to one generator. Before creating local control or AWS resources,
+it inventories current AWS, legacy 3K and legacy 5K ownership tags across RunIds.
+An active/stopped instance or orphan SG/EBS/key pair blocks launch; reconcile by
+RunId with the existing ownership-scoped cleanup. No unrelated resource is deleted.
+RunIds and finite positive cost estimates <= USD 5 are validated before provisioning.
+
+To permit a user-approved maximum of three, record `maximum_generators: 3` in the
+fresh projected-cost manifest and explicitly pass `--max-generators 3` to `start`.
+This still launches only one generator initially. Each addition needs an existing
+analysis with `generator_adequate: false` and nonempty `generator_reasons`:
+
+```bash
+python3 scripts/aws-k6/aws-private-session.py add-generator /tmp/SESSION \
+  --evidence k8s/verification/3k-aws-capacity/RUN_ID \
+  --inadequacy k8s/verification/3k-aws-capacity/MEASURED_RUN/analysis.json
+```
+
+The helper checks the approved bound, current fleet IDs/ownership and remaining
+lifetime; authenticates the new certificate with AWS console; and records the
+inadequacy file SHA256. An addition failure requests full fleet cleanup. The
+caller must review the explicit user approval before changing the default of one.
+
+SIGTERM executes the cleanup path. Partial control initialization is also covered.
+`CLOSED` is written only after verified AWS cleanup and stopped local processes;
+a cleanup exception/negative result writes `cleanup-failure.json` instead.
+Export sanitized evidence before `finish`: successful cleanup deletes controller
+keys/tokens and temporary encrypted/decrypted job artifacts (which can include
+cluster join tokens). Public certificates and sanitized state may remain locally.
+
+The AWS analyzer now requires sufficient complete hold samples containing all
+three expected HPAs and Pod/node metrics. It reports per-Pod/per-node and sampled
+cluster CPU/RAM peaks. Merged p50/p90/p95/p99 use actual numeric observations;
+the workload and HTTP thresholds are unchanged.
+
+The default lifetime remains 175 minutes. `--runtime-minutes` may shorten it
+(30..175, matching `guest_termination_minutes` in the cost manifest); both the
+controller deadline and guest shutdown use that bound. Include previous attempt
+costs when reserving the remaining phase budget.
+
+`archive-aws-points.py` also retains timestamped actual `vus`/`vus_max` observations
+in `stage-vus.jsonl.gz`. Fresh qualification rejects a missing VU timeline, missing
+hold coverage, or fewer than 95% of hold samples at the requested partition VUs.
+Distributed qualification applies this check to every generator. This is observed
+active VUs (including think time), not requested VUs inferred solely from metadata
+and not requests per second. Keep stage timelines alongside compact latency points.
+
+Five-second per-generator route/phase windows are retained in `http-windows.jsonl.gz`
+for correlation with HPA/resource timelines; their percentiles must not be averaged.
+`kubectl top` may return `<unknown>` during stress. The analyzer skips those values
+when reporting sampled peaks, excludes partial-node sums from cluster peaks, and
+checks complete hold coverage independently. A missing-metric gap cannot become
+a stable PASS or a zero-resource-usage claim.
+
+Guest shutdown bounds compute lifetime; it does not delete security groups. If the local controller/runtime disappears (including abrupt kill), inspect all known ownership phases and run ownership-scoped cleanup. Do not infer full cleanup from terminated instances alone. The 16 October recovery removed two orphan groups and verified instances, disks, groups, key pairs and ENIs were zero.
