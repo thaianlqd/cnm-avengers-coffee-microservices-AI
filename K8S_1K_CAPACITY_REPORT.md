@@ -1,3 +1,5 @@
+> **Lượt750 riêng sau báo cáo này đã hoàn tất:** [K8S_750_CAPACITY_REPORT.md](K8S_750_CAPACITY_REPORT.md). Hai750PASS mới không sửa kết quả750INVALID của phase1K bên dưới;1000 vẫnNOTRUN.
+
 # Kubernetes capacity — kết quả cuối ngày 17/10/2026
 
 **500 VU: QUALIFIED, hai lượt PASS độc lập; một lượt giữ tải 300 giây.**

@@ -1,0 +1,48 @@
+{
+  "status": "750 QUALIFIED",
+  "maximum_repeatably_qualified_vus": 750,
+  "normal_and_long_valid": true,
+  "points": [
+    {
+      "point": "regression-250",
+      "vus": 250,
+      "hold_seconds": 120,
+      "generators": 3,
+      "status": "STABLE PASS",
+      "valid_pass": true
+    },
+    {
+      "point": "regression-normal-500",
+      "vus": 500,
+      "hold_seconds": 120,
+      "generators": 3,
+      "status": "STABLE PASS",
+      "valid_pass": true
+    },
+    {
+      "point": "normal-750",
+      "vus": 750,
+      "hold_seconds": 120,
+      "generators": 5,
+      "status": "STABLE PASS",
+      "valid_pass": true
+    },
+    {
+      "point": "long-750",
+      "vus": 750,
+      "hold_seconds": 300,
+      "generators": 5,
+      "status": "STABLE PASS",
+      "valid_pass": true
+    }
+  ],
+  "run_1000": false,
+  "cleanup_required_before_delivery": false,
+  "push": false,
+  "cleanup": "PASS",
+  "all_phase_cleanup": "final-all-phase-cleanup.json",
+  "generator_valid": true,
+  "application_source_unchanged": true,
+  "delivery": "local features_k8s only; no push/no merge",
+  "finalized_at": "2026-10-17T08:54:02.302826+00:00"
+}

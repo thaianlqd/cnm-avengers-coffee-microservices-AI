@@ -1,0 +1,42 @@
+{
+  "observed_at": "2026-10-17T07:54:12.519234+00:00",
+  "account": "956035085549",
+  "region": "ap-southeast-2",
+  "inventory": {
+    "3k-aws": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    },
+    "3k-qualification": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    },
+    "5k-qualification": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0
+    }
+  },
+  "owned_eni_counts": {
+    "3k-aws": 0,
+    "3k-qualification": 0,
+    "5k-qualification": 0
+  },
+  "instance_type": "m7i-flex.large",
+  "instance_free_tier_eligible": true,
+  "ami_id": "ami-0f5e1e0151e5b95ed",
+  "ami_owner": "099720109477",
+  "ami_free_tier_eligible": true,
+  "account_plan_console_verification_required_before_launch": true,
+  "new_aws_resources_created": false,
+  "account_plan": "FREE",
+  "account_plan_directly_verified": true,
+  "account_plan_observed_at": "2026-10-17T07:55:03.912001+00:00",
+  "credit_sufficient_for_approved_cap": true,
+  "exact_private_credit_balance_retained": false
+}

@@ -1,0 +1,32 @@
+{
+  "observed_at": "2026-10-17T09:00:43.851885+00:00",
+  "tests": {
+    "backend_pass": 168,
+    "aws_helper_pass": 76,
+    "aws_helper_skip": 1,
+    "k8s_helper_pass": 24,
+    "control_pass": 3,
+    "total_pass": 271,
+    "total_skip": 1,
+    "aws_static_resources": 14
+  },
+  "control_count_audit": "control-3k has1test; separatecontrol-server/public-ingress tests add2; all3passed",
+  "backend_build_checks": "../build-checks.json",
+  "source_frozen_matches": true,
+  "application_code_dockerfiles_workload_service_config_unchanged": true,
+  "workload_sha256": "8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2",
+  "completed_point_consistency": 4,
+  "all_generator_csv_totals_verified": true,
+  "new_controller_admission_approval_safety": "PASS; see local-prelaunch-validation.json",
+  "controller_ast": "PASS",
+  "git_diff_check": "PASS; scoped raw.log trailing alignment spaces exempted, original bytes/hashes preserved",
+  "raw_logs_byte_exact": true,
+  "final_all_phase_cleanup": "../final-all-phase-cleanup.json",
+  "delivery": {
+    "branch": "features_k8s",
+    "push": false,
+    "merge": false
+  },
+  "final_secret_scan": "secret-scan.json",
+  "final_manifest_and_index_verification": "performed after final scan and explicit public-log staging"
+}

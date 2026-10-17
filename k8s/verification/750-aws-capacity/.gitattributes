@@ -1,0 +1,2 @@
+# Preserve byte-exact native tool logs; source/docs/manifests keep normal checks.
+**/*.log whitespace=-blank-at-eol

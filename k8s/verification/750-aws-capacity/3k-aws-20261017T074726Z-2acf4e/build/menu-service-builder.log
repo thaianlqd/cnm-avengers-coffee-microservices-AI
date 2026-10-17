@@ -1,0 +1,68 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 311B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:20-alpine
+#2 DONE 0.3s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 114B done
+#3 DONE 0.0s
+
+#4 [builder 1/6] FROM docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+#4 resolve docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 0.0s done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 298.31kB done
+#5 DONE 0.0s
+
+#6 [builder 2/6] WORKDIR /app
+#6 CACHED
+
+#7 [builder 3/6] COPY package*.json ./
+#7 DONE 0.4s
+
+#8 [builder 4/6] RUN npm ci
+#8 17.54 
+#8 17.54 added 744 packages, and audited 745 packages in 17s
+#8 17.54 
+#8 17.54 160 packages are looking for funding
+#8 17.54   run `npm fund` for details
+#8 17.63 
+#8 17.63 34 vulnerabilities (2 low, 15 moderate, 15 high, 2 critical)
+#8 17.63 
+#8 17.63 To address all issues, run:
+#8 17.63   npm audit fix
+#8 17.63 
+#8 17.63 Run `npm audit` for details.
+#8 17.64 npm notice
+#8 17.64 npm notice New major version of npm available! 10.8.2 -> 12.2.0
+#8 17.64 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+#8 17.64 npm notice To update run: npm install -g npm@12.2.0
+#8 17.64 npm notice
+#8 DONE 19.9s
+
+#9 [builder 5/6] COPY . .
+#9 DONE 0.2s
+
+#10 [builder 6/6] RUN npm run build
+#10 0.254 
+#10 0.254 > menu-service@0.0.1 build
+#10 0.254 > nest build
+#10 0.254 
+#10 DONE 5.3s
+
+#11 exporting to image
+#11 exporting layers
+#11 exporting layers 8.9s done
+#11 exporting manifest sha256:ccf522e562860b6b3b448679be564b2546f3c0ae042fabf1fac8a3ff379c3f94 done
+#11 exporting config sha256:48c74071e76d798f3315e889613727fc6cc014baa3085503b934905039aaee07 done
+#11 exporting attestation manifest sha256:6ee6f9b917251a695beab4445a4544809295ee2f3f8c67c25aec7a781a9e1df4 0.0s done
+#11 exporting manifest list sha256:d5a0d9da96e10c5fade914c29eb93ca21ebbddc9a6d9732e67b869aa7cadb2f5 done
+#11 naming to docker.io/avengers/menu-service:test done
+#11 unpacking to docker.io/avengers/menu-service:test
+#11 unpacking to docker.io/avengers/menu-service:test 3.9s done
+#11 DONE 12.9s

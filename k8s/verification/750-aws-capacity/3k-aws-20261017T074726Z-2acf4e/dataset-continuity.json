@@ -1,0 +1,90 @@
+{
+  "rows": [
+    {
+      "generator": "generator1",
+      "route": "/menu/danh-muc",
+      "item_counts_match": true,
+      "decoded_sizes_match": true,
+      "body_hashes_match": true
+    },
+    {
+      "generator": "generator1",
+      "route": "/menu/san-pham",
+      "item_counts_match": true,
+      "decoded_sizes_match": true,
+      "body_hashes_match": true
+    },
+    {
+      "generator": "generator1",
+      "route": "/users/branches/public",
+      "item_counts_match": true,
+      "decoded_sizes_match": true,
+      "body_hashes_match": true
+    },
+    {
+      "generator": "generator1",
+      "route": "/news?limit=100",
+      "item_counts_match": true,
+      "decoded_sizes_match": true,
+      "body_hashes_match": false
+    },
+    {
+      "generator": "generator2",
+      "route": "/menu/danh-muc",
+      "item_counts_match": true,
+      "decoded_sizes_match": true,
+      "body_hashes_match": true
+    },
+    {
+      "generator": "generator2",
+      "route": "/menu/san-pham",
+      "item_counts_match": true,
+      "decoded_sizes_match": true,
+      "body_hashes_match": true
+    },
+    {
+      "generator": "generator2",
+      "route": "/users/branches/public",
+      "item_counts_match": true,
+      "decoded_sizes_match": true,
+      "body_hashes_match": true
+    },
+    {
+      "generator": "generator2",
+      "route": "/news?limit=100",
+      "item_counts_match": true,
+      "decoded_sizes_match": true,
+      "body_hashes_match": false
+    },
+    {
+      "generator": "generator3",
+      "route": "/menu/danh-muc",
+      "item_counts_match": true,
+      "decoded_sizes_match": true,
+      "body_hashes_match": true
+    },
+    {
+      "generator": "generator3",
+      "route": "/menu/san-pham",
+      "item_counts_match": true,
+      "decoded_sizes_match": true,
+      "body_hashes_match": true
+    },
+    {
+      "generator": "generator3",
+      "route": "/users/branches/public",
+      "item_counts_match": true,
+      "decoded_sizes_match": true,
+      "body_hashes_match": true
+    },
+    {
+      "generator": "generator3",
+      "route": "/news?limit=100",
+      "item_counts_match": true,
+      "decoded_sizes_match": true,
+      "body_hashes_match": false
+    }
+  ],
+  "passed": true,
+  "body_hash_differences_preserved": true
+}

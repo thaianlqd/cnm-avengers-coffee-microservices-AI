@@ -1,7 +1,7 @@
 # External public-browse capacity
 
 Current AWS private-target workflow and results: [AWS capacity](AWS_CAPACITY.md),
-[latest report](../../K8S_3K_AWS_CAPACITY_REPORT.md), and
+[latest750 report](../../K8S_750_CAPACITY_REPORT.md), and
 [handoff](../../FEATURES_K8S_RESUME.md). Preserve the existing private data path;
 the Mac/reverse-SSH and Quick Tunnel sections below are historical.
 

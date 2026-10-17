@@ -1,0 +1,1014 @@
+{
+  "kernel-target3.jsonl.gz": {
+    "samples": 64,
+    "hold_samples": 24,
+    "conntrack_count_peak": 7108,
+    "conntrack_max_values": [
+      131072
+    ],
+    "ena_allowance_deltas": {
+      "enp39s0": {
+        "bw_in_allowance_exceeded": 0,
+        "bw_out_allowance_exceeded": 0,
+        "pps_allowance_exceeded": 0,
+        "conntrack_allowance_exceeded": 0
+      }
+    },
+    "host_cpu_busy_peak_percent": 36.27152988855117,
+    "host_cpu_busy_hold_peak_percent": 23.95939086294416,
+    "interfaces": {
+      "lo": {
+        "rx_bytes_per_second_peak": 59956.359093237734,
+        "tx_bytes_per_second_peak": 59956.359093237734,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "enp39s0": {
+        "rx_bytes_per_second_peak": 7016431.537487742,
+        "tx_bytes_per_second_peak": 16365559.776909165,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "docker0": {
+        "rx_bytes_per_second_peak": 0,
+        "tx_bytes_per_second_peak": 0,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "flannel.1": {
+        "rx_bytes_per_second_peak": 6828825.249346438,
+        "tx_bytes_per_second_peak": 16128106.147460321,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "cni0": {
+        "rx_bytes_per_second_peak": 16129755.317105846,
+        "tx_bytes_per_second_peak": 6897339.474646245,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "veth497dc7ee": {
+        "rx_bytes_per_second_peak": 12186107.10355692,
+        "tx_bytes_per_second_peak": 160753.28021731146,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "veth0ab72c05": {
+        "rx_bytes_per_second_peak": 7492545.891968171,
+        "tx_bytes_per_second_peak": 7314276.967732106,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "veth4e4fdca9": {
+        "rx_bytes_per_second_peak": 956145.8669283359,
+        "tx_bytes_per_second_peak": 938537.8892540791,
+        "error_drop_deltas": null
+      },
+      "veth6179552a": {
+        "rx_bytes_per_second_peak": 1866370.3041828815,
+        "tx_bytes_per_second_peak": 74974.87681109319,
+        "error_drop_deltas": null
+      }
+    },
+    "tcp_ext_deltas": {
+      "ListenOverflows": 0,
+      "ListenDrops": 0,
+      "TCPTimeouts": 0,
+      "TCPSackRecoveryFail": 0,
+      "TCPReqQFullDoCookies": 0,
+      "TCPReqQFullDrop": 0,
+      "TCPSynRetrans": 0
+    },
+    "conntrack_counters_deltas": {
+      "invalid": 0,
+      "insert_failed": 0,
+      "drop": 0,
+      "early_drop": 0,
+      "error": 0,
+      "search_restart": 0,
+      "clash_resolve": 1135,
+      "chaintoolong": 0
+    },
+    "host_snmp_deltas": {
+      "Ip/InDiscards": 0,
+      "Ip/OutDiscards": 0,
+      "Tcp/ActiveOpens": 351,
+      "Tcp/PassiveOpens": 2,
+      "Tcp/AttemptFails": 0,
+      "Tcp/EstabResets": 183,
+      "Tcp/CurrEstab": 4,
+      "Tcp/InSegs": 4884,
+      "Tcp/OutSegs": 5074,
+      "Tcp/RetransSegs": 0,
+      "Tcp/InErrs": 0,
+      "Tcp/OutRsts": 185,
+      "Udp/InDatagrams": 198355,
+      "Udp/NoPorts": 0,
+      "Udp/InErrors": 0,
+      "Udp/OutDatagrams": 776,
+      "Udp/RcvbufErrors": 0,
+      "Udp/SndbufErrors": 0,
+      "Udp/InCsumErrors": 0,
+      "Udp/MemErrors": 0
+    },
+    "host_tcp_ext_deltas": {
+      "ListenOverflows": 0,
+      "ListenDrops": 0,
+      "TCPTimeouts": 0,
+      "TCPSackRecoveryFail": 0,
+      "TCPReqQFullDoCookies": 0,
+      "TCPReqQFullDrop": 0,
+      "TCPSynRetrans": 0
+    },
+    "host_tcp_state_peaks": {
+      "ESTABLISHED": 26,
+      "TIME_WAIT": 33,
+      "LISTEN": 12
+    },
+    "containers": {
+      "741e091f3b1792239d0b77e99ff6b0c953038a662cd6cc42c3a628f1893bc500": {
+        "identity": {
+          "pod": "identity-service-9c49d558f-d5zbb",
+          "uid": "a878e5c6-418f-4183-b87d-7014f3575e79",
+          "node": "capacity-target3",
+          "container": "identity-service"
+        },
+        "samples": 64,
+        "cpu_limit": [
+          "40000",
+          "100000"
+        ],
+        "cpu_peak_m": 85.7838578841008,
+        "throttled_period_peak_percent": 11.11111111111111,
+        "throttled_ms_per_second_peak": 51.58575382865347,
+        "snmp_deltas": {
+          "Ip/InDiscards": 0,
+          "Ip/OutDiscards": 0,
+          "Tcp/ActiveOpens": 32,
+          "Tcp/PassiveOpens": 1078,
+          "Tcp/AttemptFails": 0,
+          "Tcp/EstabResets": 0,
+          "Tcp/CurrEstab": 1,
+          "Tcp/InSegs": 51643,
+          "Tcp/OutSegs": 160260,
+          "Tcp/RetransSegs": 1257,
+          "Tcp/InErrs": 0,
+          "Tcp/OutRsts": 0,
+          "Udp/InDatagrams": 0,
+          "Udp/NoPorts": 0,
+          "Udp/InErrors": 0,
+          "Udp/OutDatagrams": 0,
+          "Udp/RcvbufErrors": 0,
+          "Udp/SndbufErrors": 0,
+          "Udp/InCsumErrors": 0,
+          "Udp/MemErrors": 0
+        },
+        "tcp_state_peaks": {
+          "ESTABLISHED": 109,
+          "TIME_WAIT": 51,
+          "LISTEN": 1
+        }
+      },
+      "cff53961b3d3804c8d499e6a3e08026ee723cabc869640e843d36a954c2b6bfe": {
+        "identity": {
+          "pod": "api-gateway-574bcff699-q68c7",
+          "uid": "9af76a0e-b9e4-4ef3-a841-0ae8f8eca276",
+          "node": "capacity-target3",
+          "container": "api-gateway"
+        },
+        "samples": 64,
+        "cpu_limit": [
+          "50000",
+          "100000"
+        ],
+        "cpu_peak_m": 215.07704139672174,
+        "throttled_period_peak_percent": 12.76595744680851,
+        "throttled_ms_per_second_peak": 72.53585677529264,
+        "snmp_deltas": {
+          "Ip/InDiscards": 0,
+          "Ip/OutDiscards": 0,
+          "Tcp/ActiveOpens": 1626,
+          "Tcp/PassiveOpens": 265,
+          "Tcp/AttemptFails": 0,
+          "Tcp/EstabResets": 0,
+          "Tcp/CurrEstab": 0,
+          "Tcp/InSegs": 165683,
+          "Tcp/OutSegs": 240916,
+          "Tcp/RetransSegs": 5628,
+          "Tcp/InErrs": 0,
+          "Tcp/OutRsts": 0,
+          "Udp/InDatagrams": 3252,
+          "Udp/NoPorts": 0,
+          "Udp/InErrors": 0,
+          "Udp/OutDatagrams": 3252,
+          "Udp/RcvbufErrors": 0,
+          "Udp/SndbufErrors": 0,
+          "Udp/InCsumErrors": 0,
+          "Udp/MemErrors": 0
+        },
+        "tcp_state_peaks": {
+          "ESTABLISHED": 285,
+          "TIME_WAIT": 670,
+          "LISTEN": 1
+        }
+      },
+      "7158f25c5ab02b153df27d6d78a7499254e7c1c3002b92e9744479e616b01068": {
+        "identity": {
+          "pod": "api-gateway-574bcff699-cp8lt",
+          "uid": "3c924956-cdc4-45cd-b239-682aaebae920",
+          "node": "capacity-target3",
+          "container": "api-gateway"
+        },
+        "samples": 36,
+        "cpu_limit": [
+          "50000",
+          "100000"
+        ],
+        "cpu_peak_m": 62.233507334986236,
+        "throttled_period_peak_percent": 2.380952380952381,
+        "throttled_ms_per_second_peak": 2.7813332899739813,
+        "snmp_deltas": {
+          "Ip/InDiscards": 0,
+          "Ip/OutDiscards": 0,
+          "Tcp/ActiveOpens": 105,
+          "Tcp/PassiveOpens": 55,
+          "Tcp/AttemptFails": 0,
+          "Tcp/EstabResets": 0,
+          "Tcp/CurrEstab": 0,
+          "Tcp/InSegs": 15295,
+          "Tcp/OutSegs": 22169,
+          "Tcp/RetransSegs": 456,
+          "Tcp/InErrs": 0,
+          "Tcp/OutRsts": 0,
+          "Udp/InDatagrams": 210,
+          "Udp/NoPorts": 0,
+          "Udp/InErrors": 0,
+          "Udp/OutDatagrams": 210,
+          "Udp/RcvbufErrors": 0,
+          "Udp/SndbufErrors": 0,
+          "Udp/InCsumErrors": 0,
+          "Udp/MemErrors": 0
+        },
+        "tcp_state_peaks": {
+          "ESTABLISHED": 47,
+          "TIME_WAIT": 33,
+          "LISTEN": 1
+        }
+      },
+      "ae4598e731e9dc3bb900ffa6119c71419dc4c7bf55bef09152d57051f99cf85a": {
+        "identity": {
+          "pod": "menu-service-d64c4bc8c-8z2zd",
+          "uid": "a9586022-64c1-4857-adc8-d85ae4447b33",
+          "node": "capacity-target3",
+          "container": "menu-service"
+        },
+        "samples": 36,
+        "cpu_limit": [
+          "40000",
+          "100000"
+        ],
+        "cpu_peak_m": 116.2244607825345,
+        "throttled_period_peak_percent": 5.128205128205129,
+        "throttled_ms_per_second_peak": 27.614337672622234,
+        "snmp_deltas": {
+          "Ip/InDiscards": 0,
+          "Ip/OutDiscards": 0,
+          "Tcp/ActiveOpens": 22,
+          "Tcp/PassiveOpens": 328,
+          "Tcp/AttemptFails": 0,
+          "Tcp/EstabResets": 0,
+          "Tcp/CurrEstab": 1,
+          "Tcp/InSegs": 23899,
+          "Tcp/OutSegs": 22964,
+          "Tcp/RetransSegs": 8,
+          "Tcp/InErrs": 0,
+          "Tcp/OutRsts": 0,
+          "Udp/InDatagrams": 0,
+          "Udp/NoPorts": 0,
+          "Udp/InErrors": 0,
+          "Udp/OutDatagrams": 0,
+          "Udp/RcvbufErrors": 0,
+          "Udp/SndbufErrors": 0,
+          "Udp/InCsumErrors": 0,
+          "Udp/MemErrors": 0
+        },
+        "tcp_state_peaks": {
+          "ESTABLISHED": 22,
+          "TIME_WAIT": 30,
+          "LISTEN": 1
+        }
+      }
+    }
+  },
+  "kernel-target2.jsonl.gz": {
+    "samples": 64,
+    "hold_samples": 24,
+    "conntrack_count_peak": 7928,
+    "conntrack_max_values": [
+      131072
+    ],
+    "ena_allowance_deltas": {
+      "enp39s0": {
+        "bw_in_allowance_exceeded": 0,
+        "bw_out_allowance_exceeded": 0,
+        "pps_allowance_exceeded": 0,
+        "conntrack_allowance_exceeded": 0
+      }
+    },
+    "host_cpu_busy_peak_percent": 36.02421796165489,
+    "host_cpu_busy_hold_peak_percent": 36.02421796165489,
+    "interfaces": {
+      "lo": {
+        "rx_bytes_per_second_peak": 39392.538809315636,
+        "tx_bytes_per_second_peak": 39392.538809315636,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "enp39s0": {
+        "rx_bytes_per_second_peak": 8386047.847121955,
+        "tx_bytes_per_second_peak": 14178509.03157777,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "docker0": {
+        "rx_bytes_per_second_peak": 0,
+        "tx_bytes_per_second_peak": 0,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "flannel.1": {
+        "rx_bytes_per_second_peak": 8095826.388913244,
+        "tx_bytes_per_second_peak": 13954966.946074238,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "cni0": {
+        "rx_bytes_per_second_peak": 13956731.713592079,
+        "tx_bytes_per_second_peak": 8253147.093281841,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "vethe45529d3": {
+        "rx_bytes_per_second_peak": 8502125.710602747,
+        "tx_bytes_per_second_peak": 8291468.615826679,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "veth2420071e": {
+        "rx_bytes_per_second_peak": 2275065.9459047066,
+        "tx_bytes_per_second_peak": 89480.94929338647,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "veth4840c484": {
+        "rx_bytes_per_second_peak": 10462036.978677077,
+        "tx_bytes_per_second_peak": 150761.71854815396,
+        "error_drop_deltas": null
+      },
+      "vethc2b934d1": {
+        "rx_bytes_per_second_peak": 523339.2918737474,
+        "tx_bytes_per_second_peak": 38798.70992513647,
+        "error_drop_deltas": null
+      }
+    },
+    "tcp_ext_deltas": {
+      "ListenOverflows": 0,
+      "ListenDrops": 0,
+      "TCPTimeouts": 0,
+      "TCPSackRecoveryFail": 0,
+      "TCPReqQFullDoCookies": 0,
+      "TCPReqQFullDrop": 0,
+      "TCPSynRetrans": 0
+    },
+    "conntrack_counters_deltas": {
+      "invalid": 0,
+      "insert_failed": 0,
+      "drop": 0,
+      "early_drop": 0,
+      "error": 0,
+      "search_restart": 0,
+      "clash_resolve": 1182,
+      "chaintoolong": 0
+    },
+    "host_snmp_deltas": {
+      "Ip/InDiscards": 0,
+      "Ip/OutDiscards": 0,
+      "Tcp/ActiveOpens": 337,
+      "Tcp/PassiveOpens": 2,
+      "Tcp/AttemptFails": 0,
+      "Tcp/EstabResets": 183,
+      "Tcp/CurrEstab": 3,
+      "Tcp/InSegs": 4918,
+      "Tcp/OutSegs": 5169,
+      "Tcp/RetransSegs": 1,
+      "Tcp/InErrs": 0,
+      "Tcp/OutRsts": 185,
+      "Udp/InDatagrams": 207419,
+      "Udp/NoPorts": 0,
+      "Udp/InErrors": 0,
+      "Udp/OutDatagrams": 781,
+      "Udp/RcvbufErrors": 0,
+      "Udp/SndbufErrors": 0,
+      "Udp/InCsumErrors": 0,
+      "Udp/MemErrors": 0
+    },
+    "host_tcp_ext_deltas": {
+      "ListenOverflows": 0,
+      "ListenDrops": 0,
+      "TCPTimeouts": 0,
+      "TCPSackRecoveryFail": 0,
+      "TCPReqQFullDoCookies": 0,
+      "TCPReqQFullDrop": 0,
+      "TCPSynRetrans": 0
+    },
+    "host_tcp_state_peaks": {
+      "ESTABLISHED": 26,
+      "TIME_WAIT": 30,
+      "LISTEN": 12
+    },
+    "containers": {
+      "0377ca021cca4707d413f9a74d549b36c8724d9f793113dae1c1ae4152e6ff56": {
+        "identity": {
+          "pod": "api-gateway-574bcff699-dh2j2",
+          "uid": "86600d5e-e830-4fa9-99b6-ccd8d3cae1d3",
+          "node": "capacity-target2",
+          "container": "api-gateway"
+        },
+        "samples": 64,
+        "cpu_limit": [
+          "50000",
+          "100000"
+        ],
+        "cpu_peak_m": 234.01644384616813,
+        "throttled_period_peak_percent": 15.909090909090908,
+        "throttled_ms_per_second_peak": 67.929430545849,
+        "snmp_deltas": {
+          "Ip/InDiscards": 0,
+          "Ip/OutDiscards": 0,
+          "Tcp/ActiveOpens": 2111,
+          "Tcp/PassiveOpens": 297,
+          "Tcp/AttemptFails": 0,
+          "Tcp/EstabResets": 0,
+          "Tcp/CurrEstab": 0,
+          "Tcp/InSegs": 188510,
+          "Tcp/OutSegs": 272288,
+          "Tcp/RetransSegs": 6466,
+          "Tcp/InErrs": 0,
+          "Tcp/OutRsts": 0,
+          "Udp/InDatagrams": 4222,
+          "Udp/NoPorts": 0,
+          "Udp/InErrors": 0,
+          "Udp/OutDatagrams": 4222,
+          "Udp/RcvbufErrors": 0,
+          "Udp/SndbufErrors": 0,
+          "Udp/InCsumErrors": 0,
+          "Udp/MemErrors": 0
+        },
+        "tcp_state_peaks": {
+          "ESTABLISHED": 318,
+          "TIME_WAIT": 936,
+          "LISTEN": 1
+        }
+      },
+      "1ebdbf1d63bca718b4333187e395cf2eb4eeb5425e4c0d33ce0ef82a210add5f": {
+        "identity": {
+          "pod": "menu-service-d64c4bc8c-qhwfj",
+          "uid": "2b989c5f-815a-4354-98d6-fbf38f81a307",
+          "node": "capacity-target2",
+          "container": "menu-service"
+        },
+        "samples": 64,
+        "cpu_limit": [
+          "40000",
+          "100000"
+        ],
+        "cpu_peak_m": 123.77867519821781,
+        "throttled_period_peak_percent": 6.122448979591836,
+        "throttled_ms_per_second_peak": 16.16512173648134,
+        "snmp_deltas": {
+          "Ip/InDiscards": 0,
+          "Ip/OutDiscards": 0,
+          "Tcp/ActiveOpens": 35,
+          "Tcp/PassiveOpens": 1097,
+          "Tcp/AttemptFails": 0,
+          "Tcp/EstabResets": 0,
+          "Tcp/CurrEstab": 2,
+          "Tcp/InSegs": 42422,
+          "Tcp/OutSegs": 40731,
+          "Tcp/RetransSegs": 112,
+          "Tcp/InErrs": 0,
+          "Tcp/OutRsts": 0,
+          "Udp/InDatagrams": 0,
+          "Udp/NoPorts": 0,
+          "Udp/InErrors": 0,
+          "Udp/OutDatagrams": 0,
+          "Udp/RcvbufErrors": 0,
+          "Udp/SndbufErrors": 0,
+          "Udp/InCsumErrors": 0,
+          "Udp/MemErrors": 0
+        },
+        "tcp_state_peaks": {
+          "ESTABLISHED": 52,
+          "TIME_WAIT": 56,
+          "LISTEN": 1
+        }
+      },
+      "545a311830e40483263f4ba2483bd7c9932a0319c2078b0c25052ce7a8562d89": {
+        "identity": {
+          "pod": "identity-service-9c49d558f-9hfz5",
+          "uid": "94fed75a-0dab-4c37-b930-ab781b826cd9",
+          "node": "capacity-target2",
+          "container": "identity-service"
+        },
+        "samples": 33,
+        "cpu_limit": [
+          "40000",
+          "100000"
+        ],
+        "cpu_peak_m": 115.30086471326928,
+        "throttled_period_peak_percent": 10.526315789473685,
+        "throttled_ms_per_second_peak": 48.657011149988605,
+        "snmp_deltas": {
+          "Ip/InDiscards": 0,
+          "Ip/OutDiscards": 0,
+          "Tcp/ActiveOpens": 17,
+          "Tcp/PassiveOpens": 420,
+          "Tcp/AttemptFails": 0,
+          "Tcp/EstabResets": 0,
+          "Tcp/CurrEstab": 0,
+          "Tcp/InSegs": 26639,
+          "Tcp/OutSegs": 84499,
+          "Tcp/RetransSegs": 220,
+          "Tcp/InErrs": 0,
+          "Tcp/OutRsts": 0,
+          "Udp/InDatagrams": 0,
+          "Udp/NoPorts": 0,
+          "Udp/InErrors": 0,
+          "Udp/OutDatagrams": 0,
+          "Udp/RcvbufErrors": 0,
+          "Udp/SndbufErrors": 0,
+          "Udp/InCsumErrors": 0,
+          "Udp/MemErrors": 0
+        },
+        "tcp_state_peaks": {
+          "ESTABLISHED": 33,
+          "TIME_WAIT": 68,
+          "LISTEN": 1
+        }
+      },
+      "0a96b86c46b31708da0c614f193a05635a3bc87edea1ff3f1e33a6279150306d": {
+        "identity": {
+          "pod": "menu-service-d64c4bc8c-64vhd",
+          "uid": "732f6bca-4db4-4849-9a99-46d9be612e3b",
+          "node": "capacity-target2",
+          "container": "menu-service"
+        },
+        "samples": 24,
+        "cpu_limit": [
+          "40000",
+          "100000"
+        ],
+        "cpu_peak_m": 68.47102548229192,
+        "throttled_period_peak_percent": 4.3478260869565215,
+        "throttled_ms_per_second_peak": 17.18611809269791,
+        "snmp_deltas": {
+          "Ip/InDiscards": 0,
+          "Ip/OutDiscards": 0,
+          "Tcp/ActiveOpens": 14,
+          "Tcp/PassiveOpens": 188,
+          "Tcp/AttemptFails": 0,
+          "Tcp/EstabResets": 0,
+          "Tcp/CurrEstab": 0,
+          "Tcp/InSegs": 7569,
+          "Tcp/OutSegs": 7218,
+          "Tcp/RetransSegs": 4,
+          "Tcp/InErrs": 0,
+          "Tcp/OutRsts": 0,
+          "Udp/InDatagrams": 0,
+          "Udp/NoPorts": 0,
+          "Udp/InErrors": 0,
+          "Udp/OutDatagrams": 0,
+          "Udp/RcvbufErrors": 0,
+          "Udp/SndbufErrors": 0,
+          "Udp/InCsumErrors": 0,
+          "Udp/MemErrors": 0
+        },
+        "tcp_state_peaks": {
+          "ESTABLISHED": 20,
+          "TIME_WAIT": 36,
+          "LISTEN": 1
+        }
+      }
+    }
+  },
+  "kernel-target1.jsonl.gz": {
+    "samples": 64,
+    "hold_samples": 24,
+    "conntrack_count_peak": 8254,
+    "conntrack_max_values": [
+      131072
+    ],
+    "ena_allowance_deltas": {
+      "enp39s0": {
+        "bw_in_allowance_exceeded": 0,
+        "bw_out_allowance_exceeded": 0,
+        "pps_allowance_exceeded": 0,
+        "conntrack_allowance_exceeded": 0
+      }
+    },
+    "host_cpu_busy_peak_percent": 42.26491405460061,
+    "host_cpu_busy_hold_peak_percent": 42.26491405460061,
+    "interfaces": {
+      "lo": {
+        "rx_bytes_per_second_peak": 174884.3830246771,
+        "tx_bytes_per_second_peak": 174884.3830246771,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "enp39s0": {
+        "rx_bytes_per_second_peak": 17702142.53390965,
+        "tx_bytes_per_second_peak": 20407357.623645566,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "docker0": {
+        "rx_bytes_per_second_peak": 0,
+        "tx_bytes_per_second_peak": 0,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "flannel.1": {
+        "rx_bytes_per_second_peak": 17185726.210794587,
+        "tx_bytes_per_second_peak": 4487251.952149709,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "cni0": {
+        "rx_bytes_per_second_peak": 5148154.261581325,
+        "tx_bytes_per_second_peak": 1034473.723686717,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "veth63e4e4d0": {
+        "rx_bytes_per_second_peak": 99.59808606964654,
+        "tx_bytes_per_second_peak": 159.1973203347169,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "veth44bd1294": {
+        "rx_bytes_per_second_peak": 20713.14366121674,
+        "tx_bytes_per_second_peak": 12088.633325286555,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "veth643db1a2": {
+        "rx_bytes_per_second_peak": 5532.5525137208715,
+        "tx_bytes_per_second_peak": 9250.143230091591,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "veth57cb8110": {
+        "rx_bytes_per_second_peak": 547172.4420814036,
+        "tx_bytes_per_second_peak": 47012.064719141585,
+        "error_drop_deltas": {
+          "rx_errors": 0,
+          "rx_drops": 0,
+          "tx_errors": 0,
+          "tx_drops": 0
+        }
+      },
+      "vethea1d63c3": {
+        "rx_bytes_per_second_peak": 1139299.5363888228,
+        "tx_bytes_per_second_peak": 1119927.6809371477,
+        "error_drop_deltas": null
+      },
+      "vethccc48495": {
+        "rx_bytes_per_second_peak": 1623711.0363655412,
+        "tx_bytes_per_second_peak": 80386.87891785458,
+        "error_drop_deltas": null
+      },
+      "veth779bca6f": {
+        "rx_bytes_per_second_peak": 3980413.7776414263,
+        "tx_bytes_per_second_peak": 124275.18963824582,
+        "error_drop_deltas": null
+      }
+    },
+    "tcp_ext_deltas": {
+      "ListenOverflows": 0,
+      "ListenDrops": 0,
+      "TCPTimeouts": 0,
+      "TCPSackRecoveryFail": 0,
+      "TCPReqQFullDoCookies": 0,
+      "TCPReqQFullDrop": 0,
+      "TCPSynRetrans": 0
+    },
+    "conntrack_counters_deltas": {
+      "invalid": 0,
+      "insert_failed": 0,
+      "drop": 0,
+      "early_drop": 0,
+      "error": 0,
+      "search_restart": 0,
+      "clash_resolve": 7035,
+      "chaintoolong": 0
+    },
+    "host_snmp_deltas": {
+      "Ip/InDiscards": 0,
+      "Ip/OutDiscards": 0,
+      "Tcp/ActiveOpens": 1148,
+      "Tcp/PassiveOpens": 458,
+      "Tcp/AttemptFails": 1,
+      "Tcp/EstabResets": 645,
+      "Tcp/CurrEstab": 34,
+      "Tcp/InSegs": 36531,
+      "Tcp/OutSegs": 36803,
+      "Tcp/RetransSegs": 9,
+      "Tcp/InErrs": 0,
+      "Tcp/OutRsts": 773,
+      "Udp/InDatagrams": 248947,
+      "Udp/NoPorts": 0,
+      "Udp/InErrors": 0,
+      "Udp/OutDatagrams": 786,
+      "Udp/RcvbufErrors": 0,
+      "Udp/SndbufErrors": 0,
+      "Udp/InCsumErrors": 0,
+      "Udp/MemErrors": 0
+    },
+    "host_tcp_ext_deltas": {
+      "ListenOverflows": 0,
+      "ListenDrops": 0,
+      "TCPTimeouts": 0,
+      "TCPSackRecoveryFail": 0,
+      "TCPReqQFullDoCookies": 0,
+      "TCPReqQFullDrop": 0,
+      "TCPSynRetrans": 0
+    },
+    "host_tcp_state_peaks": {
+      "ESTABLISHED": 105,
+      "TIME_WAIT": 47,
+      "LISTEN": 15
+    },
+    "containers": {
+      "55cdff4cca44d43ac9404ce703dd881c04262e711276b1270f6d6cf9b7a6aa49": {
+        "identity": {
+          "pod": "news-service-59b758f876-z55vw",
+          "uid": "fa23d1c9-aa93-480c-a095-4fb3e1605d27",
+          "node": "capacity-target1",
+          "container": "news-service"
+        },
+        "samples": 64,
+        "cpu_limit": [
+          "40000",
+          "100000"
+        ],
+        "cpu_peak_m": 85.0694694914821,
+        "throttled_period_peak_percent": 7.142857142857143,
+        "throttled_ms_per_second_peak": 27.282940763946073,
+        "snmp_deltas": {
+          "Ip/InDiscards": 0,
+          "Ip/OutDiscards": 0,
+          "Tcp/ActiveOpens": 32,
+          "Tcp/PassiveOpens": 622,
+          "Tcp/AttemptFails": 0,
+          "Tcp/EstabResets": 0,
+          "Tcp/CurrEstab": 1,
+          "Tcp/InSegs": 40145,
+          "Tcp/OutSegs": 32947,
+          "Tcp/RetransSegs": 0,
+          "Tcp/InErrs": 0,
+          "Tcp/OutRsts": 0,
+          "Udp/InDatagrams": 0,
+          "Udp/NoPorts": 0,
+          "Udp/InErrors": 0,
+          "Udp/OutDatagrams": 0,
+          "Udp/RcvbufErrors": 0,
+          "Udp/SndbufErrors": 0,
+          "Udp/InCsumErrors": 0,
+          "Udp/MemErrors": 0
+        },
+        "tcp_state_peaks": {
+          "ESTABLISHED": 43,
+          "TIME_WAIT": 134,
+          "LISTEN": 1
+        }
+      },
+      "9ad1979a9976c03d7678f3a0f69c1be9ce3704b136aee327b26783a3d7bd888f": {
+        "identity": {
+          "pod": "api-gateway-574bcff699-92tcl",
+          "uid": "b9a1f9e8-3e4c-4a32-8bc3-afd4a14cddd3",
+          "node": "capacity-target1",
+          "container": "api-gateway"
+        },
+        "samples": 36,
+        "cpu_limit": [
+          "50000",
+          "100000"
+        ],
+        "cpu_peak_m": 82.50741120623799,
+        "throttled_period_peak_percent": 0.0,
+        "throttled_ms_per_second_peak": 0.0,
+        "snmp_deltas": {
+          "Ip/InDiscards": 0,
+          "Ip/OutDiscards": 0,
+          "Tcp/ActiveOpens": 123,
+          "Tcp/PassiveOpens": 72,
+          "Tcp/AttemptFails": 0,
+          "Tcp/EstabResets": 0,
+          "Tcp/CurrEstab": 0,
+          "Tcp/InSegs": 19006,
+          "Tcp/OutSegs": 27642,
+          "Tcp/RetransSegs": 522,
+          "Tcp/InErrs": 0,
+          "Tcp/OutRsts": 0,
+          "Udp/InDatagrams": 246,
+          "Udp/NoPorts": 0,
+          "Udp/InErrors": 0,
+          "Udp/OutDatagrams": 246,
+          "Udp/RcvbufErrors": 0,
+          "Udp/SndbufErrors": 0,
+          "Udp/InCsumErrors": 0,
+          "Udp/MemErrors": 0
+        },
+        "tcp_state_peaks": {
+          "ESTABLISHED": 53,
+          "TIME_WAIT": 38,
+          "LISTEN": 1
+        }
+      },
+      "f658d0175ba072f9e84a5c08eec95bfd51d38a1c0a696c3b1706cebbbe818f11": {
+        "identity": {
+          "pod": "menu-service-d64c4bc8c-lwfml",
+          "uid": "a4f4a5ca-233d-47f8-a833-d9b2f1a88e67",
+          "node": "capacity-target1",
+          "container": "menu-service"
+        },
+        "samples": 30,
+        "cpu_limit": [
+          "40000",
+          "100000"
+        ],
+        "cpu_peak_m": 106.15012732700491,
+        "throttled_period_peak_percent": 4.081632653061225,
+        "throttled_ms_per_second_peak": 29.398499546797837,
+        "snmp_deltas": {
+          "Ip/InDiscards": 0,
+          "Ip/OutDiscards": 0,
+          "Tcp/ActiveOpens": 18,
+          "Tcp/PassiveOpens": 243,
+          "Tcp/AttemptFails": 0,
+          "Tcp/EstabResets": 0,
+          "Tcp/CurrEstab": 1,
+          "Tcp/InSegs": 21693,
+          "Tcp/OutSegs": 21210,
+          "Tcp/RetransSegs": 17,
+          "Tcp/InErrs": 0,
+          "Tcp/OutRsts": 0,
+          "Udp/InDatagrams": 0,
+          "Udp/NoPorts": 0,
+          "Udp/InErrors": 0,
+          "Udp/OutDatagrams": 0,
+          "Udp/RcvbufErrors": 0,
+          "Udp/SndbufErrors": 0,
+          "Udp/InCsumErrors": 0,
+          "Udp/MemErrors": 0
+        },
+        "tcp_state_peaks": {
+          "ESTABLISHED": 49,
+          "TIME_WAIT": 29,
+          "LISTEN": 1
+        }
+      },
+      "92a1a838ba5d79e913ff392a3ca9201d0122ebd125b21f7d8722e1eabfac47c8": {
+        "identity": {
+          "pod": "identity-service-9c49d558f-qdn77",
+          "uid": "1617a4af-e1c0-4f79-8aee-4f22ebad8b42",
+          "node": "capacity-target1",
+          "container": "identity-service"
+        },
+        "samples": 24,
+        "cpu_limit": [
+          "40000",
+          "100000"
+        ],
+        "cpu_peak_m": 54.643880214990816,
+        "throttled_period_peak_percent": 14.285714285714286,
+        "throttled_ms_per_second_peak": 55.8522598751194,
+        "snmp_deltas": {
+          "Ip/InDiscards": 0,
+          "Ip/OutDiscards": 0,
+          "Tcp/ActiveOpens": 11,
+          "Tcp/PassiveOpens": 270,
+          "Tcp/AttemptFails": 0,
+          "Tcp/EstabResets": 0,
+          "Tcp/CurrEstab": 0,
+          "Tcp/InSegs": 9242,
+          "Tcp/OutSegs": 19510,
+          "Tcp/RetransSegs": 53,
+          "Tcp/InErrs": 0,
+          "Tcp/OutRsts": 1,
+          "Udp/InDatagrams": 0,
+          "Udp/NoPorts": 0,
+          "Udp/InErrors": 0,
+          "Udp/OutDatagrams": 0,
+          "Udp/RcvbufErrors": 0,
+          "Udp/SndbufErrors": 0,
+          "Udp/InCsumErrors": 0,
+          "Udp/MemErrors": 0
+        },
+        "tcp_state_peaks": {
+          "ESTABLISHED": 27,
+          "TIME_WAIT": 30,
+          "LISTEN": 1
+        }
+      }
+    }
+  }
+}

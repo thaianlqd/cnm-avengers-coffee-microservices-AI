@@ -1,3 +1,5 @@
+> **Mới nhất 17/10/2026:** [750 VU qualified, hai PASS gồm300s hold; AWS cleanup PASS](K8S_750_CAPACITY_REPORT.md). Khôngpush/merge;1000NOTRUN.
+
 > Latest result17/10/2026: [1K phase final report](K8S_1K_CAPACITY_REPORT.md).500 VU repeatably QUALIFIED (normal+300s long);750 INVALID GENERATOR,1000 NOT RUN. Owned AWS cleanup verified includingENIs. Local runtime was not rerun to protect DataPlatform; prior results below remain historical.
 
 # Kubernetes customer demo — verification report

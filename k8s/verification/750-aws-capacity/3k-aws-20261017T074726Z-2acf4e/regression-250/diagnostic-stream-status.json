@@ -1,0 +1,63 @@
+{
+  "pods": {
+    "86600d5e-e830-4fa9-99b6-ccd8d3cae1d3": {
+      "service": "api-gateway",
+      "pod": "api-gateway-574bcff699-dh2j2",
+      "records": 0
+    },
+    "9af76a0e-b9e4-4ef3-a841-0ae8f8eca276": {
+      "service": "api-gateway",
+      "pod": "api-gateway-574bcff699-q68c7",
+      "records": 0
+    },
+    "a878e5c6-418f-4183-b87d-7014f3575e79": {
+      "service": "identity-service",
+      "pod": "identity-service-9c49d558f-d5zbb",
+      "records": 0
+    },
+    "2b989c5f-815a-4354-98d6-fbf38f81a307": {
+      "service": "menu-service",
+      "pod": "menu-service-d64c4bc8c-qhwfj",
+      "records": 0
+    },
+    "fa23d1c9-aa93-480c-a095-4fb3e1605d27": {
+      "service": "news-service",
+      "pod": "news-service-59b758f876-z55vw",
+      "records": 0
+    },
+    "2e2a88cb-ab85-4b30-ad99-03cf4fba8633": {
+      "service": "api-gateway",
+      "pod": "api-gateway-574bcff699-prwqj",
+      "records": 0
+    },
+    "431af03c-e1a6-4e10-8679-e7d86b7d2556": {
+      "service": "api-gateway",
+      "pod": "api-gateway-574bcff699-f4x7g",
+      "records": 0
+    },
+    "a6c4df2f-a98d-4421-ba07-8015b92c69d3": {
+      "service": "menu-service",
+      "pod": "menu-service-d64c4bc8c-slwc5",
+      "records": 0
+    },
+    "25c175d1-a4b0-49d6-b6e2-6919368c9ea6": {
+      "service": "identity-service",
+      "pod": "identity-service-9c49d558f-pgnqk",
+      "records": 0
+    }
+  },
+  "attempts": {
+    "86600d5e-e830-4fa9-99b6-ccd8d3cae1d3": 1,
+    "9af76a0e-b9e4-4ef3-a841-0ae8f8eca276": 1,
+    "a878e5c6-418f-4183-b87d-7014f3575e79": 1,
+    "2b989c5f-815a-4354-98d6-fbf38f81a307": 1,
+    "fa23d1c9-aa93-480c-a095-4fb3e1605d27": 1,
+    "2e2a88cb-ab85-4b30-ad99-03cf4fba8633": 1,
+    "431af03c-e1a6-4e10-8679-e7d86b7d2556": 1,
+    "a6c4df2f-a98d-4421-ba07-8015b92c69d3": 1,
+    "25c175d1-a4b0-49d6-b6e2-6919368c9ea6": 1
+  },
+  "records": 0,
+  "raw_other_logs_retained": false,
+  "owned_log_processes_stopped": true
+}

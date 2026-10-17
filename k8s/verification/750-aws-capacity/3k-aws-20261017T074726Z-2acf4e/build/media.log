@@ -1,0 +1,55 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 235B done
+#1 DONE 0.0s
+
+#2 [context news_media] load .dockerignore
+#2 transferring news_media: 2B done
+#2 DONE 0.0s
+
+#3 [context menu_media] load .dockerignore
+#3 transferring menu_media: 2B done
+#3 DONE 0.0s
+
+#4 [internal] load metadata for docker.io/library/busybox:1.37
+#4 DONE 2.4s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 2B done
+#5 DONE 0.0s
+
+#6 [context news_media] load from client
+#6 transferring news_media: 1.29MB 0.0s done
+#6 DONE 0.1s
+
+#7 [media 1/3] FROM docker.io/library/busybox:1.37@sha256:bdf57e528e45e4433820e045b29b4597825a1c9e38353532d90a01445013f82e
+#7 resolve docker.io/library/busybox:1.37@sha256:bdf57e528e45e4433820e045b29b4597825a1c9e38353532d90a01445013f82e 0.0s done
+#7 DONE 0.1s
+
+#8 [context menu_media] load from client
+#8 transferring menu_media: 1.88MB 0.0s done
+#8 DONE 0.1s
+
+#7 [media 1/3] FROM docker.io/library/busybox:1.37@sha256:bdf57e528e45e4433820e045b29b4597825a1c9e38353532d90a01445013f82e
+#7 sha256:68fe9bff2ad4ad46da3e58db03faa64eb73c0ff16d546b0c42539eaa9854cb7f 0B / 2.21MB 0.2s
+#7 sha256:68fe9bff2ad4ad46da3e58db03faa64eb73c0ff16d546b0c42539eaa9854cb7f 2.21MB / 2.21MB 0.2s done
+#7 extracting sha256:68fe9bff2ad4ad46da3e58db03faa64eb73c0ff16d546b0c42539eaa9854cb7f
+#7 extracting sha256:68fe9bff2ad4ad46da3e58db03faa64eb73c0ff16d546b0c42539eaa9854cb7f 0.1s done
+#7 DONE 0.4s
+
+#9 [media 2/3] COPY --from=menu_media / /media/products/
+#9 DONE 0.3s
+
+#10 [media 3/3] COPY --from=news_media / /media/uploads/
+#10 DONE 0.0s
+
+#11 exporting to image
+#11 exporting layers 0.1s done
+#11 exporting manifest sha256:e653613b0ad931f6828d2879f2533a19ffdf72e0222718a8f4d8c60c82eb2ca3 done
+#11 exporting config sha256:6433894117c2a7827b44380984afc1a21c166a303c74b0804acd782f00b8e60d 0.0s done
+#11 exporting attestation manifest sha256:f6c81146397e6f914445ffc8aaff7c14f240c89e6c223e20cefdf2a2d2cefa01 0.0s done
+#11 exporting manifest list sha256:8a183069f6b5435bc6b698bca1011ed6723a14e14a3e00612a1f43f929170a5a done
+#11 naming to docker.io/avengers/customer-media:3k-aws-ac88422957e9 done
+#11 unpacking to docker.io/avengers/customer-media:3k-aws-ac88422957e9 0.0s done
+#11 DONE 0.2s
