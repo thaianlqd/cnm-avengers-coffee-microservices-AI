@@ -1,3 +1,8 @@
+> **Follow-up đang chuẩn bị (17Oct):** user yêu cầu tiếp tục1000 bằng cấu hình, giữ
+> code ứng dụng. Xem [K8S_1K_FOLLOWUP_PLAN.md](K8S_1K_FOLLOWUP_PLAN.md). Harness
+> đã hỗ trợ tối đa6generator với guard approval riêng. Chưa được duyệt credit/topology
+> mới, chưa provision/chạy benchmark; lịch sử kết quả/cleanup bên dưới giữ nguyên.
+
 # FEATURES_K8S — final bounded capacity checkpoint,17/10/2026 ICT
 
 **Lượt đo đã kết thúc; AWS sạch.500 VU repeatably QUALIFIED.750 INVALID GENERATOR.

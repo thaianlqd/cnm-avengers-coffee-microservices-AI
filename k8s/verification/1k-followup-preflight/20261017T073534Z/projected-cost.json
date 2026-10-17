@@ -1,0 +1,19 @@
+{
+  "status": "PROPOSED_NOT_AUTHORIZED",
+  "compute_usd_hour": 0.1197,
+  "max_projected_usd": 3.0,
+  "maximum_generators": 6,
+  "hard_max_instances": 9,
+  "guest_termination_minutes": 110,
+  "controller_deadline_minutes": 110,
+  "max_compute_usd": 1.97505,
+  "ebs_reserve_usd": 0.15,
+  "ipv4_reserve_usd": 0.1,
+  "transfer_contingency_usd": 0.65,
+  "total_with_reserves_usd": 2.87505,
+  "previous_authorized_estimates_usd": 12.4431,
+  "combined_if_approved_estimate_usd": 15.4431,
+  "actual_bill": false,
+  "free_plan_only": true,
+  "instance_type": "m7i-flex.large"
+}

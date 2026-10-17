@@ -21,8 +21,10 @@ def percentile(values, p):
 
 
 def merge(folders):
-    if not 2 <= len(folders) <= 3:
-        raise ValueError('two or three generators required')
+    if not 2 <= len(folders) <= 6:
+        raise ValueError('two to six generators required')
+    if len({p.resolve() for p in folders}) != len(folders):
+        raise ValueError('duplicate generator partition')
     metadata = [json.loads((p / 'metadata.json').read_text()) for p in folders]
     starts = [dt.datetime.fromisoformat(m['load_started_at']) for m in metadata]
     ends = [dt.datetime.fromisoformat(m['load_finished_at']) for m in metadata]

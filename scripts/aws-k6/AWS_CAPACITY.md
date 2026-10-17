@@ -43,7 +43,8 @@ failure. Distributed execution below merges actual observations; never average p
 
 ## Distributed generator qualification
 
-Scale only after measured inadequacy; maximum three generators. Keep the
+Scale only after measured inadequacy. Existing approval is at most three generators;
+the harness supports up to six only with a separate matching explicit approval. Keep the
 application images/overlay/profile fixed and rerun the same total VU level.
 Distribute integer partitions summing to that level. On each generator run
 `aws-run-generator.py NAME PARTITION --target http://PRIVATE_IP:30300
@@ -126,3 +127,22 @@ checks complete hold coverage independently. A missing-metric gap cannot become
 a stable PASS or a zero-resource-usage claim.
 
 Guest shutdown bounds compute lifetime; it does not delete security groups. If the local controller/runtime disappears (including abrupt kill), inspect all known ownership phases and run ownership-scoped cleanup. Do not infer full cleanup from terminated instances alone. The 16 October recovery removed two orphan groups and verified instances, disks, groups, key pairs and ENIs were zero.
+
+
+## Optional six-generator follow-up (not authorized by the earlier three-generator approval)
+
+See [the prepared follow-up](../../K8S_1K_FOLLOWUP_PLAN.md). Control routes, private
+job cleanup, merger and analyzer accept generator1..6; the default remains one.
+For max-generators>3, start additionally requires authorization.json with
+user_approved=true, approved_additional_credit_usd, maximum_generators, targets=3,
+runtime_minutes, free_plan_only=true, no_plan_or_iam_changes=true and
+instance_type=m7i-flex.large. These must match the explicit user approval. The
+cost manifest must cover all targets+generators, runtime and reserves within cap.
+The checked-in proposed follow-up intentionally has user_approved=false and
+approved_additional_credit_usd=0, so it cannot provision a six-generator fleet.
+Do not change those values without new user authorization. Existing <=3 flows
+keep their earlier safeguards. Each added machine still needs measured inadequacy.
+
+Numeric merging accepts2..6 distinct partitions; actual VUs must sum to the merged
+requested total. Every shard independently keeps all adequacy/coverage/actual-VU
+gates. An invalid sixth generator cannot be hidden by the other five.

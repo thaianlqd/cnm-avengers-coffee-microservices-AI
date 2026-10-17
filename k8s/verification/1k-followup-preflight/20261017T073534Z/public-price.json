@@ -1,0 +1,12 @@
+{
+  "observed_at": "2026-10-17T07:36:14.728794+00:00",
+  "source": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-southeast-2/index.csv",
+  "SKU": "YZS4YR3ZPHD427K5",
+  "EffectiveDate": "2026-10-01",
+  "Unit": "Hrs",
+  "PricePerUnit": "0.1197000000",
+  "Currency": "USD",
+  "Instance Type": "m7i-flex.large",
+  "vCPU": "2",
+  "Memory": "8 GiB"
+}

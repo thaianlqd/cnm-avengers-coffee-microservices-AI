@@ -1,0 +1,101 @@
+{
+  "observations": [
+    {
+      "source": "k8s/verification/1k-aws-capacity/3k-aws-20261016T184703Z-fc6326/reuse-long-500/analysis.json",
+      "source_sha256": "83eb5e2dd27dc8e58a1f430a53f318c6ae8219052061ec8c990677aa6ae43ab8",
+      "qualification": "STABLE PASS",
+      "requested_vus": 500,
+      "node_cpu_peak_percent": 42.0,
+      "cluster_sampled_peak": {
+        "cpu_millicores": 1489.0,
+        "memory_MiB": 2552.0
+      },
+      "services": {
+        "api-gateway": {
+          "sampled_pod_cpu_peak_millicores": 285.0,
+          "sampled_pod_memory_peak_MiB": 37.0
+        },
+        "identity-service": {
+          "sampled_pod_cpu_peak_millicores": 92.0,
+          "sampled_pod_memory_peak_MiB": 53.0
+        },
+        "menu-service": {
+          "sampled_pod_cpu_peak_millicores": 106.0,
+          "sampled_pod_memory_peak_MiB": 45.0
+        },
+        "news-service": {
+          "sampled_pod_cpu_peak_millicores": 98.0,
+          "sampled_pod_memory_peak_MiB": 45.0
+        }
+      },
+      "generator_cpu_peak_percent": [
+        77.91044776119404,
+        82.25324027916251,
+        83.6
+      ]
+    },
+    {
+      "source": "k8s/verification/1k-aws-capacity/3k-aws-20261017T052200Z-952f9c/retained-normal-750/analysis.json",
+      "source_sha256": "b626c0d2ec5d624d18c3a50b9bfab724878dc6194c2343f575daaad163ee64ad",
+      "qualification": "INVALID GENERATOR",
+      "requested_vus": 750,
+      "node_cpu_peak_percent": 41.0,
+      "cluster_sampled_peak": {
+        "cpu_millicores": 1671.0,
+        "memory_MiB": 2595.0
+      },
+      "services": {
+        "api-gateway": {
+          "sampled_pod_cpu_peak_millicores": 204.0,
+          "sampled_pod_memory_peak_MiB": 37.0
+        },
+        "identity-service": {
+          "sampled_pod_cpu_peak_millicores": 128.0,
+          "sampled_pod_memory_peak_MiB": 54.0
+        },
+        "menu-service": {
+          "sampled_pod_cpu_peak_millicores": 106.0,
+          "sampled_pod_memory_peak_MiB": 45.0
+        },
+        "news-service": {
+          "sampled_pod_cpu_peak_millicores": 107.0,
+          "sampled_pod_memory_peak_MiB": 45.0
+        }
+      },
+      "generator_cpu_peak_percent": [
+        98.8035892323031,
+        100.0,
+        99.5004995004995
+      ]
+    }
+  ],
+  "inference": "The 750 test was generator-limited. No demonstrated service saturation justifies lowering service CPU/RAM. Historical sampled peaks do not establish capacity at 1000.",
+  "docker_review": "Gateway/Identity/Menu/News already use multi-stage images and npm ci --omit=dev; Kubernetes NODE_ENV=production. Smaller image size does not itself remove per-request CPU.",
+  "app_code_modified": false,
+  "workload_sha256": "8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2",
+  "proposed_partitions": {
+    "500": [
+      167,
+      167,
+      166
+    ],
+    "750": [
+      125,
+      125,
+      125,
+      125,
+      125,
+      125
+    ],
+    "1000": [
+      167,
+      167,
+      167,
+      167,
+      166,
+      166
+    ]
+  },
+  "same_per_generator_vus_at_1000_as_qualified500": true,
+  "prediction_not_a_pass": true
+}

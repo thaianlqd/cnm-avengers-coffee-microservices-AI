@@ -8,7 +8,7 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self,*args):pass
     def handle_request(self):
         if not hmac.compare_digest(self.headers.get('Authorization',''),'Bearer '+TOKEN):self.send_error(404);return
-        match=re.fullmatch(r'/(target[1-4]|generator[1-3])/(cert|job|result/([A-Za-z0-9]+))',self.path)
+        match=re.fullmatch(r'/(target[1-4]|generator[1-6])/(cert|job|result/([A-Za-z0-9]+))',self.path)
         if not match:self.send_error(404);return
         role,action,job=match.groups();folder=FOLDER/role;folder.mkdir(exist_ok=True,mode=0o700)
         if self.command=='GET' and action=='job':

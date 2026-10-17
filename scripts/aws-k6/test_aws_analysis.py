@@ -82,7 +82,7 @@ class Gates(unittest.TestCase):
             d=Path(d);fixture(d)
             for name,fd in [('generator1',10),('generator2',900)]:
                 (d/name).mkdir();fixture(d/name,fd=fd)
-            meta=json.loads((d/'metadata.json').read_text());meta.update(generator_count=2,start_skew_seconds=0);(d/'metadata.json').write_text(json.dumps(meta))
+            meta=json.loads((d/'metadata.json').read_text());meta.update(vus=500,generator_count=2,start_skew_seconds=0);(d/'metadata.json').write_text(json.dumps(meta))
             result=m.analyze(d)
             self.assertEqual(result['status'],'INVALID GENERATOR')
             self.assertTrue(any('generator2' in reason for reason in result['generator_reasons']))

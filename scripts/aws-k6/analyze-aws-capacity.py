@@ -119,13 +119,15 @@ def analyze(folder):
     count=meta.get('generator_count',1)
     result.update(p50_ms=value('http_req_duration','p(50)'),p90_ms=value('http_req_duration','p(90)'),max_latency_ms=value('http_req_duration','max'),resources=resource_peaks(rows),complete_metric_hold_coverage=complete_coverage,vu_stage=vu_stage)
     if count!=1:
-        if count not in (2,3) or not isinstance(meta.get('start_skew_seconds'),(int,float)) or not 0<=meta['start_skew_seconds']<=2:
+        if type(count) is not int or not 2<=count<=6 or not isinstance(meta.get('start_skew_seconds'),(int,float)) or not 0<=meta['start_skew_seconds']<=2:
             raise ValueError('invalid distributed synchronization evidence')
         names=meta.get('generator_folders',['generator'+str(i+1) for i in range(count)])
-        if len(names)!=count or len(set(names))!=count or any(not re.fullmatch(r'generator[1-3]',n) for n in names):
+        if len(names)!=count or len(set(names))!=count or any(not re.fullmatch(r'generator[1-6]',n) for n in names):
             raise ValueError('invalid generator partition manifest')
         if any(not (folder/n).is_dir() for n in names):raise ValueError('missing generator partition')
         shards={n:analyze(folder/n) for n in names}
+        if any(v.get('generator_count',1)!=1 for v in shards.values()) or sum(v['vus'] for v in shards.values())!=meta['vus']:
+            raise ValueError('generator partition VUs do not match total')
         result['generators']=shards
         result['generator_count']=count
         result['start_skew_seconds']=meta['start_skew_seconds']

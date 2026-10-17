@@ -71,7 +71,7 @@ def add_generator(folder,evidence,inadequacy):
     state=json.loads((folder/'state.json').read_text());a.tags(state['run_id'])
     if not (folder/'READY').exists() or (folder/'FINISH').exists() or (folder/'CLOSED').exists():raise ValueError('session not active')
     count=sum(role.startswith('generator') for role in state['roles'])
-    if not 1<=count<state.get('max_generators',1)<=3:raise ValueError('approved generator limit')
+    if not 1<=count<state.get('max_generators',1)<=6:raise ValueError('approved generator limit')
     proof=json.loads(inadequacy.read_text())
     if proof.get('generator_adequate') is not False or not proof.get('generator_reasons'):raise ValueError('measured generator inadequacy required')
     current=a.inventory(state['run_id'])
@@ -94,6 +94,31 @@ def add_generator(folder,evidence,inadequacy):
         (folder/'FINISH').write_text('generator addition failed; mandatory cleanup')
         raise
 
+def validate_extended_topology(evidence,plan,max_generators,runtime_minutes):
+    """Preparing six-shard support does not authorize a larger paid fleet."""
+    if max_generators<=3:return
+    try:approval=json.loads((evidence/'authorization.json').read_text())
+    except (OSError,ValueError):raise ValueError('extended topology requires explicit user approval')
+    cap=approval.get('approved_additional_credit_usd')
+    if (approval.get('user_approved') is not True or
+        type(approval.get('maximum_generators')) is not int or approval['maximum_generators']<max_generators or
+        type(approval.get('targets')) is not int or approval['targets']!=3 or
+        type(approval.get('runtime_minutes')) is not int or approval['runtime_minutes']!=runtime_minutes or
+        approval.get('free_plan_only') is not True or approval.get('no_plan_or_iam_changes') is not True or
+        approval.get('instance_type')!='m7i-flex.large' or
+        type(cap) not in (int,float) or not math.isfinite(cap) or not 0<cap<=5 or
+        plan['max_projected_usd']>cap):
+        raise ValueError('extended topology requires matching explicit user approval')
+    components=[plan.get(k) for k in ('max_compute_usd','ebs_reserve_usd','ipv4_reserve_usd','transfer_contingency_usd')]
+    price=plan.get('compute_usd_hour')
+    if (plan.get('free_plan_only') is not True or plan.get('instance_type')!='m7i-flex.large' or
+        type(plan.get('hard_max_instances')) is not int or plan['hard_max_instances']!=3+max_generators or
+        type(price) not in (int,float) or not math.isfinite(price) or price<=0 or
+        any(type(v) not in (int,float) or not math.isfinite(v) or v<0 for v in components) or
+        components[0]+1e-9<(3+max_generators)*price*runtime_minutes/60 or
+        sum(components)>plan['max_projected_usd']):
+        raise ValueError('extended topology cost or Free-plan bounds invalid')
+
 def start(folder,run,evidence,max_generators=1,runtime_minutes=175):
     if subprocess.check_output(['git','branch','--show-current'],cwd=ROOT,text=True).strip()!='features_k8s':raise ValueError('branch guard')
     a.tags(run) # Reject malformed RunIds before creating local or remote resources.
@@ -101,7 +126,8 @@ def start(folder,run,evidence,max_generators=1,runtime_minutes=175):
     if isinstance(budget,bool) or not isinstance(budget,(int,float)) or not math.isfinite(budget) or not 0<budget<=5:raise ValueError('budget')
     plan=json.loads((evidence/'projected-cost.json').read_text())
     if type(runtime_minutes) is not int or not 30<=runtime_minutes<=175 or plan.get('guest_termination_minutes',runtime_minutes)!=runtime_minutes:raise ValueError('invalid runtime bound')
-    if type(max_generators) is not int or not 1<=max_generators<=3 or max_generators>plan.get('maximum_generators',1):raise ValueError('approved generator limit')
+    if type(max_generators) is not int or not 1<=max_generators<=6 or max_generators>plan.get('maximum_generators',1):raise ValueError('approved generator limit')
+    validate_extended_topology(evidence,plan,max_generators,runtime_minutes)
     inventory=a.require_clean_benchmark_inventory()
     (evidence/'prelaunch-inventory.json').write_text(json.dumps(inventory,indent=2)+'\n')
     folder.mkdir(mode=0o700,parents=True,exist_ok=False)
@@ -161,7 +187,7 @@ def start(folder,run,evidence,max_generators=1,runtime_minutes=175):
                 # Decrypted job results may contain cluster join tokens. Evidence
                 # must be exported before FINISH; retain only public certificates.
                 for role in folder.iterdir():
-                    if role.is_dir() and re.fullmatch(r'(target[1-4]|generator[1-3])',role.name):
+                    if role.is_dir() and re.fullmatch(r'(target[1-4]|generator[1-6])',role.name):
                         for artifact in role.iterdir():
                             if artifact.name in ('job.json','job.tmp') or re.fullmatch(r'[0-9a-f]{16}\.(json|stdout|stderr|cms)',artifact.name):artifact.unlink()
                 (folder/'CLOSED').write_text('AWS cleanup verified; local control stopped')
