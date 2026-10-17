@@ -1,0 +1,12 @@
+{
+  "approved_additional_credit_usd": 2.4,
+  "free_plan_only": true,
+  "targets": 3,
+  "maximum_generators": 3,
+  "instance_type": "m7i-flex.large",
+  "runtime_minutes": 120,
+  "no_plan_or_iam_changes": true,
+  "database_egress": "existing approval, DB-only configuration to three ephemeral targets in account956035085549 ap-southeast-2",
+  "data_platform": "untouched",
+  "larger_generator_proposal": "withdrawn; not approved or provisioned"
+}

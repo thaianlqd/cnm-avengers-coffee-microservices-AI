@@ -1,0 +1,18 @@
+{
+  "compute_usd_hour": 0.1197,
+  "max_projected_usd": 2.4,
+  "maximum_generators": 3,
+  "hard_max_instances": 6,
+  "guest_termination_minutes": 120,
+  "controller_deadline_minutes": 120,
+  "max_compute_usd": 1.4364,
+  "ebs_reserve_usd": 0.1,
+  "ipv4_reserve_usd": 0.07,
+  "transfer_contingency_usd": 0.75,
+  "previous_estimates_usd": 8.0431,
+  "combined_authorized_estimate_usd": 10.4431,
+  "actual_bill": false,
+  "user_approved_additional_credit_usd": 2.4,
+  "free_plan_only": true,
+  "instance_type": "m7i-flex.large"
+}

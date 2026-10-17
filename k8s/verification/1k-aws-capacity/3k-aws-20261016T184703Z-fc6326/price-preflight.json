@@ -1,0 +1,19 @@
+{
+  "SKU": "YZS4YR3ZPHD427K5",
+  "EffectiveDate": "2026-10-01",
+  "Unit": "Hrs",
+  "PricePerUnit": "0.1197000000",
+  "Currency": "USD",
+  "Instance Type": "m7i-flex.large",
+  "vCPU": "2",
+  "Memory": "8 GiB",
+  "Operating System": "Linux",
+  "Tenancy": "Shared",
+  "PriceDescription": "$0.1197 per On Demand Linux m7i-flex.large Instance Hour",
+  "source": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-southeast-2/index.csv",
+  "observed_at": "2026-10-16T18:42:40.907525+00:00",
+  "scope": "actual six-machine maximum, Free plan m7i-flex.large only",
+  "runtime_minutes": 120,
+  "approved_incremental_credit_max_usd": 2.4,
+  "xlarge": "withdrawn, neither authorized nor provisioned"
+}

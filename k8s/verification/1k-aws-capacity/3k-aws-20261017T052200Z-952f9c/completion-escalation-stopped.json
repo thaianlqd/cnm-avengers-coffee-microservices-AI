@@ -1,0 +1,13 @@
+{
+  "point": "retained-normal-750",
+  "status": "INVALID GENERATOR",
+  "generator_adequate": false,
+  "generator_reasons": [
+    "generator1: generator CPU >=90% for three consecutive intervals",
+    "generator2: generator CPU >=90% for three consecutive intervals",
+    "generator3: generator CPU >=90% for three consecutive intervals"
+  ],
+  "target_reasons": [],
+  "reason": "preserved gate did not pass; no escalation",
+  "observed_at": "2026-10-17T05:52:43.270227+00:00"
+}

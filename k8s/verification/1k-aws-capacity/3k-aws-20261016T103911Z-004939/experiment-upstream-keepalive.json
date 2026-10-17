@@ -1,0 +1,46 @@
+{
+  "hypothesis": "Per-request Gateway TCP/DNS churn exhausts target connection tracking; observed Linux table-full drops and baseline ENA connection allowance drops accompany DNS-path lookup stalls. Reuse should lower churn while retaining the same entrypoint, business responses and workload.",
+  "evidence_before_tuning": [
+    "off-a-250/kernel-summary.json",
+    "baseline-long-500/live-conntrack-snapshot2.json",
+    "baseline-long-500/preliminary-kernel-summary.json",
+    "diagnostic-long-500/diagnostic-hold-summary.json",
+    "diagnostic-long-500/kernel-summary.json",
+    "baseline-long-500/network-correlation-notes.json"
+  ],
+  "before": {
+    "GATEWAY_PROXY_KEEP_ALIVE": "false",
+    "GATEWAY_MAX_REQUESTS_PER_SOCKET": "0",
+    "gateway_cpu_limit": "500m",
+    "entrypoint": "target1 private NodePort30300",
+    "cache_ttl_ms": 5000,
+    "db_pool_max": 2,
+    "db_pool_idle_ms": 30000
+  },
+  "candidate_after": {
+    "only_changed_variable": "GATEWAY_PROXY_KEEP_ALIVE=true",
+    "agent": "existing opt-in ProxyAgents, per origin, maxSockets128, maxTotalSockets128, maxFreeSockets16, LIFO, retire after30s on return to idle; no retry/timeout/body changes"
+  },
+  "decision": "EXPERIMENT STARTED: only GATEWAY_PROXY_KEEP_ALIVE false -> true; diagnostics remain enabled for lower regression. Retention requires two valid diagnostics-off500 observations, including300s hold.",
+  "not_changed": [
+    "conntrack limits/timeouts",
+    "CPU requests/limits",
+    "replica/HPA settings",
+    "SQL/business code",
+    "cache TTL",
+    "DB pool",
+    "target1 NodePort ingress topology",
+    "workload SHA/fullJSON/gzip/think3s"
+  ],
+  "qualification_diagnostics": "off",
+  "timing_attribution": {
+    "complete_hold_intervals": 107,
+    "slow_headers_dns_dominant": 8561,
+    "slow_headers_tcp_connect_dominant": 20,
+    "slow_headers_response_wait_dominant": 63,
+    "slow_dns_fraction": 0.9903979639055993,
+    "dns_lookup_max_ms": 13912.919,
+    "news_backend_mean_ms": 4.91,
+    "limits": "DNS observed assignment-to-lookup callback includes resolver/threadpool/callback delay, not isolated DNS-server execution. No cross-service request-ID pairing; dominant-segment counters use the same Gateway upstream request."
+  }
+}

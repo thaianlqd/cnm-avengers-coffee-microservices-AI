@@ -1,0 +1,9 @@
+{
+  "goal": "legitimate1000 through repeatable500 then750",
+  "budget": "User explicitly approved additional<=3.10USD for phase1K",
+  "max_generators": 3,
+  "generator_condition": "measured inadequacy evidence required, existing CPU evidence retained",
+  "DB_config_egress": "existing DB host/port/user/password/database/schema/TLS only to three ephemeral targets, account956035085549,ap-southeast-2, encrypted authenticated control; prior explicit approval persists",
+  "other_secrets": "random startup placeholders on AWS; no real payment/email/auth secrets",
+  "DataPlatform": "original worktree/Compose/Docker settings untouched"
+}

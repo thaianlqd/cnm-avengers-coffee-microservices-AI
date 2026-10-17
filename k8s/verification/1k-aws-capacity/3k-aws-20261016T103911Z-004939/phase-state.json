@@ -1,0 +1,54 @@
+{
+  "updated_at": "2026-10-16T12:02:26.361184+00:00",
+  "status": "COMPLETE_BOUNDED_CAPACITY_PHASE",
+  "run_id": "3k-aws-20261016T103911Z-004939",
+  "starting_head": "0a9b928c7c596c8772cf83019342f392e96a4d2e",
+  "source_tree_sha256": "ac88422957e92cbb001543ba91e12ec2fb45948aa5f49c080a5f3f7aad7b9c75",
+  "goal_vus": 1000,
+  "approved_incremental_budget_usd": 3.1,
+  "qualification_progression": [
+    "baseline",
+    "500 sustained diagnosis",
+    "one justified variable",
+    "lower regression",
+    "two valid 500 PASS with at least one 300s hold",
+    "750 normal and long",
+    "1000 normal and long if gated"
+  ],
+  "historical_repeatable_qualified_vus": 250,
+  "new_qualification_results": [
+    {
+      "point": "off-a-250",
+      "status": "STABLE PASS",
+      "vus": 250,
+      "p95_ms": 593.2293122500007,
+      "hold_p95_ms": 608.4878566000002,
+      "failure_rate": 0.0
+    },
+    {
+      "vus": 500,
+      "status": "FAIL",
+      "requests": 158044.0,
+      "rps": 372.878067185109,
+      "failure_rate": 0.0007339728176963378,
+      "p95_ms": 2301.57715155,
+      "hold_p95_ms": 2494.9897661999994,
+      "generator_adequate": true,
+      "point": "baseline-long-500"
+    }
+  ],
+  "data_platform_worktree": "untouched",
+  "diagnostics_default": "off",
+  "cleanup_required": false,
+  "current_point": "diagnostic-long-500",
+  "hypothesis": "250-VU kernel observations show target1 conntrack occupancy peak102407/131072; require500 sustained counter/timing evidence before tuning",
+  "diagnostic_calibration": "diagnostic-overhead.json",
+  "conntrack_drop_observation_available": true,
+  "candidate": "keepalive true; not retained pending two500 PASS",
+  "incomplete_point": "reuse-normal-500, 333 actual VUs only; no500 qualification",
+  "next_run": "3k-aws-20261016T184703Z-fc6326",
+  "maximum_repeatably_qualified_vus": 500,
+  "level750": "INVALID GENERATOR in completion fleet",
+  "level1000": "NOT RUN",
+  "push": false
+}

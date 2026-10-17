@@ -1,0 +1,122 @@
+{
+  "source_tree_sha256": "ac88422957e92cbb001543ba91e12ec2fb45948aa5f49c080a5f3f7aad7b9c75",
+  "workload_sha256": "8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2",
+  "diagnostic": true,
+  "generator_profile": true,
+  "runtime": {
+    "api-gateway": {
+      "containers": [
+        {
+          "name": "api-gateway",
+          "image": "avengers/api-gateway:3k-aws-ac88422957e9",
+          "flags": {
+            "GATEWAY_REQUEST_LOGGING": "false",
+            "GATEWAY_PROXY_KEEP_ALIVE": "false",
+            "GATEWAY_MAX_REQUESTS_PER_SOCKET": "0",
+            "CAPACITY_DIAGNOSTICS": "true"
+          },
+          "resources": {
+            "limits": {
+              "cpu": "500m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ],
+      "init_images": []
+    },
+    "identity-service": {
+      "containers": [
+        {
+          "name": "identity-service",
+          "image": "avengers/identity-service:3k-aws-ac88422957e9",
+          "flags": {
+            "CAPACITY_DIAGNOSTICS": "true"
+          },
+          "resources": {
+            "limits": {
+              "cpu": "400m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ],
+      "init_images": []
+    },
+    "menu-service": {
+      "containers": [
+        {
+          "name": "menu-service",
+          "image": "avengers/menu-service:3k-aws-ac88422957e9",
+          "flags": {
+            "CAPACITY_DIAGNOSTICS": "true"
+          },
+          "resources": {
+            "limits": {
+              "cpu": "400m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ],
+      "init_images": [
+        "avengers/customer-media:3k-aws-ac88422957e9"
+      ]
+    },
+    "news-service": {
+      "containers": [
+        {
+          "name": "news-service",
+          "image": "avengers/news-service:3k-aws-ac88422957e9",
+          "flags": {
+            "CAPACITY_DIAGNOSTICS": "true"
+          },
+          "resources": {
+            "limits": {
+              "cpu": "400m",
+              "memory": "256Mi"
+            },
+            "requests": {
+              "cpu": "75m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ],
+      "init_images": [
+        "avengers/customer-media:3k-aws-ac88422957e9"
+      ]
+    }
+  },
+  "helpers_sha256": {
+    "aws-target-diagnostics.py": "e868c407e00d653001fb999f77c2982bb446749768ab7641c26f9d4a3b91f230",
+    "aws-observe.py": "351b6a33c63bf3dca2489aaa576b5211969d428887c556203bbe0d44c486864b",
+    "aws-diagnostic-logs.py": "ede82d6c74ee3d1fdcf1c6bf608639623f895f6b64eb8bd051a21f614a7c4adc",
+    "aws-metrics-diagnostics.py": "9d7f7c6f7e83c04b79b954397747e5ba1eabb5a3ccca8d25b885bb2b71edd02a",
+    "aws-generator-metrics.py": "865705a7b1a7e145400f8c912c5df89174e2ab283a316d107c8ef0ec0d990eee",
+    "aws-run-generator.py": "a78eaafb77a9247f9c57ab82cc44ac08f197a21e5821d8c1a97be1acf78f5c39",
+    "archive-aws-points.py": "78d463741b36c6bb95df679f530800cef396837289c01bbf92147a157aa3e268",
+    "merge-aws-generators.py": "68efc608e38c055084efc669a4cb1de0e04668ab0d9e866292959e8c45eae9c7",
+    "analyze-aws-capacity.py": "40c44395fbb8de35887a9ed5844b652de59c14a1255d0e79d5e12eb365bc067f",
+    "analyze-3k.py": "90dfc32d74cb13c3ec31ef69223cad4969f762a9e1c2b64e2f0749e56138d128",
+    "point-observe.py": "e56e0448d32bf0faed31b648e26d6226e51b60c058d61314c0f08da914861b42"
+  },
+  "entrypoint": "http://172.31.2.233:30300",
+  "generator_partition": {
+    "generator1": 167,
+    "generator2": 167,
+    "generator3": 166
+  }
+}

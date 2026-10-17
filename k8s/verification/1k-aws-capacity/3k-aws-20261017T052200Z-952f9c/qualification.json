@@ -1,0 +1,225 @@
+{
+  "observed_at": "2026-10-17T06:32:43.438588+00:00",
+  "starting_head": "0a9b928c7c596c8772cf83019342f392e96a4d2e",
+  "branch": "features_k8s",
+  "source_tree_sha256": "ac88422957e92cbb001543ba91e12ec2fb45948aa5f49c080a5f3f7aad7b9c75",
+  "workload_sha256": "8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2",
+  "maximum_repeatably_qualified_vus": 500,
+  "500": {
+    "status": "QUALIFIED",
+    "independent_valid_pass_count": 2,
+    "long_hold_seconds": 300
+  },
+  "750": {
+    "status": "INVALID GENERATOR",
+    "normal": "INVALID GENERATOR",
+    "long": "NOT RUN",
+    "not_application_failure": true
+  },
+  "1000": {
+    "status": "NOT RUN",
+    "normal": "NOT RUN",
+    "long": "NOT RUN",
+    "reason": "750 generator validity gate failed"
+  },
+  "retained_application_tuning": {
+    "GATEWAY_PROXY_KEEP_ALIVE": "true, AWS overlay only"
+  },
+  "retained_healing": "PASS60/60, newPodUID/sameimage",
+  "retained_rolling": "PASS60/60, newPodUID/sameimage",
+  "aws_cleanup": "PASS; all known benchmark phases include ENIs0",
+  "tests": {
+    "backend_pass": 168,
+    "aws_helper_pass": 68,
+    "aws_helper_skip": 1,
+    "k8s_helper_pass": 24,
+    "control_pass": 3,
+    "total_pass": 263,
+    "total_skip": 1,
+    "local_static_resources": 22,
+    "aws_static_resources": 14
+  },
+  "delivery": {
+    "push": false,
+    "github_auth_changes": false,
+    "merge": false,
+    "local_branch": "features_k8s"
+  },
+  "points": [
+    {
+      "evidence": "k8s/verification/1k-aws-capacity/3k-aws-20261016T184703Z-fc6326/reuse-regression-250",
+      "point": "reuse-regression-250",
+      "vus": 250,
+      "hold_seconds": 120,
+      "requests": 50796.0,
+      "rps": 238.70307706574613,
+      "failure_rate": 7.874635798094339e-05,
+      "check_rate": 0.999921253642019,
+      "p50_ms": 7.597383,
+      "p90_ms": 103.833008,
+      "p95_ms": 260.351986,
+      "hold_p95_ms": 189.62054700000002,
+      "p99_ms": 1031.1700492500015,
+      "max_latency_ms": 2332.511472,
+      "status": "STABLE PASS",
+      "generator_adequate": true,
+      "generator_cpu_peak_percent": 47.09418837675351,
+      "target_reasons": [],
+      "post_smoke": true,
+      "natural_recovery": true,
+      "restart_delta": 0,
+      "hpa_peak": {
+        "api-gateway": 4,
+        "identity-service": 2,
+        "menu-service": 3
+      },
+      "node_cpu_peak_percent": 21.0,
+      "complete_metric_hold_coverage": {
+        "intervals": 24,
+        "expected_intervals": 24.0,
+        "max_gap_seconds": 5.000533,
+        "sufficient": true
+      }
+    },
+    {
+      "evidence": "k8s/verification/1k-aws-capacity/3k-aws-20261016T184703Z-fc6326/reuse-normal-500",
+      "point": "reuse-normal-500",
+      "vus": 500,
+      "hold_seconds": 120,
+      "requests": 96392.0,
+      "rps": 453.73392916618,
+      "failure_rate": 1.0374304921570255e-05,
+      "check_rate": 0.9999896256950784,
+      "p50_ms": 31.186658,
+      "p90_ms": 191.5243675000001,
+      "p95_ms": 460.86925424999947,
+      "hold_p95_ms": 428.7392894999957,
+      "p99_ms": 1139.43325609,
+      "max_latency_ms": 2349.456623,
+      "status": "STABLE PASS",
+      "generator_adequate": true,
+      "generator_cpu_peak_percent": 79.17917917917917,
+      "target_reasons": [],
+      "post_smoke": true,
+      "natural_recovery": true,
+      "restart_delta": 0,
+      "hpa_peak": {
+        "api-gateway": 4,
+        "identity-service": 3,
+        "menu-service": 4
+      },
+      "node_cpu_peak_percent": 42.0,
+      "complete_metric_hold_coverage": {
+        "intervals": 24,
+        "expected_intervals": 24.0,
+        "max_gap_seconds": 5.001032,
+        "sufficient": true
+      }
+    },
+    {
+      "evidence": "k8s/verification/1k-aws-capacity/3k-aws-20261016T184703Z-fc6326/reuse-long-500",
+      "point": "reuse-long-500",
+      "vus": 500,
+      "hold_seconds": 300,
+      "requests": 220168.0,
+      "rps": 520.2226882391635,
+      "failure_rate": 1.8167944478761673e-05,
+      "check_rate": 0.9999818320555213,
+      "p50_ms": 16.524847,
+      "p90_ms": 109.24313920000002,
+      "p95_ms": 196.38094609999987,
+      "hold_p95_ms": 168.53208539999986,
+      "p99_ms": 1020.280458409997,
+      "max_latency_ms": 2269.926791,
+      "status": "STABLE PASS",
+      "generator_adequate": true,
+      "generator_cpu_peak_percent": 83.6,
+      "target_reasons": [],
+      "post_smoke": true,
+      "natural_recovery": true,
+      "restart_delta": 0,
+      "hpa_peak": {
+        "api-gateway": 4,
+        "identity-service": 3,
+        "menu-service": 4
+      },
+      "node_cpu_peak_percent": 42.0,
+      "complete_metric_hold_coverage": {
+        "intervals": 60,
+        "expected_intervals": 60.0,
+        "max_gap_seconds": 5.001144,
+        "sufficient": true
+      }
+    },
+    {
+      "evidence": "k8s/verification/1k-aws-capacity/3k-aws-20261017T052200Z-952f9c/retained-regression-250",
+      "point": "retained-regression-250",
+      "vus": 250,
+      "hold_seconds": 120,
+      "requests": 48656.0,
+      "rps": 228.07639554244523,
+      "failure_rate": 0.0,
+      "check_rate": 1.0,
+      "p50_ms": 10.307347499999999,
+      "p90_ms": 204.9834915,
+      "p95_ms": 607.6376445,
+      "hold_p95_ms": 642.3550844,
+      "p99_ms": 1066.5050503999992,
+      "max_latency_ms": 2425.901013,
+      "status": "STABLE PASS",
+      "generator_adequate": true,
+      "generator_cpu_peak_percent": 43.94394394394394,
+      "target_reasons": [],
+      "post_smoke": true,
+      "natural_recovery": true,
+      "restart_delta": 0,
+      "hpa_peak": {
+        "api-gateway": 4,
+        "identity-service": 2,
+        "menu-service": 2
+      },
+      "node_cpu_peak_percent": 16.0,
+      "complete_metric_hold_coverage": {
+        "intervals": 24,
+        "expected_intervals": 24.0,
+        "max_gap_seconds": 5.000251,
+        "sufficient": true
+      }
+    },
+    {
+      "evidence": "k8s/verification/1k-aws-capacity/3k-aws-20261017T052200Z-952f9c/retained-normal-750",
+      "point": "retained-normal-750",
+      "vus": 750,
+      "hold_seconds": 120,
+      "requests": 138368.0,
+      "rps": 647.4012728148206,
+      "failure_rate": 1.4454209065679927e-05,
+      "check_rate": 0.9999855457909343,
+      "p50_ms": 65.5588135,
+      "p90_ms": 265.5983876,
+      "p95_ms": 418.21315319999997,
+      "hold_p95_ms": 388.5722191,
+      "p99_ms": 1120.0076796899993,
+      "max_latency_ms": 2243.877046,
+      "status": "INVALID GENERATOR",
+      "generator_adequate": false,
+      "generator_cpu_peak_percent": 100.0,
+      "target_reasons": [],
+      "post_smoke": true,
+      "natural_recovery": true,
+      "restart_delta": 0,
+      "hpa_peak": {
+        "api-gateway": 4,
+        "identity-service": 3,
+        "menu-service": 4
+      },
+      "node_cpu_peak_percent": 41.0,
+      "complete_metric_hold_coverage": {
+        "intervals": 24,
+        "expected_intervals": 24.0,
+        "max_gap_seconds": 5.000105,
+        "sufficient": true
+      }
+    }
+  ]
+}

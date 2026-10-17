@@ -1,0 +1,13 @@
+{
+  "source": "https://update.k3s.io/v1-release/channels",
+  "observed_at": "2026-10-16T10:50:58.327697+00:00",
+  "channel": {
+    "id": "stable",
+    "type": "channel",
+    "links": {
+      "self": "https://update.k3s.io/v1-release/channels/stable"
+    },
+    "name": "stable",
+    "latest": "v1.36.5+k3s1"
+  }
+}

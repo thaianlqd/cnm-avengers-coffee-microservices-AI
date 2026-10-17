@@ -1,0 +1,75 @@
+{
+  "pods": {
+    "cd2733d7-5ee3-48c8-9c96-8ce88a833282": {
+      "service": "api-gateway",
+      "pod": "api-gateway-7fc7794769-5jb8p",
+      "records": 17
+    },
+    "c0feb27d-055e-4d39-815a-10c5f81113d1": {
+      "service": "api-gateway",
+      "pod": "api-gateway-7fc7794769-jhcg7",
+      "records": 13
+    },
+    "07eaa1b1-bd24-4bc8-82c3-6daaecc3505c": {
+      "service": "identity-service",
+      "pod": "identity-service-585d4d94cd-n5fkm",
+      "records": 18
+    },
+    "ecf03c2e-baee-427e-b2e4-e7f943002775": {
+      "service": "menu-service",
+      "pod": "menu-service-7c977578d7-2kxl6",
+      "records": 18
+    },
+    "c1e42f89-80e5-4591-a653-309b3b9bc781": {
+      "service": "news-service",
+      "pod": "news-service-fb88dc9d8-mww7z",
+      "records": 18
+    },
+    "69051d88-7c25-4baa-b0d6-8dad4760944c": {
+      "service": "api-gateway",
+      "pod": "api-gateway-7fc7794769-8gj4s",
+      "records": 12
+    },
+    "c81f18f7-1d57-4418-8fff-bb04157c17a0": {
+      "service": "api-gateway",
+      "pod": "api-gateway-7fc7794769-xdbb2",
+      "records": 14
+    },
+    "db178feb-d298-45f8-b63b-fab52caa7e45": {
+      "service": "identity-service",
+      "pod": "identity-service-585d4d94cd-q5qfp",
+      "records": 9
+    },
+    "1b6fe09d-0100-4ff6-907e-b35c48f5e33d": {
+      "service": "menu-service",
+      "pod": "menu-service-7c977578d7-56qbw",
+      "records": 11
+    },
+    "f8572eea-703b-4e0d-91da-f0b428032ce9": {
+      "service": "menu-service",
+      "pod": "menu-service-7c977578d7-b9xj2",
+      "records": 12
+    },
+    "e83a90a2-356c-42f3-aff5-d9128f30f625": {
+      "service": "menu-service",
+      "pod": "menu-service-7c977578d7-sjgwf",
+      "records": 6
+    }
+  },
+  "attempts": {
+    "cd2733d7-5ee3-48c8-9c96-8ce88a833282": 1,
+    "c0feb27d-055e-4d39-815a-10c5f81113d1": 1,
+    "07eaa1b1-bd24-4bc8-82c3-6daaecc3505c": 1,
+    "ecf03c2e-baee-427e-b2e4-e7f943002775": 1,
+    "c1e42f89-80e5-4591-a653-309b3b9bc781": 1,
+    "69051d88-7c25-4baa-b0d6-8dad4760944c": 1,
+    "c81f18f7-1d57-4418-8fff-bb04157c17a0": 1,
+    "db178feb-d298-45f8-b63b-fab52caa7e45": 1,
+    "1b6fe09d-0100-4ff6-907e-b35c48f5e33d": 1,
+    "f8572eea-703b-4e0d-91da-f0b428032ce9": 1,
+    "e83a90a2-356c-42f3-aff5-d9128f30f625": 1
+  },
+  "records": 148,
+  "raw_other_logs_retained": false,
+  "owned_log_processes_stopped": true
+}

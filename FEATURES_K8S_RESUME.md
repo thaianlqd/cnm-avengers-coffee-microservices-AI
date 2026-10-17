@@ -1,122 +1,70 @@
-# Kết thúc bounded AWS qualification — 16/10/2026
+# FEATURES_K8S — final bounded capacity checkpoint,17/10/2026 ICT
 
-Branch `features_k8s`, isolated `-k8s` worktree; starting/application HEAD
-`d715ba7423d012e068eb5b447b806c9a4967320b`. Không merge hoặc đụng worktree DataPlatform
-`branch_thaian`, Compose hay Docker Desktop. User đã resume và cho phép<=3 generator
-khi có measured inadequacy, cùng DB-only config egress tới ba AWS target account956035085549,
-ap-southeast-2 qua encrypted authenticated control; các paused instructions lịch sử bên
-dưới đã được supersede bởi lần resume này. Không còn phase đang chạy.
+**Lượt đo đã kết thúc; AWS sạch.500 VU repeatably QUALIFIED.750 INVALID GENERATOR.
+1000 NOT RUN / NOT QUALIFIED.** User yêu cầu giữ kết quả local, **KHÔNG PUSH GitHub**
+và không đổi authentication. Không merge. Worktree riêng `cnm-avengers-coffee-microservices-AI-k8s`,
+branch `features_k8s`; startingHEAD `0a9b928c7c596c8772cf83019342f392e96a4d2e`.
+Delivery local commit xem `git log -1`; không đổi worktree DataPlatform `branch_thaian`,
+Compose, Docker Desktop hoặc RAM/CPU trên Mac.
 
-3K NOT VALID/NOT QUALIFIED;1000–3000 NOT RUN. Retained repeatable qualification250VU;
-fresh250 regressionPASS. Highest fresh single normal375VU PASS120s:70636requests,
-331.68RPS,0%fail/checks100%,p95693.40/hold563.58/p991353.28ms.375repeat/long NOT RUN
-vì runtime bị gián đoạn.500 shortPASS nhưng longFAIL:137269requests,315.57RPS,
-2.2081%fail/checks97.7919%,p953363.87/hold3376.06/p9910000.19ms. Generator hợp lệ,
-restart0; hai failed smoke, resource maxgap42.634s được giữ nguyên. Không claim375
-repeatable hoặc exact application/DB ceiling.
+Đọc [K8S_1K_CAPACITY_REPORT.md](K8S_1K_CAPACITY_REPORT.md) và
+[qualification.json](k8s/verification/1k-aws-capacity/3k-aws-20261017T052200Z-952f9c/qualification.json).
+Historical375/500shortPASS/500longFAIL giữ ở [báo cáo cũ](K8S_3K_AWS_CAPACITY_REPORT.md).
+Không đọc historical "paused/active" notes như lệnh provision mới.
 
-Diagnostics đã được load-validated riêng250/500 và trả false. Chỉ một off/on250pair,
-không zero-overhead claim. Không đổi app code/resources/HPA/TTL/pool/transport;
-retained Gateway500m, poolidleAWS30000(default5000), cache5000, keepalivefalse.
-Helpers harden lifecycle/inventory/approved extra generators/SIGTERM/truthful cleanup,
-actual VUs/complete metrics, unknown-as-missing, exactp90/5s route windows. Tests245PASS
-+1skip; local22/AWS14 staticPASS. AWS Gateway self-heal/rolling restart60/60HTTP200
-mỗi lượt. Local runtime/Socket.IO NOT RUN hiện tại; historical PASS giữ riêng.
+## Kết quả và thay đổi
 
-AWS cleanup PASS verified `2026-10-16T09:58:49.299468+00:00`: all known phases/RunIds instance0,
-SG0,EBS0,keypairs0,ENIs0. Guests đã hết, hai orphan SG được cleanup sau interruption;
-control/process/privatefolder absent. Không provision fleet mới khi resume recovery.
-Budget planned combined4.9431USD, actual bill/termination timestamps chưa xác minh;
-không bịa runtime actual. Source/build/compact exact samples/stage/HPA/Pod/node/
-generator/CSV/cleanup có trong [evidence](k8s/verification/3k-aws-capacity/3k-aws-20261016T051947Z-e45239/README.md).
+- 500normalPASS:96392requests,453.73RPS,oneerror(0.001037%),checks99.998963%,
+ p95460.87/hold428.74ms.
+- 500longPASS300s:220168requests,520.22RPS,fourerrors(0.001817%),checks99.998183%,
+ p95196.38/hold168.53/p991020.28ms. Genvalid,CPUpeak83.6%,coverage60/60,
+ smoke/recoveryPASS,restart0/noOOM/nodepressure observed. Hai PASS độc lập.
+- Fresh250 regressionPASS trong fleet cuối:48656requests,0errors/checks100%,
+ p95607.64/hold642.36ms. Dataset itemcount/decodedsize khớp; riêng News bodyhash khác.
+- 750normalINVALIDGENERATOR:138368requests,647.40RPS,twoerrors,p95418.21/
+ hold388.57ms; HTTPgatesPASS nhưng CPU98.80/100/99.50% và saturationstreak10/12/11.
+ Thực250VU mỗi máy, nhưng không qualification.750long/1000normal+longNOTRUN.
+- Self-healing và rolling restart fleet cuối:60/60HTTP200 mỗi bài, newPodUID/sameimage.
+ Scope GatewayPod/same-image restart; không phải nodeHA hoặc versioned deployment.
 
-[Latest full report](K8S_3K_AWS_CAPACITY_REPORT.md). Nếu có phase mới: fresh price/budget
-và clean inventory, confirm375normal+long trước; đo Gateway socket/DNS/connect cùng
-backend/cache/DB và metrics-server gap trước tuning một biến. Không1000+ trước500
-repeatably validPASS. Giữ permissions/budget scope, không tự provision từ historical
-commands. Delivery commit dùng `git log -1`; chỉ push origin/features_k8s, không merge.
+KEEP chỉ `GATEWAY_PROXY_KEEP_ALIVE=true` trong AWS overlay `keepalive.yaml`.
+Gateway500m/request75m,backend400m,HPA G/M/I4/4/3 caps,cacheTTL5000,DBpoolmax2/
+AWSidle30000,timeouts/retries/workload giữ nguyên. Local/Compose default không đổi.
+Baselineconntrack131072/131072 và drops/DNS delay đã đo; long500saukeepalive peaks
+9668/8358/3821, Linuxdrop/earlydrop0 và ENAallowance0. Không claim DB hard ceiling.
+Gateway750m experiment lịch sử rejected; xlarge proposal withdrawn do Freeplan.
+Không GC/output/validation tuning, không RAM/CPU/payload/thinktime bypass.
 
----
-Historical handoff (không phải active pause):
+Frozen app/public-media tree SHA256:
+`ac88422957e92cbb001543ba91e12ec2fb45948aa5f49c080a5f3f7aad7b9c75`.
+Image tag là source-contentdigest, không phải cleanGitSHA. WorkloadSHA256:
+`8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2`.
+Bốn GET fullJSON/gzip/think3; branches1215/718448decoded/80793gzipbytes.
+Actual Node20.20.2/K3sv1.36.5+k3s1/nativek6v2.3.0,3targets+3gens m7i-flex.large.
 
-# Paused by user — 15/10/2026
+## Cleanup, chi phí và validation
 
-Instrumentation checkpoint: `89539f671748dba9befaceb61b21f28bb0727ee3`.
-GitHub authentication restored via browser device flow as `thaianlqd`.
-Push verified: origin/features_k8s reached `4ebb424730f02a64f0772c59b6c373f8118734ee`.
-This follow-up documentation commit records the resolved delivery blocker; current
-checkpoint SHA is `git log -1`. Phase remains paused by user.
-Do not provision AWS while paused.
+Ba1K-phase fleets CLOSED:
+- `3k-aws-20261016T103911Z-004939`:diagnosis; bounded175min/additionalcap3.10USD.
+- `3k-aws-20261016T184703Z-fc6326`:two500PASS;120min/additionalcap2.40USDcredit;
+ guests expired,orphanSGcleanup verified17Oct05:20UTC. Interruptedrolling remainsINCOMPLETE.
+- `3k-aws-20261017T052200Z-952f9c`:completion;100min/additionalcap2.00USDcredit;
+ cleanupPASS17Oct06:29:29UTC,allphaseEC2/SG/EBS/ENI/keypairs0 at06:30:44UTC.
 
-User requested stopping the resumed phase and committing/pushing the current checkpoint.
-No AWS resources were provisioned and no new benchmark was run in this resume.
-Branch/worktree: `features_k8s` in the dedicated `-k8s` worktree below.
-Starting/current pre-checkpoint SHA: `063efc4990d664d7a2e3843fb3ce87fa6126be48`;
-checkpoint SHA: see `git log -1` (this document is committed with the instrumentation).
-Verified remote main baseline: `9eaf3b0b72f88acd7356ad71b2f7373ed3c2f36b`.
-Fetch succeeded; features local == remote, main is an ancestor. No merge needed.
+Controller/control/tunnel stopped; privatekey/token/jobs removed,CLOSED. Active metadata
+in gitignored `.cache/aws-capacity-private/active-1k.json` is **historical,not active**.
+Do not print private logs/URLs or reuse old recipients. No secret copied to Git.
+Only approved DB settings transferred to three ephemeral AWS targets account956035085549,
+ap-southeast-2; READONLY auditPASS,noDBreset/seed/migration/restore. No real auth/payment/email secrets.
+AWS Console verifiedFreeplan; no plan/IAM changes. Cumulative authorizedestimate12.4431USD
+is not invoice/card charge; final-fleet conservativecomputeupperbound0.803695USD.
 
-Added opt-in `CAPACITY_DIAGNOSTICS=true` instrumentation to Gateway/Identity/Menu/News:
-fixed public-route aggregates every 30 seconds, event-loop histogram, Gateway upstream
-headers/body timing, cache hit/refresh/coalescing/wait/load/JSON/gzip,
-DB pool acquire, physical connect, and pg promise-query timing. No SQL/parameters,
-bodies, headers, credentials or PII logged. Diagnostics are disabled by default;
-AWS overlay does not enable them automatically. Cache TTL/pool/resources unchanged.
-Query timing includes wire/server/row decoding; acquire can include physical connect.
-No isolated server SQL execution or row materialization measurement yet. Gateway spans start at proxyReq (after socket assignment); socket queue/connect
-time is not measured by this checkpoint. Byte metrics use sums/max; time buckets are not
-meaningful for byte counters. Histograms are fixed buckets, not exact percentiles.
-The k6 profile now also records per-route waiting/TTFB trends; workload SHA changed,
-so record fresh provenance before the next run. HTTP/check tags and thresholds unchanged.
+Validation263PASS+1historicalSKIP:backend168AWS,helpers68/skip1,K8S24,control3.
+Staticlocal22/AWS14PASS; exactrawnumeric consistency10 completedpointsPASS.
+Final validation/secret scan/checksums nằm trong evidence của fleetcuối. Localruntime khôngrerun.
 
-**Instrumentation is unit/build checked, NOT validated under capacity load.**
-No bottleneck claim, tuning result, overhead claim or new qualification follows from it.
-Next exact action after resume: inspect checkpoint; measure diagnostic overhead; collect
-fresh prices/budget/source provenance and fresh RunId before provisioning; deploy this
-instrumentation and run SAME 500 VU with adequate generators. Separate route/cache/DB/
-upstream timing before one-variable tuning. No 1000+ before repeatable valid 500 PASS.
-
-AWS preflight inventory 2026-10-15: 0 owned EC2 (including stopped), 0 SG, 0 EBS,
-0 keypairs using all four ownership tags across RunIds. No new control/benchmark
-endpoint was started. Incremental AWS resource usage in this resume: zero.
-Maximum repeatably stable remains 250 VU; first valid failure remains 500 VU.
-750m Gateway experiment remains rejected; final retained limit 500m.
-Main and branch_thaian untouched. User handles any merge.
-
----
-Historical handoff (preserved):
-
-# FEATURES_K8S — AWS qualification handoff, 14/10/2026
-
-**Experiment hiện tại đã kết thúc và AWS sạch. 3K NOT QUALIFIED.**
-Maximum repeatably stable đã đo: 250 VU, được xác nhận bằng hai lượt normal độc lập.
-500 valid FAIL latency; không chạy1000–3000. Higher qualification vẫn còn dở.
-
-Worktree riêng: `/Users/thaian/Documents/KLTN_Avengers_Coffee_System/cnm-avengers-coffee-microservices-AI-k8s`, branch `features_k8s`; tự reuse, bảo vệ `branch_thaian`.
-Baseorigin/main: `9eaf3b0b72f88acd7356ad71b2f7373ed3c2f36b`.
-Startingfeatures: `978fabba45dd48bb2cc63419b0be8bd66ca492c9`.
-Không merge/PR/main/branch_thaian writes. Checkpoints đã push; final docs SHA xem gitlog.
-
-Đọc `K8S_3K_AWS_CAPACITY_REPORT.md` và `k8s/verification/3k-aws-capacity/3k-aws-20261014T140730Z-e7a0d2/qualification.json` trước.
-Pool idle default5000/AWS30000 (bounds1000–60000) được giữ; maxpool2/cacheTTL5000.
-Probe connect default1000/AWS2000 độc lập. CPU750 experiment bị bác bỏ sau long500
-FAIL và đã rollback Gateway500m/request75m/HPA2–4; backend resources/HPA không đổi.
-Final250 confirmation STABLE PASS: p95575.40/hold584.29ms.
-Images source `dd98fd5a`, filesystem giống `da8ca6f7`; overlay rollback `23b2ed11`.
-Giữ mọi INVALID GENERATOR/FAIL/diagnostic helper failure. Không claim500qualification,
-application ceiling250 hoặc Supabase hard ceiling.
-
-Next: instrument actual cache miss/business query và Gateway upstream/event-loop
-at500; measured tuning, same-load rerun. Không TTL/payload/validation benchmark bypass,
-không1000+ trước repeatable valid500PASS. Fresh fleet phải dùng RunId/cost/eligibility/
-provenance mới, không reuse oldIPs/certificates/tokens.
-Run `3k-aws-20261014T140730Z-e7a0d2` đã cleanup: zero owned active resources, endpoint/control đã dừng.
-Estimated incremental compute/EBS/IPv4 $1.9076,
-chưa itemize transfer/notactualbill. Hard phase budget$5: reestimate trước khi tiếp tục.
-Target<=4/generators<=3; không EKS/RDS/NAT/planupgrade/IAM/destructiveDB/publicappports.
-User tự final merge. Historical handoff giữ trong evidence và Git history.
-
-Checkpoint validation: **228 PASS + 1 historical SKIP**; all four backend builds PASS;
-local 22-resource semantic render PASS; AWS template render PASS (14 resources).
-`git diff --check` and staged secret review PASS. No diagnostic overhead/load
-validation performed. Evidence: `k8s/verification/3k-aws-capacity/resume-20261015-instrumentation/checkpoint.json`.
+Claim an toàn cho luận văn: Kubernetes tự động co giãn lớp dịch vụ và duy trì
+workload public-browse đã kiểm soát ở500VU, hai kiểm chứng độc lập gồm300s hold,
+đáp ứng các latency/error gates. Không claim1000 hoặc exact application ceiling500.
+Không còn benchmark đang chạy. Mọi lần đo mới cần freshinventory/price/RunId/source
+provenance và phép chi phí/topology phù hợp; không tự provision từ checkpoint này.

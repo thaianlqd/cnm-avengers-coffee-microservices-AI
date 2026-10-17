@@ -1,0 +1,22 @@
+{
+  "observed_at": "2026-10-16T10:58:16.263515+00:00",
+  "account": "956035085549",
+  "region": "ap-southeast-2",
+  "ami": {
+    "ImageId": "ami-0f5e1e0151e5b95ed",
+    "OwnerId": "099720109477",
+    "Architecture": "x86_64",
+    "Name": "ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-20261004",
+    "State": "available"
+  },
+  "subnet": {
+    "SubnetId": "subnet-0c80e4a6bb54962d6",
+    "VpcId": "vpc-019ebb919faf68752",
+    "AvailabilityZone": "ap-southeast-2a",
+    "MapPublicIpOnLaunch": true
+  },
+  "dry_run_authorized": true,
+  "actual_fleet_eligibility": "pending real launches",
+  "instance_type": "m7i-flex.large",
+  "free_tier_eligible": true
+}

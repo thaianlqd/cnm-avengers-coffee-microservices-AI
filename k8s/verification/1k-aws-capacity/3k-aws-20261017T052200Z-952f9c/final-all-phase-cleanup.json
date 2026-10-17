@@ -1,0 +1,31 @@
+{
+  "observed_at": "2026-10-17T06:30:44.792092+00:00",
+  "all_known_benchmark_phases": {
+    "3k-aws": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0,
+      "network_interfaces": 0
+    },
+    "3k-qualification": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0,
+      "network_interfaces": 0
+    },
+    "5k-qualification": {
+      "instances": 0,
+      "security_groups": 0,
+      "volumes": 0,
+      "key_pairs": 0,
+      "network_interfaces": 0
+    }
+  },
+  "pass": true,
+  "scope": "ownership tags/RunIds in ap-southeast-2; not unrelated account resources",
+  "local_closed": true,
+  "private_keys_token_absent": true,
+  "private_job_files_remaining": 0
+}

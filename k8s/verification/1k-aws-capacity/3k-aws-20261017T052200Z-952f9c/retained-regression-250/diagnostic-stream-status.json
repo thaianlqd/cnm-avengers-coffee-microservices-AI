@@ -1,0 +1,63 @@
+{
+  "pods": {
+    "23e8a765-4bd4-4429-8317-2592444f92c4": {
+      "service": "api-gateway",
+      "pod": "api-gateway-574bcff699-vmlnq",
+      "records": 0
+    },
+    "14766a53-cda5-4cf1-aaa8-65c9c6d3fb8b": {
+      "service": "api-gateway",
+      "pod": "api-gateway-574bcff699-vt5mm",
+      "records": 0
+    },
+    "7dec447d-6a23-40e0-a676-f9314d352b16": {
+      "service": "identity-service",
+      "pod": "identity-service-9c49d558f-wksmf",
+      "records": 0
+    },
+    "6e72e980-2486-45a5-be2d-8c47d8de40f4": {
+      "service": "menu-service",
+      "pod": "menu-service-d64c4bc8c-wbfst",
+      "records": 0
+    },
+    "813dfbb5-51ef-45dc-842c-dadcf819e6e8": {
+      "service": "news-service",
+      "pod": "news-service-59b758f876-v4ljr",
+      "records": 0
+    },
+    "c0f6068f-f634-4a23-862a-b19090c735be": {
+      "service": "api-gateway",
+      "pod": "api-gateway-574bcff699-wb9d9",
+      "records": 0
+    },
+    "fafbb378-4ea6-484f-ae0b-879239fc51d2": {
+      "service": "api-gateway",
+      "pod": "api-gateway-574bcff699-lskkm",
+      "records": 0
+    },
+    "201f270d-6ad7-447d-9d38-c143eca9ec0d": {
+      "service": "menu-service",
+      "pod": "menu-service-d64c4bc8c-kcb2t",
+      "records": 0
+    },
+    "518717d1-dc2c-48a4-807d-50975e7b4ffb": {
+      "service": "identity-service",
+      "pod": "identity-service-9c49d558f-sgvx4",
+      "records": 0
+    }
+  },
+  "attempts": {
+    "23e8a765-4bd4-4429-8317-2592444f92c4": 1,
+    "14766a53-cda5-4cf1-aaa8-65c9c6d3fb8b": 1,
+    "7dec447d-6a23-40e0-a676-f9314d352b16": 1,
+    "6e72e980-2486-45a5-be2d-8c47d8de40f4": 1,
+    "813dfbb5-51ef-45dc-842c-dadcf819e6e8": 1,
+    "c0f6068f-f634-4a23-862a-b19090c735be": 1,
+    "fafbb378-4ea6-484f-ae0b-879239fc51d2": 1,
+    "201f270d-6ad7-447d-9d38-c143eca9ec0d": 1,
+    "518717d1-dc2c-48a4-807d-50975e7b4ffb": 1
+  },
+  "records": 0,
+  "raw_other_logs_retained": false,
+  "owned_log_processes_stopped": true
+}

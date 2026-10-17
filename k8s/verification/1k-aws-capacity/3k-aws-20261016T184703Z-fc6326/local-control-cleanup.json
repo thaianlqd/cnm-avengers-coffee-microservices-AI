@@ -1,0 +1,10 @@
+{
+  "observed_at": "2026-10-17T05:20:13.152779+00:00",
+  "aws_cleanup_verified": true,
+  "owned_controller_absent": true,
+  "process_actions": [],
+  "secret_job_cleanup_pending_review": false,
+  "private_keys_token_removed": true,
+  "private_job_files_removed": 359,
+  "owned_processes_absent": true
+}

@@ -1,0 +1,10 @@
+{
+  "vus": 250,
+  "hold_seconds": 120,
+  "ramp_seconds": 60,
+  "down_seconds": 30,
+  "load_started_at": "2026-10-17T05:44:59.836839+00:00",
+  "fd_soft": "65536",
+  "load_finished_at": "2026-10-17T05:48:31.951631+00:00",
+  "diagnostic": false
+}

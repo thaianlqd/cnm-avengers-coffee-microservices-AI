@@ -5,6 +5,7 @@ resources:
 - ../../base
 - hpa.yaml
 patches:
+- path: keepalive.yaml
 - target:
     kind: Service
     name: api-gateway

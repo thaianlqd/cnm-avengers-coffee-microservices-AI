@@ -1,0 +1,1 @@
+PASS existing external DB TLS connection; READ ONLY transaction; five application schemas; no data changes

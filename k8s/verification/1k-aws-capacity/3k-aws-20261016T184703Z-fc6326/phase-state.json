@@ -1,0 +1,51 @@
+{
+  "updated_at": "2026-10-16T19:31:09.854985+00:00",
+  "status": "COMPLETE_BOUNDED_CAPACITY_PHASE",
+  "run_id": "3k-aws-20261016T184703Z-fc6326",
+  "starting_head": "0a9b928c7c596c8772cf83019342f392e96a4d2e",
+  "source_tree_sha256": "ac88422957e92cbb001543ba91e12ec2fb45948aa5f49c080a5f3f7aad7b9c75",
+  "approved_additional_credit_usd": 2.4,
+  "free_plan_only": true,
+  "runtime_minutes": 120,
+  "roles": {
+    "target1": {
+      "type": "m7i-flex.large",
+      "authenticated": true
+    },
+    "target2": {
+      "type": "m7i-flex.large",
+      "authenticated": true
+    },
+    "target3": {
+      "type": "m7i-flex.large",
+      "authenticated": true
+    },
+    "generator1": {
+      "type": "m7i-flex.large",
+      "authenticated": true
+    },
+    "generator2": {
+      "type": "m7i-flex.large",
+      "authenticated": true
+    },
+    "generator3": {
+      "type": "m7i-flex.large",
+      "authenticated": true
+    }
+  },
+  "cleanup_required": false,
+  "qualified500_observations": 2,
+  "candidate": "KEEP only GATEWAY_PROXY_KEEP_ALIVE true in AWS overlay",
+  "diagnostics": false,
+  "historical_maximum_repeatably_qualified_vus": 250,
+  "setup_passed": true,
+  "current_point": null,
+  "lower_regression": "reuse-regression-250 STABLE PASS",
+  "maximum_repeatably_qualified_vus": 500,
+  "rolling_result": "INCOMPLETE; HTTPprobe recovered60/60 but finalUID/image proof not exported",
+  "higher_levels": "750/1000 NOT RUN",
+  "next_run": "3k-aws-20261017T052200Z-952f9c",
+  "level750": "INVALID GENERATOR in completion fleet",
+  "level1000": "NOT RUN",
+  "push": false
+}

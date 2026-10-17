@@ -1,0 +1,74 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 311B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:20-alpine
+#2 DONE 0.7s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 114B done
+#3 DONE 0.0s
+
+#4 [builder 1/6] FROM docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+#4 resolve docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 0.0s done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 3.82kB done
+#5 DONE 0.0s
+
+#6 [builder 5/6] COPY . .
+#6 CACHED
+
+#7 [builder 2/6] WORKDIR /app
+#7 CACHED
+
+#8 [builder 4/6] RUN npm ci
+#8 CACHED
+
+#9 [builder 3/6] COPY package*.json ./
+#9 CACHED
+
+#10 [builder 6/6] RUN npm run build
+#10 CACHED
+
+#11 [runner 4/5] RUN npm ci --omit=dev
+#11 4.275 npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+#11 6.785 
+#11 6.785 added 249 packages, and audited 250 packages in 7s
+#11 6.786 
+#11 6.786 70 packages are looking for funding
+#11 6.786   run `npm fund` for details
+#11 6.828 
+#11 6.828 15 vulnerabilities (1 low, 5 moderate, 8 high, 1 critical)
+#11 6.828 
+#11 6.828 To address issues that do not require attention, run:
+#11 6.828   npm audit fix
+#11 6.828 
+#11 6.828 To address all issues (including breaking changes), run:
+#11 6.828   npm audit fix --force
+#11 6.828 
+#11 6.828 Run `npm audit` for details.
+#11 6.829 npm notice
+#11 6.829 npm notice New major version of npm available! 10.8.2 -> 12.2.0
+#11 6.829 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+#11 6.829 npm notice To update run: npm install -g npm@12.2.0
+#11 6.829 npm notice
+#11 DONE 7.1s
+
+#12 [runner 5/5] COPY --from=builder /app/dist ./dist
+#12 DONE 0.1s
+
+#13 exporting to image
+#13 exporting layers
+#13 exporting layers 3.4s done
+#13 exporting manifest sha256:b8bd13c5451e07a6ceccf936d929e63c3e5267e16cb261e15f93d06f8aa97c71 done
+#13 exporting config sha256:2a1fdd0a6e4bf3168a4caab48c9a52a13bd88cb360e46cb31f8bf6acea566660 done
+#13 exporting attestation manifest sha256:e11a99bc5bfe4ce556776c187a569ae8f86c0b20a4bf083db3f03ab7f48d4204 0.0s done
+#13 exporting manifest list sha256:f991a58babeea674473d40c4e7c6c7b496d550984bee4813e0602175f8c5d1ba 0.0s done
+#13 naming to docker.io/avengers/identity-service:3k-aws-ac88422957e9 done
+#13 unpacking to docker.io/avengers/identity-service:3k-aws-ac88422957e9
+#13 unpacking to docker.io/avengers/identity-service:3k-aws-ac88422957e9 1.4s done
+#13 DONE 4.8s

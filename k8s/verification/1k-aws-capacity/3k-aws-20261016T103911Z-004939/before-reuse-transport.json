@@ -1,0 +1,94 @@
+{
+  "observed_at": "2026-10-16T12:04:40.076831+00:00",
+  "passed": true,
+  "rows": [
+    {
+      "route": "/menu/danh-muc",
+      "status": 200,
+      "gzip": true,
+      "json_valid": true,
+      "connection": "close",
+      "response_will_close": true,
+      "socket_open_after_read": false,
+      "same_socket_as_previous": false,
+      "duration_ms": 1277.5193319998834
+    },
+    {
+      "route": "/menu/san-pham",
+      "status": 200,
+      "gzip": true,
+      "json_valid": true,
+      "connection": "close",
+      "response_will_close": true,
+      "socket_open_after_read": false,
+      "same_socket_as_previous": false,
+      "duration_ms": 889.112680999915
+    },
+    {
+      "route": "/users/branches/public",
+      "status": 200,
+      "gzip": true,
+      "json_valid": true,
+      "connection": "close",
+      "response_will_close": true,
+      "socket_open_after_read": false,
+      "same_socket_as_previous": false,
+      "duration_ms": 2561.3220610002827
+    },
+    {
+      "route": "/news?limit=100",
+      "status": 200,
+      "gzip": true,
+      "json_valid": true,
+      "connection": "close",
+      "response_will_close": true,
+      "socket_open_after_read": false,
+      "same_socket_as_previous": false,
+      "duration_ms": 1183.118349000324
+    },
+    {
+      "route": "/menu/danh-muc",
+      "status": 200,
+      "gzip": true,
+      "json_valid": true,
+      "connection": "close",
+      "response_will_close": true,
+      "socket_open_after_read": false,
+      "same_socket_as_previous": false,
+      "duration_ms": 4.275535000033415
+    },
+    {
+      "route": "/menu/san-pham",
+      "status": 200,
+      "gzip": true,
+      "json_valid": true,
+      "connection": "close",
+      "response_will_close": true,
+      "socket_open_after_read": false,
+      "same_socket_as_previous": false,
+      "duration_ms": 4.016458000023704
+    },
+    {
+      "route": "/users/branches/public",
+      "status": 200,
+      "gzip": true,
+      "json_valid": true,
+      "connection": "close",
+      "response_will_close": true,
+      "socket_open_after_read": false,
+      "same_socket_as_previous": false,
+      "duration_ms": 9.611196000150812
+    },
+    {
+      "route": "/news?limit=100",
+      "status": 200,
+      "gzip": true,
+      "json_valid": true,
+      "connection": "close",
+      "response_will_close": true,
+      "socket_open_after_read": false,
+      "same_socket_as_previous": false,
+      "duration_ms": 4.648328000257607
+    }
+  ]
+}

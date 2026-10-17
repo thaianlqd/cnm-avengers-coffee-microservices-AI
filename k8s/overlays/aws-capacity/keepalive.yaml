@@ -1,0 +1,14 @@
+# Qualified with two independent 500 VU PASS observations, including a 300s hold.
+# Keep local/Compose defaults unchanged; only AWS public-browse capacity overlay.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+spec:
+  template:
+    spec:
+      containers:
+      - name: api-gateway
+        env:
+        - name: GATEWAY_PROXY_KEEP_ALIVE
+          value: 'true'
