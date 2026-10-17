@@ -1,5 +1,5 @@
 {
-  "status": "PROPOSED_NOT_AUTHORIZED",
+  "status": "REFERENCE_ONLY_NOT_AUTHORIZED_USER_CHOSE_LOCAL_ONLY",
   "compute_usd_hour": 0.1197,
   "max_projected_usd": 3.0,
   "maximum_generators": 6,

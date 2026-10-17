@@ -1,7 +1,9 @@
-> **Follow-up đang chuẩn bị (17Oct):** user yêu cầu tiếp tục1000 bằng cấu hình, giữ
+> **Follow-up LOCAL ONLY theo xác nhận user (17Oct):** user yêu cầu tiếp tục1000 bằng cấu hình, giữ
 > code ứng dụng. Xem [K8S_1K_FOLLOWUP_PLAN.md](K8S_1K_FOLLOWUP_PLAN.md). Harness
 > đã hỗ trợ tối đa6generator với guard approval riêng. Chưa được duyệt credit/topology
-> mới, chưa provision/chạy benchmark; lịch sử kết quả/cleanup bên dưới giữ nguyên.
+> mới; user chọn “Chưa dùng thêm credit; chỉ chuẩn bị local”. Không provision/chạy
+> AWS; lịch sử kết quả/cleanup bên dưới giữ nguyên. Không hỏi lại credit khi chưa
+> có yêu cầu đổi phạm vi từ user.
 
 # FEATURES_K8S — final bounded capacity checkpoint,17/10/2026 ICT
 

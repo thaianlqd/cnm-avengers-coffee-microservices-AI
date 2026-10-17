@@ -1,7 +1,8 @@
 # Tiếp tục mục tiêu 1000 VU — chỉ features_k8s
 
-Trạng thái: **đã chuẩn bị và kiểm tra harness; chưa có phép credit/topology mới,
-chưa provision, chưa chạy benchmark mới**. Kết quả đã đo vẫn là 500 repeatably
+Trạng thái: **user đã chọn “Chưa dùng thêm credit; chỉ chuẩn bị local”.
+Không được provision hoặc chạy AWS bằng phương án này. Harness đã chuẩn bị và
+kiểm tra local; không có phép credit/topology mới, không có benchmark mới**. Kết quả đã đo vẫn là 500 repeatably
 qualified, 750 invalid generator, 1000 not run. Starting HEAD của lượt tiếp tục:
 `db37689577d90e23868db68be494e30f35a013f6`. Không push, đổi auth hoặc merge.
 
@@ -38,7 +39,7 @@ Máy bổ sung vẫn cần measured-inadequacy proof; không tự scale vô hạ
 - Kiểm tra helper:76 PASS,1 historical SKIP; AST/diff/secret-pattern scan PASS.
   Workload SHA256 không đổi; chưa có benchmark hoặc kết quả capacity mới.
 
-## Phương án chạy sau khi có phép
+## Phương án tham khảo cho tương lai — hiện chỉ chuẩn bị local
 
 1. Xác minh lại inventory/ENI, giá, AMI/instance eligibility và Free plan. FreshRunId,
    keys/certificates, frozen app/workload/source hashes; không dùng sessionCLOSED cũ.
@@ -56,7 +57,7 @@ Máy bổ sung vẫn cần measured-inadequacy proof; không tự scale vô hạ
    runtime/cost bound hoặc lỗi kiểm chứng. Không nâng plan/IAM/quota.
 7. Dọn AWS và local controls/secrets, giữ report/evidence/checksums, lưu local k8s.
 
-## Dự toán đề nghị, chưa được duyệt
+## Dự toán tham khảo đã trình — user chưa cho dùng thêm credit
 
 Giá refresh17Oct07:36UTC:0.1197USD/máy/giờ. Tối đa9máy,110phút:
 compute<=**1.97505USD**, EBS reserve0.15, IPv4 reserve0.10, transfer reserve0.65;
