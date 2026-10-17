@@ -1,0 +1,13 @@
+{
+  "observed_at": "2026-10-17T11:55:03.137362+00:00",
+  "status": "USER_DECLINED_AWS_LOCAL_ONLY_12_TESTS_PASS",
+  "controller_ast_pass": true,
+  "quota_guard_lifecycle_tests_pass": 9,
+  "six_generator_csv_tests_pass": 1,
+  "synthetic_fresh_progression_tests_pass": 2,
+  "total_pass": 12,
+  "aws_benchmark_executed": false,
+  "new_aws_resources_created": false,
+  "shared_harness_and_application_unchanged": true,
+  "initial_test_fixture_error": "MagicMockpid was not numeric; corrected testfixture, not product code; initial log retained"
+}

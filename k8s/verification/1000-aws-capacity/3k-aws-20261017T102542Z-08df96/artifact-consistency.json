@@ -1,0 +1,27 @@
+{
+  "observed_at": "2026-10-17T11:42:32.302205+00:00",
+  "passed": true,
+  "frozen_source_matches": true,
+  "workload_sha256": "8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2",
+  "points": [
+    {
+      "point": "regression-250",
+      "requests": 45564,
+      "status": "STABLE PASS",
+      "passed": true
+    },
+    {
+      "point": "regression-normal-500",
+      "requests": 98048,
+      "status": "STABLE PASS",
+      "passed": true
+    },
+    {
+      "point": "regression-normal-750",
+      "requests": 156140,
+      "status": "STABLE PASS",
+      "passed": true
+    }
+  ],
+  "quantile_method": "exact linear interpolation over all observations, never average shard percentiles; merged on AWS"
+}

@@ -1,0 +1,28 @@
+OFFLINE SYNTHETIC TEST FIXTURES ONLY — NOT AN AWS BENCHMARK OR CAPACITY RESULT
+[synthetic] SETUP FAILED: Object of type MagicMock is not JSON serializable
+[synthetic] test_aggregate_budget_includes_prior_closed_run (__main__.Guard.test_aggregate_budget_includes_prior_closed_run) ... ok
+[synthetic] test_failed_cleanup_never_marks_closed (__main__.Guard.test_failed_cleanup_never_marks_closed) ... ok
+[synthetic] test_launch_requires_fresh_direct_free_plan_verification (__main__.Guard.test_launch_requires_fresh_direct_free_plan_verification) ... ok
+[synthetic] test_native_fleet_launches_only_two_targets_and_terminates_controls (__main__.Guard.test_native_fleet_launches_only_two_targets_and_terminates_controls) ... ERROR
+[synthetic] test_pending_scope_cannot_reuse_original_three_target_approval (__main__.Guard.test_pending_scope_cannot_reuse_original_three_target_approval) ... ok
+[synthetic] test_prior_cost_and_cleanup_digests_are_pinned (__main__.Guard.test_prior_cost_and_cleanup_digests_are_pinned) ... ok
+[synthetic] test_sigterm_cleanup_removes_sixth_generator_private_jobs (__main__.Guard.test_sigterm_cleanup_removes_sixth_generator_private_jobs) ... ok
+[synthetic] test_crypto_transport_and_addition_protocol_ast_unchanged (__main__.Observation.test_crypto_transport_and_addition_protocol_ast_unchanged) ... ok
+[synthetic] test_two_node_baseline_still_requires_all_pods_hpa_and_metrics (__main__.Observation.test_two_node_baseline_still_requires_all_pods_hpa_and_metrics) ... ok
+[synthetic] 
+[synthetic] ======================================================================
+[synthetic] ERROR: test_native_fleet_launches_only_two_targets_and_terminates_controls (__main__.Guard.test_native_fleet_launches_only_two_targets_and_terminates_controls)
+[synthetic] ----------------------------------------------------------------------
+[synthetic] Traceback (most recent call last):
+[synthetic]   File "/Users/thaian/Documents/KLTN_Avengers_Coffee_System/cnm-avengers-coffee-microservices-AI-k8s/k8s/verification/1000-aws-capacity/3k-aws-20261017T114759Z-224ba7/controller/test-quota16.py", line 44, in test_native_fleet_launches_only_two_targets_and_terminates_controls
+[synthetic]     m.start(folder,'3k-aws-20261017T114759Z-abcdef',self.e,6,95)
+[synthetic]     ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[synthetic]   File "/Users/thaian/Documents/KLTN_Avengers_Coffee_System/cnm-avengers-coffee-microservices-AI-k8s/k8s/verification/1000-aws-capacity/3k-aws-20261017T114759Z-224ba7/controller/private-session-2target.py", line 209, in start
+[synthetic]     if failure:raise SystemExit(1)
+[synthetic]                ^^^^^^^^^^^^^^^^^^^
+[synthetic] SystemExit: 1
+[synthetic] 
+[synthetic] ----------------------------------------------------------------------
+[synthetic] Ran 9 tests in 0.039s
+[synthetic] 
+[synthetic] FAILED (errors=1)

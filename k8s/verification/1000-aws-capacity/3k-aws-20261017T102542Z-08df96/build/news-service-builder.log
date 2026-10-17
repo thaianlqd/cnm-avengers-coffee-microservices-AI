@@ -1,0 +1,74 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 313B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:20-alpine
+#2 DONE 0.3s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 90B done
+#3 DONE 0.0s
+
+#4 [builder 1/6] FROM docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+#4 resolve docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 0.0s done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 445.53kB done
+#5 DONE 0.0s
+
+#6 [builder 2/6] WORKDIR /app
+#6 CACHED
+
+#7 [builder 3/6] COPY package*.json ./
+#7 DONE 0.3s
+
+#8 [builder 4/6] RUN npm ci
+#8 3.813 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+#8 5.436 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+#8 6.393 npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+#8 6.412 npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+#8 6.412 npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+#8 6.424 npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+#8 12.48 
+#8 12.48 added 763 packages, and audited 764 packages in 12s
+#8 12.48 
+#8 12.48 161 packages are looking for funding
+#8 12.48   run `npm fund` for details
+#8 12.57 
+#8 12.57 32 vulnerabilities (2 low, 13 moderate, 15 high, 2 critical)
+#8 12.57 
+#8 12.57 To address all issues, run:
+#8 12.57   npm audit fix
+#8 12.57 
+#8 12.57 Run `npm audit` for details.
+#8 12.57 npm notice
+#8 12.57 npm notice New major version of npm available! 10.8.2 -> 12.2.0
+#8 12.57 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+#8 12.57 npm notice To update run: npm install -g npm@12.2.0
+#8 12.57 npm notice
+#8 DONE 14.0s
+
+#9 [builder 5/6] COPY . .
+#9 DONE 0.2s
+
+#10 [builder 6/6] RUN npm run build
+#10 0.295 
+#10 0.295 > news-service@0.0.1 build
+#10 0.295 > nest build
+#10 0.295 
+#10 DONE 5.1s
+
+#11 exporting to image
+#11 exporting layers
+#11 exporting layers 7.1s done
+#11 exporting manifest sha256:b985b2e6c9cab4fb4d38e3920284eb4bcc35a39cae99ee72d97333befde76706 0.0s done
+#11 exporting config sha256:76d2e3bc187d32035672e8daadbb4614aadb4851c6dd0793f2ee1c5f9861691a 0.0s done
+#11 exporting attestation manifest sha256:2c4f7d768c196e56640e54f405f181725944e4320f2d3ec2c09ceebc3946ca3b 0.0s done
+#11 exporting manifest list sha256:b97b9984c26a93a50513c02eacc802401aabcaede9113fdbf6091807a3d57e36 0.0s done
+#11 naming to docker.io/avengers/news-service:test done
+#11 unpacking to docker.io/avengers/news-service:test
+#11 unpacking to docker.io/avengers/news-service:test 3.2s done
+#11 DONE 10.4s

@@ -1,3 +1,27 @@
+# Checkpoint cuối — dừngAWS, chuẩn bịpushfeatures_k8s,17/10/2026
+
+**1000 NOT RUN / NOT QUALIFIED; maximum repeatably qualified vẫn750 VU.**
+User chọn **“Dừng AWS; giữ kết quả 750 và PLAN local”**, rồi yêu cầu **“push lên nhánh đó luôn đi bạn ơi”**.
+Chỉpush`features_k8s` tới`origin` đã cấu hình; khôngpush`branch_thaian`/DataPlatform, khôngmerge/đổiremote. GlobalGitidentity/Keychainerase đổi đúng lệnh user; gh login đã verifythaianlqd.
+
+Lượt3target `3k-aws-20261017T102542Z-08df96`:fresh250/500/750 đềuSTABLEPASS;
+selfheal/same-imagerollingPASS. AWSrefusedG6 `VcpuLimitExceeded`:18vCPU cần thiết>quota16.
+STOP/CLOSED:allownedEC2/SG/EBS/keypairs/ENI0,privatejobs0,key/tokenremoved,controlsstop.
+Computeupperbound0,729179626938USD, **không phải hóa đơn/sốcreditđãtrừ**.
+[Report](K8S_1000_CAPACITY_REPORT.md),[PLAN](K8S_1K_FOLLOWUP_PLAN.md).
+
+[Contingency2target](K8S_1K_QUOTA_CONTINGENCY_PLAN.md),evidence`3k-aws-20261017T114759Z-224ba7`:
+12offlinePASS, **userđãtừchốiAWS, chỉgiữlocal**. NoAWSfolder/fleet/DBtransfer cho mode2target.
+Dựtoángộp2,995379626938USD trongcùngcap3USD chỉlàthamkhảo,khôngphéplaunch;
+khôngxincreditmới,khôngcộngthêm3USDvàotrầnlũykế17,6431USD. Mọi lượt sau cần phép mới.
+
+Nativebackend168PASS +local111PASS/1historicalSKIP; contingencylocal12PASS riêng.
+Frozen176app/mediafiles vàworkloadSHA giữnguyên; sharedharness/appcode/Dockerfiles/serviceconfig khôngsửa.
+Khôngthayquota/IAM/Freeplan,khôngchạmDataPlatform/branch_thaian/Compose/DockerDesktopCPU-RAM.
+Publicevidence/checksums/secret/diff/indexchecks được hoàn tất trướcpush. Khôngcóbenchmarkcònchạy.
+
+---
+
 # FEATURES_K8S — checkpoint đã đóng, 17/10/2026
 
 **750 VU repeatably QUALIFIED: normal120s và long300s đều STABLE PASS. AWS sạch.**

@@ -1,0 +1,21 @@
+generator3 load and artifact collection complete
+generator1 load and artifact collection complete
+generator2 load and artifact collection complete
+Load complete; observing natural HPA recovery
+{
+  "vus": 500,
+  "requests": 98048.0,
+  "rps": 459.90054932054863,
+  "failure_rate": 0.00010199086161879895,
+  "check_rate": 0.9998980091383812,
+  "p50_ms": 16.787228,
+  "p90_ms": 194.82728840000001,
+  "p95_ms": 428.27684179999846,
+  "hold_p95_ms": 369.76572275,
+  "p99_ms": 1040.11760696,
+  "max_latency_ms": 2359.856445,
+  "generator_adequate": true,
+  "target_reasons": [],
+  "generator_reasons": [],
+  "status": "STABLE PASS"
+}

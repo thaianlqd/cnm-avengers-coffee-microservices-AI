@@ -1,0 +1,8 @@
+{
+  "initial_combined_invocation": "2PASS/1FAIL; both control fixture servers bind127.0.0.1:18082 concurrently",
+  "resolution": "execute each existing test file sequentially, no source changes",
+  "final_sequential_tests_passed": 3,
+  "initial_failure_log_retained": "control-tests-parallel-port-conflict.log",
+  "live_encrypted_fleet_control_port": 18084,
+  "fleet_affected": false
+}

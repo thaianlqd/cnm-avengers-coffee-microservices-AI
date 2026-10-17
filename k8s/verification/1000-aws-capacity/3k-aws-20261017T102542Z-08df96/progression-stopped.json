@@ -1,0 +1,32 @@
+{
+  "status": "STOPPED_WITHOUT_HIGHER_CLAIM",
+  "reason": "aws: [ERROR]: An error occurred (VcpuLimitExceeded) when calling the RunInstances operation: You have requested more vCPU capacity than your current vCPU limit of 16 allows for the instance bucket that the specified instance type belongs to. Please visit http://aws.amazon.com/contact-us/ec2-request to request an adjustment to this limit.",
+  "results": [
+    {
+      "point": "regression-250",
+      "vus": 250,
+      "hold_seconds": 120,
+      "generators": 3,
+      "status": "STABLE PASS",
+      "valid_pass": true
+    },
+    {
+      "point": "regression-normal-500",
+      "vus": 500,
+      "hold_seconds": 120,
+      "generators": 3,
+      "status": "STABLE PASS",
+      "valid_pass": true
+    },
+    {
+      "point": "regression-normal-750",
+      "vus": 750,
+      "hold_seconds": 120,
+      "generators": 5,
+      "status": "STABLE PASS",
+      "valid_pass": true
+    }
+  ],
+  "observed_at": "2026-10-17T11:37:04.018164+00:00",
+  "cleanup_required": true
+}

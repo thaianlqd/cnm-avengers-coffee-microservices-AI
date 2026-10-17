@@ -1,0 +1,1 @@
+PASS minimal approved DB-only configuration; fresh benchmark startup secrets; no migrations

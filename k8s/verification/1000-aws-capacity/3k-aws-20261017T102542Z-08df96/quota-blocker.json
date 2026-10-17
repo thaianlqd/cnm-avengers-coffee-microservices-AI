@@ -1,0 +1,15 @@
+{
+  "observed_at": "2026-10-17T11:37:04.018164+00:00",
+  "operation": "ec2:RunInstances",
+  "role": "generator6",
+  "aws_error": "VcpuLimitExceeded",
+  "actual_standard_instance_vcpu_limit": 16,
+  "requested_total_vcpu": 18,
+  "launched_targets": 3,
+  "launched_generators": 5,
+  "generator6_created": false,
+  "workload1000_executed": false,
+  "plan_iam_quota_changes": false,
+  "mandatory_cleanup": "PASS",
+  "next_topology_not_authorized": true
+}

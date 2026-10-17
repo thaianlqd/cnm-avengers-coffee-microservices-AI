@@ -1,0 +1,11 @@
+{
+  "observed_at": "2026-10-17T11:38:10.166569+00:00",
+  "owned_remaining": {
+    "instances": 0,
+    "security_groups": 0,
+    "volumes": 0,
+    "key_pairs": 0
+  },
+  "pass": true,
+  "temporary_endpoint_count": 0
+}

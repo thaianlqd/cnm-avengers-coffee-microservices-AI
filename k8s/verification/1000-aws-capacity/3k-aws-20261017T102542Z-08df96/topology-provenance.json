@@ -1,0 +1,30 @@
+{
+  "goal_vus": 1000,
+  "workload_sha256": "8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2",
+  "target": "http://172.31.7.31:30300",
+  "path": "generator -> target1 NodePort30300 -> Kubernetes api-gateway Service -> Gateway -> backend Services",
+  "initial_setup_generators": {
+    "generator1": {
+      "id": "i-0162d8b9072e83b20",
+      "private_ip": "172.31.7.25",
+      "launch_time": "2026-10-17T10:52:53+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator2": {
+      "id": "i-04b2b8d4eb1fe0ce6",
+      "private_ip": "172.31.9.213",
+      "launch_time": "2026-10-17T10:53:48+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator3": {
+      "id": "i-0440d9954a0891cb8",
+      "private_ip": "172.31.7.186",
+      "launch_time": "2026-10-17T10:54:36+00:00",
+      "type": "m7i-flex.large"
+    }
+  },
+  "full_json": true,
+  "gzip": true,
+  "think_seconds": 3,
+  "diagnostics_baseline": false
+}

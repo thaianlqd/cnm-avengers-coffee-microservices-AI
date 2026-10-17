@@ -1,0 +1,11 @@
+{
+  "observed_at": "2026-10-17T10:49:19.402422+00:00",
+  "account": "956035085549",
+  "plan": "FREE",
+  "direct_console_observation": true,
+  "credits_sufficient_for_approved_cap": true,
+  "credit_balance_retained": false,
+  "method": "authenticated AWS Console Home free-plan cost/credits widget; no plan changes",
+  "official_read_only_api_attempt": "freetier:GetAccountPlanState AccessDenied; no IAM changes",
+  "api_documentation": "https://docs.aws.amazon.com/cli/latest/reference/freetier/get-account-plan-state.html"
+}

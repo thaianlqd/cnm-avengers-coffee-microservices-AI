@@ -1,0 +1,71 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 328B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:20-alpine
+#2 DONE 0.7s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 114B done
+#3 DONE 0.0s
+
+#4 [builder 1/6] FROM docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+#4 resolve docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 0.0s done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 1.21kB done
+#5 DONE 0.0s
+
+#6 [builder 2/6] WORKDIR /app
+#6 CACHED
+
+#7 [builder 4/6] RUN npm ci
+#7 CACHED
+
+#8 [builder 5/6] COPY . .
+#8 CACHED
+
+#9 [builder 6/6] RUN npm run build
+#9 CACHED
+
+#10 [builder 3/6] COPY package*.json ./
+#10 CACHED
+
+#11 [runner 4/5] RUN npm ci --omit=dev
+#11 3.143 
+#11 3.143 added 120 packages, and audited 121 packages in 3s
+#11 3.143 
+#11 3.143 38 packages are looking for funding
+#11 3.143   run `npm fund` for details
+#11 3.168 
+#11 3.168 14 vulnerabilities (1 low, 4 moderate, 8 high, 1 critical)
+#11 3.168 
+#11 3.168 To address all issues, run:
+#11 3.168   npm audit fix
+#11 3.168 
+#11 3.168 Run `npm audit` for details.
+#11 3.169 npm notice
+#11 3.169 npm notice New major version of npm available! 10.8.2 -> 12.2.0
+#11 3.169 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+#11 3.169 npm notice To update run: npm install -g npm@12.2.0
+#11 3.169 npm notice
+#11 DONE 3.4s
+
+#12 [runner 5/5] COPY --from=builder /app/dist ./dist
+#12 DONE 0.1s
+
+#13 exporting to image
+#13 exporting layers
+#13 exporting layers 0.7s done
+#13 exporting manifest sha256:e96547e2e42ab768c8a666c0137fe71a856f5aa9dced41aa445978064ab5a958 0.0s done
+#13 exporting config sha256:0c80a5db70ada8c699add7a1d75797aafb33020a1eed1bf7bd55f067e69b8c70 0.0s done
+#13 exporting attestation manifest sha256:4ea7dd6cd1a161213caeffcf343ce7327983dfaf5dfb4fdead0b5757d5048845 0.0s done
+#13 exporting manifest list sha256:d72bc9c685433b9d1dacf61762a3161ee47aafad42630634167cfbbffb3cb27d 0.0s done
+#13 naming to docker.io/avengers/api-gateway:3k-aws-ac88422957e9
+#13 naming to docker.io/avengers/api-gateway:3k-aws-ac88422957e9 done
+#13 unpacking to docker.io/avengers/api-gateway:3k-aws-ac88422957e9
+#13 unpacking to docker.io/avengers/api-gateway:3k-aws-ac88422957e9 0.4s done
+#13 DONE 1.2s

@@ -1,3 +1,6 @@
+> Cập nhật phase1K17/10: fresh750PASS;1000NOTRUN vìAWSquota16vCPU. Fleetđãcleanup.
+> [Reportmới](K8S_1000_CAPACITY_REPORT.md) · [Contingencylocal2target,chờphép](K8S_1K_QUOTA_CONTINGENCY_PLAN.md).
+
 > **Lượt750 riêng sau báo cáo này đã hoàn tất:** [K8S_750_CAPACITY_REPORT.md](K8S_750_CAPACITY_REPORT.md). Hai750PASS mới không sửa kết quả750INVALID của phase1K bên dưới;1000 vẫnNOTRUN.
 
 # Kubernetes capacity — kết quả cuối ngày 17/10/2026
