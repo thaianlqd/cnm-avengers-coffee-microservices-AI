@@ -96,7 +96,6 @@ export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChar
   const tabs = missionTabs(dashboardChartTabs(ordered), report.mission_layout, { forecast: forecasts });
   const activeTab = tabs.find(t => t.id === view) || tabs[0];
   const visibleCharts = view === 'all' ? [...(showAll ? ordered : primary)] : activeTab.charts;
-  const minimum = Math.max(report.verification ? 1 : 4, report.quality_assessment?.verification_checks?.find((c: any) => c.id === 'analysis_depth_coverage')?.total || report.diagnostics?.minimum_visuals || 0);
   const context = reportContext(report, capabilities);
   const definitions: Record<string, string> = Object.fromEntries((report.analysis_explanation || []).flatMap((o: any) => (o.metrics || []).map((m: any) => [m.id, m.business_meaning])));
   const caveats = [...new Set((report.charts || []).flatMap((c: any) => c.insight?.caveats || []))].slice(0, 4) as string[];
@@ -114,12 +113,17 @@ export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChar
     {tab === 'report' && <div id="report-panel-report" role="tabpanel" aria-labelledby="report-tab-report" className="space-y-5">
     {!!report.short_answer?.length && <section data-short-answer className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4"><h3 className="text-xs font-semibold text-emerald-900 mb-1.5">Trả lời ngắn</h3>
       <ul className="space-y-1 text-sm text-slate-800 leading-relaxed">{report.short_answer.map((t: string, i: number) => <li key={i}>{t}</li>)}</ul></section>}
+
     {report.mission_layout?.caveat && <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">{report.mission_layout.caveat}</p>}
     {!!report.data_warnings?.length && <details className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800"><summary className="cursor-pointer font-medium">{report.data_warnings.length} lưu ý về dữ liệu · Xem chi tiết</summary><ul className="mt-2 space-y-1">{report.data_warnings.map((w: string, i: number) => <li key={i}>{w}</li>)}</ul></details>}
     <KpiStrip cards={kpiStrip(highlights, report)} />
     {!!findings.length && <section className="rounded-xl border border-slate-200 bg-white p-4"><h3 className="text-xs font-semibold text-slate-900 mb-3">Điểm nổi bật</h3><div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">{findings.map((f: any, i: number) => <div key={i} className="text-xs text-slate-600 leading-relaxed"><span className="inline-block w-1.5 h-1.5 bg-teal-500 rounded-full mr-2" />{f.text}{f.evidence_id && <a href={`#evidence-${encodeURIComponent(f.evidence_id)}`} className="block text-blue-600 mt-1">Đối chiếu dữ liệu ↗</a>}</div>)}</div></section>}
     <div className="flex flex-wrap gap-2 items-center justify-between"><h3 className="text-sm font-semibold text-slate-900">Các góc nhìn phân tích</h3><span className="text-xs text-slate-400">{selected.charts.length} biểu đồ{selected.duplicateCount ? ` · ${selected.duplicateCount} góc nhìn trùng đã gộp` : ''}{report.mission_evidence?.dropped?.length ? ` · ${report.mission_evidence.dropped.length} góc nhìn không liên quan đã lọc` : ''}</span></div>
-    {minimum > selected.charts.length && <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">Mới có {selected.charts.length}/{minimum} góc nhìn cần thiết. Báo cáo phân tích chưa đầy đủ biểu đồ; xem các giới hạn trong mục kiểm chứng.</p>}
+    {report.view_coverage?.some((v:any)=>v.required && v.status==='missing') && <div data-requirement-gaps role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+      {report.view_coverage.filter((v:any)=>v.required && v.status==='satisfied').length}/{report.view_coverage.filter((v:any)=>v.required).length} yêu cầu bằng chứng đã đáp ứng; báo cáo chưa đầy đủ.
+      {report.view_coverage.filter((v:any)=>v.required && v.status==='missing').map((v:any,i:number)=><p key={i}>{v.requirement_id}: {v.reason || 'Chưa có bằng chứng phù hợp'}</p>)}
+    </div>}
+    {!report.view_coverage && <p data-coverage-legacy className="text-xs text-slate-500">Báo cáo legacy: Chưa đo độ đầy đủ yêu cầu theo chính sách bằng chứng hiện tại.</p>}
     {tabs.length > 1 && <div role="tablist" aria-label="Góc nhìn biểu đồ" className="flex flex-wrap gap-2">{tabs.map(t => <button key={t.id} id={`chart-tab-${t.id}`} role="tab" aria-selected={activeTab.id === t.id} aria-controls="analysis-chart-panel" onClick={() => setView(t.id)} className={`rounded-lg border px-3 py-2 text-xs ${activeTab.id === t.id ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-600'}`}>{t.label}{t.id === 'forecast' ? '' : ` · ${t.charts.length}`}</button>)}</div>}
     <div id="analysis-chart-panel" role={tabs.length > 1 ? 'tabpanel' : undefined} aria-labelledby={tabs.length > 1 ? `chart-tab-${activeTab.id}` : undefined} className="space-y-4">
     {(view === 'forecast' || (view === 'all' && report.analysis_mission === 'forecast')) && <ForecastPanel forecasts={report.forecasts} coverage={capabilities?.data_coverage} />}
@@ -129,6 +133,12 @@ export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChar
     {!selected.charts.length && !forecasts && <div role="status" className="rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600 leading-relaxed">Chưa có biểu đồ phù hợp được kiểm chứng cho kết quả này. Xem bảng dữ liệu trong tab “Dữ liệu / SQL” và mục “Kiểm chứng & nguồn”.</div>}
     {view === 'all' && selected.charts.length > primary.length && <button onClick={() => setShowAll(!showAll)} className="w-full rounded-xl border border-slate-200 py-3 text-xs text-slate-600 hover:bg-white">{showAll ? 'Thu gọn biểu đồ' : `Xem thêm ${selected.charts.length - primary.length} góc nhìn chi tiết`}</button>}
     {!!caveats.length && <section data-report-limitations className="rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600"><h3 className="font-semibold text-slate-900 mb-2">Giới hạn quan trọng</h3><ul className="space-y-1">{caveats.map((c, i) => <li key={i}>• {c}</li>)}</ul></section>}
+    {report.conclusion?.answer && <section data-conclusion className="rounded-2xl border border-slate-200 bg-white p-4 space-y-2"><h3 className="text-xs font-semibold text-slate-900">KẾT LUẬN PHÂN TÍCH</h3>
+      <p className="text-sm text-slate-800 leading-relaxed">{report.conclusion.answer}</p>
+      {!!report.conclusion.findings?.length && <ul className="space-y-1 text-xs text-slate-700">{report.conclusion.findings.map((f: any, i: number) => <li key={i} data-evidence-id={f.evidence_id}>• {f.statement}</li>)}</ul>}
+      {!!report.conclusion.unanswered?.length && <p data-conclusion-unanswered className="text-[11px] text-rose-700"><span className="font-medium">Chưa trả lời được:</span> {report.conclusion.unanswered.join(' · ')}</p>}
+      {!!report.conclusion.caveats?.length && <p className="text-[11px] text-amber-800"><span className="font-medium">Lưu ý:</span> {report.conclusion.caveats.join(' · ')}</p>}
+      {!!report.conclusion.actions?.length && <p className="text-[11px] text-slate-600"><span className="font-medium">Nên làm tiếp:</span> {report.conclusion.actions.join(' · ')}</p>}</section>}
     {onFollowUp && <FollowUpChips items={report.follow_up_questions} onPick={onFollowUp} disabled={editing} />}
     <p className="text-[11px] text-slate-400">Chi tiết kiểm chứng, nguồn và SQL nằm ở các tab bên trên; báo cáo chỉ hiển thị góc nhìn gắn với yêu cầu của bạn.</p>
     </div>}

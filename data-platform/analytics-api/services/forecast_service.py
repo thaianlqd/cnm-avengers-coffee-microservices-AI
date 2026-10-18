@@ -68,7 +68,8 @@ def complete_series(rows, metric, unit, policy="zero_fill", reference=None, wind
     Only complete periods count: a bucket clipped by the approved time window
     (its start, e.g. rolling "6 tháng" from the 16th) or still accumulating at
     ``reference`` (today) would bias the projection downward. Complete trailing
-    periods without rows inside the window are true zeros of a complete fact.
+    periods without rows are zeros only with an explicit completeness certificate.
+    Observed MIN/MAX alone does not prove a stale trailing bucket is zero.
     """
     window = window or {}
     start, end = _bound(window.get("start")), _bound(window.get("end"))
@@ -87,7 +88,7 @@ def complete_series(rows, metric, unit, policy="zero_fill", reference=None, wind
     if not points:
         return []
     series, current, last = [], min(points), max(points)
-    if end is not None:
+    if end is not None and window.get("completeness") == "complete":
         while _bucket_end(_next(last, unit), unit) <= end:
             last = _next(last, unit)
     while current <= last:

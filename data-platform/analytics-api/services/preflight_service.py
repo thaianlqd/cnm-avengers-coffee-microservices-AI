@@ -73,6 +73,18 @@ def mapped_text(text):
     return "".join(out), index
 
 
+def _clauses(question, index, text_length):
+    """Clause spans in NORMALIZED-text coordinates. Boundaries are found in the original question (punctuation and
+    conjunctions that open a new analytical ask) and mapped through the normalization index."""
+    cuts = [m for m in re.finditer(r"[.;:!?,\n]|\s(?:và|va|rồi|roi|sau đó|sau do|đồng thời|dong thoi)\s", question, re.IGNORECASE)]
+    positions = [0]
+    for m in cuts:
+        positions.append(next((i for i, original in enumerate(index) if original >= m.end()), text_length))
+    positions.append(text_length)
+    spans = [(a, b) for a, b in zip(positions, positions[1:]) if b > a]
+    return spans or [(0, text_length)]
+
+
 def _span(index, start, end):
     return index[start], index[end - 1] + 1
 
@@ -92,6 +104,26 @@ def _mentions(text, phrases):
             if not any(a <= m.start() and m.end() <= b for a, b, _ in found):
                 found.append((m.start(), m.end(), phrase))
     return found
+
+
+REDIRECT_CODES = {"forecast_metric_unsupported", "forecast_cadence_unsupported", "forecast_horizon_exceeded",
+                  "forecast_grouped_unsupported", "forecast_scope_unsupported", "risk_signal_required", "trend_range_too_short",
+                  "unsupported_predicate", "composition_non_additive", "compare_mixed_units", "cohort_criterion_needed",
+                  "association_category_variable", "unrecognized_question", "metric_needed", "analysis_target_missing"}
+# Legacy error categories are presentation only; the capability contract owns the decision.
+from services.semantic_preflight_contract import decision_from_findings
+CODE_ERROR = {"forecast_metric_unsupported":"forecast_unsupported","forecast_cadence_unsupported":"forecast_unsupported","forecast_horizon_exceeded":"forecast_unsupported","forecast_grouped_unsupported":"forecast_unsupported","forecast_scope_unsupported":"forecast_unsupported","guided_contract_invalid":"guided_contract_invalid","unrecognized_question": "unrecognized_question", "metric_needed": "clarification",
+    "analysis_target_missing": "clarification", "composition_non_additive": "mission_mismatch",
+    "unsupported_predicate": "unsupported_metric", "unsupported_only": "unsupported_metric",
+    "unsupported_required": "unsupported_metric", "privacy_blocked": "privacy",
+    "compare_mixed_units": "clarification", "cohort_criterion_needed": "clarification",
+    "association_category_variable": "clarification", "risk_signal_required": "mission_mismatch",
+    "mission_mismatch": "mission_mismatch", "trend_range_too_short": "time_range_invalid",
+    "scope_unresolved": "clarification", "scope_conflict": "query_scope"}
+
+
+def capability_decision(findings):
+    return decision_from_findings(findings).decision
 
 
 def finding(level, code, message, fixes=(), **extra):
@@ -118,7 +150,7 @@ def coverage_for(coverage, sources):
     facts = (coverage or {}).get("facts", {})
     known = [facts[s] for s in sources if facts.get(s, {}).get("min_date")]
     if known:
-        return min(f["min_date"] for f in known), max(f["max_date"] for f in known), [f["label"] for f in known]
+        return max(f["min_date"] for f in known), min(f["max_date"] for f in known), [f["label"] for f in known]
     overall = (coverage or {}).get("overall", {})
     return overall.get("min_date"), overall.get("max_date"), []
 
@@ -135,7 +167,7 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
     from services.time_resolution_service import parse_time, resolve_time
     from services import data_coverage_service
     from services import mission_contract_service as missions
-    from services.semantic_preflight_contract import canonical_anchor, contract_from_preflight, alias_policy
+    from services.semantic_preflight_contract import canonical_anchor, contract_from_preflight, alias_policy, POLICY_VERSION
     started = time.perf_counter()
     catalog = catalog or preflight_catalog()
     coverage = coverage if coverage is not None else data_coverage_service.peek()
@@ -177,6 +209,9 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
             findings.append(finding("block", "privacy_blocked", concept["message"],
                                     [{"label": "Phân tích ở mức tổng hợp (ví dụ theo chi nhánh hoặc phân khúc)", "kind": "advice"}],
                                     concept=concept["id"], phrases=[question[slice(*_span(index, a, b))] for a, b, _ in hit]))
+    for clarification in r.get('scope_clarifications',[]):
+        if _mentions(text,clarification['aliases']):
+            findings.append(finding('block','scope_unresolved' if clarification['state']=='needs_clarification' else 'scope_unsupported',clarification['message']))
     blocked_length = any(f["code"] == "question_too_long" for f in findings)
 
     understood = {"metrics": [], "dimensions": [], "filters": [], "time": None, "forecast": None,
@@ -184,7 +219,9 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
     anchors = {"metrics": [], "dimensions": [], "values": [], "rankings": [], "granularities": []}
     periods, forecast_requested = [], False
     if question.strip() and not blocked_length:
-        anchors = request_anchors(question, catalog, {})
+        anchors = request_anchors(question, catalog, {"required_filters": scope.get("filters") or []})
+        if anchors["scope_resolution"]["state"] == "needs_clarification":
+            findings.append(finding("block", "scope_conflict", anchors["scope_resolution"]["message"]))
         metrics = r["metrics"]
         # One entry per mentioned phrase. A governed canonical alias anchors its
         # owner (V3.2); otherwise the metric whose label IS the phrase is
@@ -234,12 +271,13 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
         constrained = {tuple(a["candidate_ids"]) for a in anchors.get("capability_constraints", [])}
         for id, concept in unsupported_concepts(r).items():
             hits = _mentions(text, concept["aliases"])
+            hits=[h for h in hits if not re.search(r'\b(?:khong|chua|dung)(?:\s+can)?\s+(?:tu\s+)?(?:tinh|ket luan|suy ra|danh gia)(?:\s+(?:ve|chi so|hieu qua))*\s*$',text[max(0,h[0]-100):h[0]])]
             if not hits or (id,) in constrained:
                 continue
             nearest = [{"id": m, "label": metrics[m]["business_name"]} for m in concept["nearest_metrics"]]
             span = _span(index, hits[0][0], hits[0][1])
             understood["unsupported"].append({"id": id, "phrase": question[slice(*span)]})
-            findings.append(finding("warn", "unsupported_concept",
+            findings.append(finding("block", "unsupported_concept",
                                     f"“{question[slice(*span)]}” chưa có định nghĩa được quản trị. {concept.get('limitation', '')}".strip(),
                                     [{"label": f"Thay bằng {n['label'].lower()}", "kind": "replace_question",
                                       "question": _replace(question, span, n["label"].lower())} for n in nearest[:3]],
@@ -262,6 +300,13 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
                                   "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."}
         sources = list(dict.fromkeys(metrics[m]["source"] for m in metric_ids))
         low, high, facts = coverage_for(coverage, sources)
+        for source in sources:
+            observed=((coverage or {}).get('facts') or {}).get(source)
+            if observed and (observed.get('stale') or observed.get('completeness','unknown')!='complete'):
+                findings.append(finding('info','source_coverage_unknown',
+                    f"{observed['label']}: dữ liệu quan sát đến {observed.get('max_date') or 'chưa rõ'}; độ đầy đủ nguồn chưa được chứng minh.",
+                    source=source,completeness=observed.get('completeness','unknown')))
+
         if period and period.get("start") and low and high:
             start, end = str(period["start"])[:10], str(period["end"])[:10]
             scope_label = ", ".join(facts) if facts else "kho dữ liệu"
@@ -300,7 +345,7 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
                 if not spec.get("forecastable"):
                     span = _span(index, phrase["start"], phrase["end"])
                     same_domain = sorted(forecastable, key=lambda f: (not set(metrics[f]["subjects"]) & set(metrics[m]["subjects"]), order.index(f)))
-                    findings.append(finding("warn", "forecast_metric_unsupported",
+                    findings.append(finding("block", "forecast_metric_unsupported",
                         f"{label} chưa được khai báo là chỉ số dự báo được. Chỉ số dự báo được: "
                         + ", ".join(metrics[f]["business_name"] for f in forecastable) + ".",
                         [{"label": f"Dự báo {metrics[f]['business_name'].lower()}", "kind": "replace_question",
@@ -311,16 +356,16 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
                 if unit and unit not in spec["cadences"]:
                     best = "month" if "month" in spec["cadences"] else spec["cadences"][-1]
                     n = spec["max_horizon"][best]
-                    findings.append(finding("warn", "forecast_cadence_unsupported",
+                    findings.append(finding("block", "forecast_cadence_unsupported",
                         f"Dự báo {label.lower()} hỗ trợ theo {', '.join(cadence_labels.get(c, c) for c in spec['cadences'])}.",
                         [{"label": f"Đổi thành {n} {cadence_labels.get(best, best)}", "kind": "replace_question",
                           "question": _replace(question, _span(index, match.start(), match.end()), f"{n} {cadence_labels.get(best, best)} tới")}]
                         if match else [], metric=m))
                 elif unit and amount and amount > spec["max_horizon"][unit]:
                     n = spec["max_horizon"][unit]
-                    findings.append(finding("warn", "forecast_horizon_exceeded",
+                    findings.append(finding("block", "forecast_horizon_exceeded",
                         f"Tầm dự báo tối đa của {label.lower()} là {n} {cadence_labels.get(unit, unit)} (đã hỏi {amount}). "
-                        "Backend sẽ từ chối tầm vượt giới hạn trước khi gọi AI sửa.",
+                        "Hãy chọn tầm dự báo trong giới hạn.",
                         [{"label": f"Đổi thành {n} {cadence_labels.get(unit, unit)}", "kind": "replace_question",
                           "question": _replace(question, _span(index, match.start(), match.end()), f"{n} {cadence_labels.get(unit, unit)} tới")}],
                         metric=m, requested=amount, maximum=n, unit=unit))
@@ -335,11 +380,17 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
                         continue
                     span = _span(index, len(before) - len(marker), a["end"])
                     dim = r["dimensions"][a["candidate_ids"][0]]["business_name"]
-                    findings.append(finding("warn", "forecast_grouped_unsupported",
+                    findings.append(finding("block", "forecast_grouped_unsupported",
                         f"Chưa hỗ trợ dự báo theo từng {dim.lower()}; dự báo được tính cho toàn phạm vi đã lọc.",
                         [{"label": f"Bỏ “{question[slice(*span)]}”", "kind": "replace_question", "question": _replace(question, span, "")},
                          {"label": f"Chọn một {dim.lower()} trong Phạm vi", "kind": "advice"}], metric=m, dimension=a["candidate_ids"][0]))
                     break
+                scope_filters_selected = (analysis_scope or {}).get("mode") == "selected" and (analysis_scope or {}).get("filters")
+                if understood["filters"] or scope_filters_selected:
+                    # The forecast engine has no scoped series: never suggest a branch-filtered forecast as a valid fix.
+                    findings.append(finding("block", "forecast_scope_unsupported",
+                        "Dự báo hiện chỉ tính cho toàn phạm vi dữ liệu, chưa hỗ trợ lọc theo chi nhánh/thành phố/loại cửa hàng.",
+                        [{"label": "Dự báo toàn phạm vi (bỏ bộ lọc)", "kind": "advice"}], metric=m))
                 fact = (coverage or {}).get("facts", {}).get(metrics[m]["source"], {})
                 freshness = (coverage or {}).get("freshness", {})
                 if fact.get("max_date") and (date.fromisoformat(fact["max_date"]) < reference - timedelta(days=2) or freshness.get("stale")):
@@ -358,6 +409,25 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
                 findings.append(finding("warn", "snapshot_metric_trend",
                     f"{metrics[m]['business_name']} là chỉ số hiện trạng (ảnh chụp), không có lịch sử theo thời gian; "
                     "hệ thống chỉ trả giá trị hiện tại.", [{"label": "Bỏ mốc thời gian / xu hướng", "kind": "advice"}], metric=m))
+
+        # --- A cadence needs at least two full buckets inside the requested window ---
+        cadence_days = {"week": 7, "month": 28, "quarter": 90, "year": 365}
+        # Only an explicit cadence phrase ("theo tuần"); a bare "tháng 9" is a date, not a cadence.
+        grans = {g for g, phrase in ws.get("granularity_phrases", {}).items()
+                 if g in cadence_days and _mentions(text, [value_text(phrase)])}
+        if input_mode == "guided" and guided_contract and guided_contract.get("granularity") in cadence_days:
+            grans.add(guided_contract["granularity"])
+        if grans and period and period.get("start") and period.get("end"):
+            span = (date.fromisoformat(str(period["end"])[:10]) - date.fromisoformat(str(period["start"])[:10])).days + 1
+            for g in sorted(grans):
+                if span < 2 * cadence_days[g]:
+                    wider = (date.fromisoformat(str(period["end"])[:10]) - timedelta(days=cadence_days[g] * 8 - 1)).isoformat()
+                    findings.append(finding("block", "trend_range_too_short",
+                        f"Khoảng {str(period['start'])[:10]} → {str(period['end'])[:10]} ({span} ngày) quá ngắn để vẽ xu hướng {ws.get('granularity_phrases', {}).get(g, g)}; cần ít nhất 2 kỳ đầy đủ.",
+                        [{"label": f"Mở rộng thành 8 kỳ gần nhất (từ {wider})", "kind": "set_time",
+                          "time": {"mode": "custom", "start": wider, "end": str(period["end"])[:10]}},
+                         {"label": "Bỏ yêu cầu xu hướng, xem giá trị của khoảng này", "kind": "advice"}],
+                        granularity=g, days=span, minimum_days=2 * cadence_days[g]))
 
         # --- Breadth ---
         goals = len({tuple(a["candidate_ids"]) for a in anchors["metrics"]}) + len(understood["unsupported"])
@@ -388,16 +458,34 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
                       *sorted(m for m in signals if m != "overview")]
         recognition = {"business": sorted(set(map(str, business))), "analytical": sorted(set(analytical))}
         vague = _vocabulary_hits(text, ws.get("vague_quality_terms", []))
+        # A greeting is not analytical evidence even when diacritic-folding makes "bạn" look like "bán":
+        # only structured anchors (metric/dimension/value/unsupported concept) or analytical operators count then.
+        if _vocabulary_hits(text, ws.get("greeting_vocabulary", [])):
+            structured = [*(m["id"] for m in understood["metrics"]), *(d["id"] for d in understood["dimensions"]),
+                          *(f["dimension"] for f in understood["filters"]), *(u["id"] for u in understood["unsupported"])]
+            if not structured and not analytical:
+                business = []
         if not business and not analytical:
             findings.append(finding("block", "unrecognized_question", "Chưa nhận ra nội dung phân tích dữ liệu trong câu hỏi.",
                                     [{"label": "Mở “Hỏi được gì?” để chọn chỉ số", "kind": "advice"}]))
             state = "BLOCKED"
-        elif not business:
+        elif not business or set(business)<={'overview'}:
             missing = (mission or {}).get("input_contract", {}).get("required") or ["metric"]
             findings.append(finding("block", "analysis_target_missing",
                 "Cần nêu chỉ số hoặc đối tượng cần phân tích (ví dụ doanh thu, số đơn, tỷ lệ hủy đơn).",
                 [{"label": "Chọn chỉ số trong “Hỏi được gì?”", "kind": "advice"}], missing=[s for s in missing if s != "time"]))
             state = "NEEDS_INPUT"
+        elif not understood['metrics'] and not understood['unsupported'] and (
+                ('compare' in signals and not understood['filters']) or
+                (set(map(value_text,business))<={'hoat dong','van hanh'} and not understood['dimensions'] and not understood['filters']
+                 and (mission or {}).get('id')!='risk_watch') or
+                (not understood['dimensions'] and not understood['filters'] and not analytical and any(
+                    re.fullmatch(r'\s*'+re.escape(value_text(subject))+r'\s+'+re.escape(value_text(suffix))+r'\s*[?!.]*',text)
+                    for subject in ws.get('business_signal_vocabulary',[]) for suffix in ws.get('generic_question_suffixes',[])))):
+            findings.append(finding('block','metric_needed',
+                'Cần chọn chỉ số và đối tượng cụ thể để phân tích; với so sánh, hãy nêu rõ các nhóm cần đối chiếu.',
+                [{'label':'Chọn chỉ số trong “Hỏi được gì?”','kind':'advice'}],missing=['metric']))
+            state='NEEDS_INPUT'
         elif understood["unsupported"] and not understood["metrics"]:
             # Only an ungoverned concept was asked for: AI cannot answer it, so never spend a call.
             concept = next(f for f in findings if f["code"] == "unsupported_concept")
@@ -424,6 +512,78 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
                  {"label": f"Viết lại câu hỏi cho {mission['label']}", "kind": "rewrite_for_mission", "mission": mission["id"]}],
                 selected=mission["id"], inferred=inferred["id"]))
             state = state or "NEEDS_INPUT"
+        if mission and mission["id"] == "risk_watch" and understood["metrics"]:
+            risk_metrics = {s["metric"] for s in r.get("risk_signals", [])} | {s["observation_metric"] for s in r.get("risk_signals", []) if s.get("observation_metric")}
+            if not any(m["id"] in risk_metrics for m in understood["metrics"]):
+                findings.append(finding("block", "risk_signal_required",
+                    "Doanh thu, số đơn hoặc giá trị đơn trung bình không phải tín hiệu rủi ro được quản trị; hãy xem ở Tổng quan hoặc Xu hướng.",
+                    [{"label": f"Chuyển sang {missions_by_id[t]['label']}", "kind": "switch_mission", "mission": t} for t in ("overview", "trend") if t in missions_by_id],
+                    metrics=[m["id"] for m in understood["metrics"]]))
+                state = state or "NEEDS_INPUT"
+            elif any(m['id'] not in risk_metrics for m in understood['metrics']):
+                findings.append(finding('block','risk_mixed_roles',
+                    'Yêu cầu gồm tín hiệu rủi ro và chỉ số kinh doanh. Chuyển sang Câu hỏi tự do để giữ đủ cả hai phần phân tích.',
+                    [{'label':'Phân tích đầy đủ trong Câu hỏi tự do','kind':'switch_mission','mission':None}]))
+                state=state or 'NEEDS_INPUT'
+        # --- V3.3 deterministic capability gates (governed vocabulary + metric metadata; no question-text blacklist) ---
+        for cid, concept in unsupported_concepts(r).items():
+            hits = _mentions(text, concept.get("predicate_aliases", []))
+            hits = [h for h in hits if not re.search(r"\b(?:khong|dung)\s+(?:xet|loc|tinh|lay)(?:\s+(?:cac|nhung|chi nhanh))*\s*$", text[max(0,h[0]-80):h[0]])]
+            if hits:
+                span = _span(index, hits[0][0], hits[0][1])
+                findings.append(finding("block", "unsupported_predicate",
+                    f"Điều kiện “{question[slice(*span)]}” cần dữ liệu chi phí/lợi nhuận mà kho chưa có. {concept.get('limitation', '')}".strip(),
+                    [{"label": "Bỏ điều kiện này và xem theo chỉ số có sẵn", "kind": "replace_question", "question": _replace(question, span, "")},
+                     *[{"label": f"Dùng {r['metrics'][m]['business_name'].lower()} thay thế", "kind": "advice"} for m in concept.get("nearest_metrics", [])[:2]]],
+                    concept=cid))
+                state = state or "NEEDS_INPUT"
+                break
+        # Constraints are judged clause by clause: a composition word binds only the metrics of ITS clause.
+        by_id = {m["id"]: m for m in understood["metrics"]}
+        for cs, ce in _clauses(question, index, len(text)):
+            ctext = text[cs:ce]
+            csig = missions.mission_signals(ctext, r)
+            cmetrics = [by_id[p] for p, a in mentions if cs <= a["start"] < ce and p in by_id]
+            cdims = [d for d in understood["dimensions"] if any(cs <= a["start"] < ce and d["id"] in a["candidate_ids"] for a in anchors["dimensions"])]
+            non_additive = [m for m in cmetrics if r["metrics"][m["id"]].get("aggregation_semantics") in ("ratio", "average")]
+            if "composition" in csig and non_additive:
+                findings.append(finding("block", "composition_non_additive",
+                    f"{non_additive[0]['label']} là tỷ lệ/trung bình nên không cộng thành cơ cấu; hãy so sánh giữa các nhóm.",
+                    [{"label": f"Chuyển sang {missions_by_id['compare']['label']}", "kind": "switch_mission", "mission": "compare"}],
+                    metrics=[m["id"] for m in non_additive]))
+                state = state or "NEEDS_INPUT"
+            # Different metrics bound to different entities ("doanh thu HCM so với tỷ lệ hủy Hà Nội") have no common gap;
+            # several metrics compared side by side over the same groups ("so sánh A, B, C theo chi nhánh") are fine.
+            marks = sorted([(a["start"], "m", p) for p, a in mentions if cs <= a["start"] < ce and p in by_id] +
+                           [(text.find(value_text(f["display"]), cs, ce), "v", f["value"]) for f in understood["filters"]
+                            if text.find(value_text(f["display"]), cs, ce) >= 0])
+            pairs, last_metric = [], None
+            for _, kind, ref in marks:
+                if kind == "m":
+                    last_metric = ref
+                elif last_metric is not None:
+                    pairs.append((last_metric, ref)); last_metric = None
+            entity_mixed = any(a[0] != b[0] and a[1] != b[1] and by_id[a[0]]["unit"] != by_id[b[0]]["unit"]
+                               for i, a in enumerate(pairs) for b in pairs[i + 1:])
+            if "compare" in csig and entity_mixed:
+                findings.append(finding("block", "compare_mixed_units",
+                    "Hai chỉ số có đơn vị khác nhau nên không có chênh lệch chung; hãy chọn một chỉ số để so sánh hai nhóm, hoặc xem riêng từng chỉ số.",
+                    [{"label": f"So sánh riêng {m['label'].lower()}", "kind": "advice"} for m in cmetrics[:2]],
+                    metrics=[m["id"] for m in cmetrics]))
+                state = state or "NEEDS_INPUT"
+            cvague = _vocabulary_hits(ctext, ws.get("vague_quality_terms", []))
+            crank = bool(anchors.get("rankings"))
+            if "compare" in csig and cvague and not crank and len(cmetrics) <= 1:
+                findings.append(finding("block", "cohort_criterion_needed",
+                    f"“{cvague[0]}” cần tiêu chí đo lường và số lượng nhóm (N) để xác định nhóm so sánh.",
+                    [{"label": "Nêu rõ: Top 3 theo doanh thu", "kind": "advice"}], term=cvague[0]))
+                state = state or "NEEDS_INPUT"
+            if "relationship" in csig and len(cmetrics) == 1 and cdims:
+                findings.append(finding("block", "association_category_variable",
+                    f"“{cdims[0]['label']}” là biến phân loại, không tính hệ số tương quan được; hãy so sánh chỉ số theo từng {cdims[0]['label'].lower()} hoặc chọn hai chỉ số số học.",
+                    [{"label": f"Chuyển sang {missions_by_id['compare']['label']}", "kind": "switch_mission", "mission": "compare"}],
+                    dimension=cdims[0]["id"]))
+                state = state or "NEEDS_INPUT"
         understood["inferred_mission"] = ({"id": inferred["id"], "label": missions_by_id[inferred["id"]]["label"]}
                                           if inferred and inferred.get("id") else None)
     if input_mode == "guided" and guided_contract is not None and not blocked_length:
@@ -431,7 +591,9 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
             slots = missions.validate_guided(catalog, (mission or {}).get("id"), guided_contract,
                                              scope_filters=(analysis_scope or {}).get("filters") or [])
             guided = {"source": "builder", "slots": slots}
+            findings=[f for f in findings if f['code'] not in {'unrecognized_question','no_metric_detected','analysis_target_missing','metric_needed'}]
         except missions.GuidedContractError as error:
+            findings=[f for f in findings if f['code'] not in {'unrecognized_question','no_metric_detected'}]
             findings.append(finding("block", "guided_contract_invalid", str(error),
                                     field=error.field))
     unique = {}
@@ -456,6 +618,9 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
     contract = contract_from_preflight(understood, anchors, r, (mission or {}).get("id"), inferred)
     return {"version": "3.2.0", "status": "blocked" if blocked else "warning" if any(f["level"] == "warn" for f in findings) else "ok",
             "state": state, "state_label": labels.get(label_key, label_key), "can_submit": not blocked,
+            "capability": decision_from_findings(findings, catalog_fingerprint=catalog.fingerprint,
+                interpretation_required=state == "READY_FOR_AI").model_dump(mode="json"),
+            "scope_resolution": anchors.get("scope_resolution", {"state":"unspecified","filters":[]}),
             "understood": understood, "findings": findings, "recognition": recognition,
             "guided_contract": guided, "semantic_contract": contract,
             "provider_calls": 0, "warehouse_queries": 0,

@@ -10,7 +10,7 @@ import { createRequire } from 'node:module';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { buildSync } from 'esbuild';
-import { coverageSummary, missionCards, missionMetrics, buildQuestion, suggestionChips, capabilityGroups, unsupportedItems,
+import { coverageSummary, missionCards, visibleMissionId, missionMetrics, buildQuestion, suggestionChips, capabilityGroups, unsupportedItems,
   groupDifference, missionTabs, orderChartsByMission, kpiStrip, riskRows, riskBreachChart, formatMagnitude, timeOptions } from './workspacePresentation.mjs';
 import { preflightView, applyFix, createPreflightClient } from './preflightPresentation.mjs';
 import { periodLabel, dailyRevenueSeries, channelSlices, chartQuestion } from './dashboardPresentation.mjs';
@@ -40,14 +40,17 @@ test('coverage bar text comes from the cached server snapshot', () => {
   assert.ok(!html.includes('thời gian thực'));
 });
 
-test('eight server missions with availability; unavailable ones are disabled with reason', () => {
+test('seven product modes: six visible server missions + free form; hidden ones map to a visible mode', () => {
   const cards = missionCards(caps);
-  assert.deepEqual(cards.map(c => c.label), ['Tổng quan', 'So sánh', 'Xếp hạng', 'Xu hướng', 'Cơ cấu', 'Dự báo', 'Rủi ro & cảnh báo', 'Tương quan']);
+  assert.deepEqual(cards.map(c => c.label), ['Tổng quan', 'So sánh', 'Xếp hạng', 'Xu hướng', 'Dự báo', 'Rủi ro & cảnh báo']);
+  assert.equal(visibleMissionId(caps, 'composition'), 'overview');
+  assert.equal(visibleMissionId(caps, 'relationship'), null);
+  assert.equal(visibleMissionId(caps, 'trend'), 'trend');
   const Picker = component('../components/workspace/MissionPicker.tsx', 'MissionPicker');
-  const off = { ...caps, missions: caps.missions.map(m => m.id === 'relationship' ? { ...m, status: 'unavailable', reason: 'Không có dữ liệu' } : m) };
+  const off = { ...caps, missions: caps.missions.map(m => m.id === 'forecast' ? { ...m, status: 'unavailable', reason: 'Không có dữ liệu' } : m) };
   const html = render(Picker, { capabilities: off, value: 'compare', onChange: () => {} });
-  assert.equal((html.match(/data-mission=/g) || []).length, 8);
-  assert.match(html, /data-mission="relationship"[^>]*disabled=""|disabled=""[^>]*data-mission="relationship"/);
+  assert.equal((html.match(/data-mission=/g) || []).length, 6);
+  assert.match(html, /data-mission="forecast"[^>]*disabled=""|disabled=""[^>]*data-mission="forecast"/);
   assert.ok(html.includes('Không có dữ liệu'));
 });
 
@@ -56,7 +59,7 @@ test('template builder offers only compatible metrics and fills a Vietnamese que
   assert.deepEqual(forecastable.sort(), ['delivery_count', 'order_count', 'revenue', 'store_order_count', 'store_revenue']);
   const month = timeOptions(caps).find(t => t.id === '2026-09');
   assert.equal(buildQuestion(caps, 'compare', { metric: 'revenue', dimension: 'city', value_a: 'Hồ Chí Minh', value_b: 'Hà Nội', time: month.phrase }),
-    'So sánh doanh thu theo thành phố giữa Hồ Chí Minh và Hà Nội tháng 9 năm 2026');
+    'So sánh doanh thu theo tỉnh/thành trong dữ liệu giữa Hồ Chí Minh và Hà Nội tháng 9 năm 2026');
   assert.equal(buildQuestion(caps, 'forecast', { metric: 'revenue', horizon: 3, cadence: 'month' }), 'Dự báo doanh thu 3 tháng tới');
   assert.equal(buildQuestion(caps, 'trend', { metric: 'order_cancellation_rate', granularity: 'week' }), 'Tỷ lệ hủy đơn theo tuần');
   assert.equal(buildQuestion(caps, 'compare', { metric: 'revenue' }), '');  // missing required slots
@@ -82,7 +85,7 @@ test('"Hỏi được gì?" lists 16 groups with badges, dimensions, search and 
   assert.equal(groups.length, 16);
   const revenue = groups.flatMap(g => g.metrics).find(m => m.id === 'revenue');
   assert.deepEqual(revenue.badges, ['Có xu hướng', 'Dự báo được']);
-  assert.deepEqual(groups.flatMap(g => g.metrics).find(m => m.id === 'low_stock_count').badges, ['Hiện tại', 'Tín hiệu rủi ro']);  // V3.2: risk-signal badge
+  assert.deepEqual(groups.flatMap(g => g.metrics).find(m => m.id === 'low_stock_count').badges, ['Hiện tại', 'Tín hiệu rủi ro', 'Không cộng qua thời gian']);  // V3.2: risk-signal badge
   assert.ok(capabilityGroups(caps, 'hủy đơn').flatMap(g => g.metrics).some(m => m.id === 'order_cancellation_rate'));
   assert.ok(unsupportedItems(caps).some(u => u.id === 'profit_margin' && u.nearest.length));
   const Drawer = component('../components/workspace/CapabilityDrawer.tsx', 'CapabilityDrawer');
@@ -139,7 +142,7 @@ test('scope panel recognizes scope from the question; depth explains what it add
   const Workspace = component('../components/workspace/AnalystWorkspace.tsx', 'AnalystWorkspace');
   const page = render(Workspace, { capabilities: caps, status: null, value: { prompt: '', time: 'auto', start: '', end: '', scope: { mode: 'auto', filters: [] }, depth: 'deep', mission: null }, disabled: false, onChange() {}, onSubmit() {} });
   for (const removed of ['Ngữ cảnh phân tích', 'Mong muốn phân tích']) assert.ok(!page.includes(removed));
-  assert.ok(page.includes('data-coverage-bar')); assert.equal((page.match(/data-mission=/g) || []).length, 8);
+  assert.ok(page.includes('data-coverage-bar')); assert.equal((page.match(/data-mission=/g) || []).length, 6);
 });
 
 test('comparison difference, mission tab order and KPI strip are deterministic', () => {
@@ -214,4 +217,15 @@ test('result table shows governed value labels (ISO weekday) instead of codes', 
   const html = render(Table, { result: { columns: ['weekday', 'revenue'], column_labels: { weekday: 'Thứ trong tuần', revenue: 'Doanh thu' }, rows: [{ weekday: 1, revenue: 10 }, { weekday: '7', revenue: 5 }] },
     valueLabels: { weekday: caps.dimension_value_labels.weekday } });
   assert.ok(html.includes('Thứ Hai')); assert.ok(html.includes('Chủ nhật'));
+});
+
+test('V3.3 one-click: primary CTA is "Phân tích", optional "Xem kế hoạch" only when a preview handler exists; view wires both', () => {
+  const Workspace = component('../components/workspace/AnalystWorkspace.tsx', 'AnalystWorkspace');
+  const base = { capabilities: caps, status: null, value: { prompt: 'doanh thu', time: 'auto', start: '', end: '', scope: { mode: 'auto', filters: [] }, depth: 'deep', mission: null }, disabled: false, onChange() {}, onSubmit() {} };
+  const one = render(Workspace, { ...base, onPreview() {} });
+  assert.ok(one.includes('data-preview-plan')); assert.ok(one.includes('Xem kế hoạch')); assert.ok(one.includes('>Phân tích<'));
+  assert.ok(!render(Workspace, base).includes('data-preview-plan'));
+  const view = readFileSync(new URL('../views/AnalyticsView.tsx', import.meta.url), 'utf8');
+  assert.match(view, /onSubmit=\{\(\) => handleOneClick\(\)\} onPreview=\{\(\) => handleProposePlan\(\)\}/);
+  assert.match(view, /invalidationFor\(patch\)\.invalidate/);
 });

@@ -108,6 +108,7 @@ class AnalysisPipeline:
                     "input_mode",
                     "guided_contract",
                     "allow_deterministic_upgrade",
+                    "analysis_mission",
                 )
             },
             sort_keys=True,
@@ -123,28 +124,45 @@ class AnalysisPipeline:
         from services import mission_contract_service as missions
         from services.workspace_service import require_mission
         self.semantic_info.update(input_mode=getattr(request, "input_mode", "free_text"), guided_contract_used=False)
+        # Server-side input guard applies to every production path, including guided and module requests.
+        if self.planning_mode == "one_shot" and request.prompt:
+            from services import preflight_service, data_coverage_service
+            pf = preflight_service.run(request.prompt,
+                request.time_range.model_dump(mode="json") if request.time_range else None,
+                request.analysis_scope.model_dump(mode="json") if request.analysis_scope else None,
+                request.analysis_mission, reference, catalog=catalog, coverage=data_coverage_service.peek(),
+                input_mode=request.input_mode,
+                guided_contract=request.guided_contract.model_dump(exclude_none=True) if request.guided_contract else None)
+            decision = pf["capability"]
+            self.semantic_info.update(capability=decision, preflight_state=pf['state'])
+            if decision['decision'] != 'READY':
+                codes = [c['code'] for c in decision['constraints'] if c['blocking'] and c['status'] == 'failed']
+                self.semantic_info.update(failure_stage='PRECHECK', capability_decision=decision['decision'], capability_codes=codes)
+                category = next((preflight_service.CODE_ERROR[c] for c in codes if c in preflight_service.CODE_ERROR),
+                    'unsupported_metric' if decision['decision'] == 'UNSUPPORTED' else 'clarification')
+                raise AnalysisError(category, decision['message'])
         if getattr(request, "input_mode", "free_text") == "guided":
             mission = require_mission(catalog.registry, request.analysis_mission)
             if not mission or not request.guided_contract:
                 raise AnalysisError("guided_contract_invalid", "Guided request needs a mission and its contract")
             slots = missions.validate_guided(catalog, mission["id"], request.guided_contract.model_dump(exclude_none=True),
                                              scope_filters=context.get("required_filters") or [])
+            # The text is part of the meaning: if it was edited to name a different metric than the contract carries,
+            # the guided intent is stale and must not run (the client is expected to drop it; the server enforces it).
+            from services.request_anchors import request_anchors
+            from services.semantic_preflight_contract import canonical_anchor
+            slot_metrics = {slots.get(k) for k in ("metric", "metric_b") if slots.get(k)}
+            if slot_metrics and request.prompt:
+                for anchor in request_anchors(request.prompt, catalog, {}).get("metrics", []):
+                    if not (set(anchor["candidate_ids"]) & slot_metrics) and canonical_anchor(anchor, catalog.registry) not in slot_metrics:
+                        raise AnalysisError("guided_contract_invalid", "Guided text no longer matches its contract")
             source, period = "builder", context.get("required_period")
-        elif (getattr(request, "allow_deterministic_upgrade", False) and request.natural_input
-              and not request.analysis_module_id and not request.analysis_module_name):
-            from services import preflight_service, data_coverage_service
-            pf = preflight_service.run(request.prompt, request.time_range.model_dump(mode="json") if request.time_range else None,
-                                       request.analysis_scope.model_dump(mode="json") if request.analysis_scope else None,
-                                       request.analysis_mission, reference, catalog=catalog, coverage=data_coverage_service.peek())
-            # Server-side precheck (never trust the browser's preflight): nonsense
-            # and mission contradictions stop before any provider call.
-            for code in ("unrecognized_question", "mission_mismatch", "analysis_target_missing", "metric_needed"):
-                if any(f["code"] == code for f in pf.get("findings", [])):
-                    self.semantic_info.update(preflight_state=pf.get("state"), failure_stage="PRECHECK")
-                    raise AnalysisError("unrecognized_question" if code == "unrecognized_question" else
-                                        "mission_mismatch" if code == "mission_mismatch" else "clarification",
-                                        "Deterministic precheck rejected the request")
+        elif request.prompt and self.planning_mode == "one_shot":
+            legacy_precheck = request.natural_input and getattr(request, "allow_deterministic_upgrade", False)
             guided = pf.get("guided_contract") or {}
+            if not legacy_precheck:
+                self.semantic_info["preflight_state"] = pf.get("state")
+                return
             if pf.get("state") != "READY_GUIDED" or guided.get("source") != "auto_upgrade" or guided.get("question_filters"):
                 self.semantic_info["preflight_state"] = pf.get("state")
                 return
@@ -571,12 +589,13 @@ class AnalysisPipeline:
                     raise AnalysisError("schema_changed", "Refresh proposal")
                 if session.contract_version == "2.8":
                     from services.analytical_resolver import intent_fingerprint, plan_fingerprint, verify_operation_bindings
+                    from services.semantic_preflight_contract import POLICY_VERSION
                     from services.analysis_intent import AnalysisIntentEnvelope
                     if (request.proposal_revision != session.revision or request.intent_fingerprint != session.intent_fingerprint
                         or request.plan_fingerprint != session.plan_fingerprint or request.catalog_fingerprint != catalog.fingerprint):
                         raise AnalysisError("stale_approval", "Approval identities differ from current proposal")
                     if (intent_fingerprint(AnalysisIntentEnvelope.model_validate(session.semantic_intent),date.fromisoformat(session.agent_reference_date),catalog) != session.intent_fingerprint
-                        or plan_fingerprint(session.resolved_operations,session.requirement_coverage,catalog.fingerprint) != session.plan_fingerprint):
+                        or plan_fingerprint(session.resolved_operations,session.requirement_coverage,catalog.fingerprint,POLICY_VERSION) != session.plan_fingerprint):
                         raise AnalysisError("stale_approval", "Stored proposal meaning changed")
                     if not verify_operation_bindings(session.resolved_operations, session.agent_artifacts):
                         raise AnalysisError("stale_approval", "Stored executable scope changed")
@@ -668,6 +687,14 @@ class AnalysisPipeline:
                 return self.refine_visuals(request, session, catalog, reference)
             if not request.feedback.strip():
                 raise AnalysisError("invalid_analysis_contract", "Empty refinement")
+            if self.planning_mode=='one_shot':
+                from services import preflight_service
+                pf=preflight_service.run(session.original_prompt+'; '+request.feedback,
+                    analysis_mission=session.ui_constraints.get('analysis_mission'),reference=reference,catalog=catalog)
+                if pf['capability']['decision']!='READY':
+                    self.semantic_info.update(capability=pf['capability'],capability_decision=pf['capability']['decision'],
+                        capability_codes=[c['code'] for c in pf['capability']['constraints']],failure_stage='SEMANTIC_CAPABILITY')
+                    raise AnalysisError('clarification' if pf['capability']['decision'] in {'CLARIFY','REDIRECT'} else 'unsupported_metric',pf['capability']['message'])
             artifacts, plan = self.agent(
                 catalog, reference, previous=session.agent_artifacts,
                 known_concepts=session.agent_state.get("resolved_concepts", [])
@@ -786,8 +813,11 @@ class AnalysisPipeline:
             self.semantic_info.update(dropped_irrelevant_charts=relevance["dropped_irrelevant_charts"],
                                       dropped_budget_charts=len(relevance["dropped"]) - relevance["dropped_irrelevant_charts"])
         if session.natural_input:
+            # A driver baseline/independent-total query may legitimately be empty; that becomes a disclosed
+            # driver_status limitation (no conclusion), never a fabricated or failed analysis.
+            baseline_ids = {q for b in (self.semantic_info.get("derived_feature_bindings") or []) if b.get("feature") == "driver_delta" for q in b["query_ids"][1:]}
             for a in artifacts.values():
-                if a.query.role != "requested":
+                if a.query.role != "requested" or a.query.id in baseline_ids:
                     continue
                 if not a.result["rows"] or (a.plan.metrics and not any(
                     row.get(metric) is not None for row in a.result["rows"] for metric in a.plan.metrics
@@ -814,8 +844,21 @@ class AnalysisPipeline:
         # built only from verified, evidence-referenced facts of primary charts.
         from services.chart_insight_service import chart_insights
         insights = chart_insights(dashboard["charts"], artifacts, catalog, reference, mission_hint)
-        from services.chart_insight_service import compare_cards, short_answer as build_short_answer
+        from services.chart_insight_service import compare_cards, build_conclusion, short_answer as build_short_answer
         short_answer = build_short_answer(dashboard["charts"])
+        from services.view_requirement_service import view_coverage
+        view_cov = view_coverage(coverage_map, dashboard["charts"], artifacts, dashboard["dashboard_plan"].get("omitted_visuals", []),
+                                 dashboard['dashboard_plan'].get('tables',[]))
+        missing_required={v['requirement_id'] for v in view_cov if v['required'] and v['status']=='missing'}
+        static_dropped=[v for v in (relevance or {}).get('dropped',[]) if v.get('reason') in {'outside_mission_evidence','outside_mission_grammar'}
+                        and v.get('query_id') in artifacts and artifacts[v['query_id']].query.role=='requested']
+        if missing_required and static_dropped:
+            self.semantic_info.update(failure_stage='CAPABILITY_CONTRACT',capability_contract_disagreement=static_dropped)
+            raise AnalysisError('semantic_contract_drift','Compiled capability disagrees with required chart execution')
+        for missing in (v for v in view_cov if v["required"] and v["status"] == "missing"):
+            # A report that cannot show a required view is never a complete success.
+            self.semantic_info.setdefault("limitations", []).append(
+                {"reason": "required_view_missing", "message": f"Chưa có góc nhìn bắt buộc ({missing['kind']}) cho yêu cầu {missing['requirement_id']}: {missing['reason']}."})
         cards = compare_cards(dashboard["charts"], artifacts, catalog, mission_hint)
         if cards:
             dashboard["kpi_cards"] = cards + [k for k in dashboard.get("kpi_cards", []) if k.get("label") != "Thay đổi giữa hai kỳ quan sát"]
@@ -885,9 +928,7 @@ class AnalysisPipeline:
         )
         response = {
             "status": "success",
-            "completion_status": (
-                "partial" if self.semantic_info.get("limitations") else "complete"
-            ),
+            "completion_status": "complete",
             "pipeline_version": self.semantic_info.get("pipeline_version", "2.8" if self.planning_mode == "one_shot" else "2.3"),
             "prompt": session.original_prompt,
             "module_provenance": session.module_provenance,
@@ -925,7 +966,18 @@ class AnalysisPipeline:
             "mission_layout": mission_layout(mission, dashboard["charts"]),
             "follow_up_questions": follow_up_questions(artifacts, catalog, mission),
             "chart_insights": insights,
+            "view_coverage": view_cov,
             "short_answer": short_answer,
+            "conclusion": build_conclusion(short_answer, narrative, evidence,
+                [v["message"] for v in self.semantic_info.get("limitations", [])]
+                + (["Không có dữ liệu trong phạm vi yêu cầu."] if not any(a.result["rows"] for a in artifacts.values()) else [])
+                + list(dict.fromkeys(s for a in artifacts.values() for s in a.grounded.analysis_spec.assumptions))
+                + [f"Chưa có góc nhìn bắt buộc cho yêu cầu {v['requirement_id']} ({v['kind']}): {v['reason']}." for v in view_cov if v["required"] and v["status"] == "missing"],
+                follow_up_questions(artifacts, catalog, mission), forecasts=forecasts,
+                chart_caveats=[c for ch in dashboard["charts"] for c in (ch.get("insight") or {}).get("caveats", [])],
+                unanswered=[c.get("goal") or c.get("requirement_id") for c in (self.semantic_info.get("resolved_requirement_coverage") or [])
+                            if c.get("state") not in {"RESOLVED", None} and (c.get("goal") or c.get("requirement_id"))],
+                cadence_labels=catalog.registry.get("workspace", {}).get("forecast_cadence_labels", {})),
             "mission_evidence": relevance,
             "input_mode": self.semantic_info.get("input_mode", "free_text"),
             "evidence": evidence,
@@ -979,10 +1031,17 @@ class AnalysisPipeline:
         origin = self.semantic_info.get("coverage_origin", session.coverage_origin) if declared else origin
         session.analysis_components, session.coverage_origin = components, origin
         response["analysis_components"] = components
+        from services.data_coverage_service import peek as coverage_snapshot
+        observed=(coverage_snapshot() or {}).get('facts',{})
+        source_coverage=[]
+        for source in sorted({catalog.registry['metrics'][m]['source'] for a in artifacts.values() for m in a.plan.metrics}):
+            fact=observed.get(source,{})
+            source_coverage.append(dict(source=source,label=fact.get('label') or catalog.overlay['silver_tables'][source].get('business_name',source),
+                max_date=fact.get('max_date'),stale=fact.get('stale'),completeness=fact.get('completeness','unknown')))
         response["quality_context"] = {"version": "2.7", "catalog_fingerprint": catalog.fingerprint,
             "coverage_origin": origin, "ui_constraints": session.ui_constraints,
             "reference_date": reference.isoformat(), "limitations": deepcopy(self.semantic_info.get("limitations", [])),
-            "partial_scope_approved": session.partial_scope}
+            "partial_scope_approved": session.partial_scope, "source_coverage":source_coverage}
         if self.semantic_info.get("semantic_intent"):
             from services.analytical_resolver import digest
             from services.analysis_quality_contract import VERSION as quality_version
@@ -1005,7 +1064,12 @@ class AnalysisPipeline:
             and (c.get("text") is None or c["text"] == by_evidence[c["evidence_id"]]["statement"])]
         safe_plan["recommendations"] = [c for c in safe_plan["recommendations"] if any(r["evidence_id"] == c["evidence_id"] and r["action"] == c["action"] for r in narrative["recommendations"])]
         response["dashboard_plan_input"] = safe_plan
-        response["quality_limitations"] = report_limitations(artifacts, response["charts"], catalog, response["quality_context"]["limitations"])
+        response["quality_limitations"] = report_limitations(artifacts, response["charts"], catalog, response["quality_context"]["limitations"], source_coverage)
+        from services.answer_requirement_service import conclusion_from_report
+        response['conclusion'],response['short_answer'],response['answer_requirements']=conclusion_from_report(response,artifacts,catalog,evidence)
+        # Scope taxonomy is part of the catalog identity; keep its original version in saved reports.
+        response['scope_resolution']=(response.get('request_anchors') or {}).get('scope_resolution')
+
         # Per-row derived facts can be larger than the original result. Preserve
         # all of them externally and expose a deterministic evidence preview.
         if len(evidence) > capacity_contract.evidence_preview:
@@ -1023,13 +1087,31 @@ class AnalysisPipeline:
             artifact_bytes=sum(a.result_ref['byte_size'] for a in artifacts.values()), response_bytes=0,
             computation_scope='FULL_QUERY_POPULATION', presentation_scope='BOUNDED_SUBSET')
         response["outcome"] = "PARTIAL_AVAILABLE" if any(c["requested_or_supporting"] == "requested" and c["status"] != "planned" for c in components) else "SUCCESS"
+        if missing_required:
+            response["outcome"]="PARTIAL_AVAILABLE"
         if response["outcome"] == "PARTIAL_AVAILABLE":
             response["completion_status"] = "partial"
-        if self.semantic_info.get('optional_execution_partial'):
-            response.update(outcome='PARTIAL_AVAILABLE', completion_status='partial')
+        if (refined and self.semantic_info.get('terminal_error')) or (
+                not self.semantic_info.get('semantic_intent') and response.get('data_warnings')):
+            # A failed refinement has not fulfilled the new request. Preserve
+            # the archived adapter's warning-based completion contract as well.
+            response['completion_status']='partial'
+        # Optional omissions and disclosed caveats do not make an otherwise
+        # fulfilled requested obligation incomplete. Required coverage above
+        # remains authoritative for partial completion.
         started_quality = time.perf_counter()
         from services.analysis_response_service import bound_response, session_report_summary
         bound_response(response, capacity_contract)
+        # Transport can omit an oversized visual. Verification and completion
+        # must describe the representation actually sent, not the pre-bound plan.
+        view_cov=view_coverage(coverage_map,response['charts'],artifacts,
+            response['dashboard_plan'].get('omitted_visuals',[]),response['dashboard_plan'].get('tables',[]))
+        response['view_coverage']=view_cov
+        if any(v['required'] and v['status']=='missing' for v in view_cov):
+            response['outcome']='PARTIAL_AVAILABLE';response['completion_status']='partial'
+        response['quality_limitations']=report_limitations(artifacts,response['charts'],catalog,
+            response['quality_context']['limitations'],source_coverage)
+        response['conclusion'],response['short_answer'],response['answer_requirements']=conclusion_from_report(response,artifacts,catalog,evidence)
         self.semantic_info["failure_stage"] = "QUALITY_VERIFICATION"
         response["quality_assessment"] = assess_report(response, catalog, artifacts=artifacts)
         from services import verification_reconciliation_service as verification
@@ -1037,10 +1119,26 @@ class AnalysisPipeline:
         structural = verification.reconcile(artifacts, catalog, runner=None)
         relevance_check = chart_relevance_service.verify(response["charts"], artifacts, catalog, mission_id=mission_hint,
                                                          coverage=coverage_map) if coverage_map else {"total": 0, "passed": 0, "charts": []}
+        from services.answer_requirement_service import conclusion_from_report
+        canonical_conclusion=conclusion_from_report(response,artifacts,catalog)[0]
         response["verification"] = verification.verification_report(
             reconciliation=structural, relevance=relevance_check,
-            grounding_result=verification.grounding(safe_plan["claims"], evidence, verify_insights(insights, artifacts)),
-            forecasts=forecasts, requirement_coverage=coverage_map, internal_score=response["quality_assessment"].get("score"))
+            grounding_result=verification.grounding(safe_plan["claims"], evidence, verify_insights(insights, artifacts, catalog=catalog)),
+            forecasts=forecasts, requirement_coverage=coverage_map, internal_score=response["quality_assessment"].get("score"),
+            conclusion_check=verification.verify_conclusion(response.get("conclusion"), evidence, forecasts, expected=canonical_conclusion),
+            view_coverage=response.get("view_coverage"))
+        v=response['verification']
+        def trust(id,label,passed,total,measured=True):
+            return dict(id=id,label=label,passed=passed,total=total,status='not_measured' if not measured else 'not_applicable' if not total else 'passed' if passed==total else 'partial')
+        numeric=[c for c in structural['numeric'] if c.get('status') in {'matched','mismatch'}]
+        fc_measured=[f for f in forecasts if f.get('backtest',{}).get('smape_pct') is not None]
+        required_views=[x for x in view_cov if x['required']]
+        v['trust_dimensions']=[
+            trust('structural','Cấu trúc và kiểm tra kết quả',len(artifacts),len(artifacts)),
+            trust('numeric_reconciliation','Đối soát số liệu độc lập',sum(x['status']=='matched' for x in numeric),len(numeric),bool(numeric)),
+            trust('semantic_coverage','Yêu cầu và bằng chứng',sum(x['status']=='satisfied' for x in required_views),len(required_views)),
+            trust('forecast_quality','Kiểm tra lùi dự báo',len(fc_measured),len(forecasts),bool(fc_measured)),
+            trust('provider_execution','Thực thi provider trong ngân sách',int(self.semantic_info.get('provider_physical_attempts',0)<=3 and self.semantic_info.get('contract_repair_count',0)<=1),1)]
         response["verification"]["snapshot"] = {"registry_fingerprint": catalog.registry_fingerprint,
             "catalog_fingerprint": catalog.fingerprint, "verification_version": verification.VERSION,
             "metric_definitions": {m: catalog.registry["metrics"][m].get("business_definition") for a in artifacts.values()
@@ -1112,10 +1210,18 @@ class AnalysisPipeline:
                            known_concepts=session.agent_state.get("resolved_concepts", []))
         agent.queries.ui_context = deepcopy(session.ui_constraints)
         runner = OracleRunner(agent.queries)
+        revision=session.revision
         result = reconcile(artifacts, catalog, runner)
+        if session.revision!=revision:
+            raise AnalysisError('session','Reconciliation belongs to an older report revision')
+
         result.update(provider_calls=0, measured_at=datetime.now().astimezone().isoformat(),
                       registry_fingerprint=catalog.registry_fingerprint, session_revision=session.revision)
         session.diagnostics = {**(session.diagnostics or {}), "independent_reconciliation": deepcopy(result)}
+        from services.verification_reconciliation_service import merge_reconciliation
+        if session.report_response and session.revision==revision:
+            session.report_response['verification']=merge_reconciliation(session.report_response.get('verification'),result)
+
         from services.session_service import save_session
         save_session(session)
         return result

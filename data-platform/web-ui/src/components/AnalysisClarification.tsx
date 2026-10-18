@@ -6,12 +6,13 @@ import { analysisFailureTitle, analysisFailureActions, analysisFailureTone, anal
 export const AnalysisClarification: React.FC<{
   response: any;
   onChoice?: (answer: string) => void;
+  onAction?: (action: any) => void;
   onEdit?: () => void;
   onRetry?: () => void;
   onUpdate?: () => void;
   onSnapshot?: (answer: string) => void;
   onModule?: (module: any) => void;
-}> = ({ response, onChoice, onEdit, onRetry, onUpdate, onModule, onSnapshot }) => {
+}> = ({ response, onChoice, onEdit, onRetry, onUpdate, onModule, onSnapshot, onAction }) => {
   const clarification = response?.clarification;
   const choices = (clarification?.choices || response?.options || []).filter(
     (choice: any) => choice && typeof choice === 'object' && typeof choice.label === 'string'
@@ -37,6 +38,7 @@ export const AnalysisClarification: React.FC<{
       {issue?.suggested_actions?.filter((action: any) => action.type === 'snapshot').map((action: any, index: number) => <button type="button" key={index} disabled={!onSnapshot} onClick={() => onSnapshot?.(action.followup)} className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs">{action.label}</button>)}
       {issue?.suggested_actions?.filter((action: any) => action.type === 'select_module').map((action: any, index: number) => <button type="button" key={index} disabled={!onModule} onClick={() => onModule?.({ module_id: action.module_id, name: action.label, compatibility: 'ready' })} className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs">{action.label}</button>)}
       {issue?.suggested_actions?.some((action: any) => action.type === 'update_module') && (onUpdate || onEdit) && <button type="button" onClick={onUpdate || onEdit} className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs">Cập nhật bài toán</button>}
+      {!!response?.actions?.length && <div data-capability-actions className="flex flex-wrap gap-2">{response.actions.map((action: any,i: number) => action.kind === 'advice' ? <p key={i} className="text-xs">{action.label}</p> : <button key={i} type="button" disabled={!onAction} onClick={() => onAction?.(action)} className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs">{action.label}</button>)}</div>}
       {clarification?.known_interpretation && <AnalysisMeaning interpretation={clarification.known_interpretation} />}
       {!issue && choices.length > 0 && <div className="flex flex-wrap gap-2">{choices.map((choice: any, index: number) => (
         <button type="button" key={index} onClick={() => onChoice?.(choice.followup || choice.label)} disabled={!onChoice}
@@ -45,7 +47,7 @@ export const AnalysisClarification: React.FC<{
         </button>
       ))}</div>}
       {actions.edit && onEdit && <button type="button" onClick={onEdit} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs">Chỉnh sửa câu hỏi</button>}
-      {actions.retry && onRetry && <button type="button" onClick={onRetry} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs">Thử lại khi hệ thống sẵn sàng</button>}
+      {actions.retry && onRetry && <button type="button" onClick={onRetry} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs">{issue?.suggested_actions?.find((a: any) => a.type === 'retry')?.label || 'Thử lại khi hệ thống sẵn sàng'}</button>}
       {reference && <p className="text-[11px] text-slate-500">Mã tham chiếu kỹ thuật: <code>{reference}</code></p>}
     </section>
   );

@@ -1,10 +1,11 @@
 import React from 'react';
+import type { CapabilityAction, PreflightResult } from '../../types';
 import { preflightView } from '../../utils/preflightPresentation.mjs';
 
 const TONE: Record<string, string> = { red: 'border-rose-200 bg-rose-50 text-rose-800', amber: 'border-amber-200 bg-amber-50 text-amber-900', slate: 'border-slate-200 bg-slate-50 text-slate-600', emerald: 'border-emerald-200 bg-emerald-50 text-emerald-800' };
 
 /** Deterministic preflight result: understood chips, findings and quick fixes. */
-export const QuestionPreflight: React.FC<{ result: any; pending?: boolean; error?: string; onFix: (fix: any) => void }> = ({ result, pending, error, onFix }) => {
+export const QuestionPreflight: React.FC<{ result: PreflightResult | null; pending?: boolean; error?: string; onFix: (fix: CapabilityAction) => void }> = ({ result, pending, error, onFix }) => {
   const v = preflightView(result, { pending, error });
   if (!v.label && !v.findings.length) return null;
   return <div data-preflight={v.status} aria-live="polite" className="space-y-2">

@@ -1,4 +1,4 @@
-"""Every domain uses the dashboard floor, including focused/simple questions."""
+"""V3.3 migrates the legacy floor to required evidence coverage for every domain."""
 from copy import deepcopy
 from unittest.mock import patch
 from tests import test_hybrid_v28 as f
@@ -12,7 +12,7 @@ class DashboardMinimumTests(f.unittest.TestCase):
     pipeline=f.HybridTests.pipeline
     request=f.HybridTests.request
 
-    def report(self, req, question='Theo lựa chọn', **options):
+    def report(self, req, question='Phân tích hoạt động kinh doanh của quán', **options):
         warehouse=FixtureWarehouse(self.catalog.overlay);self.addCleanup(warehouse.close)
         p=self.pipeline(f.scripted(f.envelope(req)),executor=warehouse)
         from evals.fixture_warehouse import DATA
@@ -24,7 +24,8 @@ class DashboardMinimumTests(f.unittest.TestCase):
         return p,proposal,p.generate(request)
 
     def check_dashboard(self, report):
-        self.assertGreaterEqual(len(report['charts']),4)
+        self.assertTrue(report['short_answer'] or report['charts'])
+        self.assertTrue(all(v['status']=='satisfied' for v in report['view_coverage'] if v['required']))
         self.assertEqual(len({c['semantic_view_key'] for c in report['charts']}),len(report['charts']))
         self.assertLessEqual(len(report['analytical_queries']),8)
         self.assertEqual(verify_saved_report(report,self.catalog),report['quality_assessment'])
@@ -58,7 +59,7 @@ class DashboardMinimumTests(f.unittest.TestCase):
                 p,proposal,report=self.report(req)
                 self.check_dashboard(report)
                 self.assertEqual(p.provider.call_count,1)
-                self.assertGreaterEqual(proposal['diagnostics']['minimum_visuals'],4)
+                self.assertEqual(proposal['diagnostics']['minimum_visuals'],0)
                 if not any(self.catalog.registry['metrics'][m].get('time_column') for m in ms):
                     self.assertFalse(any(q['operation']=='trend' for q in report['analytical_queries']))
 
@@ -67,23 +68,23 @@ class DashboardMinimumTests(f.unittest.TestCase):
         # (floor 1), "Phân tích sâu" keeps the 4-view floor. Verification follows
         # the server-recorded depth, so focused is not reported as incomplete.
         p,proposal,report=self.report(f.requirement(),analysis_depth='focused')
-        self.assertEqual(proposal['diagnostics']['minimum_visuals'],1)
+        self.assertEqual(proposal['diagnostics']['minimum_visuals'],0)
         self.assertEqual(proposal['diagnostics']['supporting_operation_count'],0)
         depth=next(c for c in report['quality_assessment']['verification_checks'] if c['id']=='analysis_depth_coverage')
         self.assertEqual(depth['status'],'passed')
         _,deep,deep_report=self.report(f.requirement(),analysis_depth='deep')
-        self.assertEqual(deep['diagnostics']['minimum_visuals'],4)
+        self.assertEqual(deep['diagnostics']['minimum_visuals'],0)
         self.assertLess(len(report['charts']),len(deep_report['charts']))
 
     def test_old_or_truncated_simple_report_cannot_hide_missing_views(self):
         p,proposal,report=self.report(f.requirement())
-        forged=deepcopy(report);forged['charts']=forged['charts'][:2]
+        forged=deepcopy(report);forged['charts']=[]  # Remove required evidence, not merely optional supporting views.
         forged['diagnostics']['minimum_visuals']=0
         verdict=verify_saved_report(forged,self.catalog)
         self.assertEqual(verdict['status'],'partially_verified')
         self.assertLess(verdict['score'],90)
         check=next(c for c in verdict['verification_checks'] if c['id']=='analysis_depth_coverage')
-        self.assertEqual((check['passed'],check['total']),(2,4))
+        self.assertEqual((check['passed'],check['total']),(0,1))
 
     def test_empty_data_keeps_floor_and_declares_missing_views(self):
         from evals import fixture_warehouse as w

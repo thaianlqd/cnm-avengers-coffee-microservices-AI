@@ -129,7 +129,7 @@ test('natural fields replace depth configuration and approval reuses submitted i
   const source = readFileSync(new URL('../views/AnalyticsView.tsx', import.meta.url), 'utf8');
   // V3.1: question + time + scope + depth + optional mission; the overlapping
   // context/expectation fields were removed from the normal workflow.
-  assert.ok(source.includes('analysisInputPayload({ question: prompt, moduleId: activeModule?.module_id, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiAnalysisDepth, mission: aiMission })'));
+  assert.ok(source.includes('analysisInputPayload({ question: prompt, moduleId: activeModule?.module_id, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiDepthChosen ? aiAnalysisDepth : undefined, mission: aiMission })'));
   assert.ok(source.includes('body: JSON.stringify(submittedInput)'));
   assert.ok(source.includes('aiPlan?.submittedInput || aiInput(promptToSend)'));
   const form = readFileSync(new URL('../components/AnalysisInputForm.tsx', import.meta.url), 'utf8');
@@ -330,7 +330,7 @@ test('provider status is shown separately from local readiness and generic failu
   assert.match(error,/Dịch vụ AI chưa phản hồi kịp/);
 });
 
-test('broad kiosk dashboard opens four views with view tabs and honest missing-view notice', () => {
+test('broad kiosk dashboard reports required evidence gaps without a chart floor', () => {
   const charts = [
     { id:'rank', purpose:'ranking', chart_type:'horizontal_bar', title:'Xếp hạng kiosk' },
     { id:'trend', purpose:'trend', x_field:'period', chart_type:'line', title:'Diễn biến kiosk' },
@@ -338,13 +338,14 @@ test('broad kiosk dashboard opens four views with view tabs and honest missing-v
     { id:'city', purpose:'comparison', chart_type:'bar', title:'Doanh thu kiosk theo thành phố' },
   ].map(c => ({ ...c, data:[{ label:'A',value:10 },{ label:'B',value:20 }] }));
   const quality = { verification_checks:[{id:'analysis_depth_coverage',total:4}] };
-  const html = render(AnalystDashboard,{report:{charts,quality_assessment:quality}});
+  const coverage=charts.map(c=>({requirement_id:c.id,required:true,status:'satisfied'}));
+  const html = render(AnalystDashboard,{report:{charts,quality_assessment:quality,view_coverage:coverage}});
   assert.equal((html.match(/data-dashboard-chart=/g) || []).length,4);
   assert.ok(html.includes('aria-label="Góc nhìn biểu đồ"'));
   for (const label of ['Tất cả','Xếp hạng','Diễn biến','Cơ cấu','So sánh']) assert.ok(html.includes(label));
   assert.ok(html.includes('aria-selected="true"'));
   assert.ok(!html.includes('Mới có'));
-  const partial = render(AnalystDashboard,{report:{charts:charts.slice(0,1),quality_assessment:quality}});
+  const partial = render(AnalystDashboard,{report:{charts:charts.slice(0,1),quality_assessment:quality,view_coverage:coverage.map((v,i)=>i ? {...v,status:'missing',reason:'no_rows'}:v)}});
   assert.ok(partial.includes('1/4'));assert.ok(partial.includes('chưa đầy đủ'));
 });
 
@@ -361,14 +362,14 @@ test('expanded report shows whole-population KPIs before ranking findings', () =
   assert.ok(!html.includes('hạng 1'));
 });
 
-test('simple legacy reports cannot hide the four-view floor with missing or zero flags', () => {
+test('legacy reports show unmeasured coverage without inventing a four-chart floor', () => {
   const charts=['Số giao dịch','Doanh thu thanh toán'].map((title,i)=>({
     id:'payment'+i,chart_type:'bar',title,metric:'m'+i,x_field:'payment_gateway',
     data:[{label:'VNPAY',value:10},{label:'Ví điện tử',value:20}]
   }));
   for (const diagnostics of [undefined,{minimum_visuals:0}]) {
     const html=render(AnalystDashboard,{report:{charts,diagnostics}});
-    assert.ok(html.includes('2/4'));
-    assert.ok(html.includes('Báo cáo phân tích chưa đầy đủ biểu đồ'));
+    assert.ok(!html.includes('2/4'));
+    assert.ok(html.includes('Chưa đo độ đầy đủ yêu cầu'));
   }
 });

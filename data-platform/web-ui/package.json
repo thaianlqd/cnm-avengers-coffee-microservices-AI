@@ -12,7 +12,9 @@
     "preview": "vite preview",
     "test:ai-understanding": "node --test src/utils/analysisClarification.test.mjs",
     "test:ai-agent": "node --test src/utils/analystDashboard.test.mjs",
-    "test:ai-input": "node --test src/utils/analysisInput.test.mjs"
+    "test:ai-input": "node --test src/utils/analysisInput.test.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:api": "V33_API_TARGET=http://127.0.0.1:18765 playwright test --project=api"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -20,6 +22,7 @@
     "zustand": "^4.5.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",

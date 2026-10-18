@@ -1,0 +1,685 @@
+{
+  "status": "DIAGNOSTIC",
+  "generated_at": "2026-10-18T00:19:58.315285+00:00",
+  "ceiling": 120,
+  "physical_http_total": 115,
+  "actual_external_http": 4,
+  "injected_failures": 0,
+  "prior_reserved_http": 111,
+  "current_run_reserved_http": 4,
+  "cases_total": 29,
+  "cases_run": 2,
+  "skipped": [
+    "L01",
+    "L02",
+    "L03",
+    "L04",
+    "L05",
+    "L06",
+    "L07",
+    "L08",
+    "L09",
+    "L10",
+    "L11",
+    "L12",
+    "L13",
+    "L14",
+    "L15",
+    "L16",
+    "L17",
+    "L18",
+    "L19",
+    "L20",
+    "L21",
+    "L22",
+    "L23",
+    "L24",
+    "L25",
+    "L26",
+    "L27"
+  ],
+  "useful_first_click": {
+    "passed": 0,
+    "total": 25,
+    "rate": 0.0
+  },
+  "overall": {
+    "passed": 0,
+    "total": 29
+  },
+  "semantic_http_median": 2.0,
+  "max_http_any_case": 2,
+  "latency_p95_ms": 2874,
+  "wall_seconds": 20.0,
+  "cases": [
+    {
+      "id": "L01",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L02",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L03",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L04",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L05",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L06",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L07",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L08",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L09",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L10",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L11",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L12",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L13",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L14",
+      "group": "happy",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L15",
+      "group": "ambiguity",
+      "expected": "clarify",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L16",
+      "group": "ambiguity",
+      "expected": "clarify",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L17",
+      "group": "ambiguity",
+      "expected": "clarify",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L18",
+      "group": "ambiguity",
+      "expected": "clarify",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L19",
+      "group": "association",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L20",
+      "group": "driver",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L21",
+      "group": "expectation",
+      "expected": "useful_no_guarantee",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L22",
+      "group": "recovery",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L23",
+      "group": "geography",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L24",
+      "group": "geography",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L25",
+      "group": "geography",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L26",
+      "group": "geography",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L27",
+      "group": "geography",
+      "expected": "useful",
+      "skipped": "diagnostic_subset"
+    },
+    {
+      "id": "L28",
+      "group": "geography",
+      "expected": "useful",
+      "passed": false,
+      "logical_calls": 2,
+      "physical_http": 2,
+      "repair": 1,
+      "recovery": 0,
+      "secondary_used": false,
+      "latency_ms": 3255,
+      "outcome": {
+        "status": "error",
+        "analysis_state": "UNDERSTANDING_FAILURE",
+        "error_category": "semantic_intent_invalid",
+        "actions": [],
+        "choices": [],
+        "proposal_semantics": {},
+        "contract_issues": [
+          {
+            "requirement_id": "req_south_revenue",
+            "field": "filters",
+            "code": "population_filter_mismatch",
+            "expected": {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            }
+          },
+          {
+            "requirement_id": "req_hanoi_revenue",
+            "field": "filters",
+            "code": "population_filter_mismatch",
+            "expected": {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            }
+          }
+        ],
+        "root_contract_issues": [
+          {
+            "requirement_id": "req_south_revenue",
+            "field": "filters",
+            "code": "population_filter_mismatch",
+            "expected": {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            }
+          },
+          {
+            "requirement_id": "req_hanoi_revenue",
+            "field": "filters",
+            "code": "population_filter_mismatch",
+            "expected": {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            }
+          },
+          {
+            "requirement_id": "req_south_revenue",
+            "field": "derived_features",
+            "code": "feature_shape_conflict",
+            "feature": "scalar",
+            "expected_shapes": [
+              "aggregate"
+            ],
+            "protected_features": []
+          },
+          {
+            "requirement_id": "req_south_revenue",
+            "field": "feature_metrics",
+            "code": "feature_shape_binding_conflict",
+            "feature": "scalar"
+          },
+          {
+            "requirement_id": "req_hanoi_revenue",
+            "field": "derived_features",
+            "code": "feature_shape_conflict",
+            "feature": "scalar",
+            "expected_shapes": [
+              "aggregate"
+            ],
+            "protected_features": []
+          },
+          {
+            "requirement_id": "req_hanoi_revenue",
+            "field": "feature_metrics",
+            "code": "feature_shape_binding_conflict",
+            "feature": "scalar"
+          },
+          {
+            "requirement_id": "req_south_revenue",
+            "field": "filters",
+            "code": "scope_membership_mismatch",
+            "expected": [
+              [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            ]
+          },
+          {
+            "requirement_id": "req_hanoi_revenue",
+            "field": "filters",
+            "code": "scope_membership_mismatch",
+            "expected": [
+              [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hà Nội",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            ]
+          }
+        ],
+        "interpreter_outputs": [
+          {
+            "decision": "analyze",
+            "clarification": {},
+            "requirements": [
+              {
+                "analysis_kind": "aggregate",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "id": "req_south_revenue",
+                "time": {
+                  "year": 2026,
+                  "kind": "month",
+                  "month": 9
+                },
+                "availability": "requested",
+                "derived_features": [
+                  "scalar"
+                ],
+                "dimension_ids": [
+                  "city"
+                ]
+              },
+              {
+                "time": {
+                  "kind": "month",
+                  "month": 9,
+                  "year": 2026
+                },
+                "derived_features": [
+                  "scalar"
+                ],
+                "metric_ids": [
+                  "revenue"
+                ],
+                "analysis_kind": "aggregate",
+                "id": "req_hanoi_revenue",
+                "availability": "requested",
+                "dimension_ids": [
+                  "city"
+                ]
+              }
+            ]
+          },
+          {
+            "decision": "analyze",
+            "clarification": {},
+            "requirements": [
+              {
+                "id": "req_south_revenue"
+              },
+              {
+                "id": "req_hanoi_revenue"
+              }
+            ]
+          }
+        ]
+      },
+      "planning_ms": 2859.77
+    },
+    {
+      "id": "L29",
+      "group": "geography",
+      "expected": "useful",
+      "passed": false,
+      "logical_calls": 2,
+      "physical_http": 2,
+      "repair": 1,
+      "recovery": 0,
+      "secondary_used": false,
+      "latency_ms": 2874,
+      "outcome": {
+        "status": "error",
+        "analysis_state": "UNDERSTANDING_FAILURE",
+        "error_category": "semantic_intent_invalid",
+        "actions": [],
+        "choices": [],
+        "proposal_semantics": {},
+        "contract_issues": [
+          {
+            "requirement_id": "revenue_north_south_comparison",
+            "field": "filters",
+            "code": "scope_membership_mismatch",
+            "expected": [
+              [
+                "Bắc Ninh",
+                "Hà Nội",
+                "Hải Phòng",
+                "Quảng Ninh"
+              ],
+              [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            ]
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "scope_cohort_missing",
+            "expected": [
+              [
+                "Bắc Ninh",
+                "Hà Nội",
+                "Hải Phòng",
+                "Quảng Ninh"
+              ],
+              [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            ]
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "explicit_value_missing",
+            "expected": {
+              "dimension": "city",
+              "value": "Hà Nội"
+            }
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "explicit_value_missing",
+            "expected": {
+              "dimension": "city",
+              "value": "Hải Phòng"
+            }
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "explicit_value_missing",
+            "expected": {
+              "dimension": "city",
+              "value": "Bắc Ninh"
+            }
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "explicit_value_missing",
+            "expected": {
+              "dimension": "city",
+              "value": "Quảng Ninh"
+            }
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "explicit_value_missing",
+            "expected": {
+              "dimension": "city",
+              "value": "Hồ Chí Minh"
+            }
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "explicit_value_missing",
+            "expected": {
+              "dimension": "city",
+              "value": "Cần Thơ"
+            }
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "explicit_value_missing",
+            "expected": {
+              "dimension": "city",
+              "value": "Bình Dương"
+            }
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "explicit_value_missing",
+            "expected": {
+              "dimension": "city",
+              "value": "Đồng Nai"
+            }
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "explicit_value_missing",
+            "expected": {
+              "dimension": "city",
+              "value": "Bà Rịa - Vũng Tàu"
+            }
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "explicit_value_missing",
+            "expected": {
+              "dimension": "city",
+              "value": "Kiên Giang"
+            }
+          }
+        ],
+        "root_contract_issues": [
+          {
+            "requirement_id": "revenue_north_south_comparison",
+            "field": "filters",
+            "code": "scope_membership_mismatch",
+            "expected": [
+              [
+                "Bắc Ninh",
+                "Hà Nội",
+                "Hải Phòng",
+                "Quảng Ninh"
+              ],
+              [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            ]
+          },
+          {
+            "requirement_id": "revenue_north_south_comparison",
+            "field": "dimension_ids",
+            "code": "scope_cohort_axis_mismatch",
+            "expected": [
+              "reporting_region"
+            ]
+          },
+          {
+            "requirement_id": null,
+            "field": "filters",
+            "code": "scope_cohort_missing",
+            "expected": [
+              [
+                "Bắc Ninh",
+                "Hà Nội",
+                "Hải Phòng",
+                "Quảng Ninh"
+              ],
+              [
+                "Bà Rịa - Vũng Tàu",
+                "Bình Dương",
+                "Cần Thơ",
+                "Hồ Chí Minh",
+                "Kiên Giang",
+                "Đồng Nai"
+              ]
+            ]
+          }
+        ],
+        "interpreter_outputs": [
+          {
+            "decision": "analyze",
+            "clarification": {},
+            "requirements": [
+              {
+                "availability": "requested",
+                "id": "revenue_north_south_comparison",
+                "dimension_ids": [
+                  "city"
+                ],
+                "analysis_kind": "comparison",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "derived_features": [
+                  "group_gap"
+                ],
+                "time": {
+                  "month": 9,
+                  "year": 2026,
+                  "kind": "month"
+                }
+              }
+            ]
+          },
+          {
+            "decision": "analyze",
+            "clarification": {},
+            "requirements": [
+              {
+                "dimension_ids": [
+                  "reporting_region"
+                ],
+                "id": "revenue_north_south_comparison"
+              }
+            ]
+          }
+        ]
+      },
+      "planning_ms": 2768.98
+    }
+  ],
+  "case_file_sha256": "975e93363e4d80f20059fcef860a349ee8158cad827b40a984afe8d922808cab",
+  "release_passed": false
+}

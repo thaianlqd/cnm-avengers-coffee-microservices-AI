@@ -1,0 +1,20 @@
+{
+  "policy_version": "3.3.1",
+  "resolver_version": "2.8.0",
+  "catalog_fingerprint": "967f2fdc6ab5933e616596c02f256793bc7e12c23356b1eb54f45a7f93e667d1",
+  "registry_fingerprint": "c2805207d50c4480360cdfb5e6e145283426e6bdc31dc61146741f237810d12a",
+  "job_version": "3",
+  "owner_type": "isolated_live_acceptance",
+  "python": "3.11.17",
+  "served_browser_mode": "served_real_api",
+  "served_browser_status": "PASS",
+  "served_browser_journeys": 12,
+  "served_assets": [
+    {
+      "url": "http://localhost:8501/assets/index-BQXk_xMd.js",
+      "sha256": "94af386bd32277eeafb0613b6e2f57921edde770d368428337fd259914109d48"
+    }
+  ],
+  "provider_http_during_served_journeys": 0,
+  "api_restart_preserved_ledger_reservations": 151
+}

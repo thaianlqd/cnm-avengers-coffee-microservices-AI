@@ -59,7 +59,7 @@ def build_snapshot(rows, sync, overlay, now=None):
         label = tables[clock["table"]].get("business_name", clock["table"])
         facts[clock["table"]] = {"label": label, "subjects": clock["subjects"],
                                  "min_date": _iso(bounds.get("min")), "max_date": _iso(bounds.get("max")),
-                                 "rows": bounds.get("rows")}
+                                 "rows": bounds.get("rows"), "completeness": bounds.get("completeness", "unknown")}
     known = [f for f in facts.values() if f["min_date"] and f["max_date"]]
     overall = {"min_date": min((f["min_date"] for f in known), default=None),
                "max_date": max((f["max_date"] for f in known), default=None)}
@@ -75,7 +75,11 @@ def build_snapshot(rows, sync, overlay, now=None):
     data_lag_hours = None
     if max_data:
         data_lag_hours = round((now - datetime.fromisoformat(max_data).replace(tzinfo=timezone.utc)).total_seconds() / 3600, 1)
-    stale = bool(data_lag_hours is not None and data_lag_hours > stale_hours + 24 or lag_hours is not None and lag_hours > stale_hours)
+    for fact in facts.values():
+        latest=fact.get('max_date')
+        lag=round((now-datetime.fromisoformat(latest).replace(tzinfo=timezone.utc)).total_seconds()/3600,1) if latest else None
+        fact.update(data_lag_hours=lag, stale=None if lag is None else lag>stale_hours+24)
+    stale = bool(any(f.get('stale') for f in facts.values()) or lag_hours is not None and lag_hours>stale_hours)
     return {"status": "ready" if known else "unavailable", "overall": overall, "facts": facts,
             "freshness": {"mode": "batch", "label": "Cập nhật theo đợt", "last_sync": _stamp(last_sync),
                           "last_sync_status": (sync or {}).get("status"), "max_data_timestamp": max_data,

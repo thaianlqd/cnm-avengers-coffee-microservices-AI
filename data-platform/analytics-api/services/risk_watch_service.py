@@ -14,7 +14,7 @@ from services.analysis_query import build_plans, compile_sql, validate_plan, val
 
 STATUS_LABELS = {"red": "Vượt ngưỡng", "yellow": "Gần ngưỡng", "green": "Trong ngưỡng",
                  "no_data": "Không có dữ liệu", "insufficient_sample": "Chưa đủ quan sát",
-                 "not_applicable": "Không áp dụng cho phạm vi"}
+                 "not_applicable": "Không áp dụng cho phạm vi", "execution_error": "Lỗi tính toán"}
 BREAKDOWN_LIMIT = 10
 
 
@@ -71,8 +71,8 @@ def _execute(catalog, subject, metrics, filters, scope, dimensions, executor, re
     return result["rows"], grounded.period
 
 
-def evaluate(catalog, analysis_scope=None, period=None, breakdown="store", executor=None, reference=None, lookup=None):
-    """Evaluate every governed risk signal for the scope/period. Zero provider calls."""
+def evaluate(catalog, analysis_scope=None, period=None, breakdown="store", executor=None, reference=None, lookup=None, signal_ids=None):
+    """Evaluate the selected (default: every) governed risk signal for the scope/period. Zero provider calls."""
     if executor is None:
         from services.sql_service import execute_read_only
         executor = execute_read_only
@@ -81,7 +81,14 @@ def evaluate(catalog, analysis_scope=None, period=None, breakdown="store", execu
     filters = scope_filters(catalog, analysis_scope, lookup)
     scope = period or TimeScope(mode="all_time", timezone=r["timezone"])
     signals, queries = [], 0
-    for s in r.get("risk_signals", []):
+    governed = r.get("risk_signals", [])
+    if signal_ids is not None:
+        unknown = sorted(set(signal_ids) - {s["id"] for s in governed})
+        if unknown or not signal_ids:
+            # A wrong or empty selection is an error, never a silent fallback to every signal.
+            raise AnalysisError("risk_signal_unknown", "Unknown or empty risk signal selection")
+        governed = [s for s in governed if s["id"] in set(signal_ids)]
+    for s in governed:
         m = r["metrics"][s["metric"]]
         out = {"id": s["id"], "label": s["label"], "metric": s["metric"], "metric_label": m["business_name"],
                "unit": m["unit"], "operator": s["operator"],
@@ -120,33 +127,42 @@ def evaluate(catalog, analysis_scope=None, period=None, breakdown="store", execu
             if breakdown and breakdown in compatible and status not in {"no_data", "insufficient_sample"}:
                 groups, _ = _execute(catalog, subject, metrics, filters, window, [breakdown], executor, reference)
                 queries += 1
-                rated = []
+                rated = []; evaluable=missing=insufficient=0
                 for row in groups:
                     v = row.get(s["metric"])
                     if v is None:
+                        missing+=1
                         continue
                     if obs in metrics and (row.get(obs) or 0) < s.get("minimum_observations", 1):
+                        insufficient+=1
                         continue
+                    evaluable+=1
                     state = classify(float(v), s)
                     if state == "red":
                         rated.append({"group": row.get(breakdown), "value": float(v)})
                 reverse = s["operator"] in {"gt", "gte"}
                 rated.sort(key=lambda g: g["value"], reverse=reverse)
                 out["breakdown"] = {"dimension": breakdown, "dimension_label": r["dimensions"][breakdown]["business_name"],
-                                    "groups_total": len(groups), "groups_in_breach": len(rated), "worst": rated[:BREAKDOWN_LIMIT],
+                                    "groups_total": len(groups), "groups_evaluable":evaluable,"groups_missing":missing,"groups_insufficient_sample":insufficient,"groups_in_breach": len(rated), "worst": rated[:BREAKDOWN_LIMIT],
                                     "note": "Nhóm có ít quan sát có thể dao động mạnh; đối chiếu số lượng trước khi kết luận."}
                 if rated and status == "green":
                     out["note"] = f"Toàn phạm vi trong ngưỡng nhưng {len(rated)} {r['dimensions'][breakdown]['business_name'].lower()} vượt ngưỡng."
         except AnalysisError as error:
             if error.category in {"privacy", "security"}:
                 raise
-            out.update(status="no_data", note="Chưa tính được chỉ số này trong phạm vi đã chọn.")
+            # A failed computation is its own typed state: never no_data, never green.
+            out.update(status="execution_error", note="Không tính được chỉ số này (lỗi truy vấn); không coi là trong ngưỡng.")
+        out["bad_direction"] = "below" if s["operator"] in {"lt","lte"} else "above"
         out["status_label"] = STATUS_LABELS[out["status"]]
         signals.append(out)
     for s in signals:
         s.setdefault("status_label", STATUS_LABELS[s["status"]])
     counts = {k: sum(s["status"] == k for s in signals) for k in STATUS_LABELS}
+    from services.analysis_catalog import resolve_period
+    scope_labels=[r['dimensions'][f.dimension]['business_name']+': '+', '.join(
+        str(r['dimensions'][f.dimension].get('value_labels',{}).get(v,v)) for v in (f.value if isinstance(f.value,list) else [f.value])) for f in filters]
     return {"status": "success", "version": "3.1.0", "mission": "risk_watch", "signals": signals, "counts": counts,
             "scope": [f.model_dump(mode="json") for f in filters], "time": scope.model_dump(mode="json"),
+            "scope_label":'; '.join(scope_labels) or 'Toàn hệ thống', "resolved_time":resolve_period(scope,reference),
             "composite_score": None, "threshold_policy": r.get("workspace", {}).get("threshold_policy"),
             "provider_calls": 0, "sql_queries": queries, "elapsed_ms": round((time.perf_counter() - started) * 1000, 2)}

@@ -27,7 +27,7 @@ export const AnalysisScopePanel: React.FC<{ capabilities: any; preflight: any; s
     if (!type?.searchable || search.trim().length < 2) { setFound([]); return; }
     const controller = new AbortController();
     const timer = setTimeout(() => fetch(`/api/ai/scope-values?dimension=${encodeURIComponent(dimension)}&search=${encodeURIComponent(search.trim())}`, { signal: controller.signal })
-      .then(r => r.ok ? r.json() : { values: [] }).then(d => setFound(d.values || [])).catch(() => {}), 300);
+      .then(r => r.ok ? r.json() : { values: [] }).then(d => { if (!controller.signal.aborted) setFound(d.values || []); }).catch(() => {}), 300);
     return () => { clearTimeout(timer); controller.abort(); };
   }, [search, dimension]);
   const toggle = (value: any) => {
@@ -51,6 +51,12 @@ export const AnalysisScopePanel: React.FC<{ capabilities: any; preflight: any; s
           : <span className="text-slate-600">{detected.summary}</span>}
         {detected.axes.map((a, i) => <span key={`a${i}`} className="rounded-full border border-slate-200 px-2 py-0.5 text-slate-600">{a.label}</span>)}
       </div>}
+      {!manual && p.preflight?.scope_resolution?.state === 'resolved' && <details data-scope-provenance className="text-[10.5px] text-slate-500">
+        <summary className="cursor-pointer">Xem thành viên và quy ước phạm vi</summary>
+        {(p.preflight.scope_resolution.bindings || []).map((b: any) => <p key={b.dimension}>{b.members.join(' · ')}{b.excluded_members?.length ? ` · Đã loại: ${b.excluded_members.join(', ')}` : ''}</p>)}
+        {(p.preflight.scope_resolution.source || []).map((s: any) => <p key={s.id}>{s.label} · {s.source} · phiên bản {s.version}</p>)}
+        <p>Phân vùng báo cáo nội bộ trên các tỉnh/thành có trong dữ liệu; không đại diện toàn bộ địa bàn ngoài danh mục.</p>
+      </details>}
       {open && <div className="space-y-1.5">
         <div className="flex flex-wrap gap-2 items-center">
           <select aria-label="Loại phạm vi" disabled={p.disabled} value={dimension} onChange={e => { setDimension(e.target.value); setSearch(''); }} className={field}>

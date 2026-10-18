@@ -520,7 +520,7 @@ def validate_sql_ast_security(sql: str, allowed_tables: Mapping[str, Set[str]]) 
     if len(trees) != 1 or not isinstance(trees[0], exp.Select):
         raise SqlSafetyError('Only one SELECT/CTE is allowed')
     tree = trees[0]
-    functions = {'AND','OR','NOT','SUM','COUNT','AVG','MIN','MAX','ROUND','NULLIF','COALESCE','ROW_NUMBER','TIMESTAMP_TRUNC','DATE_TRUNC','EXTRACT','CAST','AT_TIME_ZONE'}
+    functions = {'CASE','IF','AND','OR','NOT','SUM','COUNT','AVG','MIN','MAX','ROUND','NULLIF','COALESCE','ROW_NUMBER','TIMESTAMP_TRUNC','DATE_TRUNC','EXTRACT','CAST','AT_TIME_ZONE'}
     for fn in tree.find_all(exp.Func):
         name = fn.name.upper() if isinstance(fn, exp.Anonymous) else fn.sql_name()
         if name not in functions:

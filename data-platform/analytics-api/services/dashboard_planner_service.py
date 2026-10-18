@@ -568,8 +568,8 @@ def build_dashboard(
             and any((v.query_id, m) not in represented for m in v.metrics)
         ]
     charts = []
-    from services.derived_chart_service import contribution_charts
-    derived_views = contribution_charts(artifacts, evidence)
+    from services.derived_chart_service import contribution_charts, pair_charts, driver_charts
+    derived_views = contribution_charts(artifacts, evidence) + pair_charts(artifacts, evidence) + driver_charts(artifacts, evidence)
     requested_derived = sum(c['role'] == 'requested' for c in derived_views)
     omitted = []
     seen = {}

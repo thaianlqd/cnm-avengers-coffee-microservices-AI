@@ -229,8 +229,10 @@ class OneClickSemantics(f.unittest.TestCase):
         with patch.object(AnalyticalQueries,'run',run):
             report=p.generate(f.approve(r,proposal))
         self.assertTrue(failed)
-        self.assertEqual(report['completion_status'],'partial')
-        self.assertEqual(report['outcome'],'PARTIAL_AVAILABLE')
+        # V3.3 completeness follows required obligations. Optional work failed
+        # with a disclosure, while every requested component remains fulfilled.
+        self.assertEqual(report['completion_status'],'complete')
+        self.assertEqual(report['outcome'],'SUCCESS')
         self.assertNotEqual(verify_saved_report(report,self.catalog)['status'],'not_scored')
         self.assertTrue(all(c['status']=='planned' for c in report['analysis_components'] if c['requested_or_supporting']=='requested'))
 

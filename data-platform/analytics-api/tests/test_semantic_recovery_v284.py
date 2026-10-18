@@ -108,7 +108,7 @@ class RecoveryTests(fixture.unittest.TestCase):
     def test_partial_ranking_repair_preserves_all_other_fields(self):
         initial=fixture.envelope(fixture.requirement(ranking={'limit':5},filters=[dict(dimension='city',value='Hà Nội')]))
         fixed=fixture.envelope({'id':'r1','ranking':{'metric_id':'product_revenue'}})
-        p=self.pipeline(fixture.scripted(initial,fixed));proposal=p.propose(self.request())
+        p=self.pipeline(fixture.scripted(initial,fixed));proposal=p.propose(self.request(fixture.SCENARIO_A+' tại Hà Nội'))
         self.assertEqual(p.provider.call_count,2)
         r=proposal['diagnostics']['semantic_intent']['requirements'][0]
         self.assertEqual(r['time']['amount'],30);self.assertEqual(r['filters'][0]['value'],'Hà Nội')
@@ -118,16 +118,14 @@ class RecoveryTests(fixture.unittest.TestCase):
         self.assertEqual(props['id']['enum'],['r1'])
         p.executor.assert_not_called()
 
-    def test_valid_repair_advances_to_next_issue_in_same_request(self):
+    def test_partial_progress_stops_at_the_single_repair_limit(self):
         initial=fixture.envelope(fixture.requirement(granularity='invalid',derived_features=['top_gap','contribution_share']))
         cadence=fixture.envelope({'id':'r1','granularity':None})
-        leader=fixture.envelope({'id':'r1','derived_features':['top_gap','contribution_share','leader']})
-        p,proposal,_=self.report(initial,cadence,leader,question=fixture.SCENARIO_A)
-        self.assertEqual(p.provider.call_count,3)
-        history=proposal['diagnostics']['semantic_issue_history']
-        self.assertEqual(history[0][0]['field'],'granularity')
-        self.assertEqual(history[1][0]['code'],'explicit_features_missing')
-        self.assertEqual(json.loads(p.provider.requests[2]['messages'][0]['content'])['validation_issues'][0]['field'],'derived_features')
+        p=self.pipeline(fixture.scripted(initial,cadence))
+        with self.assertRaises(AnalysisError):p.propose(self.request(fixture.SCENARIO_A))
+        self.assertEqual(p.provider.call_count,2);p.executor.assert_not_called()
+        self.assertEqual(p.semantic_info['semantic_issue_history'][0][0]['field'],'granularity')
+        self.assertTrue(p.semantic_info['contract_issues'])
 
     def test_partial_repair_cannot_change_time_even_if_schema_bypassed(self):
         initial=fixture.envelope(fixture.requirement(ranking={'limit':5}))
@@ -139,8 +137,8 @@ class RecoveryTests(fixture.unittest.TestCase):
         text=json.dumps(failure['issue'],ensure_ascii=False)
         self.assertIn('sắp thứ tự',text);self.assertIn('ngoài phần cần sửa',text)
         # V3.0: repeated rejected repair is no progress; resubmitting unchanged cannot help.
-        self.assertIn('Gửi lại nguyên câu sẽ không giúp ích',text);self.assertIn('Doanh thu sản phẩm',text)
-        self.assertEqual(failure['error_type'],'SEMANTIC_RESOLUTION_FAILED');self.assertFalse(failure['retryable'])
+        self.assertEqual(p.provider.call_count,2);self.assertIn('Doanh thu sản phẩm',text)  # one rejected repair is terminal
+        self.assertIn(failure['error_type'],{'SEMANTIC_RESOLUTION_FAILED','SEMANTIC_CONTRACT_INVALID'});self.assertFalse(failure['retryable'])
         self.assertEqual(p.semantic_info['root_contract_issues'][0]['code'],'ranking_metric_required')
         p.executor.assert_not_called()
 
@@ -181,9 +179,9 @@ class RecoveryTests(fixture.unittest.TestCase):
         with patch.dict(os.environ,{'AI_OFFLINE':'0','GEMINI_API_STYLE':'native','DATA_ANALYST_INTENT_TRANSPORT':'json'}),patch.object(llm_service,'GEMINI_API_KEY','fixture'),patch.object(llm_service,'GEMINI_MODELS',['fixture']),patch('services.agent_provider.requests.post',side_effect=[requests.exceptions.ReadTimeout('private'),Mock(ok=True,json=Mock(return_value=body))]) as http,patch('services.hybrid_analyst_planner.time.sleep'):
             p=self.pipeline(NativeAgentProvider());proposal=p.propose(self.request())
             self.assertEqual(http.call_count,2);self.assertEqual(proposal['diagnostics']['transport_retry_count'],1)
-            self.assertTrue(all(c.kwargs['timeout'].total<=25 and c.kwargs['timeout'].connect_timeout<=2
+            self.assertTrue(all(c.kwargs['timeout'].total<=12 and c.kwargs['timeout'].connect_timeout<=2
                                 for i,c in enumerate(http.call_args_list)))
-            self.assertEqual(proposal['diagnostics']['planning_budget_ms'],28000)
+            self.assertEqual(proposal['diagnostics']['planning_budget_ms'],40000)
             p.executor.assert_not_called()
 
     def test_native_and_compat_transports_receive_partial_repair_schema(self):
@@ -216,10 +214,10 @@ class RecoveryTests(fixture.unittest.TestCase):
                 self.assertEqual(actual.requirements[0].granularity,'month')
                 self.assertFalse(verify_anchors(anchors,actual.requirements,fixture.REFERENCE,self.catalog))
 
-    def test_malformed_partial_repair_is_controlled_and_can_recover(self):
+    def test_malformed_partial_repair_stops_without_third_call(self):
         initial=fixture.envelope(fixture.requirement(ranking={'limit':5}))
         repaired=fixture.envelope({'id':'r1','ranking':{'metric_id':'product_revenue'}})
         p=self.pipeline(fixture.scripted(initial,{'decision':'analyze','requirements':None},repaired))
-        self.assertEqual(p.propose(self.request())['outcome'],'SUCCESS')
-        self.assertEqual(p.provider.call_count,3)
+        with self.assertRaises(AnalysisError):p.propose(self.request())
+        self.assertEqual(p.provider.call_count,2)
         p.executor.assert_not_called()

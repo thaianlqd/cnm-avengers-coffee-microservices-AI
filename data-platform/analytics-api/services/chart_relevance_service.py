@@ -62,7 +62,11 @@ def grammar_decisions(charts, artifacts, mission, mapping):
             continue
         form = _form(chart)
         if i in primaries:
-            if form not in forms and in_grammar:
+            # A large categorical aggregate renders horizontally for legibility.
+            # Orientation does not turn its compiled grouped role into ranking.
+            grouped_bar=bool(artifact and artifact.plan.kind=='aggregate' and artifact.plan.dimensions
+                             and chart.get('chart_type') in {'bar','horizontal_bar'} and not chart.get('value_transform'))
+            if form not in forms and in_grammar and not grouped_bar:
                 drop[i] = "outside_mission_grammar"
         elif form not in supporting_forms:
             drop[i] = "outside_mission_grammar"

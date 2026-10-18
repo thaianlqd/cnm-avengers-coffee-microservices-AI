@@ -3,6 +3,7 @@ export function formatDateTime(iso?: string | null): string;
 export function formatMagnitude(value: any, unit?: string): string;
 export function formatValue(value: any, unit?: string): string;
 export function coverageSummary(capabilities: any): { status: string; range: string; freshness: string; lastSync: string; stale: boolean; facts: any[]; lagging?: string[] };
+export interface MetricCapability { semantics: string; unit: string; grain?: string; additive: boolean; additive_over: string[]; non_additive_over: string[]; ratio_parts?: string[] | null }
 export function missionCards(capabilities: any): Array<{ id: string; label: string; description: string; status: string; disabled: boolean; reason?: string; caveat?: string; examples: string[] }>;
 export function metricIndex(capabilities: any): Record<string, any>;
 export function missionMetrics(capabilities: any, missionId: string): any[];
@@ -21,4 +22,6 @@ export function metricDefinition(capabilities: any, metricId: string): { label: 
 export function riskRows(result: any): any[];
 export function riskBreachChart(result: any): Array<{ label: string; value: number }>;
 export function templateDefaults(capabilities: any, missionId: string, metric: any): Record<string, any>;
-export function riskSummary(result: any): { status: string; breached: number; total: number; headline: string; entities: Array<{ signal: string; label: string; value: string }>; followUps: Array<{ mission: string; text: string }> };
+export function riskSummary(result: any): { status: string; breached: number; total: number; selected: number; unavailable: number; headline: string; entities: Array<{ signal: string; label: string; value: string }>; followUps: Array<{ mission: string; text: string; scope?: any[]; time?: any }> };
+export function visibleMissionId(capabilities: any, missionId: string | null): string | null;
+export function additivityBadges(capability?: MetricCapability | null): string[];

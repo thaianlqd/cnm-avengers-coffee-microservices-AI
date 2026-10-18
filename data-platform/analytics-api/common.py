@@ -164,6 +164,7 @@ class AiRiskWatchRequest(BaseModel):
     analysis_scope: Optional[AiAnalysisScope] = None
     breakdown: Optional[Literal["store", "city", "store_type"]] = "store"
     reference_date: Optional[date] = None
+    signals: Optional[List[str]] = Field(default=None, max_length=12, description="Selected governed signal IDs; omitted = all.")
 
 
 class AiSummarizeRequest(BaseModel):

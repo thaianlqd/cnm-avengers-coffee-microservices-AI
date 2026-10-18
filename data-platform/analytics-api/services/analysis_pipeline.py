@@ -46,7 +46,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         'idempotency_conflict': 'Mã tác vụ đã gắn với một câu hỏi khác. Hãy bắt đầu câu hỏi mới.',
         'invalid_job_key': 'Yêu cầu chưa có mã tác vụ hợp lệ.',
         'resolver_internal': 'Máy chủ gặp lỗi xử lý kế hoạch phân tích. Câu hỏi được giữ nguyên; hệ thống chưa chạy truy vấn báo cáo. Cần kiểm tra lỗi bộ phân giải trên máy chủ.',
-        'planning_timeout': 'Hệ thống chưa hoàn tất lập kế hoạch trong giới hạn 30 giây. Đây là lỗi xử lý hoặc thời gian phản hồi của hệ thống; câu hỏi được giữ nguyên và chưa cần bổ sung thông tin.',
+        'planning_timeout': 'Hệ thống chưa hoàn tất lập kế hoạch trong giới hạn 40 giây. Đây là lỗi xử lý hoặc thời gian phản hồi của hệ thống; câu hỏi được giữ nguyên và chưa cần bổ sung thông tin.',
         'capacity_requires_choice': 'Phạm vi và nhịp thời gian yêu cầu vượt dung lượng thực thi. Chọn khoảng thời gian ngắn hơn, ít nhóm hơn hoặc nhịp tuần/tháng; hệ thống chưa thay đổi yêu cầu của bạn.',
         'artifact_store_unavailable': 'Kho kết quả phân tích chưa sẵn sàng. Dữ liệu lớn chưa được lưu vào phiên; cần khôi phục kho kết quả.',
         'artifact_expired': 'Kết quả phân tích đã hết hạn lưu trữ. Hãy làm mới báo cáo để lấy dữ liệu hiện tại.',
@@ -202,7 +202,14 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
     known['provider_attempt_count'] = len(provider_calls or [])
     if structured and structured.get('known_interpretation'):
         known['interpretation'] = structured['known_interpretation']
+    capability=(layer_diagnostics or {}).get('capability')
+    if isinstance(capability,dict) and capability.get('decision')!='READY':
+        message=capability.get('message') or message
+        outcome='UNSUPPORTED' if capability['decision']=='UNSUPPORTED' else 'NEEDS_INPUT'
     return {
+        "decision": capability.get("decision") if isinstance(capability,dict) else None,
+        "capability": capability,
+        "actions": capability.get('actions',[]) if isinstance(capability,dict) else [],
         "outcome": outcome,
         "analysis_stage": analysis_stage(typed["error_type"]),
         "error_type": typed["error_type"],
@@ -211,7 +218,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "quality_assessment": not_scored(message),
         "issue": issue,
         "status": (
-            "needs_clarification" if category in clarification_categories or population_overflow else "error"
+            "needs_clarification" if category in clarification_categories or population_overflow or (capability or {}).get("decision") in {"CLARIFY","REDIRECT"} else "error"
         ),
         "question": message,
         "message": message,

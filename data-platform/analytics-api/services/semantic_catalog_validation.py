@@ -4,7 +4,8 @@ from services.analysis_catalog import AnalysisError, referenced_columns
 from services.analysis_intent import DerivedFeature
 
 FEATURE_SHAPES={'additive_metric_with_same_population_denominator','ranking','ranking_two_rows',
-    'grouped_metric','two_complete_time_buckets','complete_additive_distribution','additive_ranking','paired_numeric_metrics'}
+    'grouped_metric','two_complete_time_buckets','complete_additive_distribution','additive_ranking','paired_numeric_metrics',
+    'additive_change_decomposition_one_grouping'}
 SOURCE_SCOPES={'FULL_FACT','FULL_AGGREGATE','FILTERED_MART','TOP_N_MART','SNAPSHOT','TIME_SERIES','PRESENTATION_ONLY'}
 # Only complete populations may answer a governed metric. A Top-N or filtered
 # mart answers its dashboard question, never a system-wide aggregate.
@@ -33,6 +34,13 @@ def validate_source_semantics(overlay, strict=False):
             raise ValueError('Metric source is not a complete population')
         if metric.get('aggregation_semantics') in NON_ADDITIVE and metric.get('additive'):
             raise ValueError('Average or ratio declared additive')
+        overlap=set(metric.get('additive_over') or [])&set(metric.get('non_additive_over') or [])
+        if overlap:
+            raise ValueError('Metric both additive and non-additive over the same axis')
+        if (metric.get('additive_over') or metric.get('disjoint_partitions')) and metric.get('aggregation_semantics') in NON_ADDITIVE:
+            raise ValueError('Average or ratio declares an additive axis')
+        if metric.get('disjoint_partitions') and metric.get('aggregation_semantics')!='distinct_count':
+            raise ValueError('Disjoint partitions only apply to distinct counts')
         if metric.get('aggregation_semantics')=='ratio':
             bounds=metric.get('value_range')
             if not isinstance(bounds,list) or len(bounds)!=2 or not all(isinstance(v,(int,float)) for v in bounds) or bounds[0]>=bounds[1]:
@@ -100,8 +108,18 @@ def validate_catalog(overlay, strict=False):
         tables=overlay['silver_tables']
         policy=r.get('dashboard_policy',{'minimum_views':4,'target_views':5})
         if (type(policy.get('minimum_views')) is not int or type(policy.get('target_views')) is not int or
-            not 4<=policy['minimum_views']<=policy['target_views']<=r.get('max_charts',8)):
+            not 0<=policy['minimum_views']<=policy['target_views']<=r.get('max_charts',8)):
             raise ValueError('Invalid dashboard visual floor')
+        if type(policy.get('narrow_top_n',5)) is not int or not 1<=policy.get('narrow_top_n',5)<=10:
+            raise ValueError('Invalid narrow Top N policy')
+        seen_pairs=set()
+        for pair in r.get('governed_pairs',[]):
+            ms=pair.get('metrics',[])
+            if (not pair.get('id') or pair['id'] in seen_pairs or len(ms)!=2 or len(set(ms))!=2 or not set(ms)<=metrics.keys()
+                    or not pair.get('key') or not set(pair['key'])<=dims.keys() or pair.get('label_dimension') not in dims
+                    or type(pair.get('min_pairs',3)) is not int or pair.get('min_pairs',3)<3):
+                raise ValueError('Invalid governed pair')
+            seen_pairs.add(pair['id'])
         for id,subject in subjects.items():
             if subject['source'] not in tables or not set(subject['metrics'])<=metrics.keys() or not set(subject.get('detail_columns',[]))<=dims.keys() or subject['default_dimension'] not in dims:
                 raise ValueError('Broken subject references')
@@ -134,6 +152,14 @@ def validate_catalog(overlay, strict=False):
             aliases=dim.get('ranking_entity_aliases',[])
             if not isinstance(aliases,list) or len(aliases)>32 or any(not isinstance(a,str) or not 3<=len(a)<=100 for a in aliases):
                 raise ValueError('Invalid ranked entity aliases')
+            if dim.get('logical_type') not in {None,'category','cyclic','identity','number','date'}:
+                raise ValueError('Invalid logical dimension type')
+            if dim.get('derived_scope_dimension'):
+                from services.scope_resolution_service import grouping_expression
+                base=dims[dim['derived_scope_dimension']]
+                expected=grouping_expression(base['table']+'.'+base['column'],base['value_groups'])
+                if dim.get('expression')!=expected:
+                    raise ValueError('Reporting geography expression differs from governed membership')
             if dim['table'] not in tables or dim.get('identity') and dim['identity'] not in dims:
                 raise ValueError('Broken dimension references')
             # Governed derived dimensions (hour, weekday) stay on their own
@@ -146,9 +172,32 @@ def validate_catalog(overlay, strict=False):
             for group in dim.get('value_groups',[]):
                 if not group.get('aliases') or not group.get('values') or not set(group['values'])<=set(dim.get('enum',[])):
                     raise ValueError('Broken population value groups')
+            if dim.get('scope_governed'):
+                from services.value_grounding_service import value_text
+                groups=dim.get('value_groups',[])
+                if any(not g.get('id') or not g.get('source') or (type(g.get('version')) is not int or g['version']<1) for g in groups):
+                    raise ValueError('Scope groups require identity and version')
+                aliases={}
+                covered=set()
+                for g in groups:
+                    members=set(g['values'])
+                    for a in g['aliases']:
+                        a=value_text(a)
+                        if a in aliases and aliases[a]!=members: raise ValueError('Scope alias collision')
+                        aliases[a]=members
+                    if g.get('primary'):
+                        if covered & members: raise ValueError('Overlapping primary geography')
+                        covered.update(members)
+                if covered!=set(dim.get('enum',[])): raise ValueError('Incomplete primary geography')
+                for g in groups:
+                    if g.get('parent'):
+                        parent=next((p for p in groups if p['id']==g['parent']),None)
+                        if not parent or not set(g['values'])<=set(parent['values']): raise ValueError('Invalid geography subset')
         for id,feature in r.get('derived_features',{}).items():
             if id not in get_args(DerivedFeature) or feature['shape'] not in FEATURE_SHAPES:
                 raise ValueError('Broken derived feature shape')
+            if feature.get('default_dimension') and feature['default_dimension'] not in dims:
+                raise ValueError('Broken default feature grouping')
         for field in ('equivalent_metric_groups','metric_concept_groups'):
             if any(len(group)<2 or len(group)!=len(set(group)) or not set(group)<=metrics.keys() for group in r.get(field,[])):
                 raise ValueError('Broken metric alias groups')
@@ -176,7 +225,7 @@ def validate_catalog(overlay, strict=False):
         budgets=policy.get('depth_budgets',{})
         if budgets and (set(budgets)!={'focused','deep','comprehensive'} or any(
                 type(b.get('minimum_views')) is not int or type(b.get('max_supporting_operations')) is not int
-                or not 1<=b['minimum_views']<=r.get('max_charts',8) for b in budgets.values())):
+                or not 0<=b['minimum_views']<=r.get('max_charts',8) for b in budgets.values())):
             raise ValueError('Invalid analysis depth budgets')
         return True
     except (KeyError,ValueError,TypeError):

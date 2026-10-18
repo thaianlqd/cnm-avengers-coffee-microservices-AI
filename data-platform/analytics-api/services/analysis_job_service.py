@@ -20,8 +20,8 @@ from services.provider_budget import request_deadline, request_cancelled, reques
 
 TERMINAL = {'completed', 'needs_input', 'partial_available', 'insufficient_data',
             'unsupported', 'failed', 'cancelled'}
-JOB_VERSION = '2'
-JOB_SECONDS = 45
+JOB_VERSION = '3'
+JOB_SECONDS = 70
 TTL = 7200
 
 
@@ -95,7 +95,7 @@ class JobRepository:
             job = dict(job_id='aj_' + uuid4().hex, version=JOB_VERSION, owner=owner,
                 input_fingerprint=signature, payload=payload, state='accepted',
                 created_at=time.time(), deadline_at=time.time() + JOB_SECONDS,
-                provider_call_count=0, worker_token=None, result=None)
+                provider_call_count=0, physical_http=0, recovery_used=False, worker_token=None, result=None)
             self.write(job['job_id'], job)
             self.write(identity, dict(job_id=job['job_id'], input_fingerprint=signature))
             self.write('active', active + [job['job_id']])
@@ -113,6 +113,34 @@ class JobRepository:
             change(job)
             self.write(job_id, job)
             return job
+
+
+def apply_ledger_event(j, event):
+    """Durable physical-HTTP / recovery ledger on the job record (atomic under repository.mutate).
+
+    Reserved BEFORE the send; an attempt whose outcome is unknown stays counted and is never replayed."""
+    if event == 'provider_physical_reserved':
+        if j.get('physical_http', 0) >= 3:
+            raise AnalysisError('provider_call_budget_exceeded', 'Durable physical allowance exhausted')
+        j['physical_http'] = j.get('physical_http', 0) + 1
+    elif event == 'provider_recovery_claimed':
+        if j.get('recovery_used'):
+            raise AnalysisError('provider_call_budget_exceeded', 'Transport recovery already used')
+        j['recovery_used'] = True
+
+
+def terminal_state(result, semantic_info):
+    """Terminal job state follows the typed taxonomy, never a name prefix.
+
+    A server-side REDIRECT/CLARIFY decision stops as `needs_input` (old clients stop polling)
+    and exposes the decision first-class on the result."""
+    decision = (semantic_info or {}).get('capability_decision')
+    if decision in {'REDIRECT', 'CLARIFY'}:
+        result['decision'] = decision
+        result['decision_codes'] = list((semantic_info or {}).get('capability_codes') or [])
+        return 'needs_input'
+    return ({'UNSUPPORTED_CAPABILITY': 'unsupported', 'INSUFFICIENT_DATA': 'insufficient_data'}.get(result.get('analysis_state'))
+            or ('needs_input' if result.get('status') == 'needs_clarification' else 'failed'))
 
 
 class AnalysisJobs:
@@ -133,14 +161,15 @@ class AnalysisJobs:
     @staticmethod
     def public(job):
         return {k:deepcopy(job.get(k)) for k in ('job_id', 'state', 'version',
-            'created_at', 'deadline_at', 'provider_call_count', 'result', 'stage_timings_ms')}
+            'created_at', 'deadline_at', 'provider_call_count', 'physical_http', 'recovery_used', 'result', 'stage_timings_ms')}
 
     def submit(self, request, owner, key):
         if not owner or not re.fullmatch(r'[A-Za-z0-9_-]{16,100}', key or ''):
             raise AnalysisError('invalid_job_key', 'Owned idempotency key required')
         if request.session_id:
             raise AnalysisError('invalid_analysis_contract', 'New job cannot bind a client session')
-        payload = request.model_dump(mode='json')
+        # exclude_unset keeps defaults (e.g. analysis_depth) from becoming explicit user choices on restore.
+        payload = request.model_dump(mode='json', exclude_unset=True)
         # The Pydantic boundary recomputes this excluded flag on restoration.
         payload['natural_input'] = request.natural_input
         job, created = self.repository.create(owner, key, payload)
@@ -222,6 +251,8 @@ class AnalysisJobs:
                     if j['provider_call_count'] >= 3:
                         raise AnalysisError('provider_call_budget_exceeded', 'Durable allowance exhausted')
                     j['provider_call_count'] += 1
+                elif event in {'provider_physical_reserved', 'provider_recovery_claimed'}:
+                    apply_ledger_event(j, event)
                 elif event in {'planning','repairing','validating','executing','verifying'}:
                     now = time.monotonic()
                     stages[current[0]] = stages.get(current[0], 0) + (now-current[1])*1000
@@ -255,7 +286,7 @@ class AnalysisJobs:
             catalog = pipeline.catalog()
             request.reference_date = pipeline.reference(request, catalog)
             from services import llm_service
-            cache_key = 'plan:' + digest([job['owner'], pipeline.request_signature(request),
+            cache_key = 'plan:' + digest([job['owner'], pipeline.request_signature(request), bool(getattr(request, 'accept_partial_scope', False)),
                 catalog.fingerprint, JOB_VERSION, llm_service.GEMINI_MODELS,
                 os.getenv('GEMINI_API_STYLE','native')])
             cached = None if request.refresh else self.repository.read(cache_key)
@@ -282,7 +313,7 @@ class AnalysisJobs:
                 pipeline.semantic_info['plan_cache_hit'] = True
             else:
                 # One planning deadline, bounded independently of SQL/report.
-                planning = request_deadline.set(min(request_deadline.get(), time.monotonic()+28))
+                planning = request_deadline.set(min(request_deadline.get(), time.monotonic()+40))
                 try:
                     proposal = pipeline.propose(request)
                 finally:
@@ -318,9 +349,7 @@ class AnalysisJobs:
             self.finish(job_id, worker, 'completed', report, stages)
         except Exception as error:
             result = self.failure(error, pipeline)
-            # Terminal job state follows the typed taxonomy, never a name prefix.
-            state = ({'UNSUPPORTED_CAPABILITY': 'unsupported', 'INSUFFICIENT_DATA': 'insufficient_data'}.get(result.get('analysis_state'))
-                or ('needs_input' if result.get('status') == 'needs_clarification' else 'failed'))
+            state = terminal_state(result, pipeline.semantic_info if pipeline else {})
             try:
                 self.finish(job_id, worker, state, result, stages)
             except AnalysisError:

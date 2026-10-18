@@ -1,0 +1,14 @@
+== backend (log: /tmp/v33-followup/full3/backend.log)
+Ran 1040 tests in 545.601s
+OK
+== web-ui tests (log: /tmp/v33-followup/full3/web.log)
+# tests 165
+# pass 165
+# fail 0
+typecheck PASS
+build PASS
+== eval offline
+146 ca · retrieval_domain 113/113 · retrieval_metric 113/113 · compile_level2 108/108 · preflight_expectations 17/17 · unsupported_preflight 5/5 · forecast_capability_rejections 6/6 · v33_cases 33/33
+failures: []
+== e2e (log: /tmp/v33-followup/full3/e2e.log)
+  16 passed (29.2s)

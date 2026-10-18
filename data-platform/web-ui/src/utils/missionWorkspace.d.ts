@@ -11,3 +11,7 @@ export function guidedActive(guided: GuidedDraft | null | undefined, prompt: str
 export function workspaceRequestFields(guided: GuidedDraft | null | undefined, prompt: string): Record<string, any>;
 export function detectedScope(preflight: any): { filters: Array<{ kind: string; label: string }>; axes: Array<{ kind: string; label: string }>; summary: string };
 export function depthOptions(capabilities: any): Array<any>;
+export function invalidationFor(patch?: Record<string, unknown>): { invalidate: boolean; clearReport: boolean };
+export function isCurrentEpoch(started: number, current: number): boolean;
+export function resetActive(epoch?: number): { epoch: number; prompt: string; guided: null; plan: null; report: null; clarification: null; versions: any[]; activeVersion: number; chat: any[]; followUp: string; step: number; generating: boolean };
+export function applyClarificationChoice(question?: string, choice?: string): string;

@@ -55,6 +55,26 @@ class AnalysisJobTests(f.unittest.TestCase):
         with self.assertRaises(AnalysisError):jobs.status(first['job_id'],'owner-b')
         with self.assertRaises(AnalysisError):jobs.submit(self.request('Doanh thu toàn hệ thống'),'owner-a',key)
 
+    def test_known_terminal_decisions_end_the_job_with_typed_state_zero_provider_and_zero_sql(self):
+        cases=[('Dự báo doanh thu 12 tháng tới theo từng chi nhánh',None,'unsupported',None),
+               ('Doanh thu và số đơn có rủi ro không','risk_watch','needs_input','REDIRECT'),
+               ('Xu hướng doanh thu theo tuần trong ngày 15/09/2026',None,'needs_input','CLARIFY')]
+        for question,mission,state,decision in cases:
+            with self.subTest(question=question):
+                jobs=self.jobs();extra={'analysis_mission':mission} if mission else {}
+                request=self.request(question,**extra)
+                job=jobs.submit(request,'owner-a',uuid4().hex)
+                result=self.wait(jobs,job['job_id'])
+                self.assertEqual(result['state'],state,result.get('result'))
+                if decision:self.assertEqual(result['result']['decision'],decision)
+                self.assertEqual(sum(p.provider.call_count for p in self.pipelines),0)     # no interpretation paid
+                self.assertTrue(all(not p.executor.called for p in self.pipelines))        # no analytical SQL
+                self.assertEqual(result['physical_http'],0)
+
+    def test_job_ledger_fields_are_public_and_start_at_zero(self):
+        jobs=self.jobs();job=jobs.submit(self.request(),'owner-a',uuid4().hex)
+        self.assertEqual((job['physical_http'],job['recovery_used']),(0,False))
+
     def test_exact_plan_cache_avoids_new_provider_but_changed_input_misses(self):
         jobs=self.jobs();r=self.request()
         one=self.wait(jobs,jobs.submit(r,'owner-a',uuid4().hex)['job_id'])
@@ -128,14 +148,14 @@ class AnalysisJobTests(f.unittest.TestCase):
         supported=f.requirement(derived_features=[],time=None)
         missing=dict(id='future',goal='Dự báo',availability='unsupported',reason='definition_unavailable')
         jobs=self.jobs(lambda:f.scripted(f.envelope(supported,missing)))
-        job=jobs.submit(self.request('Theo lựa chọn'),'owner-a',uuid4().hex)
+        job=jobs.submit(self.request('Phân tích hoạt động kinh doanh của quán'),'owner-a',uuid4().hex)
         result=self.wait(jobs,job['job_id'])
         self.assertEqual(result['state'],'partial_available',result['result'])
         self.assertTrue(all(not p.executor.called for p in self.pipelines))
 
     def test_expired_worker_is_not_replayed_by_another_replica(self):
         repository=JobRepository()
-        request=self.request();payload=request.model_dump(mode='json');payload['natural_input']=True
+        request=self.request();payload=request.model_dump(mode='json',exclude_unset=True);payload['natural_input']=True
         key=uuid4().hex
         job,_=repository.create('owner-a',key,payload)
         repository.mutate(job['job_id'],lambda j:j.update(state='repairing',worker_token='lost',

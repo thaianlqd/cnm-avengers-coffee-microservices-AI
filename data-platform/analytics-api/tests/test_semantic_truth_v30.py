@@ -4,6 +4,7 @@ Offline only. Scripted providers test contract/budget/server behavior; they do
 not measure natural-language understanding (see evals/semantic_eval_v30).
 """
 import json
+from tests.gate_fixtures import interpreted_input
 import os
 import unittest
 from copy import deepcopy
@@ -192,7 +193,7 @@ class SemanticTruthV30Tests(unittest.TestCase):
         bad = envelope(requirement(goal="Chỉ số hạnh phúc", metric_ids=["customer_happiness_index"]))
         provider = scripted(bad, bad, envelope())
         p = self.pipeline(provider)
-        with self.assertRaises(AnalysisError) as caught:
+        with interpreted_input(), self.assertRaises(AnalysisError) as caught:
             p.propose(self.request("Chỉ số hạnh phúc của khách hàng"))
         self.assertEqual(provider.call_count, 2)
         self.assertEqual(caught.exception.category, "unsupported_metric")
@@ -244,7 +245,7 @@ class SemanticTruthV30Tests(unittest.TestCase):
                     "clarification": {"reason": "unsupported_metric", "missing_fields": ["metric_ids"]}}
         provider = scripted(declared)
         p = self.pipeline(provider)
-        with self.assertRaises(AnalysisError) as caught:
+        with interpreted_input(), self.assertRaises(AnalysisError) as caught:
             p.propose(self.request("Lợi nhuận ròng sau thuế của chuỗi"))
         self.assertEqual(provider.call_count, 1)
         self.assertEqual(caught.exception.category, "unsupported_metric")
@@ -259,7 +260,9 @@ class SemanticTruthV30Tests(unittest.TestCase):
             with self.subTest(code=code):
                 provider = scripted(raw, envelope())
                 p = self.pipeline(provider)
-                with self.assertRaises(AnalysisError) as caught:
+                # V3.3 gates this phrase before any provider call; this test targets the
+                # provider-declared path, so the early gate is disabled for it only.
+                with interpreted_input(), self.assertRaises(AnalysisError) as caught:
                     p.propose(self.request("Dự báo điểm đánh giá shipper tháng sau"))
                 self.assertEqual(provider.call_count, 1)
                 self.assertEqual(caught.exception.category, code)
@@ -270,7 +273,8 @@ class SemanticTruthV30Tests(unittest.TestCase):
                "clarification": {"reason": "metric_ambiguous", "missing_fields": ["metric_ids"]}}
         provider = scripted(raw)
         p = self.pipeline(provider)
-        with self.assertRaises(AnalysisError) as caught:
+        # Deterministic gate would stop this vague question first (V3.3); this unit targets the provider-DECLARED path.
+        with interpreted_input(), self.assertRaises(AnalysisError) as caught:
             p.propose(self.request("Chi nhánh nào ngon nhất?"))
         self.assertEqual(provider.call_count, 1)
         failure = safe_failure(caught.exception, p.calls, p.semantic_info)
@@ -323,9 +327,8 @@ class SemanticTruthV30Tests(unittest.TestCase):
                             envelope(requirement(metric_ids=["delivery_count", "delivered_cnt"])),
                             envelope(requirement(metric_ids=["delivery_count", "delivered_count"])))
         p = self.pipeline(provider)
-        proposal = p.propose(self.request("Số chuyến giao và số chuyến giao thành công"))
-        self.assertEqual(proposal["status"], "proposal_ready")
-        self.assertEqual(provider.call_count, 3)
+        with self.assertRaises(AnalysisError):p.propose(self.request("Số chuyến giao và số chuyến giao thành công"))
+        self.assertEqual(provider.call_count,2);p.executor.assert_not_called()  # incomplete repair cannot buy a third interpretation
         self.assertEqual(p.semantic_info["semantic_unknown_id_counts"], [2, 1])
 
     def test_nested_transport_attempts_are_retryable_provider_failures(self):

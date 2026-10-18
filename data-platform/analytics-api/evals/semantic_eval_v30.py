@@ -145,6 +145,28 @@ def compile_level2(case, catalog):
             "subjects": sorted(subjects), "states": sorted(states)}
 
 
+V33_CASES = os.path.join(os.path.dirname(__file__), "semantic_cases_v33.json")
+V33_COVERAGE = {"status": "ready", "overall": {"min_date": "2026-01-01", "max_date": "2026-10-16"}, "facts": {},
+                "freshness": {"mode": "batch", "stale": False}}
+
+
+def run_v33_cases(catalog):
+    """V3.3 capability matrix through the real preflight (0 provider, 0 warehouse). Every case is recorded."""
+    from datetime import date
+    from services import preflight_service
+    rows = []
+    for case in json.load(open(V33_CASES))["cases"]:
+        result = preflight_service.run(case["q"], None, case.get("scope"), case.get("mission"), date(2026, 10, 16),
+                                       catalog=catalog, coverage=V33_COVERAGE)
+        blocking = sorted(f["code"] for f in result["findings"] if f["level"] == "block")
+        actual = result["capability"]["decision"]
+        rows.append({"id": case["id"], "expected_decision": case["decision"], "actual_decision": actual,
+                     "expected_codes": case["codes"], "blocking_codes": blocking,
+                     "ok": actual == case["decision"] and set(case["codes"]) <= set(blocking) and result["can_submit"] == (actual == "READY"),
+                     "provider_calls": result["provider_calls"], "warehouse_queries": result["warehouse_queries"]})
+    return rows
+
+
 def run_offline():
     from tests.analysis_fixtures import physical_metadata
     from services.analysis_catalog import AnalysisCatalog, AnalysisError
@@ -172,10 +194,12 @@ def run_offline():
                 except AnalysisError as error:
                     row["capability_rejected"] = error.category in {"forecast_unsupported", "forecast_horizon_invalid"}
         rows.append(row)
+    v33_rows = run_v33_cases(catalog)
     def rate(values):
         values = list(values)
         return {"passed": sum(values), "total": len(values), "rate": round(sum(values) / len(values), 4) if values else None}
     summary = {
+        "v33_cases": rate(r["ok"] for r in v33_rows), "v33_rows": v33_rows,
         "mode": "offline", "measures_natural_language_understanding": False,
         "generated_at": datetime.now().astimezone().isoformat(), "registry_fingerprint": catalog.registry_fingerprint,
         "case_count": len(cases), "dataset_errors": errors,
@@ -190,7 +214,7 @@ def run_offline():
         "unsupported_preflight": rate(r["preflight"]["ok"] for r, c in zip(rows, cases) if "preflight" in r and c["status"] == "UNSUPPORTED"),
         "failures": [r for r in rows if not all([r.get("retrieval", {}).get("domain_ok", True), r.get("retrieval", {}).get("metric_ok", True),
                                                  r.get("compile", {}).get("ok", True), r.get("capability_rejected", True),
-                                                 r.get("preflight", {}).get("ok", True)])],
+                                                 r.get("preflight", {}).get("ok", True)])] + [r for r in v33_rows if not r["ok"]],
     }
     summary["by_version"] = {}
     for version in sorted({c["version"] for c in cases}):

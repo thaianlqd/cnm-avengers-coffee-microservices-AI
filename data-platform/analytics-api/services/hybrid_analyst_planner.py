@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import random
+import re
 import time
 from copy import deepcopy
 from pydantic import ValidationError
@@ -19,15 +20,15 @@ from services.domain_intelligence_service import DEPTH_POLICIES
 from services.agent_provider import NativeAgentProvider
 
 logger = logging.getLogger("ai-analytics")
-SYSTEM = """Extract Vietnamese analytical meaning as one intent envelope, one requirement per distinct user goal. Use candidate metric/dimension IDs; lens_hint is advisory. No SQL, subjects, executable IDs, parents, query roles, coverage mappings, charts or reasoning. Preserve metrics, filters, time, ranking and requested features. Question overrides context/expectation; structured UI scope/time overrides question. Omitted time means all_time. Preserve incompatible populations separately. Unavailable definitions such as ROI without costs stay explicit with controlled reasons. Clarify only genuinely missing meaning. Top N is a selected cohort; contribution_share requires a verified denominator. Never invent values, causes or history. Return requested work; server chooses supporting views. Population disclosures do not imply grouping. Averages cannot have additive shares. Separate whole-scope scalar KPIs from grouped views. Companion metrics do not change the ranking criterion."""
+SYSTEM = """Extract Vietnamese analytical meaning as one intent envelope, one requirement per distinct user goal. Use candidate metric/dimension IDs; lens_hint is advisory. No SQL, subjects, executable IDs, parents, query roles, coverage mappings, charts or reasoning. Preserve metrics, filters, time, ranking and requested features. Question overrides drafts/expectations; governed scope facts and structured UI filters/time are authoritative. Omitted time means all_time. Preserve incompatible populations separately. Unavailable definitions such as ROI without costs stay explicit with controlled reasons. Clarify only genuinely missing meaning. Top N is a selected cohort; contribution_share requires a verified denominator. Never invent values, causes or history. Return requested work; server chooses supporting views. Population disclosures do not imply grouping. Averages cannot have additive shares. Separate whole-scope scalar KPIs from grouped views. Companion metrics do not change the ranking criterion."""
 REPAIR_SYSTEM = """Repair ONLY the identified semantic fields/requirements. Return one intent envelope with requirement id and only the corrected fields. Omitted fields are preserved by the server. Do not resend unaffected requirements. Correct ALL supplied conflicts together. When removing a feature, also remove its feature_metrics entry; feature_metrics is a full replacement map, not a nested patch. For a shape conflict, retain protected_features and move the conflicting feature to a new requirement with its valid shape, original filters and original time. Do not alter the existing trend cadence or grouping to accommodate a whole-scope feature. For an omitted derived feature, add it to a compatible existing requirement using only id and derived_features, preserving existing features. Add a new requirement only for genuinely omitted analytical work. All other fields are frozen. Use the bounded vocabulary or state a genuine clarification/limitation. No SQL, executable graph, reasoning or results."""
-SYSTEM += " A user instruction not to conclude ROI/causality is a guardrail, not a request to calculate ROI. For a feature applying to one of several displayed metrics, use feature_metrics. A table of catalog aggregations is aggregate, not raw detail. Greetings or text without an analytical goal use clarification reason not_analytical_request and missing_fields:[analysis_goal]."
+SYSTEM += " Negated ROI/causal claims are guardrails, not requested calculations. Use feature_metrics to target a subset of displayed metrics. Catalog aggregations are aggregate, not raw detail. Non-analytical text uses clarification reason not_analytical_request and missing_fields:[analysis_goal]."
 SYSTEM += " No optional features for dashboard count. Top N entity goes in dimension_ids; per_group only for an explicit independent partition. Totals/trends have no entity grouping unless requested. Status disclosure adds no filter; preserve catalog populations."
 SYSTEM += " Bind metrics separately for each user clause. Do not copy every KPI metric into every requested view. Retain companion metrics only where requested. For whole-scope totals use scalar; selected_total is only for a ranking criterion."
 SYSTEM += " Concept without candidate metric: decision unsupported. Vague superlative (tốt nhất, ngon nhất) without metric: clarification metric_ambiguous."
 SYSTEM += " Future forecast of one metric: forecast{horizon,unit}; time=history window; never output values; not in forecast_capabilities=unsupported."
 SYSTEM += " For broad or multi-faceted questions, synthesize into 3-5 core strategic requirements (maximum 6). Never generate more than 6 requirements. Pair each metric only with its compatible dimensions. Group complementary metrics with the same population and grouping into a single requirement rather than fragmenting into separate single-metric requirements."
-REPAIR_SYSTEM += " Each named target must include its corrected fields, never id alone. expected is the authoritative replacement for an exact grouping/ranking/time mismatch. Remove unrequested conflicting optional features instead of adding work; retain protected_features. Empty dimension_ids means a whole-scope time trend."
+REPAIR_SYSTEM += " Each named target must include its corrected fields, never id alone. expected is authoritative for grouping/ranking/time/filter mismatches. Copy required_scope_patches verbatim for those fields; do not reinterpret already-resolved scope or repeat your rejected filters. Remove unrequested conflicting optional features instead of adding work; retain protected_features. Empty dimension_ids means a whole-scope time trend."
 
 
 CALL_REASONS = {"primary": "INITIAL_UNDERSTANDING", "repair": "CONTRACT_REPAIR",
@@ -44,10 +45,10 @@ def issue_fingerprint(issues):
 
 
 def semantic_repair_limit():
-    value = os.getenv("DATA_ANALYST_MAX_SEMANTIC_REPAIRS", "2").strip()
+    value = os.getenv("DATA_ANALYST_MAX_SEMANTIC_REPAIRS", "1").strip()
     if value not in {"0", "1", "2"}:
         raise AnalysisError("provider_policy", "Invalid semantic repair allowance")
-    return int(value)
+    return min(1, int(value))
 
 
 def apply_delta(intent, raw):
@@ -99,6 +100,9 @@ def apply_delta(intent, raw):
             if isinstance(patch.get('ranking'),dict) and isinstance(baseline.get('ranking'),dict):
                 patch['ranking'] = {**baseline['ranking'],**patch['ranking']}
             requirements[id] = IntentRequirement.model_validate({**baseline,**patch})
+    # Supporting views are derived from their parent meaning. Regenerate them
+    # after a parent delta rather than retaining stale time/scope/metric filters.
+    requirements={id:r for id,r in requirements.items() if not r.supporting_for or r.supporting_for not in grouped}
     if not requirements:
         raise AnalysisError("clarification", "Refinement removed all analytical requirements")
     return AnalysisIntentEnvelope(decision="analyze",requirements=list(requirements.values()))
@@ -209,6 +213,10 @@ class HybridAnalystPlanner(OneShotPlanner):
                 "rule":"A locked phrase means that metric unless the user explicitly named a specialized metric."}
         if context.get("semantic_intent"):
             payload["current_intent"] = AnalysisIntentEnvelope.model_validate(context["semantic_intent"]).model_dump(mode='json',exclude_none=True,exclude_defaults=True)
+        scope=self.anchors.get('scope_resolution') or {}
+        if scope.get('bindings'):
+            payload['scope_contract']={'mode':'comparison' if any(b.get('comparison') for b in scope['bindings']) else 'union',
+                'rule':'Use the exact governed scope sets in protected_input_facts.scope_resolution. A union is ONE scope on EVERY requested view, never separate cohorts. For comparison use separate cohort totals or the declared comparison_dimension, never city as its substitute.'}
         self.diagnostics.update(candidate_packet_chars=packet.chars,
             required_domain_pack_ids=required,supporting_domain_pack_ids=[d for d in selected if d not in required],
             detailed_domain_ids=selected,pruned_optional_domain_ids=[],retrieval_confidence="high" if required else "low",
@@ -262,6 +270,14 @@ class HybridAnalystPlanner(OneShotPlanner):
                         entry[key] = value
                 issues.append(entry)
             raise ResolutionIssues(issues) from None
+        locked={l['metric_id'] for l in getattr(self,'metric_locks',[])}
+        if (intent.decision=='clarification' and not intent.clarification and locked and intent.requirements
+                and all(r.availability=='requested' and r.metric_ids and set(r.metric_ids)<=locked for r in intent.requirements)):
+            # A contradictory envelope label cannot override complete locked
+            # meaning. All anchors, static compatibility and runtime guards
+            # still run below; no field or analytical fact is invented here.
+            intent=intent.model_copy(update={'decision':'analyze'})
+            self.diagnostics.setdefault('semantic_normalizations',[]).append(dict(field='decision',rule='complete_locked_meaning'))
         if intent.decision!="analyze":
             if intent.decision=="unsupported":
                 # A capability gap needs no model explanation: the server owns the
@@ -276,6 +292,9 @@ class HybridAnalystPlanner(OneShotPlanner):
             if not intent.clarification:
                 raise ResolutionIssues([{"requirement_id":None,"field":"clarification","code":"clarification_required"}])
             reason=intent.clarification.reason
+            if reason=='metric_ambiguous' and getattr(self,'metric_locks',[]):
+                raise ResolutionIssues([dict(requirement_id=None,field='metric_ids',code='clarification_conflicts_with_locked_metric',
+                    candidate_ids=sorted({l['metric_id'] for l in self.metric_locks}))])
             # One concrete clarification: offer the governed metrics as choices.
             error=AnalysisError(reason,"Controlled semantic limitation",
                 choices=self.related_capabilities() if reason=="metric_ambiguous" else None)
@@ -323,6 +342,12 @@ class HybridAnalystPlanner(OneShotPlanner):
             if global_features and set(old[id].derived_features) <= set(new.derived_features) and (
                 set(new.derived_features)-set(old[id].derived_features)) <= global_features:
                 fields.add('derived_features')
+            if 'derived_features' in fields and all(
+                    before.get('feature_metrics',{}).get(f)==after.get('feature_metrics',{}).get(f)
+                    for f in set(old[id].derived_features)&set(new.derived_features)):
+                # Effective target maps gain/lose the entries of legitimately
+                # added/removed features. Targets of retained features stay frozen.
+                fields.add('feature_metrics')
             if not fields:
                 if before!=after:
                     raise ResolutionIssues([{"requirement_id":id,"field":"frozen","code":"accepted_requirement_changed"}])
@@ -422,13 +447,21 @@ class HybridAnalystPlanner(OneShotPlanner):
         history = deepcopy(context.get("semantic_history", []))
         if refinement:
             self.anchors, replayed = refinement_anchors(original,initial,history,self.catalog,context,self.reference)
+            replayed=resolver.resolve(replayed)['intent']
             from services.analytical_resolver import intent_fingerprint
             if intent_fingerprint(replayed,self.reference,self.catalog) != intent_fingerprint(AnalysisIntentEnvelope.model_validate(context["semantic_intent"]),self.reference,self.catalog):
                 raise AnalysisError("stale_approval","Semantic history differs from stored meaning")
         else:
             # A guided contract already carries canonical IDs; its display text
             # is an echo and is not re-interpreted (V3.2 guided mode).
-            self.anchors=request_anchors("" if context.get("guided_intent") else prompt,self.catalog,context)
+            self.anchors=request_anchors(prompt,self.catalog,context)
+            if context.get('guided_intent') and self.anchors['scope_resolution']['state']=='unspecified':
+                from services.scope_resolution_service import resolve_scope
+                selected=[f for req in context['guided_intent'].get('requirements',[]) for f in req.get('filters',[])
+                          if self.catalog.registry['dimensions'].get(f['dimension'],{}).get('scope_governed')]
+                if selected:
+                    self.anchors['ui']['required_filters']=selected
+                    self.anchors['scope_resolution']=resolve_scope('',self.catalog,self.anchors['ui'])
         from services.semantic_preflight_contract import metric_locks
         self.metric_locks=[] if refinement or context.get("guided_intent") else metric_locks(self.anchors,self.catalog.registry)
         self.diagnostics["semantic_metric_locks"]=[{k:l[k] for k in ("phrase","metric_id")} for l in self.metric_locks]
@@ -503,8 +536,11 @@ class HybridAnalystPlanner(OneShotPlanner):
                                 round((time.monotonic()-provider_wall_started)*1000,2))
                         # One logical call may contain exactly one bounded credential
                         # failover (V3.2); any other nested transport is forbidden.
-                        if len(attempts)>2 or (len(attempts)==2 and not attempts[1].get('credential_failover')):
+                        # The transport layer owns recovery: at most one extra attempt, either a credential
+                        # failover or one same-payload resend (never both, never a third physical attempt).
+                        if len(attempts)>2 or (len(attempts)==2 and not (attempts[1].get('credential_failover') or attempts[1].get('transport_resend'))):
                             raise AnalysisError("provider_transport_nested","Nested transport attempts forbidden")
+                        self.diagnostics['transport_retry_count']+=sum(1 for a in attempts if a.get('transport_resend'))
                         self.diagnostics["provider_calls"].extend(attempts)
                         self.diagnostics["logical_provider_calls"]=self.diagnostics.get("logical_provider_calls",0)+1
                         self.diagnostics["provider_http_attempts"]=self.diagnostics.get("provider_http_attempts",0)+len(attempts)
@@ -520,6 +556,16 @@ class HybridAnalystPlanner(OneShotPlanner):
                     repeated_output=digest(raw) in outputs
                     outputs.append(digest(raw))
                     if kind == "primary" and isinstance(raw.get("requirements"), list):
+                        if not refinement:
+                            aliases={r['id']:'r_'+digest(r['id'])[:24] for r in raw['requirements']
+                                if isinstance(r,dict) and isinstance(r.get('id'),str) and r['id']
+                                and not re.fullmatch(r'[a-z][a-z0-9_]{0,39}',r['id'])}
+                            for item in raw['requirements']:
+                                if isinstance(item,dict):
+                                    for field in ('id','supporting_for'):
+                                        if isinstance(item.get(field),str) and item[field] in aliases:item[field]=aliases[item[field]]
+                            if aliases:self.diagnostics.setdefault('semantic_normalizations',[]).append(
+                                dict(field='id',rule='opaque_requirement_ids',count=len(aliases)))
                         self.raw_requirements = {r["id"]:deepcopy(r) for r in raw["requirements"] if isinstance(r,dict) and isinstance(r.get("id"),str)}
                     if refinement and tools[0]["name"] == "submit_analysis_delta":
                         intent=apply_delta(AnalysisIntentEnvelope.model_validate(context["semantic_intent"]),raw)
@@ -564,6 +610,9 @@ class HybridAnalystPlanner(OneShotPlanner):
                         from services.semantic_preflight_contract import enforce_metric_locks
                         intent,locked,conflicts=enforce_metric_locks(intent,self.metric_locks,self.catalog)
                         completed += locked
+                        from services.request_anchors import complete_governed_roles
+                        intent,roles=complete_governed_roles(intent,self.anchors,self.catalog,prompt)
+                        completed+=roles
                         if conflicts:
                             self.diagnostics.setdefault('semantic_lock_conflicts',[]).extend(conflicts)
                         from services.request_anchors import complete_default_time, complete_explicit_time
@@ -636,7 +685,8 @@ class HybridAnalystPlanner(OneShotPlanner):
                         raise ResolutionIssues(missing)
                     from services.analysis_expansion_service import analysis_depth, dashboard_policy
                     depth=analysis_depth(resolved['intent'],resolver.index,{**context,
-                        'request_breadth':self.anchors.get('analysis_breadth')})
+                        'request_breadth':self.anchors.get('analysis_breadth'),
+                        'narrow_top_n':dashboard_policy(self.catalog).get('narrow_top_n',5)})
                     context['minimum_visuals']=dashboard_policy(self.catalog,depth)['minimum_views']
                     context['server_supporting_expansion']=depth
                     resolved=resolver.resolve(resolved['intent'])
@@ -766,6 +816,11 @@ class HybridAnalystPlanner(OneShotPlanner):
                         additive_metric_ids=[m for m in r.metric_ids if m in self.catalog.registry['metrics']
                             and self.catalog.registry['metrics'][m].get('additive')])
                         for r in previous.requirements if r.id in targets] if previous else []
+                    from services.scope_resolution_service import scope_repair_patches
+                    patches=scope_repair_patches(self.anchors.get('scope_resolution') or {},previous,issues)
+                    if patches:
+                        payload['required_scope_patches']=patches
+                        payload['scope_patch_rule']='Copy these exact diagnosed fields into the named targets; preserve all frozen fields. Correct other diagnosed feature fields too. A union must not be split into narrower scopes.'
                     if any(i.get('requirement_id') is None for i in issues):
                         payload['request_anchors']={
                             key:([{k:v for k,v in anchor.items() if k not in {'start','end','phrase'}} for anchor in value]
@@ -803,9 +858,10 @@ class HybridAnalystPlanner(OneShotPlanner):
                     # Both credentials already failed inside this logical call:
                     # a typed provider error, never another round (V3.2 §39).
                     exhausted=any(a.get('credential_failover') for a in response.get("attempts") or [])
-                    transient=(not exhausted and self.diagnostics['transport_retry_count']==0 and
-                        self.turn.budget.transport_retry_allowed(last,delay))
+                    transient=False  # V3.3: transport recovery is owned by the provider, never re-run by the planner
                     format_repair = error.category == "provider_invalid_json"
+                    if self.diagnostics['contract_repair_count'] >= semantic_repair_limit():
+                        raise
                     if not (transient or format_repair) or attempt+1>=self.turn.budget.max_calls or not self.turn.budget.recovery_available(delay if transient else 0):
                         raise
                     kind="transport" if transient else "repair" if attempt == 0 else "resolution"
@@ -815,10 +871,6 @@ class HybridAnalystPlanner(OneShotPlanner):
                         time.sleep(delay)
                 if isinstance(self.turn.provider,NativeAgentProvider):
                     self.turn.provider.reset()
-                    recovery=os.getenv("DATA_ANALYST_RECOVERY_MODEL","").strip()
-                    if kind=="resolution" and recovery:
-                        self.turn.provider.gemini_model=recovery
-                        self.diagnostics["model_escalation_count"]=1
                 repair_sizes=body_sizes(system,payload,tools)
                 if max(repair_sizes.values())>maximum and kind in {'repair','resolution'} and previous:
                     # Preserve authoritative definitions, but remove unrelated

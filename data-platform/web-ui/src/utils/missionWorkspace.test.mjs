@@ -30,7 +30,7 @@ test('E · canonical metric chip has no "+N chỉ số cùng tên"', () => {
 });
 
 test('B · mission switch never carries the old question; each mission keeps its own draft', () => {
-  const compareQ = 'So sánh doanh thu theo thành phố giữa Hồ Chí Minh và Hà Nội tháng 9 năm 2026';
+  const compareQ = 'So sánh doanh thu theo tỉnh/thành trong dữ liệu giữa Hồ Chí Minh và Hà Nội tháng 9 năm 2026';
   const toRanking = switchMissionDraft({}, 'compare', 'ranking', { prompt: compareQ, guided: null });
   assert.equal(toRanking.prompt, ''); assert.equal(toRanking.guided, null);
   assert.deepEqual(toRanking.reset, { preflight: true, risk: true, plan: true, report: true, clarification: true });
@@ -79,7 +79,7 @@ test('compare cannot submit until A and B are valid and different', () => {
   const ok = buildGuided(caps, 'compare', { ...base, group_a: 'Hồ Chí Minh', group_b: 'Hà Nội', period: '2026-09' });
   assert.equal(ok.ready, true);
   assert.deepEqual(ok.time, { mode: 'custom', start: '2026-09-01', end: '2026-09-30' });
-  assert.match(ok.question, /^So sánh doanh thu theo thành phố giữa Hồ Chí Minh và Hà Nội tháng 9 năm 2026$/);
+  assert.match(ok.question, /^So sánh doanh thu theo tỉnh\/thành trong dữ liệu giữa Hồ Chí Minh và Hà Nội tháng 9 năm 2026$/);
   assert.ok(dimensionValues(caps, 'store_type').every(v => v.value && v.label));
   assert.ok(periodOptions(caps).some(p => p.id === 'all_time'));
 });
@@ -94,4 +94,21 @@ test('scope is recognized from the question; depth options explain their budget'
   assert.equal(depths[0].max_supporting_operations, 0);
   assert.ok(depths[2].max_supporting_operations > depths[1].max_supporting_operations - 1);
   assert.ok(depths[2].max_segment_dimensions > depths[1].max_segment_dimensions);
+});
+
+test('V3.3: semantic edits invalidate plan/report and reset clears all active state', async () => {
+  const { invalidationFor, isCurrentEpoch, resetActive } = await import('./missionWorkspace.mjs');
+  for (const k of ['mission', 'prompt', 'guided', 'time', 'start', 'end', 'scope', 'depth']) assert.equal(invalidationFor({ [k]: 1 }).invalidate, true, k);
+  assert.equal(invalidationFor({}).invalidate, false);
+  assert.equal(isCurrentEpoch(3, 3), true); assert.equal(isCurrentEpoch(3, 4), false);
+  const s = resetActive(5);
+  assert.equal(s.epoch, 6); assert.equal(s.plan, null); assert.equal(s.report, null); assert.equal(s.step, 1); assert.deepEqual(s.versions, []);
+});
+
+test('V3.3: a clarification choice edits the question deterministically (no auto-submit concatenation)', async () => {
+  const { applyClarificationChoice } = await import('./missionWorkspace.mjs');
+  assert.equal(applyClarificationChoice('Top 5 chi nhánh tháng 9?', 'Theo Doanh thu'), 'Top 5 chi nhánh tháng 9, theo Doanh thu');
+  assert.equal(applyClarificationChoice('Top 5 chi nhánh tháng 9, theo doanh thu', 'Theo Doanh thu'), 'Top 5 chi nhánh tháng 9, theo doanh thu');
+  assert.equal(applyClarificationChoice('', 'Theo Doanh thu'), 'Theo Doanh thu');
+  assert.equal(applyClarificationChoice('Doanh thu.', ''), 'Doanh thu');
 });

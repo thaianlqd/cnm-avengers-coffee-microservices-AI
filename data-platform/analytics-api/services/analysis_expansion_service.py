@@ -14,10 +14,10 @@ def dashboard_policy(catalog, depth=None):
     policy = catalog.registry.get('dashboard_policy', {'minimum_views': 4, 'target_views': 5})
     budget = (policy.get('depth_budgets') or {}).get(depth or 'deep')
     if not budget:
-        return policy
+        return {**policy,'minimum_views':0}
     target = {'focused': 2, 'deep': policy.get('target_views', 5),
               'comprehensive': catalog.registry.get('max_charts', 8)}[depth or 'deep']
-    return {**policy, 'minimum_views': budget['minimum_views'], 'target_views': max(target, budget['minimum_views']),
+    return {**policy, 'minimum_views': 0, 'target_views': target,
             'max_supporting_operations': budget['max_supporting_operations'],
             'related_domains': budget.get('related_domains', True), 'segmented_trends': budget.get('segmented_trends', True),
             'max_segment_dimensions': budget.get('max_segment_dimensions', 0)}
@@ -60,6 +60,13 @@ def estimated_views(operations, catalog):
     return total
 
 
+def narrow_request(requested, metrics, narrow_top_n=5):
+    """One metric, one requested ranking whose own view answers it (Top N within the governed `narrow_top_n`):
+    no padding to a generic floor. The threshold is catalog policy (dashboard_policy.narrow_top_n), not code."""
+    return (len(requested)==1 and len(metrics)==1 and not requested[0].forecast
+            and not requested[0].derived_features and requested[0].analysis_kind in {'ranking','aggregate','trend'})
+
+
 def analysis_depth(intent, index, ui):
     if ui.get('analysis_depth_explicit'):
         return ui['analysis_depth']
@@ -80,6 +87,8 @@ def analysis_depth(intent, index, ui):
         return 'comprehensive'
     if ui.get('analysis_depth') == 'focused':
         return 'focused'
+    if narrow_request(requested, metrics, ui.get('narrow_top_n', 5)):
+        return 'focused'
     return 'deep'
 
 
@@ -97,7 +106,8 @@ def supporting_candidates(resolver, requested):
     for req in sorted(requested,key=lambda r:digest(requirement_meaning(r))):
         if req.availability!='requested' or not req.metric_ids:
             continue
-        if resolver.ui.get('minimum_visuals'):
+        historical=[m for m in req.metric_ids if resolver.index.metrics[m]['historical']]
+        if depth in {'deep','comprehensive'}:
             # Broad evaluation needs independent cohort, time and segmentation
             # views. Every candidate inherits the original complete population.
             historical=[m for m in req.metric_ids if resolver.index.metrics[m]['historical']]
@@ -163,7 +173,7 @@ def supporting_candidates(resolver, requested):
                 id='support_'+digest([req.id,domain,allowed,dim])[:24]
                 candidates.append(IntentRequirement(id=id,goal='Đối chiếu bổ sung · '+definition['business_name'],
                     domain_id=domain,supporting_for=req.id,metric_ids=allowed,dimension_ids=[dim],
-                    analysis_kind='distribution' if resolver.ui.get('minimum_visuals')
+                    analysis_kind='distribution' if depth in {'deep','comprehensive'}
                         and all(resolver.catalog.registry['metrics'][m].get('additive') for m in allowed) else 'aggregate',
                     filters=req.filters,time=req.time))
             # Analytical lenses - snapshot domains without timeline may use relationship lenses

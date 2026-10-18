@@ -118,6 +118,12 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None, as_of=No
                     continue
                 values = [v for _, v in pairs]
                 total = sum(values)
+                if catalog and a.plan.kind in {'aggregate','distribution'} and a.plan.dimensions and not a.plan.ranking and not a.plan.explicit_limit and not a.result.get('truncated'):
+                    from services.semantic_preflight_contract import metric_capability, additive_across
+                    cap=metric_capability(metric,catalog.registry['metrics'][metric])
+                    if all(additive_across(cap,d) for d in a.plan.dimensions) and len(pairs)==len(batch):
+                        add(a,metric,'aggregate','scope_total',{'total':total,'observed_groups':len(pairs)},
+                            f"Tổng {label.lower()}{suffix}: {fmt(total)} {unit} trong phạm vi đã chọn ({len(pairs)} nhóm có dữ liệu).",partition)
                 if (
                     len(pairs) == 1
                     and not a.plan.dimensions
@@ -196,7 +202,8 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None, as_of=No
                     )
                 if a.plan.kind == "trend" and len(pairs) >= 2:
                     # Missing/null buckets are not interpolated or converted to zero.
-                    window = a.grounded.period if a.grounded.period.get("end") or not as_of else {**a.grounded.period, "end": str(as_of)[:10]}
+                    window = dict(a.grounded.period)
+                    if as_of and (not window.get('end') or str(window['end'])[:10]>str(as_of)[:10]):window['end']=str(as_of)[:10]
                     coverage = [trend_bucket_coverage(r["period"], a.plan.granularity, window) for r, _ in pairs]
                     complete = [p for p, c in zip(pairs, coverage) if not c["partial"]]
                     partial_count = sum(c["partial"] for c in coverage)
@@ -206,7 +213,9 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None, as_of=No
                         continue
                     first, last = complete[0][1], complete[-1][1]
                     change = last - first
-                    pct = change / abs(first) * 100 if first else None
+                    is_rate = str(unit).strip() == "%"
+                    # A change in a rate is percentage POINTS; a percent-of-percent would mislead.
+                    pct = None if is_rate else (change / abs(first) * 100 if first else None)
                     trend_values = [v for _, v in complete]
                     peak, trough = max(complete, key=lambda p: p[1]), min(
                         complete, key=lambda p: p[1]
@@ -257,6 +266,7 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None, as_of=No
                         + (
                             f" ({fmt(pct)}%)."
                             if pct is not None
+                            else f" ({'+' if change > 0 else ''}{fmt(change)} điểm phần trăm)." if is_rate
                             else "; kỳ đầu bằng 0 nên không tính phần trăm."
                         ) + (f" Chỉ đối chiếu kỳ đầy đủ; {partial_count} kỳ biên chưa đủ ngày vẫn có trên biểu đồ." if partial_count else ""),
                         partition,
@@ -356,7 +366,7 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None, as_of=No
                         "relationship",
                         "pearson",
                         {"r": corr, "n": len(pairs), "paired_metric": m2},
-                        f'Tương quan giữa {a.grounded.metrics[m1]["business_name"]} và {a.grounded.metrics[m2]["business_name"]} đạt hệ số {fmt(corr)} trên {len(pairs)} quan sát ghép cặp.',
+                        f'Tương quan giữa {a.grounded.metrics[m1]["business_name"]} và {a.grounded.metrics[m2]["business_name"]} đạt hệ số {fmt(corr)} trên {len(pairs)} quan sát ghép cặp; tương quan không chứng minh nguyên nhân.' + (' Mẫu nhỏ (dưới 10 cặp) nên cần thận trọng.' if len(pairs) < 10 else ''),
                     )
     # Scalar comparisons must have the same metric and period and disjoint EQ/IN populations.
     scalar = [
@@ -441,6 +451,98 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None, as_of=No
                     if judgment not in {"favorable", "needs_review"}:
                         statement += " Chênh lệch chưa xác định hiệu quả tốt/xấu vì chưa kiểm chứng quy mô hoạt động tương đương."
                     add(a, metric, "comparison", "peer_gap", {"entity": entity, "actual": row[metric], "baseline": baseline, "baseline_type": signal["comparison"], "gap": gap, "relative_gap_pct": relative, "direction": direction, "judgment": judgment, "peer_groups": len(rows), "comparable_exposure": signal["comparable_exposure"]}, statement, partition)
+    # --- Governed pair (V3.3): two separate aggregates paired by a unique key; populations stay separate ---
+    for binding in feature_bindings or []:
+        if not binding.get("pair_id"):
+            continue
+        ids = binding.get("query_ids", [])[:2]
+        qa, qb = (artifacts.get(q) for q in ids) if len(ids) == 2 else (None, None)
+        if not qa or not qb:
+            continue
+        ma, mb = binding["metric_ids"][:2]
+        comparable = (qa.grounded.period == qb.grounded.period and qa.query.filters == qb.query.filters
+                      and not qa.result.get("truncated") and not qb.result.get("truncated"))
+        res = paired_observations(qa.result["rows"], qb.result["rows"], binding["key"], ma, mb) if comparable else {"status": "not_comparable", "n": 0}
+        names = [qa.grounded.metrics[ma]["business_name"], qb.grounded.metrics[mb]["business_name"]]
+        registry = catalog.registry if catalog else {"metrics": {}}
+        values = {"r": res.get("r"), "n": res.get("n", 0), "paired_metric": mb, "pair_id": binding["pair_id"], "query_ids": ids,
+                  "key": binding["key"], "status": res["status"], "initial_a": res.get("initial_a"), "initial_b": res.get("initial_b"),
+                  "excluded_invalid": res.get("excluded_invalid", 0), "excluded_missing_key": res.get("excluded_missing_key", 0),
+                  "unmatched_a": len(res.get("unmatched_a", [])), "unmatched_b": len(res.get("unmatched_b", [])),
+                  "duplicate_keys": res.get("duplicate_keys", [])[:5], "small_sample": bool(res.get("small_sample")),
+                  "populations": {m: registry["metrics"].get(m, {}).get("population_definition") for m in (ma, mb)}}
+        accounting = (f"{res.get('initial_a')}/{res.get('initial_b')} nhóm ban đầu, {res.get('n', 0)} cặp hợp lệ"
+                      f"; loại {res.get('excluded_invalid', 0)} giá trị không hợp lệ và {len(res.get('unmatched_a', [])) + len(res.get('unmatched_b', []))} khóa không khớp") if comparable else ""
+        if res["status"] == "ok":
+            add(qa, ma, "relationship", "pearson", values,
+                f"Tương quan giữa {names[0]} và {names[1]} đạt hệ số {fmt(res['r'])} trên {res['n']} cặp ghép theo mã duy nhất ({accounting}); tương quan không chứng minh nguyên nhân."
+                + (" Mẫu nhỏ (dưới 10 cặp) nên cần thận trọng." if res["small_sample"] else ""))
+        else:
+            reason = {"duplicate_keys": "khóa ghép bị trùng nên cặp không hợp lệ", "insufficient_pairs": f"chỉ có {res.get('n', 0)} cặp hợp lệ, cần ít nhất {MIN_PAIRED_OBSERVATIONS}",
+                      "zero_variance": "một trong hai chỉ số không đổi giữa các nhóm nên không tính được hệ số tương quan",
+                      "not_comparable": "hai phép tổng hợp không cùng kỳ/phạm vi hoặc bị cắt bớt"}[res["status"]]
+            add(qa, ma, "relationship", "pair_status", values, f"Không tính hệ số tương quan giữa {names[0]} và {names[1]}: {reason}. {accounting}".strip())
+    # --- Driver (V3.3): signed change decomposition reconciled against INDEPENDENT totals ---
+    for binding in feature_bindings or []:
+        if binding.get("feature") != "driver_delta":
+            continue
+        ids = binding.get("query_ids", [])
+        arts = [artifacts.get(q) for q in ids]
+        if len(arts) != 4 or not all(arts):
+            continue
+        cur_g, prev_g, cur_t, prev_t = arts
+        metric, dim = binding["metric_ids"][0], binding["dimension"]
+        meta = cur_g.grounded.metrics.get(metric, {})
+        label, unit = meta.get("business_name", metric), meta.get("unit", "")
+        def scalar(a):
+            rows = a.result.get("rows", [])
+            return rows[0].get(metric) if len(rows) == 1 and _valid_number(rows[0].get(metric)) else None
+        def by_group(a):
+            out, dup = {}, False
+            for r in a.result.get("rows", []):
+                k = r.get(dim)
+                dup = dup or k in out
+                out[k] = r.get(metric) if _valid_number(r.get(metric)) else 0
+            return out, dup
+        complete = not any(a.result.get("truncated") for a in arts) and not any(a.plan.ranking or a.plan.explicit_limit for a in arts)
+        cur_total, prev_total = scalar(cur_t), scalar(prev_t)
+        cur_map, cur_dup = by_group(cur_g)
+        prev_map, prev_dup = by_group(prev_g)
+        values = {"metric": metric, "dimension": dim, "query_ids": ids, "current_period": binding["current"], "previous_period": binding["previous"],
+                  "current_total": cur_total, "previous_total": prev_total, "groups": len(set(cur_map) | set(prev_map))}
+        status = ("not_comparable" if not complete else "disjoint_violation" if cur_dup or prev_dup
+                  else "baseline_missing" if prev_total is None or not prev_map or cur_total is None
+                  else "ok")
+        if status == "ok":
+            rec = reconcile_driver_deltas(cur_map, prev_map)
+            total_delta = round(cur_total - prev_total, 6)
+            covers = abs(sum(cur_map.values()) - cur_total) <= 0.01 and abs(sum(prev_map.values()) - prev_total) <= 0.01
+            if not (rec["reconciled"] and covers and abs(rec["total_delta"] - total_delta) <= 0.01):
+                status = "reconcile_failed"
+            else:
+                top = [{"group": g, "current": cur_map.get(g, 0), "previous": prev_map.get(g, 0), "delta": rec["deltas"][g],
+                        "share_of_change_pct": None if not total_delta else round(rec["deltas"][g] / total_delta * 100, 4)} for g in rec["drivers"][:5]]
+                direction = "up" if total_delta > 0 else "down" if total_delta < 0 else "flat"
+                pct = None if not prev_total else round(total_delta / abs(prev_total) * 100, 4)
+                values.update(total_delta=total_delta, total_delta_pct=pct, direction=direction, explained=rec["explained"], reconciled=True,
+                              coverage_complete=True, drivers=top)
+                word = {"up": "tăng", "down": "giảm", "flat": "không đổi"}[direction]
+                lead = top[0] if top else None
+                display = dimension_labeler(cur_g.plan.dimensions, cur_g.result["rows"] + prev_g.result["rows"], cur_g.grounded.dimensions)
+                lead_name = display({dim: lead["group"]}, dim) if lead else ""
+                add(cur_g, metric, "comparison", "driver_delta", values,
+                    f"{label} {word}" + (f" {fmt(abs(total_delta))} {unit}" if direction != "flat" else "")
+                    + (f" ({fmt(abs(pct))}%)" if pct is not None and direction != "flat" else "")
+                    + f" giữa kỳ {binding['previous']['start']}–{binding['previous']['end']} và kỳ {binding['current']['start']}–{binding['current']['end']}"
+                    + (f"; nhóm đóng góp thay đổi lớn nhất là {lead_name} ({'+' if lead['delta'] > 0 else ''}{fmt(lead['delta'])} {unit})." if lead and direction != "flat" else ".")
+                    + " Đây là phân rã thay đổi giữa hai kỳ, không khẳng định nguyên nhân.")
+                continue
+        reason = {"not_comparable": "kết quả bị cắt hoặc giới hạn nên không đại diện toàn bộ mẫu số",
+                  "disjoint_violation": "các nhóm bị trùng khóa nên phân rã không rời nhau",
+                  "baseline_missing": "chưa có kỳ trước tương đương với dữ liệu để làm mốc so sánh",
+                  "reconcile_failed": "tổng các thay đổi theo nhóm không khớp với tổng độc lập của hai kỳ"}[status]
+        values.update(status=status, reconciled=False)
+        add(cur_g, metric, "comparison", "driver_status", values, f"Chưa phân rã được thay đổi của {label.lower()}: {reason}; không kết luận tăng hay giảm.")
     seen_shares = set()
     for binding in feature_bindings or []:
         if binding.get("feature") != "contribution_share":
@@ -648,3 +750,78 @@ def grounded_narrative(plan, evidence):
         "recommendations": recommendations,
         "rejected_narrative": rejected,
     }
+
+
+# --- V3.3 paired observations and driver reconciliation (server-side, no generic join) ---
+MIN_PAIRED_OBSERVATIONS = 3
+SMALL_SAMPLE = 10
+
+
+def _valid_number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+
+def paired_observations(rows_a, rows_b, key, metric_a, metric_b):
+    """Pair two separately aggregated populations by a unique (possibly composite) key.
+
+    `key` is a column name or a list of names. Duplicate keys invalidate the pair (never first-wins),
+    missing key parts are never matched with each other, bool/NaN/inf/NULL values are excluded and
+    counted. Pearson needs n >= MIN_PAIRED_OBSERVATIONS and non-zero variance on both sides."""
+    keys = [key] if isinstance(key, str) else list(key)
+
+    def index(rows, metric):
+        seen, dup, invalid, missing_key = {}, set(), 0, 0
+        for r in rows:
+            k = tuple(r.get(c) for c in keys)
+            if any(part is None for part in k):
+                missing_key += 1
+                continue
+            if k in seen:
+                dup.add(k)
+            seen[k] = r.get(metric)
+        return seen, dup, missing_key
+
+    a, dup_a, missing_a = index(rows_a, metric_a)
+    b, dup_b, missing_b = index(rows_b, metric_b)
+    dups = dup_a | dup_b
+    both = [k for k in a if k in b and k not in dups]
+    pairs, invalid = [], 0
+    for k in both:
+        if _valid_number(a[k]) and _valid_number(b[k]):
+            pairs.append((a[k], b[k]))
+        else:
+            invalid += 1
+    out = {"n": len(pairs), "initial_a": len(rows_a), "initial_b": len(rows_b), "excluded_invalid": invalid,
+           "excluded_missing_key": missing_a + missing_b,
+           "duplicate_keys": sorted(map("|".join, ([str(p) for p in k] for k in dups))),
+           "unmatched_a": sorted("|".join(map(str, k)) for k in a.keys() - b.keys()),
+           "unmatched_b": sorted("|".join(map(str, k)) for k in b.keys() - a.keys()),
+           "r": None, "status": "ok", "small_sample": False}
+    if dups:
+        out["status"] = "duplicate_keys"
+        return out
+    if len(pairs) < MIN_PAIRED_OBSERVATIONS:
+        out["status"] = "insufficient_pairs"
+        return out
+    xs, ys = [p[0] for p in pairs], [p[1] for p in pairs]
+    mx, my = sum(xs) / len(xs), sum(ys) / len(ys)
+    sxx, syy = sum((x - mx) ** 2 for x in xs), sum((y - my) ** 2 for y in ys)
+    if sxx == 0 or syy == 0:
+        out["status"] = "zero_variance"
+        return out
+    out["r"] = round(sum((x - mx) * (y - my) for x, y in pairs) / (sxx * syy) ** 0.5, 4)
+    out["small_sample"] = len(pairs) < SMALL_SAMPLE
+    out["pairs"] = pairs
+    return out
+
+
+def reconcile_driver_deltas(current, previous, tolerance=0.01):
+    """Signed per-part deltas of an additive metric must sum to the total delta.
+
+    `current`/`previous`: {part: value}. Parts missing on one side count as 0."""
+    parts = sorted(set(current) | set(previous))
+    deltas = {p: round((current.get(p) or 0) - (previous.get(p) or 0), 6) for p in parts}
+    total = round(sum(current.values()) - sum(previous.values()), 6)
+    explained = round(sum(deltas.values()), 6)
+    return {"deltas": deltas, "total_delta": total, "explained": explained, "reconciled": abs(total - explained) <= tolerance,
+            "drivers": sorted(parts, key=lambda p: -abs(deltas[p]))}

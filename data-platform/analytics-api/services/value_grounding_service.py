@@ -23,7 +23,8 @@ def dimension_values(catalog, name):
     )
     # Physical enum/explicit bounded safe catalog is authoritative when supplied.
     values = (
-        column.get("enum_values")
+        (dimension.get("enum") if dimension.get("expression") else None)
+        or column.get("enum_values")
         or column.get("safe_values")
         or dimension.get("enum")
         or catalog.overlay.get("enums", {}).get(

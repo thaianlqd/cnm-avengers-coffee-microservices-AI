@@ -43,7 +43,7 @@ class OrdersWarehouse(FixtureWarehouse):
         self.connection.execute("PRAGMA query_only=OFF")
         self.connection.execute("DELETE FROM silver.don_hang")
         day = date(2026, 8, 1)
-        for i in range(75):
+        for i in range(76):
             amount = 100 + 50 * (day.weekday() >= 5)
             self.connection.execute("INSERT INTO silver.don_hang (ma_don_hang, co_so_ma, tong_tien, trang_thai_don_hang, loai_don_hang, ngay_tao) VALUES (?,?,?,?,?,?)",
                                     (f"o{i}", "s1", amount, "HOAN_THANH", "MANG_DI", day.isoformat() + "T10:00:00"))
@@ -89,8 +89,8 @@ class ForecastEngineTests(unittest.TestCase):
         series = fs.complete_series(monthly, "revenue", "month", reference=REFERENCE)
         self.assertEqual(series[-1], (date(2026, 9, 1), 160.0))  # October (in progress) excluded
         daily = rows([10.0] * 30, start=date(2026, 9, 1))  # last row 2026-09-30
-        filled = fs.complete_series(daily, "revenue", "day", reference=REFERENCE)
-        self.assertEqual(filled[-1], (date(2026, 10, 14), 0.0))  # complete days without rows are zero
+        filled = fs.complete_series(daily, "revenue", "day", reference=REFERENCE, window={"completeness":"complete"})
+        self.assertEqual(filled[-1], (date(2026, 10, 14), 0.0))  # explicit fixture completeness certificate permits trailing zeros
 
     def test_horizon_counts_from_the_current_period(self):
         series = fs.complete_series(rows([100.0 + i for i in range(8)], start=date(2026, 2, 1), unit="month"),
@@ -216,6 +216,8 @@ class ForecastPipelineTests(unittest.TestCase):
         f = report["forecasts"][0]
         self.assertEqual((f["metric_id"], f["unit"], f["horizon"]), ("revenue", "day", 7))
         self.assertEqual(f["method"], "seasonal_naive")  # weekly pattern in the oracle fixture
+        binding=next(b for b in report['answer_requirements'] if b['role']=='forecast')
+        self.assertEqual((binding['metric'],binding['unit'],binding['cadence']),('revenue','VND','day'))
         self.assertEqual(f["history"]["end"], "2026-10-14")
         self.assertEqual(sum(p["kind"] == "future" for p in f["forecast"]), 7)
         self.assertEqual(report["quality_assessment"]["status"] != "not_scored", True)
@@ -229,7 +231,9 @@ class ForecastPipelineTests(unittest.TestCase):
                 provider = ScriptedProvider([call("submit_analysis_intent", intent)])
                 p = self.pipeline(provider)
                 with self.assertRaises(AnalysisError) as caught:
-                    p.propose(AiTextToReportRequest(question="Dự báo", reference_date=REFERENCE))
+                    # A valid-looking ask (preflight READY) whose model-produced intent breaks the governed forecast
+                    # capability: the resolver rejects it before any SQL. (Known-bad ASKS are gated earlier: test_final_hardening_v33.)
+                    p.propose(AiTextToReportRequest(question="Dự báo doanh thu 3 tháng tới", reference_date=REFERENCE))
                 self.assertEqual(caught.exception.category, code)
                 self.assertEqual(provider.call_count, 1); p.executor.assert_not_called()
                 failure = safe_failure(caught.exception, p.calls, p.semantic_info)

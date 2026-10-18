@@ -9,10 +9,14 @@ from services.analysis_catalog import AnalysisError
 request_deadline = ContextVar('analysis_request_deadline', default=None)
 request_cancelled = ContextVar('analysis_request_cancelled', default=None)
 request_observer = ContextVar('analysis_request_observer', default=None)
-HTTP_DEADLINE_SECONDS = 29
-PLANNING_SECONDS = 28
-DETERMINISTIC_RESERVE = 3
+HTTP_DEADLINE_SECONDS = 41   # propose HTTP envelope
+PLANNING_SECONDS = 40        # whole-submission planning allowance (never restarted per attempt)
+PROVIDER_TOTAL_SECONDS = 30  # all provider attempts together
+ATTEMPT_SECONDS = 12         # one HTTP attempt, connect included
+CONNECT_SECONDS = 2
+DETERMINISTIC_RESERVE = 5    # local deterministic work after the provider
 MIN_RECOVERY_SECONDS = 6
+PHYSICAL_CEILING = 3  # fallback + repair together never exceed three HTTP attempts per submission
 
 
 def check_request_deadline():
@@ -32,18 +36,23 @@ class ProviderBudget:
         self.max_calls = max_calls
         self.diagnostics = diagnostics if diagnostics is not None else {}
         self.used = 0
+        self.provider_deadline = None
+        self.recovery_used = False  # one transport recovery per submission
+        self.physical = 0  # real HTTP attempts, whatever logical call owns them
+        self.payload_hashes = []
         self.lock = Lock()
         self.deadline = None
         self.diagnostics.update(provider_call_budget=max_calls, provider_call_count=0,
-                                provider_attempt_count=0, provider_call_budget_block_count=0)
+                                provider_attempt_count=0, provider_call_budget_block_count=0,
+                                provider_physical_attempts=0, provider_physical_ceiling=PHYSICAL_CEILING)
 
     def start_deadline(self):
         # One submission shares a wall-clock allowance across all three calls;
         # reserve three seconds for deterministic planning after interpretation.
         if self.deadline is None:
             self.deadline = min(time.monotonic()+PLANNING_SECONDS,request_deadline.get() or float('inf'))
-        self.diagnostics.update(planning_budget_ms=PLANNING_SECONDS*1000,provider_attempt_timeout_ms=25000,
-                                provider_recovery_timeout_ms=25000)
+        self.diagnostics.update(planning_budget_ms=PLANNING_SECONDS*1000,provider_attempt_timeout_ms=ATTEMPT_SECONDS*1000,
+                                provider_recovery_timeout_ms=ATTEMPT_SECONDS*1000, provider_total_ms=PROVIDER_TOTAL_SECONDS*1000)
 
     def remaining(self, reserve=0):
         check_request_deadline()
@@ -58,24 +67,29 @@ class ProviderBudget:
 
     def http_timeout(self):
         from urllib3.util import Timeout
-        remaining=self.remaining(reserve=3)
+        remaining=self.remaining(reserve=DETERMINISTIC_RESERVE)
         if remaining is None:
             return None
-        # A six-second read window repeatedly abandoned otherwise viable
-        # interpretations. Spend the shared allowance on the primary response;
-        # recovery still consumes the remaining deadline, never a fresh one.
-        total=min(25,remaining)
-        connect=min(2,total/4)
+        # Smallest of: one attempt, what is left of the provider total, what is left of the request
+        # (minus local reserve). The primary never consumes the window reserved for a recovery.
+        provider_left = (self.provider_deadline - time.monotonic()) if self.provider_deadline else PROVIDER_TOTAL_SECONDS
+        total=min(ATTEMPT_SECONDS,remaining,provider_left)
+        if total <= 0:
+            self.diagnostics['terminal_error']='planning_timeout'
+            raise AnalysisError('planning_timeout','Provider allowance exhausted')
+        connect=min(CONNECT_SECONDS,total/4)
         return Timeout(total=total,connect=connect,read=total-connect)
 
-    def recovery_available(self, delay=0):
+    def recovery_available(self, delay=0, same_call=False):
+        # A transport recovery inside the logical call already holds its allowance (same_call).
         try:
             remaining = self.remaining(reserve=DETERMINISTIC_RESERVE)
         except AnalysisError:
             return False
-        return self.used < self.max_calls and (remaining is None or remaining-delay >= MIN_RECOVERY_SECONDS)
+        provider_left = self.provider_deadline - time.monotonic() if self.provider_deadline else PROVIDER_TOTAL_SECONDS
+        return (same_call or self.used < self.max_calls) and provider_left-delay >= MIN_RECOVERY_SECONDS and (remaining is None or remaining-delay >= MIN_RECOVERY_SECONDS)
 
-    def transport_retry_allowed(self, attempt, delay=0):
+    def transport_retry_allowed(self, attempt, delay=0, same_call=False):
         # One early resend, never a long response-window timeout. Actual elapsed
         # wall time is authoritative even for adapters omitting latency fields.
         elapsed = attempt.get('latency_ms', float('inf')) / 1000
@@ -87,11 +101,46 @@ class ProviderBudget:
             attempt.get('provider_error_status') in {'UNAVAILABLE','INTERNAL'})
         if category == 'provider_rate_limited':
             transient = attempt.get('retryable') is True and 0 < attempt.get('retry_after_seconds',999) <= 2
-        return transient and elapsed <= 3 and self.recovery_available(delay)
+        return transient and elapsed <= 3 and self.recovery_available(delay, same_call)
+
+    def claim_recovery(self):
+        """Atomically claim the submission's single transport recovery."""
+        with self.lock:
+            if self.recovery_used or not self.recovery_available(same_call=True):
+                return False
+            observer = request_observer.get()
+            if observer is not None:
+                try:
+                    observer('provider_recovery_claimed', {})
+                except AnalysisError:
+                    return False
+            self.recovery_used = True
+            self.diagnostics["transport_recovery_count"] = 1
+            return True
+
+    def record_physical(self, payload=None):
+        """Reserve one real HTTP attempt before it is sent (hard ceiling, same lock as consume)."""
+        import hashlib, json
+        with self.lock:
+            # Durable reservation first: the job ledger (not this instance) is the authority and may veto the send.
+            observer = request_observer.get()
+            if observer is not None and self.physical < PHYSICAL_CEILING:
+                observer('provider_physical_reserved', {})
+            if self.physical >= PHYSICAL_CEILING:
+                self.diagnostics["provider_call_budget_block_count"] += 1
+                self.diagnostics["terminal_error"] = "provider_call_budget_exceeded"
+                raise AnalysisError("provider_call_budget_exceeded", "Physical HTTP allowance exhausted")
+            self.physical += 1
+            if self.provider_deadline is None:
+                self.provider_deadline = time.monotonic() + PROVIDER_TOTAL_SECONDS
+            if payload is not None:
+                self.payload_hashes.append(hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()[:12])
+            self.diagnostics.update(provider_physical_attempts=self.physical,
+                                    provider_physical_payload_hashes=list(self.payload_hashes))
 
     def consume(self, context_chars=None):
         with self.lock:
-            self.remaining(reserve=3)
+            self.remaining(reserve=DETERMINISTIC_RESERVE)
             if self.used >= self.max_calls:
                 self.diagnostics["provider_call_budget_block_count"] += 1
                 self.diagnostics["terminal_error"] = "provider_call_budget_exceeded"

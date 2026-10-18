@@ -124,9 +124,13 @@ class RefinementQualityTests(unittest.TestCase):
         p.provider = provider({'changes':[update(ranking={'limit':2},dimension_ids=['unknown'])]},
             {'changes':[update(dimension_ids=['product'])]},
             {'changes':[update(ranking={'limit':2},dimension_ids=['product'])]})
-        refined = self.refine(p,req,report)
-        self.assertEqual(p.provider.call_count,3)
-        self.assertEqual(refined['semantic_intent']['requirements'][0]['ranking']['limit'],2)
+        # V3.3 permits one targeted repair. A repair changing a frozen ranking
+        # is rejected after two calls; it never gets a third paid chance.
+        p.executor.reset_mock()
+        with self.assertRaises(AnalysisError): self.refine(p,req,report)
+        self.assertEqual(p.provider.call_count,2)
+        p.executor.assert_not_called()
+        self.assertEqual(get_session(req.session_id).semantic_intent,report['semantic_intent'])
 
     def test_repeated_refinements_replay_history_and_preserve_window(self):
         p,req,report = self.report()
@@ -178,6 +182,20 @@ class RefinementQualityTests(unittest.TestCase):
         self.assertLess(observed['passed'],observed['total'])
         self.assertEqual(q['status'],'partially_verified')
 
+    def test_saved_then_reopened_report_exports_the_same_conclusion_caveats_and_verification(self):
+        import json as _json
+        from services.docx_service import generate_report_docx
+        from docx import Document
+        _,_,report=self.report()
+        saved={k:report[k] for k in ('title','conclusion','verification','short_answer','quality_assessment','view_coverage') if k in report}
+        reopened=_json.loads(_json.dumps(saved,ensure_ascii=False))   # what /api/reports/saved stores and returns
+        self.assertEqual(reopened['conclusion'],report['conclusion'])
+        text=' '.join(p.text for p in Document(generate_report_docx(reopened)).paragraphs)
+        self.assertIn('Kết luận',text); self.assertIn(report['conclusion']['answer'],text)
+        for caveat in report['conclusion']['caveats'][:3]:
+            self.assertIn(caveat,text)
+        self.assertIn('Đối chiếu độc lập: Chưa đo',text)     # not-measured stays not-measured after reopen
+
     def test_export_shows_counts_and_unknown_accuracy_instead_of_perfect_score(self):
         from services.docx_service import generate_report_docx
         from docx import Document
@@ -185,6 +203,8 @@ class RefinementQualityTests(unittest.TestCase):
         text=' '.join(p.text for p in Document(generate_report_docx(report)).paragraphs)
         self.assertIn('Đối chiếu độc lập: Chưa đo',text)  # V3.2 §53 wording
         self.assertNotIn('100/100',text)
+        self.assertIn('Kết luận',text)  # V3.3 conclusion is exported with the report
+        self.assertTrue(report['conclusion']['answer'])
         self.assertIn('Mức hoàn tất kiểm chứng nội bộ: 90/100 (không phải độ chính xác AI)',text)  # V3.2 §53
         self.assertIn('Xác suất trả lời đúng: Chưa hiệu chuẩn',text)
 

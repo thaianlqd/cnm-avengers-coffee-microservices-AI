@@ -166,7 +166,7 @@ class FinalReviewTests(unittest.TestCase):
         bad={'decision':'analyze','requirements':[{'id':'compare','metric_ids':['aov']}]}
         p=self.pipeline(f.scripted(raw,bad,bad))
         with self.assertRaises(AnalysisError):p.propose(self.request('Doanh thu và giá trị đơn trung bình theo chi nhánh trong 90 ngày gần nhất'))
-        self.assertEqual(p.provider.call_count,3);p.executor.assert_not_called()
+        self.assertEqual(p.provider.call_count,2);p.executor.assert_not_called()
 
     def test_recorded_overview_normalizes_scalar_scope_then_reports(self):
         warehouse=FixtureWarehouse(self.catalog.overlay);self.addCleanup(warehouse.close)
@@ -190,7 +190,7 @@ class FinalReviewTests(unittest.TestCase):
                 attack=f.envelope({'id':'req_1','derived_features':[],'feature_metrics':{},**changed})
                 p=self.pipeline(f.scripted(raw,attack,attack))
                 with self.assertRaises(AnalysisError):p.propose(self.request(question))
-                self.assertEqual(p.provider.call_count,3);p.executor.assert_not_called()
+                self.assertEqual(p.provider.call_count,2);p.executor.assert_not_called()
                 self.assertEqual(p.semantic_info['failure_code'],'untargeted_field_changed')
 
     def test_global_missing_dimension_schema_excludes_frozen_requirements(self):

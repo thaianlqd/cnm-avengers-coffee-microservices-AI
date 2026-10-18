@@ -1,16 +1,20 @@
 import { AnalystDashboard, AnalystDashboardSummary, AnalystViews, AnalystResultTable, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence, AnalystPlanningSummary } from '../components/AnalystDashboardSummary';
 import { AnalysisQualityScore } from '../components/AnalysisQualityScore';
 import { AnalysisClarification } from '../components/AnalysisClarification';
+import { applyFix } from '../utils/preflightPresentation.mjs';
 import { ForecastPanel } from '../components/ForecastPanel';
 import { AnalysisMeaning } from '../components/AnalysisMeaning';
 import { AnalysisModules, AnalysisModuleSummary } from '../components/AnalysisModules';
 import { AnalystWorkspace } from '../components/workspace/AnalystWorkspace';
 import { analysisInputPayload } from '../utils/analysisInput.mjs';
-import { switchMissionDraft, workspaceRequestFields, type GuidedDraft } from '../utils/missionWorkspace.mjs';
+import { switchMissionDraft, workspaceRequestFields, invalidationFor, applyClarificationChoice, type GuidedDraft } from '../utils/missionWorkspace.mjs';
+import { visibleMissionId } from '../utils/workspacePresentation.mjs';
+import { savedV33Fields } from '../utils/reportPersistence.mjs';
 import { analysisPlanLabel } from '../utils/analysisPresentation.mjs';
 import { reportHeading } from '../utils/analystDashboardLayout.mjs';
 import { runAnalysisJob, jobStorageKey, jobStages } from '../utils/analysisJobs.mjs';
 import React, { useState, useEffect, useRef } from 'react';
+import type { AnalyticalReportContract, CapabilityAction } from '../types';
 import { usePlatformStore } from '../store/usePlatformStore';
 import { 
   SmoothAreaChart, 
@@ -75,6 +79,8 @@ export const AnalyticsView: React.FC = () => {
   const [aiTimeRange, setAiTimeRange] = useState('auto');
   const [aiDomain, setAiDomain] = useState('auto');
   const [aiAnalysisDepth, setAiAnalysisDepth] = useState('deep');
+  // V3.3: the default Deep is a display default; only an active user choice is sent (server keeps narrow requests focused).
+  const [aiDepthChosen, setAiDepthChosen] = useState(false);
   const [aiCapabilities, setAiCapabilities] = useState<any>(null);
   const [aiScope, setAiScope] = useState<any>({ mode: 'auto', filters: [] });
   const [aiStart, setAiStart] = useState('');
@@ -85,12 +91,33 @@ export const AnalyticsView: React.FC = () => {
     return () => controller.abort();
   }, []);
   // V3.1: question + time + scope + depth (+ optional mission hint); no context/expectation fields.
-  const aiInput = (prompt: string) => ({ ...analysisInputPayload({ question: prompt, moduleId: activeModule?.module_id, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiAnalysisDepth, mission: aiMission }),
+  // V3.3: a stored/legacy mission that is no longer a visible mode (e.g. composition, relationship) maps to a visible
+  // one - whatever opened it (history, module, recovered job) - and the change is disclosed, never silent.
+  useEffect(() => {
+    if (!aiCapabilities || !aiMission) return;
+    const mapped = visibleMissionId(aiCapabilities, aiMission);
+    if (mapped === aiMission) return;
+    const label = (id: string | null) => (aiCapabilities.missions || []).find((m: any) => m.id === id)?.label || 'Câu hỏi tự do';
+    showToast(`Chế độ “${label(aiMission)}” đã được gộp vào “${label(mapped)}”; yêu cầu cũ vẫn chạy lại được.`, 'info');
+    setAiMission(mapped); setAiGuided(null);
+  }, [aiCapabilities, aiMission]);
+  const aiInput = (prompt: string) => ({ ...analysisInputPayload({ question: prompt, moduleId: activeModule?.module_id, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiDepthChosen ? aiAnalysisDepth : undefined, mission: aiMission }),
     ...(activeModule ? {} : workspaceRequestFields(aiGuided, prompt)) });
   const [aiStatus, setAiStatus] = useState<any | null>(null);
 
   // Step 1: Pre-analysis proposal state
   const [pendingClarification, setPendingClarification] = useState<any | null>(null);
+  const handleCapabilityAction = (action: CapabilityAction) => {
+    const patch = applyFix(aiPrompt,action);
+    if (!patch) return;
+    cancelActiveRequests();setAiPlan(null);setPendingClarification(null);setGeneratedReport(null);setAiGuided(null);
+    if ('question' in patch) setAiPrompt(patch.question);
+    if ('mission' in patch) setAiMission(patch.mission ?? null);
+    if (patch.scope) setAiScope(patch.scope);
+    if (patch.time) {setAiTimeRange(patch.time.mode);setAiStart(patch.time.start || '');setAiEnd(patch.time.end || '');}
+    backToQuestion();
+  };
+
   const [aiPlan, setAiPlan] = useState<any | null>(null);
   const [isProposingPlan, setIsProposingPlan] = useState(false);
   const planningInFlight = useRef(false);
@@ -98,11 +125,38 @@ export const AnalyticsView: React.FC = () => {
 
   // Step 2: Visual preview report state
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
-  const [generatedReport, setGeneratedReport] = useState<any | null>(null);
+  const [generatedReport, setGeneratedReport] = useState<(AnalyticalReportContract & Record<string, any>) | null>(null);
   const [jobStage, setJobStage] = useState('accepted');
   const pendingJob = useRef<any>(null);
   const jobController = useRef<AbortController | null>(null);
   const jobEpoch = useRef(0);
+  // V3.3: every async path takes a ticket (epoch + abort signal) and re-checks it before committing state after an await.
+  const beginRequest = () => {
+    const epoch = ++jobEpoch.current;
+    jobController.current?.abort();
+    const controller = new AbortController();
+    jobController.current = controller;
+    return { epoch, signal: controller.signal, current: () => epoch === jobEpoch.current && !controller.signal.aborted };
+  };
+  // Supersede everything in flight (propose/generate/refine/job) and clear their loading flags.
+  const cancelActiveRequests = () => {
+    jobEpoch.current += 1;
+    jobController.current?.abort();
+    // Cancel the owned server task too (by id, or by idempotency key if the POST response was never seen).
+    if (pendingJob.current?.job_id) fetch(`/api/ai/analysis-jobs/${pendingJob.current.job_id}/cancel`, { method: 'POST' }).catch(() => {});
+    else if (pendingJob.current?.key) fetch('/api/ai/analysis-jobs/cancel-by-key', {
+      method: 'POST', headers: { 'Idempotency-Key': pendingJob.current.key } }).catch(() => {});
+    pendingJob.current = null;
+    try { sessionStorage.removeItem(jobStorageKey); } catch { /* storage unavailable */ }
+    planningInFlight.current = false; refinementInFlight.current = false;
+    setIsProposingPlan(false); setIsGeneratingAi(false); setIsRefining(false);
+  };
+  // Going back to edit the question supersedes whatever is still in flight, so a late answer cannot revive an old plan.
+  const backToQuestion = () => { cancelActiveRequests(); setAiStep(1); };
+  // "Kết nối lại tác vụ" resumes the SAME job/idempotency key; only without a stored job does it start a new plan.
+  const retryAnalysis = () => (pendingJob.current?.key ? handleOneClick(undefined, pendingJob.current) : handleProposePlan());
+  // Identity of the report currently on screen: late refine/reconcile responses compare against it.
+  const reportIdentityRef = useRef<string | null>(null);
   const [showSqlCode, setShowSqlCode] = useState(false);
   const [tableSearch, setTableSearch] = useState('');
   const [chatHistory, setChatHistory] = useState<Array<{ prompt: string; report: any; time: string }>>([]);
@@ -120,6 +174,7 @@ export const AnalyticsView: React.FC = () => {
   const [savedReportsSearch, setSavedReportsSearch] = useState('');
   const [savedReportsCategory, setSavedReportsCategory] = useState('all');
   const [viewingSavedReport, setViewingSavedReport] = useState<any | null>(null);
+  reportIdentityRef.current = (generatedReport || viewingSavedReport)?.session_id || null;
 
   // Word Document Interactive Preview Modal state
   const [showDocxPreview, setShowDocxPreview] = useState(false);
@@ -139,18 +194,16 @@ export const AnalyticsView: React.FC = () => {
 
   // Helper to reset and start a fresh question
   const handleResetToNewPrompt = () => {
-    jobEpoch.current += 1;
-    jobController.current?.abort();
-    if (pendingJob.current?.job_id) fetch(`/api/ai/analysis-jobs/${pendingJob.current.job_id}/cancel`, { method: 'POST' }).catch(() => {});
-    else if (pendingJob.current?.key) fetch('/api/ai/analysis-jobs/cancel-by-key', {
-      method: 'POST', headers: { 'Idempotency-Key': pendingJob.current.key } }).catch(() => {});
-    pendingJob.current = null;
-    sessionStorage.removeItem(jobStorageKey);
-    planningInFlight.current = false;
-    setIsGeneratingAi(false);
-    setPendingClarification(null);
+    cancelActiveRequests();
     setAiPrompt('');
     setAiGuided(null);
+    setAiMission(null);
+    missionDrafts.current = {};
+    setActiveModule(null);
+    setAiTimeRange('auto'); setAiStart(''); setAiEnd('');
+    setAiScope({ mode: 'auto', filters: [] });
+    setAiAnalysisDepth('deep'); setAiDepthChosen(false);
+    setIsProposingPlan(false); setIsRefining(false); refinementInFlight.current = false;
     setAiPlan(null);
     setGeneratedReport(null);
     setReportVersions([]);
@@ -181,6 +234,7 @@ export const AnalyticsView: React.FC = () => {
       const job = await runAnalysisJob(record, { signal: controller.signal,
         onUpdate: value => { if (epoch === jobEpoch.current) setJobStage(value.state); },
         onCheckpoint: value => {
+          if (epoch !== jobEpoch.current) return;  // a superseded task must not overwrite the active checkpoint
           pendingJob.current = value;
           sessionStorage.setItem(jobStorageKey, JSON.stringify(value));
         } });
@@ -222,7 +276,7 @@ export const AnalyticsView: React.FC = () => {
       const record = JSON.parse(sessionStorage.getItem(jobStorageKey) || 'null');
       if (record?.key && record?.input) {
         if (record.input.analysis_scope) setAiScope(record.input.analysis_scope);
-        if (record.input.analysis_depth) setAiAnalysisDepth(record.input.analysis_depth);
+        if (record.input.analysis_depth) { setAiAnalysisDepth(record.input.analysis_depth); setAiDepthChosen(true); }
         setAiMission(record.input.analysis_mission || null);
         setAiTimeRange(record.input.time?.mode || 'auto');
         setAiStart(record.input.time?.start || ''); setAiEnd(record.input.time?.end || '');
@@ -246,6 +300,7 @@ export const AnalyticsView: React.FC = () => {
     let submittedInput: any;
     try { submittedInput = aiInput(promptToSend); } catch (error: any) { showToast(error.message, 'info'); return; }
     planningInFlight.current = true;
+    const ticket = beginRequest();
     setIsProposingPlan(true);
     setGeneratedReport(null);
     setAiPlan(null);
@@ -255,11 +310,13 @@ export const AnalyticsView: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(submittedInput),
+        signal: ticket.signal,
       });
       if (!response.ok) {
         throw new Error('Lỗi phản hồi từ máy chủ AI khi đề xuất kế hoạch');
       }
       const data = await response.json();
+      if (!ticket.current()) return;  // reset / edit / newer request happened while waiting: drop the stale plan
       if (['needs_clarification', 'error'].includes(data.status)) {
         setGeneratedReport(data);
         setAiStep(2);
@@ -273,6 +330,7 @@ export const AnalyticsView: React.FC = () => {
         throw new Error(data.message || 'Kế hoạch chưa vượt qua kiểm chứng');
       }
     } catch (err: any) {
+      if (!ticket.current()) return;
       console.error('Lỗi đề xuất kế hoạch:', err);
       const message = 'Chưa nhận được phản hồi từ máy chủ phân tích. Hãy kiểm tra kết nối và trạng thái dịch vụ; câu hỏi của bạn được giữ lại.';
       setGeneratedReport({ status: 'error', outcome: 'SYSTEM_ERROR', retryable: true, message,
@@ -283,8 +341,10 @@ export const AnalyticsView: React.FC = () => {
       setAiStep(2);
       showToast(message, 'error');
     } finally {
-      planningInFlight.current = false;
-      setIsProposingPlan(false);
+      if (!ticket.signal.aborted) {  // a superseded ticket was already cleaned up by whoever superseded it
+        planningInFlight.current = false;
+        setIsProposingPlan(false);
+      }
     }
   };
 
@@ -295,12 +355,14 @@ export const AnalyticsView: React.FC = () => {
       showToast('Vui lòng nhập câu hỏi hoặc yêu cầu phân tích', 'info');
       return;
     }
+    const ticket = beginRequest();
     setIsGeneratingAi(true);
     setAiStep(3); // Advance to Step 3 so user sees report generating
     try {
       const response = await fetch('/api/ai/generate-executive-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: ticket.signal,
         body: JSON.stringify({
           ...(aiPlan?.submittedInput || aiInput(promptToSend)),
           session_id: aiPlan?.prompt === promptToSend ? aiPlan?.session_id : null,
@@ -315,6 +377,7 @@ export const AnalyticsView: React.FC = () => {
         throw new Error('Lỗi phản hồi từ máy chủ AI');
       }
       const data = await response.json();
+      if (!ticket.current()) return;  // approval/report of a superseded request must never surface
       setGeneratedReport(data);
       setAiStep(3);
       if (['needs_clarification', 'error'].includes(data.status)) {
@@ -339,6 +402,7 @@ export const AnalyticsView: React.FC = () => {
         throw new Error(data.message || 'Dữ liệu chưa vượt qua kiểm chứng');
       }
     } catch (err: any) {
+      if (!ticket.current()) return;
       console.error('Lỗi sinh báo cáo AI:', err);
       const message = err.message || 'Không thể tạo module phân tích';
       setGeneratedReport({
@@ -356,7 +420,7 @@ export const AnalyticsView: React.FC = () => {
       });
       showToast(message, 'error');
     } finally {
-      setIsGeneratingAi(false);
+      if (!ticket.signal.aborted) setIsGeneratingAi(false);
     }
   };
 
@@ -379,12 +443,15 @@ export const AnalyticsView: React.FC = () => {
     setRefinementChat(prev => [...prev, userMsg]);
     setFollowUpPrompt('');
     refinementInFlight.current = true;
+    const ticket = beginRequest();
+    const refinedIdentity = repToRefine?.session_id || null;
     setIsRefining(true);
 
     try {
       const response = await fetch('/api/ai/refine-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: ticket.signal,
         body: JSON.stringify({
           current_report: { revision: repToRefine.revision },
           feedback: text,
@@ -397,6 +464,8 @@ export const AnalyticsView: React.FC = () => {
         throw new Error('Lỗi khi tinh chỉnh báo cáo từ máy chủ AI');
       }
       const data = await response.json();
+      // The user may have reset, edited or opened another report while this was running.
+      if (!ticket.current() || refinedIdentity !== (reportIdentityRef.current || null)) return;
       if (!['success', 'needs_clarification', 'error'].includes(data.status)) throw new Error(data.message || 'Bản sửa chưa vượt qua kiểm chứng');
       if (['needs_clarification', 'error'].includes(data.status)) {
         setPendingClarification({ ...data, feedback: text });
@@ -435,6 +504,7 @@ export const AnalyticsView: React.FC = () => {
         showToast('Đã tinh chỉnh báo cáo thành công theo góp ý!', 'success');
       }
     } catch (err: any) {
+      if (!ticket.current()) return;
       console.error('Lỗi tinh chỉnh báo cáo:', err);
       showToast(err.message || 'Không thể tinh chỉnh báo cáo', 'error');
       setRefinementChat(prev => [...prev, {
@@ -444,8 +514,10 @@ export const AnalyticsView: React.FC = () => {
         time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
       }]);
     } finally {
-      refinementInFlight.current = false;
-      setIsRefining(false);
+      if (!ticket.signal.aborted) {
+        refinementInFlight.current = false;
+        setIsRefining(false);
+      }
     }
   };
 
@@ -480,6 +552,7 @@ export const AnalyticsView: React.FC = () => {
 
   const handleSelectVersion = (index: number) => {
     if (reportVersions[index]) {
+      cancelActiveRequests();  // an in-flight refine must not overwrite the chosen version
       const target = reportVersions[index].report;
       setGeneratedReport(target);
       if (viewingSavedReport) {
@@ -579,6 +652,7 @@ export const AnalyticsView: React.FC = () => {
   };
 
   const handleLoadSavedReportToView = async (report: any) => {
+    cancelActiveRequests();  // late responses must not overwrite the opened report
     let config = report.module_config;
     if (typeof config === 'string') {
       try {
@@ -724,6 +798,7 @@ export const AnalyticsView: React.FC = () => {
           key_findings: generatedReport.key_findings,
           table_data: generatedReport.table_data,
           conclusions: generatedReport.conclusions,
+          ...savedV33Fields(generatedReport),
         },
       };
       const res = await fetch('/api/reports/saved', {
@@ -1041,7 +1116,7 @@ export const AnalyticsView: React.FC = () => {
     if (!rep) return null;
     return (
       <div className="space-y-6">
-        {pendingClarification && <div className="space-y-2"><AnalysisClarification response={pendingClarification} onChoice={(answer) => handleFollowUpRefine(`${pendingClarification.feedback}. ${answer}`, rep)} onEdit={() => { setFollowUpPrompt(pendingClarification.feedback || ''); setPendingClarification(null); }} /><p className="text-xs text-amber-800">Yêu cầu tinh chỉnh chưa được áp dụng. Bên dưới vẫn là báo cáo đã hoàn tất trước đó.</p></div>}
+        {pendingClarification && <div className="space-y-2"><AnalysisClarification response={pendingClarification} onAction={handleCapabilityAction} onChoice={(answer) => handleFollowUpRefine(`${pendingClarification.feedback}. ${answer}`, rep)} onEdit={() => { setFollowUpPrompt(pendingClarification.feedback || ''); setPendingClarification(null); }} /><p className="text-xs text-amber-800">Yêu cầu tinh chỉnh chưa được áp dụng. Bên dưới vẫn là báo cáo đã hoàn tất trước đó.</p></div>}
         {/* Report Header Bar - Spacious Responsive Layout */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4">
           {/* Tier 1: Meta, Status & Quick Feedback */}
@@ -1211,7 +1286,7 @@ export const AnalyticsView: React.FC = () => {
           {rep.prompt && reportHeading(rep) !== rep.prompt && <details className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600"><summary className="cursor-pointer font-medium">Câu hỏi phân tích đầy đủ</summary><p className="mt-3 leading-relaxed">{rep.prompt}</p></details>}
           <AnalysisMeaning interpretation={rep.interpretation} compact />
           {showSqlCode && (rep.sql || rep.sql_query) && <pre className="bg-slate-900 text-slate-200 p-4 rounded-xl text-xs overflow-auto">{rep.sql ? Object.entries(rep.sql).map(([name, sql]) => `-- ${name}\n${sql}`).join('\n\n') : rep.sql_query}</pre>}
-          <AnalystDashboard report={rep} capabilities={aiCapabilities} editing={isRefining} onFollowUp={isFromSavedList ? undefined : q => { setAiPrompt(q); setAiGuided(null); setAiStep(1); }} onChartTypeChange={rep.session_id ? (id, type) => handleFollowUpRefine('Đổi cách trình bày biểu đồ', rep, [{ chart_id: id, chart_type: type }]) : undefined}
+          <AnalystDashboard report={rep} capabilities={aiCapabilities} editing={isRefining} onFollowUp={isFromSavedList ? undefined : q => { setAiPrompt(q); setAiGuided(null); backToQuestion(); }} onChartTypeChange={rep.session_id ? (id, type) => handleFollowUpRefine('Đổi cách trình bày biểu đồ', rep, [{ chart_id: id, chart_type: type }]) : undefined}
             onSave={isFromSavedList ? undefined : handleSaveAiReport} onExport={() => handleOpenDocxPreview(rep)} />
         </> : <>
         {/* SECTION: Data Warnings / Sanity Alerts (Phase 3.3) */}
@@ -2454,7 +2529,7 @@ export const AnalyticsView: React.FC = () => {
             <div className="grid grid-cols-3 gap-1.5 items-center">
               {/* Step 1 */}
               <button
-                onClick={() => setAiStep(1)}
+                onClick={() => backToQuestion()}
                 className={`flex items-center space-x-2.5 px-4 py-2.5 rounded-xl transition-all cursor-pointer text-left ${
                   aiStep === 1
                     ? 'bg-white text-slate-900 shadow-xs'
@@ -2542,12 +2617,15 @@ export const AnalyticsView: React.FC = () => {
           {/* ──────────────────────────────────────────────────────────── */}
           {/* ── BƯỚC 1: ĐẶT CÂU HỎI & CHỌN GỢI Ý PHÂN TÍCH ── */}
           {/* ──────────────────────────────────────────────────────────── */}
-          <AnalysisModules active={activeModule} report={generatedReport} disabled={isProposingPlan || isGeneratingAi || isRefining} rerunTime={aiTimeRange === 'custom' ? (aiStart && aiEnd && aiStart <= aiEnd ? { mode: 'custom', start: aiStart, end: aiEnd } : null) : { mode: aiTimeRange }} onSelect={setActiveModule} onUpdate={inputs => { setAiPrompt(inputs.original_question || ''); }} onEdit={() => setAiStep(1)} onReport={data => { setGeneratedReport(data); setAiStep(3); if (data.status === 'success') { setReportVersions([{ version: data.revision || 1, label: 'Chạy lại bài toán', report: data, time: new Date().toLocaleTimeString('vi-VN') }]); setActiveVersionIndex(0); setRefinementChat([]); } }} />
+          <AnalysisModules active={activeModule} report={generatedReport} disabled={isProposingPlan || isGeneratingAi || isRefining} rerunTime={aiTimeRange === 'custom' ? (aiStart && aiEnd && aiStart <= aiEnd ? { mode: 'custom', start: aiStart, end: aiEnd } : null) : { mode: aiTimeRange }} onSelect={setActiveModule} onUpdate={inputs => { setAiPrompt(inputs.original_question || ''); }} onEdit={() => backToQuestion()} onReport={data => { setGeneratedReport(data); setAiStep(3); if (data.status === 'success') { setReportVersions([{ version: data.revision || 1, label: 'Chạy lại bài toán', report: data, time: new Date().toLocaleTimeString('vi-VN') }]); setActiveVersionIndex(0); setRefinementChat([]); } }} />
           {aiStep === 1 && (
             <div className="space-y-6">
               <AnalystWorkspace capabilities={aiCapabilities} status={aiStatus} disabled={isProposingPlan || isGeneratingAi}
                 value={{ prompt: aiPrompt, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiAnalysisDepth, mission: aiMission, guided: aiGuided }}
                 onChange={patch => {
+                  // V3.3: any meaning-changing edit drops the stale plan/clarification/report and late responses.
+                  if (invalidationFor(patch).invalidate) { cancelActiveRequests(); setAiPlan(null); setPendingClarification(null); setGeneratedReport(null); }
+                  if ('time' in patch) setAiTimeRange(patch.time || 'auto'); if ('start' in patch) setAiStart(patch.start || ''); if ('end' in patch) setAiEnd(patch.end || ''); if ('scope' in patch) setAiScope(patch.scope);
                   if ('mission' in patch && (patch.mission ?? null) !== aiMission) {
                     // Mission switch = a mission-consistent workspace: restore that mission's own
                     // draft and clear everything derived from the previous mission.
@@ -2560,9 +2638,9 @@ export const AnalyticsView: React.FC = () => {
                   if ('prompt' in patch) { setAiPrompt(patch.prompt || ''); if (!patch.prompt) setAiPlan(null); }
                   if ('guided' in patch) setAiGuided(patch.guided ?? null);
                   if ('time' in patch) setAiTimeRange(patch.time || 'auto'); if ('start' in patch) setAiStart(patch.start || ''); if ('end' in patch) setAiEnd(patch.end || '');
-                  if ('scope' in patch) setAiScope(patch.scope); if ('depth' in patch) setAiAnalysisDepth(patch.depth || 'deep');
+                  if ('scope' in patch) setAiScope(patch.scope); if ('depth' in patch) { setAiAnalysisDepth(patch.depth || 'deep'); setAiDepthChosen(true); }
                 }}
-                onSubmit={() => handleProposePlan()}>
+                onSubmit={() => handleOneClick()} onPreview={() => handleProposePlan()}>
                 {/* Recent Questions Pill Bar */}
                 {chatHistory.length > 0 && (
                   <div className="mt-4 pt-3 border-t border-slate-100 flex items-center space-x-2 overflow-x-auto text-xs pb-1">
@@ -2610,7 +2688,7 @@ export const AnalyticsView: React.FC = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() => setAiStep(1)}
+                  onClick={() => backToQuestion()}
                   className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200/90 rounded-xl transition-colors cursor-pointer self-start sm:self-auto"
                 >
                   Sửa câu hỏi
@@ -2628,13 +2706,13 @@ export const AnalyticsView: React.FC = () => {
               {/* Clarification or Error in Step 2 */}
               {!isProposingPlan && ['needs_clarification', 'error'].includes(generatedReport?.status) && (
                 <AnalysisClarification
-                  response={generatedReport}
-                  onSnapshot={answer => { setAiPrompt(answer); setAiTimeRange('all_time'); setAiStep(1); }}
-                  onModule={module => { setActiveModule(module); setAiStep(1); }}
-                  onUpdate={() => { setActiveModule(null); setAiStep(1); }}
-                  onChoice={(answer) => handleProposePlan(`${aiPrompt}. ${answer}`)}
-                  onEdit={() => setAiStep(1)}
-                  onRetry={() => handleProposePlan()}
+                  response={generatedReport} onAction={handleCapabilityAction}
+                  onSnapshot={answer => { setAiPrompt(answer); setAiTimeRange('all_time'); backToQuestion(); }}
+                  onModule={module => { setActiveModule(module); backToQuestion(); }}
+                  onUpdate={() => { setActiveModule(null); backToQuestion(); }}
+                  onChoice={(answer) => { setAiPrompt(applyClarificationChoice(aiPrompt, answer)); setAiGuided(null); backToQuestion(); }}
+                  onEdit={() => backToQuestion()}
+                  onRetry={() => retryAnalysis()}
                 />
               )}
 
@@ -2643,7 +2721,7 @@ export const AnalyticsView: React.FC = () => {
                 <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-xs">
                   <h4 className="text-sm font-semibold text-slate-800">Chưa có kế hoạch phân tích</h4>
                   <button
-                    onClick={() => setAiStep(1)}
+                    onClick={() => backToQuestion()}
                     className="mt-4 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-medium transition-all shadow-xs cursor-pointer inline-flex items-center gap-1.5"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -2777,7 +2855,7 @@ export const AnalyticsView: React.FC = () => {
                   {/* Actions Footer */}
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-slate-100">
                     <button
-                      onClick={() => setAiStep(1)}
+                      onClick={() => backToQuestion()}
                       className="px-4 py-2 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200/90 rounded-xl transition-colors cursor-pointer"
                     >
                       Chỉnh sửa câu hỏi
@@ -2787,7 +2865,7 @@ export const AnalyticsView: React.FC = () => {
                       <button
                         onClick={() => {
                           setAiPlan(null);
-                          setAiStep(1);
+                          backToQuestion();
                         }}
                         className="px-3.5 py-2 text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors cursor-pointer"
                       >
@@ -2823,13 +2901,13 @@ export const AnalyticsView: React.FC = () => {
               )}
 
               {!isGeneratingAi && ['needs_clarification', 'error'].includes(generatedReport?.status) && (
-                <AnalysisClarification response={generatedReport}
-                  onSnapshot={answer => { setAiPrompt(answer); setAiTimeRange('all_time'); setAiStep(1); }}
-                  onModule={module => { setActiveModule(module); setAiStep(1); }}
-                  onUpdate={() => { setActiveModule(null); setAiStep(1); }}
-                  onChoice={(answer) => handleProposePlan(`${aiPrompt}. ${answer}`)}
-                  onEdit={() => setAiStep(1)}
-                  onRetry={() => handleProposePlan()} />
+                <AnalysisClarification response={generatedReport} onAction={handleCapabilityAction}
+                  onSnapshot={answer => { setAiPrompt(answer); setAiTimeRange('all_time'); backToQuestion(); }}
+                  onModule={module => { setActiveModule(module); backToQuestion(); }}
+                  onUpdate={() => { setActiveModule(null); backToQuestion(); }}
+                  onChoice={(answer) => { setAiPrompt(applyClarificationChoice(aiPrompt, answer)); setAiGuided(null); backToQuestion(); }}
+                  onEdit={() => backToQuestion()}
+                  onRetry={() => retryAnalysis()} />
               )}
 
               {isGeneratingAi && <button onClick={handleResetToNewPrompt} className="text-sm text-slate-600 underline">Dừng phân tích</button>}
@@ -2838,7 +2916,7 @@ export const AnalyticsView: React.FC = () => {
                 <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-xs">
                   <h4 className="text-sm font-semibold text-slate-800">Chưa có báo cáo nào</h4>
                   <button
-                    onClick={() => setAiStep(1)}
+                    onClick={() => backToQuestion()}
                     className="mt-4 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-medium transition-all shadow-xs cursor-pointer inline-flex items-center gap-1.5"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

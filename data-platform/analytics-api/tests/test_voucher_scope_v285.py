@@ -1,3 +1,4 @@
+from tests.gate_fixtures import interpreted_input
 """Voucher populations, identity, orphan lookups, guardrails and safe errors.
 
 All AI responses are scripted and HTTP/database transports are forbidden.
@@ -128,7 +129,7 @@ class VoucherTests(fixture.unittest.TestCase):
         for delta in [False,True]:
             schema=intent_tool(delta)['parameters']['properties']
             props=(schema['changes']['items']['properties']['changes'] if delta else schema['requirements']['items'])['properties']
-            self.assertEqual(set(props['feature_metrics']['properties']),{'scalar','contribution_share','leader','top_gap','group_gap','change','change_pct','concentration','selected_total','relationship_strength'})
+            self.assertEqual(set(props['feature_metrics']['properties']),{'scalar','contribution_share','leader','top_gap','group_gap','change','change_pct','concentration','selected_total','relationship_strength','driver_delta'})
 
     def test_feature_metric_target_cannot_change_in_unrelated_refinement(self):
         intent=meaning('aggregate')
@@ -138,7 +139,8 @@ class VoucherTests(fixture.unittest.TestCase):
     def test_nonsense_and_older_generic_clarification_have_specific_safe_help(self):
         for reason in ['not_analytical_request','clarification']:
             p=self.pipeline(fixture.scripted({'decision':'clarification','clarification':{'reason':reason,'missing_fields':['analysis_goal','RAW SECRET SQL']}}))
-            with self.assertRaises(AnalysisError) as caught:p.propose(self.request('hihi'))
+            # 'hihi' is stopped earlier by the deterministic gate (V3.3); this unit targets the provider-DECLARED clarification path.
+            with interpreted_input(),self.assertRaises(AnalysisError) as caught:p.propose(self.request('hihi'))
             failure=safe_failure(caught.exception,p.calls,p.semantic_info)
             self.assertEqual(failure['outcome'],'NEEDS_INPUT');self.assertIsNone(failure['quality_assessment']['score'])
             self.assertIn('mục tiêu',failure['issue']['what_is_missing'][0])

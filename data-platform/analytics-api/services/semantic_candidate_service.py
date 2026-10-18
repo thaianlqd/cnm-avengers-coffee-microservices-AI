@@ -75,6 +75,8 @@ def candidate_packet(catalog, index, intelligence, anchors, question, ui, previo
     caveats={c for id in selected for c in index.domains[id]['business_caveats']}
     notes=r['domain_intelligence'].get('model_caveat_notes',r['domain_intelligence']['caveat_labels'])
     facts={k:v for k,v in anchors.items() if v and k != 'ui'}
+    if facts.get('scope_resolution',{}).get('state') == 'unspecified':
+        facts.pop('scope_resolution')  # No scope assertion to transmit or protect.
     facts['ui'] = anchors['ui']
     return SemanticCandidatePacket(facts, dict(
         time=ui.get('required_period') or (anchors['times'][0] if len(anchors['times'])==1 else None),

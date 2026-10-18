@@ -146,14 +146,23 @@ def ranking_agreement(reported_rows, full_rows, dims, metric, direction, k):
 
 
 def forecast_quality(forecasts):
+    """Backtest quality exactly as the forecast engine reports it (mae/rmse/smape_pct, evaluated points, folds,
+    naive baseline and improvement). Interval coverage is only shown if it was really computed."""
     out = []
     for f in forecasts or []:
         bt = f.get("backtest") or {}
-        metrics = bt.get("metrics") or {k: bt.get(k) for k in ("mae", "rmse", "smape", "mase") if bt.get(k) is not None}
-        out.append({"metric_id": f.get("metric_id"), "method": f.get("method"), "baseline": bt.get("baseline") or f.get("baseline_method"),
-                    "backtest_window": bt.get("window") or bt.get("points"), "error_metrics": metrics,
-                    "interval": f.get("interval_level") or 0.8, "interval_coverage": bt.get("interval_coverage"),
-                    "note": "Dự báo không thể kiểm chứng với tương lai; chất lượng đo bằng kiểm tra lùi (backtest)."})
+        if f.get("status") not in (None, "ok"):
+            out.append({"metric_id": f.get("metric_id"), "method": None, "status": f.get("status"), "error_metrics": {},
+                        "note": "Chưa dự báo được vì lịch sử chưa đủ kỳ hợp lệ."})
+            continue
+        metrics = {k: bt[k] for k in ("mae", "rmse", "smape_pct") if bt.get(k) is not None}
+        naive = bt.get("naive_baseline") or {}
+        out.append({"metric_id": f.get("metric_id"), "method": f.get("method"), "status": "ok",
+                    "baseline": "naive" if naive else None, "baseline_metrics": {k: naive[k] for k in ("mae", "rmse", "smape_pct") if naive.get(k) is not None},
+                    "improvement_vs_naive_pct": bt.get("improvement_vs_naive_pct"),
+                    "backtest_window": {"evaluated_points": bt.get("evaluated_points"), "test_horizon": bt.get("test_horizon"), "folds": bt.get("folds")},
+                    "error_metrics": metrics, "interval": 0.8, "interval_coverage": bt.get("interval_coverage"),
+                    "note": "Dự báo không thể kiểm chứng với tương lai; chất lượng đo bằng kiểm tra lùi (backtest), không phải bảo đảm độ chính xác."})
     return out
 
 
@@ -167,7 +176,22 @@ def grounding(claims, evidence, insight_check):
             "causal_language": insight_check.get("causal_language", [])}
 
 
-def verification_report(*, reconciliation, relevance, grounding_result, forecasts, requirement_coverage, internal_score):
+def verify_conclusion(conclusion, evidence, forecasts, expected=None):
+    """The conclusion must answer, and every finding must point at real evidence or a real forecast."""
+    if not conclusion:
+        return {"present": False, "passed": 0, "total": 0, "dangling": []}
+    known = {e.get("id") for e in evidence or []}
+    forecast_ids = {f.get("requirement_id") for f in forecasts or []}
+    findings = conclusion.get("findings", [])
+    dangling = [f.get("evidence_id") or f.get("forecast_ref") for f in findings
+                if not ((f.get("evidence_id") in known) or (f.get("forecast_ref") in forecast_ids and f.get("forecast_ref") is not None))]
+    checks = [bool(conclusion.get("answer")), not dangling, bool(conclusion.get("caveats")) or not (forecasts or [])]
+    if expected is not None:
+        checks.append(conclusion == expected)
+    return {"present": True, "passed": sum(checks), "total": len(checks), "dangling": dangling}
+
+
+def verification_report(*, reconciliation, relevance, grounding_result, forecasts, requirement_coverage, internal_score, conclusion_check=None, view_coverage=None):
     """Separate evidence metrics for one report (V3.2 §63) — no blended accuracy."""
     measured = [c for c in reconciliation["numeric"] if c.get("status") in {"matched", "mismatch"}]
     ranked = [r for r in reconciliation["ranking"] if r.get("status") in {"matched", "mismatch"}]
@@ -175,7 +199,9 @@ def verification_report(*, reconciliation, relevance, grounding_result, forecast
     g = grounding_result
     status = "verified"
     if any(c["status"] == "mismatch" for c in measured) or any(r["status"] == "mismatch" for r in ranked) \
-            or g["unsupported_claims"] or g["causal_language"] or relevance["passed"] < relevance["total"]:
+            or g["unsupported_claims"] or g["causal_language"] or relevance["passed"] < relevance["total"] \
+            or (conclusion_check and conclusion_check["passed"] < conclusion_check["total"]) \
+            or any(v["required"] and v["status"] == "missing" for v in view_coverage or []):
         status = "attention"
     return {"version": VERSION, "status": status,
             "metrics": [
@@ -186,7 +212,13 @@ def verification_report(*, reconciliation, relevance, grounding_result, forecast
                 {"id": "grounded_claims", "label": "Nhận định có bằng chứng",
                  "passed": g["chart_numeric_matched"] + g["narrative_claims_with_evidence"], "total": g["chart_numeric_claims"] + g["narrative_claims"]},
                 {"id": "chart_relevance", "label": "Biểu đồ đúng yêu cầu", "passed": relevance["passed"], "total": relevance["total"]},
+                *([{"id": "view_coverage", "label": "Góc nhìn bắt buộc đã có",
+                    "passed": sum(v["status"] == "satisfied" for v in view_coverage if v["required"]),
+                    "total": sum(1 for v in view_coverage if v["required"])}] if view_coverage else []),
+                *([{"id": "conclusion_grounding", "label": "Kết luận có bằng chứng", "passed": conclusion_check["passed"], "total": conclusion_check["total"]}]
+                  if conclusion_check and conclusion_check["present"] else []),
             ],
+            "conclusion": conclusion_check, "view_coverage": view_coverage or [],
             "independent_oracle": reconciliation["independent_oracle"],
             "independent_oracle_label": (f"{reconciliation['independent_oracle']['accuracy_pct']}% trên {reconciliation['independent_oracle']['eligible']} phép đối chiếu số liệu"
                                          if reconciliation["independent_oracle"] else "Chưa đo đối chiếu độc lập"),
@@ -198,3 +230,21 @@ def verification_report(*, reconciliation, relevance, grounding_result, forecast
                             "Sai số theo đơn vị: số đếm phải khớp tuyệt đối, tiền tệ sai số ≤ 0,01, phần trăm ≤ 0,05 điểm.",
                             "Tỷ lệ/trung bình không đối chiếu bằng cách cộng hoặc lấy trung bình các nhóm.",
                             "Không dùng AI để chấm AI; không gộp các chỉ số trên thành một 'độ chính xác AI'."]}
+
+
+def merge_reconciliation(verification, oracle):
+    """Persist an oracle result for the same report revision; mismatch cannot remain verified."""
+    from copy import deepcopy
+    result=deepcopy(verification or {})
+    measured=[c for c in oracle.get('numeric',[]) if c.get('status') in {'matched','mismatch'}]
+    ranked=[c for c in oracle.get('ranking',[]) if c.get('status') in {'matched','mismatch'}]
+    for m in result.get('metrics',[]):
+        rows=measured if m['id']=='numeric_reconciliation' else ranked if m['id']=='ranking_reconciliation' else None
+        if rows is not None: m.update(passed=sum(c['status']=='matched' for c in rows),total=len(rows))
+    if any(c['status']=='mismatch' for c in measured+ranked): result['status']='attention'
+    result.update(numeric=oracle.get('numeric',[]),ranking=oracle.get('ranking',[]),independent_oracle=oracle.get('independent_oracle'),oracle_measured_at=oracle.get('measured_at'))
+    for d in result.get('trust_dimensions',[]):
+        if d['id']=='numeric_reconciliation':
+            d.update(status='not_measured' if not measured else 'passed' if all(c['status']=='matched' for c in measured) else 'partial',
+                     passed=sum(c['status']=='matched' for c in measured),total=len(measured))
+    return result

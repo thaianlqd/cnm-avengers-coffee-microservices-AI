@@ -3074,7 +3074,10 @@
           "trung bình đơn",
           "aov",
           "Giá trị đơn trung bình",
-          "aov"
+          "aov",
+          "tb 1 đơn",
+          "trung bình 1 đơn",
+          "tb đơn"
         ],
         "expression": "SUM(silver.don_hang.tong_tien) / NULLIF(COUNT(*), 0)",
         "source": "silver.don_hang",
@@ -3787,6 +3790,9 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
+        ],
+        "disjoint_partitions": [
+          "customer_role"
         ]
       },
       "total_spent": {
@@ -4044,6 +4050,9 @@
         "non_anchor_aliases": [
           "đánh giá",
           "sao"
+        ],
+        "qualifier_dimensions": [
+          "driver_id"
         ]
       },
       "stock_quantity": {
@@ -4092,6 +4101,16 @@
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Không áp bộ lọc kỳ lịch sử hoặc suy ra xu hướng từ dữ liệu hiện trạng.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
+        ],
+        "additive_over": [
+          "store",
+          "store_id",
+          "product",
+          "product_id",
+          "category"
+        ],
+        "non_additive_over": [
+          "time"
         ]
       },
       "low_stock_count": {
@@ -4138,6 +4157,16 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Không áp bộ lọc kỳ lịch sử hoặc suy ra xu hướng từ dữ liệu hiện trạng."
+        ],
+        "additive_over": [
+          "store",
+          "store_id",
+          "product",
+          "product_id",
+          "category"
+        ],
+        "non_additive_over": [
+          "time"
         ]
       },
       "avg_product_rating": {
@@ -4147,7 +4176,9 @@
           "đánh giá tb",
           "avg_product_rating",
           "Điểm đánh giá trung bình",
-          "avg product rating"
+          "avg product rating",
+          "đánh giá cao nhất",
+          "khách đánh giá cao nhất"
         ],
         "expression": "ROUND(AVG(silver.danh_gia_san_pham.so_sao), 2)",
         "source": "silver.danh_gia_san_pham",
@@ -4185,6 +4216,10 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Không cộng kết quả các nhóm; cần tính lại trên quần thể gốc."
+        ],
+        "qualifier_dimensions": [
+          "product",
+          "product_id"
         ]
       },
       "review_count": {
@@ -4282,6 +4317,10 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Không cộng kết quả các nhóm; cần tính lại trên quần thể gốc."
+        ],
+        "qualifier_dimensions": [
+          "store",
+          "store_id"
         ]
       },
       "store_review_count": {
@@ -4730,7 +4769,10 @@
         "aliases": [
           "khách mua hàng",
           "khách đã mua",
-          "purchasing customers"
+          "purchasing customers",
+          "số khách hàng mua hàng",
+          "khách hàng đã mua hàng",
+          "khách hàng mua hàng"
         ],
         "expression": "COUNT(DISTINCT silver.don_hang.ma_nguoi_dung)",
         "source": "silver.don_hang",
@@ -4839,7 +4881,8 @@
           "city",
           "store_type",
           "order_type",
-          "payment_method"
+          "payment_method",
+          "reporting_region"
         ],
         "forecast": {
           "forecastable": true,
@@ -4921,7 +4964,8 @@
           "city",
           "store_type",
           "order_type",
-          "payment_method"
+          "payment_method",
+          "reporting_region"
         ],
         "non_anchor_aliases": [
           "giao thành công"
@@ -4933,7 +4977,9 @@
           "failed_or_cancelled_delivery_count",
           "Số chuyến không thành công",
           "chuyến thất bại",
-          "giao không thành công"
+          "giao không thành công",
+          "chuyến giao bị hủy hoặc thất bại",
+          "giao bị hủy hoặc thất bại"
         ],
         "expression": "COUNT(*) FILTER (WHERE silver.giao_hang.trang_thai_giao_hang IN ('FAILED', 'CANCELLED'))",
         "source": "silver.giao_hang",
@@ -4984,7 +5030,8 @@
           "city",
           "store_type",
           "order_type",
-          "payment_method"
+          "payment_method",
+          "reporting_region"
         ],
         "non_anchor_aliases": [
           "chuyến bị hủy"
@@ -5066,7 +5113,8 @@
           "city",
           "store_type",
           "order_type",
-          "payment_method"
+          "payment_method",
+          "reporting_region"
         ]
       },
       "avg_delivery_minutes": {
@@ -5138,7 +5186,8 @@
           "city",
           "store_type",
           "order_type",
-          "payment_method"
+          "payment_method",
+          "reporting_region"
         ]
       },
       "order_cancellation_rate": {
@@ -5222,7 +5271,8 @@
           "order_type",
           "payment_method",
           "weekday",
-          "hour"
+          "hour",
+          "reporting_region"
         ]
       },
       "order_completion_rate": {
@@ -5302,7 +5352,8 @@
           "order_type",
           "payment_method",
           "weekday",
-          "hour"
+          "hour",
+          "reporting_region"
         ]
       },
       "late_shift_rate": {
@@ -5380,7 +5431,8 @@
           "store",
           "store_id",
           "city",
-          "store_type"
+          "store_type",
+          "reporting_region"
         ]
       },
       "large_cash_discrepancy_shift_count": {
@@ -5437,7 +5489,8 @@
           "store",
           "store_id",
           "city",
-          "store_type"
+          "store_type",
+          "reporting_region"
         ]
       },
       "promotion_redemption_count": {
@@ -5498,7 +5551,8 @@
           "store",
           "store_id",
           "city",
-          "store_type"
+          "store_type",
+          "reporting_region"
         ]
       }
     },
@@ -5527,7 +5581,8 @@
             "product"
           ]
         ],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "identity"
       },
       "product_id": {
         "table": "silver.san_pham",
@@ -5546,7 +5601,8 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "identity"
       },
       "category": {
         "table": "silver.danh_muc",
@@ -5571,7 +5627,8 @@
             "product"
           ]
         ],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "category"
       },
       "store": {
         "table": "silver.chi_nhanh",
@@ -5602,7 +5659,8 @@
           "kiosk",
           "kisok",
           "kiốt"
-        ]
+        ],
+        "logical_type": "identity"
       },
       "store_id": {
         "table": "silver.chi_nhanh",
@@ -5622,15 +5680,17 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "identity"
       },
       "city": {
         "table": "silver.chi_nhanh",
         "column": "thanh_pho",
-        "business_name": "Thành phố",
+        "business_name": "Tỉnh/thành trong dữ liệu",
         "aliases": [
           "city",
-          "Thành phố"
+          "Thành phố",
+          "tỉnh thành"
         ],
         "role": "dimension",
         "value_aliases": {
@@ -5683,7 +5743,8 @@
           "kien giang": "Kiên Giang",
           "kiên giang": "Kiên Giang",
           "phu quoc": "Kiên Giang",
-          "phú quốc": "Kiên Giang"
+          "phú quốc": "Kiên Giang",
+          "Thành phố Hồ Chí Minh": "Hồ Chí Minh"
         },
         "enum": [
           "Hồ Chí Minh",
@@ -5717,7 +5778,113 @@
             "store"
           ]
         ],
-        "cardinality_hint": "enumerated"
+        "cardinality_hint": "enumerated",
+        "scope_governed": true,
+        "value_groups": [
+          {
+            "id": "north",
+            "label": "Miền Bắc",
+            "values": [
+              "Hà Nội",
+              "Hải Phòng",
+              "Bắc Ninh",
+              "Quảng Ninh"
+            ],
+            "aliases": [
+              "miền Bắc",
+              "phía Bắc",
+              "northern region",
+              "north Vietnam",
+              "Bắc Bộ"
+            ],
+            "source": "warehouse_reporting_geography_v1",
+            "version": 1,
+            "primary": true,
+            "value": "Miền Bắc"
+          },
+          {
+            "id": "central",
+            "label": "Miền Trung (gồm Tây Nguyên trong phân vùng báo cáo này)",
+            "values": [
+              "Đà Nẵng",
+              "Nghệ An",
+              "Thanh Hóa",
+              "Thừa Thiên - Huế",
+              "Khánh Hòa",
+              "Lâm Đồng"
+            ],
+            "aliases": [
+              "miền Trung",
+              "central Vietnam",
+              "miền Trung và Tây Nguyên",
+              "central region"
+            ],
+            "source": "warehouse_reporting_geography_v1",
+            "version": 1,
+            "primary": true,
+            "value": "Miền Trung"
+          },
+          {
+            "id": "south",
+            "label": "Miền Nam",
+            "values": [
+              "Hồ Chí Minh",
+              "Cần Thơ",
+              "Bình Dương",
+              "Đồng Nai",
+              "Bà Rịa - Vũng Tàu",
+              "Kiên Giang"
+            ],
+            "aliases": [
+              "miền Nam",
+              "phía Nam",
+              "southern region",
+              "south Vietnam",
+              "Nam Bộ"
+            ],
+            "source": "warehouse_reporting_geography_v1",
+            "version": 1,
+            "primary": true,
+            "value": "Miền Nam"
+          },
+          {
+            "id": "southeast",
+            "label": "Đông Nam Bộ",
+            "values": [
+              "Hồ Chí Minh",
+              "Bình Dương",
+              "Đồng Nai",
+              "Bà Rịa - Vũng Tàu"
+            ],
+            "aliases": [
+              "Đông Nam Bộ",
+              "southeast Vietnam"
+            ],
+            "source": "warehouse_reporting_geography_v1",
+            "version": 1,
+            "primary": false,
+            "parent": "south"
+          },
+          {
+            "id": "southwest",
+            "label": "Tây Nam Bộ",
+            "values": [
+              "Cần Thơ",
+              "Kiên Giang"
+            ],
+            "aliases": [
+              "Tây Nam Bộ",
+              "Đồng bằng sông Cửu Long",
+              "southwest Vietnam"
+            ],
+            "source": "warehouse_reporting_geography_v1",
+            "version": 1,
+            "primary": false,
+            "parent": "south"
+          }
+        ],
+        "group_dimension": "reporting_region",
+        "logical_type": "category"
       },
       "customer_id": {
         "table": "silver.nguoi_dung",
@@ -5736,7 +5903,8 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "identity"
       },
       "customer_role": {
         "table": "silver.nguoi_dung",
@@ -5756,7 +5924,8 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "category"
       },
       "loyalty_points": {
         "table": "silver.nguoi_dung",
@@ -5775,7 +5944,8 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "number"
       },
       "lifetime_spend": {
         "table": "silver.nguoi_dung",
@@ -5794,7 +5964,8 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "number"
       },
       "order_id": {
         "table": "silver.don_hang",
@@ -5813,7 +5984,8 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "identity"
       },
       "order_status": {
         "table": "silver.don_hang",
@@ -5852,7 +6024,8 @@
         "value_labels": {
           "DANG_GIAO": "Đang giao",
           "HOAN_THANH": "Hoàn thành"
-        }
+        },
+        "logical_type": "category"
       },
       "payment_method": {
         "table": "silver.don_hang",
@@ -5895,7 +6068,8 @@
           "THANH_TOAN_KHI_NHAN_HANG": "Thanh toán khi nhận hàng",
           "VI_DIEN_TU": "Ví điện tử",
           "VNPAY": "VNPay"
-        }
+        },
+        "logical_type": "category"
       },
       "payment_status": {
         "table": "silver.don_hang",
@@ -5919,7 +6093,8 @@
           "CHO_THANH_TOAN": "Chờ thanh toán",
           "CHO_THANH_TOAN_KHI_NHAN_HANG": "Chờ thu tiền khi nhận",
           "DA_THANH_TOAN": "Đã thanh toán"
-        }
+        },
+        "logical_type": "category"
       },
       "order_amount": {
         "table": "silver.don_hang",
@@ -5938,7 +6113,8 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "number"
       },
       "order_created": {
         "table": "silver.don_hang",
@@ -5957,7 +6133,8 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "date"
       },
       "promotion": {
         "table": "silver.khuyen_mai",
@@ -5987,7 +6164,8 @@
         "required_non_null": [
           "silver.don_hang.ma_voucher"
         ],
-        "display_identity": true
+        "display_identity": true,
+        "logical_type": "identity"
       },
       "promotion_id": {
         "table": "silver.don_hang",
@@ -6011,7 +6189,8 @@
         "cardinality_hint": "unknown_until_result",
         "required_non_null": [
           "silver.don_hang.ma_voucher"
-        ]
+        ],
+        "logical_type": "identity"
       },
       "payment_gateway": {
         "table": "silver.giao_dich_thanh_toan",
@@ -6031,7 +6210,8 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "category"
       },
       "driver_id": {
         "table": "silver.shipper",
@@ -6051,7 +6231,8 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "identity"
       },
       "shift_name": {
         "table": "silver.ca_lam_viec_nhan_vien",
@@ -6070,7 +6251,8 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "category"
       },
       "attendance_status": {
         "table": "silver.ca_lam_viec_nhan_vien",
@@ -6097,7 +6279,8 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "enumerated"
+        "cardinality_hint": "enumerated",
+        "logical_type": "category"
       },
       "stock_quantity_detail": {
         "table": "silver.ton_kho_san_pham",
@@ -6116,7 +6299,8 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "number"
       },
       "warning_threshold": {
         "table": "silver.ton_kho_san_pham",
@@ -6135,7 +6319,8 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "number"
       },
       "hour": {
         "table": "silver.don_hang",
@@ -6154,7 +6339,8 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "cyclic"
       },
       "order_type": {
         "table": "silver.don_hang",
@@ -6186,7 +6372,8 @@
           "DUNG_TAI_CHO": "Dùng tại chỗ",
           "GIAO_TAN_NOI": "Giao tận nơi",
           "MANG_DI": "Mang đi"
-        }
+        },
+        "logical_type": "category"
       },
       "payment_transaction_status": {
         "table": "silver.giao_dich_thanh_toan",
@@ -6206,7 +6393,8 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "category"
       },
       "store_type": {
         "table": "silver.chi_nhanh",
@@ -6266,7 +6454,8 @@
             "store"
           ]
         ],
-        "cardinality_hint": 3
+        "cardinality_hint": 3,
+        "logical_type": "category"
       },
       "delivery_status": {
         "table": "silver.giao_hang",
@@ -6295,7 +6484,8 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "enumerated"
+        "cardinality_hint": "enumerated",
+        "logical_type": "category"
       },
       "weekday": {
         "table": "silver.don_hang",
@@ -6327,7 +6517,8 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "cyclic"
       },
       "redeemed_promotion": {
         "table": "silver.khuyen_mai_su_dung",
@@ -6348,7 +6539,8 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "category"
       },
       "redeemed_promotion_code": {
         "table": "silver.khuyen_mai_su_dung",
@@ -6368,7 +6560,39 @@
         "grouping_semantics": "Nhóm theo giá trị chuẩn của trường này; tên thực thể đi cùng định danh để phân biệt trùng tên.",
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
-        "cardinality_hint": "unknown_until_result"
+        "cardinality_hint": "unknown_until_result",
+        "logical_type": "category"
+      },
+      "reporting_region": {
+        "business_name": "Miền báo cáo",
+        "aliases": [
+          "theo miền",
+          "theo vùng miền",
+          "reporting region",
+          "mỗi miền",
+          "từng miền"
+        ],
+        "table": "silver.chi_nhanh",
+        "column": "thanh_pho",
+        "expression": "CASE WHEN silver.chi_nhanh.thanh_pho IN ('Hà Nội', 'Hải Phòng', 'Bắc Ninh', 'Quảng Ninh') THEN 'Miền Bắc' WHEN silver.chi_nhanh.thanh_pho IN ('Đà Nẵng', 'Nghệ An', 'Thanh Hóa', 'Thừa Thiên - Huế', 'Khánh Hòa', 'Lâm Đồng') THEN 'Miền Trung' WHEN silver.chi_nhanh.thanh_pho IN ('Hồ Chí Minh', 'Cần Thơ', 'Bình Dương', 'Đồng Nai', 'Bà Rịa - Vũng Tàu', 'Kiên Giang') THEN 'Miền Nam' ELSE 'Chưa phân loại' END",
+        "enum": [
+          "Miền Bắc",
+          "Miền Trung",
+          "Miền Nam",
+          "Chưa phân loại"
+        ],
+        "dimension_type": "categorical",
+        "scope_selectable": false,
+        "description": "Phân vùng báo cáo theo warehouse_reporting_geography_v1; không phải phân vùng hành chính hiện hành.",
+        "geography_source": "warehouse_reporting_geography_v1",
+        "geography_version": 1,
+        "filter_anchor": false,
+        "logical_type": "category",
+        "derived_scope_dimension": "city",
+        "business_meaning": "Phân vùng báo cáo theo warehouse_reporting_geography_v1; không phải phân vùng hành chính hiện hành.",
+        "cardinality_hint": 4,
+        "grouping_semantics": "Nhóm theo phân vùng báo cáo kho; NULL/unknown vào Chưa phân loại.",
+        "filter_semantics": "Phạm vi miền được hạ xuống tập city có quản trị; không dùng danh sách do model định nghĩa."
       }
     },
     "subjects": {
@@ -12582,9 +12806,21 @@
       },
       "relationship_strength": {
         "aliases": [
-          "tương quan"
+          "tương quan",
+          "có làm",
+          "có liên hệ",
+          "có ảnh hưởng"
         ],
         "shape": "paired_numeric_metrics"
+      },
+      "driver_delta": {
+        "aliases": [
+          "vì sao",
+          "phân rã thay đổi",
+          "phân rã biến động"
+        ],
+        "shape": "additive_change_decomposition_one_grouping",
+        "default_dimension": "store"
       }
     },
     "unsupported_capabilities": {
@@ -12607,6 +12843,10 @@
       [
         "aov",
         "store_aov"
+      ],
+      [
+        "customer_count",
+        "purchasing_customer_count"
       ]
     ],
     "population_scope_qualifiers": [
@@ -12675,32 +12915,33 @@
       "không phải"
     ],
     "dashboard_policy": {
-      "minimum_views": 4,
+      "minimum_views": 0,
       "target_views": 5,
       "default_depth": "deep",
       "depth_budgets": {
         "focused": {
-          "minimum_views": 1,
+          "minimum_views": 0,
           "max_supporting_operations": 0,
           "related_domains": false,
           "segmented_trends": false,
           "max_segment_dimensions": 0
         },
         "deep": {
-          "minimum_views": 4,
+          "minimum_views": 0,
           "max_supporting_operations": 6,
           "related_domains": true,
           "segmented_trends": true,
           "max_segment_dimensions": 1
         },
         "comprehensive": {
-          "minimum_views": 6,
+          "minimum_views": 0,
           "max_supporting_operations": 8,
           "related_domains": true,
           "segmented_trends": true,
           "max_segment_dimensions": 3
         }
-      }
+      },
+      "narrow_top_n": 5
     },
     "ranking_partition_qualifiers": [
       "trong mỗi",
@@ -12709,7 +12950,9 @@
       "cho từng",
       "mỗi danh mục",
       "mỗi thành phố",
-      "mỗi chi nhánh"
+      "mỗi chi nhánh",
+      "mỗi miền",
+      "từng miền"
     ],
     "presentation_marts": {
       "gold.shipper_performance": {
@@ -13249,7 +13492,9 @@
           "bar",
           "line"
         ],
-        "max_supporting_per_form": 1
+        "max_supporting_per_form": 1,
+        "visible": false,
+        "maps_to": "overview"
       },
       {
         "id": "forecast",
@@ -13475,7 +13720,9 @@
           "scatter",
           "line"
         ],
-        "max_supporting_per_form": 1
+        "max_supporting_per_form": 1,
+        "visible": false,
+        "maps_to": null
       }
     ],
     "risk_signals": [
@@ -13639,6 +13886,16 @@
             "revenue",
             "product_revenue",
             "discount_amount"
+          ],
+          "predicate_aliases": [
+            "đang lỗ",
+            "lỗ vốn",
+            "thua lỗ",
+            "bị lỗ",
+            "chi nhánh lỗ",
+            "cửa hàng lỗ",
+            "đang lãi",
+            "có lãi"
           ]
         },
         "customer_sentiment": {
@@ -13722,7 +13979,23 @@
         "BLOCKED": "Chưa thể gửi yêu cầu này",
         "MISMATCH": "Yêu cầu chưa phù hợp với nhiệm vụ đang chọn",
         "UNRECOGNIZED": "Chưa nhận ra bài toán phân tích"
-      }
+      },
+      "greeting_vocabulary": [
+        "xin chào",
+        "chào",
+        "chào bạn",
+        "hello",
+        "hi",
+        "cảm ơn",
+        "tạm biệt",
+        "bạn khỏe không",
+        "hôm nay thế nào"
+      ],
+      "generic_question_suffixes": [
+        "như thế nào",
+        "ra sao",
+        "thế nào"
+      ]
     },
     "metric_alias_policy": {
       "canonical": {
@@ -13735,6 +14008,126 @@
         "điểm đánh giá trung bình",
         "doanh thu món"
       ]
-    }
+    },
+    "governed_pairs": [
+      {
+        "id": "revenue_vs_cancellation_by_store",
+        "label": "Doanh thu và tỷ lệ hủy theo chi nhánh",
+        "metrics": [
+          "revenue",
+          "order_cancellation_rate"
+        ],
+        "key": [
+          "store_id"
+        ],
+        "label_dimension": "store",
+        "min_pairs": 3,
+        "note": "Hai phép tổng hợp riêng (quần thể đơn hoàn thành và toàn bộ đơn), ghép theo mã chi nhánh duy nhất; không join dòng thô."
+      }
+    ],
+    "scope_expression_policy": {
+      "geography_prefixes": [
+        "miền"
+      ],
+      "comparison": [
+        "so với",
+        "so sánh",
+        "versus",
+        "vs"
+      ],
+      "exclusion": [
+        "trừ",
+        "ngoại trừ",
+        "không gồm",
+        "không bao gồm",
+        "loại",
+        "except",
+        "excluding",
+        "ngoài",
+        "outside"
+      ],
+      "all": [
+        "toàn hệ thống",
+        "tất cả",
+        "toàn quốc",
+        "all stores"
+      ],
+      "exclusion_continuation": [
+        "ngoại trừ",
+        "không gồm",
+        "không bao gồm",
+        "except",
+        "excluding"
+      ]
+    },
+    "scope_clarifications": [
+      {
+        "aliases": [
+          "Quảng Nam"
+        ],
+        "message": "Kho chưa có nhãn Quảng Nam trong danh mục tỉnh/thành; hãy chọn một địa danh được hỗ trợ.",
+        "state": "unsupported"
+      },
+      {
+        "aliases": [
+          "Nha Trang"
+        ],
+        "message": "Kho chỉ có dữ liệu ở mức Khánh Hòa; chưa có bộ lọc riêng cấp Nha Trang. Hãy chọn tỉnh/thành hoặc chi nhánh cụ thể.",
+        "state": "needs_clarification"
+      },
+      {
+        "aliases": [
+          "Đà Lạt"
+        ],
+        "message": "Kho chỉ có dữ liệu ở mức Lâm Đồng; chưa có bộ lọc riêng cấp Đà Lạt. Hãy chọn tỉnh/thành hoặc chi nhánh cụ thể.",
+        "state": "needs_clarification"
+      },
+      {
+        "aliases": [
+          "Phú Quốc"
+        ],
+        "message": "Kho chỉ có dữ liệu ở mức Kiên Giang; chưa có bộ lọc riêng cấp Phú Quốc. Hãy chọn tỉnh/thành hoặc chi nhánh cụ thể.",
+        "state": "needs_clarification"
+      },
+      {
+        "id": "new_store",
+        "aliases": [
+          "chi nhánh mới mở",
+          "cửa hàng mới mở"
+        ],
+        "state": "needs_clarification",
+        "message": "Cần định nghĩa mới mở trong bao lâu và nguồn ngày khai trương; không dùng giao dịch gần đây làm proxy."
+      },
+      {
+        "id": "active_store",
+        "aliases": [
+          "chi nhánh đang hoạt động",
+          "cửa hàng đang hoạt động"
+        ],
+        "state": "unsupported",
+        "message": "Kho chưa có lịch sử trạng thái hoạt động được quản trị; doanh thu lớn hơn 0 không thay thế trạng thái này."
+      },
+      {
+        "id": "returning_customer",
+        "aliases": [
+          "khách quay lại",
+          "khách hàng quay lại"
+        ],
+        "state": "needs_clarification",
+        "message": "Cần định nghĩa khách quay lại và cửa sổ quan sát trước khi chọn cohort."
+      },
+      {
+        "id": "vip_customer",
+        "aliases": [
+          "khách VIP",
+          "khách hàng VIP"
+        ],
+        "state": "unsupported",
+        "message": "Chưa có định nghĩa/hạng VIP được quản trị; không tự đặt ngưỡng chi tiêu để thay thế."
+      }
+    ],
+    "topic_heading_qualifiers": [
+      "hiệu quả"
+    ]
   }
 }

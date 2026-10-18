@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AnalysisQualityScore } from '../AnalysisQualityScore';
-import { forecastRows, mergeReconciliation, numericRows, rankingRows, verificationMetrics } from '../../utils/verificationPresentation.mjs';
+import { forecastRows, mergeReconciliation, numericRows, rankingRows, trustDimensions, verificationMetrics } from '../../utils/verificationPresentation.mjs';
 
 const TONE: Record<string, string> = { emerald: 'border-emerald-200 bg-emerald-50 text-emerald-800', amber: 'border-amber-200 bg-amber-50 text-amber-900', slate: 'border-slate-200 bg-slate-50 text-slate-600' };
 
@@ -10,16 +10,21 @@ const TONE: Record<string, string> = { emerald: 'border-emerald-200 bg-emerald-5
  */
 export const VerificationPanel: React.FC<{ report: any }> = ({ report }) => {
   const [oracle, setOracle] = useState<any>(null), [busy, setBusy] = useState(false), [error, setError] = useState('');
-  useEffect(() => { setOracle(null); setError(''); }, [report?.session_id, report?.revision]);
+  // A reconciliation belongs to exactly one report; late answers for another report are dropped.
+  const reconSeq = useRef(0);
+  const latestIdentity = useRef<string>(''); latestIdentity.current = `${report?.session_id}:${report?.revision}`;
+  useEffect(() => { reconSeq.current += 1; setOracle(null); setError(''); setBusy(false); }, [report?.session_id, report?.revision]);
   const v = mergeReconciliation(report?.verification, oracle);
   const run = async () => {
+    const seq = ++reconSeq.current, identity = latestIdentity.current;
     setBusy(true); setError('');
     try {
       const response = await fetch(`/api/ai/sessions/${encodeURIComponent(report.session_id)}/reconcile`, { method: 'POST', credentials: 'same-origin' });
       const data = await response.json().catch(() => ({}));
+      if (seq !== reconSeq.current || identity !== latestIdentity.current) return;
       if (!response.ok) throw new Error(typeof data.detail === 'string' ? data.detail : 'Chưa chạy được đối chiếu độc lập.');
       setOracle(data);
-    } catch (e: any) { setError(e.message); } finally { setBusy(false); }
+    } catch (e: any) { if (seq === reconSeq.current) setError(e.message); } finally { if (seq === reconSeq.current) setBusy(false); }
   };
   if (!v) return <section data-verification-panel className="rounded-2xl border border-slate-200 bg-white p-5 text-xs text-slate-600">
     Báo cáo này được tạo trước V3.2 nên chưa có bộ kiểm chứng tách riêng. <AnalysisQualityScore assessment={report?.quality_assessment} /></section>;
@@ -34,6 +39,10 @@ export const VerificationPanel: React.FC<{ report: any }> = ({ report }) => {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">{verificationMetrics(v).map((m: any) =>
         <div key={m.id} data-verification-metric={m.id} className={`rounded-xl border px-3 py-2 ${TONE[m.tone]}`}><div className="text-[11px]">{m.label}</div><div className="text-base font-semibold tabular-nums">{m.text}</div></div>)}</div>
     </div>
+    {!!trustDimensions(report, v).length && <ul data-trust-dimensions aria-label="Các chiều tin cậy tách riêng" className="flex flex-wrap gap-2 text-[11px]">
+      {trustDimensions(report, v).map((d: any) => <li key={d.id} data-trust-dimension={d.id}
+        className={`rounded-full border px-2.5 py-1 ${d.status === 'passed' || d.status === 'measured' ? TONE.emerald : d.status === 'partial' ? TONE.amber : TONE.slate}`}>
+        {d.label}: {({ passed: 'đạt', partial: 'một phần', measured: 'đã đo', not_measured: 'chưa đo', not_applicable: 'không áp dụng' } as any)[d.status] || d.status}</li>)}</ul>}
     <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3 text-xs">
       <div className="flex flex-wrap items-center justify-between gap-2"><h4 className="font-semibold text-slate-900">Đối chiếu độc lập: <span data-independent-oracle>{v.independent_oracle_label}</span></h4>
         {report?.session_id && <button type="button" onClick={run} disabled={busy} className="rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40">{busy ? 'Đang đối chiếu…' : oracle ? 'Chạy lại đối chiếu (0 lượt AI)' : 'Chạy đối chiếu độc lập (0 lượt AI)'}</button>}</div>
@@ -54,7 +63,7 @@ export const VerificationPanel: React.FC<{ report: any }> = ({ report }) => {
         {!!dropped.length && <details><summary className="cursor-pointer">{dropped.length} góc nhìn đã được lọc bỏ</summary><ul className="mt-1 space-y-0.5">{dropped.map((d: any, i: number) =>
           <li key={i}>{d.title || d.chart_id}: {({ outside_mission_evidence: 'ngoài bằng chứng của nhiệm vụ', no_requirement_mapping: 'không gắn với yêu cầu', depth_budget: 'vượt ngân sách độ sâu', outside_mission_grammar: 'không đúng dạng biểu đồ của nhiệm vụ', duplicate_view: 'trùng góc nhìn đã có' } as any)[d.reason] || d.reason}</li>)}</ul></details>}</div>
       <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-1.5"><h4 className="font-semibold text-slate-900">Kiểm tra lùi dự báo</h4>
-        {forecast.length ? forecast.map((f, i) => <p key={i}>{f.metric} · {f.method}: {f.errors}; độ phủ khoảng 80%: {f.coverage}.</p>) : <p className="text-slate-500">Báo cáo không có dự báo.</p>}
+        {forecast.length ? forecast.map((f, i) => <p key={i}>{f.metric} · {f.method}: {f.errors}{f.window ? ` (${f.window})` : ''}{f.improvement ? `; ${f.improvement}` : ''}; độ phủ khoảng 80%: {f.coverage}.</p>) : <p className="text-slate-500">Báo cáo không có dự báo.</p>}
         <p className="text-slate-400">Dự báo không thể kiểm chứng với tương lai; chất lượng đo bằng kiểm tra lùi, không gọi là “chính xác x%”.</p></div>
       <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-1.5"><h4 className="font-semibold text-slate-900">Nguồn &amp; phiên bản</h4>
         <p>Danh mục ngữ nghĩa: <code>{String(v.snapshot?.registry_fingerprint || '').slice(0, 12)}</code> · Bộ kiểm chứng {v.version}</p>

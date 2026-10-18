@@ -78,6 +78,9 @@ def metric_locks(anchors, registry):
     for a in anchors.get("metrics", []):
         owner = canonical_anchor(a, registry)
         if not owner:
+            qualified=[m for m in a['candidate_ids'] if context & set(registry['metrics'][m].get('qualifier_dimensions',[]))]
+            if len(qualified)==1:owner=qualified[0]
+        if not owner:
             continue
         siblings = [m for m in a["candidate_ids"] if m != owner]
         qualified = {m for m in siblings if m in explicit or
@@ -157,3 +160,164 @@ def contract_from_preflight(understood, anchors, registry, mission=None, inferre
             "filters": understood.get("filters", []), "time": understood.get("time"),
             "forecast": understood.get("forecast"),
             "confidence": "high" if not unresolved else "partial", "unresolved": unresolved}
+
+
+# --- V3.3 typed capability projections (derived from governed metadata) -------
+# One evaluator input: nothing here is declared by the UI or the provider.
+_NON_ADDITIVE_SEMANTICS = {"average", "ratio"}
+def dimension_logical_type(dimension_id, dimension=None):
+    """Classification is managed metadata. Unknown metadata is categorical, never numeric."""
+    return (dimension or {}).get('logical_type','category')
+
+
+def metric_capability(metric_id, metric):
+    """Typed, additive-over aware projection of a governed metric."""
+    semantics = metric.get("aggregation_semantics")
+    legacy_additive = bool(metric.get("additive"))
+    additive_over = list(metric.get("additive_over") or ([] if semantics in _NON_ADDITIVE_SEMANTICS else ["*"] if legacy_additive and semantics != "distinct_count" else []))
+    if semantics == "distinct_count":
+        additive_over = list(metric.get("disjoint_partitions") or [])
+    return {"id": metric_id, "semantics": semantics, "unit": metric.get("unit"), "grain": metric.get("grain"),
+            "additive": legacy_additive, "additive_over": additive_over,
+            "non_additive_over": list(metric.get("non_additive_over") or []),
+            "ratio_parts": {"numerator": metric.get("numerator"), "denominator": metric.get("denominator")}
+            if semantics == "ratio" else None}
+
+
+def additive_across(capability, partition):
+    """True only when summing the metric across ``partition`` is meaningful.
+
+    ``partition`` is a dimension id or "time". Ratios/averages never sum, distinct
+    counts only over declared disjoint partitions, semi-additive metrics never over
+    their ``non_additive_over`` axes.
+    """
+    if partition in capability["non_additive_over"]:
+        return False
+    if capability["semantics"] in _NON_ADDITIVE_SEMANTICS:
+        return False
+    over = capability["additive_over"]
+    return "*" in over or partition in over
+
+
+# --- V3.3 single capability decision -----------------------------------------
+from typing import Literal, Optional
+from pydantic import Field
+from services.analysis_contract import Contract
+
+POLICY_VERSION = "3.3.1"
+
+
+class ViewRequirement(Contract):
+    kind: Literal["time_series", "grouped", "scalar", "ranking", "paired_scatter", "driver_delta"]
+    metric_ids: list[str] = Field(default_factory=list)
+    dimension_ids: list[str] = Field(default_factory=list)
+    required: bool = True
+    id: Optional[str] = None
+    operation_ids: list[str] = Field(default_factory=list)
+    transform: Optional[str] = None
+
+
+class CapabilityConstraint(Contract):
+    code: str
+    stage: Literal["static", "semantic", "runtime"]
+    blocking: bool = True
+    subject: Optional[str] = None
+    owner: str = "catalog"
+    status: Literal['passed', 'failed', 'pending'] = 'failed'
+    requirement_id: Optional[str] = None
+    message: str = ''
+
+
+class CapabilityDecision(Contract):
+    decision: Literal["READY", "CLARIFY", "REDIRECT", "UNSUPPORTED"]
+    policy_version: str = POLICY_VERSION
+    constraints: list[CapabilityConstraint] = Field(default_factory=list)
+    views: list[ViewRequirement] = Field(default_factory=list)
+    stage: Literal['input', 'compiled'] = 'compiled'
+    catalog_fingerprint: Optional[str] = None
+    interpretation_required: bool = False
+    reason: Optional[str] = None
+    message: str = ''
+    actions: list[dict] = Field(default_factory=list)
+
+
+CLARIFY_CODES = {'unrecognized_question', 'no_metric_detected', 'metric_needed', 'analysis_target_missing',
+    'trend_range_too_short', 'compare_mixed_units', 'cohort_criterion_needed', 'association_category_variable',
+    'scope_unresolved', 'scope_conflict'}
+REDIRECT_CODES = {'composition_non_additive', 'risk_signal_required', 'risk_mixed_roles', 'mission_mismatch', 'non_additive_total'}
+
+
+def decision_from_findings(findings, *, catalog_fingerprint=None, interpretation_required=False):
+    """The shared input decision. Consumers must enforce ALL failed constraints, never a code whitelist."""
+    constraints = [CapabilityConstraint(code=f['code'], stage='static', subject=f.get('metric') or f.get('dimension'),
+        message=f['message'], owner='catalog') for f in findings if f['level'] == 'block']
+    codes = {c.code for c in constraints}
+    verdicts = {'CLARIFY' if c in CLARIFY_CODES else 'REDIRECT' if c in REDIRECT_CODES else 'UNSUPPORTED' for c in codes}
+    decision = next((d for d in ('UNSUPPORTED', 'CLARIFY', 'REDIRECT') if d in verdicts), 'READY')
+    actions = [dict(fix, constraint_code=f['code']) for f in findings if f['level'] == 'block' for fix in f.get('fixes', [])]
+    for action in actions:
+        if action.get('kind')=='switch_mission': action['patch']={'mission':action['mission']}
+        elif action.get('kind')=='set_time': action['patch']={'time':action['time']}
+        elif action.get('kind')=='replace_question': action['patch']={'question':action['question']}
+        action['preserves']=['metric','time','scope'] if action.get('kind')=='switch_mission' else []
+    return CapabilityDecision(decision=decision, stage='input', constraints=constraints, actions=actions,
+        catalog_fingerprint=catalog_fingerprint, interpretation_required=interpretation_required and not constraints,
+        reason=constraints[0].code if constraints else None, message=constraints[0].message if constraints else '')
+
+
+def evaluate_capability(requirement, registry, forecast_check=None):
+    """One decision from governed metadata; every constraint names its stage/owner.
+
+    `forecast_check(metric_id, unit, horizon)` raises when the governed forecast
+    capability rejects the request (injected to avoid import cycles)."""
+    metrics, dims = registry.get("metrics", {}), registry.get("dimensions", {})
+    cons, views = [], []
+    def add(code, stage, subject=None, blocking=True, owner="catalog"):
+        cons.append(CapabilityConstraint(code=code, stage=stage, subject=subject, blocking=blocking, owner=owner))
+    for m in requirement.metric_ids:
+        if m not in metrics:
+            add("unknown_metric", "static", m)
+    for d in requirement.dimension_ids:
+        if d not in dims:
+            add("unknown_dimension", "static", d)
+    if any(c.stage == "static" for c in cons):
+        return CapabilityDecision(decision="UNSUPPORTED", constraints=cons)
+    if requirement.availability in ("unsupported", "insufficient_data"):
+        add("declared_" + requirement.availability, "semantic", requirement.reason, owner="provider")
+        return CapabilityDecision(decision="UNSUPPORTED", constraints=cons)
+    if not requirement.metric_ids or requirement.availability == "needs_input":
+        add("metric_required", "semantic", owner="resolver")
+        return CapabilityDecision(decision="CLARIFY", constraints=cons)
+    fc = requirement.forecast
+    if fc is not None:
+        if requirement.filters:
+            add('forecast_scope_unsupported','semantic',owner='forecast')
+        if len(requirement.metric_ids) != 1 or requirement.dimension_ids or requirement.ranking:
+            add("forecast_shape", "semantic", owner="forecast")
+        elif forecast_check:
+            try:
+                forecast_check(requirement.metric_ids[0], fc.unit, fc.horizon)
+            except Exception:
+                add("forecast_unsupported", "semantic", requirement.metric_ids[0], owner="forecast")
+        views.append(ViewRequirement(kind="time_series", metric_ids=list(requirement.metric_ids)))
+    else:
+        for feature in set(requirement.derived_features or []) & {'selected_total','contribution_share','concentration','driver_delta'}:
+            selected=requirement.feature_metrics.get(feature)
+            if selected is None:
+                eligible=[m for m in requirement.metric_ids if metrics[m].get('additive')]
+                selected=eligible or requirement.metric_ids
+            for m in selected:
+                if m not in metrics: continue  # resolver reports invalid targets without dropping siblings
+                cap=metric_capability(m,metrics[m])
+                if any(not additive_across(cap,d) for d in requirement.dimension_ids):
+                    add('non_additive_total','semantic',m,owner='catalog')
+        kind = ("driver_delta" if "driver_delta" in (requirement.derived_features or [])
+                else "paired_scatter" if requirement.analysis_kind == "relationship" and len(requirement.metric_ids) == 2
+                and any(set(requirement.metric_ids) == set(p["metrics"]) for p in registry.get("governed_pairs", []))
+                else "ranking" if requirement.ranking else "time_series" if requirement.analysis_kind=="trend"
+                else "grouped" if requirement.dimension_ids else "scalar")
+        views.append(ViewRequirement(kind=kind, metric_ids=list(requirement.metric_ids),
+                                     dimension_ids=list(requirement.dimension_ids)))
+    if any(c.blocking for c in cons):
+        return CapabilityDecision(decision="REDIRECT", constraints=cons, views=views)
+    return CapabilityDecision(decision="READY", constraints=cons, views=views)

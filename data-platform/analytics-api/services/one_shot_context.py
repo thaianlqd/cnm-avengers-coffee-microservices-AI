@@ -19,7 +19,7 @@ def wire_payload(payload):
             if pack["tier"] == "compact":
                 pack.pop("metrics", None)
                 pack.pop("dimensions", None)
-        knowledge["compact_lens_columns"] = "id,label,metrics,capabilities; subject metrics and compatible dimensions in manifest"
+        knowledge["compact_lens_columns"] = "id,label,metrics,capabilities; compatibility in manifest"
     meanings = {}
     for pack in knowledge["packs"]:
         meanings.update(pack.pop("metric_meanings", {}))
@@ -48,7 +48,7 @@ def wire_payload(payload):
                 pack["blueprints"][lens] = encoded
         if sets:
             knowledge["blueprint_sets"] = sets
-            knowledge["blueprint_encoding"] = "In blueprint rows, integer cells reference blueprint_sets[index]; all other cells are literal. Submit semantic IDs, never indices."
+            knowledge["blueprint_encoding"] = "Integers reference blueprint_sets[index]; others are literal. Submit IDs, not indices."
     return value
 
 

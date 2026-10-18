@@ -120,6 +120,15 @@ export function workspaceRequestFields(guided, prompt) {
 /** Scope recognized from the question (server preflight), shown instead of a default picker. */
 export function detectedScope(preflight) {
   const u = preflight?.understood || {};
+  const resolution = preflight?.scope_resolution;
+  if (resolution?.state === 'resolved') {
+    const bindings = resolution.bindings || [];
+    const groups = resolution.source || [];
+    const filters = bindings.map(b => ({kind:'filter',label: `${groups.map(g => g.label || g.id).join(' · ') || 'Phạm vi đã nhận diện'} · ${b.members.length} tỉnh/thành trong danh mục kho`}));
+    return {filters,axes:(u.dimensions || []).map(d => ({kind:'axis',label:`Theo ${String(d.label).toLowerCase()}`})),summary:filters.map(f=>f.label).join(' · ')};
+  }
+  if (resolution && ['needs_interpretation','needs_clarification','unsupported'].includes(resolution.state))
+    return {filters:[],axes:[],summary:`Phạm vi đang cần xác minh: ${resolution.requested_phrase || resolution.message || ''}`};
   const filters = (u.filters || []).map(f => ({ kind: 'filter', label: `${f.label}: ${f.display}` }));
   const axes = (u.dimensions || []).map(d => ({ kind: 'axis', label: `Theo ${String(d.label).toLowerCase()}` }));
   return { filters, axes, summary: filters.length ? filters.map(f => f.label).join(' · ') : 'Toàn hệ thống (chưa nêu phạm vi trong câu hỏi)' };
@@ -127,4 +136,40 @@ export function detectedScope(preflight) {
 
 export function depthOptions(capabilities) {
   return (capabilities?.analysis_depths || []).map(d => ({ ...d, short: String(d.label).replace('Phân tích toàn diện', 'Toàn diện') }));
+}
+
+// --- V3.3 state isolation: one pure place decides what a workspace edit invalidates ---
+const SEMANTIC_KEYS = ['mission', 'prompt', 'guided', 'time', 'start', 'end', 'scope', 'depth'];
+
+/**
+ * An edit that changes the meaning of the request (question, mission, period, scope, depth)
+ * invalidates any proposed plan, clarification and report, and every in-flight response.
+ * Returns { invalidate: boolean, clearReport: boolean }.
+ */
+export function invalidationFor(patch = {}) {
+  const semantic = SEMANTIC_KEYS.some(k => k in patch);
+  return { invalidate: semantic, clearReport: semantic };
+}
+
+/** A response may only be applied while the epoch it was started under is still current. */
+export const isCurrentEpoch = (started, current) => started === current;
+
+/** Active state after "new question": everything resets, saved history is kept by the caller. */
+export function resetActive(epoch = 0) {
+  return { epoch: epoch + 1, prompt: '', guided: null, plan: null, report: null, clarification: null,
+    versions: [], activeVersion: 0, chat: [], followUp: '', step: 1, generating: false };
+}
+
+/**
+ * A clarification choice is a controlled edit of the question, never an auto-submitted concatenation:
+ * the clause replaces a previous clarification of the same choice, the user sees the edited question and
+ * preflight re-runs before anything is sent. Returns the new question text.
+ */
+export function applyClarificationChoice(question = '', choice = '') {
+  const clause = String(choice || '').trim().replace(/[.?!\s]+$/, '');
+  const base = String(question || '').trim().replace(/[.?!\s]+$/, '');
+  if (!clause) return base;
+  if (!base) return clause;
+  if (base.toLocaleLowerCase('vi').includes(clause.toLocaleLowerCase('vi'))) return base;  // idempotent: picking twice adds nothing
+  return `${base}, ${clause.charAt(0).toLocaleLowerCase('vi')}${clause.slice(1)}`;
 }

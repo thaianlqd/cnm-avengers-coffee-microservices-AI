@@ -171,9 +171,9 @@ def ai_status():
         "planning_mode": "hybrid_verifiable",
         "provider_call_budget": validate_single_shot_policy(),
         "one_click": {"enabled": os.getenv('DATA_ANALYST_ONE_CLICK_ENABLED','1') == '1',
-            "job_deadline_seconds": 45, "workers_per_replica": 4,
+            "job_deadline_seconds": 70, "workers_per_replica": 4,
             "max_active_jobs": 12, "query_concurrency_per_job": 2,
-            "plan_cache_seconds": 300, "minimum_views": 4, "target_views": 5},
+            "plan_cache_seconds": 300, "minimum_views": 0, "target_views": 5},
         "providers": providers,
         "metadata": metadata,
         "sessions": session_stats(),
@@ -248,6 +248,13 @@ def ai_risk_watch(payload: AiRiskWatchRequest, request: Request = None, response
         r = catalog.registry
         reference = payload.reference_date or catalog_today(r["timezone"])
         scope = payload.analysis_scope.model_dump(mode="json") if payload.analysis_scope else None
+        if payload.question.strip():
+            from services.preflight_service import run as preflight
+            checked=preflight(payload.question,payload.time.model_dump(mode='json') if payload.time else None,
+                scope,'risk_watch',reference,catalog=catalog,input_mode='guided',
+                guided_contract={'signals':[s['id'] for s in r.get('risk_signals',[])]})
+            if checked['capability']['decision']!='READY':
+                raise HTTPException(422,detail=checked['capability'])
         ui = payload.time.mode if payload.time else "auto"
         period = None
         if ui in {"current_month", "previous_month", "current_quarter", "previous_quarter", "current_year", "previous_year", "all_time"}:
@@ -262,21 +269,31 @@ def ai_risk_watch(payload: AiRiskWatchRequest, request: Request = None, response
             parts = parse_time(payload.question, r["interpretation"], r["timezone"], reference)["recognized_time_parts"]
             if parts:
                 period = resolve_time(parts[0], reference, r["timezone"])[0]
-            if not scope:
-                values = [v for v in request_anchors(payload.question, catalog, {})["values"]
-                          if r["dimensions"][v["dimension"]].get("scope_selectable")]
-                grouped = {}
-                for v in values:
-                    grouped.setdefault(v["dimension"], []).append(v["value"])
-                if grouped:
-                    scope = {"mode": "selected", "filters": [{"dimension": d, "operator": "in", "value": vs} for d, vs in grouped.items()]}
-        return risk_watch_service.evaluate(catalog, scope, period, payload.breakdown, reference=reference, lookup=lookup_dimension_values)
-    except (ValueError, TypeError):
-        raise HTTPException(status_code=422, detail="Khoảng thời gian không hợp lệ cho kiểm tra rủi ro.") from None
-    except AnalysisError as error:
+        # Scope resolution is independent of the selected time preset.
+        from services.scope_resolution_service import resolve_scope
+        from services.request_anchors import population_filters
+        anchors = request_anchors(payload.question, catalog, {"required_filters": (scope or {}).get("filters") or []})
+        resolved = anchors['scope_resolution']
+        if resolved['state'] == 'needs_clarification':
+            raise AnalysisError('query_scope', resolved['message'])
+        if not scope or scope.get('mode') == 'auto':
+            filters = population_filters(anchors, catalog)
+            grouped = {}
+            for v in anchors['values']:
+                if r['dimensions'][v['dimension']].get('scope_selectable'):
+                    grouped.setdefault(v['dimension'], set()).add(v['value'])
+            filters += [dict(dimension=d,operator='in',value=sorted(vs)) for d,vs in grouped.items()
+                        if not any(f['dimension']==d for f in filters)]
+            if filters: scope = {'mode':'selected','filters':filters}
+        return risk_watch_service.evaluate(catalog, scope, period, payload.breakdown, reference=reference, lookup=lookup_dimension_values, signal_ids=payload.signals)
+    except AnalysisError as error:   # AnalysisError is a ValueError: it must be classified before the generic value error
+        if error.category == "risk_signal_unknown":
+            raise HTTPException(status_code=422, detail="Tín hiệu rủi ro đã chọn không có trong danh mục được quản trị.") from None
         if error.category in {"query_scope", "filter_value_unknown"}:
             raise HTTPException(status_code=422, detail="Phạm vi đã chọn không hợp lệ cho kiểm tra rủi ro.") from None
         raise HTTPException(status_code=503, detail="Chưa thể tính tín hiệu rủi ro.") from None
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=422, detail="Khoảng thời gian không hợp lệ cho kiểm tra rủi ro.") from None
     except HTTPException:
         raise
     except Exception:
@@ -302,7 +319,7 @@ def ai_scope_values(dimension: str = Query(min_length=1, max_length=64), search:
 
 @router.post("/propose-plan")
 async def bounded_propose_plan(payload: AiTextToReportRequest, request: Request = None, response: Response = None):
-    from services.provider_budget import request_deadline, request_cancelled, PLANNING_SECONDS
+    from services.provider_budget import request_deadline, request_cancelled, PLANNING_SECONDS, HTTP_DEADLINE_SECONDS
     owner=browser_owner(request,response)
     token=request_deadline.set(time.monotonic()+PLANNING_SECONDS)
     cancelled=Event()
@@ -311,7 +328,7 @@ async def bounded_propose_plan(payload: AiTextToReportRequest, request: Request 
         # The HTTP deadline also covers catalog I/O and preflight. A timed-out
         # worker cannot start provider work or create a proposal after expiry;
         # proposal planning never executes analytical result queries.
-        return await asyncio.wait_for(asyncio.to_thread(_invoke,'propose',payload,owner),timeout=29)
+        return await asyncio.wait_for(asyncio.to_thread(_invoke,'propose',payload,owner),timeout=HTTP_DEADLINE_SECONDS)
     except asyncio.TimeoutError:
         logger.warning('Analysis planning HTTP deadline exhausted')
         return safe_failure(AnalysisError('planning_timeout','Planning response deadline exhausted'),

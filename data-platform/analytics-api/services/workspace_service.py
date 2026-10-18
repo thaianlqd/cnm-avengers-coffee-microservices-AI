@@ -31,6 +31,8 @@ def validate_workspace(registry):
             raise ValueError("Mission operation unavailable")
         if not set(m["chart_forms"]) <= CHART_FORMS or not set(m["result_tabs"]) <= RESULT_TABS:
             raise ValueError("Mission chart/result form unsupported")
+        if m.get("visible", True) is False and m.get("maps_to") not in {None, *MISSION_IDS} - {m["id"]}:
+            raise ValueError("Hidden mission must map to another mission or free form")
         if not set(m.get("follow_ups", [])) <= FOLLOW_UPS:
             raise ValueError("Mission follow-up unsupported")
         template = m.get("template", {})
@@ -98,11 +100,14 @@ def metric_capabilities(catalog, profiles, executable):
                        for d in l["dimension_refs"]]
             curated += [d for d, v in r["dimensions"].items() if v.get("scope_selectable") and d in compatible
                         and not d.endswith("_id")]
+            curated += [d for d,v in r['dimensions'].items() if v.get('derived_scope_dimension') in curated and d in compatible]
             dims = [d for d in dict.fromkeys(curated) if d in compatible]
             examples = [e for p2 in profiles.values() for l in p2["analytical_lenses"] if metric in l["metric_refs"]
                         for e in l.get("example_intents", [])[:1]]
             forecast = m.get("forecast") or {}
+            from services.semantic_preflight_contract import metric_capability
             out[metric] = {
+                "capability": metric_capability(metric, m),
                 "id": metric, "label": m["business_name"], "domain": domain_id, "unit": m["unit"],
                 "semantic_type": m.get("aggregation_semantics"), "additive": bool(m.get("additive")),
                 "historical": bool(m.get("time_column")), "current": not m.get("time_column"),
@@ -143,6 +148,7 @@ def mission_catalog(registry, metrics, coverage, lenses):
             status, reason = "partial", "Chỉ hỗ trợ quan hệ giữa các chỉ số trong cùng một nhóm phân tích (ví dụ shipper)."
         from services.mission_contract_service import contracts
         out.append({**{k: m[k] for k in ("id", "label", "description", "operations", "result_tabs", "chart_forms", "kpi_cards", "template", "examples")},
+                    "visible": m.get("visible", True), "maps_to": m.get("maps_to"),
                     "caveat": m.get("caveat"), "follow_ups": m.get("follow_ups", []),
                     "input_contract": contracts(registry).get(m["id"]),
                     "status": status, "reason": reason, "metrics": eligible})

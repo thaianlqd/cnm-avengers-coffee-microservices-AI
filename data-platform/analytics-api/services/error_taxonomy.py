@@ -10,6 +10,8 @@ _TYPES = {
     "unsupported_metric": ("UNSUPPORTED_CAPABILITY", "UNSUPPORTED_CAPABILITY", False),
     "unsupported_dimension": ("UNSUPPORTED_CAPABILITY", "UNSUPPORTED_CAPABILITY", False),
     "unsupported": ("UNSUPPORTED_CAPABILITY", "UNSUPPORTED_CAPABILITY", False),
+    "non_additive_total": ("UNSUPPORTED_CAPABILITY", "UNSUPPORTED_CAPABILITY", False),
+    "driver_unsupported": ("UNSUPPORTED_CAPABILITY", "UNSUPPORTED_CAPABILITY", False),
     "unsupported_domain": ("UNSUPPORTED_CAPABILITY", "UNSUPPORTED_CAPABILITY", False),
     "domain_lens_invalid": ("UNSUPPORTED_CAPABILITY", "UNSUPPORTED_CAPABILITY", False),
     "not_analytical_request": ("OUT_OF_SCOPE", "UNSUPPORTED_CAPABILITY", False),

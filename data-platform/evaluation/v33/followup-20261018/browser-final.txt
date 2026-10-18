@@ -1,0 +1,2 @@
+== e2e (log: /tmp/v33-followup-resume/final-browser/e2e.log)
+  16 passed (30.1s)

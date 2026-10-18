@@ -6,7 +6,7 @@ from services.analyst_contract import Granularity, Operation
 
 DerivedFeature = Literal["scalar", "contribution_share", "leader", "top_gap", "group_gap",
                          "change", "change_pct", "concentration", "selected_total",
-                         "relationship_strength"]
+                         "relationship_strength", "driver_delta"]
 
 
 class IntentRanking(Contract):
@@ -27,14 +27,14 @@ class IntentForecast(Contract):
 class IntentRequirement(Contract):
     id: str = Field(pattern=r"^[a-z][a-z0-9_]{0,39}$")
     goal: str = Field(default="Phân tích yêu cầu", min_length=1, max_length=2000,
-                      description="Display label <=120 chars preferred; not executable meaning.")
+                      description="Display label (<=120 chars).")
     domain_id: Optional[str] = None
     lens_hint: Optional[str] = None
     supporting_for: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z0-9_]{0,39}$",
         description='Related view of a requested requirement ID.')
     metric_ids: list[str] = Field(default_factory=list, max_length=6)
     dimension_ids: list[str] = Field(default_factory=list, max_length=4,
-        description='Business grouping axes only; trend period comes from granularity, not a raw timestamp.')
+        description='Business grouping axes; trend period comes from granularity.')
     analysis_kind: Optional[Literal['comparison', Operation]] = Field(default=None,
         description='comparison/aggregate for groups; cross_tab requires two independent dimensions.')
     filters: list[Filter] = Field(default_factory=list, max_length=12)
@@ -45,7 +45,7 @@ class IntentRequirement(Contract):
     derived_features: list[DerivedFeature] = Field(default_factory=list, max_length=10,
         description='scalar: ungrouped KPI. selected_total: sum a Top N cohort, never an average.')
     feature_metrics: dict[DerivedFeature, list[str]] = Field(default_factory=dict, max_length=10,
-        description='Targets only ACTIVE derived_features within metric_ids. Omit inactive entries and unnecessary maps.')
+        description='Targets only ACTIVE derived_features within metric_ids.')
     forecast: Optional[IntentForecast] = None
     availability: Literal["requested", "needs_input", "unsupported", "insufficient_data"] = "requested"
     reason: Optional[Literal["historical_data_unavailable", "metric_unavailable",
@@ -271,7 +271,8 @@ def repair_tool(issues, previous=None):
                 changed = deepcopy(item)
                 changed['properties'] = {k:v for k,v in changed['properties'].items() if k in fields}
                 changed['properties']['id']['enum'] = [target]
-                changed['required'] = ['id']; changed['additionalProperties'] = False
+                changed['required'] = sorted({'id'}|({'filters'} if 'filters' in fields else set()))
+                changed['additionalProperties'] = False
                 alternatives.append(changed)
             # Define each field's type once. Branches restrict allowed keys and
             # mandatory shape without duplicating the full time/ranking grammar.

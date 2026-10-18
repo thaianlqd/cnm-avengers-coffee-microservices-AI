@@ -5,7 +5,7 @@ const ICONS: Record<string, string> = { overview: '◎', compare: '⇄', ranking
 const card = (active: boolean) => `text-left rounded-xl border px-3 py-2.5 transition-colors min-h-[64px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${active ? 'border-emerald-300 bg-emerald-50 text-emerald-900 shadow-2xs' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'} disabled:opacity-45 disabled:cursor-not-allowed`;
 
 /**
- * Eight governed missions (availability and reasons from the server) plus a
+ * Six visible governed missions (availability and reasons from the server) plus a
  * neutral "Câu hỏi tự do" mode. Missions are mission-scoped workspaces: the
  * parent keeps an independent draft per mission (V3.2 §11-12).
  */

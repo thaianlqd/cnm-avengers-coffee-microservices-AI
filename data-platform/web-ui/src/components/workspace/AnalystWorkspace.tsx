@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import type { PreflightResult } from '../../types';
 import { AnalysisInputForm } from '../AnalysisInputForm';
 import { DataCoverageBar } from './DataCoverageBar';
 import { MissionPicker } from './MissionPicker';
@@ -25,8 +26,8 @@ const PROVIDER: Record<string, string> = { available: 'Sẵn sàng', degraded: '
 
 /** Step 1 of the AI assistant: a mission-consistent workspace before any AI call. */
 export const AnalystWorkspace: React.FC<{ capabilities: any; status: any; value: WorkspaceInput; disabled: boolean;
-  onChange: (patch: Partial<WorkspaceInput>) => void; onSubmit: (prompt?: string) => void; children?: React.ReactNode }> = ({ capabilities, status, value, disabled, onChange, onSubmit, children }) => {
-  const [preflight, setPreflight] = useState<any>(null), [pending, setPending] = useState(false), [error, setError] = useState('');
+  onChange: (patch: Partial<WorkspaceInput>) => void; onSubmit: (prompt?: string) => void; onPreview?: () => void; children?: React.ReactNode }> = ({ capabilities, status, value, disabled, onChange, onSubmit, onPreview, children }) => {
+  const [preflight, setPreflight] = useState<PreflightResult | null>(null), [pending, setPending] = useState(false), [error, setError] = useState('');
   const [risk, setRisk] = useState<any>(null), [riskBusy, setRiskBusy] = useState(false), [riskError, setRiskError] = useState('');
   const client = useMemo(() => createPreflightClient({ fetchImpl: (url, init) => fetch(url, init), debounceMs: capabilities?.limits?.preflight?.debounce_ms || 400,
     onPending: setPending, onResult: (result, message) => { setPreflight(result); setError(message || ''); } }), [capabilities?.limits?.preflight?.debounce_ms]);
@@ -54,11 +55,13 @@ export const AnalystWorkspace: React.FC<{ capabilities: any; status: any; value:
     setRiskBusy(true); setRiskError('');
     try {
       const time = value.time === 'custom' ? { mode: 'custom', start: value.start, end: value.end } : { mode: value.time };
+      const chosen: string[] | undefined = guided ? value.guided?.contract?.signals : undefined;
       const response = await fetch('/api/ai/risk-watch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
-        body: JSON.stringify({ question: value.prompt, time, ...(value.scope?.mode === 'selected' ? { analysis_scope: value.scope } : {}) }) });
+        body: JSON.stringify({ question: value.prompt, time, ...(chosen?.length ? { signals: chosen } : {}),
+          ...(value.scope?.mode === 'selected' ? { analysis_scope: value.scope } : {}) }) });
       const data = await response.json().catch(() => ({}));
       if (id !== riskSeq.current) return;
-      if (!response.ok) throw new Error(typeof data.detail === 'string' ? data.detail : 'Phạm vi hoặc thời gian chưa hợp lệ cho kiểm tra rủi ro.');
+      if (!response.ok) throw new Error(typeof data.detail === 'string' ? data.detail : data.detail?.message || 'Phạm vi hoặc thời gian chưa hợp lệ cho kiểm tra rủi ro.');
       const selected: string[] | undefined = guided ? value.guided?.contract?.signals : undefined;
       setRisk(selected ? { ...data, signals: (data.signals || []).filter((s: any) => selected.includes(s.id)) } : data);
     } catch (e: any) { if (id === riskSeq.current) setRiskError(e.message); } finally { if (id === riskSeq.current) setRiskBusy(false); }
@@ -107,11 +110,13 @@ export const AnalystWorkspace: React.FC<{ capabilities: any; status: any; value:
           <button type="button" onClick={() => onSubmit()} disabled={disabled || blocked || !value.prompt.trim()} title={blocked ? 'Câu hỏi bị chặn bởi kiểm tra trước' : undefined}
             className={isRisk ? 'px-4 py-2 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40'
               : 'px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-medium shadow-xs disabled:opacity-40 disabled:cursor-not-allowed'}>
-            {isRisk ? 'Phân tích sâu bằng AI' : guided || preflight?.state === 'READY_GUIDED' ? 'Lập kế hoạch (không cần AI)' : 'Lập kế hoạch'}</button>
+            {isRisk ? 'Phân tích sâu bằng AI' : onPreview ? 'Phân tích' : guided || preflight?.state === 'READY_GUIDED' ? 'Lập kế hoạch (không cần AI)' : 'Lập kế hoạch'}</button>
+          {onPreview && !isRisk && <button type="button" data-preview-plan onClick={onPreview} disabled={disabled || blocked || !value.prompt.trim()}
+            className="px-4 py-2 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40">Xem kế hoạch</button>}
         </div>
       </div>
       {riskError && <p role="alert" className="text-xs text-rose-700">{riskError}</p>}
-      {risk && <RiskSignalTable result={risk} onAsk={(q, m) => onChange({ mission: m, prompt: q, guided: null })} />}
+      {risk && <RiskSignalTable result={risk} onAsk={(q, m, ctx) => onChange({ mission: m, prompt: q, guided: null, ...(ctx?.scope?.length ? { scope: { mode: 'selected', filters: ctx.scope } } : {}), ...(ctx?.time?.mode ? { time: ctx.time.mode, start: ctx.time.start || '', end: ctx.time.end || '' } : {}) })} />}
       {children}
     </Card>
   </div>;

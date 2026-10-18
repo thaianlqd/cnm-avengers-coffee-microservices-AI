@@ -39,8 +39,8 @@ class OverviewDashboardTests(f.unittest.TestCase):
     def test_slow_primary_finishes_without_a_manual_retry(self):
         clock=[100.0]
         def post(*args, **kwargs):
-            self.assertGreaterEqual(kwargs['timeout'].read_timeout, 12)
-            clock[0] += 12
+            self.assertGreaterEqual(kwargs['timeout'].read_timeout, 9)   # V3.3: one attempt is capped at 12 s (10 s read)
+            clock[0] += 11
             return Mock(ok=True,json=Mock(return_value={'candidates':[{'content':{'parts':[{'text':json.dumps(recorded())}]}}]}))
         with patch.dict(f.os.environ,{'AI_OFFLINE':'0','GEMINI_API_STYLE':'native','DATA_ANALYST_INTENT_TRANSPORT':'json'}), \
              patch.object(llm_service,'GEMINI_API_KEY','fixture'),patch.object(llm_service,'GEMINI_MODELS',['fixture']), \

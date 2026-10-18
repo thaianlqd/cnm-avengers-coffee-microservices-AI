@@ -121,3 +121,23 @@ test('failure card tells the user at which stage it failed (§117), without inte
   const html = render(Card, { response: { status: 'error', analysis_stage: 'PRECHECK_FAILURE', message: 'x' } });
   assert.ok(html.includes('Giai đoạn: Kiểm tra trước khi gửi'));
 });
+
+test('V3.3 trust dimensions: independent accuracy follows the oracle once run, never defaults to passed', async () => {
+  const { trustDimensions } = await import('./verificationPresentation.mjs');
+  const report = { quality_assessment: { trust_dimensions: [
+    { id: 'reliability', label: 'a', status: 'passed', passed: 1, total: 1 },
+    { id: 'independent_accuracy', label: 'b', status: 'not_measured', passed: 0, total: 0 }] } };
+  assert.equal(trustDimensions(report, {}).find(d => d.id === 'independent_accuracy').status, 'not_measured');
+  assert.equal(trustDimensions(report, { independent_oracle: { accuracy_pct: 100, eligible: 4, matched: 4 } }).find(d => d.id === 'independent_accuracy').status, 'passed');
+  assert.equal(trustDimensions(report, { independent_oracle: { accuracy_pct: 75, eligible: 4, matched: 3 } }).find(d => d.id === 'independent_accuracy').status, 'partial');
+  assert.deepEqual(trustDimensions({}, {}), []);
+});
+
+test('V3.3 forecast backtest rows show real error metrics and a baseline, never a false "not enough points"', async () => {
+  const { forecastRows } = await import('./verificationPresentation.mjs');
+  const rows = forecastRows({ forecast_backtest: [{ metric_id: 'revenue', method: 'holt', status: 'ok', error_metrics: { mae: 6.35, smape_pct: 4.13 },
+    improvement_vs_naive_pct: 47.06, backtest_window: { folds: 2, evaluated_points: 4 }, interval_coverage: null }] });
+  assert.match(rows[0].errors, /MAE/); assert.match(rows[0].errors, /sMAPE \(%\)/);
+  assert.equal(rows[0].window, '2 lần trên 4 điểm'); assert.match(rows[0].improvement, /naive/); assert.equal(rows[0].coverage, 'chưa đo');
+  assert.match(forecastRows({ forecast_backtest: [{ metric_id: 'r', status: 'insufficient_history', error_metrics: {} }] })[0].errors, /Chưa dự báo được/);
+});

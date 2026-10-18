@@ -83,8 +83,8 @@ class HybridTests(unittest.TestCase):
     def test_minimal_compatible_partition_preserves_metric_populations(self):
         req=requirement(metric_ids=['revenue','order_count','aov'],dimension_ids=['city'],analysis_kind='aggregate',ranking=None,derived_features=[])
         resolved=AnalyticalResolver(self.catalog,REFERENCE).resolve(AnalysisIntentEnvelope.model_validate(envelope(req)))
-        self.assertEqual(len(resolved['operations']),2)
-        self.assertEqual(sorted(sorted(o['metrics']) for o in resolved['operations']),[['aov','revenue'],['order_count']])
+        self.assertEqual(len(resolved['operations']),3)  # grouped valid orders, whole-scope valid orders, all-order count
+        self.assertEqual(sorted(sorted(o['metrics']) for o in resolved['operations']),[['aov','revenue'],['aov','revenue'],['order_count']])
         p=self.pipeline(scripted(envelope(req)));r=p.propose(self.request('Doanh thu, số đơn, giá trị đơn trung bình theo thành phố'))
         self.assertEqual(r['status'],'proposal_ready');self.assertEqual(p.provider.call_count,1)
         self.assertEqual(r['diagnostics']['requested_component_count'],1)
@@ -115,10 +115,8 @@ class HybridTests(unittest.TestCase):
         fixed=requirement(id='r2',derived_features=[])
         changed={**valid,'time':{'kind':'relative','mode':'all_time'}}
         p=self.pipeline(scripted(envelope(valid,bad),envelope(changed,fixed),envelope(fixed)))
-        r=p.propose(self.request('Phân tích đã chọn trong 30 ngày gần nhất'))
-        self.assertEqual(p.provider.call_count,3)
-        intent=r['diagnostics']['semantic_intent'];self.assertEqual(sum(not x['supporting_for'] for x in intent['requirements']),2) # requested mappings survive dashboard enrichment
-        self.assertEqual(intent['requirements'][0]['time']['amount'],30)
+        with self.assertRaises(AnalysisError):p.propose(self.request('Phân tích hoạt động kinh doanh trong 30 ngày gần nhất'))
+        self.assertEqual(p.provider.call_count,2);p.executor.assert_not_called()  # frozen-field attack consumes the only repair
         second=json.loads(p.provider.requests[1]['messages'][0]['content'])
         self.assertEqual(second['frozen_requirement_ids'],['r1'])
 
@@ -129,15 +127,15 @@ class HybridTests(unittest.TestCase):
             # be targeted, and unrelated time/filter facts remain immutable.
             good={**bad,'metric_ids':['product_revenue','quantity_sold'],**change}
             p=self.pipeline(scripted(envelope(bad),envelope(good),envelope(good)))
-            with self.assertRaises(AnalysisError):p.propose(self.request('Theo lựa chọn trong 30 ngày gần nhất'))
-            self.assertEqual(p.provider.call_count,3);p.executor.assert_not_called()
+            with self.assertRaises(AnalysisError):p.propose(self.request('Phân tích hoạt động kinh doanh của quán tại Hà Nội trong 30 ngày gần nhất'))
+            self.assertEqual(p.provider.call_count,2);p.executor.assert_not_called()
 
     def test_malformed_sibling_preserves_good_requirements(self):
         a=requirement(id='r1',metric_ids=['revenue'],analysis_kind='aggregate',dimension_ids=[],ranking=None,derived_features=[],time=None)
         b=requirement(id='r2',metric_ids=['quantity_sold'],derived_features=[],ranking={'limit':5,'metric_id':'quantity_sold'},granularity='bad')
         repaired={**b,'granularity':None}
         p=self.pipeline(scripted(envelope(a,b),envelope(repaired)))
-        r=p.propose(self.request('Theo lựa chọn'))
+        r=p.propose(self.request('Phân tích hoạt động kinh doanh của quán'))
         self.assertEqual(p.provider.call_count,2);self.assertEqual(sum(c['requested_or_supporting']=='requested' for c in r['proposal']['analysis_components']),2)
         context=json.loads(p.provider.requests[1]['messages'][0]['content'])
         self.assertIn('r1',context['frozen_requirement_ids'])
@@ -234,16 +232,17 @@ class HybridTests(unittest.TestCase):
                 agent.semantic.discovered.update(index.references)
                 for op in resolved['operations']:agent.queries.prepare(op)
 
-    def test_early_transport_retry_is_once_and_auth_is_terminal(self):
+    def test_planner_never_retries_transport_failures_and_budget_stays_bounded(self):
+        # V3.3: the transport layer (NativeAgentProvider) is the single owner of resend/failover
+        # (see test_reliability_v210). The planner treats a provider failure as final: no second call.
         success={'calls':[call('submit_analysis_intent',envelope())],'attempts':[]}
-        for code,status,count in [('provider_timeout',None,2),('provider_connection',None,2),('provider_http',503,2),('provider_auth',401,1),('provider_access_denied',403,1),('provider_daily_quota',429,1),('provider_rate_limited',429,1)]:
+        for code,status in [('provider_timeout',None),('provider_connection',None),('provider_http',503),('provider_auth',401),
+                            ('provider_access_denied',403),('provider_daily_quota',429),('provider_rate_limited',429)]:
             failure={'calls':None,'attempts':[{'error_category':code,'http_status':status,'latency_ms':100}]}
             provider=Mock(side_effect=[failure,success]);p=self.pipeline(provider)
-            if count==2:
-                self.assertEqual(p.propose(self.request())['status'],'proposal_ready')
-            else:
-                with self.assertRaises(AnalysisError):p.propose(self.request())
-            self.assertEqual(provider.call_count,count);p.executor.assert_not_called()
+            with self.assertRaises(AnalysisError):p.propose(self.request())
+            self.assertEqual(provider.call_count,1);p.executor.assert_not_called()
+            self.assertEqual(p.semantic_info['transport_retry_count'],0)
         budget=ProviderBudget(max_calls=3)
         for _ in range(3):budget.consume()
         with self.assertRaises(AnalysisError):budget.consume()
@@ -305,19 +304,19 @@ class HybridTests(unittest.TestCase):
         changed=requirement(ranking={'limit':2,'metric_id':'product_revenue'},time={'kind':'relative','mode':'all_time'})
         p.provider=ScriptedProvider([call('submit_analysis_delta',delta)],[call('submit_analysis_intent',envelope(changed))],[call('submit_analysis_intent',envelope(changed))])
         with self.assertRaises(AnalysisError):p.refine(AiReportRefineRequest(session_id=req.session_id,current_report={'revision':report['revision']},feedback='Top 2'))
-        self.assertEqual(p.provider.call_count,3)
+        self.assertEqual(p.provider.call_count,2)
         self.assertEqual(get_session(req.session_id).semantic_intent['requirements'][0]['time']['amount'],30)
 
     def test_semantic_detail_projects_only_catalog_fields(self):
         req=requirement(domain_id='orders',metric_ids=[],dimension_ids=['order_id','order_status'],analysis_kind='detail',ranking=None,derived_features=[])
         p=self.pipeline(scripted(envelope(req)))
-        proposal=p.propose(self.request('Bảng chi tiết đã chọn'))
+        proposal=p.propose(self.request('Phân tích hoạt động kinh doanh của quán'))
         query=proposal['proposal']['analytical_queries'][0]
         self.assertEqual(query['operation'],'detail');self.assertEqual(query['project'],['order_id','order_status'])
         self.assertEqual(query['subject'],'orders');self.assertEqual(query['limit'],100)
         bad={**req,'dimension_ids':['password']}
         p=self.pipeline(scripted(envelope(bad),envelope(bad),envelope(bad)))
-        with self.assertRaises(AnalysisError):p.propose(self.request('Bảng chi tiết đã chọn'))
+        with self.assertRaises(AnalysisError):p.propose(self.request('Phân tích hoạt động kinh doanh của quán'))
         p.executor.assert_not_called()
 
     def test_per_group_ranking_server_includes_partition_dimension(self):
@@ -357,24 +356,23 @@ class HybridTests(unittest.TestCase):
             with self.assertRaises(AnalysisError):storage()
 
 
-    def test_native_structured_json_recovery_model_only_on_third_attempt(self):
+    def test_native_structured_json_repair_keeps_primary_model_and_two_calls(self):
         from services.agent_provider import NativeAgentProvider
         from services import llm_service
         bad=envelope(requirement(granularity='fortnight'))
         bodies=[{'candidates':[{'content':{'parts':[{'text':'private reasoning','thought':True},{'text':json.dumps(value)}]}}],
                  'usageMetadata':{'promptTokenCount':100,'candidatesTokenCount':20}} for value in [bad,
-                 # V3.0: an identical second answer would stop (no progress). The second
-                 # repair changes state (untargeted time edit), so a third call is allowed.
-                 envelope(requirement(granularity=None,time={'kind':'relative','mode':'all_time'})),envelope(requirement(granularity=None))]]
+                 # V3.3: one complete targeted patch on the same primary model.
+                 envelope(requirement(granularity=None)),envelope(requirement(granularity=None))]]
         responses=[Mock(ok=True,json=Mock(return_value=b)) for b in bodies]
         with patch.dict(os.environ,{'AI_OFFLINE':'0','GEMINI_API_STYLE':'native','DATA_ANALYST_INTENT_TRANSPORT':'json','DATA_ANALYST_RECOVERY_MODEL':'configured-recovery'}),patch.object(llm_service,'GEMINI_API_KEY','fixture-key'),patch.object(llm_service,'GEMINI_MODELS',['fixture-primary']),patch('services.agent_provider.requests.post',side_effect=responses) as transport:
             p=self.pipeline(NativeAgentProvider());proposal=p.propose(self.request())
-            self.assertEqual(transport.call_count,3);self.assertEqual(proposal['diagnostics']['provider_call_count'],3)
-            self.assertEqual(proposal['diagnostics']['model_escalation_count'],1)
-            self.assertEqual(proposal['diagnostics']['targeted_resolution_count'],1)
-            self.assertEqual(proposal['diagnostics']['input_tokens'],300)
+            self.assertEqual(transport.call_count,2);self.assertEqual(proposal['diagnostics']['provider_call_count'],2)
+            self.assertEqual(proposal['diagnostics'].get('model_escalation_count',0),0)
+            self.assertEqual(proposal['diagnostics']['targeted_resolution_count'],0)
+            self.assertEqual(proposal['diagnostics']['input_tokens'],200)
             urls=[c.args[0] for c in transport.call_args_list]
-            self.assertTrue(all('fixture-primary' in url for url in urls[:2]));self.assertIn('configured-recovery',urls[2])
+            self.assertTrue(all('fixture-primary' in url for url in urls[:2]));self.assertFalse(any('configured-recovery' in url for url in urls))
             for c in transport.call_args_list:
                 body=c.kwargs['json'];self.assertNotIn('tools',body)
                 self.assertEqual(body['generationConfig']['responseMimeType'],'application/json')
@@ -452,7 +450,7 @@ class HybridTests(unittest.TestCase):
         changed={**fixed,'time':{'kind':'relative','mode':'all_time'}}
         p=self.pipeline(scripted(envelope(bad),envelope(changed),envelope(changed)))
         with self.assertRaises(AnalysisError):p.propose(self.request())
-        self.assertEqual(p.provider.call_count,3);p.executor.assert_not_called()
+        self.assertEqual(p.provider.call_count,2);p.executor.assert_not_called()
 
     def test_compat_transport_long_goal_succeeds_first_attempt_without_live_http(self):
         from services.agent_provider import NativeAgentProvider

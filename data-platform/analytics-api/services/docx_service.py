@@ -1136,6 +1136,17 @@ def generate_report_docx(report_data: Dict[str, Any]) -> io.BytesIO:
 
         doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
+    conclusion = report_data.get("conclusion") or {}
+    if conclusion.get("answer"):
+        doc.add_heading("KẾT LUẬN PHÂN TÍCH", level=2)
+        doc.add_paragraph(str(conclusion["answer"]))
+        for key, title in (("findings", "Phát hiện có bằng chứng"), ("caveats", "Lưu ý"), ("actions", "Hành động đề xuất")):
+            items = conclusion.get(key) or []
+            if items:
+                doc.add_paragraph(title).runs[0].bold = True
+                for it in items:
+                    doc.add_paragraph(str(it.get("statement") if isinstance(it, dict) else it), style="List Bullet")
+
     # 10. Section VII: KẾT LUẬN & KHUYẾN NGHỊ HÀNH ĐỘNG (2-column side-by-side matching preview)
     h_sec7 = doc.add_paragraph()
     h_sec7.paragraph_format.space_before = Pt(8)

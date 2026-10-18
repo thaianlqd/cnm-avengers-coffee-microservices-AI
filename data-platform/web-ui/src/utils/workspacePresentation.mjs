@@ -44,8 +44,9 @@ export function coverageSummary(capabilities) {
     facts, lagging: lagging.map(f => `${f.label} đến ${formatDate(f.max)}`) };
 }
 
+/** V3.3: seven product modes = free form + the server-visible missions. Hidden ones stay resolvable. */
 export function missionCards(capabilities) {
-  return (capabilities?.missions || []).map(m => ({ id: m.id, label: m.label, description: m.description, status: m.status,
+  return (capabilities?.missions || []).filter(m => m.visible !== false).map(m => ({ id: m.id, label: m.label, description: m.description, status: m.status,
     disabled: m.status === 'unavailable', reason: m.reason, caveat: m.caveat, examples: m.examples || [] }));
 }
 
@@ -134,7 +135,8 @@ export function capabilityGroups(capabilities, search = '') {
     metrics: (d.metrics || []).filter(m => match(d.label) || match(m.label) || match(m.definition) || (m.dimensions || []).some(x => match(x.label)))
       .map(m => ({ ...m, badges: [m.historical ? 'Có xu hướng' : 'Hiện tại', ...(m.forecastable ? ['Dự báo được'] : []),
         ...((capabilities?.risk_signals || []).some(s => s.metric === m.id) ? ['Tín hiệu rủi ro'] : []),
-        ...(m.dimensions && !m.dimensions.length ? ['Chỉ toàn phạm vi'] : [])] })),
+        ...(m.dimensions && !m.dimensions.length ? ['Chỉ toàn phạm vi'] : []),
+        ...additivityBadges(m.capability)] })),
     examples: d.example_questions || [],
   })).filter(g => g.metrics.length);
 }
@@ -203,13 +205,13 @@ export function metricDefinition(capabilities, metricId) {
 
 // --- Risk Watch ---------------------------------------------------------------
 
-const RISK_TONES = { red: 'red', yellow: 'yellow', green: 'green', no_data: 'gray', insufficient_sample: 'gray', not_applicable: 'gray' };
+const RISK_TONES = { red: 'red', yellow: 'yellow', green: 'green', no_data: 'gray', insufficient_sample: 'gray', not_applicable: 'gray', execution_error: 'gray' };
 
 export function riskRows(result) {
   return (result?.signals || []).map(s => ({ id: s.id, label: s.label, metric: s.metric_label, definition: s.definition,
     value: s.value == null ? '—' : formatValue(s.value, s.unit), threshold: `${s.operator_symbol} ${formatValue(s.threshold, s.unit)}`,
     status: s.status, statusLabel: s.status_label, tone: RISK_TONES[s.status] || 'gray', note: s.note,
-    breach: s.breakdown ? `${s.breakdown.groups_in_breach}/${s.breakdown.groups_total} ${String(s.breakdown.dimension_label).toLowerCase()} vượt ngưỡng` : null,
+    breach: s.breakdown ? `${s.breakdown.groups_in_breach}/${s.breakdown.groups_evaluable ?? s.breakdown.groups_total} ${String(s.breakdown.dimension_label).toLowerCase()} vượt ngưỡng` : null,
     worst: s.breakdown?.worst || [] }));
 }
 
@@ -225,11 +227,31 @@ export function riskSummary(result) {
   const entities = signals.filter(s => s.breakdown?.groups_in_breach).flatMap(s => (s.breakdown?.worst || []).map(w => ({ signal: s.label, label: w.label ?? w.group ?? w.value_label, value: formatValue(w.value, s.unit) })))
     .filter(e => e.label != null).slice(0, 3);
   const followUps = signals.filter(s => s.status === 'red' || s.breakdown?.groups_in_breach).slice(0, 2).flatMap(s => [
-    { mission: 'ranking', text: `Top 5 ${String(s.breakdown?.dimension_label || 'chi nhánh').toLowerCase()} có ${String(s.metric_label).toLowerCase()} ${s.bad_direction === 'below' ? 'thấp' : 'cao'} nhất` },
-    ...(s.historical ? [{ mission: 'trend', text: `Xu hướng ${String(s.metric_label).toLowerCase()} theo tuần` }] : []),
+    { scope: result.scope || [], time: result.time, mission: 'ranking', text: `Top 5 ${String(s.breakdown?.dimension_label || 'chi nhánh').toLowerCase()} có ${String(s.metric_label).toLowerCase()} ${(s.bad_direction === 'below' || ['lt','lte'].includes(s.operator)) ? 'thấp' : 'cao'} nhất` },
+    ...(s.historical ? [{ scope: result.scope || [], time: result.time, mission: 'trend', text: `Xu hướng ${String(s.metric_label).toLowerCase()} theo tuần` }] : []),
   ]);
-  const status = breached.length ? 'red' : signals.some(s => s.status === 'yellow') ? 'yellow' : signals.length ? 'green' : 'gray';
-  return { status, breached: breached.length, total: signals.filter(s => !['no_data', 'not_applicable'].includes(s.status)).length,
-    headline: breached.length ? `${breached.length} tín hiệu vượt ngưỡng cần kiểm tra` : entities.length ? 'Toàn phạm vi trong ngưỡng nhưng có nhóm vượt ngưỡng' : signals.some(s => s.status === 'yellow') ? 'Không vượt ngưỡng, có tín hiệu sát ngưỡng' : 'Các tín hiệu đều trong ngưỡng',
+  const failed = signals.filter(s => s.status === 'execution_error').length;
+  const measured = signals.filter(s => ['red','yellow','green'].includes(s.status));
+  const unavailable = signals.length - measured.length;
+  const status = breached.length ? 'red' : entities.length || signals.some(s => s.status === 'yellow') ? 'yellow' : unavailable || !measured.length ? 'gray' : 'green';
+  return { status, breached: breached.length, total: measured.length, selected: signals.length, unavailable, failed,
+    headline: breached.length ? `${breached.length} tín hiệu vượt ngưỡng cần kiểm tra` : entities.length ? 'Toàn phạm vi trong ngưỡng nhưng có nhóm vượt ngưỡng' : failed ? `${failed} tín hiệu chưa tính được; chưa thể kết luận trong ngưỡng` : signals.some(s => s.status === 'yellow') ? 'Không vượt ngưỡng, có tín hiệu sát ngưỡng' : unavailable || !measured.length ? 'Chưa đủ dữ liệu/quan sát để kết luận toàn phạm vi trong ngưỡng' : 'Các tín hiệu đều trong ngưỡng',
     entities, followUps: [...new Map(followUps.map(f => [f.text, f])).values()].slice(0, 4) };
+}
+
+/** A stored/legacy mission id that is no longer a visible mode maps to its visible target (null = free form). */
+export function visibleMissionId(capabilities, missionId) {
+  if (!missionId) return null;
+  const m = (capabilities?.missions || []).find(x => x.id === missionId);
+  if (!m || m.visible !== false) return missionId;
+  return m.maps_to || null;
+}
+
+/** Server-owned additivity (V3.3 metric capability) as user-readable badges; the UI never infers it. */
+export function additivityBadges(capability) {
+  if (!capability) return [];
+  const out = [];
+  if (capability.semantics === 'average' || capability.semantics === 'ratio') out.push('Không cộng giữa các nhóm');
+  else if ((capability.non_additive_over || []).includes('time')) out.push('Không cộng qua thời gian');
+  return out;
 }

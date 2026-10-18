@@ -107,4 +107,4 @@ class InactiveBindingTests(f.unittest.TestCase):
             'feature_metrics':{'contribution_share':['revenue']}})
         p=self.pipeline(f.scripted(raw,attack,attack))
         with self.assertRaises(AnalysisError):p.propose(self.request(OVERVIEW_45D))
-        self.assertEqual(p.provider.call_count,3);p.executor.assert_not_called()
+        self.assertEqual(p.provider.call_count,2);p.executor.assert_not_called()

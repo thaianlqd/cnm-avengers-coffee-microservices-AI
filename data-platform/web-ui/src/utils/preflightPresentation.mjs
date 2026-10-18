@@ -18,7 +18,7 @@ export function preflightView(result, { pending = false, error = '' } = {}) {
     ...(u.forecast?.requested ? [{ kind: 'forecast', label: u.forecast.horizon ? `Dự báo ${u.forecast.horizon} ${({ day: 'ngày', week: 'tuần', month: 'tháng', year: 'năm' })[u.forecast.unit] || 'kỳ'}` : 'Dự báo' }] : []),
     ...(u.mission ? [{ kind: 'mission', label: `Nhiệm vụ: ${u.mission.label}` }] : []),
   ];
-  const findings = (result.findings || []).map(f => ({ ...f, tone: TONES[f.level] || 'slate' }));
+  const findings = (result.findings || []).filter(f => !(result.state === 'READY_GUIDED' && f.code === 'no_metric_detected')).map(f => ({ ...f, tone: TONES[f.level] || 'slate' }));
   const blocked = result.can_submit === false;
   const warnings = findings.filter(f => f.level === 'warn').length;
   // V3.2 honest states: READY_GUIDED / READY_FOR_AI / NEEDS_INPUT / BLOCKED.
@@ -35,11 +35,19 @@ export function preflightView(result, { pending = false, error = '' } = {}) {
 /** Apply a server fix. Returns the new UI state fragment, or null for advice-only fixes. */
 export function applyFix(question, fix, maxChars) {
   if (!fix) return null;
+  if (fix.patch && typeof fix.patch === 'object') {
+    const patch={question};
+    if (typeof fix.patch.question === 'string') patch.question=fix.patch.question;
+    if ('mission' in fix.patch && (fix.patch.mission===null || typeof fix.patch.mission==='string')) patch.mission=fix.patch.mission;
+    if (fix.patch.time && typeof fix.patch.time==='object') patch.time=fix.patch.time;
+    if (fix.patch.scope && typeof fix.patch.scope==='object') patch.scope=fix.patch.scope;
+    return patch;
+  }
   if (fix.kind === 'replace_question' && typeof fix.question === 'string') return { question: fix.question };
   if (fix.kind === 'truncate') return { question: question.slice(0, fix.max_chars || maxChars || question.length) };
   if (fix.kind === 'set_time' && fix.time) return { time: fix.time };
   // Mission mismatch: move the question to its mission, or clear it to rewrite.
-  if (fix.kind === 'switch_mission' && fix.mission) return { mission: fix.mission, question };
+  if (fix.kind === 'switch_mission' && 'mission' in fix) return { mission: fix.mission, question };
   if (fix.kind === 'rewrite_for_mission') return { question: '' };
   return null;
 }

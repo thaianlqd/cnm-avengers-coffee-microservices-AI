@@ -190,9 +190,9 @@ class VerifiableV27Tests(unittest.TestCase):
         self.assertTrue(r['domain_intelligence']['business_relationships'])
 
     def test_unknown_vocabulary_broadens_knowledge_without_authorizing_queries(self):
-        intel=DomainIntelligence(self.catalog);cs=intel.candidates('zzzz unknown vocabulary','auto','focused')
+        intel=DomainIntelligence(self.catalog);cs=intel.candidates('Hoạt động kinh doanh: zzzz unknown vocabulary','auto','focused')
         self.assertGreaterEqual(len(cs),3);self.assertFalse(any(c['protected'] for c in cs))
-        provider=scripted(plan());p=self.pipeline(provider=provider);p.propose(AiTextToReportRequest(question='zzzz unknown vocabulary',reference_date=date(2026,10,7)))
+        provider=scripted(plan());p=self.pipeline(provider=provider);p.propose(AiTextToReportRequest(question='Hoạt động kinh doanh: zzzz unknown vocabulary',reference_date=date(2026,10,7)))
         self.assertEqual(p.semantic_info['retrieval_confidence'],'low');self.assertGreater(p.semantic_info['global_lens_directory_chars'],0)
         p.executor.assert_not_called()
 
