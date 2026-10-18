@@ -1,0 +1,9 @@
+{
+  "evidence_name": "analysis.json",
+  "evidence_sha256": "b626c0d2ec5d624d18c3a50b9bfab724878dc6194c2343f575daaad163ee64ad",
+  "generator_reasons": [
+    "generator1: generator CPU >=90% for three consecutive intervals",
+    "generator2: generator CPU >=90% for three consecutive intervals",
+    "generator3: generator CPU >=90% for three consecutive intervals"
+  ]
+}

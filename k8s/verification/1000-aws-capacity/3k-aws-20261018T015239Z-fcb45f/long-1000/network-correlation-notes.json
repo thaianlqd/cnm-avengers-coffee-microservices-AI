@@ -1,0 +1,8 @@
+{
+  "rows": 108,
+  "first_positive_counter_delta_at": {},
+  "percentiles": "range of per-generator per-route p95s within each5s bucket; never averaged or claimed as merged p95",
+  "whole_quantiles": "analysis.json is the exact merge of all numeric observations",
+  "missing_values": "blank, not zero; first counter sample has no delta",
+  "limits": "five-second bucket alignment; multiple counter layers may observe different packets, never sum them as unique packet drops"
+}

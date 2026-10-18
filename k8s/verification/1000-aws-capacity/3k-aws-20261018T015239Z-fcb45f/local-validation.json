@@ -1,0 +1,14 @@
+{
+  "observed_at": "2026-10-18T01:53:38.952904+00:00",
+  "status": "LOCAL_READY_PENDING_RENEWED_SCOPE_AND_FRESH_AWS_PREFLIGHT",
+  "tests_pass": 12,
+  "tests": {
+    "test-quota16.py": 9,
+    "test-correlations.py": 1,
+    "test-progression.py": 2
+  },
+  "frozen_files_verified": 176,
+  "workload_unchanged": true,
+  "aws_resources_created": false,
+  "1000_benchmark_executed": false
+}

@@ -1,0 +1,32 @@
+{
+  "observed_at": "2026-10-18T02:10:32.162980+00:00",
+  "stats": {
+    "source": "netlink",
+    "counters": {
+      "invalid": 0,
+      "insert_failed": 0,
+      "drop": 0,
+      "early_drop": 0,
+      "error": 0,
+      "search_restart": 0,
+      "clash_resolve": 49,
+      "chaintoolong": 0
+    }
+  },
+  "usage": {
+    "count": 640,
+    "max": 131072
+  },
+  "sysctls": {
+    "nf_conntrack_tcp_timeout_time_wait": 120,
+    "nf_conntrack_tcp_timeout_close_wait": 3600,
+    "nf_conntrack_tcp_timeout_fin_wait": 120,
+    "nf_conntrack_tcp_timeout_established": 86400,
+    "nf_conntrack_udp_timeout": 30,
+    "nf_conntrack_udp_timeout_stream": 120,
+    "nf_conntrack_buckets": 262144
+  },
+  "tool_version": "conntrack v1.4.8 (conntrack-tools)",
+  "kernel_log_available": true,
+  "table_full_event_timestamps": []
+}

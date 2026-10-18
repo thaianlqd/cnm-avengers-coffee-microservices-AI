@@ -1,0 +1,312 @@
+{
+  "vus": 167,
+  "hold_seconds": 120,
+  "requests": 32924,
+  "rps": 154.91157629719532,
+  "failure_rate": 0,
+  "check_rate": 1,
+  "p95_ms": 278.3051317499997,
+  "hold_p95_ms": 190.49124980000022,
+  "p99_ms": 1040.73255992,
+  "http_pass": true,
+  "restart_delta": 0,
+  "hpa_peak": {
+    "api-gateway": 4,
+    "identity-service": 3,
+    "menu-service": 4
+  },
+  "node_cpu_peak_percent": 44.0,
+  "pending_pod_samples": 0,
+  "target_hold_coverage": {
+    "intervals": 24,
+    "expected_intervals": 24.0,
+    "max_gap_seconds": 5.000125,
+    "sufficient": true
+  },
+  "generator": {
+    "samples": 43,
+    "cpu_busy_peak_percent": 80.58058058058059,
+    "k6_cpu_peak_core_percent": 160.78972892766816,
+    "k6_rss_peak_bytes": 349286400,
+    "k6_fds_peak": 173,
+    "memory_available_min_KiB": 7134056,
+    "network_rx_peak_bytes_s": 6106607.580098621,
+    "network_tx_peak_bytes_s": 69165.11828418607,
+    "cpu_intervals": [
+      {
+        "observed_at": "2026-10-18T02:12:37.341832+00:00",
+        "busy_percent": 2.80561122244489
+      },
+      {
+        "observed_at": "2026-10-18T02:12:42.346800+00:00",
+        "busy_percent": 6.626506024096385
+      },
+      {
+        "observed_at": "2026-10-18T02:12:47.357823+00:00",
+        "busy_percent": 15.315315315315315
+      },
+      {
+        "observed_at": "2026-10-18T02:12:52.363043+00:00",
+        "busy_percent": 25.450901803607213
+      },
+      {
+        "observed_at": "2026-10-18T02:12:57.367949+00:00",
+        "busy_percent": 26.606425702811244
+      },
+      {
+        "observed_at": "2026-10-18T02:13:02.373095+00:00",
+        "busy_percent": 28.714859437751002
+      },
+      {
+        "observed_at": "2026-10-18T02:13:07.378119+00:00",
+        "busy_percent": 44.8345035105316
+      },
+      {
+        "observed_at": "2026-10-18T02:13:12.383195+00:00",
+        "busy_percent": 38.53853853853854
+      },
+      {
+        "observed_at": "2026-10-18T02:13:17.395864+00:00",
+        "busy_percent": 49.5
+      },
+      {
+        "observed_at": "2026-10-18T02:13:22.402234+00:00",
+        "busy_percent": 43.83149448345035
+      },
+      {
+        "observed_at": "2026-10-18T02:13:27.413635+00:00",
+        "busy_percent": 48.048048048048045
+      },
+      {
+        "observed_at": "2026-10-18T02:13:32.418586+00:00",
+        "busy_percent": 55.210420841683366
+      },
+      {
+        "observed_at": "2026-10-18T02:13:37.424234+00:00",
+        "busy_percent": 64.36436436436436
+      },
+      {
+        "observed_at": "2026-10-18T02:13:42.438964+00:00",
+        "busy_percent": 69.26147704590818
+      },
+      {
+        "observed_at": "2026-10-18T02:13:47.452400+00:00",
+        "busy_percent": 68.60581745235707
+      },
+      {
+        "observed_at": "2026-10-18T02:13:52.458236+00:00",
+        "busy_percent": 61.62324649298597
+      },
+      {
+        "observed_at": "2026-10-18T02:13:57.468232+00:00",
+        "busy_percent": 70.32967032967034
+      },
+      {
+        "observed_at": "2026-10-18T02:14:02.481236+00:00",
+        "busy_percent": 75.52447552447552
+      },
+      {
+        "observed_at": "2026-10-18T02:14:07.494237+00:00",
+        "busy_percent": 64.76476476476476
+      },
+      {
+        "observed_at": "2026-10-18T02:14:12.509602+00:00",
+        "busy_percent": 74.12587412587412
+      },
+      {
+        "observed_at": "2026-10-18T02:14:17.524146+00:00",
+        "busy_percent": 78.2435129740519
+      },
+      {
+        "observed_at": "2026-10-18T02:14:22.534226+00:00",
+        "busy_percent": 71.67167167167167
+      },
+      {
+        "observed_at": "2026-10-18T02:14:27.543235+00:00",
+        "busy_percent": 65.46546546546547
+      },
+      {
+        "observed_at": "2026-10-18T02:14:32.557754+00:00",
+        "busy_percent": 79.76071784646062
+      },
+      {
+        "observed_at": "2026-10-18T02:14:37.575066+00:00",
+        "busy_percent": 71.0
+      },
+      {
+        "observed_at": "2026-10-18T02:14:42.589869+00:00",
+        "busy_percent": 70.97097097097097
+      },
+      {
+        "observed_at": "2026-10-18T02:14:47.595220+00:00",
+        "busy_percent": 69.06906906906907
+      },
+      {
+        "observed_at": "2026-10-18T02:14:52.607123+00:00",
+        "busy_percent": 62.5
+      },
+      {
+        "observed_at": "2026-10-18T02:14:57.619881+00:00",
+        "busy_percent": 80.58058058058059
+      },
+      {
+        "observed_at": "2026-10-18T02:15:02.634500+00:00",
+        "busy_percent": 70.14028056112224
+      },
+      {
+        "observed_at": "2026-10-18T02:15:07.639551+00:00",
+        "busy_percent": 72.47247247247248
+      },
+      {
+        "observed_at": "2026-10-18T02:15:12.645233+00:00",
+        "busy_percent": 72.5
+      },
+      {
+        "observed_at": "2026-10-18T02:15:17.660229+00:00",
+        "busy_percent": 60.1
+      },
+      {
+        "observed_at": "2026-10-18T02:15:22.672060+00:00",
+        "busy_percent": 73.18045862412762
+      },
+      {
+        "observed_at": "2026-10-18T02:15:27.678231+00:00",
+        "busy_percent": 67.8
+      },
+      {
+        "observed_at": "2026-10-18T02:15:32.691493+00:00",
+        "busy_percent": 59.64035964035964
+      },
+      {
+        "observed_at": "2026-10-18T02:15:37.705131+00:00",
+        "busy_percent": 77.04590818363273
+      },
+      {
+        "observed_at": "2026-10-18T02:15:42.710275+00:00",
+        "busy_percent": 51.15346038114343
+      },
+      {
+        "observed_at": "2026-10-18T02:15:47.717234+00:00",
+        "busy_percent": 43.43029087261785
+      },
+      {
+        "observed_at": "2026-10-18T02:15:52.722464+00:00",
+        "busy_percent": 34.97487437185929
+      },
+      {
+        "observed_at": "2026-10-18T02:15:57.727660+00:00",
+        "busy_percent": 17.771084337349397
+      },
+      {
+        "observed_at": "2026-10-18T02:16:02.733014+00:00",
+        "busy_percent": 7.730923694779117
+      }
+    ]
+  },
+  "generator_hold_coverage": {
+    "intervals": 24,
+    "expected_intervals": 24.0,
+    "max_gap_seconds": 5.017312,
+    "sufficient": true
+  },
+  "generator_cpu_saturation_longest_samples": 0,
+  "ena_allowance_deltas": {
+    "enp39s0/bw_in_allowance_exceeded": 0,
+    "enp39s0/bw_out_allowance_exceeded": 0,
+    "enp39s0/pps_allowance_exceeded": 0,
+    "enp39s0/conntrack_allowance_exceeded": 0
+  },
+  "generator_adequate": true,
+  "generator_reasons": [],
+  "target_reasons": [],
+  "post_smoke": true,
+  "natural_recovery": true,
+  "status": "STABLE PASS",
+  "p50_ms": 28.284804,
+  "p90_ms": null,
+  "max_latency_ms": 2198.243485,
+  "resources": {
+    "nodes": {
+      "capacity-target1": {
+        "cpu_millicores": 883.0,
+        "memory_MiB": 1397.0
+      },
+      "capacity-target2": {
+        "cpu_millicores": 588.0,
+        "memory_MiB": 733.0
+      }
+    },
+    "pods": {
+      "api-gateway-574bcff699-6pztf": {
+        "cpu_millicores": 217.0,
+        "memory_MiB": 37.0
+      },
+      "api-gateway-574bcff699-tqc2l": {
+        "cpu_millicores": 201.0,
+        "memory_MiB": 36.0
+      },
+      "identity-service-9c49d558f-mzgx7": {
+        "cpu_millicores": 91.0,
+        "memory_MiB": 55.0
+      },
+      "menu-service-d64c4bc8c-xtw5q": {
+        "cpu_millicores": 96.0,
+        "memory_MiB": 44.0
+      },
+      "news-service-59b758f876-vbfl7": {
+        "cpu_millicores": 83.0,
+        "memory_MiB": 45.0
+      },
+      "api-gateway-574bcff699-rt2xk": {
+        "cpu_millicores": 83.0,
+        "memory_MiB": 33.0
+      },
+      "api-gateway-574bcff699-dn6f4": {
+        "cpu_millicores": 48.0,
+        "memory_MiB": 31.0
+      },
+      "identity-service-9c49d558f-tjlvp": {
+        "cpu_millicores": 99.0,
+        "memory_MiB": 50.0
+      },
+      "menu-service-d64c4bc8c-mwvjc": {
+        "cpu_millicores": 134.0,
+        "memory_MiB": 46.0
+      },
+      "menu-service-d64c4bc8c-6drbf": {
+        "cpu_millicores": 82.0,
+        "memory_MiB": 43.0
+      },
+      "menu-service-d64c4bc8c-86bh5": {
+        "cpu_millicores": 54.0,
+        "memory_MiB": 41.0
+      },
+      "identity-service-9c49d558f-lqd4n": {
+        "cpu_millicores": 84.0,
+        "memory_MiB": 48.0
+      }
+    },
+    "cluster_sampled_peak": {
+      "cpu_millicores": 1408.0,
+      "memory_MiB": 2123.0
+    },
+    "incomplete_node_metric_samples": 0,
+    "complete_node_metric_samples": 109
+  },
+  "complete_metric_hold_coverage": {
+    "intervals": 24,
+    "expected_intervals": 24.0,
+    "max_gap_seconds": 5.000125,
+    "sufficient": true
+  },
+  "vu_stage": {
+    "actual_vu_peak": 167,
+    "hold_target_fraction": 0.9916666666666667,
+    "hold_coverage": {
+      "intervals": 120,
+      "expected_intervals": 24.0,
+      "max_gap_seconds": 1.133017,
+      "sufficient": true
+    }
+  }
+}

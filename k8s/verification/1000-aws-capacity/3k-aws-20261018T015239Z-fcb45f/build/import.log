@@ -1,0 +1,35 @@
+docker.io/avengers/api gateway:3k aws ac	saved	
+application/vnd.oci.image.index.v1+json sha256:4ccd5f7ce03a0899e96b585b857c9fbb677869d8fd05c8d1f6e005e6478e13d1
+Importing	elapsed: 6.3 s	total:   0.0 B	(0.0 B/s)	
+docker.io/avengers/api gateway:3k aws ac	saved	
+docker.io/avengers/identity service:3k a	saved	
+application/vnd.oci.image.index.v1+json sha256:4ccd5f7ce03a0899e96b585b857c9fbb677869d8fd05c8d1f6e005e6478e13d1
+application/vnd.oci.image.index.v1+json sha256:6a77bed6bf8225ea16604832721cd4a34de456da29a715535eb934c344b96c1d
+Importing	elapsed: 6.3 s	total:   0.0 B	(0.0 B/s)	
+docker.io/avengers/api gateway:3k aws ac	saved	
+docker.io/avengers/identity service:3k a	saved	
+docker.io/avengers/menu service:3k aws a	saved	
+application/vnd.oci.image.index.v1+json sha256:4ccd5f7ce03a0899e96b585b857c9fbb677869d8fd05c8d1f6e005e6478e13d1
+application/vnd.oci.image.index.v1+json sha256:6a77bed6bf8225ea16604832721cd4a34de456da29a715535eb934c344b96c1d
+application/vnd.oci.image.index.v1+json sha256:5ca1799f0a6c680314e614182f09f0507bbed6166c2f4bb071b2154dd797479e
+Importing	elapsed: 6.3 s	total:   0.0 B	(0.0 B/s)	
+docker.io/avengers/api gateway:3k aws ac	saved	
+docker.io/avengers/identity service:3k a	saved	
+docker.io/avengers/menu service:3k aws a	saved	
+docker.io/avengers/news service:3k aws a	saved	
+application/vnd.oci.image.index.v1+json sha256:4ccd5f7ce03a0899e96b585b857c9fbb677869d8fd05c8d1f6e005e6478e13d1
+application/vnd.oci.image.index.v1+json sha256:6a77bed6bf8225ea16604832721cd4a34de456da29a715535eb934c344b96c1d
+application/vnd.oci.image.index.v1+json sha256:5ca1799f0a6c680314e614182f09f0507bbed6166c2f4bb071b2154dd797479e
+application/vnd.oci.image.index.v1+json sha256:c9b61efd9afdc6b69612402faa86d3f17658721608f58ba7eff617c00f7dbefe
+Importing	elapsed: 6.3 s	total:   0.0 B	(0.0 B/s)	
+docker.io/avengers/api gateway:3k aws ac	saved	
+docker.io/avengers/identity service:3k a	saved	
+docker.io/avengers/menu service:3k aws a	saved	
+docker.io/avengers/news service:3k aws a	saved	
+docker.io/avengers/customer media:3k aws	saved	
+application/vnd.oci.image.index.v1+json sha256:4ccd5f7ce03a0899e96b585b857c9fbb677869d8fd05c8d1f6e005e6478e13d1
+application/vnd.oci.image.index.v1+json sha256:6a77bed6bf8225ea16604832721cd4a34de456da29a715535eb934c344b96c1d
+application/vnd.oci.image.index.v1+json sha256:5ca1799f0a6c680314e614182f09f0507bbed6166c2f4bb071b2154dd797479e
+application/vnd.oci.image.index.v1+json sha256:c9b61efd9afdc6b69612402faa86d3f17658721608f58ba7eff617c00f7dbefe
+application/vnd.oci.image.index.v1+json sha256:624c2552d7b0f9b21e7cb15c12f724914106291e9b8189e7334ec2d9cd9cbc37
+Importing	elapsed: 6.3 s	total:   0.0 B	(0.0 B/s)	

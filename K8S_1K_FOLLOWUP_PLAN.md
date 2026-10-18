@@ -1,3 +1,6 @@
+> **Mới nhất 18/10/2026: 1.000 VU QUALIFIED: normal 120s và long 300s đều STABLE PASS. AWS đã cleanup, session CLOSED.**
+> [Báo cáo mới: hai target, 18/10/2026](K8S_1000_TWO_TARGET_CAPACITY_REPORT.md). Phần bên dưới là lịch sử các phase trước, giữ nguyên kết luận tại thời điểm đó.
+
 # PLAN 1.000 VU — features_k8s, phase mới sau 750 QUALIFIED
 
 Trạng thái 17/10/2026: **đã thực thi regression250/500/750 vàself-heal/rolling đềuPASS;

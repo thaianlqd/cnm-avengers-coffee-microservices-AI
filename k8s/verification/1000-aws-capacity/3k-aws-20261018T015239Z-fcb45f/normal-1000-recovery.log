@@ -1,0 +1,24 @@
+generator1 original artifact recovery complete
+generator3 original artifact recovery complete
+generator5 original artifact recovery complete
+generator4 original artifact recovery complete
+generator2 original artifact recovery complete
+generator6 original artifact recovery complete
+Load complete; observing natural HPA recovery
+{
+  "vus": 1000,
+  "requests": 195048.0,
+  "rps": 915.60238514027,
+  "failure_rate": 6.152331733727083e-05,
+  "check_rate": 0.9999384766826628,
+  "p50_ms": 25.0820175,
+  "p90_ms": 211.58624560000032,
+  "p95_ms": 448.40802089999994,
+  "hold_p95_ms": 427.9210635999991,
+  "p99_ms": 1085.01334006,
+  "max_latency_ms": 2337.728278,
+  "generator_adequate": true,
+  "target_reasons": [],
+  "generator_reasons": [],
+  "status": "STABLE PASS"
+}

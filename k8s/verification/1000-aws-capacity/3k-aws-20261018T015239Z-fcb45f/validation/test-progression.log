@@ -1,0 +1,41 @@
+OFFLINE SYNTHETIC TEST FIXTURES ONLY — NOT AWS BENCHMARK/CAPACITY
+[synthetic] regression-normal-500 STABLE PASS
+[synthetic] BEGIN generators generator4 generator5
+[synthetic] DONE generators
+[synthetic] BEGIN precheck 
+[synthetic] DONE precheck
+[synthetic] regression-normal-750 STABLE PASS
+[synthetic] fresh-long-750 STABLE PASS
+[synthetic] BEGIN healing healing retained
+[synthetic] DONE healing
+[synthetic] BEGIN healing rollout retained
+[synthetic] DONE healing
+[synthetic] BEGIN generators generator6
+[synthetic] DONE generators
+[synthetic] BEGIN precheck 
+[synthetic] DONE precheck
+[synthetic] normal-1000 INVALID GENERATOR
+[synthetic] regression-normal-500 STABLE PASS
+[synthetic] BEGIN generators generator4 generator5
+[synthetic] DONE generators
+[synthetic] BEGIN precheck 
+[synthetic] DONE precheck
+[synthetic] regression-normal-750 STABLE PASS
+[synthetic] fresh-long-750 STABLE PASS
+[synthetic] BEGIN healing healing retained
+[synthetic] DONE healing
+[synthetic] BEGIN healing rollout retained
+[synthetic] DONE healing
+[synthetic] BEGIN generators generator6
+[synthetic] DONE generators
+[synthetic] BEGIN precheck 
+[synthetic] DONE precheck
+[synthetic] normal-1000 STABLE PASS
+[synthetic] long-1000 STABLE PASS
+[synthetic] test_invalid1000normal_cannot_advance_to_long_or_claim_qualified (__main__.FreshProgression.test_invalid1000normal_cannot_advance_to_long_or_claim_qualified) ... ok
+[synthetic] test_matching_dataset_still_needs_fresh750normal_and_long_on_two_targets (__main__.FreshProgression.test_matching_dataset_still_needs_fresh750normal_and_long_on_two_targets) ... ok
+[synthetic] 
+[synthetic] ----------------------------------------------------------------------
+[synthetic] Ran 2 tests in 0.032s
+[synthetic] 
+[synthetic] OK

@@ -1,0 +1,7 @@
+OFFLINE SYNTHETIC TEST FIXTURES ONLY — NOT AWS BENCHMARK/CAPACITY
+[synthetic] test_both_exports_include_sixth_generator_and_all_requests (__main__.SixGeneratorExports.test_both_exports_include_sixth_generator_and_all_requests) ... ok
+[synthetic] 
+[synthetic] ----------------------------------------------------------------------
+[synthetic] Ran 1 test in 0.105s
+[synthetic] 
+[synthetic] OK

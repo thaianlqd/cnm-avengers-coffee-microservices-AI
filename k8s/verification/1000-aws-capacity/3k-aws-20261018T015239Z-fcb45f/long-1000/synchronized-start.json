@@ -1,0 +1,5 @@
+{
+  "scheduled_start_epoch": 1792292791.611545,
+  "lead_seconds": 90,
+  "reason": "allow two30s encrypted-control poll delays; actual <=2s start skew and full VU timeline gates unchanged"
+}

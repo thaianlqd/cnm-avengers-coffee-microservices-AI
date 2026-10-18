@@ -1,3 +1,6 @@
+> **Mới nhất 18/10/2026: 1.000 VU QUALIFIED: normal 120s và long 300s đều STABLE PASS. AWS đã cleanup, session CLOSED.**
+> [Báo cáo mới: hai target, 18/10/2026](K8S_1000_TWO_TARGET_CAPACITY_REPORT.md). Phần bên dưới là lịch sử các phase trước, giữ nguyên kết luận tại thời điểm đó.
+
 # Kubernetes capacity — kết quả phase 1.000 VU, 17/10/2026
 
 **1.000 VU chưa chạy, chưa QUALIFIED. Mức cao nhất đã chứng minh lặp lại vẫn là 750 VU.**

@@ -1,0 +1,23 @@
+{
+  "observed_at": "2026-10-18T03:20:22.446602+00:00",
+  "approved_additional_credit_cap_usd": 3.0,
+  "planned_compute_cap_usd": 1.5162,
+  "price_usd_instance_hour": 0.1197,
+  "all_roles_from_controller_start_through_cleanup_compute_upper_bound_usd": 1.2370574775860002,
+  "per_role_launch_through_cleanup_compute_upper_bound_usd": 1.058366477238,
+  "actual_fleet_role_count": 8,
+  "controller_elapsed_minutes_through_cleanup": 77.50986701666667,
+  "planned_reserves_usd": {
+    "ebs_reserve_usd": 0.15,
+    "ipv4_reserve_usd": 0.1,
+    "transfer_contingency_usd": 0.5
+  },
+  "free_plan_only": true,
+  "plan_or_iam_changes": false,
+  "actual_bill": false,
+  "prior_closed_run_compute_upper_bound_usd": 0.729179626938,
+  "combined_compute_upper_bound_usd": 1.9662371045240001,
+  "new_credit_authorized_usd": 0,
+  "credit_balance_retained": false,
+  "interpretation": "conservative compute upper bounds, not invoice or measured credit debit; final native cleanup time includes termination/SG cleanup"
+}

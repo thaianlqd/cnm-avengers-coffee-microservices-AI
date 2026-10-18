@@ -1,0 +1,76 @@
+{
+  "goal_vus": 1000,
+  "workload_sha256": "8746a95c5e11382ded7f355e68ecec34a759346bc079b3db2b40c33cefed2fb2",
+  "target": "http://172.31.3.77:30300",
+  "path": "generator -> target1 NodePort30300 -> Kubernetes api-gateway Service -> Gateway -> backend Services",
+  "initial_setup_generators": {
+    "generator1": {
+      "id": "i-0365b76a49fb56ddb",
+      "private_ip": "172.31.8.199",
+      "launch_time": "2026-10-18T02:02:07+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator2": {
+      "id": "i-0595f1406173c547f",
+      "private_ip": "172.31.1.55",
+      "launch_time": "2026-10-18T02:02:58+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator3": {
+      "id": "i-0927bee8a712676aa",
+      "private_ip": "172.31.10.153",
+      "launch_time": "2026-10-18T02:03:50+00:00",
+      "type": "m7i-flex.large"
+    }
+  },
+  "full_json": true,
+  "gzip": true,
+  "think_seconds": 3,
+  "diagnostics_baseline": false,
+  "qualified_attempt_generators": {
+    "generator1": {
+      "id": "i-0365b76a49fb56ddb",
+      "private_ip": "172.31.8.199",
+      "launch_time": "2026-10-18T02:02:07+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator2": {
+      "id": "i-0595f1406173c547f",
+      "private_ip": "172.31.1.55",
+      "launch_time": "2026-10-18T02:02:58+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator3": {
+      "id": "i-0927bee8a712676aa",
+      "private_ip": "172.31.10.153",
+      "launch_time": "2026-10-18T02:03:50+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator4": {
+      "id": "i-0d45def1946b9e948",
+      "private_ip": "172.31.9.101",
+      "launch_time": "2026-10-18T02:20:21+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator5": {
+      "id": "i-0c2e00c1d03728ba8",
+      "private_ip": "172.31.12.44",
+      "launch_time": "2026-10-18T02:21:11+00:00",
+      "type": "m7i-flex.large"
+    },
+    "generator6": {
+      "id": "i-0c6606d882a9aefe1",
+      "private_ip": "172.31.10.130",
+      "launch_time": "2026-10-18T02:49:45+00:00",
+      "type": "m7i-flex.large"
+    }
+  },
+  "planned_partitions": {
+    "generator1": 167,
+    "generator2": 167,
+    "generator3": 167,
+    "generator4": 167,
+    "generator5": 166,
+    "generator6": 166
+  }
+}

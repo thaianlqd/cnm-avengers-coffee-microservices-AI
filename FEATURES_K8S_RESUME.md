@@ -1,3 +1,28 @@
+# Checkpoint cuối — 18/10/2026, features_k8s
+
+**1.000 VU QUALIFIED: normal 120s và long 300s đều STABLE PASS.** [Báo cáo mới: hai target, 18/10/2026](K8S_1000_TWO_TARGET_CAPACITY_REPORT.md).
+RunId `3k-aws-20261018T015239Z-fcb45f`; AWS đã dọn và kiểm tra độc lập: owned EC2/SG/EBS/keypairs/ENI 0,
+private jobs 0, key/token đã xóa, controls dừng, **CLOSED**. Không còn benchmark chạy.
+
+Phép đã dùng: 2 target + tối đa 6 generator `m7i-flex.large`, tối đa 95 phút, chỉ Free plan,
+**cùng tổng cap 3 USD credit**, không thêm 3 USD mới; prior closed compute nằm trong cap.
+Không mở fleet mới nếu không có phép mới. Không đổi IAM/quota/plan.
+
+Fresh 500 normal → 750 normal + long 300s → Gateway self-heal/same-image rolling →
+1.000 normal + long 300s. Đọc `qualification.json`/`progression.json` và analysis từng point;
+không dùng fixture để claim capacity. Normal 1.000 đã thu lại artifact gốc sau lỗi giao nhận
+control, không chạy lại load hay giảm gate; lịch sử recovery được giữ đầy đủ.
+
+Frozen 176 source files, workload, Dockerfiles, service resources/HPA/cache/DB pool giữ nguyên.
+Không tác động DataPlatform/branch_thaian/Compose/Docker Desktop CPU-RAM. Native + offline:
+283 PASS, 1 historical SKIP; exact merge trên AWS; CSV/hash/secret/index checks trước commit.
+
+Chỉ commit/push `features_k8s` theo yêu cầu push đã có của user; không merge, force push,
+đổi auth/remote hoặc push DataPlatform. Git account phải là `thaianlqd` trước push.
+[PLAN đã thực thi](K8S_1K_RESUME_20261018_PLAN.md). Các checkpoint dưới đây là lịch sử.
+
+---
+
 # Checkpoint cuối — dừngAWS, chuẩn bịpushfeatures_k8s,17/10/2026
 
 **1000 NOT RUN / NOT QUALIFIED; maximum repeatably qualified vẫn750 VU.**

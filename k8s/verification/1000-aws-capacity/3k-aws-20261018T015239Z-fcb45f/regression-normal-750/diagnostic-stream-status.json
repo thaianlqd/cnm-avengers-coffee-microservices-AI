@@ -1,0 +1,81 @@
+{
+  "pods": {
+    "6b2fcccd-d4db-4fdd-92a2-35fe00f611d5": {
+      "service": "api-gateway",
+      "pod": "api-gateway-574bcff699-6pztf",
+      "records": 0
+    },
+    "ec3f3474-bf54-44a7-88ea-303f9aa9ed91": {
+      "service": "api-gateway",
+      "pod": "api-gateway-574bcff699-tqc2l",
+      "records": 0
+    },
+    "a779323e-79bf-4a24-a506-dcd33cff6426": {
+      "service": "identity-service",
+      "pod": "identity-service-9c49d558f-lqd4n",
+      "records": 0
+    },
+    "8e8c4cc6-6728-4a51-9ef6-9a6e63ec589f": {
+      "service": "menu-service",
+      "pod": "menu-service-d64c4bc8c-86bh5",
+      "records": 0
+    },
+    "24ba2cd3-0019-4ecc-a8d6-cc1dec975e34": {
+      "service": "news-service",
+      "pod": "news-service-59b758f876-vbfl7",
+      "records": 0
+    },
+    "8bf9ef47-3d0c-47af-98f7-77dadce83b61": {
+      "service": "api-gateway",
+      "pod": "api-gateway-574bcff699-xj9xw",
+      "records": 0
+    },
+    "d432d484-23e8-41a1-901a-e3f2ea6ef0b0": {
+      "service": "api-gateway",
+      "pod": "api-gateway-574bcff699-hpxc7",
+      "records": 0
+    },
+    "05c6ab93-e16a-430d-b53c-32d755a8874c": {
+      "service": "identity-service",
+      "pod": "identity-service-9c49d558f-9ws6d",
+      "records": 0
+    },
+    "14dd311f-0af4-40e6-a85e-a5a37cc9dee4": {
+      "service": "menu-service",
+      "pod": "menu-service-d64c4bc8c-gmsfr",
+      "records": 0
+    },
+    "10f2e2e6-0bb5-47d3-abdb-aea6169e6f7b": {
+      "service": "identity-service",
+      "pod": "identity-service-9c49d558f-fkm8x",
+      "records": 0
+    },
+    "6ba74f2a-a0a0-4cfe-a613-fce399f321d6": {
+      "service": "menu-service",
+      "pod": "menu-service-d64c4bc8c-gmfcl",
+      "records": 0
+    },
+    "febaab06-73b8-4d04-93f6-4061cba918e4": {
+      "service": "menu-service",
+      "pod": "menu-service-d64c4bc8c-gvgqf",
+      "records": 0
+    }
+  },
+  "attempts": {
+    "6b2fcccd-d4db-4fdd-92a2-35fe00f611d5": 1,
+    "ec3f3474-bf54-44a7-88ea-303f9aa9ed91": 1,
+    "a779323e-79bf-4a24-a506-dcd33cff6426": 1,
+    "8e8c4cc6-6728-4a51-9ef6-9a6e63ec589f": 1,
+    "24ba2cd3-0019-4ecc-a8d6-cc1dec975e34": 1,
+    "8bf9ef47-3d0c-47af-98f7-77dadce83b61": 1,
+    "d432d484-23e8-41a1-901a-e3f2ea6ef0b0": 1,
+    "05c6ab93-e16a-430d-b53c-32d755a8874c": 1,
+    "14dd311f-0af4-40e6-a85e-a5a37cc9dee4": 1,
+    "10f2e2e6-0bb5-47d3-abdb-aea6169e6f7b": 1,
+    "6ba74f2a-a0a0-4cfe-a613-fce399f321d6": 1,
+    "febaab06-73b8-4d04-93f6-4061cba918e4": 1
+  },
+  "records": 0,
+  "raw_other_logs_retained": false,
+  "owned_log_processes_stopped": true
+}

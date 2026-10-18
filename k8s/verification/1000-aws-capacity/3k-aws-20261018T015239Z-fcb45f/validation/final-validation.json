@@ -1,0 +1,21 @@
+{
+  "observed_at": "2026-10-18T03:06:40.605360+00:00",
+  "status": "CLOSED_CLEANUP_VERIFIED",
+  "native_backend_pass": 168,
+  "offline_aws_helpers_pass": 76,
+  "offline_aws_helpers_historical_skip": 1,
+  "offline_k8s_helpers_pass": 24,
+  "control_pass": 3,
+  "two_target_snapshot_pass": 12,
+  "total_pass": 283,
+  "total_skip": 1,
+  "controller_ast_pass_files": 29,
+  "static_overlay_resources": 14,
+  "frozen_source_files_unchanged": 176,
+  "benchmark_fixtures_not_measured_capacity": true,
+  "all_capacity_claims_require_actual_analysis_and_cleanup": true,
+  "finalized_at": "2026-10-18T03:20:31.051121+00:00",
+  "aws_resources_remaining": 0,
+  "capacity_1000_qualified": true,
+  "cleanup_verified": true
+}
