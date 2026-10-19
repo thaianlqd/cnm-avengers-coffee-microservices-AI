@@ -1,0 +1,24 @@
+{
+  "attestation": {
+    "id": "orders-sep2026",
+    "start": "2026-09-01",
+    "end": "2026-09-30",
+    "timezone": "Asia/Ho_Chi_Minh",
+    "enabled": true,
+    "attested_by": "admin",
+    "attested_on": "2026-10-19",
+    "authority": "user_confirmation_20261019",
+    "must_revoke_before_mutation": true
+  },
+  "sources": [
+    "orders.don_hang",
+    "orders.chi_tiet_don_hang"
+  ],
+  "business_confirmation": "User explicitly confirmed closed September orders/items and revocation before correction/deletion/backdating.",
+  "read_only_source_observation": {
+    "orders": 4089,
+    "last_order_update": "2026-09-30 22:46:07"
+  },
+  "source_writes": false,
+  "scope_not_extended_to_other_sources_or_periods": true
+}

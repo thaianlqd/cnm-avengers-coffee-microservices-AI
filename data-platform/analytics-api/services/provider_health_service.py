@@ -72,10 +72,19 @@ def provider_health():
             out['state']='unknown'
     # V3.2 credential pool (sanitized: no key, slot or identifier is exposed).
     from services import provider_credential_router as credentials
-    pool=credentials.status()
+    from services.error_taxonomy import AnalysisError
+    try:
+        pool=credentials.status()
+        circuit_available=True
+    except AnalysisError:
+        # Diagnostics remain readable during shared-store/config failures.
+        # Transport authorization still fails closed in credential_plan().
+        pool={'secondary_configured':credentials.secondary_configured(),'recent_failover':False}
+        circuit_available=False
+        out['state']='unknown'
     if out['state'] in {'unavailable','degraded'} and out.get('last_failure_category') in {'provider_rate_limited','provider_daily_quota'}:
         out['state']='rate_limited'
     if pool['recent_failover'] and out['state']=='available':
         out['state']='degraded'  # "Đang chuyển dự phòng": answered via the secondary credential
-    return dict(configured=configured,credential_failover_configured=pool['secondary_configured'],
+    return dict(configured=configured,credential_circuit_available=circuit_available,credential_failover_configured=pool['secondary_configured'],
                 credential_failover_recent=pool['recent_failover'],rolling=rolling_observations(),**out)

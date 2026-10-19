@@ -21,7 +21,8 @@ test('South scope → optional proposal → generate → direct total and final 
   const report=await (await resultPromise).json();expect(report.status).toBe('success');
   expect(report.short_answer.join(' ')).toMatch(/Tổng doanh thu/);expect(report.answer_requirements.length).toBeGreaterThan(0);
   await expect(page.locator('[data-short-answer]')).toContainText('Tổng doanh thu');
-  await expect(page.locator('[data-conclusion] h3')).toHaveText('KẾT LUẬN PHÂN TÍCH');
+  await expect(page.locator('[data-conclusion] > summary')).toHaveText('Kết luận phân tích');
+  await expect(page.locator('[data-conclusion]')).not.toHaveAttribute('open','');
   expect(await page.locator('[data-conclusion]').evaluate(el=>Boolean(el.previousElementSibling))).toBeTruthy();
   const saved=await page.request.post('/api/reports/saved',{data:{title:'V33 isolated South acceptance',
     sql_query:Object.values(report.sql_by_query)[0],module_config:report,category:'ai_report'}});

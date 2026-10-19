@@ -300,16 +300,12 @@ def current_principal(*, required=False):
     return principal
 
 
-def route_permission(path,method):
-    if path.startswith('/api/system/') or path=='/api/reports/logs': return 'system.read'
-    if path=='/api/platform/pipelines/trigger': return 'pipeline.trigger'
-    if path=='/api/query' or path.startswith('/api/warehouse/'): return 'sql.explore'
-    if 'export' in path or 'download-docx' in path: return 'reports.export'
-    if path=='/api/reports/preview' or '/execute' in path or path.endswith('/run'): return 'sql.explore'
-    if path.startswith('/api/reports/') and method!='GET': return 'reports.save'
-    if path.startswith('/api/ai/modules') and method!='GET': return 'reports.save'
-    if path.startswith('/api/platform/') or path=='/api/realtime-events': return 'platform.read'
-    return 'analytics.read'
+def route_permission(path, method):
+    from route_policy import lookup
+    declared, permission = lookup(path, method)
+    if not declared or permission is None:
+        raise HTTPException(403, 'Chức năng này chưa được khai báo quyền truy cập.')
+    return permission
 
 
 BI_DATASET_DEPENDENCIES = {
@@ -411,7 +407,10 @@ def cache_identity():
 def project_tables(tables):
     if active_principal.get() is None:return tables
     principal=current_principal(required=True)
-    return {name:value for name,value in tables.items() if principal.permits('analytics.read',name)}
+    from services.metadata_service import is_sensitive_column
+    return {name: {**value, 'columns': [column for column in value.get('columns', [])
+                    if not column.get('sensitive') and not is_sensitive_column(column['name'])]}
+            for name, value in tables.items() if principal.permits('analytics.read', name)}
 
 
 def authorize_meaning(question,catalog,*,analysis_scope=None,anchors=None):
@@ -457,13 +456,14 @@ class AccessMiddleware:
         from starlette.requests import Request
         from starlette.responses import JSONResponse
         path,method=scope.get('path',''),scope.get('method','GET')
-        public={'/health','/api/health','/liveness','/api/readiness','/api/auth/login','/api/auth/session','/api/auth/logout'}
-        if not path.startswith('/api/') or path in public or method=='OPTIONS':
+        from route_policy import is_public
+        if (not path.startswith('/api/') and path != '/metrics') or is_public(path, method) or method=='OPTIONS':
             return await self.app(scope,receive,send)
         request=Request(scope)
         token=None
         try:
             if development_fallback() and not request.headers.get('authorization') and not request.cookies.get(AUTH_COOKIE):
+                route_permission(path, method)
                 return await self.app(scope,receive,send)
             csrf_origin(request)
             principal=request_principal(request)

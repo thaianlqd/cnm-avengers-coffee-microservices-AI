@@ -63,6 +63,13 @@ class FixtureWarehouse:
         def translate(n):
             if isinstance(n, (exp.DateTrunc, exp.TimestampTrunc)):
                 return exp.Anonymous(this='EVAL_PERIOD',expressions=[exp.Literal.string(str(n.args['unit']).strip("'\"").lower()),n.this])
+            if isinstance(n, exp.Extract) and str(n.this).upper()=='EPOCH':
+                value = n.expression.unnest()
+                if not isinstance(value, exp.Sub):
+                    raise ValueError('Fixture epoch requires a timestamp interval')
+                days = exp.Sub(this=exp.Anonymous(this='JULIANDAY',expressions=[value.this]),
+                               expression=exp.Anonymous(this='JULIANDAY',expressions=[value.expression]))
+                return exp.Mul(this=exp.Paren(this=days),expression=exp.Literal.number(86400))
             if isinstance(n, exp.Extract) and str(n.this).upper()=='HOUR':
                 return exp.Cast(this=exp.Anonymous(this='STRFTIME',expressions=[exp.Literal.string('%H'),n.expression]),to=exp.DataType.build('INT'))
             if isinstance(n, exp.Extract) and str(n.this).upper()=='ISODOW':

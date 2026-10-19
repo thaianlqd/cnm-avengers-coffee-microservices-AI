@@ -20,6 +20,13 @@ def require_sql_admin(request):
         raise HTTPException(403, "Thực thi SQL báo cáo bị tắt. Cần cấu hình và xác thực quản trị đáng tin cậy.")
 
 
+def require_warehouse_reader():
+    from services.access_policy import active_principal, current_principal, require_permission, development_fallback
+    if active_principal.get() is None and development_fallback():
+        return
+    require_permission(current_principal(required=True), 'warehouse.read')
+
+
 def validate_report_sql(sql, catalog=None):
     if catalog is None:
         from services.analysis_catalog import AnalysisCatalog

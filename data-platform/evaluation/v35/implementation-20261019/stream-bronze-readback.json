@@ -1,0 +1,88 @@
+{
+  "version": "3.5.0",
+  "observation": "Committed broker positions read back from immutable Bronze; no offset mutation",
+  "partitions": [
+    {
+      "topic": "order-items-events",
+      "partition": 0,
+      "committed_next_offset": 1249661,
+      "status": "verified",
+      "bronze_checksum_verified": true,
+      "record_status": "accepted",
+      "sample_offset": 1249660
+    },
+    {
+      "topic": "order-items-events",
+      "partition": 1,
+      "committed_next_offset": 1247261,
+      "status": "verified",
+      "bronze_checksum_verified": true,
+      "record_status": "accepted",
+      "sample_offset": 1247260
+    },
+    {
+      "topic": "order-items-events",
+      "partition": 2,
+      "committed_next_offset": 1250597,
+      "status": "verified",
+      "bronze_checksum_verified": true,
+      "record_status": "accepted",
+      "sample_offset": 1250596
+    },
+    {
+      "topic": "orders-events",
+      "partition": 0,
+      "committed_next_offset": 414372,
+      "status": "verified",
+      "bronze_checksum_verified": true,
+      "record_status": "accepted",
+      "sample_offset": 414371
+    },
+    {
+      "topic": "orders-events",
+      "partition": 1,
+      "committed_next_offset": 421047,
+      "status": "verified",
+      "bronze_checksum_verified": true,
+      "record_status": "accepted",
+      "sample_offset": 421046
+    },
+    {
+      "topic": "orders-events",
+      "partition": 2,
+      "committed_next_offset": 415820,
+      "status": "verified",
+      "bronze_checksum_verified": true,
+      "record_status": "accepted",
+      "sample_offset": 415819
+    },
+    {
+      "topic": "shipper-events",
+      "partition": 0,
+      "committed_next_offset": 76779,
+      "status": "verified",
+      "bronze_checksum_verified": true,
+      "record_status": "accepted",
+      "sample_offset": 76778
+    },
+    {
+      "topic": "shipper-events",
+      "partition": 1,
+      "committed_next_offset": 78736,
+      "status": "verified",
+      "bronze_checksum_verified": true,
+      "record_status": "accepted",
+      "sample_offset": 78735
+    },
+    {
+      "topic": "shipper-events",
+      "partition": 2,
+      "committed_next_offset": 76495,
+      "status": "verified",
+      "bronze_checksum_verified": true,
+      "record_status": "accepted",
+      "sample_offset": 76494
+    }
+  ],
+  "all_verified": true
+}

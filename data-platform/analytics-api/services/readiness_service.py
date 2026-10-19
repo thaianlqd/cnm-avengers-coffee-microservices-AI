@@ -106,7 +106,7 @@ def readiness():
     try:
         # V3.1: an invalid repair allowance is a configuration error at
         # readiness, not something discovered on the first semantic failure.
-        from services.hybrid_analyst_planner import semantic_repair_limit
+        from services.provider_budget import semantic_repair_limit
         semantic_repair_limit()
     except Exception:
         config = False

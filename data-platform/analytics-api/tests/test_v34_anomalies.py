@@ -55,6 +55,17 @@ class RobustAnomalyTests(TestCase):
         result=robust_anomaly(rows,'fixture',config,source_health=HEALTH,observed_day=self.today,exposure='exposure')
         self.assertEqual(result['status'],'insufficient_sample')
 
+    def test_postgres_numeric_decimals_are_measured_and_invalid_exposure_is_rejected(self):
+        from decimal import Decimal
+        rows=self.rows()
+        for row in rows:
+            row['fixture']=Decimal(str(row['fixture']))
+            row['exposure']=Decimal(str(row['exposure']))
+        self.assertEqual(self.run_baseline(rows, exposure='exposure')['status'],'anomaly')
+        for invalid in (True, Decimal('NaN'), Decimal('Infinity')):
+            rows[0]['exposure']=invalid
+            self.assertEqual(self.run_baseline(rows, exposure='exposure')['status'],'insufficient_sample')
+
     def test_unknown_source_performs_zero_baseline_queries(self):
         from types import SimpleNamespace
         catalog=SimpleNamespace(registry={'metrics':{'fixture':{'time_column':'silver.fixture.date','source':'silver.fixture'}},'timezone':'Asia/Ho_Chi_Minh'})

@@ -1,0 +1,3532 @@
+{
+  "version": "3.4.0",
+  "scope": "Only the23 sources referenced by current Silver views and Bronze jobs. No chatbot/order-cart/security-config replication is added.",
+  "default_owner": "avengers-data-team",
+  "datasets": {
+    "identity.chi_nhanh": {
+      "dataset_id": "replica.identity.chi_nhanh",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "identity.chi_nhanh",
+      "target_table": "identity.chi_nhanh",
+      "primary_key": [
+        "ma_chi_nhanh"
+      ],
+      "mode": "incremental",
+      "update_clock": "ngay_cap_nhat",
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "ma_chi_nhanh": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_chi_nhanh": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "dia_chi": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "pii",
+          "projection": "source"
+        },
+        "so_dien_thoai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "pii",
+          "projection": "source"
+        },
+        "trang_thai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "thanh_pho": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "hinh_anh_url": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "gio_mo_cua": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "gio_dong_cua": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "map_url": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "loai_diem_ban": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "vi_do": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "kinh_do": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "khu_vuc_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "chi_nhanh_me_ma": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "loai_vi_tri": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "mo_ta": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [
+        {
+          "id": "enum.trang_thai",
+          "kind": "enum",
+          "column": "trang_thai",
+          "semantic_enum_ref": "silver.chi_nhanh.trang_thai",
+          "values": [
+            "ACTIVE",
+            "MAINTENANCE"
+          ]
+        }
+      ],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "identity.khu_vuc": {
+      "dataset_id": "replica.identity.khu_vuc",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "identity.khu_vuc",
+      "target_table": "identity.khu_vuc",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "incremental",
+      "update_clock": "ngay_cap_nhat",
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_khu_vuc": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_khu_vuc": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "thanh_pho": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "mo_ta": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "nguoi_quan_ly_ma": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "identity.khuyen_mai": {
+      "dataset_id": "replica.identity.khuyen_mai",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "identity.khuyen_mai",
+      "target_table": "identity.khuyen_mai",
+      "primary_key": [
+        "ma_khuyen_mai"
+      ],
+      "mode": "incremental",
+      "update_clock": "ngay_cap_nhat",
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "ma_khuyen_mai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_khuyen_mai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "mo_ta": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "loai_khuyen_mai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "gia_tri": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "gia_tri_don_toi_thieu": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "giam_toi_da": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_luong_toi_da": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_luong_da_dung": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "gioi_han_moi_nguoi": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_bat_dau": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_ket_thuc": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "hien_thi_cho_khach": {
+          "data_type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_san_pham_tang": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "hinh_anh": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "hang_toi_thieu": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_nguoi_dung": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "loai_su_kien": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "loai_phan_phoi": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_template_goc": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "identity.khuyen_mai_su_dung": {
+      "dataset_id": "replica.identity.khuyen_mai_su_dung",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "identity.khuyen_mai_su_dung",
+      "target_table": "identity.khuyen_mai_su_dung",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_khuyen_mai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_nguoi_dung": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_don_hang": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_tien_giam": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_su_dung": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [
+        {
+          "id": "ref.ma_khuyen_mai",
+          "columns": [
+            "ma_khuyen_mai"
+          ],
+          "reference_table": "identity.khuyen_mai",
+          "reference_columns": [
+            "ma_khuyen_mai"
+          ],
+          "authority": "observed_source_fk"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "identity.nguoi_dung": {
+      "dataset_id": "replica.identity.nguoi_dung",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "identity.nguoi_dung",
+      "target_table": "identity.nguoi_dung",
+      "primary_key": [
+        "ma_nguoi_dung"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "ma_nguoi_dung": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_dang_nhap": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "mat_khau_hash": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": "[REDACTED]"
+        },
+        "ho_ten": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "pii",
+          "projection": "source"
+        },
+        "email": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "pii",
+          "projection": "source"
+        },
+        "so_dien_thoai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "pii",
+          "projection": "source"
+        },
+        "avatar_url": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "diem_loyalty": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "vai_tro": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "co_so_ma": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "co_so_ten": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "reset_password_code_hash": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "reset_password_code_expires_at": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "reset_password_requested_at": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        },
+        "reset_password_attempts": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": 0
+        },
+        "diem_kha_dung": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tong_chi_tieu": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_sinh": {
+          "data_type": "date",
+          "udt_name": "date",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "chi_tieu_thang_nay": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "thang_chi_tieu_gan_nhat": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "require_password_change": {
+          "data_type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": false
+        },
+        "parent_franchisee_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "kiosk_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "pos_permissions": {
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_du_vi": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "inventory.ton_kho_san_pham": {
+      "dataset_id": "replica.inventory.ton_kho_san_pham",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "inventory.ton_kho_san_pham",
+      "target_table": "inventory.ton_kho_san_pham",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "incremental",
+      "update_clock": "cap_nhat_luc",
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_san_pham": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_luong_ton": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "muc_canh_bao": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "dang_kinh_doanh": {
+          "data_type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "cap_nhat_luc": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "co_so_ma": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "menu.bien_the_san_pham": {
+      "dataset_id": "replica.menu.bien_the_san_pham",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "menu.bien_the_san_pham",
+      "target_table": "menu.bien_the_san_pham",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_san_pham": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_thuoc_tinh": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "gia_tri": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "phu_thu": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [
+        {
+          "id": "ref.ma_san_pham",
+          "columns": [
+            "ma_san_pham"
+          ],
+          "reference_table": "menu.san_pham",
+          "reference_columns": [
+            "ma_san_pham"
+          ],
+          "authority": "observed_source_fk"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "menu.danh_muc": {
+      "dataset_id": "replica.menu.danh_muc",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "menu.danh_muc",
+      "target_table": "menu.danh_muc",
+      "primary_key": [
+        "ma_danh_muc"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "ma_danh_muc": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_danh_muc": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "hinh_anh_icon": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_danh_muc_cha": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "cap_bac": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "menu.san_pham": {
+      "dataset_id": "replica.menu.san_pham",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "menu.san_pham",
+      "target_table": "menu.san_pham",
+      "primary_key": [
+        "ma_san_pham"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "ma_san_pham": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_san_pham": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "gia_ban": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "mo_ta": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "hinh_anh_url": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai": {
+          "data_type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_danh_muc": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "gia_niem_yet": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "la_hot": {
+          "data_type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "la_moi": {
+          "data_type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "sizes": {
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "luong_da": {
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "do_ngot": {
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "loai_sua": {
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "toppings": {
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "bien_the": {
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [
+        {
+          "id": "ref.ma_danh_muc",
+          "columns": [
+            "ma_danh_muc"
+          ],
+          "reference_table": "menu.danh_muc",
+          "reference_columns": [
+            "ma_danh_muc"
+          ],
+          "authority": "observed_source_fk"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.ca_doi_soat": {
+      "dataset_id": "replica.orders.ca_doi_soat",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.ca_doi_soat",
+      "target_table": "orders.ca_doi_soat",
+      "primary_key": [
+        "ma_ca"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "ma_ca": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "thoi_gian_bat_dau": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "thoi_gian_ket_thuc": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tien_dau_ca": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tien_cuoi_ca": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tien_mat_he_thong": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "doanh_thu_he_thong": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tien_mat_ky_vong": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "chenh_lech": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tong_don": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tong_don_tien_mat": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ghi_chu": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_nhan_vien": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "du_lieu_tom_tat": {
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai_phe_duyet": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "manager_duyet": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ghi_chu_phe_duyet": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "thoi_gian_phe_duyet": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "co_so_ma": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [
+        {
+          "id": "enum.trang_thai_phe_duyet",
+          "kind": "enum",
+          "column": "trang_thai_phe_duyet",
+          "semantic_enum_ref": "silver.ca_doi_soat.trang_thai_phe_duyet",
+          "values": [
+            "PENDING",
+            "APPROVED",
+            "REJECTED",
+            "DA_DUYET"
+          ]
+        }
+      ],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.ca_lam_viec_nhan_vien": {
+      "dataset_id": "replica.orders.ca_lam_viec_nhan_vien",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.ca_lam_viec_nhan_vien",
+      "target_table": "orders.ca_lam_viec_nhan_vien",
+      "primary_key": [
+        "ma_ca_lam_viec"
+      ],
+      "mode": "incremental",
+      "update_clock": "ngay_cap_nhat",
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "ma_ca_lam_viec": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "staff_username": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "staff_name": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_lam_viec": {
+          "data_type": "date",
+          "udt_name": "date",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_khung_ca": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_ca": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "gio_bat_dau": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "gio_ket_thuc": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai_cham_cong": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "check_in_at": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "check_out_at": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "note": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "manager_username": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "co_so_ma": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "nguon_tao": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai_yeu_cau": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "thoi_gian_gui_yeu_cau": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "nguoi_duyet_yeu_cau": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ghi_chu_duyet": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "thoi_gian_duyet": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [
+        {
+          "id": "enum.trang_thai_cham_cong",
+          "kind": "enum",
+          "column": "trang_thai_cham_cong",
+          "semantic_enum_ref": "silver.ca_lam_viec_nhan_vien.trang_thai_cham_cong",
+          "values": [
+            "DUNG_GIO",
+            "DI_TRE",
+            "VE_SOM",
+            "VANG_MAT",
+            "ASSIGNED",
+            "NGHI_PHEP"
+          ]
+        }
+      ],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.chi_tiet_don_hang": {
+      "dataset_id": "replica.orders.chi_tiet_don_hang",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.chi_tiet_don_hang",
+      "target_table": "orders.chi_tiet_don_hang",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_don_hang": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_san_pham": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_san_pham": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "gia_ban": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_luong": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "kich_co": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "hinh_anh_url": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "toppings": {
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "luong_da": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "do_ngot": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ghi_chu": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "loai_sua": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "custom_attributes": {
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [
+        {
+          "id": "domain.so_luong",
+          "kind": "numeric_range",
+          "column": "so_luong",
+          "exclusive_minimum": 0,
+          "authority": "existing_v34_quality_rule"
+        }
+      ],
+      "reference_checks": [
+        {
+          "id": "ref.ma_don_hang",
+          "columns": [
+            "ma_don_hang"
+          ],
+          "reference_table": "orders.don_hang",
+          "reference_columns": [
+            "ma_don_hang"
+          ],
+          "authority": "observed_source_fk"
+        },
+        {
+          "id": "ref.ma_san_pham",
+          "columns": [
+            "ma_san_pham"
+          ],
+          "reference_table": "menu.san_pham",
+          "reference_columns": [
+            "ma_san_pham"
+          ],
+          "authority": "canonical_semantic_join"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      },
+      "closed_periods": [
+        {
+          "id": "orders-sep2026",
+          "start": "2026-09-01",
+          "end": "2026-09-30",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "enabled": true,
+          "attested_by": "admin",
+          "attested_on": "2026-10-19",
+          "authority": "user_confirmation_20261019",
+          "must_revoke_before_mutation": true,
+          "clock": "ngay_tao",
+          "parent_table": "orders.don_hang",
+          "parent_key": "ma_don_hang",
+          "local_key": "ma_don_hang",
+          "clock_data_type": "timestamp without time zone"
+        }
+      ]
+    },
+    "orders.customer_wallet_transaction": {
+      "dataset_id": "replica.orders.customer_wallet_transaction",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.customer_wallet_transaction",
+      "target_table": "orders.customer_wallet_transaction",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "customer_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "amount": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "type": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "status": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "reference_id": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "created_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.danh_gia_chi_nhanh": {
+      "dataset_id": "replica.orders.danh_gia_chi_nhanh",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.danh_gia_chi_nhanh",
+      "target_table": "orders.danh_gia_chi_nhanh",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "incremental",
+      "update_clock": "ngay_cap_nhat",
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_chi_nhanh": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_chi_nhanh": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_nguoi_dung": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_nguoi_dung": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_dien_thoai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "pii",
+          "projection": "source"
+        },
+        "ma_don_hang": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "diem_tong_quan": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tieu_chi": {
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "nhan_xet": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "hinh_anh_urls": {
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_kiosk": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.danh_gia_san_pham": {
+      "dataset_id": "replica.orders.danh_gia_san_pham",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.danh_gia_san_pham",
+      "target_table": "orders.danh_gia_san_pham",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "incremental",
+      "update_clock": "ngay_cap_nhat",
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_san_pham": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_nguoi_dung": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_sao": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "binh_luan": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_don_hang": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "phan_hoi_quan_ly": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "nguoi_phan_hoi": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "thoi_gian_phan_hoi": {
+          "data_type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_kiosk": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.delivery_tracking": {
+      "dataset_id": "replica.orders.delivery_tracking",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.delivery_tracking",
+      "target_table": "orders.delivery_tracking",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "incremental",
+      "update_clock": "updated_at",
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_don_hang": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "delivery_mode": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "delivery_method": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "lalamove_order_id": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "lalamove_share_link": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "lalamove_status": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "branch_code": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "table_number": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "pickup_time": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "customer_name": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "pii",
+          "projection": "source"
+        },
+        "customer_phone": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "pii",
+          "projection": "source"
+        },
+        "tracking_code": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "shipper_delivery_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "delivery_address": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "pii",
+          "projection": "source"
+        },
+        "store_latitude": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "store_longitude": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "destination_latitude": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "destination_longitude": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "delivery_fee": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "estimated_minutes": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "created_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "updated_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.don_hang": {
+      "dataset_id": "replica.orders.don_hang",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.don_hang",
+      "target_table": "orders.don_hang",
+      "primary_key": [
+        "ma_don_hang"
+      ],
+      "mode": "incremental",
+      "update_clock": "ngay_cap_nhat",
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "ma_don_hang": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_nguoi_dung": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tong_tien": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "dia_chi_giao_hang": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "pii",
+          "projection": "source"
+        },
+        "khung_gio_giao": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ghi_chu": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "phuong_thuc_thanh_toan": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai_thanh_toan": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai_don_hang": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_voucher": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_tien_giam": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "lich_su_trang_thai": {
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "loai_don_hang": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_ban": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_khach_hang": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "pii",
+          "projection": "source"
+        },
+        "ten_thu_ngan": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "co_so_ma": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tien_khach_dua": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tien_thoi": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "guest_email": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "guest_phone": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "session_id": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [
+        {
+          "id": "enum.trang_thai_don_hang",
+          "kind": "enum",
+          "column": "trang_thai_don_hang",
+          "semantic_enum_ref": "silver.don_hang.trang_thai_don_hang",
+          "values": [
+            "HOAN_THANH",
+            "DANG_GIAO",
+            "CHO_THANH_TOAN",
+            "DA_XAC_NHAN",
+            "MOI_TAO",
+            "DA_HUY"
+          ]
+        },
+        {
+          "id": "enum.phuong_thuc_thanh_toan",
+          "kind": "enum",
+          "column": "phuong_thuc_thanh_toan",
+          "semantic_enum_ref": "silver.don_hang.phuong_thuc_thanh_toan",
+          "values": [
+            "TIEN_MAT",
+            "NGAN_HANG_QR",
+            "THE_NGAN_HANG",
+            "CHUYEN_KHOAN",
+            "THANH_TOAN_KHI_NHAN_HANG",
+            "VI_DIEN_TU",
+            "VNPAY"
+          ]
+        },
+        {
+          "id": "enum.loai_don_hang",
+          "kind": "enum",
+          "column": "loai_don_hang",
+          "semantic_enum_ref": "silver.don_hang.loai_don_hang",
+          "values": [
+            "TAI_CHO",
+            "DUNG_TAI_CHO",
+            "LAY_TAI_QUAN",
+            "MANG_DI",
+            "GIAO_TAN_NOI"
+          ]
+        },
+        {
+          "id": "domain.tong_tien",
+          "kind": "numeric_range",
+          "column": "tong_tien",
+          "minimum": 0,
+          "authority": "existing_v34_quality_rule"
+        }
+      ],
+      "reference_checks": [
+        {
+          "id": "ref.co_so_ma",
+          "columns": [
+            "co_so_ma"
+          ],
+          "reference_table": "identity.chi_nhanh",
+          "reference_columns": [
+            "ma_chi_nhanh"
+          ],
+          "authority": "canonical_semantic_join"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      },
+      "closed_periods": [
+        {
+          "id": "orders-sep2026",
+          "start": "2026-09-01",
+          "end": "2026-09-30",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "enabled": true,
+          "attested_by": "admin",
+          "attested_on": "2026-10-19",
+          "authority": "user_confirmation_20261019",
+          "must_revoke_before_mutation": true,
+          "clock": "ngay_tao",
+          "clock_data_type": "timestamp without time zone"
+        }
+      ]
+    },
+    "orders.giao_dich_thanh_toan": {
+      "dataset_id": "replica.orders.giao_dich_thanh_toan",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.giao_dich_thanh_toan",
+      "target_table": "orders.giao_dich_thanh_toan",
+      "primary_key": [
+        "ma_giao_dich"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "ma_giao_dich": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_don_hang": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "cong_thanh_toan": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_tham_chieu": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_giao_dich_cong": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_tien": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "du_lieu_tho": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [
+        {
+          "id": "ref.ma_don_hang",
+          "columns": [
+            "ma_don_hang"
+          ],
+          "reference_table": "orders.don_hang",
+          "reference_columns": [
+            "ma_don_hang"
+          ],
+          "authority": "observed_source_fk"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.khao_sat_phan_hoi": {
+      "dataset_id": "replica.orders.khao_sat_phan_hoi",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.khao_sat_phan_hoi",
+      "target_table": "orders.khao_sat_phan_hoi",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_bieu_mau": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_nguoi_dung": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_nguoi_dung": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_dien_thoai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "pii",
+          "projection": "source"
+        },
+        "ma_don_hang": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tra_loi": {
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "co_so_ma": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai_voucher": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.shipper": {
+      "dataset_id": "replica.orders.shipper",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.shipper",
+      "target_table": "orders.shipper",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "incremental",
+      "update_clock": "updated_at",
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "username": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "full_name": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "phone": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "pii",
+          "projection": "source"
+        },
+        "email": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "pii",
+          "projection": "source"
+        },
+        "status": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "branch_code": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "current_latitude": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "current_longitude": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "total_deliveries": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "rating": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "avatar_url": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "vehicle_type": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "vehicle_plate": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "created_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "updated_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "password": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "restricted",
+          "projection": "redacted",
+          "placeholder": null
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.shipper_delivery": {
+      "dataset_id": "replica.orders.shipper_delivery",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.shipper_delivery",
+      "target_table": "orders.shipper_delivery",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "incremental",
+      "update_clock": "updated_at",
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_don_hang": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "shipper_id": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "status": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "delivery_note": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "delivery_address": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "pii",
+          "projection": "source"
+        },
+        "pickup_latitude": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "pickup_longitude": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "delivery_latitude": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "delivery_longitude": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "estimated_time_minutes": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "picked_up_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "delivered_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "proof_image_url": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "delivery_fee": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "assigned_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "updated_at": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "shipperId": {
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "is_batched": {
+          "data_type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [
+        {
+          "id": "ref.shipperId",
+          "columns": [
+            "shipperId"
+          ],
+          "reference_table": "orders.shipper",
+          "reference_columns": [
+            "id"
+          ],
+          "authority": "observed_source_fk"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.voucher": {
+      "dataset_id": "replica.orders.voucher",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.voucher",
+      "target_table": "orders.voucher",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "incremental",
+      "update_clock": "ngay_cap_nhat",
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_voucher": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "mo_ta": {
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "loai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "gia_tri": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "giam_toi_da": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "don_hang_toi_thieu": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "tong_luot_dung": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "luot_da_dung": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "han_su_dung": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "trang_thai": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_cap_nhat": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_voucher": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "loai_phan_phoi": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngu_canh_su_dung": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "so_ngay_hieu_luc": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "gioi_han_moi_nguoi": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_san_pham_tang": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_bat_dau": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "hien_thi_cho_khach": {
+          "data_type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "hinh_anh": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    },
+    "orders.yeu_thich_san_pham": {
+      "dataset_id": "replica.orders.yeu_thich_san_pham",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
+      "source_table": "orders.yeu_thich_san_pham",
+      "target_table": "orders.yeu_thich_san_pham",
+      "primary_key": [
+        "id"
+      ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
+      "columns": {
+        "id": {
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_nguoi_dung": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ma_san_pham": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ten_san_pham": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "gia_ban": {
+          "data_type": "numeric",
+          "udt_name": "numeric",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "hinh_anh_url": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "danh_muc": {
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "classification": "internal",
+          "projection": "source"
+        },
+        "ngay_tao": {
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "classification": "internal",
+          "projection": "source"
+        }
+      },
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
+      "expected_load_interval_seconds": 300,
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
+    }
+  }
+}

@@ -1,0 +1,451 @@
+{
+  "version": "3.5.0",
+  "status": "passed",
+  "observed_at": "2026-10-19T13:39:20.099296+00:00",
+  "mode": "read_only_acceptance_measurement",
+  "database_writes": 0,
+  "source_transaction": "REPEATABLE READ READ ONLY",
+  "replica_transaction": "REPEATABLE READ READ ONLY",
+  "sources": {
+    "orders.don_hang": {
+      "status": "matched",
+      "generation": 96,
+      "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5",
+      "projection": {
+        "rows": 40460,
+        "row_identity_digest_sha256": "01c2b898925c106abdeb032fc5389206819e0b771157cc00c03ea3909dd2e6e6",
+        "content_sha256": "9757bc8e4c90928e3e93949ea2508857b279c3148f32a6e60378ad46e1295a13",
+        "quality": {
+          "status": "passed",
+          "checks": [
+            {
+              "rule_id": "primary_key",
+              "kind": "primary_key",
+              "column": null,
+              "checked": 40460,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.ma_don_hang",
+              "kind": "not_null",
+              "column": "ma_don_hang",
+              "checked": 40460,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.tong_tien",
+              "kind": "not_null",
+              "column": "tong_tien",
+              "checked": 40460,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.dia_chi_giao_hang",
+              "kind": "not_null",
+              "column": "dia_chi_giao_hang",
+              "checked": 40460,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.phuong_thuc_thanh_toan",
+              "kind": "not_null",
+              "column": "phuong_thuc_thanh_toan",
+              "checked": 40460,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.trang_thai_thanh_toan",
+              "kind": "not_null",
+              "column": "trang_thai_thanh_toan",
+              "checked": 40460,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.trang_thai_don_hang",
+              "kind": "not_null",
+              "column": "trang_thai_don_hang",
+              "checked": 40460,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.lich_su_trang_thai",
+              "kind": "not_null",
+              "column": "lich_su_trang_thai",
+              "checked": 40460,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.ngay_tao",
+              "kind": "not_null",
+              "column": "ngay_tao",
+              "checked": 40460,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.ngay_cap_nhat",
+              "kind": "not_null",
+              "column": "ngay_cap_nhat",
+              "checked": 40460,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.co_so_ma",
+              "kind": "not_null",
+              "column": "co_so_ma",
+              "checked": 40460,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "clock_bound",
+              "kind": "clock_bound",
+              "column": "ngay_cap_nhat",
+              "checked": 40460,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "enum.trang_thai_don_hang",
+              "kind": "enum",
+              "column": "trang_thai_don_hang",
+              "checked": 40460,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "enum.phuong_thuc_thanh_toan",
+              "kind": "enum",
+              "column": "phuong_thuc_thanh_toan",
+              "checked": 40460,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "enum.loai_don_hang",
+              "kind": "enum",
+              "column": "loai_don_hang",
+              "checked": 40460,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "domain.tong_tien",
+              "kind": "numeric_range",
+              "column": "tong_tien",
+              "checked": 40460,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "ref.co_so_ma",
+              "kind": "reference",
+              "checked": 40460,
+              "violations": 0,
+              "status": "passed"
+            }
+          ]
+        }
+      },
+      "source_projection_sha256": "1b425f05b6871391a9555e06cc2e2990834e17691f54fcb8fdba3ffe8a69587b",
+      "replica_projection_sha256": "1b425f05b6871391a9555e06cc2e2990834e17691f54fcb8fdba3ffe8a69587b",
+      "snapshot_certificate_sha256": "ea4a8e06e534ff9b95b561e9a63bb5ef8c884d97097b672413435f7134837803",
+      "elapsed_seconds": 71.761
+    },
+    "orders.chi_tiet_don_hang": {
+      "status": "matched",
+      "generation": 96,
+      "schema_fingerprint": "88e28e04bbf79940e9d7f16420502465f188f686d87f9824d4f2d716f1f6b042",
+      "projection": {
+        "rows": 72063,
+        "row_identity_digest_sha256": "cd06a05e0eb2f2d4c1fea42242c50a71ad5d20318a0e07fdf5016c0d7ed5b6bf",
+        "content_sha256": "3269e42da7b5c5a5d3dc8aa97c56f6cae86d0fcbf9513d683bc825156992c4a4",
+        "quality": {
+          "status": "passed",
+          "checks": [
+            {
+              "rule_id": "primary_key",
+              "kind": "primary_key",
+              "column": null,
+              "checked": 72063,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.id",
+              "kind": "not_null",
+              "column": "id",
+              "checked": 72063,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.ma_don_hang",
+              "kind": "not_null",
+              "column": "ma_don_hang",
+              "checked": 72063,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.ma_san_pham",
+              "kind": "not_null",
+              "column": "ma_san_pham",
+              "checked": 72063,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.ten_san_pham",
+              "kind": "not_null",
+              "column": "ten_san_pham",
+              "checked": 72063,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.gia_ban",
+              "kind": "not_null",
+              "column": "gia_ban",
+              "checked": 72063,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.so_luong",
+              "kind": "not_null",
+              "column": "so_luong",
+              "checked": 72063,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.toppings",
+              "kind": "not_null",
+              "column": "toppings",
+              "checked": 72063,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "domain.so_luong",
+              "kind": "numeric_range",
+              "column": "so_luong",
+              "checked": 72063,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "ref.ma_don_hang",
+              "kind": "reference",
+              "checked": 72063,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "ref.ma_san_pham",
+              "kind": "reference",
+              "checked": 72063,
+              "violations": 0,
+              "status": "passed"
+            }
+          ]
+        }
+      },
+      "source_projection_sha256": "c5e5ae06b9d33a1fd54d416114dab443725bb93afaf39848a2bd9a5fd503d11f",
+      "replica_projection_sha256": "c5e5ae06b9d33a1fd54d416114dab443725bb93afaf39848a2bd9a5fd503d11f",
+      "snapshot_certificate_sha256": "cca31f9a440071c9eacdeeed01818b95290631b8e6ee6dc96ec7526595354fac",
+      "elapsed_seconds": 56.456
+    },
+    "identity.chi_nhanh": {
+      "status": "matched",
+      "generation": 98,
+      "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c",
+      "projection": {
+        "rows": 1215,
+        "row_identity_digest_sha256": "0fe1f621e510d5ff6d59b7f4b541b02e6e58f9fd4f427a6af575df30034dd2d5",
+        "content_sha256": "2891531f057237a1caa96a79247e7b7078212746f474cf0250a893edf6147fc2",
+        "quality": {
+          "status": "passed",
+          "checks": [
+            {
+              "rule_id": "primary_key",
+              "kind": "primary_key",
+              "column": null,
+              "checked": 1215,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.ma_chi_nhanh",
+              "kind": "not_null",
+              "column": "ma_chi_nhanh",
+              "checked": 1215,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.ten_chi_nhanh",
+              "kind": "not_null",
+              "column": "ten_chi_nhanh",
+              "checked": 1215,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.trang_thai",
+              "kind": "not_null",
+              "column": "trang_thai",
+              "checked": 1215,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.ngay_tao",
+              "kind": "not_null",
+              "column": "ngay_tao",
+              "checked": 1215,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.ngay_cap_nhat",
+              "kind": "not_null",
+              "column": "ngay_cap_nhat",
+              "checked": 1215,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.loai_diem_ban",
+              "kind": "not_null",
+              "column": "loai_diem_ban",
+              "checked": 1215,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "clock_bound",
+              "kind": "clock_bound",
+              "column": "ngay_cap_nhat",
+              "checked": 1215,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "enum.trang_thai",
+              "kind": "enum",
+              "column": "trang_thai",
+              "checked": 1215,
+              "violations": 0,
+              "status": "passed"
+            }
+          ]
+        }
+      },
+      "source_projection_sha256": "7e34f3f8abb93f6ac3e4519efd11e33793d87abf80b2265d33b8092f276a0b12",
+      "replica_projection_sha256": "7e34f3f8abb93f6ac3e4519efd11e33793d87abf80b2265d33b8092f276a0b12",
+      "snapshot_certificate_sha256": "6349b726dd71d4803d38d7ce17615dfc5a6073019714153cdb752cbefbe24e05",
+      "elapsed_seconds": 1.142
+    },
+    "menu.san_pham": {
+      "status": "matched",
+      "generation": 98,
+      "schema_fingerprint": "e262a1c0df53db8f8a561ae3be21772f4f1ffb28c5790d60447a0f74c3b2f35f",
+      "projection": {
+        "rows": 118,
+        "row_identity_digest_sha256": "ea827f37caa9596d540de359ae202c467c2264866a7351297a8bd12bff1cd3ef",
+        "content_sha256": "ad9eb3bac9fe8ed0b935eae31e9b71dfa72fcf29e264845def36ec071a3aacea",
+        "quality": {
+          "status": "passed",
+          "checks": [
+            {
+              "rule_id": "primary_key",
+              "kind": "primary_key",
+              "column": null,
+              "checked": 118,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.ma_san_pham",
+              "kind": "not_null",
+              "column": "ma_san_pham",
+              "checked": 118,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.ten_san_pham",
+              "kind": "not_null",
+              "column": "ten_san_pham",
+              "checked": 118,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.gia_ban",
+              "kind": "not_null",
+              "column": "gia_ban",
+              "checked": 118,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.trang_thai",
+              "kind": "not_null",
+              "column": "trang_thai",
+              "checked": 118,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.la_hot",
+              "kind": "not_null",
+              "column": "la_hot",
+              "checked": 118,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "required.la_moi",
+              "kind": "not_null",
+              "column": "la_moi",
+              "checked": 118,
+              "violations": 0,
+              "status": "passed"
+            },
+            {
+              "rule_id": "ref.ma_danh_muc",
+              "kind": "reference",
+              "checked": 118,
+              "violations": 0,
+              "status": "passed"
+            }
+          ]
+        }
+      },
+      "source_projection_sha256": "238f08ca954cff88832f17506d80dd93d4a61049439e6fa24dc53a0af86d7c9c",
+      "replica_projection_sha256": "238f08ca954cff88832f17506d80dd93d4a61049439e6fa24dc53a0af86d7c9c",
+      "snapshot_certificate_sha256": "f521cfbe5a45f6c3d00d101d44e083ae8028794b10149a5f638bf8d1f025df7f",
+      "elapsed_seconds": 0.3
+    }
+  },
+  "limitations": [
+    "Independent acceptance comparison; not persisted as a worker certificate",
+    "No business-period closure inferred",
+    "Source and replica have independent MVCC snapshots; mismatches fail instead of being hidden"
+  ],
+  "field_aliases": {
+    "row_identity_digest_sha256": "key_sha256; canonical proof hashing uses original key name; values unchanged"
+  }
+}

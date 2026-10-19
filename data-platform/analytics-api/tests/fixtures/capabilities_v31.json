@@ -1,10 +1,10 @@
 {
   "status": "ready",
   "version": "3.0",
-  "fingerprint": "2a05283d39249765b6881e7dc2bc775770c4baa92f119705f5c30cdbe1801926",
-  "semantic_fingerprint": "f854776b46d8e0136e9bf7c9b423641c1da476bfc83ed75d3fbe41233a84d4b6",
+  "fingerprint": "2f7ea31b519ce31e8c7d68c85135f1feb338a14654ed79cea8bdb83c88f00c05",
+  "semantic_fingerprint": "ed1ad678b1fc71b5c94ea0783c8fdab2c168840fb59d3b606503f7329ecfb9e8",
   "governance_contract_version": "3.4.0",
-  "registry_fingerprint": "58e5b23bb02e0541106277b36d11f30add90bd5976a11e79e8c6f46d2298af6c",
+  "registry_fingerprint": "eb184b6d30fcb4bbd5562826c9f33342d6ccb5efbd334ca6a067252d098d2f03",
   "domains": [
     {
       "id": "orders",

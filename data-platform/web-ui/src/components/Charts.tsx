@@ -1,6 +1,6 @@
 import { businessCategory, categoryColor, compositionData, bucketCoverage, conciseChartTitle } from '../utils/analystDashboardLayout.mjs';
 import { formatChartValue } from '../utils/aiChartConfig.mjs';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 const axisValue = (value: number) => {
   const magnitude = Math.abs(value);
@@ -10,47 +10,66 @@ const axisValue = (value: number) => {
 const tickIndices = (count: number, maximum = 5) => [...new Set(Array.from({ length: Math.min(count, maximum) }, (_, i) => Math.round(i * (count - 1) / Math.max(1, Math.min(count, maximum) - 1))))];
 const timeTick = (label: string, crossYear: boolean) => /^\d{4}-\d{2}-\d{2}/.test(String(label)) ? `${label.slice(8, 10)}/${label.slice(5, 7)}${crossYear ? '/' + label.slice(2, 4) : ''}` : String(label).slice(0, 12);
 
+// Keep labels at a readable size while the plot fills its card without growing taller.
+const PLOT_HEIGHT = 214;
+function usePlotWidth() {
+  const ref = useRef<SVGSVGElement>(null);
+  const [width, setWidth] = useState(620);
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const measure = () => setWidth(Math.max(240, Math.round(element.getBoundingClientRect().width)));
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, width };
+}
+
 /** Signed grouped/stacked series. Missing observations remain missing. */
 export const SeriesBarChart: React.FC<{ data: any[]; series: any[]; stacked?: boolean; percentage?: boolean; unit?: string; onInspect?: (row: any) => void }> = ({ data, series, stacked = false, percentage = false, unit = '', onInspect }) => {
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const active = series.filter(s => !hidden[s.key]);
+  const { ref, width: plotWidth } = usePlotWidth();
   if (!data.length) return <p>Không có dữ liệu trong phạm vi này.</p>;
   const values = data.flatMap(row => active.map(s => row[s.key]).filter(Number.isFinite));
   const sums = data.map(row => active.reduce((sum, s) => sum + (Number.isFinite(row[s.key]) ? row[s.key] : 0), 0));
   const low = Math.min(0, ...values), high = percentage ? 100 : Math.max(0, ...(stacked ? sums : values));
-  const span = high - low || 1, y = (value: number) => 245 - (value - low) / span * 215;
-  const slot = 540 / data.length;
+  const span = high - low || 1, y = (value: number) => (PLOT_HEIGHT - 38) - (value - low) / span * (PLOT_HEIGHT - 62);
+  const slot = (plotWidth - 78) / data.length;
   return <div className="w-full min-w-0">
     <div className="flex flex-wrap gap-2 text-xs mb-3">{(series.length > 1 ? series : []).map(s => <button key={s.key} onClick={() => setHidden({ ...hidden, [s.key]: !hidden[s.key] })} aria-pressed={!hidden[s.key]} style={{ color: s.color }}>{s.label}</button>)}</div>
-    <svg viewBox="0 0 620 300" role="img" aria-label={stacked ? 'Biểu đồ cột chồng' : 'Biểu đồ cột nhóm'} className="w-full">
-      <line x1="55" x2="600" y1={y(0)} y2={y(0)} stroke="#94a3b8" />
-      {[low, (low + high) / 2, high].map((v, i) => <g key={i}><line x1="55" x2="600" y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="4 5" /><text x="50" y={y(v)} textAnchor="end" fontSize="11" fill="#64748b">{axisValue(v)}</text></g>)}
+    <svg ref={ref} viewBox={`0 0 ${plotWidth} ${PLOT_HEIGHT}`} style={{ height: PLOT_HEIGHT }} role="img" aria-label={stacked ? 'Biểu đồ cột chồng' : 'Biểu đồ cột nhóm'} className="w-full">
+      <line x1="55" x2={plotWidth - 18} y1={y(0)} y2={y(0)} stroke="#94a3b8" />
+      {[low, (low + high) / 2, high].map((v, i) => <g key={i}><line x1="55" x2={plotWidth - 18} y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="4 5" /><text x="50" y={y(v)} textAnchor="end" fontSize="11" fill="#64748b">{axisValue(v)}</text></g>)}
       {data.map((row, i) => { let offset = 0; return <g key={i}>{active.map((s, j) => {
         const v = row[s.key]; if (!Number.isFinite(v)) return null;
         const start = stacked ? offset : 0; if (stacked) offset += v;
         const width = slot * .8 / (stacked ? 1 : Math.max(active.length, 1));
         const x = 60 + i * slot + (stacked ? 0 : j * width);
         return <rect role={row.entity_ref && onInspect ? 'button' : undefined} aria-label={row.entity_ref && onInspect ? `Xem nhóm ${row.label}` : undefined} onClick={() => row.entity_ref && onInspect?.(row)} onKeyDown={event => { if (row.entity_ref && onInspect && ['Enter', ' '].includes(event.key)) { event.preventDefault(); onInspect(row); } }} key={s.key} x={x} y={Math.min(y(start), y(start + v))} width={Math.max(1, width - 2)} height={Math.abs(y(start + v) - y(start))} rx={3} tabIndex={0} className="outline-none transition-opacity duration-150 motion-reduce:transition-none hover:opacity-80 focus:opacity-80" fill={active.length === 1 ? row.color || s.color || '#2563eb' : s.color || '#2563eb'}><title>{`${row.label}: ${s.label} — ${formatChartValue(v, unit ? ` ${unit}` : '')}`}</title></rect>;
-      })}<text x={60 + i * slot + slot * .4} y="276" fontSize="11" fill="#64748b" textAnchor="middle">{tickIndices(data.length, 6).includes(i) ? String(row.label).slice(0, 12) : ''}</text></g>; })}
+      })}<text x={60 + i * slot + slot * .4} y={PLOT_HEIGHT - 12} fontSize="11" fill="#64748b" textAnchor="middle">{tickIndices(data.length, Math.min(5, Math.max(2, Math.floor(plotWidth / 85)))).includes(i) ? String(row.label).slice(0, 12) : ''}</text></g>; })}
     </svg>
   </div>;
 };
 
 export const ScatterChart: React.FC<{ data: any[]; xLabel?: string; yLabel?: string; xUnit?: string; yUnit?: string }> = ({ data, xLabel = '', yLabel = '', xUnit = '', yUnit = '' }) => {
+  const { ref, width: plotWidth } = usePlotWidth();
   const rows = data.filter(r => Number.isFinite(r.x) && Number.isFinite(r.y));
   if (!rows.length) return <p>Không có quan sát ghép cặp.</p>;
   const xs = rows.map(r => r.x), ys = rows.map(r => r.y);
   const minX = Math.min(0, ...xs), minY = Math.min(0, ...ys), spanX = Math.max(...xs) - minX || 1, spanY = Math.max(...ys) - minY || 1;
-  const x = (v: number) => 78 + (v - minX) / spanX * 495, y = (v: number) => 242 - (v - minY) / spanY * 200;
-  return <svg viewBox="0 0 620 310" role="img" aria-label="Biểu đồ phân tán — liên hệ quan sát" className="w-full">
+  const x = (v: number) => 58 + (v - minX) / spanX * (plotWidth - 80), y = (v: number) => (PLOT_HEIGHT - 45) - (v - minY) / spanY * (PLOT_HEIGHT - 75);
+  return <svg ref={ref} viewBox={`0 0 ${plotWidth} ${PLOT_HEIGHT}`} style={{ height: PLOT_HEIGHT }} role="img" aria-label="Biểu đồ phân tán — liên hệ quan sát" className="w-full">
     {[0, .5, 1].map((fraction, i) => <g key={i}>
-      <line x1="78" x2="573" y1={y(minY + fraction * spanY)} y2={y(minY + fraction * spanY)} stroke="#e2e8f0" strokeDasharray="4 5" />
-      <text x="70" y={y(minY + fraction * spanY) + 4} textAnchor="end" fontSize="11" fill="#64748b">{axisValue(minY + fraction * spanY)}</text>
-      <text x={x(minX + fraction * spanX)} y="264" textAnchor="middle" fontSize="11" fill="#64748b">{axisValue(minX + fraction * spanX)}</text>
+      <line x1="58" x2={plotWidth - 22} y1={y(minY + fraction * spanY)} y2={y(minY + fraction * spanY)} stroke="#e2e8f0" strokeDasharray="4 5" />
+      <text x="50" y={y(minY + fraction * spanY) + 4} textAnchor="end" fontSize="11" fill="#64748b">{axisValue(minY + fraction * spanY)}</text>
+      <text x={x(minX + fraction * spanX)} y={PLOT_HEIGHT - 26} textAnchor="middle" fontSize="11" fill="#64748b">{axisValue(minX + fraction * spanX)}</text>
     </g>)}
-    <path d="M 78 42 V 242 H 573" fill="none" stroke="#94a3b8" />
+    <path d={`M 58 30 V ${PLOT_HEIGHT - 45} H ${plotWidth - 22}`} fill="none" stroke="#94a3b8" />
     {rows.map((r, i) => <circle key={i} cx={x(r.x)} cy={y(r.y)} r={rows.length > 100 ? 3 : 5} fill="#0891b2" opacity={rows.length > 100 ? .45 : .75}><title>{`${r.label}: ${formatChartValue(r.x, ` ${xUnit}`)} / ${formatChartValue(r.y, ` ${yUnit}`)}`}</title></circle>)}
-    <text x="325" y="298" textAnchor="middle" fontSize="12" fill="#475569">{xLabel} ({xUnit})</text><text x="78" y="20" fontSize="12" fill="#475569">{yLabel} ({yUnit})</text>
+    <text x={plotWidth / 2} y={PLOT_HEIGHT - 4} textAnchor="middle" fontSize="12" fill="#475569">{xLabel} ({xUnit})</text><text x="58" y="17" fontSize="12" fill="#475569">{yLabel} ({yUnit})</text>
   </svg>;
 };
 
@@ -72,14 +91,14 @@ export const AnalystHorizontalBars: React.FC<{ data: any[]; unit: string; color:
   const low = Math.min(0, ...values), high = Math.max(0, ...values);
   const span = high - low || 1, origin = -low / span * 100;
   const mark = threshold ? (threshold.value - low) / span * 100 : null;
-  return <div className="min-h-[260px]">
+  return <div className="w-full">
     {threshold && <p className="mb-3 text-[11px] text-slate-500"><span className="inline-block w-3 border-t-2 border-dashed border-slate-500 align-middle mr-1" />Ngưỡng {threshold.label}: {threshold.symbol} {formatChartValue(threshold.value, unit ? ` ${unit}` : '')} · <span style={{ color: RISK_COLORS.red }}>■</span> vượt ngưỡng <span style={{ color: RISK_COLORS.amber }}>■</span> sát ngưỡng <span style={{ color: RISK_COLORS.green }}>■</span> an toàn</p>}
-    <div className="space-y-3">{data.slice((activePage - 1) * pageSize, activePage * pageSize).map((row: any, i: number) => { const tone = riskTone(row.value, threshold); return <div key={i} tabIndex={0} role={row.entity_ref && onInspect ? 'button' : undefined} onClick={() => row.entity_ref && onInspect?.(row)} onKeyDown={event => { if (row.entity_ref && onInspect && ['Enter', ' '].includes(event.key)) { event.preventDefault(); onInspect(row); } }} aria-label={`${row.entity_ref && onInspect ? 'Xem nhóm ' : ''}${row.label}: ${formatChartValue(row.value, unit ? ` ${unit}` : '')}${tone === 'red' ? ' — vượt ngưỡng' : ''}`} data-risk-tone={tone || undefined} className="group grid grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)_4rem] gap-3 items-center text-xs min-h-[20px] rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400" title={`${row.label}: ${formatChartValue(row.value, unit ? ` ${unit}` : '')}`}>
-      <div className="text-slate-600 leading-relaxed break-words">{ranking && <span className="text-slate-400 mr-2">{row.rank_position ?? (activePage - 1) * pageSize + i + 1}.</span>}{row.label}</div>
+    <div className="space-y-1">{data.slice((activePage - 1) * pageSize, activePage * pageSize).map((row: any, i: number) => { const tone = riskTone(row.value, threshold); return <div key={i} tabIndex={0} role={row.entity_ref && onInspect ? 'button' : undefined} onClick={() => row.entity_ref && onInspect?.(row)} onKeyDown={event => { if (row.entity_ref && onInspect && ['Enter', ' '].includes(event.key)) { event.preventDefault(); onInspect(row); } }} aria-label={`${row.entity_ref && onInspect ? 'Xem nhóm ' : ''}${row.label}: ${formatChartValue(row.value, unit ? ` ${unit}` : '')}${tone === 'red' ? ' — vượt ngưỡng' : ''}`} data-risk-tone={tone || undefined} className="group grid grid-cols-[minmax(0,1fr)_minmax(0,0.65fr)_4.5rem] gap-2 items-center text-[11px] min-h-[18px] rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400" title={`${row.label}: ${formatChartValue(row.value, unit ? ` ${unit}` : '')}`}>
+      <div className="text-slate-600 leading-4 truncate">{ranking && <span className="text-slate-400 mr-2">{row.rank_position ?? (activePage - 1) * pageSize + i + 1}.</span>}{row.label}</div>
       <div className="relative h-2.5 rounded-full bg-slate-100"><span className="absolute inset-y-0 rounded-full transition-[filter] duration-150 motion-reduce:transition-none group-hover:brightness-90" style={{ left: `${row.value < 0 ? origin + row.value / span * 100 : origin}%`, width: `${Math.abs(row.value) / span * 100}%`, background: tone ? RISK_COLORS[tone as keyof typeof RISK_COLORS] : row.color || color }} />{low < 0 && <span className="absolute -top-1 h-4 border-l border-slate-400" style={{ left: `${origin}%` }} />}{mark != null && <span data-risk-threshold className="absolute -top-1.5 h-5 border-l-2 border-dashed border-slate-600" style={{ left: `${mark}%` }} />}</div>
-      <span className="text-slate-700 font-medium tabular-nums text-right">{unit === '%' ? `${row.value.toLocaleString('vi-VN', { maximumFractionDigits: 2 })}%` : axisValue(row.value)}</span>
+      <span className="text-slate-700 font-medium tabular-nums text-right whitespace-nowrap">{unit === '%' ? `${row.value.toLocaleString('vi-VN', { maximumFractionDigits: 2 })}%` : axisValue(row.value)}</span>
     </div>; })}</div>
-    {pages > 1 && <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400"><span>{(activePage - 1) * pageSize + 1}–{Math.min(activePage * pageSize, data.length)}/{data.length} nhóm hiển thị</span><div className="flex gap-3"><button aria-label="Nhóm trước" disabled={activePage === 1} onClick={() => setPage(activePage - 1)} className="disabled:opacity-25 text-slate-600">←</button><button aria-label="Nhóm tiếp theo" disabled={activePage === pages} onClick={() => setPage(activePage + 1)} className="disabled:opacity-25 text-slate-600">→</button></div></div>}
+    {pages > 1 && <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400"><span>{(activePage - 1) * pageSize + 1}–{Math.min(activePage * pageSize, data.length)}/{data.length} nhóm hiển thị</span><div className="flex gap-3"><button aria-label="Nhóm trước" disabled={activePage === 1} onClick={() => setPage(activePage - 1)} className="disabled:opacity-25 text-slate-600">←</button><button aria-label="Nhóm tiếp theo" disabled={activePage === pages} onClick={() => setPage(activePage + 1)} className="disabled:opacity-25 text-slate-600">→</button></div></div>}
   </div>;
 };
 
@@ -98,15 +117,16 @@ export const AnalystChart: React.FC<{ chart: any; onInspect?: (row: any) => void
 export const SeriesLineChart: React.FC<{ data: any[]; series: any[]; unit?: string; area?: boolean; granularity?: string; period?: any }> = ({ data, series, unit = '', area = false, granularity, period }) => {
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const active = series.filter(s => !hidden[s.key]);
+  const { ref, width: plotWidth } = usePlotWidth();
   const values = data.flatMap(row => active.map(s => row[s.key]).filter(Number.isFinite));
   if (!data.length) return <p>Không có dữ liệu trong phạm vi này.</p>;
   const low = Math.min(0, ...values), high = Math.max(0, ...values), span = high - low || 1;
-  const x = (i: number) => 60 + i * 530 / Math.max(1, data.length - 1), y = (v: number) => 245 - (v - low) / span * 215;
+  const x = (i: number) => 55 + i * (plotWidth - 78) / Math.max(1, data.length - 1), y = (v: number) => (PLOT_HEIGHT - 38) - (v - low) / span * (PLOT_HEIGHT - 62);
   const coverage = data.map(r => bucketCoverage(r.label, granularity, period));
   const periodNote = (i: number) => coverage[i]?.partial ? ` · Kỳ chưa đủ ngày: ${[coverage[i].start, period?.start].filter(Boolean).sort().slice(-1)[0]} → ${[coverage[i].end, period?.end].filter(Boolean).sort()[0]}` : '';
   return <div className="w-full"><div className="flex flex-wrap gap-2 text-xs mb-3">{(series.length > 1 ? series : []).map(s => <button key={s.key} aria-pressed={!hidden[s.key]} onClick={() => setHidden({ ...hidden, [s.key]: !hidden[s.key] })} style={{ color: s.color }}>{s.label}</button>)}</div>
-    <svg viewBox="0 0 620 305" role="img" aria-label="Biểu đồ theo thời gian" className="w-full">
-      {[low, (low + high) / 2, high].map((v, i) => <g key={i}><line x1="55" x2="595" y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="4 5" /><text x="50" y={y(v)} textAnchor="end" fontSize="11" fill="#64748b">{axisValue(v)}</text></g>)}
+    <svg ref={ref} viewBox={`0 0 ${plotWidth} ${PLOT_HEIGHT}`} style={{ height: PLOT_HEIGHT }} role="img" aria-label="Biểu đồ theo thời gian" className="w-full">
+      {[low, (low + high) / 2, high].map((v, i) => <g key={i}><line x1="55" x2={plotWidth - 18} y1={y(v)} y2={y(v)} stroke="#e2e8f0" strokeDasharray="4 5" /><text x="50" y={y(v)} textAnchor="end" fontSize="11" fill="#64748b">{axisValue(v)}</text></g>)}
       {active.map(s => { let connected = false; const path = data.map((r, i) => { if (!Number.isFinite(r[s.key])) { connected = false; return ''; } const point = `${connected ? 'L' : 'M'} ${x(i)} ${y(r[s.key])}`; connected = true; return point; }).join(' ');
         const segments: number[][] = []; let segment: number[] = [];
         data.forEach((r, i) => { if (Number.isFinite(r[s.key])) segment.push(i); else if (segment.length) { segments.push(segment); segment = []; } });
@@ -114,7 +134,7 @@ export const SeriesLineChart: React.FC<{ data: any[]; series: any[]; unit?: stri
         return <g key={s.key}>{area && segments.map((indices, i) => <path key={i} d={`M ${x(indices[0])} ${y(0)} ${indices.map(index => `L ${x(index)} ${y(data[index][s.key])}`).join(' ')} L ${x(indices[indices.length - 1])} ${y(0)} Z`} fill={s.color || '#6366f1'} opacity=".12" />)}<path d={path} fill="none" stroke={s.color || '#6366f1'} strokeWidth="2" />{data.map((r, i) => i > 0 && (coverage[i]?.partial || coverage[i - 1]?.partial) && Number.isFinite(r[s.key]) && Number.isFinite(data[i - 1][s.key])
           ? <line key={`partial-${i}`} data-partial-segment x1={x(i - 1)} y1={y(data[i - 1][s.key])} x2={x(i)} y2={y(r[s.key])} stroke="white" strokeWidth="3" strokeDasharray="5 4" /> : null)}{data.map((r, i) => Number.isFinite(r[s.key]) ? <circle key={i} cx={x(i)} cy={y(r[s.key])} r={coverage[i]?.partial ? 4 : 3} fill={coverage[i]?.partial ? 'white' : s.color || '#6366f1'} stroke={s.color || '#6366f1'} strokeWidth="1.5" tabIndex={0} className="outline-none transition-[stroke-width] duration-150 motion-reduce:transition-none hover:[stroke-width:3] focus:[stroke-width:3]"><title>{`${r.label}: ${s.label} — ${formatChartValue(r[s.key], unit ? ` ${unit}` : '')}${periodNote(i)}`}</title></circle> : null)}</g>;
       })}
-      {tickIndices(data.length).map(i => <text key={i} x={x(i)} y="278" fontSize="11" fill="#64748b" textAnchor={i === 0 ? 'start' : i === data.length - 1 ? 'end' : 'middle'}><title>{data[i].label}{periodNote(i)}</title>{timeTick(data[i].label, String(data[0].label).slice(0, 4) !== String(data[data.length - 1].label).slice(0, 4))}{coverage[i]?.partial ? '*' : ''}</text>)}
+      {tickIndices(data.length, Math.min(5, Math.max(2, Math.floor(plotWidth / 85)))).map(i => <text data-time-tick key={i} x={x(i)} y={PLOT_HEIGHT - 12} fontSize="11" fill="#64748b" textAnchor={i === 0 ? 'start' : i === data.length - 1 ? 'end' : 'middle'}><title>{data[i].label}{periodNote(i)}</title>{timeTick(data[i].label, String(data[0].label).slice(0, 4) !== String(data[data.length - 1].label).slice(0, 4))}{coverage[i]?.partial ? '*' : ''}</text>)}
     </svg>
   </div>;
 };

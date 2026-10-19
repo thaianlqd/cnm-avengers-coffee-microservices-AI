@@ -48,3 +48,12 @@ export async function runAnalysisJob(record, { fetcher = fetch, onUpdate = () =>
     }
   }
 }
+
+/** Cancel the same owned job even when its submission response was lost. */
+export async function cancelAnalysisJob(record, fetcher = fetch) {
+  if (!record?.job_id && !record?.key) return;
+  const response = record.job_id
+    ? await fetcher(`/api/ai/analysis-jobs/${encodeURIComponent(record.job_id)}/cancel`, { method: 'POST' })
+    : await fetcher('/api/ai/analysis-jobs/cancel-by-key', { method: 'POST', headers: { 'Idempotency-Key': record.key } });
+  if (!response.ok) throw new Error('Chưa hủy được tác vụ trên máy chủ.');
+}

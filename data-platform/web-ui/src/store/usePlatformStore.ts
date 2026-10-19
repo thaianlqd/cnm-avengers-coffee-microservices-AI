@@ -134,7 +134,7 @@ export const usePlatformStore = create<PlatformState>((set, get) => ({
   activeTab: 'overview',
   setActiveTab: (tab) => set({ activeTab: tab }),
   
-  analyticsSubTab: 'revenue',
+  analyticsSubTab: 'hub',
   setAnalyticsSubTab: (subTab) => set({ analyticsSubTab: subTab }),
   
   dateRange: '30days',
@@ -175,15 +175,7 @@ export const usePlatformStore = create<PlatformState>((set, get) => ({
   isLoadingProducts: false,
   isLoadingMarts: false,
   
-  activeSql: `SELECT 
-    schemaname AS schema_name,
-    relname AS table_name,
-    n_live_tup AS total_rows,
-    pg_size_pretty(pg_total_relation_size(relid)) AS total_size
-FROM pg_stat_user_tables
-WHERE schemaname IN ('gold', 'orders', 'identity', 'menu', 'inventory', 'public')
-ORDER BY n_live_tup DESC
-LIMIT 15;`,
+  activeSql: 'SELECT COUNT(ma_don_hang) AS so_don FROM silver.don_hang',
   setActiveSql: (sql) => set({ activeSql: sql }),
   queryResult: null,
   isQueryRunning: false,

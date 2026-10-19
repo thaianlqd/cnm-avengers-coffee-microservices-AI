@@ -1,13 +1,14 @@
-# This file applies only to the shared pipeline build context.
+# Shared Data Platform build context; credentials never enter any image.
 **/.env
 **/.env.*
 !**/.env.example
+**/.runtime
 **/node_modules
 **/__pycache__
 **/.venv
 **/*.pyc
-analytics-api
 web-ui
 evaluation
+**/evaluation
 *.md
 init-db

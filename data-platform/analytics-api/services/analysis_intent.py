@@ -1,4 +1,6 @@
 """Semantic meaning only. Executable identities and coverage are server outputs."""
+from copy import deepcopy
+from services.error_taxonomy import AnalysisError, ResolutionIssues
 from typing import Literal, Optional
 from pydantic import Field, field_validator
 from services.analysis_contract import Contract, Filter, TimeSpec
@@ -87,6 +89,63 @@ class IntentChange(Contract):
 
 class AnalysisIntentDelta(Contract):
     changes: list[IntentChange] = Field(default_factory=list, max_length=16)
+
+
+def apply_delta(intent, raw):
+    """Apply one atomic patch; repeated updates may agree or affect disjoint fields.
+
+    Ranking is a nested patch (changing N keeps its metric/direction/group).
+    Lists and time specifications are replacements, never concatenated or
+    combined across different populations/time kinds. Conflicts never use
+    last-write-wins and the caller's baseline is never mutated.
+    """
+    delta = AnalysisIntentDelta.model_validate(raw)
+    requirements = {r.id:r.model_copy(deep=True) for r in intent.requirements}
+    grouped = {}
+    allowed = set(IntentRequirement.model_fields)-{"id"}
+    def merge(left, right, id, field=None):
+        result = deepcopy(left)
+        for key, value in right.items():
+            target = field or key
+            if key in result and result[key] != value:
+                if isinstance(result[key],dict) and isinstance(value,dict) and (field == 'ranking' or key == 'ranking'):
+                    result[key] = merge(result[key],value,id,target)
+                    continue
+                raise ResolutionIssues([{"requirement_id":id,"field":target,"code":"duplicate_delta"}])
+            result[key] = deepcopy(value)
+        return result
+    for change in delta.changes:
+        id = change.requirement_id
+        if id in grouped:
+            prior = grouped[id]
+            if prior.action != 'update' or change.action != 'update' or change.requirement:
+                raise ResolutionIssues([{"requirement_id":id,"field":"changes","code":"duplicate_delta"}])
+            prior.changes = merge(prior.changes,change.changes,id)
+        else:
+            grouped[id] = change.model_copy(deep=True)
+    for id, change in grouped.items():
+        if change.action == "add":
+            if id in requirements or not change.requirement or change.requirement.id != id or change.changes:
+                raise ResolutionIssues([{"requirement_id":id,"field":"requirement","code":"invalid_delta"}])
+            requirements[id] = change.requirement
+        elif change.action == "remove":
+            if id not in requirements or change.requirement or change.changes:
+                raise ResolutionIssues([{"requirement_id":id,"field":"requirement_id","code":"unknown_requirement"}])
+            del requirements[id]
+        else:
+            if id not in requirements or change.requirement or not set(change.changes) <= allowed:
+                raise ResolutionIssues([{"requirement_id":id,"field":"changes","code":"invalid_delta"}])
+            patch = deepcopy(change.changes)
+            baseline = requirements[id].model_dump(mode="json")
+            if isinstance(patch.get('ranking'),dict) and isinstance(baseline.get('ranking'),dict):
+                patch['ranking'] = {**baseline['ranking'],**patch['ranking']}
+            requirements[id] = IntentRequirement.model_validate({**baseline,**patch})
+    # Supporting views are derived from their parent meaning. Regenerate them
+    # after a parent delta rather than retaining stale time/scope/metric filters.
+    requirements={id:r for id,r in requirements.items() if not r.supporting_for or r.supporting_for not in grouped}
+    if not requirements:
+        raise AnalysisError("clarification", "Refinement removed all analytical requirements")
+    return AnalysisIntentEnvelope(decision="analyze",requirements=list(requirements.values()))
 
 
 def intent_tool(delta=False):

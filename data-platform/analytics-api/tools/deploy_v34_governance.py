@@ -129,14 +129,111 @@ def deploy(*,apply=False,approved=False):
     finally:connection.close()
 
 
+def admin_access_policy(policy):
+    """Only the approved ADMIN-only application grants; no DB role changes."""
+    from copy import deepcopy
+    if set(policy.get('roles', {})) != {'ADMIN'}:
+        raise ValueError('Expected the existing ADMIN-only access matrix')
+    grants = policy['roles']['ADMIN']
+    if not isinstance(grants.get('permissions'), list) or grants.get('national') is not True:
+        raise ValueError('Unexpected ADMIN policy shape')
+    result = deepcopy(policy)
+    result['roles']['ADMIN']['permissions'] = sorted(set(grants['permissions']) | {'system.read', 'warehouse.read'})
+    result['version'] = '3.5.0-local-admin-governed'
+    result['basis'] = ('Existing Identity ADMIN only; dataset and subject scope preserved. '
+                       'Metadata is separate from read-only, durably audited trusted_admin SQL.')
+    return result
+
+
+def _replace_public_config(path, value):
+    """Atomic local public-policy/settings replacement; no credential files."""
+    import tempfile
+    if path.is_symlink():
+        raise ValueError('Public deployment configuration must not be a symlink')
+    raw = (json.dumps(value, ensure_ascii=False, indent=2) + '\n').encode()
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=path.parent, prefix='.v35-settings-', delete=False) as handle:
+            temporary = Path(handle.name)
+            os.chmod(temporary, 0o600)
+            handle.write(raw)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+        descriptor = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+    finally:
+        if temporary is not None and temporary.exists():
+            temporary.unlink()
+
+
+def deploy_admin_access(*, apply=False):
+    """Reviewed app-policy rollout. Never executes migrations, GRANT or fact DML."""
+    from services.access_policy import digest
+    private = ROOT / '.runtime'
+    policy_path = private / 'access_policy.json'
+    settings_path = private / 'deployment.json'
+    before = json.loads(policy_path.read_text())
+    settings = json.loads(settings_path.read_text())
+    expected_path = Path(settings.get('DATA_ANALYST_ACCESS_POLICY_PATH', str(policy_path)))
+    if expected_path.resolve() != policy_path.resolve():
+        raise ValueError('Unexpected deployed policy path')
+    after = admin_access_policy(before)
+    changes = sorted(set(after['roles']['ADMIN']['permissions']) - set(before['roles']['ADMIN']['permissions']))
+    result = {'applied': False, 'policy_before': digest(before), 'policy_after': digest(after),
+              'version': after['version'], 'added_permissions': changes, 'roles': ['ADMIN'],
+              'datasets_unchanged': True, 'subjects_unchanged': True, 'ddl': False, 'db_grants': False,
+              'sql_mode_after': 'trusted_admin'}
+    if not apply:
+        return result
+    if os.getenv('ANALYTICS_INITIALIZE_WAREHOUSE_ON_STARTUP', 'false').lower() == 'true':
+        raise RuntimeError('Startup DDL must remain disabled')
+    checks = {}
+    for kind, factory in [('reader', db.get_db_conn), ('writer', db.get_report_writer_conn)]:
+        connection = factory()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT rolsuper,rolcreatedb,rolcreaterole,rolbypassrls FROM pg_roles WHERE rolname=current_user')
+                role = dict(cursor.fetchone())
+                if any(role.values()):
+                    raise RuntimeError('Dedicated role must not hold privileged database attributes')
+                if kind == 'reader':
+                    cursor.execute("SELECT has_column_privilege(current_user,'silver.don_hang','ma_don_hang','SELECT') AS allowed, has_column_privilege(current_user,'silver.nguoi_dung','email','SELECT') AS pii")
+                    row = dict(cursor.fetchone())
+                    if not row['allowed'] or row['pii']:
+                        raise RuntimeError('Reader column authorization differs from the approved policy')
+                else:
+                    cursor.execute("SELECT has_table_privilege(current_user,'analytics.audit_events','INSERT') AS allowed")
+                    if not cursor.fetchone()['allowed']:
+                        raise RuntimeError('Dedicated audit writer privilege is required')
+                checks[kind] = 'passed'
+        finally:
+            connection.rollback()
+            connection.close()
+    backup = private / 'admin_access_pre_v35.json'
+    if not backup.exists():
+        private_write(backup, {'policy': before, 'deployment': settings})
+    # Keep SQL disabled until the policy file is durably in place. A crash
+    # between these operations cannot grant unaudited or unrestricted SQL.
+    _replace_public_config(policy_path, after)
+    _replace_public_config(settings_path, {**settings, 'DATA_ANALYST_REPORT_SQL_MODE': 'trusted_admin'})
+    return {**result, 'applied': True, 'role_smokes': checks, 'backup_created': True}
+
+
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--apply',action='store_true');parser.add_argument('--approved-026-027',action='store_true')
     parser.add_argument('--snapshot-guards',action='store_true')
+    parser.add_argument('--admin-access',action='store_true',help='Update only the existing ADMIN application policy/public SQL mode')
     parser.add_argument('--approved-snapshot-guards',action='store_true')
     args=parser.parse_args()
     try:
-        result=deploy_snapshot_guards(apply=args.apply,approved=args.approved_snapshot_guards) if args.snapshot_guards else deploy(apply=args.apply,approved=args.approved_026_027)
+        result = (deploy_admin_access(apply=args.apply) if args.admin_access else
+                  deploy_snapshot_guards(apply=args.apply,approved=args.approved_snapshot_guards) if args.snapshot_guards else
+                  deploy(apply=args.apply,approved=args.approved_026_027))
         print(json.dumps(result,ensure_ascii=False))
     except Exception as error:
         # DB exception strings may include data/parameters. No interpolation.

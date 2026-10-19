@@ -36,6 +36,14 @@ router = APIRouter(prefix="/api/ai", tags=["AI Data Assistant"])
 logger = logging.getLogger("ai-analytics")
 
 
+@router.get('/dashboards')
+def curated_dashboards():
+    from services.preflight_service import preflight_catalog
+    from services.data_coverage_service import peek
+    from services.workspace_service import dashboard_catalog
+    return dashboard_catalog(preflight_catalog(), (peek() or {}).get('data_health'))
+
+
 @router.post('/analysis-jobs', status_code=202)
 def submit_analysis_job(payload: AiTextToReportRequest, request: Request, response: Response):
     import os
@@ -136,7 +144,7 @@ def reconcile_report(session_id: str, request: Request, response: Response):
 
 
 def _invoke(action, payload, owner_id=None):
-    if hasattr(payload, "prompt") and not payload.prompt.strip():
+    if hasattr(payload, "prompt") and not payload.prompt.strip() and not getattr(payload,"dashboard_id",None):
         raise HTTPException(
             status_code=422, detail="Yêu cầu phân tích không được để trống."
         )

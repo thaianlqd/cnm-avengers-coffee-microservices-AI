@@ -1,0 +1,132 @@
+{
+  "version": "3.5.0",
+  "observed_at": "2026-10-19T13:25:37.733249+00:00",
+  "status": "passed",
+  "crash_windows": [
+    {
+      "stage": "claimed",
+      "same_job_on_reconnect": true,
+      "state": "failed",
+      "physical_reservations": 0,
+      "metered_sends": 0,
+      "stale_finish_refused": true,
+      "pool_max": 12
+    },
+    {
+      "stage": "reserved",
+      "same_job_on_reconnect": true,
+      "state": "failed",
+      "physical_reservations": 1,
+      "metered_sends": 0,
+      "stale_finish_refused": true,
+      "pool_max": 12
+    },
+    {
+      "stage": "sent",
+      "same_job_on_reconnect": true,
+      "state": "failed",
+      "physical_reservations": 1,
+      "metered_sends": 1,
+      "stale_finish_refused": true,
+      "pool_max": 12
+    },
+    {
+      "stage": "sql",
+      "same_job_on_reconnect": true,
+      "state": "failed",
+      "physical_reservations": 1,
+      "metered_sends": 1,
+      "stale_finish_refused": true,
+      "pool_max": 12
+    },
+    {
+      "stage": "persist",
+      "same_job_on_reconnect": true,
+      "state": "failed",
+      "physical_reservations": 1,
+      "metered_sends": 1,
+      "stale_finish_refused": true,
+      "pool_max": 12
+    }
+  ],
+  "external_provider_http": 0,
+  "fixture_transport": "real loopback HTTP meter on API B",
+  "postgres": "fixed disposable 127.0.0.1:5432/postgres",
+  "postgres_cancel": {
+    "status": "passed",
+    "seconds": 0.506,
+    "cross_process": true,
+    "actual_pg_sleep_cancelled": true
+  },
+  "revocation": [
+    {
+      "stage": "before_send",
+      "state": "failed",
+      "metered_sends": 0,
+      "denied_while_revoked": true
+    },
+    {
+      "stage": "before_sql",
+      "state": "failed",
+      "metered_sends": 1,
+      "denied_while_revoked": true
+    },
+    {
+      "stage": "persist",
+      "state": "failed",
+      "metered_sends": 1,
+      "denied_while_revoked": true
+    },
+    {
+      "stage": "sql",
+      "state": "failed",
+      "metered_sends": 1,
+      "denied_while_revoked": true
+    }
+  ],
+  "physical_ceiling": {
+    "offers": 4,
+    "physical_reservations": 3,
+    "metered_sends": 3,
+    "fourth_send_refused": true
+  },
+  "shared_half_open": {
+    "offers": 16,
+    "primary_probes": 1,
+    "secondary_routes": 15,
+    "instances": 2,
+    "provider_sends": 0
+  },
+  "reader_pressure": {
+    "instances": 2,
+    "per_instance": [
+      {
+        "connections": 12,
+        "exhausted_typed": true,
+        "pool_used_after": 0
+      },
+      {
+        "connections": 12,
+        "exhausted_typed": true,
+        "pool_used_after": 0
+      }
+    ],
+    "actual_postgres_connections": true
+  },
+  "drain": {
+    "own_job_cancelled": true,
+    "other_instance_completed": true,
+    "provider_sends": 0
+  },
+  "redis_outage": {
+    "http_status": 503,
+    "provider_refused": true,
+    "same_job_after_reconnect": true,
+    "no_memory_fallback": true
+  },
+  "resource_envelope_revalidation": {
+    "evidence": "two-api-reader-pressure-current.json",
+    "reason": "PLAN final capacity reduced after matrix from12 to6 readers/API; actual two-process exhaustion/release rerun at6; other fixtures explicitly use2workers unchanged",
+    "original_pool_measurement_retained": true
+  }
+}

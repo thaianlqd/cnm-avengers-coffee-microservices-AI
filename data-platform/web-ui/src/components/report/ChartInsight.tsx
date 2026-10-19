@@ -6,8 +6,9 @@ import React from 'react';
  */
 export const ChartInsight: React.FC<{ insight?: any }> = ({ insight }) => {
   if (!insight) return null;
-  return <section data-chart-insight aria-label="Nhận định từ biểu đồ" className="mt-4 rounded-xl bg-slate-50 border border-slate-100 p-3 text-xs text-slate-700 space-y-1.5">
-    <h6 className="text-[11px] font-semibold text-slate-900">Nhận định từ biểu đồ</h6>
+  return <details data-chart-insight className="text-[11px] text-slate-600 open:w-full">
+    <summary className="cursor-pointer font-medium text-slate-700 focus-visible:outline-blue-500">Nhận định từ biểu đồ</summary>
+    <div className="mt-3 rounded-xl bg-slate-50 p-3 leading-relaxed space-y-1.5">
     {insight.why_relevant && <p data-insight-why><span className="text-slate-400">Vì sao có biểu đồ này: </span>{insight.why_relevant}</p>}
     {insight.what_it_shows && <p><span className="text-slate-400">Thể hiện: </span>{insight.what_it_shows}</p>}
     {!!insight.key_facts?.length && <ul className="space-y-0.5">{insight.key_facts.map((f: any, i: number) =>
@@ -15,7 +16,8 @@ export const ChartInsight: React.FC<{ insight?: any }> = ({ insight }) => {
     {insight.interpretation && <p><span className="text-slate-400">Diễn giải: </span>{insight.interpretation}</p>}
     {!!insight.caveats?.length && <p data-insight-caveat className="text-amber-800"><span className="text-amber-600">Lưu ý: </span>{insight.caveats.join(' ')}</p>}
     {!!insight.next_checks?.length && <div className="pt-1"><span className="text-slate-400">Điểm nên kiểm tra tiếp: </span>{insight.next_checks.join(' · ')}</div>}
-  </section>;
+    </div>
+  </details>;
 };
 
 /** "Nguồn & phạm vi" disclosure for one chart (requirement mapping + source rows). */

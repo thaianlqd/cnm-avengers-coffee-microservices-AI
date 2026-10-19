@@ -104,7 +104,9 @@ class AiTextToReportRequest(BaseModel):
     intent_fingerprint: Optional[str] = None
     plan_fingerprint: Optional[str] = None
     catalog_fingerprint: Optional[str] = None
-    prompt: str = Field(validation_alias=AliasChoices("question", "prompt"), min_length=1, max_length=8000)
+    prompt: str = Field(default="", validation_alias=AliasChoices("question", "prompt"), max_length=8000)
+    dashboard_id: Optional[str] = Field(default=None, pattern=r"^D[0-9]{2}$")
+    dashboard_version: Optional[str] = Field(default=None, pattern=r"^\d+\.\d+\.\d+$")
     analysis_context: str = Field(default="", max_length=2000)
     analysis_expectation: str = Field(default="", max_length=1500)
     analysis_module_id: Optional[str] = Field(default=None, pattern=r"^am_[a-f0-9]{24}$")
@@ -141,6 +143,20 @@ class AiTextToReportRequest(BaseModel):
         for new, old in (("question", "prompt"), ("time", "time_range")):
             if new in data and old in data and data[new] != data[old]:
                 raise ValueError("Conflicting request aliases")
+        if data.get('dashboard_id') is not None or data.get('dashboard_version') is not None:
+            if not data.get('dashboard_id') or not data.get('dashboard_version'):
+                raise ValueError('Dashboard identity and version are both required')
+            if (data.get('question') or data.get('prompt') or data.get('guided_contract')
+                    or data.get('input_mode','free_text') != 'free_text' or data.get('analysis_mission')
+                    or data.get('analysis_module_id') or data.get('analysis_module_name') or data.get('source_analysis')
+                    or data.get('analysis_context') or data.get('analysis_expectation') or data.get('context')
+                    or data.get('branch','all') != 'all' or data.get('date_range') or data.get('allow_deterministic_upgrade')
+                    or data.get('domain','auto') != 'auto'):
+                raise ValueError('Dashboard cannot be combined with another input contract')
+            if 'time' not in data and 'time_range' not in data:
+                raise ValueError('Dashboard needs an explicit time contract')
+            data['natural_input'] = False
+            return data
         data["natural_input"] = any(k in data for k in ("question", "analysis_context", "analysis_expectation", "analysis_module_id", "analysis_module_name"))
         if data["natural_input"] and "time" not in data and "time_range" not in data:
             data["time_range"] = {"mode": "auto"}

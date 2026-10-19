@@ -8,8 +8,9 @@ import time
 from copy import deepcopy
 from pydantic import ValidationError
 from services.one_shot_planner import OneShotPlanner
+from services.one_shot_context import body_sizes
 from services.analysis_catalog import AnalysisError
-from services.analysis_intent import AnalysisIntentEnvelope, IntentRequirement, AnalysisIntentDelta, intent_tool, repair_tool
+from services.analysis_intent import AnalysisIntentEnvelope, IntentRequirement, AnalysisIntentDelta, apply_delta, intent_tool, repair_tool
 from services.analytical_resolver import AnalyticalResolver, ResolutionIssues, digest, requirement_meaning
 from services.request_anchors import request_anchors, verify_anchors, refinement_anchors
 from services.value_grounding_service import dimension_values
@@ -18,6 +19,9 @@ from services.semantic_manifest_service import compact, char_limit
 from services.analyst_contract import DashboardPlan
 from services.domain_intelligence_service import DEPTH_POLICIES
 from services.agent_provider import NativeAgentProvider
+
+# Compatibility export; provider allowance belongs to the budget owner.
+from services.provider_budget import semantic_repair_limit
 
 logger = logging.getLogger("ai-analytics")
 SYSTEM = """Extract Vietnamese analytical meaning as one intent envelope, one requirement per distinct user goal. Use candidate metric/dimension IDs; lens_hint is advisory. No SQL, subjects, executable IDs, parents, query roles, coverage mappings, charts or reasoning. Preserve metrics, filters, time, ranking and requested features. Question overrides drafts/expectations; governed scope facts and structured UI filters/time are authoritative. Omitted time means all_time. Preserve incompatible populations separately. Unavailable definitions such as ROI without costs stay explicit with controlled reasons. Clarify only genuinely missing meaning. Top N is a selected cohort; contribution_share requires a verified denominator. Never invent values, causes or history. Return requested work; server chooses supporting views. Population disclosures do not imply grouping. Averages cannot have additive shares. Separate whole-scope scalar KPIs from grouped views. Companion metrics do not change the ranking criterion."""
@@ -44,70 +48,6 @@ def issue_fingerprint(issues):
     so renaming an unavailable concept is never mistaken for repair progress.
     """
     return sorted({(str(i.get("requirement_id")), str(i.get("field")), str(i.get("code"))) for i in issues})
-
-
-def semantic_repair_limit():
-    value = os.getenv("DATA_ANALYST_MAX_SEMANTIC_REPAIRS", "1").strip()
-    if value not in {"0", "1", "2"}:
-        raise AnalysisError("provider_policy", "Invalid semantic repair allowance")
-    return min(1, int(value))
-
-
-def apply_delta(intent, raw):
-    """Apply one atomic patch; repeated updates may agree or affect disjoint fields.
-
-    Ranking is a nested patch (changing N keeps its metric/direction/group).
-    Lists and time specifications are replacements, never concatenated or
-    combined across different populations/time kinds. Conflicts never use
-    last-write-wins and the caller's baseline is never mutated.
-    """
-    delta = AnalysisIntentDelta.model_validate(raw)
-    requirements = {r.id:r.model_copy(deep=True) for r in intent.requirements}
-    grouped = {}
-    allowed = set(IntentRequirement.model_fields)-{"id"}
-    def merge(left, right, id, field=None):
-        result = deepcopy(left)
-        for key, value in right.items():
-            target = field or key
-            if key in result and result[key] != value:
-                if isinstance(result[key],dict) and isinstance(value,dict) and (field == 'ranking' or key == 'ranking'):
-                    result[key] = merge(result[key],value,id,target)
-                    continue
-                raise ResolutionIssues([{"requirement_id":id,"field":target,"code":"duplicate_delta"}])
-            result[key] = deepcopy(value)
-        return result
-    for change in delta.changes:
-        id = change.requirement_id
-        if id in grouped:
-            prior = grouped[id]
-            if prior.action != 'update' or change.action != 'update' or change.requirement:
-                raise ResolutionIssues([{"requirement_id":id,"field":"changes","code":"duplicate_delta"}])
-            prior.changes = merge(prior.changes,change.changes,id)
-        else:
-            grouped[id] = change.model_copy(deep=True)
-    for id, change in grouped.items():
-        if change.action == "add":
-            if id in requirements or not change.requirement or change.requirement.id != id or change.changes:
-                raise ResolutionIssues([{"requirement_id":id,"field":"requirement","code":"invalid_delta"}])
-            requirements[id] = change.requirement
-        elif change.action == "remove":
-            if id not in requirements or change.requirement or change.changes:
-                raise ResolutionIssues([{"requirement_id":id,"field":"requirement_id","code":"unknown_requirement"}])
-            del requirements[id]
-        else:
-            if id not in requirements or change.requirement or not set(change.changes) <= allowed:
-                raise ResolutionIssues([{"requirement_id":id,"field":"changes","code":"invalid_delta"}])
-            patch = deepcopy(change.changes)
-            baseline = requirements[id].model_dump(mode="json")
-            if isinstance(patch.get('ranking'),dict) and isinstance(baseline.get('ranking'),dict):
-                patch['ranking'] = {**baseline['ranking'],**patch['ranking']}
-            requirements[id] = IntentRequirement.model_validate({**baseline,**patch})
-    # Supporting views are derived from their parent meaning. Regenerate them
-    # after a parent delta rather than retaining stale time/scope/metric filters.
-    requirements={id:r for id,r in requirements.items() if not r.supporting_for or r.supporting_for not in grouped}
-    if not requirements:
-        raise AnalysisError("clarification", "Refinement removed all analytical requirements")
-    return AnalysisIntentEnvelope(decision="analyze",requirements=list(requirements.values()))
 
 
 class HybridAnalystPlanner(OneShotPlanner):
@@ -489,10 +429,7 @@ class HybridAnalystPlanner(OneShotPlanner):
         self.diagnostics['dry_plan'] = dry_analysis_plan(prepared, resolved['coverage'], resolved['feature_bindings'], resolved['plan_fingerprint'])
         return prepared
 
-    def run(self, prompt, context=None):
-        started=time.perf_counter();context=dict(context or {})
-        self.turn.budget.start_deadline()
-        resolver=AnalyticalResolver(self.catalog,self.reference,context)
+    def _prepare_grounding(self, prompt, context, resolver):
         grounding_started=time.perf_counter()
         refinement=bool(context.get("semantic_intent"))
         original=context.get("original_question",prompt)
@@ -520,11 +457,9 @@ class HybridAnalystPlanner(OneShotPlanner):
         self.diagnostics["semantic_metric_locks"]=[{k:l[k] for k in ("phrase","metric_id")} for l in self.metric_locks]
         from services.request_anchors import population_filters
         population_filters(self.anchors,self.catalog)  # Reject unavailable scope before spending an AI call.
-        accepted_delta = None
-        self.semantic.discovered.update(resolver.index.references)
-        self.diagnostics["request_anchors"]=self.anchors
-        logger.info("[AnalystCoverageAnchors] %s",json.dumps({"explicit_metric_anchors":[a["candidate_ids"] for a in self.anchors["metrics"]],"dimension_anchors":[a["candidate_ids"] for a in self.anchors["dimensions"]],"time_anchor":bool(self.anchors["times"]),"ranking_anchor":bool(self.anchors["rankings"])}))
-        self.diagnostics['local_grounding_ms']=round((time.perf_counter()-grounding_started)*1000,2)
+        return refinement, original, initial, history, grounding_started
+
+    def _prepare_provider_context(self, prompt, context, refinement):
         retrieval_started=time.perf_counter()
         payload=self.context_payload(prompt,context)
         self.diagnostics['metadata_retrieval_ms']=round((time.perf_counter()-retrieval_started)*1000,2)
@@ -565,6 +500,50 @@ class HybridAnalystPlanner(OneShotPlanner):
             system_chars=len(system),coverage_contract_chars=0)
         if max(sizes.values())>maximum:
             raise AnalysisError("one_shot_context_budget_exceeded","Required meaning context cannot fit")
+        return payload, system, tools, maximum
+
+    def _compile_resolved(self, resolved, context):
+        compiled=time.perf_counter()
+        self.turn.budget.remaining()
+        prepared=self.preflight(resolved,context)
+        self.turn.budget.remaining()
+        self.diagnostics["compiler_latency_ms"]=round((time.perf_counter()-compiled)*1000,2)
+        return prepared
+
+    def _execute_prepared(self, prepared):
+        # Grounded filters are authoritative; persist normalized meaning.
+        active={}
+        self.diagnostics["failure_stage"]="SQL_EXECUTION"
+        active, omitted = self.queries.run_batch(prepared, allow_supporting_failure=True)
+        for id,error in omitted.items():
+            self.diagnostics.setdefault('limitations', []).append(dict(reason='supporting_execution',
+                operation_id=id, message='Một góc nhìn hỗ trợ chưa thực thi được; kết quả chính được giữ nguyên.'))
+            self.diagnostics['omitted_supporting_operation_count'] += 1
+        self.diagnostics.update(failure_stage=None,analytical_tool_calls=len(active))
+        return active,DashboardPlan(active_query_ids=list(active))
+
+    def _finalize_diagnostics(self, started):
+        for field,token in (("input_tokens","input"),("output_tokens","output")):
+            values=[a.get("tokens",{}).get(token) for a in self.diagnostics["provider_calls"]]
+            self.diagnostics[field]=sum(v for v in values if isinstance(v,int)) if any(isinstance(v,int) for v in values) else None
+        self.diagnostics.update(value_lookup_count=self.semantic.lookup_count,planning_latency_ms=round((time.perf_counter()-started)*1000,2))
+        self.diagnostics.update(provider_attempt_latencies=[a.get('latency_ms') for a in self.diagnostics['provider_calls']],
+            provider_attempt_categories=[a.get('error_category','success') for a in self.diagnostics['provider_calls']],
+            resolver_ms=self.diagnostics.get('resolver_latency_ms',0),
+            provider_ms=sum(self.diagnostics.get(k,0) for k in ('provider_primary_ms','provider_repair_ms','provider_transport_retry_ms')))
+        logger.info("[AnalystPlanningTurn] %s",json.dumps({k:self.diagnostics.get(k) for k in ("request_id","provider_call_count","provider_call_reasons","primary_call_count","semantic_repair_count","targeted_resolution_count","transport_retry_count","semantic_stop_reason","capability_status","detailed_domain_ids","total_context_chars","repair_context_chars","schema_chars","resolver_latency_ms","compiler_latency_ms","planning_latency_ms","terminal_error")}))
+
+    def run(self, prompt, context=None):
+        started=time.perf_counter();context=dict(context or {})
+        self.turn.budget.start_deadline()
+        resolver=AnalyticalResolver(self.catalog,self.reference,context)
+        refinement, original, initial, history, grounding_started = self._prepare_grounding(prompt, context, resolver)
+        accepted_delta = None
+        self.semantic.discovered.update(resolver.index.references)
+        self.diagnostics["request_anchors"]=self.anchors
+        logger.info("[AnalystCoverageAnchors] %s",json.dumps({"explicit_metric_anchors":[a["candidate_ids"] for a in self.anchors["metrics"]],"dimension_anchors":[a["candidate_ids"] for a in self.anchors["dimensions"]],"time_anchor":bool(self.anchors["times"]),"ranking_anchor":bool(self.anchors["rankings"])}))
+        self.diagnostics['local_grounding_ms']=round((time.perf_counter()-grounding_started)*1000,2)
+        payload, system, tools, maximum = self._prepare_provider_context(prompt, context, refinement)
         previous=None;issues=[];resolved=None;raw=None;kind="primary"
         self.semantic.lookup_count=context.get("scope_lookup_count",0)
         try:
@@ -655,7 +634,7 @@ class HybridAnalystPlanner(OneShotPlanner):
                         analysis_kind=r.analysis_kind,dimension_count=len(r.dimension_ids),
                         metric_ids=[m for m in r.metric_ids if m in resolver.index.metrics],
                         dimension_ids=[d for d in r.dimension_ids if d in resolver.index.dimensions]) for r in intent.requirements]
-                    if not refinement:
+                    if not refinement and not context.get('dashboard_template'):
                         from services.request_anchors import complete_unique_grouping, complete_explicit_granularity, normalize_population_disclosures
                         intent,completed=normalize_population_disclosures(intent,self.anchors)
                         from services.request_anchors import complete_population_filters
@@ -985,11 +964,7 @@ class HybridAnalystPlanner(OneShotPlanner):
                 states={c["state"] for c in resolved["coverage"]}
                 code="historical_metric_unavailable" if "INSUFFICIENT_DATA" in states else "clarification" if "NEEDS_INPUT" in states else "unsupported_metric"
                 raise AnalysisError(code,"No executable requested capability")
-            compiled=time.perf_counter()
-            self.turn.budget.remaining()
-            prepared=self.preflight(resolved,context)
-            self.turn.budget.remaining()
-            self.diagnostics["compiler_latency_ms"]=round((time.perf_counter()-compiled)*1000,2)
+            prepared = self._compile_resolved(resolved, context)
             self.resolved=resolved
             self.diagnostics["request_anchors"] = self.anchors
             self.diagnostics["initial_semantic_intent"] = initial if refinement else resolved["intent"].model_dump(mode="json")
@@ -1024,28 +999,11 @@ class HybridAnalystPlanner(OneShotPlanner):
                 agent_contract_status="valid",agent_contract_error=None,semantic_status="grounded",failure_stage=None,terminal_error=None,contract_issues=[])
             if any(c["status"]!="planned" and c["requested_or_supporting"]=="requested" for c in resolved["components"]) and not self.proposal:
                 raise AnalysisError("approval_required","Partial requirements need current explicit approval")
-            # Grounded filters are authoritative; persist normalized meaning.
-            active={}
-            self.diagnostics["failure_stage"]="SQL_EXECUTION"
-            active, omitted = self.queries.run_batch(prepared, allow_supporting_failure=True)
-            for id,error in omitted.items():
-                self.diagnostics.setdefault('limitations', []).append(dict(reason='supporting_execution',
-                    operation_id=id, message='Một góc nhìn hỗ trợ chưa thực thi được; kết quả chính được giữ nguyên.'))
-                self.diagnostics['omitted_supporting_operation_count'] += 1
-            self.diagnostics.update(failure_stage=None,analytical_tool_calls=len(active))
-            return active,DashboardPlan(active_query_ids=list(active))
+            return self._execute_prepared(prepared)
         except Exception as error:
             if getattr(error,"category",None)=="result_contract":
                 self.diagnostics["failure_stage"]="RESULT_VALIDATION"
             self.diagnostics["terminal_error"]=getattr(error,"category","internal")
             raise
         finally:
-            for field,token in (("input_tokens","input"),("output_tokens","output")):
-                values=[a.get("tokens",{}).get(token) for a in self.diagnostics["provider_calls"]]
-                self.diagnostics[field]=sum(v for v in values if isinstance(v,int)) if any(isinstance(v,int) for v in values) else None
-            self.diagnostics.update(value_lookup_count=self.semantic.lookup_count,planning_latency_ms=round((time.perf_counter()-started)*1000,2))
-            self.diagnostics.update(provider_attempt_latencies=[a.get('latency_ms') for a in self.diagnostics['provider_calls']],
-                provider_attempt_categories=[a.get('error_category','success') for a in self.diagnostics['provider_calls']],
-                resolver_ms=self.diagnostics.get('resolver_latency_ms',0),
-                provider_ms=sum(self.diagnostics.get(k,0) for k in ('provider_primary_ms','provider_repair_ms','provider_transport_retry_ms')))
-            logger.info("[AnalystPlanningTurn] %s",json.dumps({k:self.diagnostics.get(k) for k in ("request_id","provider_call_count","provider_call_reasons","primary_call_count","semantic_repair_count","targeted_resolution_count","transport_retry_count","semantic_stop_reason","capability_status","detailed_domain_ids","total_context_chars","repair_context_chars","schema_chars","resolver_latency_ms","compiler_latency_ms","planning_latency_ms","terminal_error")}))
+            self._finalize_diagnostics(started)

@@ -8,8 +8,14 @@ if os.getenv('AI_OFFLINE') != '1':
         import json
         settings=json.loads(settings_path.read_text())
         for name in {'DATA_ANALYST_AUTH_MODE','DATA_ANALYST_IDENTITY_LOGIN_URL','DATA_ANALYST_ACCESS_POLICY_PATH',
-                     'DATA_ANALYST_AUDIT_SPOOL_DIR','DATA_ANALYST_OTEL_ENABLED'}:
+                     'DATA_ANALYST_AUDIT_SPOOL_DIR','DATA_ANALYST_OTEL_ENABLED','DATA_ANALYST_REPORT_SQL_MODE'}:
             if name in settings: os.environ.setdefault(name,settings[name])
+        if os.getenv('DATA_ANALYST_REPORT_SQL_MODE') == 'deployment':
+            os.environ['DATA_ANALYST_REPORT_SQL_MODE'] = settings.get('DATA_ANALYST_REPORT_SQL_MODE', 'disabled')
+# Missing settings and isolated offline fixtures remain fail-closed. Explicit
+# operator environment values still take precedence over the public file.
+if os.getenv('DATA_ANALYST_REPORT_SQL_MODE') == 'deployment':
+    os.environ['DATA_ANALYST_REPORT_SQL_MODE'] = 'disabled'
 from fastapi import FastAPI, HTTPException, Request, Response, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -80,6 +86,12 @@ def _background_init_warehouse_views():
 
 @app.on_event("startup")
 def on_startup():
+    from route_policy import validate_routes
+    validate_routes(app.routes)
+    if os.getenv('DATA_ANALYST_REPORT_SQL_MODE') == 'deployment':
+        os.environ['DATA_ANALYST_REPORT_SQL_MODE'] = 'disabled'
+    if os.getenv('DATA_ANALYST_REPORT_SQL_MODE', 'disabled') not in {'disabled', 'trusted_admin'}:
+        raise RuntimeError('Invalid SQL Explorer deployment mode')
     from services.readiness_service import catalog_probe
     catalog_probe(False)
     # V3.1: cached data coverage/freshness for the Analyst Workspace; requests
@@ -140,6 +152,8 @@ def _login_origin(request):
 @app.post('/api/auth/session')
 def exchange_auth_session(request:Request,response:Response):
     from services.access_policy import request_principal,AUTH_COOKIE
+    if os.getenv('DATA_ANALYST_AUTH_MODE') == 'identity_login_session':
+        raise HTTPException(403,'Hãy đăng nhập để tạo phiên Data Platform.')
     _login_origin(request)
     principal=request_principal(request)
     bearer=request.headers.get('authorization','')
@@ -211,6 +225,12 @@ def auth_logout(request:Request,response:Response):
     response.delete_cookie(AUTH_COOKIE,path='/api')
     response.headers['Cache-Control']='no-store'
     return {'authenticated':False}
+
+
+@app.get('/metrics')
+def prometheus_metrics():
+    from services.telemetry import prometheus_export
+    return Response(content=prometheus_export(),media_type='text/plain; version=0.0.4')
 
 
 @app.get('/api/system/metrics')

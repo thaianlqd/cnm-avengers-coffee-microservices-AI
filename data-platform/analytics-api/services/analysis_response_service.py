@@ -82,3 +82,103 @@ def restore_report_presentation(report, artifacts, catalog):
         raise AnalysisError('quality_metadata','Restored chart does not match full artifact')
     bound_response(report, c)
     return report
+
+
+def assemble_report_payload(*, artifacts, catalog, session, meaning, results, dashboard, narrative,
+        forecasts, mission, insights, view_cov, short_answer, relevance, domain_summary, evidence,
+        semantic_info, planning_mode, diagnostics, refined=False):
+    """Pure presentation assembly; meaning, plans and values are validated upstream."""
+    from datetime import datetime
+    from services.workspace_service import mission_layout, follow_up_questions
+    from services.chart_insight_service import build_conclusion
+    from services.explanation_service import explain_analysis
+    main = next(iter(artifacts.values()))
+    first = results[main.query.id]
+    return {
+        "status": "success",
+        "completion_status": "complete",
+        "pipeline_version": semantic_info.get("pipeline_version", "2.8" if planning_mode == "one_shot" else "2.3"),
+        "prompt": session.original_prompt,
+        "module_provenance": session.module_provenance,
+        "analysis_breadth": semantic_info.get("analysis_depth", session.analysis_depth),
+        "session_id": session.session_id,
+        "revision": session.revision + (1 if session.approved else 0),
+        "title": meaning["subject"],
+        "description": "Phân tích từ các kết quả đã kiểm chứng.",
+        "domain_summary": domain_summary,
+        "analysis_spec": main.grounded.analysis_spec.model_dump(mode="json"),
+        "analysis_specs": {
+            id: a.grounded.analysis_spec.model_dump(mode="json")
+            for id, a in artifacts.items()
+        },
+        "analytical_queries": [
+            a.query.model_dump(mode="json") for a in artifacts.values()
+        ],
+        "grounded_analysis_spec": main.grounded.model_dump(mode="json"),
+        "query_plans": [a.plan.model_dump(mode="json") for a in artifacts.values()],
+        "schema_fingerprint": catalog.fingerprint,
+        "interpretation": meaning,
+        "interpreted_request": meaning,
+        "assumptions": list(
+            dict.fromkeys(
+                s
+                for a in artifacts.values()
+                for s in a.grounded.analysis_spec.assumptions
+            )
+        ),
+        **dashboard,
+        **narrative,
+        "kpis": {},
+        "forecasts": forecasts,
+        "analysis_mission": mission["id"] if mission else None,
+        "mission_layout": mission_layout(mission, dashboard["charts"]),
+        "follow_up_questions": follow_up_questions(artifacts, catalog, mission),
+        "chart_insights": insights,
+        "view_coverage": view_cov,
+        "short_answer": short_answer,
+        "conclusion": build_conclusion(short_answer, narrative, evidence,
+            [v["message"] for v in semantic_info.get("limitations", [])]
+            + (["Không có dữ liệu trong phạm vi yêu cầu."] if not any(a.result["rows"] for a in artifacts.values()) else [])
+            + list(dict.fromkeys(s for a in artifacts.values() for s in a.grounded.analysis_spec.assumptions))
+            + [f"Chưa có góc nhìn bắt buộc cho yêu cầu {v['requirement_id']} ({v['kind']}): {v['reason']}." for v in view_cov if v["required"] and v["status"] == "missing"],
+            follow_up_questions(artifacts, catalog, mission), forecasts=forecasts,
+            chart_caveats=[c for ch in dashboard["charts"] for c in (ch.get("insight") or {}).get("caveats", [])],
+            unanswered=[c.get("goal") or c.get("requirement_id") for c in (semantic_info.get("resolved_requirement_coverage") or [])
+                        if c.get("state") not in {"RESOLVED", None} and (c.get("goal") or c.get("requirement_id"))],
+            cadence_labels=catalog.registry.get("workspace", {}).get("forecast_cadence_labels", {})),
+        "mission_evidence": relevance,
+        "input_mode": semantic_info.get("input_mode", "free_text"),
+        "evidence": evidence,
+        "analysis_explanation": explain_analysis(
+            artifacts, catalog, dashboard["charts"], evidence
+        ),
+        "result_sets": results,
+        "result_contracts": {id: a.contract for id, a in artifacts.items()},
+        "table_data": {
+            "title": meaning["subject"],
+            "columns": first["columns"],
+            "column_labels": first["column_labels"],
+            "rows": first["rows"],
+            "total_rows": first['total_rows'],
+            "query_id": main.query.id,
+            "artifact_ref": main.result_ref,
+        },
+        "sql": {"main": main.sql},
+        "sql_query": main.sql,
+        "sql_by_query": {id: a.sql for id, a in artifacts.items()},
+        "data_warnings": (
+            ["Không có dữ liệu trong phạm vi yêu cầu."]
+            if not any(a.result["rows"] for a in artifacts.values())
+            else []
+        )
+        + [v["message"] for v in semantic_info.get("limitations", [])],
+        "provider": {
+            "planner": "catalog_compiler",
+            "synthesis": "validated_evidence",
+        },
+        "created_at": datetime.now().astimezone().isoformat(),
+        "assistant_reply": (
+            "Đã cập nhật báo cáo theo kế hoạch đã kiểm chứng." if refined else ""
+        ),
+        "diagnostics": diagnostics,
+    }

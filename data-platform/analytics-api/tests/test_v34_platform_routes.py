@@ -44,7 +44,7 @@ class PlatformRouteTests(TestCase):
             db.assert_not_called()
 
     def test_quality_endpoint_delegates_to_measured_shared_health_projection(self):
-        with patch('services.data_coverage_service.quality_snapshot', return_value={'status': 'unknown', 'overall_score': None}) as snapshot:
+        with patch('services.data_coverage_service.contract_quality_snapshot', return_value={'status': 'unknown', 'overall_score': None}) as snapshot:
             self.assertEqual(platform.get_data_quality(), {'status': 'unknown', 'overall_score': None})
             snapshot.assert_called_once_with()
 
@@ -88,7 +88,7 @@ class PlatformHonestyTests(TestCase):
         rows = [dict(total_rows=10), dict(total_orders=2, total_revenue=5, active_deliveries=1),
                 dict(total_events=7), dict(total_branches=3), dict(total_products=4), dict(total_tables=9)]
         with patch.object(platform, 'get_db_conn', return_value=self._db(rows)), \
-             patch('services.data_coverage_service.quality_snapshot', return_value={'status': 'unknown', 'overall_score': None}):
+             patch('services.data_coverage_service.contract_quality_snapshot', return_value={'status': 'unknown', 'overall_score': None}):
             data = platform.get_platform_overview()
         self._no_fabrication(data)
         self.assertEqual(data['warehouse']['total_events'], 7)

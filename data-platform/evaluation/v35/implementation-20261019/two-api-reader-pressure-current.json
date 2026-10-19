@@ -1,0 +1,1 @@
+{"version": "3.5.0", "status": "passed", "observed_at": "2026-10-19T13:30:06.394445+00:00", "two_process_pg_pressure": [{"connections": 6, "exhausted_typed": true, "pool_used_after": 0}, {"connections": 6, "exhausted_typed": true, "pool_used_after": 0}], "total_reader_cap": 12, "excess_connections_refused": true, "provider_http": 0}

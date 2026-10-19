@@ -1,0 +1,3662 @@
+{
+  "version": "3.5.0",
+  "status": "passed",
+  "duration_seconds": 903.942,
+  "sample_interval_seconds": 60,
+  "samples": [
+    {
+      "at": "2026-10-19T13:22:10.035975+00:00",
+      "elapsed_seconds": 2.809,
+      "workers": [
+        {
+          "name": "/avengers_minio",
+          "started": "2026-10-19T11:35:57.373506876Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_producer",
+          "started": "2026-10-19T12:43:14.249307467Z",
+          "restarts": 10,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_consumer",
+          "started": "2026-10-19T11:35:57.776094001Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_data_sync",
+          "started": "2026-10-19T13:21:48.130665969Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        }
+      ],
+      "source": {
+        "epoch": "2ef1557f94a76ab30be2a27dfe94346a20e7f10f774f6ac3cb0d79b23a4d3bc4",
+        "sources": {
+          "identity.chi_nhanh": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 20.922,
+            "last_success_at": "2026-10-19T13:21:50.208054+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:02.697369+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khu_vuc": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 20.49,
+            "last_success_at": "2026-10-19T13:21:50.640686+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.089655+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 19.587,
+            "last_success_at": "2026-10-19T13:21:51.543083+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.553058+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai_su_dung": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 313.555,
+            "last_success_at": "2026-10-19T13:16:57.574972+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:16:57.574972+00:00",
+            "completeness": "complete"
+          },
+          "identity.nguoi_dung": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 18.513,
+            "last_success_at": "2026-10-19T13:21:52.617443+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:21:52.617443+00:00",
+            "completeness": "complete"
+          },
+          "inventory.ton_kho_san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 17.426,
+            "last_success_at": "2026-10-19T13:21:53.704480+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:07.697797+00:00",
+            "completeness": "unknown"
+          },
+          "menu.bien_the_san_pham": {
+            "status": "healthy",
+            "generation": 92,
+            "load_lag_seconds": 280.673,
+            "last_success_at": "2026-10-19T13:17:30.457249+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:17:30.457249+00:00",
+            "completeness": "complete"
+          },
+          "menu.danh_muc": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 16.529,
+            "last_success_at": "2026-10-19T13:21:54.601026+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:21:54.601026+00:00",
+            "completeness": "complete"
+          },
+          "menu.san_pham": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 34.213,
+            "last_success_at": "2026-10-19T13:21:36.916947+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:21:36.916947+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_doi_soat": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 11.416,
+            "last_success_at": "2026-10-19T13:21:59.714286+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:21:59.714286+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_lam_viec_nhan_vien": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 9.312,
+            "last_success_at": "2026-10-19T13:22:01.818502+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:22.301385+00:00",
+            "completeness": "unknown"
+          },
+          "orders.chi_tiet_don_hang": {
+            "status": "healthy",
+            "generation": 92,
+            "load_lag_seconds": 224.066,
+            "last_success_at": "2026-10-19T13:18:27.064666+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:18:27.064666+00:00",
+            "completeness": "complete"
+          },
+          "orders.customer_wallet_transaction": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 8.815,
+            "last_success_at": "2026-10-19T13:22:02.315387+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:02.315387+00:00",
+            "completeness": "complete"
+          },
+          "orders.danh_gia_chi_nhanh": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 7.21,
+            "last_success_at": "2026-10-19T13:22:03.920663+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:25.299380+00:00",
+            "completeness": "unknown"
+          },
+          "orders.danh_gia_san_pham": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 6.119,
+            "last_success_at": "2026-10-19T13:22:05.010929+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:28.693239+00:00",
+            "completeness": "unknown"
+          },
+          "orders.delivery_tracking": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 2.614,
+            "last_success_at": "2026-10-19T13:22:08.516132+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:40.197161+00:00",
+            "completeness": "unknown"
+          },
+          "orders.don_hang": {
+            "status": "healthy",
+            "generation": 92,
+            "load_lag_seconds": 285.697,
+            "last_success_at": "2026-10-19T13:17:25.432935+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:39.023811+00:00",
+            "completeness": "partial"
+          },
+          "orders.giao_dich_thanh_toan": {
+            "status": "healthy",
+            "generation": 91,
+            "load_lag_seconds": 207.279,
+            "last_success_at": "2026-10-19T13:18:43.851476+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:18:43.851476+00:00",
+            "completeness": "complete"
+          },
+          "orders.khao_sat_phan_hoi": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 2.178,
+            "last_success_at": "2026-10-19T13:22:08.952281+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:08.952281+00:00",
+            "completeness": "complete"
+          },
+          "orders.shipper": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 1.733,
+            "last_success_at": "2026-10-19T13:22:09.397684+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.295209+00:00",
+            "completeness": "unknown"
+          },
+          "orders.shipper_delivery": {
+            "status": "healthy",
+            "generation": 92,
+            "load_lag_seconds": 281.619,
+            "last_success_at": "2026-10-19T13:17:29.511153+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:47.174607+00:00",
+            "completeness": "unknown"
+          },
+          "orders.voucher": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 1.291,
+            "last_success_at": "2026-10-19T13:22:09.839236+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.666449+00:00",
+            "completeness": "unknown"
+          },
+          "orders.yeu_thich_san_pham": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 0.22,
+            "last_success_at": "2026-10-19T13:22:10.910511+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:10.910511+00:00",
+            "completeness": "complete"
+          }
+        }
+      },
+      "stream": {
+        "partitions": 9,
+        "backlog": 360228,
+        "committed_sum": 6054093
+      }
+    },
+    {
+      "at": "2026-10-19T13:23:10.037156+00:00",
+      "elapsed_seconds": 63.016,
+      "workers": [
+        {
+          "name": "/avengers_minio",
+          "started": "2026-10-19T11:35:57.373506876Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_producer",
+          "started": "2026-10-19T12:43:14.249307467Z",
+          "restarts": 10,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_consumer",
+          "started": "2026-10-19T11:35:57.776094001Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_data_sync",
+          "started": "2026-10-19T13:21:48.130665969Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        }
+      ],
+      "source": {
+        "epoch": "47fb415d82fde6e226740c18930c2a5d2ea511f1ee27ff812f1b5f495fabbe06",
+        "sources": {
+          "identity.chi_nhanh": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 80.96,
+            "last_success_at": "2026-10-19T13:21:50.208054+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:02.697369+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khu_vuc": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 80.527,
+            "last_success_at": "2026-10-19T13:21:50.640686+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.089655+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 79.625,
+            "last_success_at": "2026-10-19T13:21:51.543083+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.553058+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai_su_dung": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 58.384,
+            "last_success_at": "2026-10-19T13:22:12.783778+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:12.783778+00:00",
+            "completeness": "complete"
+          },
+          "identity.nguoi_dung": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 78.551,
+            "last_success_at": "2026-10-19T13:21:52.617443+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:21:52.617443+00:00",
+            "completeness": "complete"
+          },
+          "inventory.ton_kho_san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 77.464,
+            "last_success_at": "2026-10-19T13:21:53.704480+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:07.697797+00:00",
+            "completeness": "unknown"
+          },
+          "menu.bien_the_san_pham": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 20.694,
+            "last_success_at": "2026-10-19T13:22:50.474496+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:50.474496+00:00",
+            "completeness": "complete"
+          },
+          "menu.danh_muc": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 76.567,
+            "last_success_at": "2026-10-19T13:21:54.601026+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:21:54.601026+00:00",
+            "completeness": "complete"
+          },
+          "menu.san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 57.801,
+            "last_success_at": "2026-10-19T13:22:13.366935+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:13.366935+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_doi_soat": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 71.454,
+            "last_success_at": "2026-10-19T13:21:59.714286+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:21:59.714286+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_lam_viec_nhan_vien": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 69.35,
+            "last_success_at": "2026-10-19T13:22:01.818502+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:22.301385+00:00",
+            "completeness": "unknown"
+          },
+          "orders.chi_tiet_don_hang": {
+            "status": "healthy",
+            "generation": 92,
+            "load_lag_seconds": 284.103,
+            "last_success_at": "2026-10-19T13:18:27.064666+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:18:27.064666+00:00",
+            "completeness": "complete"
+          },
+          "orders.customer_wallet_transaction": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 68.853,
+            "last_success_at": "2026-10-19T13:22:02.315387+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:02.315387+00:00",
+            "completeness": "complete"
+          },
+          "orders.danh_gia_chi_nhanh": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 67.247,
+            "last_success_at": "2026-10-19T13:22:03.920663+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:25.299380+00:00",
+            "completeness": "unknown"
+          },
+          "orders.danh_gia_san_pham": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 66.157,
+            "last_success_at": "2026-10-19T13:22:05.010929+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:28.693239+00:00",
+            "completeness": "unknown"
+          },
+          "orders.delivery_tracking": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 62.652,
+            "last_success_at": "2026-10-19T13:22:08.516132+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:40.197161+00:00",
+            "completeness": "unknown"
+          },
+          "orders.don_hang": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 26.011,
+            "last_success_at": "2026-10-19T13:22:45.157286+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:39.023811+00:00",
+            "completeness": "partial"
+          },
+          "orders.giao_dich_thanh_toan": {
+            "status": "healthy",
+            "generation": 91,
+            "load_lag_seconds": 267.317,
+            "last_success_at": "2026-10-19T13:18:43.851476+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:18:43.851476+00:00",
+            "completeness": "complete"
+          },
+          "orders.khao_sat_phan_hoi": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 62.216,
+            "last_success_at": "2026-10-19T13:22:08.952281+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:08.952281+00:00",
+            "completeness": "complete"
+          },
+          "orders.shipper": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 61.77,
+            "last_success_at": "2026-10-19T13:22:09.397684+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.295209+00:00",
+            "completeness": "unknown"
+          },
+          "orders.shipper_delivery": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 21.554,
+            "last_success_at": "2026-10-19T13:22:49.614327+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:47.174607+00:00",
+            "completeness": "unknown"
+          },
+          "orders.voucher": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 61.329,
+            "last_success_at": "2026-10-19T13:22:09.839236+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.666449+00:00",
+            "completeness": "unknown"
+          },
+          "orders.yeu_thich_san_pham": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 60.258,
+            "last_success_at": "2026-10-19T13:22:10.910511+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:10.910511+00:00",
+            "completeness": "complete"
+          }
+        }
+      },
+      "stream": {
+        "partitions": 9,
+        "backlog": 357546,
+        "committed_sum": 6056775
+      }
+    },
+    {
+      "at": "2026-10-19T13:24:10.041047+00:00",
+      "elapsed_seconds": 123.018,
+      "workers": [
+        {
+          "name": "/avengers_minio",
+          "started": "2026-10-19T11:35:57.373506876Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_producer",
+          "started": "2026-10-19T12:43:14.249307467Z",
+          "restarts": 10,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_consumer",
+          "started": "2026-10-19T11:35:57.776094001Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_data_sync",
+          "started": "2026-10-19T13:21:48.130665969Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        }
+      ],
+      "source": {
+        "epoch": "2385cd0239843fa7de82b712e525bc072b64378947190f976c0b80f184419f09",
+        "sources": {
+          "identity.chi_nhanh": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 140.967,
+            "last_success_at": "2026-10-19T13:21:50.208054+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:02.697369+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khu_vuc": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 140.535,
+            "last_success_at": "2026-10-19T13:21:50.640686+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.089655+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 139.632,
+            "last_success_at": "2026-10-19T13:21:51.543083+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.553058+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai_su_dung": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 118.392,
+            "last_success_at": "2026-10-19T13:22:12.783778+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:12.783778+00:00",
+            "completeness": "complete"
+          },
+          "identity.nguoi_dung": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 138.558,
+            "last_success_at": "2026-10-19T13:21:52.617443+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:21:52.617443+00:00",
+            "completeness": "complete"
+          },
+          "inventory.ton_kho_san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 137.471,
+            "last_success_at": "2026-10-19T13:21:53.704480+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:07.697797+00:00",
+            "completeness": "unknown"
+          },
+          "menu.bien_the_san_pham": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 80.701,
+            "last_success_at": "2026-10-19T13:22:50.474496+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:50.474496+00:00",
+            "completeness": "complete"
+          },
+          "menu.danh_muc": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 136.574,
+            "last_success_at": "2026-10-19T13:21:54.601026+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:21:54.601026+00:00",
+            "completeness": "complete"
+          },
+          "menu.san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 117.809,
+            "last_success_at": "2026-10-19T13:22:13.366935+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:13.366935+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_doi_soat": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 131.461,
+            "last_success_at": "2026-10-19T13:21:59.714286+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:21:59.714286+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_lam_viec_nhan_vien": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 129.357,
+            "last_success_at": "2026-10-19T13:22:01.818502+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:22.301385+00:00",
+            "completeness": "unknown"
+          },
+          "orders.chi_tiet_don_hang": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 9.313,
+            "last_success_at": "2026-10-19T13:24:01.862409+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:24:01.862409+00:00",
+            "completeness": "complete"
+          },
+          "orders.customer_wallet_transaction": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 128.86,
+            "last_success_at": "2026-10-19T13:22:02.315387+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:02.315387+00:00",
+            "completeness": "complete"
+          },
+          "orders.danh_gia_chi_nhanh": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 127.255,
+            "last_success_at": "2026-10-19T13:22:03.920663+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:25.299380+00:00",
+            "completeness": "unknown"
+          },
+          "orders.danh_gia_san_pham": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 126.165,
+            "last_success_at": "2026-10-19T13:22:05.010929+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:28.693239+00:00",
+            "completeness": "unknown"
+          },
+          "orders.delivery_tracking": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 122.659,
+            "last_success_at": "2026-10-19T13:22:08.516132+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:40.197161+00:00",
+            "completeness": "unknown"
+          },
+          "orders.don_hang": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 86.018,
+            "last_success_at": "2026-10-19T13:22:45.157286+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:39.023811+00:00",
+            "completeness": "partial"
+          },
+          "orders.giao_dich_thanh_toan": {
+            "status": "healthy",
+            "generation": 91,
+            "load_lag_seconds": 327.324,
+            "last_success_at": "2026-10-19T13:18:43.851476+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:18:43.851476+00:00",
+            "completeness": "complete"
+          },
+          "orders.khao_sat_phan_hoi": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 122.223,
+            "last_success_at": "2026-10-19T13:22:08.952281+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:08.952281+00:00",
+            "completeness": "complete"
+          },
+          "orders.shipper": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 121.778,
+            "last_success_at": "2026-10-19T13:22:09.397684+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.295209+00:00",
+            "completeness": "unknown"
+          },
+          "orders.shipper_delivery": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 81.561,
+            "last_success_at": "2026-10-19T13:22:49.614327+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:47.174607+00:00",
+            "completeness": "unknown"
+          },
+          "orders.voucher": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 121.336,
+            "last_success_at": "2026-10-19T13:22:09.839236+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.666449+00:00",
+            "completeness": "unknown"
+          },
+          "orders.yeu_thich_san_pham": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 120.265,
+            "last_success_at": "2026-10-19T13:22:10.910511+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:10.910511+00:00",
+            "completeness": "complete"
+          }
+        }
+      },
+      "stream": {
+        "partitions": 9,
+        "backlog": 354746,
+        "committed_sum": 6059575
+      }
+    },
+    {
+      "at": "2026-10-19T13:25:10.046874+00:00",
+      "elapsed_seconds": 183.419,
+      "workers": [
+        {
+          "name": "/avengers_minio",
+          "started": "2026-10-19T11:35:57.373506876Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_producer",
+          "started": "2026-10-19T12:43:14.249307467Z",
+          "restarts": 10,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_consumer",
+          "started": "2026-10-19T11:35:57.776094001Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_data_sync",
+          "started": "2026-10-19T13:21:48.130665969Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        }
+      ],
+      "source": {
+        "epoch": "07ea7a1e05e135d888f3a438278a05dc74e5eda1c244af42b669cabdc9a62e94",
+        "sources": {
+          "identity.chi_nhanh": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 201.169,
+            "last_success_at": "2026-10-19T13:21:50.208054+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:02.697369+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khu_vuc": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 200.736,
+            "last_success_at": "2026-10-19T13:21:50.640686+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.089655+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 199.834,
+            "last_success_at": "2026-10-19T13:21:51.543083+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.553058+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai_su_dung": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 178.593,
+            "last_success_at": "2026-10-19T13:22:12.783778+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:12.783778+00:00",
+            "completeness": "complete"
+          },
+          "identity.nguoi_dung": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 198.759,
+            "last_success_at": "2026-10-19T13:21:52.617443+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:21:52.617443+00:00",
+            "completeness": "complete"
+          },
+          "inventory.ton_kho_san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 197.672,
+            "last_success_at": "2026-10-19T13:21:53.704480+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:07.697797+00:00",
+            "completeness": "unknown"
+          },
+          "menu.bien_the_san_pham": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 140.902,
+            "last_success_at": "2026-10-19T13:22:50.474496+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:50.474496+00:00",
+            "completeness": "complete"
+          },
+          "menu.danh_muc": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 196.776,
+            "last_success_at": "2026-10-19T13:21:54.601026+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:21:54.601026+00:00",
+            "completeness": "complete"
+          },
+          "menu.san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 178.01,
+            "last_success_at": "2026-10-19T13:22:13.366935+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:13.366935+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_doi_soat": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 191.662,
+            "last_success_at": "2026-10-19T13:21:59.714286+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:21:59.714286+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_lam_viec_nhan_vien": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 189.558,
+            "last_success_at": "2026-10-19T13:22:01.818502+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:22.301385+00:00",
+            "completeness": "unknown"
+          },
+          "orders.chi_tiet_don_hang": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 69.514,
+            "last_success_at": "2026-10-19T13:24:01.862409+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:24:01.862409+00:00",
+            "completeness": "complete"
+          },
+          "orders.customer_wallet_transaction": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 189.061,
+            "last_success_at": "2026-10-19T13:22:02.315387+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:02.315387+00:00",
+            "completeness": "complete"
+          },
+          "orders.danh_gia_chi_nhanh": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 187.456,
+            "last_success_at": "2026-10-19T13:22:03.920663+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:25.299380+00:00",
+            "completeness": "unknown"
+          },
+          "orders.danh_gia_san_pham": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 186.366,
+            "last_success_at": "2026-10-19T13:22:05.010929+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:28.693239+00:00",
+            "completeness": "unknown"
+          },
+          "orders.delivery_tracking": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 182.86,
+            "last_success_at": "2026-10-19T13:22:08.516132+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:40.197161+00:00",
+            "completeness": "unknown"
+          },
+          "orders.don_hang": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 146.219,
+            "last_success_at": "2026-10-19T13:22:45.157286+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:39.023811+00:00",
+            "completeness": "partial"
+          },
+          "orders.giao_dich_thanh_toan": {
+            "status": "healthy",
+            "generation": 92,
+            "load_lag_seconds": 50.232,
+            "last_success_at": "2026-10-19T13:24:21.144754+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:24:21.144754+00:00",
+            "completeness": "complete"
+          },
+          "orders.khao_sat_phan_hoi": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 182.424,
+            "last_success_at": "2026-10-19T13:22:08.952281+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:08.952281+00:00",
+            "completeness": "complete"
+          },
+          "orders.shipper": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 181.979,
+            "last_success_at": "2026-10-19T13:22:09.397684+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.295209+00:00",
+            "completeness": "unknown"
+          },
+          "orders.shipper_delivery": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 141.762,
+            "last_success_at": "2026-10-19T13:22:49.614327+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:47.174607+00:00",
+            "completeness": "unknown"
+          },
+          "orders.voucher": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 181.537,
+            "last_success_at": "2026-10-19T13:22:09.839236+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.666449+00:00",
+            "completeness": "unknown"
+          },
+          "orders.yeu_thich_san_pham": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 180.466,
+            "last_success_at": "2026-10-19T13:22:10.910511+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:10.910511+00:00",
+            "completeness": "complete"
+          }
+        }
+      },
+      "stream": {
+        "partitions": 9,
+        "backlog": 352164,
+        "committed_sum": 6062157
+      }
+    },
+    {
+      "at": "2026-10-19T13:26:10.084251+00:00",
+      "elapsed_seconds": 242.81,
+      "workers": [
+        {
+          "name": "/avengers_minio",
+          "started": "2026-10-19T11:35:57.373506876Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_producer",
+          "started": "2026-10-19T12:43:14.249307467Z",
+          "restarts": 10,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_consumer",
+          "started": "2026-10-19T11:35:57.776094001Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_data_sync",
+          "started": "2026-10-19T13:21:48.130665969Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        }
+      ],
+      "source": {
+        "epoch": "07ea7a1e05e135d888f3a438278a05dc74e5eda1c244af42b669cabdc9a62e94",
+        "sources": {
+          "identity.chi_nhanh": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 261.088,
+            "last_success_at": "2026-10-19T13:21:50.208054+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:02.697369+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khu_vuc": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 260.655,
+            "last_success_at": "2026-10-19T13:21:50.640686+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.089655+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 259.753,
+            "last_success_at": "2026-10-19T13:21:51.543083+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.553058+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai_su_dung": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 238.512,
+            "last_success_at": "2026-10-19T13:22:12.783778+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:12.783778+00:00",
+            "completeness": "complete"
+          },
+          "identity.nguoi_dung": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 258.678,
+            "last_success_at": "2026-10-19T13:21:52.617443+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:21:52.617443+00:00",
+            "completeness": "complete"
+          },
+          "inventory.ton_kho_san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 257.591,
+            "last_success_at": "2026-10-19T13:21:53.704480+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:07.697797+00:00",
+            "completeness": "unknown"
+          },
+          "menu.bien_the_san_pham": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 200.821,
+            "last_success_at": "2026-10-19T13:22:50.474496+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:50.474496+00:00",
+            "completeness": "complete"
+          },
+          "menu.danh_muc": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 256.695,
+            "last_success_at": "2026-10-19T13:21:54.601026+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:21:54.601026+00:00",
+            "completeness": "complete"
+          },
+          "menu.san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 237.929,
+            "last_success_at": "2026-10-19T13:22:13.366935+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:13.366935+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_doi_soat": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 251.581,
+            "last_success_at": "2026-10-19T13:21:59.714286+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:21:59.714286+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_lam_viec_nhan_vien": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 249.477,
+            "last_success_at": "2026-10-19T13:22:01.818502+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:22.301385+00:00",
+            "completeness": "unknown"
+          },
+          "orders.chi_tiet_don_hang": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 129.433,
+            "last_success_at": "2026-10-19T13:24:01.862409+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:24:01.862409+00:00",
+            "completeness": "complete"
+          },
+          "orders.customer_wallet_transaction": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 248.98,
+            "last_success_at": "2026-10-19T13:22:02.315387+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:02.315387+00:00",
+            "completeness": "complete"
+          },
+          "orders.danh_gia_chi_nhanh": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 247.375,
+            "last_success_at": "2026-10-19T13:22:03.920663+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:25.299380+00:00",
+            "completeness": "unknown"
+          },
+          "orders.danh_gia_san_pham": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 246.285,
+            "last_success_at": "2026-10-19T13:22:05.010929+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:28.693239+00:00",
+            "completeness": "unknown"
+          },
+          "orders.delivery_tracking": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 242.78,
+            "last_success_at": "2026-10-19T13:22:08.516132+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:40.197161+00:00",
+            "completeness": "unknown"
+          },
+          "orders.don_hang": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 206.138,
+            "last_success_at": "2026-10-19T13:22:45.157286+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:39.023811+00:00",
+            "completeness": "partial"
+          },
+          "orders.giao_dich_thanh_toan": {
+            "status": "healthy",
+            "generation": 92,
+            "load_lag_seconds": 110.151,
+            "last_success_at": "2026-10-19T13:24:21.144754+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:24:21.144754+00:00",
+            "completeness": "complete"
+          },
+          "orders.khao_sat_phan_hoi": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 242.343,
+            "last_success_at": "2026-10-19T13:22:08.952281+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:08.952281+00:00",
+            "completeness": "complete"
+          },
+          "orders.shipper": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 241.898,
+            "last_success_at": "2026-10-19T13:22:09.397684+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.295209+00:00",
+            "completeness": "unknown"
+          },
+          "orders.shipper_delivery": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 201.681,
+            "last_success_at": "2026-10-19T13:22:49.614327+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:47.174607+00:00",
+            "completeness": "unknown"
+          },
+          "orders.voucher": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 241.457,
+            "last_success_at": "2026-10-19T13:22:09.839236+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.666449+00:00",
+            "completeness": "unknown"
+          },
+          "orders.yeu_thich_san_pham": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 240.385,
+            "last_success_at": "2026-10-19T13:22:10.910511+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:10.910511+00:00",
+            "completeness": "complete"
+          }
+        }
+      },
+      "stream": {
+        "partitions": 9,
+        "backlog": 349414,
+        "committed_sum": 6064907
+      }
+    },
+    {
+      "at": "2026-10-19T13:27:10.086401+00:00",
+      "elapsed_seconds": 302.81,
+      "workers": [
+        {
+          "name": "/avengers_minio",
+          "started": "2026-10-19T11:35:57.373506876Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_producer",
+          "started": "2026-10-19T12:43:14.249307467Z",
+          "restarts": 10,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_consumer",
+          "started": "2026-10-19T11:35:57.776094001Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_data_sync",
+          "started": "2026-10-19T13:21:48.130665969Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        }
+      ],
+      "source": {
+        "epoch": "8c76d9212d3329e82ad3aedb482610d70e304efc7f91d32fd10a6d38ae1e957b",
+        "sources": {
+          "identity.chi_nhanh": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 20.948,
+            "last_success_at": "2026-10-19T13:26:50.252586+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:02.697369+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khu_vuc": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 20.546,
+            "last_success_at": "2026-10-19T13:26:50.653814+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.089655+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 20.197,
+            "last_success_at": "2026-10-19T13:26:51.003163+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.553058+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai_su_dung": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 298.417,
+            "last_success_at": "2026-10-19T13:22:12.783778+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:12.783778+00:00",
+            "completeness": "complete"
+          },
+          "identity.nguoi_dung": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 19.339,
+            "last_success_at": "2026-10-19T13:26:51.860894+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:26:51.860894+00:00",
+            "completeness": "complete"
+          },
+          "inventory.ton_kho_san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 18.344,
+            "last_success_at": "2026-10-19T13:26:52.856036+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:07.697797+00:00",
+            "completeness": "unknown"
+          },
+          "menu.bien_the_san_pham": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 260.726,
+            "last_success_at": "2026-10-19T13:22:50.474496+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:50.474496+00:00",
+            "completeness": "complete"
+          },
+          "menu.danh_muc": {
+            "status": "healthy",
+            "generation": 98,
+            "load_lag_seconds": 17.801,
+            "last_success_at": "2026-10-19T13:26:53.398952+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:26:53.398952+00:00",
+            "completeness": "complete"
+          },
+          "menu.san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 297.833,
+            "last_success_at": "2026-10-19T13:22:13.366935+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:22:13.366935+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_doi_soat": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 11.845,
+            "last_success_at": "2026-10-19T13:26:59.354960+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:26:59.354960+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_lam_viec_nhan_vien": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 9.933,
+            "last_success_at": "2026-10-19T13:27:01.267202+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:22.301385+00:00",
+            "completeness": "unknown"
+          },
+          "orders.chi_tiet_don_hang": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 189.338,
+            "last_success_at": "2026-10-19T13:24:01.862409+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:24:01.862409+00:00",
+            "completeness": "complete"
+          },
+          "orders.customer_wallet_transaction": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 9.337,
+            "last_success_at": "2026-10-19T13:27:01.863104+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:01.863104+00:00",
+            "completeness": "complete"
+          },
+          "orders.danh_gia_chi_nhanh": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 7.939,
+            "last_success_at": "2026-10-19T13:27:03.260871+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:25.299380+00:00",
+            "completeness": "unknown"
+          },
+          "orders.danh_gia_san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 6.648,
+            "last_success_at": "2026-10-19T13:27:04.551909+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:28.693239+00:00",
+            "completeness": "unknown"
+          },
+          "orders.delivery_tracking": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 2.639,
+            "last_success_at": "2026-10-19T13:27:08.561681+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:40.197161+00:00",
+            "completeness": "unknown"
+          },
+          "orders.don_hang": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 266.043,
+            "last_success_at": "2026-10-19T13:22:45.157286+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:39.023811+00:00",
+            "completeness": "partial"
+          },
+          "orders.giao_dich_thanh_toan": {
+            "status": "healthy",
+            "generation": 92,
+            "load_lag_seconds": 170.056,
+            "last_success_at": "2026-10-19T13:24:21.144754+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:24:21.144754+00:00",
+            "completeness": "complete"
+          },
+          "orders.khao_sat_phan_hoi": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 2.286,
+            "last_success_at": "2026-10-19T13:27:08.914528+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:08.914528+00:00",
+            "completeness": "complete"
+          },
+          "orders.shipper": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 1.725,
+            "last_success_at": "2026-10-19T13:27:09.475078+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.295209+00:00",
+            "completeness": "unknown"
+          },
+          "orders.shipper_delivery": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 261.586,
+            "last_success_at": "2026-10-19T13:22:49.614327+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:47.174607+00:00",
+            "completeness": "unknown"
+          },
+          "orders.voucher": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 1.352,
+            "last_success_at": "2026-10-19T13:27:09.848441+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.666449+00:00",
+            "completeness": "unknown"
+          },
+          "orders.yeu_thich_san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 0.741,
+            "last_success_at": "2026-10-19T13:27:10.459484+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:10.459484+00:00",
+            "completeness": "complete"
+          }
+        }
+      },
+      "stream": {
+        "partitions": 9,
+        "backlog": 346464,
+        "committed_sum": 6067857
+      }
+    },
+    {
+      "at": "2026-10-19T13:28:10.087516+00:00",
+      "elapsed_seconds": 362.525,
+      "workers": [
+        {
+          "name": "/avengers_minio",
+          "started": "2026-10-19T11:35:57.373506876Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_producer",
+          "started": "2026-10-19T12:43:14.249307467Z",
+          "restarts": 10,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_consumer",
+          "started": "2026-10-19T11:35:57.776094001Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_data_sync",
+          "started": "2026-10-19T13:21:48.130665969Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        }
+      ],
+      "source": {
+        "epoch": "6798a2cf7fe2279cf53d3567b1112b19d6c5f7309047d5eaee734f878e469d4f",
+        "sources": {
+          "identity.chi_nhanh": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 80.861,
+            "last_success_at": "2026-10-19T13:26:50.252586+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:02.697369+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khu_vuc": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 80.46,
+            "last_success_at": "2026-10-19T13:26:50.653814+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.089655+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 80.111,
+            "last_success_at": "2026-10-19T13:26:51.003163+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.553058+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai_su_dung": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 58.993,
+            "last_success_at": "2026-10-19T13:27:12.120541+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:12.120541+00:00",
+            "completeness": "complete"
+          },
+          "identity.nguoi_dung": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 79.253,
+            "last_success_at": "2026-10-19T13:26:51.860894+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:26:51.860894+00:00",
+            "completeness": "complete"
+          },
+          "inventory.ton_kho_san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 78.258,
+            "last_success_at": "2026-10-19T13:26:52.856036+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:07.697797+00:00",
+            "completeness": "unknown"
+          },
+          "menu.bien_the_san_pham": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 26.005,
+            "last_success_at": "2026-10-19T13:27:45.109434+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:45.109434+00:00",
+            "completeness": "complete"
+          },
+          "menu.danh_muc": {
+            "status": "healthy",
+            "generation": 98,
+            "load_lag_seconds": 77.715,
+            "last_success_at": "2026-10-19T13:26:53.398952+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:26:53.398952+00:00",
+            "completeness": "complete"
+          },
+          "menu.san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 58.408,
+            "last_success_at": "2026-10-19T13:27:12.705472+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:12.705472+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_doi_soat": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 71.759,
+            "last_success_at": "2026-10-19T13:26:59.354960+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:26:59.354960+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_lam_viec_nhan_vien": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 69.847,
+            "last_success_at": "2026-10-19T13:27:01.267202+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:22.301385+00:00",
+            "completeness": "unknown"
+          },
+          "orders.chi_tiet_don_hang": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 249.252,
+            "last_success_at": "2026-10-19T13:24:01.862409+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:24:01.862409+00:00",
+            "completeness": "complete"
+          },
+          "orders.customer_wallet_transaction": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 69.251,
+            "last_success_at": "2026-10-19T13:27:01.863104+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:01.863104+00:00",
+            "completeness": "complete"
+          },
+          "orders.danh_gia_chi_nhanh": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 67.853,
+            "last_success_at": "2026-10-19T13:27:03.260871+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:25.299380+00:00",
+            "completeness": "unknown"
+          },
+          "orders.danh_gia_san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 66.562,
+            "last_success_at": "2026-10-19T13:27:04.551909+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:28.693239+00:00",
+            "completeness": "unknown"
+          },
+          "orders.delivery_tracking": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 62.552,
+            "last_success_at": "2026-10-19T13:27:08.561681+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:40.197161+00:00",
+            "completeness": "unknown"
+          },
+          "orders.don_hang": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 31.231,
+            "last_success_at": "2026-10-19T13:27:39.883384+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:39.023811+00:00",
+            "completeness": "partial"
+          },
+          "orders.giao_dich_thanh_toan": {
+            "status": "healthy",
+            "generation": 92,
+            "load_lag_seconds": 229.969,
+            "last_success_at": "2026-10-19T13:24:21.144754+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:24:21.144754+00:00",
+            "completeness": "complete"
+          },
+          "orders.khao_sat_phan_hoi": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 62.199,
+            "last_success_at": "2026-10-19T13:27:08.914528+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:08.914528+00:00",
+            "completeness": "complete"
+          },
+          "orders.shipper": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 61.639,
+            "last_success_at": "2026-10-19T13:27:09.475078+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.295209+00:00",
+            "completeness": "unknown"
+          },
+          "orders.shipper_delivery": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 26.747,
+            "last_success_at": "2026-10-19T13:27:44.366764+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:47.174607+00:00",
+            "completeness": "unknown"
+          },
+          "orders.voucher": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 61.266,
+            "last_success_at": "2026-10-19T13:27:09.848441+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.666449+00:00",
+            "completeness": "unknown"
+          },
+          "orders.yeu_thich_san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 60.654,
+            "last_success_at": "2026-10-19T13:27:10.459484+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:10.459484+00:00",
+            "completeness": "complete"
+          }
+        }
+      },
+      "stream": {
+        "partitions": 9,
+        "backlog": 343633,
+        "committed_sum": 6070688
+      }
+    },
+    {
+      "at": "2026-10-19T13:29:10.085155+00:00",
+      "elapsed_seconds": 422.617,
+      "workers": [
+        {
+          "name": "/avengers_minio",
+          "started": "2026-10-19T11:35:57.373506876Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_producer",
+          "started": "2026-10-19T12:43:14.249307467Z",
+          "restarts": 10,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_consumer",
+          "started": "2026-10-19T11:35:57.776094001Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_data_sync",
+          "started": "2026-10-19T13:21:48.130665969Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        }
+      ],
+      "source": {
+        "epoch": "9c030cadad6515c4d6cea492d27a3107b665d729c92d3eb509557d47453feb80",
+        "sources": {
+          "identity.chi_nhanh": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 140.819,
+            "last_success_at": "2026-10-19T13:26:50.252586+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:02.697369+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khu_vuc": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 140.418,
+            "last_success_at": "2026-10-19T13:26:50.653814+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.089655+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 140.069,
+            "last_success_at": "2026-10-19T13:26:51.003163+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.553058+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai_su_dung": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 118.951,
+            "last_success_at": "2026-10-19T13:27:12.120541+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:12.120541+00:00",
+            "completeness": "complete"
+          },
+          "identity.nguoi_dung": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 139.211,
+            "last_success_at": "2026-10-19T13:26:51.860894+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:26:51.860894+00:00",
+            "completeness": "complete"
+          },
+          "inventory.ton_kho_san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 138.216,
+            "last_success_at": "2026-10-19T13:26:52.856036+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:07.697797+00:00",
+            "completeness": "unknown"
+          },
+          "menu.bien_the_san_pham": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 85.963,
+            "last_success_at": "2026-10-19T13:27:45.109434+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:45.109434+00:00",
+            "completeness": "complete"
+          },
+          "menu.danh_muc": {
+            "status": "healthy",
+            "generation": 98,
+            "load_lag_seconds": 137.673,
+            "last_success_at": "2026-10-19T13:26:53.398952+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:26:53.398952+00:00",
+            "completeness": "complete"
+          },
+          "menu.san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 118.367,
+            "last_success_at": "2026-10-19T13:27:12.705472+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:12.705472+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_doi_soat": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 131.717,
+            "last_success_at": "2026-10-19T13:26:59.354960+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:26:59.354960+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_lam_viec_nhan_vien": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 129.805,
+            "last_success_at": "2026-10-19T13:27:01.267202+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:22.301385+00:00",
+            "completeness": "unknown"
+          },
+          "orders.chi_tiet_don_hang": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 23.571,
+            "last_success_at": "2026-10-19T13:28:47.500844+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:28:47.500844+00:00",
+            "completeness": "complete"
+          },
+          "orders.customer_wallet_transaction": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 129.209,
+            "last_success_at": "2026-10-19T13:27:01.863104+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:01.863104+00:00",
+            "completeness": "complete"
+          },
+          "orders.danh_gia_chi_nhanh": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 127.811,
+            "last_success_at": "2026-10-19T13:27:03.260871+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:25.299380+00:00",
+            "completeness": "unknown"
+          },
+          "orders.danh_gia_san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 126.52,
+            "last_success_at": "2026-10-19T13:27:04.551909+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:28.693239+00:00",
+            "completeness": "unknown"
+          },
+          "orders.delivery_tracking": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 122.51,
+            "last_success_at": "2026-10-19T13:27:08.561681+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:40.197161+00:00",
+            "completeness": "unknown"
+          },
+          "orders.don_hang": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 91.189,
+            "last_success_at": "2026-10-19T13:27:39.883384+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:39.023811+00:00",
+            "completeness": "partial"
+          },
+          "orders.giao_dich_thanh_toan": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 5.058,
+            "last_success_at": "2026-10-19T13:29:06.013602+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:29:06.013602+00:00",
+            "completeness": "complete"
+          },
+          "orders.khao_sat_phan_hoi": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 122.157,
+            "last_success_at": "2026-10-19T13:27:08.914528+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:08.914528+00:00",
+            "completeness": "complete"
+          },
+          "orders.shipper": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 121.597,
+            "last_success_at": "2026-10-19T13:27:09.475078+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.295209+00:00",
+            "completeness": "unknown"
+          },
+          "orders.shipper_delivery": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 86.705,
+            "last_success_at": "2026-10-19T13:27:44.366764+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:47.174607+00:00",
+            "completeness": "unknown"
+          },
+          "orders.voucher": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 121.224,
+            "last_success_at": "2026-10-19T13:27:09.848441+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.666449+00:00",
+            "completeness": "unknown"
+          },
+          "orders.yeu_thich_san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 120.613,
+            "last_success_at": "2026-10-19T13:27:10.459484+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:10.459484+00:00",
+            "completeness": "complete"
+          }
+        }
+      },
+      "stream": {
+        "partitions": 9,
+        "backlog": 340533,
+        "committed_sum": 6073788
+      }
+    },
+    {
+      "at": "2026-10-19T13:30:10.084302+00:00",
+      "elapsed_seconds": 482.917,
+      "workers": [
+        {
+          "name": "/avengers_minio",
+          "started": "2026-10-19T11:35:57.373506876Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_producer",
+          "started": "2026-10-19T12:43:14.249307467Z",
+          "restarts": 10,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_consumer",
+          "started": "2026-10-19T11:35:57.776094001Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_data_sync",
+          "started": "2026-10-19T13:21:48.130665969Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        }
+      ],
+      "source": {
+        "epoch": "9c030cadad6515c4d6cea492d27a3107b665d729c92d3eb509557d47453feb80",
+        "sources": {
+          "identity.chi_nhanh": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 200.87,
+            "last_success_at": "2026-10-19T13:26:50.252586+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:02.697369+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khu_vuc": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 200.469,
+            "last_success_at": "2026-10-19T13:26:50.653814+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.089655+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 200.12,
+            "last_success_at": "2026-10-19T13:26:51.003163+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.553058+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai_su_dung": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 179.002,
+            "last_success_at": "2026-10-19T13:27:12.120541+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:12.120541+00:00",
+            "completeness": "complete"
+          },
+          "identity.nguoi_dung": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 199.262,
+            "last_success_at": "2026-10-19T13:26:51.860894+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:26:51.860894+00:00",
+            "completeness": "complete"
+          },
+          "inventory.ton_kho_san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 198.267,
+            "last_success_at": "2026-10-19T13:26:52.856036+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:07.697797+00:00",
+            "completeness": "unknown"
+          },
+          "menu.bien_the_san_pham": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 146.014,
+            "last_success_at": "2026-10-19T13:27:45.109434+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:45.109434+00:00",
+            "completeness": "complete"
+          },
+          "menu.danh_muc": {
+            "status": "healthy",
+            "generation": 98,
+            "load_lag_seconds": 197.724,
+            "last_success_at": "2026-10-19T13:26:53.398952+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:26:53.398952+00:00",
+            "completeness": "complete"
+          },
+          "menu.san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 178.418,
+            "last_success_at": "2026-10-19T13:27:12.705472+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:12.705472+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_doi_soat": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 191.768,
+            "last_success_at": "2026-10-19T13:26:59.354960+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:26:59.354960+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_lam_viec_nhan_vien": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 189.856,
+            "last_success_at": "2026-10-19T13:27:01.267202+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:22.301385+00:00",
+            "completeness": "unknown"
+          },
+          "orders.chi_tiet_don_hang": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 83.622,
+            "last_success_at": "2026-10-19T13:28:47.500844+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:28:47.500844+00:00",
+            "completeness": "complete"
+          },
+          "orders.customer_wallet_transaction": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 189.26,
+            "last_success_at": "2026-10-19T13:27:01.863104+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:01.863104+00:00",
+            "completeness": "complete"
+          },
+          "orders.danh_gia_chi_nhanh": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 187.862,
+            "last_success_at": "2026-10-19T13:27:03.260871+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:25.299380+00:00",
+            "completeness": "unknown"
+          },
+          "orders.danh_gia_san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 186.571,
+            "last_success_at": "2026-10-19T13:27:04.551909+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:28.693239+00:00",
+            "completeness": "unknown"
+          },
+          "orders.delivery_tracking": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 182.561,
+            "last_success_at": "2026-10-19T13:27:08.561681+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:40.197161+00:00",
+            "completeness": "unknown"
+          },
+          "orders.don_hang": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 151.24,
+            "last_success_at": "2026-10-19T13:27:39.883384+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:39.023811+00:00",
+            "completeness": "partial"
+          },
+          "orders.giao_dich_thanh_toan": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 65.109,
+            "last_success_at": "2026-10-19T13:29:06.013602+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:29:06.013602+00:00",
+            "completeness": "complete"
+          },
+          "orders.khao_sat_phan_hoi": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 182.208,
+            "last_success_at": "2026-10-19T13:27:08.914528+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:08.914528+00:00",
+            "completeness": "complete"
+          },
+          "orders.shipper": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 181.648,
+            "last_success_at": "2026-10-19T13:27:09.475078+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.295209+00:00",
+            "completeness": "unknown"
+          },
+          "orders.shipper_delivery": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 146.756,
+            "last_success_at": "2026-10-19T13:27:44.366764+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:47.174607+00:00",
+            "completeness": "unknown"
+          },
+          "orders.voucher": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 181.275,
+            "last_success_at": "2026-10-19T13:27:09.848441+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.666449+00:00",
+            "completeness": "unknown"
+          },
+          "orders.yeu_thich_san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 180.664,
+            "last_success_at": "2026-10-19T13:27:10.459484+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:10.459484+00:00",
+            "completeness": "complete"
+          }
+        }
+      },
+      "stream": {
+        "partitions": 9,
+        "backlog": 337355,
+        "committed_sum": 6076966
+      }
+    },
+    {
+      "at": "2026-10-19T13:31:10.084832+00:00",
+      "elapsed_seconds": 542.811,
+      "workers": [
+        {
+          "name": "/avengers_minio",
+          "started": "2026-10-19T11:35:57.373506876Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_producer",
+          "started": "2026-10-19T12:43:14.249307467Z",
+          "restarts": 10,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_consumer",
+          "started": "2026-10-19T11:35:57.776094001Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_data_sync",
+          "started": "2026-10-19T13:21:48.130665969Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        }
+      ],
+      "source": {
+        "epoch": "9c030cadad6515c4d6cea492d27a3107b665d729c92d3eb509557d47453feb80",
+        "sources": {
+          "identity.chi_nhanh": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 260.938,
+            "last_success_at": "2026-10-19T13:26:50.252586+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:02.697369+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khu_vuc": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 260.537,
+            "last_success_at": "2026-10-19T13:26:50.653814+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.089655+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 260.187,
+            "last_success_at": "2026-10-19T13:26:51.003163+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.553058+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai_su_dung": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 239.07,
+            "last_success_at": "2026-10-19T13:27:12.120541+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:12.120541+00:00",
+            "completeness": "complete"
+          },
+          "identity.nguoi_dung": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 259.329,
+            "last_success_at": "2026-10-19T13:26:51.860894+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:26:51.860894+00:00",
+            "completeness": "complete"
+          },
+          "inventory.ton_kho_san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 258.334,
+            "last_success_at": "2026-10-19T13:26:52.856036+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:07.697797+00:00",
+            "completeness": "unknown"
+          },
+          "menu.bien_the_san_pham": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 206.081,
+            "last_success_at": "2026-10-19T13:27:45.109434+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:45.109434+00:00",
+            "completeness": "complete"
+          },
+          "menu.danh_muc": {
+            "status": "healthy",
+            "generation": 98,
+            "load_lag_seconds": 257.791,
+            "last_success_at": "2026-10-19T13:26:53.398952+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:26:53.398952+00:00",
+            "completeness": "complete"
+          },
+          "menu.san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 238.485,
+            "last_success_at": "2026-10-19T13:27:12.705472+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:12.705472+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_doi_soat": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 251.835,
+            "last_success_at": "2026-10-19T13:26:59.354960+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:26:59.354960+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_lam_viec_nhan_vien": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 249.923,
+            "last_success_at": "2026-10-19T13:27:01.267202+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:22.301385+00:00",
+            "completeness": "unknown"
+          },
+          "orders.chi_tiet_don_hang": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 143.689,
+            "last_success_at": "2026-10-19T13:28:47.500844+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:28:47.500844+00:00",
+            "completeness": "complete"
+          },
+          "orders.customer_wallet_transaction": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 249.327,
+            "last_success_at": "2026-10-19T13:27:01.863104+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:01.863104+00:00",
+            "completeness": "complete"
+          },
+          "orders.danh_gia_chi_nhanh": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 247.929,
+            "last_success_at": "2026-10-19T13:27:03.260871+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:25.299380+00:00",
+            "completeness": "unknown"
+          },
+          "orders.danh_gia_san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 246.638,
+            "last_success_at": "2026-10-19T13:27:04.551909+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:28.693239+00:00",
+            "completeness": "unknown"
+          },
+          "orders.delivery_tracking": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 242.629,
+            "last_success_at": "2026-10-19T13:27:08.561681+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:40.197161+00:00",
+            "completeness": "unknown"
+          },
+          "orders.don_hang": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 211.307,
+            "last_success_at": "2026-10-19T13:27:39.883384+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:39.023811+00:00",
+            "completeness": "partial"
+          },
+          "orders.giao_dich_thanh_toan": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 125.177,
+            "last_success_at": "2026-10-19T13:29:06.013602+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:29:06.013602+00:00",
+            "completeness": "complete"
+          },
+          "orders.khao_sat_phan_hoi": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 242.276,
+            "last_success_at": "2026-10-19T13:27:08.914528+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:08.914528+00:00",
+            "completeness": "complete"
+          },
+          "orders.shipper": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 241.715,
+            "last_success_at": "2026-10-19T13:27:09.475078+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.295209+00:00",
+            "completeness": "unknown"
+          },
+          "orders.shipper_delivery": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 206.824,
+            "last_success_at": "2026-10-19T13:27:44.366764+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:47.174607+00:00",
+            "completeness": "unknown"
+          },
+          "orders.voucher": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 241.342,
+            "last_success_at": "2026-10-19T13:27:09.848441+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.666449+00:00",
+            "completeness": "unknown"
+          },
+          "orders.yeu_thich_san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 240.731,
+            "last_success_at": "2026-10-19T13:27:10.459484+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:10.459484+00:00",
+            "completeness": "complete"
+          }
+        }
+      },
+      "stream": {
+        "partitions": 9,
+        "backlog": 334355,
+        "committed_sum": 6079966
+      }
+    },
+    {
+      "at": "2026-10-19T13:32:10.085904+00:00",
+      "elapsed_seconds": 602.912,
+      "workers": [
+        {
+          "name": "/avengers_minio",
+          "started": "2026-10-19T11:35:57.373506876Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_producer",
+          "started": "2026-10-19T12:43:14.249307467Z",
+          "restarts": 10,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_consumer",
+          "started": "2026-10-19T11:35:57.776094001Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_data_sync",
+          "started": "2026-10-19T13:21:48.130665969Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        }
+      ],
+      "source": {
+        "epoch": "ef891b15ecb49fc4a725452023cffac20f03b5f4d7787a559275d12607142eda",
+        "sources": {
+          "identity.chi_nhanh": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 21.107,
+            "last_success_at": "2026-10-19T13:31:50.266521+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:02.697369+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khu_vuc": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 20.672,
+            "last_success_at": "2026-10-19T13:31:50.700860+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.089655+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 20.041,
+            "last_success_at": "2026-10-19T13:31:51.331765+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.553058+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai_su_dung": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 0.438,
+            "last_success_at": "2026-10-19T13:32:10.934852+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:10.934852+00:00",
+            "completeness": "complete"
+          },
+          "identity.nguoi_dung": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 19.311,
+            "last_success_at": "2026-10-19T13:31:52.062543+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:31:52.062543+00:00",
+            "completeness": "complete"
+          },
+          "inventory.ton_kho_san_pham": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 18.318,
+            "last_success_at": "2026-10-19T13:31:53.055089+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:07.697797+00:00",
+            "completeness": "unknown"
+          },
+          "menu.bien_the_san_pham": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 266.264,
+            "last_success_at": "2026-10-19T13:27:45.109434+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:45.109434+00:00",
+            "completeness": "complete"
+          },
+          "menu.danh_muc": {
+            "status": "healthy",
+            "generation": 99,
+            "load_lag_seconds": 17.882,
+            "last_success_at": "2026-10-19T13:31:53.491183+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:31:53.491183+00:00",
+            "completeness": "complete"
+          },
+          "menu.san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 298.668,
+            "last_success_at": "2026-10-19T13:27:12.705472+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:27:12.705472+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_doi_soat": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 13.008,
+            "last_success_at": "2026-10-19T13:31:58.364825+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:31:58.364825+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_lam_viec_nhan_vien": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 10.822,
+            "last_success_at": "2026-10-19T13:32:00.551698+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:22.301385+00:00",
+            "completeness": "unknown"
+          },
+          "orders.chi_tiet_don_hang": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 203.872,
+            "last_success_at": "2026-10-19T13:28:47.500844+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:28:47.500844+00:00",
+            "completeness": "complete"
+          },
+          "orders.customer_wallet_transaction": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 10.332,
+            "last_success_at": "2026-10-19T13:32:01.040768+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:01.040769+00:00",
+            "completeness": "complete"
+          },
+          "orders.danh_gia_chi_nhanh": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 9.212,
+            "last_success_at": "2026-10-19T13:32:02.161558+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:25.299380+00:00",
+            "completeness": "unknown"
+          },
+          "orders.danh_gia_san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 8.122,
+            "last_success_at": "2026-10-19T13:32:03.250796+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:28.693239+00:00",
+            "completeness": "unknown"
+          },
+          "orders.delivery_tracking": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 4.403,
+            "last_success_at": "2026-10-19T13:32:06.969783+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:40.197161+00:00",
+            "completeness": "unknown"
+          },
+          "orders.don_hang": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 271.49,
+            "last_success_at": "2026-10-19T13:27:39.883384+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:39.023811+00:00",
+            "completeness": "partial"
+          },
+          "orders.giao_dich_thanh_toan": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 185.36,
+            "last_success_at": "2026-10-19T13:29:06.013602+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:29:06.013602+00:00",
+            "completeness": "complete"
+          },
+          "orders.khao_sat_phan_hoi": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 3.883,
+            "last_success_at": "2026-10-19T13:32:07.490739+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:07.490739+00:00",
+            "completeness": "complete"
+          },
+          "orders.shipper": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 3.444,
+            "last_success_at": "2026-10-19T13:32:07.929730+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.295209+00:00",
+            "completeness": "unknown"
+          },
+          "orders.shipper_delivery": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 267.006,
+            "last_success_at": "2026-10-19T13:27:44.366764+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:47.174607+00:00",
+            "completeness": "unknown"
+          },
+          "orders.voucher": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 2.994,
+            "last_success_at": "2026-10-19T13:32:08.379653+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.666449+00:00",
+            "completeness": "unknown"
+          },
+          "orders.yeu_thich_san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 2.321,
+            "last_success_at": "2026-10-19T13:32:09.051838+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:09.051838+00:00",
+            "completeness": "complete"
+          }
+        }
+      },
+      "stream": {
+        "partitions": 9,
+        "backlog": 331073,
+        "committed_sum": 6083248
+      }
+    },
+    {
+      "at": "2026-10-19T13:33:10.085943+00:00",
+      "elapsed_seconds": 663.012,
+      "workers": [
+        {
+          "name": "/avengers_minio",
+          "started": "2026-10-19T11:35:57.373506876Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_producer",
+          "started": "2026-10-19T12:43:14.249307467Z",
+          "restarts": 10,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_consumer",
+          "started": "2026-10-19T11:35:57.776094001Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_data_sync",
+          "started": "2026-10-19T13:21:48.130665969Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        }
+      ],
+      "source": {
+        "epoch": "2d5775ab7f59c2c8ed1ba5a61c382981d780a7750610e7e61248d217e290d308",
+        "sources": {
+          "identity.chi_nhanh": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 81.183,
+            "last_success_at": "2026-10-19T13:31:50.266521+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:02.697369+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khu_vuc": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 80.749,
+            "last_success_at": "2026-10-19T13:31:50.700860+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.089655+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 80.118,
+            "last_success_at": "2026-10-19T13:31:51.331765+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.553058+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai_su_dung": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 60.515,
+            "last_success_at": "2026-10-19T13:32:10.934852+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:10.934852+00:00",
+            "completeness": "complete"
+          },
+          "identity.nguoi_dung": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 79.387,
+            "last_success_at": "2026-10-19T13:31:52.062543+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:31:52.062543+00:00",
+            "completeness": "complete"
+          },
+          "inventory.ton_kho_san_pham": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 78.394,
+            "last_success_at": "2026-10-19T13:31:53.055089+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:07.697797+00:00",
+            "completeness": "unknown"
+          },
+          "menu.bien_the_san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 23.196,
+            "last_success_at": "2026-10-19T13:32:48.253315+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:48.253315+00:00",
+            "completeness": "complete"
+          },
+          "menu.danh_muc": {
+            "status": "healthy",
+            "generation": 99,
+            "load_lag_seconds": 77.958,
+            "last_success_at": "2026-10-19T13:31:53.491183+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:31:53.491183+00:00",
+            "completeness": "complete"
+          },
+          "menu.san_pham": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 59.695,
+            "last_success_at": "2026-10-19T13:32:11.754652+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:11.754652+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_doi_soat": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 73.085,
+            "last_success_at": "2026-10-19T13:31:58.364825+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:31:58.364825+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_lam_viec_nhan_vien": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 70.898,
+            "last_success_at": "2026-10-19T13:32:00.551698+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:22.301385+00:00",
+            "completeness": "unknown"
+          },
+          "orders.chi_tiet_don_hang": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 263.949,
+            "last_success_at": "2026-10-19T13:28:47.500844+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:28:47.500844+00:00",
+            "completeness": "complete"
+          },
+          "orders.customer_wallet_transaction": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 70.409,
+            "last_success_at": "2026-10-19T13:32:01.040768+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:01.040769+00:00",
+            "completeness": "complete"
+          },
+          "orders.danh_gia_chi_nhanh": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 69.288,
+            "last_success_at": "2026-10-19T13:32:02.161558+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:25.299380+00:00",
+            "completeness": "unknown"
+          },
+          "orders.danh_gia_san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 68.199,
+            "last_success_at": "2026-10-19T13:32:03.250796+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:28.693239+00:00",
+            "completeness": "unknown"
+          },
+          "orders.delivery_tracking": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 64.48,
+            "last_success_at": "2026-10-19T13:32:06.969783+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:40.197161+00:00",
+            "completeness": "unknown"
+          },
+          "orders.don_hang": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 30.376,
+            "last_success_at": "2026-10-19T13:32:41.073867+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:39.023811+00:00",
+            "completeness": "partial"
+          },
+          "orders.giao_dich_thanh_toan": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 245.436,
+            "last_success_at": "2026-10-19T13:29:06.013602+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:29:06.013602+00:00",
+            "completeness": "complete"
+          },
+          "orders.khao_sat_phan_hoi": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 63.959,
+            "last_success_at": "2026-10-19T13:32:07.490739+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:07.490739+00:00",
+            "completeness": "complete"
+          },
+          "orders.shipper": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 63.52,
+            "last_success_at": "2026-10-19T13:32:07.929730+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.295209+00:00",
+            "completeness": "unknown"
+          },
+          "orders.shipper_delivery": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 24.79,
+            "last_success_at": "2026-10-19T13:32:46.659154+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:47.174607+00:00",
+            "completeness": "unknown"
+          },
+          "orders.voucher": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 63.07,
+            "last_success_at": "2026-10-19T13:32:08.379653+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.666449+00:00",
+            "completeness": "unknown"
+          },
+          "orders.yeu_thich_san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 62.398,
+            "last_success_at": "2026-10-19T13:32:09.051838+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:09.051838+00:00",
+            "completeness": "complete"
+          }
+        }
+      },
+      "stream": {
+        "partitions": 9,
+        "backlog": 328273,
+        "committed_sum": 6086048
+      }
+    },
+    {
+      "at": "2026-10-19T13:34:10.089753+00:00",
+      "elapsed_seconds": 723.913,
+      "workers": [
+        {
+          "name": "/avengers_minio",
+          "started": "2026-10-19T11:35:57.373506876Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_producer",
+          "started": "2026-10-19T12:43:14.249307467Z",
+          "restarts": 10,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_consumer",
+          "started": "2026-10-19T11:35:57.776094001Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_data_sync",
+          "started": "2026-10-19T13:21:48.130665969Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        }
+      ],
+      "source": {
+        "epoch": "b400846ccec44d31e3fa28d82893b1bf2426b8d66d5d606cdfa235fe522e4ca9",
+        "sources": {
+          "identity.chi_nhanh": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 141.451,
+            "last_success_at": "2026-10-19T13:31:50.266521+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:02.697369+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khu_vuc": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 141.017,
+            "last_success_at": "2026-10-19T13:31:50.700860+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.089655+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 140.386,
+            "last_success_at": "2026-10-19T13:31:51.331765+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.553058+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai_su_dung": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 120.783,
+            "last_success_at": "2026-10-19T13:32:10.934852+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:10.934852+00:00",
+            "completeness": "complete"
+          },
+          "identity.nguoi_dung": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 139.655,
+            "last_success_at": "2026-10-19T13:31:52.062543+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:31:52.062543+00:00",
+            "completeness": "complete"
+          },
+          "inventory.ton_kho_san_pham": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 138.663,
+            "last_success_at": "2026-10-19T13:31:53.055089+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:07.697797+00:00",
+            "completeness": "unknown"
+          },
+          "menu.bien_the_san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 83.464,
+            "last_success_at": "2026-10-19T13:32:48.253315+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:48.253315+00:00",
+            "completeness": "complete"
+          },
+          "menu.danh_muc": {
+            "status": "healthy",
+            "generation": 99,
+            "load_lag_seconds": 138.227,
+            "last_success_at": "2026-10-19T13:31:53.491183+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:31:53.491183+00:00",
+            "completeness": "complete"
+          },
+          "menu.san_pham": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 119.963,
+            "last_success_at": "2026-10-19T13:32:11.754652+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:11.754652+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_doi_soat": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 133.353,
+            "last_success_at": "2026-10-19T13:31:58.364825+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:31:58.364825+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_lam_viec_nhan_vien": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 131.166,
+            "last_success_at": "2026-10-19T13:32:00.551698+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:22.301385+00:00",
+            "completeness": "unknown"
+          },
+          "orders.chi_tiet_don_hang": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 12.464,
+            "last_success_at": "2026-10-19T13:33:59.253736+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:33:59.253736+00:00",
+            "completeness": "complete"
+          },
+          "orders.customer_wallet_transaction": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 130.677,
+            "last_success_at": "2026-10-19T13:32:01.040768+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:01.040769+00:00",
+            "completeness": "complete"
+          },
+          "orders.danh_gia_chi_nhanh": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 129.556,
+            "last_success_at": "2026-10-19T13:32:02.161558+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:25.299380+00:00",
+            "completeness": "unknown"
+          },
+          "orders.danh_gia_san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 128.467,
+            "last_success_at": "2026-10-19T13:32:03.250796+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:28.693239+00:00",
+            "completeness": "unknown"
+          },
+          "orders.delivery_tracking": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 124.748,
+            "last_success_at": "2026-10-19T13:32:06.969783+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:40.197161+00:00",
+            "completeness": "unknown"
+          },
+          "orders.don_hang": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 90.644,
+            "last_success_at": "2026-10-19T13:32:41.073867+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:39.023811+00:00",
+            "completeness": "partial"
+          },
+          "orders.giao_dich_thanh_toan": {
+            "status": "healthy",
+            "generation": 93,
+            "load_lag_seconds": 305.704,
+            "last_success_at": "2026-10-19T13:29:06.013602+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:29:06.013602+00:00",
+            "completeness": "complete"
+          },
+          "orders.khao_sat_phan_hoi": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 124.227,
+            "last_success_at": "2026-10-19T13:32:07.490739+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:07.490739+00:00",
+            "completeness": "complete"
+          },
+          "orders.shipper": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 123.788,
+            "last_success_at": "2026-10-19T13:32:07.929730+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.295209+00:00",
+            "completeness": "unknown"
+          },
+          "orders.shipper_delivery": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 85.059,
+            "last_success_at": "2026-10-19T13:32:46.659154+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:47.174607+00:00",
+            "completeness": "unknown"
+          },
+          "orders.voucher": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 123.338,
+            "last_success_at": "2026-10-19T13:32:08.379653+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.666449+00:00",
+            "completeness": "unknown"
+          },
+          "orders.yeu_thich_san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 122.666,
+            "last_success_at": "2026-10-19T13:32:09.051838+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:09.051838+00:00",
+            "completeness": "complete"
+          }
+        }
+      },
+      "stream": {
+        "partitions": 9,
+        "backlog": 325746,
+        "committed_sum": 6088575
+      }
+    },
+    {
+      "at": "2026-10-19T13:35:10.085674+00:00",
+      "elapsed_seconds": 784.56,
+      "workers": [
+        {
+          "name": "/avengers_minio",
+          "started": "2026-10-19T11:35:57.373506876Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_producer",
+          "started": "2026-10-19T12:43:14.249307467Z",
+          "restarts": 10,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_consumer",
+          "started": "2026-10-19T11:35:57.776094001Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_data_sync",
+          "started": "2026-10-19T13:21:48.130665969Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        }
+      ],
+      "source": {
+        "epoch": "6449fd9e493c0d9d953189771195bf57c9706ef12f76079930c8dac14449fc7b",
+        "sources": {
+          "identity.chi_nhanh": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 201.744,
+            "last_success_at": "2026-10-19T13:31:50.266521+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:02.697369+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khu_vuc": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 201.31,
+            "last_success_at": "2026-10-19T13:31:50.700860+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.089655+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 200.679,
+            "last_success_at": "2026-10-19T13:31:51.331765+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.553058+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai_su_dung": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 181.076,
+            "last_success_at": "2026-10-19T13:32:10.934852+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:10.934852+00:00",
+            "completeness": "complete"
+          },
+          "identity.nguoi_dung": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 199.948,
+            "last_success_at": "2026-10-19T13:31:52.062543+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:31:52.062543+00:00",
+            "completeness": "complete"
+          },
+          "inventory.ton_kho_san_pham": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 198.956,
+            "last_success_at": "2026-10-19T13:31:53.055089+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:07.697797+00:00",
+            "completeness": "unknown"
+          },
+          "menu.bien_the_san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 143.757,
+            "last_success_at": "2026-10-19T13:32:48.253315+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:48.253315+00:00",
+            "completeness": "complete"
+          },
+          "menu.danh_muc": {
+            "status": "healthy",
+            "generation": 99,
+            "load_lag_seconds": 198.519,
+            "last_success_at": "2026-10-19T13:31:53.491183+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:31:53.491183+00:00",
+            "completeness": "complete"
+          },
+          "menu.san_pham": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 180.256,
+            "last_success_at": "2026-10-19T13:32:11.754652+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:11.754652+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_doi_soat": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 193.646,
+            "last_success_at": "2026-10-19T13:31:58.364825+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:31:58.364825+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_lam_viec_nhan_vien": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 191.459,
+            "last_success_at": "2026-10-19T13:32:00.551698+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:22.301385+00:00",
+            "completeness": "unknown"
+          },
+          "orders.chi_tiet_don_hang": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 72.757,
+            "last_success_at": "2026-10-19T13:33:59.253736+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:33:59.253736+00:00",
+            "completeness": "complete"
+          },
+          "orders.customer_wallet_transaction": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 190.97,
+            "last_success_at": "2026-10-19T13:32:01.040768+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:01.040769+00:00",
+            "completeness": "complete"
+          },
+          "orders.danh_gia_chi_nhanh": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 189.849,
+            "last_success_at": "2026-10-19T13:32:02.161558+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:25.299380+00:00",
+            "completeness": "unknown"
+          },
+          "orders.danh_gia_san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 188.76,
+            "last_success_at": "2026-10-19T13:32:03.250796+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:28.693239+00:00",
+            "completeness": "unknown"
+          },
+          "orders.delivery_tracking": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 185.041,
+            "last_success_at": "2026-10-19T13:32:06.969783+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:40.197161+00:00",
+            "completeness": "unknown"
+          },
+          "orders.don_hang": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 150.937,
+            "last_success_at": "2026-10-19T13:32:41.073867+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:39.023811+00:00",
+            "completeness": "partial"
+          },
+          "orders.giao_dich_thanh_toan": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 48.196,
+            "last_success_at": "2026-10-19T13:34:23.814645+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:34:23.814645+00:00",
+            "completeness": "complete"
+          },
+          "orders.khao_sat_phan_hoi": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 184.52,
+            "last_success_at": "2026-10-19T13:32:07.490739+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:07.490739+00:00",
+            "completeness": "complete"
+          },
+          "orders.shipper": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 184.081,
+            "last_success_at": "2026-10-19T13:32:07.929730+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.295209+00:00",
+            "completeness": "unknown"
+          },
+          "orders.shipper_delivery": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 145.352,
+            "last_success_at": "2026-10-19T13:32:46.659154+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:47.174607+00:00",
+            "completeness": "unknown"
+          },
+          "orders.voucher": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 183.631,
+            "last_success_at": "2026-10-19T13:32:08.379653+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.666449+00:00",
+            "completeness": "unknown"
+          },
+          "orders.yeu_thich_san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 182.959,
+            "last_success_at": "2026-10-19T13:32:09.051838+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:09.051838+00:00",
+            "completeness": "complete"
+          }
+        }
+      },
+      "stream": {
+        "partitions": 9,
+        "backlog": 323146,
+        "committed_sum": 6091175
+      }
+    },
+    {
+      "at": "2026-10-19T13:36:10.090349+00:00",
+      "elapsed_seconds": 844.321,
+      "workers": [
+        {
+          "name": "/avengers_minio",
+          "started": "2026-10-19T11:35:57.373506876Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_producer",
+          "started": "2026-10-19T12:43:14.249307467Z",
+          "restarts": 10,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_consumer",
+          "started": "2026-10-19T11:35:57.776094001Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_data_sync",
+          "started": "2026-10-19T13:21:48.130665969Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        }
+      ],
+      "source": {
+        "epoch": "6449fd9e493c0d9d953189771195bf57c9706ef12f76079930c8dac14449fc7b",
+        "sources": {
+          "identity.chi_nhanh": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 262.027,
+            "last_success_at": "2026-10-19T13:31:50.266521+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:02.697369+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khu_vuc": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 261.593,
+            "last_success_at": "2026-10-19T13:31:50.700860+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.089655+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 260.962,
+            "last_success_at": "2026-10-19T13:31:51.331765+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.553058+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai_su_dung": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 241.359,
+            "last_success_at": "2026-10-19T13:32:10.934852+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:10.934852+00:00",
+            "completeness": "complete"
+          },
+          "identity.nguoi_dung": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 260.231,
+            "last_success_at": "2026-10-19T13:31:52.062543+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:31:52.062543+00:00",
+            "completeness": "complete"
+          },
+          "inventory.ton_kho_san_pham": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 259.238,
+            "last_success_at": "2026-10-19T13:31:53.055089+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:07.697797+00:00",
+            "completeness": "unknown"
+          },
+          "menu.bien_the_san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 204.04,
+            "last_success_at": "2026-10-19T13:32:48.253315+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:48.253315+00:00",
+            "completeness": "complete"
+          },
+          "menu.danh_muc": {
+            "status": "healthy",
+            "generation": 99,
+            "load_lag_seconds": 258.802,
+            "last_success_at": "2026-10-19T13:31:53.491183+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:31:53.491183+00:00",
+            "completeness": "complete"
+          },
+          "menu.san_pham": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 240.539,
+            "last_success_at": "2026-10-19T13:32:11.754652+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:11.754652+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_doi_soat": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 253.929,
+            "last_success_at": "2026-10-19T13:31:58.364825+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:31:58.364825+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_lam_viec_nhan_vien": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 251.742,
+            "last_success_at": "2026-10-19T13:32:00.551698+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:22.301385+00:00",
+            "completeness": "unknown"
+          },
+          "orders.chi_tiet_don_hang": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 133.04,
+            "last_success_at": "2026-10-19T13:33:59.253736+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:33:59.253736+00:00",
+            "completeness": "complete"
+          },
+          "orders.customer_wallet_transaction": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 251.253,
+            "last_success_at": "2026-10-19T13:32:01.040768+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:01.040769+00:00",
+            "completeness": "complete"
+          },
+          "orders.danh_gia_chi_nhanh": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 250.132,
+            "last_success_at": "2026-10-19T13:32:02.161558+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:25.299380+00:00",
+            "completeness": "unknown"
+          },
+          "orders.danh_gia_san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 249.043,
+            "last_success_at": "2026-10-19T13:32:03.250796+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:28.693239+00:00",
+            "completeness": "unknown"
+          },
+          "orders.delivery_tracking": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 245.324,
+            "last_success_at": "2026-10-19T13:32:06.969783+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:40.197161+00:00",
+            "completeness": "unknown"
+          },
+          "orders.don_hang": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 211.22,
+            "last_success_at": "2026-10-19T13:32:41.073867+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:39.023811+00:00",
+            "completeness": "partial"
+          },
+          "orders.giao_dich_thanh_toan": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 108.479,
+            "last_success_at": "2026-10-19T13:34:23.814645+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:34:23.814645+00:00",
+            "completeness": "complete"
+          },
+          "orders.khao_sat_phan_hoi": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 244.803,
+            "last_success_at": "2026-10-19T13:32:07.490739+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:07.490739+00:00",
+            "completeness": "complete"
+          },
+          "orders.shipper": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 244.364,
+            "last_success_at": "2026-10-19T13:32:07.929730+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.295209+00:00",
+            "completeness": "unknown"
+          },
+          "orders.shipper_delivery": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 205.634,
+            "last_success_at": "2026-10-19T13:32:46.659154+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:47.174607+00:00",
+            "completeness": "unknown"
+          },
+          "orders.voucher": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 243.914,
+            "last_success_at": "2026-10-19T13:32:08.379653+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.666449+00:00",
+            "completeness": "unknown"
+          },
+          "orders.yeu_thich_san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 243.242,
+            "last_success_at": "2026-10-19T13:32:09.051838+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:09.051838+00:00",
+            "completeness": "complete"
+          }
+        }
+      },
+      "stream": {
+        "partitions": 9,
+        "backlog": 320746,
+        "committed_sum": 6093575
+      }
+    },
+    {
+      "at": "2026-10-19T13:37:10.087082+00:00",
+      "elapsed_seconds": 903.94,
+      "workers": [
+        {
+          "name": "/avengers_minio",
+          "started": "2026-10-19T11:35:57.373506876Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_producer",
+          "started": "2026-10-19T12:43:14.249307467Z",
+          "restarts": 10,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_kafka_consumer",
+          "started": "2026-10-19T11:35:57.776094001Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        },
+        {
+          "name": "/avengers_data_sync",
+          "started": "2026-10-19T13:21:48.130665969Z",
+          "restarts": 0,
+          "oom": false,
+          "running": true
+        }
+      ],
+      "source": {
+        "epoch": "c99a7bf7aa4fabe1780cb0161c79988abd7a6de993df17359c4470509348dbb6",
+        "sources": {
+          "identity.chi_nhanh": {
+            "status": "healthy",
+            "generation": 98,
+            "load_lag_seconds": 21.09,
+            "last_success_at": "2026-10-19T13:36:50.853736+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:02.697369+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khu_vuc": {
+            "status": "healthy",
+            "generation": 98,
+            "load_lag_seconds": 20.724,
+            "last_success_at": "2026-10-19T13:36:51.219068+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.089655+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai": {
+            "status": "healthy",
+            "generation": 98,
+            "load_lag_seconds": 20.259,
+            "last_success_at": "2026-10-19T13:36:51.684180+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:03.553058+00:00",
+            "completeness": "unknown"
+          },
+          "identity.khuyen_mai_su_dung": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 301.008,
+            "last_success_at": "2026-10-19T13:32:10.934852+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:10.934852+00:00",
+            "completeness": "complete"
+          },
+          "identity.nguoi_dung": {
+            "status": "healthy",
+            "generation": 98,
+            "load_lag_seconds": 19.469,
+            "last_success_at": "2026-10-19T13:36:52.473918+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:36:52.473918+00:00",
+            "completeness": "complete"
+          },
+          "inventory.ton_kho_san_pham": {
+            "status": "healthy",
+            "generation": 98,
+            "load_lag_seconds": 17.577,
+            "last_success_at": "2026-10-19T13:36:54.366612+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:07.697797+00:00",
+            "completeness": "unknown"
+          },
+          "menu.bien_the_san_pham": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 263.69,
+            "last_success_at": "2026-10-19T13:32:48.253315+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:48.253315+00:00",
+            "completeness": "complete"
+          },
+          "menu.danh_muc": {
+            "status": "healthy",
+            "generation": 100,
+            "load_lag_seconds": 17.2,
+            "last_success_at": "2026-10-19T13:36:54.743125+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:36:54.743125+00:00",
+            "completeness": "complete"
+          },
+          "menu.san_pham": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 300.189,
+            "last_success_at": "2026-10-19T13:32:11.754652+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:11.754652+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_doi_soat": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 10.589,
+            "last_success_at": "2026-10-19T13:37:01.354379+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:37:01.354379+00:00",
+            "completeness": "complete"
+          },
+          "orders.ca_lam_viec_nhan_vien": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 8.281,
+            "last_success_at": "2026-10-19T13:37:03.661768+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:22.301385+00:00",
+            "completeness": "unknown"
+          },
+          "orders.chi_tiet_don_hang": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 192.69,
+            "last_success_at": "2026-10-19T13:33:59.253736+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:33:59.253736+00:00",
+            "completeness": "complete"
+          },
+          "orders.customer_wallet_transaction": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 7.865,
+            "last_success_at": "2026-10-19T13:37:04.078578+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:37:04.078578+00:00",
+            "completeness": "complete"
+          },
+          "orders.danh_gia_chi_nhanh": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 6.489,
+            "last_success_at": "2026-10-19T13:37:05.454699+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:25.299380+00:00",
+            "completeness": "unknown"
+          },
+          "orders.danh_gia_san_pham": {
+            "status": "healthy",
+            "generation": 97,
+            "load_lag_seconds": 5.191,
+            "last_success_at": "2026-10-19T13:37:06.751877+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:28.693239+00:00",
+            "completeness": "unknown"
+          },
+          "orders.delivery_tracking": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 304.973,
+            "last_success_at": "2026-10-19T13:32:06.969783+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:40.197161+00:00",
+            "completeness": "unknown"
+          },
+          "orders.don_hang": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 270.869,
+            "last_success_at": "2026-10-19T13:32:41.073867+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:39.023811+00:00",
+            "completeness": "partial"
+          },
+          "orders.giao_dich_thanh_toan": {
+            "status": "healthy",
+            "generation": 94,
+            "load_lag_seconds": 168.129,
+            "last_success_at": "2026-10-19T13:34:23.814645+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:34:23.814645+00:00",
+            "completeness": "complete"
+          },
+          "orders.khao_sat_phan_hoi": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 304.453,
+            "last_success_at": "2026-10-19T13:32:07.490739+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:07.490739+00:00",
+            "completeness": "complete"
+          },
+          "orders.shipper": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 304.014,
+            "last_success_at": "2026-10-19T13:32:07.929730+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.295209+00:00",
+            "completeness": "unknown"
+          },
+          "orders.shipper_delivery": {
+            "status": "healthy",
+            "generation": 95,
+            "load_lag_seconds": 265.284,
+            "last_success_at": "2026-10-19T13:32:46.659154+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:42:47.174607+00:00",
+            "completeness": "unknown"
+          },
+          "orders.voucher": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 303.564,
+            "last_success_at": "2026-10-19T13:32:08.379653+00:00",
+            "last_full_reconcile_at": "2026-10-19T12:41:41.666449+00:00",
+            "completeness": "unknown"
+          },
+          "orders.yeu_thich_san_pham": {
+            "status": "healthy",
+            "generation": 96,
+            "load_lag_seconds": 302.891,
+            "last_success_at": "2026-10-19T13:32:09.051838+00:00",
+            "last_full_reconcile_at": "2026-10-19T13:32:09.051838+00:00",
+            "completeness": "complete"
+          }
+        }
+      },
+      "stream": {
+        "partitions": 9,
+        "backlog": 318767,
+        "committed_sum": 6095554
+      }
+    }
+  ],
+  "errors": [],
+  "limitations": [
+    "Local observation, not production SLO",
+    "Backlog is measured, not assumed caught up",
+    "No provider calls; no service changes"
+  ]
+}

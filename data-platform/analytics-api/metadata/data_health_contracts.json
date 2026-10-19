@@ -1,13 +1,20 @@
 {
   "version": "3.4.0",
+  "scope": "Only the23 sources referenced by current Silver views and Bronze jobs. No chatbot/order-cart/security-config replication is added.",
+  "default_owner": "avengers-data-team",
   "datasets": {
     "identity.chi_nhanh": {
       "dataset_id": "replica.identity.chi_nhanh",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "identity.chi_nhanh",
       "target_table": "identity.chi_nhanh",
       "primary_key": [
         "ma_chi_nhanh"
       ],
+      "mode": "incremental",
+      "update_clock": "ngay_cap_nhat",
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "ma_chi_nhanh": {
           "data_type": "character varying",
@@ -143,17 +150,55 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [
+        {
+          "id": "enum.trang_thai",
+          "kind": "enum",
+          "column": "trang_thai",
+          "semantic_enum_ref": "silver.chi_nhanh.trang_thai",
+          "values": [
+            "ACTIVE",
+            "MAINTENANCE"
+          ]
+        }
+      ],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "identity.khu_vuc": {
       "dataset_id": "replica.identity.khu_vuc",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "identity.khu_vuc",
       "target_table": "identity.khu_vuc",
       "primary_key": [
         "id"
       ],
+      "mode": "incremental",
+      "update_clock": "ngay_cap_nhat",
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "id": {
           "data_type": "uuid",
@@ -219,17 +264,44 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "identity.khuyen_mai": {
       "dataset_id": "replica.identity.khuyen_mai",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "identity.khuyen_mai",
       "target_table": "identity.khuyen_mai",
       "primary_key": [
         "ma_khuyen_mai"
       ],
+      "mode": "incremental",
+      "update_clock": "ngay_cap_nhat",
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "ma_khuyen_mai": {
           "data_type": "character varying",
@@ -393,17 +465,44 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "identity.khuyen_mai_su_dung": {
       "dataset_id": "replica.identity.khuyen_mai_su_dung",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "identity.khuyen_mai_su_dung",
       "target_table": "identity.khuyen_mai_su_dung",
       "primary_key": [
         "id"
       ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "id": {
           "data_type": "integer",
@@ -448,17 +547,56 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [
+        {
+          "id": "ref.ma_khuyen_mai",
+          "columns": [
+            "ma_khuyen_mai"
+          ],
+          "reference_table": "identity.khuyen_mai",
+          "reference_columns": [
+            "ma_khuyen_mai"
+          ],
+          "authority": "observed_source_fk"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "identity.nguoi_dung": {
       "dataset_id": "replica.identity.nguoi_dung",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "identity.nguoi_dung",
       "target_table": "identity.nguoi_dung",
       "primary_key": [
         "ma_nguoi_dung"
       ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "ma_nguoi_dung": {
           "data_type": "uuid",
@@ -656,17 +794,44 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "inventory.ton_kho_san_pham": {
       "dataset_id": "replica.inventory.ton_kho_san_pham",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "inventory.ton_kho_san_pham",
       "target_table": "inventory.ton_kho_san_pham",
       "primary_key": [
         "id"
       ],
+      "mode": "incremental",
+      "update_clock": "cap_nhat_luc",
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "id": {
           "data_type": "integer",
@@ -718,17 +883,44 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "menu.bien_the_san_pham": {
       "dataset_id": "replica.menu.bien_the_san_pham",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "menu.bien_the_san_pham",
       "target_table": "menu.bien_the_san_pham",
       "primary_key": [
         "id"
       ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "id": {
           "data_type": "integer",
@@ -766,17 +958,56 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [
+        {
+          "id": "ref.ma_san_pham",
+          "columns": [
+            "ma_san_pham"
+          ],
+          "reference_table": "menu.san_pham",
+          "reference_columns": [
+            "ma_san_pham"
+          ],
+          "authority": "observed_source_fk"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "menu.danh_muc": {
       "dataset_id": "replica.menu.danh_muc",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "menu.danh_muc",
       "target_table": "menu.danh_muc",
       "primary_key": [
         "ma_danh_muc"
       ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "ma_danh_muc": {
           "data_type": "integer",
@@ -814,17 +1045,44 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "menu.san_pham": {
       "dataset_id": "replica.menu.san_pham",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "menu.san_pham",
       "target_table": "menu.san_pham",
       "primary_key": [
         "ma_san_pham"
       ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "ma_san_pham": {
           "data_type": "integer",
@@ -939,17 +1197,56 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [
+        {
+          "id": "ref.ma_danh_muc",
+          "columns": [
+            "ma_danh_muc"
+          ],
+          "reference_table": "menu.danh_muc",
+          "reference_columns": [
+            "ma_danh_muc"
+          ],
+          "authority": "observed_source_fk"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.ca_doi_soat": {
       "dataset_id": "replica.orders.ca_doi_soat",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "orders.ca_doi_soat",
       "target_table": "orders.ca_doi_soat",
       "primary_key": [
         "ma_ca"
       ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "ma_ca": {
           "data_type": "uuid",
@@ -1092,17 +1389,57 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [
+        {
+          "id": "enum.trang_thai_phe_duyet",
+          "kind": "enum",
+          "column": "trang_thai_phe_duyet",
+          "semantic_enum_ref": "silver.ca_doi_soat.trang_thai_phe_duyet",
+          "values": [
+            "PENDING",
+            "APPROVED",
+            "REJECTED",
+            "DA_DUYET"
+          ]
+        }
+      ],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.ca_lam_viec_nhan_vien": {
       "dataset_id": "replica.orders.ca_lam_viec_nhan_vien",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "orders.ca_lam_viec_nhan_vien",
       "target_table": "orders.ca_lam_viec_nhan_vien",
       "primary_key": [
         "ma_ca_lam_viec"
       ],
+      "mode": "incremental",
+      "update_clock": "ngay_cap_nhat",
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "ma_ca_lam_viec": {
           "data_type": "uuid",
@@ -1259,17 +1596,59 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [
+        {
+          "id": "enum.trang_thai_cham_cong",
+          "kind": "enum",
+          "column": "trang_thai_cham_cong",
+          "semantic_enum_ref": "silver.ca_lam_viec_nhan_vien.trang_thai_cham_cong",
+          "values": [
+            "DUNG_GIO",
+            "DI_TRE",
+            "VE_SOM",
+            "VANG_MAT",
+            "ASSIGNED",
+            "NGHI_PHEP"
+          ]
+        }
+      ],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.chi_tiet_don_hang": {
       "dataset_id": "replica.orders.chi_tiet_don_hang",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "orders.chi_tiet_don_hang",
       "target_table": "orders.chi_tiet_don_hang",
       "primary_key": [
         "id"
       ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "id": {
           "data_type": "integer",
@@ -1370,17 +1749,93 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [
+        {
+          "id": "domain.so_luong",
+          "kind": "numeric_range",
+          "column": "so_luong",
+          "exclusive_minimum": 0,
+          "authority": "existing_v34_quality_rule"
+        }
+      ],
+      "reference_checks": [
+        {
+          "id": "ref.ma_don_hang",
+          "columns": [
+            "ma_don_hang"
+          ],
+          "reference_table": "orders.don_hang",
+          "reference_columns": [
+            "ma_don_hang"
+          ],
+          "authority": "observed_source_fk"
+        },
+        {
+          "id": "ref.ma_san_pham",
+          "columns": [
+            "ma_san_pham"
+          ],
+          "reference_table": "menu.san_pham",
+          "reference_columns": [
+            "ma_san_pham"
+          ],
+          "authority": "canonical_semantic_join"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      },
+      "closed_periods": [
+        {
+          "id": "orders-sep2026",
+          "start": "2026-09-01",
+          "end": "2026-09-30",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "enabled": true,
+          "attested_by": "admin",
+          "attested_on": "2026-10-19",
+          "authority": "user_confirmation_20261019",
+          "must_revoke_before_mutation": true,
+          "clock": "ngay_tao",
+          "parent_table": "orders.don_hang",
+          "parent_key": "ma_don_hang",
+          "local_key": "ma_don_hang",
+          "clock_data_type": "timestamp without time zone"
+        }
+      ]
     },
     "orders.customer_wallet_transaction": {
       "dataset_id": "replica.orders.customer_wallet_transaction",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "orders.customer_wallet_transaction",
       "target_table": "orders.customer_wallet_transaction",
       "primary_key": [
         "id"
       ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "id": {
           "data_type": "uuid",
@@ -1432,17 +1887,44 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.danh_gia_chi_nhanh": {
       "dataset_id": "replica.orders.danh_gia_chi_nhanh",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "orders.danh_gia_chi_nhanh",
       "target_table": "orders.danh_gia_chi_nhanh",
       "primary_key": [
         "id"
       ],
+      "mode": "incremental",
+      "update_clock": "ngay_cap_nhat",
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "id": {
           "data_type": "integer",
@@ -1550,17 +2032,44 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.danh_gia_san_pham": {
       "dataset_id": "replica.orders.danh_gia_san_pham",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "orders.danh_gia_san_pham",
       "target_table": "orders.danh_gia_san_pham",
       "primary_key": [
         "id"
       ],
+      "mode": "incremental",
+      "update_clock": "ngay_cap_nhat",
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "id": {
           "data_type": "integer",
@@ -1647,17 +2156,44 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.delivery_tracking": {
       "dataset_id": "replica.orders.delivery_tracking",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "orders.delivery_tracking",
       "target_table": "orders.delivery_tracking",
       "primary_key": [
         "id"
       ],
+      "mode": "incremental",
+      "update_clock": "updated_at",
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "id": {
           "data_type": "uuid",
@@ -1821,17 +2357,44 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.don_hang": {
       "dataset_id": "replica.orders.don_hang",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "orders.don_hang",
       "target_table": "orders.don_hang",
       "primary_key": [
         "ma_don_hang"
       ],
+      "mode": "incremental",
+      "update_clock": "ngay_cap_nhat",
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "ma_don_hang": {
           "data_type": "uuid",
@@ -2002,17 +2565,121 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [
+        {
+          "id": "enum.trang_thai_don_hang",
+          "kind": "enum",
+          "column": "trang_thai_don_hang",
+          "semantic_enum_ref": "silver.don_hang.trang_thai_don_hang",
+          "values": [
+            "HOAN_THANH",
+            "DANG_GIAO",
+            "CHO_THANH_TOAN",
+            "DA_XAC_NHAN",
+            "MOI_TAO",
+            "DA_HUY"
+          ]
+        },
+        {
+          "id": "enum.phuong_thuc_thanh_toan",
+          "kind": "enum",
+          "column": "phuong_thuc_thanh_toan",
+          "semantic_enum_ref": "silver.don_hang.phuong_thuc_thanh_toan",
+          "values": [
+            "TIEN_MAT",
+            "NGAN_HANG_QR",
+            "THE_NGAN_HANG",
+            "CHUYEN_KHOAN",
+            "THANH_TOAN_KHI_NHAN_HANG",
+            "VI_DIEN_TU",
+            "VNPAY"
+          ]
+        },
+        {
+          "id": "enum.loai_don_hang",
+          "kind": "enum",
+          "column": "loai_don_hang",
+          "semantic_enum_ref": "silver.don_hang.loai_don_hang",
+          "values": [
+            "TAI_CHO",
+            "DUNG_TAI_CHO",
+            "LAY_TAI_QUAN",
+            "MANG_DI",
+            "GIAO_TAN_NOI"
+          ]
+        },
+        {
+          "id": "domain.tong_tien",
+          "kind": "numeric_range",
+          "column": "tong_tien",
+          "minimum": 0,
+          "authority": "existing_v34_quality_rule"
+        }
+      ],
+      "reference_checks": [
+        {
+          "id": "ref.co_so_ma",
+          "columns": [
+            "co_so_ma"
+          ],
+          "reference_table": "identity.chi_nhanh",
+          "reference_columns": [
+            "ma_chi_nhanh"
+          ],
+          "authority": "canonical_semantic_join"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      },
+      "closed_periods": [
+        {
+          "id": "orders-sep2026",
+          "start": "2026-09-01",
+          "end": "2026-09-30",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "enabled": true,
+          "attested_by": "admin",
+          "attested_on": "2026-10-19",
+          "authority": "user_confirmation_20261019",
+          "must_revoke_before_mutation": true,
+          "clock": "ngay_tao",
+          "clock_data_type": "timestamp without time zone"
+        }
+      ]
     },
     "orders.giao_dich_thanh_toan": {
       "dataset_id": "replica.orders.giao_dich_thanh_toan",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "orders.giao_dich_thanh_toan",
       "target_table": "orders.giao_dich_thanh_toan",
       "primary_key": [
         "ma_giao_dich"
       ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "ma_giao_dich": {
           "data_type": "integer",
@@ -2078,17 +2745,56 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [
+        {
+          "id": "ref.ma_don_hang",
+          "columns": [
+            "ma_don_hang"
+          ],
+          "reference_table": "orders.don_hang",
+          "reference_columns": [
+            "ma_don_hang"
+          ],
+          "authority": "observed_source_fk"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.khao_sat_phan_hoi": {
       "dataset_id": "replica.orders.khao_sat_phan_hoi",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "orders.khao_sat_phan_hoi",
       "target_table": "orders.khao_sat_phan_hoi",
       "primary_key": [
         "id"
       ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "id": {
           "data_type": "integer",
@@ -2161,17 +2867,44 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.shipper": {
       "dataset_id": "replica.orders.shipper",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "orders.shipper",
       "target_table": "orders.shipper",
       "primary_key": [
         "id"
       ],
+      "mode": "incremental",
+      "update_clock": "updated_at",
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "id": {
           "data_type": "uuid",
@@ -2294,17 +3027,44 @@
           "placeholder": null
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.shipper_delivery": {
       "dataset_id": "replica.orders.shipper_delivery",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "orders.shipper_delivery",
       "target_table": "orders.shipper_delivery",
       "primary_key": [
         "id"
       ],
+      "mode": "incremental",
+      "update_clock": "updated_at",
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "id": {
           "data_type": "uuid",
@@ -2440,17 +3200,56 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [
+        {
+          "id": "ref.shipperId",
+          "columns": [
+            "shipperId"
+          ],
+          "reference_table": "orders.shipper",
+          "reference_columns": [
+            "id"
+          ],
+          "authority": "observed_source_fk"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.voucher": {
       "dataset_id": "replica.orders.voucher",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "orders.voucher",
       "target_table": "orders.voucher",
       "primary_key": [
         "id"
       ],
+      "mode": "incremental",
+      "update_clock": "ngay_cap_nhat",
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "id": {
           "data_type": "integer",
@@ -2607,17 +3406,44 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.yeu_thich_san_pham": {
       "dataset_id": "replica.orders.yeu_thich_san_pham",
+      "analytical_owner": "avengers-data-team",
+      "source_business_owner": "admin",
       "source_table": "orders.yeu_thich_san_pham",
       "target_table": "orders.yeu_thich_san_pham",
       "primary_key": [
         "id"
       ],
+      "mode": "full_snapshot",
+      "update_clock": null,
+      "source_clock_timezone": "discover_source_session",
       "columns": {
         "id": {
           "data_type": "integer",
@@ -2676,9 +3502,31 @@
           "projection": "source"
         }
       },
-      "source_business_owner": "admin",
+      "overlap_seconds": 600,
+      "full_reconcile_seconds": 3600,
       "expected_load_interval_seconds": 300,
-      "maximum_acceptable_load_lag_seconds": 900
+      "schema_policy": {
+        "missing_or_type_or_key_change": "block",
+        "new_nullable_column": "do_not_replicate_until_classified",
+        "new_required_column": "block"
+      },
+      "delete_strategy": "full_reconcile",
+      "completeness_default": "unknown",
+      "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
+      "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     }
   }
 }

@@ -1,0 +1,14 @@
+# Optional collector configuration; does not start a service or create credentials.
+# Use an existing, authorized ADMIN opaque bearer via a private mounted file.
+global:
+  scrape_interval: 5s
+  scrape_timeout: 3s
+scrape_configs:
+  - job_name: analytics-api
+    metrics_path: /metrics
+    authorization:
+      credentials_file: /run/secrets/analytics-metrics-bearer
+    static_configs:
+      - targets: ['analytics-api:8000']
+        labels:
+          deployment: local

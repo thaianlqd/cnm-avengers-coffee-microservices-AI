@@ -76,6 +76,7 @@ def safe_failure(error, provider_calls=None, layer_diagnostics=None):
         "one_shot_context_budget_exceeded": "Hệ thống chưa chuẩn bị được đầy đủ ngữ cảnh dữ liệu để lập kế hoạch. Vui lòng thử lại.",
         "semantic_manifest_budget_exceeded": "Hệ thống chưa chuẩn bị được đầy đủ danh mục dữ liệu trong dung lượng lập kế hoạch hiện tại.",
         "context_configuration": "Giới hạn ngữ cảnh trên máy chủ chưa hợp lệ.",
+        "provider_forbidden": "Dashboard này chỉ dùng dữ liệu phân tích có sẵn; dịch vụ AI không được phép gọi tại đây.",
         "provider_policy": "Cấu hình AI chưa đáp ứng giới hạn số lượt gọi cho mỗi yêu cầu. Vui lòng kiểm tra cấu hình máy chủ.",
         "dashboard_contract": "Loại biểu đồ này chưa phù hợp với kết quả hiện tại. Báo cáo đã duyệt được giữ nguyên.",
         "duplicate_invalid_tool_call": "AI lặp lại một kế hoạch chưa hợp lệ; hệ thống đã dừng lượt sửa. Vui lòng lập lại kế hoạch.",

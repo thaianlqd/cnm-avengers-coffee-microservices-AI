@@ -178,6 +178,8 @@ def robust_anomaly(rows,metric,config,*,source_health,observed_day,exposure=None
     from datetime import date,timedelta
     from statistics import median
     import math
+    from decimal import Decimal
+    numeric = (int, float, Decimal)
     result={'signal_version':config.get('version'),'method':'median_mad_iqr','metric_id':metric,
         'baseline_window':config.get('baseline_buckets'),'n':0,'observed_period':observed_day.isoformat(),
         'status':'not_measured','source_health':source_health.get('status','unknown'),
@@ -195,11 +197,11 @@ def robust_anomaly(rows,metric,config,*,source_health,observed_day,exposure=None
         try:day=date.fromisoformat(str(row.get('period'))[:10])
         except ValueError:return {**result,'status':'invalid_history','reason':'invalid_bucket'}
         value=row.get(metric)
-        if day in by_day or isinstance(value,bool) or not isinstance(value,(int,float)) or not math.isfinite(value):
+        if day in by_day or isinstance(value,bool) or not isinstance(value,numeric) or not math.isfinite(value):
             return {**result,'status':'invalid_history','reason':'duplicate_or_invalid_observation'}
         if day>observed_day:
             result['excluded_periods'].append(day.isoformat());continue
-        if exposure and (not isinstance(row.get(exposure),(float,int)) or row[exposure]<config.get('minimum_exposure',1)):
+        if exposure and (isinstance(row.get(exposure),bool) or not isinstance(row.get(exposure),numeric) or not math.isfinite(row[exposure]) or row[exposure]<config.get('minimum_exposure',1)):
             return {**result,'status':'insufficient_sample','reason':'exposure_below_minimum'}
         by_day[day]=float(value)
     baseline_days=[observed_day-timedelta(days=i) for i in range(width,0,-1)]
@@ -229,15 +231,15 @@ def robust_anomaly(rows,metric,config,*,source_health,observed_day,exposure=None
 def evaluate_anomaly(catalog,signal,filters,scope,executor,reference,budget):
     from datetime import date,datetime,timedelta
     from zoneinfo import ZoneInfo
-    from services.data_coverage_service import peek
+    from services.data_coverage_service import peek, certified_period_health
     from services.analysis_catalog import resolve_period
     metric=catalog.registry['metrics'][signal['metric']]
     config=signal.get('anomaly') or {}
     base={'signal_id':signal['id'],'signal_version':config.get('version'),'metric_id':signal['metric'],
         'status':'not_applicable','reason':'baseline_not_enabled','sql_queries':0}
     if not config.get('enabled') or not metric.get('time_column'):return base
-    health=((peek() or {}).get('data_health') or {}).get('views',{}).get(metric['source'],{})
-    if health.get('status')!='healthy' or health.get('completeness')!='complete' or not health.get('certificate'):
+    data_health=(peek() or {}).get('data_health') or {}
+    if data_health.get('views',{}).get(metric['source'],{}).get('status')!='healthy':
         return {**base,'status':'unknown_source','reason':'complete_source_history_not_certified'}
     if metric.get('aggregation_semantics') in {'ratio','average'} and not config.get('exposure_metric'):
         return {**base,'reason':'exposure_contract_required'}
@@ -249,11 +251,26 @@ def evaluate_anomaly(catalog,signal,filters,scope,executor,reference,budget):
     if type(width) is not int or not 28<=width<=90:return {**base,'reason':'unsupported_baseline_contract'}
     window=TimeScope(mode='custom',start=observed-timedelta(days=width),end=observed,timezone=catalog.registry['timezone'])
     metrics=[signal['metric']]+([config['exposure_metric']] if config.get('exposure_metric') else [])
-    budget[0]-=1
+    tables={catalog.registry['metrics'][name]['source'] for name in metrics}
+    tables.update(catalog.registry['dimensions'][item.dimension]['table'] for item in filters)
+    health=certified_period_health(data_health,tables,window.start,window.end)
+    if health.get('completeness')!='complete':
+        return {**base,'status':'unknown_source','reason':'complete_source_history_not_certified'}
+    from services.sql_service import execute_read_only
+    from services.query_execution_batch import report_snapshot, data_epoch
+    from contextlib import nullcontext
     try:
-        rows,_=_execute(catalog,metric['subjects'][0],metrics,filters,window,[],executor,reference,granularity='day')
+        with (report_snapshot(tables) if executor is execute_read_only else nullcontext()):
+            if executor is execute_read_only:
+                health=certified_period_health(data_health,tables,window.start,window.end,epoch=data_epoch.get() or {})
+                if health.get('completeness')!='complete':
+                    return {**base,'status':'unknown_source','reason':'certificate_generation_changed'}
+            budget[0]-=1
+            rows,_=_execute(catalog,metric['subjects'][0],metrics,filters,window,[],executor,reference,granularity='day')
         result=robust_anomaly(rows,signal['metric'],config,source_health=health,observed_day=observed,exposure=config.get('exposure_metric'))
-        from services.access_policy import digest
+        result['source_certificate']=health['certificate']
+        result['exposure_population']=metric.get('population_definition') if config.get('exposure_metric') else None
+        from services.analytical_resolver import digest
         result.update(signal_id=signal['id'],sql_queries=1,scope=[f.model_dump(mode='json') for f in filters],
             evidence_id='anomaly_'+digest([signal['id'],rows,result['parameters']])[:24])
         return result

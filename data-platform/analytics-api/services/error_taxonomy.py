@@ -5,6 +5,20 @@ authority for what the user can do next; a failure is retryable only when an
 unchanged resubmission can plausibly succeed (transient provider transport).
 """
 
+class AnalysisError(ValueError):
+    """Stable failure contract; legacy catalog imports re-export this identity."""
+    def __init__(self, category: str, message: str, choices=None, clarification=None):
+        super().__init__(message)
+        self.category, self.choices = category, choices or []
+        self.clarification = clarification
+
+
+class ResolutionIssues(AnalysisError):
+    def __init__(self, issues):
+        super().__init__("semantic_intent_invalid", "Semantic interpretation needs targeted recovery")
+        self.issues = issues
+
+
 # error_type, analysis_state, retryable
 _TYPES = {
     "unsupported_metric": ("UNSUPPORTED_CAPABILITY", "UNSUPPORTED_CAPABILITY", False),
@@ -33,6 +47,7 @@ _TYPES = {
     "provider_schema_invalid": ("PROVIDER_UNAVAILABLE", "PROVIDER_FAILURE", False),
     "provider_bad_request": ("PROVIDER_UNAVAILABLE", "PROVIDER_FAILURE", False),
     "provider_policy": ("PROVIDER_UNAVAILABLE", "PROVIDER_FAILURE", False),
+    "provider_forbidden": ("PROVIDER_UNAVAILABLE", "PROVIDER_FAILURE", False),
     "provider_auth": ("PROVIDER_AUTH_ERROR", "PROVIDER_FAILURE", False),
     "provider_access_denied": ("PROVIDER_AUTH_ERROR", "PROVIDER_FAILURE", False),
     "provider_timeout": ("PROVIDER_TIMEOUT", "PROVIDER_FAILURE", True),

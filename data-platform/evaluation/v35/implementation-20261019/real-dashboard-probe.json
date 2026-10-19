@@ -1,0 +1,552 @@
+{
+  "event": "real_dashboards_complete",
+  "provider_http": 0,
+  "results": [
+    {
+      "dashboard_id": "D01",
+      "title": "Doanh thu & đơn hàng",
+      "provider_http": 0,
+      "status": "success",
+      "chart_count": 3,
+      "charts": [
+        {
+          "title": "Top 10 — Doanh thu chi nhánh theo chi nhánh — Chi nhánh và điểm bán",
+          "type": "horizontal_bar",
+          "requirement_id": "stores"
+        },
+        {
+          "title": "Số lượng đơn theo hình thức nhận hàng — Đơn hàng và doanh thu",
+          "type": "bar",
+          "requirement_id": "channels"
+        },
+        {
+          "title": "Doanh thu theo tuần — Đơn hàng và doanh thu",
+          "type": "area",
+          "requirement_id": "trend"
+        }
+      ],
+      "requirement_ids_preserved": true,
+      "omitted": [],
+      "query_count": 6,
+      "verification": "verified",
+      "elapsed_seconds": 1.314
+    },
+    {
+      "dashboard_id": "D02",
+      "title": "Sản phẩm & danh mục",
+      "provider_http": 0,
+      "status": "success",
+      "chart_count": 4,
+      "charts": [
+        {
+          "title": "Top 10 — Số lượng sản phẩm bán theo sản phẩm — Sản phẩm và thực đơn",
+          "type": "horizontal_bar",
+          "requirement_id": "products"
+        },
+        {
+          "title": "Doanh thu sản phẩm theo danh mục — Sản phẩm và thực đơn",
+          "type": "bar",
+          "requirement_id": "categories"
+        },
+        {
+          "title": "Số lượng sản phẩm bán theo tuần — Chi tiết món trong đơn",
+          "type": "area",
+          "requirement_id": "trend"
+        },
+        {
+          "title": "Top 10 — Doanh thu sản phẩm trong tập xếp hạng theo Số lượng sản phẩm bán theo sản phẩm — Sản phẩm và thực đơn",
+          "type": "horizontal_bar",
+          "requirement_id": "products"
+        }
+      ],
+      "requirement_ids_preserved": true,
+      "omitted": [],
+      "query_count": 5,
+      "verification": "verified",
+      "elapsed_seconds": 0.91
+    },
+    {
+      "dashboard_id": "D03",
+      "title": "Cửa hàng & khu vực",
+      "provider_http": 0,
+      "status": "success",
+      "chart_count": 4,
+      "charts": [
+        {
+          "title": "Top 10 — Doanh thu chi nhánh theo chi nhánh — Chi nhánh và điểm bán",
+          "type": "horizontal_bar",
+          "requirement_id": "stores"
+        },
+        {
+          "title": "Số đơn chi nhánh theo chi nhánh — Chi nhánh và điểm bán",
+          "type": "horizontal_bar",
+          "requirement_id": "stores"
+        },
+        {
+          "title": "Doanh thu chi nhánh theo miền báo cáo — Chi nhánh và điểm bán",
+          "type": "bar",
+          "requirement_id": "regions"
+        },
+        {
+          "title": "Số đơn chi nhánh theo tuần — Chi nhánh và điểm bán",
+          "type": "area",
+          "requirement_id": "trend"
+        }
+      ],
+      "requirement_ids_preserved": true,
+      "omitted": [],
+      "query_count": 6,
+      "verification": "verified",
+      "elapsed_seconds": 1.144
+    },
+    {
+      "dashboard_id": "D04",
+      "title": "Kiosk",
+      "provider_http": 0,
+      "status": "success",
+      "chart_count": 4,
+      "charts": [
+        {
+          "title": "Top 10 — Doanh thu chi nhánh theo chi nhánh — Loại điểm bán: KIOSK_NHUONG_QUYEN, KIOSK_VE_TINH",
+          "type": "horizontal_bar",
+          "requirement_id": "stores"
+        },
+        {
+          "title": "Số đơn chi nhánh theo chi nhánh — Loại điểm bán: KIOSK_NHUONG_QUYEN, KIOSK_VE_TINH",
+          "type": "horizontal_bar",
+          "requirement_id": "stores"
+        },
+        {
+          "title": "Doanh thu chi nhánh theo loại điểm bán — Loại điểm bán: KIOSK_NHUONG_QUYEN, KIOSK_VE_TINH",
+          "type": "bar",
+          "requirement_id": "types"
+        },
+        {
+          "title": "Doanh thu chi nhánh theo tuần — Loại điểm bán: KIOSK_NHUONG_QUYEN, KIOSK_VE_TINH",
+          "type": "area",
+          "requirement_id": "trend"
+        }
+      ],
+      "requirement_ids_preserved": true,
+      "omitted": [],
+      "query_count": 6,
+      "verification": "verified",
+      "elapsed_seconds": 0.948
+    },
+    {
+      "dashboard_id": "D05",
+      "title": "Giao hàng & tài xế",
+      "provider_http": 0,
+      "status": "success",
+      "chart_count": 4,
+      "charts": [
+        {
+          "title": "Top 10 — Số chuyến giao theo mã người giao — Chuyến giao hàng",
+          "type": "horizontal_bar",
+          "requirement_id": "drivers"
+        },
+        {
+          "title": "Số chuyến giao theo trạng thái chuyến giao — Chuyến giao hàng",
+          "type": "bar",
+          "requirement_id": "statuses"
+        },
+        {
+          "title": "Số chuyến giao theo tuần — Chuyến giao hàng",
+          "type": "area",
+          "requirement_id": "trend"
+        },
+        {
+          "title": "Top 10 — Số chuyến giao thành công trong tập xếp hạng theo Số chuyến giao theo mã người giao — Chuyến giao hàng",
+          "type": "horizontal_bar",
+          "requirement_id": "drivers"
+        }
+      ],
+      "requirement_ids_preserved": true,
+      "omitted": [],
+      "query_count": 7,
+      "verification": "verified",
+      "elapsed_seconds": 0.868
+    },
+    {
+      "dashboard_id": "D06",
+      "title": "Thanh toán",
+      "provider_http": 0,
+      "status": "success",
+      "chart_count": 4,
+      "charts": [
+        {
+          "title": "Số giao dịch theo trạng thái giao dịch — Thanh toán và cổng tiền tệ",
+          "type": "bar",
+          "requirement_id": "statuses"
+        },
+        {
+          "title": "Số giao dịch theo phương thức thanh toán — Thanh toán và cổng tiền tệ",
+          "type": "horizontal_bar",
+          "requirement_id": "methods"
+        },
+        {
+          "title": "Doanh thu thanh toán theo tuần — Thanh toán và cổng tiền tệ",
+          "type": "area",
+          "requirement_id": "trend"
+        },
+        {
+          "title": "Doanh thu thanh toán theo phương thức thanh toán — Thanh toán và cổng tiền tệ",
+          "type": "horizontal_bar",
+          "requirement_id": "methods"
+        }
+      ],
+      "requirement_ids_preserved": true,
+      "omitted": [],
+      "query_count": 4,
+      "verification": "verified",
+      "elapsed_seconds": 0.629
+    },
+    {
+      "dashboard_id": "D07",
+      "title": "Khuyến mãi & voucher",
+      "provider_http": 0,
+      "status": "success",
+      "chart_count": 4,
+      "charts": [
+        {
+          "title": "Top 10 — Doanh thu đơn có khuyến mãi theo khuyến mãi — Chương trình khuyến mãi và Voucher",
+          "type": "horizontal_bar",
+          "requirement_id": "campaigns"
+        },
+        {
+          "title": "Lượt sử dụng khuyến mãi theo chương trình khuyến mãi đã dùng — Lượt sử dụng khuyến mãi",
+          "type": "horizontal_bar",
+          "requirement_id": "redemptions"
+        },
+        {
+          "title": "Tổng tiền đã giảm giá theo tuần — Chương trình khuyến mãi và Voucher",
+          "type": "area",
+          "requirement_id": "trend"
+        },
+        {
+          "title": "Top 10 — Tổng tiền đã giảm giá trong tập xếp hạng theo Doanh thu đơn có khuyến mãi theo khuyến mãi — Chương trình khuyến mãi và Voucher",
+          "type": "horizontal_bar",
+          "requirement_id": "campaigns"
+        }
+      ],
+      "requirement_ids_preserved": true,
+      "omitted": [],
+      "query_count": 5,
+      "verification": "verified",
+      "elapsed_seconds": 0.737
+    },
+    {
+      "dashboard_id": "D08",
+      "title": "Khách hàng & hội viên",
+      "provider_http": 0,
+      "status": "success",
+      "chart_count": 3,
+      "charts": [
+        {
+          "title": "Số khách theo điểm thành viên — Khách hàng và hội viên — 20/222 nhóm có số khách cao nhất",
+          "type": "bar",
+          "requirement_id": "loyalty"
+        },
+        {
+          "title": "Số khách theo tháng — Khách hàng và hội viên",
+          "type": "area",
+          "requirement_id": "acquisition"
+        },
+        {
+          "title": "Số khách mua hàng theo tháng — Đơn hàng và doanh thu",
+          "type": "line",
+          "requirement_id": "buyer_trend"
+        }
+      ],
+      "requirement_ids_preserved": true,
+      "omitted": [],
+      "query_count": 6,
+      "verification": "verified",
+      "elapsed_seconds": 0.807
+    },
+    {
+      "dashboard_id": "D09",
+      "title": "Tồn kho & cảnh báo",
+      "provider_http": 0,
+      "status": "success",
+      "chart_count": 4,
+      "charts": [
+        {
+          "title": "Số món dưới định mức theo chi nhánh — Tồn kho nguyên vật liệu",
+          "type": "horizontal_bar",
+          "requirement_id": "stores"
+        },
+        {
+          "title": "Số món dưới định mức theo danh mục — Tồn kho nguyên vật liệu",
+          "type": "bar",
+          "requirement_id": "categories"
+        },
+        {
+          "title": "Số lượng tồn kho theo chi nhánh — Tồn kho nguyên vật liệu",
+          "type": "horizontal_bar",
+          "requirement_id": "stores"
+        },
+        {
+          "title": "Số lượng tồn kho theo danh mục — Tồn kho nguyên vật liệu",
+          "type": "bar",
+          "requirement_id": "categories"
+        }
+      ],
+      "requirement_ids_preserved": true,
+      "omitted": [],
+      "query_count": 3,
+      "verification": "verified",
+      "elapsed_seconds": 0.51
+    },
+    {
+      "dashboard_id": "D10",
+      "title": "Ca làm & chấm công",
+      "provider_http": 0,
+      "status": "success",
+      "chart_count": 3,
+      "charts": [
+        {
+          "title": "Tổng số ca làm theo trạng thái chấm công — Ca làm việc và chấm công nhân viên",
+          "type": "bar",
+          "requirement_id": "statuses"
+        },
+        {
+          "title": "Số ca đi trễ / Tổng số ca làm theo ca làm — Ca làm việc và chấm công nhân viên",
+          "type": "grouped_bar",
+          "requirement_id": "shifts"
+        },
+        {
+          "title": "Tổng số ca làm theo tuần — Ca làm việc và chấm công nhân viên",
+          "type": "area",
+          "requirement_id": "trend"
+        }
+      ],
+      "requirement_ids_preserved": true,
+      "omitted": [],
+      "query_count": 5,
+      "verification": "verified",
+      "elapsed_seconds": 0.636
+    },
+    {
+      "dashboard_id": "D11",
+      "title": "Đối soát thu ngân",
+      "provider_http": 0,
+      "status": "success",
+      "chart_count": 3,
+      "charts": [
+        {
+          "title": "Số ca đã đối soát theo chi nhánh — Đối soát ca thu ngân và chênh lệch tiền mặt",
+          "type": "horizontal_bar",
+          "requirement_id": "stores"
+        },
+        {
+          "title": "Tổng tiền chênh lệch theo tuần — Đối soát ca thu ngân và chênh lệch tiền mặt",
+          "type": "line",
+          "requirement_id": "trend"
+        },
+        {
+          "title": "Tổng tiền chênh lệch theo chi nhánh — Đối soát ca thu ngân và chênh lệch tiền mặt",
+          "type": "horizontal_bar",
+          "requirement_id": "stores"
+        }
+      ],
+      "requirement_ids_preserved": true,
+      "omitted": [],
+      "query_count": 3,
+      "verification": "verified",
+      "elapsed_seconds": 0.574
+    },
+    {
+      "dashboard_id": "D12",
+      "title": "Đánh giá sản phẩm",
+      "provider_http": 0,
+      "status": "success",
+      "chart_count": 7,
+      "charts": [
+        {
+          "title": "Điểm đánh giá trung bình theo danh mục — Đánh giá chất lượng sản phẩm",
+          "type": "bar",
+          "requirement_id": "categories"
+        },
+        {
+          "title": "Điểm đánh giá trung bình theo sản phẩm — Đánh giá chất lượng sản phẩm",
+          "type": "horizontal_bar",
+          "requirement_id": "products"
+        },
+        {
+          "title": "Số lượt đánh giá theo tuần — Đánh giá chất lượng sản phẩm",
+          "type": "area",
+          "requirement_id": "trend"
+        },
+        {
+          "title": "Số lượt đánh giá theo danh mục — Đánh giá chất lượng sản phẩm",
+          "type": "bar",
+          "requirement_id": "categories"
+        },
+        {
+          "title": "Số lượt đánh giá theo sản phẩm — Đánh giá chất lượng sản phẩm",
+          "type": "horizontal_bar",
+          "requirement_id": "products"
+        },
+        {
+          "title": "Số lượt đánh giá / Điểm đánh giá trung bình — Đánh giá chất lượng sản phẩm",
+          "type": "scatter",
+          "requirement_id": "categories"
+        },
+        {
+          "title": "Số lượt đánh giá / Điểm đánh giá trung bình — Đánh giá chất lượng sản phẩm",
+          "type": "scatter",
+          "requirement_id": "products"
+        }
+      ],
+      "requirement_ids_preserved": true,
+      "omitted": [],
+      "query_count": 4,
+      "verification": "verified",
+      "elapsed_seconds": 0.757
+    },
+    {
+      "dashboard_id": "D13",
+      "title": "Đánh giá cửa hàng",
+      "provider_http": 0,
+      "status": "success",
+      "chart_count": 7,
+      "charts": [
+        {
+          "title": "Điểm phục vụ trung bình theo chi nhánh — Đánh giá dịch vụ và không gian chi nhánh",
+          "type": "horizontal_bar",
+          "requirement_id": "stores"
+        },
+        {
+          "title": "Điểm phục vụ trung bình theo miền báo cáo — Đánh giá dịch vụ và không gian chi nhánh",
+          "type": "bar",
+          "requirement_id": "regions"
+        },
+        {
+          "title": "Số lượt đánh giá quán theo tuần — Đánh giá dịch vụ và không gian chi nhánh",
+          "type": "area",
+          "requirement_id": "trend"
+        },
+        {
+          "title": "Số lượt đánh giá quán theo chi nhánh — Đánh giá dịch vụ và không gian chi nhánh",
+          "type": "horizontal_bar",
+          "requirement_id": "stores"
+        },
+        {
+          "title": "Số lượt đánh giá quán theo miền báo cáo — Đánh giá dịch vụ và không gian chi nhánh",
+          "type": "bar",
+          "requirement_id": "regions"
+        },
+        {
+          "title": "Số lượt đánh giá quán / Điểm phục vụ trung bình — Đánh giá dịch vụ và không gian chi nhánh",
+          "type": "scatter",
+          "requirement_id": "stores"
+        },
+        {
+          "title": "Số lượt đánh giá quán / Điểm phục vụ trung bình — Đánh giá dịch vụ và không gian chi nhánh",
+          "type": "scatter",
+          "requirement_id": "regions"
+        }
+      ],
+      "requirement_ids_preserved": true,
+      "omitted": [],
+      "query_count": 4,
+      "verification": "verified",
+      "elapsed_seconds": 0.85
+    },
+    {
+      "dashboard_id": "D14",
+      "title": "Khảo sát khách hàng",
+      "provider_http": 0,
+      "status": "success",
+      "chart_count": 3,
+      "charts": [
+        {
+          "title": "Số lượt phản hồi khảo sát theo miền báo cáo — Khảo sát ý kiến khách hàng",
+          "type": "bar",
+          "requirement_id": "regions"
+        },
+        {
+          "title": "Số lượt phản hồi khảo sát theo chi nhánh — Khảo sát ý kiến khách hàng",
+          "type": "bar",
+          "requirement_id": "stores"
+        },
+        {
+          "title": "Số lượt phản hồi khảo sát theo tháng — Khảo sát ý kiến khách hàng",
+          "type": "area",
+          "requirement_id": "trend"
+        }
+      ],
+      "requirement_ids_preserved": true,
+      "omitted": [],
+      "query_count": 4,
+      "verification": "verified",
+      "elapsed_seconds": 0.67
+    },
+    {
+      "dashboard_id": "D15",
+      "title": "Yêu thích sản phẩm",
+      "provider_http": 0,
+      "status": "success",
+      "chart_count": 3,
+      "charts": [
+        {
+          "title": "Top 10 — Số lượt thả tim yêu thích theo sản phẩm — Món uống yêu thích của khách hàng",
+          "type": "horizontal_bar",
+          "requirement_id": "products"
+        },
+        {
+          "title": "Số lượt thả tim yêu thích theo danh mục — Món uống yêu thích của khách hàng",
+          "type": "bar",
+          "requirement_id": "categories"
+        },
+        {
+          "title": "Số lượt thả tim yêu thích theo tháng — Món uống yêu thích của khách hàng",
+          "type": "area",
+          "requirement_id": "trend"
+        }
+      ],
+      "requirement_ids_preserved": true,
+      "omitted": [],
+      "query_count": 4,
+      "verification": "attention",
+      "elapsed_seconds": 0.574
+    },
+    {
+      "dashboard_id": "D16",
+      "title": "Giờ cao điểm",
+      "provider_http": 0,
+      "status": "success",
+      "chart_count": 4,
+      "charts": [
+        {
+          "title": "Doanh thu theo thứ trong tuần — Đơn hàng và doanh thu",
+          "type": "bar",
+          "requirement_id": "weekdays"
+        },
+        {
+          "title": "Số đơn theo giờ theo giờ — Khung giờ và thời điểm",
+          "type": "bar",
+          "requirement_id": "hours"
+        },
+        {
+          "title": "Số lượng đơn theo chi nhánh — Đơn hàng và doanh thu — 20/920 nhóm có số lượng đơn cao nhất",
+          "type": "horizontal_bar",
+          "requirement_id": "stores"
+        },
+        {
+          "title": "Số lượng đơn theo thứ trong tuần — Đơn hàng và doanh thu",
+          "type": "bar",
+          "requirement_id": "weekdays"
+        }
+      ],
+      "requirement_ids_preserved": true,
+      "omitted": [],
+      "query_count": 7,
+      "verification": "verified",
+      "elapsed_seconds": 1.142
+    }
+  ],
+  "semantic_catalog_sha256": "c8ff37cf525fa3b9c082c0a830e4136f920375f1ec09d7b93e83e475c67da929",
+  "provider_forbidden_at_budget_boundary": true
+}

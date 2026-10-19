@@ -49,7 +49,7 @@ jobs:
       - uses: actions/checkout@v4
         with: {fetch-depth: 2}
       - name: Build isolated API test image
-        run: docker build -t avengers-dp-ci data-platform/analytics-api
+        run: docker build -t avengers-dp-ci -f data-platform/analytics-api/Dockerfile data-platform
       - name: Full backend (network disabled, no credentials)
         run: |
           mkdir -p /tmp/dp-ci
@@ -126,7 +126,7 @@ jobs:
           node-version: 20
           cache: npm
           cache-dependency-path: data-platform/web-ui/package-lock.json
-      - run: docker build -t avengers-dp-http-ci data-platform/analytics-api
+      - run: docker build -t avengers-dp-http-ci -f data-platform/analytics-api/Dockerfile data-platform
       - name: Start isolated HTTP process with no production configuration
         run: |
           mkdir -p /tmp/dp-http-ci
@@ -164,6 +164,49 @@ jobs:
             /tmp/dp-http-ci
             data-platform/web-ui/test-results
           retention-days: 14
+
+  two-instance-v35:
+    name: DP V35 / two processes / load / faults / 15min soak
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      V35_FAULT_EVIDENCE_PATH: /tmp/dp-v35-ci/faults.json
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build isolated API image (no deployment profiles)
+        run: docker build -t cnm-avengers-coffee-microservices-ai-analytics-api -f data-platform/analytics-api/Dockerfile data-platform
+      - name: Start bounded loopback fixtures
+        run: |
+          mkdir -p /tmp/dp-v35-ci
+          bash .claude/scripts/dp-v35-two-api.sh start > /tmp/dp-v35-ci/start.log 2>&1
+          docker update --cpus 0.5 v35-fixture-api-a v35-fixture-api-b
+      - name: Cross-process ownership, idempotency and CAS (zero paid transport)
+        run: |
+          docker exec -e V35_TWO_API_FIXTURE=1 -i v35-fixture-api-b python - < data-platform/pipeline-tests/v35_two_api.py > /tmp/dp-v35-ci/ownership.log 2>&1
+          bash .claude/scripts/dp-v35-two-api.sh start-a >> /tmp/dp-v35-ci/start.log 2>&1
+          docker update --cpus 0.5 v35-fixture-api-a
+      - name: Admission profiles 1/4/8/12/20 (three repeats)
+        run: docker exec -e V35_TWO_API_FIXTURE=1 -i v35-fixture-api-b python - < data-platform/pipeline-tests/v35_load_profiles.py > /tmp/dp-v35-ci/load.jsonl 2>&1
+      - name: Fixed workload and exact two-target counters for 15 minutes
+        run: docker exec -e V35_TWO_API_FIXTURE=1 -i v35-fixture-api-b python - < data-platform/pipeline-tests/v35_operational_soak.py > /tmp/dp-v35-ci/soak.jsonl 2>&1
+      - name: Five crash windows, PostgreSQL cancellation, revocation, circuit and Redis outage
+        run: python3 .claude/scripts/dp-v35-fault-matrix.py > /tmp/dp-v35-ci/faults.log 2>&1
+      - name: Preserve fault evidence and stop only disposable fixtures
+        if: always()
+        run: |
+          mkdir -p /tmp/dp-v35-ci
+          if [ ! -f /tmp/dp-v35-ci/faults.json ]; then
+            printf '%s\n' '{"status":"not_run","reason":"earlier_gate_failed"}' > /tmp/dp-v35-ci/faults.json
+          fi
+          docker stop v35-fixture-api-a v35-fixture-api-b || true
+          docker compose -p avengers-v34-fixture -f data-platform/pipeline-tests/compose.fixture.yml stop postgres redis
+      - name: Scan generated two-process evidence before upload
+        id: scan
+        if: always()
+        run: bash .claude/scripts/dp-scan-artifacts.sh /tmp/dp-v35-ci
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.scan.outcome == 'success'
+        with: {name: dp-v35-two-instance, path: /tmp/dp-v35-ci, retention-days: 14}
 
   pipeline-fixtures:
     name: DP pipeline / PostgreSQL / MinIO / Kafka fixtures

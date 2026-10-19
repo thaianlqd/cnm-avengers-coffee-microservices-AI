@@ -14,7 +14,7 @@ active_connections = ContextVar('analysis_active_connections', default=None)
 _pool = None
 _pool_reader = None
 _lock = threading.Lock()
-SQL_CONNECTIONS=12
+SQL_CONNECTIONS=6
 SQL_QUERY_CONCURRENCY=2
 _snapshot_slots=threading.BoundedSemaphore(SQL_CONNECTIONS//(SQL_QUERY_CONCURRENCY+1))
 

@@ -9,6 +9,6 @@ COPY data-sync/sync.py .
 
 COPY pipeline-common/ /opt/pipeline-common/
 COPY metadata/ /opt/data-platform-metadata/
-ENV PYTHONPATH=/opt/pipeline-common DATA_PLATFORM_DATA_CONTRACTS_PATH=/opt/data-platform-metadata/data_contracts.json
+ENV PYTHONPATH=/opt/pipeline-common DATA_PLATFORM_DATA_CONTRACTS_PATH=/opt/data-platform-metadata/runtime_data_contracts.json
 
 CMD ["python", "-u", "sync.py"]

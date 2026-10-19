@@ -127,10 +127,8 @@ def compatibility_index(catalog):
         return _indexes[catalog.fingerprint]
 
 
-class ResolutionIssues(AnalysisError):
-    def __init__(self, issues):
-        super().__init__("semantic_intent_invalid", "Semantic interpretation needs targeted recovery")
-        self.issues = issues
+# Compatibility export for existing planner/compiler callers.
+from services.error_taxonomy import ResolutionIssues
 
 
 class AnalyticalResolver:

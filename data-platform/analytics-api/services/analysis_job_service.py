@@ -174,7 +174,7 @@ def terminal_state(result, semantic_info):
 
 
 class AnalysisJobs:
-    def __init__(self, repository, pipeline_factory=None, workers=4):
+    def __init__(self, repository, pipeline_factory=None, workers=2):
         self.repository = repository
         self.pipeline_factory = pipeline_factory
         self.pool = ThreadPoolExecutor(max_workers=workers, thread_name_prefix='analysis-job')
@@ -199,6 +199,16 @@ class AnalysisJobs:
 
     def submit(self, request, owner, key):
         from services.access_policy import active_principal,authorize_meaning
+        if getattr(request, 'dashboard_id', None):
+            from services.preflight_service import preflight_catalog
+            from services.workspace_service import dashboard_template, dashboard_sources
+            catalog = preflight_catalog()
+            template = dashboard_template(catalog, request.dashboard_id, request.dashboard_version)
+            if active_principal.get() is not None:
+                from services.access_policy import current_principal
+                principal = current_principal(required=True)
+                if any(not principal.permits('analytics.read', source) for source in dashboard_sources(catalog, template)):
+                    raise AnalysisError('privacy', 'Dashboard source is outside the granted datasets')
         if active_principal.get() is not None:
             from services.preflight_service import preflight_catalog
             from services.request_anchors import request_anchors
@@ -334,6 +344,8 @@ class AnalysisJobs:
                 if j['worker_token'] != worker or j['state'] in TERMINAL or time.time() >= j['deadline_at']:
                     cancelled.set()
                     raise AnalysisError('job_cancelled', 'Job no longer active')
+                if j['payload'].get('dashboard_id') and event in {'provider_reserved','provider_physical_reserved','provider_recovery_claimed'}:
+                    raise AnalysisError('provider_forbidden', 'Dashboard jobs cannot reserve provider calls')
                 if event == 'provider_reserved':
                     if j['provider_call_count'] >= 3:
                         raise AnalysisError('provider_call_budget_exceeded', 'Durable allowance exhausted')
@@ -348,12 +360,15 @@ class AnalysisJobs:
                 j['heartbeat_at'] = time.time()
             self.repository.mutate(job_id, update)
         def heartbeat():
+            from services.access_policy import active_principal, current_principal
             while not stop.wait(1):
                 try:
+                    if active_principal.get() is not None:
+                        current_principal(required=True)
                     j = self.repository.read(job_id)
                     if not j or j['worker_token'] != worker or j['state'] in TERMINAL or time.time() >= j['deadline_at']:
                         cancelled.set(); connections.cancel(); return
-                except AnalysisError:
+                except Exception:
                     cancelled.set(); connections.cancel(); return
         try:
             job = self.repository.mutate(job_id, claim)
@@ -375,7 +390,7 @@ class AnalysisJobs:
                 (request_cancelled, request_cancelled.set(cancelled)),
                 (request_observer, request_observer.set(observer)),
                 (active_connections, active_connections.set(connections))]
-            threading.Thread(target=heartbeat, name='analysis-heartbeat', daemon=True).start()
+            threading.Thread(target=copy_context().run, args=(heartbeat,), name='analysis-heartbeat', daemon=True).start()
             from common import AiTextToReportRequest
             request = AiTextToReportRequest.model_validate(job['payload'])
             request.natural_input = job['payload']['natural_input']

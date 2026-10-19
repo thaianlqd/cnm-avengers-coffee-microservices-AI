@@ -35,7 +35,7 @@ test('ranked metric companions render two plot cards with full category names', 
   for (const name of ['Americano Phúc Bồn Tử', '1 Lít Matcha Latte Tây Bắc', 'Bánh Trung Thu Matcha']) {
     assert.ok(html.includes(name));
   }
-  assert.ok(html.includes('lg:grid-cols-2'));
+  assert.ok(html.includes('xl:grid-cols-12'));
   assert.ok(html.includes('giữ nguyên thứ tự theo số lượng bán'));
 });
 
@@ -155,7 +155,7 @@ test('seven views render requested first, with responsive widths and distinct un
   const html = render(AnalystViews, { charts });
   assert.equal((html.match(/<article/g) || []).length, 7);
   assert.ok(html.indexOf('Phân tích theo yêu cầu') < html.indexOf('Phân tích hỗ trợ'));
-  assert.ok(html.includes('grid-cols-1 lg:grid-cols-2'));
+  assert.ok(html.includes('grid-cols-1 xl:grid-cols-12'));
   assert.ok(!html.includes('lg:col-span-2'));
   for (const label of ['VND', 'sản phẩm', 'Tập Top N']) assert.ok(html.includes(label));
   assert.ok(!html.includes('private_query_'));
@@ -275,7 +275,7 @@ test('compact dashboard uses one responsive grid across different story sections
   assert.equal((html.match(/data-dashboard-grid/g) || []).length, 1);
   assert.equal((html.match(/<article/g) || []).length, 4);
   assert.ok(!html.includes('lg:col-span-2'));
-  assert.ok(html.includes('lg:grid-cols-2'));
+  assert.ok(html.includes('xl:grid-cols-12'));
 });
 
 test('overview displays equal trend and composition cards and a visible result table', () => {
@@ -291,7 +291,7 @@ test('overview displays equal trend and composition cards and a visible result t
 
 test('time axes use five short labels, with full dates retained for tooltips', () => {
   const html = render(SeriesLineChart, { data: Array.from({ length: 14 }, (_, i) => ({ label: `2026-09-${String(i + 1).padStart(2, '0')}T00:00:00`, s: i })), series: [{ key: 's', label: 'Sản lượng', color: '#2563eb' }] });
-  assert.equal((html.match(/y="278"/g) || []).length, 5);
+  assert.equal((html.match(/data-time-tick="true"/g) || []).length, 5);
   assert.ok(html.includes('01/09')); assert.ok(html.includes('14/09'));
   assert.ok(html.includes('<title>2026-09-14T00:00:00'));
 });
@@ -311,12 +311,15 @@ test('clipped weekly buckets are marked and disclose the actual selected dates',
 });
 
 for (const count of [1, 3, 4, 5, 6]) {
-  test(`${count} primary chart cards share two equal desktop columns and one mobile column`, () => {
+  test(`${count} primary chart cards use paired desktop widths and one mobile column`, () => {
     const charts=Array.from({length:count}, (_,i)=>({id:'balanced'+i,chart_type:['line','donut','bar','heatmap'][i%4],title:'View '+i,data:[]}));
     const html=render(AnalystViews,{charts,compact:true});
     assert.equal((html.match(/<article/g)||[]).length,count);
-    assert.match(html,/grid-cols-1 lg:grid-cols-2/);
+    assert.match(html,/grid-cols-1 xl:grid-cols-12/);
     assert.doesNotMatch(html,/lg:col-span-|lg:grid-cols-6/);
+    const spans=[...html.matchAll(/<article[^>]*class="col-span-1 xl:col-span-(\d+)/g)].map(match=>Number(match[1]));
+    assert.equal(spans.length,count);
+    for(let index=0;index<spans.length;index+=2) assert.equal(spans[index]+(spans[index+1] || 0),12);
     assert.equal((html.match(/class="col-span-1 /g)||[]).length,count);
   });
 }

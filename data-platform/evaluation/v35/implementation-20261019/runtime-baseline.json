@@ -1,0 +1,21 @@
+{
+  "head": "eda390b84c90ef37d0081bcd16de84098d07d605",
+  "policy_version": "3.4.0-local-admin-governed",
+  "policy_hash": "c4c31535bfdbd4c545a037518ffa5698ea50ebb8347cb9812b6bcbe14d80ce94",
+  "admin_permissions": [
+    "analytics.read",
+    "platform.read",
+    "reports.save",
+    "reports.export",
+    "reports.legacy",
+    "sql.explore"
+  ],
+  "sql_mode": "disabled",
+  "startup_ddl": "false",
+  "ledger_reserved": 457,
+  "ledger_events": 457,
+  "ledger_sha256": "b3c07acb5db22752fd0f69937e42fa49f64ac9cba448332ff8e22dcb490db40d",
+  "minio": "intentionally_stopped_by_user_for_CPU",
+  "streaming_acceptance": "pending_dependency_available",
+  "observed_http_routes": 75
+}

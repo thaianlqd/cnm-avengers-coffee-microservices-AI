@@ -54,7 +54,7 @@ def _publications(cur):
 def _quality_summary():
     try:
         from services import data_coverage_service
-        snap = data_coverage_service.quality_snapshot() or {}
+        snap = data_coverage_service.contract_quality_snapshot() or {}
     except Exception:
         snap = {}
     return {"health_score": snap.get("overall_score"), "rules_checked": None,
@@ -291,8 +291,8 @@ def trigger_pipeline(req: PipelineTriggerRequest, request: Request = None):
 # ─── 6. DATA QUALITY & GOVERNANCE ───
 @router.get("/api/platform/quality")
 def get_data_quality():
-    from services.data_coverage_service import quality_snapshot
-    return quality_snapshot()
+    from services.data_coverage_service import contract_quality_snapshot
+    return contract_quality_snapshot()
 
 
 # ─── 7. DATA CATALOG & SCHEMA BROWSER ───

@@ -34,9 +34,9 @@ class AuthBoundaryTests(TestCase):
     def app(self):
         app=FastAPI()
         app.add_middleware(access.AccessMiddleware)
-        @app.get('/api/private')
+        @app.get('/api/ai/status')
         def private():return {'owner':access.current_principal(required=True).bound_owner}
-        @app.post('/api/private')
+        @app.post('/api/ai/preflight')
         def mutate():return {'ok':True}
         @app.get('/api/system/users')
         def users():return {'users':[]}
@@ -61,17 +61,17 @@ class AuthBoundaryTests(TestCase):
     def test_roles_and_runtime_revocation_are_rechecked_on_every_http_request(self):
         client=self.app()
         headers={'Authorization':'Bearer '+token()}
-        self.assertEqual(client.get('/api/private',headers=headers).status_code,200)
+        self.assertEqual(client.get('/api/ai/status',headers=headers).status_code,200)
         self.assertEqual(client.get('/api/system/users',headers=headers).status_code,403)
         self.policy['subjects']['fixture-user']['disabled']=True
-        self.assertEqual(client.get('/api/private',headers=headers).status_code,403)
+        self.assertEqual(client.get('/api/ai/status',headers=headers).status_code,403)
 
     def test_cookie_writes_require_explicit_allowed_origin_and_production_cannot_enable_browser_fallback(self):
         client=self.app()
         client.cookies.set(access.AUTH_COOKIE,token())
-        self.assertEqual(client.post('/api/private').status_code,403)
-        self.assertEqual(client.post('/api/private',headers={'Origin':'https://evil.example'}).status_code,403)
-        self.assertEqual(client.post('/api/private',headers={'Origin':'http://testserver'}).status_code,200)
+        self.assertEqual(client.post('/api/ai/preflight').status_code,403)
+        self.assertEqual(client.post('/api/ai/preflight',headers={'Origin':'https://evil.example'}).status_code,403)
+        self.assertEqual(client.post('/api/ai/preflight',headers={'Origin':'http://testserver'}).status_code,200)
         with patch.dict(os.environ,{'DATA_ANALYST_ENV':'production','DATA_ANALYST_ALLOW_BROWSER_OWNER':'1'}):
             self.assertFalse(access.development_fallback())
 

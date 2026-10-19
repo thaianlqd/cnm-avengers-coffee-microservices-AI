@@ -74,7 +74,7 @@ class GovernedSyncPostgresTests(TestCase):
                 'CREATE TABLE orders.demo (id integer PRIMARY KEY, amount numeric NOT NULL, updated_at timestamptz NOT NULL,'
                 'created_at timestamptz NOT NULL, label text, sensitive_hash text NOT NULL);')
         with self.target.cursor() as cursor:
-            cursor.execute("CREATE SCHEMA IF NOT EXISTS orders; DROP TABLE IF EXISTS orders.demo; "
+            cursor.execute("CREATE SCHEMA IF NOT EXISTS orders; DROP VIEW IF EXISTS silver.v35_metadata_demo; DROP TABLE IF EXISTS orders.demo; "
                 "DELETE FROM analytics.ingestion_checkpoints WHERE dataset_id='replica.orders.demo'; "
                 "DELETE FROM analytics.stream_checkpoints WHERE stream_id='fixture-publisher'; "
                 "DELETE FROM public.sync_metadata WHERE schema_name='orders' AND table_name='demo';")
@@ -115,6 +115,65 @@ class GovernedSyncPostgresTests(TestCase):
         with self.target.cursor() as cursor:
             cursor.execute('SELECT id,amount,sensitive_hash FROM orders.demo ORDER BY id')
             return cursor.fetchall()
+
+    def test_catalog_structure_is_readable_while_replica_replacement_holds_exclusive_lock(self):
+        from contextlib import contextmanager
+        from services.metadata_service import _introspect
+        self.seed(2)
+        self.poll()
+        with self.target.cursor() as cursor:
+            cursor.execute('CREATE OR REPLACE VIEW silver.v35_metadata_demo AS SELECT id,amount FROM orders.demo')
+        self.target.commit()
+        with self.target.cursor() as cursor:
+            cursor.execute('LOCK TABLE orders.demo IN ACCESS EXCLUSIVE MODE')
+        @contextmanager
+        def reader():
+            connection=connect('v34_target')
+            connection.cursor_factory=psycopg2.extras.RealDictCursor
+            with connection.cursor() as cursor:
+                cursor.execute("SET lock_timeout='100ms'; SET statement_timeout='1s'")
+            connection.commit()
+            try:yield connection
+            finally:connection.close()
+        try:
+            metadata=_introspect(reader,['orders','silver'])
+            self.assertIn('silver.v35_metadata_demo',metadata['table_map'])
+            self.assertEqual(metadata['table_map']['orders.demo']['primary_key'],['id'])
+        finally:
+            self.target.rollback()
+
+    def test_full_load_has_atomic_verified_parity_but_incremental_is_not_global_complete(self):
+        self.seed(7)
+        self.poll()
+        checkpoint = self.checkpoint()
+        proof = checkpoint['certificate']
+        self.assertTrue(runtime.valid_load_evidence(proof, self.contract,
+            generation=checkpoint['generation'], schema_fingerprint=checkpoint['schema_fingerprint']))
+        self.assertEqual(proof['snapshot']['source']['rows'], 7)
+        self.assertEqual(proof['snapshot']['source'], proof['snapshot']['target'])
+        self.assertEqual(proof['snapshot']['closed_through'], None)
+        self.poll()
+        self.assertEqual(self.checkpoint()['completeness'], 'unknown')
+        self.assertIsNone(self.checkpoint()['certificate']['snapshot'])
+
+    def test_closed_period_is_rechecked_even_when_source_delete_is_outside_overlap(self):
+        contract = deepcopy(self.contract)
+        contract['closed_periods'] = [{'id': 'orders-sep2026', 'start': '2026-09-01', 'end': '2026-09-30',
+            'clock': 'created_at', 'timezone': 'Asia/Ho_Chi_Minh', 'enabled': True,
+            'attested_by': 'admin', 'attested_on': '2026-10-19',
+            'authority': 'user_confirmation_20261019', 'must_revoke_before_mutation': True}]
+        self.seed(2)
+        with self.source_admin.cursor() as cursor:
+            cursor.execute("UPDATE orders.demo SET created_at='2026-09-15T12:00:00+07'")
+        self.poll(contract)
+        self.assertEqual(len(self.checkpoint()['certificate']['closed_periods']), 1)
+        with self.source_admin.cursor() as cursor:
+            cursor.execute('DELETE FROM orders.demo WHERE id=2')
+        self.poll(contract)
+        proof = self.checkpoint()['certificate']
+        self.assertEqual(proof['closed_periods'], [])
+        self.assertEqual(proof['completeness'], 'unknown')
+        self.assertEqual(len(self.target_rows()), 2)  # Incremental does not claim deletion repair.
 
     def test_timestamp_ties_across_batches_and_replay_are_not_lost_or_duplicated(self):
         stamp = datetime.now(timezone.utc)-timedelta(minutes=2)
@@ -187,7 +246,9 @@ class GovernedSyncPostgresTests(TestCase):
         full = {**self.contract, 'mode': 'full_snapshot', 'update_clock': None}
         self.assertEqual(self.poll(full), 0)
         self.assertEqual(self.target_rows(), [])
-        self.assertEqual(self.checkpoint()['completeness'], 'unknown')
+        self.assertEqual(self.checkpoint()['completeness'], 'complete')
+        self.assertEqual(self.checkpoint()['certificate']['snapshot']['source']['rows'], 0)
+        self.assertIsNone(self.checkpoint()['certificate']['snapshot']['closed_through'])
         self.assertEqual(self.checkpoint()['observed_rows'], 0)
 
     def test_type_drift_blocks_before_replacing_old_target(self):
@@ -228,6 +289,65 @@ class GovernedSyncPostgresTests(TestCase):
             sync.sync_table_governed(source, target, self.contract, deadline=0)
         source.cursor.assert_not_called()
         target.cursor.assert_not_called()
+
+    def test_full_snapshot_keeps_committed_replica_readable_during_transfer_and_validation(self):
+        self.seed(3)
+        self.poll()
+        before = self.target_rows()
+        self.target.commit()
+        with self.source_admin.cursor() as cursor:
+            cursor.execute("UPDATE orders.demo SET amount=999 WHERE id=1; DELETE FROM orders.demo WHERE id=2")
+        self.seed(1, start=4)
+        reader = connect('v34_target')
+        self.addCleanup(reader.close)
+        reader.set_session(readonly=True, autocommit=True)
+        reads = []
+        def observe_committed():
+            with reader.cursor() as cursor:
+                cursor.execute("SET lock_timeout='150ms'")
+                cursor.execute('SELECT id,amount,sensitive_hash FROM orders.demo ORDER BY id')
+                self.assertEqual(cursor.fetchall(), before)
+                reads.append('old_committed')
+        original_insert = psycopg2.extras.execute_values
+        original_measure = sync._measure_projection
+        def insert(*args, **kwargs):
+            value = original_insert(*args, **kwargs)
+            observe_committed()
+            return value
+        def measure(*args, **kwargs):
+            if args[0] is self.target: observe_committed()
+            return original_measure(*args, **kwargs)
+        with patch.object(psycopg2.extras, 'execute_values', side_effect=insert), \
+             patch.object(sync, '_measure_projection', side_effect=measure):
+            self.poll({**self.contract, 'mode':'full_snapshot'})
+        self.assertGreaterEqual(len(reads), 3)
+        with reader.cursor() as cursor:
+            cursor.execute('SELECT id,amount,sensitive_hash FROM orders.demo ORDER BY id')
+            after = cursor.fetchall()
+        self.assertEqual([row[0] for row in after], [1,3,4])
+        self.assertEqual(after[0][1], 999)
+        self.assertTrue(all(row[2]=='[REDACTED]' for row in after))
+        self.assertEqual(self.checkpoint()['generation'], 2)
+        self.assertIsNotNone(self.checkpoint()['certificate']['snapshot'])
+
+    def test_unchanged_full_snapshot_preserves_tuple_versions_and_old_reader_snapshot(self):
+        self.seed(3)
+        self.poll()
+        self.target.commit()
+        reader = connect('v34_target')
+        self.addCleanup(reader.close)
+        reader.set_session(readonly=True, isolation_level='REPEATABLE READ')
+        with reader.cursor() as cursor:
+            cursor.execute('SELECT id,xmin::text FROM orders.demo ORDER BY id')
+            before = cursor.fetchall()
+        self.poll({**self.contract, 'mode':'full_snapshot'})
+        with reader.cursor() as cursor:
+            cursor.execute('SELECT id,xmin::text FROM orders.demo ORDER BY id')
+            self.assertEqual(cursor.fetchall(), before)
+        reader.rollback()
+        with reader.cursor() as cursor:
+            cursor.execute('SELECT id,xmin::text FROM orders.demo ORDER BY id')
+            self.assertEqual(cursor.fetchall(), before)
 
     def test_future_source_clock_blocks_and_rolls_back_full_replacement(self):
         self.seed(1)
@@ -344,11 +464,41 @@ class GovernedSyncPostgresTests(TestCase):
         contract, producer = self.publisher_contract(clock=False), self.fake_producer()
         for _ in range(3): poll_stream(producer, self.source, self.target, contract, limit=2)
         self.assertEqual([e['data']['id'] for e in producer.events], [1,2,3,4,5])
+        # Advance the durable reconciliation clock, without sleeping or changing
+        # source data timestamps: a clockless stream observes edits on full scans.
+        from producer_runtime import load_cursor, save_cursor
+        generation, state = load_cursor(self.target, contract)
+        state['last_full_at'] = (datetime.now(timezone.utc)-timedelta(seconds=3601)).isoformat()
+        save_cursor(self.target, contract, state, generation)
         with self.source_admin.cursor() as cursor: cursor.execute('UPDATE orders.demo SET amount=999 WHERE id=1')
         replay = self.fake_producer()
         poll_stream(replay, self.source, self.target, contract, limit=2)
         self.assertNotEqual(replay.events[0]['event_id'], producer.events[0]['event_id'])
         self.assertEqual(replay.events[0]['data']['amount'], '999')
+
+    def test_completed_clock_stream_waits_while_sibling_pages_drain(self):
+        from producer_runtime import poll_stream, load_cursor
+        self.seed(1)
+        contract, producer = self.publisher_contract(), self.fake_producer()
+        poll_stream(producer, self.source, self.target, contract)
+        before = load_cursor(self.target, contract)
+        result = poll_stream(producer, self.source, self.target, contract, poll_interval_seconds=60)
+        self.assertEqual(result['published'], 0)
+        self.assertFalse(result['has_more'])
+        self.assertEqual(len(producer.events), 1)
+        self.assertEqual(load_cursor(self.target, contract), before)
+
+    def test_clockless_publisher_waits_for_full_reconcile_before_rescan(self):
+        from producer_runtime import poll_stream, load_cursor
+        self.seed(1)
+        contract, producer = self.publisher_contract(clock=False), self.fake_producer()
+        poll_stream(producer, self.source, self.target, contract)
+        before = load_cursor(self.target, contract)
+        result = poll_stream(producer, self.source, self.target, contract)
+        self.assertEqual(result['published'], 0)
+        self.assertFalse(result['has_more'])
+        self.assertEqual(len(producer.events), 1)
+        self.assertEqual(load_cursor(self.target, contract), before)
 
     def test_changed_stream_contract_requires_explicit_checkpoint_migration(self):
         from producer_runtime import poll_stream

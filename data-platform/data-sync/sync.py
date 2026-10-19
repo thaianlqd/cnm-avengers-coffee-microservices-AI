@@ -439,6 +439,43 @@ def ensure_target_contract(target_conn, contract):
     target_conn.commit()  # Schema phase precedes the fenced data/checkpoint transaction.
 
 
+def _proof_order(contract):
+    from pipeline_runtime import quote_identifier
+    return ', '.join(quote_identifier(name) + (' COLLATE "C"' if
+        contract['columns'][name]['data_type'] in {'text', 'character varying', 'character'} else '')
+        for name in contract['primary_key'])
+
+
+def _measure_projection(connection, contract, *, upper, source_timezone, deadline,
+                        source=False, period=None):
+    """Bounded server-cursor scan in the caller's existing transaction/snapshot."""
+    from uuid import uuid4
+    from pipeline_runtime import (ProjectionEvidence, source_projection, target_projection,
+        quote_table, period_predicate, attach_reference_evidence, reference_observations)
+    evidence = ProjectionEvidence(contract, source_upper_bound=upper, source_timezone=source_timezone)
+    projection, params = source_projection(contract) if source else (target_projection(contract), [])
+    table = contract['source_table'] if source else contract['target_table']
+    predicate, bounds = period_predicate(contract, period, target=not source) if period else ('', [])
+    statement = 'SELECT '+projection+' FROM '+quote_table(table)+' r'
+    if predicate:
+        statement += ' WHERE '+predicate
+    statement += ' ORDER BY '+_proof_order(contract)
+    with connection.cursor(name='v35_proof_'+uuid4().hex,
+                           cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
+        cursor.itersize = BATCH_SIZE
+        cursor.execute(statement, params+bounds)
+        while True:
+            if time.monotonic() >= deadline:
+                raise TimeoutError('Governed source snapshot deadline exhausted')
+            rows = cursor.fetchmany(BATCH_SIZE)
+            if not rows:
+                break
+            for row in rows:
+                evidence.observe(row)
+    return attach_reference_evidence(contract, evidence.summary(),
+        reference_observations(connection, contract, table=table, where_sql=predicate, parameters=bounds))
+
+
 def sync_table_governed(source_conn, target_conn, contract, *, deadline=None):
     """Bounded replica update with real update clocks, overlap and periodic repair.
 
@@ -451,7 +488,10 @@ def sync_table_governed(source_conn, target_conn, contract, *, deadline=None):
     from uuid import uuid4
     from zoneinfo import ZoneInfo
     from pipeline_runtime import (validate_data_contract, source_projection, quote_identifier,
-                                  quote_table, read_checkpoint, advance_checkpoint, PipelineContractError)
+                                  quote_table, read_checkpoint, advance_checkpoint, PipelineContractError,
+                                  ProjectionEvidence, attach_reference_evidence, reference_observations,
+                                  snapshot_certificate, closed_period_certificate, load_evidence)
+    snapshot_started = datetime.now(timezone.utc)
     started = monotonic_clock.monotonic()
     deadline = started + 180 if deadline is None else deadline
     if started >= deadline:
@@ -499,10 +539,21 @@ def sync_table_governed(source_conn, target_conn, contract, *, deadline=None):
             params += [source_time(lower), source_time(upper)]
         ordering = list(dict.fromkeys(([clock] if clock else [])+keys))
         if ordering:
-            sql += ' ORDER BY '+', '.join(quote_identifier(name) for name in ordering)
+            sql += ' ORDER BY '+(_proof_order(contract) if full else
+                                 ', '.join(quote_identifier(name) for name in ordering))
+        source_evidence = ProjectionEvidence(contract, source_upper_bound=upper, source_timezone=source_timezone) if full else None
+        stage_table = None
         if full:
+            # Fetch into a session-local table before changing the committed replica.
+            # TRUNCATE holds ACCESS EXCLUSIVE for remote I/O and proof scans; that
+            # made ordinary BI readers fail their bounded lock timeout every cycle.
+            stage_table = quote_identifier('v35_replica_stage_'+uuid4().hex)
             with target_conn.cursor() as cursor:
-                cursor.execute('TRUNCATE TABLE '+quote_table(contract['target_table']))
+                cursor.execute('CREATE TEMP TABLE '+stage_table+' (LIKE '+
+                    quote_table(contract['target_table'])+' INCLUDING ALL) ON COMMIT DROP')
+            batch_insert = 'INSERT INTO '+stage_table+' ('+names+') VALUES %s'
+        else:
+            batch_insert = insert
         source_cursor = source_conn.cursor(name='v34_'+uuid4().hex, cursor_factory=psycopg2.extras.RealDictCursor)
         source_cursor.itersize = BATCH_SIZE
         source_cursor.execute(sql, params)
@@ -515,9 +566,13 @@ def sync_table_governed(source_conn, target_conn, contract, *, deadline=None):
                 break
             values = [[adapt_value(row[name]) for name in columns] for row in rows]
             with target_conn.cursor() as cursor:
-                psycopg2.extras.execute_values(cursor, insert, values, page_size=min(BATCH_SIZE, 1000))
+                psycopg2.extras.execute_values(cursor, batch_insert, values, page_size=min(BATCH_SIZE, 1000))
             rows_written += len(rows)
-            last_row = rows[-1]
+            for row in rows:
+                if source_evidence is not None:
+                    source_evidence.observe(row)
+                if last_row is None or not clock or row[clock] >= last_row[clock]:
+                    last_row = row
         source_cursor.close()
         source_cursor = None
         position = last_row.get(clock) if last_row and clock else checkpoint['cursor_time']
@@ -528,9 +583,57 @@ def sync_table_governed(source_conn, target_conn, contract, *, deadline=None):
         if not full and checkpoint['cursor_time'] is not None:
             position = max(position, checkpoint['cursor_time'])
         cursor_keys = [str(last_row[k]) for k in keys] if last_row and clock else checkpoint['cursor_keys']
+        if full:
+            target_table = quote_table(contract['target_table'])
+            # Ordinary row writes are MVCC-safe: readers retain the old committed
+            # generation throughout publication and validation. Unchanged rows
+            # retain their tuple versions, avoiding a full rewrite every 5 minutes.
+            with target_conn.cursor() as cursor:
+                if keys:
+                    match = ' AND '.join('replica.'+quote_identifier(k)+'=staged.'+quote_identifier(k) for k in keys)
+                    cursor.execute('DELETE FROM '+target_table+' AS replica WHERE NOT EXISTS '
+                        '(SELECT 1 FROM '+stage_table+' AS staged WHERE '+match+')')
+                else:
+                    cursor.execute('DELETE FROM '+target_table)
+                publish = 'INSERT INTO '+target_table+' AS replica ('+names+') SELECT '+names+' FROM '+stage_table+' WHERE TRUE'
+                if keys:
+                    publish += ' ON CONFLICT ('+', '.join(quote_identifier(k) for k in keys)+') '
+                    if updates:
+                        publish += 'DO UPDATE SET '+', '.join(quote_identifier(n)+'=EXCLUDED.'+quote_identifier(n) for n in updates)
+                        publish += ' WHERE ('+', '.join('replica.'+quote_identifier(n) for n in updates)+') IS DISTINCT FROM ('
+                        publish += ', '.join('EXCLUDED.'+quote_identifier(n) for n in updates)+')'
+                    else:
+                        publish += 'DO NOTHING'
+                cursor.execute(publish)
+        target_evidence = _measure_projection(target_conn, contract, upper=upper,
+            source_timezone=source_timezone, deadline=deadline)
+        arguments = dict(generation=checkpoint['generation']+1,
+            schema_fingerprint=validated['schema_fingerprint'], source_upper_bound=upper,
+            snapshot_started_at=snapshot_started)
+        snapshot, periods = None, []
+        if full:
+            observed = attach_reference_evidence(contract, source_evidence.summary(),
+                reference_observations(source_conn, contract, table=contract['source_table']))
+            if observed != target_evidence:
+                raise PipelineContractError('Source and target projection parity failed')
+            if target_evidence['quality']['status'] in {'passed', 'empty_measured'}:
+                snapshot = snapshot_certificate(contract, observed, target_evidence, **arguments)
+        for period in contract.get('closed_periods', []):
+            if not period.get('enabled'):
+                continue
+            source_period = _measure_projection(source_conn, contract, upper=upper,
+                source_timezone=source_timezone, deadline=deadline, source=True, period=period)
+            target_period = _measure_projection(target_conn, contract, upper=upper,
+                source_timezone=source_timezone, deadline=deadline, period=period)
+            if source_period == target_period and target_period['quality']['status'] in {'passed', 'empty_measured'}:
+                periods.append(closed_period_certificate(contract, source_period, target_period,
+                    period_id=period['id'], **arguments))
+        evidence = load_evidence(contract, target_evidence, snapshot=snapshot, closed_periods=periods,
+            previous=checkpoint.get('certificate'), generation=arguments['generation'],
+            schema_fingerprint=arguments['schema_fingerprint'])
         advance_checkpoint(target_conn, contract['dataset_id'], cursor_time=position, cursor_keys=cursor_keys,
             source_upper_bound=upper, schema_fingerprint=validated['schema_fingerprint'], observed_rows=rows_written,
-            expected_generation=checkpoint['generation'], full_reconcile=full)
+            expected_generation=checkpoint['generation'], full_reconcile=full, evidence=evidence, contract=contract)
         elapsed = int((monotonic_clock.monotonic()-started)*1000)
         update_sync_metadata(target_conn, target_schema, target_table, rows_written, elapsed,
                              'governed_full' if full else 'governed_incremental', commit=False)
@@ -567,7 +670,8 @@ def run_sync_cycle(source_conn, target_conn):
     if governed:
         # Only source tables required by the approved analytical contracts.
         # Missing required sources become explicit failures, never silent skips.
-        tables = [tuple(name.split('.')) for name in sorted(contracts)]
+        from pipeline_runtime import extraction_order
+        tables = [tuple(name.split('.')) for name in extraction_order(contracts)]
     cycle_deadline = time.monotonic() + 180
     total_rows = 0
     synced_tables = 0
@@ -717,7 +821,7 @@ def wait_for_target_db():
             logger.info("postgres-analytics san sang!")
             return True
         except Exception as e:
-            logger.info(f"Doi postgres-analytics ({attempt + 1}/30): {e}")
+            logger.info("Doi postgres-analytics (%s/30): %s", attempt+1, type(e).__name__)
             time.sleep(5)
     return False
 
@@ -731,9 +835,18 @@ def wait_for_source_db():
             logger.info("Supabase (source) ket noi thanh cong!")
             return True
         except Exception as e:
-            logger.info(f"Doi Supabase ({attempt + 1}/20): {e}")
+            logger.info("Doi Supabase (%s/20): %s", attempt+1, type(e).__name__)
             time.sleep(10)
     return False
+
+
+def next_sync_slot(previous, now, interval):
+    """Monotonic fixed cadence, no catch-up burst or concurrent cycles."""
+    import math
+    if interval <= 0:
+        raise ValueError('Positive sync interval required')
+    candidate = previous+interval
+    return candidate if candidate >= now else candidate+math.ceil((now-candidate)/interval)*interval
 
 
 def main():
@@ -755,30 +868,28 @@ def main():
         logger.error("Khong the ket noi Supabase. Thoat.")
         sys.exit(1)
 
-    # Vòng lặp sync
+    # Fixed start slots; a slow cycle skips missed slots without overlapping.
+    slot = time.monotonic()
     while True:
+        source_conn = target_conn = None
         try:
             source_conn = get_source_conn()
             target_conn = get_target_conn()
-
             run_sync_cycle(source_conn, target_conn)
-
-            source_conn.close()
-            target_conn.close()
-
-        except Exception as e:
-            logger.error(f"Loi vong sync: {e}")
-            try:
-                source_conn.close()
-            except Exception:
-                pass
-            try:
-                target_conn.close()
-            except Exception:
-                pass
-
-        logger.info(f"Doi {SYNC_INTERVAL}s cho vong sync tiep theo...")
-        time.sleep(SYNC_INTERVAL)
+        except Exception as error:
+            logger.error("Loi vong sync: %s", getattr(error, 'pgcode', None) or type(error).__name__)
+        finally:
+            for connection in (source_conn, target_conn):
+                if connection is not None:
+                    try:
+                        connection.close()
+                    except Exception:
+                        pass
+        now = time.monotonic()
+        slot = next_sync_slot(slot, now, SYNC_INTERVAL)
+        delay = max(0, slot-now)
+        logger.info("Vong sync tiep theo sau %.1fs", delay)
+        time.sleep(delay)
 
 
 if __name__ == "__main__":

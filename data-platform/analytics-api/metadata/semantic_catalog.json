@@ -1078,7 +1078,7 @@
         },
         "trang_thai_phe_duyet": {
           "type": "text",
-          "description": "Trạng thái phê duyệt: 'DA_PHE_DUYET', 'CHO_DUYET', 'CAN_GIAI_TRINH'"
+          "description": "Trạng thái phê duyệt: PENDING (chờ duyệt), APPROVED (đã duyệt), REJECTED (từ chối); DA_DUYET là mã lịch sử hợp lệ, nghĩa là đã duyệt (admin xác nhận 19/10/2026)."
         },
         "ghi_chu": {
           "type": "text",
@@ -1109,7 +1109,8 @@
       "joins": [
         {
           "to_table": "silver.chi_nhanh",
-          "on": "silver.khao_sat_phan_hoi.co_so_ma = silver.chi_nhanh.ma_chi_nhanh"
+          "on": "silver.khao_sat_phan_hoi.co_so_ma = silver.chi_nhanh.ma_chi_nhanh",
+          "join_type": "LEFT"
         }
       ],
       "columns": {
@@ -1430,9 +1431,10 @@
       "NGHI_PHEP"
     ],
     "silver.ca_doi_soat.trang_thai_phe_duyet": [
-      "DA_PHE_DUYET",
-      "CHO_DUYET",
-      "CAN_GIAI_TRINH"
+      "PENDING",
+      "APPROVED",
+      "REJECTED",
+      "DA_DUYET"
     ],
     "silver.danh_gia_san_pham.so_sao": [
       1,
@@ -13561,8 +13563,18 @@
       "nêu rõ"
     ],
     "ranking_value_direction_aliases": {
-      "top": ["cao nhất", "nhiều nhất", "highest", "largest"],
-      "bottom": ["thấp nhất", "ít nhất", "lowest", "smallest"]
+      "top": [
+        "cao nhất",
+        "nhiều nhất",
+        "highest",
+        "largest"
+      ],
+      "bottom": [
+        "thấp nhất",
+        "ít nhất",
+        "lowest",
+        "smallest"
+      ]
     },
     "ranking_quantifier_aliases": {
       "top": [
@@ -14443,14 +14455,15 @@
         "threshold": 8,
         "warning_margin": 2,
         "anomaly": {
-          "enabled": false,
-          "version": "3.4.0",
+          "enabled": true,
+          "version": "3.5.0",
           "cadence": "day",
           "minimum_history": 28,
           "baseline_buckets": 28,
           "threshold_z": 3.5,
           "direction": "above",
-          "reason": "snapshot_or_ratio_exposure_contract_not_enabled"
+          "exposure_metric": "order_count",
+          "minimum_exposure": 10
         }
       },
       {
@@ -14766,6 +14779,961 @@
         "như thế nào",
         "ra sao",
         "thế nào"
+      ],
+      "dashboard_templates": [
+        {
+          "id": "D01",
+          "version": "1.0.0",
+          "title": "Doanh thu & đơn hàng",
+          "category": "Kinh doanh",
+          "description": "Doanh thu, trạng thái đơn và các kênh bán hàng.",
+          "limitation": "Doanh thu theo trạng thái đủ điều kiện; số đơn bao gồm mọi trạng thái.",
+          "default_time": "30d",
+          "requirements": [
+            {
+              "id": "kpi",
+              "goal": "Chỉ số kinh doanh",
+              "metric_ids": [
+                "revenue",
+                "order_count",
+                "aov",
+                "order_completion_rate",
+                "order_cancellation_rate"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": []
+            },
+            {
+              "id": "trend",
+              "goal": "Diễn biến doanh thu",
+              "metric_ids": [
+                "revenue"
+              ],
+              "analysis_kind": "trend",
+              "dimension_ids": [],
+              "granularity": "day"
+            },
+            {
+              "id": "channels",
+              "goal": "Đơn theo kênh bán",
+              "metric_ids": [
+                "order_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "order_type"
+              ]
+            },
+            {
+              "id": "stores",
+              "goal": "Cửa hàng dẫn đầu",
+              "metric_ids": [
+                "store_revenue"
+              ],
+              "analysis_kind": "ranking",
+              "dimension_ids": [
+                "store"
+              ],
+              "ranking": {
+                "direction": "top",
+                "limit": 10,
+                "metric_id": "store_revenue"
+              }
+            }
+          ]
+        },
+        {
+          "id": "D02",
+          "version": "1.0.0",
+          "title": "Sản phẩm & danh mục",
+          "category": "Kinh doanh",
+          "description": "Món bán chạy, sản lượng và doanh thu theo danh mục.",
+          "limitation": "Doanh thu món được tính từ chi tiết đơn, khác doanh thu cấp đơn.",
+          "default_time": "30d",
+          "requirements": [
+            {
+              "id": "kpi",
+              "goal": "Sản lượng và doanh thu món",
+              "metric_ids": [
+                "quantity_sold",
+                "product_revenue",
+                "item_revenue"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": []
+            },
+            {
+              "id": "products",
+              "goal": "Sản phẩm bán chạy",
+              "metric_ids": [
+                "quantity_sold",
+                "product_revenue"
+              ],
+              "analysis_kind": "ranking",
+              "dimension_ids": [
+                "product"
+              ],
+              "ranking": {
+                "direction": "top",
+                "limit": 10,
+                "metric_id": "quantity_sold"
+              }
+            },
+            {
+              "id": "categories",
+              "goal": "Đóng góp danh mục",
+              "metric_ids": [
+                "product_revenue"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "category"
+              ]
+            },
+            {
+              "id": "trend",
+              "goal": "Sản lượng theo ngày",
+              "metric_ids": [
+                "quantity_sold"
+              ],
+              "analysis_kind": "trend",
+              "dimension_ids": [],
+              "granularity": "day"
+            }
+          ]
+        },
+        {
+          "id": "D03",
+          "version": "1.0.0",
+          "title": "Cửa hàng & khu vực",
+          "category": "Vận hành",
+          "description": "So sánh hiệu quả cửa hàng và vùng báo cáo.",
+          "limitation": "AOV cửa hàng giữ nguyên định nghĩa trong danh mục chỉ số.",
+          "default_time": "30d",
+          "requirements": [
+            {
+              "id": "kpi",
+              "goal": "Hiệu quả cửa hàng",
+              "metric_ids": [
+                "store_revenue",
+                "store_order_count",
+                "store_aov",
+                "purchasing_customer_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": []
+            },
+            {
+              "id": "stores",
+              "goal": "Xếp hạng cửa hàng",
+              "metric_ids": [
+                "store_revenue",
+                "store_order_count"
+              ],
+              "analysis_kind": "ranking",
+              "dimension_ids": [
+                "store"
+              ],
+              "ranking": {
+                "direction": "top",
+                "limit": 10,
+                "metric_id": "store_revenue"
+              }
+            },
+            {
+              "id": "regions",
+              "goal": "Theo khu vực",
+              "metric_ids": [
+                "store_revenue"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "reporting_region"
+              ]
+            },
+            {
+              "id": "trend",
+              "goal": "Diễn biến đơn hàng",
+              "metric_ids": [
+                "store_order_count"
+              ],
+              "analysis_kind": "trend",
+              "dimension_ids": [],
+              "granularity": "day"
+            }
+          ]
+        },
+        {
+          "id": "D04",
+          "version": "1.0.0",
+          "title": "Kiosk",
+          "category": "Vận hành",
+          "description": "Theo dõi hai loại kiosk và hiệu quả từng điểm bán.",
+          "limitation": "Phạm vi gồm kiosk nhượng quyền và kiosk vệ tinh theo loại điểm bán.",
+          "default_time": "30d",
+          "requirements": [
+            {
+              "id": "kpi",
+              "goal": "Hiệu quả kiosk",
+              "metric_ids": [
+                "store_revenue",
+                "store_order_count",
+                "store_aov"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [],
+              "filters": [
+                {
+                  "dimension": "store_type",
+                  "operator": "in",
+                  "value": [
+                    "KIOSK_NHUONG_QUYEN",
+                    "KIOSK_VE_TINH"
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "stores",
+              "goal": "Xếp hạng kiosk",
+              "metric_ids": [
+                "store_revenue",
+                "store_order_count"
+              ],
+              "analysis_kind": "ranking",
+              "dimension_ids": [
+                "store"
+              ],
+              "ranking": {
+                "direction": "top",
+                "limit": 10,
+                "metric_id": "store_revenue"
+              },
+              "filters": [
+                {
+                  "dimension": "store_type",
+                  "operator": "in",
+                  "value": [
+                    "KIOSK_NHUONG_QUYEN",
+                    "KIOSK_VE_TINH"
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "types",
+              "goal": "Hai mô hình kiosk",
+              "metric_ids": [
+                "store_revenue"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "store_type"
+              ],
+              "filters": [
+                {
+                  "dimension": "store_type",
+                  "operator": "in",
+                  "value": [
+                    "KIOSK_NHUONG_QUYEN",
+                    "KIOSK_VE_TINH"
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "trend",
+              "goal": "Doanh thu kiosk theo ngày",
+              "metric_ids": [
+                "store_revenue"
+              ],
+              "analysis_kind": "trend",
+              "dimension_ids": [],
+              "granularity": "day",
+              "filters": [
+                {
+                  "dimension": "store_type",
+                  "operator": "in",
+                  "value": [
+                    "KIOSK_NHUONG_QUYEN",
+                    "KIOSK_VE_TINH"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "D05",
+          "version": "1.0.0",
+          "title": "Giao hàng & tài xế",
+          "category": "Vận hành",
+          "description": "Trạng thái chuyến giao, tỷ lệ thành công và thời gian giao.",
+          "limitation": "Tỷ lệ tính trên toàn bộ chuyến đủ điều kiện; hồ sơ tài xế là snapshot.",
+          "default_time": "30d",
+          "requirements": [
+            {
+              "id": "kpi",
+              "goal": "Hiệu quả giao hàng",
+              "metric_ids": [
+                "delivery_count",
+                "delivered_count",
+                "failed_or_cancelled_delivery_count",
+                "delivery_success_rate",
+                "avg_delivery_minutes"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": []
+            },
+            {
+              "id": "statuses",
+              "goal": "Trạng thái chuyến",
+              "metric_ids": [
+                "delivery_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "delivery_status"
+              ]
+            },
+            {
+              "id": "trend",
+              "goal": "Chuyến giao theo ngày",
+              "metric_ids": [
+                "delivery_count"
+              ],
+              "analysis_kind": "trend",
+              "dimension_ids": [],
+              "granularity": "day"
+            },
+            {
+              "id": "drivers",
+              "goal": "Tài xế theo số chuyến",
+              "metric_ids": [
+                "delivery_count",
+                "delivered_count"
+              ],
+              "analysis_kind": "ranking",
+              "dimension_ids": [
+                "driver_id"
+              ],
+              "ranking": {
+                "direction": "top",
+                "limit": 10,
+                "metric_id": "delivery_count"
+              }
+            },
+            {
+              "id": "driver_snapshot",
+              "goal": "Hồ sơ tài xế hiện tại",
+              "metric_ids": [
+                "total_deliveries",
+                "driver_rating"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": []
+            }
+          ]
+        },
+        {
+          "id": "D06",
+          "version": "1.0.0",
+          "title": "Thanh toán",
+          "category": "Tài chính",
+          "description": "Giao dịch, phương thức và cổng thanh toán.",
+          "limitation": "Giá trị giao dịch thanh toán khác doanh thu đơn hàng; không cộng lẫn.",
+          "default_time": "30d",
+          "requirements": [
+            {
+              "id": "kpi",
+              "goal": "Giao dịch thanh toán",
+              "metric_ids": [
+                "payment_count",
+                "payment_revenue"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": []
+            },
+            {
+              "id": "methods",
+              "goal": "Theo phương thức",
+              "metric_ids": [
+                "payment_count",
+                "payment_revenue"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "payment_method"
+              ]
+            },
+            {
+              "id": "statuses",
+              "goal": "Trạng thái giao dịch",
+              "metric_ids": [
+                "payment_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "payment_transaction_status"
+              ]
+            },
+            {
+              "id": "trend",
+              "goal": "Giá trị giao dịch theo ngày",
+              "metric_ids": [
+                "payment_revenue"
+              ],
+              "analysis_kind": "trend",
+              "dimension_ids": [],
+              "granularity": "day"
+            }
+          ]
+        },
+        {
+          "id": "D07",
+          "version": "1.0.0",
+          "title": "Khuyến mãi & voucher",
+          "category": "Kinh doanh",
+          "description": "Đơn dùng voucher, giảm giá và lượt sử dụng khuyến mãi.",
+          "limitation": "Lượt sử dụng khác doanh thu gắn voucher; không suy ra tác động nhân quả hay ROI.",
+          "default_time": "30d",
+          "requirements": [
+            {
+              "id": "kpi",
+              "goal": "Đơn dùng voucher",
+              "metric_ids": [
+                "voucher_revenue",
+                "discount_amount",
+                "voucher_order_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": []
+            },
+            {
+              "id": "campaigns",
+              "goal": "Voucher theo doanh thu",
+              "metric_ids": [
+                "voucher_revenue",
+                "discount_amount"
+              ],
+              "analysis_kind": "ranking",
+              "dimension_ids": [
+                "promotion"
+              ],
+              "ranking": {
+                "direction": "top",
+                "limit": 10,
+                "metric_id": "voucher_revenue"
+              }
+            },
+            {
+              "id": "trend",
+              "goal": "Giảm giá theo ngày",
+              "metric_ids": [
+                "discount_amount"
+              ],
+              "analysis_kind": "trend",
+              "dimension_ids": [],
+              "granularity": "day"
+            },
+            {
+              "id": "redemptions",
+              "goal": "Lượt sử dụng khuyến mãi",
+              "metric_ids": [
+                "promotion_redemption_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "redeemed_promotion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "D08",
+          "version": "1.0.0",
+          "title": "Khách hàng & hội viên",
+          "category": "Khách hàng",
+          "description": "Quy mô khách hàng, người mua và phân khúc hội viên.",
+          "limitation": "Tổng chi tiêu là giá trị trọn đời; không phải doanh thu trong kỳ.",
+          "default_time": "all_time",
+          "requirements": [
+            {
+              "id": "customers",
+              "goal": "Quy mô khách hàng",
+              "metric_ids": [
+                "customer_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": []
+            },
+            {
+              "id": "lifetime",
+              "goal": "Chi tiêu trọn đời hiện tại",
+              "metric_ids": [
+                "total_spent"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": []
+            },
+            {
+              "id": "buyers",
+              "goal": "Khách phát sinh mua hàng",
+              "metric_ids": [
+                "purchasing_customer_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": []
+            },
+            {
+              "id": "acquisition",
+              "goal": "Khách hàng đăng ký theo thời gian",
+              "metric_ids": ["customer_count"],
+              "analysis_kind": "trend",
+              "dimension_ids": [],
+              "granularity": "month"
+            },
+            {
+              "id": "buyer_trend",
+              "goal": "Khách mua hàng theo thời gian",
+              "metric_ids": ["purchasing_customer_count"],
+              "analysis_kind": "trend",
+              "dimension_ids": [],
+              "granularity": "month"
+            },
+            {
+              "id": "loyalty",
+              "goal": "Theo điểm hội viên",
+              "metric_ids": [
+                "customer_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "loyalty_points"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "D09",
+          "version": "1.0.0",
+          "title": "Tồn kho & cảnh báo",
+          "category": "Vận hành",
+          "description": "Tồn kho hiện tại và số mặt hàng dưới ngưỡng.",
+          "limitation": "Snapshot hiện tại; không có lịch sử tồn kho hoặc dự báo hết hàng.",
+          "default_time": "all_time",
+          "requirements": [
+            {
+              "id": "kpi",
+              "goal": "Tồn kho hiện tại",
+              "metric_ids": [
+                "stock_quantity",
+                "low_stock_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": []
+            },
+            {
+              "id": "stores",
+              "goal": "Tồn kho theo cửa hàng",
+              "metric_ids": [
+                "stock_quantity",
+                "low_stock_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "store"
+              ]
+            },
+            {
+              "id": "categories",
+              "goal": "Tồn kho theo danh mục",
+              "metric_ids": [
+                "stock_quantity",
+                "low_stock_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "category"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "D10",
+          "version": "1.0.0",
+          "title": "Ca làm & chấm công",
+          "category": "Nhân sự",
+          "description": "Số ca, tình trạng chấm công và tỷ lệ đi trễ.",
+          "limitation": "Đối chiếu số ca cùng tỷ lệ; không đánh giá cá nhân từ mẫu nhỏ.",
+          "default_time": "30d",
+          "requirements": [
+            {
+              "id": "kpi",
+              "goal": "Tổng quan ca làm",
+              "metric_ids": [
+                "shift_count",
+                "late_count",
+                "late_shift_rate"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": []
+            },
+            {
+              "id": "statuses",
+              "goal": "Trạng thái chấm công",
+              "metric_ids": [
+                "shift_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "attendance_status"
+              ]
+            },
+            {
+              "id": "shifts",
+              "goal": "Theo ca làm",
+              "metric_ids": [
+                "shift_count",
+                "late_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "shift_name"
+              ]
+            },
+            {
+              "id": "trend",
+              "goal": "Số ca theo ngày",
+              "metric_ids": [
+                "shift_count"
+              ],
+              "analysis_kind": "trend",
+              "dimension_ids": [],
+              "granularity": "day"
+            }
+          ]
+        },
+        {
+          "id": "D11",
+          "version": "1.0.0",
+          "title": "Đối soát thu ngân",
+          "category": "Tài chính",
+          "description": "Doanh thu tiền mặt và chênh lệch qua các ca đối soát.",
+          "limitation": "Chênh lệch giữ nguyên dấu; số liệu không phải kết luận gian lận.",
+          "default_time": "30d",
+          "requirements": [
+            {
+              "id": "kpi",
+              "goal": "Chỉ số đối soát",
+              "metric_ids": [
+                "total_cash_difference",
+                "system_cash_revenue",
+                "reconciled_shifts",
+                "large_cash_discrepancy_shift_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": []
+            },
+            {
+              "id": "stores",
+              "goal": "Đối soát theo cửa hàng",
+              "metric_ids": [
+                "total_cash_difference",
+                "reconciled_shifts"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "store"
+              ]
+            },
+            {
+              "id": "trend",
+              "goal": "Chênh lệch theo ngày",
+              "metric_ids": [
+                "total_cash_difference"
+              ],
+              "analysis_kind": "trend",
+              "dimension_ids": [],
+              "granularity": "day"
+            }
+          ]
+        },
+        {
+          "id": "D12",
+          "version": "1.0.0",
+          "title": "Đánh giá sản phẩm",
+          "category": "Khách hàng",
+          "description": "Điểm đánh giá và số lượt phản hồi theo sản phẩm.",
+          "limitation": "Luôn đọc điểm cùng số đánh giá; không lấy trung bình của các điểm trung bình.",
+          "default_time": "30d",
+          "requirements": [
+            {
+              "id": "kpi",
+              "goal": "Đánh giá sản phẩm",
+              "metric_ids": [
+                "avg_product_rating",
+                "review_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": []
+            },
+            {
+              "id": "products",
+              "goal": "Điểm và số đánh giá",
+              "metric_ids": [
+                "avg_product_rating",
+                "review_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "product"
+              ]
+            },
+            {
+              "id": "categories",
+              "goal": "Theo danh mục",
+              "metric_ids": [
+                "avg_product_rating",
+                "review_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "category"
+              ]
+            },
+            {
+              "id": "trend",
+              "goal": "Số lượt đánh giá theo ngày",
+              "metric_ids": [
+                "review_count"
+              ],
+              "analysis_kind": "trend",
+              "dimension_ids": [],
+              "granularity": "day"
+            }
+          ]
+        },
+        {
+          "id": "D13",
+          "version": "1.0.0",
+          "title": "Đánh giá cửa hàng",
+          "category": "Khách hàng",
+          "description": "Trải nghiệm tại cửa hàng và lượng phản hồi.",
+          "limitation": "Đánh giá cửa hàng tách riêng đánh giá sản phẩm; chú ý lượng mẫu.",
+          "default_time": "30d",
+          "requirements": [
+            {
+              "id": "kpi",
+              "goal": "Đánh giá cửa hàng",
+              "metric_ids": [
+                "avg_store_rating",
+                "store_review_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": []
+            },
+            {
+              "id": "stores",
+              "goal": "Theo cửa hàng",
+              "metric_ids": [
+                "avg_store_rating",
+                "store_review_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "store"
+              ]
+            },
+            {
+              "id": "regions",
+              "goal": "Theo khu vực",
+              "metric_ids": [
+                "avg_store_rating",
+                "store_review_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "reporting_region"
+              ]
+            },
+            {
+              "id": "trend",
+              "goal": "Phản hồi theo ngày",
+              "metric_ids": [
+                "store_review_count"
+              ],
+              "analysis_kind": "trend",
+              "dimension_ids": [],
+              "granularity": "day"
+            }
+          ]
+        },
+        {
+          "id": "D14",
+          "version": "1.0.0",
+          "title": "Khảo sát khách hàng",
+          "category": "Khách hàng",
+          "description": "Lượng phản hồi khảo sát và phân bố theo cửa hàng.",
+          "limitation": "Chưa có thang điểm khảo sát; không suy ra điểm hài lòng. Phản hồi thiếu mã chi nhánh vẫn được tính và hiển thị trong nhóm chưa phân loại.",
+          "default_time": "all_time",
+          "requirements": [
+            {
+              "id": "kpi",
+              "goal": "Phản hồi khảo sát",
+              "metric_ids": [
+                "survey_response_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": []
+            },
+            {
+              "id": "trend",
+              "goal": "Phản hồi theo ngày",
+              "metric_ids": [
+                "survey_response_count"
+              ],
+              "analysis_kind": "trend",
+              "dimension_ids": [],
+              "granularity": "day"
+            },
+            {
+              "id": "stores",
+              "goal": "Theo cửa hàng",
+              "metric_ids": [
+                "survey_response_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "store"
+              ]
+            },
+            {
+              "id": "regions",
+              "goal": "Theo khu vực",
+              "metric_ids": [
+                "survey_response_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "reporting_region"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "D15",
+          "version": "1.0.0",
+          "title": "Yêu thích sản phẩm",
+          "category": "Khách hàng",
+          "description": "Sản phẩm được yêu thích và phân bố danh mục.",
+          "limitation": "Yêu thích không đồng nghĩa mua hàng; không có tỷ lệ chuyển đổi.",
+          "default_time": "all_time",
+          "requirements": [
+            {
+              "id": "kpi",
+              "goal": "Lượt yêu thích",
+              "metric_ids": [
+                "favorite_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": []
+            },
+            {
+              "id": "products",
+              "goal": "Sản phẩm được yêu thích",
+              "metric_ids": [
+                "favorite_count"
+              ],
+              "analysis_kind": "ranking",
+              "dimension_ids": [
+                "product"
+              ],
+              "ranking": {
+                "direction": "top",
+                "limit": 10,
+                "metric_id": "favorite_count"
+              }
+            },
+            {
+              "id": "categories",
+              "goal": "Theo danh mục",
+              "metric_ids": [
+                "favorite_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "category"
+              ]
+            },
+            {
+              "id": "trend",
+              "goal": "Yêu thích theo ngày",
+              "metric_ids": [
+                "favorite_count"
+              ],
+              "analysis_kind": "trend",
+              "dimension_ids": [],
+              "granularity": "day"
+            }
+          ]
+        },
+        {
+          "id": "D16",
+          "version": "1.0.0",
+          "title": "Giờ cao điểm",
+          "category": "Vận hành",
+          "description": "Phân bố đơn hàng theo giờ, thứ và cửa hàng.",
+          "limitation": "Theo múi giờ Asia/Ho_Chi_Minh; ngày chưa trọn có thể thiếu quan sát.",
+          "default_time": "30d",
+          "requirements": [
+            {
+              "id": "kpi",
+              "goal": "Tổng quan đơn và doanh thu",
+              "metric_ids": [
+                "hourly_orders",
+                "order_count",
+                "revenue"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": []
+            },
+            {
+              "id": "hours",
+              "goal": "Đơn theo giờ",
+              "metric_ids": [
+                "hourly_orders"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "hour"
+              ]
+            },
+            {
+              "id": "weekdays",
+              "goal": "Đơn theo thứ",
+              "metric_ids": [
+                "order_count",
+                "revenue"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "weekday"
+              ]
+            },
+            {
+              "id": "stores",
+              "goal": "Đơn theo cửa hàng",
+              "metric_ids": [
+                "order_count"
+              ],
+              "analysis_kind": "aggregate",
+              "dimension_ids": [
+                "store"
+              ]
+            }
+          ]
+        }
       ]
     },
     "metric_alias_policy": {

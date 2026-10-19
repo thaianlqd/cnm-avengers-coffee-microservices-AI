@@ -97,9 +97,13 @@ class StreamRolloutTests(TestCase):
             module.running=False
             return [dict(published=0,has_more=False)]
         def run(error=None):
+            clock = [0.0]
+            def advance(seconds): clock[0] += seconds
             with patch.dict(os.environ,{'DATA_PLATFORM_GOVERNED_STREAMING':'1'}),patch.object(module.signal,'signal'), \
                  patch('pipeline_runtime.private_database_profile'),patch.object(module,'create_producer'), \
-                 patch.object(module,'get_db_conn',return_value=MagicMock()),patch.object(module.time,'sleep'), \
+                 patch.object(module,'get_db_conn',return_value=MagicMock()), \
+                 patch.object(module.time,'monotonic',side_effect=lambda:clock[0]), \
+                 patch.object(module.time,'sleep',side_effect=advance), \
                  patch.object(module,'fetch_and_publish',side_effect=error or fake):
                 module.running=True;module.main()
         run()

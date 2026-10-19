@@ -1,0 +1,72 @@
+{
+  "version": "3.5.0",
+  "status": "passed",
+  "observed_at": "2026-10-19T13:26:20.230198+00:00",
+  "snapshot_protocol": "actual Analyst exporter; oracle and marts import the same PostgreSQL MVCC snapshot",
+  "consistency": {
+    "status": "same_generation",
+    "report_epoch": "a00715a5264783ab5698926bc4e012ce66f7701ea358a5def87aff5866515fdb",
+    "oracle_epoch": "a00715a5264783ab5698926bc4e012ce66f7701ea358a5def87aff5866515fdb",
+    "reason": "same_observed_source_generations",
+    "basis": "Per-source replica generation vector; no source/formula independence claim"
+  },
+  "analyst_scalar_metrics": {
+    "store_revenue": 4373803500.0,
+    "store_order_count": 40460
+  },
+  "observations": [
+    {
+      "epoch": {
+        "status": "observed",
+        "sources": [
+          {
+            "dataset_id": "replica.identity.chi_nhanh",
+            "generation": 95,
+            "schema_fingerprint": "4fe0b04aa0d0e1422584d56c17ed18941fa1b7ff056706582ee703dbb1aad16c"
+          },
+          {
+            "dataset_id": "replica.orders.don_hang",
+            "generation": 93,
+            "schema_fingerprint": "74ebe0808c8f70687ccd589bd4783d99bd47ab7584ed784b53fcab62e0c5c8b5"
+          }
+        ],
+        "fingerprint": "a00715a5264783ab5698926bc4e012ce66f7701ea358a5def87aff5866515fdb",
+        "basis": "Observed per-source replica generations, not source transaction or completeness proof"
+      },
+      "raw_order_population": {
+        "orders": 40460,
+        "revenue": "4373803500.00"
+      },
+      "matched_store_population": {
+        "orders": 40460,
+        "revenue": "4373803500.00"
+      },
+      "marts_kpi": {
+        "total_orders_all_time": 40460,
+        "revenue_all_time": "4373803500.00"
+      },
+      "gold_stores": {
+        "orders": "40460",
+        "revenue": "4373803500.00"
+      },
+      "gold_status": "observed",
+      "gold_access": "explicit_operator_readonly_acceptance_probe",
+      "versioned_batch_publications": [
+        {
+          "pipeline": "daily_medallion",
+          "run_id": "run_a8496f9e21384a52bd68f6bb540dd050",
+          "manifest_fingerprint": "52298949003b1350dcc801df99070411985dbb08ee3b2d6c17acaf36a8dacd89",
+          "requested_as_of": "2026-10-19 05:16:46.701573+00:00"
+        }
+      ],
+      "batch_vs_current_replica": "incomparable_snapshot: independent published run identity",
+      "gold_vs_all_orders": "same_population",
+      "gold_menu_vs_order_revenue": "incomparable_definition: quantity*unit_price across all lines differs from eligible order totals"
+    }
+  ],
+  "provider_http": 0,
+  "limitations": [
+    "Per-source replica generation vector does not imply source-wide atomicity or business completeness",
+    "Versioned batch publications have independent run identities; current replica totals are not claimed as parity for an older batch run"
+  ]
+}

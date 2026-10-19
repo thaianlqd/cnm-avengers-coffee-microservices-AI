@@ -1,0 +1,103 @@
+{
+  "version": "3.5.0",
+  "workers": [
+    {
+      "container": "avengers_minio",
+      "status": "running",
+      "started_at": "2026-10-19T08:32:13.60005993Z",
+      "restart_count": 0
+    },
+    {
+      "container": "avengers_kafka_producer",
+      "status": "running",
+      "started_at": "2026-10-19T08:45:27.457504131Z",
+      "restart_count": 0
+    },
+    {
+      "container": "avengers_kafka_consumer",
+      "status": "running",
+      "started_at": "2026-10-19T08:34:36.955188052Z",
+      "restart_count": 0
+    },
+    {
+      "container": "avengers_data_sync",
+      "status": "running",
+      "started_at": "2026-10-19T08:43:48.308189001Z",
+      "restart_count": 0
+    }
+  ],
+  "partitions": [
+    {
+      "topic": "orders-events",
+      "partition": 1,
+      "committed_next_offset": 421047,
+      "log_end_offset": 421047,
+      "lag": 0
+    },
+    {
+      "topic": "order-items-events",
+      "partition": 0,
+      "committed_next_offset": 1271972,
+      "log_end_offset": 1572196,
+      "lag": 300224
+    },
+    {
+      "topic": "shipper-events",
+      "partition": 0,
+      "committed_next_offset": 76779,
+      "log_end_offset": 76779,
+      "lag": 0
+    },
+    {
+      "topic": "orders-events",
+      "partition": 0,
+      "committed_next_offset": 414372,
+      "log_end_offset": 414372,
+      "lag": 0
+    },
+    {
+      "topic": "orders-events",
+      "partition": 2,
+      "committed_next_offset": 415820,
+      "log_end_offset": 415820,
+      "lag": 0
+    },
+    {
+      "topic": "order-items-events",
+      "partition": 1,
+      "committed_next_offset": 1266980,
+      "log_end_offset": 1590860,
+      "lag": 323880
+    },
+    {
+      "topic": "order-items-events",
+      "partition": 2,
+      "committed_next_offset": 1271866,
+      "log_end_offset": 1567716,
+      "lag": 295850
+    },
+    {
+      "topic": "shipper-events",
+      "partition": 2,
+      "committed_next_offset": 76495,
+      "log_end_offset": 76495,
+      "lag": 0
+    },
+    {
+      "topic": "shipper-events",
+      "partition": 1,
+      "committed_next_offset": 78736,
+      "log_end_offset": 78736,
+      "lag": 0
+    }
+  ],
+  "total_lag": 919954,
+  "status": "catching_up",
+  "offsets_reset": false,
+  "bronze_readback": "stream-bronze-readback.json",
+  "limitation": "Running/no restarts is not equivalent to freshness; order-items backlog still blocks streaming FINAL",
+  "observation_window": {
+    "start": "2026-10-19T09:02:33.242481+00:00",
+    "end": "2026-10-19T09:02:40.683589+00:00"
+  }
+}

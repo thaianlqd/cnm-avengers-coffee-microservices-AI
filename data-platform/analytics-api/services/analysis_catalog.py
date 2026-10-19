@@ -21,11 +21,8 @@ CATALOG_PATH = (
 )
 
 
-class AnalysisError(ValueError):
-    def __init__(self, category: str, message: str, choices=None, clarification=None):
-        super().__init__(message)
-        self.category, self.choices = category, choices or []
-        self.clarification = clarification
+# Compatibility export: callers keep the same exception identity.
+from services.error_taxonomy import AnalysisError
 
 
 def normalize(text: str) -> str:

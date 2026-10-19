@@ -1,0 +1,39 @@
+{
+  "version": "3.5.0",
+  "minio": {
+    "cpus": 0.5,
+    "ram_mib": 768,
+    "go_heap_mib": 384,
+    "go_maxprocs": 1
+  },
+  "producer": {
+    "cpus": 0.25,
+    "ram_mib": 256
+  },
+  "consumer": {
+    "cpus": 0.5,
+    "ram_mib": 384
+  },
+  "replica": {
+    "cpus": 0.5,
+    "ram_mib": 384
+  },
+  "consumer_planned_stop_exit_code": 0,
+  "offset_reset": false,
+  "bronze_volume_replaced": false,
+  "fixtures_stopped": [
+    "v35-fixture-api-a",
+    "v35-fixture-api-b",
+    "v34-fixture-postgres",
+    "v34-fixture-redis"
+  ],
+  "minio_health_after_change": "healthy",
+  "post_change_15minute_soak": "not_measured",
+  "resource_observation": [
+    "avengers_minio CPU=48.13% RAM=463.8MiB / 768MiB",
+    "avengers_kafka_producer CPU=0.11% RAM=18.54MiB / 256MiB",
+    "avengers_kafka_consumer CPU=35.00% RAM=62.6MiB / 384MiB",
+    "avengers_data_sync CPU=0.00% RAM=54.77MiB / 384MiB",
+    "avengers_analytics_api CPU=0.20% RAM=203.9MiB / 7.748GiB"
+  ]
+}

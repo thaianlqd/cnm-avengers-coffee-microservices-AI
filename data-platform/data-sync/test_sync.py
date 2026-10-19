@@ -121,3 +121,13 @@ class WarehouseViewTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SyncScheduleTests(unittest.TestCase):
+    def test_cycle_duration_does_not_extend_cadence_and_slow_cycles_skip_slots(self):
+        self.assertEqual(sync.next_sync_slot(100, 131, 300), 400)
+        self.assertEqual(sync.next_sync_slot(100, 400, 300), 400)
+        self.assertEqual(sync.next_sync_slot(100, 401, 300), 700)
+        self.assertEqual(sync.next_sync_slot(100, 1101, 300), 1300)
+        with self.assertRaises(ValueError):
+            sync.next_sync_slot(100, 120, 0)

@@ -164,10 +164,23 @@ def dataset_health(contracts, views, checkpoints, physical, keys, *, quality=Non
         if failed: reasons.append('last_load_failed')
         if stale: reasons.append('load_stale')
         if not success or not generation: reasons.append('governed_checkpoint_missing')
-        quality_observation = measured_quality.get(name)
+        certificate = None
+        raw_evidence = checkpoint.get('certificate')
+        if raw_evidence is not None:
+            from pipeline_runtime import valid_load_evidence, PipelineContractError
+            try:
+                valid_load_evidence(raw_evidence, contract, generation=generation,
+                    schema_fingerprint=checkpoint.get('schema_fingerprint'), now=now)
+                if schema_status == 'consistent' and not failed and not stale:
+                    certificate = deepcopy(raw_evidence)
+            except PipelineContractError:
+                reasons.append('checkpoint_evidence_invalid_or_expired')
+        quality_observation = certificate['quality'] if certificate else measured_quality.get(name)
         if quality_observation and quality_observation.get('status') == 'failed': reasons.append('critical_quality_failed')
+        if contract.get('quality_tier') == 'critical' and not quality_observation:
+            reasons.append('critical_quality_not_measured')
         status = ('blocked' if schema_status == 'drift' or failed or 'critical_quality_failed' in reasons else
-                  'unknown' if not success or not generation or schema_status == 'unknown' else
+                  'unknown' if not success or not generation or schema_status == 'unknown' or 'critical_quality_not_measured' in reasons else
                   'degraded' if stale else 'healthy')
         datasets[name] = {'dataset_id':contract['dataset_id'], 'source_id':name,
             'owner_team':'avengers-data-team',
@@ -182,7 +195,8 @@ def dataset_health(contracts, views, checkpoints, physical, keys, *, quality=Non
             'expected_load_interval_seconds':contract['expected_load_interval_seconds'],
             'maximum_acceptable_load_lag_seconds':maximum_lag,
             'source_business_owner':contract.get('source_business_owner'),
-            'completeness':'unknown','certificate':None,'certificate_basis':'No certified extraction completeness proof',
+            'completeness':certificate['completeness'] if certificate else 'unknown',
+            'certificate':certificate,'certificate_basis':'Fenced worker evidence' if certificate else 'No certified extraction completeness proof',
             'quality':quality_observation or {'status':'not_measured','checks':[]},
             'status':status,'reasons':reasons,'observed_at':now.isoformat(),
             'expires_at':datetime.fromtimestamp(now.timestamp()+TTL_SECONDS,timezone.utc).isoformat()}
@@ -195,13 +209,49 @@ def dataset_health(contracts, views, checkpoints, physical, keys, *, quality=Non
         projected[view['name']] = {'status':status,
             'reasons':sorted({r for state in states for r in state['reasons']}),
             'generations':{state['dataset_id']:state['generation'] for state in states},
-            'source_dependencies':deps,'completeness':'unknown'}
+            'source_dependencies':deps,'completeness':
+                'complete' if status=='healthy' and states and all(x['completeness']=='complete' for x in states) else
+                'partial' if status=='healthy' and any(x['completeness']=='partial' for x in states) else 'unknown'}
     vector = {d['dataset_id']:{k:d[k] for k in ('generation','schema_fingerprint','last_success_at','status')}
               for d in datasets.values()}
     epoch = hashlib.sha256(json.dumps(vector,sort_keys=True,separators=(',',':')).encode()).hexdigest()
     return {'version':'1.0','datasets':datasets,'views':projected,'epoch':epoch,
             'epoch_basis':'per-source observed generations; no cross-source transaction claim',
             'observed_at':now.isoformat(),'quality_scope':'Only explicitly measured checks are associated'}
+
+
+def certified_period_health(data_health, tables, start, end, *, now=None, epoch=None):
+    """Only validated, unexpired, range-bound proof can authorize history."""
+    from pipeline_runtime import closed_period_eligible
+    now = now or datetime.now(timezone.utc)
+    unknown = {'status': 'unknown', 'completeness': 'unknown', 'certificate': None}
+    views, datasets = data_health.get('views', {}), data_health.get('datasets', {})
+    if not tables or any(views.get(table, {}).get('status') != 'healthy' for table in tables):
+        return unknown
+    sources = {source for table in tables for source in views[table].get('source_dependencies', [])}
+    if not sources:
+        return unknown
+    epochs = {row['dataset_id']: row for row in (epoch or {}).get('sources', [])}
+    proofs = {}
+    for source in sources:
+        state = datasets.get(source, {})
+        envelope = state.get('certificate') or {}
+        if state.get('status') != 'healthy' or _moment(state.get('expires_at')) is None or _moment(state['expires_at']) <= now:
+            return unknown
+        if epoch is not None:
+            observed = epochs.get(state.get('dataset_id'), {})
+            if (epoch.get('status') != 'observed' or observed.get('generation') != state.get('generation')
+                    or observed.get('schema_fingerprint') != state.get('schema_fingerprint')):
+                return unknown
+        proof = next((cert for cert in envelope.get('closed_periods', [])
+            if closed_period_eligible(cert, end, start) and _moment(cert.get('expires_at'))
+                and _moment(cert['expires_at']) > now), None)
+        if proof is None:
+            return unknown
+        proofs[state['dataset_id']] = {'generation': state['generation'],
+            'certificate_sha256': proof['certificate_sha256'], 'expires_at': proof['expires_at']}
+    return {'status': 'healthy', 'completeness': 'complete', 'certificate': {
+        'kind': 'closed_period_projection', 'start': str(start), 'end': str(end), 'sources': proofs}}
 
 
 def _query_dataset_health(connection, overlay):
@@ -211,7 +261,8 @@ def _query_dataset_health(connection, overlay):
     try:
         with connection.cursor() as cursor:
             cursor.execute('SELECT dataset_id,cursor_time,source_upper_bound,generation,schema_fingerprint,'
-                'last_attempt_at,last_success_at,last_full_reconcile_at,observed_rows,completeness,error_code '
+                'last_attempt_at,last_success_at,last_full_reconcile_at,observed_rows,completeness,error_code, '
+                'CASE WHEN pg_column_size(certificate)<=128000 THEN certificate END AS certificate '
                 'FROM analytics.ingestion_checkpoints ORDER BY dataset_id LIMIT 1000')
             checkpoints={row['dataset_id']:dict(row) for row in cursor.fetchall()}
     except Exception:
@@ -240,21 +291,7 @@ def _query_dataset_health(connection, overlay):
     except Exception:
         connection.rollback()
         physical,keys={},{}
-    quality_by_source={}
-    for source, rule_ids in {'orders.don_hang':['DQ-01','DQ-02'], 'orders.chi_tiet_don_hang':['DQ-03']}.items():
-        observations={}
-        for rule in QUALITY_RULES:
-            if rule['rule_id'] not in rule_ids: continue
-            try:
-                with connection.cursor() as cursor:
-                    cursor.execute(rule['sql'])
-                    observations[rule['rule_id']]=dict(cursor.fetchone())
-            except Exception:
-                connection.rollback()
-        checks=[r for r in quality_summary(observations)['tests'] if r['rule_id'] in rule_ids]
-        quality_by_source[source]={'status':'failed' if any(r['quality_status']=='failed' for r in checks) else
-            'passed' if all(r['quality_status']=='passed' for r in checks) else 'not_measured','checks':checks}
-    value=dataset_health(contracts,views,checkpoints,physical,keys,quality=quality_by_source)
+    value=dataset_health(contracts,views,checkpoints,physical,keys)
     for name,view in value['views'].items():
         view['impacted_metrics']=[metric for metric,definition in overlay['analysis_registry']['metrics'].items() if definition['source']==name]
     return value
@@ -343,10 +380,10 @@ QUALITY_RULES = (
 )
 
 
-def quality_summary(observations, now=None):
+def quality_summary(observations, now=None, *, definitions=None, scope=None):
     """No measurement/empty data cannot turn into a 100% quality score."""
     rules = []
-    for definition in QUALITY_RULES:
+    for definition in (QUALITY_RULES if definitions is None else definitions):
         observed = observations.get(definition['rule_id']) or {}
         checked, violations = observed.get('checked'), observed.get('violations')
         measured = (type(checked) is int and type(violations) is int and 0 <= violations <= checked)
@@ -359,15 +396,38 @@ def quality_summary(observations, now=None):
             'score': score, 'quality_status': status,
             'status': {'passed': 'DAT_CHUAN', 'failed': 'KHONG_DAT', 'no_data': 'KHONG_CO_DU_LIEU',
                        'not_measured': 'CHUA_DO'}[status], 'reason': observed.get('reason')})
-    complete = all(r['score'] is not None for r in rules)
+    complete = bool(rules) and all(r['score'] is not None for r in rules)
     failed = [r for r in rules if r['quality_status'] == 'failed']
     return {'version': '3.4.0', 'status': 'failed' if failed else 'passed' if complete else 'unknown',
             'overall_score': round(sum(r['score'] for r in rules)/len(rules), 2) if complete else None,
-            'scope': 'Ba kiểm tra hợp đồng trên đơn hàng và chi tiết món; không chứng nhận toàn bộ kho hoặc source completeness.',
+            'scope': scope or 'Ba kiểm tra hợp đồng trên đơn hàng và chi tiết món; không chứng nhận toàn bộ kho hoặc source completeness.',
             'total_rules': len(rules), 'passed_rules': sum(r['quality_status'] == 'passed' for r in rules),
             'warning_rules': len(failed), 'not_measured_rules': sum(r['score'] is None for r in rules),
             'critical_failures': sum(r['severity'] == 'CRITICAL' for r in failed),
             'last_audit_time': (now or datetime.now(timezone.utc)).isoformat(), 'tests': rules}
+
+
+def contract_quality_snapshot():
+    """Project the same validated DataHealth observations for every governed source."""
+    from pipeline_runtime import quality_manifest
+    contracts = json.loads((_METADATA/'data_health_contracts.json').read_text())['datasets']
+    data_health = (current() or {}).get('data_health') or {}
+    observations, definitions = {}, []
+    labels = {'primary_key': 'Khóa chính', 'not_null': 'Cột bắt buộc', 'clock_bound': 'Giới hạn đồng hồ nguồn',
+        'enum': 'Tập giá trị nghiệp vụ', 'numeric_range': 'Miền giá trị', 'reference': 'Tham chiếu nguồn'}
+    for source, contract in contracts.items():
+        measured = {rule['rule_id']: rule for rule in data_health.get('datasets', {}).get(source, {}).get('quality', {}).get('checks', [])}
+        for rule in quality_manifest(contract):
+            key = contract['dataset_id']+':'+rule['id']
+            definitions.append({'rule_id': key, 'rule_name': labels[rule['kind']]+': '+str(rule.get('column') or rule['id']),
+                'domain': source, 'severity': 'CRITICAL' if contract.get('quality_tier')=='critical' else 'HIGH'})
+            if rule['id'] in measured:
+                observations[key] = measured[rule['id']]
+    result = quality_summary(observations, definitions=definitions,
+        scope='Kiểm tra theo hợp đồng của 23 nguồn; đo trên replica và ghi cùng checkpoint. Không chứng nhận toàn bộ lịch sử nghiệp vụ.')
+    result['version'] = '3.5.0'
+    result['data_epoch'] = data_health.get('epoch')
+    return result
 
 
 def quality_snapshot(connection_factory=None):

@@ -1,0 +1,16 @@
+{
+  "source": "orders.ca_doi_soat",
+  "column": "trang_thai_phe_duyet",
+  "observed_status_counts": {
+    "DA_DUYET": 4140
+  },
+  "business_owner": "admin",
+  "confirmation": "DA_DUYET hợp lệ, nghĩa là đã duyệt",
+  "confirmed_on": "2026-10-19",
+  "current_entity_values": [
+    "PENDING",
+    "APPROVED",
+    "REJECTED"
+  ],
+  "source_mutations": false
+}

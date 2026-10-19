@@ -260,6 +260,7 @@ test('BI export fails visibly on denial and only reports success after receiving
     : {status:403,json:{detail:'Fixture export denied'}}));
   await page.goto('/');
   await page.getByRole('button',{name:'Báo cáo & Phân tích',exact:true}).click();
+  await page.getByRole('button',{name:'Báo cáo tổng hợp',exact:true}).click();
   await page.getByRole('button',{name:'Xuất dữ liệu',exact:true}).click();
   await expect(page.getByText('Fixture export denied',{exact:true})).toBeVisible();
   await expect(page.getByText('Đã tạo file CSV từ dữ liệu máy chủ.',{exact:true})).toHaveCount(0);
@@ -282,6 +283,7 @@ test('city share keeps the full population denominator and displays unscaled mon
     revenue_by_city:[100,90,80,70,60,50].map((revenue,index)=>({city:'City '+index,revenue}))}}));
   await page.goto('/');
   await page.getByRole('button',{name:'Báo cáo & Phân tích',exact:true}).click();
+  await page.getByRole('button',{name:'Báo cáo tổng hợp',exact:true}).click();
   await page.getByRole('button',{name:'Hiệu suất Cửa hàng',exact:true}).click();
   const region=page.getByRole('heading',{name:'Tỷ trọng doanh thu theo tỉnh thành',exact:true}).locator('../..');
   await expect(region).toContainText('Các tỉnh/thành còn lại');

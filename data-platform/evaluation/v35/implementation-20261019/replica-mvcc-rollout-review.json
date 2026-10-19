@@ -1,0 +1,318 @@
+{
+  "version": "3.5.0",
+  "status": "approved_activated_15min_observation_passed",
+  "problem": "Overview marts/products HTTP503, PostgreSQL55P03 while full snapshot holds TRUNCATE lock during transfer/proof scans",
+  "target": "local postgres-analytics only",
+  "role": "avengers_dp_replica",
+  "existing_privileges": [
+    {
+      "table": "identity.chi_nhanh",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "identity.khu_vuc",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "identity.khuyen_mai",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "identity.khuyen_mai_su_dung",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "identity.nguoi_dung",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "inventory.ton_kho_san_pham",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "menu.bien_the_san_pham",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "menu.danh_muc",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "menu.san_pham",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "orders.ca_doi_soat",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "orders.ca_lam_viec_nhan_vien",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "orders.chi_tiet_don_hang",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "orders.customer_wallet_transaction",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "orders.danh_gia_chi_nhanh",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "orders.danh_gia_san_pham",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "orders.delivery_tracking",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "orders.don_hang",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "orders.giao_dich_thanh_toan",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "orders.khao_sat_phan_hoi",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "orders.shipper",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "orders.shipper_delivery",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "orders.voucher",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    },
+    {
+      "table": "orders.yeu_thich_san_pham",
+      "privileges": {
+        "select": true,
+        "insert": true,
+        "update": true,
+        "delete": false,
+        "truncate": true
+      }
+    }
+  ],
+  "requested_grants": [
+    "GRANT DELETE ON TABLE \"identity\".\"chi_nhanh\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"identity\".\"khu_vuc\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"identity\".\"khuyen_mai\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"identity\".\"khuyen_mai_su_dung\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"identity\".\"nguoi_dung\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"inventory\".\"ton_kho_san_pham\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"menu\".\"bien_the_san_pham\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"menu\".\"danh_muc\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"menu\".\"san_pham\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"orders\".\"ca_doi_soat\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"orders\".\"ca_lam_viec_nhan_vien\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"orders\".\"chi_tiet_don_hang\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"orders\".\"customer_wallet_transaction\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"orders\".\"danh_gia_chi_nhanh\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"orders\".\"danh_gia_san_pham\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"orders\".\"delivery_tracking\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"orders\".\"don_hang\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"orders\".\"giao_dich_thanh_toan\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"orders\".\"khao_sat_phan_hoi\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"orders\".\"shipper\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"orders\".\"shipper_delivery\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"orders\".\"voucher\" TO \"avengers_dp_replica\";",
+    "GRANT DELETE ON TABLE \"orders\".\"yeu_thich_san_pham\" TO \"avengers_dp_replica\";"
+  ],
+  "source_access": "Supabase READ ONLY; existing approved projections unchanged",
+  "method": "Session-local temporary stage; delete only missing primary keys; upsert only changed/new rows; data+proof+checkpoint in one target transaction",
+  "meaning_unchanged": [
+    "23 reviewed replica tables only",
+    "same snapshot/parity/closed-period checks",
+    "rollback on mismatch/conflict",
+    "same300s/900s schedule/SLA target",
+    "no provider call/no offset reset"
+  ],
+  "not_requested": [
+    "source writes",
+    "new persistent table/view/schema",
+    "superuser/role management",
+    "access to other datasets"
+  ],
+  "validation": {
+    "postgres_tests": {
+      "passed": 27,
+      "seconds": 8.19,
+      "log": "/tmp/v35-sync-lock-current.log"
+    },
+    "unit_tests": {
+      "passed": 21,
+      "seconds": 0.023,
+      "log": "/tmp/v35-sync-unit-current.log"
+    },
+    "red_regressions": "2PGtests failed with lock timeouts before patch",
+    "canary": "118-product canary detected missing DELETE privilege and rolled back; original worker restarted"
+  },
+  "source_sha256": "ab8a8831df7e64a51ab8018aea4c682b8651b5e5010e244d1f4fe8eb6b577539",
+  "rollout": [
+    "Apply exactly23GRANTDELETE statements using existing operator connection",
+    "Stop existing worker gracefully; canary menu.san_pham; enable same23sources",
+    "Observe real overview APIs during sync with current quiet limits"
+  ],
+  "rollback": [
+    "On canary failure retain committed data/checkpoint and restart old image",
+    "Revoke only newly granted DELETE rights if rollback is chosen"
+  ],
+  "created_at": "2026-10-19T13:17:12.149165+00:00",
+  "user_approval": "Duyệt cấp DELETE và rollout",
+  "activation": {
+    "image": "sha256:63596b55333053b77c2d21ad79161f545f536572ee58d4769c9df2be5b16de20",
+    "started_at": "2026-10-19T13:21:48.130665969Z",
+    "cpu": 0.2,
+    "memory_mib": 384
+  },
+  "runtime_evidence": [
+    "replica-mvcc-grants-applied.json",
+    "replica-mvcc-canary.json",
+    "overview-mvcc-validation.json",
+    "runtime-post-mvcc-soak.json"
+  ],
+  "rollback_image": "sha256:c67011cce8cf5b0d50ead59a3f2e5761394f1784d0338584f21411167a64e35f"
+}

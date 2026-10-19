@@ -133,100 +133,42 @@ TABLE_METADATA = {
 
 @router.get("/warehouse/tables")
 def get_warehouse_tables(request: Request = None):
-    from services.report_sql_policy import require_sql_admin
-    require_sql_admin(request)
+    from services.report_sql_policy import require_warehouse_reader
+    from services.analysis_catalog import AnalysisCatalog
+    from services.metadata_service import get_local_metadata
+    from services.access_policy import active_principal
+    import os
+    require_warehouse_reader()
     try:
-        with get_db_conn() as conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    SELECT 
-                        c.table_schema,
-                        c.table_name,
-                        c.column_name,
-                        c.data_type,
-                        c.ordinal_position
-                    FROM information_schema.columns c
-                    WHERE c.table_schema = 'silver'
-                    ORDER BY c.table_name, c.ordinal_position;
-                """)
-                rows = cur.fetchall()
-
-                tables_dict = {}
-                for r in rows:
-                    s_name = r["table_schema"]
-                    t_name = r["table_name"]
-                    full_name = f"{s_name}.{t_name}"
-
-                    meta = TABLE_METADATA.get(full_name, {
-                        "display_name": t_name.replace("_", " ").title(),
-                        "category": "Dữ liệu vận hành",
-                        "layer": "Tầng Silver (Chi tiết)",
-                        "description": f"Bảng dữ liệu {t_name}"
-                    })
-
-                    if full_name not in tables_dict:
-                        tables_dict[full_name] = {
-                            "name": full_name,
-                            "table_name": t_name,
-                            "schema": s_name,
-                            "display_name": meta["display_name"],
-                            "category": meta["category"],
-                            "layer": meta["layer"],
-                            "description": meta["description"],
-                            "columns": []
-                        }
-                    tables_dict[full_name]["columns"].append({
-                        "name": r["column_name"],
-                        "type": r["data_type"]
-                    })
-
-                sample_queries = [
-                    {
-                        "title": "20 đơn hàng mới nhất và hình thức thanh toán",
-                        "sql": "SELECT ma_don_hang, tong_tien, phuong_thuc_thanh_toan, trang_thai_don_hang, ngay_tao\nFROM silver.don_hang\nORDER BY ngay_tao DESC\nLIMIT 20;"
-                    },
-                    {
-                        "title": "Top món bán chạy và doanh thu từ chi tiết đơn hàng",
-                        "sql": "SELECT ten_san_pham, kich_co, COUNT(*) AS so_lan_goi, SUM(so_luong) AS tong_ly_ban, SUM(thanh_tien) AS tong_tien\nFROM silver.chi_tiet_don_hang\nGROUP BY ten_san_pham, kich_co\nORDER BY tong_ly_ban DESC\nLIMIT 15;"
-                    },
-                    {
-                        "title": "Khách hàng thân thiết có điểm tích lũy Beans cao nhất",
-                        "sql": "SELECT ho_ten, so_dien_thoai, email, diem_loyalty, tong_chi_tieu, ngay_tao\nFROM silver.nguoi_dung\nORDER BY diem_loyalty DESC\nLIMIT 20;"
-                    },
-                    {
-                        "title": "Danh sách thực đơn sản phẩm đồ uống và giá bán",
-                        "sql": "SELECT ma_san_pham, ten_san_pham, ten_danh_muc, gia_ban, trang_thai\nFROM silver.san_pham\nORDER BY ma_san_pham ASC;"
-                    },
-                    {
-                        "title": "Hiệu suất tài xế giao hàng và điểm đánh giá",
-                        "sql": "SELECT ho_ten, so_dien_thoai, bien_so_xe, loai_xe, tong_chuyen_giao, diem_danh_gia\nFROM silver.shipper\nORDER BY tong_chuyen_giao DESC;"
-                    },
-                    {
-                        "title": "Mạng lưới chi nhánh cửa hàng đang hoạt động",
-                        "sql": "SELECT ma_chi_nhanh, ten_chi_nhanh, thanh_pho, dia_chi, so_dien_thoai, trang_thai\nFROM silver.chi_nhanh\nORDER BY thanh_pho, ten_chi_nhanh;"
-                    }
-                ]
-
-                # Sort tables logically: Bán hàng -> Thực đơn -> Khách hàng -> Chi nhánh
-                category_order = {
-                    "Bán hàng & Đơn hàng": 1,
-                    "Thực đơn & Sản phẩm": 2,
-                    "Khách hàng & Hội viên": 3,
-                    "Chi nhánh & Vận hành": 4,
-                }
-                sorted_tables = sorted(
-                    tables_dict.values(),
-                    key=lambda t: (category_order.get(t.get("category"), 99), t.get("display_name", ""))
-                )
-
-                return {
-                    "warehouse": "Avengers Analytics Lakehouse",
-                    "schema": "silver",
-                    "tables": sorted_tables,
-                    "sample_queries": sample_queries
-                }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        catalog = AnalysisCatalog(get_local_metadata())
+        tables, samples = [], []
+        for name, physical in sorted(catalog.tables.items()):
+            allowed = set(catalog.policy['tables'].get(name, []))
+            columns = [c for c in physical['columns'] if c['name'] in allowed]
+            if not columns:
+                continue
+            meta = TABLE_METADATA.get(name, {})
+            schema, table = name.split('.', 1)
+            label = meta.get('display_name', table.replace('_', ' ').title())
+            tables.append({'name': name, 'table_name': table, 'schema': schema,
+                'display_name': label, 'category': meta.get('category', 'Dữ liệu vận hành'),
+                'layer': meta.get('layer', 'Tầng Silver'),
+                'description': meta.get('description', 'Nguồn dữ liệu được cấp quyền.'),
+                'columns': [{'name': c['name'], 'type': c.get('data_type', '')} for c in columns]})
+            quoted = lambda value: '"' + value.replace('"', '""') + '"'
+            projection = ', '.join(quoted(c['name']) for c in columns[:6])
+            samples.append({'title': f'Xem dữ liệu: {label}',
+                'sql': f'SELECT {projection} FROM {quoted(schema)}.{quoted(table)} LIMIT 20'})
+        principal = active_principal.get()
+        execution = os.getenv('DATA_ANALYST_REPORT_SQL_MODE', 'disabled') == 'trusted_admin'
+        execution = execution and bool(principal and principal.permits('sql.explore'))
+        return {'warehouse': 'Avengers Analytics', 'schema': 'silver', 'tables': tables,
+                'sample_queries': samples, 'sql_execution_enabled': execution,
+                'sql_execution_reason': None if execution else 'Chạy SQL chưa được bật hoặc tài khoản chưa có quyền. Bạn vẫn có thể xem danh mục dữ liệu.'}
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(503, 'Danh mục dữ liệu tạm thời chưa sẵn sàng.') from None
 
 
 @router.post("/query")
@@ -237,7 +179,19 @@ def run_custom_query(req: SqlQueryRequest, request: Request = None):
         # Read-only is not a table/column/function permission. SQL Explorer
         # shares the explicit deployment gate and AST policy used by reports.
         validate_report_sql(req.sql)
+        from services.access_policy import active_principal, development_fallback
+        from services.telemetry import audit
+        import hashlib
+        authenticated = active_principal.get() is not None
+        query_hash = hashlib.sha256(req.sql.encode()).hexdigest()
+        if authenticated:
+            audit('sql.explore', 'query', query_hash=query_hash)
+        elif not development_fallback():
+            raise HTTPException(403, 'SQL cần phiên đăng nhập có nhật ký bảo mật.')
         result = execute_read_only(req.sql, row_limit=500)
+        if authenticated:
+            audit('sql.explore', 'query', query_hash=query_hash, decision='completed',
+                  details={'rows': result['count'], 'duration_ms': result['duration_ms']})
         return {
             "columns": result["columns"],
             "data": result["rows"],

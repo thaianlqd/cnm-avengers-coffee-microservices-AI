@@ -88,6 +88,9 @@ def _source_conn():
 
 @reader_query_kind('metadata')
 def _introspect(connection_factory: Callable[[], Any], schemas: Optional[List[str]] = None) -> Dict[str, Any]:
+    # Structural catalog reads must not deparse view/index SQL: PostgreSQL
+    # deparsing acquires data-relation locks and races atomic replica TRUNCATE.
+    # Columns, keys and foreign keys below remain physically observed.
     params: List[Any] = []
     schema_filter = ""
     if schemas:
@@ -106,7 +109,7 @@ def _introspect(connection_factory: Callable[[], Any], schemas: Optional[List[st
                             WHEN 'p' THEN 'partitioned_table' ELSE 'table' END AS object_type,
                        GREATEST(COALESCE(st.n_live_tup, c.reltuples)::bigint, 0) AS estimated_rows,
                        obj_description(c.oid, 'pg_class') AS comment,
-                       CASE WHEN c.relkind IN ('v', 'm') THEN pg_get_viewdef(c.oid, true) END AS view_definition
+                       NULL::text AS view_definition
                 FROM pg_class c
                 JOIN pg_namespace n ON n.oid = c.relnamespace
                 LEFT JOIN pg_stat_all_tables st ON st.relid = c.oid
@@ -177,9 +180,7 @@ def _introspect(connection_factory: Callable[[], Any], schemas: Optional[List[st
                     f"""
                     SELECT n.nspname AS schema_name, t.relname AS object_name,
                            i.relname AS index_name,
-                           CASE WHEN am.amname IN ('btree', 'hash', 'gin', 'gist', 'spgist', 'brin')
-                                THEN pg_get_indexdef(ix.indexrelid)
-                                ELSE '' END AS definition
+                           NULL::text AS definition
                     FROM pg_index ix
                     JOIN pg_class t ON t.oid = ix.indrelid
                     JOIN pg_class i ON i.oid = ix.indexrelid

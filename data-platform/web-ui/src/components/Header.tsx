@@ -13,9 +13,9 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-20 px-8 h-16 flex items-center justify-between">
+    <header className="bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-20 px-3 sm:px-8 h-14 sm:h-16 shrink-0 gap-3 flex items-center justify-between">
       {/* Left: Clean Minimal Search */}
-      <form onSubmit={handleSearchSubmit} className="w-80 sm:w-96">
+      <form onSubmit={handleSearchSubmit} className="w-full max-w-96 min-w-0">
         <input
           type="text"
           value={searchTerm}
@@ -26,19 +26,19 @@ export const Header: React.FC = () => {
       </form>
 
       {/* Right: Clean Status and Profile */}
-      <div className="flex items-center space-x-5">
-        <div className="flex items-center space-x-2 text-xs text-slate-500">
+      <div className="flex shrink-0 items-center space-x-3 lg:space-x-5">
+        <div className="hidden lg:flex items-center space-x-2 text-xs text-slate-500">
           <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
           <span className="text-[11px] font-medium tracking-tight" title="Kho phân tích được đồng bộ định kỳ (data-sync), không phải thời gian thực">Cập nhật theo đợt</span>
         </div>
 
-        <div className="h-4 w-px bg-slate-200" />
+        <div className="hidden lg:block h-4 w-px bg-slate-200" />
 
         <div className="flex items-center space-x-3 cursor-pointer group">
           <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-medium text-xs tracking-tight">
             AC
           </div>
-          <div className="text-left">
+          <div className="hidden lg:block text-left">
             <div className="text-xs font-medium text-slate-900 leading-tight">
               Ban Điều Hành
             </div>

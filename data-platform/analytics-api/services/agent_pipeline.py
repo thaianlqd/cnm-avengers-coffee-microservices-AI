@@ -19,6 +19,7 @@ from services.verified_analysis_service import record_verified
 from services.explanation_service import explain_analysis
 from services.analyst_contract import DashboardPlan, AgentState
 from services.domain_intelligence_service import DomainIntelligence, DEPTH_POLICIES
+from services.provider_budget import deterministic_dashboard
 
 
 class AnalysisPipeline:
@@ -115,6 +116,8 @@ class AnalysisPipeline:
                     "date_range",
                     "input_mode",
                     "guided_contract",
+                    "dashboard_id",
+                    "dashboard_version",
                     "allow_deterministic_upgrade",
                     "analysis_mission",
                 )
@@ -129,6 +132,23 @@ class AnalysisPipeline:
         browser is trusted. Free text is upgraded only when the server's own
         preflight resolves every required field with no ambiguity.
         """
+        if getattr(request, 'dashboard_id', None):
+            from services.workspace_service import dashboard_template, dashboard_intent
+            template = dashboard_template(catalog, request.dashboard_id, request.dashboard_version)
+            context['guided_intent'] = dashboard_intent(catalog, request.dashboard_id, request.dashboard_version,
+                context.get('required_period'))
+            context['dashboard_template'] = {key:template[key] for key in ('id','version','title','limitation')}
+            # Presets bind time per historical panel; snapshot/lifetime panels
+            # retain their registered as-of meaning in the same dashboard.
+            context['dashboard_template']['selected_period'] = context.get('required_period')
+            context['required_period'] = None
+            # Entire authorized scope still includes immutable preset filters
+            # (e.g. the two kiosk types). Client scope filters remain required.
+            if context.get('scope_mode') == 'all':
+                context['scope_mode'] = 'auto'
+            self.semantic_info.update(input_mode='dashboard', guided_contract_used=True,
+                guided_source='dashboard', dashboard_template=context['dashboard_template'], preflight_state='READY_GUIDED')
+            return
         from services import mission_contract_service as missions
         from services.workspace_service import require_mission
         self.semantic_info.update(input_mode=getattr(request, "input_mode", "free_text"), guided_contract_used=False)
@@ -443,6 +463,7 @@ class AnalysisPipeline:
             dashboard=plan,
         ).model_dump(mode="json")
 
+    @deterministic_dashboard
     def propose(self, request):
         from services.provider_budget import request_deadline, PLANNING_SECONDS
         token=None
@@ -608,6 +629,7 @@ class AnalysisPipeline:
             'provider_primary_ms','provider_repair_ms','provider_ms','resolver_ms','proposal_persistence_ms','session_ms','total_ms')}))
         return response
 
+    @deterministic_dashboard
     def generate(self, request):
         self.semantic_info['force_refresh'] = bool(getattr(request,'refresh',False))
         catalog = self.catalog()
@@ -849,7 +871,7 @@ class AnalysisPipeline:
                 intent=self.semantic_info.get("semantic_intent") or session.semantic_intent, evidence=evidence)
             self.semantic_info.update(dropped_irrelevant_charts=relevance["dropped_irrelevant_charts"],
                                       dropped_budget_charts=len(relevance["dropped"]) - relevance["dropped_irrelevant_charts"])
-        if session.natural_input:
+        if session.natural_input or session.ui_constraints.get('dashboard_template'):
             # A driver baseline/independent-total query may legitimately be empty; that becomes a disclosed
             # driver_status limitation (no conclusion), never a fabricated or failed analysis.
             baseline_ids = {q for b in (self.semantic_info.get("derived_feature_bindings") or []) if b.get("feature") == "driver_delta" for q in b["query_ids"][1:]}
@@ -881,7 +903,7 @@ class AnalysisPipeline:
         # built only from verified, evidence-referenced facts of primary charts.
         from services.chart_insight_service import chart_insights
         insights = chart_insights(dashboard["charts"], artifacts, catalog, reference, mission_hint)
-        from services.chart_insight_service import compare_cards, build_conclusion, short_answer as build_short_answer
+        from services.chart_insight_service import compare_cards, short_answer as build_short_answer
         short_answer = build_short_answer(dashboard["charts"])
         from services.view_requirement_service import view_coverage
         view_cov = view_coverage(coverage_map, dashboard["charts"], artifacts, dashboard["dashboard_plan"].get("omitted_visuals", []),
@@ -963,104 +985,14 @@ class AnalysisPipeline:
             requested_operation_count=sum(a.query.role == "requested" for a in artifacts.values()),
             supporting_operation_count=sum(a.query.role == "supporting" for a in artifacts.values()),
         )
-        response = {
-            "status": "success",
-            "completion_status": "complete",
-            "pipeline_version": self.semantic_info.get("pipeline_version", "2.8" if self.planning_mode == "one_shot" else "2.3"),
-            "prompt": session.original_prompt,
-            "module_provenance": session.module_provenance,
-            "analysis_breadth": self.semantic_info.get("analysis_depth", session.analysis_depth),
-            "session_id": session.session_id,
-            "revision": session.revision + (1 if session.approved else 0),
-            "title": meaning["subject"],
-            "description": "Phân tích từ các kết quả đã kiểm chứng.",
-            "domain_summary": domain_summary,
-            "analysis_spec": main.grounded.analysis_spec.model_dump(mode="json"),
-            "analysis_specs": {
-                id: a.grounded.analysis_spec.model_dump(mode="json")
-                for id, a in artifacts.items()
-            },
-            "analytical_queries": [
-                a.query.model_dump(mode="json") for a in artifacts.values()
-            ],
-            "grounded_analysis_spec": main.grounded.model_dump(mode="json"),
-            "query_plans": [a.plan.model_dump(mode="json") for a in artifacts.values()],
-            "schema_fingerprint": catalog.fingerprint,
-            "interpretation": meaning,
-            "interpreted_request": meaning,
-            "assumptions": list(
-                dict.fromkeys(
-                    s
-                    for a in artifacts.values()
-                    for s in a.grounded.analysis_spec.assumptions
-                )
-            ),
-            **dashboard,
-            **narrative,
-            "kpis": {},
-            "forecasts": forecasts,
-            "analysis_mission": mission["id"] if mission else None,
-            "mission_layout": mission_layout(mission, dashboard["charts"]),
-            "follow_up_questions": follow_up_questions(artifacts, catalog, mission),
-            "chart_insights": insights,
-            "view_coverage": view_cov,
-            "short_answer": short_answer,
-            "conclusion": build_conclusion(short_answer, narrative, evidence,
-                [v["message"] for v in self.semantic_info.get("limitations", [])]
-                + (["Không có dữ liệu trong phạm vi yêu cầu."] if not any(a.result["rows"] for a in artifacts.values()) else [])
-                + list(dict.fromkeys(s for a in artifacts.values() for s in a.grounded.analysis_spec.assumptions))
-                + [f"Chưa có góc nhìn bắt buộc cho yêu cầu {v['requirement_id']} ({v['kind']}): {v['reason']}." for v in view_cov if v["required"] and v["status"] == "missing"],
-                follow_up_questions(artifacts, catalog, mission), forecasts=forecasts,
-                chart_caveats=[c for ch in dashboard["charts"] for c in (ch.get("insight") or {}).get("caveats", [])],
-                unanswered=[c.get("goal") or c.get("requirement_id") for c in (self.semantic_info.get("resolved_requirement_coverage") or [])
-                            if c.get("state") not in {"RESOLVED", None} and (c.get("goal") or c.get("requirement_id"))],
-                cadence_labels=catalog.registry.get("workspace", {}).get("forecast_cadence_labels", {})),
-            "mission_evidence": relevance,
-            "input_mode": self.semantic_info.get("input_mode", "free_text"),
-            "evidence": evidence,
-            "analysis_explanation": explain_analysis(
-                artifacts, catalog, dashboard["charts"], evidence
-            ),
-            "result_sets": results,
-            "result_contracts": {id: a.contract for id, a in artifacts.items()},
-            "table_data": {
-                "title": meaning["subject"],
-                "columns": first["columns"],
-                "column_labels": first["column_labels"],
-                "rows": first["rows"],
-                "total_rows": first['total_rows'],
-                "query_id": main.query.id,
-                "artifact_ref": main.result_ref,
-            },
-            "sql": {"main": main.sql},
-            "sql_query": main.sql,
-            "sql_by_query": {id: a.sql for id, a in artifacts.items()},
-            "data_warnings": (
-                ["Không có dữ liệu trong phạm vi yêu cầu."]
-                if not any(a.result["rows"] for a in artifacts.values())
-                else []
-            )
-            + [v["message"] for v in self.semantic_info.get("limitations", [])],
-            "provider": {
-                "planner": "catalog_compiler",
-                "synthesis": "validated_evidence",
-            },
-            "created_at": datetime.now().astimezone().isoformat(),
-            "assistant_reply": (
-                "Đã cập nhật báo cáo theo kế hoạch đã kiểm chứng." if refined else ""
-            ),
-            "diagnostics": self.diagnostics(
-                catalog,
-                {
-                    "plan": "passed",
-                    "sql_semantics": "passed",
-                    "security": "passed",
-                    "results": "passed",
-                    "dashboard": "passed",
-                    "insights": "passed",
-                },
-            ),
-        }
+        from services.analysis_response_service import assemble_report_payload
+        response = assemble_report_payload(artifacts=artifacts,catalog=catalog,session=session,
+            meaning=meaning,results=results,dashboard=dashboard,narrative=narrative,forecasts=forecasts,
+            mission=mission,insights=insights,view_cov=view_cov,short_answer=short_answer,relevance=relevance,
+            domain_summary=domain_summary,evidence=evidence,semantic_info=self.semantic_info,planning_mode=self.planning_mode,
+            refined=refined,diagnostics=self.diagnostics(catalog,{
+                "plan":"passed","sql_semantics":"passed","security":"passed",
+                "results":"passed","dashboard":"passed","insights":"passed"}))
         from services.analysis_quality_service import assess_report, report_limitations
         from services.analysis_coverage_service import canonical_components
         declared = self.semantic_info.get("analysis_components") or (session.analysis_components if session.coverage_origin == "declared" else [])
@@ -1094,6 +1026,9 @@ class AnalysisPipeline:
                 "result_set_fingerprint":digest(response["result_sets"]),"query_plans":response["query_plans"],
                 "initial_semantic_intent":deepcopy(self.semantic_info.get("initial_semantic_intent", session.initial_semantic_intent)),
                 "semantic_history":deepcopy(self.semantic_info.get("semantic_history", session.semantic_history))}
+        if session.ui_constraints.get('dashboard_template'):
+            response['title'] = session.ui_constraints['dashboard_template']['title']
+            response.setdefault('provenance', {})['dashboard_template'] = deepcopy(session.ui_constraints['dashboard_template'])
         safe_plan = plan.model_dump(mode="json")
         by_evidence = {e["id"]: e for e in evidence}
         safe_plan["claims"] = [c for c in safe_plan["claims"] if c["evidence_id"] in by_evidence

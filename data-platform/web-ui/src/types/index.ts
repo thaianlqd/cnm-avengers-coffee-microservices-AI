@@ -5,11 +5,13 @@ export type ViewTab =
   | 'stores'
   | 'customers'
   | 'products'
+  | 'architecture'
   | 'system'
   | 'ai_assistant'
   | 'saved_reports';
 
 export type AnalyticsSubTab =
+  | 'hub'
   | 'revenue'
   | 'stores'
   | 'customers'
@@ -126,11 +128,11 @@ export interface SystemUser {
   full_name: string;
   role: string;
   status: string;
-  email: string;
-  last_login?: string;
+  email: string | null;
+  last_login?: string | null;
 }
 
-export interface SystemRole { role: string; users_count: number; description: string; }
+export interface SystemRole { role: string; users_count: number | null; description: string; permissions?: string[]; }
 
 export interface SystemLog { time: string; user: string; action: string; status: string; duration_seconds: number; }
 

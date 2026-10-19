@@ -216,8 +216,24 @@ export function initialChartType(chart = {}) {
   return chart.chart_type === 'bar' && (rows.length > 8 || rows.some(r => String(r.label).length > 18))
     ? 'horizontal_bar' : chart.chart_type;
 }
+
+/** Pair adjacent views without changing their mission order or data. */
+export function chartGridSpans(charts = []) {
+  const density = chart => ['line', 'area', 'multi_line', 'heatmap', 'scatter'].includes(chart.chart_type) ? 2
+    : ['grouped_bar', 'stacked_bar'].includes(chart.chart_type) || (chart.data || []).length > 8
+      || (chart.data || []).some(row => String(row.label).length > 24) ? 1 : 0;
+  const classes = { 4: 'col-span-1 xl:col-span-4', 6: 'col-span-1 xl:col-span-6',
+    8: 'col-span-1 xl:col-span-8', 12: 'col-span-1 xl:col-span-12' };
+  return charts.map((chart, index) => {
+    const start = index - index % 2, pair = charts.slice(start, start + 2);
+    if (pair.length === 1) return classes[12];
+    const first = density(pair[0]), second = density(pair[1]);
+    if (first === second) return classes[6];
+    return classes[density(chart) === Math.max(first, second) ? 8 : 4];
+  });
+}
 export function businessCategory(value) {
-  const labels = { HOAN_THANH: 'Hoàn thành', DA_HUY: 'Đã hủy', DANG_GIAO: 'Đang giao', DANG_XU_LY: 'Đang xử lý', CHO_XAC_NHAN: 'Chờ xác nhận', DUNG_TAI_CHO: 'Dùng tại chỗ', MANG_DI: 'Mang đi', GIAO_HANG: 'Giao hàng', THANH_CONG: 'Thành công', THAT_BAI: 'Thất bại', CHO_THANH_TOAN: 'Chờ thanh toán' };
+  const labels = { HOAN_THANH: 'Hoàn thành', DA_HUY: 'Đã hủy', DANG_GIAO: 'Đang giao', DANG_XU_LY: 'Đang xử lý', CHO_XAC_NHAN: 'Chờ xác nhận', DUNG_TAI_CHO: 'Dùng tại chỗ', LAY_TAI_QUAN: 'Lấy tại quán', MANG_DI: 'Mang đi', GIAO_HANG: 'Giao hàng', THANH_CONG: 'Thành công', THAT_BAI: 'Thất bại', CHO_THANH_TOAN: 'Chờ thanh toán' };
   const payments = { THANH_TOAN_KHI_NHAN_HANG: 'Thanh toán khi nhận hàng', VI_DIEN_TU: 'Ví điện tử', NGAN_HANG_QR: 'QR ngân hàng', THE_NGAN_HANG: 'Thẻ ngân hàng', CHUYEN_KHOAN: 'Chuyển khoản', TIEN_MAT: 'Tiền mặt', GIAO_TAN_NOI: 'Giao tận nơi', DA_THANH_TOAN: 'Đã thanh toán', CHO_THU_TIEN: 'Chờ thu tiền' };
   return labels[value] || payments[value] || String(value ?? 'Chưa xác định');
 }

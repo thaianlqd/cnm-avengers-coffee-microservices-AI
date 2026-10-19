@@ -61,7 +61,8 @@ def fetch_and_publish(producer, source, state_connection):
     result = []
     deadline = time.monotonic()+45
     for contract in contracts():
-        result.append(poll_stream(producer, source, state_connection, contract, deadline=deadline))
+        result.append(poll_stream(producer, source, state_connection, contract, deadline=deadline,
+            poll_interval_seconds=max(1, min(300, int(os.getenv('POLL_INTERVAL_SECONDS', '60'))))))
     return result
 
 

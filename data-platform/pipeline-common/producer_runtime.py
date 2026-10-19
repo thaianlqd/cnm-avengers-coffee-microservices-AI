@@ -52,9 +52,11 @@ def save_cursor(connection, contract, state, generation):
         raise
 
 
-def poll_stream(producer, source, state_connection, contract, *, limit=500, deadline=None):
+def poll_stream(producer, source, state_connection, contract, *, limit=500, deadline=None, poll_interval_seconds=0):
     if type(limit) is not int or not 1 <= limit <= 1000:
         raise PipelineContractError('Bounded stream page required')
+    if type(poll_interval_seconds) is not int or not 0 <= poll_interval_seconds <= 300:
+        raise PipelineContractError('Bounded stream poll interval required')
     deadline = time.monotonic()+45 if deadline is None else deadline
     if time.monotonic() >= deadline: raise TimeoutError('Poll deadline exhausted')
     table, keys = quote_table(contract['source_table']), contract['primary_key']
@@ -75,6 +77,13 @@ def poll_stream(producer, source, state_connection, contract, *, limit=500, dead
                 clock_sql += " AT TIME ZONE current_setting('TimeZone')"
             active = state.get('active')
             if active is None:
+                # A sibling stream can still be paging. Completed streams must
+                # wait independently, rather than re-publishing every sibling page.
+                # Clockless sources only support the contracted periodic full scan.
+                previous = state.get('completed_upper') if clock else state.get('last_full_at')
+                interval = poll_interval_seconds if clock else contract['full_reconcile_seconds']
+                if previous and (upper-datetime.fromisoformat(previous)).total_seconds() < interval:
+                    return {'published': 0, 'has_more': False, 'completeness': 'unknown'}
                 full = (not clock or not state.get('last_full_at') or
                     (upper-datetime.fromisoformat(state['last_full_at'])).total_seconds() >= contract['full_reconcile_seconds'])
                 lower = None if full else (datetime.fromisoformat(state['completed_upper'])-

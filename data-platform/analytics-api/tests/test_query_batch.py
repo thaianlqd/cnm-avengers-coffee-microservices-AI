@@ -13,19 +13,29 @@ from services.provider_budget import request_deadline
 
 
 class QueryBatchTests(TestCase):
+    def test_two_instance_reference_envelope_stays_within_twelve_readers(self):
+        from services import query_execution_batch as batch
+        from services.analysis_job_service import AnalysisJobs
+        from unittest.mock import Mock
+        self.assertEqual(batch.SQL_CONNECTIONS,6)
+        self.assertEqual(batch.SQL_CONNECTIONS*2,12)
+        with patch('services.analysis_job_service.ThreadPoolExecutor') as executor:
+            jobs=AnalysisJobs(Mock())
+            self.assertEqual(executor.call_args.kwargs['max_workers'],2)
+
     def test_snapshot_exporters_leave_connection_capacity_for_their_two_readers(self):
         from services import query_execution_batch as batch
-        self.assertEqual(batch.SQL_CONNECTIONS//(batch.SQL_QUERY_CONCURRENCY+1),4)
-        slots=threading.BoundedSemaphore(4)
+        self.assertEqual(batch.SQL_CONNECTIONS//(batch.SQL_QUERY_CONCURRENCY+1),2)
+        slots=threading.BoundedSemaphore(2)
         entered=threading.Event();release=threading.Event();count=[];lock=threading.Lock()
         def enter():
             with batch.snapshot_admission():
                 with lock:
                     count.append(1)
-                    if len(count)==4:entered.set()
+                    if len(count)==2:entered.set()
                 release.wait(3)
         with patch.object(batch,'_snapshot_slots',slots):
-            workers=[threading.Thread(target=enter) for _ in range(4)]
+            workers=[threading.Thread(target=enter) for _ in range(2)]
             for worker in workers:worker.start()
             try:
                 self.assertTrue(entered.wait(2));self.assertFalse(slots.acquire(blocking=False))
@@ -41,8 +51,8 @@ class QueryBatchTests(TestCase):
             finally:
                 release.set()
                 for worker in workers:worker.join(2)
-            for _ in range(4):self.assertTrue(slots.acquire(blocking=False))
-            for _ in range(4):slots.release()
+            for _ in range(2):self.assertTrue(slots.acquire(blocking=False))
+            for _ in range(2):slots.release()
 
     def test_failed_snapshot_body_releases_its_admission_slot(self):
         from services import query_execution_batch as batch

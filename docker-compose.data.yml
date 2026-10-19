@@ -32,6 +32,8 @@ services:
       dockerfile: data-sync/Dockerfile
     container_name: avengers_data_sync
     restart: unless-stopped
+    cpus: 0.20
+    mem_limit: 384m
     depends_on:
       postgres-analytics:
         condition: service_healthy
@@ -50,7 +52,7 @@ services:
       TARGET_DB_PASSWORD: analytics123
       TARGET_DB_NAME: analytics
       # Sync config
-      DATA_PLATFORM_GOVERNED_INGESTION: ${DATA_PLATFORM_GOVERNED_INGESTION:-0}
+      DATA_PLATFORM_GOVERNED_INGESTION: ${DATA_PLATFORM_GOVERNED_INGESTION:-1}
       DATA_PLATFORM_WAREHOUSE_PROFILE_PATH: /run/secrets/warehouse-replica.json
       SYNC_INTERVAL_SECONDS: 300
       SYNC_SCHEMAS: "orders,identity,menu,inventory,news,ai"
@@ -155,8 +157,12 @@ services:
         EXPOSE 9000 9001
         VOLUME ["/data"]
     container_name: avengers_minio
+    cpus: 0.20
+    mem_limit: 768m
     restart: unless-stopped
     environment:
+      GOMAXPROCS: 1
+      GOMEMLIMIT: 384MiB
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
     command:
@@ -196,6 +202,8 @@ services:
       context: ./data-platform
       dockerfile: kafka-producer/Dockerfile
     container_name: avengers_kafka_producer
+    cpus: 0.10
+    mem_limit: 256m
     restart: unless-stopped
     depends_on:
       kafka:
@@ -203,7 +211,7 @@ services:
       postgres-analytics:
         condition: service_healthy
     environment:
-      DATA_PLATFORM_GOVERNED_STREAMING: ${DATA_PLATFORM_GOVERNED_STREAMING:-0}
+      DATA_PLATFORM_GOVERNED_STREAMING: ${DATA_PLATFORM_GOVERNED_STREAMING:-1}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DB_HOST: postgres-analytics
       DB_PORT: 5432
@@ -225,6 +233,8 @@ services:
       context: ./data-platform
       dockerfile: kafka-consumer/Dockerfile
     container_name: avengers_kafka_consumer
+    cpus: 0.15
+    mem_limit: 384m
     restart: unless-stopped
     depends_on:
       kafka:
@@ -236,7 +246,7 @@ services:
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_GROUP_ID: avengers-bronze-consumer
-      DATA_PLATFORM_GOVERNED_STREAMING: ${DATA_PLATFORM_GOVERNED_STREAMING:-0}
+      DATA_PLATFORM_GOVERNED_STREAMING: ${DATA_PLATFORM_GOVERNED_STREAMING:-1}
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
@@ -353,9 +363,12 @@ services:
   # =========================================
   analytics-api:
     build:
-      context: ./data-platform/analytics-api
+      context: ./data-platform
+      dockerfile: analytics-api/Dockerfile
     container_name: avengers_analytics_api
     restart: unless-stopped
+    cpus: 0.50
+    mem_limit: 1024m
     depends_on:
       postgres-analytics:
         condition: service_healthy
@@ -369,6 +382,7 @@ services:
       ANALYTICS_INITIALIZE_WAREHOUSE_ON_STARTUP: "false"
       DATA_ANALYST_ALLOWED_ORIGINS: ${DATA_ANALYST_ALLOWED_ORIGINS:-}
       PORT: 8000
+      PYTHONPATH: /app:/opt/pipeline-common
       # ── Database (Analytics DB riêng) ──────────────────
       DB_HOST: postgres-analytics
       DB_PORT: 5432
@@ -403,7 +417,9 @@ services:
       DATA_ANALYST_CAPACITY_RESPONSE_BYTES: "1000000"
       DATA_ANALYST_CAPACITY_SESSION_BYTES: "1000000"
       DATA_ANALYST_REDIS_URL: ${DATA_ANALYST_REDIS_URL:-redis://redis-analytics:6379/2}
-      DATA_ANALYST_REPORT_SQL_MODE: ${DATA_ANALYST_REPORT_SQL_MODE:-disabled}
+      # Explicit disabled/trusted_admin overrides public deployment settings.
+      # The default delegates to the reviewed settings file, otherwise disabled.
+      DATA_ANALYST_REPORT_SQL_MODE: ${DATA_ANALYST_REPORT_SQL_MODE:-deployment}
       DATA_ANALYST_REPORT_ADMIN_TOKEN: ${DATA_ANALYST_REPORT_ADMIN_TOKEN:-}
       # Optional source access is metadata-only; analytical SQL always uses postgres-analytics.
       SOURCE_DB_HOST: ${DB_HOST:-aws-0-ap-southeast-1.pooler.supabase.com}
@@ -416,6 +432,7 @@ services:
       - "8502:8000"
     volumes:
       - ./data-platform/analytics-api:/app
+      - ./data-platform/pipeline-common:/opt/pipeline-common:ro
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS --max-time 7 http://localhost:8000/api/readiness >/dev/null || exit 1"]
       interval: 10s

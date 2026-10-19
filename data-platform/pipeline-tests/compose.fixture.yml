@@ -2,6 +2,8 @@
 services:
   postgres:
     image: postgres:16
+    cpus: 0.15
+    mem_limit: 384m
     network_mode: none
     labels: {codex.goal: v34-maturity}
     environment:
@@ -82,6 +84,8 @@ services:
       - ../evaluation/v34/implementation-20261018/views-parity-before.json:/workspace/evaluation/v34/implementation-20261018/views-parity-before.json:ro
     command: [python, -m, unittest, discover, -s, pipeline-tests, -p, 'integration_*.py']
   redis:
+    cpus: 0.05
+    mem_limit: 96m
     image: redis:7-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
     network_mode: service:postgres
     depends_on: {postgres: {condition: service_healthy}}
@@ -93,7 +97,7 @@ services:
       retries: 30
   api-tests:
     image: avengers-v34-api-fixture-tests
-    build: {context: ../analytics-api}
+    build: {context: .., dockerfile: analytics-api/Dockerfile}
     working_dir: /app
     network_mode: service:postgres
     depends_on:

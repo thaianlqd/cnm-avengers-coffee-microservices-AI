@@ -4,7 +4,29 @@ import os
 import time
 from contextvars import ContextVar
 from threading import Lock
-from services.analysis_catalog import AnalysisError
+from services.error_taxonomy import AnalysisError
+
+# Trusted dashboard execution is deterministic, including accidental future fallbacks.
+# Context-local and inherited by the existing context-aware executor; never client headers.
+_provider_forbidden = ContextVar('analysis_provider_forbidden', default=False)
+
+
+def deterministic_dashboard(method):
+    from functools import wraps
+    @wraps(method)
+    def run(self, request, *args, **kwargs):
+        token = _provider_forbidden.set(_provider_forbidden.get() or bool(getattr(request, 'dashboard_id', None)))
+        try:
+            return method(self, request, *args, **kwargs)
+        finally:
+            _provider_forbidden.reset(token)
+    return run
+
+
+def require_provider_allowed():
+    if _provider_forbidden.get():
+        raise AnalysisError('provider_forbidden', 'Dashboard execution forbids provider calls')
+
 
 request_deadline = ContextVar('analysis_request_deadline', default=None)
 request_cancelled = ContextVar('analysis_request_cancelled', default=None)
@@ -17,6 +39,13 @@ CONNECT_SECONDS = 2
 DETERMINISTIC_RESERVE = 5    # local deterministic work after the provider
 MIN_RECOVERY_SECONDS = 6
 PHYSICAL_CEILING = 3  # fallback + repair together never exceed three HTTP attempts per submission
+
+
+def semantic_repair_limit():
+    value = os.getenv("DATA_ANALYST_MAX_SEMANTIC_REPAIRS", "1").strip()
+    if value not in {"0", "1", "2"}:
+        raise AnalysisError("provider_policy", "Invalid semantic repair allowance")
+    return min(1, int(value))
 
 
 def check_request_deadline():
@@ -121,6 +150,7 @@ class ProviderBudget:
     def record_physical(self, payload=None):
         """Reserve one real HTTP attempt before it is sent (hard ceiling, same lock as consume)."""
         import hashlib, json
+        require_provider_allowed()
         with self.lock:
             # Durable reservation first: the job ledger (not this instance) is the authority and may veto the send.
             observer = request_observer.get()
@@ -139,6 +169,7 @@ class ProviderBudget:
                                     provider_physical_payload_hashes=list(self.payload_hashes))
 
     def consume(self, context_chars=None):
+        require_provider_allowed()
         with self.lock:
             self.remaining(reserve=DETERMINISTIC_RESERVE)
             if self.used >= self.max_calls:

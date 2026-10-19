@@ -57,6 +57,425 @@ def fingerprint(value):
     return hashlib.sha256(canonical_bytes(value)).hexdigest()
 
 
+def quality_rules(contract):
+    """Contract-derived integrity rules; no guessed numerical or enum domains."""
+    rules = [{'id': 'primary_key', 'kind': 'primary_key'}]
+    for name, definition in contract['columns'].items():
+        if not definition.get('nullable', True) and definition.get('projection', 'source') == 'source':
+            rules.append({'id': 'required.' + name, 'kind': 'not_null', 'column': name})
+    if contract.get('update_clock'):
+        rules.append({'id': 'clock_bound', 'kind': 'clock_bound', 'column': contract['update_clock']})
+    known = {rule['id'] for rule in rules}
+    for rule in contract.get('quality_checks', []):
+        if (rule.get('id') in known or rule.get('kind') not in {'numeric_range', 'enum', 'not_null'}
+                or rule.get('column') not in contract['columns']):
+            raise PipelineContractError('Invalid or duplicate quality rule')
+        if rule['kind'] == 'enum' and (not isinstance(rule.get('values'), list) or not rule['values']):
+            raise PipelineContractError('Enum check requires a governed finite vocabulary')
+        if rule['kind'] == 'numeric_range' and not any(k in rule for k in ('minimum', 'maximum', 'exclusive_minimum')):
+            raise PipelineContractError('Numeric check requires a governed bound')
+        known.add(rule['id'])
+        rules.append(deepcopy(rule))
+    return rules
+
+
+def _projection_value(value, definition):
+    """Stable typed digest input, never a value exported in certificate evidence."""
+    from decimal import Decimal
+    from datetime import date
+    import math
+    if value is None:
+        return ['null']
+    kind = definition.get('data_type', '')
+    if kind in {'json', 'jsonb'}:
+        def normalized(item):
+            if isinstance(item, dict):
+                return ['object', [[key, normalized(item[key])] for key in sorted(item)]]
+            if isinstance(item, list):
+                return ['array', [normalized(value) for value in item]]
+            if isinstance(item, (int, float, Decimal)) and not isinstance(item, bool):
+                return _projection_value(item, {'data_type': 'numeric'})
+            return ['scalar', item]
+        try:
+            parsed = json.loads(value, parse_float=Decimal, parse_int=Decimal,
+                parse_constant=lambda _value: (_ for _ in ()).throw(ValueError())) if isinstance(value, str) else value
+            return ['json', normalized(parsed)]
+        except (ValueError, TypeError):
+            raise PipelineContractError('Invalid JSON projection') from None
+    if kind in {'numeric', 'decimal', 'money'}:
+        number = Decimal(str(value))
+        if not number.is_finite():
+            raise PipelineContractError('Nonfinite numeric value cannot be certified')
+        text = format(number, 'f')
+        if '.' in text:
+            text = text.rstrip('0').rstrip('.')
+        return ['numeric', text if number else '0']
+    if kind in {'real', 'double precision'}:
+        number = float(value)
+        if not math.isfinite(number):
+            raise PipelineContractError('Nonfinite float value cannot be certified')
+        return ['float', number.hex()]
+    if isinstance(value, datetime):
+        if value.tzinfo is None:
+            return ['local_datetime', value.isoformat(timespec='microseconds')]
+        return ['instant', value.astimezone(timezone.utc).isoformat(timespec='microseconds')]
+    if isinstance(value, date):
+        return ['date', value.isoformat()]
+    if isinstance(value, (bytes, bytearray, memoryview)):
+        return ['bytes', bytes(value).hex()]
+    if isinstance(value, (dict, list)):
+        return ['json', canonical_bytes(value).decode()]
+    if isinstance(value, bool):
+        return ['boolean', value]
+    if isinstance(value, int):
+        return ['integer', str(value)]
+    return ['text', str(value)]
+
+
+class ProjectionEvidence:
+    """One-pass ordered projection digests and bounded per-rule observations.
+
+    Caller orders both source and target by the same stable primary-key text
+    collation. Only the immediately previous key is retained to detect ties.
+    Output contains no keys, values or rejected rows.
+    """
+    def __init__(self, contract, *, source_upper_bound=None, source_timezone="UTC"):
+        self.contract = contract
+        self.upper = source_upper_bound
+        self.source_timezone = source_timezone
+        if contract.get("update_clock") and source_upper_bound is None:
+            raise PipelineContractError("Update-clock evidence requires a measured source upper bound")
+        self.rules = quality_rules(contract)
+        self.rows = 0
+        self.key_hash = hashlib.sha256()
+        self.content_hash = hashlib.sha256()
+        self.previous_key = None
+        self.counts = {rule['id']: 0 for rule in self.rules}
+
+    def observe(self, row):
+        from decimal import Decimal, InvalidOperation
+        keys = self.contract['primary_key']
+        key = canonical_bytes([_projection_value(row[name], self.contract['columns'][name]) for name in keys])
+        payload = canonical_bytes([_projection_value(row[name], definition)
+                                   for name, definition in self.contract['columns'].items()])
+        for digest, raw in ((self.key_hash, key), (self.content_hash, payload)):
+            digest.update(len(raw).to_bytes(8, 'big'))
+            digest.update(raw)
+        for rule in self.rules:
+            kind = rule['kind']
+            value = row.get(rule.get('column'))
+            bad = False
+            if kind == 'primary_key':
+                bad = not keys or any(row.get(name) is None for name in keys) or key == self.previous_key
+            elif kind == 'not_null':
+                bad = value is None
+            elif kind == 'clock_bound':
+                from zoneinfo import ZoneInfo
+                if isinstance(value, datetime):
+                    instant = value if value.tzinfo else value.replace(tzinfo=ZoneInfo(self.source_timezone))
+                    bad = instant > self.upper
+                else:
+                    bad = True
+            elif kind == 'enum':
+                bad = value is not None and value not in rule['values']
+            elif kind == 'numeric_range':
+                try:
+                    number = Decimal(str(value))
+                    bad = not number.is_finite()
+                    bad |= 'minimum' in rule and number < Decimal(str(rule['minimum']))
+                    bad |= 'maximum' in rule and number > Decimal(str(rule['maximum']))
+                    bad |= 'exclusive_minimum' in rule and number <= Decimal(str(rule['exclusive_minimum']))
+                except (InvalidOperation, TypeError, ValueError):
+                    bad = True
+            self.counts[rule['id']] += int(bad)
+        self.previous_key = key
+        self.rows += 1
+
+    def summary(self):
+        checks = [{'rule_id': rule['id'], 'kind': rule['kind'], 'column': rule.get('column'),
+                   'checked': self.rows, 'violations': self.counts[rule['id']],
+                   'status': 'failed' if self.counts[rule['id']] else 'passed' if self.rows else 'no_data'}
+                  for rule in self.rules]
+        return {'rows': self.rows, 'key_sha256': self.key_hash.hexdigest(),
+                'content_sha256': self.content_hash.hexdigest(),
+                'quality': {'status': 'failed' if any(self.counts.values()) else 'passed' if self.rows else 'empty_measured',
+                            'checks': checks}}
+
+
+def quality_manifest(contract):
+    refs = []
+    for reference in contract.get('reference_checks', []):
+        quote_table(reference['reference_table'])
+        for name in reference['columns'] + reference['reference_columns']:
+            quote_identifier(name)
+        if (not reference['columns'] or len(reference['columns']) != len(reference['reference_columns'])
+                or any(name not in contract['columns'] for name in reference['columns'])):
+            raise PipelineContractError('Invalid reference check contract')
+        refs.append({'id': reference['id'], 'kind': 'reference', **reference})
+    result = quality_rules(contract) + refs
+    if len({rule['id'] for rule in result}) != len(result):
+        raise PipelineContractError('Duplicate quality rule identity')
+    return result
+
+
+def _validate_quality(contract, observed):
+    rows = observed['rows']
+    definitions = {rule['id']: rule for rule in quality_manifest(contract)}
+    checks = observed['quality']['checks']
+    if (type(rows) is not int or rows < 0 or len(checks) != len(definitions)
+            or {rule['rule_id'] for rule in checks} != set(definitions)):
+        raise PipelineContractError('Required quality observation missing')
+    for check in checks:
+        checked, violations = check['checked'], check['violations']
+        definition = definitions[check['rule_id']]
+        expected_status = 'failed' if violations else 'passed' if checked else 'no_data'
+        if (type(checked) is not int or type(violations) is not int
+                or not 0 <= violations <= checked <= rows or check['status'] != expected_status
+                or (definition['kind'] != 'reference' and checked != rows)):
+            raise PipelineContractError('Quality observation count/status is inconsistent')
+    status = 'failed' if any(check['violations'] for check in checks) else 'passed' if rows else 'empty_measured'
+    if observed['quality']['status'] != status:
+        raise PipelineContractError('Quality summary differs from its measured checks')
+
+
+def attach_reference_evidence(contract, observed, measurements):
+    value = deepcopy(observed)
+    for definition in quality_manifest(contract):
+        if definition['kind'] != 'reference':
+            continue
+        measurement = measurements.get(definition['id'])
+        if not isinstance(measurement, dict):
+            raise PipelineContractError('Reference integrity has not been measured')
+        checked, violations = measurement.get('checked'), measurement.get('violations')
+        if type(checked) is not int or type(violations) is not int or not 0 <= violations <= checked <= observed['rows']:
+            raise PipelineContractError('Reference observation is outside its population')
+        value['quality']['checks'].append({'rule_id': definition['id'], 'kind': 'reference',
+            'checked': checked, 'violations': violations,
+            'status': 'failed' if violations else 'passed' if checked else 'no_data'})
+    value['quality']['status'] = ('failed' if any(c['violations'] for c in value['quality']['checks'])
+                                  else 'passed' if value['rows'] else 'empty_measured')
+    _validate_quality(contract, value)
+    return value
+
+
+def reference_observations(connection, contract, *, table=None, where_sql='', parameters=()):
+    """Bounded counts; caller supplies an internally compiled period predicate."""
+    result = {}
+    for rule in quality_manifest(contract):
+        if rule['kind'] != 'reference': continue
+        present = ' AND '.join('r.'+quote_identifier(name)+' IS NOT NULL' for name in rule['columns'])
+        links = ' AND '.join('p.'+quote_identifier(remote)+' = r.'+quote_identifier(local)
+                             for local, remote in zip(rule['columns'], rule['reference_columns']))
+        exists = 'EXISTS (SELECT 1 FROM '+quote_table(rule['reference_table'])+' p WHERE '+links+')'
+        statement = ('SELECT COUNT(*) FILTER (WHERE '+present+') AS checked, '
+                     'COUNT(*) FILTER (WHERE '+present+' AND NOT '+exists+') AS violations '
+                     'FROM '+quote_table(table or contract['target_table'])+' r')
+        if where_sql: statement += ' WHERE '+where_sql
+        with connection.cursor() as cursor:
+            cursor.execute(statement, parameters)
+            row = cursor.fetchone()
+        result[rule['id']] = dict(row) if isinstance(row, dict) else dict(zip(('checked','violations'),row))
+    return result
+
+
+def snapshot_certificate(contract, source, target, *, generation, schema_fingerprint,
+                         source_upper_bound, snapshot_started_at, now=None):
+    """Issue physical snapshot parity only; business-period closure is separate."""
+    from datetime import timedelta
+    now = now or datetime.now(timezone.utc)
+    _validate_quality(contract, source)
+    _validate_quality(contract, target)
+    if (source != target or source.get('quality', {}).get('status') not in {'passed', 'empty_measured'}
+            or not contract.get('primary_key') or type(generation) is not int or generation <= 0
+            or not _SHA.fullmatch(schema_fingerprint)):
+        raise PipelineContractError('Snapshot parity or required quality checks failed')
+    for value in (now, source_upper_bound, snapshot_started_at):
+        if not isinstance(value, datetime) or value.tzinfo is None:
+            raise PipelineContractError('Snapshot proof requires explicit timezone')
+    if snapshot_started_at > now or source_upper_bound > now + timedelta(seconds=2):
+        raise PipelineContractError('Snapshot proof clock bounds are inconsistent')
+    result = {'certificate_version': 1, 'kind': 'snapshot_parity', 'dataset_id': contract['dataset_id'],
+        'contract_fingerprint': fingerprint(contract), 'generation': generation,
+        'schema_fingerprint': schema_fingerprint, 'source_upper_bound': source_upper_bound.isoformat(),
+        'snapshot_started_at': snapshot_started_at.isoformat(), 'snapshot_finished_at': now.isoformat(),
+        'extraction_range': {'kind': 'full_snapshot'}, 'full_reconcile': True, 'delete_reconciled': True,
+        'source': deepcopy(source), 'target': deepcopy(target), 'quality': deepcopy(target['quality']),
+        'issued_at': now.isoformat(),
+        'expires_at': (now+timedelta(seconds=contract.get('maximum_acceptable_load_lag_seconds', 900))).isoformat(),
+        'closed_through': None, 'lateness_basis': 'not_certified', 'unresolved_failures': []}
+    result['certificate_sha256'] = fingerprint(result)
+    return result
+
+
+def valid_certificate(value, contract, *, generation, schema_fingerprint, now=None):
+    """Validate trusted-writer evidence; digest alone is not a client signature."""
+    now = now or datetime.now(timezone.utc)
+    try:
+        proof = deepcopy(value)
+        claimed = proof.pop('certificate_sha256')
+        if (claimed != fingerprint(proof) or proof['certificate_version'] != 1
+                or proof['kind'] not in {'snapshot_parity', 'closed_period'} or proof['dataset_id'] != contract['dataset_id']
+                or proof['contract_fingerprint'] != fingerprint(contract)
+                or proof['generation'] != generation or proof['schema_fingerprint'] != schema_fingerprint
+                or proof['source'] != proof['target'] or not proof['full_reconcile'] or not proof['delete_reconciled']
+                or proof['unresolved_failures']
+                or proof['quality'] != proof['target']['quality']
+                or proof['quality']['status'] not in {'passed', 'empty_measured'}
+                or datetime.fromisoformat(proof['expires_at']) <= now
+                or datetime.fromisoformat(proof['issued_at']) > now):
+            raise ValueError()
+        if proof['kind'] == 'snapshot_parity':
+            if (proof['closed_through'] is not None or proof['lateness_basis'] != 'not_certified'
+                    or proof['extraction_range'] != {'kind': 'full_snapshot'}):
+                raise ValueError()
+        else:
+            period = next((p for p in contract.get('closed_periods', [])
+                           if p.get('id') == proof['extraction_range'].get('period_id')), None)
+            if (not period or not _valid_closure_attestation(period)
+                    or proof.get('attestation_sha256') != fingerprint(period)
+                    or proof['closed_through'] != period['end']
+                    or proof['lateness_basis'] != 'admin_attested_closed_period'
+                    or proof['extraction_range'] != _period_range(period)):
+                raise ValueError()
+        _validate_quality(contract, proof['source'])
+        expected_rules = {rule['id'] for rule in quality_manifest(contract)}
+        checks = proof['quality']['checks']
+        if (len(checks) != len(expected_rules) or {rule['rule_id'] for rule in checks} != expected_rules
+                or any(rule['violations'] != 0 for rule in checks)
+                or type(proof['source']['rows']) is not int or proof['source']['rows'] < 0
+                or any(not _SHA.fullmatch(proof['source'][name]) for name in ('key_sha256', 'content_sha256'))):
+            raise ValueError()
+        return True
+    except (ValueError, KeyError, TypeError, AttributeError, OverflowError):
+        raise PipelineContractError('Certificate missing, stale, incompatible or invalid') from None
+
+
+def _valid_closure_attestation(period):
+    from datetime import date
+    try:
+        return (period['attested_by'] == 'admin' and period['authority'] == 'user_confirmation_20261019'
+                and period['must_revoke_before_mutation'] is True
+                and date.fromisoformat(period['start']) <= date.fromisoformat(period['end'])
+                and date.fromisoformat(period['end']) < date.fromisoformat(period['attested_on'])
+                and period.get('enabled') is True)
+    except (KeyError, ValueError, TypeError):
+        return False
+
+
+def _period_range(period):
+    return {'kind': 'closed_period', 'period_id': period['id'], 'start': period['start'], 'end': period['end'],
+            'clock': period['clock'], 'timezone': period['timezone']}
+
+
+def closed_period_certificate(contract, source, target, *, period_id, **snapshot_arguments):
+    period = next((p for p in contract.get('closed_periods', []) if p.get('id') == period_id), None)
+    if not period or not _valid_closure_attestation(period):
+        raise PipelineContractError('Closed period needs recorded business-owner attestation')
+    certificate = snapshot_certificate(contract, source, target, **snapshot_arguments)
+    certificate.update(kind='closed_period', extraction_range=_period_range(period),
+                       closed_through=period['end'], lateness_basis='admin_attested_closed_period',
+                       attestation_sha256=fingerprint(period))
+    certificate.pop('certificate_sha256')
+    certificate['certificate_sha256'] = fingerprint(certificate)
+    return certificate
+
+
+def closed_period_eligible(certificate, period_end, period_start=None):
+    """Range check after DataHealth validated the trusted-writer certificate."""
+    from datetime import date
+    try:
+        proof = certificate['extraction_range']
+        end = period_end.date() if isinstance(period_end, datetime) else period_end
+        start = period_start.date() if isinstance(period_start, datetime) else period_start
+        if isinstance(end, str): end = date.fromisoformat(end)
+        if isinstance(start, str): start = date.fromisoformat(start)
+        return (certificate.get('kind') == 'closed_period'
+                and certificate.get('lateness_basis') == 'admin_attested_closed_period'
+                and date.fromisoformat(proof['start']) <= (start or end)
+                and end <= date.fromisoformat(proof['end']))
+    except (KeyError, ValueError, TypeError, AttributeError):
+        return False
+
+
+# Compatibility name for the initial snapshot-only proof consumers.
+valid_snapshot_certificate = valid_certificate
+
+
+def load_evidence(contract, target, *, generation, schema_fingerprint, snapshot=None,
+                  closed_periods=(), previous=None, now=None):
+    """Atomic checkpoint envelope: measured quality is not global completeness."""
+    from statistics import median
+    now = now or datetime.now(timezone.utc)
+    _validate_quality(contract, target)
+    if snapshot is not None:
+        valid_certificate(snapshot, contract, generation=generation, schema_fingerprint=schema_fingerprint, now=now)
+        if snapshot['kind'] != 'snapshot_parity' or snapshot['target'] != target:
+            raise PipelineContractError('Snapshot does not describe this target projection')
+    periods = list(closed_periods)
+    for certificate in periods:
+        valid_certificate(certificate, contract, generation=generation, schema_fingerprint=schema_fingerprint, now=now)
+        if certificate['kind'] != 'closed_period':
+            raise PipelineContractError('Period evidence must have a bounded attested range')
+    contract_hash = fingerprint(contract)
+    history = [row for row in (previous or {}).get('volume_history', [])
+               if row.get('schema_fingerprint') == schema_fingerprint and row.get('contract_fingerprint') == contract_hash][-7:]
+    volume = {'status': 'not_measured', 'baseline_samples': len(history), 'threshold': None,
+              'reason': 'insufficient_comparable_reconciliations'}
+    if len(history) >= 7:
+        volume.update(status='observed', baseline_rows=median([row['rows'] for row in history]),
+                      current_rows=target['rows'], reason='no_alert_threshold_configured')
+    if snapshot is not None:
+        history = (history+[{'generation': generation, 'rows': target['rows'], 'observed_at': now.isoformat(),
+                            'schema_fingerprint': schema_fingerprint, 'contract_fingerprint': contract_hash}])[-7:]
+    payload = {'evidence_version': 1, 'dataset_id': contract['dataset_id'], 'generation': generation,
+        'contract_fingerprint': contract_hash, 'schema_fingerprint': schema_fingerprint,
+        'observed_at': now.isoformat(), 'quality': deepcopy(target['quality']),
+        'replica_rows': target['rows'], 'quality_basis': 'current_replica_projection',
+        'snapshot': snapshot, 'closed_periods': periods,
+        'completeness': 'complete' if snapshot else 'partial' if periods else 'unknown',
+        'volume_history': history, 'volume': volume}
+    payload['evidence_sha256'] = fingerprint(payload)
+    if len(canonical_bytes(payload)) > 128000:
+        raise PipelineContractError('Checkpoint evidence exceeds bounded capacity')
+    return payload
+
+
+def valid_load_evidence(payload, contract, *, generation, schema_fingerprint, now=None):
+    now = now or datetime.now(timezone.utc)
+    try:
+        value = deepcopy(payload)
+        digest = value.pop('evidence_sha256')
+        if (digest != fingerprint(value) or value['evidence_version'] != 1
+                or value['dataset_id'] != contract['dataset_id'] or value['generation'] != generation
+                or value['schema_fingerprint'] != schema_fingerprint
+                or value['contract_fingerprint'] != fingerprint(contract)):
+            raise ValueError()
+        from datetime import timedelta
+        observed = datetime.fromisoformat(value['observed_at'])
+        if (observed > now+timedelta(seconds=2)
+                or (now-observed).total_seconds() > contract.get('maximum_acceptable_load_lag_seconds', 900)):
+            raise ValueError()
+        _validate_quality(contract, {'rows': value['replica_rows'], 'quality': value['quality']})
+        certificates = ([value['snapshot']] if value['snapshot'] else []) + value['closed_periods']
+        for certificate in certificates:
+            valid_certificate(certificate, contract, generation=generation, schema_fingerprint=schema_fingerprint, now=now)
+        snapshot = value['snapshot']
+        if snapshot and (snapshot['kind'] != 'snapshot_parity'
+                or snapshot['target']['rows'] != value['replica_rows']
+                or snapshot['quality'] != value['quality']):
+            raise ValueError()
+        period_ids = [certificate['extraction_range'].get('period_id') for certificate in value['closed_periods']]
+        if (any(certificate['kind'] != 'closed_period' for certificate in value['closed_periods'])
+                or len(period_ids) != len(set(period_ids))):
+            raise ValueError()
+        expected = 'complete' if value['snapshot'] else 'partial' if value['closed_periods'] else 'unknown'
+        if expected != value['completeness']:
+            raise ValueError()
+        return True
+    except (ValueError, KeyError, TypeError, AttributeError):
+        raise PipelineContractError('Invalid checkpoint evidence') from None
+
+
 def start_run(dataset_id, contract_fingerprint, source_runs, *, run_id=None, now=None):
     identity = 'run_' + uuid4().hex if run_id is None else run_id
     if (not isinstance(identity, str) or not isinstance(dataset_id, str) or not isinstance(contract_fingerprint, str)
@@ -183,17 +602,17 @@ def read_verified_artifact(s3, bucket, manifest, name):
 def read_checkpoint(connection, dataset_id):
     with connection.cursor() as cursor:
         cursor.execute('SELECT cursor_time, cursor_keys, source_upper_bound, generation, schema_fingerprint, '
-                       'last_success_at, last_full_reconcile_at, completeness, observed_rows FROM analytics.ingestion_checkpoints '
+                       'last_success_at, last_full_reconcile_at, completeness, observed_rows, certificate FROM analytics.ingestion_checkpoints '
                        'WHERE dataset_id=%s', (dataset_id,))
         row = cursor.fetchone()
     if row is None:
         return {'cursor_time': None, 'cursor_keys': [], 'source_upper_bound': None, 'generation': 0,
                 'schema_fingerprint': None, 'last_success_at': None, 'last_full_reconcile_at': None,
-                'completeness': 'unknown', 'observed_rows': None}
+                'completeness': 'unknown', 'observed_rows': None, 'certificate': None}
     if isinstance(row, dict):
         return dict(row)
     return dict(zip(('cursor_time', 'cursor_keys', 'source_upper_bound', 'generation', 'schema_fingerprint',
-                     'last_success_at', 'last_full_reconcile_at', 'completeness', 'observed_rows'), row))
+                     'last_success_at', 'last_full_reconcile_at', 'completeness', 'observed_rows', 'certificate'), row))
 
 
 def quote_identifier(value):
@@ -258,7 +677,7 @@ def source_projection(contract):
     for name, definition in contract['columns'].items():
         identifier = quote_identifier(name)
         if definition['projection'] == 'source':
-            expressions.append(identifier)
+            expressions.append(identifier+'::text AS '+identifier if definition['data_type'] in {'json','jsonb'} else identifier)
         else:
             if definition['classification'] != 'restricted' or definition['data_type'] not in casts:
                 raise PipelineContractError('Redacted source column has no safe typed projection')
@@ -267,34 +686,93 @@ def source_projection(contract):
     return ', '.join(expressions), parameters
 
 
+def target_projection(contract):
+    expressions = []
+    for name, definition in contract['columns'].items():
+        identifier = quote_identifier(name)
+        expressions.append(identifier+'::text AS '+identifier if definition['data_type'] in {'json','jsonb'} else identifier)
+    return ', '.join(expressions)
+
+
+def period_predicate(contract, period, *, alias='r', target=False):
+    from datetime import date, time, timedelta
+    from zoneinfo import ZoneInfo
+    if not _valid_closure_attestation(period):
+        raise PipelineContractError('Closed period is not authorized')
+    start = datetime.combine(date.fromisoformat(period['start']), time.min)
+    end = datetime.combine(date.fromisoformat(period['end'])+timedelta(days=1), time.min)
+    kind = period.get('clock_data_type', contract['columns'].get(period['clock'], {}).get('data_type'))
+    if kind == 'timestamp with time zone':
+        start, end = start.replace(tzinfo=ZoneInfo(period['timezone'])), end.replace(tzinfo=ZoneInfo(period['timezone']))
+    elif kind != 'timestamp without time zone':
+        raise PipelineContractError('Closed period needs its physical clock type')
+    if period.get('parent_table'):
+        parent = period.get('target_parent_table', period['parent_table']) if target else period['parent_table']
+        clock = 'period_parent.' + quote_identifier(period['clock'])
+        sql = ('EXISTS (SELECT 1 FROM '+quote_table(parent)+' period_parent WHERE '
+               'period_parent.'+quote_identifier(period['parent_key'])+' = '+quote_identifier(alias)+'.'+quote_identifier(period['local_key'])
+               +' AND '+clock+' >= %s AND '+clock+' < %s)')
+    else:
+        if period['clock'] not in contract['columns']:
+            raise PipelineContractError('Closed period clock is outside source projection')
+        clock = quote_identifier(alias)+'.'+quote_identifier(period['clock'])
+        sql = clock+' >= %s AND '+clock+' < %s'
+    return sql, [start, end]
+
+
+def extraction_order(contracts):
+    """Load referenced snapshots first; no scheduler or second pipeline owner."""
+    graph = {name: {rule['reference_table'] for rule in contract.get('reference_checks', [])
+                    if rule['reference_table'] in contracts and rule['reference_table'] != name}
+             for name, contract in contracts.items()}
+    ordered = []
+    while graph:
+        ready = sorted(name for name, dependencies in graph.items() if not dependencies)
+        if not ready:
+            raise PipelineContractError('Source reference contracts contain a dependency cycle')
+        ordered.extend(ready)
+        graph = {name: dependencies-set(ready) for name, dependencies in graph.items() if name not in ready}
+    return ordered
+
+
 def advance_checkpoint(connection, dataset_id, *, cursor_time, cursor_keys, source_upper_bound,
-                       schema_fingerprint, observed_rows, expected_generation, full_reconcile=False):
-    """Fenced write in the caller's data transaction. NEVER commits on its own."""
+                       schema_fingerprint, observed_rows, expected_generation, full_reconcile=False,
+                       evidence=None, contract=None, now=None):
+    """Fenced data/checkpoint/evidence mutation; caller owns the transaction."""
     if (not _DATASET.fullmatch(dataset_id) or not _SHA.fullmatch(schema_fingerprint)
             or not isinstance(cursor_keys, list) or type(expected_generation) is not int or expected_generation < 0
             or type(observed_rows) is not int or observed_rows < 0):
         raise PipelineContractError('Invalid source checkpoint contract')
+    completeness, encoded = 'unknown', None
+    if evidence is not None:
+        if contract is None or contract['dataset_id'] != dataset_id:
+            raise PipelineContractError('Evidence requires its exact source contract')
+        valid_load_evidence(evidence, contract, generation=expected_generation+1,
+                            schema_fingerprint=schema_fingerprint, now=now)
+        completeness = evidence['completeness']
+        encoded = canonical_bytes(evidence).decode()
     keys = canonical_bytes(cursor_keys).decode()
-    values = (cursor_time, keys, source_upper_bound, schema_fingerprint, observed_rows, full_reconcile)
+    values = (cursor_time, keys, source_upper_bound, schema_fingerprint, observed_rows, full_reconcile,
+              completeness, encoded)
     with connection.cursor() as cursor:
         if expected_generation == 0:
             cursor.execute('INSERT INTO analytics.ingestion_checkpoints '
                 '(cursor_time,cursor_keys,source_upper_bound,schema_fingerprint,observed_rows,last_full_reconcile_at,'
-                'dataset_id,generation,last_attempt_at,last_success_at) '
-                'VALUES (%s,%s::jsonb,%s,%s,%s,CASE WHEN %s THEN clock_timestamp() END,%s,1,clock_timestamp(),clock_timestamp()) '
+                'completeness,certificate,dataset_id,generation,last_attempt_at,last_success_at) '
+                'VALUES (%s,%s::jsonb,%s,%s,%s,CASE WHEN %s THEN clock_timestamp() END,%s,%s::jsonb,%s,1,clock_timestamp(),clock_timestamp()) '
                 'ON CONFLICT (dataset_id) DO UPDATE SET cursor_time=EXCLUDED.cursor_time,'
                 'cursor_keys=EXCLUDED.cursor_keys,source_upper_bound=EXCLUDED.source_upper_bound,'
                 'schema_fingerprint=EXCLUDED.schema_fingerprint,observed_rows=EXCLUDED.observed_rows,'
                 'last_full_reconcile_at=COALESCE(EXCLUDED.last_full_reconcile_at,ingestion_checkpoints.last_full_reconcile_at),'
                 'generation=1,last_attempt_at=clock_timestamp(),last_success_at=clock_timestamp(),'
-                "completeness='unknown',certificate=NULL,error_code=NULL "
+                'completeness=EXCLUDED.completeness,certificate=EXCLUDED.certificate,error_code=NULL '
                 'WHERE ingestion_checkpoints.generation=0 RETURNING generation', (*values, dataset_id))
         else:
             cursor.execute('UPDATE analytics.ingestion_checkpoints SET cursor_time=%s,cursor_keys=%s::jsonb,'
                 'source_upper_bound=%s,schema_fingerprint=%s,observed_rows=%s,'
                 'last_full_reconcile_at=CASE WHEN %s THEN clock_timestamp() ELSE last_full_reconcile_at END,'
                 'generation=generation+1,last_attempt_at=clock_timestamp(),last_success_at=clock_timestamp(),'
-                "completeness='unknown',certificate=NULL,error_code=NULL "
+                'completeness=%s,certificate=%s::jsonb,error_code=NULL '
                 'WHERE dataset_id=%s AND generation=%s RETURNING generation', (*values, dataset_id, expected_generation))
         result = cursor.fetchone()
     if not result:

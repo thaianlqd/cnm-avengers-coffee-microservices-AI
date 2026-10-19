@@ -13,7 +13,8 @@ import { visibleMissionId } from '../utils/workspacePresentation.mjs';
 import { savedV33Fields, savedReportOwnership } from '../utils/reportPersistence.mjs';
 import { analysisPlanLabel } from '../utils/analysisPresentation.mjs';
 import { reportHeading } from '../utils/analystDashboardLayout.mjs';
-import { runAnalysisJob, jobStages } from '../utils/analysisJobs.mjs';
+import { jobStages } from '../utils/analysisJobs.mjs';
+import { useReportActions } from '../hooks/useReportActions';
 import { useAnalysisLifecycle } from '../hooks/useAnalysisLifecycle';
 import React, { useState, useEffect, useRef } from 'react';
 import type { AnalyticalReportContract, CapabilityAction } from '../types';
@@ -33,8 +34,9 @@ import { SeriesLineChart } from '../components/Charts';
 import { WordReportPreviewModal } from '../components/WordReportPreviewModal';
 
 export const AnalyticsView: React.FC = () => {
+  const { saveReport, exportDocx: downloadDocx, openReport, deleteReport, downloadSavedDocx } = useReportActions();
   const {accountJobStorageKey,planningInFlight,refinementInFlight,pendingJob,jobController,jobEpoch,
-    reportIdentityRef,beginRequest,invalidate} = useAnalysisLifecycle();
+    reportIdentityRef,beginRequest,invalidate,executeJob,clearJob,cancelOwnedJob} = useAnalysisLifecycle();
   const { 
     activeTab: storeActiveTab,
     setActiveTab: setStoreActiveTab,
@@ -54,24 +56,13 @@ export const AnalyticsView: React.FC = () => {
     dateRange
   } = usePlatformStore();
 
-  const [activeTab, setActiveTab] = useState<AnalyticsSubTab>(
-    (storeActiveTab === 'ai_assistant' || storeActiveTab === 'saved_reports' ? storeActiveTab : analyticsSubTab) || 'revenue'
-  );
-
-  useEffect(() => {
-    if (storeActiveTab === 'ai_assistant') {
-      setActiveTab('ai_assistant');
-      setAnalyticsSubTab('ai_assistant');
-    } else if (storeActiveTab === 'saved_reports') {
-      setActiveTab('saved_reports');
-      setAnalyticsSubTab('saved_reports');
-    } else if (storeActiveTab === 'analytics') {
-      if (activeTab === 'ai_assistant' || activeTab === 'saved_reports') {
-        setActiveTab('revenue');
-        setAnalyticsSubTab('revenue');
-      }
-    }
-  }, [storeActiveTab]);
+  // The store owns navigation; local report/draft state stays in this workspace.
+  const activeTab: AnalyticsSubTab = storeActiveTab === 'ai_assistant' || storeActiveTab === 'saved_reports'
+    ? storeActiveTab : analyticsSubTab;
+  const setActiveTab = (tab: AnalyticsSubTab) => {
+    setAnalyticsSubTab(tab);
+    setStoreActiveTab(tab === 'ai_assistant' || tab === 'saved_reports' ? tab : 'analytics');
+  };
 
   // ─── AI ASSISTANT 3-STEP REPORT WORKFLOW STATE ───
   const [aiStep, setAiStep] = useState<1 | 2 | 3>(1);
@@ -147,14 +138,7 @@ export const AnalyticsView: React.FC = () => {
   const [jobStage, setJobStage] = useState('accepted');
   // Supersede everything in flight (propose/generate/refine/job) and clear their loading flags.
   const cancelActiveRequests = () => {
-    invalidate();
-    // Cancel the owned server task too (by id, or by idempotency key if the POST response was never seen).
-    if (pendingJob.current?.job_id) fetch(`/api/ai/analysis-jobs/${pendingJob.current.job_id}/cancel`, { method: 'POST' }).catch(() => {});
-    else if (pendingJob.current?.key) fetch('/api/ai/analysis-jobs/cancel-by-key', {
-      method: 'POST', headers: { 'Idempotency-Key': pendingJob.current.key } }).catch(() => {});
-    pendingJob.current = null;
-    try { sessionStorage.removeItem(accountJobStorageKey); } catch { /* storage unavailable */ }
-    planningInFlight.current = false; refinementInFlight.current = false;
+    cancelOwnedJob();
     setIsProposingPlan(false); setIsGeneratingAi(false); setIsRefining(false);
   };
   // Going back to edit the question supersedes whatever is still in flight, so a late answer cannot revive an old plan.
@@ -230,23 +214,17 @@ export const AnalyticsView: React.FC = () => {
     let record: any;
     try { record = recovered || { key: crypto.randomUUID(), input: aiInput(prompt) }; }
     catch (error: any) { showToast(error.message, 'info'); return; }
-    const epoch = ++jobEpoch.current;
-    const controller = new AbortController();
-    jobController.current = controller;
+    const ticket = beginRequest();
+    const epoch = ticket.epoch;
+    const controller = {signal:ticket.signal};
     planningInFlight.current = true;
     setAiPrompt(record.input.question || record.input.prompt || prompt);
     setGeneratedReport(null); setAiPlan(null); setAiStep(3); setIsGeneratingAi(true);
     setJobStage('accepted');
     try {
-      const job = await runAnalysisJob(record, { signal: controller.signal,
-        onUpdate: value => { if (epoch === jobEpoch.current) setJobStage(value.state); },
-        onCheckpoint: value => {
-          if (epoch !== jobEpoch.current) return;  // a superseded task must not overwrite the active checkpoint
-          pendingJob.current = value;
-          sessionStorage.setItem(accountJobStorageKey, JSON.stringify(value));
-        } });
-      if (epoch !== jobEpoch.current) return;
-      pendingJob.current = null; sessionStorage.removeItem(accountJobStorageKey);
+      const job = await executeJob(record,ticket,value=>setJobStage(value.state));
+      if (!ticket.current()) return;
+      clearJob();
       const data = job.result;
       if (job.state === 'partial_available') {
         setAiPlan({ ...data.proposal, submittedInput: record.input,
@@ -296,6 +274,7 @@ export const AnalyticsView: React.FC = () => {
   };
 
   useEffect(() => {
+    if (activeTab !== 'ai_assistant') return;
     try {
       const record = JSON.parse(sessionStorage.getItem(accountJobStorageKey) || 'null');
       if (record?.key && record?.input) {
@@ -307,8 +286,8 @@ export const AnalyticsView: React.FC = () => {
         handleOneClick(undefined, record);
       }
     } catch { sessionStorage.removeItem(accountJobStorageKey); }
-    return () => { jobEpoch.current += 1; jobController.current?.abort(); planningInFlight.current = false; };
-  }, []);
+    return () => cancelOwnedJob();
+  }, [activeTab]);
 
   // Optional plan preview; the default action completes the whole job.
   const handleProposePlan = async (customPrompt?: string) => {
@@ -461,6 +440,15 @@ export const AnalyticsView: React.FC = () => {
       return;
     }
 
+    // Semantic changes are offered only in the AI assistant. Merely opening or
+    // exporting a saved report must never spend a provider call.
+    if (activeTab !== 'ai_assistant' && !visualChanges?.length) {
+      setGeneratedReport(repToRefine); setViewingSavedReport(null);
+      setFollowUpPrompt(text); setAiStep(3);
+      setStoreActiveTab('ai_assistant'); setActiveTab('ai_assistant'); setAnalyticsSubTab('ai_assistant');
+      showToast('Đã mở Trợ lý AI. Gửi góp ý tại đây để thực hiện phân tích.', 'info');
+      return;
+    }
     if (refinementInFlight.current) return;
     const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     const userMsg = { id: `user-${Date.now()}`, sender: 'user' as const, text, time: timeStr };
@@ -596,35 +584,12 @@ export const AnalyticsView: React.FC = () => {
     }
     setIsExportingDocx(true);
     try {
-      const response = await fetch('/api/reports/export-docx', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          report_data: reportData,
-          save_to_db: true,
-        }),
-      });
-      if (!response.ok) {
-        throw new Error('Lỗi khi xuất tài liệu Word DOCX từ máy chủ');
-      }
-
-      // Convert to blob and trigger download
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      const rawTitle = reportData.title || 'Bao_Cao_Phan_Tich_AI';
-      const safeTitle = rawTitle.replace(/[^a-zA-Z0-9_\u00C0-\u024F\u1EA0-\u1EF9]/g, '_').slice(0, 40);
-      link.download = `${safeTitle}.docx`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      await downloadDocx(reportData, { saveToDb: true });
 
       showToast('Đã tải xuống file Word (.docx) và lưu vào Quản lý Báo cáo!', 'success');
       fetchSavedReports();
     } catch (err: any) {
-      console.error('Lỗi xuất DOCX:', err);
+      if (err.name === 'AbortError') return;
       showToast(err.message || 'Không thể xuất file Word (.docx)', 'error');
     } finally {
       setIsExportingDocx(false);
@@ -658,20 +623,10 @@ export const AnalyticsView: React.FC = () => {
   const handleDownloadSavedDocx = async (reportId: string, title: string) => {
     try {
       showToast(`Đang chuẩn bị file Word: ${title}...`, 'info');
-      const res = await fetch(`/api/reports/saved/${reportId}/download-docx`);
-      if (!res.ok) throw new Error('Không thể tải file Word từ kho lưu trữ');
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      const safeTitle = (title || 'Bao_Cao').replace(/[^a-zA-Z0-9_\u00C0-\u024F\u1EA0-\u1EF9]/g, '_').slice(0, 40);
-      a.download = `${safeTitle}.docx`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
+      await downloadSavedDocx(reportId, title);
       showToast('Tải xuống file Word (.docx) thành công!', 'success');
     } catch (err: any) {
+      if (err.name === 'AbortError') return;
       showToast(err.message || 'Lỗi khi tải file Word', 'error');
     }
   };
@@ -682,9 +637,7 @@ export const AnalyticsView: React.FC = () => {
     // presentation from owned artifacts for an older stripped session summary.
     const ticket = beginRequest();
     try {
-      const response = await fetch(`/api/reports/saved/${encodeURIComponent(report.id)}`, { signal: ticket.signal });
-      if (!response.ok) throw new Error(response.status === 403 ? 'Bạn không còn quyền xem báo cáo này.' : 'Chưa mở được báo cáo lưu trữ.');
-      const stored = await response.json();
+      const stored = await openReport(report.id, ticket.signal);
       if (!ticket.current()) return;
       report = { ...report, ...stored };
       if (stored.presentation_status === 'source_artifacts_unavailable') {
@@ -762,14 +715,11 @@ export const AnalyticsView: React.FC = () => {
       return;
     }
     try {
-      const res = await fetch(`/api/reports/saved/${reportId}`, { method: 'DELETE' });
-      if (res.ok) {
-        showToast('Đã xóa báo cáo thành công!', 'success');
-        fetchSavedReports();
-      } else {
-        showToast('Không thể xóa báo cáo', 'error');
-      }
-    } catch (err) {
+      await deleteReport(reportId);
+      showToast('Đã xóa báo cáo thành công!', 'success');
+      fetchSavedReports();
+    } catch (err: any) {
+      if (err.name === 'AbortError') return;
       showToast('Lỗi kết nối khi xóa báo cáo', 'error');
     }
   };
@@ -844,19 +794,11 @@ export const AnalyticsView: React.FC = () => {
           ...savedV33Fields(generatedReport),
         },
       };
-      const res = await fetch('/api/reports/saved', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (res.ok) {
-        showToast('Đã lưu báo cáo vào tab Quản lý Báo cáo!', 'success');
-        fetchSavedReports();
-      } else {
-        const error = await res.json().catch(() => ({}));
-        showToast(error.detail || 'Không thể lưu báo cáo', 'error');
-      }
-    } catch (err) {
+      await saveReport(payload);
+      showToast('Đã lưu báo cáo vào tab Quản lý Báo cáo!', 'success');
+      fetchSavedReports();
+    } catch (err: any) {
+      if (err.name === 'AbortError') return;
       showToast('Không thể kết nối để lưu báo cáo', 'error');
     }
   };
@@ -889,17 +831,11 @@ export const AnalyticsView: React.FC = () => {
     showToast('Đã xuất bảng dữ liệu sang file CSV thành công!', 'success');
   };
   useEffect(() => {
-    if (analyticsSubTab) {
-      setActiveTab(analyticsSubTab);
-    }
-  }, [analyticsSubTab]);
-
-  useEffect(() => {
-    fetchMarts();
-    fetchStores();
-    fetchCustomers();
-    fetchProducts();
-  }, [fetchMarts, fetchStores, fetchCustomers, fetchProducts]);
+    if (activeTab === 'revenue') fetchMarts();
+    else if (activeTab === 'stores') fetchStores();
+    else if (activeTab === 'customers') fetchCustomers();
+    else if (activeTab === 'products') fetchProducts();
+  }, [activeTab, fetchMarts, fetchStores, fetchCustomers, fetchProducts]);
 
   useEffect(() => {
     if (activeTab === 'ai_assistant') {
@@ -1149,12 +1085,12 @@ export const AnalyticsView: React.FC = () => {
   const renderVisualReportBlock = (rep: any, isFromSavedList: boolean = false) => {
     if (!rep) return null;
     return (
-      <div className="space-y-6">
+      <div className="space-y-3">
         {pendingClarification && <div className="space-y-2"><AnalysisClarification response={pendingClarification} onAction={handleCapabilityAction} onChoice={(answer) => handleFollowUpRefine(`${pendingClarification.feedback}. ${answer}`, rep)} onEdit={() => { setFollowUpPrompt(pendingClarification.feedback || ''); setPendingClarification(null); }} /><p className="text-xs text-amber-800">Yêu cầu tinh chỉnh chưa được áp dụng. Bên dưới vẫn là báo cáo đã hoàn tất trước đó.</p></div>}
         {/* Report Header Bar - Spacious Responsive Layout */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4">
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-4 shadow-xs space-y-2.5">
           {/* Tier 1: Meta, Status & Quick Feedback */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
             <div className="flex items-center gap-2.5 flex-wrap">
               {isFromSavedList ? (
                 <>
@@ -1223,13 +1159,13 @@ export const AnalyticsView: React.FC = () => {
 
           {/* Tier 2: Wide Uncramped Title & Context */}
           <div className="space-y-1.5 max-w-5xl">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug">
+            <h2 className="text-lg sm:text-xl font-semibold text-slate-900 tracking-tight leading-snug">
               {reportHeading(rep)}
             </h2>
           </div>
 
           {/* Tier 3: Action Toolbar - Organized by functional intent */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
             {/* Left group: Analysis & Query */}
             <div className="flex items-center gap-2 flex-wrap">
               {isFromSavedList ? (
@@ -1340,15 +1276,12 @@ export const AnalyticsView: React.FC = () => {
           </div>
         )}
 
-        {/* SECTION: AI Executive Summary */}
-        <div className="bg-slate-50 rounded-2xl border border-slate-200/80 p-5 shadow-xs">
-          <div className="text-xs font-semibold text-slate-900 mb-1">
-            Tóm tắt điều hành
-          </div>
-          <div className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal whitespace-pre-line">
+        <details className="bg-slate-50 rounded-xl border border-slate-200/80 px-3 py-2">
+          <summary className="cursor-pointer text-xs font-medium text-slate-700">Tóm tắt điều hành</summary>
+          <div className="mt-2 text-xs text-slate-700 leading-relaxed whitespace-pre-line">
             {rep.executive_summary || 'Chưa có tóm tắt được hỗ trợ bởi bằng chứng.'}
           </div>
-        </div>
+        </details>
 
         {/* SQL Viewer if expanded */}
         {showSqlCode && (rep.sql || rep.sql_query) && (
@@ -1384,7 +1317,7 @@ export const AnalyticsView: React.FC = () => {
             <h3 className="text-base font-bold text-slate-800 tracking-tight">
               Bảng Điều Khiển Tự Động
             </h3>
-            <AnalystDashboardSummary report={rep} />
+            <details className="mt-2 text-xs text-slate-600"><summary className="cursor-pointer">Phạm vi báo cáo</summary><div className="mt-2"><AnalystDashboardSummary report={rep} /></div></details>
           </div>
           <ForecastPanel forecasts={rep.forecasts} />
 
@@ -1483,13 +1416,8 @@ export const AnalyticsView: React.FC = () => {
         <AnalystEvidence report={rep} />
 
         {/* Các Phát Hiện Chính */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
-          <div className="border-b border-slate-100 pb-2">
-            <h3 className="text-base font-bold text-slate-800 tracking-tight">
-              Các Phát Hiện Chính
-            </h3>
-          </div>
-
+        <details className="bg-white rounded-xl border border-slate-200 px-3 py-2">
+          <summary className="cursor-pointer text-xs font-medium text-slate-700">Các phát hiện chính</summary>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
@@ -1553,7 +1481,7 @@ export const AnalyticsView: React.FC = () => {
               </tbody>
             </table>
           </div>
-        </div>
+        </details>
 
         {/* Phân Tích Dữ Liệu Chi Tiết */}
         {rep.table_data?.artifact_ref && <AnalystResultTable result={rep.table_data} title={rep.table_data.title} sessionId={rep.session_id} queryId={rep.table_data.query_id} />}
@@ -1702,7 +1630,7 @@ export const AnalyticsView: React.FC = () => {
         </>}
 
         {/* Góp ý chỉnh sửa báo cáo */}
-        <details className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs">
+        {activeTab === 'ai_assistant' ? <details className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs">
           <summary className="cursor-pointer text-sm font-semibold text-slate-700">Điều chỉnh phân tích</summary>
           <div className="mb-3">
             <p className="text-xs text-slate-500 mt-0.5">
@@ -1775,7 +1703,10 @@ export const AnalyticsView: React.FC = () => {
               ))}
             </div>
           )}
-        </details>
+        </details> : <button className="rounded-xl border bg-white px-4 py-3 text-sm text-emerald-800" onClick={() => {
+          setGeneratedReport(rep); setViewingSavedReport(null); setAiStep(3);
+          setStoreActiveTab('ai_assistant'); setActiveTab('ai_assistant'); setAnalyticsSubTab('ai_assistant');
+        }}>Mở trong Trợ lý AI để điều chỉnh</button>}
 
         {/* Footnote */}
         <div className="text-[11px] text-slate-400 text-center py-2 border-t border-slate-100">

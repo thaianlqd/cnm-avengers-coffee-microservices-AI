@@ -162,7 +162,26 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [
+        {
+          "id": "enum.trang_thai",
+          "kind": "enum",
+          "column": "trang_thai",
+          "semantic_enum_ref": "silver.chi_nhanh.trang_thai"
+        }
+      ],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "identity.khu_vuc": {
       "dataset_id": "replica.identity.khu_vuc",
@@ -253,7 +272,19 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "identity.khuyen_mai": {
       "dataset_id": "replica.identity.khuyen_mai",
@@ -442,7 +473,19 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "identity.khuyen_mai_su_dung": {
       "dataset_id": "replica.identity.khuyen_mai_su_dung",
@@ -512,7 +555,31 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [
+        {
+          "id": "ref.ma_khuyen_mai",
+          "columns": [
+            "ma_khuyen_mai"
+          ],
+          "reference_table": "identity.khuyen_mai",
+          "reference_columns": [
+            "ma_khuyen_mai"
+          ],
+          "authority": "observed_source_fk"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "identity.nguoi_dung": {
       "dataset_id": "replica.identity.nguoi_dung",
@@ -735,7 +802,19 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "inventory.ton_kho_san_pham": {
       "dataset_id": "replica.inventory.ton_kho_san_pham",
@@ -812,7 +891,19 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "menu.bien_the_san_pham": {
       "dataset_id": "replica.menu.bien_the_san_pham",
@@ -875,7 +966,31 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [
+        {
+          "id": "ref.ma_san_pham",
+          "columns": [
+            "ma_san_pham"
+          ],
+          "reference_table": "menu.san_pham",
+          "reference_columns": [
+            "ma_san_pham"
+          ],
+          "authority": "observed_source_fk"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "menu.danh_muc": {
       "dataset_id": "replica.menu.danh_muc",
@@ -938,7 +1053,19 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "menu.san_pham": {
       "dataset_id": "replica.menu.san_pham",
@@ -1078,7 +1205,31 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [
+        {
+          "id": "ref.ma_danh_muc",
+          "columns": [
+            "ma_danh_muc"
+          ],
+          "reference_table": "menu.danh_muc",
+          "reference_columns": [
+            "ma_danh_muc"
+          ],
+          "authority": "observed_source_fk"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.ca_doi_soat": {
       "dataset_id": "replica.orders.ca_doi_soat",
@@ -1246,7 +1397,26 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [
+        {
+          "id": "enum.trang_thai_phe_duyet",
+          "kind": "enum",
+          "column": "trang_thai_phe_duyet",
+          "semantic_enum_ref": "silver.ca_doi_soat.trang_thai_phe_duyet"
+        }
+      ],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.ca_lam_viec_nhan_vien": {
       "dataset_id": "replica.orders.ca_lam_viec_nhan_vien",
@@ -1428,7 +1598,26 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [
+        {
+          "id": "enum.trang_thai_cham_cong",
+          "kind": "enum",
+          "column": "trang_thai_cham_cong",
+          "semantic_enum_ref": "silver.ca_lam_viec_nhan_vien.trang_thai_cham_cong"
+        }
+      ],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.chi_tiet_don_hang": {
       "dataset_id": "replica.orders.chi_tiet_don_hang",
@@ -1554,7 +1743,67 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [
+        {
+          "id": "domain.so_luong",
+          "kind": "numeric_range",
+          "column": "so_luong",
+          "exclusive_minimum": 0,
+          "authority": "existing_v34_quality_rule"
+        }
+      ],
+      "reference_checks": [
+        {
+          "id": "ref.ma_don_hang",
+          "columns": [
+            "ma_don_hang"
+          ],
+          "reference_table": "orders.don_hang",
+          "reference_columns": [
+            "ma_don_hang"
+          ],
+          "authority": "observed_source_fk"
+        },
+        {
+          "id": "ref.ma_san_pham",
+          "columns": [
+            "ma_san_pham"
+          ],
+          "reference_table": "menu.san_pham",
+          "reference_columns": [
+            "ma_san_pham"
+          ],
+          "authority": "canonical_semantic_join"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      },
+      "closed_periods": [
+        {
+          "id": "orders-sep2026",
+          "start": "2026-09-01",
+          "end": "2026-09-30",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "enabled": true,
+          "attested_by": "admin",
+          "attested_on": "2026-10-19",
+          "authority": "user_confirmation_20261019",
+          "must_revoke_before_mutation": true,
+          "clock": "ngay_tao",
+          "parent_table": "orders.don_hang",
+          "parent_key": "ma_don_hang",
+          "local_key": "ma_don_hang"
+        }
+      ]
     },
     "orders.customer_wallet_transaction": {
       "dataset_id": "replica.orders.customer_wallet_transaction",
@@ -1631,7 +1880,19 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.danh_gia_chi_nhanh": {
       "dataset_id": "replica.orders.danh_gia_chi_nhanh",
@@ -1764,7 +2025,19 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.danh_gia_san_pham": {
       "dataset_id": "replica.orders.danh_gia_san_pham",
@@ -1876,7 +2149,19 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.delivery_tracking": {
       "dataset_id": "replica.orders.delivery_tracking",
@@ -2065,7 +2350,19 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "supporting",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.don_hang": {
       "dataset_id": "replica.orders.don_hang",
@@ -2261,7 +2558,71 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [
+        {
+          "id": "enum.trang_thai_don_hang",
+          "kind": "enum",
+          "column": "trang_thai_don_hang",
+          "semantic_enum_ref": "silver.don_hang.trang_thai_don_hang"
+        },
+        {
+          "id": "enum.phuong_thuc_thanh_toan",
+          "kind": "enum",
+          "column": "phuong_thuc_thanh_toan",
+          "semantic_enum_ref": "silver.don_hang.phuong_thuc_thanh_toan"
+        },
+        {
+          "id": "enum.loai_don_hang",
+          "kind": "enum",
+          "column": "loai_don_hang",
+          "semantic_enum_ref": "silver.don_hang.loai_don_hang"
+        },
+        {
+          "id": "domain.tong_tien",
+          "kind": "numeric_range",
+          "column": "tong_tien",
+          "minimum": 0,
+          "authority": "existing_v34_quality_rule"
+        }
+      ],
+      "reference_checks": [
+        {
+          "id": "ref.co_so_ma",
+          "columns": [
+            "co_so_ma"
+          ],
+          "reference_table": "identity.chi_nhanh",
+          "reference_columns": [
+            "ma_chi_nhanh"
+          ],
+          "authority": "canonical_semantic_join"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      },
+      "closed_periods": [
+        {
+          "id": "orders-sep2026",
+          "start": "2026-09-01",
+          "end": "2026-09-30",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "enabled": true,
+          "attested_by": "admin",
+          "attested_on": "2026-10-19",
+          "authority": "user_confirmation_20261019",
+          "must_revoke_before_mutation": true,
+          "clock": "ngay_tao"
+        }
+      ]
     },
     "orders.giao_dich_thanh_toan": {
       "dataset_id": "replica.orders.giao_dich_thanh_toan",
@@ -2352,7 +2713,31 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [
+        {
+          "id": "ref.ma_don_hang",
+          "columns": [
+            "ma_don_hang"
+          ],
+          "reference_table": "orders.don_hang",
+          "reference_columns": [
+            "ma_don_hang"
+          ],
+          "authority": "observed_source_fk"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.khao_sat_phan_hoi": {
       "dataset_id": "replica.orders.khao_sat_phan_hoi",
@@ -2450,7 +2835,19 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.shipper": {
       "dataset_id": "replica.orders.shipper",
@@ -2598,7 +2995,19 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.shipper_delivery": {
       "dataset_id": "replica.orders.shipper_delivery",
@@ -2759,7 +3168,31 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [
+        {
+          "id": "ref.shipperId",
+          "columns": [
+            "shipperId"
+          ],
+          "reference_table": "orders.shipper",
+          "reference_columns": [
+            "id"
+          ],
+          "authority": "observed_source_fk"
+        }
+      ],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.voucher": {
       "dataset_id": "replica.orders.voucher",
@@ -2941,7 +3374,19 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     },
     "orders.yeu_thich_san_pham": {
       "dataset_id": "replica.orders.yeu_thich_san_pham",
@@ -3025,7 +3470,19 @@
       "completeness_default": "unknown",
       "late_commit_guarantee": "not_certified; overlap plus periodic full reconciliation",
       "source_schema_evidence": "evaluation/v34/implementation-20261018/source-schema-readonly.json",
-      "maximum_acceptable_load_lag_seconds": 900
+      "maximum_acceptable_load_lag_seconds": 900,
+      "quality_tier": "critical",
+      "quality_checks": [],
+      "reference_checks": [],
+      "volume_baseline": {
+        "minimum_comparable_full_reconciliations": 7,
+        "status_until_eligible": "not_measured"
+      },
+      "certificate_policy": {
+        "snapshot_parity": true,
+        "closed_period_default": "unknown",
+        "maximum_certificate_age_seconds": 900
+      }
     }
   }
 }

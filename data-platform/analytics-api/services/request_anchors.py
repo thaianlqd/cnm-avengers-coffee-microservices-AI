@@ -867,7 +867,7 @@ def refinement_anchors(original, initial_intent, history, catalog, ui, reference
     """
     from copy import deepcopy
     from services.analysis_intent import AnalysisIntentEnvelope, AnalysisIntentDelta
-    from services.hybrid_analyst_planner import apply_delta
+    from services.analysis_intent import apply_delta
     from services.analytical_resolver import ResolutionIssues
     from services.time_resolution_service import resolve_time
     intent = AnalysisIntentEnvelope.model_validate(initial_intent)

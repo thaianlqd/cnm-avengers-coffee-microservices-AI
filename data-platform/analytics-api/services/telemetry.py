@@ -369,3 +369,45 @@ def audit(action,resource_type,*,resource_key=None,decision='allowed',query_hash
     finally:
         if connection is not None: connection.close()
     return identity
+
+
+def prometheus_export(observation=None):
+    """Bounded process counters; data gauges have explicit shared ownership.
+
+    Exposition format: https://prometheus.io/docs/instrumenting/exposition_formats/
+    Sum counter rates across targets; use max for duplicated shared gauges.
+    No account/request/job/source-value labels or collection-time I/O.
+    """
+    from services.data_coverage_service import peek
+    observed = snapshot() if observation is None else observation
+    lines = ['# HELP analytics_events_total Process-local bounded stage observations.',
+             '# TYPE analytics_events_total counter']
+    for row in observed.get('counts', []):
+        if row.get('stage') not in _STAGES or row.get('status') not in _STATUS:
+            continue
+        count = row.get('count')
+        if type(count) is int and count >= 0:
+            lines.append(f'analytics_events_total{{stage="{row["stage"]}",status="{row["status"]}"}} {count}')
+    lines += ['# HELP analytics_stage_duration_seconds Process-local cumulative duration histogram.',
+              '# TYPE analytics_stage_duration_seconds histogram']
+    for stage, hist in sorted(observed.get('duration_histograms_ms', {}).items()):
+        if stage not in _STAGES:
+            continue
+        for bound in (10,50,100,500,1000,5000,12000,40000,70000):
+            lines.append(f'analytics_stage_duration_seconds_bucket{{stage="{stage}",le="{bound/1000:g}"}} {hist.get(str(bound),0)}')
+        count = hist.get('count',0)
+        lines.extend([f'analytics_stage_duration_seconds_bucket{{stage="{stage}",le="+Inf"}} {count}',
+            f'analytics_stage_duration_seconds_count{{stage="{stage}"}} {count}',
+            f'analytics_stage_duration_seconds_sum{{stage="{stage}"}} {hist.get("sum_ms",0)/1000:g}'])
+    lines += ['# HELP analytics_dropped_events_total Process-local telemetry delivery failures.',
+              '# TYPE analytics_dropped_events_total counter',
+              f'analytics_dropped_events_total {observed.get("dropped_events",0)}',
+              '# HELP analytics_source_states Shared source health projection; aggregate with max, never sum.',
+              '# TYPE analytics_source_states gauge']
+    datasets = (((peek() or {}).get('data_health') or {}).get('datasets') or {})
+    for state in ('healthy','blocked','unknown','degraded'):
+        lines.append(f'analytics_source_states{{state="{state}"}} {sum(item.get("status")==state for item in datasets.values())}')
+    lines += ['# HELP analytics_source_observations_known Shared projection presence; 0 means unknown, never healthy.',
+              '# TYPE analytics_source_observations_known gauge',
+              f'analytics_source_observations_known {int(bool(datasets))}']
+    return '\n'.join(lines)+'\n'

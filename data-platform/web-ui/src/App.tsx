@@ -9,6 +9,9 @@ import { PipelineLogModal } from './components/PipelineLogModal';
 import { TablePreviewModal } from './components/TablePreviewModal';
 
 // 4 Primary Views matching the updated clean navigation
+import { ArchitectureView } from './views/ArchitectureView';
+import { DashboardHubView } from './views/DashboardHubView';
+import { LoginView } from './views/LoginView';
 import { OverviewView } from './views/OverviewView';
 import { AnalyticsView } from './views/AnalyticsView';
 import { DataExplorerView } from './views/DataExplorerView';
@@ -18,6 +21,8 @@ const EMPTY_PERMISSIONS: string[] = [];
 const PlatformApp: React.FC<{permissions?: string[]}> = ({permissions = EMPTY_PERMISSIONS}) => {
   const { 
     activeTab,
+    analyticsSubTab,
+    setAnalyticsSubTab,
     dataErrors,
     fetchOverview, 
     fetchTables, 
@@ -26,22 +31,28 @@ const PlatformApp: React.FC<{permissions?: string[]}> = ({permissions = EMPTY_PE
   } = usePlatformStore();
 
   useEffect(() => {
-    fetchOverview();
-    fetchMarts();
-  }, [fetchOverview, fetchTables, fetchMarts, fetchSystem, permissions]);
+    if (activeTab === 'overview') fetchOverview();
+  }, [activeTab, fetchOverview]);
 
-  const visibleErrors = Object.entries(dataErrors).filter(([key,message]) => Boolean(message) && (key === 'tables' ? activeTab === 'explorer' : key === 'system' ? activeTab === 'system' : true)).map(([,message]) => message);
+  const visibleErrors = Object.entries(dataErrors).filter(([key,message]) => Boolean(message) &&
+    (activeTab === 'overview' ? ['overview','pipelines','streaming','marts','storesData','customersData','productsData'].includes(key) :
+      activeTab === 'analytics' && analyticsSubTab !== 'hub' ? ['marts','storesData','customersData','productsData'].includes(key) :
+      activeTab === 'explorer' ? key === 'tables' : activeTab === 'system' ? key === 'system' : false)).map(([,message]) => message);
+
 
   const renderActiveView = () => {
     switch (activeTab) {
       case 'overview':
         return <OverviewView />;
       case 'analytics':
+        return analyticsSubTab === 'hub' ? <DashboardHubView /> : <><button onClick={()=>setAnalyticsSubTab('hub')} className="mb-4 text-sm font-medium text-emerald-800">← Tất cả dashboard</button><AnalyticsView /></>;
       case 'ai_assistant':
       case 'saved_reports':
         return <AnalyticsView />;
       case 'explorer':
         return <DataExplorerView />;
+      case 'architecture':
+        return <ArchitectureView />;
       case 'system':
         return permissions.includes('system.read') ? <SystemAdminView /> : <section role="status" className="rounded-xl border bg-white p-6">Tài khoản chưa được cấp quyền xem người dùng và nhật ký quản trị.</section>;
       default:
@@ -50,7 +61,7 @@ const PlatformApp: React.FC<{permissions?: string[]}> = ({permissions = EMPTY_PE
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
+    <div className="flex flex-col md:flex-row h-screen bg-slate-50 overflow-hidden font-sans">
       {/* Left Compact Sidebar */}
       <Sidebar />
 
@@ -60,12 +71,12 @@ const PlatformApp: React.FC<{permissions?: string[]}> = ({permissions = EMPTY_PE
         <Header />
 
         {/* Scrollable Main Viewport */}
-        <main className="flex-1 overflow-y-auto px-6 py-5 bg-[#f8fafc]">
+        <main className="flex-1 overflow-y-auto px-3 py-3 sm:px-6 sm:py-5 bg-[#f8fafc]">
           <div className="max-w-[1400px] mx-auto">
             {visibleErrors.length > 0 && <section role="alert" data-platform-load-errors className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
               <p className="font-semibold">Chưa tải được một số nguồn dữ liệu</p>
               <ul className="mt-1 list-disc pl-5">{[...new Set(visibleErrors)].map(message => <li key={message}>{message}</li>)}</ul>
-              <button className="mt-2 underline" onClick={() => { fetchOverview(); fetchMarts(); usePlatformStore.getState().fetchStores(); usePlatformStore.getState().fetchCustomers(); usePlatformStore.getState().fetchProducts(); }}>Tải lại dữ liệu</button>
+              <button className="mt-2 underline" onClick={() => { if(activeTab === 'overview') {fetchOverview();fetchMarts();usePlatformStore.getState().fetchStores();usePlatformStore.getState().fetchCustomers();usePlatformStore.getState().fetchProducts();} else if(activeTab === 'explorer') fetchTables(); else if(activeTab === 'system') fetchSystem(); }}>Tải lại dữ liệu</button>
             </section>}
             {renderActiveView()}
           </div>
@@ -136,16 +147,8 @@ export const App: React.FC = () => {
     finally {setBusy(false);}
   };
   if(loading)return <main className="min-h-screen grid place-items-center" role="status">Đang kiểm tra phiên đăng nhập…</main>;
-  if(!session)return <main className="min-h-screen grid place-items-center bg-slate-50 p-6">
-    <form onSubmit={login} className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-7 shadow" aria-label="Đăng nhập Data Platform">
-      <h1 className="text-xl font-semibold">Đăng nhập Data Platform</h1>
-      <p className="text-sm text-slate-600">Dùng tài khoản Avengers Coffee đã được cấp quyền phân tích.</p>
-      <label className="block">Tài khoản<input autoComplete="username" required maxLength={120} value={username} onChange={e=>setUsername(e.target.value)} className="block w-full rounded border p-2" /></label>
-      <label className="block">Mật khẩu<input type="password" autoComplete="current-password" required maxLength={256} value={password} onChange={e=>setPassword(e.target.value)} className="block w-full rounded border p-2" /></label>
-      {message&&<p role="alert" className="text-sm text-red-700">{message}</p>}
-      <button disabled={busy} className="w-full rounded bg-slate-900 p-2 text-white">{busy?'Đang đăng nhập…':'Đăng nhập'}</button>
-    </form>
-  </main>;
+  if(!session)return <LoginView username={username} password={password} busy={busy} message={message}
+    onUsername={setUsername} onPassword={setPassword} onSubmit={login} />;
   return <><PlatformApp key={session.identity} permissions={session.permissions}/>{message&&<p role="alert" className="fixed bottom-16 right-6 rounded bg-white p-3 text-red-700">{message}</p>}<button onClick={logout} disabled={busy} className="fixed right-6 bottom-4 rounded border bg-white px-3 py-2 text-xs shadow" aria-label="Đăng xuất tài khoản phân tích">Đăng xuất</button></>;
 };
 

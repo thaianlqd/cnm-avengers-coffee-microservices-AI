@@ -19,6 +19,7 @@ RISK_OPERATORS = {"gt": ">", "gte": "≥", "lt": "<", "lte": "≤"}
 
 def validate_workspace(registry):
     """Logical validation of missions and risk signals. Raises ValueError."""
+    validate_dashboard_templates(registry)
     metrics, dims = registry["metrics"], registry["dimensions"]
     missions = registry.get("analysis_missions")
     if missions is None:
@@ -304,3 +305,88 @@ def require_mission(registry, value):
     if value and not mission:
         raise AnalysisError("analysis_mission_unknown", "Unknown analysis mission")
     return mission
+
+
+def validate_dashboard_templates(registry):
+    """Stored references only; execution still uses the existing semantic compiler."""
+    import re
+    from services.analysis_intent import AnalysisIntentEnvelope
+    templates = registry.get('workspace', {}).get('dashboard_templates')
+    if templates is None:
+        return
+    if {item['id'] for item in templates} != {f'D{i:02}' for i in range(1,17)} or len(templates) != 16:
+        raise ValueError('Dashboard identities must be unique and complete')
+    for item in templates:
+        if (set(item) != {'id','version','title','category','description','limitation','default_time','requirements'}
+                or not re.fullmatch(r'\d+\.\d+\.\d+', item['version'])
+                or not all(isinstance(item[key],str) and item[key].strip() for key in ('title','category','description','limitation'))
+                or item['default_time'] not in {'30d','all_time'} or not 2 <= len(item['requirements']) <= 6):
+            raise ValueError('Invalid dashboard declaration')
+        intent = AnalysisIntentEnvelope.model_validate({'decision':'analyze','requirements':item['requirements']})
+        if len({req.id for req in intent.requirements}) != len(intent.requirements):
+            raise ValueError('Duplicate dashboard panel identity')
+        for req in intent.requirements:
+            if (not req.metric_ids or not set(req.metric_ids) <= registry['metrics'].keys()
+                    or not set(req.dimension_ids) <= registry['dimensions'].keys()
+                    or any(f.dimension not in registry['dimensions'] for f in req.filters)
+                    or req.analysis_kind not in {'aggregate','ranking','trend','distribution','comparison'}):
+                raise ValueError('Dashboard references unavailable semantics')
+            if req.analysis_kind == 'ranking' and (not req.ranking or req.ranking.metric_id not in req.metric_ids):
+                raise ValueError('Dashboard ranking metric must be explicit')
+
+
+def dashboard_template(catalog, identity, version):
+    from copy import deepcopy
+    template = next((item for item in catalog.registry.get('workspace', {}).get('dashboard_templates', [])
+                     if item['id']==identity), None)
+    if template is None or template['version'] != version:
+        raise AnalysisError('dashboard_unavailable', 'Dashboard version is unavailable; refresh the catalog')
+    return deepcopy(template)
+
+
+def dashboard_intent(catalog, identity, version, period=None):
+    from services.analysis_intent import AnalysisIntentEnvelope
+    template = dashboard_template(catalog, identity, version)
+    for req in template['requirements']:
+        if req['analysis_kind'] == 'trend':
+            from services.mission_contract_service import _trend_cadence
+            req['granularity'] = _trend_cadence(period)
+        for metric in req['metric_ids']:
+            if not set(req.get('dimension_ids', [])) <= set(catalog.compatible_dimensions(metric)):
+                raise AnalysisError('dashboard_unavailable', 'Dashboard grouping is no longer compatible')
+        if period and period.get('start') and any(catalog.registry['metrics'][m].get('time_column') for m in req['metric_ids']):
+            req['time'] = {'kind':'range', 'start':period['start'], 'end':period['end']}
+    return AnalysisIntentEnvelope.model_validate({'decision':'analyze','requirements':template['requirements']}).model_dump(mode='json',exclude_none=True)
+
+
+def dashboard_sources(catalog, template):
+    sources = set()
+    for req in template['requirements']:
+        sources.update(catalog.registry['metrics'][m]['source'] for m in req['metric_ids'])
+        sources.update(catalog.registry['dimensions'][d]['table'] for d in req.get('dimension_ids', []))
+        sources.update(catalog.registry['dimensions'][f['dimension']]['table'] for f in req.get('filters', []))
+    return sorted(sources)
+
+
+def dashboard_catalog(catalog, data_health=None):
+    from services.access_policy import active_principal, current_principal
+    principal = current_principal(required=True) if active_principal.get() is not None else None
+    views = (data_health or {}).get('views', {})
+    from services.domain_intelligence_service import DomainIntelligence
+    scope_types = DomainIntelligence(catalog).capabilities()['scope_types']
+    result = []
+    for template in catalog.registry.get('workspace', {}).get('dashboard_templates', []):
+        sources = dashboard_sources(catalog, template)
+        if principal and any(not principal.permits('analytics.read', source) for source in sources):
+            continue
+        statuses = [views.get(source, {}).get('status','unknown') for source in sources]
+        status = next((value for value in ('blocked','unknown','degraded') if value in statuses),'healthy' if statuses else 'unknown')
+        result.append({key:template[key] for key in ('id','version','title','category','description','limitation','default_time')} | {
+            'panel_count':len(template['requirements']), 'status':status,
+            'source_views':sources, 'provider_calls':0,
+            'time_filter_enabled':any(catalog.registry['metrics'][metric].get('time_column')
+                for req in template['requirements'] for metric in req['metric_ids']),
+            'scope_types':[scope for scope in scope_types if scope['id'] in {'store_id','city','reporting_region','store_type'}
+                and all(scope['id'] in catalog.compatible_dimensions(metric)
+                    for req in template['requirements'] for metric in req['metric_ids'])]})
+    return {'version':'3.5.0','dashboards':result, 'catalog_fingerprint':catalog.fingerprint}

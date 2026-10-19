@@ -1,0 +1,40 @@
+{
+  "version": "3.5.0",
+  "user_decision": "Only the AI assistant tab may initiate provider/API-key calls",
+  "dashboard_enforcement": [
+    "request-local prohibition around propose/generate",
+    "logical allowance veto before consume",
+    "physical reservation veto before send",
+    "durable dashboard job observer veto"
+  ],
+  "other_tab_behavior": [
+    "SQL/deterministic dashboard execution",
+    "saved report semantic feedback opens assistant and waits for submit",
+    "AI checkpoint resumes only on assistant entry",
+    "leaving assistant requests owned-job cancellation"
+  ],
+  "real_dashboards": {
+    "passed": 16,
+    "provider_http": 0,
+    "minimum_charts": 3,
+    "maximum_charts": 7
+  },
+  "regression_tests": {
+    "backend_dashboard_jobs_provider": 36,
+    "planner_transport_trace_compatibility": 72,
+    "browser": 37,
+    "web_logic": 180,
+    "typecheck": "passed",
+    "build": "passed"
+  },
+  "ledger": {
+    "before_reserved": 457,
+    "after_reserved": 457,
+    "sha256": "b3c07acb5db22752fd0f69937e42fa49f64ac9cba448332ff8e22dcb490db40d",
+    "unchanged": true
+  },
+  "limitations": [
+    "Cancellation cannot retract a provider request sent before cancellation",
+    "A browser tab is a UI workflow boundary; server enforcement uses trusted request kind, not a spoofable tab header"
+  ]
+}
