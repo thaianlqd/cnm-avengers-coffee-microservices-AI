@@ -1,9 +1,9 @@
 {
   "version": "3.5.0",
-  "status": "LOCAL_VERIFIED_REMOTE_PENDING",
+  "status": "FINAL_ACCEPTED",
   "branch": "branch_thaian",
   "source_tree_sha256": "7a7d975b5f920ef56384bfc510904701df65b64dcd1c9eae666ab450a60f658c",
-  "observed_at": "2026-10-19T14:58:43.380662+00:00",
+  "observed_at": "2026-10-19T15:20:03.754817+00:00",
   "commit_identity": "Scanned dp-candidate-identity artifact binds clean checkout to repository_commit/run_id; no old HEAD substituted.",
   "gates": [
     {
@@ -128,8 +128,11 @@
     },
     {
       "id": "G15",
-      "status": "PENDING",
-      "evidence": []
+      "status": "PASS",
+      "evidence": [
+        "remote-ci.json",
+        "candidate-manifest.json"
+      ]
     },
     {
       "id": "G16",
@@ -142,17 +145,18 @@
     },
     {
       "id": "G17",
-      "status": "PENDING",
+      "status": "PASS",
       "evidence": [
+        "final-acceptance.json",
         "source-manifest.json",
-        "secret-scan.json"
+        "candidate-manifest.json",
+        "remote-ci.json",
+        "secret-scan.json",
+        "secret-scan-final-delta.json"
       ]
     }
   ],
-  "pending_reasons": {
-    "G15": "Six Data Platform jobs must succeed on the candidate commit.",
-    "G17": "Final acceptance is issued only after candidate freeze+scan and G15."
-  },
+  "pending_reasons": {},
   "repository_governance": {
     "required_checks_enforced": false,
     "classification": "nonblocking repository governance limitation",
@@ -165,5 +169,12 @@
     "No new paid-provider/model-accuracy evaluation",
     "Word visual QA deferred by user",
     "Repository-wide API CI has pre-existing Order/Menu failures"
-  ]
+  ],
+  "remote_workflow": {
+    "run_id": 39273979348,
+    "url": "https://github.com/thaianlqd/cnm-avengers-coffee-microservices-AI/actions/runs/39273979348",
+    "head_sha": "0e6fa9f96173ec9850f442cb5b3b831dabe3f073"
+  },
+  "validated_source_commit": "0e6fa9f96173ec9850f442cb5b3b831dabe3f073",
+  "delivery_identity": "Documentation/evidence delivery commits must retain the same539-file source fingerprint and also pass all six CI jobs. Their exact SHA is in the scanned dp-candidate-identity artifact of that run."
 }

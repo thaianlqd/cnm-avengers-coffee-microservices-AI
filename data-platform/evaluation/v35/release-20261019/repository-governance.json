@@ -14,5 +14,15 @@
       "Menu service fixture missing orders.chi_tiet_don_hang"
     ],
     "classification": "Pre-existing outside Data Platform changes; no Order/Menu business logic changed."
+  },
+  "candidate_api_ci": {
+    "sha": "0e6fa9f96173ec9850f442cb5b3b831dabe3f073",
+    "run_id": 39273979238,
+    "url": "https://github.com/thaianlqd/cnm-avengers-coffee-microservices-AI/actions/runs/39273979238",
+    "failures": [
+      "Order e2e HTTP401/503",
+      "Menu fixture missing orders.chi_tiet_don_hang"
+    ],
+    "classification": "Same failures reproduced at baseline before this task. Identity/Inventory/News/AI health pass; no unrelated service or API CI fixture changed."
   }
 }

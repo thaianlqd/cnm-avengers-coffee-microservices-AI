@@ -69,8 +69,8 @@
     },
     {
       "group": "Testing",
-      "status": "LOCAL_VERIFIED_REMOTE_PENDING",
-      "basis": "All required fresh local gates passed; same-SHA six-job remote CI remains separate"
+      "status": "REMOTE_CI_VERIFIED",
+      "basis": "All required fresh local gates plus six Data Platform CI jobs successful on 0e6fa9f96173ec9850f442cb5b3b831dabe3f073"
     },
     {
       "group": "Data quality",

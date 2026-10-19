@@ -1,10 +1,10 @@
 # V3.5 — tiến độ triển khai
 
-## Nghiệm thu mới — 19/10/2026, 22:00 giờ Việt Nam
+## Nghiệm thu mới — 19/10/2026
 
-**LOCAL_VERIFIED; remote candidate CI pending.** Không lập PLAN mới. User đã cho phép commit/push branch_thaian cho phần việc này; ràng buộc không commit trong nhật ký cũ bên dưới đã được thay thế bởi yêu cầu mới.
+**FINAL_VERIFIED / RELEASE_READY.** Nguồn `0e6fa9f96173ec9850f442cb5b3b831dabe3f073` đã qua6/6 Data Platform CI, run39273979348. Không lập PLAN mới. User đã cho phép commit/push branch_thaian cho phần việc này; ràng buộc không commit trong nhật ký cũ bên dưới đã được thay thế bởi yêu cầu mới.
 
-P0–P9 đã hoàn tất gate local: backend1301, pipeline65+41+33, worker6, web183/typecheck/build, browser35+4HTTP, semantic146/reference120,16dashboard dữ liệu thật3–7charts/0provider,4critical nguồn parity, two-process15loadprofiles/900ssoak1922operations/fullfaultmatrix. Source539files đóng băng bằng fingerprint; review context mới không có actionable finding. P10 còn commit/push +6job cùng SHA; P11 paid rerun không được yêu cầu và không chạy.
+P0–P9 đã hoàn tất gate local: backend1301, pipeline65+41+33, worker6, web183/typecheck/build, browser35+4HTTP, semantic146/reference120,16dashboard dữ liệu thật3–7charts/0provider,4critical nguồn parity, two-process15loadprofiles/900ssoak1922operations/fullfaultmatrix. Source539files đóng băng bằng fingerprint; review context mới không có actionable finding. P10 đã commit/push và6job cùng SHA xanh; P11 paid rerun không được yêu cầu và không chạy.
 
 CI ownership test đã sửa đúng suite/image; production từ chối ingestion legacy trước I/O; fresh provisioning DELETE23targets/khôngTRUNCATE; fixture dùng compiledcontracts; health propagation có regression. Worker guard đã triển khai0,20CPU/384MiB. Nguồn có12complete/11unknown tại14:57UTC; không biến physical snapshot parity thành chốt mọi kỳ nghiệp vụ. Ledger457/hash nguyên.
 

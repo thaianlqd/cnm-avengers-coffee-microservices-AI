@@ -1,6 +1,8 @@
 # Data Platform V3.5 — nghiệm thu release candidate
 
-Trạng thái hiện tại: **LOCAL_VERIFIED**, toàn bộ gate local đã qua; đang chờ CI sáu job của candidate mới. Chỉ nhận **FINAL_VERIFIED / RELEASE_READY** sau khi `release-gates.json` và receipt remote ghi đủ sáu kết quả success trên cùng commit. Không dùng CI của `eda390b8` hoặc `bc576213` làm chứng nhận bản sửa này.
+**FINAL_VERIFIED / RELEASE_READY** cho nguồn tại commit `0e6fa9f96173ec9850f442cb5b3b831dabe3f073`. Sáu job Data Platform đã SUCCESS trên cùng SHA trong [CI run 39273979348](https://github.com/thaianlqd/cnm-avengers-coffee-microservices-AI/actions/runs/39273979348). Local validation giữ trạng thái LOCAL_VERIFIED; remote-ci.json ghi REMOTE_CI_VERIFIED; release-gates.json ghi FINAL_ACCEPTED. Required branch checks chưa được enforce là giới hạn governance repo, không phải blocker RC theo yêu cầu user.
+
+Commit bàn giao chỉ bổ sung tài liệu/chứng cứ phải giữ nguyên fingerprint nguồn `7a7d975b5f920ef56384bfc510904701df65b64dcd1c9eae666ab450a60f658c` và cũng qua sáu job CI. SHA bàn giao chính xác được ghi bởi artifact `dp-candidate-identity` của run tương ứng với `git HEAD`; không đưa một SHA tự tham chiếu giả vào chính commit chứa báo cáo.
 
 ## Bản sửa và bằng chứng
 
@@ -26,7 +28,7 @@ Evidence mới tại [release-20261019](evaluation/v35/release-20261019/). Bộ 
 | Two processes | Ownership/idempotency/CAS/crash reservation PASS; 15 load profiles PASS,111 completed/24 expected429;900ssoak1922/1922operations,60/60jobcontext;5crashwindows/cancel/revoke/circuit/pool/Redis PASS |
 | Secret scan | Frozen inventory963files/~106,8MB,0finding; positive control42; receipt/manifest cuối được quét delta trước commit; CI quét lại toàn bộ commit |
 | Metadata/architecture | Regeneration --check, git diff --check PASS;81 modules/409edges, không tăng coupling |
-| Remote release | Chỉ PASS khi sáu job xanh đúng candidate SHA; không suy ra từ kết quả local |
+| Remote release | **6/6 SUCCESS** trên `0e6fa9f96173ec9850f442cb5b3b831dabe3f073`; [run 39273979348](https://github.com/thaianlqd/cnm-avengers-coffee-microservices-AI/actions/runs/39273979348) |
 
 Xem [local-validation.json](evaluation/v35/release-20261019/local-validation.json), [source-manifest.json](evaluation/v35/release-20261019/source-manifest.json) và CI artifact. Fingerprint nguồn loại tài liệu/receipts để tránh tự tham chiếu; manifest CI vẫn bao phủ cả source và evidence đã commit. Receipt remote được tạo sau khi CI hoàn tất và ghi SHA thực tế; tài liệu không giả định trước SHA tự chứa chính nó.
 
@@ -47,3 +49,5 @@ Repository **chưa enforce required branch checks** (`applicable_branch_rules=[]
 ## Kiểm tra nhanh
 
 Mở8501: Tổng quan có số liệu; Báo cáo chọnD01/D03 và đổi kỳ/phạm vi, bấm mở/đóng lời giải thích; ADMIN vào Explorer/System; Kiến trúc xem luồng replica/stream/batch. Các thao tác này không dùng provider. Nếu cần rollback worker, giữ committed snapshot/checkpoint/offset; không chạy TRUNCATE/repair/reset.
+
+Snapshot bổ sung trước nghiệm thu: 2026-10-19T15:17:22.622195+00:00; status={"healthy": 23}; completeness={"unknown": 11, "complete": 11, "partial": 1}; SQL mode=trusted_admin. Xem [runtime-release.json](evaluation/v35/release-20261019/runtime-release.json). Các quan sát có generation/timestamp riêng, không suy ra completeness cố định.
