@@ -42,12 +42,13 @@ def get_all_marts(
                 kpi_query = f"""
                     SELECT
                         COUNT(*) AS total_orders_all_time,
+                        COUNT(*) FILTER (WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')) AS revenue_orders,
                         COALESCE(SUM(d.tong_tien) FILTER (WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')), 0) AS revenue_all_time,
                         COUNT(*) FILTER (WHERE d.trang_thai_don_hang = 'HOAN_THANH') AS completed_orders,
                         ROUND(100.0 * COUNT(*) FILTER (WHERE d.trang_thai_don_hang = 'HOAN_THANH') / NULLIF(COUNT(*), 0), 1) AS completion_rate,
                         COUNT(*) FILTER (WHERE d.trang_thai_don_hang = 'DANG_GIAO') AS active_deliveries
-                    FROM orders.don_hang d
-                    LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
+                    FROM silver.don_hang d
+                    LEFT JOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
                     WHERE {date_cond} AND {branch_cond};
                 """
                 cur.execute(kpi_query, date_params + branch_params)
@@ -57,25 +58,29 @@ def get_all_marts(
                 # Calculate growth compared to previous period
                 prev_rev = 0
                 prev_orders = 0
+                prev_revenue_orders = 0
                 if date_range != "all":
                     prev_kpi_query = f"""
                         SELECT
                             COUNT(*) AS prev_orders,
+                            COUNT(*) FILTER (WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')) AS prev_revenue_orders,
                             COALESCE(SUM(d.tong_tien) FILTER (WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')), 0) AS prev_rev
-                        FROM orders.don_hang d
-                        LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
+                        FROM silver.don_hang d
+                        LEFT JOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
                         WHERE {prev_date_cond} AND {branch_cond};
                     """
                     cur.execute(prev_kpi_query, prev_date_params + branch_params)
                     prev_row = cur.fetchone()
                     if prev_row:
                         prev_orders = prev_row.get("prev_orders") or 0
+                        prev_revenue_orders = prev_row.get("prev_revenue_orders") or 0
                         prev_rev = float(prev_row.get("prev_rev") or 0)
 
                 curr_rev = float(kpi_dict.get("revenue_all_time") or 0)
                 curr_orders = int(kpi_dict.get("total_orders_all_time") or 0)
-                curr_aov = round(curr_rev / curr_orders) if curr_orders > 0 else 0
-                prev_aov = round(prev_rev / prev_orders) if prev_orders > 0 else 0
+                curr_revenue_orders = int(kpi_dict.get("revenue_orders") or 0)
+                curr_aov = round(curr_rev / curr_revenue_orders) if curr_revenue_orders > 0 else 0
+                prev_aov = round(prev_rev / prev_revenue_orders) if prev_revenue_orders > 0 else 0
 
                 if prev_rev > 0:
                     kpi_dict["revenue_growth"] = round(((curr_rev - prev_rev) / prev_rev) * 100, 1)
@@ -95,24 +100,16 @@ def get_all_marts(
                 kpi_dict["aov"] = curr_aov
                 kpi_dict["completion_rate"] = float(kpi_dict.get("completion_rate") or 0.0)
 
-                # Real store counts from identity.chi_nhanh
-                cur.execute("SELECT COUNT(*) AS total_stores, COUNT(*) FILTER (WHERE trang_thai = 'ACTIVE') AS active_stores FROM identity.chi_nhanh;")
+                # Real store counts from silver.chi_nhanh
+                cur.execute("SELECT COUNT(*) AS total_stores, COUNT(*) FILTER (WHERE trang_thai = 'ACTIVE') AS active_stores FROM silver.chi_nhanh;")
                 st_data = cur.fetchone() or {}
                 kpi_dict["total_stores"] = int(st_data.get("total_stores") or 0)
                 kpi_dict["active_stores"] = int(st_data.get("active_stores") or 0)
 
-                # Real new customers count in last 30 days
-                cur.execute("""
-                    SELECT COUNT(DISTINCT CASE
-                        WHEN ma_nguoi_dung IS NOT NULL THEN ma_nguoi_dung
-                        WHEN guest_email IS NOT NULL THEN guest_email
-                        WHEN ten_khach_hang IS NOT NULL THEN ten_khach_hang
-                        WHEN guest_phone IS NOT NULL THEN guest_phone
-                        ELSE NULL
-                    END) AS new_customers
-                    FROM orders.don_hang
-                    WHERE ngay_tao >= (SELECT MAX(ngay_tao) - INTERVAL '30 days' FROM orders.don_hang);
-                """)
+                # Distinct registered accounts with orders in the selected scope/time.
+                cur.execute(f"""SELECT COUNT(DISTINCT d.ma_nguoi_dung) AS new_customers
+                    FROM silver.don_hang d LEFT JOIN silver.chi_nhanh cn ON d.co_so_ma=cn.ma_chi_nhanh
+                    WHERE {date_cond} AND {branch_cond}""",date_params+branch_params)
                 nc_row = cur.fetchone() or {}
                 kpi_dict["new_customers"] = int(nc_row.get("new_customers") or 0)
 
@@ -123,8 +120,8 @@ def get_all_marts(
                             LPAD(EXTRACT(HOUR FROM d.ngay_tao)::text, 2, '0') || ':00' AS date,
                             COUNT(*) AS total_orders,
                             COALESCE(SUM(d.tong_tien), 0) AS revenue
-                        FROM orders.don_hang d
-                        LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
+                        FROM silver.don_hang d
+                        LEFT JOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
                         WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
                           AND {date_cond} AND {branch_cond} AND {pm_cond}
                         GROUP BY EXTRACT(HOUR FROM d.ngay_tao)
@@ -136,8 +133,8 @@ def get_all_marts(
                             d.ngay_tao::date::text AS date,
                             COUNT(*) AS total_orders,
                             COALESCE(SUM(d.tong_tien), 0) AS revenue
-                        FROM orders.don_hang d
-                        LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
+                        FROM silver.don_hang d
+                        LEFT JOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
                         WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
                           AND {date_cond} AND {branch_cond} AND {pm_cond}
                         GROUP BY d.ngay_tao::date
@@ -152,10 +149,10 @@ def get_all_marts(
                         ct.ma_san_pham, 
                         ct.ten_san_pham, 
                         SUM(ct.so_luong) AS total_quantity, 
-                        COALESCE(SUM(ct.so_luong * ct.gia_ban), 0) AS total_revenue
-                    FROM orders.chi_tiet_don_hang ct
-                    JOIN orders.don_hang d ON ct.ma_don_hang = d.ma_don_hang
-                    LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
+                        COALESCE(SUM(ct.thanh_tien), 0) AS total_revenue
+                    FROM silver.chi_tiet_don_hang ct
+                    JOIN silver.don_hang d ON ct.ma_don_hang = d.ma_don_hang
+                    LEFT JOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
                     WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
                       AND {date_cond} AND {branch_cond}
                     GROUP BY ct.ma_san_pham, ct.ten_san_pham
@@ -171,8 +168,8 @@ def get_all_marts(
                         d.phuong_thuc_thanh_toan AS payment_method, 
                         COUNT(*) AS count, 
                         COALESCE(SUM(d.tong_tien), 0) AS revenue
-                    FROM orders.don_hang d
-                    LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
+                    FROM silver.don_hang d
+                    LEFT JOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
                     WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
                       AND {date_cond} AND {branch_cond}
                     GROUP BY d.phuong_thuc_thanh_toan
@@ -187,8 +184,8 @@ def get_all_marts(
                         d.trang_thai_don_hang AS status, 
                         COUNT(*) AS count,
                         ROUND(100.0 * COUNT(*) / NULLIF(SUM(COUNT(*)) OVER(), 0), 1) AS pct
-                    FROM orders.don_hang d
-                    LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
+                    FROM silver.don_hang d
+                    LEFT JOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
                     WHERE {date_cond} AND {branch_cond}
                     GROUP BY d.trang_thai_don_hang
                     ORDER BY count DESC;
@@ -196,35 +193,18 @@ def get_all_marts(
                 cur.execute(order_status_sql, date_params + branch_params)
                 order_status = [dict(r) for r in cur.fetchall()]
 
-                # 6. Customer segments RFM
-                customer_segments = []
-                cur.execute("SELECT to_regclass('gold.customer_segments') IS NOT NULL AS tbl_exists;")
-                if cur.fetchone()["tbl_exists"]:
-                    cur.execute("SELECT segment, count, avg_ltv FROM gold.customer_segments ORDER BY count DESC;")
-                    customer_segments = [dict(r) for r in cur.fetchall()]
-
-                # 7. Shipper performance
-                shipper_perf = []
-                cur.execute("SELECT to_regclass('gold.shipper_performance') IS NOT NULL AS tbl_exists;")
-                if cur.fetchone()["tbl_exists"]:
-                    cur.execute("SELECT shipper_id::text, total_deliveries, completed, failed, avg_delivery_min, success_rate FROM gold.shipper_performance ORDER BY completed DESC;")
-                    shipper_perf = [dict(r) for r in cur.fetchall()]
-
-                # 8. Branch taste sample
-                taste_sample = []
-                cur.execute("SELECT to_regclass('gold.branch_taste_profile') IS NOT NULL AS tbl_exists;")
-                if cur.fetchone()["tbl_exists"]:
-                    cur.execute("SELECT branch_code, ten_san_pham, size_variant, order_count, total_qty, avg_order_value FROM gold.branch_taste_profile ORDER BY total_qty DESC LIMIT 20;")
-                    taste_sample = [dict(r) for r in cur.fetchall()]
-
+                # Legacy Gold tables have no scope/time publication certificate.
+                # Keep optional datasets unavailable; do not mix an old global
+                # Gold snapshot into the current scoped operational report.
+                customer_segments, shipper_perf, taste_sample = [], [], []
                 # 9. Hourly sales patterns
                 hourly_sql = f"""
                     SELECT 
                         EXTRACT(HOUR FROM d.ngay_tao)::int AS hour,
                         COUNT(*) AS order_count,
                         COALESCE(SUM(d.tong_tien), 0) AS revenue
-                    FROM orders.don_hang d
-                    LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
+                    FROM silver.don_hang d
+                    LEFT JOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
                     WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
                       AND {date_cond} AND {branch_cond}
                     GROUP BY hour
@@ -239,8 +219,8 @@ def get_all_marts(
                         EXTRACT(ISODOW FROM d.ngay_tao)::int AS dow,
                         COUNT(*) AS order_count,
                         COALESCE(SUM(d.tong_tien), 0) AS revenue
-                    FROM orders.don_hang d
-                    LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
+                    FROM silver.don_hang d
+                    LEFT JOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
                     WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
                       AND {date_cond} AND {branch_cond}
                     GROUP BY dow
@@ -264,13 +244,13 @@ def get_all_marts(
                         REPLACE(COALESCE(dm.ten_danh_muc, pdm.ten_danh_muc, 'Khác'), '&', 'và') AS category_name,
                         REPLACE(COALESCE(pdm.ten_danh_muc, 'Khác'), '&', 'và') AS parent_category,
                         SUM(ct.so_luong) AS total_qty,
-                        COALESCE(SUM(ct.so_luong * ct.gia_ban), 0) AS revenue
-                    FROM orders.chi_tiet_don_hang ct
-                    JOIN orders.don_hang d ON ct.ma_don_hang = d.ma_don_hang
-                    LEFT JOIN menu.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham
-                    LEFT JOIN menu.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc
-                    LEFT JOIN menu.danh_muc pdm ON dm.ma_danh_muc_cha = pdm.ma_danh_muc
-                    LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
+                        COALESCE(SUM(ct.thanh_tien), 0) AS revenue
+                    FROM silver.chi_tiet_don_hang ct
+                    JOIN silver.don_hang d ON ct.ma_don_hang = d.ma_don_hang
+                    LEFT JOIN silver.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham
+                    LEFT JOIN silver.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc
+                    LEFT JOIN silver.danh_muc pdm ON dm.ma_danh_muc_cha = pdm.ma_danh_muc
+                    LEFT JOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
                     WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
                       AND {date_cond} AND {branch_cond}
                     GROUP BY category_name, parent_category
@@ -284,13 +264,13 @@ def get_all_marts(
                     SELECT 
                         REPLACE(COALESCE(pdm.ten_danh_muc, dm.ten_danh_muc, 'Cà Phê'), '&', 'và') AS category_name,
                         SUM(ct.so_luong) AS total_qty,
-                        COALESCE(SUM(ct.so_luong * ct.gia_ban), 0) AS revenue
-                    FROM orders.chi_tiet_don_hang ct
-                    JOIN orders.don_hang d ON ct.ma_don_hang = d.ma_don_hang
-                    LEFT JOIN menu.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham
-                    LEFT JOIN menu.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc
-                    LEFT JOIN menu.danh_muc pdm ON dm.ma_danh_muc_cha = pdm.ma_danh_muc
-                    LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
+                        COALESCE(SUM(ct.thanh_tien), 0) AS revenue
+                    FROM silver.chi_tiet_don_hang ct
+                    JOIN silver.don_hang d ON ct.ma_don_hang = d.ma_don_hang
+                    LEFT JOIN silver.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham
+                    LEFT JOIN silver.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc
+                    LEFT JOIN silver.danh_muc pdm ON dm.ma_danh_muc_cha = pdm.ma_danh_muc
+                    LEFT JOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
                     WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
                       AND {date_cond} AND {branch_cond}
                     GROUP BY category_name
@@ -305,13 +285,13 @@ def get_all_marts(
                         REPLACE(COALESCE(dm.ten_danh_muc, 'Khác'), '&', 'và') AS category_name,
                         REPLACE(COALESCE(pdm.ten_danh_muc, 'Khác'), '&', 'và') AS parent_category,
                         SUM(ct.so_luong) AS total_qty,
-                        COALESCE(SUM(ct.so_luong * ct.gia_ban), 0) AS revenue
-                    FROM orders.chi_tiet_don_hang ct
-                    JOIN orders.don_hang d ON ct.ma_don_hang = d.ma_don_hang
-                    LEFT JOIN menu.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham
-                    LEFT JOIN menu.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc
-                    LEFT JOIN menu.danh_muc pdm ON dm.ma_danh_muc_cha = pdm.ma_danh_muc
-                    LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
+                        COALESCE(SUM(ct.thanh_tien), 0) AS revenue
+                    FROM silver.chi_tiet_don_hang ct
+                    JOIN silver.don_hang d ON ct.ma_don_hang = d.ma_don_hang
+                    LEFT JOIN silver.san_pham sp ON ct.ma_san_pham = sp.ma_san_pham
+                    LEFT JOIN silver.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc
+                    LEFT JOIN silver.danh_muc pdm ON dm.ma_danh_muc_cha = pdm.ma_danh_muc
+                    LEFT JOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
                     WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
                       AND {date_cond} AND {branch_cond}
                     GROUP BY category_name, parent_category
@@ -321,7 +301,7 @@ def get_all_marts(
                 sub_category_sales = [dict(r) for r in cur.fetchall()]
 
                 # All system categories
-                cur.execute("SELECT ma_danh_muc, REPLACE(ten_danh_muc, '&', 'và') AS ten_danh_muc, cap_bac, ma_danh_muc_cha FROM menu.danh_muc ORDER BY cap_bac ASC, ten_danh_muc ASC;")
+                cur.execute("SELECT ma_danh_muc, REPLACE(ten_danh_muc, '&', 'và') AS ten_danh_muc, cap_bac, ma_danh_muc_cha FROM silver.danh_muc ORDER BY cap_bac ASC, ten_danh_muc ASC;")
                 all_catalog_categories = [dict(r) for r in cur.fetchall()]
 
                 # 11. Top branches by revenue
@@ -332,8 +312,8 @@ def get_all_marts(
                         COUNT(d.ma_don_hang) AS total_orders,
                         COALESCE(SUM(d.tong_tien), 0) AS revenue,
                         ROUND(AVG(d.tong_tien), 0) AS avg_order_value
-                    FROM orders.don_hang d
-                    LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
+                    FROM silver.don_hang d
+                    LEFT JOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
                     WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
                       AND {date_cond} AND {branch_cond}
                     GROUP BY d.co_so_ma, cn.ten_chi_nhanh
@@ -350,24 +330,27 @@ def get_all_marts(
                         COALESCE(cn.ten_chi_nhanh, d.co_so_ma, 'Cửa hàng') AS store_name,
                         COALESCE(ct.ten_san_pham, 'Cà phê') AS product_name,
                         COALESCE(ct.so_luong, 1) AS quantity,
-                        COALESCE(ct.so_luong * ct.gia_ban, d.tong_tien, 0) AS total_amount
-                    FROM orders.don_hang d
-                    LEFT JOIN identity.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
+                        COALESCE(ct.thanh_tien, d.tong_tien, 0) AS total_amount
+                    FROM silver.don_hang d
+                    LEFT JOIN silver.chi_nhanh cn ON d.co_so_ma = cn.ma_chi_nhanh
                     LEFT JOIN LATERAL (
-                        SELECT ten_san_pham, so_luong, gia_ban 
-                        FROM orders.chi_tiet_don_hang 
+                        SELECT ten_san_pham, so_luong, gia_ban, thanh_tien
+                        FROM silver.chi_tiet_don_hang
                         WHERE ma_don_hang = d.ma_don_hang 
                         LIMIT 1
                     ) ct ON true
                     WHERE d.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')
+                      AND {date_cond} AND {branch_cond}
                     ORDER BY d.ngay_tao DESC
                     LIMIT 5;
                 """
-                cur.execute(recent_sales_sql)
+                cur.execute(recent_sales_sql, date_params + branch_params)
                 recent_sales = [dict(r) for r in cur.fetchall()]
 
                 return {
                     "kpi": kpi_dict,
+                    "optional_datasets": {name: {"status":"not_measured","reason":"legacy_gold_not_run_scope_bound"}
+                        for name in ("customer_segments","shipper_performance","branch_taste_profile")},
                     "revenue_daily": revenue_trend,
                     "top_products": top_products,
                     "payment_methods": payment_methods,
@@ -390,5 +373,7 @@ def get_all_marts(
                         "reference_date": str(ref_date)
                     }
                 }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=503, detail='Nguồn dữ liệu phân tích chưa sẵn sàng.') from None

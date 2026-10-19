@@ -108,6 +108,9 @@ def metric_capabilities(catalog, profiles, executable):
             from services.semantic_preflight_contract import metric_capability
             out[metric] = {
                 "capability": metric_capability(metric, m),
+                "owner": m.get('owner'), "lifecycle": m.get('lifecycle', {'status': 'active'}),
+                "lineage": {k:v for k,v in catalog.metric_lineage(metric).items()
+                    if k in {'metric_id','formula_fingerprint'}},
                 "id": metric, "label": m["business_name"], "domain": domain_id, "unit": m["unit"],
                 "semantic_type": m.get("aggregation_semantics"), "additive": bool(m.get("additive")),
                 "historical": bool(m.get("time_column")), "current": not m.get("time_column"),

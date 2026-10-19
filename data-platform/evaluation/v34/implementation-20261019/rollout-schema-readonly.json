@@ -1,0 +1,8 @@
+{
+  "sources": 23,
+  "source_timezone": "UTC",
+  "target_schema_review": [],
+  "fact_reads": 0,
+  "ddl_applied": 0,
+  "grant_changes": 0
+}

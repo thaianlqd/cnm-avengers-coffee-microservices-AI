@@ -1,0 +1,57 @@
+{
+  "base_head": "f9a1a6ff8d3c88e1bc9954c134d7cef8bdcd050b",
+  "branch": "branch_thaian",
+  "runtime": {
+    "python": "3.11.17",
+    "machine": "aarch64"
+  },
+  "historical_release": "data-platform/evaluation/v33/followup-20261018/README.md",
+  "global_ledger_readback": {
+    "reserved": 151,
+    "events": 151,
+    "path": "container:/tmp/v33-live-http-ledger.json"
+  },
+  "source_sha256": {
+    "data-platform/analytics-api/metadata/semantic_catalog.json": "9afb87a21d4460f7dec3b282720c7de17cd9158877d04929a3ca55b9c1592b12",
+    "data-platform/analytics-api/evals/live_cases_v33.json": "975e93363e4d80f20059fcef860a349ee8158cad827b40a984afe8d922808cab",
+    "data-platform/analytics-api/services/agent_pipeline.py": "1e47b6cfd81d3761f1f9e126e100444ae7fcc6fec04036071d40019f8864932a",
+    "data-platform/analytics-api/services/scope_resolution_service.py": "643a65c88012b3fe435a29ff680fb5b58224f9ba0b300350b0efd438fc1c06f5",
+    "data-platform/analytics-api/services/verification_reconciliation_service.py": "c944ff609efa09da67ec6d033f438b72afe9f4aff3d98cb476e46ccb3f40bfbc",
+    "data-platform/analytics-api/routers/query.py": "4eb5ef82a0778a5263d224f742ffa6f9e584c18c64c73a76d4d704e7c2d26f47"
+  },
+  "provider_http_this_task": 0,
+  "baseline_command": "LOG_DIR=/tmp/v34-baseline .claude/scripts/dp-test.sh all",
+  "baseline_status": "PASS",
+  "new_regression_before_patch": {
+    "tests": 10,
+    "failures": 4,
+    "errors": 4,
+    "note": "Includes expected missing HTTP request signature for new SQL guard; exact L03 still fails; oracle makes 7 attempts past allowance2/3."
+  },
+  "baseline_results": {
+    "backend": {
+      "tests": 1063,
+      "seconds": 520.647,
+      "passed": true
+    },
+    "web": {
+      "tests": 165,
+      "passed": true
+    },
+    "typecheck": {
+      "passed": true
+    },
+    "build": {
+      "passed": true
+    },
+    "offline_eval": {
+      "legacy_cases": 146,
+      "v33_cases": 33,
+      "passed": true
+    },
+    "browser_mocked": {
+      "passed": true,
+      "count": 12
+    }
+  }
+}

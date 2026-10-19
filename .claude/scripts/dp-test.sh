@@ -14,7 +14,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 LOG_DIR="${LOG_DIR:-/tmp/dp-test}"; mkdir -p "$LOG_DIR"
 DC=(docker compose -f "$ROOT/docker-compose.data.yml" exec -T analytics-api)
 OFFLINE=(env -u DATA_ANALYST_MAX_PROVIDER_CALLS_PER_TURN -u DATA_ANALYST_ENABLE_CONTRACT_REPAIR -u DATA_ANALYST_GEMINI_SECONDARY_KEY AI_OFFLINE=1
-         DATA_ANALYST_ENV=development DATA_ANALYST_SESSION_STORE=memory DATA_ANALYST_ARTIFACT_STORE=memory)
+         DATA_ANALYST_ENV=development DATA_ANALYST_ALLOW_BROWSER_OWNER=1 DATA_ANALYST_SESSION_STORE=memory DATA_ANALYST_ARTIFACT_STORE=memory)
 
 unittest_summary() {  # $1 = log
   grep -E "^(ERROR|FAIL):" "$1" | head -20
@@ -64,7 +64,7 @@ eval_offline() {
   echo "== eval offline"
   "${DC[@]}" python -c "
 import json;d=json.load(open('/tmp/dp_eval.json'))
-keys=('retrieval_domain','retrieval_metric','compile_level2','preflight_expectations','unsupported_preflight','forecast_capability_rejections','v33_cases')
+keys=('retrieval_domain','retrieval_metric','compile_level2','preflight_expectations','unsupported_preflight','forecast_capability_rejections','v33_cases','v34_cases')
 print(d['case_count'],'ca ·',' · '.join(f\"{k} {d[k]['passed']}/{d[k]['total']}\" for k in keys if k in d))
 print('failures:',[f['id'] for f in d.get('failures',[])])
 raise SystemExit(1 if d.get('failures') else 0)"

@@ -23,7 +23,7 @@ export interface WarehouseMetrics {
   total_orders: number;
   total_revenue: number;
   active_deliveries: number;
-  total_events: number;
+  total_events: number | null;
   total_tables: number;
   total_branches: number;
   total_products: number;
@@ -32,9 +32,9 @@ export interface WarehouseMetrics {
 export interface PlatformOverview {
   warehouse: WarehouseMetrics;
   pipeline: {
-    last_batch_run: string;
+    last_batch_run: string | null;
     status: string;
-    active_jobs: number;
+    active_jobs: number | null;
   };
 }
 
@@ -105,7 +105,11 @@ export interface JobItem {
   status: string;
 }
 
-export interface PipelinesData { jobs: JobItem[]; }
+export interface PipelinesData {
+  jobs: JobItem[];
+  observation_status?: string;
+  committed_publications?: {pipeline: string; run_id: string; published_at: string}[];
+}
 
 export interface RealtimeEvent {
   id: number;

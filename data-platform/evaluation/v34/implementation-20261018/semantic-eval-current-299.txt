@@ -1,0 +1,3 @@
+== eval offline
+146 ca · retrieval_domain 113/113 · retrieval_metric 113/113 · compile_level2 108/108 · preflight_expectations 17/17 · unsupported_preflight 5/5 · forecast_capability_rejections 6/6 · v33_cases 33/33 · v34_cases 120/120
+failures: []

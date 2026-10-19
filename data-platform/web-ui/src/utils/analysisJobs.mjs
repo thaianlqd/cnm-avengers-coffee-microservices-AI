@@ -13,7 +13,7 @@ export async function runAnalysisJob(record, { fetcher = fetch, onUpdate = () =>
     const response = await fetcher(url, { ...options, signal });
     if (!response.ok) {
       const details = await response.json().catch(() => ({}));
-      throw new Error(details.detail || 'Chưa kết nối được với tác vụ phân tích.');
+      throw Object.assign(new Error(details.detail || 'Chưa kết nối được với tác vụ phân tích.'), { status: response.status });
     }
     const data = await response.json();
     check();
@@ -44,7 +44,7 @@ export async function runAnalysisJob(record, { fetcher = fetch, onUpdate = () =>
       failures = 0;
     } catch (error) {
       check();
-      if (++failures >= 3) throw error;
+      if ([400, 401, 403, 404, 409, 422].includes(error.status) || ++failures >= 3) throw error;
     }
   }
 }

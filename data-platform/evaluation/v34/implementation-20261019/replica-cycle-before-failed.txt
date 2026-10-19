@@ -1,0 +1,28 @@
+.................................<frozen importlib._bootstrap>:1047: ImportWarning: _SixMetaPathImporter.find_spec() not found; falling back to find_module()
+<frozen importlib._bootstrap>:673: ImportWarning: _SixMetaPathImporter.exec_module() not found; falling back to load_module()
+<frozen importlib._bootstrap>:1047: ImportWarning: _SixMetaPathImporter.find_spec() not found; falling back to find_module()
+<frozen importlib._bootstrap>:1047: ImportWarning: _SixMetaPathImporter.find_spec() not found; falling back to find_module()
+<frozen importlib._bootstrap>:1047: ImportWarning: _SixMetaPathImporter.find_spec() not found; falling back to find_module()
+.E..2026-10-19 03:09:54,570 [INFO] Streaming standby: rollout disabled; no source, state or Kafka connections
+2026-10-19 03:09:54,571 [INFO] Streaming standby: rollout disabled; no source, state or Kafka connections
+2026-10-19 03:09:54,572 [INFO] Streaming standby: rollout disabled; no MinIO, Kafka or projection connections
+2026-10-19 03:09:54,573 [INFO] Streaming standby: rollout disabled; no MinIO, Kafka or projection connections
+...
+======================================================================
+ERROR: test_governed_full_cycle_never_attempts_view_ddl_under_replica_role (test_stream_rollout.StreamRolloutTests.test_governed_full_cycle_never_attempts_view_ddl_under_replica_role)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/pipeline-tests/test_stream_rollout.py", line 22, in test_governed_full_cycle_never_attempts_view_ddl_under_replica_role
+    module.run_sync_cycle(source,target)
+  File "/workspace/data-sync/sync.py", line 565, in run_sync_cycle
+    contracts = load_data_contracts() if governed else None
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/data-sync/sync.py", line 404, in load_data_contracts
+    document = json.loads(path.read_text())
+               ^^^^
+NameError: name 'json' is not defined
+
+----------------------------------------------------------------------
+Ran 40 tests in 0.604s
+
+FAILED (errors=1)

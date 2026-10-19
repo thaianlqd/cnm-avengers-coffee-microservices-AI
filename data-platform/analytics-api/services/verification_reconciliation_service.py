@@ -45,6 +45,8 @@ class OracleRunner:
         isolated = copy(self.queries)
         isolated.artifacts = {}
         isolated.diagnostics = deepcopy(getattr(self.queries, "diagnostics", {}))
+        isolated.diagnostics['force_refresh']=True
+        isolated.diagnostics['independent_oracle_query']=True
         isolated.cache = {}
         prepared = isolated.prepare(op)
         self.executed += 1
@@ -59,19 +61,41 @@ def _oracle_op(artifact, **changes):
     return base
 
 
-def _additive(catalog, metric):
-    return bool(catalog.registry["metrics"].get(metric, {}).get("additive"))
+def _additive(catalog, metric, partitions=()):
+    from services.semantic_preflight_contract import metric_capability,additive_across
+    definition=catalog.registry['metrics'].get(metric,{})
+    capability=metric_capability(metric,definition)
+    return bool(partitions) and all(additive_across(capability,axis) for axis in partitions)
+
+
+def compare_epochs(report_epoch,current_epoch):
+    import re
+    if (not isinstance(report_epoch,dict) or not isinstance(current_epoch,dict)
+            or report_epoch.get('status')!='observed' or current_epoch.get('status')!='observed'
+            or not all(isinstance(e.get('fingerprint'),str) and re.fullmatch(r'[a-f0-9]{64}',e['fingerprint'])
+                       for e in (report_epoch,current_epoch))):
+        return {'status':'not_measured','reason':'source_generation_not_pinned',
+                'label':'Chưa đo đối chiếu độc lập trên cùng generation dữ liệu'}
+    same=report_epoch.get('fingerprint')==current_epoch.get('fingerprint')
+    return {'status':'same_generation' if same else 'incomparable_snapshot',
+            'report_epoch':report_epoch.get('fingerprint'),'oracle_epoch':current_epoch.get('fingerprint'),
+            'reason':'same_observed_source_generations' if same else 'source_generation_changed_refresh_report',
+            'basis':'Per-source replica generation vector; no source/formula independence claim'}
 
 
 def reconcile(artifacts, catalog, runner=None, *, max_oracle_queries=3):
     """Numeric + ranking + trend reconciliation for requested results."""
+    if type(max_oracle_queries) is not int or max_oracle_queries < 0:
+        raise ValueError('Oracle attempt allowance must be a nonnegative integer')
     numeric, ranking, trend = [], [], []
     budget = max_oracle_queries
+    failures = 0
     for id, a in artifacts.items():
         if getattr(a.query, "role", "requested") != "requested" or a.plan.kind == "detail":
             continue
         rows = a.result.get("rows", [])
-        metrics = [m for m in a.plan.metrics if _additive(catalog, m)]
+        partitions=list(a.plan.dimensions)+(['time'] if a.plan.kind=='trend' else [])
+        metrics = [m for m in a.plan.metrics if _additive(catalog, m, partitions)]
         unit = lambda m: catalog.registry["metrics"][m]["unit"]
         complete = not a.plan.ranking and not a.plan.explicit_limit
         if a.plan.kind == "trend":
@@ -80,9 +104,9 @@ def reconcile(artifacts, catalog, runner=None, *, max_oracle_queries=3):
                           "ordered": periods == sorted(periods) or len(set(r.get(d) for r in rows for d in a.plan.dimensions if d != "period")) > 1,
                           "duplicate_buckets": len(periods) - len(set(periods)) if not [d for d in a.plan.dimensions if d != "period"] else 0})
         if (metrics and rows and complete and (a.plan.dimensions or a.plan.kind == "trend") and runner and budget > 0):
+            budget -= 1  # Reserve before execution: errors/timeouts consume an attempt.
             try:
                 oracle = runner(_oracle_op(a, operation="aggregate", group_by=[], ranking=None, metrics=metrics))
-                budget -= 1
                 expected_row = (oracle.result.get("rows") or [{}])[0]
                 for m in metrics:
                     reported = sum(r[m] for r in rows if isinstance(r.get(m), (int, float)))
@@ -90,19 +114,21 @@ def reconcile(artifacts, catalog, runner=None, *, max_oracle_queries=3):
                                                     expected_row.get(m), reported, unit(m),
                                                     "independent_scalar_query"), "query_id": id, "metric": m})
             except Exception as error:  # an oracle failure is reported, never hidden as a pass
+                failures += 1
                 numeric.append({"label": "Truy vấn đối chiếu độc lập", "status": "not_measured", "query_id": id,
                                 "reason": getattr(error, "category", "oracle_unavailable")})
         if a.plan.ranking and a.plan.dimensions and rows and runner and budget > 0:
             metric = a.plan.ranking.metric
+            budget -= 1
             try:
                 oracle = runner(_oracle_op(a, operation="aggregate", ranking=None, limit=100))
-                budget -= 1
                 if len(oracle.result.get("rows", [])) >= 100:
                     ranking.append({"query_id": id, "metric": metric, "status": "not_measured", "reason": "population_over_oracle_limit"})
                     continue
                 ranking.append({"query_id": id, "metric": metric, **ranking_agreement(rows, oracle.result.get("rows", []),
                                 [d for d in a.plan.dimensions], metric, a.plan.ranking.direction, a.plan.ranking.top_n)})
             except Exception as error:
+                failures += 1
                 ranking.append({"query_id": id, "metric": metric, "status": "not_measured",
                                 "reason": getattr(error, "category", "oracle_unavailable")})
     measured = [c for c in numeric if c.get("status") in {"matched", "mismatch"}]
@@ -112,7 +138,8 @@ def reconcile(artifacts, catalog, runner=None, *, max_oracle_queries=3):
                        "accuracy_pct": round(100 * sum(c["status"] == "matched" for c in measured) / len(measured), 1),
                        "source": "Truy vấn tổng hợp độc lập (read-only) từ cùng định nghĩa chỉ số"}
     return {"numeric": numeric, "ranking": ranking, "trend": trend, "independent_oracle": independent,
-            "oracle_queries": max_oracle_queries - budget}
+            "oracle_queries": max_oracle_queries - budget, "oracle_failures": failures,
+            "oracle_successes": max_oracle_queries - budget - failures}
 
 
 def ranking_agreement(reported_rows, full_rows, dims, metric, direction, k):
@@ -242,7 +269,9 @@ def merge_reconciliation(verification, oracle):
         rows=measured if m['id']=='numeric_reconciliation' else ranked if m['id']=='ranking_reconciliation' else None
         if rows is not None: m.update(passed=sum(c['status']=='matched' for c in rows),total=len(rows))
     if any(c['status']=='mismatch' for c in measured+ranked): result['status']='attention'
-    result.update(numeric=oracle.get('numeric',[]),ranking=oracle.get('ranking',[]),independent_oracle=oracle.get('independent_oracle'),oracle_measured_at=oracle.get('measured_at'))
+    result.update(numeric=oracle.get('numeric',[]),ranking=oracle.get('ranking',[]),independent_oracle=oracle.get('independent_oracle'),oracle_measured_at=oracle.get('measured_at'),
+                  oracle_consistency=deepcopy(oracle.get('consistency')),
+                  oracle_queries=oracle.get('oracle_queries',0),oracle_failures=oracle.get('oracle_failures',0),oracle_successes=oracle.get('oracle_successes',0))
     for d in result.get('trust_dimensions',[]):
         if d['id']=='numeric_reconciliation':
             d.update(status='not_measured' if not measured else 'passed' if all(c['status']=='matched' for c in measured) else 'partial',

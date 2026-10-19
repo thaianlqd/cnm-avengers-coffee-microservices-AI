@@ -7,7 +7,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 function load(entry) {
-  const output = buildSync({ entryPoints: [entry], bundle: true, write: false, platform: 'node', format: 'cjs', external: ['react'] }).outputFiles[0].text;
+  const output = buildSync({ entryPoints: [entry], bundle: true, write: false, platform: 'node', format: 'cjs', external: ['react', 'react-dom'] }).outputFiles[0].text;
   const module = { exports: {} }; vm.runInNewContext(output, { module, exports: module.exports, require: createRequire(import.meta.url), console, setTimeout, clearTimeout }); return module.exports;
 }
 const { AnalysisQualityScore } = load('src/components/AnalysisQualityScore.tsx');

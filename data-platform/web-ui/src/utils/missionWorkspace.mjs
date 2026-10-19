@@ -173,3 +173,54 @@ export function applyClarificationChoice(question = '', choice = '') {
   if (base.toLocaleLowerCase('vi').includes(clause.toLocaleLowerCase('vi'))) return base;  // idempotent: picking twice adds nothing
   return `${base}, ${clause.charAt(0).toLocaleLowerCase('vi')}${clause.slice(1)}`;
 }
+
+/** New request from an owned artifact group; totals/rows never become input.
+ * Missing lineage, a null key or an unrepresentable scope keeps inspection read-only.
+ * The server still validates the guided slots, permissions and scope on preflight/run.
+ */
+export function inspectedGroupDraft(report, chart, row, capabilities) {
+  const ref = row?.entity_ref;
+  const query = report?.analytical_queries?.find(q => q.id === ref?.query_id);
+  const explained = report?.analysis_explanation?.find(q => q.query_id === ref?.query_id);
+  const metric = capabilities?.metrics?.find(m => m.id === chart?.metric);
+  const contract = missionContract(capabilities, 'overview');
+  if (!report?.session_id || !Number.isInteger(report.revision) || !query || !explained || !metric || !contract ||
+      chart.query_id !== ref.query_id || !query.metrics?.includes(metric.id) || !ref.filters ||
+      !report.result_sets?.[ref.query_id]?.artifact_ref) return null;
+  const keys = Object.entries(ref.filters);
+  const dimensions = report.query_plans?.find(plan => plan.id === query.id)?.dimensions || query.group_by;
+  if (!keys.length || keys.length !== dimensions?.length ||
+      keys.some(([dimension, value]) => !dimensions.includes(dimension) ||
+        !metric.dimensions?.some(d => d.id === dimension) ||
+        !['string', 'number', 'boolean'].includes(typeof value) ||
+        (typeof value === 'number' && !Number.isFinite(value)))) return null;
+  // Retain every existing restriction. Equality for the clicked key may replace
+  // an in/eq restriction only when it selects an existing member, never a wider set.
+  const filters = structuredClone(query.filters || []);
+  for (const [dimension, value] of keys) {
+    const previous = filters.filter(f => f.dimension === dimension);
+    if (previous.some(f => f.operator === 'eq' ? f.value !== value :
+      f.operator === 'in' ? !Array.isArray(f.value) || !f.value.includes(value) : true)) return null;
+    for (let i = filters.length - 1; i >= 0; i--) if (filters[i].dimension === dimension) filters.splice(i, 1);
+    filters.push({ dimension, operator: 'eq', value });
+  }
+  if (filters.length > contract.max_scope_filters) return null;
+  const period = explained.period;
+  const validDay = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+    Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
+  if (!validDay(period?.start) || !validDay(period?.end) || period.start > period.end) return null;
+  const question = `Tình hình ${metric.label.toLocaleLowerCase('vi-VN')} từ ${period.start} đến ${period.end}`;
+  return { question, mission: 'overview', guided: { question, mission: 'overview', contract: { metric: metric.id } },
+    scope: { mode: 'selected', filters }, time: { mode: 'custom', start: period.start, end: period.end },
+    source: { session_id: report.session_id, revision: report.revision, query_id: ref.query_id,
+      artifact_id: report.result_sets[ref.query_id].artifact_ref.artifact_id, filters: structuredClone(ref.filters) } };
+}
+
+/** A lineage reference applies only while the group draft's meaning is intact. */
+export function sourceAnalysisPayload(draft, input) {
+  if (!draft?.source || input.moduleId || draft.question !== input.question ||
+      JSON.stringify(draft.guided) !== JSON.stringify(input.guided) ||
+      JSON.stringify(draft.scope) !== JSON.stringify(input.scope) ||
+      JSON.stringify(draft.time) !== JSON.stringify(input.time)) return {};
+  return { source_analysis: structuredClone(draft.source) };
+}

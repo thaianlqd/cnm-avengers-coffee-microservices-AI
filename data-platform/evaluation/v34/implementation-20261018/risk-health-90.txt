@@ -1,0 +1,3 @@
+== module tests.test_v34_anomalies tests.test_workspace_v31 tests.test_v33_followup tests.test_v34_oracle_consistency (log: /tmp/v34-risk-anomaly-final/module.log)
+Ran 90 tests in 17.290s
+OK

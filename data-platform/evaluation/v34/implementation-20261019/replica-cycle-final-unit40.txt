@@ -1,0 +1,15 @@
+.................................<frozen importlib._bootstrap>:1047: ImportWarning: _SixMetaPathImporter.find_spec() not found; falling back to find_module()
+<frozen importlib._bootstrap>:673: ImportWarning: _SixMetaPathImporter.exec_module() not found; falling back to load_module()
+<frozen importlib._bootstrap>:1047: ImportWarning: _SixMetaPathImporter.find_spec() not found; falling back to find_module()
+<frozen importlib._bootstrap>:1047: ImportWarning: _SixMetaPathImporter.find_spec() not found; falling back to find_module()
+<frozen importlib._bootstrap>:1047: ImportWarning: _SixMetaPathImporter.find_spec() not found; falling back to find_module()
+.2026-10-19 03:10:16,795 [INFO] === Sync hoan thanh: 23/23 bang, 0 rows, 0.0s, trang thai: success ===
+...2026-10-19 03:10:16,813 [INFO] Streaming standby: rollout disabled; no source, state or Kafka connections
+2026-10-19 03:10:16,815 [INFO] Streaming standby: rollout disabled; no source, state or Kafka connections
+2026-10-19 03:10:16,817 [INFO] Streaming standby: rollout disabled; no MinIO, Kafka or projection connections
+2026-10-19 03:10:16,817 [INFO] Streaming standby: rollout disabled; no MinIO, Kafka or projection connections
+...
+----------------------------------------------------------------------
+Ran 40 tests in 1.112s
+
+OK

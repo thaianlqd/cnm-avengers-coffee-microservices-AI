@@ -1,0 +1,3 @@
+== module tests.test_v34_relationship tests.test_v33_pair tests.test_v33_verification tests.test_v34_oracle_consistency (log: /tmp/v34-statistics/module.log)
+Ran 50 tests in 17.004s
+OK

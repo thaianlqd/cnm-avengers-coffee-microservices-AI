@@ -1,6 +1,6 @@
 """Owned module APIs; mutations save metadata only, warehouse execution is read-only."""
 from typing import Optional
-from fastapi import APIRouter, Request, Response, Query
+from fastapi import APIRouter, Request, Response, Query, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 from common import AiTimeRange, AiAnalysisScope
 from services.browser_owner import browser_owner
@@ -32,6 +32,7 @@ def invoke(request,response,action):
     pipeline = AnalysisPipeline(owner_id=browser_owner(request,response))
     modules = AnalysisModules(pipeline.module_repository)
     try: return action(modules,pipeline)
+    except HTTPException: raise
     except Exception as e: return safe_failure(e,pipeline.calls,pipeline.semantic_info)
 
 @router.get("")

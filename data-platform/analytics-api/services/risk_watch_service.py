@@ -53,9 +53,10 @@ def scope_filters(catalog, analysis_scope, lookup=None):
     return out
 
 
-def _execute(catalog, subject, metrics, filters, scope, dimensions, executor, reference):
-    spec = AnalysisSpec(analysis_kind="aggregate", subject=subject, time_range=scope,
-                        components=[Component(id="risk", kind="aggregate", subject=subject, metrics=metrics,
+def _execute(catalog, subject, metrics, filters, scope, dimensions, executor, reference,granularity=None):
+    kind='trend' if granularity else 'aggregate'
+    spec = AnalysisSpec(analysis_kind=kind, subject=subject, time_range=scope,granularity=granularity or 'day',
+                        components=[Component(id="risk", kind=kind, subject=subject, metrics=metrics,
                                               dimensions=dimensions, filters=filters)])
     grounded = catalog.ground(spec, reference)
     plan = build_plans(grounded, catalog)[0]
@@ -81,6 +82,7 @@ def evaluate(catalog, analysis_scope=None, period=None, breakdown="store", execu
     filters = scope_filters(catalog, analysis_scope, lookup)
     scope = period or TimeScope(mode="all_time", timezone=r["timezone"])
     signals, queries = [], 0
+    anomaly_budget=[2]
     governed = r.get("risk_signals", [])
     if signal_ids is not None:
         unknown = sorted(set(signal_ids) - {s["id"] for s in governed})
@@ -110,8 +112,8 @@ def evaluate(catalog, analysis_scope=None, period=None, breakdown="store", execu
             out["note"] = "Chỉ số hiện trạng (ảnh chụp tồn kho); không áp dụng khoảng thời gian."
         subject = m["subjects"][0]
         try:
-            rows, resolved = _execute(catalog, subject, metrics, filters, window, [], executor, reference)
             queries += 1
+            rows, resolved = _execute(catalog, subject, metrics, filters, window, [], executor, reference)
             value = rows[0].get(s["metric"]) if rows else None
             value = None if value is None else float(value)
             out["value"] = value
@@ -125,8 +127,8 @@ def evaluate(catalog, analysis_scope=None, period=None, breakdown="store", execu
             out["status"] = status
             # Always inspect groups: a healthy total can hide breaching groups.
             if breakdown and breakdown in compatible and status not in {"no_data", "insufficient_sample"}:
-                groups, _ = _execute(catalog, subject, metrics, filters, window, [breakdown], executor, reference)
                 queries += 1
+                groups, _ = _execute(catalog, subject, metrics, filters, window, [breakdown], executor, reference)
                 rated = []; evaluable=missing=insufficient=0
                 for row in groups:
                     v = row.get(s["metric"])
@@ -153,6 +155,7 @@ def evaluate(catalog, analysis_scope=None, period=None, breakdown="store", execu
             # A failed computation is its own typed state: never no_data, never green.
             out.update(status="execution_error", note="Không tính được chỉ số này (lỗi truy vấn); không coi là trong ngưỡng.")
         out["bad_direction"] = "below" if s["operator"] in {"lt","lte"} else "above"
+        out['anomaly']=evaluate_anomaly(catalog,s,filters,window,executor,reference,anomaly_budget)
         out["status_label"] = STATUS_LABELS[out["status"]]
         signals.append(out)
     for s in signals:
@@ -165,4 +168,94 @@ def evaluate(catalog, analysis_scope=None, period=None, breakdown="store", execu
             "scope": [f.model_dump(mode="json") for f in filters], "time": scope.model_dump(mode="json"),
             "scope_label":'; '.join(scope_labels) or 'Toàn hệ thống', "resolved_time":resolve_period(scope,reference),
             "composite_score": None, "threshold_policy": r.get("workspace", {}).get("threshold_policy"),
-            "provider_calls": 0, "sql_queries": queries, "elapsed_ms": round((time.perf_counter() - started) * 1000, 2)}
+            "provider_calls": 0, "sql_queries": queries+(2-anomaly_budget[0]),
+            'anomaly_sql_queries':2-anomaly_budget[0],
+            "elapsed_ms": round((time.perf_counter() - started) * 1000, 2)}
+
+
+def robust_anomaly(rows,metric,config,*,source_health,observed_day,exposure=None):
+    """One fixed median/MAD baseline, complete buckets only, no imputation."""
+    from datetime import date,timedelta
+    from statistics import median
+    import math
+    result={'signal_version':config.get('version'),'method':'median_mad_iqr','metric_id':metric,
+        'baseline_window':config.get('baseline_buckets'),'n':0,'observed_period':observed_day.isoformat(),
+        'status':'not_measured','source_health':source_health.get('status','unknown'),
+        'excluded_periods':[],'parameters':{k:config.get(k) for k in ('cadence','minimum_history','baseline_buckets','threshold_z','direction','minimum_exposure')}}
+    if (source_health.get('status')!='healthy' or source_health.get('completeness')!='complete'
+            or not source_health.get('certificate')):
+        return {**result,'status':'unknown_source','reason':'complete_source_history_not_certified'}
+    minimum,width=config.get('minimum_history'),config.get('baseline_buckets')
+    if (config.get('cadence')!='day' or type(minimum) is not int or minimum<28
+            or type(width) is not int or not minimum<=width<=90 or config.get('direction') not in {'above','below'}
+            or not isinstance(config.get('threshold_z'),(int,float)) or not 2<=config['threshold_z']<=6):
+        return {**result,'status':'not_applicable','reason':'unsupported_baseline_contract'}
+    by_day={}
+    for row in rows:
+        try:day=date.fromisoformat(str(row.get('period'))[:10])
+        except ValueError:return {**result,'status':'invalid_history','reason':'invalid_bucket'}
+        value=row.get(metric)
+        if day in by_day or isinstance(value,bool) or not isinstance(value,(int,float)) or not math.isfinite(value):
+            return {**result,'status':'invalid_history','reason':'duplicate_or_invalid_observation'}
+        if day>observed_day:
+            result['excluded_periods'].append(day.isoformat());continue
+        if exposure and (not isinstance(row.get(exposure),(float,int)) or row[exposure]<config.get('minimum_exposure',1)):
+            return {**result,'status':'insufficient_sample','reason':'exposure_below_minimum'}
+        by_day[day]=float(value)
+    baseline_days=[observed_day-timedelta(days=i) for i in range(width,0,-1)]
+    if observed_day not in by_day or any(day not in by_day for day in baseline_days):
+        return {**result,'status':'insufficient_sample','reason':'complete_daily_buckets_missing',
+                'n':sum(day in by_day for day in baseline_days)}
+    baseline=[by_day[day] for day in baseline_days]
+    center=median(baseline);mad=median(abs(v-center) for v in baseline)
+    scale=1.4826*mad
+    scale_method='mad'
+    if not scale:
+        ordered=sorted(baseline)
+        q1,q3=median(ordered[:len(ordered)//2]),median(ordered[(len(ordered)+1)//2:])
+        scale=(q3-q1)/1.349;scale_method='iqr'
+    result.update(n=len(baseline),observed=by_day[observed_day],expected=center,
+        baseline_start=baseline_days[0].isoformat(),baseline_end=baseline_days[-1].isoformat(),scale_method=scale_method)
+    if not scale:return {**result,'status':'not_applicable','reason':'zero_robust_scale'}
+    deviation=(by_day[observed_day]-center)/scale
+    threshold=config['threshold_z']
+    flagged=deviation>threshold if config['direction']=='above' else deviation < -threshold
+    result.update(status='anomaly' if flagged else 'within_baseline',deviation_z=round(deviation,4),
+        bounds={'lower':center-threshold*scale,'upper':center+threshold*scale},
+        reason='robust_deviation_above_threshold' if flagged else 'robust_deviation_within_threshold')
+    return result
+
+
+def evaluate_anomaly(catalog,signal,filters,scope,executor,reference,budget):
+    from datetime import date,datetime,timedelta
+    from zoneinfo import ZoneInfo
+    from services.data_coverage_service import peek
+    from services.analysis_catalog import resolve_period
+    metric=catalog.registry['metrics'][signal['metric']]
+    config=signal.get('anomaly') or {}
+    base={'signal_id':signal['id'],'signal_version':config.get('version'),'metric_id':signal['metric'],
+        'status':'not_applicable','reason':'baseline_not_enabled','sql_queries':0}
+    if not config.get('enabled') or not metric.get('time_column'):return base
+    health=((peek() or {}).get('data_health') or {}).get('views',{}).get(metric['source'],{})
+    if health.get('status')!='healthy' or health.get('completeness')!='complete' or not health.get('certificate'):
+        return {**base,'status':'unknown_source','reason':'complete_source_history_not_certified'}
+    if metric.get('aggregation_semantics') in {'ratio','average'} and not config.get('exposure_metric'):
+        return {**base,'reason':'exposure_contract_required'}
+    if budget[0]<=0:return {**base,'status':'not_measured','reason':'baseline_query_budget_exhausted'}
+    reference=reference or datetime.now(ZoneInfo(catalog.registry['timezone'])).date()
+    resolved=resolve_period(scope,reference)
+    observed=min(reference-timedelta(days=1),date.fromisoformat(resolved['end']) if resolved.get('end') else reference-timedelta(days=1))
+    width=config.get('baseline_buckets',28)
+    if type(width) is not int or not 28<=width<=90:return {**base,'reason':'unsupported_baseline_contract'}
+    window=TimeScope(mode='custom',start=observed-timedelta(days=width),end=observed,timezone=catalog.registry['timezone'])
+    metrics=[signal['metric']]+([config['exposure_metric']] if config.get('exposure_metric') else [])
+    budget[0]-=1
+    try:
+        rows,_=_execute(catalog,metric['subjects'][0],metrics,filters,window,[],executor,reference,granularity='day')
+        result=robust_anomaly(rows,signal['metric'],config,source_health=health,observed_day=observed,exposure=config.get('exposure_metric'))
+        from services.access_policy import digest
+        result.update(signal_id=signal['id'],sql_queries=1,scope=[f.model_dump(mode='json') for f in filters],
+            evidence_id='anomaly_'+digest([signal['id'],rows,result['parameters']])[:24])
+        return result
+    except Exception:
+        return {**base,'status':'execution_error','reason':'baseline_query_unavailable','sql_queries':1}

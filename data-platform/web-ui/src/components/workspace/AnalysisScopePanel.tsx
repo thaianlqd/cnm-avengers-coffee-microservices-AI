@@ -19,7 +19,8 @@ export const AnalysisScopePanel: React.FC<{ capabilities: any; preflight: any; s
   const [search, setSearch] = useState(''), [found, setFound] = useState<any[]>([]);
   const type = types.find((t: any) => t.id === dimension);
   const labels = Object.fromEntries((p.capabilities?.dimension_value_labels?.[dimension] || []).map((v: any) => [v.value, v.label]));
-  const selected: any[] = p.scope?.filters?.find((f: any) => f.dimension === dimension)?.value || [];
+  const selectedValue = p.scope?.filters?.find((f: any) => f.dimension === dimension)?.value;
+  const selected: any[] = selectedValue == null ? [] : Array.isArray(selectedValue) ? selectedValue : [selectedValue];
   const detected = detectedScope(p.preflight);
   const depths = depthOptions(p.capabilities);
   const activeDepth = depths.find(d => d.id === p.depth);
@@ -43,12 +44,13 @@ export const AnalysisScopePanel: React.FC<{ capabilities: any; preflight: any; s
       {p.time === 'custom' && <div className="flex gap-2"><input aria-label="Từ ngày" type="date" required value={p.start} max={p.end || undefined} onChange={e => p.onStart(e.target.value)} className={field} /><input aria-label="Đến ngày" type="date" required value={p.end} min={p.start || undefined} onChange={e => p.onEnd(e.target.value)} className={field} /></div>}
     </div>}
     <div data-analysis-input="scope" className="space-y-1 min-w-0">
+      {p.capabilities?.authorized_scope?.national===false&&<p data-authorized-scope className="rounded border border-blue-100 bg-blue-50 p-2 text-[11px] text-blue-900">Phạm vi theo quyền tài khoản: {(p.capabilities.authorized_scope.store_ids||[]).join(' · ')}. Mọi kết quả đều giới hạn trong các mã cửa hàng được cấp.</p>}
       <div className="flex items-center justify-between gap-2"><span className="text-[11px] font-semibold text-slate-500">Phạm vi</span>
         <button type="button" disabled={p.disabled} onClick={() => { if (open && manual) p.onScope({ mode: 'auto', filters: [] }); setOpen(!open); }} className="text-[11px] text-slate-500 hover:text-slate-800">{open ? (manual ? 'Bỏ thu hẹp' : 'Đóng') : 'Thu hẹp thủ công'}</button></div>
       {!manual && <div data-detected-scope className="flex flex-wrap gap-1.5 items-center text-[11px]">
         <span className="text-slate-400">Tự nhận diện từ câu hỏi:</span>
         {detected.filters.length ? detected.filters.map((f, i) => <span key={i} className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-emerald-800">{f.label}</span>)
-          : <span className="text-slate-600">{detected.summary}</span>}
+          : <span className="text-slate-600">{p.capabilities?.authorized_scope?.national===false?'Trong phạm vi tài khoản được cấp':detected.summary}</span>}
         {detected.axes.map((a, i) => <span key={`a${i}`} className="rounded-full border border-slate-200 px-2 py-0.5 text-slate-600">{a.label}</span>)}
       </div>}
       {!manual && p.preflight?.scope_resolution?.state === 'resolved' && <details data-scope-provenance className="text-[10.5px] text-slate-500">
@@ -67,7 +69,7 @@ export const AnalysisScopePanel: React.FC<{ capabilities: any; preflight: any; s
           {[...(type?.searchable ? found.map((v: any) => v.value) : type?.values || []), ...selected.filter(v => !(type?.values || []).includes(v) && !found.some((f: any) => f.value === v))].map((v: any) =>
             <button key={String(v)} type="button" aria-pressed={selected.includes(v)} onClick={() => toggle(v)} className={`rounded-full border px-2 py-0.5 text-[11px] ${selected.includes(v) ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-slate-200 text-slate-600'}`}>{labels[v] || String(v)}</button>)}
         </div>}
-        {manual && <p className="text-[10.5px] text-slate-500">{p.scope.filters.map((f: any) => `${types.find((t: any) => t.id === f.dimension)?.label}: ${f.value.length} giá trị`).join(' · ')}</p>}
+        {manual && <p className="text-[10.5px] text-slate-500">{p.scope.filters.map((f: any) => `${types.find((t: any) => t.id === f.dimension)?.label || p.capabilities?.metrics?.flatMap((m: any) => m.dimensions || []).find((d: any) => d.id === f.dimension)?.label || f.dimension}: ${(Array.isArray(f.value) ? f.value : [f.value]).map((value: any) => p.capabilities?.dimension_value_labels?.[f.dimension]?.find((v: any) => v.value === value)?.label || String(value)).join(', ')}`).join(' · ')}</p>}
       </div>}
     </div>
     {p.showDepth && <div data-analysis-input="depth" className="space-y-1 max-w-xs"><span className="text-[11px] font-semibold text-slate-500">Độ sâu</span>

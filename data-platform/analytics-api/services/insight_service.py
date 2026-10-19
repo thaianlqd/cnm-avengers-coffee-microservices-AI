@@ -72,9 +72,10 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None, as_of=No
                     "partition": partition or {},
                     "selection": (
                         "Top N"
-                        if a.plan.ranking
+                        if a.plan.ranking or getattr(a.query,'cohort_query_id',None)
                         else "limited" if a.plan.explicit_limit else "complete"
                     ),
+                    **({'cohort_query_id':a.query.cohort_query_id} if getattr(a.query,'cohort_query_id',None) else {}),
                 },
                 "statement": statement,
             }
@@ -451,6 +452,67 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None, as_of=No
                     if judgment not in {"favorable", "needs_review"}:
                         statement += " Chênh lệch chưa xác định hiệu quả tốt/xấu vì chưa kiểm chứng quy mô hoạt động tương đương."
                     add(a, metric, "comparison", "peer_gap", {"entity": entity, "actual": row[metric], "baseline": baseline, "baseline_type": signal["comparison"], "gap": gap, "relative_gap_pct": relative, "direction": direction, "judgment": judgment, "peer_groups": len(rows), "comparable_exposure": signal["comparable_exposure"]}, statement, partition)
+    for binding in feature_bindings or []:
+        if binding.get('feature')!='ranked_companion':continue
+        ids=binding.get('query_ids',[])
+        if len(ids)!=2:continue
+        primary,companion=(artifacts.get(q) for q in ids)
+        if not primary or not companion or companion.query.cohort_query_id!=primary.query.id:continue
+        from services.analysis_query import validate_ranked_cohorts
+        try:validate_ranked_cohorts({primary.query.id:primary,companion.query.id:companion})
+        except ValueError:continue
+        dimensions=primary.plan.dimensions
+        def key(row):return tuple(row[d] for d in dimensions)
+        mapped={key(row):row for row in companion.result['rows']}
+        display=dimension_labeler(dimensions,primary.result['rows'],primary.grounded.dimensions)
+        for metric in binding['metric_ids']:
+            identities={d.get('identity') for d in primary.grounded.dimensions.values()}
+            rows=[{'entity':'; '.join(display(row,d) for d in dimensions if d not in identities),
+                'key':{d:row[d] for d in dimensions},
+                'rank_value':row[primary.plan.ranking.metric], 'value':mapped[key(row)][metric]}
+                for row in primary.result['rows']]
+            if not rows or any(not number(row['value']) for row in rows):continue
+            meta=companion.grounded.metrics[metric]
+            statement=f"{meta['business_name']} của cùng {len(rows)} nhóm đã chọn theo {primary.grounded.metrics[primary.plan.ranking.metric]['business_name']}: "
+            statement+='; '.join(f"{row['entity']}: {fmt(row['value'])} {meta['unit']}" for row in rows[:5])+'.'
+            if len(rows)>5:statement+=' Hiển thị 5 nhóm đầu; xem bảng đầy đủ.'
+            statement+=' Mỗi chỉ số giữ quần thể theo định nghĩa danh mục.'
+            add(companion,metric,'comparison','ranked_companion',
+                {'rows':rows,'query_ids':ids,'ranking_metric':primary.plan.ranking.metric},statement)
+    # Scalar period comparisons use two independently compiled full artifacts.
+    # Missing/null baselines never become a fabricated zero or percentage.
+    for binding in feature_bindings or []:
+        if binding.get('feature') != 'period_comparison':
+            continue
+        ids = binding.get('query_ids', [])
+        if len(ids) != 2:
+            continue
+        target, baseline = (artifacts.get(q) for q in ids)
+        if not target or not baseline:
+            continue
+        comparable = (not target.plan.dimensions and not baseline.plan.dimensions
+            and target.query.subject == baseline.query.subject and target.query.filters == baseline.query.filters
+            and not target.result.get('truncated') and not baseline.result.get('truncated')
+            and len(target.result['rows']) == len(baseline.result['rows']) == 1)
+        for metric in binding['metric_ids']:
+            current = target.result['rows'][0].get(metric) if comparable else None
+            previous = baseline.result['rows'][0].get(metric) if comparable else None
+            if not number(current) or not number(previous):
+                continue
+            delta = current - previous
+            pct = delta / abs(previous) * 100 if previous else None
+            if not number(delta) or pct is not None and not number(pct):
+                continue
+            start, end = target.grounded.period, baseline.grounded.period
+            label = target.grounded.metrics[metric]['business_name']
+            unit = target.grounded.metrics[metric]['unit']
+            statement = (f"{label} kỳ {start['start']}–{start['end']}: {fmt(current)} {unit}; "
+                f"kỳ đối chiếu {end['start']}–{end['end']}: {fmt(previous)} {unit}; "
+                f"chênh lệch {fmt(delta)} {unit}")
+            statement += f" ({fmt(pct)}%)." if pct is not None else '; không tính phần trăm vì kỳ đối chiếu bằng 0.'
+            add(target, metric, 'comparison', 'period_comparison',
+                {'current':current,'baseline':previous,'delta':delta,'change_pct':pct,
+                 'query_ids':ids,'comparison_scope':{'target':start,'baseline':end}}, statement)
     # --- Governed pair (V3.3): two separate aggregates paired by a unique key; populations stay separate ---
     for binding in feature_bindings or []:
         if not binding.get("pair_id"):
@@ -466,6 +528,8 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None, as_of=No
         names = [qa.grounded.metrics[ma]["business_name"], qb.grounded.metrics[mb]["business_name"]]
         registry = catalog.registry if catalog else {"metrics": {}}
         values = {"r": res.get("r"), "n": res.get("n", 0), "paired_metric": mb, "pair_id": binding["pair_id"], "query_ids": ids,
+                  'spearman':res.get('spearman'),'sensitivity':res.get('sensitivity'),
+                  'statistics_version':'3.4.0',
                   "key": binding["key"], "status": res["status"], "initial_a": res.get("initial_a"), "initial_b": res.get("initial_b"),
                   "excluded_invalid": res.get("excluded_invalid", 0), "excluded_missing_key": res.get("excluded_missing_key", 0),
                   "unmatched_a": len(res.get("unmatched_a", [])), "unmatched_b": len(res.get("unmatched_b", [])),
@@ -475,7 +539,7 @@ def analytical_features(artifacts, catalog=None, feature_bindings=None, as_of=No
                       f"; loại {res.get('excluded_invalid', 0)} giá trị không hợp lệ và {len(res.get('unmatched_a', [])) + len(res.get('unmatched_b', []))} khóa không khớp") if comparable else ""
         if res["status"] == "ok":
             add(qa, ma, "relationship", "pearson", values,
-                f"Tương quan giữa {names[0]} và {names[1]} đạt hệ số {fmt(res['r'])} trên {res['n']} cặp ghép theo mã duy nhất ({accounting}); tương quan không chứng minh nguyên nhân."
+                f"Tương quan giữa {names[0]} và {names[1]} đạt Pearson {fmt(res['r'])}, Spearman {fmt(res['spearman'])} trên {res['n']} cặp ghép theo mã duy nhất ({accounting}); tương quan không chứng minh nguyên nhân."
                 + (" Mẫu nhỏ (dưới 10 cặp) nên cần thận trọng." if res["small_sample"] else ""))
         else:
             reason = {"duplicate_keys": "khóa ghép bị trùng nên cặp không hợp lệ", "insufficient_pairs": f"chỉ có {res.get('n', 0)} cặp hợp lệ, cần ít nhất {MIN_PAIRED_OBSERVATIONS}",
@@ -804,15 +868,66 @@ def paired_observations(rows_a, rows_b, key, metric_a, metric_b):
         out["status"] = "insufficient_pairs"
         return out
     xs, ys = [p[0] for p in pairs], [p[1] for p in pairs]
-    mx, my = sum(xs) / len(xs), sum(ys) / len(ys)
-    sxx, syy = sum((x - mx) ** 2 for x in xs), sum((y - my) ** 2 for y in ys)
-    if sxx == 0 or syy == 0:
+    coefficient=_paired_coefficient(xs,ys)
+    if coefficient is None:
         out["status"] = "zero_variance"
         return out
-    out["r"] = round(sum((x - mx) * (y - my) for x, y in pairs) / (sxx * syy) ** 0.5, 4)
+    out["r"] = round(coefficient, 4)
+    out['spearman']=round(_paired_coefficient(_average_ranks(xs),_average_ranks(ys)),4)
+    xflags,yflags=_robust_outliers(xs),_robust_outliers(ys)
+    flagged=set(xflags['indices'])|set(yflags['indices'])
+    subset=[(x,y) for i,(x,y) in enumerate(pairs) if i not in flagged]
+    subset_r=_paired_coefficient([p[0] for p in subset],[p[1] for p in subset]) if len(subset)>=MIN_PAIRED_OBSERVATIONS else None
+    out['sensitivity']={'method':'median_mad_with_iqr_fallback','version':'3.4.0','full_n':len(pairs),
+        'flagged_pairs':len(flagged),'diagnostic_n':len(subset),'full_pearson':out['r'],
+        'diagnostic_pearson':round(subset_r,4) if subset_r is not None else None,
+        'x_scale_status':xflags['status'],'y_scale_status':yflags['status'],
+        'label':'Diagnostic subset only; full-sample coefficients remain authoritative',
+        'fisher_z_interval':{'status':'not_measured','reason':'independent_bivariate_normal_assumptions_not_certified'}}
     out["small_sample"] = len(pairs) < SMALL_SAMPLE
     out["pairs"] = pairs
     return out
+
+
+def _paired_coefficient(xs,ys):
+    if len(xs)!=len(ys) or not xs:return None
+    # Normalize first so finite values cannot overflow while computing means
+    # or squared deviations. Positive rescaling preserves correlation.
+    sx,sy=max(abs(v) for v in xs),max(abs(v) for v in ys)
+    if not sx or not sy:return None
+    x,y=[v/sx for v in xs],[v/sy for v in ys]
+    mx,my=sum(x)/len(x),sum(y)/len(y)
+    dx,dy=[v-mx for v in x],[v-my for v in y]
+    xx,yy=sum(v*v for v in dx),sum(v*v for v in dy)
+    if not xx or not yy:return None
+    return max(-1.0,min(1.0,sum(a*b for a,b in zip(dx,dy))/(xx*yy)**0.5))
+
+
+def _average_ranks(values):
+    ordered=sorted(range(len(values)),key=lambda i:values[i])
+    ranks=[0.0]*len(values)
+    i=0
+    while i<len(ordered):
+        end=i+1
+        while end<len(ordered) and values[ordered[end]]==values[ordered[i]]:end+=1
+        average=(i+1+end)/2
+        for index in ordered[i:end]:ranks[index]=average
+        i=end
+    return ranks
+
+
+def _robust_outliers(values):
+    from statistics import median
+    if len(values)<8:return {'indices':[],'status':'insufficient_sample'}
+    center=median(values)
+    mad=median(abs(v-center) for v in values)
+    if mad:
+        return {'indices':[i for i,v in enumerate(values) if abs(v-center)/(1.4826*mad)>3.5], 'status':'mad'}
+    ordered=sorted(values)
+    q1,q3=median(ordered[:len(ordered)//2]),median(ordered[(len(ordered)+1)//2:])
+    iqr=q3-q1
+    if not iqr:return {'indices':[],'status':'zero_scale_not_applicable'}
+    return {'indices':[i for i,v in enumerate(values) if v<q1-3*iqr or v>q3+3*iqr],'status':'iqr'}
 
 
 def reconcile_driver_deltas(current, previous, tolerance=0.01):

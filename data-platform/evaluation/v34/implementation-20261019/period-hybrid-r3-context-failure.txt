@@ -1,0 +1,17 @@
+..........F..........Result rejected source=execution operation=ranking rows=1 limit=5 rules=projection_columns,projection_rows,sensitive_field dimensions=product,product_id granularity=day
+...................[AnalystResolverInternal] {"requirement_id": "r1", "exception_type": "KeyError", "frames": [{"file": "analytical_resolver.py", "function": "resolve", "line": 677}, {"file": "mock.py", "function": "__call__", "line": 1124}, {"file": "mock.py", "function": "_mock_call", "line": 1128}, {"file": "mock.py", "function": "_execute_mock_call", "line": 1183}]}
+[AnalystResolverInternal] {"requirement_id": "r1", "exception_type": "TypeError", "frames": [{"file": "analytical_resolver.py", "function": "resolve", "line": 677}, {"file": "mock.py", "function": "__call__", "line": 1124}, {"file": "mock.py", "function": "_mock_call", "line": 1128}, {"file": "mock.py", "function": "_execute_mock_call", "line": 1183}]}
+[AnalystResolverInternal] {"requirement_id": "r1", "exception_type": "ValueError", "frames": [{"file": "analytical_resolver.py", "function": "resolve", "line": 677}, {"file": "mock.py", "function": "__call__", "line": 1124}, {"file": "mock.py", "function": "_mock_call", "line": 1128}, {"file": "mock.py", "function": "_execute_mock_call", "line": 1183}]}
+.......
+======================================================================
+FAIL: test_context_and_schema_reduction (tests.test_hybrid_v28.HybridTests.test_context_and_schema_reduction)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_hybrid_v28.py", line 255, in test_context_and_schema_reduction
+    self.assertLess(len(compact(intent_tool())),len(compact(decision_tool(natural=True,refinement=False)))*0.80)
+AssertionError: 5260 not less than 5124.0
+
+----------------------------------------------------------------------
+Ran 47 tests in 68.705s
+
+FAILED (failures=1)

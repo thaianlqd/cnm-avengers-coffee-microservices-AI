@@ -1,0 +1,425 @@
+[
+  {
+    "id": "L01",
+    "group": "happy",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L02",
+    "group": "happy",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L03",
+    "group": "happy",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L04",
+    "group": "happy",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L05",
+    "group": "happy",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L06",
+    "group": "happy",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L07",
+    "group": "happy",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L08",
+    "group": "happy",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L09",
+    "group": "happy",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L10",
+    "group": "happy",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L11",
+    "group": "happy",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L12",
+    "group": "happy",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L13",
+    "group": "happy",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L14",
+    "group": "happy",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L15",
+    "group": "ambiguity",
+    "expected": "clarify",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L16",
+    "group": "ambiguity",
+    "expected": "clarify",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L17",
+    "group": "ambiguity",
+    "expected": "clarify",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L18",
+    "group": "ambiguity",
+    "expected": "clarify",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L19",
+    "group": "association",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L20",
+    "group": "driver",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L21",
+    "group": "expectation",
+    "expected": "useful_no_guarantee",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L22",
+    "group": "recovery",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L23",
+    "group": "geography",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L24",
+    "group": "geography",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L25",
+    "group": "geography",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L26",
+    "group": "geography",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L27",
+    "group": "geography",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L28",
+    "group": "geography",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L29",
+    "group": "geography",
+    "expected": "useful",
+    "skipped": "diagnostic_subset"
+  },
+  {
+    "id": "L30",
+    "group": "no_diacritics",
+    "expected": "useful",
+    "passed": true,
+    "logical_calls": 0,
+    "physical_http": 1,
+    "repair": 0,
+    "recovery": 0,
+    "secondary_used": false,
+    "latency_ms": 2538,
+    "outcome": {
+      "status": "success",
+      "outcome": "SUCCESS",
+      "choices": null,
+      "actions": null,
+      "analysis_state": null,
+      "error_category": null,
+      "conclusion": "Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (55 nhóm có dữ liệu).",
+      "verification": "verified",
+      "completion_status": "complete",
+      "coverage": [
+        {
+          "requirement_id": "req_1",
+          "state": "RESOLVED",
+          "reason": null,
+          "operation_ids": [
+            "q_15681032c463f9180a382c1c"
+          ],
+          "derived_features": [],
+          "goal": "Phân tích yêu cầu",
+          "supporting_for": null,
+          "views": [
+            {
+              "kind": "grouped",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "city"
+              ],
+              "required": true,
+              "id": null,
+              "operation_ids": [],
+              "transform": null
+            }
+          ]
+        }
+      ],
+      "views": [
+        {
+          "requirement_id": "req_1",
+          "index": 0,
+          "kind": "grouped",
+          "required": true,
+          "status": "satisfied",
+          "reason": null
+        }
+      ],
+      "metric_ids": [
+        "revenue"
+      ],
+      "applied_filters": [
+        []
+      ],
+      "verification_score_status": "verified",
+      "answer_requirements": [
+        {
+          "requirement_id": "req_1",
+          "role": "grouped",
+          "evidence_id": "q_15681032c463f9180a382c1c:revenue:scope_total:6230060e3b",
+          "query_id": "q_15681032c463f9180a382c1c",
+          "metric": "revenue",
+          "unit": "VND",
+          "scope": {
+            "label": "Đơn hàng và doanh thu",
+            "period": {
+              "mode": "custom",
+              "start": "2026-09-01",
+              "end": "2026-09-30",
+              "end_exclusive": "2026-10-01",
+              "timezone": "Asia/Ho_Chi_Minh"
+            },
+            "population_relation": "same",
+            "metric_business_filters": [
+              {
+                "dimension": "order_status",
+                "operator": "in",
+                "value": [
+                  "HOAN_THANH",
+                  "DANG_GIAO"
+                ]
+              }
+            ],
+            "metric_required_non_null": [],
+            "filters": [],
+            "partition": {},
+            "selection": "complete"
+          },
+          "statement": "Tổng doanh thu: 440,072,000 VND trong phạm vi đã chọn (55 nhóm có dữ liệu)."
+        }
+      ],
+      "scope_resolution": {
+        "state": "unspecified",
+        "filters": [],
+        "bindings": [],
+        "source": [],
+        "fingerprint": "a683096011db3975a1e401e33b0047d1f2677a11efe85ef12806f016ae039795",
+        "requested_phrase": null
+      },
+      "query_semantics": [
+        {
+          "id": "q_15681032c463f9180a382c1c",
+          "metrics": [
+            "revenue"
+          ],
+          "group_by": [
+            "city"
+          ],
+          "time": {
+            "kind": "range",
+            "mode": null,
+            "year": null,
+            "month": null,
+            "quarter": null,
+            "day": null,
+            "start": "2026-09-01",
+            "end": "2026-09-30",
+            "amount": null,
+            "unit": null
+          },
+          "filters": [],
+          "role": "requested"
+        }
+      ],
+      "proposal_semantics": {
+        "semantic_intent": {
+          "decision": "analyze",
+          "requirements": [
+            {
+              "id": "req_1",
+              "goal": "Phân tích yêu cầu",
+              "domain_id": "orders",
+              "lens_hint": null,
+              "supporting_for": null,
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "city"
+              ],
+              "analysis_kind": "aggregate",
+              "filters": [],
+              "time": {
+                "kind": "month",
+                "mode": null,
+                "year": 2026,
+                "month": 9,
+                "quarter": null,
+                "day": null,
+                "start": null,
+                "end": null,
+                "amount": null,
+                "unit": null
+              },
+              "comparison_time": null,
+              "ranking": null,
+              "granularity": null,
+              "derived_features": [],
+              "feature_metrics": {},
+              "forecast": null,
+              "availability": "requested",
+              "reason": null
+            }
+          ],
+          "clarification": null
+        },
+        "contract_issues": [],
+        "semantic_normalizations": [
+          {
+            "requirement_id": "req_2",
+            "field": "requirements",
+            "rule": "unrequested_sibling_metric_duplicate",
+            "previous": [
+              "store_revenue"
+            ],
+            "value": "req_1"
+          }
+        ],
+        "semantic_issue_history": null,
+        "planning_latency_ms": 1683.5
+      },
+      "contract_issues": [],
+      "root_contract_issues": null,
+      "interpreter_outputs": [
+        {
+          "decision": "analyze",
+          "clarification": {},
+          "requirements": [
+            {
+              "time": {
+                "kind": "month",
+                "month": 9,
+                "year": 2026
+              },
+              "analysis_kind": "aggregate",
+              "availability": "requested",
+              "dimension_ids": [
+                "city"
+              ],
+              "id": "req_1",
+              "metric_ids": [
+                "revenue"
+              ]
+            },
+            {
+              "time": {
+                "kind": "month",
+                "month": 9,
+                "year": 2026
+              },
+              "analysis_kind": "aggregate",
+              "availability": "requested",
+              "dimension_ids": [
+                "city"
+              ],
+              "id": "req_2",
+              "metric_ids": [
+                "store_revenue"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "planning_ms": 1683.5,
+    "job_id": "aj_b375ddc396b946f2a1eb859e4c9e4c44",
+    "terminal_state": "completed",
+    "job_physical_http": 1,
+    "job_latency_ms": 2479.89,
+    "stage_timings_ms": {
+      "queue": 4.44,
+      "accepted": 588.53,
+      "planning": 1570.61,
+      "validating": 39.47,
+      "executing": 113.94,
+      "verifying": 162.9
+    }
+  }
+]

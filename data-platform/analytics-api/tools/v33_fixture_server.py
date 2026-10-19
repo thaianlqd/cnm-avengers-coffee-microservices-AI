@@ -106,6 +106,12 @@ app.include_router(reports.router)
 app.include_router(analysis_modules.router)
 
 
+@app.get('/api/auth/session')
+def development_auth_session():
+    # Explicit fixture/dev compatibility only; never imported by production.
+    return {'authenticated':False,'mode':'explicit_development_browser','identity':'development-browser'}
+
+
 @app.get('/health')
 def health(): return {'fixture':True,'external_http':0}
 

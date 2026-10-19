@@ -15,7 +15,7 @@ class AnalysisJobTests(f.unittest.TestCase):
     pipeline=f.HybridTests.pipeline
     request=f.HybridTests.request
 
-    def jobs(self, provider_factory=None, repository=None, before=None):
+    def jobs(self, provider_factory=None, repository=None, before=None, workers=4):
         self.pipelines=[]
         def factory(owner):
             p=self.pipeline(provider_factory() if provider_factory else f.scripted(f.envelope()))
@@ -30,7 +30,7 @@ class AnalysisJobTests(f.unittest.TestCase):
                 finally: warehouse.close()
             p.generate=MethodType(generate,p)
             return p
-        jobs=AnalysisJobs(repository or JobRepository(),factory)
+        jobs=AnalysisJobs(repository or JobRepository(),factory,workers=workers)
         self.addCleanup(lambda:jobs.pool.shutdown(wait=True))
         return jobs
 

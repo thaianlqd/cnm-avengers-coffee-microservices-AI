@@ -138,14 +138,21 @@ class LiveRegressionTests(f.unittest.TestCase):
         patch={'id':'req_1','dimension_ids':['reporting_region'],'filters':union}
         p=self.pipeline(f.scripted(f.envelope(req),f.envelope(patch)))
         proposed=p.propose(self.request(q,analysis_depth='focused'))
-        self.assertEqual(proposed['outcome'],'SUCCESS');self.assertEqual(p.provider.call_count,2)
-        self.assertTrue(any(i['code']=='scope_cohort_axis_mismatch' for i in proposed['diagnostics']['root_contract_issues']))
-        wire=json.loads(p.provider.requests[1]['messages'][0]['content'])
-        self.assertEqual(wire['required_scope_patches'],[patch])
+        self.assertEqual(proposed['outcome'],'SUCCESS');self.assertEqual(p.provider.call_count,1)
+        self.assertTrue(any(i['rule']=='governed_derived_cohort_axis' for i in proposed['diagnostics']['semantic_normalizations']))
+        # Preserve the paid-repair boundary assertions independently of the new
+        # deterministic completion; no validator is mocked or weakened.
+        from services.scope_resolution_service import scope_issues,scope_repair_patches
+        previous=AnalysisIntentEnvelope.model_validate(f.envelope(req))
+        issues=scope_issues(a['scope_resolution'],previous.requirements,self.catalog)
+        self.assertEqual(scope_repair_patches(a['scope_resolution'],previous,issues),[patch])
+        planner=p.agent(self.catalog,f.REFERENCE,proposal=True)
+        repaired=planner.parse_repair(f.envelope(patch),previous)
+        self.assertEqual(planner.merge_repair(previous,repaired,issues).requirements[0].dimension_ids,['reporting_region'])
         protected={**patch,'time':{'kind':'relative','mode':'all_time'}}
-        p=self.pipeline(f.scripted(f.envelope(req),f.envelope(protected)))
-        with self.assertRaises(f.AnalysisError):p.propose(self.request(q,analysis_depth='focused'))
-        self.assertTrue(any(i['code']=='untargeted_field_changed' for i in p.semantic_info['contract_issues']))
+        with self.assertRaises(f.AnalysisError) as caught:
+            planner.merge_repair(previous,planner.parse_repair(f.envelope(protected),previous),issues)
+        self.assertTrue(any(i['code']=='untargeted_field_changed' for i in caught.exception.issues))
 
     def test_union_scope_repair_has_exact_typed_patch_for_every_sibling(self):
         from evals.fixture_warehouse import FixtureWarehouse

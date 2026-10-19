@@ -1,268 +1,163 @@
-"""
-Avengers Coffee - Kafka Streaming Consumer
-Consumes events from Kafka topics, buffers them, and:
-1. Ingests raw streaming micro-batches into MinIO Bronze Lake (avengers-bronze/streaming/{topic}/...)
-2. Persists real-time events into postgres-analytics (public.realtime_events) for instant visibility.
-"""
-import os
-import sys
-import json
-import time
-import signal
+"""Kafka -> immutable Bronze (required), PostgreSQL event projection (replayable)."""
 import logging
-from datetime import datetime, timezone
+import os
+import signal
+import time
 
-import psycopg2
-import psycopg2.extras
-from kafka import KafkaConsumer
-from kafka.errors import NoBrokersAvailable
 import boto3
-from botocore.client import Config
+from botocore.config import Config
+import psycopg2
+from kafka import KafkaConsumer, TopicPartition
+from kafka.structs import OffsetAndMetadata
+from kafka.errors import NoBrokersAvailable
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(name)s - %(message)s',
-)
-logger = logging.getLogger("kafka-consumer")
+from stream_runtime import broker_record, flush_records, project_records
 
-KAFKA_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
-KAFKA_GROUP_ID = os.getenv("KAFKA_GROUP_ID", "avengers-bronze-consumer")
-TOPICS = ["orders-events", "order-items-events", "shipper-events"]
-
-DB_HOST     = os.getenv("DB_HOST", "postgres-analytics")
-DB_PORT     = int(os.getenv("DB_PORT", 5432))
-DB_USER     = os.getenv("DB_USER", "analytics")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "analytics123")
-DB_NAME     = os.getenv("DB_NAME", "analytics")
-
-MINIO_ENDPOINT   = os.getenv("MINIO_ENDPOINT", "http://minio:9000")
-MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
-MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "minioadmin123")
-BRONZE_BUCKET    = "avengers-bronze"
-
-BATCH_SIZE = int(os.getenv("BATCH_SIZE", 50))
-FLUSH_INTERVAL = int(os.getenv("FLUSH_INTERVAL_SECONDS", 15))
-
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(name)s - %(message)s')
+logger = logging.getLogger('kafka-consumer')
+TOPICS = ['orders-events', 'order-items-events', 'shipper-events']
+BRONZE_BUCKET = 'avengers-bronze'
+BATCH_SIZE = max(1, min(100, int(os.getenv('BATCH_SIZE', '50'))))
+FLUSH_INTERVAL = max(1, min(30, int(os.getenv('FLUSH_INTERVAL_SECONDS', '15'))))
 running = True
 
 
 def signal_handler(sig, frame):
     global running
-    logger.info("Received termination signal. Gracefully stopping...")
     running = False
-
-
-signal.signal(signal.SIGINT, signal_handler)
-signal.signal(signal.SIGTERM, signal_handler)
 
 
 def get_db_conn():
     try:
-        conn = psycopg2.connect(
-            host=DB_HOST, port=DB_PORT, user=DB_USER,
-            password=DB_PASSWORD, dbname=DB_NAME,
-            connect_timeout=10,
-            sslmode=os.getenv('DB_SSLMODE', 'disable')
-        )
-        conn.autocommit = True
-        return conn
-    except Exception as e:
-        logger.warning(f"Could not connect to PostgreSQL: {e}")
+        credentials=None
+        if os.getenv('DATA_PLATFORM_GOVERNED_STREAMING','0')=='1':
+            from pipeline_runtime import private_database_profile
+            credentials=private_database_profile()
+        return psycopg2.connect(host=os.getenv('DB_HOST', 'postgres-analytics'),
+            port=int(os.getenv('DB_PORT', '5432')), user=credentials[0] if credentials else os.getenv('DB_USER', 'analytics'),
+            password=credentials[1] if credentials else os.environ['DB_PASSWORD'], dbname=os.getenv('DB_NAME', 'analytics'),
+            connect_timeout=3, options='-c statement_timeout=10000 -c lock_timeout=3000',
+            sslmode=os.getenv('DB_SSLMODE', 'disable'))
+    except Exception as error:
+        logger.warning('Projection unavailable: %s', type(error).__name__)
         return None
 
 
 def get_minio():
-    try:
-        return boto3.client(
-            "s3", endpoint_url=MINIO_ENDPOINT,
-            aws_access_key_id=MINIO_ACCESS_KEY,
-            aws_secret_access_key=MINIO_SECRET_KEY,
-            config=Config(signature_version="s3v4"),
-        )
-    except Exception as e:
-        logger.warning(f"Could not connect to MinIO: {e}")
-        return None
+    return boto3.client('s3', endpoint_url=os.getenv('MINIO_ENDPOINT', 'http://minio:9000'),
+        aws_access_key_id=os.environ['MINIO_ACCESS_KEY'], aws_secret_access_key=os.environ['MINIO_SECRET_KEY'],
+        config=Config(signature_version='s3v4', connect_timeout=2, read_timeout=5,
+                      retries={'mode': 'standard', 'total_max_attempts': 3}))
 
 
-def ensure_bucket(s3, bucket: str):
-    if s3 is None:
-        return
-    try:
-        s3.head_bucket(Bucket=bucket)
-    except Exception:
-        try:
-            s3.create_bucket(Bucket=bucket)
-        except Exception:
-            pass
-
-
-def init_db_schema(conn):
-    """Ensure realtime_events table exists in postgres-analytics."""
-    if conn is None:
-        return
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS public.realtime_events (
-                    id BIGSERIAL PRIMARY KEY,
-                    topic VARCHAR(100) NOT NULL,
-                    event_key VARCHAR(255),
-                    event_type VARCHAR(100),
-                    payload JSONB NOT NULL,
-                    received_at TIMESTAMPTZ DEFAULT NOW()
-                );
-                CREATE INDEX IF NOT EXISTS idx_realtime_events_topic ON public.realtime_events(topic);
-                CREATE INDEX IF NOT EXISTS idx_realtime_events_received ON public.realtime_events(received_at DESC);
-            """)
-        logger.info("Verified public.realtime_events table in DB.")
-    except Exception as e:
-        logger.warning(f"Error checking realtime_events table: {e}")
-
-
-def create_consumer() -> KafkaConsumer:
-    """Connect to Kafka with retry logic until broker becomes ready."""
-    logger.info(f"Connecting to Kafka brokers at {KAFKA_SERVERS}...")
+def create_consumer():
+    deadline = time.monotonic()+60
     while running:
         try:
-            consumer = KafkaConsumer(
-                *TOPICS,
-                bootstrap_servers=KAFKA_SERVERS,
-                group_id=KAFKA_GROUP_ID,
-                auto_offset_reset='earliest',
-                enable_auto_commit=True,
-                value_deserializer=lambda m: json.loads(m.decode('utf-8', errors='ignore')),
-                key_deserializer=lambda k: k.decode('utf-8', errors='ignore') if k else None,
-                consumer_timeout_ms=1000
-            )
-            logger.info(f"Connected to Kafka and subscribed to topics: {TOPICS}")
-            return consumer
+            return KafkaConsumer(*TOPICS, bootstrap_servers=os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'kafka:9092'),
+                group_id=os.getenv('KAFKA_GROUP_ID', 'avengers-bronze-consumer'),
+                auto_offset_reset='earliest', enable_auto_commit=False,
+                max_poll_records=BATCH_SIZE, max_poll_interval_ms=300000,
+                request_timeout_ms=30000, api_version_auto_timeout_ms=3000)
         except NoBrokersAvailable:
-            logger.warning("Kafka broker not available yet. Retrying in 5 seconds...")
-            time.sleep(5)
-        except Exception as e:
-            logger.warning(f"Error connecting to Kafka: {e}. Retrying in 5 seconds...")
-            time.sleep(5)
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(2)
     return None
 
 
-def flush_batch(batch: list, db_conn, s3_client):
-    """Flush accumulated events to both PostgreSQL and MinIO Bronze."""
-    if not batch:
-        return
-
-    # 1. Insert into PostgreSQL public.realtime_events
-    if db_conn is not None:
-        try:
-            with db_conn.cursor() as cur:
-                records = [
-                    (
-                        item["topic"],
-                        item["key"],
-                        item["event_type"],
-                        json.dumps(item["payload"]),
-                        item["received_at"]
-                    )
-                    for item in batch
-                ]
-                psycopg2.extras.execute_values(
-                    cur,
-                    """
-                    INSERT INTO public.realtime_events (topic, event_key, event_type, payload, received_at)
-                    VALUES %s
-                    """,
-                    records
-                )
-            logger.info(f"Recorded {len(batch)} real-time events into postgres-analytics.")
-        except Exception as e:
-            logger.warning(f"DB insert error for real-time events: {e}")
-
-    # 2. Upload streaming batch to MinIO Bronze Lake
-    if s3_client is not None:
-        try:
-            ensure_bucket(s3_client, BRONZE_BUCKET)
-            now = datetime.now()
-            date_str = now.strftime("%Y/%m/%d")
-            ts_str = now.strftime("%Y%m%d_%H%M%S_%f")
-            key = f"streaming/{date_str}/batch_{ts_str}.json"
-
-            body = json.dumps(batch, default=str, ensure_ascii=False, indent=2).encode("utf-8")
-            s3_client.put_object(
-                Bucket=BRONZE_BUCKET,
-                Key=key,
-                Body=body,
-                ContentType="application/json"
-            )
-            logger.info(f"Ingested streaming batch ({len(batch)} events) → s3://{BRONZE_BUCKET}/{key}")
-        except Exception as e:
-            logger.warning(f"MinIO streaming upload error: {e}")
+def flush_batch(batch, db_conn, s3_client, consumer):
+    def commit(positions):
+        consumer.commit({TopicPartition(*tp): OffsetAndMetadata(offset, '') for tp, offset in positions.items()})
+    result = flush_records(batch, s3_client, BRONZE_BUCKET, commit,
+                           project=lambda records: project_records(db_conn, records))
+    logger.info('Stream flush: rows=%d quarantined=%d projection=%s',
+                result['records'], result['quarantined'], result['projection'])
+    return result
 
 
 def main():
-    logger.info("=== Avengers Coffee - Kafka Streaming Consumer Starting ===")
-    db_conn = get_db_conn()
-    if db_conn:
-        init_db_schema(db_conn)
-    s3_client = get_minio()
-
-    consumer = create_consumer()
-    if consumer is None:
-        logger.info("Kafka consumer shutting down before initialization.")
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    if os.getenv('DATA_PLATFORM_GOVERNED_STREAMING','0')!='1':
+        logger.info('Streaming standby: rollout disabled; no MinIO, Kafka or projection connections')
+        while running:time.sleep(0.5)
         return
-
+    from pipeline_runtime import private_database_profile
+    private_database_profile()  # Provision explicitly before reading broker/object storage.
+    s3 = get_minio()
+    # Deployment creates buckets. Missing Bronze fails before consumption.
+    s3.head_bucket(Bucket=BRONZE_BUCKET)
+    consumer, connection = None, None
+    failed = False
     buffer = []
-    last_flush_time = time.time()
-
     try:
+        consumer = create_consumer()
+        if consumer is None:
+            return
+        connection = get_db_conn()
+        last_flush = time.monotonic()
         while running:
-            # Poll for new messages
-            for message in consumer:
-                if not running:
-                    break
-
-                try:
-                    payload = message.value
-                    event_type = payload.get("event_type", "unknown") if isinstance(payload, dict) else "unknown"
-                    event_record = {
-                        "topic": message.topic,
-                        "key": message.key,
-                        "event_type": event_type,
-                        "payload": payload,
-                        "received_at": datetime.now(timezone.utc).isoformat(),
-                        "offset": message.offset,
-                        "partition": message.partition
-                    }
-                    buffer.append(event_record)
-                except Exception as e:
-                    logger.warning(f"Error parsing message from {message.topic}: {e}")
-
-                # Flush if buffer reaches batch size
-                if len(buffer) >= BATCH_SIZE:
-                    flush_batch(buffer, db_conn, s3_client)
-                    buffer = []
-                    last_flush_time = time.time()
-
-            # Flush periodically even if batch size not reached
-            if buffer and (time.time() - last_flush_time) >= FLUSH_INTERVAL:
-                flush_batch(buffer, db_conn, s3_client)
-                buffer = []
-                last_flush_time = time.time()
-
-            # Check DB health and reconnect if disconnected
-            if db_conn is None or db_conn.closed:
-                db_conn = get_db_conn()
-
-    except Exception as e:
-        logger.error(f"Unexpected error in consumer loop: {e}", exc_info=True)
+            batches = consumer.poll(timeout_ms=1000, max_records=BATCH_SIZE)
+            for messages in batches.values():
+                for message in messages:
+                    buffer.append(broker_record(message.topic, message.partition, message.offset,
+                                                message.value or b'', message.key))
+            if buffer and (len(buffer) >= BATCH_SIZE or time.monotonic()-last_flush >= FLUSH_INTERVAL):
+                flush_batch(buffer, connection, s3, consumer)
+                buffer.clear()
+                last_flush = time.monotonic()
+            if connection is None or connection.closed:
+                connection = get_db_conn()
+    except Exception as error:
+        failed = True
+        logger.error('Stream stopped with offsets preserved: %s', type(error).__name__)
+        raise
     finally:
-        if buffer:
-            logger.info(f"Flushing remaining {len(buffer)} events before shutdown...")
-            flush_batch(buffer, db_conn, s3_client)
-        if consumer:
-            consumer.close()
-        if db_conn and not db_conn.closed:
-            db_conn.close()
-        logger.info("=== Kafka Streaming Consumer Stopped Gracefully ===")
+        try:
+            if buffer and consumer is not None and not failed:
+                flush_batch(buffer, connection, s3, consumer)
+        finally:
+            if consumer is not None:
+                consumer.close(autocommit=False)
+            if connection is not None and not connection.closed:
+                connection.close()
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--replay-topic', choices=TOPICS)
+    parser.add_argument('--partition', type=int)
+    parser.add_argument('--first-offset', type=int)
+    parser.add_argument('--last-offset', type=int)
+    args = parser.parse_args()
+    if args.replay_topic:
+        from stream_runtime import read_bronze_record
+        if (args.partition is None or args.first_offset is None or args.last_offset is None
+                or args.partition < 0 or args.first_offset < 0
+                or not 0 <= args.last_offset-args.first_offset < 1000):
+            parser.error('Replay requires an explicit partition and inclusive range of at most 1000 offsets')
+        client, connection = get_minio(), get_db_conn()
+        if connection is None: raise RuntimeError('Replay projection database unavailable')
+        try:
+            records, total, deadline = [], 0, time.monotonic()+60
+            for offset in range(args.first_offset,args.last_offset+1):
+                if time.monotonic() >= deadline: raise TimeoutError('Projection replay deadline exhausted; retry is idempotent')
+                try:
+                    record = read_bronze_record(client,BRONZE_BUCKET,args.replay_topic,args.partition,offset)
+                except Exception as error:
+                    if getattr(error,'response',{}).get('Error',{}).get('Code') not in {'NoSuchKey','404'}: raise
+                    record = read_bronze_record(client,BRONZE_BUCKET,args.replay_topic,args.partition,offset,quarantined=True)
+                records.append(record)
+                if len(records)>=20:
+                    project_records(connection,records)
+                    total+=len(records)
+                    records.clear()
+            if records:
+                project_records(connection,records)
+                total+=len(records)
+            logger.info('Projection replay completed: records=%d (Kafka offsets unchanged)',total)
+        finally: connection.close()
+    else:
+        main()

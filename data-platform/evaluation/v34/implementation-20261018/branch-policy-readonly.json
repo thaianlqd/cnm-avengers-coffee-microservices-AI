@@ -1,0 +1,13 @@
+{
+  "checked_at": "2026-10-18T11:08:25.123131+00:00",
+  "repository": "thaianlqd/cnm-avengers-coffee-microservices-AI",
+  "branch": "branch_thaian",
+  "branch_protection": {
+    "http_status": 404,
+    "message": "Branch not protected"
+  },
+  "repository_rulesets": [],
+  "effective_branch_rules": [],
+  "mutation": false,
+  "remote_workflow": "Source uncommitted; not remotely executed; no required checks configured through this task"
+}

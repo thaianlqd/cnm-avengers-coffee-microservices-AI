@@ -1,5 +1,9 @@
 """Startup logical validation, independent of physical warehouse availability."""
 from typing import get_args
+from copy import deepcopy
+import hashlib
+import json
+import re
 from services.analysis_catalog import AnalysisError, referenced_columns
 from services.analysis_intent import DerivedFeature
 
@@ -104,6 +108,7 @@ def registry_drift(catalog):
 def validate_catalog(overlay, strict=False):
     try:
         validate_source_semantics(overlay, strict)
+        validate_governance(overlay, required=strict)
         r=overlay['analysis_registry'];metrics=r['metrics'];dims=r['dimensions'];subjects=r['subjects']
         tables=overlay['silver_tables']
         policy=r.get('dashboard_policy',{'minimum_views':4,'target_views':5})
@@ -230,3 +235,103 @@ def validate_catalog(overlay, strict=False):
         return True
     except (KeyError,ValueError,TypeError):
         raise AnalysisError('domain_metadata_invalid','Semantic catalog references or relationships are invalid') from None
+
+
+def validate_governance(overlay, required=False):
+    """Legacy overlays remain readable; governed releases validate every owner/ID."""
+    governance = overlay.get('governance')
+    if governance is None:
+        # Pre-V3.4 contracts are valid legacy inputs, never retroactively certified.
+        return 'legacy'
+    if (not isinstance(governance, dict) or not isinstance(governance.get('contract_version'), str)
+            or not re.fullmatch(r'\d+\.\d+\.\d+', governance['contract_version'])):
+        raise ValueError('Invalid governance contract version')
+    registry = overlay['analysis_registry']
+    for group in ('metrics', 'dimensions', 'subjects'):
+        for identity, definition in registry[group].items():
+            if not re.fullmatch(r'[a-z][a-z0-9_]*', identity):
+                raise ValueError('Unstable semantic identifier')
+            owner = definition.get('owner', governance.get('default_owner') if not required else None)
+            if not isinstance(owner, str) or not re.fullmatch(r'[A-Za-z][A-Za-z0-9_.-]{1,100}', owner):
+                raise ValueError('Semantic definition has no governed owner')
+            lifecycle = definition.get('lifecycle', {'status': 'active'} if not required else {})
+            if not isinstance(lifecycle, dict) or lifecycle.get('status') not in {'active', 'deprecated'}:
+                raise ValueError('Invalid semantic lifecycle')
+            replacement = lifecycle.get('replacement_id')
+            if replacement is not None and (replacement == identity or replacement not in registry[group]):
+                raise ValueError('Broken semantic replacement identity')
+            if lifecycle['status'] == 'deprecated' and not lifecycle.get('deprecated_in'):
+                raise ValueError('Deprecation release missing')
+    return 'governed'
+
+
+def semantic_projection(overlay):
+    """Additional identity for impact analysis; does NOT replace legacy approval hashes.
+
+    Unknown fields are conservatively retained. In particular business_name and
+    aliases are language anchors, not cosmetic display labels.
+    """
+    result = deepcopy(overlay)
+    result.pop('governance', None)
+    for group in ('metrics', 'dimensions', 'subjects'):
+        for definition in result.get('analysis_registry', {}).get(group, {}).values():
+            for field in ('owner', 'display_label', 'documentation_url', 'reviewed_at'):
+                definition.pop(field, None)
+    return result
+
+
+def semantic_fingerprint(overlay):
+    return hashlib.sha256(json.dumps(semantic_projection(overlay), sort_keys=True, ensure_ascii=False,
+                                     separators=(',', ':'), allow_nan=False).encode()).hexdigest()
+
+
+def contract_diff(before, after):
+    """Conservative contract impact report, derived from the single runtime catalog."""
+    changes = []
+    impacted = set()
+    br, ar = before.get('analysis_registry', {}), after.get('analysis_registry', {})
+    for group in ('metrics', 'dimensions', 'subjects'):
+        old, new = br.get(group, {}), ar.get(group, {})
+        for identity in sorted(old.keys() | new.keys()):
+            if identity not in old or identity not in new:
+                kind = 'compatible_addition' if identity in new else 'breaking_removal'
+                changes.append({'group': group, 'id': identity, 'kind': kind, 'fields': ['definition']})
+                impacted.add((group, identity))
+                continue
+            fields = sorted(k for k in old[identity].keys() | new[identity].keys() if old[identity].get(k) != new[identity].get(k))
+            if not fields:
+                continue
+            if set(fields) <= {'display_label', 'documentation_url', 'reviewed_at'}:
+                kind = 'presentation'
+            elif set(fields) <= {'owner', 'display_label', 'documentation_url', 'reviewed_at'}:
+                kind = 'governance'
+            else:
+                kind = 'semantic_change'
+                impacted.add((group, identity))
+            changes.append({'group': group, 'id': identity, 'kind': kind, 'fields': fields})
+    # Rules/taxonomy/source schemas outside individual definitions can affect all
+    # capabilities. Never call an unknown change presentation-only.
+    old_rest, new_rest = deepcopy(before), deepcopy(after)
+    for value in (old_rest, new_rest):
+        value.pop('governance', None)
+        registry = value.get('analysis_registry', {})
+        for group in ('metrics', 'dimensions', 'subjects'):
+            registry.pop(group, None)
+    global_change = old_rest != new_rest
+    if global_change:
+        changes.append({'group': 'catalog', 'id': '*', 'kind': 'semantic_change', 'fields': ['global_rules_or_sources']})
+    metric_ids = {identity for group, identity in impacted if group == 'metrics'}
+    dimensions = {identity for group, identity in impacted if group == 'dimensions'}
+    subjects = {identity for group, identity in impacted if group == 'subjects'}
+    for identity, metric in ar.get('metrics', {}).items():
+        if global_change or set(metric.get('subjects', [])) & subjects:
+            metric_ids.add(identity)
+        if dimensions:
+            # Missing explicit compatibility metadata is intentionally broad.
+            if dimensions & set(metric.get('compatible_dimensions', ar.get('dimensions', {}))):
+                metric_ids.add(identity)
+    return {'version': 1, 'before_semantic_fingerprint': semantic_fingerprint(before),
+            'after_semantic_fingerprint': semantic_fingerprint(after), 'changes': changes,
+            'impacted_metric_ids': sorted(metric_ids),
+            'requires_meaning_review': any(c['kind'] in {'semantic_change', 'breaking_removal'} for c in changes),
+            'note': 'Additive shadow identity; legacy catalog/approval fingerprints remain authoritative.'}

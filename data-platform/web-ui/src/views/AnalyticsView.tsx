@@ -1,3 +1,4 @@
+import { getAccountIdentity, readAnalysisDraft, rememberAnalysisDraft } from '../utils/authSession.mjs';
 import { AnalystDashboard, AnalystDashboardSummary, AnalystViews, AnalystResultTable, AnalystOptionalNarrative, AnalystReportReady, AnalystEvidence, AnalystPlanningSummary } from '../components/AnalystDashboardSummary';
 import { AnalysisQualityScore } from '../components/AnalysisQualityScore';
 import { AnalysisClarification } from '../components/AnalysisClarification';
@@ -7,12 +8,13 @@ import { AnalysisMeaning } from '../components/AnalysisMeaning';
 import { AnalysisModules, AnalysisModuleSummary } from '../components/AnalysisModules';
 import { AnalystWorkspace } from '../components/workspace/AnalystWorkspace';
 import { analysisInputPayload } from '../utils/analysisInput.mjs';
-import { switchMissionDraft, workspaceRequestFields, invalidationFor, applyClarificationChoice, type GuidedDraft } from '../utils/missionWorkspace.mjs';
+import { switchMissionDraft, workspaceRequestFields, invalidationFor, applyClarificationChoice, sourceAnalysisPayload, type GuidedDraft } from '../utils/missionWorkspace.mjs';
 import { visibleMissionId } from '../utils/workspacePresentation.mjs';
-import { savedV33Fields } from '../utils/reportPersistence.mjs';
+import { savedV33Fields, savedReportOwnership } from '../utils/reportPersistence.mjs';
 import { analysisPlanLabel } from '../utils/analysisPresentation.mjs';
 import { reportHeading } from '../utils/analystDashboardLayout.mjs';
-import { runAnalysisJob, jobStorageKey, jobStages } from '../utils/analysisJobs.mjs';
+import { runAnalysisJob, jobStages } from '../utils/analysisJobs.mjs';
+import { useAnalysisLifecycle } from '../hooks/useAnalysisLifecycle';
 import React, { useState, useEffect, useRef } from 'react';
 import type { AnalyticalReportContract, CapabilityAction } from '../types';
 import { usePlatformStore } from '../store/usePlatformStore';
@@ -31,10 +33,13 @@ import { SeriesLineChart } from '../components/Charts';
 import { WordReportPreviewModal } from '../components/WordReportPreviewModal';
 
 export const AnalyticsView: React.FC = () => {
+  const {accountJobStorageKey,planningInFlight,refinementInFlight,pendingJob,jobController,jobEpoch,
+    reportIdentityRef,beginRequest,invalidate} = useAnalysisLifecycle();
   const { 
     activeTab: storeActiveTab,
     setActiveTab: setStoreActiveTab,
-    marts, 
+    marts,
+    dataErrors,
     storesData, 
     customersData, 
     productsData, 
@@ -70,21 +75,25 @@ export const AnalyticsView: React.FC = () => {
 
   // ─── AI ASSISTANT 3-STEP REPORT WORKFLOW STATE ───
   const [aiStep, setAiStep] = useState<1 | 2 | 3>(1);
-  const [aiPrompt, setAiPrompt] = useState('');
-  const [aiMission, setAiMission] = useState<string | null>(null);
+  const draftOwner = useRef(getAccountIdentity()).current;
+  const restoredDraft = useRef(readAnalysisDraft(draftOwner)).current;
+  const [aiPrompt, setAiPrompt] = useState(restoredDraft?.question || '');
+  const [aiMission, setAiMission] = useState<string | null>(restoredDraft?.mission || null);
   // V3.2: guided mission contract + an independent draft per mission.
-  const [aiGuided, setAiGuided] = useState<GuidedDraft | null>(null);
+  const [aiGuided, setAiGuided] = useState<GuidedDraft | null>(restoredDraft?.guided || null);
+  const [aiSourceDraft, setAiSourceDraft] = useState<any>(null);
   const missionDrafts = useRef<Record<string, any>>({});
   const [activeModule, setActiveModule] = useState<AnalysisModuleSummary | null>(null);
-  const [aiTimeRange, setAiTimeRange] = useState('auto');
+  const [aiTimeRange, setAiTimeRange] = useState(restoredDraft?.time || 'auto');
   const [aiDomain, setAiDomain] = useState('auto');
   const [aiAnalysisDepth, setAiAnalysisDepth] = useState('deep');
   // V3.3: the default Deep is a display default; only an active user choice is sent (server keeps narrow requests focused).
   const [aiDepthChosen, setAiDepthChosen] = useState(false);
   const [aiCapabilities, setAiCapabilities] = useState<any>(null);
-  const [aiScope, setAiScope] = useState<any>({ mode: 'auto', filters: [] });
-  const [aiStart, setAiStart] = useState('');
-  const [aiEnd, setAiEnd] = useState('');
+  const [aiScope, setAiScope] = useState<any>(restoredDraft?.scope || { mode: 'auto', filters: [] });
+  const [aiStart, setAiStart] = useState(restoredDraft?.start || '');
+  const [aiEnd, setAiEnd] = useState(restoredDraft?.end || '');
+  useEffect(() => {rememberAnalysisDraft(draftOwner,{question:aiPrompt,mission:aiMission,guided:aiGuided,time:aiTimeRange,scope:aiScope,start:aiStart,end:aiEnd});},[draftOwner,aiPrompt,aiMission,aiGuided,aiTimeRange,aiScope,aiStart,aiEnd]);
   useEffect(() => {
     const controller = new AbortController();
     fetch('/api/ai/capabilities', { signal: controller.signal }).then(r => r.ok ? r.json() : null).then(setAiCapabilities).catch(() => {});
@@ -102,7 +111,18 @@ export const AnalyticsView: React.FC = () => {
     setAiMission(mapped); setAiGuided(null);
   }, [aiCapabilities, aiMission]);
   const aiInput = (prompt: string) => ({ ...analysisInputPayload({ question: prompt, moduleId: activeModule?.module_id, time: aiTimeRange, start: aiStart, end: aiEnd, scope: aiScope, depth: aiDepthChosen ? aiAnalysisDepth : undefined, mission: aiMission }),
-    ...(activeModule ? {} : workspaceRequestFields(aiGuided, prompt)) });
+    ...(activeModule ? {} : workspaceRequestFields(aiGuided, prompt)),
+    ...sourceAnalysisPayload(aiSourceDraft,{question:prompt,guided:aiGuided,scope:aiScope,
+      time:{mode:aiTimeRange,start:aiStart,end:aiEnd},moduleId:activeModule?.module_id}) });
+  const handleGroupAnalysis = (draft: any) => {
+    backToQuestion();
+    setActiveModule(null); setAiPlan(null); setPendingClarification(null); setGeneratedReport(null);
+    setAiPrompt(draft.question); setAiMission(draft.mission); setAiGuided(draft.guided);
+    setAiScope(draft.scope); setAiTimeRange(draft.time.mode); setAiStart(draft.time.start); setAiEnd(draft.time.end);
+    setAiDepthChosen(false);
+    setAiSourceDraft(draft);
+    showToast('Yêu cầu mới đã giữ nhóm và kỳ báo cáo. Hãy kiểm tra phạm vi trước khi phân tích.', 'info');
+  };
   const [aiStatus, setAiStatus] = useState<any | null>(null);
 
   // Step 1: Pre-analysis proposal state
@@ -120,34 +140,20 @@ export const AnalyticsView: React.FC = () => {
 
   const [aiPlan, setAiPlan] = useState<any | null>(null);
   const [isProposingPlan, setIsProposingPlan] = useState(false);
-  const planningInFlight = useRef(false);
-  const refinementInFlight = useRef(false);
 
   // Step 2: Visual preview report state
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [generatedReport, setGeneratedReport] = useState<(AnalyticalReportContract & Record<string, any>) | null>(null);
   const [jobStage, setJobStage] = useState('accepted');
-  const pendingJob = useRef<any>(null);
-  const jobController = useRef<AbortController | null>(null);
-  const jobEpoch = useRef(0);
-  // V3.3: every async path takes a ticket (epoch + abort signal) and re-checks it before committing state after an await.
-  const beginRequest = () => {
-    const epoch = ++jobEpoch.current;
-    jobController.current?.abort();
-    const controller = new AbortController();
-    jobController.current = controller;
-    return { epoch, signal: controller.signal, current: () => epoch === jobEpoch.current && !controller.signal.aborted };
-  };
   // Supersede everything in flight (propose/generate/refine/job) and clear their loading flags.
   const cancelActiveRequests = () => {
-    jobEpoch.current += 1;
-    jobController.current?.abort();
+    invalidate();
     // Cancel the owned server task too (by id, or by idempotency key if the POST response was never seen).
     if (pendingJob.current?.job_id) fetch(`/api/ai/analysis-jobs/${pendingJob.current.job_id}/cancel`, { method: 'POST' }).catch(() => {});
     else if (pendingJob.current?.key) fetch('/api/ai/analysis-jobs/cancel-by-key', {
       method: 'POST', headers: { 'Idempotency-Key': pendingJob.current.key } }).catch(() => {});
     pendingJob.current = null;
-    try { sessionStorage.removeItem(jobStorageKey); } catch { /* storage unavailable */ }
+    try { sessionStorage.removeItem(accountJobStorageKey); } catch { /* storage unavailable */ }
     planningInFlight.current = false; refinementInFlight.current = false;
     setIsProposingPlan(false); setIsGeneratingAi(false); setIsRefining(false);
   };
@@ -156,7 +162,6 @@ export const AnalyticsView: React.FC = () => {
   // "Kết nối lại tác vụ" resumes the SAME job/idempotency key; only without a stored job does it start a new plan.
   const retryAnalysis = () => (pendingJob.current?.key ? handleOneClick(undefined, pendingJob.current) : handleProposePlan());
   // Identity of the report currently on screen: late refine/reconcile responses compare against it.
-  const reportIdentityRef = useRef<string | null>(null);
   const [showSqlCode, setShowSqlCode] = useState(false);
   const [tableSearch, setTableSearch] = useState('');
   const [chatHistory, setChatHistory] = useState<Array<{ prompt: string; report: any; time: string }>>([]);
@@ -171,6 +176,7 @@ export const AnalyticsView: React.FC = () => {
   const [isExportingDocx, setIsExportingDocx] = useState(false);
   const [savedReports, setSavedReports] = useState<any[]>([]);
   const [isLoadingSavedReports, setIsLoadingSavedReports] = useState(false);
+  const [savedReportsError, setSavedReportsError] = useState('');
   const [savedReportsSearch, setSavedReportsSearch] = useState('');
   const [savedReportsCategory, setSavedReportsCategory] = useState('all');
   const [viewingSavedReport, setViewingSavedReport] = useState<any | null>(null);
@@ -195,6 +201,7 @@ export const AnalyticsView: React.FC = () => {
   // Helper to reset and start a fresh question
   const handleResetToNewPrompt = () => {
     cancelActiveRequests();
+    setAiSourceDraft(null);
     setAiPrompt('');
     setAiGuided(null);
     setAiMission(null);
@@ -236,10 +243,10 @@ export const AnalyticsView: React.FC = () => {
         onCheckpoint: value => {
           if (epoch !== jobEpoch.current) return;  // a superseded task must not overwrite the active checkpoint
           pendingJob.current = value;
-          sessionStorage.setItem(jobStorageKey, JSON.stringify(value));
+          sessionStorage.setItem(accountJobStorageKey, JSON.stringify(value));
         } });
       if (epoch !== jobEpoch.current) return;
-      pendingJob.current = null; sessionStorage.removeItem(jobStorageKey);
+      pendingJob.current = null; sessionStorage.removeItem(accountJobStorageKey);
       const data = job.result;
       if (job.state === 'partial_available') {
         setAiPlan({ ...data.proposal, submittedInput: record.input,
@@ -258,7 +265,24 @@ export const AnalyticsView: React.FC = () => {
         } else showToast(data?.message || 'Tác vụ chưa hoàn tất.', 'info');
       }
     } catch (error: any) {
+      const terminalHttp = [400, 401, 403, 404, 409, 422].includes(error.status);
+      // Authentication expiry unmounts/aborts this view before the HTTP catch.
+      // Clear a rejected submission checkpoint even then, matching its key so
+      // an old response cannot erase a newer submission. An accepted job with
+      // an ID can resume by GET after reauthentication; never resubmit paid work.
+      if (terminalHttp) {
+        try {
+          const stored=JSON.parse(sessionStorage.getItem(accountJobStorageKey) || 'null');
+          if(stored?.key===record.key && !(error.status===401 && stored.job_id))sessionStorage.removeItem(accountJobStorageKey);
+        } catch { /* Leave unknown checkpoint intact rather than replay paid work. */ }
+        if(pendingJob.current?.key===record.key && !(error.status===401 && pendingJob.current.job_id))pendingJob.current=null;
+      }
       if (controller.signal.aborted || epoch !== jobEpoch.current) return;
+      if (terminalHttp) {
+        setGeneratedReport(null); setAiStep(1);
+        showToast(error.message || 'Tác vụ không được phép thực hiện.', 'error');
+        return;
+      }
       const message = 'Chưa nhận được trạng thái tác vụ. Kết nối lại để tiếp tục tác vụ hiện tại.';
       setGeneratedReport({ status: 'error', outcome: 'SYSTEM_ERROR', retryable: true, message,
         issue: { category: 'JOB_CONNECTION', title: 'Chưa kết nối được với tác vụ',
@@ -273,7 +297,7 @@ export const AnalyticsView: React.FC = () => {
 
   useEffect(() => {
     try {
-      const record = JSON.parse(sessionStorage.getItem(jobStorageKey) || 'null');
+      const record = JSON.parse(sessionStorage.getItem(accountJobStorageKey) || 'null');
       if (record?.key && record?.input) {
         if (record.input.analysis_scope) setAiScope(record.input.analysis_scope);
         if (record.input.analysis_depth) { setAiAnalysisDepth(record.input.analysis_depth); setAiDepthChosen(true); }
@@ -282,7 +306,7 @@ export const AnalyticsView: React.FC = () => {
         setAiStart(record.input.time?.start || ''); setAiEnd(record.input.time?.end || '');
         handleOneClick(undefined, record);
       }
-    } catch { sessionStorage.removeItem(jobStorageKey); }
+    } catch { sessionStorage.removeItem(accountJobStorageKey); }
     return () => { jobEpoch.current += 1; jobController.current?.abort(); planningInFlight.current = false; };
   }, []);
 
@@ -609,7 +633,7 @@ export const AnalyticsView: React.FC = () => {
 
   // Fetch saved reports from database
   const fetchSavedReports = async () => {
-    setIsLoadingSavedReports(true);
+    setIsLoadingSavedReports(true); setSavedReportsError('');
     try {
       const url = new URL('/api/reports/saved', window.location.origin);
       if (savedReportsCategory && savedReportsCategory !== 'all') {
@@ -619,12 +643,13 @@ export const AnalyticsView: React.FC = () => {
         url.searchParams.set('search', savedReportsSearch.trim());
       }
       const res = await fetch(url.toString());
+      if (!res.ok) throw new Error(res.status === 403 ? 'Tài khoản chưa có quyền xem danh sách báo cáo.' : 'Chưa tải được danh sách báo cáo. Vui lòng thử lại.');
       if (res.ok) {
         const data = await res.json();
         setSavedReports(data.reports || []);
       }
     } catch (err) {
-      console.error('Lỗi tải danh sách báo cáo:', err);
+      setSavedReportsError(err instanceof Error ? err.message : 'Chưa tải được danh sách báo cáo.');
     } finally {
       setIsLoadingSavedReports(false);
     }
@@ -653,6 +678,22 @@ export const AnalyticsView: React.FC = () => {
 
   const handleLoadSavedReportToView = async (report: any) => {
     cancelActiveRequests();  // late responses must not overwrite the opened report
+    // Fetch the currently authorized saved resource; the server may restore
+    // presentation from owned artifacts for an older stripped session summary.
+    const ticket = beginRequest();
+    try {
+      const response = await fetch(`/api/reports/saved/${encodeURIComponent(report.id)}`, { signal: ticket.signal });
+      if (!response.ok) throw new Error(response.status === 403 ? 'Bạn không còn quyền xem báo cáo này.' : 'Chưa mở được báo cáo lưu trữ.');
+      const stored = await response.json();
+      if (!ticket.current()) return;
+      report = { ...report, ...stored };
+      if (stored.presentation_status === 'source_artifacts_unavailable') {
+        showToast('Artifact của bản lưu cũ đã hết hạn; một số biểu đồ chưa thể khôi phục. Hãy chạy lại phân tích.', 'info');
+      }
+    } catch (error: any) {
+      if (!ticket.current() || error.name === 'AbortError') return;
+      showToast(error.message || 'Chưa mở được báo cáo lưu trữ.', 'error'); return;
+    }
     let config = report.module_config;
     if (typeof config === 'string') {
       try {
@@ -694,8 +735,10 @@ export const AnalyticsView: React.FC = () => {
     reportData.quality_assessment = { status: 'not_scored', reason: 'Chưa thể kiểm chứng lại báo cáo lưu trữ.' };
     try {
       const res = await fetch('/api/ai/verify-report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(reportData) });
+      if ([401,403,404].includes(res.status)) { showToast('Bạn không còn quyền xem báo cáo này.', 'error'); return; }
       if (res.ok) reportData.quality_assessment = (await res.json()).quality_assessment;
     } catch {}
+    if (!ticket.current()) return;
     setViewingSavedReport(reportData);
     const viewTime = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     setReportVersions([
@@ -935,9 +978,12 @@ export const AnalyticsView: React.FC = () => {
   const activeCities = rawCities.filter((c: any) => Number(c.revenue) > 0);
   const totalCityRevenue = activeCities.reduce((sum: number, c: any) => sum + Number(c.revenue), 0);
 
-  const regionSlices = activeCities.slice(0, 5).map((c: any, idx: number) => ({
+  const displayedCities = activeCities.length > 5
+    ? [...activeCities.slice(0,4),{city:'Các tỉnh/thành còn lại',revenue:activeCities.slice(4).reduce((sum:number,row:any)=>sum+Number(row.revenue),0)}]
+    : activeCities;
+  const regionSlices = displayedCities.map((c: any, idx: number) => ({
     label: c.city,
-    value: Math.round(Number(c.revenue) / 1000000),
+    value: Number(c.revenue),
     color: palette[idx % palette.length],
   }));
 
@@ -979,24 +1025,9 @@ export const AnalyticsView: React.FC = () => {
   // ────────────────────────────────────────────────────────────
   // CUSTOMERS METRICS & CHARTS
   // ────────────────────────────────────────────────────────────
-  const customerKpi = customersData?.kpi || {
-    total_orders: 21124,
-    total_registered: 18,
-    total_customers: 7,
-    identified_orders: 26,
-    anonymous_orders: 21098,
-    new_customers: 7,
-    repeat_customers: 2,
-    repeat_orders: 21,
-    avg_frequency: 3.7,
-  };
+  const customerKpi = customersData?.kpi || {total_orders:0,total_registered:0,total_customers:0,identified_orders:0,anonymous_orders:0,new_customers:0,repeat_customers:0,repeat_orders:0,avg_frequency:0};
 
-  const membershipTiers = customersData?.membership_tiers || [
-    { tier: 'Hạng Kim Cương', name: 'Hạng Kim Cương', key: 'Kim Cương', count: 2, value: 2, pct: 10.0, avg_spending: 8320175, color: '#0284c7' },
-    { tier: 'Hạng Vàng', name: 'Hạng Vàng', key: 'Vàng', count: 1, value: 1, pct: 5.0, avg_spending: 650000, color: '#d97706' },
-    { tier: 'Hạng Bạc', name: 'Hạng Bạc', key: 'Bạc', count: 1, value: 1, pct: 5.0, avg_spending: 250000, color: '#64748b' },
-    { tier: 'Hạng Đồng', name: 'Hạng Đồng', key: 'Đồng', count: 17, value: 17, pct: 85.0, avg_spending: 5117, color: '#059669' },
-  ];
+  const membershipTiers = customersData?.membership_tiers || [];
 
   const totalMembers = membershipTiers.reduce((s: number, t: any) => s + Number(t.count || 0), 0);
 
@@ -1021,12 +1052,7 @@ export const AnalyticsView: React.FC = () => {
   }));
 
   // Payment channel distribution
-  const paymentSlices = [
-    { label: 'Chuyển khoản QR', value: 12450, color: '#059669' },
-    { label: 'Ví MoMo và ZaloPay', value: 6890, color: '#0284c7' },
-    { label: 'Thẻ thanh toán', value: 2840, color: '#d97706' },
-    { label: 'Tiền mặt', value: 1859, color: '#64748b' },
-  ];
+  const paymentSlices = (marts?.payment_methods || []).map((row:any,index:number) => ({label:row.payment_method || 'Chưa xác định',value:Number(row.count || 0),color:palette[index % palette.length]}));
 
   // ────────────────────────────────────────────────────────────
   // PRODUCTS METRICS & CHARTS
@@ -1042,11 +1068,11 @@ export const AnalyticsView: React.FC = () => {
     : categories;
 
   const productKpi = productsData?.kpi || {
-    total_products: allProducts.length || 118,
-    best_sellers: topProducts.length || 15,
-    total_revenue: totalRevenue || 5238080000,
-    total_sold: 104938,
-    categories_count: categories.length || 17,
+    total_products: allProducts.length,
+    best_sellers: topProducts.length,
+    total_revenue: totalRevenue,
+    total_sold: 0,
+    categories_count: categories.length,
   };
 
   const categoryBars = activeCategoryList.slice(0, 8).map((c: any) => ({
@@ -1056,12 +1082,15 @@ export const AnalyticsView: React.FC = () => {
 
   const categoryQtyBars = activeCategoryList.slice(0, 8).map((c: any) => ({
     label: c.category_name || c.ten_danh_muc || 'Món',
-    value: Math.round(Number(c.total_qty || 0) / 1000), // Nghìn ly
+    value: Number(c.total_qty || 0) / 1000, // Nghìn sản phẩm; không làm tròn trước vẽ
   }));
 
-  const categorySlices = activeCategoryList.slice(0, 6).map((c: any, idx: number) => ({
+  const displayedProductCategories = activeCategoryList.length > 6
+    ? [...activeCategoryList.slice(0,5),{category_name:'Các nhóm còn lại',revenue:activeCategoryList.slice(5).reduce((sum:number,row:any)=>sum+Number(row.revenue || 0),0)}]
+    : activeCategoryList;
+  const categorySlices = displayedProductCategories.map((c: any, idx: number) => ({
     label: c.category_name || c.ten_danh_muc || 'Khác',
-    value: Math.round(Number(c.revenue || 0) / 1000000),
+    value: Number(c.revenue || 0),
     color: palette[idx % palette.length],
   }));
 
@@ -1084,18 +1113,23 @@ export const AnalyticsView: React.FC = () => {
     return name.toLowerCase().includes(productSearch.toLowerCase()) || cat.toLowerCase().includes(productSearch.toLowerCase());
   });
 
-  // Export handlers
-  const handleExport = (reportName: string) => {
-    if (activeTab === 'ai_assistant' && generatedReport) {
-      handleExportDocx();
-      return;
-    }
-    showToast(`Đang xuất dữ liệu ${reportName}...`, 'info');
-    setTimeout(() => {
-      showToast(`Đã xuất báo cáo ${reportName} thành công`, 'success');
-    }, 700);
+  // Export server-owned BI rows, with permission/audit rechecked before bytes.
+  const [isExportingData,setIsExportingData] = useState(false);
+  const handleExport = async (reportName: string) => {
+    if(activeTab==='ai_assistant' && generatedReport){await handleExportDocx();return;}
+    if(isExportingData || !['revenue','stores','customers','products'].includes(reportName))return;
+    setIsExportingData(true);
+    try {
+      const response=await fetch('/api/reports/export-data',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({kind:reportName,date_range:dateRange,branch:'all'})});
+      if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.detail || 'Chưa xuất được dữ liệu.');}
+      const blob=await response.blob();const url=URL.createObjectURL(blob);
+      const link=document.createElement('a');link.href=url;link.download=`du_lieu_${reportName}.csv`;
+      document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
+      showToast(reportName==='customers'?'Đã tạo CSV Top15 khách theo tài khoản ẩn danh.':'Đã tạo file CSV từ dữ liệu máy chủ.','success');
+    } catch(error){showToast(error instanceof Error?error.message:'Chưa xuất được dữ liệu.','error');}
+    finally{setIsExportingData(false);}
   };
-
   const formatReportDateTime = (dateStr?: string) => {
     if (!dateStr) return new Date().toLocaleDateString('vi-VN');
     try {
@@ -1286,7 +1320,7 @@ export const AnalyticsView: React.FC = () => {
           {rep.prompt && reportHeading(rep) !== rep.prompt && <details className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600"><summary className="cursor-pointer font-medium">Câu hỏi phân tích đầy đủ</summary><p className="mt-3 leading-relaxed">{rep.prompt}</p></details>}
           <AnalysisMeaning interpretation={rep.interpretation} compact />
           {showSqlCode && (rep.sql || rep.sql_query) && <pre className="bg-slate-900 text-slate-200 p-4 rounded-xl text-xs overflow-auto">{rep.sql ? Object.entries(rep.sql).map(([name, sql]) => `-- ${name}\n${sql}`).join('\n\n') : rep.sql_query}</pre>}
-          <AnalystDashboard report={rep} capabilities={aiCapabilities} editing={isRefining} onFollowUp={isFromSavedList ? undefined : q => { setAiPrompt(q); setAiGuided(null); backToQuestion(); }} onChartTypeChange={rep.session_id ? (id, type) => handleFollowUpRefine('Đổi cách trình bày biểu đồ', rep, [{ chart_id: id, chart_type: type }]) : undefined}
+          <AnalystDashboard report={rep} capabilities={aiCapabilities} onGroupAnalysis={isFromSavedList ? undefined : handleGroupAnalysis} editing={isRefining} onFollowUp={isFromSavedList ? undefined : q => { setAiPrompt(q); setAiGuided(null); backToQuestion(); }} onChartTypeChange={rep.session_id ? (id, type) => handleFollowUpRefine('Đổi cách trình bày biểu đồ', rep, [{ chart_id: id, chart_type: type }]) : undefined}
             onSave={isFromSavedList ? undefined : handleSaveAiReport} onExport={() => handleOpenDocxPreview(rep)} />
         </> : <>
         {/* SECTION: Data Warnings / Sanity Alerts (Phase 3.3) */}
@@ -1785,17 +1819,23 @@ export const AnalyticsView: React.FC = () => {
 
           <button
             onClick={() => handleExport(activeTab)}
+            disabled={isExportingData}
             className="px-4 py-2 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200/90 rounded-xl shadow-xs transition-colors self-start sm:self-auto cursor-pointer"
           >
-            Xuất dữ liệu
+            {isExportingData?'Đang tạo CSV…':'Xuất dữ liệu'}
           </button>
         </div>
       )}
 
+      {['revenue','stores','customers','products'].includes(activeTab) && (() => {
+        const key = ({revenue:'marts',stores:'storesData',customers:'customersData',products:'productsData'} as Record<string,string>)[activeTab];
+        const data = ({marts,storesData,customersData,productsData} as Record<string,unknown>)[key];
+        return dataErrors[key] ? <p data-analytics-unavailable className="rounded-xl border bg-white p-6 text-slate-600">Chưa nhận được dữ liệu. Hãy xem thông báo lỗi nguồn phía trên.</p> : !data ? <p role="status">Đang tải dữ liệu báo cáo…</p> : null;
+      })()}
       {/* ──────────────────────────────────────────────────────────── */}
       {/* 1. DOANH THU VÀ ĐƠN HÀNG */}
       {/* ──────────────────────────────────────────────────────────── */}
-      {activeTab === 'revenue' && (
+      {activeTab === 'revenue' && !dataErrors.marts && marts && (
         <div className="space-y-5">
           {/* 4 Refined KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1833,7 +1873,7 @@ export const AnalyticsView: React.FC = () => {
                 <span className="text-xs font-medium text-slate-500">đ</span>
               </div>
               <div className="text-xs text-slate-500 font-normal mt-1 truncate">
-                Doanh thu hợp lệ / tổng số đơn · {kpiPeriod}
+                Doanh thu / đơn hoàn thành hoặc đang giao · {kpiPeriod}
               </div>
             </div>
 
@@ -1862,7 +1902,7 @@ export const AnalyticsView: React.FC = () => {
                   </h3>
                   <p className="text-[11px] text-slate-400">Đơn hoàn thành và đang giao; điểm rỗng/nét đứt là ngày chưa trọn</p>
                 </div>
-                <span className="text-[11px] text-slate-400 font-medium">{dailySeries.data.length} ngày có doanh thu</span>
+                <span className="text-[11px] text-slate-400 font-medium">{revenueDaily.length} ngày có quan sát doanh thu</span>
               </div>
               <div className="h-[290px] flex items-center">
                 <SeriesLineChart data={dailySeries.data} series={[{ key: 'series_1', label: 'Doanh thu', color: '#059669' }]} unit="đ" area granularity="day" period={dailySeries.period} />
@@ -1973,7 +2013,7 @@ export const AnalyticsView: React.FC = () => {
       {/* ──────────────────────────────────────────────────────────── */}
       {/* 2. HIỆU SUẤT CỬA HÀNG */}
       {/* ──────────────────────────────────────────────────────────── */}
-      {activeTab === 'stores' && (
+      {activeTab === 'stores' && !dataErrors.storesData && storesData && (
         <div className="space-y-6">
           {/* 4 Refined Store KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -2018,10 +2058,10 @@ export const AnalyticsView: React.FC = () => {
                 Giá trị đơn AOV toàn chuỗi
               </span>
               <div className="text-2xl font-semibold text-slate-900 tracking-tight">
-                {Number(topStore.aov ?? 0).toLocaleString('vi-VN')} đ
+                {aov.toLocaleString('vi-VN')} đ
               </div>
               <div className="text-xs text-emerald-600 font-medium truncate">
-                Trung bình toàn bộ đơn hàng
+                Trên các đơn hoàn thành hoặc đang giao
               </div>
             </div>
           </div>
@@ -2057,11 +2097,10 @@ export const AnalyticsView: React.FC = () => {
                   <DonutChart 
                     data={regionSlices} 
                     centerLabel="Tổng DT" 
-                    centerValue={`${(totalCityRevenue / 1000000000).toFixed(2)}B`} 
                     size={135} 
                   />
                 ) : (
-                  <div className="text-xs text-slate-400 text-center py-8">Đang tải dữ liệu vùng...</div>
+                  <div className="text-xs text-slate-400 text-center py-8">Chưa có doanh thu tỉnh/thành trong kỳ</div>
                 )}
               </div>
             </div>
@@ -2182,31 +2221,31 @@ export const AnalyticsView: React.FC = () => {
       {/* ──────────────────────────────────────────────────────────── */}
       {/* 3. KHÁCH HÀNG VÀ HỘI VIÊN */}
       {/* ──────────────────────────────────────────────────────────── */}
-      {activeTab === 'customers' && (
+      {activeTab === 'customers' && !dataErrors.customersData && customersData && (
         <div className="space-y-6">
           {/* 4 Refined Customer KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between h-[135px]">
               <span className="text-xs font-medium text-slate-500">
-                Tổng đơn hàng ghi nhận
+                Đơn hàng hợp lệ trong kỳ
               </span>
               <div className="text-2xl font-semibold text-slate-900 tracking-tight">
                 {Number(customerKpi.total_orders || 0).toLocaleString('vi-VN')} đơn
               </div>
               <div className="text-xs text-emerald-600 font-medium truncate">
-                Từ cả khách quen và vãng lai
+                Đơn hoàn thành và đang giao
               </div>
             </div>
 
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between h-[135px]">
               <span className="text-xs font-medium text-slate-500">
-                Hội viên định danh
+                Tài khoản khách đã đăng ký
               </span>
               <div className="text-2xl font-semibold text-slate-900 tracking-tight">
                 {customerKpi.total_registered} thành viên
               </div>
               <div className="text-xs text-slate-400 font-normal truncate">
-                Đăng ký tài khoản hệ thống
+                Toàn bộ tài khoản khách trong nguồn
               </div>
             </div>
 
@@ -2218,7 +2257,7 @@ export const AnalyticsView: React.FC = () => {
                 {customerKpi.repeat_orders} đơn
               </div>
               <div className="text-xs text-emerald-600 font-medium truncate">
-                Gắn kết hội viên tích cực
+                Đơn thuộc tài khoản có từ 2 đơn trong kỳ
               </div>
             </div>
 
@@ -2230,46 +2269,26 @@ export const AnalyticsView: React.FC = () => {
                 {customerKpi.avg_frequency} lần / hội viên
               </div>
               <div className="text-xs text-slate-400 font-normal truncate">
-                Chỉ số quay lại mua hàng tốt
+                Đơn hợp lệ / tài khoản có giao dịch
               </div>
             </div>
           </div>
 
-          {/* Charts Row 1: Membership Donut + Spending Bar */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            {/* Membership Donut */}
-            <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between min-h-[380px]">
-              <div className="mb-2">
-                <h3 className="text-sm font-semibold text-slate-900">
-                  Cơ cấu 4 hạng hội viên
-                </h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">Phân bố tỷ lệ theo hạng thành viên</p>
-              </div>
-              <div className="flex-1 flex items-center justify-center py-2">
-                <DonutChart 
-                  data={customerSlices} 
-                  centerLabel="Hội viên" 
-                  centerValue={`${totalMembers}`} 
-                  size={135} 
-                />
-              </div>
-            </div>
-
-            {/* Spending by Tier Bar */}
-            <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between min-h-[380px]">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-900">
-                    Chi tiêu theo hạng hội viên
-                  </h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Tổng chi tiêu đóng góp từ các hạng thành viên</p>
-                </div>
-                <span className="text-xs font-medium text-slate-400">Đơn vị: Tr đ</span>
-              </div>
-              <div className="flex-1 flex items-end">
-                <BarChart data={tierSpendingBars} height={260} valueSuffix="Tr" />
-              </div>
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <section className="rounded-2xl border border-slate-200 bg-white p-6">
+              <h3 className="text-sm font-semibold">Đơn hàng theo định danh tài khoản</h3>
+              <p className="mb-5 mt-1 text-xs text-slate-500">Đơn hoàn thành và đang giao trong kỳ đã chọn</p>
+              <DonutChart data={[
+                {label:'Có tài khoản',value:Number(customerKpi.identified_orders || 0),color:'#2563eb'},
+                {label:'Chưa định danh',value:Number(customerKpi.anonymous_orders || 0),color:'#64748b'}
+              ]} centerLabel="Đơn hàng" valueSuffix=" đơn" />
+            </section>
+            <section className="rounded-2xl border border-slate-200 bg-white p-6">
+              <h3 className="text-sm font-semibold">Tài khoản có giao dịch trong kỳ</h3>
+              <p className="mt-4 text-2xl font-semibold">{Number(customerKpi.active_accounts ?? customerKpi.total_customers ?? 0).toLocaleString('vi-VN')}</p>
+              <p className="mt-2 text-sm text-slate-600">{Number(customerKpi.repeat_customers || 0).toLocaleString('vi-VN')} tài khoản có từ 2 đơn hợp lệ trong kỳ.</p>
+              <p className="mt-4 text-xs text-slate-500">Chưa có phân hạng hội viên được quản trị từ nguồn dữ liệu.</p>
+            </section>
           </div>
 
           {/* Charts Row 2: Top Spenders Horizontal Bar + Payment Method Donut */}
@@ -2301,8 +2320,8 @@ export const AnalyticsView: React.FC = () => {
               <div className="flex-1 flex items-center justify-center py-2">
                 <DonutChart 
                   data={paymentSlices} 
-                  centerLabel="Kênh trả" 
-                  centerValue="QR dẫn đầu" 
+                  centerLabel="Đơn hàng"
+                  valueSuffix=" đơn"
                   size={175} 
                 />
               </div>
@@ -2314,7 +2333,7 @@ export const AnalyticsView: React.FC = () => {
       {/* ──────────────────────────────────────────────────────────── */}
       {/* 4. SẢN PHẨM VÀ THỰC ĐƠN */}
       {/* ──────────────────────────────────────────────────────────── */}
-      {activeTab === 'products' && (
+      {activeTab === 'products' && !dataErrors.productsData && productsData && (
         <div className="space-y-6">
           {/* 4 Refined Product KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -2347,7 +2366,7 @@ export const AnalyticsView: React.FC = () => {
                 Tổng doanh số sản phẩm
               </span>
               <div className="text-2xl font-semibold text-slate-900 tracking-tight">
-                {Number(productKpi.total_revenue || 5238080000).toLocaleString('vi-VN')} đ
+                {Number(productKpi.total_revenue || 0).toLocaleString('vi-VN')} đ
               </div>
               <div className="text-xs text-emerald-600 font-medium truncate">
                 Ghi nhận từ chi tiết đơn hàng
@@ -2416,8 +2435,7 @@ export const AnalyticsView: React.FC = () => {
               <div className="flex-1 flex items-center justify-center py-2">
                 <DonutChart 
                   data={categorySlices} 
-                  centerLabel="Danh mục" 
-                  centerValue={`${activeCategoryList.length} nhóm`} 
+                  centerLabel="Giá trị dòng món"
                   size={135} 
                 />
               </div>
@@ -3020,7 +3038,7 @@ export const AnalyticsView: React.FC = () => {
                     <div className="w-6 h-6 rounded-full border-2 border-slate-900 border-t-transparent animate-spin mx-auto mb-2"></div>
                     Đang tải danh sách báo cáo...
                   </div>
-                ) : savedReports.length === 0 ? (
+                ) : savedReportsError ? (<div role="alert" className="p-8 text-center text-red-700"><p>{savedReportsError}</p><button className="mt-2 underline" onClick={fetchSavedReports}>Tải lại danh sách</button></div>) : savedReports.length === 0 ? (
                   <div className="p-12 text-center text-slate-400 text-xs space-y-2">
                     <div className="font-semibold text-slate-700 text-sm">Chưa có báo cáo nào trong kho lưu trữ</div>
                     <p className="max-w-md mx-auto text-slate-400">
@@ -3053,13 +3071,13 @@ export const AnalyticsView: React.FC = () => {
                               <div className="flex items-center space-x-2 text-[10px] text-slate-400 mt-1">
                                 <span>{report.created_at}</span>
                                 <span>•</span>
-                                <span>{report.created_by || 'Trợ lý AI Data Platform'}</span>
+                                <span>{savedReportOwnership(report).label}</span>
                               </div>
                             </td>
 
                             <td className="px-4 py-3.5">
                               <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                                {report.ai_summary || report.description || 'Báo cáo phân tích chuyên sâu tự động sinh bởi AI.'}
+                                {savedReportOwnership(report).owned ? report.ai_summary || report.description || 'Chưa có tóm tắt được hỗ trợ bởi bằng chứng.' : 'Bản lưu trước chính sách ownership hiện tại. Nội dung chưa được kiểm chứng; không dùng làm số liệu đã xác nhận.'}
                               </p>
                             </td>
 
@@ -3097,6 +3115,7 @@ export const AnalyticsView: React.FC = () => {
                                 )}
 
                                 <button
+                                  disabled={!savedReportOwnership(report).owned}
                                   onClick={() => handleDownloadSavedDocx(report.id, report.title)}
                                   title="Tải tệp Word (.docx) về máy"
                                   className="px-3 py-1.5 text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-2xs transition-colors cursor-pointer inline-flex items-center gap-1.5 whitespace-nowrap"
@@ -3108,6 +3127,7 @@ export const AnalyticsView: React.FC = () => {
                                 </button>
 
                                 <button
+                                  disabled={!savedReportOwnership(report).owned}
                                   onClick={() => handleDeleteSavedReport(report.id, report.title)}
                                   title="Xóa báo cáo khỏi kho lưu trữ"
                                   className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer inline-flex items-center"

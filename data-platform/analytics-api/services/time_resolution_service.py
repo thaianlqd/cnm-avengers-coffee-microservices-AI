@@ -93,7 +93,7 @@ def parse_time(prompt, interpretation, timezone, reference_date=None):
     if isinstance(reference, str):
         reference = date.fromisoformat(reference)
     text = normalize(prompt)
-    parsed, occupied = [], []
+    parsed, occupied, located = [], [], []
     errors = []
     for item in interpretation.get("time_grammar", []):
         for match in re.finditer(item["pattern"], text):
@@ -102,15 +102,26 @@ def parse_time(prompt, interpretation, timezone, reference_date=None):
             occupied.append(match.span())
             parts = {k: int(v) for k, v in match.groupdict().items() if v is not None}
             try:
-                parsed.append(
+                located.append((match.start(), match.end(),
                     TimeSpec(
                         kind=item["kind"],
                         **parts,
                         **({"unit": item["unit"]} if item.get("unit") else {}),
-                    )
-                )
+                    )))
             except ValueError:
                 errors.append("time_range_invalid")
+    located.sort(key=lambda item: item[0])
+    parsed = [item[2] for item in located]
+    # A trailing year qualifies both calendar periods in one explicit comparison
+    # ("tháng 8 với tháng 9 năm 2026"). Never carry it across clauses or replace
+    # an explicit year. Ranges and unrelated dates keep their existing grammar.
+    if len(located) == 2:
+        (_, end, first), (start, _, second) = located
+        connector = text[end:start].strip()
+        if (first.kind == second.kind and first.kind in {'month', 'quarter'}
+                and first.year is None and second.year is not None
+                and re.fullmatch(r'(?:voi|so voi|va|versus|vs\.?)', connector)):
+            first.year = second.year
     # Adjacent/answered year can qualify one partial date, without losing known fields.
     years = [p for p in parsed if p.kind == "year"]
     partial = [

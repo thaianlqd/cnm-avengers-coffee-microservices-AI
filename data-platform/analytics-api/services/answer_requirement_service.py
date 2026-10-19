@@ -14,8 +14,10 @@ def direct_answers(coverage, artifacts, evidence, catalog, mission=None):
         else:
             preferred={'driver_delta','driver_status'} if role=='change' else {'pearson','pair_status'} if role=='paired_scatter' else {'change','period_coverage'} if role=='time_series' else {'leader','top_gap'} if role=='ranking' else {'scope_total','scalar'}
         found=[e for e in evidence if e.get('scope_ref') in ids and e.get('feature') in preferred]
+        comparisons=[e for e in evidence if e.get('scope_ref') in ids and e.get('feature') in {'period_comparison','ranked_companion'}]
+        found=comparisons+found
         # Scalar totals take precedence over a grouped single-row scalar.
-        found.sort(key=lambda e: (bool(artifacts.get(e['scope_ref']) and artifacts[e['scope_ref']].plan.dimensions), e.get('feature')!='scope_total', e['id']))
+        found.sort(key=lambda e: (e.get('feature')!='period_comparison', bool(artifacts.get(e['scope_ref']) and artifacts[e['scope_ref']].plan.dimensions), e.get('feature')!='scope_total', e['id']))
         seen=set()
         for e in found:
             metric=e.get('metric')

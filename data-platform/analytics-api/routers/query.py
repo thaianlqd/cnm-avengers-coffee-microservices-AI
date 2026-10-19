@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from db import get_db_conn
 from common import SqlQueryRequest
 from services.sql_service import SqlSafetyError, QueryExecutionError, execute_read_only
@@ -132,7 +132,9 @@ TABLE_METADATA = {
 
 
 @router.get("/warehouse/tables")
-def get_warehouse_tables():
+def get_warehouse_tables(request: Request = None):
+    from services.report_sql_policy import require_sql_admin
+    require_sql_admin(request)
     try:
         with get_db_conn() as conn:
             with conn.cursor() as cur:
@@ -228,8 +230,13 @@ def get_warehouse_tables():
 
 
 @router.post("/query")
-def run_custom_query(req: SqlQueryRequest):
+def run_custom_query(req: SqlQueryRequest, request: Request = None):
+    from services.report_sql_policy import require_sql_admin, validate_report_sql
+    require_sql_admin(request)
     try:
+        # Read-only is not a table/column/function permission. SQL Explorer
+        # shares the explicit deployment gate and AST policy used by reports.
+        validate_report_sql(req.sql)
         result = execute_read_only(req.sql, row_limit=500)
         return {
             "columns": result["columns"],

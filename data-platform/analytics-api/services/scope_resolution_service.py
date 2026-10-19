@@ -100,10 +100,14 @@ def scope_issues(resolution, requirements, catalog, ui=None):
             valid=all(f.operator in {'eq','in'} for f in present) and (actual in cohorts or grouped_comparison)
             if not valid:
                 issues.append(dict(requirement_id=req.id,field='filters',code='scope_membership_mismatch',expected=[sorted(c) for c in cohorts]))
-                if binding and binding['comparison'] and dimension in req.dimension_ids and binding.get('comparison_dimension'):
+                missing_comparison_axis = (not req.dimension_ids and
+                    (req.analysis_kind == 'comparison' or 'group_gap' in req.derived_features))
+                if (binding and binding['comparison'] and binding.get('comparison_dimension')
+                        and (dimension in req.dimension_ids or missing_comparison_axis)):
                     # A geographic cohort comparison may need BOTH the scope
                     # and its grouping repaired. Freeze metrics/time, not the
-                    # wrong city axis of an unapproved draft.
+                    # wrong OR missing axis of an unapproved comparison draft.
+                    # Independent scalar cohorts do not authorize this change.
                     issues.append(dict(requirement_id=req.id,field='dimension_ids',code='scope_cohort_axis_mismatch',
                         expected=[binding['comparison_dimension']]))
             represented.extend(cohorts if grouped_comparison else [actual])
@@ -143,3 +147,31 @@ def grouping_expression(base, groups, unknown='Chưa phân loại'):
     clauses=['WHEN '+base+' IN ('+', '.join(literal(v) for v in g['values'])+') THEN '+literal(g['value'])
              for g in groups if g.get('primary')]
     return 'CASE '+' '.join(clauses)+' ELSE '+literal(unknown)+' END'
+
+
+def complete_derived_cohort_axis(intent, resolution, catalog):
+    """Complete a fully bound comparison of two metadata-owned derived cohorts.
+
+    This does not repair arbitrary grouping/filter errors. A single group-gap
+    requirement with an explicit metric/time and no filters/ranking must refer
+    to two disjoint, complete primary value groups. All other meaning stays frozen.
+    """
+    if resolution.get('state')!='resolved' or len(resolution.get('bindings',[]))!=1 or len(intent.requirements)!=1:
+        return intent,[]
+    binding=resolution['bindings'][0];axis=binding.get('comparison_dimension');dimension=binding['dimension']
+    definition=catalog.registry['dimensions'].get(axis,{})
+    if (not binding.get('comparison') or binding.get('excluded_members') or
+        definition.get('derived_scope_dimension')!=dimension or len(binding.get('cohorts',[]))!=2):return intent,[]
+    groups=[set(g['values']) for g in catalog.registry['dimensions'][dimension].get('value_groups',[]) if g.get('primary')]
+    cohorts=[set(c['members']) for c in binding['cohorts']]
+    if cohorts[0]&cohorts[1] or any(c not in groups for c in cohorts):return intent,[]
+    req=intent.requirements[0]
+    if (req.availability!='requested' or req.supporting_for or not req.metric_ids or req.time is None or req.filters or req.ranking or
+        req.analysis_kind not in {'aggregate','comparison'} or req.dimension_ids not in ([],[dimension]) or
+        set(req.derived_features)!={'group_gap'}):return intent,[]
+    from services.analysis_contract import Filter
+    result=intent.model_copy(deep=True);target=result.requirements[0]
+    target.dimension_ids=[axis]
+    target.filters=[Filter(dimension=dimension,operator='in',value=binding['members'])]
+    return result,[{'requirement_id':req.id,'field':'dimension_ids','rule':'governed_derived_cohort_axis','dimension_ids':[axis]},
+                   {'requirement_id':req.id,'field':'filters','rule':'governed_exact_cohort_union'}]

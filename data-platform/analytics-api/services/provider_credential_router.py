@@ -25,7 +25,7 @@ RETRYABLE_HTTP = {429, 500, 502, 503, 504}
 _COOLDOWN = {"provider_daily_quota": 600.0, "provider_rate_limited": 60.0}
 
 _lock = threading.Lock()
-_state = {"primary_cooldown_until": 0.0, "last_failover_at": None, "last_category": None}
+_state = {"primary_cooldown_until": 0.0, "primary_probe_until":0.0, "last_failover_at": None, "last_category": None}
 
 
 def _secondary_key():
@@ -57,10 +57,21 @@ def credential_plan():
     """Ordered credential slots for one logical call: [(slot, key), ...] (≤ 2)."""
     primary, secondary = _primary_key(), _secondary_key() if secondary_configured() else ""
     with _lock:
-        cooling = time.monotonic() < _state["primary_cooldown_until"]
-    if cooling and secondary:
+        now=time.monotonic()
+        cooling = now < _state["primary_cooldown_until"]
+        recovering=primary and _state['primary_cooldown_until']>0 and not cooling
+        occupied=recovering and now<_state['primary_probe_until']
+        if recovering and not occupied:
+            from services.provider_budget import ATTEMPT_SECONDS
+            # One lazy half-open probe, with a lease if a cancelled request
+            # never reaches a transport outcome. No background paid traffic.
+            _state['primary_probe_until']=now+ATTEMPT_SECONDS+1
+    if (cooling or occupied) and secondary:
         # Primary is known quota-limited: go straight to the secondary (still 1 attempt).
         return [("secondary", secondary)]
+    if (cooling or occupied) and primary:
+        from services.analysis_catalog import AnalysisError
+        raise AnalysisError('provider_rate_limited','Credential cooldown/probe in progress; no physical send')
     slots = [("primary", primary)] if primary else []
     if secondary:
         slots.append(("secondary", secondary))
@@ -71,10 +82,20 @@ def record_failure(slot, attempt):
     if slot != "primary":
         return
     cooldown = _COOLDOWN.get(attempt.get("error_category"))
-    if cooldown:
-        with _lock:
+    with _lock:
+        _state['primary_probe_until']=0.0
+        if cooldown:
             _state["primary_cooldown_until"] = time.monotonic() + cooldown
             _state["last_category"] = attempt.get("error_category")
+
+
+def record_success(slot):
+    if slot=='primary':
+        with _lock:
+            # A healthy request sent before another request opened cooldown
+            # cannot close that newer circuit. Only its half-open probe can.
+            if _state['primary_cooldown_until']==0 or _state['primary_probe_until']>time.monotonic():
+                _state.update(primary_cooldown_until=0.0,primary_probe_until=0.0,last_category=None)
 
 
 def record_failover():
@@ -94,4 +115,4 @@ def status():
 
 def reset_for_tests():
     with _lock:
-        _state.update(primary_cooldown_until=0.0, last_failover_at=None, last_category=None)
+        _state.update(primary_cooldown_until=0.0,primary_probe_until=0.0,last_failover_at=None,last_category=None)

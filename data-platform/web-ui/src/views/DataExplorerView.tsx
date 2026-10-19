@@ -7,6 +7,8 @@ export const DataExplorerView: React.FC = () => {
     tables, 
     sampleQueries, 
     fetchTables, 
+    dataErrors,
+    isLoadingTables,
     activeSql, 
     setActiveSql, 
     runQuery, 
@@ -87,6 +89,9 @@ export const DataExplorerView: React.FC = () => {
   };
 
   const lineCount = activeSql ? activeSql.split('\n').length : 1;
+
+  if(dataErrors.tables)return <section role="alert" className="rounded-xl border border-amber-200 bg-white p-6"><h1 className="font-semibold">Khám phá dữ liệu chưa khả dụng</h1><p className="mt-2">{dataErrors.tables}</p><p className="mt-2 text-sm text-slate-500">SQL Explorer cần quyền riêng và cấu hình quản trị của máy chủ.</p><button className="mt-4 underline" onClick={()=>fetchTables()}>Thử lại</button></section>;
+  if(isLoadingTables)return <section role="status" className="p-6">Đang tải danh mục dữ liệu…</section>;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pb-8">

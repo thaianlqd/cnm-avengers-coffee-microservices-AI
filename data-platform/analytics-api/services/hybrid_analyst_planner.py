@@ -24,9 +24,11 @@ SYSTEM = """Extract Vietnamese analytical meaning as one intent envelope, one re
 REPAIR_SYSTEM = """Repair ONLY the identified semantic fields/requirements. Return one intent envelope with requirement id and only the corrected fields. Omitted fields are preserved by the server. Do not resend unaffected requirements. Correct ALL supplied conflicts together. When removing a feature, also remove its feature_metrics entry; feature_metrics is a full replacement map, not a nested patch. For a shape conflict, retain protected_features and move the conflicting feature to a new requirement with its valid shape, original filters and original time. Do not alter the existing trend cadence or grouping to accommodate a whole-scope feature. For an omitted derived feature, add it to a compatible existing requirement using only id and derived_features, preserving existing features. Add a new requirement only for genuinely omitted analytical work. All other fields are frozen. Use the bounded vocabulary or state a genuine clarification/limitation. No SQL, executable graph, reasoning or results."""
 SYSTEM += " Negated ROI/causal claims are guardrails, not requested calculations. Use feature_metrics to target a subset of displayed metrics. Catalog aggregations are aggregate, not raw detail. Non-analytical text uses clarification reason not_analytical_request and missing_fields:[analysis_goal]."
 SYSTEM += " No optional features for dashboard count. Top N entity goes in dimension_ids; per_group only for an explicit independent partition. Totals/trends have no entity grouping unless requested. Status disclosure adds no filter; preserve catalog populations."
-SYSTEM += " Bind metrics separately for each user clause. Do not copy every KPI metric into every requested view. Retain companion metrics only where requested. For whole-scope totals use scalar; selected_total is only for a ranking criterion."
+SYSTEM += " Bind each clause's metrics and grouping. scalar=whole scope; selected_total=ranking metric only."
 SYSTEM += " Concept without candidate metric: decision unsupported. Vague superlative (tốt nhất, ngon nhất) without metric: clarification metric_ambiguous."
 SYSTEM += " Future forecast of one metric: forecast{horizon,unit}; time=history window; never output values; not in forecast_capabilities=unsupported."
+SYSTEM += " Only an explicit two-period scalar comparison uses comparison_time=baseline ISO range, time=target, aggregate; no cadence/change features. A single date window has no comparison_time."
+SYSTEM += " driver_delta is supported observational decomposition of additive changes by group, never causal; aggregate, time=current period, server computes the baseline."
 SYSTEM += " For broad or multi-faceted questions, synthesize into 3-5 core strategic requirements (maximum 6). Never generate more than 6 requirements. Pair each metric only with its compatible dimensions. Group complementary metrics with the same population and grouping into a single requirement rather than fragmenting into separate single-metric requirements."
 REPAIR_SYSTEM += " Each named target must include its corrected fields, never id alone. expected is authoritative for grouping/ranking/time/filter mismatches. Copy required_scope_patches verbatim for those fields; do not reinterpret already-resolved scope or repeat your rejected filters. Remove unrequested conflicting optional features instead of adding work; retain protected_features. Empty dimension_ids means a whole-scope time trend."
 
@@ -271,6 +273,37 @@ class HybridAnalystPlanner(OneShotPlanner):
                 issues.append(entry)
             raise ResolutionIssues(issues) from None
         locked={l['metric_id'] for l in getattr(self,'metric_locks',[])}
+        # A missing limitation reason has no authority over a completely bound
+        # aggregate. Catalog metric IDs already denote aggregations; the sole
+        # explicit grouped clause determines that shape. A
+        # genuine clarification, partial period, extra axis/filter or feature
+        # remains on the bounded repair path. All normal validators still run.
+        if intent.decision=='clarification' and not intent.clarification and len(intent.requirements)==1:
+            req=intent.requirements[0]
+            bindings=self.anchors.get('clause_bindings',[])
+            times=self.anchors.get('times',[])
+            from services.time_resolution_service import resolve_time
+            same_period=False
+            if req.time is not None and len(times)==1:
+                try:
+                    same_period=(resolve_time(req.time.model_dump(mode='json'),self.reference,self.catalog.registry['timezone'])[2]==
+                        resolve_time(times[0],self.reference,self.catalog.registry['timezone'])[2])
+                except (ValueError,TypeError,OverflowError):
+                    pass  # Incomplete/contradictory periods still need repair.
+            if (req.availability=='needs_input' and req.reason is None and len(req.metric_ids)==1
+                    and set(req.metric_ids)<=locked and req.analysis_kind in {None,'aggregate'}
+                    and not (req.filters or req.ranking or req.forecast or req.granularity or req.supporting_for)
+                    and not (self.anchors.get('rankings') or self.anchors.get('granularities') or self.anchors.get('forecasts'))
+                    and set(req.derived_features)<={'scalar'} and not req.feature_metrics and same_period
+                    and len(bindings)==1 and req.dimension_ids==[bindings[0]['dimension_id']]
+                    and req.metric_ids[0] in bindings[0]['metric_candidates']):
+                req.availability='requested'
+                self.diagnostics.setdefault('semantic_normalizations',[]).append(
+                    dict(requirement_id=req.id,field='availability',rule='fully_bound_unexplained_limitation'))
+                if req.analysis_kind is None:
+                    req.analysis_kind='aggregate'
+                    self.diagnostics['semantic_normalizations'].append(
+                        dict(requirement_id=req.id,field='analysis_kind',rule='explicit_grouped_catalog_aggregation'))
         if (intent.decision=='clarification' and not intent.clarification and locked and intent.requirements
                 and all(r.availability=='requested' and r.metric_ids and set(r.metric_ids)<=locked for r in intent.requirements)):
             # A contradictory envelope label cannot override complete locked
@@ -279,6 +312,12 @@ class HybridAnalystPlanner(OneShotPlanner):
             intent=intent.model_copy(update={'decision':'analyze'})
             self.diagnostics.setdefault('semantic_normalizations',[]).append(dict(field='decision',rule='complete_locked_meaning'))
         if intent.decision!="analyze":
+            if (intent.decision=="unsupported" and locked and not self.diagnostics.get('unsupported_declaration_rechecked')
+                    and all(r.reason in (None,'historical_data_unavailable') for r in intent.requirements)):
+                # Data history/coverage is owned by the server, and a bare refusal with fully locked
+                # metrics proves nothing. Ask for the analysis once; a second refusal is honored.
+                self.diagnostics['unsupported_declaration_rechecked']=True
+                raise ResolutionIssues([{"requirement_id":None,"field":"requirements","code":"unsupported_declaration_unverified"}])
             if intent.decision=="unsupported":
                 # A capability gap needs no model explanation: the server owns the
                 # typed outcome, so a missing clarification object is not repaired.
@@ -356,6 +395,12 @@ class HybridAnalystPlanner(OneShotPlanner):
                 if field not in fields and before.get(field)!=after.get(field):
                     raise ResolutionIssues([{"requirement_id":id,"field":field,"code":"untargeted_field_changed"}])
             for issue in issues:
+                if (issue.get('requirement_id') == id and issue['code'] == 'scope_cohort_axis_mismatch'
+                        and set(new.dimension_ids) != set(issue['expected'])):
+                    # The target authorizes only the governed dependency,
+                    # never arbitrary additional grouping in this field.
+                    raise ResolutionIssues([{'requirement_id': id, 'field': 'dimension_ids',
+                        'code': 'scope_cohort_axis_mismatch', 'expected': issue['expected']}])
                 if issue.get('requirement_id')==id and issue['code']=='explicit_metric_definition_mismatch' and not set(issue['protected_metric_ids'])<=set(new.metric_ids):
                     raise ResolutionIssues([{'requirement_id':id,'field':'metric_ids','code':'accepted_metric_removed'}])
                 if issue.get('requirement_id')==id and issue['code']=='feature_shape_conflict':
@@ -383,6 +428,14 @@ class HybridAnalystPlanner(OneShotPlanner):
                 continue
             prior = baseline.get(item.get('id')) or getattr(self, 'raw_requirements', {}).get(item.get('id'))
             if prior:
+                if ('feature_metrics' not in item and isinstance(item.get('derived_features'), list)
+                        and isinstance(prior.get('feature_metrics'), dict)):
+                    # An omitted map inherits retained feature targets only.
+                    # Bindings of explicitly removed features are dead fields,
+                    # not authority to change targets on retained features.
+                    # Explicit provider maps are still validated unmodified.
+                    item['feature_metrics'] = {k: deepcopy(v) for k, v in prior['feature_metrics'].items()
+                                               if k in item['derived_features']}
                 if isinstance(item.get('ranking'),dict) and isinstance(prior.get('ranking'),dict):
                     item['ranking']={**deepcopy(prior['ranking']),**item['ranking']}
                 # Keep malformed target fields available for correction while
@@ -425,8 +478,8 @@ class HybridAnalystPlanner(OneShotPlanner):
             self.diagnostics.setdefault('limitations',[]).append(dict(reason='omitted_supporting_operations',
                 message='Một phần hỗ trợ đã được bỏ qua vì không phù hợp dung lượng hoặc dữ liệu; yêu cầu chính được giữ nguyên.'))
             return self.preflight(resolved,context)
-        from services.agent_pipeline import AnalysisPipeline
-        AnalysisPipeline.enforce_ui(prepared,context)
+        from services.request_anchors import enforce_ui
+        enforce_ui(prepared,context)
         from services.analysis_coverage_service import canonical_components, coverage_diagnostics
         components,_=canonical_components(resolved["components"],prepared,self.intelligence)
         self.diagnostics.update(analysis_components=components,coverage_origin="server_resolved",
@@ -475,7 +528,19 @@ class HybridAnalystPlanner(OneShotPlanner):
         retrieval_started=time.perf_counter()
         payload=self.context_payload(prompt,context)
         self.diagnostics['metadata_retrieval_ms']=round((time.perf_counter()-retrieval_started)*1000,2)
-        system=SYSTEM if not refinement else "Return only a semantic DELTA to current_intent: add/remove/update named requirements; changes contains only fields explicitly changed by feedback. No SQL, operation graph or full replacement. "+SYSTEM
+        system=SYSTEM if not refinement else (
+            "Return submit_analysis_delta against current_intent: add/remove/update named requirements; "
+            "changes contains only fields explicitly changed by feedback. Preserve all other meaning. "
+            "Feedback overrides drafts; governed scope facts and structured UI filters/time are authoritative. "
+            "Use candidate metric/dimension IDs and catalog populations. Never invent values, causes or history. "
+            "No SQL, executable graph, full intent replacement, charts or reasoning. "
+            "Keep incompatible populations separate, scalar totals ungrouped and ranking companions on the selected cohort. "
+            "Preserve explicit trend cadence; contribution_share needs a denominator; averages have no additive shares. "
+            "Period comparison uses time=target and comparison_time=baseline ISO range. "
+            "Forecast uses forecast{horizon,unit}, time=history and catalog capabilities. "
+            "Clarify only genuinely missing meaning; keep unavailable definitions explicit. "
+            "A removed feature must lose its feature_metrics entry."
+        )
         tools=[intent_tool(delta=refinement)]
         maximum=char_limit("DATA_ANALYST_ONE_SHOT_CONTEXT_MAX_CHARS",24000,48000)
         self.diagnostics["context_char_budget"]=maximum
@@ -619,6 +684,10 @@ class HybridAnalystPlanner(OneShotPlanner):
                         intent,explicit_times=complete_explicit_time(intent,self.anchors)
                         completed += explicit_times
                         intent,default_times=complete_default_time(intent,self.anchors,prompt,self.catalog,self.reference)
+                        if kind=='primary':
+                            from services.scope_resolution_service import complete_derived_cohort_axis
+                            intent,cohort_completion=complete_derived_cohort_axis(intent,self.anchors['scope_resolution'],self.catalog)
+                            completed+=cohort_completion
                         completed += default_times
                         from services.analysis_intent import normalize_whole_scope_features
                         intent,whole_scope=normalize_whole_scope_features(intent)
@@ -732,8 +801,27 @@ class HybridAnalystPlanner(OneShotPlanner):
                         except AnalysisError:
                             pass  # A diagnostic probe cannot replace the original rejection.
                         try:
+                            probe=previous.model_copy(deep=True)
+                            unclassified={r.id for r in probe.requirements
+                                if r.availability!='requested' and not r.reason}
+                            # A reasonless limitation is an invalid classification,
+                            # not an accepted metric/time baseline. Diagnose the
+                            # explicit input conflicts together before freezing a
+                            # single bounded repair. This probe accepts no work.
+                            if unclassified:
+                                for req in probe.requirements:
+                                    if req.id in unclassified:req.availability='requested'
+                                from services.semantic_preflight_contract import enforce_metric_locks
+                                probe,changes,_=enforce_metric_locks(probe,self.metric_locks,self.catalog)
+                                new_issues += [dict(requirement_id=c['requirement_id'],field='metric_ids',
+                                    code='explicit_metric_definition_mismatch',protected_metric_ids=c['value'])
+                                    for c in changes if c['requirement_id'] in unclassified]
+                                try:
+                                    resolver.resolve(probe)
+                                except ResolutionIssues as classification_dependencies:
+                                    new_issues += [i for i in classification_dependencies.issues if i not in new_issues]
                             independent = verify_anchors(self.anchors,
-                                [resolver.normalize(r) for r in previous.requirements],self.reference,self.catalog)
+                                [resolver.normalize(r) for r in probe.requirements],self.reference,self.catalog)
                             new_issues += [i for i in independent if i not in new_issues]
                         except (AnalysisError,ValueError,TypeError,KeyError):
                             pass

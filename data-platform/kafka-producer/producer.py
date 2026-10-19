@@ -1,251 +1,113 @@
-"""
-Avengers Coffee - Kafka Event Producer
-Reads from PostgreSQL and publishes business events to Kafka topics.
-Polls every POLL_INTERVAL_SECONDS for new records.
-
-VERIFIED SCHEMA from entity files:
-  don_hang: ma_nguoi_dung (NOT khach_hang_id), loai_don_hang (NOT loai_don)
-  chi_tiet_don_hang: id (NOT ma_chi_tiet), gia_ban (NOT don_gia), ten_san_pham
-  shipper_delivery: NO cod_amount, NO fail_reason
-"""
-import os
+"""Governed event observability publisher; no canonical fact writes or CDC claim."""
 import json
-import time
 import logging
-from datetime import datetime, timezone
-from decimal import Decimal
+import os
+from pathlib import Path
+import signal
+import time
 
 import psycopg2
-import psycopg2.extras
 from kafka import KafkaProducer
-from kafka.admin import KafkaAdminClient, NewTopic
-from kafka.errors import TopicAlreadyExistsError
+from producer_runtime import json_value, poll_stream
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(name)s - %(message)s',
-)
-logger = logging.getLogger("kafka-producer")
-
-KAFKA_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
-DB_HOST       = os.getenv("DB_HOST", "postgres-db")
-DB_PORT       = int(os.getenv("DB_PORT", 5432))
-DB_USER       = os.getenv("DB_USER", "admin")
-DB_PASSWORD   = os.getenv("DB_PASSWORD", "123")
-DB_NAME       = os.getenv("DB_NAME", "avengers_coffee")
-POLL_INTERVAL = int(os.getenv("POLL_INTERVAL_SECONDS", 30))
-
-TOPICS = [
-    "orders-events",
-    "order-items-events",
-    "shipper-events",
-]
-
-_state: dict = {}
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
+logger = logging.getLogger('kafka-producer')
+running = True
 
 
-def json_serial(obj):
-    if isinstance(obj, datetime):
-        return obj.isoformat()
-    if isinstance(obj, Decimal):
-        return float(obj)
-    raise TypeError(f"Type {type(obj)} not serializable")
+LOCK_NOT_AVAILABLE = '55P03'  # lock_timeout while a replica cycle owns the table
+MAX_LOCK_WAITS = 5
 
 
-def create_producer() -> KafkaProducer:
-    logger.info(f"Connecting to Kafka at {KAFKA_SERVERS}…")
-    return KafkaProducer(
-        bootstrap_servers=KAFKA_SERVERS,
-        value_serializer=lambda v: json.dumps(v, default=json_serial).encode("utf-8"),
-        key_serializer=lambda k: k.encode("utf-8") if k else None,
-        retries=5, acks="all",
-    )
+def stop(sig, frame):
+    global running
+    running = False
 
 
-def ensure_topics(producer: KafkaProducer):
-    admin = KafkaAdminClient(bootstrap_servers=KAFKA_SERVERS)
-    existing = admin.list_topics()
-    new_topics = [
-        NewTopic(name=t, num_partitions=3, replication_factor=1)
-        for t in TOPICS if t not in existing
-    ]
-    if new_topics:
-        try:
-            admin.create_topics(new_topics)
-            logger.info(f"Created topics: {[t.name for t in new_topics]}")
-        except TopicAlreadyExistsError:
-            pass
-    admin.close()
+def get_db_conn(*, writer=False):
+    credentials=None
+    if os.getenv('DATA_PLATFORM_GOVERNED_STREAMING','0')=='1':
+        from pipeline_runtime import private_database_profile
+        credentials=private_database_profile()
+    def setting(name, default=None):
+        return os.getenv('STATE_DB_'+name, os.getenv('DB_'+name, default)) if writer else os.getenv('DB_'+name, default)
+    connection = psycopg2.connect(host=setting('HOST', 'postgres-analytics'), port=int(setting('PORT', '5432')),
+        user=credentials[0] if credentials else setting('USER', 'analytics'),
+        password=credentials[1] if credentials else setting('PASSWORD'), dbname=setting('NAME', 'analytics'),
+        sslmode=setting('SSLMODE', 'disable'), connect_timeout=3,
+        options='-c statement_timeout=15000 -c lock_timeout=3000')
+    if not writer:
+        connection.set_session(readonly=True, isolation_level='REPEATABLE READ')
+    return connection
 
 
-def get_db_conn():
-    conn = psycopg2.connect(
-        host=DB_HOST, port=DB_PORT, user=DB_USER,
-        password=DB_PASSWORD, dbname=DB_NAME,
-        cursor_factory=psycopg2.extras.RealDictCursor,
-        sslmode=os.getenv('DB_SSLMODE', 'disable')
-    )
-    conn.autocommit = True
-    return conn
+def create_producer():
+    return KafkaProducer(bootstrap_servers=os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'kafka:9092'),
+        value_serializer=lambda value: json.dumps(json_value(value), ensure_ascii=False, allow_nan=False,
+                                                  sort_keys=True, separators=(',', ':')).encode(),
+        key_serializer=lambda key: key.encode(), acks='all', retries=2, max_block_ms=2000,
+        request_timeout_ms=5000, retry_backoff_ms=200, max_in_flight_requests_per_connection=1)
 
 
-def fetch_and_publish(producer: KafkaProducer, conn):
-    cur = conn.cursor()
-    published = 0
+def contracts():
+    root = Path(os.getenv('DATA_PLATFORM_DATA_CONTRACTS_PATH', '/opt/data-platform-metadata/data_contracts.json')).parent
+    value = json.loads((root / 'stream_contracts.json').read_text())
+    if value.get('version') != '3.4.0' or not value.get('streams'):
+        raise ValueError('Reviewed stream contract required')
+    return value['streams']
 
-    # ── 1. Orders — CORRECT COLUMNS ─────────────────────────────────────────
-    try:
-        last_ts = _state.get("orders_last_ts", "2020-01-01 00:00:00")
-        cur.execute("""
-            SELECT
-                d.ma_don_hang,
-                d.ma_nguoi_dung,
-                d.trang_thai_don_hang,
-                d.phuong_thuc_thanh_toan,
-                d.tong_tien,
-                d.co_so_ma,
-                d.loai_don_hang,
-                d.ghi_chu,
-                d.ngay_tao,
-                d.ngay_cap_nhat
-            FROM orders.don_hang d
-            WHERE d.ngay_tao > %s
-            ORDER BY d.ngay_tao ASC
-            LIMIT 500
-        """, (last_ts,))
-        rows = cur.fetchall()
-        for row in rows:
-            event = {
-                "event_type": "order_created",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "data": dict(row),
-            }
-            producer.send("orders-events", key=str(row["ma_don_hang"]), value=event)
-            published += 1
-            if row["ngay_tao"]:
-                _state["orders_last_ts"] = str(row["ngay_tao"])
-        if rows:
-            logger.info(f"Published {len(rows)} order events")
-    except Exception as e:
-        logger.warning(f"Orders fetch error: {e}")
 
-    # ── 2. Order Items — uses id, gia_ban, ten_san_pham ─────────────────────
-    try:
-        last_ts = _state.get("items_last_ts", "2020-01-01 00:00:00")
-        cur.execute("""
-            SELECT
-                ct.id,
-                ct.ma_don_hang,
-                ct.ma_san_pham,
-                ct.ten_san_pham,
-                ct.gia_ban,
-                ct.so_luong,
-                ct.kich_co,
-                d.ngay_tao
-            FROM orders.chi_tiet_don_hang ct
-            JOIN orders.don_hang d ON ct.ma_don_hang = d.ma_don_hang
-            WHERE d.ngay_tao > %s
-            ORDER BY d.ngay_tao ASC
-            LIMIT 1000
-        """, (last_ts,))
-        rows = cur.fetchall()
-        for row in rows:
-            event = {
-                "event_type": "order_item",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "data": dict(row),
-            }
-            producer.send("order-items-events", key=str(row["ma_don_hang"]), value=event)
-            published += 1
-            if row["ngay_tao"]:
-                _state["items_last_ts"] = str(row["ngay_tao"])
-        if rows:
-            logger.info(f"Published {len(rows)} order-item events")
-    except Exception as e:
-        logger.warning(f"Order items fetch error: {e}")
-
-    # ── 3. Shipper Deliveries — NO cod_amount, NO fail_reason ───────────────
-    try:
-        last_ts = _state.get("shipper_last_ts", "2020-01-01 00:00:00")
-        cur.execute("""
-            SELECT
-                sd.id,
-                sd.ma_don_hang,
-                sd.shipper_id,
-                sd.status,
-                sd.delivery_address,
-                sd.delivery_fee,
-                sd.assigned_at,
-                sd.picked_up_at,
-                sd.delivered_at
-            FROM orders.shipper_delivery sd
-            WHERE sd.assigned_at > %s
-            ORDER BY sd.assigned_at ASC
-            LIMIT 200
-        """, (last_ts,))
-        rows = cur.fetchall()
-        for row in rows:
-            event = {
-                "event_type": "delivery_assigned",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "data": dict(row),
-            }
-            producer.send("shipper-events", key=str(row["ma_don_hang"]), value=event)
-            published += 1
-            if row["assigned_at"]:
-                _state["shipper_last_ts"] = str(row["assigned_at"])
-        if rows:
-            logger.info(f"Published {len(rows)} shipper events")
-    except Exception as e:
-        logger.warning(f"Shipper deliveries fetch error: {e}")
-
-    producer.flush()
-    return published
+def fetch_and_publish(producer, source, state_connection):
+    result = []
+    deadline = time.monotonic()+45
+    for contract in contracts():
+        result.append(poll_stream(producer, source, state_connection, contract, deadline=deadline))
+    return result
 
 
 def main():
-    logger.info("=== Avengers Coffee Kafka Producer Starting ===")
-
-    for attempt in range(20):
-        try:
-            producer = create_producer()
-            ensure_topics(producer)
-            logger.info("Kafka connected successfully!")
-            break
-        except Exception as e:
-            logger.warning(f"Kafka not ready ({attempt+1}/20): {e}. Retrying in 10s…")
-            time.sleep(10)
-    else:
-        logger.error("Failed to connect to Kafka after 20 attempts. Exiting.")
+    signal.signal(signal.SIGTERM, stop)
+    signal.signal(signal.SIGINT, stop)
+    if os.getenv('DATA_PLATFORM_GOVERNED_STREAMING','0')!='1':
+        logger.info('Streaming standby: rollout disabled; no source, state or Kafka connections')
+        while running:time.sleep(0.5)
         return
-
-    for attempt in range(20):
-        try:
-            conn = get_db_conn()
-            logger.info("PostgreSQL connected successfully!")
-            break
-        except Exception as e:
-            logger.warning(f"PG not ready ({attempt+1}/20): {e}. Retrying in 10s…")
-            time.sleep(10)
-    else:
-        logger.error("Failed to connect to PostgreSQL after 20 attempts.")
-        return
-
-    logger.info(f"Starting poll loop every {POLL_INTERVAL}s…")
-    while True:
-        try:
-            count = fetch_and_publish(producer, conn)
-            logger.info(f"Poll done. Events published: {count}")
-        except psycopg2.OperationalError:
-            logger.warning("DB connection lost. Reconnecting…")
+    from pipeline_runtime import private_database_profile
+    private_database_profile()  # Fail before Kafka/source I/O if credentials are not provisioned.
+    producer = source = state_connection = None
+    try:
+        producer = create_producer()
+        source, state_connection = get_db_conn(), get_db_conn(writer=True)
+        interval = max(1, min(300, int(os.getenv('POLL_INTERVAL_SECONDS', '60'))))
+        lock_waits = 0
+        while running:
             try:
-                conn = get_db_conn()
-            except Exception:
-                pass
-        except Exception as e:
-            logger.error(f"Poll error: {e}")
-        time.sleep(POLL_INTERVAL)
+                results = fetch_and_publish(producer, source, state_connection)
+                lock_waits = 0
+                logger.info('Poll: published=%d pending_streams=%d completeness=unknown',
+                    sum(item['published'] for item in results), sum(item['has_more'] for item in results))
+            except Exception as error:
+                source.rollback()
+                state_connection.rollback()
+                logger.error('Publisher cursor preserved: %s', type(error).__name__)
+                # Replica TRUNCATE+INSERT briefly holds table locks; wait and retry a bounded
+                # number of times instead of restarting. Cursor/offsets are never reset.
+                lock_waits += 1
+                if getattr(error, 'pgcode', None) != LOCK_NOT_AVAILABLE or lock_waits > MAX_LOCK_WAITS:
+                    raise
+                logger.warning('Source lock busy (%d/%d); retrying after backoff', lock_waits, MAX_LOCK_WAITS)
+                end = time.monotonic()+min(30, 2**lock_waits)
+                while running and time.monotonic() < end:
+                    time.sleep(0.5)
+                continue
+            end = time.monotonic()+(1 if any(item['has_more'] for item in results) else interval)
+            while running and time.monotonic() < end:
+                time.sleep(min(0.5, max(0, end-time.monotonic())))
+    finally:
+        if source is not None: source.close()
+        if state_connection is not None: state_connection.close()
+        if producer is not None: producer.close(timeout=5)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

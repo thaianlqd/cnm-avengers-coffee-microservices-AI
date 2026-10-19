@@ -10,7 +10,8 @@ from typing import Any, Callable, Dict, List, Optional
 import psycopg2
 import psycopg2.extras
 
-from db import get_db_conn
+from db import get_db_conn, AccountedReaderCursor
+from services.analytical_capacity_planner import reader_query_kind
 
 
 logger = logging.getLogger("ai-metadata")
@@ -80,11 +81,12 @@ def _source_conn():
         dbname=os.getenv("SOURCE_DB_NAME", "postgres"),
         sslmode=os.getenv("SOURCE_DB_SSLMODE", "require"),
         connect_timeout=10,
-        cursor_factory=psycopg2.extras.RealDictCursor,
+        cursor_factory=AccountedReaderCursor,
         options="-c statement_timeout=30000 -c default_transaction_read_only=on",
     )
 
 
+@reader_query_kind('metadata')
 def _introspect(connection_factory: Callable[[], Any], schemas: Optional[List[str]] = None) -> Dict[str, Any]:
     params: List[Any] = []
     schema_filter = ""
@@ -190,6 +192,8 @@ def _introspect(connection_factory: Callable[[], Any], schemas: Optional[List[st
                 )
                 indexes = [dict(row) for row in cur.fetchall()]
             except Exception as idx_err:
+                from services.analysis_catalog import AnalysisError
+                if isinstance(idx_err,AnalysisError):raise
                 logger.warning("Could not introspect all index definitions: %s", idx_err)
                 indexes = []
 
@@ -348,6 +352,7 @@ def cache_status() -> Dict[str, Any]:
     }
 
 
+@reader_query_kind('metadata')
 def lookup_dimension_values(table, column, search, limit=8):
     """Explicit entity lookup only: safe identifiers, bounded rows/time, read-only."""
     from psycopg2 import sql

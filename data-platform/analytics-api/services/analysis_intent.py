@@ -13,7 +13,7 @@ class IntentRanking(Contract):
     direction: Literal["top", "bottom"] = "top"
     limit: int = Field(ge=1, le=100)
     metric_id: Optional[str] = Field(default=None,
-        description='Explicit ordering metric in metric_ids; other displayed metrics do not change ranking.')
+        description='Ordering metric; companions do not change rank.')
     per_group: list[str] = Field(default_factory=list, max_length=2)
 
 
@@ -34,16 +34,18 @@ class IntentRequirement(Contract):
         description='Related view of a requested requirement ID.')
     metric_ids: list[str] = Field(default_factory=list, max_length=6)
     dimension_ids: list[str] = Field(default_factory=list, max_length=4,
-        description='Business grouping axes; trend period comes from granularity.')
+        description='Independent grouping axes.')
     analysis_kind: Optional[Literal['comparison', Operation]] = Field(default=None,
-        description='comparison/aggregate for groups; cross_tab requires two independent dimensions.')
+        description='comparison/aggregate for groups.')
     filters: list[Filter] = Field(default_factory=list, max_length=12)
     time: Optional[TimeSpec] = None
+    comparison_time: Optional[TimeSpec] = Field(default=None,
+        description='Baseline period; time is the target.')
     ranking: Optional[IntentRanking] = None
     granularity: Optional[Granularity] = Field(default=None,
         description='Required for trend: day/week/month/quarter/year. Preserve the cadence explicitly requested in the question.')
     derived_features: list[DerivedFeature] = Field(default_factory=list, max_length=10,
-        description='scalar: ungrouped KPI. selected_total: sum a Top N cohort, never an average.')
+        description='scalar: ungrouped; selected_total: additive Top N.')
     feature_metrics: dict[DerivedFeature, list[str]] = Field(default_factory=dict, max_length=10,
         description='Targets only ACTIVE derived_features within metric_ids.')
     forecast: Optional[IntentForecast] = None
@@ -118,10 +120,19 @@ def intent_tool(delta=False):
         time_props = props['time']['properties']
         time_props['mode'] = {'type':'string', 'enum': [m for m in
             TimeScope.model_json_schema()['properties']['mode']['enum'] if m != 'custom']}
-        props['time'] = {'description':'Omit when unspecified (all_time). Supply exactly one complete time kind.',
+        props['time'] = {'description':'Exactly one complete time kind.',
             'anyOf':[{'type':'object', 'properties':{'kind':{'type':'string','enum':[kind]},
                 **{f:time_props[f] for f in required + optional}}, 'required':['kind', *required]}
                 for kind,(required,optional) in TIME_SHAPES.items()]}
+        # The baseline wire grammar is an exact inclusive range. Reusing the
+        # full calendar grammar twice exceeds the bounded provider context.
+        # Local calendar specs remain compatible with authored/guided intents.
+        props['comparison_time'] = next(s for s in props['time']['anyOf']
+            if s['properties']['kind']['enum']==['range'])
+        # These meanings are already in SYSTEM/shape_rules. Preserve every
+        # type/enum/required field while avoiding duplicate wire prose.
+        for field in ('goal','dimension_ids','time','derived_features'):
+            props[field].pop('description',None)
     if delta:
         # A semantic patch uses the SAME finite field grammar, not arbitrary JSON.
         properties = intent_tool()["parameters"]["properties"]["requirements"]["items"]["properties"]
@@ -245,6 +256,12 @@ def repair_tool(issues, previous=None):
     Local merge guards reject any unauthorized fields sent despite the schema.
     """
     tool = intent_tool()
+    # Omitted patch fields inherit their old value. Nullable local fields must
+    # therefore also admit an explicit null to remove an invented baseline,
+    # cadence or ranking. This grammar does not authorize any extra target.
+    props=tool['parameters']['properties']['requirements']['items']['properties']
+    for name in ('time','comparison_time','ranking','granularity','forecast','supporting_for','reason'):
+        props[name]={'anyOf':[props[name],{'type':'null'}]}
     targets={i.get('requirement_id') for i in issues if i.get('requirement_id')}
     if any(i.get('requirement_id') is None for i in issues):
         shapes={'leader':{'ranking'},'top_gap':{'ranking'},'change':{'trend'},'change_pct':{'trend'}}

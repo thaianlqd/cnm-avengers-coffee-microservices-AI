@@ -1,0 +1,13 @@
+# This file applies only to the shared pipeline build context.
+**/.env
+**/.env.*
+!**/.env.example
+**/node_modules
+**/__pycache__
+**/.venv
+**/*.pyc
+analytics-api
+web-ui
+evaluation
+*.md
+init-db

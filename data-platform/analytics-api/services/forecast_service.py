@@ -6,11 +6,13 @@ simple and dependency-free; the one used is chosen by rolling-origin backtest
 and is reported next to the naive baseline so accuracy claims stay evidenced.
 """
 import math
+import hashlib
+import json
 from datetime import date, datetime, timedelta
 
 from services.analysis_catalog import AnalysisError
 
-VERSION = "3.0.0"
+VERSION = "3.4.0"
 CADENCE_DAYS = {"day": 1, "week": 7}
 SEASON = {"day": 7, "week": 52, "month": 12, "quarter": 4, "year": 1}
 LEVELS = (0.1, 0.3, 0.5, 0.7, 0.9)
@@ -147,7 +149,7 @@ def _metrics(errors, actuals):
             "evaluated_points": len(errors)}
 
 
-def backtest(values, method, horizon, folds):
+def backtest(values, method, horizon, folds, *, origins=None):
     """Rolling-origin backtest: refit on each prefix, score the next horizon.
 
     A method that cannot fit a short prefix (season/window longer than it)
@@ -155,7 +157,7 @@ def backtest(values, method, horizon, folds):
     """
     errors, actuals, by_step = [], [], {}
     n = len(values)
-    for origin in range(n - folds - horizon + 1, n - horizon + 1):
+    for origin in (origins if origins is not None else range(n - folds - horizon + 1, n - horizon + 1)):
         if origin < 2:
             continue
         predict = method(values[:origin])
@@ -167,6 +169,54 @@ def backtest(values, method, horizon, folds):
             errors.append(error); actuals.append(actual)
             by_step.setdefault(h, []).append(error)
     return _metrics(errors, actuals), by_step
+
+
+def _selection(values, unit, horizon, folds):
+    """Compare candidates only on a common set of eligible observations."""
+    methods = candidate_methods(unit, len(values))
+    origins = [o for o in range(len(values)-folds-horizon+1, len(values)-horizon+1) if o >= 2]
+    eligible = {name: {o for o in origins if fit(values[:o]) is not None} for name, fit in methods.items()}
+    excluded = {name: 'insufficient_selection_history' for name, points in eligible.items() if not points}
+    methods = {name: fit for name, fit in methods.items() if eligible[name]}
+    if 'naive' not in methods:
+        raise AnalysisError('forecast_execution', 'Backtest window unavailable')
+    common = sorted(set.intersection(*(eligible[name] for name in methods)))
+    if not common:
+        # A model with incomparable origins is not ranked by a different MAE.
+        excluded.update({name: 'no_common_origins' for name in methods if name != 'naive'})
+        methods = {'naive': methods['naive']}
+        common = sorted(eligible['naive'])
+    results = {}
+    for name, fit in methods.items():
+        score, by_step = backtest(values, fit, horizon, len(common), origins=common)
+        if score:
+            results[name] = (score, by_step, fit)
+    order = list(results)
+    chosen = min(results, key=lambda name: (results[name][0]['mae'], order.index(name)))
+    diagnostics = {'criterion': 'common_origin_mae', 'common_origins': common,
+                   'methods': {name: result[0] for name, result in results.items()}, 'excluded_methods': excluded}
+    return chosen, results, diagnostics
+
+
+def _interval(predict, step, errors_by_step, score, test_horizon, nonnegative):
+    errors = errors_by_step.get(min(step, test_horizon), [])
+    scale = math.sqrt(sum(e*e for e in errors)/len(errors)) if errors else score['rmse']
+    if step > test_horizon:
+        scale *= math.sqrt(step/test_horizon)
+    value = predict(step)
+    low, high = value-Z80*scale, value+Z80*scale
+    return tuple(max(0.0, v) for v in (value, low, high)) if nonnegative else (value, low, high)
+
+
+def _method_parameters(name):
+    parts = name.split('_')
+    if name.startswith('moving_average_'):
+        return {'window': int(parts[-1])}
+    if name.startswith('ses_'):
+        return {'alpha': float(parts[1])}
+    if name.startswith('holt_'):
+        return {'alpha': float(parts[1]), 'beta': float(parts[2])}
+    return {}
 
 
 def _current_period(reference, unit):
@@ -194,18 +244,28 @@ def forecast(series, unit, horizon, spec, reference=None):
         raise AnalysisError("forecast_insufficient_history", "History contains no observed activity")
     test_horizon = max(1, min(horizon, len(values) // 4))
     folds = max(1, min(8, len(values) // 3))
-    results = {}
-    for name, method in candidate_methods(unit, len(values)).items():
-        score, by_step = backtest(values, method, test_horizon, folds)
-        if score:
-            results[name] = (score, by_step, method)
-    if "naive" not in results:
-        raise AnalysisError("forecast_execution", "Backtest window unavailable")
-    order = list(results)
-    chosen = min(results, key=lambda name: (results[name][0]["mae"], order.index(name)))
+    # Holdout never participates in selection. Short histories explicitly lack
+    # independent calibration; the existing rolling backtest remains available.
+    holdout = min(8, max(horizon, len(values)//5)) if len(values) >= max(2*minimum, minimum+3*horizon) else 0
+    selection_values = values[:-holdout] if holdout else values
+    selected_horizon = max(1, min(test_horizon, len(selection_values)//4))
+    selected_folds = max(1, min(folds, len(selection_values)//3))
+    chosen, results, selection = _selection(selection_values, unit, selected_horizon, selected_folds)
+    test_horizon = selected_horizon
     score, by_step, method = results[chosen]
-    predict = method(values)
     nonnegative = spec.get("non_negative", True)
+    calibration = {'status': 'not_measured', 'coverage_80_pct': None, 'evaluated_points': 0,
+                   'reason': 'insufficient_independent_history'}
+    if holdout:
+        validation_predict = method(selection_values)
+        inside = 0
+        for step, actual in enumerate(values[-holdout:], 1):
+            _, low, high = _interval(validation_predict, step, by_step, score, test_horizon, nonnegative)
+            inside += low <= actual <= high
+        calibration = {'status': 'measured', 'coverage_80_pct': round(100*inside/holdout, 2),
+                       'evaluated_points': holdout, 'holdout_start_index': len(selection_values),
+                       'method': 'fixed_origin_holdout', 'used_for_selection': False}
+    predict = method(values)  # Production projection refits on all observed history.
     points, period = [], series[-1][0]
     lag = 0
     if reference is not None:
@@ -220,14 +280,7 @@ def forecast(series, unit, horizon, spec, reference=None):
             raise error
     for h in range(1, lag + horizon + 1):
         period = _next(period, unit)
-        step = by_step.get(min(h, test_horizon), [])
-        scale = math.sqrt(sum(e * e for e in step) / len(step)) if step else score["rmse"]
-        # Beyond the backtested steps the error is extrapolated by sqrt(h).
-        scale *= math.sqrt(h / test_horizon) if h > test_horizon else 1
-        value = predict(h)
-        low, high = value - Z80 * scale, value + Z80 * scale
-        if nonnegative:
-            value, low, high = max(0.0, value), max(0.0, low), max(0.0, high)
+        value, low, high = _interval(predict, h, by_step, score, test_horizon, nonnegative)
         points.append({"period": period.isoformat(), "value": round(value, 2),
                        "lower_80": round(low, 2), "upper_80": round(high, 2),
                        "kind": "future" if h > lag else "in_progress"})
@@ -243,9 +296,13 @@ def forecast(series, unit, horizon, spec, reference=None):
         "history": {"start": series[0][0].isoformat(), "end": series[-1][0].isoformat(), "periods": len(values),
                     "missing_data_policy": spec.get("missing_data_policy", "zero_fill")},
         "forecast": points,
-        "backtest": {**score, "test_horizon": test_horizon, "folds": folds,
+        "backtest": {**score, "test_horizon": test_horizon, "folds": len(selection['common_origins']),
                      "naive_baseline": baseline,
                      "improvement_vs_naive_pct": None if not baseline["mae"] else round(100 * (1 - score["mae"] / baseline["mae"]), 2)},
+        "diagnostics": {'selection': selection, 'interval_calibration': calibration,
+                        'method_parameters': _method_parameters(chosen),
+                        'history_hash': hashlib.sha256(json.dumps([[str(p), v] for p, v in series],
+                            allow_nan=False, separators=(',', ':')).encode()).hexdigest()},
         "interval": "Khoảng 80% ước lượng từ sai số backtest; không phải xác suất được bảo đảm.",
         "limitations": limitations,
     }

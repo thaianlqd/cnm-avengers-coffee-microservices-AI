@@ -1,0 +1,17 @@
+{
+  "status": "passed",
+  "source": "menu.danh_muc",
+  "target": "menu.danh_muc",
+  "before_rows": 23,
+  "observed_source_rows": 23,
+  "after_rows": 23,
+  "checkpoint": {
+    "generation": 1,
+    "completeness": "unknown",
+    "observed_rows": 23
+  },
+  "duration_seconds": 0.74,
+  "sync_sha256": "0e234d31bf5a5ae2c318833bff63ee2b08fafa9f0fc3928adba05f05f23cbe3f",
+  "source_read_only": true,
+  "target_current_user_is_replica": true
+}

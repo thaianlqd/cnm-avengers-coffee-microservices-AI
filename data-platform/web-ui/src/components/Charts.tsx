@@ -11,7 +11,7 @@ const tickIndices = (count: number, maximum = 5) => [...new Set(Array.from({ len
 const timeTick = (label: string, crossYear: boolean) => /^\d{4}-\d{2}-\d{2}/.test(String(label)) ? `${label.slice(8, 10)}/${label.slice(5, 7)}${crossYear ? '/' + label.slice(2, 4) : ''}` : String(label).slice(0, 12);
 
 /** Signed grouped/stacked series. Missing observations remain missing. */
-export const SeriesBarChart: React.FC<{ data: any[]; series: any[]; stacked?: boolean; percentage?: boolean; unit?: string }> = ({ data, series, stacked = false, percentage = false, unit = '' }) => {
+export const SeriesBarChart: React.FC<{ data: any[]; series: any[]; stacked?: boolean; percentage?: boolean; unit?: string; onInspect?: (row: any) => void }> = ({ data, series, stacked = false, percentage = false, unit = '', onInspect }) => {
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const active = series.filter(s => !hidden[s.key]);
   if (!data.length) return <p>Không có dữ liệu trong phạm vi này.</p>;
@@ -30,7 +30,7 @@ export const SeriesBarChart: React.FC<{ data: any[]; series: any[]; stacked?: bo
         const start = stacked ? offset : 0; if (stacked) offset += v;
         const width = slot * .8 / (stacked ? 1 : Math.max(active.length, 1));
         const x = 60 + i * slot + (stacked ? 0 : j * width);
-        return <rect key={s.key} x={x} y={Math.min(y(start), y(start + v))} width={Math.max(1, width - 2)} height={Math.abs(y(start + v) - y(start))} rx={3} tabIndex={0} className="outline-none transition-opacity duration-150 motion-reduce:transition-none hover:opacity-80 focus:opacity-80" fill={active.length === 1 ? row.color || s.color || '#2563eb' : s.color || '#2563eb'}><title>{`${row.label}: ${s.label} — ${formatChartValue(v, unit ? ` ${unit}` : '')}`}</title></rect>;
+        return <rect role={row.entity_ref && onInspect ? 'button' : undefined} aria-label={row.entity_ref && onInspect ? `Xem nhóm ${row.label}` : undefined} onClick={() => row.entity_ref && onInspect?.(row)} onKeyDown={event => { if (row.entity_ref && onInspect && ['Enter', ' '].includes(event.key)) { event.preventDefault(); onInspect(row); } }} key={s.key} x={x} y={Math.min(y(start), y(start + v))} width={Math.max(1, width - 2)} height={Math.abs(y(start + v) - y(start))} rx={3} tabIndex={0} className="outline-none transition-opacity duration-150 motion-reduce:transition-none hover:opacity-80 focus:opacity-80" fill={active.length === 1 ? row.color || s.color || '#2563eb' : s.color || '#2563eb'}><title>{`${row.label}: ${s.label} — ${formatChartValue(v, unit ? ` ${unit}` : '')}`}</title></rect>;
       })}<text x={60 + i * slot + slot * .4} y="276" fontSize="11" fill="#64748b" textAnchor="middle">{tickIndices(data.length, 6).includes(i) ? String(row.label).slice(0, 12) : ''}</text></g>; })}
     </svg>
   </div>;
@@ -65,7 +65,7 @@ export function riskTone(value: number, threshold?: any) {
   return (above ? value >= t - margin : value <= t + margin) && margin > 0 ? 'amber' : 'green';
 }
 
-export const AnalystHorizontalBars: React.FC<{ data: any[]; unit: string; color: string; ranking?: boolean; threshold?: any }> = ({ data, unit, color, ranking, threshold }) => {
+export const AnalystHorizontalBars: React.FC<{ data: any[]; unit: string; color: string; ranking?: boolean; threshold?: any; onInspect?: (row: any) => void }> = ({ data, unit, color, ranking, threshold, onInspect }) => {
   const [page, setPage] = useState(1);
   const pageSize = 10, pages = Math.max(1, Math.ceil(data.length / pageSize)), activePage = Math.min(page, pages);
   const values = [...data.map(r => r.value), ...(threshold ? [threshold.value] : [])].filter(Number.isFinite);
@@ -74,7 +74,7 @@ export const AnalystHorizontalBars: React.FC<{ data: any[]; unit: string; color:
   const mark = threshold ? (threshold.value - low) / span * 100 : null;
   return <div className="min-h-[260px]">
     {threshold && <p className="mb-3 text-[11px] text-slate-500"><span className="inline-block w-3 border-t-2 border-dashed border-slate-500 align-middle mr-1" />Ngưỡng {threshold.label}: {threshold.symbol} {formatChartValue(threshold.value, unit ? ` ${unit}` : '')} · <span style={{ color: RISK_COLORS.red }}>■</span> vượt ngưỡng <span style={{ color: RISK_COLORS.amber }}>■</span> sát ngưỡng <span style={{ color: RISK_COLORS.green }}>■</span> an toàn</p>}
-    <div className="space-y-3">{data.slice((activePage - 1) * pageSize, activePage * pageSize).map((row: any, i: number) => { const tone = riskTone(row.value, threshold); return <div key={i} tabIndex={0} aria-label={`${row.label}: ${formatChartValue(row.value, unit ? ` ${unit}` : '')}${tone === 'red' ? ' — vượt ngưỡng' : ''}`} data-risk-tone={tone || undefined} className="group grid grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)_4rem] gap-3 items-center text-xs min-h-[20px] rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400" title={`${row.label}: ${formatChartValue(row.value, unit ? ` ${unit}` : '')}`}>
+    <div className="space-y-3">{data.slice((activePage - 1) * pageSize, activePage * pageSize).map((row: any, i: number) => { const tone = riskTone(row.value, threshold); return <div key={i} tabIndex={0} role={row.entity_ref && onInspect ? 'button' : undefined} onClick={() => row.entity_ref && onInspect?.(row)} onKeyDown={event => { if (row.entity_ref && onInspect && ['Enter', ' '].includes(event.key)) { event.preventDefault(); onInspect(row); } }} aria-label={`${row.entity_ref && onInspect ? 'Xem nhóm ' : ''}${row.label}: ${formatChartValue(row.value, unit ? ` ${unit}` : '')}${tone === 'red' ? ' — vượt ngưỡng' : ''}`} data-risk-tone={tone || undefined} className="group grid grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)_4rem] gap-3 items-center text-xs min-h-[20px] rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400" title={`${row.label}: ${formatChartValue(row.value, unit ? ` ${unit}` : '')}`}>
       <div className="text-slate-600 leading-relaxed break-words">{ranking && <span className="text-slate-400 mr-2">{row.rank_position ?? (activePage - 1) * pageSize + i + 1}.</span>}{row.label}</div>
       <div className="relative h-2.5 rounded-full bg-slate-100"><span className="absolute inset-y-0 rounded-full transition-[filter] duration-150 motion-reduce:transition-none group-hover:brightness-90" style={{ left: `${row.value < 0 ? origin + row.value / span * 100 : origin}%`, width: `${Math.abs(row.value) / span * 100}%`, background: tone ? RISK_COLORS[tone as keyof typeof RISK_COLORS] : row.color || color }} />{low < 0 && <span className="absolute -top-1 h-4 border-l border-slate-400" style={{ left: `${origin}%` }} />}{mark != null && <span data-risk-threshold className="absolute -top-1.5 h-5 border-l-2 border-dashed border-slate-600" style={{ left: `${mark}%` }} />}</div>
       <span className="text-slate-700 font-medium tabular-nums text-right">{unit === '%' ? `${row.value.toLocaleString('vi-VN', { maximumFractionDigits: 2 })}%` : axisValue(row.value)}</span>
@@ -83,16 +83,16 @@ export const AnalystHorizontalBars: React.FC<{ data: any[]; unit: string; color:
   </div>;
 };
 
-export const AnalystChart: React.FC<{ chart: any }> = ({ chart }) => {
+export const AnalystChart: React.FC<{ chart: any; onInspect?: (row: any) => void }> = ({ chart, onInspect }) => {
   const data = (chart.data || []).map((r: any, i: number) => ({ ...r, color: r.color || categoryColor(r.label, i), label: r.label == null ? r.label : businessCategory(r.label) })), unit = chart.unit || '', color = chart.accent_color || '#2563eb';
   if (['grouped_bar', 'stacked_bar', 'stacked_100'].includes(chart.chart_type)) return <SeriesBarChart data={data} series={chart.series || []} stacked={chart.chart_type !== 'grouped_bar'} percentage={chart.chart_type === 'stacked_100'} unit={unit} />;
   if (chart.chart_type === 'scatter') return <ScatterChart data={data} xLabel={chart.x_label} yLabel={chart.y_label} xUnit={unit} yUnit={chart.y_unit} />;
   if (chart.chart_type === 'heatmap') return <HeatmapChart data={data} valueSuffix={unit ? ` ${unit}` : ''} xLabel={chart.x_label || 'Chiều phân tích'} yLabel={chart.series_label || 'Nhóm phân tích'} />;
   if (chart.chart_type === 'multi_line') return <SeriesLineChart data={data} series={chart.series || []} unit={unit} granularity={chart.granularity} period={chart.period} />;
   if (chart.chart_type === 'donut') return <DonutChart data={chart.grouped_categories ? data : compositionData(data).data} centerLabel="Tổng trong phạm vi" valueSuffix={unit ? ` ${unit}` : ''} size={170} />;
-  if (chart.chart_type === 'horizontal_bar' || (chart.risk_threshold && chart.chart_type === 'bar')) return <AnalystHorizontalBars data={data} unit={unit} color={color} ranking={chart.selection === 'Top N'} threshold={chart.risk_threshold} />;
+  if (chart.chart_type === 'horizontal_bar' || (chart.risk_threshold && chart.chart_type === 'bar')) return <AnalystHorizontalBars data={data} unit={unit} color={color} ranking={chart.selection === 'Top N'} threshold={chart.risk_threshold} onInspect={onInspect} />;
   if (['line', 'area'].includes(chart.chart_type)) return <SeriesLineChart data={data.map((r: any) => ({ label: r.label, series_1: r.value }))} series={[{ key: 'series_1', label: conciseChartTitle(chart), color }]} unit={unit} area={chart.chart_type === 'area'} granularity={chart.granularity} period={chart.period} />;
-  return <SeriesBarChart data={data.map((r: any) => ({ label: r.label, series_1: r.value, color: r.color || color }))} series={[{ key: 'series_1', label: conciseChartTitle(chart), color }]} unit={unit} />;
+  return <SeriesBarChart data={data.map((r: any) => ({ ...r, series_1: r.value, color: r.color || color }))} series={[{ key: 'series_1', label: conciseChartTitle(chart), color }]} unit={unit} onInspect={onInspect} />;
 };
 
 export const SeriesLineChart: React.FC<{ data: any[]; series: any[]; unit?: string; area?: boolean; granularity?: string; period?: any }> = ({ data, series, unit = '', area = false, granularity, period }) => {

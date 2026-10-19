@@ -1,5 +1,5 @@
 {
-  "version": 9,
+  "version": 10,
   "description": "Semantic Knowledge Catalog & Comprehensive Data Dictionary cho Avengers Coffee AI — Toàn bộ CSDL Tầng Silver (19 bảng/view)",
   "silver_tables": {
     "silver.don_hang": {
@@ -96,7 +96,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.don_hang"
     },
     "silver.chi_tiet_don_hang": {
       "business_name": "Chi tiết từng món trong đơn",
@@ -167,7 +169,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.chi_tiet_don_hang"
     },
     "silver.san_pham": {
       "business_name": "Thực đơn món đồ uống và sản phẩm",
@@ -238,7 +242,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.san_pham"
     },
     "silver.danh_muc": {
       "business_name": "Danh mục phân loại thực đơn",
@@ -281,7 +287,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.danh_muc"
     },
     "silver.bien_the_san_pham": {
       "business_name": "Biến thể món (Size & Phụ thu)",
@@ -328,7 +336,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.bien_the_san_pham"
     },
     "silver.chi_nhanh": {
       "business_name": "Mạng lưới chi nhánh cửa hàng",
@@ -403,7 +413,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.chi_nhanh"
     },
     "silver.khu_vuc": {
       "business_name": "Phân vùng địa lý và khu vực kinh doanh",
@@ -432,7 +444,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.khu_vuc"
     },
     "silver.khuyen_mai": {
       "business_name": "Chương trình khuyến mãi và Voucher giảm giá",
@@ -499,7 +513,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.khuyen_mai"
     },
     "silver.voucher": {
       "business_name": "Voucher ưu đãi (Alias của silver.khuyen_mai)",
@@ -566,7 +582,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.voucher"
     },
     "silver.nguoi_dung": {
       "business_name": "Khách hàng và hội viên thân thiết",
@@ -629,7 +647,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.nguoi_dung"
     },
     "silver.giao_dich_thanh_toan": {
       "business_name": "Giao dịch qua cổng thanh toán",
@@ -676,7 +696,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.giao_dich_thanh_toan"
     },
     "silver.shipper": {
       "business_name": "Đội ngũ tài xế và hiệu suất giao hàng",
@@ -725,7 +747,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.shipper"
     },
     "silver.ton_kho_san_pham": {
       "business_name": "Tồn kho sản phẩm tại từng chi nhánh",
@@ -784,7 +808,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.ton_kho_san_pham"
     },
     "silver.danh_gia_san_pham": {
       "business_name": "Đánh giá chất lượng sản phẩm từ khách hàng",
@@ -851,7 +877,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.danh_gia_san_pham"
     },
     "silver.danh_gia_chi_nhanh": {
       "business_name": "Đánh giá chất lượng dịch vụ chi nhánh",
@@ -906,7 +934,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.danh_gia_chi_nhanh"
     },
     "silver.ca_lam_viec_nhan_vien": {
       "business_name": "Ca làm việc và chấm công nhân sự",
@@ -977,7 +1007,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.ca_lam_viec_nhan_vien"
     },
     "silver.ca_doi_soat": {
       "business_name": "Đối soát kết ca thu ngân và chênh lệch tiền két",
@@ -1064,7 +1096,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.ca_doi_soat"
     },
     "silver.khao_sat_phan_hoi": {
       "business_name": "Khảo sát ý kiến và phản hồi khách hàng",
@@ -1119,7 +1153,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.khao_sat_phan_hoi"
     },
     "silver.yeu_thich_san_pham": {
       "business_name": "Món uống yêu thích (Wishlist khách hàng)",
@@ -1174,7 +1210,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.yeu_thich_san_pham"
     },
     "silver.giao_hang": {
       "business_name": "Chuyến giao hàng của shipper",
@@ -1241,7 +1279,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.giao_hang"
     },
     "silver.khuyen_mai_su_dung": {
       "business_name": "Lượt sử dụng khuyến mãi",
@@ -1292,7 +1332,9 @@
         "mode": "batch",
         "pipeline": "data-sync",
         "description": "Đồng bộ định kỳ từ CSDL vận hành sang kho phân tích; không phải thời gian thực."
-      }
+      },
+      "owner": "avengers-data-team",
+      "dataset_id": "silver.khuyen_mai_su_dung"
     }
   },
   "business_rules": [
@@ -2992,6 +3034,13 @@
           "non_negative": true,
           "allowed_dimensions": [],
           "constraints": "Dự báo toàn phạm vi đã lọc; không dự báo theo nhóm."
+        },
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
         }
       },
       "order_count": {
@@ -3065,6 +3114,13 @@
           "non_negative": true,
           "allowed_dimensions": [],
           "constraints": "Dự báo toàn phạm vi đã lọc; không dự báo theo nhóm."
+        },
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
         }
       },
       "aov": {
@@ -3125,7 +3181,14 @@
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Không cộng kết quả các nhóm; cần tính lại trên quần thể gốc.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "voucher_revenue": {
         "business_name": "Doanh thu đơn có khuyến mãi",
@@ -3200,7 +3263,14 @@
           "promotion_id",
           "redeemed_promotion",
           "redeemed_promotion_code"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "discount_amount": {
         "business_name": "Tổng tiền đã giảm giá",
@@ -3268,7 +3338,14 @@
             "id": "voucher_effectiveness",
             "label": "Số đơn, doanh thu và giảm giá chỉ mô tả việc dùng voucher. Chưa có chi phí đầy đủ hoặc nhóm đối chứng độc lập; không kết luận ROI hay tác động tăng doanh thu. Số đơn dùng voucher gồm mọi trạng thái; doanh thu và giảm giá chỉ gồm HOAN_THANH/DANG_GIAO."
           }
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "voucher_order_count": {
         "business_name": "Số đơn áp dụng khuyến mãi",
@@ -3279,6 +3356,7 @@
           "Số đơn áp dụng khuyến mãi",
           "voucher order count",
           "số đơn có sử dụng voucher",
+          "số đơn sử dụng voucher",
           "số đơn"
         ],
         "expression": "COUNT(silver.don_hang.ma_don_hang)",
@@ -3332,7 +3410,14 @@
           "promotion_id",
           "redeemed_promotion",
           "redeemed_promotion_code"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "quantity_sold": {
         "business_name": "Số lượng sản phẩm bán",
@@ -3350,7 +3435,8 @@
           "best selling",
           "selling quantity",
           "selling",
-          "số lượng bán"
+          "số lượng bán",
+          "lượng bán"
         ],
         "expression": "SUM(silver.chi_tiet_don_hang.so_luong)",
         "source": "silver.chi_tiet_don_hang",
@@ -3398,7 +3484,14 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "item_revenue": {
         "business_name": "Doanh thu món",
@@ -3460,7 +3553,14 @@
           "product",
           "product_id",
           "category"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "product_revenue": {
         "business_name": "Doanh thu sản phẩm",
@@ -3521,7 +3621,14 @@
           "product",
           "product_id",
           "category"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "store_revenue": {
         "business_name": "Doanh thu chi nhánh",
@@ -3606,7 +3713,14 @@
           "store_id",
           "city",
           "store_type"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "store_order_count": {
         "business_name": "Số đơn chi nhánh",
@@ -3681,7 +3795,14 @@
           "store_id",
           "city",
           "store_type"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "store_aov": {
         "business_name": "AOV chi nhánh",
@@ -3737,7 +3858,14 @@
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Không cộng kết quả các nhóm; cần tính lại trên quần thể gốc.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "customer_count": {
         "business_name": "Số khách",
@@ -3793,7 +3921,14 @@
         ],
         "disjoint_partitions": [
           "customer_role"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "total_spent": {
         "business_name": "Tổng chi tiêu tích lũy",
@@ -3847,7 +3982,14 @@
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Không áp bộ lọc kỳ lịch sử hoặc suy ra xu hướng từ dữ liệu hiện trạng.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "payment_count": {
         "business_name": "Số giao dịch",
@@ -3893,7 +4035,14 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "payment_revenue": {
         "business_name": "Doanh thu thanh toán",
@@ -3948,7 +4097,14 @@
           "payment_gateway",
           "payment_transaction_status",
           "payment_status"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "total_deliveries": {
         "business_name": "Tổng chuyến giao",
@@ -3995,7 +4151,14 @@
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Không áp bộ lọc kỳ lịch sử hoặc suy ra xu hướng từ dữ liệu hiện trạng.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "driver_rating": {
         "business_name": "Điểm đánh giá trung bình",
@@ -4053,7 +4216,14 @@
         ],
         "qualifier_dimensions": [
           "driver_id"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "stock_quantity": {
         "business_name": "Số lượng tồn kho",
@@ -4111,7 +4281,14 @@
         ],
         "non_additive_over": [
           "time"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "low_stock_count": {
         "business_name": "Số món dưới định mức",
@@ -4167,7 +4344,14 @@
         ],
         "non_additive_over": [
           "time"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "avg_product_rating": {
         "business_name": "Điểm đánh giá trung bình",
@@ -4220,7 +4404,14 @@
         "qualifier_dimensions": [
           "product",
           "product_id"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "review_count": {
         "business_name": "Số lượt đánh giá",
@@ -4267,7 +4458,14 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "avg_store_rating": {
         "business_name": "Điểm phục vụ trung bình",
@@ -4321,7 +4519,14 @@
         "qualifier_dimensions": [
           "store",
           "store_id"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "store_review_count": {
         "business_name": "Số lượt đánh giá quán",
@@ -4369,7 +4574,14 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "shift_count": {
         "business_name": "Tổng số ca làm",
@@ -4415,7 +4627,14 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "late_count": {
         "business_name": "Số ca đi trễ",
@@ -4472,6 +4691,13 @@
               "value": "DI_TRE"
             }
           ]
+        },
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
         }
       },
       "total_cash_difference": {
@@ -4527,7 +4753,14 @@
         "non_anchor_aliases": [
           "chênh lệch",
           "lệch tiền"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "system_cash_revenue": {
         "business_name": "Doanh thu tiền mặt hệ thống",
@@ -4576,7 +4809,14 @@
         ],
         "non_anchor_aliases": [
           "tiền mặt"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "reconciled_shifts": {
         "business_name": "Số ca đã đối soát",
@@ -4622,7 +4862,14 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "survey_response_count": {
         "business_name": "Số lượt phản hồi khảo sát",
@@ -4669,7 +4916,14 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "favorite_count": {
         "business_name": "Số lượt thả tim yêu thích",
@@ -4716,7 +4970,14 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "hourly_orders": {
         "business_name": "Số đơn theo giờ",
@@ -4762,7 +5023,14 @@
         "invalid_uses": [
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "purchasing_customer_count": {
         "business_name": "Số khách mua hàng",
@@ -4821,7 +5089,14 @@
           "Không suy ra quan hệ nhân quả hoặc dự báo chỉ từ thống kê mô tả.",
           "Không cộng kết quả các nhóm; cần tính lại trên quần thể gốc.",
           "Quy mô cao/thấp chưa xác định tốt/xấu khi chưa có chuẩn nghiệp vụ và mức phơi nhiễm tương đương."
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "delivery_count": {
         "business_name": "Số chuyến giao",
@@ -4906,6 +5181,13 @@
           "non_negative": true,
           "allowed_dimensions": [],
           "constraints": "Dự báo toàn phạm vi đã lọc; không dự báo theo nhóm."
+        },
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
         }
       },
       "delivered_count": {
@@ -4969,7 +5251,14 @@
         ],
         "non_anchor_aliases": [
           "giao thành công"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "failed_or_cancelled_delivery_count": {
         "business_name": "Số chuyến không thành công",
@@ -5035,7 +5324,14 @@
         ],
         "non_anchor_aliases": [
           "chuyến bị hủy"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "delivery_success_rate": {
         "business_name": "Tỷ lệ giao thành công",
@@ -5115,7 +5411,14 @@
           "order_type",
           "payment_method",
           "reporting_region"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "avg_delivery_minutes": {
         "business_name": "Thời gian giao trung bình",
@@ -5188,7 +5491,14 @@
           "order_type",
           "payment_method",
           "reporting_region"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "order_cancellation_rate": {
         "business_name": "Tỷ lệ hủy đơn",
@@ -5273,7 +5583,14 @@
           "weekday",
           "hour",
           "reporting_region"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "order_completion_rate": {
         "business_name": "Tỷ lệ hoàn thành đơn",
@@ -5354,7 +5671,14 @@
           "weekday",
           "hour",
           "reporting_region"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "late_shift_rate": {
         "business_name": "Tỷ lệ ca đi trễ",
@@ -5433,7 +5757,14 @@
           "city",
           "store_type",
           "reporting_region"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "large_cash_discrepancy_shift_count": {
         "business_name": "Số ca lệch tiền lớn",
@@ -5443,7 +5774,9 @@
           "số ca lệch tiền lớn",
           "ca lệch tiền lớn",
           "ca lệch quỹ lớn",
-          "ca chênh lệch tiền lớn"
+          "ca chênh lệch tiền lớn",
+          "số ca chênh lệch tiền mặt lớn",
+          "ca chênh lệch tiền mặt lớn"
         ],
         "expression": "COUNT(*) FILTER (WHERE silver.ca_doi_soat.chenh_lech > 500000 OR silver.ca_doi_soat.chenh_lech < -500000)",
         "source": "silver.ca_doi_soat",
@@ -5491,7 +5824,14 @@
           "city",
           "store_type",
           "reporting_region"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "promotion_redemption_count": {
         "business_name": "Lượt sử dụng khuyến mãi",
@@ -5553,7 +5893,14 @@
           "city",
           "store_type",
           "reporting_region"
-        ]
+        ],
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       }
     },
     "dimensions": {
@@ -5582,7 +5929,14 @@
           ]
         ],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "identity"
+        "logical_type": "identity",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "product_id": {
         "table": "silver.san_pham",
@@ -5602,7 +5956,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "identity"
+        "logical_type": "identity",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "category": {
         "table": "silver.danh_muc",
@@ -5628,7 +5989,14 @@
           ]
         ],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "category"
+        "logical_type": "category",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "store": {
         "table": "silver.chi_nhanh",
@@ -5660,7 +6028,14 @@
           "kisok",
           "kiốt"
         ],
-        "logical_type": "identity"
+        "logical_type": "identity",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "store_id": {
         "table": "silver.chi_nhanh",
@@ -5681,7 +6056,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "identity"
+        "logical_type": "identity",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "city": {
         "table": "silver.chi_nhanh",
@@ -5884,7 +6266,14 @@
           }
         ],
         "group_dimension": "reporting_region",
-        "logical_type": "category"
+        "logical_type": "category",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "customer_id": {
         "table": "silver.nguoi_dung",
@@ -5904,7 +6293,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "identity"
+        "logical_type": "identity",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "customer_role": {
         "table": "silver.nguoi_dung",
@@ -5925,7 +6321,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "category"
+        "logical_type": "category",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "loyalty_points": {
         "table": "silver.nguoi_dung",
@@ -5945,7 +6348,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "number"
+        "logical_type": "number",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "lifetime_spend": {
         "table": "silver.nguoi_dung",
@@ -5965,7 +6375,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "number"
+        "logical_type": "number",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "order_id": {
         "table": "silver.don_hang",
@@ -5985,7 +6402,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "identity"
+        "logical_type": "identity",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "order_status": {
         "table": "silver.don_hang",
@@ -6025,7 +6449,14 @@
           "DANG_GIAO": "Đang giao",
           "HOAN_THANH": "Hoàn thành"
         },
-        "logical_type": "category"
+        "logical_type": "category",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "payment_method": {
         "table": "silver.don_hang",
@@ -6069,7 +6500,14 @@
           "VI_DIEN_TU": "Ví điện tử",
           "VNPAY": "VNPay"
         },
-        "logical_type": "category"
+        "logical_type": "category",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "payment_status": {
         "table": "silver.don_hang",
@@ -6094,7 +6532,14 @@
           "CHO_THANH_TOAN_KHI_NHAN_HANG": "Chờ thu tiền khi nhận",
           "DA_THANH_TOAN": "Đã thanh toán"
         },
-        "logical_type": "category"
+        "logical_type": "category",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "order_amount": {
         "table": "silver.don_hang",
@@ -6114,7 +6559,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "number"
+        "logical_type": "number",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "order_created": {
         "table": "silver.don_hang",
@@ -6134,7 +6586,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "date"
+        "logical_type": "date",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "promotion": {
         "table": "silver.khuyen_mai",
@@ -6165,7 +6624,14 @@
           "silver.don_hang.ma_voucher"
         ],
         "display_identity": true,
-        "logical_type": "identity"
+        "logical_type": "identity",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "promotion_id": {
         "table": "silver.don_hang",
@@ -6190,7 +6656,14 @@
         "required_non_null": [
           "silver.don_hang.ma_voucher"
         ],
-        "logical_type": "identity"
+        "logical_type": "identity",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "payment_gateway": {
         "table": "silver.giao_dich_thanh_toan",
@@ -6211,7 +6684,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "category"
+        "logical_type": "category",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "driver_id": {
         "table": "silver.shipper",
@@ -6232,7 +6712,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "identity"
+        "logical_type": "identity",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "shift_name": {
         "table": "silver.ca_lam_viec_nhan_vien",
@@ -6252,7 +6739,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "category"
+        "logical_type": "category",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "attendance_status": {
         "table": "silver.ca_lam_viec_nhan_vien",
@@ -6280,7 +6774,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "enumerated",
-        "logical_type": "category"
+        "logical_type": "category",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "stock_quantity_detail": {
         "table": "silver.ton_kho_san_pham",
@@ -6300,7 +6801,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "number"
+        "logical_type": "number",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "warning_threshold": {
         "table": "silver.ton_kho_san_pham",
@@ -6320,7 +6828,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "number"
+        "logical_type": "number",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "hour": {
         "table": "silver.don_hang",
@@ -6340,7 +6855,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "cyclic"
+        "logical_type": "cyclic",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "order_type": {
         "table": "silver.don_hang",
@@ -6349,7 +6871,8 @@
         "aliases": [
           "hình thức nhận hàng",
           "loại đơn",
-          "order type"
+          "order type",
+          "kênh bán"
         ],
         "enum": [
           "TAI_CHO",
@@ -6373,7 +6896,14 @@
           "GIAO_TAN_NOI": "Giao tận nơi",
           "MANG_DI": "Mang đi"
         },
-        "logical_type": "category"
+        "logical_type": "category",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "payment_transaction_status": {
         "table": "silver.giao_dich_thanh_toan",
@@ -6394,7 +6924,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "category"
+        "logical_type": "category",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "store_type": {
         "table": "silver.chi_nhanh",
@@ -6455,7 +6992,14 @@
           ]
         ],
         "cardinality_hint": 3,
-        "logical_type": "category"
+        "logical_type": "category",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "delivery_status": {
         "table": "silver.giao_hang",
@@ -6485,7 +7029,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "enumerated",
-        "logical_type": "category"
+        "logical_type": "category",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "weekday": {
         "table": "silver.don_hang",
@@ -6518,7 +7069,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "cyclic"
+        "logical_type": "cyclic",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "redeemed_promotion": {
         "table": "silver.khuyen_mai_su_dung",
@@ -6540,7 +7098,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "category"
+        "logical_type": "category",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "redeemed_promotion_code": {
         "table": "silver.khuyen_mai_su_dung",
@@ -6561,7 +7126,14 @@
         "filter_semantics": "Lọc giá trị chuẩn đã đối chiếu metadata; không đoán giá trị chưa xác minh.",
         "hierarchies": [],
         "cardinality_hint": "unknown_until_result",
-        "logical_type": "category"
+        "logical_type": "category",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "reporting_region": {
         "business_name": "Miền báo cáo",
@@ -6592,7 +7164,14 @@
         "business_meaning": "Phân vùng báo cáo theo warehouse_reporting_geography_v1; không phải phân vùng hành chính hiện hành.",
         "cardinality_hint": 4,
         "grouping_semantics": "Nhóm theo phân vùng báo cáo kho; NULL/unknown vào Chưa phân loại.",
-        "filter_semantics": "Phạm vi miền được hạ xuống tập city có quản trị; không dùng danh sách do model định nghĩa."
+        "filter_semantics": "Phạm vi miền được hạ xuống tập city có quản trị; không dùng danh sách do model định nghĩa.",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       }
     },
     "subjects": {
@@ -6643,7 +7222,14 @@
         ],
         "detail_source": "silver.don_hang",
         "detail_time_column": "silver.don_hang.ngay_tao",
-        "detail_grain": "order"
+        "detail_grain": "order",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "promotions": {
         "business_name": "Chương trình khuyến mãi và Voucher",
@@ -6696,7 +7282,14 @@
         ],
         "detail_source": "silver.khuyen_mai",
         "detail_time_column": null,
-        "detail_grain": "promotion"
+        "detail_grain": "promotion",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "order_items": {
         "business_name": "Chi tiết món trong đơn",
@@ -6735,7 +7328,14 @@
         ],
         "detail_source": "silver.chi_tiet_don_hang",
         "detail_time_column": "silver.don_hang.ngay_tao",
-        "detail_grain": "order_line"
+        "detail_grain": "order_line",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "products": {
         "business_name": "Sản phẩm và thực đơn",
@@ -6790,7 +7390,14 @@
         ],
         "detail_source": "silver.san_pham",
         "detail_time_column": null,
-        "detail_grain": "product"
+        "detail_grain": "product",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "stores": {
         "business_name": "Chi nhánh và điểm bán",
@@ -6839,7 +7446,14 @@
         ],
         "detail_source": "silver.chi_nhanh",
         "detail_time_column": null,
-        "detail_grain": "store"
+        "detail_grain": "store",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "customers": {
         "business_name": "Khách hàng và hội viên",
@@ -6884,7 +7498,14 @@
         ],
         "detail_source": "silver.nguoi_dung",
         "detail_time_column": "silver.nguoi_dung.ngay_tao",
-        "detail_grain": "customer"
+        "detail_grain": "customer",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "payments": {
         "business_name": "Thanh toán và cổng tiền tệ",
@@ -6922,7 +7543,14 @@
         ],
         "detail_source": "silver.giao_dich_thanh_toan",
         "detail_time_column": "silver.giao_dich_thanh_toan.ngay_tao",
-        "detail_grain": "payment"
+        "detail_grain": "payment",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "delivery": {
         "business_name": "Giao hàng và tài xế shipper",
@@ -6957,7 +7585,14 @@
         ],
         "detail_source": "silver.shipper",
         "detail_time_column": null,
-        "detail_grain": "driver_snapshot"
+        "detail_grain": "driver_snapshot",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "inventory": {
         "business_name": "Tồn kho nguyên vật liệu",
@@ -6998,7 +7633,14 @@
         ],
         "detail_source": "silver.ton_kho_san_pham",
         "detail_time_column": null,
-        "detail_grain": "store_product_snapshot"
+        "detail_grain": "store_product_snapshot",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "product_reviews": {
         "business_name": "Đánh giá chất lượng sản phẩm",
@@ -7034,7 +7676,14 @@
         ],
         "detail_source": "silver.danh_gia_san_pham",
         "detail_time_column": "silver.danh_gia_san_pham.ngay_tao",
-        "detail_grain": "review"
+        "detail_grain": "review",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "store_reviews": {
         "business_name": "Đánh giá dịch vụ và không gian chi nhánh",
@@ -7075,7 +7724,14 @@
         ],
         "detail_source": "silver.danh_gia_chi_nhanh",
         "detail_time_column": "silver.danh_gia_chi_nhanh.ngay_tao",
-        "detail_grain": "review"
+        "detail_grain": "review",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "staff_shifts": {
         "business_name": "Ca làm việc và chấm công nhân viên",
@@ -7115,7 +7771,14 @@
         ],
         "detail_source": "silver.ca_lam_viec_nhan_vien",
         "detail_time_column": "silver.ca_lam_viec_nhan_vien.ngay_lam_viec",
-        "detail_grain": "shift"
+        "detail_grain": "shift",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "cashier_reconciliation": {
         "business_name": "Đối soát ca thu ngân và chênh lệch tiền mặt",
@@ -7155,7 +7818,14 @@
         ],
         "detail_source": "silver.ca_doi_soat",
         "detail_time_column": "silver.ca_doi_soat.ngay_tao",
-        "detail_grain": "cash_shift"
+        "detail_grain": "cash_shift",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "customer_surveys": {
         "business_name": "Khảo sát ý kiến khách hàng",
@@ -7186,7 +7856,14 @@
         ],
         "detail_source": "silver.khao_sat_phan_hoi",
         "detail_time_column": "silver.khao_sat_phan_hoi.ngay_tao",
-        "detail_grain": "survey_response"
+        "detail_grain": "survey_response",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "wishlist_favorites": {
         "business_name": "Món uống yêu thích của khách hàng",
@@ -7225,7 +7902,14 @@
         ],
         "detail_source": "silver.yeu_thich_san_pham",
         "detail_time_column": "silver.yeu_thich_san_pham.ngay_tao",
-        "detail_grain": "favorite"
+        "detail_grain": "favorite",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "hourly": {
         "business_name": "Khung giờ và thời điểm",
@@ -7258,7 +7942,14 @@
         ],
         "detail_source": "silver.don_hang",
         "detail_time_column": "silver.don_hang.ngay_tao",
-        "detail_grain": "order"
+        "detail_grain": "order",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "delivery_assignments": {
         "business_name": "Chuyến giao hàng",
@@ -7291,7 +7982,14 @@
         ],
         "detail_source": "silver.giao_hang",
         "detail_time_column": "silver.giao_hang.thoi_gian_nhan_chuyen",
-        "detail_grain": "delivery"
+        "detail_grain": "delivery",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       },
       "promotion_redemptions": {
         "business_name": "Lượt sử dụng khuyến mãi",
@@ -7317,7 +8015,14 @@
         ],
         "detail_source": "silver.khuyen_mai_su_dung",
         "detail_time_column": "silver.khuyen_mai_su_dung.ngay_su_dung",
-        "detail_grain": "redemption"
+        "detail_grain": "redemption",
+        "owner": "avengers-data-team",
+        "lifecycle": {
+          "status": "active",
+          "introduced_in": "legacy",
+          "deprecated_in": null,
+          "replacement_id": null
+        }
       }
     },
     "timezone": "Asia/Ho_Chi_Minh",
@@ -12855,6 +13560,10 @@
       "định nghĩa",
       "nêu rõ"
     ],
+    "ranking_value_direction_aliases": {
+      "top": ["cao nhất", "nhiều nhất", "highest", "largest"],
+      "bottom": ["thấp nhất", "ít nhất", "lowest", "smallest"]
+    },
     "ranking_quantifier_aliases": {
       "top": [
         "top",
@@ -13732,7 +14441,17 @@
         "metric": "order_cancellation_rate",
         "operator": "gt",
         "threshold": 8,
-        "warning_margin": 2
+        "warning_margin": 2,
+        "anomaly": {
+          "enabled": false,
+          "version": "3.4.0",
+          "cadence": "day",
+          "minimum_history": 28,
+          "baseline_buckets": 28,
+          "threshold_z": 3.5,
+          "direction": "above",
+          "reason": "snapshot_or_ratio_exposure_contract_not_enabled"
+        }
       },
       {
         "id": "delivery_success_low",
@@ -13740,7 +14459,17 @@
         "metric": "delivery_success_rate",
         "operator": "lt",
         "threshold": 90,
-        "warning_margin": 3
+        "warning_margin": 3,
+        "anomaly": {
+          "enabled": false,
+          "version": "3.4.0",
+          "cadence": "day",
+          "minimum_history": 28,
+          "baseline_buckets": 28,
+          "threshold_z": 3.5,
+          "direction": "below",
+          "reason": "snapshot_or_ratio_exposure_contract_not_enabled"
+        }
       },
       {
         "id": "cash_discrepancy_high",
@@ -13748,7 +14477,16 @@
         "metric": "large_cash_discrepancy_shift_count",
         "operator": "gt",
         "threshold": 0,
-        "warning_margin": 0
+        "warning_margin": 0,
+        "anomaly": {
+          "enabled": true,
+          "version": "3.4.0",
+          "cadence": "day",
+          "minimum_history": 28,
+          "baseline_buckets": 28,
+          "threshold_z": 3.5,
+          "direction": "above"
+        }
       },
       {
         "id": "late_shift_high",
@@ -13756,7 +14494,17 @@
         "metric": "late_shift_rate",
         "operator": "gt",
         "threshold": 15,
-        "warning_margin": 3
+        "warning_margin": 3,
+        "anomaly": {
+          "enabled": false,
+          "version": "3.4.0",
+          "cadence": "day",
+          "minimum_history": 28,
+          "baseline_buckets": 28,
+          "threshold_z": 3.5,
+          "direction": "above",
+          "reason": "snapshot_or_ratio_exposure_contract_not_enabled"
+        }
       },
       {
         "id": "low_stock_exists",
@@ -13764,7 +14512,17 @@
         "metric": "low_stock_count",
         "operator": "gt",
         "threshold": 0,
-        "warning_margin": 0
+        "warning_margin": 0,
+        "anomaly": {
+          "enabled": false,
+          "version": "3.4.0",
+          "cadence": "day",
+          "minimum_history": 28,
+          "baseline_buckets": 28,
+          "threshold_z": 3.5,
+          "direction": "above",
+          "reason": "snapshot_or_ratio_exposure_contract_not_enabled"
+        }
       },
       {
         "id": "store_rating_low",
@@ -13774,7 +14532,18 @@
         "threshold": 3.5,
         "warning_margin": 0.3,
         "observation_metric": "store_review_count",
-        "minimum_observations": 5
+        "minimum_observations": 5,
+        "anomaly": {
+          "enabled": true,
+          "version": "3.4.0",
+          "cadence": "day",
+          "minimum_history": 28,
+          "baseline_buckets": 28,
+          "threshold_z": 3.5,
+          "direction": "below",
+          "exposure_metric": "store_review_count",
+          "minimum_exposure": 10
+        }
       }
     ],
     "workspace": {
@@ -13878,7 +14647,9 @@
             "giá vốn",
             "profit",
             "COGS",
-            "gross margin"
+            "gross margin",
+            "chi phí vận hành",
+            "chi phí"
           ],
           "reason": "definition_unavailable",
           "limitation": "Kho chỉ có giá bán, không có giá vốn hay chi phí nên không tính được lợi nhuận.",
@@ -14129,5 +14900,13 @@
     "topic_heading_qualifiers": [
       "hiệu quả"
     ]
+  },
+  "governance": {
+    "contract_version": "3.4.0",
+    "default_owner": "avengers-data-team",
+    "ownership_role": "analytics_dataset_steward",
+    "ownership_source": "airflow/dags/daily_pipeline_dag.py:default_args.owner",
+    "source_business_ownership": "not_certified",
+    "lifecycle_schema_version": 1
   }
 }

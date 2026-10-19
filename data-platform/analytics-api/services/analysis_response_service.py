@@ -64,6 +64,21 @@ def restore_report_presentation(report, artifacts, catalog):
     hydrated = restore_artifacts(report, catalog)
     evidence = analytical_features(hydrated, catalog, report.get('derived_feature_bindings'), as_of=(report.get('quality_context') or {}).get('reference_date'))
     report['evidence'] = evidence[:c.evidence_preview]
-    report.update(build_dashboard(hydrated, evidence, DashboardPlan.model_validate(report['dashboard_plan_input']), catalog=catalog))
+    dashboard=build_dashboard(hydrated, evidence, DashboardPlan.model_validate(report['dashboard_plan_input']), catalog=catalog)
+    # Saved summaries retain verified view bindings/insights, but omit only data.
+    # Rebuilding presentation must not drop those later pipeline annotations.
+    rebuilt={chart['id']:chart for chart in dashboard['charts']}
+    restored=[]
+    for chart in report.get('charts',[]):
+        current=rebuilt.get(chart['id'])
+        if (current is None or current.get('query_id')!=chart.get('query_id') or
+            current.get('chart_type')!=chart.get('chart_type') or current.get('metrics')!=chart.get('metrics')):
+            raise AnalysisError('quality_metadata','Stored chart no longer matches approved artifact rendering')
+        restored.append({**current,**chart,'data':current['data']})
+    dashboard['charts']=restored
+    report.update(dashboard)
+    from services.analysis_quality_service import chart_checks
+    if any(not check['valid'] for check in chart_checks(report['charts'],hydrated,evidence)):
+        raise AnalysisError('quality_metadata','Restored chart does not match full artifact')
     bound_response(report, c)
     return report

@@ -1,0 +1,1058 @@
+TAP version 13
+# Subtest: renders stores breakdown as bar with VNĐ
+ok 1 - renders stores breakdown as bar with VNĐ
+  ---
+  duration_ms: 1.664792
+  ...
+# Subtest: renders payments breakdown as donut with VNĐ
+ok 2 - renders payments breakdown as donut with VNĐ
+  ---
+  duration_ms: 0.099625
+  ...
+# Subtest: renders customers breakdown as donut with hội viên
+ok 3 - renders customers breakdown as donut with hội viên
+  ---
+  duration_ms: 0.075708
+  ...
+# Subtest: renders products breakdown as donut with VNĐ
+ok 4 - renders products breakdown as donut with VNĐ
+  ---
+  duration_ms: 0.094
+  ...
+# Subtest: renders hourly breakdown as donut with đơn
+ok 5 - renders hourly breakdown as donut with đơn
+  ---
+  duration_ms: 2.191959
+  ...
+# Subtest: renders delivery breakdown as donut with lượt giao
+ok 6 - renders delivery breakdown as donut with lượt giao
+  ---
+  duration_ms: 0.092208
+  ...
+# Subtest: large counts keep count units and never infer currency
+ok 7 - large counts keep count units and never infer currency
+  ---
+  duration_ms: 82.843791
+  ...
+# Subtest: zero is an observation; missing or invalid values are not manufactured
+ok 8 - zero is an observation; missing or invalid values are not manufactured
+  ---
+  duration_ms: 0.291916
+  ...
+# Subtest: clarification renders business labels and preserves understood scope
+ok 9 - clarification renders business labels and preserves understood scope
+  ---
+  duration_ms: 4.282375
+  ...
+# Subtest: provider error and legacy raw ID options do not become user ambiguity
+ok 10 - provider error and legacy raw ID options do not become user ambiguity
+  ---
+  duration_ms: 0.504041
+  ...
+# Subtest: server context capacity is not presented as missing user input or an oversized question
+ok 11 - server context capacity is not presented as missing user input or an oversized question
+  ---
+  duration_ms: 0.329833
+  ...
+# Subtest: semantic system error does not duplicate message or request missing user input
+ok 12 - semantic system error does not duplicate message or request missing user input
+  ---
+  duration_ms: 0.409375
+  ...
+# Subtest: failure displays root cause, recovered scope and concrete system action
+ok 13 - failure displays root cause, recovered scope and concrete system action
+  ---
+  duration_ms: 0.288833
+  ...
+# Subtest: nonanalytical text explains missing goal with example and edit action
+ok 14 - nonanalytical text explains missing goal with example and edit action
+  ---
+  duration_ms: 0.207083
+  ...
+# Subtest: unsupported capability never offers retry and is informational
+ok 15 - unsupported capability never offers retry and is informational
+  ---
+  duration_ms: 3.427667
+  ...
+# Subtest: no-progress semantic failure is not presented as provider connectivity
+ok 16 - no-progress semantic failure is not presented as provider connectivity
+  ---
+  duration_ms: 0.154333
+  ...
+# Subtest: transient provider timeout offers retry from the typed contract
+ok 17 - transient provider timeout offers retry from the typed contract
+  ---
+  duration_ms: 0.104041
+  ...
+# Subtest: insufficient data is informational without retry
+ok 18 - insufficient data is informational without retry
+  ---
+  duration_ms: 0.087333
+  ...
+# Subtest: execution failure exposes a safe technical reference only
+ok 19 - execution failure exposes a safe technical reference only
+  ---
+  duration_ms: 1.840917
+  ...
+# Subtest: suggestions come only from governed capabilities
+ok 20 - suggestions come only from governed capabilities
+  ---
+  duration_ms: 0.44825
+  ...
+# Subtest: V3.1 question form: one required question, no context/expectation fields
+ok 21 - V3.1 question form: one required question, no context/expectation fields
+  ---
+  duration_ms: 23.643417
+  ...
+# Subtest: character count uses the server limit and flags overflow
+ok 22 - character count uses the server limit and flags overflow
+  ---
+  duration_ms: 1.15625
+  ...
+# Subtest: V3.1 payload carries scope, depth and optional mission hint only when set
+ok 23 - V3.1 payload carries scope, depth and optional mission hint only when set
+  ---
+  duration_ms: 0.547792
+  ...
+# Subtest: question-only natural payload omits blank optional fields and engine configuration
+ok 24 - question-only natural payload omits blank optional fields and engine configuration
+  ---
+  duration_ms: 0.189666
+  ...
+# Subtest: compatibility callers may still send context/expectation; module selection survives approval
+ok 25 - compatibility callers may still send context/expectation; module selection survives approval
+  ---
+  duration_ms: 0.113333
+  ...
+# Subtest: question-only submission has auto constraints and deep default
+ok 26 - question-only submission has auto constraints and deep default
+  ---
+  duration_ms: 0.084375
+  ...
+# Subtest: structured domain/time/scope/depth are serialized unchanged
+ok 27 - structured domain/time/scope/depth are serialized unchanged
+  ---
+  duration_ms: 0.2035
+  ...
+# Subtest: invalid custom time, empty selected population, or empty question cannot submit
+ok 28 - invalid custom time, empty selected population, or empty question cannot submit
+  ---
+  duration_ms: 0.172167
+  ...
+# Subtest: domain dashboard story preserves requested priority and business labels
+ok 29 - domain dashboard story preserves requested priority and business labels
+  ---
+  duration_ms: 0.297417
+  ...
+# Subtest: proposal groups domains and explains catalog lens without raw semantic IDs
+ok 30 - proposal groups domains and explains catalog lens without raw semantic IDs
+  ---
+  duration_ms: 1.146208
+  ...
+# Subtest: comprehensive copy and limited coverage do not promise a quota
+ok 31 - comprehensive copy and limited coverage do not promise a quota
+  ---
+  duration_ms: 0.324458
+  ...
+# Subtest: module save requires approved success, active chip and provenance use business labels
+ok 32 - module save requires approved success, active chip and provenance use business labels
+  ---
+  duration_ms: 0.93375
+  ...
+# Subtest: actionable issue renders known meaning, missing choice and explicit snapshot action
+ok 33 - actionable issue renders known meaning, missing choice and explicit snapshot action
+  ---
+  duration_ms: 0.530208
+  ...
+# Subtest: one submit and polling complete without another AI submission
+ok 34 - one submit and polling complete without another AI submission
+  ---
+  duration_ms: 1.765083
+  ...
+# Subtest: refresh resumes the existing job using GET only
+ok 35 - refresh resumes the existing job using GET only
+  ---
+  duration_ms: 0.214375
+  ...
+# Subtest: lost submit checkpoints its original key before transport
+ok 36 - lost submit checkpoints its original key before transport
+  ---
+  duration_ms: 0.32825
+  ...
+# Subtest: poll retries never submit another job
+ok 37 - poll retries never submit another job
+  ---
+  duration_ms: 2.897667
+  ...
+# Subtest: aborted old response cannot checkpoint a job over a new question
+ok 38 - aborted old response cannot checkpoint a job over a new question
+  ---
+  duration_ms: 0.940458
+  ...
+# Subtest: revoked access stops polling immediately and preserves the security status
+ok 39 - revoked access stops polling immediately and preserves the security status
+  ---
+  duration_ms: 0.247917
+  ...
+# Subtest: legacy weighted score is hidden, with evidence and unmeasured accuracy visible
+ok 40 - legacy weighted score is hidden, with evidence and unmeasured accuracy visible
+  ---
+  duration_ms: 5.47075
+  ...
+# Subtest: legacy and failed reports have no numeric score or empty progress bar
+ok 41 - legacy and failed reports have no numeric score or empty progress bar
+  ---
+  duration_ms: 0.493958
+  ...
+# Subtest: partial reports expose missing work and next actions without hiding limits
+ok 42 - partial reports expose missing work and next actions without hiding limits
+  ---
+  duration_ms: 0.599833
+  ...
+# Subtest: observed check counts stay separate from unmeasured accuracy and probability
+ok 43 - observed check counts stay separate from unmeasured accuracy and probability
+  ---
+  duration_ms: 0.594709
+  ...
+# Subtest: versioned verification score shows formula and unearned independent points
+ok 44 - versioned verification score shows formula and unearned independent points
+  ---
+  duration_ms: 34.752958
+  ...
+# Subtest: fractional verification failures remain visible and errors never show a fake zero
+ok 45 - fractional verification failures remain visible and errors never show a fake zero
+  ---
+  duration_ms: 8.579
+  ...
+# Subtest: only independently referenced accuracy is shown with sample count and source
+ok 46 - only independently referenced accuracy is shown with sample count and source
+  ---
+  duration_ms: 19.22425
+  ...
+# Subtest: backend text is escaped and evidence links are encoded
+ok 47 - backend text is escaped and evidence links are encoded
+  ---
+  duration_ms: 0.609083
+  ...
+# Subtest: V3.2: business report stays clean; verification and tables live in their own tabs
+ok 48 - V3.2: business report stays clean; verification and tables live in their own tabs
+  ---
+  duration_ms: 5.055625
+  ...
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:237:26)
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:237:26)
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:237:26)
+# Warning: Each child in a list should have a unique "key" prop.
+# Check the top-level render call using <div>. See https://reactjs.org/link/warning-keys for more information.
+#     at p
+#     at AnalystEvidence (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-3BkVHJ/component.cjs:30516:26)
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-3BkVHJ/component.cjs:28934:26)
+#     at AnalystChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-3BkVHJ/component.cjs:28923:23)
+#     at div
+#     at article
+#     at ChartCard (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-3BkVHJ/component.cjs:29977:20)
+#     at div
+#     at section
+#     at div
+#     at AnalystViews (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-3BkVHJ/component.cjs:30048:23)
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:237:26)
+#     at AnalystChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:226:23)
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:237:26)
+#     at AnalystChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:226:23)
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:237:26)
+#     at AnalystChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:226:23)
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:237:26)
+#     at AnalystChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:226:23)
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:237:26)
+#     at AnalystChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:226:23)
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:237:26)
+#     at AnalystChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:226:23)
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:237:26)
+#     at AnalystChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:226:23)
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:237:26)
+#     at AnalystChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:226:23)
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:237:26)
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:237:26)
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:237:26)
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:237:26)
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:237:26)
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:237:26)
+#     at AnalystChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:226:23)
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:237:26)
+#     at AnalystChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-TH8PZ9/component.cjs:226:23)
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-3BkVHJ/component.cjs:28934:26)
+#     at AnalystChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-3BkVHJ/component.cjs:28923:23)
+#     at div
+#     at article
+#     at ChartCard (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-3BkVHJ/component.cjs:29977:20)
+#     at div
+#     at AnalystViews (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-3BkVHJ/component.cjs:30048:23)
+#     at div
+#     at div
+#     at div
+#     at AnalystDashboard (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-3BkVHJ/component.cjs:30053:27)
+# Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
+#     at title
+#     at text
+#     at svg
+#     at div
+#     at SeriesLineChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-3BkVHJ/component.cjs:28934:26)
+#     at AnalystChart (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-3BkVHJ/component.cjs:28923:23)
+#     at div
+#     at article
+#     at ChartCard (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-3BkVHJ/component.cjs:29977:20)
+#     at div
+#     at AnalystViews (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-3BkVHJ/component.cjs:30048:23)
+#     at div
+#     at div
+#     at div
+#     at AnalystDashboard (/private/var/folders/pb/hr2p614n46q7df40ccfrcgb00000gn/T/analyst-ui-3BkVHJ/component.cjs:30053:27)
+# Subtest: ranked metric companions render two plot cards with full category names
+ok 49 - ranked metric companions render two plot cards with full category names
+  ---
+  duration_ms: 45.310083
+  ...
+# Subtest: per-group bars show stored ranks and empty chart sections explain missing presentation
+ok 50 - per-group bars show stored ranks and empty chart sections explain missing presentation
+  ---
+  duration_ms: 1.456417
+  ...
+# Subtest: large population chart discloses display subset and complete analytical coverage
+ok 51 - large population chart discloses display subset and complete analytical coverage
+  ---
+  duration_ms: 1.527542
+  ...
+# Subtest: proposal types describe ranking and detail without promising a trend
+ok 52 - proposal types describe ranking and detail without promising a trend
+  ---
+  duration_ms: 0.116583
+  ...
+# Subtest: single-operation trend displays the chosen weekly observation grain
+ok 53 - single-operation trend displays the chosen weekly observation grain
+  ---
+  duration_ms: 0.542667
+  ...
+# Subtest: grouped_bar displays actual series labels, values and semantic unit
+ok 54 - grouped_bar displays actual series labels, values and semantic unit
+  ---
+  duration_ms: 0.974375
+  ...
+# Subtest: stacked_bar displays actual series labels, values and semantic unit
+ok 55 - stacked_bar displays actual series labels, values and semantic unit
+  ---
+  duration_ms: 0.515833
+  ...
+# Subtest: stacked_100 displays actual series labels, values and semantic unit
+ok 56 - stacked_100 displays actual series labels, values and semantic unit
+  ---
+  duration_ms: 1.771875
+  ...
+# Subtest: scatter labels separate units and preserves negative observations
+ok 57 - scatter labels separate units and preserves negative observations
+  ---
+  duration_ms: 1.299875
+  ...
+# Subtest: signed trend and missing observations remain separate segments
+ok 58 - signed trend and missing observations remain separate segments
+  ---
+  duration_ms: 3.1465
+  ...
+# Subtest: prototype-like heatmap categories remain safe and missing cells show dash
+ok 59 - prototype-like heatmap categories remain safe and missing cells show dash
+  ---
+  duration_ms: 0.848417
+  ...
+# Subtest: multi-operation proposal shows business labels and each population period
+ok 60 - multi-operation proposal shows business labels and each population period
+  ---
+  duration_ms: 0.585
+  ...
+# Subtest: dashboard copy follows actual plan and records omitted views
+ok 61 - dashboard copy follows actual plan and records omitted views
+  ---
+  duration_ms: 0.186375
+  ...
+# Subtest: empty optional narrative renders no section or filler
+ok 62 - empty optional narrative renders no section or filler
+  ---
+  duration_ms: 0.3405
+  ...
+# Subtest: only a successful report may show the ready banner
+ok 63 - only a successful report may show the ready banner
+  ---
+  duration_ms: 0.442084
+  ...
+# Subtest: AnalyticsView wires actual dashboard components and no static scope claim
+ok 64 - AnalyticsView wires actual dashboard components and no static scope claim
+  ---
+  duration_ms: 1.793458
+  ...
+# Subtest: natural fields replace depth configuration and approval reuses submitted input
+ok 65 - natural fields replace depth configuration and approval reuses submitted input
+  ---
+  duration_ms: 0.658542
+  ...
+# Subtest: deep planning and related population evidence explain their actual scope
+ok 66 - deep planning and related population evidence explain their actual scope
+  ---
+  duration_ms: 3.111625
+  ...
+# Subtest: seven views render requested first, with responsive widths and distinct units
+ok 67 - seven views render requested first, with responsive widths and distinct units
+  ---
+  duration_ms: 6.340083
+  ...
+# Subtest: result table paginates full rows and renders business labels safely
+ok 68 - result table paginates full rows and renders business labels safely
+  ---
+  duration_ms: 2.424708
+  ...
+# Subtest: failure UI attributes invalid_analysis_contract to its actual layer
+ok 69 - failure UI attributes invalid_analysis_contract to its actual layer
+  ---
+  duration_ms: 0.428458
+  ...
+# Subtest: failure UI attributes duplicate_invalid_tool_call to its actual layer
+ok 70 - failure UI attributes duplicate_invalid_tool_call to its actual layer
+  ---
+  duration_ms: 0.110958
+  ...
+# Subtest: failure UI attributes agent_budget to its actual layer
+ok 71 - failure UI attributes agent_budget to its actual layer
+  ---
+  duration_ms: 0.098542
+  ...
+# Subtest: failure UI attributes provider_auth to its actual layer
+ok 72 - failure UI attributes provider_auth to its actual layer
+  ---
+  duration_ms: 0.088
+  ...
+# Subtest: failure UI attributes execution to its actual layer
+ok 73 - failure UI attributes execution to its actual layer
+  ---
+  duration_ms: 0.079458
+  ...
+# Subtest: failure UI attributes result_contract to its actual layer
+ok 74 - failure UI attributes result_contract to its actual layer
+  ---
+  duration_ms: 0.176666
+  ...
+# Subtest: area adds real observed segments while gaps remain separate
+ok 75 - area adds real observed segments while gaps remain separate
+  ---
+  duration_ms: 2.156416
+  ...
+# Subtest: analysis evidence exposes scope, sources and calculation references safely
+ok 76 - analysis evidence exposes scope, sources and calculation references safely
+  ---
+  duration_ms: 0.870625
+  ...
+# Subtest: large bar axes use readable scales while exact values stay in tooltips
+ok 77 - large bar axes use readable scales while exact values stay in tooltips
+  ---
+  duration_ms: 0.606167
+  ...
+# Subtest: one-shot proposal distinguishes mandatory, optional and omitted work
+ok 78 - one-shot proposal distinguishes mandatory, optional and omitted work
+  ---
+  duration_ms: 0.136083
+  ...
+# Subtest: manual retry renders only on errors and never invokes itself
+ok 79 - manual retry renders only on errors and never invokes itself
+  ---
+  duration_ms: 0.345584
+  ...
+# Subtest: chart presentation controls keep Top N caution and are disabled during refinement
+ok 80 - chart presentation controls keep Top N caution and are disabled during refinement
+  ---
+  duration_ms: 0.660459
+  ...
+# Subtest: refinement wire sends revision and explicit visual action without full history
+ok 81 - refinement wire sends revision and explicit visual action without full history
+  ---
+  duration_ms: 0.816208
+  ...
+# Subtest: one-shot guard failures have safe business headings
+ok 82 - one-shot guard failures have safe business headings
+  ---
+  duration_ms: 0.235166
+  ...
+# Subtest: large evidence collections are collapsed and bounded to one page
+ok 83 - large evidence collections are collapsed and bounded to one page
+  ---
+  duration_ms: 1.019125
+  ...
+# Subtest: dashboard opens with up to six primary views and keeps all result tables in disclosure
+ok 84 - dashboard opens with up to six primary views and keeps all result tables in disclosure
+  ---
+  duration_ms: 141.606375
+  ...
+# Subtest: long category labels get a bounded horizontal view and zero stays zero
+ok 85 - long category labels get a bounded horizontal view and zero stays zero
+  ---
+  duration_ms: 1.699833
+  ...
+# Subtest: compact dashboard uses one responsive grid across different story sections
+ok 86 - compact dashboard uses one responsive grid across different story sections
+  ---
+  duration_ms: 0.949
+  ...
+# Subtest: overview displays equal trend and composition cards and a visible result table
+ok 87 - overview displays equal trend and composition cards and a visible result table
+  ---
+  duration_ms: 126.960792
+  ...
+# Subtest: time axes use five short labels, with full dates retained for tooltips
+ok 88 - time axes use five short labels, with full dates retained for tooltips
+  ---
+  duration_ms: 3.256208
+  ...
+# Subtest: top ten shows all ten observations with multiple bar colors
+ok 89 - top ten shows all ten observations with multiple bar colors
+  ---
+  duration_ms: 2.338291
+  ...
+# Subtest: clipped weekly buckets are marked and disclose the actual selected dates
+ok 90 - clipped weekly buckets are marked and disclose the actual selected dates
+  ---
+  duration_ms: 1.731625
+  ...
+# Subtest: 1 primary chart cards share two equal desktop columns and one mobile column
+ok 91 - 1 primary chart cards share two equal desktop columns and one mobile column
+  ---
+  duration_ms: 0.482542
+  ...
+# Subtest: 3 primary chart cards share two equal desktop columns and one mobile column
+ok 92 - 3 primary chart cards share two equal desktop columns and one mobile column
+  ---
+  duration_ms: 0.678625
+  ...
+# Subtest: 4 primary chart cards share two equal desktop columns and one mobile column
+ok 93 - 4 primary chart cards share two equal desktop columns and one mobile column
+  ---
+  duration_ms: 0.919625
+  ...
+# Subtest: 5 primary chart cards share two equal desktop columns and one mobile column
+ok 94 - 5 primary chart cards share two equal desktop columns and one mobile column
+  ---
+  duration_ms: 2.258792
+  ...
+# Subtest: 6 primary chart cards share two equal desktop columns and one mobile column
+ok 95 - 6 primary chart cards share two equal desktop columns and one mobile column
+  ---
+  duration_ms: 0.911833
+  ...
+# Subtest: provider status is shown separately from local readiness and generic failure
+ok 96 - provider status is shown separately from local readiness and generic failure
+  ---
+  duration_ms: 0.404584
+  ...
+# Subtest: broad kiosk dashboard reports required evidence gaps without a chart floor
+ok 97 - broad kiosk dashboard reports required evidence gaps without a chart floor
+  ---
+  duration_ms: 16.688084
+  ...
+# Subtest: expanded report shows whole-population KPIs before ranking findings
+ok 98 - expanded report shows whole-population KPIs before ranking findings
+  ---
+  duration_ms: 0.7395
+  ...
+# Subtest: legacy reports show unmeasured coverage without inventing a four-chart floor
+ok 99 - legacy reports show unmeasured coverage without inventing a four-chart floor
+  ---
+  duration_ms: 2.236375
+  ...
+# Subtest: multi-axis ranking preserves both metric views, tuple labels and partition meaning
+ok 100 - multi-axis ranking preserves both metric views, tuple labels and partition meaning
+  ---
+  duration_ms: 1.89375
+  ...
+# Subtest: overview KPIs use whole-scope values, deduplicate equivalent revenue and retain population differences
+ok 101 - overview KPIs use whole-scope values, deduplicate equivalent revenue and retain population differences
+  ---
+  duration_ms: 0.585792
+  ...
+# Subtest: comparison retains columns even with concentration evidence
+ok 102 - comparison retains columns even with concentration evidence
+  ---
+  duration_ms: 0.222625
+  ...
+# Subtest: main dashboard keeps every requested view ahead of optional views
+ok 103 - main dashboard keeps every requested view ahead of optional views
+  ---
+  duration_ms: 0.173292
+  ...
+# Subtest: refined report title follows current Top 2 meaning instead of original Top 5 prompt
+ok 104 - refined report title follows current Top 2 meaning instead of original Top 5 prompt
+  ---
+  duration_ms: 0.135916
+  ...
+# Subtest: identical displayed numbers alone never merge scopes or metric meanings
+ok 105 - identical displayed numbers alone never merge scopes or metric meanings
+  ---
+  duration_ms: 0.115875
+  ...
+# Subtest: long composition preserves the exact full total and explicitly groups the remainder
+ok 106 - long composition preserves the exact full total and explicitly groups the remainder
+  ---
+  duration_ms: 0.401584
+  ...
+# Subtest: legacy weekly findings and cards exclude both clipped boundary weeks
+ok 107 - legacy weekly findings and cards exclude both clipped boundary weeks
+  ---
+  duration_ms: 20.533334
+  ...
+# Subtest: older reports deduplicate only validated expressions with matching complete query plans
+ok 108 - older reports deduplicate only validated expressions with matching complete query plans
+  ---
+  duration_ms: 0.590958
+  ...
+# Subtest: highlights use certified maxima without summing distinct counts or averages
+ok 109 - highlights use certified maxima without summing distinct counts or averages
+  ---
+  duration_ms: 0.254
+  ...
+# Subtest: presentation respects actual chart types and applies a stable metric palette
+ok 110 - presentation respects actual chart types and applies a stable metric palette
+  ---
+  duration_ms: 0.179125
+  ...
+# Subtest: chart explanations distinguish ranking, whole composition, preview and partial weeks
+ok 111 - chart explanations distinguish ranking, whole composition, preview and partial weeks
+  ---
+  duration_ms: 19.528
+  ...
+# Subtest: quantity companion preserves revenue cohort and does not claim quantity ranking
+ok 112 - quantity companion preserves revenue cohort and does not claim quantity ranking
+  ---
+  duration_ms: 0.158333
+  ...
+# Subtest: contribution view keeps full-scope percentage distinct from raw revenue
+ok 113 - contribution view keeps full-scope percentage distinct from raw revenue
+  ---
+  duration_ms: 0.276416
+  ...
+# Subtest: business overview keeps a finding for every requested scope including the fifth trend
+ok 114 - business overview keeps a finding for every requested scope including the fifth trend
+  ---
+  duration_ms: 0.307292
+  ...
+# Subtest: a fifth business scope cannot push revenue movement out of all four KPI cards
+ok 115 - a fifth business scope cannot push revenue movement out of all four KPI cards
+  ---
+  duration_ms: 0.2395
+  ...
+# Subtest: a complementary scatter does not move its primary business KPI behind other scopes
+ok 116 - a complementary scatter does not move its primary business KPI behind other scopes
+  ---
+  duration_ms: 0.427292
+  ...
+# Subtest: authenticated identity is explicit and malformed boundaries fail closed
+ok 117 - authenticated identity is explicit and malformed boundaries fail closed
+  ---
+  duration_ms: 1.058708
+  ...
+# Subtest: development compatibility is explicit and cannot be inferred from missing authentication
+ok 118 - development compatibility is explicit and cannot be inferred from missing authentication
+  ---
+  duration_ms: 0.105709
+  ...
+# Subtest: pending job storage separates users and policy versions without storing bearer tokens
+ok 119 - pending job storage separates users and policy versions without storing bearer tokens
+  ---
+  duration_ms: 0.103167
+  ...
+# Subtest: only protected API 401 expires the UI session; forbidden permissions stay a distinct result
+ok 120 - only protected API 401 expires the UI session; forbidden permissions stay a distinct result
+  ---
+  duration_ms: 0.095583
+  ...
+# Subtest: expired-session drafts remain memory-only and require the same account and policy
+ok 121 - expired-session drafts remain memory-only and require the same account and policy
+  ---
+  duration_ms: 2.6
+  ...
+# Subtest: forecast provenance is labelled, numbers pass through unchanged
+ok 122 - forecast provenance is labelled, numbers pass through unchanged
+  ---
+  duration_ms: 16.977875
+  ...
+# Subtest: method labels cover every server method family
+ok 123 - method labels cover every server method family
+  ---
+  duration_ms: 0.124459
+  ...
+# Subtest: unavailable forecast explains missing history instead of showing numbers
+ok 124 - unavailable forecast explains missing history instead of showing numbers
+  ---
+  duration_ms: 0.181917
+  ...
+# Subtest: successful internal repair does not display retry or edit controls
+ok 125 - successful internal repair does not display retry or edit controls
+  ---
+  duration_ms: 1.251834
+  ...
+# Subtest: needs input presents clarification and no system retry
+ok 126 - needs input presents clarification and no system retry
+  ---
+  duration_ms: 0.105583
+  ...
+# Subtest: unsupported capability keeps limitation and meaningful edit
+ok 127 - unsupported capability keeps limitation and meaningful edit
+  ---
+  duration_ms: 0.085125
+  ...
+# Subtest: system interpretation failure does not blame user wording
+ok 128 - system interpretation failure does not blame user wording
+  ---
+  duration_ms: 0.136958
+  ...
+# Subtest: partial scope is a proposal and does not offer retry
+ok 129 - partial scope is a proposal and does not offer retry
+  ---
+  duration_ms: 2.57425
+  ...
+# Subtest: A · gibberish is shown as blocked/unrecognized, never "valid"
+ok 130 - A · gibberish is shown as blocked/unrecognized, never "valid"
+  ---
+  duration_ms: 1.2015
+  ...
+# Subtest: E · canonical metric chip has no "+N chỉ số cùng tên"
+ok 131 - E · canonical metric chip has no "+N chỉ số cùng tên"
+  ---
+  duration_ms: 0.16575
+  ...
+# Subtest: B · mission switch never carries the old question; each mission keeps its own draft
+ok 132 - B · mission switch never carries the old question; each mission keeps its own draft
+  ---
+  duration_ms: 2.806292
+  ...
+# Subtest: §25 · mission mismatch quick fix switches mission and keeps the question
+ok 133 - §25 · mission mismatch quick fix switches mission and keeps the question
+  ---
+  duration_ms: 1.076709
+  ...
+# Subtest: C · each mission exposes only its governed controls
+ok 134 - C · each mission exposes only its governed controls
+  ---
+  duration_ms: 1.132791
+  ...
+# Subtest: F · guided forecast builds canonical IDs, not text for AI to rediscover
+ok 135 - F · guided forecast builds canonical IDs, not text for AI to rediscover
+  ---
+  duration_ms: 1.036917
+  ...
+# Subtest: §10 · editing the generated question invalidates the guided contract
+ok 136 - §10 · editing the generated question invalidates the guided contract
+  ---
+  duration_ms: 0.285917
+  ...
+# Subtest: compare cannot submit until A and B are valid and different
+ok 137 - compare cannot submit until A and B are valid and different
+  ---
+  duration_ms: 0.398708
+  ...
+# Subtest: scope is recognized from the question; depth options explain their budget
+ok 138 - scope is recognized from the question; depth options explain their budget
+  ---
+  duration_ms: 0.421208
+  ...
+# Subtest: V3.3: semantic edits invalidate plan/report and reset clears all active state
+ok 139 - V3.3: semantic edits invalidate plan/report and reset clears all active state
+  ---
+  duration_ms: 0.380833
+  ...
+# Subtest: V3.3: a clarification choice edits the question deterministically (no auto-submit concatenation)
+ok 140 - V3.3: a clarification choice edits the question deterministically (no auto-submit concatenation)
+  ---
+  duration_ms: 0.281542
+  ...
+# Subtest: artifact group action retains exact typed scope and original period, with no client totals
+ok 141 - artifact group action retains exact typed scope and original period, with no client totals
+  ---
+  duration_ms: 3.934667
+  ...
+# Subtest: HTTP403 is a visible permission error and never an empty or zero-valued successful mart
+ok 142 - HTTP403 is a visible permission error and never an empty or zero-valued successful mart
+  ---
+  duration_ms: 59.834208
+  ...
+# Subtest: network failure ends loading with an error; successful zero remains a measured zero
+ok 143 - network failure ends loading with an error; successful zero remains a measured zero
+  ---
+  duration_ms: 19.720417
+  ...
+# Subtest: older date response cannot overwrite the selected period or its error status
+ok 144 - older date response cannot overwrite the selected period or its error status
+  ---
+  duration_ms: 19.492583
+  ...
+# Subtest: Overview unavailable state hides invented customer/growth/transactions and genuine empty state invents no rows
+ok 145 - Overview unavailable state hides invented customer/growth/transactions and genuine empty state invents no rows
+  ---
+  duration_ms: 47.959708
+  ...
+# Subtest: save keeps conclusion, caveats, forecasts, verification and view coverage; reopen restores them verbatim
+ok 146 - save keeps conclusion, caveats, forecasts, verification and view coverage; reopen restores them verbatim
+  ---
+  duration_ms: 1.371
+  ...
+# Subtest: a legacy saved report without V3.3 fields reopens without inventing a conclusion or verification
+ok 147 - a legacy saved report without V3.3 fields reopens without inventing a conclusion or verification
+  ---
+  duration_ms: 0.131875
+  ...
+# Subtest: H · every chart card renders "Nhận định từ biểu đồ" with why/facts/caveats/next checks
+ok 148 - H · every chart card renders "Nhận định từ biểu đồ" with why/facts/caveats/next checks
+  ---
+  duration_ms: 215.287708
+  ...
+# Subtest: J · report tab shows the short answer first; verification is a separate tab
+ok 149 - J · report tab shows the short answer first; verification is a separate tab
+  ---
+  duration_ms: 108.167458
+  ...
+# Subtest: I · no blended "AI accuracy"; internal score is labelled as completeness
+ok 150 - I · no blended "AI accuracy"; internal score is labelled as completeness
+  ---
+  duration_ms: 29.049292
+  ...
+# Subtest: on-demand oracle merges into separate metrics and shows mismatches honestly
+ok 151 - on-demand oracle merges into separate metrics and shows mismatches honestly
+  ---
+  duration_ms: 1.079625
+  ...
+# Subtest: risk visuals use the governed threshold with traffic-light tones, focusable rows
+ok 152 - risk visuals use the governed threshold with traffic-light tones, focusable rows
+  ---
+  duration_ms: 42.207583
+  ...
+# Subtest: Risk Watch summary: status, highest-risk entities and deterministic drill-downs
+ok 153 - Risk Watch summary: status, highest-risk entities and deterministic drill-downs
+  ---
+  duration_ms: 13.398625
+  ...
+# Subtest: failure card tells the user at which stage it failed (§117), without internals
+ok 154 - failure card tells the user at which stage it failed (§117), without internals
+  ---
+  duration_ms: 7.711625
+  ...
+# Subtest: V3.3 trust dimensions: independent accuracy follows the oracle once run, never defaults to passed
+ok 155 - V3.3 trust dimensions: independent accuracy follows the oracle once run, never defaults to passed
+  ---
+  duration_ms: 0.394292
+  ...
+# Subtest: V3.3 forecast backtest rows show real error metrics and a baseline, never a false "not enough points"
+ok 156 - V3.3 forecast backtest rows show real error metrics and a baseline, never a false "not enough points"
+  ---
+  duration_ms: 0.567208
+  ...
+# Subtest: typed redirect to free text preserves meaning and accepts a null mission
+ok 157 - typed redirect to free text preserves meaning and accepts a null mission
+  ---
+  duration_ms: 2.147625
+  ...
+# Subtest: unmeasured risk signals never imply green
+ok 158 - unmeasured risk signals never imply green
+  ---
+  duration_ms: 0.313416
+  ...
+# Subtest: low-is-bad followup preserves direction, applied scope and time
+ok 159 - low-is-bad followup preserves direction, applied scope and time
+  ---
+  duration_ms: 0.186667
+  ...
+# Subtest: oracle mismatch downgrades verified report
+ok 160 - oracle mismatch downgrades verified report
+  ---
+  duration_ms: 14.903792
+  ...
+# Subtest: coverage bar text comes from the cached server snapshot
+ok 161 - coverage bar text comes from the cached server snapshot
+  ---
+  duration_ms: 74.120791
+  ...
+# Subtest: seven product modes: six visible server missions + free form; hidden ones map to a visible mode
+ok 162 - seven product modes: six visible server missions + free form; hidden ones map to a visible mode
+  ---
+  duration_ms: 13.107375
+  ...
+# Subtest: template builder offers only compatible metrics and fills a Vietnamese question
+ok 163 - template builder offers only compatible metrics and fills a Vietnamese question
+  ---
+  duration_ms: 16.284667
+  ...
+# Subtest: suggestion chips are real example questions, filtered by mission
+ok 164 - suggestion chips are real example questions, filtered by mission
+  ---
+  duration_ms: 3.057708
+  ...
+# Subtest: "Hỏi được gì?" lists 16 groups with badges, dimensions, search and unsupported items
+ok 165 - "Hỏi được gì?" lists 16 groups with badges, dimensions, search and unsupported items
+  ---
+  duration_ms: 15.197417
+  ...
+# Subtest: preflight view: understood chips, blocking, warnings and quick fixes
+ok 166 - preflight view: understood chips, blocking, warnings and quick fixes
+  ---
+  duration_ms: 14.752458
+  ...
+# Subtest: preflight client debounces, cancels stale requests and never applies old results
+ok 167 - preflight client debounces, cancels stale requests and never applies old results
+  ---
+  duration_ms: 8.507625
+  ...
+# Subtest: scope panel recognizes scope from the question; depth explains what it adds; no context/expectation
+ok 168 - scope panel recognizes scope from the question; depth explains what it adds; no context/expectation
+  ---
+  duration_ms: 38.755833
+  ...
+# Subtest: comparison difference, mission tab order and KPI strip are deterministic
+ok 169 - comparison difference, mission tab order and KPI strip are deterministic
+  ---
+  duration_ms: 0.984292
+  ...
+# Subtest: risk table renders server traffic lights; no composite score
+ok 170 - risk table renders server traffic lights; no composite score
+  ---
+  duration_ms: 13.127833
+  ...
+# Subtest: forecast panel draws history, forecast and 80% band from server data only
+ok 171 - forecast panel draws history, forecast and 80% band from server data only
+  ---
+  duration_ms: 28.375
+  ...
+# Subtest: P5: period-scoped KPI labels, order units, incomplete day and ask-AI bridge
+ok 172 - P5: period-scoped KPI labels, order units, incomplete day and ask-AI bridge
+  ---
+  duration_ms: 1.92975
+  ...
+# Subtest: workspace code has no hard-coded capability catalog
+ok 173 - workspace code has no hard-coded capability catalog
+  ---
+  duration_ms: 0.525833
+  ...
+# Subtest: open-ended trend marks the bucket containing the reference date as incomplete
+ok 174 - open-ended trend marks the bucket containing the reference date as incomplete
+  ---
+  duration_ms: 0.411084
+  ...
+# Subtest: result table shows governed value labels (ISO weekday) instead of codes
+ok 175 - result table shows governed value labels (ISO weekday) instead of codes
+  ---
+  duration_ms: 94.065375
+  ...
+# Subtest: V3.3 one-click: primary CTA is "Phân tích", optional "Xem kế hoạch" only when a preview handler exists; view wires both
+ok 176 - V3.3 one-click: primary CTA is "Phân tích", optional "Xem kế hoạch" only when a preview handler exists; view wires both
+  ---
+  duration_ms: 18.455791
+  ...
+1..176
+# tests 176
+# suites 0
+# pass 176
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 954.304541

@@ -195,7 +195,8 @@ class AnalysisModules:
                 agent.omit(error)
         if not any(a.query.role == "requested" for a in prepared):
             raise AnalysisError("module_needs_review", "Requested templates missing")
-        pipeline.enforce_ui({a.query.id:a for a in prepared},context)
+        from services.request_anchors import enforce_ui
+        enforce_ui({a.query.id:a for a in prepared},context)
         for a in prepared:
             try: agent.queries.run(a)
             except AnalysisError as e:

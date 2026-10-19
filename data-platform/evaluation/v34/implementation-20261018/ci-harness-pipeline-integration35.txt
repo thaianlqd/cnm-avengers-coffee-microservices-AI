@@ -1,0 +1,30 @@
+ Container avengers-v34-fixture-postgres-1 Running 
+ Container avengers-v34-fixture-minio-1 Running 
+ Container avengers-v34-fixture-kafka-1 Running 
+ Container avengers-v34-fixture-postgres-1 Waiting 
+ Container avengers-v34-fixture-postgres-1 Waiting 
+ Container avengers-v34-fixture-postgres-1 Healthy 
+ Container avengers-v34-fixture-postgres-1 Healthy 
+ Container avengers-v34-fixture-kafka-1 Waiting 
+ Container avengers-v34-fixture-minio-1 Waiting 
+ Container avengers-v34-fixture-minio-1 Healthy 
+ Container avengers-v34-fixture-kafka-1 Healthy 
+ Container avengers-v34-fixture-tests-run-cff64a94879b Creating 
+ Container avengers-v34-fixture-tests-run-cff64a94879b Created 
+<frozen importlib._bootstrap>:1047: ImportWarning: _SixMetaPathImporter.find_spec() not found; falling back to find_module()
+<frozen importlib._bootstrap>:1047: ImportWarning: _SixMetaPathImporter.find_spec() not found; falling back to find_module()
+<frozen importlib._bootstrap>:1047: ImportWarning: _SixMetaPathImporter.find_spec() not found; falling back to find_module()
+2026-10-18 10:44:30,709 [INFO] gold - Computing Gold datasets directly from Silver Parquet...
+.2026-10-18 10:44:31,232 [INFO] gold - Computing Gold datasets directly from Silver Parquet...
+2026-10-18 10:44:31,603 [INFO] gold - Computing Gold datasets directly from Silver Parquet...
+.2026-10-18 10:44:32,221 [INFO] gold - Computing Gold datasets directly from Silver Parquet...
+.2026-10-18 10:44:32,812 [INFO] gold - Computing Gold datasets directly from Silver Parquet...
+.2026-10-18 10:44:33,586 [INFO] gold - Computing Gold datasets directly from Silver Parquet...
+..2026-10-18 10:44:35,125 [INFO] kafka-consumer - Stream flush: rows=1 quarantined=0 projection=completed
+.2026-10-18 10:44:35,707 [INFO] kafka-consumer - Stream flush: rows=2 quarantined=1 projection=failed_replay_required
+..2026-10-18 10:44:37,261 [INFO] kafka-consumer - Stream flush: rows=2 quarantined=0 projection=completed
+..........................
+----------------------------------------------------------------------
+Ran 35 tests in 8.252s
+
+OK

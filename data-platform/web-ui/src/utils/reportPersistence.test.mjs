@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { savedV33Fields, reopenSavedReport, V33_SAVED_FIELDS } from './reportPersistence.mjs';
+import { savedV33Fields, reopenSavedReport, V33_SAVED_FIELDS, savedReportOwnership } from './reportPersistence.mjs';
 
 test('save keeps conclusion, caveats, forecasts, verification and view coverage; reopen restores them verbatim', () => {
   const report = { title: 'x', conclusion: { answer: 'A', findings: [{ statement: 's', evidence_id: 'e1' }], caveats: ['c'], actions: ['a'] },
@@ -19,4 +19,13 @@ test('a legacy saved report without V3.3 fields reopens without inventing a conc
   assert.equal(reopened.conclusion, undefined);
   assert.equal(reopened.verification, undefined);
   assert.ok(V33_SAVED_FIELDS.includes('conclusion'));
+});
+
+
+test('legacy ownership is disclosed without publishing raw actor IDs or unverified claims', () => {
+  assert.deepEqual(savedReportOwnership({ created_by: 'account:' + 'a'.repeat(64) }), { owned: true, label: 'Báo cáo cá nhân' });
+  for (const report of [{}, { created_by: 'client-spoof' }, { owner_type: 'legacy' }]) {
+    assert.equal(savedReportOwnership(report).owned, false);
+    assert.match(savedReportOwnership(report).label, /chỉ đọc, chưa xác minh/);
+  }
 });

@@ -535,6 +535,10 @@ def render(v, a, index, max_categories=100):
                 "label": category(r) if v.chart_type in {'bar', 'horizontal_bar'} else display(r,v.x_field),
                 "value": r[metric],
                 "color": PALETTE[i % len(PALETTE)],
+                **({'entity_ref': {'query_id': a.query.id,
+                    'filters': {dimension: r[dimension] for dimension in a.plan.dimensions}}}
+                   if v.chart_type in {'bar', 'horizontal_bar'} and a.plan.kind != 'trend' and a.plan.dimensions
+                   and len(a.plan.dimensions) <= 8 and all(dimension in r for dimension in a.plan.dimensions) else {}),
                 **({'rank_position': r['rank_position']} if a.plan.ranking and a.plan.ranking.per_group else {}),
             }
             for i, r in enumerate(rows)

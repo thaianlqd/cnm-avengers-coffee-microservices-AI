@@ -1,0 +1,3 @@
+== module tests.test_v34_observability tests.test_query_batch tests.test_v34_query_security tests.test_v34_audit tests.test_v34_job_operations (log: /tmp/v34-sql-budget/module.log)
+Ran 30 tests in 1.728s
+OK

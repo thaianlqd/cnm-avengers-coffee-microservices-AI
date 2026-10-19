@@ -11,7 +11,6 @@ from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.operators.bash import BashOperator
 
 logger = logging.getLogger(__name__)
 
@@ -28,70 +27,62 @@ default_args = {
 }
 
 
+def _identity(context):
+    import hashlib
+    raw = context['dag_run'].run_id
+    run_id = 'run_'+hashlib.sha256(('avengers_daily_pipeline|'+raw).encode()).hexdigest()[:32]
+    return run_id, context['logical_date'].isoformat()
+
+
+def _reference(manifest):
+    return {key:manifest[key] for key in ('run_id','manifest_fingerprint','requested_as_of','publication_quality')}
+
+
 def run_bronze(**context):
-    """Run bronze ingestion job."""
     sys.path.insert(0, JOBS_DIR)
-    try:
-        import bronze_ingestion
-        bronze_ingestion.main()
-        logger.info("Bronze layer completed successfully")
-    except Exception as e:
-        logger.error(f"Bronze layer failed: {e}")
-        raise
+    import bronze_ingestion
+    run_id, as_of = _identity(context)
+    return _reference(bronze_ingestion.main(run_id=run_id, as_of=as_of))
 
 
 def run_silver(**context):
-    """Run silver transformation job."""
     sys.path.insert(0, JOBS_DIR)
-    try:
-        import silver_transform
-        silver_transform.main()
-        logger.info("Silver layer completed successfully")
-    except Exception as e:
-        logger.error(f"Silver layer failed: {e}")
-        raise
+    import silver_transform
+    upstream = context['ti'].xcom_pull(task_ids='ingest_bronze')
+    run_id, as_of = _identity(context)
+    if not upstream or upstream['run_id'] != run_id: raise ValueError('Expected current Bronze run is missing')
+    return _reference(silver_transform.main(run_id=run_id, as_of=as_of, input_run=upstream['run_id']))
 
 
 def run_gold(**context):
-    """Run gold aggregation job."""
     sys.path.insert(0, JOBS_DIR)
-    try:
-        import gold_aggregation
-        gold_aggregation.main()
-        logger.info("Gold layer completed successfully")
-    except Exception as e:
-        logger.error(f"Gold layer failed: {e}")
-        raise
+    import gold_aggregation
+    upstream = context['ti'].xcom_pull(task_ids='transform_silver')
+    run_id, as_of = _identity(context)
+    if not upstream or upstream['run_id'] != run_id: raise ValueError('Expected current Silver run is missing')
+    return _reference(gold_aggregation.main(run_id=run_id, as_of=as_of, input_run=upstream['run_id']))
 
 
 def check_pipeline_health(**context):
-    """Check if all Gold datasets were created."""
-    import boto3
-    from botocore.client import Config
-
-    s3 = boto3.client(
-        "s3",
-        endpoint_url=os.getenv("MINIO_ENDPOINT", "http://minio:9000"),
-        aws_access_key_id=os.getenv("MINIO_ACCESS_KEY", "minioadmin"),
-        aws_secret_access_key=os.getenv("MINIO_SECRET_KEY", "minioadmin123"),
-        config=Config(signature_version="s3v4"),
-    )
-    expected_keys = [
-        "kpi/latest.json",
-        "revenue_daily/latest.json",
-        "top_products/latest.json",
-        "customer_segments/latest.json",
-    ]
-    missing = []
-    for key in expected_keys:
-        try:
-            s3.head_object(Bucket="avengers-gold", Key=key)
-        except Exception:
-            missing.append(key)
-
-    if missing:
-        raise ValueError(f"Missing Gold datasets: {missing}")
-    logger.info("All Gold datasets verified ✓")
+    sys.path.insert(0, JOBS_DIR)
+    import gold_aggregation
+    from batch_runtime import verify_publication
+    expected = context['ti'].xcom_pull(task_ids='aggregate_gold')
+    run_id, _ = _identity(context)
+    if not expected or expected['run_id'] != run_id: raise ValueError('Expected current Gold run is missing')
+    engine = gold_aggregation.get_engine()
+    connection = engine.raw_connection()
+    try:
+        connection.set_session(readonly=True)
+        result = verify_publication(gold_aggregation.get_minio(), 'avengers-gold', run_id,
+                                    expected['manifest_fingerprint'], gold_aggregation.CONTRACT, connection)
+        logger.info('Pipeline health: run=%s status=%s optional_missing=%d completeness=%s',
+            run_id, result['status'], len(result['optional_missing']), result['source_completeness'])
+        return result
+    finally:
+        connection.rollback()
+        connection.close()
+        engine.dispose()
 
 
 with DAG(

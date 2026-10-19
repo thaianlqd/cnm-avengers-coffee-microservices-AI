@@ -3,6 +3,7 @@
 import hashlib
 import json
 import logging
+from fastapi import HTTPException
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -13,9 +14,11 @@ from services.analytical_tool_contract import canonicalize, ToolContractError, i
 from services.analysis_query import (
     build_plans,
     compile_sql,
+    compile_ranked_companion,
     validate_plan,
     validate_sql,
     validate_results,
+    validate_ranked_cohorts,
 )
 from services.analysis_presentation import safe_rows
 from services.time_resolution_service import resolve_time
@@ -62,6 +65,8 @@ class AnalysisArtifact:
 
 def signature(query, period, fingerprint):
     data = query.model_dump(mode="json")
+    if not query.cohort_query_id:
+        data.pop('cohort_query_id',None)  # Preserve signatures of pre-extension reports.
     for key in ("id", "role", "parent_id", "purpose", "lens_id", "population_relation", "replaces", "changed_fields"):
         data.pop(key, None)
     data["time"] = period
@@ -150,6 +155,14 @@ class AnalyticalQueries:
                     "query", "An operation id cannot change within a turn"
                 )
         r = self.catalog.registry
+        cohort_parent=None
+        if q.cohort_query_id:
+            cohort_parent=self.pending.get(q.cohort_query_id) or self.artifacts.get(q.cohort_query_id)
+            if (not cohort_parent or not cohort_parent.query.ranking
+                    or cohort_parent.query.cohort_query_id or q.role!='requested'
+                    or q.limit!=cohort_parent.query.ranking.top_n
+                    or q.filters!=cohort_parent.query.filters):
+                raise AnalysisError('query_scope','Unknown or incompatible selected ranking cohort')
         if q.subject not in r["subjects"]:
             raise AnalysisError("unsupported_subject", "Unknown catalog subject")
         for m in q.metrics:
@@ -273,7 +286,7 @@ class AnalyticalQueries:
             ranking=q.ranking,
             detail_columns=q.project,
             order_by=[s.model_dump() for s in q.order_by],
-            row_limit=q.limit if q.limit < 100 else None,
+            row_limit=q.limit if q.limit < 100 or cohort_parent else None,
         )
         spec = AnalysisSpec(
             analysis_kind=kind,
@@ -295,9 +308,13 @@ class AnalyticalQueries:
         for verdict in (validate_sql(sql, plan, ground, self.catalog),):
             if not verdict.valid:
                 raise AnalysisError(verdict.category, "Analytical contract rejected")
-        artifact = AnalysisArtifact(
-            q, ground, plan, sql, signature(q, period, self.catalog.fingerprint), capacity=capacity
-        )
+        if cohort_parent:
+            sql=compile_ranked_companion(plan,ground,cohort_parent,self.catalog)
+        from services.access_policy import cache_identity, active_principal, authorize_sql
+        identity=cache_identity() if active_principal.get() is not None else None
+        if identity is not None: authorize_sql(sql)  # Fail before cache/provider execution.
+        schema_identity=self.catalog.fingerprint if identity is None else self.catalog.fingerprint+':'+identity
+        artifact = AnalysisArtifact(q, ground, plan, sql, signature(q, period, schema_identity), capacity=capacity)
         self.pending[q.id] = artifact
         self.stage(None)
         return artifact
@@ -329,6 +346,8 @@ class AnalyticalQueries:
         raise error
 
     def run(self, artifact):
+        from services.access_policy import active_principal, authorize_sql
+        if active_principal.get() is not None: authorize_sql(artifact.sql)
         cached = None if self.diagnostics.get('force_refresh') else self.cache.get(artifact.signature)
         from services.sql_service import execute_read_only
         from services.result_artifact_store import artifact_store
@@ -358,6 +377,10 @@ class AnalyticalQueries:
             try:
                 from services.sql_service import execute_read_only, dry_run_sql
                 dry_runner = dry_run_sql if self.executor is execute_read_only else getattr(self.executor, 'dry_run', None)
+                # Oracle operations already pass the same compiler, AST and
+                # capacity guards. Execute one bounded SELECT per reservation;
+                # no hidden EXPLAIN attempt outside its physical query budget.
+                if self.diagnostics.get('independent_oracle_query'): dry_runner=None
                 # Explicit adapter protocol; unittest mocks must not invent it.
                 if self.executor is not execute_read_only and 'dry_run' not in getattr(type(self.executor), '__dict__', {}) and 'dry_run' not in getattr(self.executor, '__dict__', {}):
                     dry_runner = None
@@ -365,6 +388,8 @@ class AnalyticalQueries:
                     self.stage('DRY_RUN')
                     try:
                         valid, _ = dry_runner(artifact.sql)
+                    except (AnalysisError, HTTPException):
+                        raise
                     except Exception:
                         raise AnalysisError('dry_run_failed', 'Database preflight unavailable') from None
                     self.diagnostics['dry_run_count'] = self.diagnostics.get('dry_run_count', 0)+1
@@ -421,7 +446,7 @@ class AnalyticalQueries:
         from types import FunctionType
         from uuid import uuid4
         from services.sql_service import execute_read_only
-        from services.query_execution_batch import report_snapshot
+        from services.query_execution_batch import report_snapshot,SQL_QUERY_CONCURRENCY
         from services.result_artifact_store import artifact_store
         from services.analytical_capacity_planner import AnalyticalCapacityContract
         from services.provider_budget import check_request_deadline
@@ -437,6 +462,7 @@ class AnalyticalQueries:
                     if not allow_supporting_failure or artifact.query.role == 'requested':
                         raise
                     errors[id] = error
+            if not self.proposal:validate_ranked_cohorts(result)
             return result, errors
         freshness = AnalyticalCapacityContract.from_env().cache_freshness
         refs = []
@@ -457,6 +483,8 @@ class AnalyticalQueries:
         tables = {node.db + '.' + node.name for artifact in prepared.values()
             for node in sqlglot.parse_one(artifact.sql,read='postgres').find_all(exp.Table) if node.db}
         with (nullcontext() if cached else report_snapshot(tables)):
+            from services.query_execution_batch import data_epoch
+            self.diagnostics['data_epoch']=deepcopy(data_epoch.get()) if not cached else {'status':'not_measured','reason':'cached_generation_not_pinned'}
             def run_one(artifact):
                 isolated = copy(self)
                 isolated.diagnostics = deepcopy(baseline)
@@ -476,7 +504,7 @@ class AnalyticalQueries:
                     duplicates[id] = signatures[artifact.signature]
                 else:
                     unique[id] = artifact; signatures[artifact.signature] = id
-            with ThreadPoolExecutor(max_workers=2, thread_name_prefix='analysis-sql') as executor:
+            with ThreadPoolExecutor(max_workers=SQL_QUERY_CONCURRENCY, thread_name_prefix='analysis-sql') as executor:
                 futures = {id:executor.submit(copy_context().run, run_one, artifact)
                     for id,artifact in unique.items()}
                 for id, future in futures.items():
@@ -500,13 +528,14 @@ class AnalyticalQueries:
                     finally:
                         self.diagnostics['force_refresh'] = force
         self.diagnostics['sql_batch_ms'] = round((time.perf_counter()-started)*1000,2)
-        self.diagnostics['query_concurrency'] = 2
+        self.diagnostics['query_concurrency'] = SQL_QUERY_CONCURRENCY
         for id,error in errors.items():
             if not allow_supporting_failure or prepared[id].query.role == 'requested':
                 self.stage('RESULT_VALIDATION' if error.category == 'result_contract' else 'SQL_EXECUTION')
                 raise error
         check_request_deadline()
         self.artifacts.update(result)
+        validate_ranked_cohorts(result)
         return result, errors
 
     def restore(self, id):

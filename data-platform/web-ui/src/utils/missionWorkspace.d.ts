@@ -15,3 +15,5 @@ export function invalidationFor(patch?: Record<string, unknown>): { invalidate: 
 export function isCurrentEpoch(started: number, current: number): boolean;
 export function resetActive(epoch?: number): { epoch: number; prompt: string; guided: null; plan: null; report: null; clarification: null; versions: any[]; activeVersion: number; chat: any[]; followUp: string; step: number; generating: boolean };
 export function applyClarificationChoice(question?: string, choice?: string): string;
+export function inspectedGroupDraft(report: any, chart: any, row: any, capabilities: any): any | null;
+export function sourceAnalysisPayload(draft: any, input: any): Record<string, any>;

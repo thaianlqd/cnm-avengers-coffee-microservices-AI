@@ -86,14 +86,17 @@ class AnalysisCatalog:
             else json.loads(CATALOG_PATH.read_text())
         )
         self.registry = self.overlay["analysis_registry"]
-        from services.semantic_catalog_validation import validate_catalog
+        from services.semantic_catalog_validation import validate_catalog, semantic_fingerprint
         # The governed production catalog must declare every source scope.
         validate_catalog(self.overlay, strict=overlay is None)
+        self.semantic_fingerprint = semantic_fingerprint(self.overlay)
         self.tables = {
             n: t
             for n, t in physical.get("table_map", {}).items()
             if n.startswith("silver.")
         }
+        from services.access_policy import project_tables
+        self.tables=project_tables(self.tables)
         structural = {
             n: {
                 "columns": sorted(
@@ -139,6 +142,23 @@ class AnalysisCatalog:
                 for n, t in self.tables.items()
             }
         }
+
+    def metric_lineage(self, metric_id):
+        """Formula identity and source references, derived from governed definitions."""
+        metric = self.registry['metrics'][metric_id]
+        columns = set()
+        for expression in [metric['expression'], metric.get('time_column'), *metric.get('required_non_null', [])]:
+            if expression:
+                columns.update(referenced_columns(expression))
+        for condition in metric.get('business_filters', []):
+            dimension = self.registry['dimensions'][condition['dimension']]
+            columns.update(referenced_columns(dimension.get('expression') or dimension['table']+'.'+dimension['column']))
+        formula = {k: metric.get(k) for k in ('source', 'expression', 'grain', 'unit', 'time_column',
+            'business_filters', 'aggregation_semantics', 'numerator', 'denominator', 'required_non_null')}
+        return {'metric_id': metric_id, 'dataset_id': self.overlay['silver_tables'][metric['source']].get('dataset_id', metric['source']),
+                'source': metric['source'], 'columns': [{'table': table, 'column': column} for table, column in sorted(columns)],
+                'formula_fingerprint': hashlib.sha256(json.dumps(formula, sort_keys=True, ensure_ascii=False,
+                                                                separators=(',', ':')).encode()).hexdigest()}
 
     def check_column(self, table, column):
         if table not in self.tables or column not in {

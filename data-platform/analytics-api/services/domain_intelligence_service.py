@@ -230,6 +230,19 @@ class DomainIntelligence:
         validate_materialized(query, lens)
 
     def capabilities(self, coverage=None):
+        from services.access_policy import active_principal,current_principal
+        principal=current_principal(required=True) if active_principal.get() is not None else None
+        if principal is not None:
+            coverage=deepcopy(coverage or {})
+            coverage['facts']={name:value for name,value in coverage.get('facts',{}).items() if principal.permits('analytics.read',name)}
+            if coverage.get('data_health'):
+                health=coverage['data_health']
+                health['datasets']={}
+                health['views']={name:value for name,value in health.get('views',{}).items() if principal.permits('analytics.read',name)}
+            if not principal.national:
+                coverage['overall']={'min_date':None,'max_date':None}
+                coverage['facts']={}
+                coverage['bounds_basis']='Account scope bounds not measured; no global bounds assumed'
         profiles = self.available()
         scope_types = []
         for id, d in self.catalog.registry["dimensions"].items():
@@ -242,6 +255,9 @@ class DomainIntelligence:
             if not any(id in p["dimension_refs"] for p in profiles.values()):
                 continue
             scope_types.append({"id": id, "label": d["business_name"], "values": dimension_values(self.catalog, id)[:50], "searchable": d.get("value_grounding", {}).get("mode") == "lookup"})
+        if principal is not None and not principal.national:
+            scope_types=[{**scope,'values':list(principal.store_ids)[:50],'searchable':True}
+                         for scope in scope_types if scope['id']=='store_id']
         r = self.catalog.registry
 
         def executable(metric):
@@ -275,12 +291,18 @@ class DomainIntelligence:
         domains = [describe(id, p) for id, p in profiles.items()]
         for d in domains:
             d["metrics"] = [{**m, **{k: v for k, v in by_id.get(m["id"], {}).items() if k not in m}} for m in d["metrics"]]
-        return {"status": "ready", "version": "3.0", "fingerprint": self.catalog.fingerprint,
+        result={"status": "ready", "version": "3.0", "fingerprint": self.catalog.fingerprint,
+                "semantic_fingerprint": self.catalog.semantic_fingerprint,
+                "governance_contract_version": self.catalog.overlay.get('governance', {}).get('contract_version'),
                 "registry_fingerprint": getattr(self.catalog, "registry_fingerprint", None),
                 "domains": domains,
                 "analysis_depths": depth_options(self.catalog),
                 "time_presets": [{"id": id, "label": label} for id, label in TIME_PRESETS.items()],
                 "scope_types": scope_types, **workspace}
+        if principal is not None:
+            result['authorized_scope']={'national':principal.national,'store_ids':list(principal.store_ids),
+                'policy_version':principal.policy_version,'policy_fingerprint':principal.access_fingerprint}
+        return result
 
     def directory(self, profiles):
         # Aliases are used locally by retrieval; subjects/caveats live in packs.

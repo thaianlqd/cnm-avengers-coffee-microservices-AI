@@ -116,7 +116,7 @@ def enforce_metric_locks(intent, locks, catalog):
     Returns (intent, normalizations, conflicts). A drifted sibling is replaced
     only when the canonical metric can express the same requirement; when it
     cannot, the sibling is a contextual qualification and is kept (recorded).
-    Never touches requirements that already contain the canonical metric.
+    Duplicate unqualified alias claimants collapse to the canonical metric too.
     """
     registry = catalog.registry
     if not locks:
@@ -127,7 +127,7 @@ def enforce_metric_locks(intent, locks, catalog):
         owner, siblings = lock["metric_id"], set(lock["siblings"])
         explicit = set(lock["explicitly_qualified"])
         for req in result.requirements:
-            if req.availability != "requested" or req.supporting_for or owner in req.metric_ids:
+            if req.availability != "requested" or req.supporting_for:
                 continue
             drifted = [m for m in req.metric_ids if m in siblings and not _qualified(m, req, registry, explicit)]
             if not drifted:

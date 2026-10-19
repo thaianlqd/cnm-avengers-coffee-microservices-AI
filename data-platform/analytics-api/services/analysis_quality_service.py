@@ -56,6 +56,8 @@ def restore_artifacts(report, catalog):
             a.result = deepcopy(supplied)
         a.contract = validate_results(a.result, a.plan, a.grounded, catalog).model_dump()
         prepared[a.query.id] = a
+    from services.analysis_query import validate_ranked_cohorts
+    validate_ranked_cohorts(prepared)
     return prepared
 
 
@@ -162,8 +164,12 @@ def equivalent_visual_metrics(visual, source, other, expected):
         return None
     aliases = dict(zip(mapped, visual.metrics))
     def rows(data, rename=False):
-        return sorted(json.dumps({aliases.get(k, k) if rename else k: value for k,value in row.items()},
-                                 sort_keys=True, ensure_ascii=False, default=str) for row in data)
+        # Both sides are freshly rendered from their own verified artifacts.
+        # Navigation query IDs differ across equivalent source operations;
+        # retain and compare the exact typed filters while normalizing that ID.
+        return sorted(json.dumps({aliases.get(k, k) if rename else k:
+            ({'filters':value['filters']} if k=='entity_ref' else value) for k,value in row.items()},
+            sort_keys=True, ensure_ascii=False, default=str) for row in data)
     if rows(rendered['data'], True) != rows(expected['data']):
         return None
     return mapped
@@ -262,6 +268,8 @@ def assess_report(report, catalog, *, artifacts=None):
             intent = AnalysisIntentEnvelope.model_validate(report['semantic_intent'])
             resolved = AnalyticalResolver(catalog,reference,context.get('ui_constraints',{})).resolve(intent)
             provenance = report.get('provenance',{})
+            if provenance.get('source_analysis')!=context.get('source_analysis'):
+                return not_scored('Nguồn của yêu cầu mới không khớp tham chiếu đã kiểm chứng.')
             anchors, replayed = refinement_anchors(provenance['user_request'],provenance['initial_semantic_intent'],
                 provenance.get('semantic_history', []),catalog,context.get('ui_constraints',{}),reference)
             # A parent delta invalidates generated supporting views. Reproduce

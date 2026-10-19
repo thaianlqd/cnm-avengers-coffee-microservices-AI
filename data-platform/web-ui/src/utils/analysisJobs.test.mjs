@@ -31,3 +31,10 @@ test('aborted old response cannot checkpoint a job over a new question',async()=
   await assert.rejects(runAnalysisJob({key:'stable',input:{}},{signal:controller.signal,onCheckpoint:()=>checkpoints++,fetcher:async()=>{controller.abort();return response({job_id:'old',state:'planning'});}}),{name:'AbortError'});
   assert.equal(checkpoints,1);
 });
+test('revoked access stops polling immediately and preserves the security status',async()=>{
+  let calls=0;
+  await assert.rejects(runAnalysisJob({key:'stable',job_id:'job',input:{}},{wait:async()=>{},fetcher:async()=>{
+    calls++;return {ok:false,status:403,json:async()=>({detail:'No longer permitted'})};
+  }}),{status:403,message:'No longer permitted'});
+  assert.equal(calls,1);
+});

@@ -1,10 +1,15 @@
 import React, { useEffect } from 'react';
 import { usePlatformStore } from '../store/usePlatformStore';
-import { SmoothAreaChart, DonutChart, HorizontalBarChart, Sparkline, BarChart } from '../components/Charts';
+import { SmoothAreaChart, DonutChart, HorizontalBarChart, BarChart } from '../components/Charts';
 
 export const OverviewView: React.FC = () => {
   const { 
-    marts, 
+    marts,
+    dataErrors,
+    isLoadingMarts,
+    isLoadingStores,
+    isLoadingCustomers,
+    isLoadingProducts,
     storesData,
     productsData,
     customersData,
@@ -28,11 +33,11 @@ export const OverviewView: React.FC = () => {
   const kpi = marts?.kpi || marts?.kpi_summary?.[0] || {};
   const totalRevenue = Number(kpi.revenue_all_time || 0);
   const totalOrders = Number(kpi.total_orders_all_time || 0);
-  const totalCustomers = Number(kpi.new_customers || customersData?.kpi?.total_registered || 12486);
+  const totalCustomers = Number(kpi.new_customers ?? 0);
   const aov = Number(kpi.aov || (totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0));
-  const revenueGrowth = kpi.revenue_growth !== undefined ? Number(kpi.revenue_growth) : 12.5;
-  const ordersGrowth = kpi.orders_growth !== undefined ? Number(kpi.orders_growth) : 8.3;
-  const aovGrowth = kpi.aov_growth !== undefined ? Number(kpi.aov_growth) : 6.2;
+  const revenueGrowth = kpi.revenue_growth !== undefined ? Number(kpi.revenue_growth) : null;
+  const ordersGrowth = kpi.orders_growth !== undefined ? Number(kpi.orders_growth) : null;
+  const aovGrowth = kpi.aov_growth !== undefined ? Number(kpi.aov_growth) : null;
   const periodLabel = dateRange === 'today' ? 'hôm qua' 
     : dateRange === '7days' ? '7 ngày trước' 
     : dateRange === '14days' ? '14 ngày trước' 
@@ -42,18 +47,19 @@ export const OverviewView: React.FC = () => {
   const rawRevenueDaily = marts?.revenue_daily || [];
   const revenueTimeSeries = rawRevenueDaily.map((r: any) => {
     const rev = Number(r.revenue) || 0;
-    const ord = Number(r.total_orders) || 0;
     return {
       label: String(r.date).slice(-5).replace('-', '/'),
       value: rev,
-      secondaryValue: ord * 100000,
     };
   });
 
   const palette = ['#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#64748b', '#06b6d4'];
   const rawCategories = marts?.parent_category_sales || marts?.category_sales || productsData?.categories || [];
 
-  const categorySlices = rawCategories.slice(0, 5).map((c: any, idx: number) => {
+  const displayedCategories = rawCategories.length > 5
+    ? [...rawCategories.slice(0, 4), {category_name:'Nhóm còn lại', revenue:rawCategories.slice(4).reduce((total: number, row: any) => total + Number(row.revenue || 0), 0)}]
+    : rawCategories;
+  const categorySlices = displayedCategories.map((c: any, idx: number) => {
     const rev = Number(c.revenue || 0);
     const formattedAmount = rev >= 1_000_000_000 
       ? `${(rev / 1_000_000_000).toFixed(1)} tỷ` 
@@ -82,12 +88,7 @@ export const OverviewView: React.FC = () => {
 
   const rawCities = storesData?.revenue_by_city && storesData.revenue_by_city.length > 0
     ? storesData.revenue_by_city
-    : [
-        { city: 'Hà Nội', revenue: 767000000 },
-        { city: 'Cần Thơ', revenue: 625200000 },
-        { city: 'Đà Nẵng', revenue: 581800000 },
-        { city: 'Hồ Chí Minh', revenue: 468800000 },
-      ];
+    : [];
   const totalRegionRev = rawCities.reduce((sum: number, c: any) => sum + Number(c.revenue || 0), 0) || 1;
 
   const getCityColor = (city: string, idx: number) => {
@@ -106,13 +107,7 @@ export const OverviewView: React.FC = () => {
     color: getCityColor(c.city, idx),
   }));
 
-  const recentSales = marts?.recent_sales || [
-    { order_time: '30/09/2026 14:32', store_name: 'Quận 1 - Nguyễn Huệ', product_name: 'Cà phê Americano', quantity: 2, total_amount: 98000 },
-    { order_time: '30/09/2026 14:21', store_name: 'Thủ Đức - Võ Văn Ngân', product_name: 'Trà đào cam sả', quantity: 1, total_amount: 65000 },
-    { order_time: '30/09/2026 14:03', store_name: 'Quận 7 - Phú Mỹ Hưng', product_name: 'Bánh croissant', quantity: 1, total_amount: 45000 },
-    { order_time: '30/09/2026 13:52', store_name: 'Bình Thạnh - Điện Biên Phủ', product_name: 'Cà phê Latte', quantity: 1, total_amount: 75000 },
-    { order_time: '30/09/2026 13:37', store_name: 'Quận 1 - Nguyễn Huệ', product_name: 'Trà sữa matcha', quantity: 2, total_amount: 120000 },
-  ];
+  const recentSales = marts?.recent_sales || [];
 
   const rawWeekday = marts?.weekday_sales || [];
   const weekdayBars = rawWeekday.map((w: any) => ({
@@ -127,6 +122,10 @@ export const OverviewView: React.FC = () => {
     return `${val.toLocaleString('vi-VN')} đ`;
   };
 
+  const errors = ['marts', 'storesData', 'productsData', 'customersData'].some(key => Boolean(dataErrors[key]));
+  const loading = isLoadingMarts || isLoadingStores || isLoadingCustomers || isLoadingProducts;
+  if (errors) return <section className="rounded-2xl border border-slate-200 bg-white p-6" data-overview-unavailable><h1 className="text-xl font-semibold">Tổng quan hệ thống</h1><p className="mt-3 text-slate-600">Chưa nhận được dữ liệu từ máy chủ. Các chỉ số chưa thể hiển thị; hãy xem thông báo lỗi phía trên.</p></section>;
+  if (loading || !marts) return <section role="status" className="p-6">Đang tải dữ liệu tổng quan…</section>;
   return (
     <div className="space-y-7 pb-8">
       {/* Page Header */}
@@ -153,7 +152,7 @@ export const OverviewView: React.FC = () => {
             <option value="7days">7 ngày qua</option>
             <option value="14days">14 ngày qua</option>
             <option value="30days">30 ngày qua</option>
-            <option value="90days">90 ngày qua (Quý 3/2026)</option>
+            <option value="90days">90 ngày qua</option>
             <option value="all">Từ đầu năm 2026 đến nay</option>
           </select>
         </div>
@@ -167,10 +166,9 @@ export const OverviewView: React.FC = () => {
             {totalRevenue.toLocaleString('vi-VN')} đ
           </div>
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-medium ${revenueGrowth >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-              {revenueGrowth >= 0 ? `+${revenueGrowth}%` : `${revenueGrowth}%`} so với {periodLabel}
+            <span className={`text-xs font-medium ${(revenueGrowth ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+              {revenueGrowth === null ? 'Chưa đo biến động' : `${revenueGrowth >= 0 ? '+' : ''}${revenueGrowth}% so với ${periodLabel}`}
             </span>
-            <Sparkline data={[12, 15, 14, 21, 18, 25, 29]} color="#10b981" width={64} height={24} />
           </div>
         </div>
 
@@ -180,23 +178,21 @@ export const OverviewView: React.FC = () => {
             {totalOrders.toLocaleString('vi-VN')}
           </div>
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-medium ${ordersGrowth >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-              {ordersGrowth >= 0 ? `+${ordersGrowth}%` : `${ordersGrowth}%`} so với {periodLabel}
+            <span className={`text-xs font-medium ${(ordersGrowth ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+              {ordersGrowth === null ? 'Chưa đo biến động' : `${ordersGrowth >= 0 ? '+' : ''}${ordersGrowth}% so với ${periodLabel}`}
             </span>
-            <Sparkline data={[10, 14, 12, 18, 16, 22, 26]} color="#8b5cf6" width={64} height={24} />
           </div>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between h-[135px]">
-          <span className="text-xs font-medium text-slate-500">Khách hàng mới</span>
+          <span className="text-xs font-medium text-slate-500">Khách có tài khoản trong kỳ</span>
           <div className="text-2xl font-semibold text-slate-900 tracking-tight">
             {totalCustomers.toLocaleString('vi-VN')}
           </div>
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-emerald-600">
-              +15.7% so với tháng trước
+              Tài khoản có giao dịch trong kỳ đã chọn
             </span>
-            <Sparkline data={[8, 12, 14, 13, 19, 21, 27]} color="#2563eb" width={64} height={24} />
           </div>
         </div>
 
@@ -206,10 +202,9 @@ export const OverviewView: React.FC = () => {
             {aov.toLocaleString('vi-VN')} đ
           </div>
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-medium ${aovGrowth >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-              {aovGrowth >= 0 ? `+${aovGrowth}%` : `${aovGrowth}%`} so với {periodLabel}
+            <span className={`text-xs font-medium ${(aovGrowth ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+              {aovGrowth === null ? 'Chưa đo biến động' : `${aovGrowth >= 0 ? '+' : ''}${aovGrowth}% so với ${periodLabel}`}
             </span>
-            <Sparkline data={[14, 15, 13, 17, 19, 18, 22]} color="#f59e0b" width={64} height={24} />
           </div>
         </div>
       </div>
@@ -221,14 +216,14 @@ export const OverviewView: React.FC = () => {
             <h2 className="text-sm font-semibold text-slate-900">
               Doanh thu theo thời gian
             </h2>
-            <p className="text-[11px] text-slate-400 mt-0.5">Xu hướng doanh thu và đối soát đơn hàng</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Tổng tiền các đơn hoàn thành và đang giao</p>
           </div>
 
           <div className="flex-1 w-full pt-1 flex items-center">
             <SmoothAreaChart 
               data={revenueTimeSeries} 
               height={280} 
-              showSecondary={true} 
+              showSecondary={false}
               showLegend={true}
               color="#2563eb"
               secondaryColor="#8b5cf6"
@@ -240,15 +235,15 @@ export const OverviewView: React.FC = () => {
         <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between min-h-[380px]">
           <div className="mb-3">
             <h2 className="text-sm font-semibold text-slate-900">
-              Cơ cấu doanh thu theo nhóm món
+              Giá trị dòng món theo nhóm
             </h2>
-            <p className="text-[11px] text-slate-400 mt-0.5">Tỷ trọng đóng góp từ các danh mục</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Tổng tiền dòng món, khác tổng tiền đơn hàng</p>
           </div>
 
           <div className="flex-1 flex items-center justify-center py-2">
             <DonutChart 
               data={categorySlices} 
-              centerLabel="Doanh thu"
+              centerLabel="Giá trị món"
               size={135} 
             />
           </div>
@@ -332,7 +327,7 @@ export const OverviewView: React.FC = () => {
               <h2 className="text-sm font-semibold text-slate-900">
                 Giao dịch gần nhất
               </h2>
-              <p className="text-[11px] text-slate-400 mt-0.5">Dữ liệu đơn hàng cập nhật liên tục</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Đơn hợp lệ theo dữ liệu đã đồng bộ</p>
             </div>
             <button
               onClick={() => {
@@ -404,7 +399,7 @@ export const OverviewView: React.FC = () => {
             {weekdayBars.length > 0 ? (
               <BarChart data={weekdayBars} height={250} valueSuffix="Tr" color="#2563eb" />
             ) : (
-              <div className="text-xs text-slate-400 text-center py-10 w-full">Đang tải dữ liệu...</div>
+              <div className="text-xs text-slate-400 text-center py-10 w-full">Không có quan sát trong khoảng thời gian đã chọn.</div>
             )}
           </div>
         </div>

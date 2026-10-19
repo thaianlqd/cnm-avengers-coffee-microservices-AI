@@ -199,7 +199,7 @@ class GovernedMetadataTests(Guarded):
         self.assertEqual((s["metric"], s["operator"], s["threshold"]), ("late_shift_rate", "gt", 15))
         d = next(s for s in self.registry["risk_signals"] if s["id"] == "delivery_success_low")
         self.assertEqual((d["metric"], d["threshold"]), ("delivery_success_rate", 90))
-        self.assertTrue(all(set(s) <= {"id", "label", "metric", "operator", "threshold", "warning_margin", "observation_metric",
+        self.assertTrue(all(set(s) <= {"id", "label", "metric", "operator", "threshold", "warning_margin", "observation_metric", "anomaly",
                                        "minimum_observations"} for s in self.registry["risk_signals"]))
 
 

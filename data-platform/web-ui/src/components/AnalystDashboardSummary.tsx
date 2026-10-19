@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AnalystChart } from './Charts';
 import { chartAccent, conciseChartTitle, dashboardCharts, dashboardPrimaryCharts, dashboardChartTabs, dashboardHighlights, dashboardFindings, initialChartType, chartExplanation, businessCategory } from '../utils/analystDashboardLayout.mjs';
 import { formatChartValue } from '../utils/aiChartConfig.mjs';
 import { analysisChartGroups, analysisChartSpan, analysisPlanLabel } from '../utils/analysisPresentation.mjs';
 import { groupDifference, kpiStrip, missionTabs, orderChartsByMission, reportContext } from '../utils/workspacePresentation.mjs';
+import { inspectedGroupDraft } from '../utils/missionWorkspace.mjs';
 import { KpiStrip } from './workspace/KpiStrip';
 import { FollowUpChips } from './workspace/FollowUpChips';
 import { ForecastPanel } from './ForecastPanel';
@@ -18,7 +20,7 @@ const ChartData: React.FC<{ chart: any }> = ({ chart }) => {
   </details>;
 };
 
-const ChartCard: React.FC<{ chart: any; compact?: boolean; span: string; editing?: boolean; onChartTypeChange?: (id: string, type: string) => void; definition?: string }> = ({ chart, compact, span, editing, onChartTypeChange, definition }) => {
+const ChartCard: React.FC<{ chart: any; compact?: boolean; span: string; editing?: boolean; onChartTypeChange?: (id: string, type: string) => void; definition?: string; onInspect?: (chart: any, row: any) => void }> = ({ chart, compact, span, editing, onChartTypeChange, definition, onInspect }) => {
   const [type, setType] = useState(initialChartType(chart));
   useEffect(() => setType(initialChartType(chart)), [chart.id, chart.chart_type, chart.query_id]);
   const accent = chartAccent(chart);
@@ -46,7 +48,7 @@ const ChartCard: React.FC<{ chart: any; compact?: boolean; span: string; editing
         </div>
       </details>
     </div>
-    <div className="h-[320px] overflow-auto flex-1 flex flex-col justify-center min-w-0"><AnalystChart chart={{ ...chart, chart_type: type, accent_color: accent }} /></div>
+    <div className="h-[320px] overflow-auto flex-1 flex flex-col justify-center min-w-0"><AnalystChart chart={{ ...chart, chart_type: type, accent_color: accent }} onInspect={onInspect ? row => onInspect(chart, row) : undefined} /></div>
     <ChartInsight insight={chart.insight} />
     {chart.time_note && <p className="text-[11px] leading-relaxed text-amber-700 mt-4">{chart.time_note}</p>}
     {chart.ranking_note && <p className="text-[11px] leading-relaxed text-slate-600 mt-4">{chart.ranking_note}</p>}
@@ -58,13 +60,13 @@ const ChartCard: React.FC<{ chart: any; compact?: boolean; span: string; editing
   </article>;
 };
 
-export const AnalystViews: React.FC<{ charts?: any[]; onChartTypeChange?: (id: string, type: string) => void; editing?: boolean; compact?: boolean; definitions?: Record<string, string> }> = ({ charts = [], onChartTypeChange, editing = false, compact = false, definitions = {} }) => compact ? <div data-dashboard-grid className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
-  {charts.map((chart, index) => <ChartCard key={chart.id || index} chart={chart} compact span="col-span-1" editing={editing} onChartTypeChange={onChartTypeChange} definition={definitions[chart.metric]} />)}
+export const AnalystViews: React.FC<{ charts?: any[]; onChartTypeChange?: (id: string, type: string) => void; editing?: boolean; compact?: boolean; definitions?: Record<string, string>; onInspect?: (chart: any, row: any) => void }> = ({ charts = [], onChartTypeChange, editing = false, compact = false, definitions = {}, onInspect }) => compact ? <div data-dashboard-grid className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+  {charts.map((chart, index) => <ChartCard key={chart.id || index} chart={chart} compact span="col-span-1" editing={editing} onChartTypeChange={onChartTypeChange} definition={definitions[chart.metric]} onInspect={onInspect} />)}
 </div> : <div className="space-y-5">
   {analysisChartGroups(charts).map(group => <section key={group.role} aria-label={group.title} className="space-y-3">
     <h4 className="text-xs font-semibold text-slate-500">{group.title}</h4>
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
-      {group.charts.map((chart: any, index: number) => <ChartCard key={chart.id || index} chart={chart} span={analysisChartSpan(chart, index, group.charts.length)} editing={editing} onChartTypeChange={onChartTypeChange} />)}
+      {group.charts.map((chart: any, index: number) => <ChartCard key={chart.id || index} chart={chart} span={analysisChartSpan(chart, index, group.charts.length)} editing={editing} onChartTypeChange={onChartTypeChange} onInspect={onInspect} />)}
     </div>
   </section>)}
 </div>;
@@ -76,13 +78,42 @@ const REPORT_TABS = [['report', 'Báo cáo'], ['verification', 'Kiểm chứng &
  * limitations → next questions); verification/provenance, data/SQL and
  * save/export live in their own tabs.
  */
-export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChartTypeChange?: (id: string, type: string) => void; capabilities?: any; onFollowUp?: (question: string) => void;
-  initialTab?: 'report' | 'verification' | 'data' | 'export'; onSave?: () => void; onExport?: () => void }> = ({ report, editing, onChartTypeChange, capabilities, onFollowUp, initialTab = 'report', onSave, onExport }) => {
+export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChartTypeChange?: (id: string, type: string) => void; capabilities?: any; onFollowUp?: (question: string) => void; onGroupAnalysis?: (draft: any) => void;
+  initialTab?: 'report' | 'verification' | 'data' | 'export'; onSave?: () => void; onExport?: () => void }> = ({ report, editing, onChartTypeChange, capabilities, onFollowUp, onGroupAnalysis, initialTab = 'report', onSave, onExport }) => {
   const [showAll, setShowAll] = useState(false);
   const [view, setView] = useState('all');
   const [tab, setTab] = useState<string>(initialTab);
   useEffect(() => { setView('all'); setShowAll(false); setTab(initialTab); }, [report.session_id, report.revision]);
   const [resultId, setResultId] = useState<string | null>(null);
+  const [inspect, setInspect] = useState<any>(null);
+  const [inspectPage, setInspectPage] = useState<any>(null);
+  const [inspectError, setInspectError] = useState('');
+  const inspectTrigger = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!inspect) return;
+    return () => { if (inspectTrigger.current?.isConnected) inspectTrigger.current.focus(); };
+  }, [inspect]);
+  const inspectLabels = Object.fromEntries((capabilities?.metrics || []).flatMap((metric: any) =>
+    [[metric.id, metric.label], ...(metric.dimensions || []).map((dimension: any) => [dimension.id, dimension.label])]));
+  useEffect(() => { setInspect(null); setInspectPage(null); }, [report.session_id, report.revision]);
+  useEffect(() => {
+    if (!inspect) return;
+    const controller = new AbortController();
+    setInspectPage(null); setInspectError('');
+    const queryId = inspect.row.entity_ref.query_id;
+    const reference = report.result_sets?.[queryId]?.artifact_ref;
+    if (!reference) { setInspectError('Báo cáo này chưa có artifact để mở nhóm.'); return; }
+    const params = new URLSearchParams({ filters: JSON.stringify(inspect.row.entity_ref.filters), revision: String(report.revision), limit: '50' });
+    fetch(`/api/ai/sessions/${encodeURIComponent(report.session_id)}/results/${encodeURIComponent(queryId)}?${params}`, { signal: controller.signal, credentials: 'same-origin' })
+      .then(async response => {
+        const page = await response.json();
+        if (!response.ok) throw new Error(response.status === 403 ? 'Bạn không còn quyền xem nhóm này.' : page.detail || 'Chưa mở được nhóm.');
+        if (page.revision !== report.revision || page.artifact_id !== reference.artifact_id) throw new Error('Báo cáo đã thay đổi; hãy mở lại nhóm.');
+        if (!controller.signal.aborted) setInspectPage(page);
+      }).catch(error => { if (!controller.signal.aborted) setInspectError(error.message); });
+    return () => controller.abort();
+  }, [inspect, report.session_id, report.revision]);
+  const groupDraft = inspect && inspectPage && !inspectError ? inspectedGroupDraft(report, inspect.chart, inspect.row, capabilities) : null;
   // Governed value labels (e.g. ISO weekday 1 → "Thứ Hai") come from capabilities.
   const valueLabels = capabilities?.dimension_value_labels || {};
   const labelled = (report.charts || []).map((c: any) => valueLabels[c.x_field] ? { ...c, data: (c.data || []).map((r: any) => ({ ...r, label: valueLabels[c.x_field].find((v: any) => String(v.value) === String(Number(r.label)))?.label ?? r.label })) } : c);
@@ -127,7 +158,7 @@ export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChar
     {tabs.length > 1 && <div role="tablist" aria-label="Góc nhìn biểu đồ" className="flex flex-wrap gap-2">{tabs.map(t => <button key={t.id} id={`chart-tab-${t.id}`} role="tab" aria-selected={activeTab.id === t.id} aria-controls="analysis-chart-panel" onClick={() => setView(t.id)} className={`rounded-lg border px-3 py-2 text-xs ${activeTab.id === t.id ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-600'}`}>{t.label}{t.id === 'forecast' ? '' : ` · ${t.charts.length}`}</button>)}</div>}
     <div id="analysis-chart-panel" role={tabs.length > 1 ? 'tabpanel' : undefined} aria-labelledby={tabs.length > 1 ? `chart-tab-${activeTab.id}` : undefined} className="space-y-4">
     {(view === 'forecast' || (view === 'all' && report.analysis_mission === 'forecast')) && <ForecastPanel forecasts={report.forecasts} coverage={capabilities?.data_coverage} />}
-    {view !== 'forecast' && <AnalystViews charts={visibleCharts} compact editing={editing} onChartTypeChange={onChartTypeChange} definitions={definitions} />}
+    {view !== 'forecast' && <AnalystViews charts={visibleCharts} compact editing={editing} onChartTypeChange={onChartTypeChange} definitions={definitions} onInspect={(chart, row) => { inspectTrigger.current = document.activeElement as HTMLElement; setInspect({ chart, row }); }} />}
     {view === 'all' && forecasts && report.analysis_mission !== 'forecast' && <ForecastPanel forecasts={report.forecasts} coverage={capabilities?.data_coverage} />}
     </div>
     {!selected.charts.length && !forecasts && <div role="status" className="rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600 leading-relaxed">Chưa có biểu đồ phù hợp được kiểm chứng cho kết quả này. Xem bảng dữ liệu trong tab “Dữ liệu / SQL” và mục “Kiểm chứng & nguồn”.</div>}
@@ -162,6 +193,28 @@ export const AnalystDashboard: React.FC<{ report: any; editing?: boolean; onChar
       <div className="flex flex-wrap gap-2">{onSave && <button type="button" onClick={onSave} className="rounded-lg bg-slate-900 px-3 py-2 font-semibold text-white">Lưu báo cáo</button>}
         {onExport && <button type="button" onClick={onExport} className="rounded-lg border border-slate-300 px-3 py-2 font-semibold text-slate-700">Xem & xuất Word</button>}</div>
     </div>}
+    {inspect && createPortal(<div className="fixed inset-0 z-50 flex justify-end bg-slate-950/30" onClick={() => setInspect(null)}>
+      <aside role="dialog" aria-modal="true" aria-label={`Nhóm ${inspect.row.label}`} onClick={event => event.stopPropagation()} onKeyDown={event => { if (event.key === 'Escape') setInspect(null);
+          if (event.key === 'Tab') {
+            const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('button, a[href], summary, input, select, [tabindex="0"]'));
+            const first = items[0], last = items[items.length - 1];
+            if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+            else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+          } }} className="w-full max-w-xl bg-white p-6 shadow-xl overflow-y-auto">
+        <button autoFocus onClick={() => setInspect(null)} className="float-right rounded-lg border px-3 py-1">Đóng nhóm</button>
+        <h3 className="text-lg font-semibold">{inspect.row.label}</h3>
+        <p className="mt-2 text-sm text-slate-600">{inspect.chart.title} · {inspect.chart.unit}</p>
+        <p className="mt-2 text-xs text-slate-500">Dữ liệu nhóm từ kết quả báo cáo đã duyệt. Tổng của báo cáo giữ nguyên.</p>
+        {!inspectPage && !inspectError && <p role="status" className="mt-4">Đang mở dữ liệu nhóm…</p>}
+        {inspectError && <p role="alert" className="mt-4 text-red-700">{inspectError}</p>}
+        {inspectPage && <><p className="mt-3 text-xs text-slate-500">{inspectPage.total_rows} dòng trong nhóm · Phiên bản {inspectPage.revision}</p><div className="mt-4 overflow-x-auto"><table className="text-xs"><thead><tr>{inspectPage.columns.map((column: string) => <th key={column} className="p-2 text-left">{inspectLabels[column] || column}</th>)}</tr></thead><tbody>{inspectPage.rows.map((row: any, index: number) => <tr key={index}>{inspectPage.columns.map((column: string) => <td key={column} className="p-2">{String(row[column] ?? 'Chưa có giá trị')}</td>)}</tr>)}</tbody></table></div>
+          <details className="mt-4 text-xs text-slate-500"><summary>Nguồn đối chiếu</summary><p className="break-all">Artifact: {inspectPage.artifact_id}</p><p className="break-all">Kế hoạch: {inspectPage.plan_fingerprint}</p></details></>}
+        {onGroupAnalysis && groupDraft && <div className="mt-5 border-t border-slate-200 pt-4 text-xs text-slate-600">
+          <p>Mở yêu cầu mới với đúng nhóm và kỳ này. Bạn kiểm tra phạm vi trước khi bấm Phân tích; hệ thống sẽ tính lại từ nguồn.</p>
+          <button disabled={editing} onClick={() => { onGroupAnalysis(groupDraft); setInspect(null); }} className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 font-semibold text-blue-800">Phân tích riêng nhóm</button>
+        </div>}
+      </aside>
+    </div>, document.body)}
   </div>;
 };
 

@@ -12,8 +12,11 @@ _registry_drift = None
 
 def warehouse_connection():
     import db
-    return db.psycopg2.connect(host=db.DB_HOST, port=db.DB_PORT, user=db.DB_USER,
-        password=db.DB_PASSWORD, dbname=db.DB_NAME, sslmode=db.DB_SSLMODE,
+    user,password=db.connection_credentials('READER')
+    if os.getenv('DATA_ANALYST_ENV')=='production' and not (user and password):
+        raise RuntimeError('Production warehouse reader is not configured')
+    return db.psycopg2.connect(host=db.DB_HOST, port=db.DB_PORT, user=user or db.DB_USER,
+        password=password or db.DB_PASSWORD, dbname=db.DB_NAME, sslmode=db.DB_SSLMODE,
         cursor_factory=db.psycopg2.extras.RealDictCursor, connect_timeout=2,
         options='-c default_transaction_read_only=on -c statement_timeout=1000')
 
@@ -22,6 +25,16 @@ def warehouse_probe():
     conn = warehouse_connection()
     try:
         with conn.cursor() as cur:
+            from psycopg2 import sql
+            from services.query_execution_batch import snapshot_lock_relations
+            # A successful SELECT 1 cannot prove that the report snapshot can
+            # start under the dedicated column-only reader. Core relation locks
+            # are bounded and released immediately; no business rows are read.
+            cur.execute('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY')
+            cur.execute("SET LOCAL lock_timeout='500ms'")
+            relations=snapshot_lock_relations({'silver.don_hang','silver.chi_nhanh'})
+            cur.execute(sql.SQL('LOCK TABLE {} IN ACCESS SHARE MODE').format(
+                sql.SQL(', ').join(sql.Identifier(*name.split('.')) for name in relations)))
             cur.execute('SELECT 1')
             return bool(cur.fetchone())
     finally:

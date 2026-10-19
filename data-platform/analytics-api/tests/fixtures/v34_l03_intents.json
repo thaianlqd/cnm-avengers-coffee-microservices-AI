@@ -1,0 +1,78 @@
+{
+  "source": "run18 L03 projected normalized interpreter outputs; absent clarification rendered as {} by capture logger, omitted for schema-valid replay; analytical fields unchanged",
+  "question": "So sánh doanh thu Hồ Chí Minh và Hà Nội tháng 9 năm 2026",
+  "outputs": [
+    {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "metric_ids": [
+            "revenue"
+          ],
+          "analysis_kind": "comparison",
+          "time": {
+            "kind": "month",
+            "month": 9,
+            "year": 2026
+          },
+          "availability": "requested",
+          "id": "comparison_revenue_hcm_hanoi_sep2026",
+          "derived_features": [
+            "change",
+            "change_pct",
+            "group_gap",
+            "leader"
+          ],
+          "feature_metrics": {
+            "change_pct": [
+              "revenue"
+            ],
+            "leader": [
+              "revenue"
+            ],
+            "group_gap": [
+              "revenue"
+            ],
+            "change": [
+              "revenue"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "decision": "analyze",
+      "requirements": [
+        {
+          "time": {
+            "year": 2026,
+            "month": 9,
+            "kind": "month"
+          },
+          "derived_features": [
+            "group_gap"
+          ],
+          "dimension_ids": [
+            "city"
+          ],
+          "metric_ids": [
+            "revenue"
+          ],
+          "id": "comparison_revenue_hcm_hanoi_sep2026",
+          "filters": [
+            {
+              "dimension": "city",
+              "value": [
+                "Hồ Chí Minh",
+                "Hà Nội"
+              ],
+              "operator": "in"
+            }
+          ],
+          "analysis_kind": "comparison",
+          "availability": "requested"
+        }
+      ]
+    }
+  ]
+}

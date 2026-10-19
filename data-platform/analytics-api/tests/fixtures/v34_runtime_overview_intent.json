@@ -1,0 +1,532 @@
+{
+  "question": "Tình hình doanh thu tháng 9 năm 2026 thế nào?",
+  "reference": "2026-10-18",
+  "intent": {
+    "decision": "analyze",
+    "requirements": [
+      {
+        "id": "req_1",
+        "goal": "Tổng doanh thu tháng 9 năm 2026",
+        "domain_id": null,
+        "lens_hint": null,
+        "supporting_for": null,
+        "metric_ids": [
+          "revenue"
+        ],
+        "dimension_ids": [],
+        "analysis_kind": "aggregate",
+        "filters": [],
+        "time": {
+          "kind": "month",
+          "mode": null,
+          "year": 2026,
+          "month": 9,
+          "quarter": null,
+          "day": null,
+          "start": null,
+          "end": null,
+          "amount": null,
+          "unit": null
+        },
+        "ranking": null,
+        "granularity": null,
+        "derived_features": [
+          "scalar"
+        ],
+        "feature_metrics": {},
+        "forecast": null,
+        "availability": "requested",
+        "reason": null
+      },
+      {
+        "id": "support_10fe69d54c38481864f76838",
+        "goal": "Đối chiếu bổ sung · Chi nhánh",
+        "domain_id": "orders",
+        "lens_hint": null,
+        "supporting_for": "req_1",
+        "metric_ids": [
+          "revenue"
+        ],
+        "dimension_ids": [
+          "store"
+        ],
+        "analysis_kind": "distribution",
+        "filters": [],
+        "time": {
+          "kind": "month",
+          "mode": null,
+          "year": 2026,
+          "month": 9,
+          "quarter": null,
+          "day": null,
+          "start": null,
+          "end": null,
+          "amount": null,
+          "unit": null
+        },
+        "ranking": null,
+        "granularity": null,
+        "derived_features": [],
+        "feature_metrics": {},
+        "forecast": null,
+        "availability": "requested",
+        "reason": null
+      },
+      {
+        "id": "support_dba554bee44ecbc72bb1587d",
+        "goal": "Đối chiếu bổ sung · Hình thức nhận hàng",
+        "domain_id": "orders",
+        "lens_hint": null,
+        "supporting_for": "req_1",
+        "metric_ids": [
+          "revenue"
+        ],
+        "dimension_ids": [
+          "order_type"
+        ],
+        "analysis_kind": "distribution",
+        "filters": [],
+        "time": {
+          "kind": "month",
+          "mode": null,
+          "year": 2026,
+          "month": 9,
+          "quarter": null,
+          "day": null,
+          "start": null,
+          "end": null,
+          "amount": null,
+          "unit": null
+        },
+        "ranking": null,
+        "granularity": null,
+        "derived_features": [],
+        "feature_metrics": {},
+        "forecast": null,
+        "availability": "requested",
+        "reason": null
+      },
+      {
+        "id": "support_ff2677afb4de20dc6b3b2317",
+        "goal": "Đối chiếu bổ sung · Tỉnh/thành trong dữ liệu",
+        "domain_id": "orders",
+        "lens_hint": null,
+        "supporting_for": "req_1",
+        "metric_ids": [
+          "revenue"
+        ],
+        "dimension_ids": [
+          "city"
+        ],
+        "analysis_kind": "distribution",
+        "filters": [],
+        "time": {
+          "kind": "month",
+          "mode": null,
+          "year": 2026,
+          "month": 9,
+          "quarter": null,
+          "day": null,
+          "start": null,
+          "end": null,
+          "amount": null,
+          "unit": null
+        },
+        "ranking": null,
+        "granularity": null,
+        "derived_features": [],
+        "feature_metrics": {},
+        "forecast": null,
+        "availability": "requested",
+        "reason": null
+      },
+      {
+        "id": "support_687477f5a90a7911acd7ce93",
+        "goal": "Đối chiếu bổ sung · Phương thức thanh toán",
+        "domain_id": "orders",
+        "lens_hint": null,
+        "supporting_for": "req_1",
+        "metric_ids": [
+          "revenue"
+        ],
+        "dimension_ids": [
+          "payment_method"
+        ],
+        "analysis_kind": "distribution",
+        "filters": [],
+        "time": {
+          "kind": "month",
+          "mode": null,
+          "year": 2026,
+          "month": 9,
+          "quarter": null,
+          "day": null,
+          "start": null,
+          "end": null,
+          "amount": null,
+          "unit": null
+        },
+        "ranking": null,
+        "granularity": null,
+        "derived_features": [],
+        "feature_metrics": {},
+        "forecast": null,
+        "availability": "requested",
+        "reason": null
+      },
+      {
+        "id": "support_c4f96ae98f51180a42acbcf3",
+        "goal": "Chỉ số toàn phạm vi",
+        "domain_id": null,
+        "lens_hint": null,
+        "supporting_for": "req_1",
+        "metric_ids": [
+          "aov",
+          "order_cancellation_rate",
+          "revenue"
+        ],
+        "dimension_ids": [],
+        "analysis_kind": "aggregate",
+        "filters": [],
+        "time": {
+          "kind": "month",
+          "mode": null,
+          "year": 2026,
+          "month": 9,
+          "quarter": null,
+          "day": null,
+          "start": null,
+          "end": null,
+          "amount": null,
+          "unit": null
+        },
+        "ranking": null,
+        "granularity": null,
+        "derived_features": [
+          "scalar"
+        ],
+        "feature_metrics": {},
+        "forecast": null,
+        "availability": "requested",
+        "reason": null
+      },
+      {
+        "id": "support_7c202956757b0944d01a1ae1",
+        "goal": "Diễn biến trong phạm vi đã chọn",
+        "domain_id": null,
+        "lens_hint": null,
+        "supporting_for": "req_1",
+        "metric_ids": [
+          "revenue"
+        ],
+        "dimension_ids": [],
+        "analysis_kind": "trend",
+        "filters": [],
+        "time": {
+          "kind": "month",
+          "mode": null,
+          "year": 2026,
+          "month": 9,
+          "quarter": null,
+          "day": null,
+          "start": null,
+          "end": null,
+          "amount": null,
+          "unit": null
+        },
+        "ranking": null,
+        "granularity": "week",
+        "derived_features": [],
+        "feature_metrics": {},
+        "forecast": null,
+        "availability": "requested",
+        "reason": null
+      }
+    ],
+    "clarification": null
+  },
+  "queries": [
+    {
+      "id": "q_0cc227fd17bcf1ef431a8361",
+      "metrics": [
+        "revenue"
+      ],
+      "group_by": [],
+      "filters": [],
+      "project": [],
+      "time": {
+        "kind": "range",
+        "mode": null,
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": "2026-09-01",
+        "end": "2026-09-30",
+        "amount": null,
+        "unit": null
+      },
+      "order_by": [],
+      "limit": 100,
+      "role": "requested",
+      "parent_id": null,
+      "purpose": "answer",
+      "lens_id": "channel_mix",
+      "population_relation": "same",
+      "replaces": null,
+      "changed_fields": [],
+      "subject": "orders",
+      "operation": "aggregate",
+      "ranking": null,
+      "granularity": "day"
+    },
+    {
+      "id": "q_2b18d6bf892a9d2d300a3463",
+      "metrics": [
+        "revenue"
+      ],
+      "group_by": [],
+      "filters": [],
+      "project": [],
+      "time": {
+        "kind": "range",
+        "mode": null,
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": "2026-09-01",
+        "end": "2026-09-30",
+        "amount": null,
+        "unit": null
+      },
+      "order_by": [],
+      "limit": 100,
+      "role": "supporting",
+      "parent_id": "q_0cc227fd17bcf1ef431a8361",
+      "purpose": "context",
+      "lens_id": "channel_mix",
+      "population_relation": "related",
+      "replaces": null,
+      "changed_fields": [],
+      "subject": "orders",
+      "operation": "trend",
+      "ranking": null,
+      "granularity": "week"
+    },
+    {
+      "id": "q_361c352055a4d58c879651a1",
+      "metrics": [
+        "revenue"
+      ],
+      "group_by": [
+        "payment_method"
+      ],
+      "filters": [],
+      "project": [],
+      "time": {
+        "kind": "range",
+        "mode": null,
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": "2026-09-01",
+        "end": "2026-09-30",
+        "amount": null,
+        "unit": null
+      },
+      "order_by": [],
+      "limit": 100,
+      "role": "supporting",
+      "parent_id": "q_0cc227fd17bcf1ef431a8361",
+      "purpose": "context",
+      "lens_id": "channel_mix",
+      "population_relation": "related",
+      "replaces": null,
+      "changed_fields": [],
+      "subject": "orders",
+      "operation": "distribution",
+      "ranking": null,
+      "granularity": "day"
+    },
+    {
+      "id": "q_5cc803e984b297c989a4ce8f",
+      "metrics": [
+        "revenue"
+      ],
+      "group_by": [
+        "store"
+      ],
+      "filters": [],
+      "project": [],
+      "time": {
+        "kind": "range",
+        "mode": null,
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": "2026-09-01",
+        "end": "2026-09-30",
+        "amount": null,
+        "unit": null
+      },
+      "order_by": [],
+      "limit": 100,
+      "role": "supporting",
+      "parent_id": "q_0cc227fd17bcf1ef431a8361",
+      "purpose": "context",
+      "lens_id": null,
+      "population_relation": "related",
+      "replaces": null,
+      "changed_fields": [],
+      "subject": "orders",
+      "operation": "distribution",
+      "ranking": null,
+      "granularity": "day"
+    },
+    {
+      "id": "q_ae2d228ea6c8cdd6f8a39ecd",
+      "metrics": [
+        "revenue"
+      ],
+      "group_by": [
+        "order_type"
+      ],
+      "filters": [],
+      "project": [],
+      "time": {
+        "kind": "range",
+        "mode": null,
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": "2026-09-01",
+        "end": "2026-09-30",
+        "amount": null,
+        "unit": null
+      },
+      "order_by": [],
+      "limit": 100,
+      "role": "supporting",
+      "parent_id": "q_0cc227fd17bcf1ef431a8361",
+      "purpose": "context",
+      "lens_id": "channel_mix",
+      "population_relation": "related",
+      "replaces": null,
+      "changed_fields": [],
+      "subject": "orders",
+      "operation": "distribution",
+      "ranking": null,
+      "granularity": "day"
+    },
+    {
+      "id": "q_efc9e4e463ed0c9bff79cdb7",
+      "metrics": [
+        "aov",
+        "revenue"
+      ],
+      "group_by": [],
+      "filters": [],
+      "project": [],
+      "time": {
+        "kind": "range",
+        "mode": null,
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": "2026-09-01",
+        "end": "2026-09-30",
+        "amount": null,
+        "unit": null
+      },
+      "order_by": [],
+      "limit": 100,
+      "role": "supporting",
+      "parent_id": "q_0cc227fd17bcf1ef431a8361",
+      "purpose": "context",
+      "lens_id": "sales_overview",
+      "population_relation": "related",
+      "replaces": null,
+      "changed_fields": [],
+      "subject": "orders",
+      "operation": "aggregate",
+      "ranking": null,
+      "granularity": "day"
+    },
+    {
+      "id": "q_f1e84820cc23b9c8f9393fc1",
+      "metrics": [
+        "order_cancellation_rate"
+      ],
+      "group_by": [],
+      "filters": [],
+      "project": [],
+      "time": {
+        "kind": "range",
+        "mode": null,
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": "2026-09-01",
+        "end": "2026-09-30",
+        "amount": null,
+        "unit": null
+      },
+      "order_by": [],
+      "limit": 100,
+      "role": "supporting",
+      "parent_id": "q_0cc227fd17bcf1ef431a8361",
+      "purpose": "context",
+      "lens_id": "order_fulfilment",
+      "population_relation": "related",
+      "replaces": null,
+      "changed_fields": [],
+      "subject": "orders",
+      "operation": "aggregate",
+      "ranking": null,
+      "granularity": "day"
+    },
+    {
+      "id": "q_fe003823bb57569d22e46b0e",
+      "metrics": [
+        "revenue"
+      ],
+      "group_by": [
+        "city"
+      ],
+      "filters": [],
+      "project": [],
+      "time": {
+        "kind": "range",
+        "mode": null,
+        "year": null,
+        "month": null,
+        "quarter": null,
+        "day": null,
+        "start": "2026-09-01",
+        "end": "2026-09-30",
+        "amount": null,
+        "unit": null
+      },
+      "order_by": [],
+      "limit": 100,
+      "role": "supporting",
+      "parent_id": "q_0cc227fd17bcf1ef431a8361",
+      "purpose": "context",
+      "lens_id": "sales_trend",
+      "population_relation": "related",
+      "replaces": null,
+      "changed_fields": [],
+      "subject": "orders",
+      "operation": "distribution",
+      "ranking": null,
+      "granularity": "day"
+    }
+  ],
+  "basis": "Normalized successful user proposal from 2026-10-18; no session, account, raw provider response or warehouse rows"
+}

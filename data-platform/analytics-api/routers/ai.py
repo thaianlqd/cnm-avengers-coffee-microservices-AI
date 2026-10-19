@@ -1,6 +1,8 @@
 """Thin HTTP boundary for the Data Platform AI analysis contract."""
 
 import logging
+import json
+import math
 import asyncio
 import time
 from threading import Event
@@ -80,7 +82,8 @@ def cancel_analysis_job(job_id: str, request: Request, response: Response):
 @router.get('/sessions/{session_id}/results/{query_id}')
 def result_page(session_id: str, query_id: str, request: Request, response: Response,
                 offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=200),
-                dimension: str = Query(None), value: str = Query(None)):
+                dimension: str = Query(None), value: str = Query(None),
+                filters: str | None = None, revision: int | None = None):
     """Page/filter immutable approved results; never accept SQL or arbitrary IDs."""
     from services.session_service import get_session
     from services.result_artifact_store import artifact_store
@@ -88,12 +91,28 @@ def result_page(session_id: str, query_id: str, request: Request, response: Resp
     session = get_session(session_id)
     if not session or session.owner_id != owner or not session.approved:
         raise HTTPException(404, 'Phiên phân tích đã hết hạn hoặc không thuộc trình duyệt này.')
+    if revision is not None and revision != session.revision:
+        raise HTTPException(409, 'Báo cáo đã thay đổi; hãy mở lại kết quả hiện tại.')
     artifact = session.agent_artifacts.get(query_id)
     if not artifact or not artifact.result_ref:
         raise HTTPException(404, 'Không tìm thấy kết quả trong kế hoạch đã duyệt.')
     try:
-        filters = {dimension:value} if dimension is not None and value is not None else {}
-        page = artifact_store().page(artifact.result_ref, offset, limit, filters)
+        selected = {dimension:value} if dimension is not None and value is not None else {}
+        if filters is not None:
+            try:
+                if len(filters) > 4096 or selected:
+                    raise ValueError()
+                selected = json.loads(filters)
+                if not isinstance(selected, dict) or not 1 <= len(selected) <= 8:
+                    raise ValueError()
+                for key, item in selected.items():
+                    if not isinstance(key, str) or len(key) > 64 or type(item) not in {str, int, float, type(None)}:
+                        raise ValueError()
+                    if isinstance(item, str) and len(item) > 512 or isinstance(item, float) and not math.isfinite(item):
+                        raise ValueError()
+            except (ValueError, TypeError):
+                raise HTTPException(400, 'Khóa nhóm không hợp lệ.') from None
+        page = artifact_store().page(artifact.result_ref, offset, limit, selected)
         page['revision'] = session.revision
         page['catalog_fingerprint'] = session.schema_fingerprint
         page['resolved_plan_fingerprint'] = session.plan_fingerprint
@@ -123,22 +142,32 @@ def _invoke(action, payload, owner_id=None):
         )
     pipeline = AnalysisPipeline(owner_id=owner_id)
     try:
+        from services.access_policy import active_principal,authorize_meaning
+        if active_principal.get() is not None:
+            from services.request_anchors import request_anchors
+            question=getattr(payload,'prompt',None) or getattr(payload,'feedback','')
+            catalog=pipeline.catalog()
+            authorize_meaning(question,catalog,analysis_scope=getattr(payload,'analysis_scope',None),
+                              anchors=request_anchors(question,catalog,{}))
         if action == "generate" and not payload.session_id:
             raise AnalysisError("approval_required", "Approve a server proposal before execution")
         return getattr(pipeline, action)(payload)
+    except HTTPException:
+        raise
     except Exception as error:
+        from services.telemetry import failure_diagnostic
+        failure_diagnostic(error,action=action)
         pipeline.semantic_info['total_ms']=round((time.perf_counter()-pipeline.started)*1000,2)
         failure = safe_failure(error, pipeline.calls, pipeline.semantic_info)
         logger.warning(
-            "Analysis rejected action=%s category=%s stage=%s provider_calls=%s root_contract_issues=%s contract_issues=%s issue_history=%s resolver_diagnostic=%s",
+            "Analysis rejected request_id=%s action=%s category=%s stage=%s provider_calls=%s root_issue_count=%s issue_count=%s",
+            pipeline.semantic_info.get('request_id'),
             action,
             failure["diagnostics"]["error_category"],
             pipeline.semantic_info.get('failure_stage'),
             pipeline.semantic_info.get('provider_call_count',len(pipeline.calls)),
-            pipeline.semantic_info.get('root_contract_issues',[]),
-            pipeline.semantic_info.get("contract_issues", []),
-            pipeline.semantic_info.get('semantic_issue_history',[]),
-            pipeline.semantic_info.get('resolver_diagnostic',{}),
+            len(pipeline.semantic_info.get('root_contract_issues',[])),
+            len(pipeline.semantic_info.get("contract_issues", [])),
         )
         failure["diagnostics"].update(
             {
@@ -304,6 +333,13 @@ def ai_risk_watch(payload: AiRiskWatchRequest, request: Request = None, response
 def ai_scope_values(dimension: str = Query(min_length=1, max_length=64), search: str = Query(min_length=2, max_length=80)):
     """Explicit picker search, parameterized/read-only; no analytical inference."""
     try:
+        from services.access_policy import active_principal,current_principal
+        if active_principal.get() is not None:
+            principal=current_principal(required=True)
+            if not principal.national:
+                if dimension!='store_id':raise HTTPException(403,'Chỉ có thể tìm mã cửa hàng trong phạm vi được cấp.')
+                values=[value for value in principal.store_ids if search.casefold() in value.casefold()][:8]
+                return {'dimension':dimension,'values':[{'value':v,'label':v} for v in values]}
         catalog = AnalysisCatalog(get_local_metadata())
         scopes = DomainIntelligence(catalog).capabilities()["scope_types"]
         if not any(s["id"] == dimension and s["searchable"] for s in scopes):

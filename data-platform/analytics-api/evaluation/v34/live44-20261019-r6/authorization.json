@@ -1,0 +1,12 @@
+{
+  "approved_total": 480,
+  "prior_reserved": 413,
+  "maximum_new_reservations": 67,
+  "user_reply": "duyệt luôn nhé bạn ơi, hơn tí cũng được miễn sao là Done xong PLAN (đáp lại đề xuất trần 480, 2026-10-19)",
+  "case_count": 44,
+  "useful_denominator": 40,
+  "full_jobs_execute": true,
+  "scope": "Existing Google Gemini primary/secondary; questions and governed semantic metadata; no raw rows/PII",
+  "ledger_sha256_before": "242bff7d37addb4c253c744e20d906431747d916bf6fc6ae475c227852c2edef",
+  "case_sha256": "5fc5eb47fd515d314c5d1d7186a9306c5c262bfac4dca3c1d1ccc206d29bda2c"
+}

@@ -1,6 +1,9 @@
 """Server-owned data/transport budgets. Estimates never change denominators."""
 import logging
 import os
+from contextlib import contextmanager
+from contextvars import ContextVar
+from threading import Lock
 from dataclasses import asdict, dataclass
 from datetime import date
 from math import prod
@@ -38,6 +41,106 @@ class AnalyticalCapacityContract:
             except ValueError:
                 raise AnalysisError('capacity_configuration', 'Invalid server capacity contract') from None
         return cls(**values)
+
+
+request_sql_budget=ContextVar('analysis_request_sql_budget',default=None)
+executor_sql_attempt=ContextVar('executor_sql_attempt',default=False)
+reader_sql_kind=ContextVar('reader_sql_kind',default='direct_reader')
+
+
+@contextmanager
+def reader_query_kind(kind):
+    if kind not in {'metadata','direct_reader'}:raise ValueError('Unknown reader SQL kind')
+    token=reader_sql_kind.set(kind)
+    try:yield
+    finally:reader_sql_kind.reset(token)
+
+
+class QueryBudget:
+    """One shared reservation object across a request/job's SQL worker contexts.
+
+    EXPLAIN consumes a separate physical attempt. Instrumented reader cursors
+    include metadata and direct BI queries, excluding transaction controls.
+    The existing operation/row/artifact contracts own these derived limits.
+    """
+    def __init__(self,contract=None):
+        self.contract=contract
+        self.limit=2*contract.operations+3 if contract is not None else None
+        self.lock=Lock();self.records={};self.rows=0;self.bytes=0;self.limited=False
+
+    def reserve(self,kind):
+        if kind not in {'execute','dry_run','metadata','direct_reader'}:raise ValueError('Unknown SQL attempt kind')
+        from services.analysis_catalog import AnalysisError
+        with self.lock:
+            if self.contract is None:
+                # Lazy validation keeps liveness/auth/readiness available when
+                # configuration is invalid, while SQL still fails before I/O.
+                self.contract=AnalyticalCapacityContract.from_env()
+                self.limit=2*self.contract.operations+3
+            if self.limited or len(self.records)>=self.limit:
+                self.limited=True
+                raise AnalysisError('capacity_requires_choice','Physical SQL attempt allowance exhausted')
+            identity=len(self.records)+1
+            self.records[identity]={'kind':kind,'status':'reserved'}
+            return identity
+
+    def finish(self,identity,*,failed=False,rows=0,bytes_=0):
+        with self.lock:
+            record=self.records[identity]
+            if record['status']!='reserved':raise ValueError('SQL reservation already finalized')
+            record['status']='failed' if failed else 'successful'
+            self._consume(rows,bytes_)
+
+    def _consume(self,rows,bytes_):
+        from services.analysis_catalog import AnalysisError
+        self.rows+=rows;self.bytes+=bytes_
+        if self.rows>self.contract.execution_rows*self.contract.operations or self.bytes>self.contract.artifact_bytes*self.contract.operations:
+            self.limited=True
+            raise AnalysisError('capacity_requires_choice','Physical result population exceeds request capacity')
+
+    def record_fetch(self,identity,*,failed=False,rows=0,bytes_=0):
+        with self.lock:
+            record=self.records[identity]
+            if record['status']=='reserved':raise ValueError('SQL execute must finish before fetch')
+            if failed:
+                record['status']='failed'
+                if not rows and not bytes_:return
+            try:self._consume(rows,bytes_)
+            except BaseException:
+                record['status']='failed'
+                raise
+
+    def fetch_allowance(self):
+        with self.lock:
+            return max(0,self.contract.execution_rows*self.contract.operations-self.rows)
+
+    def snapshot(self):
+        with self.lock:
+            records=list(self.records.values())
+            return {'attempted':len(records),'execute_attempts':sum(r['kind']=='execute' for r in records),
+                'dry_run_attempts':sum(r['kind']=='dry_run' for r in records),
+                'metadata_attempts':sum(r['kind']=='metadata' for r in records),
+                'direct_reader_attempts':sum(r['kind']=='direct_reader' for r in records),
+                'successful':sum(r['status']=='successful' for r in records),'failed':sum(r['status']=='failed' for r in records),
+                'reserved':sum(r['status']=='reserved' for r in records),'limit_attempts':self.limit,
+                'fetched_rows':self.rows,'fetched_bytes':self.bytes,'limited':self.limited,
+                'coverage':'Validated executor plus instrumented API reader/source-metadata cursors; transaction controls and writer/pipeline connections excluded'}
+
+
+@contextmanager
+def query_attempt(kind):
+    budget=request_sql_budget.get()
+    if budget is None:
+        yield None
+        return
+    identity=budget.reserve(kind);observed={}
+    token=executor_sql_attempt.set(True)
+    try:yield observed
+    except BaseException:
+        budget.finish(identity,failed=True)
+        raise
+    else:budget.finish(identity,rows=observed.get('rows',0),bytes_=observed.get('bytes',0))
+    finally:executor_sql_attempt.reset(token)
 
 
 def period_count(period, granularity):

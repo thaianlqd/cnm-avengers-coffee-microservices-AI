@@ -1,0 +1,191 @@
+name: Data Platform offline gates
+
+on:
+  pull_request:
+    paths: ['data-platform/**', 'docker-compose.data.yml', '.claude/scripts/dp-*', '.github/workflows/data-platform-ci.yml', '.github/gitleaks-data-platform.toml']
+  push:
+    branches: [branch_thaian]
+    paths: ['data-platform/**', 'docker-compose.data.yml', '.claude/scripts/dp-*', '.github/workflows/data-platform-ci.yml', '.github/gitleaks-data-platform.toml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: data-platform-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secret-scan:
+    name: DP source and evidence / Gitleaks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage source and evidence without deployment credentials
+        run: python3 data-platform/analytics-api/tools/stage_release_scan.py --out /tmp/dp-scan
+      - name: Scan locally with reviewed default rules; redact every finding
+        run: |
+          docker run --rm --network none -v /tmp/dp-scan:/scan:ro \
+            ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f \
+            dir /scan --config /scan/.github/gitleaks-data-platform.toml --redact=100 --no-banner --exit-code=1 --ignore-gitleaks-allow
+      - name: Scanner positive control (synthetic inactive token must fail)
+        run: |
+          mkdir /tmp/dp-scan-positive
+          python3 -c 'from pathlib import Path; import hashlib; Path("/tmp/dp-scan-positive/fixture.txt").write_text("token = \"" + "ghp_" + hashlib.sha256(b"inactive-local-scanner-control").hexdigest()[:36] + "\"\n")'
+          set +e
+          docker run --rm --network none -v /tmp/dp-scan-positive:/scan:ro \
+            -v "$PWD/.github/gitleaks-data-platform.toml:/config.toml:ro" \
+            ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f \
+            dir /scan --config /config.toml --redact=100 --no-banner --exit-code=42 --ignore-gitleaks-allow
+          result=$?
+          set -e
+          test "$result" -eq 42
+
+  backend-offline:
+    name: DP backend / semantic offline
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 2}
+      - name: Build isolated API test image
+        run: docker build -t avengers-dp-ci data-platform/analytics-api
+      - name: Full backend (network disabled, no credentials)
+        run: |
+          mkdir -p /tmp/dp-ci
+          docker run --rm --network none -e AI_OFFLINE=1 -e PYTHONDONTWRITEBYTECODE=1 \
+            -v "$PWD/data-platform/analytics-api:/app:ro" avengers-dp-ci \
+            python -m tools.run_tests_v29 > /tmp/dp-ci/backend.log 2>&1 || { tail -60 /tmp/dp-ci/backend.log; exit 1; }
+          tail -5 /tmp/dp-ci/backend.log
+      - name: Offline semantic evaluator (old IDs retained)
+        run: |
+          docker run --rm --network none -e AI_OFFLINE=1 -e DATA_ANALYST_ENV=development \
+            -v "$PWD/data-platform/analytics-api:/app:ro" -v /tmp/dp-ci:/evidence \
+            avengers-dp-ci python -m evals.semantic_eval_v30 --mode offline --out /evidence/semantic.json
+      - name: Authored reference meanings through resolver and compiler (zero I/O)
+        run: |
+          docker run --rm --network none -e AI_OFFLINE=1 -e DATA_ANALYST_ENV=development \
+            -e DATA_ANALYST_SESSION_STORE=memory -e DATA_ANALYST_ARTIFACT_STORE=memory \
+            -v "$PWD/data-platform/analytics-api:/app:ro" -v /tmp/dp-ci:/evidence \
+            avengers-dp-ci python -m evals.semantic_reference_eval_v34 --out /evidence/semantic-reference.json
+      - name: Generated metadata and architecture identity
+        run: |
+          python3 data-platform/analytics-api/tools/regenerate_pipeline_metadata.py --check
+          python3 data-platform/analytics-api/tools/architecture_inventory.py --out /tmp/dp-ci/architecture.json
+          git diff --check
+      - name: Scan generated backend evidence before upload
+        id: scan
+        if: always()
+        run: bash .claude/scripts/dp-scan-artifacts.sh /tmp/dp-ci
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.scan.outcome == 'success'
+        with: {name: dp-backend-offline, path: /tmp/dp-ci, retention-days: 14}
+
+  frontend-browser:
+    name: DP web / types / build / mocked browser
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run: {working-directory: data-platform/web-ui}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: data-platform/web-ui/package-lock.json
+      - run: npm ci
+      - run: node --test src/utils/*.test.mjs
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: Scan browser evidence and served build before upload
+        id: scan
+        if: always()
+        run: bash ../../.claude/scripts/dp-scan-artifacts.sh test-results dist
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.scan.outcome == 'success'
+        with:
+          name: dp-web-browser
+          path: |
+            data-platform/web-ui/test-results
+            data-platform/web-ui/dist
+          retention-days: 14
+
+  http-fixture-browser:
+    name: DP browser / actual HTTP fixture (zero external I/O)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      V33_API_TARGET: http://127.0.0.1:18765
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: data-platform/web-ui/package-lock.json
+      - run: docker build -t avengers-dp-http-ci data-platform/analytics-api
+      - name: Start isolated HTTP process with no production configuration
+        run: |
+          mkdir -p /tmp/dp-http-ci
+          DP_FIXTURE_IMAGE=avengers-dp-http-ci bash .claude/scripts/dp-fixture-http.sh > /tmp/dp-http-ci/server.log 2>&1 &
+          for attempt in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:18765/health > /tmp/dp-http-ci/health.json; then
+              python3 -c 'import json; d=json.load(open("/tmp/dp-http-ci/health.json")); assert d["fixture"] is True and d["external_http"] == 0'
+              exit 0
+            fi
+            sleep 1
+          done
+          echo 'Required HTTP fixture unavailable'; exit 1
+      - run: npm ci
+        working-directory: data-platform/web-ui
+      - run: npx playwright install --with-deps chromium
+        working-directory: data-platform/web-ui
+      - run: npm run test:e2e -- --project=api
+        working-directory: data-platform/web-ui
+      - name: Verify fixture transport counters
+        run: |
+          curl --fail --silent http://127.0.0.1:18765/api/test/metrics > /tmp/dp-http-ci/counters.json
+          python3 -c 'import json; d=json.load(open("/tmp/dp-http-ci/counters.json")); assert d["external_http"] == 0 and d["sql_queries"] > 0'
+      - name: Stop only the isolated HTTP fixture
+        if: always()
+        run: docker stop v33-followup-fixture
+      - name: Scan HTTP fixture evidence before upload
+        id: scan
+        if: always()
+        run: bash .claude/scripts/dp-scan-artifacts.sh /tmp/dp-http-ci data-platform/web-ui/test-results
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.scan.outcome == 'success'
+        with:
+          name: dp-http-fixture-browser
+          path: |
+            /tmp/dp-http-ci
+            data-platform/web-ui/test-results
+          retention-days: 14
+
+  pipeline-fixtures:
+    name: DP pipeline / PostgreSQL / MinIO / Kafka fixtures
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unit contracts (network none)
+        run: bash .claude/scripts/dp-pipeline-test.sh unit
+      - name: Actual isolated data integrations
+        run: bash .claude/scripts/dp-pipeline-test.sh integration
+      - name: Stop fixture services (preserve diagnostics; no production resources)
+        if: always()
+        run: bash .claude/scripts/dp-pipeline-test.sh stop
+      - name: Scan data fixture evidence before upload
+        id: scan
+        if: always()
+        run: bash .claude/scripts/dp-scan-artifacts.sh /tmp/v34-pipeline-checks
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.scan.outcome == 'success'
+        with: {name: dp-pipeline-fixtures, path: /tmp/v34-pipeline-checks, retention-days: 14}
+
+# No paid-provider workflow is enabled here. Live release acceptance requires a
+# separately approved TOTAL ceiling, corpus/destination and persistent ledger.
+# Branch required checks are an admin setting, not established by this file.

@@ -220,6 +220,8 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
     periods, forecast_requested = [], False
     if question.strip() and not blocked_length:
         anchors = request_anchors(question, catalog, {"required_filters": scope.get("filters") or []})
+        from services.access_policy import authorize_meaning
+        authorize_meaning(question,catalog,analysis_scope=analysis_scope,anchors=anchors)
         if anchors["scope_resolution"]["state"] == "needs_clarification":
             findings.append(finding("block", "scope_conflict", anchors["scope_resolution"]["message"]))
         metrics = r["metrics"]
@@ -268,11 +270,11 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
                                     candidates=[{"id": m, "label": metrics[m]["business_name"]} for m in a["candidate_ids"]]))
 
         # --- Unsupported concepts (governed) ---
-        constrained = {tuple(a["candidate_ids"]) for a in anchors.get("capability_constraints", [])}
+        from services.request_anchors import capability_is_constraint
         for id, concept in unsupported_concepts(r).items():
             hits = _mentions(text, concept["aliases"])
-            hits=[h for h in hits if not re.search(r'\b(?:khong|chua|dung)(?:\s+can)?\s+(?:tu\s+)?(?:tinh|ket luan|suy ra|danh gia)(?:\s+(?:ve|chi so|hieu qua))*\s*$',text[max(0,h[0]-100):h[0]])]
-            if not hits or (id,) in constrained:
+            hits=[h for h in hits if not capability_is_constraint(text,h[0])]
+            if not hits:
                 continue
             nearest = [{"id": m, "label": metrics[m]["business_name"]} for m in concept["nearest_metrics"]]
             span = _span(index, hits[0][0], hits[0][1])
@@ -299,6 +301,12 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
             understood["time"] = {"source": "default", "start": None, "end": None,
                                   "label": "Theo câu hỏi; nếu câu hỏi không nêu thời gian, hệ thống dùng toàn bộ dữ liệu hiện có."}
         sources = list(dict.fromkeys(metrics[m]["source"] for m in metric_ids))
+        for source in sources:
+            state=(((coverage or {}).get('data_health') or {}).get('views') or {}).get(source,{})
+            if state.get('status')=='blocked':
+                findings.append(finding('block','required_source_blocked',
+                    'Nguồn dữ liệu cần thiết đang bị chặn do lỗi tải, schema hoặc chất lượng; vui lòng thử lại sau khi nguồn được xử lý.',
+                    source=source,reasons=state.get('reasons',[])))
         low, high, facts = coverage_for(coverage, sources)
         for source in sources:
             observed=((coverage or {}).get('facts') or {}).get(source)
@@ -512,7 +520,7 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
                  {"label": f"Viết lại câu hỏi cho {mission['label']}", "kind": "rewrite_for_mission", "mission": mission["id"]}],
                 selected=mission["id"], inferred=inferred["id"]))
             state = state or "NEEDS_INPUT"
-        if mission and mission["id"] == "risk_watch" and understood["metrics"]:
+        if ((mission and mission['id']=='risk_watch') or (not mission and inferred and inferred['id']=='risk_watch')) and understood['metrics']:
             risk_metrics = {s["metric"] for s in r.get("risk_signals", [])} | {s["observation_metric"] for s in r.get("risk_signals", []) if s.get("observation_metric")}
             if not any(m["id"] in risk_metrics for m in understood["metrics"]):
                 findings.append(finding("block", "risk_signal_required",
@@ -520,7 +528,7 @@ def run(question, time_range=None, analysis_scope=None, analysis_mission=None, r
                     [{"label": f"Chuyển sang {missions_by_id[t]['label']}", "kind": "switch_mission", "mission": t} for t in ("overview", "trend") if t in missions_by_id],
                     metrics=[m["id"] for m in understood["metrics"]]))
                 state = state or "NEEDS_INPUT"
-            elif any(m['id'] not in risk_metrics for m in understood['metrics']):
+            elif mission and any(m['id'] not in risk_metrics for m in understood['metrics']):
                 findings.append(finding('block','risk_mixed_roles',
                     'Yêu cầu gồm tín hiệu rủi ro và chỉ số kinh doanh. Chuyển sang Câu hỏi tự do để giữ đủ cả hai phần phân tích.',
                     [{'label':'Phân tích đầy đủ trong Câu hỏi tự do','kind':'switch_mission','mission':None}]))

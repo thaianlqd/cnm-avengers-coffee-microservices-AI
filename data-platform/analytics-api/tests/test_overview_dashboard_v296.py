@@ -32,7 +32,11 @@ def expanded():
 
 
 class OverviewDashboardTests(f.unittest.TestCase):
-    setUp=f.HybridTests.setUp
+    def setUp(self):
+        f.HybridTests.setUp(self)
+        from services import provider_credential_router
+        provider_credential_router.reset_for_tests()
+        self.addCleanup(provider_credential_router.reset_for_tests)
     pipeline=f.HybridTests.pipeline
     request=f.HybridTests.request
 

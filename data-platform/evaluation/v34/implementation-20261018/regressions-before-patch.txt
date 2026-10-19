@@ -1,0 +1,80 @@
+EEEF.E.FFF.
+======================================================================
+ERROR: test_administrator_sql_still_enforces_silver_and_sensitive_policy (tests.test_v34_query_security.QuerySecurityTests.test_administrator_sql_still_enforces_silver_and_sensitive_policy) (sql='SELECT * FROM identity.nguoi_dung')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_query_security.py", line 33, in test_administrator_sql_still_enforces_silver_and_sensitive_policy
+    query.run_custom_query(SqlQueryRequest(sql=sql), request=request)
+TypeError: run_custom_query() got an unexpected keyword argument 'request'
+
+======================================================================
+ERROR: test_administrator_sql_still_enforces_silver_and_sensitive_policy (tests.test_v34_query_security.QuerySecurityTests.test_administrator_sql_still_enforces_silver_and_sensitive_policy)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_query_security.py", line 34, in test_administrator_sql_still_enforces_silver_and_sensitive_policy
+    self.assertEqual(caught.exception.status_code, 400)
+                     ^^^^^^^^^^^^^^^^
+AttributeError: '_AssertRaisesContext' object has no attribute 'exception'
+
+======================================================================
+ERROR: test_authorized_allowed_sql_uses_existing_bounded_executor (tests.test_v34_query_security.QuerySecurityTests.test_authorized_allowed_sql_uses_existing_bounded_executor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_query_security.py", line 43, in test_authorized_allowed_sql_uses_existing_bounded_executor
+    result = query.run_custom_query(SqlQueryRequest(sql=sql), request=request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: run_custom_query() got an unexpected keyword argument 'request'
+
+======================================================================
+ERROR: test_recorded_l03_repair_reaches_verified_report_with_exact_cohorts (tests.test_v34_semantic_repair.CohortRepairTests.test_recorded_l03_repair_reaches_verified_report_with_exact_cohorts)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_semantic_repair.py", line 25, in test_recorded_l03_repair_reaches_verified_report_with_exact_cohorts
+    proposal = pipeline.propose(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 461, in propose
+    return self._propose(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 481, in _propose
+    artifacts, plan = self.agent(catalog, reference, proposal=True, previous=previous, known_concepts=concepts).run(request.prompt, context)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/hybrid_analyst_planner.py", line 776, in run
+    raise self.terminal_semantic_error(new_issues,no_progress,repaired=kind in {'repair','resolution'}) from None
+services.analytical_resolver.ResolutionIssues: Semantic interpretation needs targeted recovery
+
+======================================================================
+FAIL: test_direct_sql_denied_without_explicit_administration_before_execution (tests.test_v34_query_security.QuerySecurityTests.test_direct_sql_denied_without_explicit_administration_before_execution)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_query_security.py", line 20, in test_direct_sql_denied_without_explicit_administration_before_execution
+    with self.assertRaises(HTTPException) as caught:
+AssertionError: HTTPException not raised
+
+======================================================================
+FAIL: test_failed_numeric_queries_consume_the_attempt_allowance (tests.test_v34_oracle_consistency.OracleBudgetTests.test_failed_numeric_queries_consume_the_attempt_allowance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_oracle_consistency.py", line 24, in test_failed_numeric_queries_consume_the_attempt_allowance
+    self.assertEqual(runner.call_count, 3)
+AssertionError: 7 != 3
+
+======================================================================
+FAIL: test_failed_rank_queries_cannot_escape_the_same_allowance (tests.test_v34_oracle_consistency.OracleBudgetTests.test_failed_rank_queries_cannot_escape_the_same_allowance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_oracle_consistency.py", line 33, in test_failed_rank_queries_cannot_escape_the_same_allowance
+    self.assertEqual(runner.call_count, 2)
+AssertionError: 7 != 2
+
+======================================================================
+FAIL: test_negative_allowance_is_rejected (tests.test_v34_oracle_consistency.OracleBudgetTests.test_negative_allowance_is_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_oracle_consistency.py", line 44, in test_negative_allowance_is_rejected
+    with self.assertRaises(ValueError):
+AssertionError: ValueError not raised
+
+----------------------------------------------------------------------
+Ran 10 tests in 1.437s
+
+FAILED (failures=4, errors=4)

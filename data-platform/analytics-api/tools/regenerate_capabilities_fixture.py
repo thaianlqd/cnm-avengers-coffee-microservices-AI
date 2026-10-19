@@ -17,7 +17,7 @@ PATH = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "capabili
 def main():
     coverage = json.loads(PATH.read_text())["data_coverage"]  # keep the fixed test coverage snapshot
     capabilities = DomainIntelligence(AnalysisCatalog(physical_metadata())).capabilities(coverage=coverage)
-    PATH.write_text(json.dumps(capabilities, ensure_ascii=False, indent=1) + "\n")
+    PATH.write_text(json.dumps(capabilities, ensure_ascii=False, indent=2) + "\n")
     print("written", PATH.name, capabilities["registry_fingerprint"][:12])
 
 

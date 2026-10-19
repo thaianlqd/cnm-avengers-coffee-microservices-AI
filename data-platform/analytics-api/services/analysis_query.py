@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 import math
+import json
 from datetime import date, datetime
 from decimal import Decimal
 from copy import deepcopy
@@ -451,6 +452,51 @@ def compile_sql(plan, grounded, catalog):
         else plan.row_limit + 1
     )
     return query + " LIMIT " + str(sql_limit)
+
+
+def validate_ranked_cohorts(artifacts):
+    """Validate full artifacts against the selected Top N, including tie keys."""
+    for artifact in artifacts.values():
+        ref=getattr(artifact.query,'cohort_query_id',None)
+        if not ref:continue
+        parent=artifacts.get(ref)
+        if not parent or not parent.result or not artifact.result:
+            raise AnalysisError('result_contract','Selected ranking cohort unavailable')
+        def keys(value):
+            return {json.dumps([row[d] for d in parent.plan.dimensions],ensure_ascii=False,default=str)
+                for row in value.result['rows']}
+        if parent.plan.dimensions!=artifact.plan.dimensions or keys(parent)!=keys(artifact):
+            raise AnalysisError('result_contract','Companion keys differ from selected ranking cohort')
+
+
+def compile_ranked_companion(plan, grounded, parent, catalog):
+    """Intersect two catalog aggregates on selected keys, preserving populations.
+
+    Both inner SELECTs come from the existing compiler. The companion aggregate
+    is unbounded inside SQL, then restricted by the parent's bounded Top N;
+    applying its limit before the intersection would select arbitrary entities.
+    """
+    if (not parent.plan.ranking or parent.plan.ranking.per_group or parent.query.cohort_query_id
+            or parent.query.role != 'requested' or plan.kind != 'aggregate'
+            or not plan.dimensions or plan.dimensions != parent.plan.dimensions
+            or plan.source != parent.plan.source or plan.subject != parent.plan.subject
+            or plan.time_column != parent.plan.time_column or plan.period != parent.plan.period
+            or not plan.explicit_limit or plan.row_limit != parent.plan.ranking.top_n
+            or not validate_sql(parent.sql,parent.plan,parent.grounded,catalog).valid):
+        raise AnalysisError('query_scope','Ranked companion must preserve its selected entity cohort')
+    base=sqlglot.parse_one(compile_sql(plan,grounded,catalog),read='postgres')
+    base.set('limit',None);base.set('order',None)
+    fields=', '.join('c.'+_ident(f) for f in plan.output_columns)
+    keys=' AND '.join('(c.'+_ident(d)+' = r.'+_ident(d)+' OR (c.'+_ident(d)+' IS NULL AND r.'+_ident(d)+' IS NULL))'
+        for d in plan.dimensions)
+    order=', '.join('c.'+_ident(o['field'])+' '+o['direction']+' NULLS LAST' for o in plan.order_by)
+    sql=(f'WITH companion_rows AS ({base.sql(dialect="postgres")}), ranked_cohort AS ({parent.sql}) '
+         f'SELECT {fields} FROM companion_rows AS c JOIN ranked_cohort AS r ON {keys}'
+         +(' ORDER BY '+order if order else '')+f' LIMIT {plan.row_limit}')
+    tables={p.source for p in (plan,parent.plan)} | {j['to_table'] for p in (plan,parent.plan) for j in p.joins}
+    policy={t:set(catalog.policy['tables'][t]) for t in tables}
+    validate_read_only_sql(sql);validate_ai_query_scope(sql,policy);validate_sql_ast_security(sql,policy)
+    return sql
 
 
 def validate_sql(sql, plan, grounded, catalog):

@@ -28,6 +28,28 @@ def candidate_packet(catalog, index, intelligence, anchors, question, ui, previo
     explicit_dims.update(f['dimension'] for f in ui.get('required_filters',[]))
     if ui.get('required_filter'):
         explicit_dims.add(ui['required_filter']['dimension'])
+    # Canonical alias priority is already server-owned. Do not present every
+    # alias claimant as a requested KPI when the canonical metric can express
+    # all explicit axes. Retain precisely named metrics and incompatible-axis
+    # qualifications (e.g. product revenue), plus every frozen refinement ID.
+    from services.semantic_preflight_contract import metric_locks
+    locks=metric_locks(anchors,catalog.registry)
+    exact={a['candidate_ids'][0] for a in anchors['metrics'] if len(a['candidate_ids'])==1}
+    named_axes={d for a in anchors.get('dimensions',[]) for d in a['candidate_ids']}
+    named_axes.update(a['dimension_id'] for a in anchors.get('rankings',[]) if a.get('dimension_id'))
+    protected=exact | {l['metric_id'] for l in locks}
+    protected.update(m for lock in locks for m in lock['siblings']
+        if named_axes & set(catalog.registry['metrics'][m].get('qualifier_dimensions',[])))
+    exact_sources={catalog.registry['metrics'][m]['source'] for m in exact}
+    protected.update(m for lock in locks for m in lock['siblings']
+        if catalog.registry['metrics'][m]['source'] in exact_sources)
+    for group in catalog.registry.get('equivalent_metric_groups',[]):
+        if protected.intersection(group):protected.update(group)
+    excluded=set()
+    for lock in locks:
+        if explicit_dims <= set(catalog.compatible_dimensions(lock['metric_id'])):
+            excluded.update(set(lock['siblings'])-protected)
+    explicit_metrics-=excluded
     stored = ui.get('semantic_intent') or {}
     explicit_metrics.update(m for req in stored.get('requirements',[]) for m in req.get('metric_ids',[]))
     explicit_dims.update(d for req in stored.get('requirements',[]) for d in req.get('dimension_ids',[]))
@@ -48,7 +70,7 @@ def candidate_packet(catalog, index, intelligence, anchors, question, ui, previo
     # Only an unambiguous anchor narrows the menu; broad anchors already do not.
     narrow = {a['candidate_ids'][0] for a in anchors['metrics'] if len(a['candidate_ids']) == 1}
     sibling = {m for x in narrow if x in index.metrics for s in index.metrics[x]['subjects']
-               for m in index.subjects.get(s, {}).get('metrics', []) if m in index.metrics} - metrics
+               for m in index.subjects.get(s, {}).get('metrics', []) if m in index.metrics} - metrics - excluded
     directory = [] if metrics else sorted(index.metrics)
     dims = explicit_dims & index.dimensions.keys()
     # Missing axes remain choices for the interpreter, supplied by selected lenses
@@ -75,6 +97,12 @@ def candidate_packet(catalog, index, intelligence, anchors, question, ui, previo
     caveats={c for id in selected for c in index.domains[id]['business_caveats']}
     notes=r['domain_intelligence'].get('model_caveat_notes',r['domain_intelligence']['caveat_labels'])
     facts={k:v for k,v in anchors.items() if v and k != 'ui'}
+    if excluded:
+        facts['metrics']=[{**a,'candidate_ids':[m for m in a['candidate_ids'] if m not in excluded]}
+                          for a in anchors['metrics']]
+        if facts.get('rankings'):
+            facts['rankings']=[{**a,'metric_candidates':[m for m in a['metric_candidates'] if m not in excluded]}
+                               for a in facts['rankings']]
     if facts.get('scope_resolution',{}).get('state') == 'unspecified':
         facts.pop('scope_resolution')  # No scope assertion to transmit or protect.
     facts['ui'] = anchors['ui']

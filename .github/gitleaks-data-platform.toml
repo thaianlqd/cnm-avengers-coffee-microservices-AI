@@ -1,0 +1,21 @@
+title = "Data Platform default rules with reviewed non-secret evidence shapes"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Canonical visualization SHA256, entire JSON line only (23 historical findings)"
+regexTarget = "line"
+regexes = ['''^\s*"semantic_view_key":\s*"[a-f0-9]{64}",?\s*$''']
+
+[[allowlists]]
+description = "Source-file SHA256 manifest entry, entire JSON line only"
+regexTarget = "line"
+regexes = ['''^\s*"data-platform/[A-Za-z0-9_./-]+\.(py|ts|tsx|mjs|mts|json|md|sql|yml|yaml|sh)":\s*"[a-f0-9]{64}",?\s*$''']
+
+[[allowlists]]
+description = "Reviewed historical test-plan sentence; no credential or token"
+condition = "AND"
+paths = ['''(^|/)data-platform/AI_V33_FINAL_ANALYST_HARDENING_PLAN\.md$''']
+regexTarget = "line"
+regexes = ['''^- \*\*Tests I:\*\* FixtureWarehouse \+ query snapshot tests: two population aggregates paired by unique [k]ey, duplicate/missing pairs, n/variance guards; driver sum deltas match total; rated risk sample[=]4 không red; forecast max horizons và all-zero history fail đúng loại\.$''']

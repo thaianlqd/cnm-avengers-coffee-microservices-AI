@@ -1,0 +1,18 @@
+{
+  "mode": "actual warehouse + approved ADMIN policy internal fixture principal; no Identity HTTP login claim",
+  "status": "success",
+  "verification": "verified",
+  "full_chart_parity": true,
+  "chart_count": 3,
+  "donut_rows": [
+    4,
+    7
+  ],
+  "donut_total": [
+    440072000.0,
+    440072000.0
+  ],
+  "external_http": 0,
+  "fact_writes": 0,
+  "client_rows_ignored": true
+}

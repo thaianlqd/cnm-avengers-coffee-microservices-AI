@@ -1,0 +1,353 @@
+{
+  "version": "3.4.0",
+  "owner": "avengers-data-team",
+  "authority": "data-platform/metadata/warehouse_views.json",
+  "views": [
+    {
+      "name": "gold.stores_overview",
+      "sql": "\n        CREATE OR REPLACE VIEW gold.stores_overview AS\n        SELECT\n            cn.ma_chi_nhanh AS store_code,\n            cn.ten_chi_nhanh AS store_name,\n            COALESCE(cn.thanh_pho, 'TP.HCM') AS city,\n            COALESCE(cn.dia_chi, 'Đang cập nhật') AS address,\n            CASE \n                WHEN cn.trang_thai = 'ACTIVE' THEN 'Hoạt động'\n                ELSE 'Bảo trì'\n            END AS status,\n            COUNT(o.ma_don_hang) AS total_orders,\n            COALESCE(SUM(o.tong_tien) FILTER (WHERE o.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')), 0) AS total_revenue,\n            COALESCE(ROUND(AVG(o.tong_tien) FILTER (WHERE o.trang_thai_don_hang IN ('HOAN_THANH', 'DANG_GIAO')), 0), 0) AS aov\n        FROM identity.chi_nhanh cn\n        LEFT JOIN orders.don_hang o ON cn.ma_chi_nhanh = o.co_so_ma\n        GROUP BY cn.ma_chi_nhanh, cn.ten_chi_nhanh, cn.thanh_pho, cn.dia_chi, cn.trang_thai;\n        ",
+      "source_dependencies": [
+        "identity.chi_nhanh",
+        "orders.don_hang"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "identity.chi_nhanh",
+        "orders.don_hang"
+      ]
+    },
+    {
+      "name": "gold.menu_overview",
+      "sql": "\n        CREATE OR REPLACE VIEW gold.menu_overview AS\n        SELECT\n            sp.ma_san_pham AS product_id,\n            sp.ten_san_pham AS product_name,\n            COALESCE(dm.ten_danh_muc, 'Cà phê') AS category_name,\n            sp.gia_ban AS price,\n            COALESCE(SUM(ct.so_luong), 0) AS total_sold,\n            COALESCE(SUM(ct.so_luong * ct.gia_ban), 0) AS total_revenue\n        FROM menu.san_pham sp\n        LEFT JOIN menu.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc\n        LEFT JOIN orders.chi_tiet_don_hang ct ON sp.ma_san_pham = ct.ma_san_pham\n        GROUP BY sp.ma_san_pham, sp.ten_san_pham, dm.ten_danh_muc, sp.gia_ban;\n        ",
+      "source_dependencies": [
+        "menu.danh_muc",
+        "menu.san_pham",
+        "orders.chi_tiet_don_hang"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "menu.danh_muc",
+        "menu.san_pham",
+        "orders.chi_tiet_don_hang"
+      ]
+    },
+    {
+      "name": "silver.don_hang",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.don_hang AS\n        SELECT \n            ma_don_hang,\n            ma_nguoi_dung,\n            co_so_ma,\n            tong_tien,\n            phuong_thuc_thanh_toan,\n            trang_thai_thanh_toan,\n            trang_thai_don_hang,\n            loai_don_hang,\n            ma_voucher,\n            so_tien_giam,\n            ten_khach_hang,\n            dia_chi_giao_hang,\n            ngay_tao,\n            ngay_cap_nhat\n        FROM orders.don_hang;\n        ",
+      "source_dependencies": [
+        "orders.don_hang"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "orders.don_hang"
+      ]
+    },
+    {
+      "name": "silver.chi_tiet_don_hang",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.chi_tiet_don_hang AS\n        SELECT \n            ct.id,\n            ct.ma_don_hang,\n            ct.ma_san_pham,\n            ct.ten_san_pham,\n            ct.gia_ban,\n            ct.so_luong,\n            ct.kich_co,\n            ct.luong_da,\n            ct.do_ngot,\n            ct.toppings,\n            (ct.gia_ban * ct.so_luong) AS thanh_tien\n        FROM orders.chi_tiet_don_hang ct;\n        ",
+      "source_dependencies": [
+        "orders.chi_tiet_don_hang"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "orders.chi_tiet_don_hang"
+      ]
+    },
+    {
+      "name": "silver.san_pham",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.san_pham AS\n        SELECT \n            sp.ma_san_pham,\n            sp.ten_san_pham,\n            sp.gia_ban,\n            sp.gia_niem_yet,\n            sp.trang_thai,\n            sp.ma_danh_muc,\n            COALESCE(dm.ten_danh_muc, 'Khác') AS ten_danh_muc,\n            sp.la_hot,\n            sp.la_moi\n        FROM menu.san_pham sp\n        LEFT JOIN menu.danh_muc dm ON sp.ma_danh_muc = dm.ma_danh_muc;\n        ",
+      "source_dependencies": [
+        "menu.danh_muc",
+        "menu.san_pham"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "menu.danh_muc",
+        "menu.san_pham"
+      ]
+    },
+    {
+      "name": "silver.danh_muc",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.danh_muc AS\n        SELECT \n            ma_danh_muc,\n            ten_danh_muc,\n            hinh_anh_icon,\n            ma_danh_muc_cha,\n            cap_bac\n        FROM menu.danh_muc;\n        ",
+      "source_dependencies": [
+        "menu.danh_muc"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "menu.danh_muc"
+      ]
+    },
+    {
+      "name": "silver.nguoi_dung",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.nguoi_dung AS\n        SELECT \n            ma_nguoi_dung,\n            ho_ten,\n            so_dien_thoai,\n            email,\n            vai_tro,\n            trang_thai,\n            diem_loyalty,\n            tong_chi_tieu,\n            ngay_tao\n        FROM identity.nguoi_dung;\n        ",
+      "source_dependencies": [
+        "identity.nguoi_dung"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "identity.nguoi_dung"
+      ]
+    },
+    {
+      "name": "silver.chi_nhanh",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.chi_nhanh AS\n        SELECT \n            ma_chi_nhanh,\n            ten_chi_nhanh,\n            dia_chi,\n            thanh_pho,\n            so_dien_thoai,\n            trang_thai,\n            loai_diem_ban,\n            gio_mo_cua,\n            gio_dong_cua\n        FROM identity.chi_nhanh;\n        ",
+      "source_dependencies": [
+        "identity.chi_nhanh"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "identity.chi_nhanh"
+      ]
+    },
+    {
+      "name": "silver.giao_dich_thanh_toan",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.giao_dich_thanh_toan AS\n        SELECT \n            ma_giao_dich,\n            ma_don_hang,\n            cong_thanh_toan,\n            so_tien,\n            trang_thai,\n            ngay_tao\n        FROM orders.giao_dich_thanh_toan;\n        ",
+      "source_dependencies": [
+        "orders.giao_dich_thanh_toan"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "orders.giao_dich_thanh_toan"
+      ]
+    },
+    {
+      "name": "silver.shipper",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.shipper AS\n        SELECT \n            id AS ma_shipper,\n            full_name AS ho_ten,\n            phone AS so_dien_thoai,\n            vehicle_plate AS bien_so_xe,\n            status AS trang_thai,\n            vehicle_type AS loai_xe,\n            total_deliveries AS tong_chuyen_giao,\n            rating AS diem_danh_gia\n        FROM orders.shipper;\n        ",
+      "source_dependencies": [
+        "orders.shipper"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "orders.shipper"
+      ]
+    },
+    {
+      "name": "silver.giao_hang",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.giao_hang AS\n        SELECT\n            id AS ma_giao_hang,\n            ma_don_hang,\n            shipper_id AS ma_shipper,\n            status AS trang_thai_giao_hang,\n            assigned_at AS thoi_gian_nhan_chuyen,\n            picked_up_at AS thoi_gian_lay_hang,\n            delivered_at AS thoi_gian_ket_thuc,\n            estimated_time_minutes AS thoi_gian_du_kien_phut,\n            delivery_fee AS phi_giao_hang,\n            is_batched AS giao_ghep\n        FROM orders.shipper_delivery;\n        ",
+      "source_dependencies": [
+        "orders.shipper_delivery"
+      ],
+      "consumers": [
+        "sync"
+      ],
+      "direct_dependencies": [
+        "orders.shipper_delivery"
+      ]
+    },
+    {
+      "name": "silver.ton_kho_san_pham",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.ton_kho_san_pham AS\n        SELECT \n            tk.id,\n            tk.co_so_ma,\n            tk.ma_san_pham,\n            sp.ten_san_pham,\n            tk.so_luong_ton,\n            tk.muc_canh_bao,\n            tk.dang_kinh_doanh,\n            tk.cap_nhat_luc\n        FROM inventory.ton_kho_san_pham tk\n        LEFT JOIN menu.san_pham sp ON tk.ma_san_pham = sp.ma_san_pham;\n        ",
+      "source_dependencies": [
+        "inventory.ton_kho_san_pham",
+        "menu.san_pham"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "inventory.ton_kho_san_pham",
+        "menu.san_pham"
+      ]
+    },
+    {
+      "name": "silver.khuyen_mai",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.khuyen_mai AS\n        SELECT \n            COALESCE(v.ma_voucher, km.ma_khuyen_mai) AS ma_khuyen_mai,\n            COALESCE(km.ten_khuyen_mai, v.ten_voucher, v.ma_voucher, km.ma_khuyen_mai) AS ten_khuyen_mai,\n            COALESCE(km.mo_ta, v.mo_ta) AS mo_ta,\n            COALESCE(km.loai_khuyen_mai, v.loai) AS loai_khuyen_mai,\n            COALESCE(km.gia_tri, v.gia_tri, 0) AS gia_tri,\n            COALESCE(km.giam_toi_da, v.giam_toi_da, 0) AS giam_toi_da,\n            COALESCE(km.gia_tri_don_toi_thieu, v.don_hang_toi_thieu, 0) AS don_hang_toi_thieu,\n            COALESCE(km.so_luong_da_dung, v.luot_da_dung, 0) AS luot_da_dung,\n            COALESCE(km.trang_thai, v.trang_thai, 'ACTIVE') AS trang_thai,\n            COALESCE(v.ngay_bat_dau, km.ngay_bat_dau) AS ngay_bat_dau,\n            COALESCE(v.han_su_dung, km.ngay_ket_thuc) AS ngay_ket_thuc\n        FROM orders.voucher v\n        FULL OUTER JOIN identity.khuyen_mai km ON v.ma_voucher = km.ma_khuyen_mai;\n        ",
+      "source_dependencies": [
+        "identity.khuyen_mai",
+        "orders.voucher"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "identity.khuyen_mai",
+        "orders.voucher"
+      ]
+    },
+    {
+      "name": "silver.voucher",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.voucher AS\n        SELECT * FROM silver.khuyen_mai;\n        ",
+      "source_dependencies": [
+        "identity.khuyen_mai",
+        "orders.voucher"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "silver.khuyen_mai"
+      ]
+    },
+    {
+      "name": "silver.khuyen_mai_su_dung",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.khuyen_mai_su_dung AS\n        SELECT\n            u.id AS ma_su_dung,\n            u.ma_khuyen_mai,\n            km.ten_khuyen_mai,\n            km.loai_khuyen_mai,\n            dh.co_so_ma,\n            u.so_tien_giam,\n            u.ngay_su_dung\n        FROM identity.khuyen_mai_su_dung u\n        LEFT JOIN silver.khuyen_mai km ON km.ma_khuyen_mai = u.ma_khuyen_mai\n        LEFT JOIN orders.don_hang dh ON dh.ma_don_hang::text = u.ma_don_hang;\n        ",
+      "source_dependencies": [
+        "identity.khuyen_mai",
+        "identity.khuyen_mai_su_dung",
+        "orders.don_hang",
+        "orders.voucher"
+      ],
+      "consumers": [
+        "sync"
+      ],
+      "direct_dependencies": [
+        "identity.khuyen_mai_su_dung",
+        "orders.don_hang",
+        "silver.khuyen_mai"
+      ]
+    },
+    {
+      "name": "silver.danh_gia_san_pham",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.danh_gia_san_pham AS\n        SELECT \n            dg.id,\n            dg.ma_san_pham,\n            COALESCE(sp.ten_san_pham, dg.ma_san_pham) AS ten_san_pham,\n            dg.ma_nguoi_dung,\n            dg.so_sao,\n            dg.binh_luan,\n            dg.ma_don_hang,\n            dg.ngay_tao,\n            dg.phan_hoi_quan_ly\n        FROM orders.danh_gia_san_pham dg\n        LEFT JOIN menu.san_pham sp ON dg.ma_san_pham = sp.ma_san_pham::text;\n        ",
+      "source_dependencies": [
+        "menu.san_pham",
+        "orders.danh_gia_san_pham"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "menu.san_pham",
+        "orders.danh_gia_san_pham"
+      ]
+    },
+    {
+      "name": "silver.danh_gia_chi_nhanh",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.danh_gia_chi_nhanh AS\n        SELECT \n            dg.id,\n            dg.ma_chi_nhanh,\n            COALESCE(cn.ten_chi_nhanh, dg.ten_chi_nhanh, dg.ma_chi_nhanh) AS ten_chi_nhanh,\n            dg.ma_nguoi_dung,\n            dg.diem_tong_quan AS so_sao,\n            dg.nhan_xet,\n            dg.ma_don_hang,\n            dg.ngay_tao\n        FROM orders.danh_gia_chi_nhanh dg\n        LEFT JOIN identity.chi_nhanh cn ON dg.ma_chi_nhanh = cn.ma_chi_nhanh;\n        ",
+      "source_dependencies": [
+        "identity.chi_nhanh",
+        "orders.danh_gia_chi_nhanh"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "identity.chi_nhanh",
+        "orders.danh_gia_chi_nhanh"
+      ]
+    },
+    {
+      "name": "silver.ca_lam_viec_nhan_vien",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.ca_lam_viec_nhan_vien AS\n        SELECT \n            ma_ca_lam_viec,\n            staff_name,\n            staff_username,\n            ngay_lam_viec,\n            ten_ca,\n            gio_bat_dau,\n            gio_ket_thuc,\n            trang_thai_cham_cong,\n            check_in_at,\n            check_out_at,\n            co_so_ma,\n            note\n        FROM orders.ca_lam_viec_nhan_vien;\n        ",
+      "source_dependencies": [
+        "orders.ca_lam_viec_nhan_vien"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "orders.ca_lam_viec_nhan_vien"
+      ]
+    },
+    {
+      "name": "silver.ca_doi_soat",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.ca_doi_soat AS\n        SELECT \n            ma_ca,\n            co_so_ma,\n            ten_nhan_vien,\n            thoi_gian_bat_dau,\n            thoi_gian_ket_thuc,\n            tien_dau_ca,\n            tien_cuoi_ca,\n            tien_mat_he_thong,\n            doanh_thu_he_thong,\n            tien_mat_ky_vong,\n            chenh_lech,\n            tong_don,\n            tong_don_tien_mat,\n            trang_thai_phe_duyet,\n            ghi_chu,\n            ngay_tao\n        FROM orders.ca_doi_soat;\n        ",
+      "source_dependencies": [
+        "orders.ca_doi_soat"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "orders.ca_doi_soat"
+      ]
+    },
+    {
+      "name": "silver.yeu_thich_san_pham",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.yeu_thich_san_pham AS\n        SELECT \n            yt.id,\n            yt.ma_nguoi_dung,\n            yt.ma_san_pham,\n            COALESCE(sp.ten_san_pham, yt.ten_san_pham) AS ten_san_pham,\n            COALESCE(sp.gia_ban, yt.gia_ban) AS gia_ban,\n            yt.danh_muc,\n            yt.ngay_tao\n        FROM orders.yeu_thich_san_pham yt\n        LEFT JOIN menu.san_pham sp ON yt.ma_san_pham = sp.ma_san_pham::text;\n        ",
+      "source_dependencies": [
+        "menu.san_pham",
+        "orders.yeu_thich_san_pham"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "menu.san_pham",
+        "orders.yeu_thich_san_pham"
+      ]
+    },
+    {
+      "name": "silver.khao_sat_phan_hoi",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.khao_sat_phan_hoi AS\n        SELECT \n            id,\n            ma_bieu_mau,\n            ma_nguoi_dung,\n            ma_don_hang,\n            co_so_ma,\n            tra_loi,\n            trang_thai_voucher,\n            ngay_tao\n        FROM orders.khao_sat_phan_hoi;\n        ",
+      "source_dependencies": [
+        "orders.khao_sat_phan_hoi"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "orders.khao_sat_phan_hoi"
+      ]
+    },
+    {
+      "name": "silver.bien_the_san_pham",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.bien_the_san_pham AS\n        SELECT \n            bt.id,\n            bt.ma_san_pham,\n            sp.ten_san_pham,\n            bt.ma_thuoc_tinh,\n            bt.gia_tri,\n            bt.phu_thu\n        FROM menu.bien_the_san_pham bt\n        LEFT JOIN menu.san_pham sp ON bt.ma_san_pham = sp.ma_san_pham;\n        ",
+      "source_dependencies": [
+        "menu.bien_the_san_pham",
+        "menu.san_pham"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "menu.bien_the_san_pham",
+        "menu.san_pham"
+      ]
+    },
+    {
+      "name": "silver.khu_vuc",
+      "sql": "\n        CREATE OR REPLACE VIEW silver.khu_vuc AS\n        SELECT \n            ma_khu_vuc,\n            ten_khu_vuc,\n            mo_ta\n        FROM identity.khu_vuc;\n        ",
+      "source_dependencies": [
+        "identity.khu_vuc"
+      ],
+      "consumers": [
+        "sync",
+        "api"
+      ],
+      "direct_dependencies": [
+        "identity.khu_vuc"
+      ]
+    }
+  ]
+}

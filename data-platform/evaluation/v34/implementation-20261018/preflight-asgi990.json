@@ -1,0 +1,37 @@
+{
+  "mode": "offline_actual_ASGI",
+  "samples": 990,
+  "principals": 33,
+  "warm_calls_per_principal": 30,
+  "cold": {
+    "status": 200,
+    "ms": 380.157
+  },
+  "warm_ms": {
+    "p50": 15.889,
+    "p95": 24.354,
+    "p99": 46.743,
+    "max": 109.259
+  },
+  "http_status_counts": {
+    "200": 990
+  },
+  "decision_state_counts": {
+    "READY_FOR_AI": 660,
+    "READY_GUIDED": 330
+  },
+  "warehouse_connect_calls": 0,
+  "external_HTTP_calls": 0,
+  "host": {
+    "system": "Linux",
+    "machine": "aarch64",
+    "python": "3.11.17",
+    "peak_rss_KiB": 141196
+  },
+  "limitations": [
+    "Synthetic signed principals/in-process ASGI, not network transport",
+    "Serial requests; not throughput/multi-instance proof",
+    "No sustained operational SLO measured"
+  ],
+  "passed": true
+}

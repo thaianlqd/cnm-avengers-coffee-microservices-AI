@@ -49,6 +49,8 @@ def requirement_meaning(requirement, reference=None, catalog=None):
     data["filters"] = sorted(filters, key=lambda f: digest(f))
     if reference and catalog:
         data["time"] = resolve_time(data.get("time", {"kind":"relative", "mode":"all_time"}), reference, catalog.registry["timezone"])[2]
+        if data.get('comparison_time'):
+            data['comparison_time'] = resolve_time(data['comparison_time'], reference, catalog.registry['timezone'])[2]
     return data
 
 
@@ -179,7 +181,7 @@ class AnalyticalResolver:
         # Resolve its executable shape here without inventing a second dimension
         # or changing any metric, filter, period or population. Real two-axis
         # cross-tabs retain both axes and their strict compiler rules.
-        if req.analysis_kind == 'comparison' and not req.ranking:
+        if req.analysis_kind == 'comparison' and not req.ranking and not req.comparison_time:
             req.derived_features=sorted(set(req.derived_features)|{'group_gap'})
         if req.analysis_kind == 'comparison' or req.analysis_kind == 'cross_tab' and len(req.dimension_ids) == 1:
             req.analysis_kind = 'aggregate'
@@ -211,6 +213,12 @@ class AnalyticalResolver:
         if req.analysis_kind=='aggregate' and not req.dimension_ids and 'selected_total' in req.derived_features:
             req.derived_features=sorted((set(req.derived_features)-{'selected_total'})|{'scalar'})
             req.feature_metrics.pop('selected_total',None)
+        # Period deltas are compiler-owned from comparison_time; the draft only needs the scalar shape.
+        if (req.comparison_time and req.analysis_kind in {'aggregate',None} and not req.dimension_ids
+                and not req.ranking and not req.forecast and not req.supporting_for
+                and {'change','change_pct'} & set(req.derived_features)):
+            req.derived_features=sorted((set(req.derived_features)-{'change','change_pct'})|{'scalar'})
+            for feature in ('change','change_pct'):req.feature_metrics.pop(feature,None)
         # UI time outranks question time, by the documented precedence rule.
         period = self.ui.get("required_period")
         if period:
@@ -284,13 +292,25 @@ class AnalyticalResolver:
     def resolve_requirement(self, raw):
         req = self.normalize(raw)
         self.validate_time(req)
+        if req.comparison_time and (req.analysis_kind not in {'aggregate',None} or req.forecast or req.supporting_for):
+            # The two period values may already be correct. Target the shape
+            # fields that conflict instead of authorizing a baseline rewrite.
+            conflicts=[]
+            for field,invalid in (('time',not req.time),('analysis_kind',req.analysis_kind not in {'aggregate',None}),
+                    ('dimension_ids',bool(req.dimension_ids)),('ranking',bool(req.ranking)),
+                    ('forecast',bool(req.forecast)),('supporting_for',bool(req.supporting_for)),
+                    ('granularity',bool(req.granularity)),
+                    ('derived_features',bool(set(req.derived_features)-{'scalar'}))):
+                if invalid:conflicts.append(self.issue(req,field,'scalar_period_comparison_required'))
+            raise ResolutionIssues(conflicts)
         if req.forecast and req.availability == "requested":
             req = self.forecast_requirement(req)
         if req.availability != "requested":
             if req.reason=='metric_unavailable' and req.metric_ids and all(m in self.index.metrics for m in req.metric_ids):
                 raise ResolutionIssues([self.issue(req,field,'declared_metric_available') for field in ('availability','reason')])
             if not req.reason:
-                raise ResolutionIssues([self.issue(req,"reason","limitation_reason_required")])
+                raise ResolutionIssues([self.issue(req,field,"limitation_reason_required")
+                                        for field in ('availability','reason')])
             return req, [], req.availability.upper(), req.reason, []
         issues = []
         for field, ids, known in (("metric_ids",req.metric_ids,self.catalog.registry["metrics"]), ("dimension_ids",req.dimension_ids,self.catalog.registry["dimensions"]), ("filters",[f.dimension for f in req.filters],self.catalog.registry["dimensions"])):
@@ -349,6 +369,21 @@ class AnalyticalResolver:
             if not req.granularity:
                 req.granularity = 'year'
         period = resolve_time(req.time.model_dump(mode="json", exclude_none=True) if req.time else {"kind":"relative","mode":"all_time"},self.reference,self.catalog.registry["timezone"])[2]
+        if req.comparison_time:
+            # Two independently compiled aggregates retain the same metric
+            # populations and filters. No union-period total can stand in for
+            # this contract. Grouped/ranked comparisons need a different shape.
+            conflicts=[]
+            for field,invalid in (('time',not req.time),('analysis_kind',req.analysis_kind!='aggregate'),
+                    ('dimension_ids',bool(req.dimension_ids)),('ranking',bool(req.ranking)),
+                    ('forecast',bool(req.forecast)),('granularity',bool(req.granularity)),
+                    ('derived_features',bool(set(req.derived_features)-{'scalar'}))):
+                if invalid:conflicts.append(self.issue(req,field,'scalar_period_comparison_required'))
+            if conflicts:raise ResolutionIssues(conflicts)
+            self.validate_time(req.model_copy(update={'time':req.comparison_time}))
+            baseline = resolve_time(req.comparison_time.model_dump(mode='json'), self.reference, self.catalog.registry['timezone'])[2]
+            if not period['start'] or not baseline['start'] or not (period['end'] < baseline['start'] or baseline['end'] < period['start']):
+                raise ResolutionIssues([self.issue(req,'comparison_time','distinct_disjoint_periods_required')])
         if (period["start"] or req.analysis_kind == "trend") and any(not self.index.metrics[m]["historical"] for m in req.metric_ids):
             return req, [], "INSUFFICIENT_DATA", "historical_data_unavailable", []
         required_shapes = {"scalar":{"aggregate"}, "leader":{"ranking"}, "top_gap":{"ranking"}, "selected_total":{"ranking"},
@@ -445,6 +480,37 @@ class AnalyticalResolver:
         if "driver_delta" in req.derived_features and "driver_delta" in targets:
             return self.resolve_driver(req, parts, possible, period)
         pair = self.governed_pair(req) if len(parts)>1 and req.analysis_kind=="relationship" else None
+        if (len(parts)>1 and req.analysis_kind=='ranking' and req.ranking
+                and not req.ranking.per_group and not req.supporting_for):
+            # Rank exactly once. Other populations are requested companions on
+            # those selected entity keys, never independent Top Ns or a shared
+            # WHERE filter that changes the metric definitions.
+            ranked = next(p for p in parts if req.ranking.metric_id in p)
+            definitions = [self.catalog.registry['metrics'][m] for m in req.metric_ids]
+            if (len({(m['source'],m.get('time_column')) for m in definitions})==1
+                    and all(possible[frozenset(p)][0]==possible[frozenset(ranked)][0] for p in parts)):
+                primary_req=req.model_copy(update={'metric_ids':list(ranked),
+                    'derived_features':req.derived_features,
+                    'feature_metrics':{f:sorted(ms & set(ranked)) for f,ms in targets.items()}})
+                if all(set(ms)<=set(ranked) for ms in targets.values()):
+                    _, primary_ops, state, reason, bindings=self.resolve_requirement(primary_req)
+                    if state!='RESOLVED':return req,[],state,reason,[]
+                    primary=next(o for o in primary_ops if o['operation']=='ranking')
+                    operations=list(primary_ops)
+                    base=requirement_meaning(req,self.reference,self.catalog)
+                    for subset in parts:
+                        if subset==ranked:continue
+                        subject,lens=possible[frozenset(subset)]
+                        op={'id':'q_'+digest([base,subset,'ranked_companion'])[:24],
+                            'subject':subject,'operation':'aggregate','metrics':list(subset),
+                            'group_by':req.dimension_ids,'filters':deepcopy(primary['filters']),
+                            'time':deepcopy(primary['time']),'role':'requested',
+                            'cohort_query_id':primary['id'],'limit':req.ranking.limit}
+                        operations.append(op)
+                        bindings.append({'requirement_id':req.id,'feature':'ranked_companion',
+                            'query_id':op['id'],'query_ids':[primary['id'],op['id']],
+                            'metric_ids':list(subset)})
+                    return req,operations,'RESOLVED',None,bindings
         if len(parts)>1 and req.analysis_kind in {"ranking","relationship","distribution"} and not pair:
             # Independent rankings/compositions of different populations would
             # silently change the requested cohort or denominator.
@@ -506,6 +572,20 @@ class AnalyticalResolver:
                 bindings.append(binding)
             logger.info("[AnalystResolver] %s",json.dumps({"requirement_id":req.id,"candidate_count":len(possible),"selected_subject":subject,
                 "selected_lens":lens,"operation_count":len(parts),"split_reason":"population_or_subject" if len(parts)>1 else None,"derived_features":req.derived_features,"result":"RESOLVED"}))
+        if req.comparison_time:
+            # Build the baseline through the same resolver, compiler and
+            # capability checks. Its IDs, population and SQL are server-owned.
+            baseline_req = req.model_copy(update={'time':req.comparison_time,'comparison_time':None})
+            _, baseline_ops, state, reason, _ = self.resolve_requirement(baseline_req)
+            if state != 'RESOLVED':
+                return req, [], state, reason, []
+            for op in operations:
+                other = next((b for b in baseline_ops if b['metrics']==op['metrics']), None)
+                if other is None:
+                    raise AnalysisError('resolver_internal','Comparison population cannot be paired')
+                bindings.append({'requirement_id':req.id,'feature':'period_comparison','query_id':op['id'],
+                    'query_ids':[op['id'],other['id']],'metric_ids':op['metrics']})
+            operations.extend(baseline_ops)
         return req,operations,"RESOLVED",None,bindings
 
     def resolve_driver(self, req, parts, possible, period):
@@ -724,6 +804,8 @@ class AnalyticalResolver:
         for op in operations:
             if op.get('parent_id'):
                 op['parent_id'] = aliases[op['parent_id']]
+            if op.get('cohort_query_id'):
+                op['cohort_query_id'] = aliases[op['cohort_query_id']]
         for c in coverage:
             c['operation_ids'] = sorted({aliases[id] for id in c['operation_ids']})
         for binding in bindings:

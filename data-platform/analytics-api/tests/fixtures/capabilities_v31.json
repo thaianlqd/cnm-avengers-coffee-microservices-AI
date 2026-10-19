@@ -1,8 +1,10 @@
 {
   "status": "ready",
   "version": "3.0",
-  "fingerprint": "3c6bf72deb529f7c8d93f66df4fbec34a6f579a3d074ca1433c5b7c14801262b",
-  "registry_fingerprint": "c2805207d50c4480360cdfb5e6e145283426e6bdc31dc61146741f237810d12a",
+  "fingerprint": "2a05283d39249765b6881e7dc2bc775770c4baa92f119705f5c30cdbe1801926",
+  "semantic_fingerprint": "f854776b46d8e0136e9bf7c9b423641c1da476bfc83ed75d3fbe41233a84d4b6",
+  "governance_contract_version": "3.4.0",
+  "registry_fingerprint": "58e5b23bb02e0541106277b36d11f30add90bd5976a11e79e8c6f46d2298af6c",
   "domains": [
     {
       "id": "orders",
@@ -32,6 +34,17 @@
             ],
             "non_additive_over": [],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "revenue",
+            "formula_fingerprint": "5846fda85ded6b645415d78eb8bad590a915d43bf064d7517bb5abad76b4a067"
           },
           "domain": "orders",
           "semantic_type": "sum",
@@ -117,6 +130,17 @@
             ],
             "non_additive_over": [],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "order_count",
+            "formula_fingerprint": "5ba2e5d2a3a0e49e27f34582cf9b48ae6fb59fe8e186b74d51b2bc60d01a8b71"
           },
           "domain": "orders",
           "semantic_type": "count",
@@ -204,6 +228,17 @@
             "non_additive_over": [],
             "ratio_parts": null
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "aov",
+            "formula_fingerprint": "f773431582d17888be3fdb896b364d593484586255428fb28db525038fc9dc76"
+          },
           "domain": "orders",
           "semantic_type": "average",
           "additive": false,
@@ -269,6 +304,17 @@
             "additive_over": [],
             "non_additive_over": [],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "purchasing_customer_count",
+            "formula_fingerprint": "8eed80bfeb20eb000798a50e940eb54be4b4b052bbf7144945e8327a103b71fb"
           },
           "domain": "orders",
           "semantic_type": "distinct_count",
@@ -340,6 +386,17 @@
               "denominator": "Đơn HOAN_THANH + DA_HUY"
             }
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "order_cancellation_rate",
+            "formula_fingerprint": "b892503415dc0a9ce826d30847811fdaaf32e8f658b5ee1a4962e20e641800c4"
+          },
           "domain": "orders",
           "semantic_type": "ratio",
           "additive": false,
@@ -403,6 +460,17 @@
               "numerator": "Đơn HOAN_THANH",
               "denominator": "Đơn HOAN_THANH + DA_HUY"
             }
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "order_completion_rate",
+            "formula_fingerprint": "4f7388ac407c95bfb2d4dd3e7a0355b0890bf133a55db02e2a18895769d90f5d"
           },
           "domain": "orders",
           "semantic_type": "ratio",
@@ -494,6 +562,17 @@
             "non_additive_over": [],
             "ratio_parts": null
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "quantity_sold",
+            "formula_fingerprint": "6d834c07d0255a04367d905d99d9ca55325b0aa9656308d7ec03e11ddadca253"
+          },
           "domain": "order_items",
           "semantic_type": "sum",
           "additive": true,
@@ -566,6 +645,17 @@
             ],
             "non_additive_over": [],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "item_revenue",
+            "formula_fingerprint": "8418355c8bdfa5dac9c8820e62657bb16bc80652bac4bf1a707d0e5e82b27793"
           },
           "domain": "order_items",
           "semantic_type": "sum",
@@ -665,6 +755,17 @@
             "non_additive_over": [],
             "ratio_parts": null
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "quantity_sold",
+            "formula_fingerprint": "6d834c07d0255a04367d905d99d9ca55325b0aa9656308d7ec03e11ddadca253"
+          },
           "domain": "order_items",
           "semantic_type": "sum",
           "additive": true,
@@ -737,6 +838,17 @@
             ],
             "non_additive_over": [],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "product_revenue",
+            "formula_fingerprint": "8418355c8bdfa5dac9c8820e62657bb16bc80652bac4bf1a707d0e5e82b27793"
           },
           "domain": "products",
           "semantic_type": "sum",
@@ -838,6 +950,17 @@
             "non_additive_over": [],
             "ratio_parts": null
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "store_revenue",
+            "formula_fingerprint": "5846fda85ded6b645415d78eb8bad590a915d43bf064d7517bb5abad76b4a067"
+          },
           "domain": "stores",
           "semantic_type": "sum",
           "additive": true,
@@ -919,6 +1042,17 @@
             "non_additive_over": [],
             "ratio_parts": null
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "store_order_count",
+            "formula_fingerprint": "5f02521bc5966f87d9156def70d52b14fbd693726e8a89ae963e1f820ddc8db6"
+          },
           "domain": "stores",
           "semantic_type": "count",
           "additive": true,
@@ -997,6 +1131,17 @@
             "non_additive_over": [],
             "ratio_parts": null
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "store_aov",
+            "formula_fingerprint": "c133ac834d862877191abe3e8faef5aec99fb4330ab2f6d748547d75b1624c11"
+          },
           "domain": "stores",
           "semantic_type": "average",
           "additive": false,
@@ -1058,6 +1203,17 @@
             "additive_over": [],
             "non_additive_over": [],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "purchasing_customer_count",
+            "formula_fingerprint": "8eed80bfeb20eb000798a50e940eb54be4b4b052bbf7144945e8327a103b71fb"
           },
           "domain": "orders",
           "semantic_type": "distinct_count",
@@ -1154,6 +1310,17 @@
             "non_additive_over": [],
             "ratio_parts": null
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "customer_count",
+            "formula_fingerprint": "f1926102e30a14c65df13425cb0116bae133786eac790609d5140e701082d26f"
+          },
           "domain": "customers",
           "semantic_type": "distinct_count",
           "additive": true,
@@ -1194,6 +1361,17 @@
             ],
             "non_additive_over": [],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "total_spent",
+            "formula_fingerprint": "b8a29bfbb6696f90029bbaae90a965da39fd8b93f891641c10856c120e3ac246"
           },
           "domain": "customers",
           "semantic_type": "sum",
@@ -1262,6 +1440,17 @@
             "non_additive_over": [],
             "ratio_parts": null
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "voucher_revenue",
+            "formula_fingerprint": "99aa04393934914fbdcc9065a990f27921c7bee33b1e712ff9139ffee6aeffb0"
+          },
           "domain": "promotions",
           "semantic_type": "sum",
           "additive": true,
@@ -1325,6 +1514,17 @@
             ],
             "non_additive_over": [],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "discount_amount",
+            "formula_fingerprint": "7b3447cafe9198190817ea71106c7aab58e82eecafd61f9743f219ae382cd95a"
           },
           "domain": "promotions",
           "semantic_type": "sum",
@@ -1390,6 +1590,17 @@
             "non_additive_over": [],
             "ratio_parts": null
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "voucher_order_count",
+            "formula_fingerprint": "e361fe78a60664cd1e3ad7ef24c04ca37f98f126b7c4b064b81269106841d3fb"
+          },
           "domain": "promotions",
           "semantic_type": "count",
           "additive": true,
@@ -1454,6 +1665,17 @@
             ],
             "non_additive_over": [],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "promotion_redemption_count",
+            "formula_fingerprint": "b9d1334301d7cadc2b0c35db892d501f5fad5458fe0f49d78c868c747d6b44ed"
           },
           "domain": "promotions",
           "semantic_type": "count",
@@ -1534,6 +1756,17 @@
             "non_additive_over": [],
             "ratio_parts": null
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "payment_count",
+            "formula_fingerprint": "c663b1e7b6ef304b945203a7fb12470b02f9821646abb47057178a207db0d73b"
+          },
           "domain": "payments",
           "semantic_type": "count",
           "additive": true,
@@ -1610,6 +1843,17 @@
             ],
             "non_additive_over": [],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "payment_revenue",
+            "formula_fingerprint": "284e954beb83c9b5cb3cbe2e21b871f8032250390e1456692e71a3bfa166f758"
           },
           "domain": "payments",
           "semantic_type": "sum",
@@ -1718,6 +1962,17 @@
             "non_additive_over": [],
             "ratio_parts": null
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "total_deliveries",
+            "formula_fingerprint": "91a272197cb559df0fd1cb119ca4e3726668d36b26058d9e14fea1133c85837e"
+          },
           "domain": "delivery",
           "semantic_type": "sum",
           "additive": true,
@@ -1752,6 +2007,17 @@
             "additive_over": [],
             "non_additive_over": [],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "driver_rating",
+            "formula_fingerprint": "569fe04171b96553168033cd13e12a2c70fc589c68ac6e83302d4d752de57c80"
           },
           "domain": "delivery",
           "semantic_type": "average",
@@ -1789,6 +2055,17 @@
             ],
             "non_additive_over": [],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "delivery_count",
+            "formula_fingerprint": "3c83a2a0c529370d3d696ea8d7ec857ad2ad58e154f126d810e73cceb00b7ca3"
           },
           "domain": "delivery",
           "semantic_type": "count",
@@ -1870,6 +2147,17 @@
             "non_additive_over": [],
             "ratio_parts": null
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "delivered_count",
+            "formula_fingerprint": "b5189ff7259f6b7c47fe7bd4ff88be893cab3b0a408c7774f4cd3d2f74836413"
+          },
           "domain": "delivery",
           "semantic_type": "conditional_count",
           "additive": true,
@@ -1929,6 +2217,17 @@
             ],
             "non_additive_over": [],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "failed_or_cancelled_delivery_count",
+            "formula_fingerprint": "549f9a0b5684968fa71a527361f725abad5f083d719f5d9de241a07733a5b223"
           },
           "domain": "delivery",
           "semantic_type": "conditional_count",
@@ -1991,6 +2290,17 @@
               "denominator": "Chuyến DELIVERED + FAILED + CANCELLED"
             }
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "delivery_success_rate",
+            "formula_fingerprint": "c4bd50f2df7c9c7364df88a53174ed76b77616b8fc5ff7efacc9d9afd3e8404b"
+          },
           "domain": "delivery",
           "semantic_type": "ratio",
           "additive": false,
@@ -2051,6 +2361,17 @@
             "additive_over": [],
             "non_additive_over": [],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "avg_delivery_minutes",
+            "formula_fingerprint": "f90371d49d3bffa69233c761be3001121f561bd96749ac2800a284b0d44a935e"
           },
           "domain": "delivery",
           "semantic_type": "average",
@@ -2140,6 +2461,17 @@
             ],
             "ratio_parts": null
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "stock_quantity",
+            "formula_fingerprint": "edfae09e7854f43e28ed6af0804a415c91541feb9fd7f4360964531d6a3523f8"
+          },
           "domain": "inventory",
           "semantic_type": "sum",
           "additive": true,
@@ -2201,6 +2533,17 @@
               "time"
             ],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "low_stock_count",
+            "formula_fingerprint": "a319ae4c1919481fafd42fdab93423e10795e6a373e58a7b4fcdfa43c57b1113"
           },
           "domain": "inventory",
           "semantic_type": "conditional_count",
@@ -2282,6 +2625,17 @@
             "non_additive_over": [],
             "ratio_parts": null
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "avg_product_rating",
+            "formula_fingerprint": "df7ccb0070f5c4ef0f2b613371094233e599f04125fbcb4cac056ecd1ae5f168"
+          },
           "domain": "product_reviews",
           "semantic_type": "average",
           "additive": false,
@@ -2353,6 +2707,17 @@
             ],
             "non_additive_over": [],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "review_count",
+            "formula_fingerprint": "c145674242949e222cc7d2deea742a0ca23756e07263f1b992bae2da8ddadc0e"
           },
           "domain": "product_reviews",
           "semantic_type": "count",
@@ -2449,6 +2814,17 @@
             "non_additive_over": [],
             "ratio_parts": null
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "avg_store_rating",
+            "formula_fingerprint": "d3787df3ca0d9c3be0dc65813c17c71a85486d2700c6d71d2bb457e559f9c0d7"
+          },
           "domain": "store_reviews",
           "semantic_type": "average",
           "additive": false,
@@ -2496,6 +2872,17 @@
             ],
             "non_additive_over": [],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "store_review_count",
+            "formula_fingerprint": "78c0d980f9140c9026d652b9a3cfa32ea807e15ce220c2e0e9c4ef8e3b0fffa5"
           },
           "domain": "store_reviews",
           "semantic_type": "count",
@@ -2568,6 +2955,17 @@
             "non_additive_over": [],
             "ratio_parts": null
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "shift_count",
+            "formula_fingerprint": "7b9bfbf5daf58ccfbb9c21a261ababec51b697d89f0775168c62654cf97a839d"
+          },
           "domain": "staff_shifts",
           "semantic_type": "count",
           "additive": true,
@@ -2619,6 +3017,17 @@
             ],
             "non_additive_over": [],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "late_count",
+            "formula_fingerprint": "1070c195b9b51ebc64e1eba8c3e56c856e6c3cb88409bafc77580d62f43657cd"
           },
           "domain": "staff_shifts",
           "semantic_type": "conditional_count",
@@ -2676,6 +3085,17 @@
               "numerator": "Ca DI_TRE",
               "denominator": "Ca DUNG_GIO + DI_TRE + VE_SOM"
             }
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "late_shift_rate",
+            "formula_fingerprint": "6eefde96b46ed586d130bd8b59c8696cd6aacec0e50792de2c6d5259153996da"
           },
           "domain": "staff_shifts",
           "semantic_type": "ratio",
@@ -2758,6 +3178,17 @@
             "non_additive_over": [],
             "ratio_parts": null
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "total_cash_difference",
+            "formula_fingerprint": "5efd62674e46964533cd23791b2e9c7e00aeb0c35cd9a78d030be2d73d8aba60"
+          },
           "domain": "cashier_reconciliation",
           "semantic_type": "sum",
           "additive": true,
@@ -2805,6 +3236,17 @@
             ],
             "non_additive_over": [],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "system_cash_revenue",
+            "formula_fingerprint": "46ebe1f56dfa08f6123b367cc12317361ff96da3ae958161b8a06ffdd88a15df"
           },
           "domain": "cashier_reconciliation",
           "semantic_type": "sum",
@@ -2854,6 +3296,17 @@
             "non_additive_over": [],
             "ratio_parts": null
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "reconciled_shifts",
+            "formula_fingerprint": "e0b6040674f9c3ae857c56a147695578346988801d4f4018c567094fb5af2a60"
+          },
           "domain": "cashier_reconciliation",
           "semantic_type": "count",
           "additive": true,
@@ -2901,6 +3354,17 @@
             ],
             "non_additive_over": [],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "large_cash_discrepancy_shift_count",
+            "formula_fingerprint": "b97419d1ea4552580bc0bc8b064df66b3280fd2aec9ff7716fc7bc808665aa9a"
           },
           "domain": "cashier_reconciliation",
           "semantic_type": "conditional_count",
@@ -2976,6 +3440,17 @@
             "non_additive_over": [],
             "ratio_parts": null
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "survey_response_count",
+            "formula_fingerprint": "8c9d9d8263c5640409bdbb6d8c7194c2835245be2f5cd0ecbfbe10a082da9eb2"
+          },
           "domain": "customer_surveys",
           "semantic_type": "count",
           "additive": true,
@@ -3048,6 +3523,17 @@
             "non_additive_over": [],
             "ratio_parts": null
           },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "favorite_count",
+            "formula_fingerprint": "3bd5e319e5028c0fbb08a850aebad5a36868543178fb5fe7a0b85af6370838ab"
+          },
           "domain": "wishlist_favorites",
           "semantic_type": "count",
           "additive": true,
@@ -3115,6 +3601,17 @@
             ],
             "non_additive_over": [],
             "ratio_parts": null
+          },
+          "owner": "avengers-data-team",
+          "lifecycle": {
+            "status": "active",
+            "introduced_in": "legacy",
+            "deprecated_in": null,
+            "replacement_id": null
+          },
+          "lineage": {
+            "metric_id": "hourly_orders",
+            "formula_fingerprint": "5ba2e5d2a3a0e49e27f34582cf9b48ae6fb59fe8e186b74d51b2bc60d01a8b71"
           },
           "domain": "hourly",
           "semantic_type": "count",
@@ -3375,6 +3872,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "revenue",
+        "formula_fingerprint": "5846fda85ded6b645415d78eb8bad590a915d43bf064d7517bb5abad76b4a067"
+      },
       "id": "revenue",
       "label": "Doanh thu",
       "domain": "orders",
@@ -3459,6 +3967,17 @@
         ],
         "non_additive_over": [],
         "ratio_parts": null
+      },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "order_count",
+        "formula_fingerprint": "5ba2e5d2a3a0e49e27f34582cf9b48ae6fb59fe8e186b74d51b2bc60d01a8b71"
       },
       "id": "order_count",
       "label": "Số lượng đơn",
@@ -3546,6 +4065,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "aov",
+        "formula_fingerprint": "f773431582d17888be3fdb896b364d593484586255428fb28db525038fc9dc76"
+      },
       "id": "aov",
       "label": "Giá trị đơn trung bình",
       "domain": "orders",
@@ -3611,6 +4141,17 @@
         "additive_over": [],
         "non_additive_over": [],
         "ratio_parts": null
+      },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "purchasing_customer_count",
+        "formula_fingerprint": "8eed80bfeb20eb000798a50e940eb54be4b4b052bbf7144945e8327a103b71fb"
       },
       "id": "purchasing_customer_count",
       "label": "Số khách mua hàng",
@@ -3682,6 +4223,17 @@
           "denominator": "Đơn HOAN_THANH + DA_HUY"
         }
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "order_cancellation_rate",
+        "formula_fingerprint": "b892503415dc0a9ce826d30847811fdaaf32e8f658b5ee1a4962e20e641800c4"
+      },
       "id": "order_cancellation_rate",
       "label": "Tỷ lệ hủy đơn",
       "domain": "orders",
@@ -3746,6 +4298,17 @@
           "denominator": "Đơn HOAN_THANH + DA_HUY"
         }
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "order_completion_rate",
+        "formula_fingerprint": "4f7388ac407c95bfb2d4dd3e7a0355b0890bf133a55db02e2a18895769d90f5d"
+      },
       "id": "order_completion_rate",
       "label": "Tỷ lệ hoàn thành đơn",
       "domain": "orders",
@@ -3808,6 +4371,17 @@
         ],
         "non_additive_over": [],
         "ratio_parts": null
+      },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "quantity_sold",
+        "formula_fingerprint": "6d834c07d0255a04367d905d99d9ca55325b0aa9656308d7ec03e11ddadca253"
       },
       "id": "quantity_sold",
       "label": "Số lượng sản phẩm bán",
@@ -3882,6 +4456,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "item_revenue",
+        "formula_fingerprint": "8418355c8bdfa5dac9c8820e62657bb16bc80652bac4bf1a707d0e5e82b27793"
+      },
       "id": "item_revenue",
       "label": "Doanh thu món",
       "domain": "order_items",
@@ -3954,6 +4539,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "product_revenue",
+        "formula_fingerprint": "8418355c8bdfa5dac9c8820e62657bb16bc80652bac4bf1a707d0e5e82b27793"
+      },
       "id": "product_revenue",
       "label": "Doanh thu sản phẩm",
       "domain": "products",
@@ -4025,6 +4621,17 @@
         ],
         "non_additive_over": [],
         "ratio_parts": null
+      },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "store_revenue",
+        "formula_fingerprint": "5846fda85ded6b645415d78eb8bad590a915d43bf064d7517bb5abad76b4a067"
       },
       "id": "store_revenue",
       "label": "Doanh thu chi nhánh",
@@ -4107,6 +4714,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "store_order_count",
+        "formula_fingerprint": "5f02521bc5966f87d9156def70d52b14fbd693726e8a89ae963e1f820ddc8db6"
+      },
       "id": "store_order_count",
       "label": "Số đơn chi nhánh",
       "domain": "stores",
@@ -4185,6 +4803,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "store_aov",
+        "formula_fingerprint": "c133ac834d862877191abe3e8faef5aec99fb4330ab2f6d748547d75b1624c11"
+      },
       "id": "store_aov",
       "label": "AOV chi nhánh",
       "domain": "stores",
@@ -4249,6 +4878,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "customer_count",
+        "formula_fingerprint": "f1926102e30a14c65df13425cb0116bae133786eac790609d5140e701082d26f"
+      },
       "id": "customer_count",
       "label": "Số khách",
       "domain": "customers",
@@ -4290,6 +4930,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "total_spent",
+        "formula_fingerprint": "b8a29bfbb6696f90029bbaae90a965da39fd8b93f891641c10856c120e3ac246"
+      },
       "id": "total_spent",
       "label": "Tổng chi tiêu tích lũy",
       "domain": "customers",
@@ -4329,6 +4980,17 @@
         ],
         "non_additive_over": [],
         "ratio_parts": null
+      },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "voucher_revenue",
+        "formula_fingerprint": "99aa04393934914fbdcc9065a990f27921c7bee33b1e712ff9139ffee6aeffb0"
       },
       "id": "voucher_revenue",
       "label": "Doanh thu đơn có khuyến mãi",
@@ -4394,6 +5056,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "discount_amount",
+        "formula_fingerprint": "7b3447cafe9198190817ea71106c7aab58e82eecafd61f9743f219ae382cd95a"
+      },
       "id": "discount_amount",
       "label": "Tổng tiền đã giảm giá",
       "domain": "promotions",
@@ -4457,6 +5130,17 @@
         ],
         "non_additive_over": [],
         "ratio_parts": null
+      },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "voucher_order_count",
+        "formula_fingerprint": "e361fe78a60664cd1e3ad7ef24c04ca37f98f126b7c4b064b81269106841d3fb"
       },
       "id": "voucher_order_count",
       "label": "Số đơn áp dụng khuyến mãi",
@@ -4523,6 +5207,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "promotion_redemption_count",
+        "formula_fingerprint": "b9d1334301d7cadc2b0c35db892d501f5fad5458fe0f49d78c868c747d6b44ed"
+      },
       "id": "promotion_redemption_count",
       "label": "Lượt sử dụng khuyến mãi",
       "domain": "promotions",
@@ -4574,6 +5269,17 @@
         ],
         "non_additive_over": [],
         "ratio_parts": null
+      },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "payment_count",
+        "formula_fingerprint": "c663b1e7b6ef304b945203a7fb12470b02f9821646abb47057178a207db0d73b"
       },
       "id": "payment_count",
       "label": "Số giao dịch",
@@ -4652,6 +5358,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "payment_revenue",
+        "formula_fingerprint": "284e954beb83c9b5cb3cbe2e21b871f8032250390e1456692e71a3bfa166f758"
+      },
       "id": "payment_revenue",
       "label": "Doanh thu thanh toán",
       "domain": "payments",
@@ -4729,6 +5446,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "total_deliveries",
+        "formula_fingerprint": "91a272197cb559df0fd1cb119ca4e3726668d36b26058d9e14fea1133c85837e"
+      },
       "id": "total_deliveries",
       "label": "Tổng chuyến giao",
       "domain": "delivery",
@@ -4763,6 +5491,17 @@
         "additive_over": [],
         "non_additive_over": [],
         "ratio_parts": null
+      },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "driver_rating",
+        "formula_fingerprint": "569fe04171b96553168033cd13e12a2c70fc589c68ac6e83302d4d752de57c80"
       },
       "id": "driver_rating",
       "label": "Điểm đánh giá trung bình",
@@ -4800,6 +5539,17 @@
         ],
         "non_additive_over": [],
         "ratio_parts": null
+      },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "delivery_count",
+        "formula_fingerprint": "3c83a2a0c529370d3d696ea8d7ec857ad2ad58e154f126d810e73cceb00b7ca3"
       },
       "id": "delivery_count",
       "label": "Số chuyến giao",
@@ -4881,6 +5631,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "delivered_count",
+        "formula_fingerprint": "b5189ff7259f6b7c47fe7bd4ff88be893cab3b0a408c7774f4cd3d2f74836413"
+      },
       "id": "delivered_count",
       "label": "Số chuyến giao thành công",
       "domain": "delivery",
@@ -4940,6 +5701,17 @@
         ],
         "non_additive_over": [],
         "ratio_parts": null
+      },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "failed_or_cancelled_delivery_count",
+        "formula_fingerprint": "549f9a0b5684968fa71a527361f725abad5f083d719f5d9de241a07733a5b223"
       },
       "id": "failed_or_cancelled_delivery_count",
       "label": "Số chuyến không thành công",
@@ -5002,6 +5774,17 @@
           "denominator": "Chuyến DELIVERED + FAILED + CANCELLED"
         }
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "delivery_success_rate",
+        "formula_fingerprint": "c4bd50f2df7c9c7364df88a53174ed76b77616b8fc5ff7efacc9d9afd3e8404b"
+      },
       "id": "delivery_success_rate",
       "label": "Tỷ lệ giao thành công",
       "domain": "delivery",
@@ -5063,6 +5846,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "avg_delivery_minutes",
+        "formula_fingerprint": "f90371d49d3bffa69233c761be3001121f561bd96749ac2800a284b0d44a935e"
+      },
       "id": "avg_delivery_minutes",
       "label": "Thời gian giao trung bình",
       "domain": "delivery",
@@ -5122,6 +5916,17 @@
           "time"
         ],
         "ratio_parts": null
+      },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "stock_quantity",
+        "formula_fingerprint": "edfae09e7854f43e28ed6af0804a415c91541feb9fd7f4360964531d6a3523f8"
       },
       "id": "stock_quantity",
       "label": "Số lượng tồn kho",
@@ -5185,6 +5990,17 @@
         ],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "low_stock_count",
+        "formula_fingerprint": "a319ae4c1919481fafd42fdab93423e10795e6a373e58a7b4fcdfa43c57b1113"
+      },
       "id": "low_stock_count",
       "label": "Số món dưới định mức",
       "domain": "inventory",
@@ -5238,6 +6054,17 @@
         "additive_over": [],
         "non_additive_over": [],
         "ratio_parts": null
+      },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "avg_product_rating",
+        "formula_fingerprint": "df7ccb0070f5c4ef0f2b613371094233e599f04125fbcb4cac056ecd1ae5f168"
       },
       "id": "avg_product_rating",
       "label": "Điểm đánh giá trung bình",
@@ -5311,6 +6138,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "review_count",
+        "formula_fingerprint": "c145674242949e222cc7d2deea742a0ca23756e07263f1b992bae2da8ddadc0e"
+      },
       "id": "review_count",
       "label": "Số lượt đánh giá",
       "domain": "product_reviews",
@@ -5381,6 +6219,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "avg_store_rating",
+        "formula_fingerprint": "d3787df3ca0d9c3be0dc65813c17c71a85486d2700c6d71d2bb457e559f9c0d7"
+      },
       "id": "avg_store_rating",
       "label": "Điểm phục vụ trung bình",
       "domain": "store_reviews",
@@ -5429,6 +6278,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "store_review_count",
+        "formula_fingerprint": "78c0d980f9140c9026d652b9a3cfa32ea807e15ce220c2e0e9c4ef8e3b0fffa5"
+      },
       "id": "store_review_count",
       "label": "Số lượt đánh giá quán",
       "domain": "store_reviews",
@@ -5476,6 +6336,17 @@
         ],
         "non_additive_over": [],
         "ratio_parts": null
+      },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "shift_count",
+        "formula_fingerprint": "7b9bfbf5daf58ccfbb9c21a261ababec51b697d89f0775168c62654cf97a839d"
       },
       "id": "shift_count",
       "label": "Tổng số ca làm",
@@ -5528,6 +6399,17 @@
         ],
         "non_additive_over": [],
         "ratio_parts": null
+      },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "late_count",
+        "formula_fingerprint": "1070c195b9b51ebc64e1eba8c3e56c856e6c3cb88409bafc77580d62f43657cd"
       },
       "id": "late_count",
       "label": "Số ca đi trễ",
@@ -5586,6 +6468,17 @@
           "denominator": "Ca DUNG_GIO + DI_TRE + VE_SOM"
         }
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "late_shift_rate",
+        "formula_fingerprint": "6eefde96b46ed586d130bd8b59c8696cd6aacec0e50792de2c6d5259153996da"
+      },
       "id": "late_shift_rate",
       "label": "Tỷ lệ ca đi trễ",
       "domain": "staff_shifts",
@@ -5641,6 +6534,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "total_cash_difference",
+        "formula_fingerprint": "5efd62674e46964533cd23791b2e9c7e00aeb0c35cd9a78d030be2d73d8aba60"
+      },
       "id": "total_cash_difference",
       "label": "Tổng tiền chênh lệch",
       "domain": "cashier_reconciliation",
@@ -5688,6 +6592,17 @@
         ],
         "non_additive_over": [],
         "ratio_parts": null
+      },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "system_cash_revenue",
+        "formula_fingerprint": "46ebe1f56dfa08f6123b367cc12317361ff96da3ae958161b8a06ffdd88a15df"
       },
       "id": "system_cash_revenue",
       "label": "Doanh thu tiền mặt hệ thống",
@@ -5737,6 +6652,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "reconciled_shifts",
+        "formula_fingerprint": "e0b6040674f9c3ae857c56a147695578346988801d4f4018c567094fb5af2a60"
+      },
       "id": "reconciled_shifts",
       "label": "Số ca đã đối soát",
       "domain": "cashier_reconciliation",
@@ -5784,6 +6710,17 @@
         ],
         "non_additive_over": [],
         "ratio_parts": null
+      },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "large_cash_discrepancy_shift_count",
+        "formula_fingerprint": "b97419d1ea4552580bc0bc8b064df66b3280fd2aec9ff7716fc7bc808665aa9a"
       },
       "id": "large_cash_discrepancy_shift_count",
       "label": "Số ca lệch tiền lớn",
@@ -5833,6 +6770,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "survey_response_count",
+        "formula_fingerprint": "8c9d9d8263c5640409bdbb6d8c7194c2835245be2f5cd0ecbfbe10a082da9eb2"
+      },
       "id": "survey_response_count",
       "label": "Số lượt phản hồi khảo sát",
       "domain": "customer_surveys",
@@ -5881,6 +6829,17 @@
         "non_additive_over": [],
         "ratio_parts": null
       },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "favorite_count",
+        "formula_fingerprint": "3bd5e319e5028c0fbb08a850aebad5a36868543178fb5fe7a0b85af6370838ab"
+      },
       "id": "favorite_count",
       "label": "Số lượt thả tim yêu thích",
       "domain": "wishlist_favorites",
@@ -5924,6 +6883,17 @@
         ],
         "non_additive_over": [],
         "ratio_parts": null
+      },
+      "owner": "avengers-data-team",
+      "lifecycle": {
+        "status": "active",
+        "introduced_in": "legacy",
+        "deprecated_in": null,
+        "replacement_id": null
+      },
+      "lineage": {
+        "metric_id": "hourly_orders",
+        "formula_fingerprint": "5ba2e5d2a3a0e49e27f34582cf9b48ae6fb59fe8e186b74d51b2bc60d01a8b71"
       },
       "id": "hourly_orders",
       "label": "Số đơn theo giờ",
@@ -6908,7 +7878,9 @@
         "giá vốn",
         "profit",
         "COGS",
-        "gross margin"
+        "gross margin",
+        "chi phí vận hành",
+        "chi phí"
       ],
       "reason": "definition_unavailable",
       "limitation": "Kho chỉ có giá bán, không có giá vốn hay chi phí nên không tính được lợi nhuận.",

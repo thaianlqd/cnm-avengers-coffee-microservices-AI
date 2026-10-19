@@ -1,0 +1,3 @@
+== module tests.test_v34_audit tests.test_analysis_jobs tests.test_v34_auth_boundary tests.test_v34_platform_routes (log: /tmp/v34-auth-jobs/module.log)
+Ran 26 tests in 27.370s
+OK

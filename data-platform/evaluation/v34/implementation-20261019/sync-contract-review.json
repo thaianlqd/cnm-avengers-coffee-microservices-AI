@@ -1,0 +1,168 @@
+{
+  "read_only": true,
+  "comparison": "source exact; target uses existing map_postgres_type because replica maps varchar to text",
+  "sources": [
+    {
+      "source": "identity.chi_nhanh",
+      "target": "identity.chi_nhanh",
+      "mode": "incremental",
+      "columns": 19,
+      "issues": []
+    },
+    {
+      "source": "identity.khu_vuc",
+      "target": "identity.khu_vuc",
+      "mode": "incremental",
+      "columns": 9,
+      "issues": []
+    },
+    {
+      "source": "identity.khuyen_mai",
+      "target": "identity.khuyen_mai",
+      "mode": "incremental",
+      "columns": 23,
+      "issues": []
+    },
+    {
+      "source": "identity.khuyen_mai_su_dung",
+      "target": "identity.khuyen_mai_su_dung",
+      "mode": "full_snapshot",
+      "columns": 6,
+      "issues": []
+    },
+    {
+      "source": "identity.nguoi_dung",
+      "target": "identity.nguoi_dung",
+      "mode": "full_snapshot",
+      "columns": 27,
+      "issues": []
+    },
+    {
+      "source": "inventory.ton_kho_san_pham",
+      "target": "inventory.ton_kho_san_pham",
+      "mode": "incremental",
+      "columns": 7,
+      "issues": []
+    },
+    {
+      "source": "menu.bien_the_san_pham",
+      "target": "menu.bien_the_san_pham",
+      "mode": "full_snapshot",
+      "columns": 5,
+      "issues": []
+    },
+    {
+      "source": "menu.danh_muc",
+      "target": "menu.danh_muc",
+      "mode": "full_snapshot",
+      "columns": 5,
+      "issues": []
+    },
+    {
+      "source": "menu.san_pham",
+      "target": "menu.san_pham",
+      "mode": "full_snapshot",
+      "columns": 16,
+      "issues": []
+    },
+    {
+      "source": "orders.ca_doi_soat",
+      "target": "orders.ca_doi_soat",
+      "mode": "full_snapshot",
+      "columns": 20,
+      "issues": []
+    },
+    {
+      "source": "orders.ca_lam_viec_nhan_vien",
+      "target": "orders.ca_lam_viec_nhan_vien",
+      "mode": "incremental",
+      "columns": 22,
+      "issues": []
+    },
+    {
+      "source": "orders.chi_tiet_don_hang",
+      "target": "orders.chi_tiet_don_hang",
+      "mode": "full_snapshot",
+      "columns": 14,
+      "issues": []
+    },
+    {
+      "source": "orders.customer_wallet_transaction",
+      "target": "orders.customer_wallet_transaction",
+      "mode": "full_snapshot",
+      "columns": 7,
+      "issues": []
+    },
+    {
+      "source": "orders.danh_gia_chi_nhanh",
+      "target": "orders.danh_gia_chi_nhanh",
+      "mode": "incremental",
+      "columns": 15,
+      "issues": []
+    },
+    {
+      "source": "orders.danh_gia_san_pham",
+      "target": "orders.danh_gia_san_pham",
+      "mode": "incremental",
+      "columns": 12,
+      "issues": []
+    },
+    {
+      "source": "orders.delivery_tracking",
+      "target": "orders.delivery_tracking",
+      "mode": "incremental",
+      "columns": 23,
+      "issues": []
+    },
+    {
+      "source": "orders.don_hang",
+      "target": "orders.don_hang",
+      "mode": "incremental",
+      "columns": 24,
+      "issues": []
+    },
+    {
+      "source": "orders.giao_dich_thanh_toan",
+      "target": "orders.giao_dich_thanh_toan",
+      "mode": "full_snapshot",
+      "columns": 9,
+      "issues": []
+    },
+    {
+      "source": "orders.khao_sat_phan_hoi",
+      "target": "orders.khao_sat_phan_hoi",
+      "mode": "full_snapshot",
+      "columns": 10,
+      "issues": []
+    },
+    {
+      "source": "orders.shipper",
+      "target": "orders.shipper",
+      "mode": "incremental",
+      "columns": 17,
+      "issues": []
+    },
+    {
+      "source": "orders.shipper_delivery",
+      "target": "orders.shipper_delivery",
+      "mode": "incremental",
+      "columns": 19,
+      "issues": []
+    },
+    {
+      "source": "orders.voucher",
+      "target": "orders.voucher",
+      "mode": "incremental",
+      "columns": 22,
+      "issues": []
+    },
+    {
+      "source": "orders.yeu_thich_san_pham",
+      "target": "orders.yeu_thich_san_pham",
+      "mode": "full_snapshot",
+      "columns": 8,
+      "issues": []
+    }
+  ],
+  "status": "compatible"
+}

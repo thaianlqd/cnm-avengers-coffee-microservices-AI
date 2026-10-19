@@ -97,6 +97,7 @@ class ReportSession:
     analysis_inputs: Dict[str, Any] = field(default_factory=dict)
     input_time_strategy: Dict[str, Any] = field(default_factory=dict)
     module_provenance: Optional[Dict[str, Any]] = None
+    source_analysis: Optional[Dict[str, Any]] = None
 
     # Full conversation history
     conversation_turns: List[ConversationTurn] = field(default_factory=list)

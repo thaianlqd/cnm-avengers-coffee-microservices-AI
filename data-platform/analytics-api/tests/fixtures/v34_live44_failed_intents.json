@@ -1,0 +1,551 @@
+{
+  "origin": "Normalized captures of all failures from first full frozen44 run, retained without paid retry. Shape-only interpreter captures; not raw transport/rows/credentials.",
+  "cases": [
+    {
+      "id": "L29",
+      "question": "So sánh doanh thu miền Bắc với miền Nam tháng 9 năm 2026",
+      "outputs": [
+        {
+          "decision": "analyze",
+          "clarification": {},
+          "requirements": [
+            {
+              "derived_features": [
+                "group_gap"
+              ],
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "city"
+              ],
+              "id": "req_1",
+              "availability": "requested",
+              "analysis_kind": "comparison",
+              "time": {
+                "kind": "month",
+                "month": 9,
+                "year": 2026
+              }
+            }
+          ]
+        },
+        {
+          "decision": "analyze",
+          "clarification": {},
+          "requirements": [
+            {
+              "ranking": {
+                "limit": 10,
+                "metric_id": "revenue"
+              },
+              "time": {
+                "year": 2026,
+                "kind": "month",
+                "month": 9
+              },
+              "id": "req_1"
+            }
+          ]
+        }
+      ],
+      "error": "semantic_intent_invalid",
+      "issues": [
+        {
+          "requirement_id": "req_1",
+          "field": "analysis_kind",
+          "code": "untargeted_field_changed"
+        }
+      ],
+      "root": [
+        {
+          "requirement_id": "req_1",
+          "field": "filters",
+          "code": "scope_membership_mismatch",
+          "expected": [
+            [
+              "Bắc Ninh",
+              "Hà Nội",
+              "Hải Phòng",
+              "Quảng Ninh"
+            ],
+            [
+              "Bà Rịa - Vũng Tàu",
+              "Bình Dương",
+              "Cần Thơ",
+              "Hồ Chí Minh",
+              "Kiên Giang",
+              "Đồng Nai"
+            ]
+          ]
+        },
+        {
+          "requirement_id": "req_1",
+          "field": "dimension_ids",
+          "code": "scope_cohort_axis_mismatch",
+          "expected": [
+            "reporting_region"
+          ]
+        },
+        {
+          "requirement_id": null,
+          "field": "filters",
+          "code": "scope_cohort_missing",
+          "expected": [
+            [
+              "Bắc Ninh",
+              "Hà Nội",
+              "Hải Phòng",
+              "Quảng Ninh"
+            ],
+            [
+              "Bà Rịa - Vũng Tàu",
+              "Bình Dương",
+              "Cần Thơ",
+              "Hồ Chí Minh",
+              "Kiên Giang",
+              "Đồng Nai"
+            ]
+          ]
+        },
+        {
+          "requirement_id": null,
+          "field": "filters",
+          "code": "explicit_value_missing",
+          "expected": {
+            "dimension": "city",
+            "value": "Hà Nội"
+          }
+        },
+        {
+          "requirement_id": null,
+          "field": "filters",
+          "code": "explicit_value_missing",
+          "expected": {
+            "dimension": "city",
+            "value": "Hải Phòng"
+          }
+        },
+        {
+          "requirement_id": null,
+          "field": "filters",
+          "code": "explicit_value_missing",
+          "expected": {
+            "dimension": "city",
+            "value": "Bắc Ninh"
+          }
+        },
+        {
+          "requirement_id": null,
+          "field": "filters",
+          "code": "explicit_value_missing",
+          "expected": {
+            "dimension": "city",
+            "value": "Quảng Ninh"
+          }
+        },
+        {
+          "requirement_id": null,
+          "field": "filters",
+          "code": "explicit_value_missing",
+          "expected": {
+            "dimension": "city",
+            "value": "Hồ Chí Minh"
+          }
+        },
+        {
+          "requirement_id": null,
+          "field": "filters",
+          "code": "explicit_value_missing",
+          "expected": {
+            "dimension": "city",
+            "value": "Cần Thơ"
+          }
+        },
+        {
+          "requirement_id": null,
+          "field": "filters",
+          "code": "explicit_value_missing",
+          "expected": {
+            "dimension": "city",
+            "value": "Bình Dương"
+          }
+        },
+        {
+          "requirement_id": null,
+          "field": "filters",
+          "code": "explicit_value_missing",
+          "expected": {
+            "dimension": "city",
+            "value": "Đồng Nai"
+          }
+        },
+        {
+          "requirement_id": null,
+          "field": "filters",
+          "code": "explicit_value_missing",
+          "expected": {
+            "dimension": "city",
+            "value": "Bà Rịa - Vũng Tàu"
+          }
+        },
+        {
+          "requirement_id": null,
+          "field": "filters",
+          "code": "explicit_value_missing",
+          "expected": {
+            "dimension": "city",
+            "value": "Kiên Giang"
+          }
+        }
+      ]
+    },
+    {
+      "id": "L32",
+      "question": "Top 3 thành phố có doanh thu thấp nhất tháng 9 năm 2026",
+      "outputs": [
+        {
+          "decision": "analyze",
+          "clarification": {},
+          "requirements": [
+            {
+              "feature_metrics": {
+                "selected_total": [
+                  "revenue"
+                ]
+              },
+              "dimension_ids": [
+                "city"
+              ],
+              "availability": "requested",
+              "ranking": {
+                "limit": 3,
+                "metric_id": "revenue",
+                "direction": "bottom"
+              },
+              "id": "req_1",
+              "time": {
+                "year": 2026,
+                "month": 9,
+                "kind": "month"
+              },
+              "derived_features": [
+                "selected_total"
+              ],
+              "analysis_kind": "ranking"
+            }
+          ]
+        },
+        {
+          "decision": "analyze",
+          "clarification": {},
+          "requirements": [
+            {
+              "ranking": {
+                "limit": 3,
+                "direction": "bottom",
+                "metric_id": "revenue"
+              },
+              "id": "req_1",
+              "metric_ids": [
+                "revenue"
+              ],
+              "dimension_ids": [
+                "city"
+              ],
+              "availability": "requested",
+              "time": {
+                "kind": "month",
+                "year": 2026,
+                "month": 9
+              },
+              "analysis_kind": "ranking"
+            }
+          ]
+        }
+      ],
+      "error": "semantic_intent_invalid",
+      "issues": [
+        {
+          "requirement_id": null,
+          "field": "ranking",
+          "code": "explicit_ranking_missing",
+          "expected": {
+            "direction": "top",
+            "limit": 3,
+            "metric_candidates": [
+              "item_revenue",
+              "payment_revenue",
+              "product_revenue",
+              "revenue",
+              "store_revenue",
+              "voucher_revenue"
+            ],
+            "dimension_id": "city",
+            "partition_requested": false,
+            "partition_dimensions": []
+          }
+        }
+      ],
+      "root": [
+        {
+          "requirement_id": "req_1",
+          "field": "metric_ids",
+          "code": "metric_required"
+        },
+        {
+          "requirement_id": null,
+          "field": "metric_ids",
+          "code": "explicit_metrics_missing",
+          "candidate_ids": [
+            "item_revenue",
+            "payment_revenue",
+            "product_revenue",
+            "revenue",
+            "store_revenue",
+            "voucher_revenue"
+          ]
+        },
+        {
+          "requirement_id": null,
+          "field": "ranking",
+          "code": "explicit_ranking_missing",
+          "expected": {
+            "direction": "top",
+            "limit": 3,
+            "metric_candidates": [
+              "item_revenue",
+              "payment_revenue",
+              "product_revenue",
+              "revenue",
+              "store_revenue",
+              "voucher_revenue"
+            ],
+            "dimension_id": "city",
+            "partition_requested": false,
+            "partition_dimensions": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "L41",
+      "question": "So sánh doanh thu tháng 8 với tháng 9 năm 2026",
+      "outputs": [
+        {
+          "decision": "analyze",
+          "clarification": {},
+          "requirements": [
+            {
+              "id": "revenue_comparison_m8_m9_2026",
+              "metric_ids": [
+                "revenue"
+              ],
+              "derived_features": [
+                "change",
+                "change_pct"
+              ],
+              "analysis_kind": "comparison",
+              "availability": "requested",
+              "time": {
+                "kind": "range",
+                "start": "2026-08-01",
+                "end": "2026-09-30"
+              }
+            }
+          ]
+        },
+        {
+          "decision": "analyze",
+          "clarification": {},
+          "requirements": [
+            {
+              "feature_metrics": {},
+              "dimension_ids": [],
+              "analysis_kind": "trend",
+              "derived_features": [],
+              "metric_ids": [
+                "revenue"
+              ],
+              "filters": [],
+              "availability": "requested",
+              "time": {
+                "start": "2026-08-01",
+                "kind": "range",
+                "end": "2026-09-30"
+              },
+              "id": "revenue_comparison_m8_m9_2026"
+            }
+          ]
+        }
+      ],
+      "error": "semantic_intent_invalid",
+      "issues": [
+        {
+          "requirement_id": "revenue_comparison_m8_m9_2026",
+          "field": "analysis_kind",
+          "code": "untargeted_field_changed"
+        }
+      ],
+      "root": [
+        {
+          "requirement_id": "revenue_comparison_m8_m9_2026",
+          "field": "derived_features",
+          "code": "feature_shape_conflict",
+          "feature": "change",
+          "expected_shapes": [
+            "trend"
+          ],
+          "protected_features": [
+            "group_gap"
+          ]
+        },
+        {
+          "requirement_id": "revenue_comparison_m8_m9_2026",
+          "field": "feature_metrics",
+          "code": "feature_shape_binding_conflict",
+          "feature": "change"
+        },
+        {
+          "requirement_id": "revenue_comparison_m8_m9_2026",
+          "field": "derived_features",
+          "code": "feature_shape_conflict",
+          "feature": "change_pct",
+          "expected_shapes": [
+            "trend"
+          ],
+          "protected_features": [
+            "group_gap"
+          ]
+        },
+        {
+          "requirement_id": "revenue_comparison_m8_m9_2026",
+          "field": "feature_metrics",
+          "code": "feature_shape_binding_conflict",
+          "feature": "change_pct"
+        },
+        {
+          "requirement_id": null,
+          "field": "time",
+          "code": "explicit_time_missing",
+          "expected": {
+            "kind": "month",
+            "month": 8
+          }
+        },
+        {
+          "requirement_id": null,
+          "field": "time",
+          "code": "explicit_time_missing",
+          "expected": {
+            "kind": "month",
+            "year": 2026,
+            "month": 9
+          }
+        }
+      ]
+    },
+    {
+      "id": "L43",
+      "question": "Top 5 chi nhánh có tỷ lệ hủy đơn cao nhất tháng 9 năm 2026, kèm số đơn để xem quy mô.",
+      "outputs": [
+        {
+          "decision": "analyze",
+          "clarification": {},
+          "requirements": [
+            {
+              "dimension_ids": [
+                "store"
+              ],
+              "availability": "requested",
+              "metric_ids": [
+                "order_cancellation_rate",
+                "order_count"
+              ],
+              "time": {
+                "year": 2026,
+                "month": 9,
+                "kind": "month"
+              },
+              "id": "top_stores_by_cancellation_rate_sep_2026",
+              "analysis_kind": "ranking",
+              "ranking": {
+                "direction": "top",
+                "metric_id": "order_cancellation_rate",
+                "limit": 5
+              }
+            }
+          ]
+        }
+      ],
+      "error": "clarification",
+      "issues": null,
+      "root": null
+    },
+    {
+      "id": "L44",
+      "question": "Tổng tiền giảm giá và số đơn sử dụng voucher tại Hà Nội tháng 9 năm 2026",
+      "outputs": [
+        {
+          "decision": "analyze",
+          "clarification": {},
+          "requirements": [
+            {
+              "id": "req_1",
+              "analysis_kind": "aggregate",
+              "metric_ids": [
+                "discount_amount",
+                "voucher_order_count"
+              ],
+              "feature_metrics": {
+                "scalar": [
+                  "discount_amount",
+                  "voucher_order_count"
+                ]
+              },
+              "filters": [
+                {
+                  "dimension": "city",
+                  "operator": "eq",
+                  "value": "Hà Nội"
+                }
+              ],
+              "time": {
+                "month": 9,
+                "year": 2026,
+                "kind": "month"
+              },
+              "derived_features": [
+                "scalar"
+              ],
+              "availability": "requested"
+            }
+          ]
+        },
+        {
+          "decision": "clarification",
+          "clarification": {},
+          "requirements": []
+        }
+      ],
+      "error": "semantic_intent_invalid",
+      "issues": [
+        {
+          "requirement_id": null,
+          "field": "clarification",
+          "code": "clarification_required"
+        }
+      ],
+      "root": [
+        {
+          "requirement_id": null,
+          "field": "dimension_ids",
+          "code": "explicit_dimensions_missing",
+          "candidate_ids": [
+            "promotion"
+          ]
+        }
+      ]
+    }
+  ]
+}

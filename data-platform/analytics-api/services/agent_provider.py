@@ -628,6 +628,8 @@ class NativeAgentProvider:
                 if not response.ok:
                     attempt.update(http_failure(response))
                     raise RuntimeError("transport")
+                if provider=='gemini' and not self.legacy_policy:
+                    credentials.record_success(attempt.get('credential_slot'))
                 body = response.json()
                 if provider == "gemini" and self.gemini_api_style == "native":
                     parts = body["candidates"][0]["content"]["parts"]

@@ -1,0 +1,23 @@
+..E..................Native provider failed provider=gemini model=fixture http_status=None category=provider_timeout reason=None provider_status=None schema_keywords=[] latency_ms=1.07 quota_scopes=[] retry_after_seconds=None
+.....................................
+======================================================================
+ERROR: test_observed_reasonless_bottom_ranking_keeps_criterion_time_and_city_in_one_repair (tests.test_v34_live44_third_regressions.ThirdRunRegressions.test_observed_reasonless_bottom_ranking_keeps_criterion_time_and_city_in_one_repair)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_v34_live44_third_regressions.py", line 90, in test_observed_reasonless_bottom_ranking_keeps_criterion_time_and_city_in_one_repair
+    proposal=pipeline.propose(self.request(capture['question'],analysis_depth='focused'))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 452, in propose
+    return self._propose(request)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agent_pipeline.py", line 517, in _propose
+    artifacts, plan = self.agent(catalog, reference, proposal=True, previous=previous, known_concepts=concepts).run(request.prompt, context)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/hybrid_analyst_planner.py", line 854, in run
+    raise self.terminal_semantic_error(new_issues,no_progress,repaired=kind in {'repair','resolution'}) from None
+services.analytical_resolver.ResolutionIssues: Semantic interpretation needs targeted recovery
+
+----------------------------------------------------------------------
+Ran 58 tests in 31.507s
+
+FAILED (errors=1)

@@ -92,6 +92,9 @@ def deep_domain_queries(subject):
 
 class OneShotTests(unittest.TestCase):
     def setUp(self):
+        from services import provider_credential_router
+        provider_credential_router.reset_for_tests()
+        self.addCleanup(provider_credential_router.reset_for_tests)
         for name in ("requests.sessions.Session.request", "psycopg2.connect"):
             guard = patch(name, side_effect=AssertionError("External calls forbidden"))
             guard.start(); self.addCleanup(guard.stop)
@@ -785,6 +788,9 @@ class OneShotTests(unittest.TestCase):
         from services import llm_service
         for status in (400, 401, 403, 404, 429, 500, 503):
             for style in ("native", "openai"):
+                # Independent wire fixtures, not repeated requests under the same quota fault.
+                from services import provider_credential_router
+                provider_credential_router.reset_for_tests()
                 response = Mock(ok=False, status_code=status, headers={})
                 response.json.return_value = {"error": {"message": "redacted"}}
                 with patch.dict(os.environ, {"AI_OFFLINE": "0", "AI_AGENT_GROQ_FALLBACK": "1", "GEMINI_API_STYLE": style}), patch.object(llm_service, "GEMINI_API_KEY", "fixture"), patch.object(llm_service, "GEMINI_MODELS", ["primary", "fallback"]), patch.object(llm_service, "GROQ_API_KEY", "fixture"), patch("services.agent_provider.requests.post", return_value=response) as post:

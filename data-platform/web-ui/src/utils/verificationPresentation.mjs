@@ -21,6 +21,8 @@ export function mergeReconciliation(verification, oracle) {
   const independent = oracle.independent_oracle || null;
   const mismatch = measured.some(c => c.status === 'mismatch') || ranked.some(c => c.status === 'mismatch');
   return { ...verification, status: mismatch ? 'attention' : verification.status, metrics, numeric: oracle.numeric || [], ranking: oracle.ranking || [], independent_oracle: independent,
+    oracle_consistency: oracle.consistency, oracle_queries: oracle.oracle_queries,
+    oracle_failures: oracle.oracle_failures, oracle_successes: oracle.oracle_successes,
     independent_oracle_label: independent ? `${vi(independent.accuracy_pct, 1)}% trên ${independent.eligible} phép đối chiếu số liệu` : 'Chưa đo đối chiếu độc lập',
     oracle_measured_at: oracle.measured_at };
 }

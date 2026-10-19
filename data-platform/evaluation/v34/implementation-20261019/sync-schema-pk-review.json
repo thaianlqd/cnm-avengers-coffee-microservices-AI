@@ -1,0 +1,655 @@
+{
+  "read_only": true,
+  "sources": [
+    {
+      "source": "identity.chi_nhanh",
+      "target": "identity.chi_nhanh",
+      "mode": "incremental",
+      "required_columns": 19,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "ma_chi_nhanh",
+        "ten_chi_nhanh",
+        "so_dien_thoai",
+        "trang_thai",
+        "thanh_pho",
+        "gio_mo_cua",
+        "gio_dong_cua",
+        "loai_diem_ban",
+        "chi_nhanh_me_ma",
+        "loai_vi_tri"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "ma_chi_nhanh"
+      ],
+      "source_pk": [
+        "ma_chi_nhanh"
+      ],
+      "target_pk": [
+        "ma_chi_nhanh"
+      ]
+    },
+    {
+      "source": "identity.khu_vuc",
+      "target": "identity.khu_vuc",
+      "mode": "incremental",
+      "required_columns": 9,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "ma_khu_vuc",
+        "ten_khu_vuc",
+        "thanh_pho",
+        "nguoi_quan_ly_ma",
+        "trang_thai"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "id"
+      ],
+      "source_pk": [
+        "id"
+      ],
+      "target_pk": [
+        "id"
+      ]
+    },
+    {
+      "source": "identity.khuyen_mai",
+      "target": "identity.khuyen_mai",
+      "mode": "incremental",
+      "required_columns": 23,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "ma_khuyen_mai",
+        "ten_khuyen_mai",
+        "loai_khuyen_mai",
+        "trang_thai",
+        "ten_san_pham_tang",
+        "hinh_anh",
+        "hang_toi_thieu",
+        "ma_nguoi_dung",
+        "loai_su_kien",
+        "loai_phan_phoi",
+        "ma_template_goc"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "ma_khuyen_mai"
+      ],
+      "source_pk": [
+        "ma_khuyen_mai"
+      ],
+      "target_pk": [
+        "ma_khuyen_mai"
+      ]
+    },
+    {
+      "source": "identity.khuyen_mai_su_dung",
+      "target": "identity.khuyen_mai_su_dung",
+      "mode": "full_snapshot",
+      "required_columns": 6,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "ma_khuyen_mai",
+        "ma_nguoi_dung",
+        "ma_don_hang"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "id"
+      ],
+      "source_pk": [
+        "id"
+      ],
+      "target_pk": [
+        "id"
+      ]
+    },
+    {
+      "source": "identity.nguoi_dung",
+      "target": "identity.nguoi_dung",
+      "mode": "full_snapshot",
+      "required_columns": 27,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "ten_dang_nhap",
+        "mat_khau_hash",
+        "ho_ten",
+        "email",
+        "so_dien_thoai",
+        "avatar_url",
+        "trang_thai",
+        "vai_tro",
+        "co_so_ma",
+        "co_so_ten",
+        "reset_password_code_hash",
+        "thang_chi_tieu_gan_nhat"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "ma_nguoi_dung"
+      ],
+      "source_pk": [
+        "ma_nguoi_dung"
+      ],
+      "target_pk": [
+        "ma_nguoi_dung"
+      ]
+    },
+    {
+      "source": "inventory.ton_kho_san_pham",
+      "target": "inventory.ton_kho_san_pham",
+      "mode": "incremental",
+      "required_columns": 7,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "co_so_ma"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "id"
+      ],
+      "source_pk": [
+        "id"
+      ],
+      "target_pk": [
+        "id"
+      ]
+    },
+    {
+      "source": "menu.bien_the_san_pham",
+      "target": "menu.bien_the_san_pham",
+      "mode": "full_snapshot",
+      "required_columns": 5,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "gia_tri"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "id"
+      ],
+      "source_pk": [
+        "id"
+      ],
+      "target_pk": [
+        "id"
+      ]
+    },
+    {
+      "source": "menu.danh_muc",
+      "target": "menu.danh_muc",
+      "mode": "full_snapshot",
+      "required_columns": 5,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "ten_danh_muc",
+        "hinh_anh_icon"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "ma_danh_muc"
+      ],
+      "source_pk": [
+        "ma_danh_muc"
+      ],
+      "target_pk": [
+        "ma_danh_muc"
+      ]
+    },
+    {
+      "source": "menu.san_pham",
+      "target": "menu.san_pham",
+      "mode": "full_snapshot",
+      "required_columns": 16,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "ten_san_pham",
+        "hinh_anh_url"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "ma_san_pham"
+      ],
+      "source_pk": [
+        "ma_san_pham"
+      ],
+      "target_pk": [
+        "ma_san_pham"
+      ]
+    },
+    {
+      "source": "orders.ca_doi_soat",
+      "target": "orders.ca_doi_soat",
+      "mode": "full_snapshot",
+      "required_columns": 20,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "ten_nhan_vien",
+        "trang_thai_phe_duyet",
+        "manager_duyet",
+        "co_so_ma"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "ma_ca"
+      ],
+      "source_pk": [
+        "ma_ca"
+      ],
+      "target_pk": [
+        "ma_ca"
+      ]
+    },
+    {
+      "source": "orders.ca_lam_viec_nhan_vien",
+      "target": "orders.ca_lam_viec_nhan_vien",
+      "mode": "incremental",
+      "required_columns": 22,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "staff_username",
+        "staff_name",
+        "ma_khung_ca",
+        "ten_ca",
+        "gio_bat_dau",
+        "gio_ket_thuc",
+        "trang_thai_cham_cong",
+        "note",
+        "manager_username",
+        "co_so_ma",
+        "nguon_tao",
+        "trang_thai_yeu_cau",
+        "nguoi_duyet_yeu_cau"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "ma_ca_lam_viec"
+      ],
+      "source_pk": [
+        "ma_ca_lam_viec"
+      ],
+      "target_pk": [
+        "ma_ca_lam_viec"
+      ]
+    },
+    {
+      "source": "orders.chi_tiet_don_hang",
+      "target": "orders.chi_tiet_don_hang",
+      "mode": "full_snapshot",
+      "required_columns": 14,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "ten_san_pham",
+        "kich_co",
+        "hinh_anh_url",
+        "luong_da",
+        "do_ngot",
+        "ghi_chu",
+        "loai_sua"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "id"
+      ],
+      "source_pk": [
+        "id"
+      ],
+      "target_pk": [
+        "id"
+      ]
+    },
+    {
+      "source": "orders.customer_wallet_transaction",
+      "target": "orders.customer_wallet_transaction",
+      "mode": "full_snapshot",
+      "required_columns": 7,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "type",
+        "status",
+        "reference_id"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "id"
+      ],
+      "source_pk": [
+        "id"
+      ],
+      "target_pk": [
+        "id"
+      ]
+    },
+    {
+      "source": "orders.danh_gia_chi_nhanh",
+      "target": "orders.danh_gia_chi_nhanh",
+      "mode": "incremental",
+      "required_columns": 15,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "ma_chi_nhanh",
+        "ten_chi_nhanh",
+        "ma_nguoi_dung",
+        "ten_nguoi_dung",
+        "so_dien_thoai",
+        "ma_don_hang",
+        "trang_thai",
+        "ma_kiosk"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "id"
+      ],
+      "source_pk": [
+        "id"
+      ],
+      "target_pk": [
+        "id"
+      ]
+    },
+    {
+      "source": "orders.danh_gia_san_pham",
+      "target": "orders.danh_gia_san_pham",
+      "mode": "incremental",
+      "required_columns": 12,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "ma_san_pham",
+        "nguoi_phan_hoi",
+        "ma_kiosk"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "id"
+      ],
+      "source_pk": [
+        "id"
+      ],
+      "target_pk": [
+        "id"
+      ]
+    },
+    {
+      "source": "orders.delivery_tracking",
+      "target": "orders.delivery_tracking",
+      "mode": "incremental",
+      "required_columns": 23,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "delivery_mode",
+        "delivery_method",
+        "lalamove_order_id",
+        "lalamove_status",
+        "branch_code",
+        "table_number",
+        "customer_name",
+        "customer_phone",
+        "tracking_code"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "id"
+      ],
+      "source_pk": [
+        "id"
+      ],
+      "target_pk": [
+        "id"
+      ]
+    },
+    {
+      "source": "orders.don_hang",
+      "target": "orders.don_hang",
+      "mode": "incremental",
+      "required_columns": 24,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "ma_nguoi_dung",
+        "dia_chi_giao_hang",
+        "khung_gio_giao",
+        "phuong_thuc_thanh_toan",
+        "trang_thai_thanh_toan",
+        "trang_thai_don_hang",
+        "ma_voucher",
+        "loai_don_hang",
+        "ma_ban",
+        "ten_khach_hang",
+        "ten_thu_ngan",
+        "co_so_ma",
+        "guest_email",
+        "guest_phone",
+        "session_id"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "ma_don_hang"
+      ],
+      "source_pk": [
+        "ma_don_hang"
+      ],
+      "target_pk": [
+        "ma_don_hang"
+      ]
+    },
+    {
+      "source": "orders.giao_dich_thanh_toan",
+      "target": "orders.giao_dich_thanh_toan",
+      "mode": "full_snapshot",
+      "required_columns": 9,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "cong_thanh_toan",
+        "ma_tham_chieu",
+        "ma_giao_dich_cong",
+        "trang_thai"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "ma_giao_dich"
+      ],
+      "source_pk": [
+        "ma_giao_dich"
+      ],
+      "target_pk": [
+        "ma_giao_dich"
+      ]
+    },
+    {
+      "source": "orders.khao_sat_phan_hoi",
+      "target": "orders.khao_sat_phan_hoi",
+      "mode": "full_snapshot",
+      "required_columns": 10,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "ma_nguoi_dung",
+        "ten_nguoi_dung",
+        "so_dien_thoai",
+        "ma_don_hang",
+        "co_so_ma",
+        "trang_thai_voucher"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "id"
+      ],
+      "source_pk": [
+        "id"
+      ],
+      "target_pk": [
+        "id"
+      ]
+    },
+    {
+      "source": "orders.shipper",
+      "target": "orders.shipper",
+      "mode": "incremental",
+      "required_columns": 17,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "username",
+        "full_name",
+        "phone",
+        "email",
+        "status",
+        "branch_code",
+        "vehicle_type",
+        "vehicle_plate",
+        "password"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "id"
+      ],
+      "source_pk": [
+        "id"
+      ],
+      "target_pk": [
+        "id"
+      ]
+    },
+    {
+      "source": "orders.shipper_delivery",
+      "target": "orders.shipper_delivery",
+      "mode": "incremental",
+      "required_columns": 19,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "status",
+        "delivery_address"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "id"
+      ],
+      "source_pk": [
+        "id"
+      ],
+      "target_pk": [
+        "id"
+      ]
+    },
+    {
+      "source": "orders.voucher",
+      "target": "orders.voucher",
+      "mode": "incremental",
+      "required_columns": 22,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "ma_voucher",
+        "loai",
+        "trang_thai",
+        "ten_voucher",
+        "loai_phan_phoi",
+        "ngu_canh_su_dung",
+        "ten_san_pham_tang",
+        "hinh_anh"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "id"
+      ],
+      "source_pk": [
+        "id"
+      ],
+      "target_pk": [
+        "id"
+      ]
+    },
+    {
+      "source": "orders.yeu_thich_san_pham",
+      "target": "orders.yeu_thich_san_pham",
+      "mode": "full_snapshot",
+      "required_columns": 8,
+      "source_missing_columns": [],
+      "target_missing_columns": [],
+      "source_type_drift": [],
+      "target_type_drift": [
+        "ma_nguoi_dung",
+        "ma_san_pham",
+        "ten_san_pham",
+        "hinh_anh_url",
+        "danh_muc"
+      ],
+      "source_pk_match": true,
+      "target_pk_match": true,
+      "expected_pk": [
+        "id"
+      ],
+      "source_pk": [
+        "id"
+      ],
+      "target_pk": [
+        "id"
+      ]
+    }
+  ],
+  "status": "reviewed"
+}

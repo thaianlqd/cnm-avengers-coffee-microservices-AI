@@ -81,6 +81,23 @@ class AiGuidedContract(BaseModel):
     signals: Optional[List[str]] = Field(default=None, max_length=12)
 
 
+class AiSourceAnalysis(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    session_id: str = Field(min_length=1,max_length=128)
+    revision: int = Field(ge=1)
+    query_id: str = Field(min_length=1,max_length=64)
+    artifact_id: str = Field(min_length=1,max_length=128)
+    filters: Dict[str,Any] = Field(min_length=1,max_length=8)
+
+    @model_validator(mode='after')
+    def typed_key(self):
+        import math
+        if any(not isinstance(k,str) or len(k)>64 or type(v) not in {str,int,float}
+                or isinstance(v,str) and len(v)>512 or isinstance(v,float) and not math.isfinite(v)
+                for k,v in self.filters.items()):raise ValueError('Invalid source group key')
+        return self
+
+
 class AiTextToReportRequest(BaseModel):
     refresh: bool = False
     proposal_revision: Optional[int] = None
@@ -96,6 +113,7 @@ class AiTextToReportRequest(BaseModel):
     accept_partial_scope: bool = False
     analysis_depth: Literal["deep", "focused", "comprehensive"] = "deep"
     analysis_scope: Optional[AiAnalysisScope] = None
+    source_analysis: Optional[AiSourceAnalysis] = None
     reference_date: Optional[date] = None
     context: Optional[str] = ""
     time_range: Optional[AiTimeRange] = Field(default=None, validation_alias=AliasChoices("time", "time_range"))

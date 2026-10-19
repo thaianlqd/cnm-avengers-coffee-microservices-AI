@@ -1,0 +1,517 @@
+{
+  "status": "RECOVERED_DIAGNOSTIC",
+  "reason": "Runner failed to persist because requested output parent was missing; no repeat paid call",
+  "reserved": 161,
+  "jobs": [
+    {
+      "job_id": "aj_4841d66ea9dd4c27b19030b8f92520bc",
+      "state": "completed",
+      "physical_http": 1,
+      "provider_call_count": 1,
+      "stage_timings_ms": {
+        "queue": 48.65,
+        "accepted": 910.11,
+        "planning": 2044.56,
+        "validating": 260.86,
+        "executing": 584.04,
+        "verifying": 367.87
+      },
+      "outcome": {
+        "status": "success",
+        "conclusion": "Trong 2 nhóm quan sát đã trả về, doanh thu cao nhất ở Hồ Chí Minh (154,577,000 VND), thấp nhất ở Hà Nội (96,171,000 VND); chênh lệch là 58,406,000 VND.",
+        "verification": "verified",
+        "completion_status": "complete",
+        "error_category": null,
+        "coverage": [
+          {
+            "requirement_id": "compare_revenue_hcm_hanoi_sep2026",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_bbbfd263f60514cc928b35c9"
+            ],
+            "derived_features": [
+              "group_gap"
+            ],
+            "goal": "So sánh doanh thu giữa Hồ Chí Minh và Hà Nội tháng 9 năm 2026",
+            "supporting_for": null,
+            "views": [
+              {
+                "kind": "grouped",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "city"
+                ],
+                "required": true,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_27d0e07e91a74e6ea804bf9f",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_9741f61441cfadfbd04f6b3b"
+            ],
+            "derived_features": [],
+            "goal": "Đối chiếu bổ sung · Hình thức nhận hàng",
+            "supporting_for": "compare_revenue_hcm_hanoi_sep2026",
+            "views": [
+              {
+                "kind": "grouped",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "order_type"
+                ],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_402e253aed7dfba806534e22",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_0cfa15d37786388faee50683",
+              "q_22920bf6981f74fe998858c7"
+            ],
+            "derived_features": [
+              "scalar"
+            ],
+            "goal": "Chỉ số toàn phạm vi",
+            "supporting_for": "compare_revenue_hcm_hanoi_sep2026",
+            "views": [
+              {
+                "kind": "scalar",
+                "metric_ids": [
+                  "aov",
+                  "order_cancellation_rate",
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_5762205649333013ef2b1146",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_11c60e5db69581f5b9e6eee2"
+            ],
+            "derived_features": [],
+            "goal": "Đối chiếu bổ sung · Chi nhánh",
+            "supporting_for": "compare_revenue_hcm_hanoi_sep2026",
+            "views": [
+              {
+                "kind": "grouped",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "store"
+                ],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_88275e26c1d1ca97bb9949a6",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_e3a436ebb6ba93ae8900bbe1"
+            ],
+            "derived_features": [],
+            "goal": "Diễn biến trong phạm vi đã chọn",
+            "supporting_for": "compare_revenue_hcm_hanoi_sep2026",
+            "views": [
+              {
+                "kind": "time_series",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          },
+          {
+            "requirement_id": "support_fc0332d3704f1f2f6d7ad28f",
+            "state": "RESOLVED",
+            "reason": null,
+            "operation_ids": [
+              "q_45c01b3d46dd04d907053ead"
+            ],
+            "derived_features": [],
+            "goal": "Đối chiếu bổ sung · Phương thức thanh toán",
+            "supporting_for": "compare_revenue_hcm_hanoi_sep2026",
+            "views": [
+              {
+                "kind": "grouped",
+                "metric_ids": [
+                  "revenue"
+                ],
+                "dimension_ids": [
+                  "payment_method"
+                ],
+                "required": false,
+                "id": null,
+                "operation_ids": [],
+                "transform": null
+              }
+            ]
+          }
+        ],
+        "applied_filters": [
+          [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hà Nội",
+                "Hồ Chí Minh"
+              ]
+            }
+          ],
+          [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hà Nội",
+                "Hồ Chí Minh"
+              ]
+            }
+          ],
+          [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hà Nội",
+                "Hồ Chí Minh"
+              ]
+            }
+          ],
+          [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hà Nội",
+                "Hồ Chí Minh"
+              ]
+            }
+          ],
+          [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hà Nội",
+                "Hồ Chí Minh"
+              ]
+            }
+          ],
+          [
+            {
+              "dimension": "city",
+              "operator": "in",
+              "value": [
+                "Hà Nội",
+                "Hồ Chí Minh"
+              ]
+            }
+          ]
+        ]
+      },
+      "semantic_intent": {
+        "decision": "analyze",
+        "requirements": [
+          {
+            "id": "compare_revenue_hcm_hanoi_sep2026",
+            "goal": "So sánh doanh thu giữa Hồ Chí Minh và Hà Nội tháng 9 năm 2026",
+            "domain_id": "orders",
+            "lens_hint": null,
+            "supporting_for": null,
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "city"
+            ],
+            "analysis_kind": "aggregate",
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Hà Nội",
+                  "Hồ Chí Minh"
+                ]
+              }
+            ],
+            "time": {
+              "kind": "month",
+              "mode": null,
+              "year": 2026,
+              "month": 9,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "ranking": null,
+            "granularity": null,
+            "derived_features": [
+              "group_gap"
+            ],
+            "feature_metrics": {},
+            "forecast": null,
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "support_fc0332d3704f1f2f6d7ad28f",
+            "goal": "Đối chiếu bổ sung · Phương thức thanh toán",
+            "domain_id": "orders",
+            "lens_hint": null,
+            "supporting_for": "compare_revenue_hcm_hanoi_sep2026",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "payment_method"
+            ],
+            "analysis_kind": "distribution",
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Hà Nội",
+                  "Hồ Chí Minh"
+                ]
+              }
+            ],
+            "time": {
+              "kind": "month",
+              "mode": null,
+              "year": 2026,
+              "month": 9,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "ranking": null,
+            "granularity": null,
+            "derived_features": [],
+            "feature_metrics": {},
+            "forecast": null,
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "support_402e253aed7dfba806534e22",
+            "goal": "Chỉ số toàn phạm vi",
+            "domain_id": null,
+            "lens_hint": null,
+            "supporting_for": "compare_revenue_hcm_hanoi_sep2026",
+            "metric_ids": [
+              "aov",
+              "order_cancellation_rate",
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "aggregate",
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Hà Nội",
+                  "Hồ Chí Minh"
+                ]
+              }
+            ],
+            "time": {
+              "kind": "month",
+              "mode": null,
+              "year": 2026,
+              "month": 9,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "ranking": null,
+            "granularity": null,
+            "derived_features": [
+              "scalar"
+            ],
+            "feature_metrics": {},
+            "forecast": null,
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "support_88275e26c1d1ca97bb9949a6",
+            "goal": "Diễn biến trong phạm vi đã chọn",
+            "domain_id": null,
+            "lens_hint": null,
+            "supporting_for": "compare_revenue_hcm_hanoi_sep2026",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [],
+            "analysis_kind": "trend",
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Hà Nội",
+                  "Hồ Chí Minh"
+                ]
+              }
+            ],
+            "time": {
+              "kind": "month",
+              "mode": null,
+              "year": 2026,
+              "month": 9,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "ranking": null,
+            "granularity": "week",
+            "derived_features": [],
+            "feature_metrics": {},
+            "forecast": null,
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "support_27d0e07e91a74e6ea804bf9f",
+            "goal": "Đối chiếu bổ sung · Hình thức nhận hàng",
+            "domain_id": "orders",
+            "lens_hint": null,
+            "supporting_for": "compare_revenue_hcm_hanoi_sep2026",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "order_type"
+            ],
+            "analysis_kind": "distribution",
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Hà Nội",
+                  "Hồ Chí Minh"
+                ]
+              }
+            ],
+            "time": {
+              "kind": "month",
+              "mode": null,
+              "year": 2026,
+              "month": 9,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "ranking": null,
+            "granularity": null,
+            "derived_features": [],
+            "feature_metrics": {},
+            "forecast": null,
+            "availability": "requested",
+            "reason": null
+          },
+          {
+            "id": "support_5762205649333013ef2b1146",
+            "goal": "Đối chiếu bổ sung · Chi nhánh",
+            "domain_id": "orders",
+            "lens_hint": null,
+            "supporting_for": "compare_revenue_hcm_hanoi_sep2026",
+            "metric_ids": [
+              "revenue"
+            ],
+            "dimension_ids": [
+              "store"
+            ],
+            "analysis_kind": "distribution",
+            "filters": [
+              {
+                "dimension": "city",
+                "operator": "in",
+                "value": [
+                  "Hà Nội",
+                  "Hồ Chí Minh"
+                ]
+              }
+            ],
+            "time": {
+              "kind": "month",
+              "mode": null,
+              "year": 2026,
+              "month": 9,
+              "quarter": null,
+              "day": null,
+              "start": null,
+              "end": null,
+              "amount": null,
+              "unit": null
+            },
+            "ranking": null,
+            "granularity": null,
+            "derived_features": [],
+            "feature_metrics": {},
+            "forecast": null,
+            "availability": "requested",
+            "reason": null
+          }
+        ],
+        "clarification": null
+      }
+    }
+  ]
+}

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { switchMissionDraft, missionControls, buildGuided, guidedActive, workspaceRequestFields, detectedScope,
-  depthOptions, defaultSlots, periodOptions, dimensionValues } from './missionWorkspace.mjs';
+  depthOptions, defaultSlots, periodOptions, dimensionValues, inspectedGroupDraft, sourceAnalysisPayload } from './missionWorkspace.mjs';
 import { preflightView, applyFix } from './preflightPresentation.mjs';
 
 const caps = JSON.parse(readFileSync(new URL('../../../analytics-api/tests/fixtures/capabilities_v31.json', import.meta.url), 'utf8'));
@@ -111,4 +111,37 @@ test('V3.3: a clarification choice edits the question deterministically (no auto
   assert.equal(applyClarificationChoice('Top 5 chi nhánh tháng 9, theo doanh thu', 'Theo Doanh thu'), 'Top 5 chi nhánh tháng 9, theo doanh thu');
   assert.equal(applyClarificationChoice('', 'Theo Doanh thu'), 'Theo Doanh thu');
   assert.equal(applyClarificationChoice('Doanh thu.', ''), 'Doanh thu');
+});
+
+
+test('artifact group action retains exact typed scope and original period, with no client totals', () => {
+  const metric = caps.metrics.find(m => m.id === 'revenue');
+  const chart = { metric: 'revenue', query_id: 'q1' };
+  const row = { value: 999, entity_ref: { query_id: 'q1', filters: { city: 'Hà Nội' } } };
+  const report = { session_id: 'owned-session', revision: 3,
+    analytical_queries: [{ id: 'q1', metrics: ['revenue'], group_by: ['city'], filters: [{ dimension: 'city', operator: 'in', value: ['Hà Nội', 'Hồ Chí Minh'] }] }],
+    analysis_explanation: [{ query_id: 'q1', period: { start: '2026-09-01', end: '2026-09-30' } }],
+    result_sets: { q1: { artifact_ref: { artifact_id: 'immutable-artifact' }, rows: [{ revenue: 999 }] } } };
+  const before = JSON.stringify(report);
+  const draft = inspectedGroupDraft(report, chart, row, caps);
+  assert.deepEqual(draft.scope, { mode: 'selected', filters: [{ dimension: 'city', operator: 'eq', value: 'Hà Nội' }] });
+  assert.deepEqual(draft.time, { mode: 'custom', start: '2026-09-01', end: '2026-09-30' });
+  assert.deepEqual(workspaceRequestFields(draft.guided, draft.question).guided_contract, { metric: 'revenue' });
+  assert.equal(draft.source.artifact_id, 'immutable-artifact');
+  assert.deepEqual(draft.source.filters,{city:'Hà Nội'});
+  const input={question:draft.question,guided:draft.guided,scope:draft.scope,time:draft.time};
+  assert.deepEqual(sourceAnalysisPayload(draft,input).source_analysis,draft.source);
+  for (const change of [{question:'Câu hỏi khác'},{guided:{contract:{metric:'order_count'}}},
+      {scope:{mode:'all',filters:[]}},{time:{...draft.time,start:'2026-08-01'}},{moduleId:'different-module'}]) {
+    assert.deepEqual(sourceAnalysisPayload(draft,{...input,...change}),{});
+  }
+  assert.ok(draft.question.includes(metric.label.toLocaleLowerCase('vi-VN')));
+  assert.ok(!JSON.stringify(draft).includes('999'));
+  assert.equal(JSON.stringify(report), before);
+  for (const invalid of [null, 'Đà Nẵng']) {
+    assert.equal(inspectedGroupDraft(report, chart, { entity_ref: { query_id: 'q1', filters: { city: invalid } } }, caps), null);
+  }
+  assert.equal(inspectedGroupDraft(report, { ...chart, query_id: 'other' }, row, caps), null);
+  assert.equal(inspectedGroupDraft({ ...report, analysis_explanation: [] }, chart, row, caps), null);
+  assert.equal(inspectedGroupDraft({ ...report, analysis_explanation: [{ query_id: 'q1', period: { start: '2026-02-30', end: '2026-09-30' } }] }, chart, row, caps), null);
 });

@@ -1,0 +1,119 @@
+# Isolated test databases/buckets/broker only. No ports, production .env or external network.
+services:
+  postgres:
+    image: postgres:16
+    network_mode: none
+    labels: {codex.goal: v34-maturity}
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    healthcheck:
+      test: [CMD, pg_isready, -U, postgres]
+      interval: 2s
+      retries: 30
+  minio:
+    image: avengers-v34-minio-fixture
+    build:
+      context: ..
+      dockerfile_inline: |
+        FROM golang:1.24-alpine AS builder
+        RUN apk add --no-cache git ca-certificates
+        ENV CGO_ENABLED=0
+        RUN GOBIN=/out go install github.com/minio/minio@RELEASE.2025-10-15T17-29-55Z
+        FROM alpine:3.20
+        RUN apk add --no-cache ca-certificates curl
+        COPY --from=builder /out/minio /usr/local/bin/minio
+        ENTRYPOINT ["minio"]
+    network_mode: service:postgres
+    depends_on: {postgres: {condition: service_healthy}}
+    labels: {codex.goal: v34-maturity}
+    environment:
+      MINIO_ROOT_USER: v34fixture
+      MINIO_ROOT_PASSWORD: v34-fixture-only-pass
+    command: [server, /data, --address, ':9000']
+    healthcheck:
+      test: [CMD, curl, -f, http://127.0.0.1:9000/minio/health/ready]
+      interval: 2s
+      retries: 30
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    network_mode: service:postgres
+    depends_on: {postgres: {condition: service_healthy}}
+    labels: {codex.goal: v34-maturity}
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@127.0.0.1:19093
+      KAFKA_LISTENERS: PLAINTEXT://:19092,CONTROLLER://:19093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_HEAP_OPTS: -Xms128m -Xmx256m
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    healthcheck:
+      test: [CMD-SHELL, 'kafka-broker-api-versions --bootstrap-server 127.0.0.1:19092 >/dev/null 2>&1']
+      interval: 5s
+      timeout: 10s
+      retries: 30
+  tests:
+    image: avengers-v34-pipeline-tests
+    build: {context: .., dockerfile: pipeline-tests/Dockerfile}
+    network_mode: service:postgres
+    depends_on:
+      minio: {condition: service_healthy}
+      kafka: {condition: service_healthy}
+    environment:
+      V34_PIPELINE_PG_FIXTURE: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+    volumes:
+      - ../pipeline-common:/workspace/pipeline-common:ro
+      - ../pipeline-tests:/workspace/pipeline-tests:ro
+      - ../data-sync:/workspace/data-sync:ro
+      - ../spark-jobs:/workspace/spark-jobs:ro
+      - ../kafka-consumer:/workspace/kafka-consumer:ro
+      - ../metadata:/workspace/metadata:ro
+      - ../analytics-api/migrations:/workspace/analytics-api/migrations:ro
+      - ../analytics-api/metadata/warehouse_views.json:/workspace/analytics-api/metadata/warehouse_views.json:ro
+      - ../evaluation/v34/implementation-20261018/source-schema-readonly.json:/workspace/evaluation/v34/implementation-20261018/source-schema-readonly.json:ro
+      - ../evaluation/v34/implementation-20261018/views-parity-before.json:/workspace/evaluation/v34/implementation-20261018/views-parity-before.json:ro
+    command: [python, -m, unittest, discover, -s, pipeline-tests, -p, 'integration_*.py']
+  redis:
+    image: redis:7-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
+    network_mode: service:postgres
+    depends_on: {postgres: {condition: service_healthy}}
+    labels: {codex.goal: v34-maturity}
+    command: [redis-server, --bind, 127.0.0.1, --port, '16379', --save, '', --appendonly, 'no']
+    healthcheck:
+      test: [CMD, redis-cli, -p, '16379', ping]
+      interval: 2s
+      retries: 30
+  api-tests:
+    image: avengers-v34-api-fixture-tests
+    build: {context: ../analytics-api}
+    working_dir: /app
+    network_mode: service:postgres
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    environment:
+      V34_PIPELINE_PG_FIXTURE: '1'
+      V34_PIPELINE_REDIS_FIXTURE: '1'
+      AI_OFFLINE: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+      DATA_ANALYST_ENV: development
+      DATA_ANALYST_ALLOW_BROWSER_OWNER: '1'
+      DATA_ANALYST_SESSION_STORE: memory
+      DATA_ANALYST_ARTIFACT_STORE: memory
+      PYTHONPATH: /app:/workspace/pipeline-tests:/workspace/pipeline-common
+    volumes:
+      - ../analytics-api:/app:ro
+      - ../pipeline-tests:/workspace/pipeline-tests:ro
+      - ../pipeline-common:/workspace/pipeline-common:ro
+      - ../data-sync:/workspace/data-sync:ro
+      - ../metadata:/workspace/metadata:ro
+      - ../analytics-api/migrations:/workspace/analytics-api/migrations:ro
+    command: [python, -m, unittest, discover, -s, /workspace/pipeline-tests, -p, 'acceptance_*.py']

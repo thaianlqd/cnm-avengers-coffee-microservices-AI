@@ -62,4 +62,5 @@ pnpm-debug.log*
 db_metadata.txt
 .review-seed-backups/
 /k8s/overlays/.docker-desktop-runtime/
+/data-platform/analytics-api/.runtime/
 /.tools/k6/

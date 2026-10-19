@@ -195,11 +195,15 @@ def run_offline():
                     row["capability_rejected"] = error.category in {"forecast_unsupported", "forecast_horizon_invalid"}
         rows.append(row)
     v33_rows = run_v33_cases(catalog)
+    from evals.semantic_eval_v34 import run_cases as run_v34_cases
+    v34=run_v34_cases(catalog)
     def rate(values):
         values = list(values)
         return {"passed": sum(values), "total": len(values), "rate": round(sum(values) / len(values), 4) if values else None}
     summary = {
         "v33_cases": rate(r["ok"] for r in v33_rows), "v33_rows": v33_rows,
+        'v34_cases':rate(r['ok'] for r in v34['rows']),'v34_rows':v34['rows'],
+        'v34_corpus_sha256':v34['corpus_sha256'],'v34_claim':v34['claim'],
         "mode": "offline", "measures_natural_language_understanding": False,
         "generated_at": datetime.now().astimezone().isoformat(), "registry_fingerprint": catalog.registry_fingerprint,
         "case_count": len(cases), "dataset_errors": errors,
@@ -214,7 +218,7 @@ def run_offline():
         "unsupported_preflight": rate(r["preflight"]["ok"] for r, c in zip(rows, cases) if "preflight" in r and c["status"] == "UNSUPPORTED"),
         "failures": [r for r in rows if not all([r.get("retrieval", {}).get("domain_ok", True), r.get("retrieval", {}).get("metric_ok", True),
                                                  r.get("compile", {}).get("ok", True), r.get("capability_rejected", True),
-                                                 r.get("preflight", {}).get("ok", True)])] + [r for r in v33_rows if not r["ok"]],
+                                                 r.get("preflight", {}).get("ok", True)])] + [r for r in v33_rows if not r["ok"]]+[r for r in v34['rows'] if not r['ok']],
     }
     summary["by_version"] = {}
     for version in sorted({c["version"] for c in cases}):

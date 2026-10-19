@@ -1,0 +1,50 @@
+{
+  "status": "partial_deployment_not_release",
+  "authorization": "User explicitly approved migrations026/027 and limited DB roles",
+  "orders_before_after": [
+    40460,
+    40460
+  ],
+  "roles": [
+    "avengers_dp_reader",
+    "avengers_dp_writer",
+    "avengers_dp_pipeline"
+  ],
+  "reader_raw_source_grants": false,
+  "reader_sensitive_columns": false,
+  "login": "Existing identity gateway protected users/me validation + Redis opaque HttpOnly session",
+  "admin_permissions": [
+    "analytics.read",
+    "platform.read",
+    "reports.save",
+    "reports.export",
+    "reports.legacy",
+    "sql.explore"
+  ],
+  "system_read_and_pipeline_trigger": "not_granted",
+  "sql_explorer": "explicitly_disabled",
+  "private_profiles": "excluded_from_git_and_image_build",
+  "provider_ledger_reserved": 151,
+  "provider_ledger_ceiling": 160,
+  "provider_ledger_sha256": "3f3f8c88e436badb1a3024eb6158e0b5c1f9006cfdff4a3a0c465759905641a5",
+  "provider_calls_by_agent_during_this_implementation": 0,
+  "source_checkpoint_status": "23 schemas consistent;23 governed checkpoints missing;completeness unknown",
+  "served_browser_observed": {
+    "date_range": "30days",
+    "revenue": 195351500,
+    "orders_all_statuses": 1871,
+    "revenue_orders": 1759,
+    "aov": 111058,
+    "accounts_with_orders": 312,
+    "store_count": 1215,
+    "line_item_revenue": 207042000,
+    "item_quantity": 4016,
+    "products": 118
+  },
+  "limitations": [
+    "No final full-platform acceptance",
+    "No 44-case live cohort or 240TOTAL authorization",
+    "No production governed-ingestion switch",
+    "No business tier assignment in source"
+  ]
+}

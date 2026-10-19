@@ -1,0 +1,14 @@
+2026-10-18 09:12:58,350 [INFO] matplotlib.font_manager - generated new fontManager
+.2026-10-18 09:12:58,672 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":null,"job_id":null}
+..2026-10-18 09:12:58,726 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":null,"job_id":null}
+..2026-10-18 09:12:58,752 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":null,"job_id":null}
+2026-10-18 09:12:58,761 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":null,"job_id":null}
+.2026-10-18 09:12:58,772 [INFO] analytics.events - {"stage":"audit","status":"failed","request_id":null,"job_id":null}
+.2026-10-18 09:12:58,787 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":null,"job_id":null}
+2026-10-18 09:12:58,800 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":null,"job_id":null}
+2026-10-18 09:12:58,806 [INFO] analytics.events - {"stage":"audit","status":"completed","request_id":null,"job_id":null}
+.
+----------------------------------------------------------------------
+Ran 8 tests in 0.231s
+
+OK

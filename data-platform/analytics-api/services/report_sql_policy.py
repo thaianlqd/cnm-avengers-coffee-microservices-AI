@@ -6,6 +6,13 @@ from services.sql_service import validate_ai_query_scope, validate_sql_ast_secur
 
 
 def require_sql_admin(request):
+    from services.access_policy import active_principal, current_principal, require_permission
+    if active_principal.get() is not None:
+        principal=current_principal(required=True)
+        require_permission(principal,'sql.explore')
+        if os.getenv('DATA_ANALYST_REPORT_SQL_MODE','disabled')!='trusted_admin':
+            raise HTTPException(403,'SQL Explorer chưa được bật cho deployment này.')
+        return
     mode = os.getenv("DATA_ANALYST_REPORT_SQL_MODE", "disabled")
     token = os.getenv("DATA_ANALYST_REPORT_ADMIN_TOKEN", "")
     header = request.headers.get("authorization", "") if request else ""

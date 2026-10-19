@@ -1,0 +1,4005 @@
+{
+  "version": 1,
+  "semantics": "static AST import upper bound, includes lazy/type-only imports; not runtime call coverage",
+  "service_modules": 81,
+  "service_import_edges": 378,
+  "router_import_reachable": 78,
+  "not_router_import_reachable": [
+    "reference_accuracy",
+    "semantic_example_service",
+    "vector_rag_service"
+  ],
+  "strongly_connected_components": [
+    [
+      "agent_provider",
+      "analysis_catalog",
+      "analysis_contract",
+      "analysis_coverage_service",
+      "analysis_expansion_service",
+      "analysis_intent",
+      "analysis_presentation",
+      "analysis_quality_contract",
+      "analysis_quality_service",
+      "analysis_query",
+      "analysis_response_service",
+      "analysis_understanding",
+      "analyst_clarification",
+      "analyst_contract",
+      "analyst_decision",
+      "analytical_blueprint_service",
+      "analytical_capacity_planner",
+      "analytical_query_service",
+      "analytical_resolver",
+      "analytical_tool_contract",
+      "answer_requirement_service",
+      "chart_insight_service",
+      "dashboard_planner_service",
+      "data_coverage_service",
+      "decision_boundary_normalizer",
+      "derived_chart_service",
+      "domain_intelligence_service",
+      "forecast_service",
+      "hybrid_analyst_planner",
+      "insight_service",
+      "mission_contract_service",
+      "one_shot_context",
+      "one_shot_planner",
+      "preflight_service",
+      "provider_budget",
+      "query_execution_batch",
+      "readiness_service",
+      "request_anchors",
+      "result_artifact_store",
+      "scope_resolution_service",
+      "semantic_candidate_service",
+      "semantic_catalog_validation",
+      "semantic_manifest_service",
+      "semantic_preflight_contract",
+      "semantic_tools",
+      "session_service",
+      "sql_service",
+      "time_resolution_service",
+      "value_grounding_service",
+      "value_profile_service",
+      "verification_score",
+      "view_requirement_service",
+      "workspace_service"
+    ],
+    [
+      "access_policy"
+    ],
+    [
+      "agent_pipeline"
+    ],
+    [
+      "analysis_issue_service"
+    ],
+    [
+      "analysis_job_service"
+    ],
+    [
+      "analysis_module_repository"
+    ],
+    [
+      "analysis_module_service"
+    ],
+    [
+      "analysis_pipeline"
+    ],
+    [
+      "browser_owner"
+    ],
+    [
+      "business_labels"
+    ],
+    [
+      "chart_relevance_service"
+    ],
+    [
+      "data_analyst_agent"
+    ],
+    [
+      "docx_service"
+    ],
+    [
+      "error_taxonomy"
+    ],
+    [
+      "explanation_service"
+    ],
+    [
+      "legacy_analysis_compat"
+    ],
+    [
+      "llm_service"
+    ],
+    [
+      "metadata_service"
+    ],
+    [
+      "provider_credential_router"
+    ],
+    [
+      "provider_health_service"
+    ],
+    [
+      "reference_accuracy"
+    ],
+    [
+      "report_sql_policy"
+    ],
+    [
+      "risk_watch_service"
+    ],
+    [
+      "semantic_example_service"
+    ],
+    [
+      "semantic_service"
+    ],
+    [
+      "telemetry"
+    ],
+    [
+      "vector_rag_service"
+    ],
+    [
+      "verification_reconciliation_service"
+    ],
+    [
+      "verified_analysis_service"
+    ]
+  ],
+  "entrypoints": {
+    "server.py": [
+      "access_policy",
+      "analytical_capacity_planner",
+      "data_coverage_service",
+      "readiness_service",
+      "telemetry"
+    ],
+    "routers/__init__.py": [],
+    "routers/ai.py": [
+      "access_policy",
+      "analysis_catalog",
+      "analysis_contract",
+      "analysis_job_service",
+      "analysis_pipeline",
+      "analysis_quality_service",
+      "analysis_understanding",
+      "browser_owner",
+      "data_coverage_service",
+      "domain_intelligence_service",
+      "legacy_analysis_compat",
+      "llm_service",
+      "metadata_service",
+      "preflight_service",
+      "provider_budget",
+      "provider_health_service",
+      "readiness_service",
+      "request_anchors",
+      "result_artifact_store",
+      "risk_watch_service",
+      "scope_resolution_service",
+      "session_service",
+      "time_resolution_service"
+    ],
+    "routers/analysis_modules.py": [
+      "analysis_module_service",
+      "analysis_pipeline",
+      "browser_owner"
+    ],
+    "routers/customers.py": [],
+    "routers/marts.py": [],
+    "routers/platform.py": [
+      "access_policy",
+      "data_coverage_service",
+      "report_sql_policy",
+      "telemetry"
+    ],
+    "routers/products.py": [],
+    "routers/query.py": [
+      "report_sql_policy",
+      "sql_service"
+    ],
+    "routers/reports.py": [
+      "access_policy",
+      "analysis_catalog",
+      "analysis_quality_service",
+      "docx_service",
+      "metadata_service",
+      "report_sql_policy",
+      "session_service",
+      "sql_service",
+      "telemetry"
+    ],
+    "routers/stores.py": [],
+    "routers/system.py": []
+  },
+  "routes": [
+    {
+      "file": "routers/ai.py",
+      "function": "submit_analysis_job",
+      "line": 40,
+      "method": "POST",
+      "path": "/api/ai/analysis-jobs"
+    },
+    {
+      "file": "routers/ai.py",
+      "function": "cancel_analysis_key",
+      "line": 64,
+      "method": "POST",
+      "path": "/api/ai/analysis-jobs/cancel-by-key"
+    },
+    {
+      "file": "routers/ai.py",
+      "function": "analysis_job_status",
+      "line": 54,
+      "method": "GET",
+      "path": "/api/ai/analysis-jobs/{job_id}"
+    },
+    {
+      "file": "routers/ai.py",
+      "function": "cancel_analysis_job",
+      "line": 73,
+      "method": "POST",
+      "path": "/api/ai/analysis-jobs/{job_id}/cancel"
+    },
+    {
+      "file": "routers/ai.py",
+      "function": "ai_capabilities",
+      "line": 212,
+      "method": "GET",
+      "path": "/api/ai/capabilities"
+    },
+    {
+      "file": "routers/ai.py",
+      "function": "log_user_feedback",
+      "line": 393,
+      "method": "POST",
+      "path": "/api/ai/feedback"
+    },
+    {
+      "file": "routers/ai.py",
+      "function": "generate_executive_report",
+      "line": 383,
+      "method": "POST",
+      "path": "/api/ai/generate-executive-report"
+    },
+    {
+      "file": "routers/analysis_modules.py",
+      "function": "list_modules",
+      "line": 39,
+      "method": "GET",
+      "path": "/api/ai/modules"
+    },
+    {
+      "file": "routers/analysis_modules.py",
+      "function": "save_module",
+      "line": 47,
+      "method": "POST",
+      "path": "/api/ai/modules"
+    },
+    {
+      "file": "routers/analysis_modules.py",
+      "function": "archive_module",
+      "line": 56,
+      "method": "DELETE",
+      "path": "/api/ai/modules/{module_id}"
+    },
+    {
+      "file": "routers/analysis_modules.py",
+      "function": "get_module",
+      "line": 43,
+      "method": "GET",
+      "path": "/api/ai/modules/{module_id}"
+    },
+    {
+      "file": "routers/analysis_modules.py",
+      "function": "patch_module",
+      "line": 51,
+      "method": "PATCH",
+      "path": "/api/ai/modules/{module_id}"
+    },
+    {
+      "file": "routers/analysis_modules.py",
+      "function": "rerun_module",
+      "line": 60,
+      "method": "POST",
+      "path": "/api/ai/modules/{module_id}/rerun"
+    },
+    {
+      "file": "routers/analysis_modules.py",
+      "function": "previous_module_report",
+      "line": 64,
+      "method": "GET",
+      "path": "/api/ai/modules/{module_id}/runs/{report_id}"
+    },
+    {
+      "file": "routers/ai.py",
+      "function": "ai_preflight",
+      "line": 241,
+      "method": "POST",
+      "path": "/api/ai/preflight"
+    },
+    {
+      "file": "routers/ai.py",
+      "function": "bounded_propose_plan",
+      "line": 356,
+      "method": "POST",
+      "path": "/api/ai/propose-plan"
+    },
+    {
+      "file": "routers/ai.py",
+      "function": "refine_report",
+      "line": 388,
+      "method": "POST",
+      "path": "/api/ai/refine-report"
+    },
+    {
+      "file": "routers/ai.py",
+      "function": "ai_risk_watch",
+      "line": 261,
+      "method": "POST",
+      "path": "/api/ai/risk-watch"
+    },
+    {
+      "file": "routers/ai.py",
+      "function": "ai_scope_values",
+      "line": 332,
+      "method": "GET",
+      "path": "/api/ai/scope-values"
+    },
+    {
+      "file": "routers/ai.py",
+      "function": "reconcile_report",
+      "line": 126,
+      "method": "POST",
+      "path": "/api/ai/sessions/{session_id}/reconcile"
+    },
+    {
+      "file": "routers/ai.py",
+      "function": "result_page",
+      "line": 83,
+      "method": "GET",
+      "path": "/api/ai/sessions/{session_id}/results/{query_id}"
+    },
+    {
+      "file": "routers/ai.py",
+      "function": "ai_status",
+      "line": 185,
+      "method": "GET",
+      "path": "/api/ai/status"
+    },
+    {
+      "file": "routers/ai.py",
+      "function": "summarize_report",
+      "line": 398,
+      "method": "POST",
+      "path": "/api/ai/summarize"
+    },
+    {
+      "file": "routers/ai.py",
+      "function": "verify_report",
+      "line": 424,
+      "method": "POST",
+      "path": "/api/ai/verify-report"
+    },
+    {
+      "file": "server.py",
+      "function": "auth_login",
+      "line": 139,
+      "method": "POST",
+      "path": "/api/auth/login"
+    },
+    {
+      "file": "server.py",
+      "function": "auth_logout",
+      "line": 175,
+      "method": "POST",
+      "path": "/api/auth/logout"
+    },
+    {
+      "file": "server.py",
+      "function": "auth_session",
+      "line": 111,
+      "method": "GET",
+      "path": "/api/auth/session"
+    },
+    {
+      "file": "server.py",
+      "function": "exchange_auth_session",
+      "line": 126,
+      "method": "POST",
+      "path": "/api/auth/session"
+    },
+    {
+      "file": "routers/platform.py",
+      "function": "get_branch_taste",
+      "line": 678,
+      "method": "GET",
+      "path": "/api/branch-taste"
+    },
+    {
+      "file": "routers/customers.py",
+      "function": "get_customers_overview",
+      "line": 10,
+      "method": "GET",
+      "path": "/api/customers/overview"
+    },
+    {
+      "file": "server.py",
+      "function": "health_check",
+      "line": 192,
+      "method": "GET",
+      "path": "/api/health"
+    },
+    {
+      "file": "routers/platform.py",
+      "function": "get_kpis",
+      "line": 621,
+      "method": "GET",
+      "path": "/api/kpi"
+    },
+    {
+      "file": "routers/marts.py",
+      "function": "get_all_marts",
+      "line": 9,
+      "method": "GET",
+      "path": "/api/marts/all"
+    },
+    {
+      "file": "routers/platform.py",
+      "function": "get_payment_methods",
+      "line": 667,
+      "method": "GET",
+      "path": "/api/payment-methods"
+    },
+    {
+      "file": "routers/platform.py",
+      "function": "get_platform_catalog",
+      "line": 550,
+      "method": "GET",
+      "path": "/api/platform/catalog"
+    },
+    {
+      "file": "routers/platform.py",
+      "function": "get_lakehouse_details",
+      "line": 220,
+      "method": "GET",
+      "path": "/api/platform/lakehouse"
+    },
+    {
+      "file": "routers/platform.py",
+      "function": "get_data_lineage",
+      "line": 130,
+      "method": "GET",
+      "path": "/api/platform/lineage"
+    },
+    {
+      "file": "routers/platform.py",
+      "function": "get_platform_overview",
+      "line": 13,
+      "method": "GET",
+      "path": "/api/platform/overview"
+    },
+    {
+      "file": "routers/platform.py",
+      "function": "get_pipelines",
+      "line": 422,
+      "method": "GET",
+      "path": "/api/platform/pipelines"
+    },
+    {
+      "file": "routers/platform.py",
+      "function": "trigger_pipeline",
+      "line": 489,
+      "method": "POST",
+      "path": "/api/platform/pipelines/trigger"
+    },
+    {
+      "file": "routers/platform.py",
+      "function": "get_data_quality",
+      "line": 543,
+      "method": "GET",
+      "path": "/api/platform/quality"
+    },
+    {
+      "file": "routers/platform.py",
+      "function": "get_streaming_details",
+      "line": 330,
+      "method": "GET",
+      "path": "/api/platform/streaming"
+    },
+    {
+      "file": "routers/platform.py",
+      "function": "get_table_columns",
+      "line": 599,
+      "method": "GET",
+      "path": "/api/platform/table-columns/{schema_name}/{table_name}"
+    },
+    {
+      "file": "routers/products.py",
+      "function": "get_products_overview",
+      "line": 10,
+      "method": "GET",
+      "path": "/api/products/overview"
+    },
+    {
+      "file": "routers/query.py",
+      "function": "run_custom_query",
+      "line": 233,
+      "method": "POST",
+      "path": "/api/query"
+    },
+    {
+      "file": "server.py",
+      "function": "readiness_check",
+      "line": 207,
+      "method": "GET",
+      "path": "/api/readiness"
+    },
+    {
+      "file": "routers/platform.py",
+      "function": "get_realtime_events",
+      "line": 689,
+      "method": "GET",
+      "path": "/api/realtime-events"
+    },
+    {
+      "file": "routers/reports.py",
+      "function": "export_report_docx",
+      "line": 305,
+      "method": "POST",
+      "path": "/api/reports/export-docx"
+    },
+    {
+      "file": "routers/reports.py",
+      "function": "log_report_export",
+      "line": 279,
+      "method": "POST",
+      "path": "/api/reports/export-log"
+    },
+    {
+      "file": "routers/reports.py",
+      "function": "get_export_logs",
+      "line": 260,
+      "method": "GET",
+      "path": "/api/reports/logs"
+    },
+    {
+      "file": "routers/reports.py",
+      "function": "preview_report_query",
+      "line": 238,
+      "method": "POST",
+      "path": "/api/reports/preview"
+    },
+    {
+      "file": "routers/reports.py",
+      "function": "list_saved_reports",
+      "line": 88,
+      "method": "GET",
+      "path": "/api/reports/saved"
+    },
+    {
+      "file": "routers/reports.py",
+      "function": "create_saved_report",
+      "line": 125,
+      "method": "POST",
+      "path": "/api/reports/saved"
+    },
+    {
+      "file": "routers/reports.py",
+      "function": "delete_saved_report",
+      "line": 174,
+      "method": "DELETE",
+      "path": "/api/reports/saved/{report_id}"
+    },
+    {
+      "file": "routers/reports.py",
+      "function": "get_saved_report",
+      "line": 148,
+      "method": "GET",
+      "path": "/api/reports/saved/{report_id}"
+    },
+    {
+      "file": "routers/reports.py",
+      "function": "download_saved_report_docx",
+      "line": 338,
+      "method": "GET",
+      "path": "/api/reports/saved/{report_id}/download-docx"
+    },
+    {
+      "file": "routers/reports.py",
+      "function": "run_saved_report",
+      "line": 197,
+      "method": "GET",
+      "path": "/api/reports/saved/{report_id}/execute"
+    },
+    {
+      "file": "routers/reports.py",
+      "function": "run_saved_report",
+      "line": 197,
+      "method": "POST",
+      "path": "/api/reports/saved/{report_id}/execute"
+    },
+    {
+      "file": "routers/reports.py",
+      "function": "run_saved_report",
+      "line": 197,
+      "method": "GET",
+      "path": "/api/reports/saved/{report_id}/run"
+    },
+    {
+      "file": "routers/reports.py",
+      "function": "run_saved_report",
+      "line": 197,
+      "method": "POST",
+      "path": "/api/reports/saved/{report_id}/run"
+    },
+    {
+      "file": "routers/platform.py",
+      "function": "get_revenue_trend",
+      "line": 644,
+      "method": "GET",
+      "path": "/api/revenue-trend"
+    },
+    {
+      "file": "routers/stores.py",
+      "function": "get_stores_list",
+      "line": 109,
+      "method": "GET",
+      "path": "/api/stores/list"
+    },
+    {
+      "file": "routers/stores.py",
+      "function": "get_stores_overview",
+      "line": 98,
+      "method": "GET",
+      "path": "/api/stores/overview"
+    },
+    {
+      "file": "routers/system.py",
+      "function": "get_system_logs",
+      "line": 76,
+      "method": "GET",
+      "path": "/api/system/logs"
+    },
+    {
+      "file": "server.py",
+      "function": "telemetry_metrics",
+      "line": 184,
+      "method": "GET",
+      "path": "/api/system/metrics"
+    },
+    {
+      "file": "routers/system.py",
+      "function": "get_system_users",
+      "line": 8,
+      "method": "GET",
+      "path": "/api/system/users"
+    },
+    {
+      "file": "routers/platform.py",
+      "function": "get_top_products",
+      "line": 656,
+      "method": "GET",
+      "path": "/api/top-products"
+    },
+    {
+      "file": "routers/query.py",
+      "function": "get_warehouse_tables",
+      "line": 135,
+      "method": "GET",
+      "path": "/api/warehouse/tables"
+    },
+    {
+      "file": "server.py",
+      "function": "health_check",
+      "line": 192,
+      "method": "GET",
+      "path": "/health"
+    },
+    {
+      "file": "server.py",
+      "function": "health_check",
+      "line": 192,
+      "method": "GET",
+      "path": "/liveness"
+    },
+    {
+      "file": "server.py",
+      "function": "serve_spa",
+      "line": 220,
+      "method": "GET",
+      "path": "/{full_path:path}"
+    }
+  ],
+  "modules": [
+    {
+      "name": "access_policy",
+      "lines": 391,
+      "sha256": "8f41ca4cf2d61fbf4afdcad3a5e98a4ecc37227e181fb9b1219fd9a151bd1117",
+      "imports": [],
+      "callers": [
+        "agent_pipeline",
+        "analysis_catalog",
+        "analysis_job_service",
+        "analytical_query_service",
+        "browser_owner",
+        "domain_intelligence_service",
+        "preflight_service",
+        "query_execution_batch",
+        "report_sql_policy",
+        "risk_watch_service",
+        "sql_service",
+        "telemetry"
+      ],
+      "largest_functions": [
+        {
+          "name": "authorize_sql",
+          "line": 263,
+          "lines": 50
+        },
+        {
+          "name": "verify_identity",
+          "line": 61,
+          "lines": 45
+        },
+        {
+          "name": "principal_for",
+          "line": 138,
+          "lines": 32
+        },
+        {
+          "name": "authorize_meaning",
+          "line": 327,
+          "lines": 28
+        },
+        {
+          "name": "__call__",
+          "line": 365,
+          "lines": 27
+        }
+      ]
+    },
+    {
+      "name": "agent_pipeline",
+      "lines": 1270,
+      "sha256": "d694b2298c047db4d563157de0ff79d8ccac59517e42f5a7d303165b5ff5dde0",
+      "imports": [
+        "access_policy",
+        "agent_provider",
+        "analysis_catalog",
+        "analysis_contract",
+        "analysis_coverage_service",
+        "analysis_intent",
+        "analysis_module_service",
+        "analysis_quality_contract",
+        "analysis_quality_service",
+        "analysis_response_service",
+        "analysis_understanding",
+        "analyst_contract",
+        "analytical_capacity_planner",
+        "analytical_resolver",
+        "answer_requirement_service",
+        "chart_insight_service",
+        "chart_relevance_service",
+        "dashboard_planner_service",
+        "data_analyst_agent",
+        "data_coverage_service",
+        "domain_intelligence_service",
+        "explanation_service",
+        "forecast_service",
+        "hybrid_analyst_planner",
+        "insight_service",
+        "metadata_service",
+        "mission_contract_service",
+        "preflight_service",
+        "provider_budget",
+        "query_execution_batch",
+        "request_anchors",
+        "result_artifact_store",
+        "semantic_preflight_contract",
+        "semantic_tools",
+        "session_service",
+        "sql_service",
+        "value_grounding_service",
+        "verification_reconciliation_service",
+        "verified_analysis_service",
+        "view_requirement_service",
+        "workspace_service"
+      ],
+      "callers": [
+        "analysis_job_service",
+        "analysis_pipeline"
+      ],
+      "largest_functions": [
+        {
+          "name": "report",
+          "line": 772,
+          "lines": 406
+        },
+        {
+          "name": "_propose",
+          "line": 452,
+          "lines": 107
+        },
+        {
+          "name": "ui_context",
+          "line": 202,
+          "lines": 100
+        },
+        {
+          "name": "generate",
+          "line": 560,
+          "lines": 97
+        },
+        {
+          "name": "guided_context",
+          "line": 120,
+          "lines": 64
+        }
+      ]
+    },
+    {
+      "name": "agent_provider",
+      "lines": 779,
+      "sha256": "a4bcd881c5379f7546ff2bfa7f53553ba8b1bb039c1ffd9595689be2b39c3eeb",
+      "imports": [
+        "analysis_catalog",
+        "analyst_contract",
+        "llm_service",
+        "provider_budget",
+        "provider_credential_router",
+        "provider_health_service"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_intent",
+        "analyst_decision",
+        "data_analyst_agent",
+        "hybrid_analyst_planner",
+        "one_shot_context",
+        "one_shot_planner",
+        "provider_budget"
+      ],
+      "largest_functions": [
+        {
+          "name": "__call__",
+          "line": 484,
+          "lines": 296
+        },
+        {
+          "name": "http_failure",
+          "line": 16,
+          "lines": 165
+        },
+        {
+          "name": "gemini_tool_schema",
+          "line": 202,
+          "lines": 125
+        },
+        {
+          "name": "_gemini_body",
+          "line": 348,
+          "lines": 50
+        },
+        {
+          "name": "_groq_messages",
+          "line": 400,
+          "lines": 35
+        }
+      ]
+    },
+    {
+      "name": "analysis_catalog",
+      "lines": 650,
+      "sha256": "7bf6f5dc5bcb56a32d51a14e8abee2c5f6cc74f3655ff4af7f145efc969d7806",
+      "imports": [
+        "access_policy",
+        "analysis_contract",
+        "metadata_service",
+        "semantic_catalog_validation",
+        "value_grounding_service"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "agent_provider",
+        "analysis_issue_service",
+        "analysis_job_service",
+        "analysis_module_repository",
+        "analysis_module_service",
+        "analysis_quality_service",
+        "analysis_query",
+        "analysis_response_service",
+        "analysis_understanding",
+        "analyst_clarification",
+        "analytical_blueprint_service",
+        "analytical_capacity_planner",
+        "analytical_query_service",
+        "analytical_resolver",
+        "analytical_tool_contract",
+        "data_analyst_agent",
+        "data_coverage_service",
+        "domain_intelligence_service",
+        "forecast_service",
+        "hybrid_analyst_planner",
+        "mission_contract_service",
+        "one_shot_context",
+        "one_shot_planner",
+        "preflight_service",
+        "provider_budget",
+        "query_execution_batch",
+        "readiness_service",
+        "report_sql_policy",
+        "request_anchors",
+        "result_artifact_store",
+        "risk_watch_service",
+        "semantic_catalog_validation",
+        "semantic_manifest_service",
+        "semantic_tools",
+        "session_service",
+        "sql_service",
+        "time_resolution_service",
+        "value_grounding_service",
+        "vector_rag_service",
+        "verified_analysis_service",
+        "workspace_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "candidates",
+          "line": 383,
+          "lines": 142
+        },
+        {
+          "name": "ground",
+          "line": 526,
+          "lines": 125
+        },
+        {
+          "name": "_relationships",
+          "line": 182,
+          "lines": 77
+        },
+        {
+          "name": "__init__",
+          "line": 82,
+          "lines": 63
+        },
+        {
+          "name": "structured_table",
+          "line": 301,
+          "lines": 58
+        }
+      ]
+    },
+    {
+      "name": "analysis_contract",
+      "lines": 302,
+      "sha256": "e5f1b75fe6bed9346ed54fc266fc17341c1e35c8dff64e25e830849e0bd8c29b",
+      "imports": [
+        "analytical_capacity_planner"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_catalog",
+        "analysis_coverage_service",
+        "analysis_intent",
+        "analysis_module_service",
+        "analysis_presentation",
+        "analysis_quality_contract",
+        "analysis_query",
+        "analysis_understanding",
+        "analyst_clarification",
+        "analyst_contract",
+        "analyst_decision",
+        "analytical_blueprint_service",
+        "analytical_query_service",
+        "analytical_resolver",
+        "analytical_tool_contract",
+        "domain_intelligence_service",
+        "preflight_service",
+        "request_anchors",
+        "risk_watch_service",
+        "semantic_preflight_contract",
+        "session_service",
+        "time_resolution_service",
+        "verified_analysis_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "meaning",
+          "line": 189,
+          "lines": 27
+        },
+        {
+          "name": "scalar",
+          "line": 100,
+          "lines": 13
+        },
+        {
+          "name": "bounds",
+          "line": 84,
+          "lines": 8
+        },
+        {
+          "name": "max_analytical_rows",
+          "line": 243,
+          "lines": 3
+        }
+      ]
+    },
+    {
+      "name": "analysis_coverage_service",
+      "lines": 67,
+      "sha256": "0db82e5e26ebded5c0b53790223f3753179b158821be1bff2245df846572a0da",
+      "imports": [
+        "analysis_contract",
+        "analytical_tool_contract"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_quality_service",
+        "analyst_decision",
+        "hybrid_analyst_planner",
+        "one_shot_planner"
+      ],
+      "largest_functions": [
+        {
+          "name": "canonical_components",
+          "line": 18,
+          "lines": 40
+        },
+        {
+          "name": "coverage_diagnostics",
+          "line": 64,
+          "lines": 4
+        },
+        {
+          "name": "requested_identity",
+          "line": 60,
+          "lines": 2
+        }
+      ]
+    },
+    {
+      "name": "analysis_expansion_service",
+      "lines": 202,
+      "sha256": "7d90b8cb59ef69a6b0c12290434e8246142cc131b39cca6c70314193e9b1a4cc",
+      "imports": [
+        "analysis_intent",
+        "analytical_capacity_planner",
+        "analytical_resolver",
+        "semantic_manifest_service"
+      ],
+      "callers": [
+        "analytical_resolver",
+        "domain_intelligence_service",
+        "hybrid_analyst_planner"
+      ],
+      "largest_functions": [
+        {
+          "name": "supporting_candidates",
+          "line": 95,
+          "lines": 108
+        },
+        {
+          "name": "analysis_depth",
+          "line": 70,
+          "lines": 23
+        },
+        {
+          "name": "mission_relevant",
+          "line": 26,
+          "lines": 20
+        },
+        {
+          "name": "dashboard_policy",
+          "line": 7,
+          "lines": 17
+        },
+        {
+          "name": "estimated_views",
+          "line": 48,
+          "lines": 13
+        }
+      ]
+    },
+    {
+      "name": "analysis_intent",
+      "lines": 313,
+      "sha256": "1b49d0ecdf805fbf5322959a81765a21bdeef8d2d9a64c85827fc51c12be246c",
+      "imports": [
+        "agent_provider",
+        "analysis_contract",
+        "analyst_contract"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_expansion_service",
+        "analysis_module_service",
+        "analysis_quality_service",
+        "analytical_resolver",
+        "hybrid_analyst_planner",
+        "request_anchors",
+        "semantic_catalog_validation",
+        "semantic_example_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "repair_tool",
+          "line": 240,
+          "lines": 74
+        },
+        {
+          "name": "decompose_scalar_draft",
+          "line": 184,
+          "lines": 54
+        },
+        {
+          "name": "intent_tool",
+          "line": 90,
+          "lines": 45
+        },
+        {
+          "name": "normalize_whole_scope_features",
+          "line": 157,
+          "lines": 25
+        },
+        {
+          "name": "remove_inactive_feature_bindings",
+          "line": 137,
+          "lines": 18
+        }
+      ]
+    },
+    {
+      "name": "analysis_issue_service",
+      "lines": 161,
+      "sha256": "db37d1f84e74a9acd0165b78c35cbaca483679ba3c4ae317241ffb9d4692eb61",
+      "imports": [
+        "analysis_catalog",
+        "error_taxonomy"
+      ],
+      "callers": [
+        "analysis_pipeline"
+      ],
+      "largest_functions": [
+        {
+          "name": "actionable_issue",
+          "line": 64,
+          "lines": 98
+        },
+        {
+          "name": "semantic_failure_summary",
+          "line": 3,
+          "lines": 59
+        }
+      ]
+    },
+    {
+      "name": "analysis_job_service",
+      "lines": 405,
+      "sha256": "efdf404d3357836dab370e6fa4f305c55d627403a52a01faa03a0bf78a95f6e1",
+      "imports": [
+        "access_policy",
+        "agent_pipeline",
+        "analysis_catalog",
+        "analysis_pipeline",
+        "llm_service",
+        "preflight_service",
+        "provider_budget",
+        "query_execution_batch",
+        "request_anchors",
+        "session_service",
+        "telemetry"
+      ],
+      "callers": [],
+      "largest_functions": [
+        {
+          "name": "work",
+          "line": 239,
+          "lines": 139
+        },
+        {
+          "name": "create",
+          "line": 79,
+          "lines": 29
+        },
+        {
+          "name": "submit",
+          "line": 167,
+          "lines": 24
+        },
+        {
+          "name": "observer",
+          "line": 253,
+          "lines": 20
+        },
+        {
+          "name": "update",
+          "line": 256,
+          "lines": 16
+        }
+      ]
+    },
+    {
+      "name": "analysis_module_repository",
+      "lines": 34,
+      "sha256": "d984d6b24c23f4e7107a6c454bf349ad88c19da92bf8468dfea3b62f8c8b54ec",
+      "imports": [
+        "analysis_catalog"
+      ],
+      "callers": [
+        "analysis_module_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "execute",
+          "line": 6,
+          "lines": 12
+        },
+        {
+          "name": "create",
+          "line": 25,
+          "lines": 3
+        },
+        {
+          "name": "record_run",
+          "line": 32,
+          "lines": 3
+        },
+        {
+          "name": "list",
+          "line": 19,
+          "lines": 2
+        },
+        {
+          "name": "get",
+          "line": 22,
+          "lines": 2
+        }
+      ]
+    },
+    {
+      "name": "analysis_module_service",
+      "lines": 223,
+      "sha256": "d2cb94f5617885425368e51a97ff2c93114e5838d0e784f21371b38e51682724",
+      "imports": [
+        "analysis_catalog",
+        "analysis_contract",
+        "analysis_intent",
+        "analysis_module_repository",
+        "analysis_response_service",
+        "analyst_contract",
+        "hybrid_analyst_planner",
+        "request_anchors",
+        "session_service",
+        "value_grounding_service"
+      ],
+      "callers": [
+        "agent_pipeline"
+      ],
+      "largest_functions": [
+        {
+          "name": "rerun",
+          "line": 166,
+          "lines": 58
+        },
+        {
+          "name": "save",
+          "line": 62,
+          "lines": 40
+        },
+        {
+          "name": "prepare_context",
+          "line": 119,
+          "lines": 30
+        },
+        {
+          "name": "resolve",
+          "line": 46,
+          "lines": 15
+        },
+        {
+          "name": "templates",
+          "line": 103,
+          "lines": 15
+        }
+      ]
+    },
+    {
+      "name": "analysis_pipeline",
+      "lines": 262,
+      "sha256": "4c0f04361f5cb718736622f38dcaa63cb5e9c62ba6a422adc5e9f7535648e94c",
+      "imports": [
+        "agent_pipeline",
+        "analysis_issue_service",
+        "analysis_quality_service",
+        "error_taxonomy"
+      ],
+      "callers": [
+        "analysis_job_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "safe_failure",
+          "line": 6,
+          "lines": 257
+        }
+      ]
+    },
+    {
+      "name": "analysis_presentation",
+      "lines": 272,
+      "sha256": "6f85999b795294f9006bdf0aea68129216ecc6dc8e0bb7e1e6a911f9f6e565df",
+      "imports": [
+        "analysis_contract"
+      ],
+      "callers": [
+        "analytical_query_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "choose_visualizations",
+          "line": 21,
+          "lines": 123
+        },
+        {
+          "name": "render_chart",
+          "line": 157,
+          "lines": 63
+        },
+        {
+          "name": "grounded_facts",
+          "line": 222,
+          "lines": 51
+        },
+        {
+          "name": "validate_chart",
+          "line": 146,
+          "lines": 9
+        },
+        {
+          "name": "primitive",
+          "line": 9,
+          "lines": 6
+        }
+      ]
+    },
+    {
+      "name": "analysis_quality_contract",
+      "lines": 82,
+      "sha256": "8ed4c65de0e5bdc95ff40aca48e6528f85aedb0472917355fa379b8ae6eddf18",
+      "imports": [
+        "analysis_contract"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_quality_service",
+        "reference_accuracy",
+        "verification_score"
+      ],
+      "largest_functions": []
+    },
+    {
+      "name": "analysis_quality_service",
+      "lines": 501,
+      "sha256": "aefdb8ddef40fc42312622ce79c3be5b9adf181a90ae52fa3d4ea6d2849403a3",
+      "imports": [
+        "analysis_catalog",
+        "analysis_coverage_service",
+        "analysis_intent",
+        "analysis_quality_contract",
+        "analysis_query",
+        "analyst_contract",
+        "analytical_capacity_planner",
+        "analytical_query_service",
+        "analytical_resolver",
+        "answer_requirement_service",
+        "dashboard_planner_service",
+        "derived_chart_service",
+        "domain_intelligence_service",
+        "insight_service",
+        "request_anchors",
+        "result_artifact_store",
+        "semantic_tools",
+        "verification_score",
+        "view_requirement_service"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_pipeline",
+        "analysis_response_service",
+        "report_sql_policy"
+      ],
+      "largest_functions": [
+        {
+          "name": "assess_report",
+          "line": 229,
+          "lines": 254
+        },
+        {
+          "name": "chart_checks",
+          "line": 62,
+          "lines": 77
+        },
+        {
+          "name": "report_limitations",
+          "line": 172,
+          "lines": 55
+        },
+        {
+          "name": "restore_artifacts",
+          "line": 27,
+          "lines": 33
+        },
+        {
+          "name": "equivalent_visual_metrics",
+          "line": 141,
+          "lines": 29
+        }
+      ]
+    },
+    {
+      "name": "analysis_query",
+      "lines": 678,
+      "sha256": "38f681142a3f6af0fc7bf16b4d274bee5feeafbf29b32e93362a41f2363c16b2",
+      "imports": [
+        "analysis_catalog",
+        "analysis_contract",
+        "analytical_capacity_planner",
+        "metadata_service",
+        "sql_service"
+      ],
+      "callers": [
+        "analysis_quality_service",
+        "analytical_query_service",
+        "risk_watch_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "build_plans",
+          "line": 27,
+          "lines": 252
+        },
+        {
+          "name": "validate_results",
+          "line": 513,
+          "lines": 166
+        },
+        {
+          "name": "compile_sql",
+          "line": 309,
+          "lines": 145
+        },
+        {
+          "name": "validate_sql",
+          "line": 456,
+          "lines": 55
+        },
+        {
+          "name": "expression",
+          "line": 313,
+          "lines": 11
+        }
+      ]
+    },
+    {
+      "name": "analysis_response_service",
+      "lines": 69,
+      "sha256": "90c8dd5e02f6ade7c0a0aeeea3b1f193ca9ebf19768317e82ce6a2f96bc35c67",
+      "imports": [
+        "analysis_catalog",
+        "analysis_quality_service",
+        "analyst_contract",
+        "analytical_capacity_planner",
+        "analytical_resolver",
+        "dashboard_planner_service",
+        "insight_service",
+        "result_artifact_store"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_module_service",
+        "session_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "bound_response",
+          "line": 10,
+          "lines": 28
+        },
+        {
+          "name": "restore_report_presentation",
+          "line": 51,
+          "lines": 19
+        },
+        {
+          "name": "session_report_summary",
+          "line": 40,
+          "lines": 9
+        }
+      ]
+    },
+    {
+      "name": "analysis_understanding",
+      "lines": 1299,
+      "sha256": "1f1612c9bc728c3a1bf33f16a0b9f622d60ee9b0eb35cc329cfc556491ef54eb",
+      "imports": [
+        "analysis_catalog",
+        "analysis_contract",
+        "time_resolution_service",
+        "value_grounding_service"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analyst_clarification"
+      ],
+      "largest_functions": [
+        {
+          "name": "understand",
+          "line": 584,
+          "lines": 341
+        },
+        {
+          "name": "refine_spec",
+          "line": 974,
+          "lines": 326
+        },
+        {
+          "name": "labelled_interpretation",
+          "line": 103,
+          "lines": 134
+        },
+        {
+          "name": "hints",
+          "line": 15,
+          "lines": 86
+        },
+        {
+          "name": "clarify",
+          "line": 239,
+          "lines": 58
+        }
+      ]
+    },
+    {
+      "name": "analyst_clarification",
+      "lines": 153,
+      "sha256": "d072bb645ae443f3ae4c4b2a1311e3b1014808f1c970f64601d47f1bb819fed2",
+      "imports": [
+        "analysis_catalog",
+        "analysis_contract",
+        "analysis_understanding",
+        "analyst_contract",
+        "analyst_decision",
+        "analytical_tool_contract",
+        "decision_boundary_normalizer",
+        "time_resolution_service",
+        "value_grounding_service"
+      ],
+      "callers": [
+        "data_analyst_agent",
+        "hybrid_analyst_planner",
+        "one_shot_planner"
+      ],
+      "largest_functions": [
+        {
+          "name": "clarify_decision",
+          "line": 47,
+          "lines": 107
+        },
+        {
+          "name": "clarify_filter",
+          "line": 16,
+          "lines": 29
+        },
+        {
+          "name": "__init__",
+          "line": 10,
+          "lines": 4
+        }
+      ]
+    },
+    {
+      "name": "analyst_contract",
+      "lines": 234,
+      "sha256": "5373eec6b7285a2647cebbfbdd90964f7f09d1db06d9f83c28e40eccbec85074",
+      "imports": [
+        "analysis_contract"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "agent_provider",
+        "analysis_intent",
+        "analysis_module_service",
+        "analysis_quality_service",
+        "analysis_response_service",
+        "analyst_clarification",
+        "analyst_decision",
+        "analytical_blueprint_service",
+        "analytical_query_service",
+        "analytical_tool_contract",
+        "answer_requirement_service",
+        "dashboard_planner_service",
+        "data_analyst_agent",
+        "hybrid_analyst_planner",
+        "one_shot_planner",
+        "semantic_tools",
+        "session_service",
+        "workspace_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "logical",
+          "line": 81,
+          "lines": 43
+        },
+        {
+          "name": "fail",
+          "line": 84,
+          "lines": 2
+        }
+      ]
+    },
+    {
+      "name": "analyst_decision",
+      "lines": 158,
+      "sha256": "7069a46b78f1960d007ad1fd5ee4089b1ea2759c9912d0bc817339d09243feb6",
+      "imports": [
+        "agent_provider",
+        "analysis_contract",
+        "analysis_coverage_service",
+        "analyst_contract",
+        "analytical_tool_contract"
+      ],
+      "callers": [
+        "analyst_clarification",
+        "one_shot_planner"
+      ],
+      "largest_functions": [
+        {
+          "name": "decision_tool",
+          "line": 69,
+          "lines": 90
+        },
+        {
+          "name": "internal",
+          "line": 40,
+          "lines": 12
+        },
+        {
+          "name": "omit_null",
+          "line": 74,
+          "lines": 8
+        }
+      ]
+    },
+    {
+      "name": "analytical_blueprint_service",
+      "lines": 175,
+      "sha256": "3462cbcff658da9ff83cd246fe711359594c6b362155e5cb1a07053e7f6c9547",
+      "imports": [
+        "analysis_catalog",
+        "analysis_contract",
+        "analyst_contract",
+        "analytical_tool_contract"
+      ],
+      "callers": [
+        "domain_intelligence_service",
+        "one_shot_planner"
+      ],
+      "largest_functions": [
+        {
+          "name": "materialize",
+          "line": 95,
+          "lines": 56
+        },
+        {
+          "name": "validate_blueprint",
+          "line": 52,
+          "lines": 17
+        },
+        {
+          "name": "shape",
+          "line": 34,
+          "lines": 16
+        },
+        {
+          "name": "__init__",
+          "line": 79,
+          "lines": 14
+        },
+        {
+          "name": "validate_materialized",
+          "line": 153,
+          "lines": 14
+        }
+      ]
+    },
+    {
+      "name": "analytical_capacity_planner",
+      "lines": 128,
+      "sha256": "259868799b31efca18b403f611df9ff84e294cd04e88b80e7d1761ba8c60b805",
+      "imports": [
+        "analysis_catalog",
+        "value_grounding_service"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_contract",
+        "analysis_expansion_service",
+        "analysis_quality_service",
+        "analysis_query",
+        "analysis_response_service",
+        "analytical_query_service",
+        "analytical_resolver",
+        "dashboard_planner_service",
+        "hybrid_analyst_planner",
+        "readiness_service",
+        "result_artifact_store",
+        "session_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "plan",
+          "line": 80,
+          "lines": 38
+        },
+        {
+          "name": "period_count",
+          "line": 43,
+          "lines": 14
+        },
+        {
+          "name": "dimension_count",
+          "line": 65,
+          "lines": 14
+        },
+        {
+          "name": "from_env",
+          "line": 29,
+          "lines": 12
+        },
+        {
+          "name": "dry_analysis_plan",
+          "line": 120,
+          "lines": 9
+        }
+      ]
+    },
+    {
+      "name": "analytical_query_service",
+      "lines": 532,
+      "sha256": "3c28856a3fb313b24aa568a1468e5621bb5ac547a5910debb264dc44ccfd6cc4",
+      "imports": [
+        "access_policy",
+        "analysis_catalog",
+        "analysis_contract",
+        "analysis_presentation",
+        "analysis_query",
+        "analyst_contract",
+        "analytical_capacity_planner",
+        "analytical_tool_contract",
+        "domain_intelligence_service",
+        "provider_budget",
+        "query_execution_batch",
+        "result_artifact_store",
+        "sql_service",
+        "time_resolution_service",
+        "value_grounding_service",
+        "value_profile_service"
+      ],
+      "callers": [
+        "analysis_quality_service",
+        "analytical_resolver",
+        "data_analyst_agent",
+        "one_shot_planner",
+        "session_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "prepare",
+          "line": 141,
+          "lines": 165
+        },
+        {
+          "name": "run_batch",
+          "line": 417,
+          "lines": 104
+        },
+        {
+          "name": "run",
+          "line": 333,
+          "lines": 83
+        },
+        {
+          "name": "__init__",
+          "line": 82,
+          "lines": 54
+        },
+        {
+          "name": "check_result",
+          "line": 307,
+          "lines": 25
+        }
+      ]
+    },
+    {
+      "name": "analytical_resolver",
+      "lines": 774,
+      "sha256": "7e139a9762976bb76821abbb1caa4680487c487ac6f7a5caadb9c16bd7396123",
+      "imports": [
+        "analysis_catalog",
+        "analysis_contract",
+        "analysis_expansion_service",
+        "analysis_intent",
+        "analytical_capacity_planner",
+        "analytical_query_service",
+        "analytical_tool_contract",
+        "domain_intelligence_service",
+        "forecast_service",
+        "semantic_manifest_service",
+        "semantic_preflight_contract",
+        "semantic_tools",
+        "time_resolution_service",
+        "value_grounding_service",
+        "value_profile_service"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_expansion_service",
+        "analysis_quality_service",
+        "analysis_response_service",
+        "hybrid_analyst_planner",
+        "readiness_service",
+        "request_anchors",
+        "semantic_example_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "resolve_requirement",
+          "line": 284,
+          "lines": 226
+        },
+        {
+          "name": "resolve",
+          "line": 576,
+          "lines": 191
+        },
+        {
+          "name": "normalize",
+          "line": 167,
+          "lines": 63
+        },
+        {
+          "name": "candidates",
+          "line": 231,
+          "lines": 35
+        },
+        {
+          "name": "resolve_driver",
+          "line": 511,
+          "lines": 31
+        }
+      ]
+    },
+    {
+      "name": "analytical_tool_contract",
+      "lines": 196,
+      "sha256": "ec8bae0ba304f5af89acf298b519f4cf67f5bfc4c85cb9f878cb5cfac333b2a3",
+      "imports": [
+        "analysis_catalog",
+        "analysis_contract",
+        "analyst_contract"
+      ],
+      "callers": [
+        "analysis_coverage_service",
+        "analyst_clarification",
+        "analyst_decision",
+        "analytical_blueprint_service",
+        "analytical_query_service",
+        "analytical_resolver",
+        "data_analyst_agent",
+        "decision_boundary_normalizer",
+        "domain_intelligence_service",
+        "one_shot_planner",
+        "semantic_tools"
+      ],
+      "largest_functions": [
+        {
+          "name": "rejection_issues",
+          "line": 126,
+          "lines": 49
+        },
+        {
+          "name": "canonicalize",
+          "line": 82,
+          "lines": 42
+        },
+        {
+          "name": "invalid_signature",
+          "line": 177,
+          "lines": 20
+        },
+        {
+          "name": "structural_payload",
+          "line": 66,
+          "lines": 14
+        },
+        {
+          "name": "safe_path",
+          "line": 46,
+          "lines": 8
+        }
+      ]
+    },
+    {
+      "name": "answer_requirement_service",
+      "lines": 70,
+      "sha256": "9d709d1c9fb5ef33675470c08dc31245ff21399a9ebe5ec477ea5aca04026873",
+      "imports": [
+        "analyst_contract",
+        "chart_insight_service",
+        "forecast_service",
+        "insight_service"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_quality_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "conclusion_from_report",
+          "line": 30,
+          "lines": 41
+        },
+        {
+          "name": "direct_answers",
+          "line": 5,
+          "lines": 23
+        }
+      ]
+    },
+    {
+      "name": "browser_owner",
+      "lines": 27,
+      "sha256": "b53c7c5635cf08cb099da9767823f0070b4fcc47eed567754395419bdb681591",
+      "imports": [
+        "access_policy"
+      ],
+      "callers": [],
+      "largest_functions": [
+        {
+          "name": "browser_owner",
+          "line": 10,
+          "lines": 18
+        }
+      ]
+    },
+    {
+      "name": "business_labels",
+      "lines": 21,
+      "sha256": "4226d974614a05976879c172524f02de305e692f9e9b3586d608113287163cad",
+      "imports": [],
+      "callers": [
+        "dashboard_planner_service",
+        "derived_chart_service",
+        "insight_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "dimension_labeler",
+          "line": 4,
+          "lines": 18
+        },
+        {
+          "name": "label",
+          "line": 14,
+          "lines": 7
+        }
+      ]
+    },
+    {
+      "name": "chart_insight_service",
+      "lines": 470,
+      "sha256": "c5cd2df717e05252eb71cbad9ca01a3ab2f83efa7b24d6013d1182b7d96d8eea",
+      "imports": [
+        "insight_service",
+        "preflight_service"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "answer_requirement_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "insight",
+          "line": 67,
+          "lines": 149
+        },
+        {
+          "name": "verify_insights",
+          "line": 299,
+          "lines": 61
+        },
+        {
+          "name": "recompute",
+          "line": 239,
+          "lines": 58
+        },
+        {
+          "name": "_forecast_sentences",
+          "line": 406,
+          "lines": 32
+        },
+        {
+          "name": "build_conclusion",
+          "line": 440,
+          "lines": 31
+        }
+      ]
+    },
+    {
+      "name": "chart_relevance_service",
+      "lines": 171,
+      "sha256": "bd587a24ecbdb254a36a73619bca729ee0ea15d685d85146ba5a4b2c51636f0a",
+      "imports": [
+        "workspace_service"
+      ],
+      "callers": [
+        "agent_pipeline"
+      ],
+      "largest_functions": [
+        {
+          "name": "apply",
+          "line": 80,
+          "lines": 68
+        },
+        {
+          "name": "grammar_decisions",
+          "line": 39,
+          "lines": 39
+        },
+        {
+          "name": "verify",
+          "line": 150,
+          "lines": 22
+        },
+        {
+          "name": "requirement_map",
+          "line": 13,
+          "lines": 11
+        },
+        {
+          "name": "mission_metric_scope",
+          "line": 26,
+          "lines": 6
+        }
+      ]
+    },
+    {
+      "name": "dashboard_planner_service",
+      "lines": 829,
+      "sha256": "fbc0c19af0dc975ad8b48b96c55c08321b87d9ce49f7e03f164d6cfec1b72ad8",
+      "imports": [
+        "analyst_contract",
+        "analytical_capacity_planner",
+        "business_labels",
+        "derived_chart_service",
+        "domain_intelligence_service",
+        "insight_service",
+        "semantic_manifest_service"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_quality_service",
+        "analysis_response_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "build_dashboard",
+          "line": 555,
+          "lines": 242
+        },
+        {
+          "name": "render",
+          "line": 354,
+          "lines": 199
+        },
+        {
+          "name": "defaults",
+          "line": 64,
+          "lines": 120
+        },
+        {
+          "name": "chart_reason",
+          "line": 251,
+          "lines": 101
+        },
+        {
+          "name": "comparison_reason",
+          "line": 186,
+          "lines": 40
+        }
+      ]
+    },
+    {
+      "name": "data_analyst_agent",
+      "lines": 692,
+      "sha256": "f3b7402e50af5c19ff66a5630e89196441da9bc505067bedfef2e28852373b98",
+      "imports": [
+        "agent_provider",
+        "analysis_catalog",
+        "analyst_clarification",
+        "analyst_contract",
+        "analytical_query_service",
+        "analytical_tool_contract",
+        "insight_service",
+        "semantic_tools"
+      ],
+      "callers": [
+        "agent_pipeline"
+      ],
+      "largest_functions": [
+        {
+          "name": "_run",
+          "line": 362,
+          "lines": 331
+        },
+        {
+          "name": "__init__",
+          "line": 104,
+          "lines": 74
+        },
+        {
+          "name": "projection",
+          "line": 241,
+          "lines": 40
+        },
+        {
+          "name": "record_tool",
+          "line": 203,
+          "lines": 37
+        },
+        {
+          "name": "finish",
+          "line": 287,
+          "lines": 36
+        }
+      ]
+    },
+    {
+      "name": "data_coverage_service",
+      "lines": 420,
+      "sha256": "7a7af976ec57dbd38d02404c95f2d3927e6bae7083c0e6892307692cd15e1cea",
+      "imports": [
+        "analysis_catalog",
+        "readiness_service"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "preflight_service",
+        "query_execution_batch",
+        "risk_watch_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "dataset_health",
+          "line": 138,
+          "lines": 63
+        },
+        {
+          "name": "_query_dataset_health",
+          "line": 203,
+          "lines": 54
+        },
+        {
+          "name": "build_snapshot",
+          "line": 55,
+          "lines": 46
+        },
+        {
+          "name": "quality_snapshot",
+          "line": 369,
+          "lines": 27
+        },
+        {
+          "name": "_query",
+          "line": 103,
+          "lines": 25
+        }
+      ]
+    },
+    {
+      "name": "decision_boundary_normalizer",
+      "lines": 35,
+      "sha256": "cb11a066e9338eeac2c5e4cc80e05e1c98bd5e21bb3e23271eccee31d5d3fbc3",
+      "imports": [
+        "analytical_tool_contract"
+      ],
+      "callers": [
+        "analyst_clarification",
+        "one_shot_planner"
+      ],
+      "largest_functions": [
+        {
+          "name": "normalize_operation",
+          "line": 14,
+          "lines": 22
+        }
+      ]
+    },
+    {
+      "name": "derived_chart_service",
+      "lines": 140,
+      "sha256": "fb74c6d9523d0bfac7e0c5629aa9b378dd99efe224fd5a8de8741f65385d59a5",
+      "imports": [
+        "business_labels",
+        "insight_service"
+      ],
+      "callers": [
+        "analysis_quality_service",
+        "dashboard_planner_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "contribution_charts",
+          "line": 10,
+          "lines": 54
+        },
+        {
+          "name": "pair_charts",
+          "line": 66,
+          "lines": 48
+        },
+        {
+          "name": "driver_charts",
+          "line": 116,
+          "lines": 25
+        }
+      ]
+    },
+    {
+      "name": "docx_service",
+      "lines": 1208,
+      "sha256": "ec71945de3076cf8dfb795ce9cc3a015f64cccd2e8f10f5c71af7e0fdfcaf70e",
+      "imports": [],
+      "callers": [],
+      "largest_functions": [
+        {
+          "name": "generate_report_docx",
+          "line": 534,
+          "lines": 675
+        },
+        {
+          "name": "_generate_chart_image",
+          "line": 242,
+          "lines": 290
+        },
+        {
+          "name": "_clean_val",
+          "line": 130,
+          "lines": 44
+        },
+        {
+          "name": "_render_text_block",
+          "line": 206,
+          "lines": 34
+        },
+        {
+          "name": "_add_styled_runs",
+          "line": 176,
+          "lines": 28
+        }
+      ]
+    },
+    {
+      "name": "domain_intelligence_service",
+      "lines": 554,
+      "sha256": "27502a4d6c957fa02accceb329aaa4ca4a0b44ee1630c932da6c992c9dafc011",
+      "imports": [
+        "access_policy",
+        "analysis_catalog",
+        "analysis_contract",
+        "analysis_expansion_service",
+        "analytical_blueprint_service",
+        "analytical_tool_contract",
+        "semantic_manifest_service",
+        "value_grounding_service",
+        "workspace_service"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_quality_service",
+        "analytical_query_service",
+        "analytical_resolver",
+        "dashboard_planner_service",
+        "explanation_service",
+        "hybrid_analyst_planner",
+        "insight_service",
+        "one_shot_planner",
+        "readiness_service",
+        "semantic_catalog_validation"
+      ],
+      "largest_functions": [
+        {
+          "name": "candidates",
+          "line": 359,
+          "lines": 89
+        },
+        {
+          "name": "capabilities",
+          "line": 232,
+          "lines": 74
+        },
+        {
+          "name": "available",
+          "line": 140,
+          "lines": 62
+        },
+        {
+          "name": "validate_profiles",
+          "line": 72,
+          "lines": 57
+        },
+        {
+          "name": "pack",
+          "line": 311,
+          "lines": 47
+        }
+      ]
+    },
+    {
+      "name": "error_taxonomy",
+      "lines": 170,
+      "sha256": "64e78fbdb2b72c3cf8a9fd86de032e2f73a7642bdbf888f50134e955ef2c34ea",
+      "imports": [],
+      "callers": [
+        "analysis_issue_service",
+        "analysis_pipeline"
+      ],
+      "largest_functions": [
+        {
+          "name": "classify",
+          "line": 140,
+          "lines": 25
+        },
+        {
+          "name": "is_provider_transport",
+          "line": 167,
+          "lines": 4
+        },
+        {
+          "name": "analysis_stage",
+          "line": 135,
+          "lines": 3
+        }
+      ]
+    },
+    {
+      "name": "explanation_service",
+      "lines": 119,
+      "sha256": "4a24c0f0f446298ae8fde15f92d3016af547c288bb2660316e6f339fcffb848c",
+      "imports": [
+        "domain_intelligence_service"
+      ],
+      "callers": [
+        "agent_pipeline"
+      ],
+      "largest_functions": [
+        {
+          "name": "explain_analysis",
+          "line": 4,
+          "lines": 116
+        }
+      ]
+    },
+    {
+      "name": "forecast_service",
+      "lines": 356,
+      "sha256": "a258319d319637347cc3286962859194f0464e842d8bda9ee1df02ecd27d7fa1",
+      "imports": [
+        "analysis_catalog"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analytical_resolver",
+        "answer_requirement_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "forecast",
+          "line": 230,
+          "lines": 79
+        },
+        {
+          "name": "report_forecasts",
+          "line": 311,
+          "lines": 46
+        },
+        {
+          "name": "complete_series",
+          "line": 67,
+          "lines": 38
+        },
+        {
+          "name": "_selection",
+          "line": 174,
+          "lines": 25
+        },
+        {
+          "name": "backtest",
+          "line": 152,
+          "lines": 20
+        }
+      ]
+    },
+    {
+      "name": "hybrid_analyst_planner",
+      "lines": 977,
+      "sha256": "82a8d20ac050253f313cba1cb7203d9265bdf70c4bcfbddf303e4da7e14065a3",
+      "imports": [
+        "agent_provider",
+        "analysis_catalog",
+        "analysis_coverage_service",
+        "analysis_expansion_service",
+        "analysis_intent",
+        "analyst_clarification",
+        "analyst_contract",
+        "analytical_capacity_planner",
+        "analytical_resolver",
+        "domain_intelligence_service",
+        "one_shot_context",
+        "one_shot_planner",
+        "provider_budget",
+        "request_anchors",
+        "scope_resolution_service",
+        "semantic_candidate_service",
+        "semantic_manifest_service",
+        "semantic_preflight_contract",
+        "value_grounding_service"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_module_service",
+        "readiness_service",
+        "request_anchors"
+      ],
+      "largest_functions": [
+        {
+          "name": "run",
+          "line": 453,
+          "lines": 525
+        },
+        {
+          "name": "merge_repair",
+          "line": 315,
+          "lines": 65
+        },
+        {
+          "name": "parse",
+          "line": 253,
+          "lines": 61
+        },
+        {
+          "name": "apply_delta",
+          "line": 54,
+          "lines": 55
+        },
+        {
+          "name": "preflight",
+          "line": 407,
+          "lines": 45
+        }
+      ]
+    },
+    {
+      "name": "insight_service",
+      "lines": 880,
+      "sha256": "584b56f08e4d841c739f3c2e3cbcf5bff00b23038b061c9144b345c155d59caf",
+      "imports": [
+        "business_labels",
+        "domain_intelligence_service",
+        "semantic_preflight_contract"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_quality_service",
+        "analysis_response_service",
+        "answer_requirement_service",
+        "chart_insight_service",
+        "dashboard_planner_service",
+        "data_analyst_agent",
+        "derived_chart_service",
+        "view_requirement_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "analytical_features",
+          "line": 43,
+          "lines": 542
+        },
+        {
+          "name": "grounded_narrative",
+          "line": 587,
+          "lines": 168
+        },
+        {
+          "name": "paired_observations",
+          "line": 766,
+          "lines": 62
+        },
+        {
+          "name": "add",
+          "line": 48,
+          "lines": 34
+        },
+        {
+          "name": "trend_bucket_coverage",
+          "line": 12,
+          "lines": 13
+        }
+      ]
+    },
+    {
+      "name": "legacy_analysis_compat",
+      "lines": 1161,
+      "sha256": "d5e5f649b86e6014c2af2aac6b2ee6fa2dd6d516aa2841bfd574742311fc7be8",
+      "imports": [
+        "semantic_service"
+      ],
+      "callers": [],
+      "largest_functions": [
+        {
+          "name": "_deterministic_plan",
+          "line": 215,
+          "lines": 821
+        },
+        {
+          "name": "_time_selection",
+          "line": 17,
+          "lines": 184
+        },
+        {
+          "name": "validate_results",
+          "line": 1131,
+          "lines": 31
+        },
+        {
+          "name": "_chart_metadata",
+          "line": 1106,
+          "lines": 16
+        },
+        {
+          "name": "_base_kpi_sql",
+          "line": 203,
+          "lines": 10
+        }
+      ]
+    },
+    {
+      "name": "llm_service",
+      "lines": 238,
+      "sha256": "042360536a72e3c836f154c795b3b578f1ad43da5d7b9505b0402c9516355db5",
+      "imports": [],
+      "callers": [
+        "agent_provider",
+        "analysis_job_service",
+        "one_shot_context",
+        "provider_credential_router",
+        "provider_health_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "call_gemini",
+          "line": 40,
+          "lines": 64
+        },
+        {
+          "name": "call_bounded_llm",
+          "line": 170,
+          "lines": 55
+        },
+        {
+          "name": "call_groq",
+          "line": 106,
+          "lines": 46
+        },
+        {
+          "name": "_parse_json",
+          "line": 25,
+          "lines": 13
+        },
+        {
+          "name": "_provider_json_schema",
+          "line": 227,
+          "lines": 12
+        }
+      ]
+    },
+    {
+      "name": "metadata_service",
+      "lines": 370,
+      "sha256": "ebb33264d6ce9bcc2115f7c9496c267f10cc82bd1ddeaa302d19e85e25b46a19",
+      "imports": [],
+      "callers": [
+        "agent_pipeline",
+        "analysis_catalog",
+        "analysis_query",
+        "preflight_service",
+        "readiness_service",
+        "report_sql_policy",
+        "sql_service",
+        "value_profile_service",
+        "vector_rag_service",
+        "verified_analysis_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "_introspect",
+          "line": 88,
+          "lines": 178
+        },
+        {
+          "name": "get_combined_metadata",
+          "line": 304,
+          "lines": 32
+        },
+        {
+          "name": "lookup_dimension_values",
+          "line": 351,
+          "lines": 20
+        },
+        {
+          "name": "_cached",
+          "line": 268,
+          "lines": 17
+        },
+        {
+          "name": "_source_conn",
+          "line": 72,
+          "lines": 14
+        }
+      ]
+    },
+    {
+      "name": "mission_contract_service",
+      "lines": 319,
+      "sha256": "6b4f4c59c3b30a81aefbb52a5c476cf77627b1ebaf845e4ba4da3f88074f079e",
+      "imports": [
+        "analysis_catalog",
+        "value_grounding_service"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "preflight_service",
+        "request_anchors",
+        "semantic_catalog_validation",
+        "workspace_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "validate_guided",
+          "line": 137,
+          "lines": 89
+        },
+        {
+          "name": "guided_intent",
+          "line": 236,
+          "lines": 61
+        },
+        {
+          "name": "guided_question",
+          "line": 299,
+          "lines": 21
+        },
+        {
+          "name": "infer_mission",
+          "line": 75,
+          "lines": 19
+        },
+        {
+          "name": "validate_contracts",
+          "line": 28,
+          "lines": 15
+        }
+      ]
+    },
+    {
+      "name": "one_shot_context",
+      "lines": 117,
+      "sha256": "da61704a6c760ba11f4c936b6b1637a7b0073a7b043fde045f82add0bbbe8888",
+      "imports": [
+        "agent_provider",
+        "analysis_catalog",
+        "llm_service",
+        "semantic_manifest_service"
+      ],
+      "callers": [
+        "hybrid_analyst_planner",
+        "one_shot_planner"
+      ],
+      "largest_functions": [
+        {
+          "name": "pack_context",
+          "line": 70,
+          "lines": 48
+        },
+        {
+          "name": "wire_payload",
+          "line": 9,
+          "lines": 44
+        },
+        {
+          "name": "body_sizes",
+          "line": 59,
+          "lines": 9
+        },
+        {
+          "name": "context_messages",
+          "line": 55,
+          "lines": 2
+        }
+      ]
+    },
+    {
+      "name": "one_shot_planner",
+      "lines": 561,
+      "sha256": "2c248b7180d0688163172adfa72309499189c276cb1d0820050e219b312a3876",
+      "imports": [
+        "agent_provider",
+        "analysis_catalog",
+        "analysis_coverage_service",
+        "analyst_clarification",
+        "analyst_contract",
+        "analyst_decision",
+        "analytical_blueprint_service",
+        "analytical_query_service",
+        "analytical_tool_contract",
+        "decision_boundary_normalizer",
+        "domain_intelligence_service",
+        "one_shot_context",
+        "provider_budget",
+        "request_anchors",
+        "semantic_manifest_service",
+        "semantic_tools",
+        "time_resolution_service",
+        "value_grounding_service"
+      ],
+      "callers": [
+        "hybrid_analyst_planner"
+      ],
+      "largest_functions": [
+        {
+          "name": "run",
+          "line": 357,
+          "lines": 205
+        },
+        {
+          "name": "accept_plan",
+          "line": 166,
+          "lines": 145
+        },
+        {
+          "name": "prepare",
+          "line": 109,
+          "lines": 51
+        },
+        {
+          "name": "accept_response",
+          "line": 312,
+          "lines": 44
+        },
+        {
+          "name": "__init__",
+          "line": 33,
+          "lines": 29
+        }
+      ]
+    },
+    {
+      "name": "preflight_service",
+      "lines": 703,
+      "sha256": "3086b3cbfddb458396b5d252262b0577c34638801eb5f8c7cc60ec136e6c285c",
+      "imports": [
+        "access_policy",
+        "analysis_catalog",
+        "analysis_contract",
+        "data_coverage_service",
+        "metadata_service",
+        "mission_contract_service",
+        "request_anchors",
+        "semantic_preflight_contract",
+        "time_resolution_service",
+        "value_grounding_service",
+        "workspace_service"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_job_service",
+        "chart_insight_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "run",
+          "line": 164,
+          "lines": 474
+        },
+        {
+          "name": "auto_guided",
+          "line": 640,
+          "lines": 41
+        },
+        {
+          "name": "mapped_text",
+          "line": 59,
+          "lines": 15
+        },
+        {
+          "name": "preflight_catalog",
+          "line": 42,
+          "lines": 13
+        },
+        {
+          "name": "allow",
+          "line": 691,
+          "lines": 13
+        }
+      ]
+    },
+    {
+      "name": "provider_budget",
+      "lines": 192,
+      "sha256": "ae7158e031bc0621768eef155f9465a453dd6fbfce5a67fc4bf112ab610425a5",
+      "imports": [
+        "agent_provider",
+        "analysis_catalog",
+        "semantic_manifest_service"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "agent_provider",
+        "analysis_job_service",
+        "analytical_query_service",
+        "hybrid_analyst_planner",
+        "one_shot_planner",
+        "query_execution_batch",
+        "session_service",
+        "sql_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "record_physical",
+          "line": 121,
+          "lines": 19
+        },
+        {
+          "name": "consume",
+          "line": 141,
+          "lines": 19
+        },
+        {
+          "name": "__init__",
+          "line": 33,
+          "lines": 15
+        },
+        {
+          "name": "http_timeout",
+          "line": 68,
+          "lines": 14
+        },
+        {
+          "name": "claim_recovery",
+          "line": 106,
+          "lines": 14
+        }
+      ]
+    },
+    {
+      "name": "provider_credential_router",
+      "lines": 97,
+      "sha256": "727d6e9f8567e3e8f85500913655b764a2f1cb50777f7e2a93eaa92d52099519",
+      "imports": [
+        "llm_service"
+      ],
+      "callers": [
+        "agent_provider",
+        "provider_health_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "credential_plan",
+          "line": 56,
+          "lines": 12
+        },
+        {
+          "name": "record_failure",
+          "line": 70,
+          "lines": 8
+        },
+        {
+          "name": "status",
+          "line": 85,
+          "lines": 8
+        },
+        {
+          "name": "eligible",
+          "line": 47,
+          "lines": 7
+        },
+        {
+          "name": "_secondary_key",
+          "line": 31,
+          "lines": 4
+        }
+      ]
+    },
+    {
+      "name": "provider_health_service",
+      "lines": 81,
+      "sha256": "bbc65e1008e3d4ee4e2c0f326bbb72a28a2148957dbc3e75c0d78c4ed36c53dc",
+      "imports": [
+        "llm_service",
+        "provider_credential_router",
+        "telemetry"
+      ],
+      "callers": [
+        "agent_provider",
+        "readiness_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "observe_attempt",
+          "line": 42,
+          "lines": 22
+        },
+        {
+          "name": "rolling_observations",
+          "line": 24,
+          "lines": 16
+        },
+        {
+          "name": "provider_health",
+          "line": 66,
+          "lines": 16
+        },
+        {
+          "name": "_prune",
+          "line": 19,
+          "lines": 3
+        }
+      ]
+    },
+    {
+      "name": "query_execution_batch",
+      "lines": 170,
+      "sha256": "10339d8adf0a4a5b0a278b37ec522c219803b05f4a7758f7bc02e2c0c0890cb3",
+      "imports": [
+        "access_policy",
+        "analysis_catalog",
+        "data_coverage_service",
+        "provider_budget"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_job_service",
+        "analytical_query_service",
+        "sql_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "report_snapshot",
+          "line": 99,
+          "lines": 34
+        },
+        {
+          "name": "connection",
+          "line": 69,
+          "lines": 27
+        },
+        {
+          "name": "read_data_epoch",
+          "line": 135,
+          "lines": 25
+        },
+        {
+          "name": "pool",
+          "line": 41,
+          "lines": 19
+        },
+        {
+          "name": "begin",
+          "line": 162,
+          "lines": 9
+        }
+      ]
+    },
+    {
+      "name": "readiness_service",
+      "lines": 128,
+      "sha256": "6e839057b20785d9ce88c962598f301bd4e7d8d5639a0a7d441034db35014e74",
+      "imports": [
+        "analysis_catalog",
+        "analytical_capacity_planner",
+        "analytical_resolver",
+        "domain_intelligence_service",
+        "hybrid_analyst_planner",
+        "metadata_service",
+        "provider_health_service",
+        "semantic_catalog_validation"
+      ],
+      "callers": [
+        "data_coverage_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "readiness",
+          "line": 80,
+          "lines": 49
+        },
+        {
+          "name": "catalog_probe",
+          "line": 32,
+          "lines": 33
+        },
+        {
+          "name": "redis_probe",
+          "line": 67,
+          "lines": 11
+        },
+        {
+          "name": "warehouse_probe",
+          "line": 21,
+          "lines": 9
+        },
+        {
+          "name": "connection",
+          "line": 47,
+          "lines": 7
+        }
+      ]
+    },
+    {
+      "name": "reference_accuracy",
+      "lines": 42,
+      "sha256": "f020c9b8f2c901f128b39b6c8eaa953cef85c8b97a1a1e6d65732043a175a4b1",
+      "imports": [
+        "analysis_quality_contract"
+      ],
+      "callers": [],
+      "largest_functions": [
+        {
+          "name": "measure_reference_accuracy",
+          "line": 28,
+          "lines": 15
+        },
+        {
+          "name": "matches_reference",
+          "line": 14,
+          "lines": 12
+        }
+      ]
+    },
+    {
+      "name": "report_sql_policy",
+      "lines": 48,
+      "sha256": "163d1b7e50fc54780ff8c7b5b366b669ad1a89e2ae1ad5e174a7e2b86b73da1b",
+      "imports": [
+        "access_policy",
+        "analysis_catalog",
+        "analysis_quality_service",
+        "metadata_service",
+        "sql_service"
+      ],
+      "callers": [],
+      "largest_functions": [
+        {
+          "name": "validate_saved_payload",
+          "line": 34,
+          "lines": 15
+        },
+        {
+          "name": "require_sql_admin",
+          "line": 8,
+          "lines": 13
+        },
+        {
+          "name": "validate_report_sql",
+          "line": 23,
+          "lines": 9
+        }
+      ]
+    },
+    {
+      "name": "request_anchors",
+      "lines": 878,
+      "sha256": "cd12f2c1371ec50187fb132ea1f2d042a9a2ae155203b877e9efba694a61acca",
+      "imports": [
+        "analysis_catalog",
+        "analysis_contract",
+        "analysis_intent",
+        "analytical_resolver",
+        "hybrid_analyst_planner",
+        "mission_contract_service",
+        "scope_resolution_service",
+        "time_resolution_service",
+        "value_grounding_service"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_job_service",
+        "analysis_module_service",
+        "analysis_quality_service",
+        "hybrid_analyst_planner",
+        "one_shot_planner",
+        "preflight_service",
+        "scope_resolution_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "verify_anchors",
+          "line": 571,
+          "lines": 199
+        },
+        {
+          "name": "request_anchors",
+          "line": 49,
+          "lines": 191
+        },
+        {
+          "name": "refinement_anchors",
+          "line": 772,
+          "lines": 84
+        },
+        {
+          "name": "normalize_explicit_metrics",
+          "line": 520,
+          "lines": 49
+        },
+        {
+          "name": "normalize_explicit_grains",
+          "line": 478,
+          "lines": 40
+        }
+      ]
+    },
+    {
+      "name": "result_artifact_store",
+      "lines": 194,
+      "sha256": "6a4db322490e118e25561f5f844f7d44b826561a53b1f6b80a21f207c5417d5a",
+      "imports": [
+        "analysis_catalog",
+        "analytical_capacity_planner",
+        "session_service"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_quality_service",
+        "analysis_response_service",
+        "analytical_query_service",
+        "session_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "_read_verified",
+          "line": 102,
+          "lines": 47
+        },
+        {
+          "name": "put",
+          "line": 40,
+          "lines": 35
+        },
+        {
+          "name": "page",
+          "line": 150,
+          "lines": 23
+        },
+        {
+          "name": "artifact_store",
+          "line": 178,
+          "lines": 17
+        },
+        {
+          "name": "find",
+          "line": 76,
+          "lines": 16
+        }
+      ]
+    },
+    {
+      "name": "risk_watch_service",
+      "lines": 261,
+      "sha256": "594139e2f5f5f3c8ba6369849016519c0221c2a1f13f5ae354fc9fab6d2903ad",
+      "imports": [
+        "access_policy",
+        "analysis_catalog",
+        "analysis_contract",
+        "analysis_query",
+        "data_coverage_service",
+        "sql_service",
+        "value_grounding_service"
+      ],
+      "callers": [],
+      "largest_functions": [
+        {
+          "name": "evaluate",
+          "line": 75,
+          "lines": 99
+        },
+        {
+          "name": "robust_anomaly",
+          "line": 176,
+          "lines": 51
+        },
+        {
+          "name": "evaluate_anomaly",
+          "line": 229,
+          "lines": 33
+        },
+        {
+          "name": "scope_filters",
+          "line": 33,
+          "lines": 21
+        },
+        {
+          "name": "_execute",
+          "line": 56,
+          "lines": 17
+        }
+      ]
+    },
+    {
+      "name": "scope_resolution_service",
+      "lines": 149,
+      "sha256": "db91673f74689241cb23857f61011b8363a57e9e22e70cf53788767d686c75aa",
+      "imports": [
+        "request_anchors",
+        "value_grounding_service"
+      ],
+      "callers": [
+        "hybrid_analyst_planner",
+        "request_anchors",
+        "semantic_catalog_validation"
+      ],
+      "largest_functions": [
+        {
+          "name": "resolve_scope",
+          "line": 9,
+          "lines": 72
+        },
+        {
+          "name": "scope_issues",
+          "line": 83,
+          "lines": 34
+        },
+        {
+          "name": "scope_repair_patches",
+          "line": 119,
+          "lines": 23
+        },
+        {
+          "name": "grouping_expression",
+          "line": 144,
+          "lines": 6
+        },
+        {
+          "name": "literal",
+          "line": 146,
+          "lines": 1
+        }
+      ]
+    },
+    {
+      "name": "semantic_candidate_service",
+      "lines": 95,
+      "sha256": "783dac80f20a665df7728e721f8747b191c8aef02fcc17bdde9cf07739825cf2",
+      "imports": [
+        "semantic_manifest_service",
+        "value_grounding_service"
+      ],
+      "callers": [
+        "hybrid_analyst_planner"
+      ],
+      "largest_functions": [
+        {
+          "name": "candidate_packet",
+          "line": 20,
+          "lines": 76
+        },
+        {
+          "name": "wire",
+          "line": 12,
+          "lines": 2
+        },
+        {
+          "name": "chars",
+          "line": 16,
+          "lines": 2
+        }
+      ]
+    },
+    {
+      "name": "semantic_catalog_validation",
+      "lines": 337,
+      "sha256": "9b5a3c0583c5e0c701b9ba6fe48b4de0f393b25d8db27ef6721e6db824322b2c",
+      "imports": [
+        "analysis_catalog",
+        "analysis_intent",
+        "domain_intelligence_service",
+        "mission_contract_service",
+        "scope_resolution_service",
+        "semantic_preflight_contract",
+        "value_grounding_service",
+        "workspace_service"
+      ],
+      "callers": [
+        "analysis_catalog",
+        "readiness_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "validate_catalog",
+          "line": 108,
+          "lines": 130
+        },
+        {
+          "name": "validate_source_semantics",
+          "line": 20,
+          "lines": 62
+        },
+        {
+          "name": "contract_diff",
+          "line": 288,
+          "lines": 50
+        },
+        {
+          "name": "validate_governance",
+          "line": 240,
+          "lines": 26
+        },
+        {
+          "name": "registry_drift",
+          "line": 84,
+          "lines": 22
+        }
+      ]
+    },
+    {
+      "name": "semantic_example_service",
+      "lines": 20,
+      "sha256": "ba439e8f8810458f7ff7dbcd3cd091441ef87d97e2268633474f623fb3bc59e3",
+      "imports": [
+        "analysis_intent",
+        "analytical_resolver"
+      ],
+      "callers": [],
+      "largest_functions": [
+        {
+          "name": "confirmed_examples",
+          "line": 7,
+          "lines": 14
+        }
+      ]
+    },
+    {
+      "name": "semantic_manifest_service",
+      "lines": 195,
+      "sha256": "5a4283ae50037a5b9cd97f4789058d4daf9a7f3e76772e1499f9331c17c5ef47",
+      "imports": [
+        "analysis_catalog",
+        "semantic_preflight_contract",
+        "value_grounding_service"
+      ],
+      "callers": [
+        "analysis_expansion_service",
+        "analytical_resolver",
+        "dashboard_planner_service",
+        "domain_intelligence_service",
+        "hybrid_analyst_planner",
+        "one_shot_context",
+        "one_shot_planner",
+        "provider_budget",
+        "semantic_candidate_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "build_manifest",
+          "line": 30,
+          "lines": 130
+        },
+        {
+          "name": "project",
+          "line": 82,
+          "lines": 61
+        },
+        {
+          "name": "provider_manifest",
+          "line": 166,
+          "lines": 30
+        },
+        {
+          "name": "char_limit",
+          "line": 23,
+          "lines": 5
+        },
+        {
+          "name": "compact",
+          "line": 19,
+          "lines": 2
+        }
+      ]
+    },
+    {
+      "name": "semantic_preflight_contract",
+      "lines": 323,
+      "sha256": "911b526fdfd32ae29fbb8f76286e7da40f9ec2a76e60e07ba0c87097c7f2a3a2",
+      "imports": [
+        "analysis_contract",
+        "value_grounding_service"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analytical_resolver",
+        "hybrid_analyst_planner",
+        "insight_service",
+        "preflight_service",
+        "semantic_catalog_validation",
+        "semantic_manifest_service",
+        "verification_reconciliation_service",
+        "workspace_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "evaluate_capability",
+          "line": 268,
+          "lines": 56
+        },
+        {
+          "name": "enforce_metric_locks",
+          "line": 113,
+          "lines": 35
+        },
+        {
+          "name": "validate_alias_policy",
+          "line": 32,
+          "lines": 25
+        },
+        {
+          "name": "metric_locks",
+          "line": 66,
+          "lines": 25
+        },
+        {
+          "name": "decision_from_findings",
+          "line": 250,
+          "lines": 16
+        }
+      ]
+    },
+    {
+      "name": "semantic_service",
+      "lines": 492,
+      "sha256": "3a0ebad5087caaadbde9f34a9ac99e0145b251e3dc98055c9bf683861efcc71e",
+      "imports": [],
+      "callers": [
+        "legacy_analysis_compat"
+      ],
+      "largest_functions": [
+        {
+          "name": "extract_query_context",
+          "line": 69,
+          "lines": 115
+        },
+        {
+          "name": "resolve",
+          "line": 241,
+          "lines": 101
+        },
+        {
+          "name": "retrieve_few_shots",
+          "line": 343,
+          "lines": 86
+        },
+        {
+          "name": "llm_context",
+          "line": 430,
+          "lines": 60
+        },
+        {
+          "name": "is_vague",
+          "line": 185,
+          "lines": 27
+        }
+      ]
+    },
+    {
+      "name": "semantic_tools",
+      "lines": 321,
+      "sha256": "90fb2f1e62d0d5f859b1f5fccf8ff2d340bef7337bdfcfc8f4f431791b8eae38",
+      "imports": [
+        "analysis_catalog",
+        "analyst_contract",
+        "analytical_tool_contract",
+        "value_grounding_service"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_quality_service",
+        "analytical_resolver",
+        "data_analyst_agent",
+        "one_shot_planner"
+      ],
+      "largest_functions": [
+        {
+          "name": "describe",
+          "line": 130,
+          "lines": 87
+        },
+        {
+          "name": "resolve",
+          "line": 264,
+          "lines": 48
+        },
+        {
+          "name": "search",
+          "line": 218,
+          "lines": 45
+        },
+        {
+          "name": "related_subjects",
+          "line": 65,
+          "lines": 34
+        },
+        {
+          "name": "cohort_compatible",
+          "line": 33,
+          "lines": 31
+        }
+      ]
+    },
+    {
+      "name": "session_service",
+      "lines": 480,
+      "sha256": "9996cc63b9dcd066e1a477099569ee5881e73776537e5306b689897977a13d2d",
+      "imports": [
+        "analysis_catalog",
+        "analysis_contract",
+        "analysis_response_service",
+        "analyst_contract",
+        "analytical_capacity_planner",
+        "analytical_query_service",
+        "provider_budget",
+        "result_artifact_store"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_job_service",
+        "analysis_module_service",
+        "result_artifact_store"
+      ],
+      "largest_functions": [
+        {
+          "name": "get_data_context_for_llm",
+          "line": 181,
+          "lines": 42
+        },
+        {
+          "name": "create_session",
+          "line": 259,
+          "lines": 36
+        },
+        {
+          "name": "formatted_history",
+          "line": 154,
+          "lines": 26
+        },
+        {
+          "name": "encode_session",
+          "line": 332,
+          "lines": 25
+        },
+        {
+          "name": "storage",
+          "line": 454,
+          "lines": 20
+        }
+      ]
+    },
+    {
+      "name": "sql_service",
+      "lines": 559,
+      "sha256": "4e040b0f0b22010702f4a170e1873a0707bc66fa66be1302a71442035c7126bc",
+      "imports": [
+        "access_policy",
+        "analysis_catalog",
+        "metadata_service",
+        "provider_budget",
+        "query_execution_batch"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_query",
+        "analytical_query_service",
+        "report_sql_policy",
+        "risk_watch_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "validate_ai_query_scope",
+          "line": 364,
+          "lines": 90
+        },
+        {
+          "name": "_analysis_sql",
+          "line": 159,
+          "lines": 73
+        },
+        {
+          "name": "_mask_literals_and_comments",
+          "line": 59,
+          "lines": 71
+        },
+        {
+          "name": "validate_sql_ast_security",
+          "line": 514,
+          "lines": 46
+        },
+        {
+          "name": "_has_implicit_comma_join",
+          "line": 326,
+          "lines": 34
+        }
+      ]
+    },
+    {
+      "name": "telemetry",
+      "lines": 115,
+      "sha256": "58471056de6420523f15142fde077527b88b9a130b0b4dfe569f7a596551323c",
+      "imports": [
+        "access_policy"
+      ],
+      "callers": [
+        "analysis_job_service",
+        "provider_health_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "audit",
+          "line": 79,
+          "lines": 37
+        },
+        {
+          "name": "event",
+          "line": 29,
+          "lines": 19
+        },
+        {
+          "name": "__call__",
+          "line": 60,
+          "lines": 17
+        },
+        {
+          "name": "traced_send",
+          "line": 67,
+          "lines": 6
+        },
+        {
+          "name": "snapshot",
+          "line": 50,
+          "lines": 5
+        }
+      ]
+    },
+    {
+      "name": "time_resolution_service",
+      "lines": 182,
+      "sha256": "2193401dfe8e82cdf8f650c54af887e6753bd1a1be2956015d8f306f7956679b",
+      "imports": [
+        "analysis_catalog",
+        "analysis_contract"
+      ],
+      "callers": [
+        "analysis_understanding",
+        "analyst_clarification",
+        "analytical_query_service",
+        "analytical_resolver",
+        "one_shot_planner",
+        "preflight_service",
+        "request_anchors"
+      ],
+      "largest_functions": [
+        {
+          "name": "parse_time",
+          "line": 91,
+          "lines": 92
+        },
+        {
+          "name": "resolve_time",
+          "line": 18,
+          "lines": 71
+        },
+        {
+          "name": "shift_months",
+          "line": 12,
+          "lines": 4
+        }
+      ]
+    },
+    {
+      "name": "value_grounding_service",
+      "lines": 207,
+      "sha256": "177045a8ef0a9e91b46bde6d4b079675d13f0ae4787794fcc5031f7b57773a8f",
+      "imports": [
+        "analysis_catalog"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_catalog",
+        "analysis_module_service",
+        "analysis_understanding",
+        "analyst_clarification",
+        "analytical_capacity_planner",
+        "analytical_query_service",
+        "analytical_resolver",
+        "domain_intelligence_service",
+        "hybrid_analyst_planner",
+        "mission_contract_service",
+        "one_shot_planner",
+        "preflight_service",
+        "request_anchors",
+        "risk_watch_service",
+        "scope_resolution_service",
+        "semantic_candidate_service",
+        "semantic_catalog_validation",
+        "semantic_manifest_service",
+        "semantic_preflight_contract",
+        "semantic_tools",
+        "value_profile_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "value_hints",
+          "line": 58,
+          "lines": 101
+        },
+        {
+          "name": "canonical_filter",
+          "line": 161,
+          "lines": 47
+        },
+        {
+          "name": "dimension_values",
+          "line": 13,
+          "lines": 28
+        },
+        {
+          "name": "aliases_for",
+          "line": 43,
+          "lines": 13
+        },
+        {
+          "name": "value_text",
+          "line": 9,
+          "lines": 2
+        }
+      ]
+    },
+    {
+      "name": "value_profile_service",
+      "lines": 74,
+      "sha256": "26dcde9fe867b1ac0cf175684617717f5c74e9bdacac9a8ce2d13e7d71e3a4fa",
+      "imports": [
+        "metadata_service",
+        "value_grounding_service"
+      ],
+      "callers": [
+        "analytical_query_service",
+        "analytical_resolver"
+      ],
+      "largest_functions": [
+        {
+          "name": "profiles_for",
+          "line": 12,
+          "lines": 33
+        },
+        {
+          "name": "warehouse_statistics",
+          "line": 47,
+          "lines": 28
+        }
+      ]
+    },
+    {
+      "name": "vector_rag_service",
+      "lines": 167,
+      "sha256": "3a5f61610d285eb6e4f009affe805d8d036d6c1fc96d2027e663c13eea7c753d",
+      "imports": [
+        "analysis_catalog",
+        "metadata_service"
+      ],
+      "callers": [],
+      "largest_functions": [
+        {
+          "name": "search_semantic_knowledge",
+          "line": 59,
+          "lines": 106
+        },
+        {
+          "name": "get_embedding",
+          "line": 23,
+          "lines": 33
+        }
+      ]
+    },
+    {
+      "name": "verification_reconciliation_service",
+      "lines": 279,
+      "sha256": "51ee961146d032236784bae011c9eb91dfb2bc523c56102c0b9cc54b018d2e09",
+      "imports": [
+        "semantic_preflight_contract"
+      ],
+      "callers": [
+        "agent_pipeline"
+      ],
+      "largest_functions": [
+        {
+          "name": "reconcile",
+          "line": 86,
+          "lines": 57
+        },
+        {
+          "name": "verification_report",
+          "line": 221,
+          "lines": 39
+        },
+        {
+          "name": "ranking_agreement",
+          "line": 145,
+          "lines": 28
+        },
+        {
+          "name": "forecast_quality",
+          "line": 175,
+          "lines": 19
+        },
+        {
+          "name": "merge_reconciliation",
+          "line": 262,
+          "lines": 18
+        }
+      ]
+    },
+    {
+      "name": "verification_score",
+      "lines": 80,
+      "sha256": "e04b19e10f86b3bf1e4807a348369e0228037ddfd5c07a1e0838be050dff0e0a",
+      "imports": [
+        "analysis_quality_contract"
+      ],
+      "callers": [
+        "analysis_quality_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "verification_score",
+          "line": 16,
+          "lines": 38
+        },
+        {
+          "name": "trust_dimensions",
+          "line": 63,
+          "lines": 18
+        }
+      ]
+    },
+    {
+      "name": "verified_analysis_service",
+      "lines": 112,
+      "sha256": "765b9cb010c3d6abe88d2d76b529cc88d2ca3dddb9932b4c70ec1fc460c551b7",
+      "imports": [
+        "analysis_catalog",
+        "analysis_contract",
+        "metadata_service"
+      ],
+      "callers": [
+        "agent_pipeline"
+      ],
+      "largest_functions": [
+        {
+          "name": "record_verified",
+          "line": 16,
+          "lines": 65
+        },
+        {
+          "name": "retrieve_verified",
+          "line": 83,
+          "lines": 30
+        },
+        {
+          "name": "score",
+          "line": 96,
+          "lines": 10
+        }
+      ]
+    },
+    {
+      "name": "view_requirement_service",
+      "lines": 77,
+      "sha256": "36c3b61546c9ee3a6d520d0892705c349f58a27bb8e622f82f474f4a925558be",
+      "imports": [
+        "insight_service"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "analysis_quality_service"
+      ],
+      "largest_functions": [
+        {
+          "name": "_implements",
+          "line": 10,
+          "lines": 34
+        },
+        {
+          "name": "view_coverage",
+          "line": 46,
+          "lines": 32
+        },
+        {
+          "name": "_ops",
+          "line": 6,
+          "lines": 2
+        }
+      ]
+    },
+    {
+      "name": "workspace_service",
+      "lines": 305,
+      "sha256": "95a061de72d36723f9c5f3d6b3d487457c64ed269d53a7201a8936ae1a64e629",
+      "imports": [
+        "analysis_catalog",
+        "analyst_contract",
+        "mission_contract_service",
+        "semantic_preflight_contract"
+      ],
+      "callers": [
+        "agent_pipeline",
+        "chart_relevance_service",
+        "domain_intelligence_service",
+        "preflight_service",
+        "semantic_catalog_validation"
+      ],
+      "largest_functions": [
+        {
+          "name": "validate_workspace",
+          "line": 20,
+          "lines": 60
+        },
+        {
+          "name": "follow_up_questions",
+          "line": 261,
+          "lines": 38
+        },
+        {
+          "name": "metric_capabilities",
+          "line": 88,
+          "lines": 36
+        },
+        {
+          "name": "mission_catalog",
+          "line": 126,
+          "lines": 32
+        },
+        {
+          "name": "workspace_capabilities",
+          "line": 204,
+          "lines": 22
+        }
+      ]
+    }
+  ]
+}

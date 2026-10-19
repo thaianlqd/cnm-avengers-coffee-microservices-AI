@@ -28,7 +28,8 @@ services:
   # =========================================
   data-sync:
     build:
-      context: ./data-platform/data-sync
+      context: ./data-platform
+      dockerfile: data-sync/Dockerfile
     container_name: avengers_data_sync
     restart: unless-stopped
     depends_on:
@@ -49,8 +50,12 @@ services:
       TARGET_DB_PASSWORD: analytics123
       TARGET_DB_NAME: analytics
       # Sync config
+      DATA_PLATFORM_GOVERNED_INGESTION: ${DATA_PLATFORM_GOVERNED_INGESTION:-0}
+      DATA_PLATFORM_WAREHOUSE_PROFILE_PATH: /run/secrets/warehouse-replica.json
       SYNC_INTERVAL_SECONDS: 300
       SYNC_SCHEMAS: "orders,identity,menu,inventory,news,ai"
+    volumes:
+      - ./data-platform/analytics-api/.runtime/replica-secrets:/run/secrets:ro
     networks:
       - data-network
   # =========================================
@@ -188,7 +193,8 @@ services:
   # =========================================
   kafka-producer:
     build:
-      context: ./data-platform/kafka-producer
+      context: ./data-platform
+      dockerfile: kafka-producer/Dockerfile
     container_name: avengers_kafka_producer
     restart: unless-stopped
     depends_on:
@@ -197,6 +203,7 @@ services:
       postgres-analytics:
         condition: service_healthy
     environment:
+      DATA_PLATFORM_GOVERNED_STREAMING: ${DATA_PLATFORM_GOVERNED_STREAMING:-0}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DB_HOST: postgres-analytics
       DB_PORT: 5432
@@ -207,6 +214,7 @@ services:
       POLL_INTERVAL_SECONDS: 60
     volumes:
       - ./data-platform/kafka-producer:/app
+      - ./data-platform/analytics-api/.runtime/streaming-secrets:/run/secrets:ro
     networks:
       - data-network
   # =========================================
@@ -214,7 +222,8 @@ services:
   # =========================================
   kafka-consumer:
     build:
-      context: ./data-platform/kafka-consumer
+      context: ./data-platform
+      dockerfile: kafka-consumer/Dockerfile
     container_name: avengers_kafka_consumer
     restart: unless-stopped
     depends_on:
@@ -227,6 +236,7 @@ services:
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_GROUP_ID: avengers-bronze-consumer
+      DATA_PLATFORM_GOVERNED_STREAMING: ${DATA_PLATFORM_GOVERNED_STREAMING:-0}
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
@@ -240,6 +250,7 @@ services:
       FLUSH_INTERVAL_SECONDS: 15
     volumes:
       - ./data-platform/kafka-consumer:/app
+      - ./data-platform/analytics-api/.runtime/streaming-secrets:/run/secrets:ro
     networks:
       - data-network
   # =========================================
@@ -247,7 +258,8 @@ services:
   # =========================================
   spark-jobs:
     build:
-      context: ./data-platform/spark-jobs
+      context: ./data-platform
+      dockerfile: spark-jobs/Dockerfile
     container_name: avengers_spark_jobs
     restart: "no"
     depends_on:
@@ -265,8 +277,11 @@ services:
       DB_PASSWORD: analytics123
       DB_NAME: analytics
       DB_SSLMODE: disable
+      DATA_PLATFORM_GOVERNED_BATCH: ${DATA_PLATFORM_GOVERNED_BATCH:-0}
+      DATA_PLATFORM_WAREHOUSE_PROFILE_PATH: /run/secrets/warehouse-batch.json
     volumes:
       - ./data-platform/spark-jobs:/opt/spark-jobs
+      - ./data-platform/analytics-api/.runtime/batch-secrets:/run/secrets:ro
     networks:
       - data-network
   # =========================================
@@ -275,7 +290,8 @@ services:
   # =========================================
   airflow:
     build:
-      context: ./data-platform/airflow
+      context: ./data-platform
+      dockerfile: airflow/Dockerfile
     container_name: avengers_airflow
     profiles: ["tools"]
     restart: unless-stopped

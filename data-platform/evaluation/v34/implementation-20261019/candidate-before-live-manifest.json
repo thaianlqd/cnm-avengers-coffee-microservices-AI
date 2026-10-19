@@ -1,0 +1,791 @@
+{
+  "phase": "19 October final backend/offline candidate; documentation checkpoint still pending",
+  "head": "f9a1a6ff8d3c88e1bc9954c134d7cef8bdcd050b",
+  "files": [
+    {
+      "path": ".claude/scripts/dp-fixture-http.sh",
+      "sha256": "bfc2dba4f349c62e05d9804390227aebd5c976abb0fe4a9c1b119c43e5f235e7"
+    },
+    {
+      "path": ".claude/scripts/dp-pipeline-test.sh",
+      "sha256": "7387ad84622ca4432e89e9caccb7bb3b41d73d8e35545639f00d4b57c2aaa0c4"
+    },
+    {
+      "path": ".claude/scripts/dp-scan-artifacts.sh",
+      "sha256": "f1d05201302fd4eb3e6ab889d251709540bd7d0040704a02e7c6b38f9a3c6ebb"
+    },
+    {
+      "path": ".claude/scripts/dp-test.sh",
+      "sha256": "333d98b6cf5d3ae0b62b00d50e16b0251547fffcd56b8108f2a6a5790795cbbc"
+    },
+    {
+      "path": ".github/gitleaks-data-platform.toml",
+      "sha256": "5f7ecc6da3f18bcfbc773d09b338c584580a34fb81fd4a119c76aa872009a3f6"
+    },
+    {
+      "path": ".github/workflows/data-platform-ci.yml",
+      "sha256": "9f57fbc9aaef00e2cedaa2f6d3bcc91d14b2fcc1553f1e16820047dfd98e361f"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "52010a318236d3c8d0978a7dbfb35fc290bedcbedf429d0dbe74311ff098d5b3"
+    },
+    {
+      "path": "data-platform/.dockerignore",
+      "sha256": "d3a2cad511cab449f14997ef9b7be30039c1a1a1cb67fda9495d91e1e5b7e615"
+    },
+    {
+      "path": "data-platform/.env.example",
+      "sha256": "ce2189f0e527b164745d49ea8c62a6031e496c9b96b1423beaf67e653e32faac"
+    },
+    {
+      "path": "data-platform/AI_V34_IMPLEMENTATION_HANDOFF_20261018.md",
+      "sha256": "683012ca53864c1bd4bf93326b7236432c4e82276fe17909049882c9e8083fea"
+    },
+    {
+      "path": "data-platform/AI_V34_PLATFORM_MATURITY_PLAN.md",
+      "sha256": "451ab2d71e0c6eb5242d0b977f915f81ca4202d342f894037fe5a82dae96dc11"
+    },
+    {
+      "path": "data-platform/AI_V34_PLATFORM_MATURITY_PLAN.progress.md",
+      "sha256": "b7c6897faaedd17d2540edb46d5be8f0be7618782c90d0d1c058c263f0b3b24c"
+    },
+    {
+      "path": "data-platform/airflow/Dockerfile",
+      "sha256": "78c8562e006c21729f869591e5ef255f3eeac6b078da0cc12ef090b3aba36071"
+    },
+    {
+      "path": "data-platform/airflow/dags/daily_pipeline_dag.py",
+      "sha256": "eff620611259d6e3cfbef1a8f5a3a9b4739201681b5bd2c4debbf057928546f6"
+    },
+    {
+      "path": "data-platform/airflow/requirements.txt",
+      "sha256": "4d528ebe5caea480dd12e645dc51a8f0e68b82b6276451ab6f7afd0ec7dceb23"
+    },
+    {
+      "path": "data-platform/analytics-api/.dockerignore",
+      "sha256": "0117ed64f814a85db321b58e0402f0fd51ae70f55c256860af585c6b326a101d"
+    },
+    {
+      "path": "data-platform/analytics-api/common.py",
+      "sha256": "160b27985235cd6e6eb0c8254bd582d87bde4b19663a4d677550b0a7e9534187"
+    },
+    {
+      "path": "data-platform/analytics-api/db.py",
+      "sha256": "bf65b7ffdfc6de0b343470430fdfebd7d01f32c7d09972464d95286953dc82a2"
+    },
+    {
+      "path": "data-platform/analytics-api/evals/live_acceptance_v33.py",
+      "sha256": "9ae35e7450a3c440819a67fdc613a55a5088d79315afa608f4c457b081b1b472"
+    },
+    {
+      "path": "data-platform/analytics-api/evals/live_cases_v34.json",
+      "sha256": "5fc5eb47fd515d314c5d1d7186a9306c5c262bfac4dca3c1d1ccc206d29bda2c"
+    },
+    {
+      "path": "data-platform/analytics-api/evals/semantic_cases_v34.json",
+      "sha256": "12959e3daef9e07d9941ba60abef564a64ad73203bc386a452e28b4783067fa4"
+    },
+    {
+      "path": "data-platform/analytics-api/evals/semantic_eval_v30.py",
+      "sha256": "f7b0c9449b20d245de98df6115929a6511d656d6c2039d2daeb1872fd28e5c7a"
+    },
+    {
+      "path": "data-platform/analytics-api/evals/semantic_eval_v34.py",
+      "sha256": "c81171a7767f0b2f588fc69016680e8817554136ccd9734638baacfc0f418067"
+    },
+    {
+      "path": "data-platform/analytics-api/evals/semantic_reference_eval_v34.py",
+      "sha256": "0da9fbb93166411c77351f33227ff7110ba4aee481e2fae65857ba22dacefaf0"
+    },
+    {
+      "path": "data-platform/analytics-api/evals/semantic_reference_v34.json",
+      "sha256": "8b6f9164fde3a3dad0b43c27c6da75c2d8e137b561abefd975afbc55605aaefa"
+    },
+    {
+      "path": "data-platform/analytics-api/metadata/access_policy.json",
+      "sha256": "62d14944387f36f1dbe3b80f22403c6ed973fb117c22094662f24869420334fc"
+    },
+    {
+      "path": "data-platform/analytics-api/metadata/data_health_contracts.json",
+      "sha256": "9e4359ae25b2fd5de8db19dde643e3180b7bde5f725aa38d4a31f179f888de7c"
+    },
+    {
+      "path": "data-platform/analytics-api/metadata/semantic_catalog.json",
+      "sha256": "eeeb550d57a323c25440c289d63c09051ba664cf92859c9017653784b82f0e19"
+    },
+    {
+      "path": "data-platform/analytics-api/metadata/warehouse_views.json",
+      "sha256": "fcdeef08c35855aae5f21dd41ff3a30b67070299f2209bd98ca190d4178a9230"
+    },
+    {
+      "path": "data-platform/analytics-api/migrations/027_platform_governance.sql",
+      "sha256": "9aaed6d44fbda7dc755d57e0c19961ccc7f17dc8bc4a9c3166d8cc8381fcffac"
+    },
+    {
+      "path": "data-platform/analytics-api/migrations/028_snapshot_lock_guards.sql",
+      "sha256": "4f115ebb45ce4cd497fd2218df31c54e81d28c8530a97e3049e02af757b15f1d"
+    },
+    {
+      "path": "data-platform/analytics-api/requirements.txt",
+      "sha256": "c283883bd2e5207ceb1cf25685939c1fae016283792afc06b3b8e1442689d1a8"
+    },
+    {
+      "path": "data-platform/analytics-api/routers/ai.py",
+      "sha256": "56ef2c3be08631e88da6478324868f8b6b1fbe659eb76387ed89ed3c5dfca0e0"
+    },
+    {
+      "path": "data-platform/analytics-api/routers/analysis_modules.py",
+      "sha256": "ac53c6e5bd89bd1a6c400de7b5b32f20ec0e179ed7e7cdc8fbcdce6e8c45ee4a"
+    },
+    {
+      "path": "data-platform/analytics-api/routers/customers.py",
+      "sha256": "186a3f9a1411ffa4e2e6fb7fa670b333875d6333bf6f68ea313d370a0b3f3604"
+    },
+    {
+      "path": "data-platform/analytics-api/routers/marts.py",
+      "sha256": "d875c8cf60e79b0b6268394f7d4b1622459213bc67c73e00cd705f7a214cd35b"
+    },
+    {
+      "path": "data-platform/analytics-api/routers/platform.py",
+      "sha256": "8287c460ffea9f52f5995d022bae01ca8e0f6231b75360d3aaa9be27b08ce86a"
+    },
+    {
+      "path": "data-platform/analytics-api/routers/products.py",
+      "sha256": "73eb556fe9e4e15453b7d7ef1b4e4c0e1e400544ff8a5957395681e590337f7c"
+    },
+    {
+      "path": "data-platform/analytics-api/routers/query.py",
+      "sha256": "24cef50085111cd756d0d9781a0ce8c2a2830fb0522e8d24f4c8892aaf0a3ea5"
+    },
+    {
+      "path": "data-platform/analytics-api/routers/reports.py",
+      "sha256": "3166ca4d5d9d488998f1854245c7eebe602775330ea3c5e037ca5e4451dac2e4"
+    },
+    {
+      "path": "data-platform/analytics-api/routers/stores.py",
+      "sha256": "840098f0661efa9ae7b5f4c616caae9ac12048b0349c727ba1e8ed6eda0edf1f"
+    },
+    {
+      "path": "data-platform/analytics-api/server.py",
+      "sha256": "d32da0139c4b54bd72b1d684a5cbd6bdf0a852777397b90bddbf9e60fc43ee84"
+    },
+    {
+      "path": "data-platform/analytics-api/services/access_policy.py",
+      "sha256": "d9479d6f1b67d959e68f4e58fddc070325b818812c168c647adc5b68977cb670"
+    },
+    {
+      "path": "data-platform/analytics-api/services/agent_pipeline.py",
+      "sha256": "136aa113ee15b30ecadc12fde4c16b4e98abd2c0782d9a23d950b8953f1cfaa9"
+    },
+    {
+      "path": "data-platform/analytics-api/services/agent_provider.py",
+      "sha256": "ce78f92693b78ac2bf73fede021a08741144db3f75613ee9137b99d5194ae000"
+    },
+    {
+      "path": "data-platform/analytics-api/services/analysis_catalog.py",
+      "sha256": "7bf6f5dc5bcb56a32d51a14e8abee2c5f6cc74f3655ff4af7f145efc969d7806"
+    },
+    {
+      "path": "data-platform/analytics-api/services/analysis_intent.py",
+      "sha256": "d1cdae38df96fbb0cc4db4e48b79db32490db98dec799d433a5c2687ad7a07dc"
+    },
+    {
+      "path": "data-platform/analytics-api/services/analysis_job_service.py",
+      "sha256": "7cb7fe0465e2a21c64f04c673d185a10e204f091cdd6afcc806000d0f06434b4"
+    },
+    {
+      "path": "data-platform/analytics-api/services/analysis_module_repository.py",
+      "sha256": "d984d6b24c23f4e7107a6c454bf349ad88c19da92bf8468dfea3b62f8c8b54ec"
+    },
+    {
+      "path": "data-platform/analytics-api/services/analysis_module_service.py",
+      "sha256": "d2cb94f5617885425368e51a97ff2c93114e5838d0e784f21371b38e51682724"
+    },
+    {
+      "path": "data-platform/analytics-api/services/analysis_quality_service.py",
+      "sha256": "bd9a93c467b2ad32a888112b9ab17034fdd52cd6c26bb007b0cc132f688b4716"
+    },
+    {
+      "path": "data-platform/analytics-api/services/analysis_query.py",
+      "sha256": "12bbc9224cc1b51e1a38ccd44aafe07df2fe79ca6e5544d9fb0353af1a01e4d5"
+    },
+    {
+      "path": "data-platform/analytics-api/services/analysis_response_service.py",
+      "sha256": "a72fb314aa2a99f1c2957efff1e9fb5a3799735ec169fa97bc765396f4a95ae0"
+    },
+    {
+      "path": "data-platform/analytics-api/services/analyst_contract.py",
+      "sha256": "77524e9348431d0ee3c1d6fed9f1c0acbf657ba59e73ca2e6eda8e70b957be95"
+    },
+    {
+      "path": "data-platform/analytics-api/services/analytical_capacity_planner.py",
+      "sha256": "fe6e9c09246d55a0c19dd877f8a9701b004402fa17256207ea1bb42f7fe7b862"
+    },
+    {
+      "path": "data-platform/analytics-api/services/analytical_query_service.py",
+      "sha256": "2d1ae034c2575977748b3869579fe22faad6587e2ee981901fa7ff5606530e6b"
+    },
+    {
+      "path": "data-platform/analytics-api/services/analytical_resolver.py",
+      "sha256": "9fe29cccb8b1d8e28252e61f660cdcc5a38e871d49e1dfca871090fb043a3113"
+    },
+    {
+      "path": "data-platform/analytics-api/services/analytical_tool_contract.py",
+      "sha256": "60629da7e3f6a5445899f9d6435e2d2d610e7d7a2080f2e5e09c13774a8db30d"
+    },
+    {
+      "path": "data-platform/analytics-api/services/answer_requirement_service.py",
+      "sha256": "0c32d1d8e35c657975fbbabef9324cdeb811c655b077cf9cd984e706e026538c"
+    },
+    {
+      "path": "data-platform/analytics-api/services/browser_owner.py",
+      "sha256": "b53c7c5635cf08cb099da9767823f0070b4fcc47eed567754395419bdb681591"
+    },
+    {
+      "path": "data-platform/analytics-api/services/dashboard_planner_service.py",
+      "sha256": "fbc0c19af0dc975ad8b48b96c55c08321b87d9ce49f7e03f164d6cfec1b72ad8"
+    },
+    {
+      "path": "data-platform/analytics-api/services/data_coverage_service.py",
+      "sha256": "a895d73094259e68821791c561593b14c48d329a04c0ed0e47c4d5f290b72b0c"
+    },
+    {
+      "path": "data-platform/analytics-api/services/domain_intelligence_service.py",
+      "sha256": "27502a4d6c957fa02accceb329aaa4ca4a0b44ee1630c932da6c992c9dafc011"
+    },
+    {
+      "path": "data-platform/analytics-api/services/forecast_service.py",
+      "sha256": "a258319d319637347cc3286962859194f0464e842d8bda9ee1df02ecd27d7fa1"
+    },
+    {
+      "path": "data-platform/analytics-api/services/hybrid_analyst_planner.py",
+      "sha256": "108a1df5812efcfd8653ea328fb39f0a7a319be106f2d554738fe97e3c9449af"
+    },
+    {
+      "path": "data-platform/analytics-api/services/insight_service.py",
+      "sha256": "50ae38e3396acd88079ff778e81ae2719a580cfa5b17fc1cebddaa48da053f62"
+    },
+    {
+      "path": "data-platform/analytics-api/services/metadata_service.py",
+      "sha256": "8d94beccc1b7ee2989bcc0c0811380893e7d800bad395d530fe297def3a8a0d1"
+    },
+    {
+      "path": "data-platform/analytics-api/services/one_shot_planner.py",
+      "sha256": "2c248b7180d0688163172adfa72309499189c276cb1d0820050e219b312a3876"
+    },
+    {
+      "path": "data-platform/analytics-api/services/preflight_service.py",
+      "sha256": "224445da93ee1c75043549e0b610836a099dbde726d6a2db89d65a34108309cf"
+    },
+    {
+      "path": "data-platform/analytics-api/services/provider_credential_router.py",
+      "sha256": "433358846258bb7e99fa4eb4a32dec653fe3f29dc54a4b83a0b59939825a8c3d"
+    },
+    {
+      "path": "data-platform/analytics-api/services/provider_health_service.py",
+      "sha256": "bbc65e1008e3d4ee4e2c0f326bbb72a28a2148957dbc3e75c0d78c4ed36c53dc"
+    },
+    {
+      "path": "data-platform/analytics-api/services/query_execution_batch.py",
+      "sha256": "de9979c7aad4b12de4f9f676369cdd9b23f1276173a4ac7253e8f28e6094c39a"
+    },
+    {
+      "path": "data-platform/analytics-api/services/readiness_service.py",
+      "sha256": "ff083f1dd52220c06a9aadcfc02863d3b12b41b0e004b687296a05d2212f3bd3"
+    },
+    {
+      "path": "data-platform/analytics-api/services/report_sql_policy.py",
+      "sha256": "163d1b7e50fc54780ff8c7b5b366b669ad1a89e2ae1ad5e174a7e2b86b73da1b"
+    },
+    {
+      "path": "data-platform/analytics-api/services/request_anchors.py",
+      "sha256": "e559ef439b5975ec2ad5871d55a2611b06fd9e2d8f38069cbfb4b1f3c4491f29"
+    },
+    {
+      "path": "data-platform/analytics-api/services/risk_watch_service.py",
+      "sha256": "594139e2f5f5f3c8ba6369849016519c0221c2a1f13f5ae354fc9fab6d2903ad"
+    },
+    {
+      "path": "data-platform/analytics-api/services/scope_resolution_service.py",
+      "sha256": "12a51babfaa94078edba7711139fd9d656ca7a799bed6ac6f5802ee0ea3c8c32"
+    },
+    {
+      "path": "data-platform/analytics-api/services/semantic_catalog_validation.py",
+      "sha256": "9b5a3c0583c5e0c701b9ba6fe48b4de0f393b25d8db27ef6721e6db824322b2c"
+    },
+    {
+      "path": "data-platform/analytics-api/services/session_service.py",
+      "sha256": "1a11d9d05541e50bb986de12c7bd8758523a47b603e2d1df5c00e49042e9514e"
+    },
+    {
+      "path": "data-platform/analytics-api/services/sql_service.py",
+      "sha256": "ee4c82e33c3e4c54506e5900311840e21cdbd7d969c3fe07fc2ee7f37e363490"
+    },
+    {
+      "path": "data-platform/analytics-api/services/telemetry.py",
+      "sha256": "0706730f6c50d41511b6ee76713c0c28a056d5d842eb198ab48f00369b2cbaf5"
+    },
+    {
+      "path": "data-platform/analytics-api/services/time_resolution_service.py",
+      "sha256": "270c3b714f990e31202d908de1c218d01c62cb20d9df5c3bf0f48ae7272d25e1"
+    },
+    {
+      "path": "data-platform/analytics-api/services/verification_reconciliation_service.py",
+      "sha256": "51ee961146d032236784bae011c9eb91dfb2bc523c56102c0b9cc54b018d2e09"
+    },
+    {
+      "path": "data-platform/analytics-api/services/workspace_service.py",
+      "sha256": "cebe4a109644453afcf79c2653e0c20b431433d60b65647f1226bcb0bdacc2bf"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/fixtures/capabilities_v31.json",
+      "sha256": "3921a9936602aefd8d7c1a66568455b1706c3d2e60360eecfadf3e4f3c24588b"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/fixtures/v34_l03_intents.json",
+      "sha256": "b344bc5a49ca06de5dbd18a0ed82129ad2efe54d5530eb1db40c2caf6ad78337"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/fixtures/v34_l29_live_rejection.json",
+      "sha256": "403b7564ab7bf546c2b2f8eb09087c823e58b5e31af3cb6464940dff68582d44"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/fixtures/v34_live44_failed_intents.json",
+      "sha256": "78ddebcbc802cf2e0babc120a5e34a38ed87f1a9c463528fa0c302a865a83aa7"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/fixtures/v34_live44_rerun2_failed_intents.json",
+      "sha256": "c1517e6d8d56cf8ff287c88867ed4ba7adce326fa2c2edd33fbe7317dbf4d542"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/fixtures/v34_runtime_overview_intent.json",
+      "sha256": "4e16eb4a07eb59e36fb14f1ad07ccaf1ff80342fa687831b809ad77f05084c3c"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/http_fixture.py",
+      "sha256": "cbf7b6788661f1f7e200ecaec4e6a7425db18d5679a73f76ffe7fa89fdc021e6"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_analysis_jobs.py",
+      "sha256": "680eb67baf588278a886dd1f1310972d5d93acf70b0ef8d6e7da7dfa2c26725d"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_one_shot_v24.py",
+      "sha256": "c64dd957e5e44783cd7e3aad4320fd616093b3eaa3b203703138d8e1f707f97e"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_overview_dashboard_v296.py",
+      "sha256": "cf0372d478be62b8f67ffca9d31b73cc4e55f1157063d4c5b9a55273122b1485"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_query_batch.py",
+      "sha256": "594942213b7c1abc3995efbb8bf9feab4d10a4a1119cfef0905150c3c6a8c36d"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v33_live_regressions.py",
+      "sha256": "51604f1a0985a4fa3c02899a5198a487d08b38b740d37a7ca668c2984a706ce9"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_access_policy.py",
+      "sha256": "e6b4b368ba2a34c47ad63e8aa6c8571ce51e611203e1e3e2a49b14f2c402bd4e"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_anomalies.py",
+      "sha256": "0d54db6fd9703cba716e2910abaeda0d8070e0972067888cb69d94e7594a2363"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_architecture.py",
+      "sha256": "80cb230dc5af7600bd70dba82e5815ddc8a146d497c8fafb6db6bc2422a787fb"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_audit.py",
+      "sha256": "7cc4ca7ea6c3871df87640627ca488a9625fb56a7150d74dfec7760da589591b"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_auth_boundary.py",
+      "sha256": "f4536c1460dfe5da203c2fcec810ce7c7edaa1b8a28e4f5fff995ba141233e0c"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_catalog_lifecycle.py",
+      "sha256": "c88163e550d746e522fbf742f1f99909cf977cdd92396e067c6915be23a41480"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_data_health.py",
+      "sha256": "e6490fcb6379fa46569f01cc3f1cd55a5535269ec48cd45841a9bda5eadf4171"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_entity_inspect.py",
+      "sha256": "a3b1c67706b24053a31a3f20126488215d9c17666bcfe7967dc7db67759497f9"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_forecast_diagnostics.py",
+      "sha256": "0977db885ded90d2428b54eecc36ab3076f72c58f802ba64d289d88d5d0e86e8"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_identity_login_session.py",
+      "sha256": "eb9a1a967256c28c3a607ed9dabaa458936e009e900316f846a6cf42ee4a792f"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_job_operations.py",
+      "sha256": "4a33b85f6eeda586beff0a9ad757de4d6eaa38536d2660d3c526a1df16aadc9e"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_live_harness.py",
+      "sha256": "1515fbc34946dd189ab21754c1d587b8eca329c0e6eabdc0c40351107a3a9761"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_observability.py",
+      "sha256": "7fcfb442f5330af917675cc4a5c0fd037f7035ef473ea6f798ae12d2e47926c9"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_oracle_consistency.py",
+      "sha256": "0e302ad6066a650e9703890ef1c7f24d0626b6dbb6ae0f6bcc168c3b90b9cd01"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_otel.py",
+      "sha256": "68edc2df1e79279551bb5691db6a2fad79f7ce830523a1853537a519a33b524f"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_period_comparison.py",
+      "sha256": "ac3a97d3c0390fa6a1af5fcbef06d4fe5d3bd5b9a5946a84dc88bf560a313ba3"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_platform_routes.py",
+      "sha256": "336e446ff5a8f901b6bcb54075747f13d910de12f6833e83ba759fb8ce49149b"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_provider_observability.py",
+      "sha256": "5e20c1a5de854c983c48db9a60adff4d9e0acfde0d0113d2ce947b4f080d9b05"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_query_security.py",
+      "sha256": "174ed89d610a570a32ed9a4bd32451a289605196105b359d651b39e195f0a6e8"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_ranked_companion.py",
+      "sha256": "449decdf34dd1a538244be94b4822d21effad304d6549366c5840687b626f3b2"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_relationship.py",
+      "sha256": "7d63e30d8ba73047118527342e5af626e8efb0d982e1e02aedbf669322bfb722"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_semantic_corpus.py",
+      "sha256": "df26c980c421e8ee295acc9fba7ab07e0ec16b318ef7842b631c93dd4a70dcde"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_semantic_repair.py",
+      "sha256": "ff0cde104bc375639558a006eaf8c5f280136748d3a00cc27acc1d206c13f541"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_v34_source_lineage.py",
+      "sha256": "9b4c72964cd6b3d2c87781a17c76c3281049a96803b18f13d69184e96d79e1b3"
+    },
+    {
+      "path": "data-platform/analytics-api/tests/test_workspace_v31.py",
+      "sha256": "f02e6331133862bca7dd4fef5f73458deb4d4b89ae0e78a973e9ea7a0acff3fc"
+    },
+    {
+      "path": "data-platform/analytics-api/tools/architecture_inventory.py",
+      "sha256": "b0cf0c4f34d89599bcbbbdee37722d3475253a32da5e84a222a05d6f70ad8f92"
+    },
+    {
+      "path": "data-platform/analytics-api/tools/benchmark_v34_preflight.py",
+      "sha256": "d2fdb5766677a563e29c6a88cb96fc27dea537d84b8b969351863a17cce967a9"
+    },
+    {
+      "path": "data-platform/analytics-api/tools/catalog_contract_diff.py",
+      "sha256": "ca5f7f3c40bb0fb56a17cd12e98ee49ce044989b0376fcf6e57b659420e59816"
+    },
+    {
+      "path": "data-platform/analytics-api/tools/deploy_v34_governance.py",
+      "sha256": "53f9c5b53b8fd633c72bb0fc7e8061283108e3092b543a8ea58273f7e242d766"
+    },
+    {
+      "path": "data-platform/analytics-api/tools/regenerate_capabilities_fixture.py",
+      "sha256": "666ac612f7c9b6aff5a2e21fdaeb3fa0a56fb2db4bff4013a3f420d3ad0d5861"
+    },
+    {
+      "path": "data-platform/analytics-api/tools/regenerate_pipeline_metadata.py",
+      "sha256": "2ca4026aaea4e3960b94e41dfce92e976b7b3edfdf58aa73c2fc2fb42a8f7d50"
+    },
+    {
+      "path": "data-platform/analytics-api/tools/run_tests_v29.py",
+      "sha256": "edc00b6e1f949366e4c3c919bcc6526dbd660ca674db421b4039d18c3e4cf2d2"
+    },
+    {
+      "path": "data-platform/analytics-api/tools/stage_release_scan.py",
+      "sha256": "2b991b8d0b10eef929e0b2b1583691e112d3692c790a2f533ab22a1d6beddb0b"
+    },
+    {
+      "path": "data-platform/analytics-api/tools/v33_fixture_server.py",
+      "sha256": "09f0cbf3b05f8473e995d46006cc2adb702f9f865ddf4bbf49bd77b17282a9d3"
+    },
+    {
+      "path": "data-platform/data-sync/Dockerfile",
+      "sha256": "aad9e36699aa6cb23728f52ac2d74a1a564444b35713cf46f6b5679e14881d8a"
+    },
+    {
+      "path": "data-platform/data-sync/sync.py",
+      "sha256": "14a562e3f4314d51da86d37284dc6edaad7894cf788472e2e1d756bcff7b24a3"
+    },
+    {
+      "path": "data-platform/kafka-consumer/Dockerfile",
+      "sha256": "328447978c5fb77dc5d2669ce7828a6d663abc62add90866d7f3c7a7f8c8a011"
+    },
+    {
+      "path": "data-platform/kafka-consumer/consumer.py",
+      "sha256": "73ece4c13bb99752589676300c6347cef1b5bf5ad2858c2dc31e73a6b20c3cee"
+    },
+    {
+      "path": "data-platform/kafka-consumer/requirements.txt",
+      "sha256": "9dd630c3d3d2a9f8d14fbefecff7110e13010c9a480ac901cb53a42f6a11016d"
+    },
+    {
+      "path": "data-platform/kafka-producer/Dockerfile",
+      "sha256": "72fa98d2c900fba76ae9ea34f458aced66cd3602abf2865ddbf56aef4cf81cf1"
+    },
+    {
+      "path": "data-platform/kafka-producer/producer.py",
+      "sha256": "570e1c5e52c1ffe3ae4e6df9d6a8a3aecea75cd79b3d6a177e0e1a91dd7ed9e6"
+    },
+    {
+      "path": "data-platform/metadata/data_contracts.json",
+      "sha256": "6572772765b57e902bd0fe4401b36cb8f2914ca77b7f8151a801a7c443469911"
+    },
+    {
+      "path": "data-platform/metadata/stream_contracts.json",
+      "sha256": "9e6d11da8d138027dd7a0666eb8c993edc41ca2732dfcb36c5ecb7962f76bd0f"
+    },
+    {
+      "path": "data-platform/metadata/warehouse_views.json",
+      "sha256": "fcdeef08c35855aae5f21dd41ff3a30b67070299f2209bd98ca190d4178a9230"
+    },
+    {
+      "path": "data-platform/pipeline-common/batch_runtime.py",
+      "sha256": "6e6e7bbb548c4f1ad630a5a591eb1d8d4ea7c648c8cf1944320ac540ddae7b6d"
+    },
+    {
+      "path": "data-platform/pipeline-common/pipeline_runtime.py",
+      "sha256": "26d2aafed2aeca53ee26a1a4aa36ba8d6838e2a9daef6ab328c6bcf8c3384c61"
+    },
+    {
+      "path": "data-platform/pipeline-common/producer_runtime.py",
+      "sha256": "1f4e9f6ec9e6dc1ef6d5365337d912db6151f957eb99aabff1d9bab2f825d0a9"
+    },
+    {
+      "path": "data-platform/pipeline-common/stream_runtime.py",
+      "sha256": "b067714a762667f2be593713c025cf809e682f52661287b8a29f554978af6a65"
+    },
+    {
+      "path": "data-platform/pipeline-tests/Dockerfile",
+      "sha256": "e9330be9e28b1d8cb65b5b6f46d5a8727398adad768c330a43aa5e8cff504410"
+    },
+    {
+      "path": "data-platform/pipeline-tests/acceptance_api_ownership.py",
+      "sha256": "ae6196c9bfc3cc4e7a05f26d8b673deb3dd55d26b54e55a1d55a80ee10a4e566"
+    },
+    {
+      "path": "data-platform/pipeline-tests/acceptance_job_redis.py",
+      "sha256": "e0ef9195814ba07232346a955048b60ed6e11118e4914a67b4818e76f18b921b"
+    },
+    {
+      "path": "data-platform/pipeline-tests/acceptance_metric_parity.py",
+      "sha256": "9ed2857d40e93f0ea30567bd36cd8a6af65bdad20a610eac8a021fa948f7bc4d"
+    },
+    {
+      "path": "data-platform/pipeline-tests/acceptance_snapshot_reader.py",
+      "sha256": "9f847a148363f5d91b184de688b607d3fc51a125af53cdd3f1bc0243a4cf4037"
+    },
+    {
+      "path": "data-platform/pipeline-tests/compose.fixture.yml",
+      "sha256": "4c70dbe183f6504543655cb111cfcdfea1981f531590ea9d6e0a14390c086677"
+    },
+    {
+      "path": "data-platform/pipeline-tests/integration_batch.py",
+      "sha256": "90138cd75504e3e63d1c0816e0611eb72b9e732c5d334f498b1c67d0214524d4"
+    },
+    {
+      "path": "data-platform/pipeline-tests/integration_kafka.py",
+      "sha256": "3d36245de096e7db6671ee3bfb55a4f13906e6f529c8ee74e134402ef47c88c2"
+    },
+    {
+      "path": "data-platform/pipeline-tests/integration_minio.py",
+      "sha256": "1659c3e6dc712f4a1b28e881252ccedfda8503a613fd62f2c090b1d1895dc307"
+    },
+    {
+      "path": "data-platform/pipeline-tests/integration_sync_pg.py",
+      "sha256": "0e420081cf8fa697a56a02946cb946086008ad3d624ec1891b691cfd9b9ca99a"
+    },
+    {
+      "path": "data-platform/pipeline-tests/requirements.txt",
+      "sha256": "1036ce202b7f609256a891bda601f4cfb71803edaccfca094d50a7ca57980f96"
+    },
+    {
+      "path": "data-platform/pipeline-tests/test_batch_quality.py",
+      "sha256": "854a6284ab8093d55c3f711bf7020dfe39ee70f27a2a32043cd0ad2ba5a1c07b"
+    },
+    {
+      "path": "data-platform/pipeline-tests/test_data_contracts.py",
+      "sha256": "03cfbb4b50835a717fcf6947c884bd5812759129e2569330d2a02d825f7d4bb6"
+    },
+    {
+      "path": "data-platform/pipeline-tests/test_run_publication.py",
+      "sha256": "fcf80e87126d8ea3ec7121725bb35e70fc9d27d52b2cc5f28990dc33bbe9135a"
+    },
+    {
+      "path": "data-platform/pipeline-tests/test_stream_delivery.py",
+      "sha256": "ea4f2fd38de5dff86a83bdff404843a0a748b91bf323eee0fe145cbb8a88fef9"
+    },
+    {
+      "path": "data-platform/pipeline-tests/test_stream_rollout.py",
+      "sha256": "eddc7af11d12930defebd80c5dc8d473567a8430bd7d77a53d091100f9b58118"
+    },
+    {
+      "path": "data-platform/pipeline-tests/test_views_registry.py",
+      "sha256": "e14126aef7143e25b02e0c98ffb372e5f3a17d7937b2f4d079d3feadc0fa99a3"
+    },
+    {
+      "path": "data-platform/spark-jobs/Dockerfile",
+      "sha256": "d755a825284c0841ab80ca0426800a62ab2a2030c747588fb0df49e60879c14e"
+    },
+    {
+      "path": "data-platform/spark-jobs/bronze_ingestion.py",
+      "sha256": "63c8c0d98c8074cff0cfaa580d3c700fd2b6452e6e96ca37e8def9c1d1bd8864"
+    },
+    {
+      "path": "data-platform/spark-jobs/entrypoint.sh",
+      "sha256": "269aed431befb3fdbbb35a2759453356a688080f91f59955904d89c6c7e58829"
+    },
+    {
+      "path": "data-platform/spark-jobs/gold_aggregation.py",
+      "sha256": "63ba072eb3ecc92bd5574ae8851e1cb8f1ba085fff4eeff1ef8225cabf35ea40"
+    },
+    {
+      "path": "data-platform/spark-jobs/silver_transform.py",
+      "sha256": "2311ebccfddc8869b48c12c2318b0ab09037cb9016928394985bd961f5df2125"
+    },
+    {
+      "path": "data-platform/web-ui/nginx.conf",
+      "sha256": "db92cce1bfd612bec7bf94e2777f9cca2f07ddd7ba46ee5290ef5c9b8e9e972b"
+    },
+    {
+      "path": "data-platform/web-ui/src/App.tsx",
+      "sha256": "aa076202ce986c9fa45fcae7115f3d7dd03fe2e004d2d309eed61af78042dad7"
+    },
+    {
+      "path": "data-platform/web-ui/src/components/AnalystDashboardSummary.tsx",
+      "sha256": "c3c13c294c01be5a3d660b3934cfe63731dd51536960c68bd3d1b9d2b8b65d40"
+    },
+    {
+      "path": "data-platform/web-ui/src/components/Charts.tsx",
+      "sha256": "c198104a76d743ebb8be2a53fa82f5742cf21ba73502bb931c56ef9a204043dc"
+    },
+    {
+      "path": "data-platform/web-ui/src/components/report/VerificationPanel.tsx",
+      "sha256": "58fa68b2ee08a9580444a5197e65b483767ca2cb628e3791c242d1978c3fef5c"
+    },
+    {
+      "path": "data-platform/web-ui/src/components/workspace/AnalysisScopePanel.tsx",
+      "sha256": "d0e361cca3a2e0f3652b2e5736f59230737d53cec705deb4d635fbccbd7bcce6"
+    },
+    {
+      "path": "data-platform/web-ui/src/components/workspace/DataCoverageBar.tsx",
+      "sha256": "6738b8be9e979f110aa27e4d475aa84ff4a204a658b3505cf7c86b7feff43ae1"
+    },
+    {
+      "path": "data-platform/web-ui/src/hooks/useAnalysisLifecycle.ts",
+      "sha256": "3c0e806137cc5ee6c51baccc5670e8affd98519fe69041c01183c43ef64712f1"
+    },
+    {
+      "path": "data-platform/web-ui/src/main.tsx",
+      "sha256": "45aa4503f161ca18be2042b6b271025d47a199a436f26087dacb61965a63e835"
+    },
+    {
+      "path": "data-platform/web-ui/src/store/usePlatformStore.ts",
+      "sha256": "8f536f307eb35c642adfd163cafaaaf422e293749e0133bc9b7d47923bc37fda"
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/analysisJobs.mjs",
+      "sha256": "6b42fdce791cbf32dde655b5a41386ef87c63aeaa5f41cc4c0540131d1bc43a8"
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/analysisJobs.test.mjs",
+      "sha256": "6d6da53b2b7d1371b92b22f275098024c644411d7f7c1110aba1d5f9f2e2b5b0"
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/analysisQuality.test.mjs",
+      "sha256": "0f8c0be3c27257485cb34fbfbfba35741b720310838ef5fbb7b2e8d18a7a4e92"
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/authSession.d.mts",
+      "sha256": "8bae654789bd985be7890604fb316bc2e5b7ec17c8e9c8b57eca55f6bca6d8ec"
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/authSession.mjs",
+      "sha256": "4957698fdc87a5f36c4c4fd7e2757fad07b13e9665ec55a8fafe56128b0f3982"
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/authSession.test.mjs",
+      "sha256": "123939e5b7252f731cb198b7dc7390b0b08c28033ea0186b156a66814af27205"
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/missionWorkspace.d.ts",
+      "sha256": "97fa93616af76c10c96d5bc2a9cc7d1d3b54d2a0cfeae757db77ed2dbd8696bd"
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/missionWorkspace.mjs",
+      "sha256": "9eac2b12580ae2117a6736454f60347530b6f5132f0a8685b62abc758b0208c6"
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/missionWorkspace.test.mjs",
+      "sha256": "8eb3b5627d5cdb8760b77ee801316a66df64702997de9b66abf5c358483c8426"
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/platformData.test.mjs",
+      "sha256": "acef65d7f034f106b3ba62594688300f723df35947f5b6d157a5ae4264a912fb"
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/reportPersistence.mjs",
+      "sha256": "debd30cfe6c51f1ffab1896365119a33c7c586f90d04137ee7f45161f49bc187"
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/reportPersistence.test.mjs",
+      "sha256": "fa93fada29aebb0cc6b3a24ca78b27ad88a6b8c1743f7e705483df6b680efd31"
+    },
+    {
+      "path": "data-platform/web-ui/src/utils/verificationPresentation.mjs",
+      "sha256": "5f36eb2d839f05395b154bbb4da53198c6bc4ca02f0f0f218bddab712d4b9ae2"
+    },
+    {
+      "path": "data-platform/web-ui/src/views/AnalyticsView.tsx",
+      "sha256": "56147bc97af6c31ce85112d443dea60cfda5859e8f1eebb57dcb3696e84776d9"
+    },
+    {
+      "path": "data-platform/web-ui/src/views/DataExplorerView.tsx",
+      "sha256": "2e1b5c8be91770c77f0fe31659443102788578b395e5ca5a46cdca4af6ebb9ac"
+    },
+    {
+      "path": "data-platform/web-ui/src/views/OverviewView.tsx",
+      "sha256": "5178d6a96fa8c271ce6715579ab7a7b27e6fa67d6b9f052a765365a36f82ae02"
+    },
+    {
+      "path": "data-platform/web-ui/tests/e2e/helpers.ts",
+      "sha256": "7748bb2e721569c95dcde77313a169cf9da5837a94cb9ec5b6e981cd4de76e32"
+    },
+    {
+      "path": "data-platform/web-ui/tests/e2e/platform-v34.spec.ts",
+      "sha256": "6514095a64ce111a2c3f98cb93f15d5ad35d7eaa99deb54847334fffe855779c"
+    },
+    {
+      "path": "docker-compose.data.yml",
+      "sha256": "f06df08ea773862b6183b6e67a2681b75797b0db81cb83f5bd4b92f874577d01"
+    }
+  ],
+  "tracked_diff_sha256": "be0c31cadfe69f77fb5c882538008169abd14739b5e95864efc9652410ab0df1",
+  "external_provider_calls_this_session": 0,
+  "ledger_reserved": 263,
+  "corpus_live44_sha256": "5fc5eb47fd515d314c5d1d7186a9306c5c262bfac4dca3c1d1ccc206d29bda2c",
+  "source_scan_scope": "803 staged files, 64.81MB; no leaks; synthetic positive control exit42"
+}

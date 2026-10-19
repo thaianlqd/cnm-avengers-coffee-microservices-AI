@@ -7,6 +7,7 @@ from uuid import uuid4
 from copy import deepcopy
 from datetime import date, datetime, timedelta
 from services.analysis_catalog import AnalysisCatalog, AnalysisError
+from fastapi import HTTPException
 from services.data_analyst_agent import DataAnalystAgent, AgentBudget
 from services.agent_provider import NativeAgentProvider
 from services.metadata_service import get_local_metadata, lookup_dimension_values
@@ -47,7 +48,8 @@ class AnalysisPipeline:
         self.semantic_info = {}
         self.embedding_calls = 0
         self.started = time.perf_counter()
-        self.semantic_info.update(request_id=uuid4().hex,provider_primary_ms=0,provider_repair_ms=0,
+        from services.telemetry import request_id as telemetry_request_id
+        self.semantic_info.update(request_id=telemetry_request_id.get() or uuid4().hex,provider_primary_ms=0,provider_repair_ms=0,
             local_grounding_ms=0,metadata_retrieval_ms=0,resolver_ms=0,proposal_persistence_ms=0)
 
     @property
@@ -58,11 +60,16 @@ class AnalysisPipeline:
         try:
             self._active_catalog = AnalysisCatalog(self.metadata_loader())
             return self._active_catalog
+        except HTTPException:
+            raise
         except Exception as exc:
             raise AnalysisError("metadata", "Current metadata unavailable") from exc
 
     def diagnostics(self, catalog, validation=None):
+        from services.analytical_capacity_planner import request_sql_budget
+        budget=request_sql_budget.get()
         return {
+            'sql_budget':budget.snapshot() if budget is not None else None,
             "pipeline_version": self.semantic_info.get("pipeline_version", "2.8" if self.planning_mode == "one_shot" else "2.3"),
             "schema_fingerprint": catalog.fingerprint,
             "registry_fingerprint": catalog.registry_fingerprint,
@@ -103,6 +110,7 @@ class AnalysisPipeline:
                     "domain",
                     "analysis_depth",
                     "analysis_scope",
+                    "source_analysis",
                     "branch",
                     "date_range",
                     "input_mode",
@@ -323,25 +331,8 @@ class AnalysisPipeline:
 
     @staticmethod
     def enforce_ui(artifacts, context):
-        for a in artifacts.values():
-            period = context.get("required_period")
-            if period and any(
-                a.grounded.period[k] != period[k] for k in ("start", "end")
-            ):
-                raise AnalysisError(
-                    "time_range_ambiguous", "Analysis conflicts with selected UI period"
-                )
-            required = context.get("required_filter")
-            if required and required not in [
-                f.model_dump(mode="json") for f in a.query.filters
-            ]:
-                raise AnalysisError(
-                    "clarification", "Analysis omitted selected UI population"
-                )
-            if any(f not in [v.model_dump(mode="json") for v in a.query.filters] for f in context.get("required_filters", [])):
-                raise AnalysisError("query_scope", "Analysis conflicts with selected UI population")
-            if context.get("scope_mode") == "all" and a.query.filters:
-                raise AnalysisError("query_scope", "Analysis narrowed the selected entire-system population")
+        from services.request_anchors import enforce_ui
+        return enforce_ui(artifacts,context)
 
     def interpretation(self, artifacts):
         from services.analysis_understanding import labelled_interpretation
@@ -463,11 +454,56 @@ class AnalysisPipeline:
             if token is not None:
                 request_deadline.reset(token)
 
+    def source_lineage(self,request,catalog,reference):
+        source=request.source_analysis
+        if source is None:return None
+        parent=get_session(source.session_id)
+        if not self.owner_id or not parent or parent.owner_id!=self.owner_id or not parent.approved:
+            raise AnalysisError('query_scope','Source analysis unavailable for this owner')
+        if parent.revision!=source.revision or parent.schema_fingerprint!=catalog.fingerprint:
+            raise AnalysisError('schema_changed','Source analysis revision or catalog changed')
+        artifact=parent.agent_artifacts.get(source.query_id)
+        if (not artifact or not artifact.result_ref or artifact.result_ref['artifact_id']!=source.artifact_id
+                or set(source.filters)!=set(artifact.plan.dimensions)):
+            raise AnalysisError('query_scope','Source group must bind every approved entity key')
+        from services.result_artifact_store import artifact_store
+        page=artifact_store().page(artifact.result_ref,0,2,source.filters)
+        if page['total_rows']!=1:
+            raise AnalysisError('query_scope','Source entity key is absent or ambiguous')
+        if any(not (page['rows'][0][key]==value and (type(page['rows'][0][key])==type(value)
+                or type(page['rows'][0][key]) in {int,float} and type(value) in {int,float}))
+                for key,value in source.filters.items()):
+            raise AnalysisError('query_scope','Source entity key types changed')
+        if (request.input_mode!='guided' or not request.guided_contract
+                or request.guided_contract.metric not in artifact.query.metrics):
+            raise AnalysisError('query_scope','Source metric must retain its governed definition')
+        scope=request.analysis_scope
+        expected=[f.model_dump(mode='json') for f in artifact.query.filters]
+        for dimension,value in source.filters.items():
+            prior=[f for f in expected if f['dimension']==dimension]
+            if any(f['operator'] not in {'eq','in'} or value not in
+                    (f['value'] if isinstance(f['value'],list) else [f['value']]) for f in prior):
+                raise AnalysisError('query_scope','Source group cannot widen its approved filters')
+            expected=[f for f in expected if f['dimension']!=dimension]
+            expected.append({'dimension':dimension,'operator':'eq','value':value})
+        ordered=lambda fs:sorted(json.dumps(f,sort_keys=True,ensure_ascii=False) for f in fs)
+        if not scope or scope.mode!='selected' or ordered([f.model_dump(mode='json') for f in scope.filters])!=ordered(expected):
+            raise AnalysisError('query_scope','Source group must preserve its exact typed scope')
+        if not request.time_range:
+            raise AnalysisError('time_range_ambiguous','Source group requires its original period')
+        if (request.time_range.mode!='custom' or
+                any(str(getattr(request.time_range,k))!=artifact.grounded.period[k] for k in ('start','end'))):
+            raise AnalysisError('time_range_ambiguous','Source group period changed')
+        return {**source.model_dump(mode='json'),'catalog_fingerprint':catalog.fingerprint,
+            'source_plan_fingerprint':parent.plan_fingerprint,'source_query_fingerprint':artifact.signature,
+            'validation':'owned_immutable_artifact_at_submission'}
+
     def _propose(self, request):
         from services.provider_budget import check_request_deadline, request_deadline
         check_request_deadline()
         catalog = self.catalog()
         reference = self.reference(request, catalog)
+        source_analysis=self.source_lineage(request,catalog,reference)
         context = self.ui_context(request, catalog, reference)
         self.guided_context(request, catalog, reference, context)
         self.semantic_info.update(local_metadata_ms=round((time.perf_counter()-self.started)*1000,2),
@@ -491,6 +527,7 @@ class AnalysisPipeline:
         session.analysis_inputs = {"original_question": request.prompt, "analysis_context": request.analysis_context, "analysis_expectation": request.analysis_expectation}
         session.input_time_strategy = request.time_range.model_dump(mode="json") if request.time_range else {"mode": "auto"}
         session.module_provenance = {"module_id": module["module_id"], "name": module["name"], "mode": "reference"} if module else None
+        session.source_analysis=source_analysis
         session.ui_constraints = deepcopy(context)
         session.proposed_prompt = request.prompt
         session.proposed_request = self.request_signature(request)
@@ -1069,6 +1106,15 @@ class AnalysisPipeline:
         response['conclusion'],response['short_answer'],response['answer_requirements']=conclusion_from_report(response,artifacts,catalog,evidence)
         # Scope taxonomy is part of the catalog identity; keep its original version in saved reports.
         response['scope_resolution']=(response.get('request_anchors') or {}).get('scope_resolution')
+        from services.access_policy import active_principal,current_principal
+        if active_principal.get() is not None:
+            principal=current_principal(required=True)
+            response['authorized_scope']={'national':principal.national,'store_ids':list(principal.store_ids),
+                'policy_version':principal.policy_version,'policy_fingerprint':principal.access_fingerprint}
+        response.setdefault('provenance',{})['data_epoch']=deepcopy(self.semantic_info.get('data_epoch'))
+        if session.source_analysis:
+            response['provenance']['source_analysis']=deepcopy(session.source_analysis)
+            response['quality_context']['source_analysis']=deepcopy(session.source_analysis)
 
         # Per-row derived facts can be larger than the original result. Preserve
         # all of them externally and expose a deterministic evidence preview.
@@ -1211,7 +1257,26 @@ class AnalysisPipeline:
         agent.queries.ui_context = deepcopy(session.ui_constraints)
         runner = OracleRunner(agent.queries)
         revision=session.revision
-        result = reconcile(artifacts, catalog, runner)
+        from services.sql_service import execute_read_only
+        if self.executor is execute_read_only:
+            from services.query_execution_batch import report_snapshot,data_epoch
+            from services.verification_reconciliation_service import compare_epochs
+            import sqlglot
+            from sqlglot import exp
+            tables={node.db+'.'+node.name for artifact in artifacts.values()
+                for node in sqlglot.parse_one(artifact.sql,read='postgres').find_all(exp.Table) if node.db}
+            with report_snapshot(tables):
+                report_epoch=(session.report_response.get('provenance') or {}).get('data_epoch')
+                consistency=compare_epochs(report_epoch,data_epoch.get())
+                if consistency['status']=='same_generation':
+                    result=reconcile(artifacts,catalog,runner)
+                else:
+                    result={'numeric':[],'ranking':[],'trend':[],'independent_oracle':None,
+                            'oracle_queries':0,'oracle_failures':0,'oracle_successes':0}
+                result['consistency']=consistency
+        else:
+            result = reconcile(artifacts, catalog, runner)
+            result['consistency']={'status':'fixture_reference','basis':'Explicit offline fixture executor'}
         if session.revision!=revision:
             raise AnalysisError('session','Reconciliation belongs to an older report revision')
 
