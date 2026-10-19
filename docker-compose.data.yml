@@ -52,6 +52,7 @@ services:
       TARGET_DB_PASSWORD: analytics123
       TARGET_DB_NAME: analytics
       # Sync config
+      DATA_ANALYST_ENV: production
       DATA_PLATFORM_GOVERNED_INGESTION: ${DATA_PLATFORM_GOVERNED_INGESTION:-1}
       DATA_PLATFORM_WAREHOUSE_PROFILE_PATH: /run/secrets/warehouse-replica.json
       SYNC_INTERVAL_SECONDS: 300

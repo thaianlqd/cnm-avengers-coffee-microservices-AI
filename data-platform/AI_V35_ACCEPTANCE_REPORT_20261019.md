@@ -1,89 +1,49 @@
-# Nghiệm thu V3.5 ngày 19/10/2026
+# Data Platform V3.5 — nghiệm thu release candidate
 
-**Trạng thái: LOCAL VERIFIED, RELEASE PENDING — chưa FINAL.** Bản sửa lỗi Overview 503 đã được triển khai và qua quan sát15 phút. Full backend 1.299/1.299 và các evaluator/unit pipeline cuối đã xanh. Nguồn và chứng cứ được đóng băng trong candidate-manifest.json; kết quả quét nằm ở secret-scan.json. CI đúng candidate commit và required branch rules còn thiếu. Không lấy CI của HEAD cũ làm chứng nhận cho working tree V3.5.
+Trạng thái hiện tại: **LOCAL_VERIFIED**, toàn bộ gate local đã qua; đang chờ CI sáu job của candidate mới. Chỉ nhận **FINAL_VERIFIED / RELEASE_READY** sau khi `release-gates.json` và receipt remote ghi đủ sáu kết quả success trên cùng commit. Không dùng CI của `eda390b8` hoặc `bc576213` làm chứng nhận bản sửa này.
 
-## Bản đang dùng
+## Bản sửa và bằng chứng
 
-Login có nền café local/form bên phải. Báo cáo có16 dashboard nghiệp vụ, mỗi bài toán3–7 biểu đồ; BI/AI dùng chung ReportWorkspace với KPI gọn, chart cao214 px, lưới8/4 hoặc6/6, mobile 1 cột. Trả lời ngắn, giải thích, kết luận, giới hạn, định nghĩa chỉ số và nhận định đều đóng mặc định, bấm mới mở. Tab Kiến trúc có14 thành phần và hai đường dữ liệu; sơ đồ cấu hình không tự nhận là health monitor.
+- Test catalog-under-lock thuộc Analytics API đã chuyển sang `acceptance_snapshot_reader.py`, chạy bằng image/API suite có đúng dependency. Image pipeline không import `services`; regression được giữ nguyên và có kiểm tra AST bảo vệ ownership.
+- Worker từ chối cấu hình thiếu/sai hoặc production chạy legacy **trước I/O**. Dockerfile và Compose khai báo production/governed. Legacy chỉ dùng khi development/test chọn rõ. Worker mới đã triển khai, vẫn 0,20 CPU / 384 MiB; không thay thuật toán MVCC, CAS, parity hoặc transaction publication.
+- Fresh replica provisioning đã khớp MVCC: SELECT/INSERT/UPDATE/DELETE đúng 23 target, không cấp TRUNCATE. Đây là sửa công cụ triển khai/fixture; không chạy lại công cụ lên production, không đổi quyền nguồn hoặc tự thu hồi quyền đã duyệt. Acceptance kiểm DELETE23/23, TRUNCATE0/23 và vẫn từ chối ghi stream/tạo schema.
+- Fixture dùng compiled runtime contracts giống worker, có finite enums và physical clock types. Kiểm chứng thực từng proof theo generation/schema/contract; snapshot parity không tự đóng kỳ nghiệp vụ.
+- Regression kiểm trạng thái từng dependency của 16 dashboard: blocked/unknown/degraded và nguồn thiếu truyền đúng tới dashboard liên quan, không gọi provider.
+- CI xuất artifact `dp-candidate-identity`: commit SHA, run/attempt và SHA256 từng file từ clean checkout. Artifact chỉ upload sau scan và positive control xanh.
 
-Chỉ tab **Trợ lý AI** được khởi tạo luồng gọi provider. Preset bị chặn trước logical/physical reservation và tại job ledger. Xem/lọc/inspect/lưu/xuất không gọi provider. Rời Trợ lý AI gửi hủy tác vụ sở hữu; request đã gửi ra trước đó không thể thu hồi. ADMIN là role duy nhất, có system.read và SQL Explorer trusted_admin; không hardcode quyền phía trình duyệt, không biến PostgreSQL roles thành người dùng ứng dụng.
+Evidence mới tại [release-20261019](evaluation/v35/release-20261019/). Bộ `implementation-20261019` là bằng chứng lịch sử có timestamp riêng, không được đổi nhãn thành test của candidate mới.
 
-## Lỗi503 và bản sửa đã triển khai
+## Các gate hiện tại
 
-Nguyên nhân đã bắt được: PostgreSQL 55P03 khi worker giữ khóa TRUNCATE trên bảng replica trong suốt remote fetch và proof scan, làm hai đường Overview hết lock_timeout 2 s. Bản sửa dùng temp stage trong session, DELETE khóa không còn và upsert chỉ dòng thay đổi; dữ liệu/proof/checkpoint vẫn commit cùng transaction. Reader tiếp tục nhìn generation đã commit.
-
-User duyệt rõ “Duyệt cấp DELETE và rollout”; đã cấp đúng23 target tables cho avengers_dp_replica, không sửa quyền nguồn/schema/offset. Canary118 sản phẩm PASS 0,818 s, generation93→94. Worker image63596b55… chạy từ13:21:48UTC; [gói quyền và rollout](evaluation/v35/implementation-20261019/replica-mvcc-rollout-review.json), [receipt](evaluation/v35/implementation-20261019/replica-mvcc-grants-applied.json).
-
-Sau rollout: **182 lần gọi hai handler Overview trong900 s,0 lỗi**, chậm nhất2,349 s. Chrome thật reload hiện174.347.500 đ / 1.696 đơn ở kỳ30 ngày. Đây là direct handler/read-only probe; không thay cho gate HTTP/auth. [Overview proof](evaluation/v35/implementation-20261019/overview-mvcc-validation.json).
-
-## Kiểm chứng
-
-Đường dẫn trong bảng tương đối với `evaluation/v35/implementation-20261019/`.
-
-| Gate | Kết quả hiện hành | Bằng chứng |
-|---|---|---|
-| Full backend | 1.299/1.299 PASS, 0 failure/error/skip, 737,877 s; network none, 1 CPU / 1 GiB; nguồn hiện tại khớp bản đóng băng | [local-validation.json](evaluation/v35/implementation-20261019/local-validation.json) |
-| Affected resource/snapshot/jobs | 27/27PASS59,815s; test12!=6 đỏ trước sửa | /tmp/v35-reader-envelope-green.log |
-| Web/types/build | 183/183PASS, typecheck/buildPASS; không đổi web sau bản đã triển khai | local-validation.json |
-| Browser | UI35/35PASS52,3s; HTTP4/4PASS11,4s trước thay đổi trình bày; affected BI/AI currency journeyPASS5,5s | [compact-ui-validation.json](evaluation/v35/implementation-20261019/compact-ui-validation.json) |
-| Semantic offline | Fresh 146 cases, compile 108/108, V33 33/33, V34 120/120; authored reference 120/120, 83 compiled intents; 0 failure | local-validation.json |
-| PostgreSQL pipeline | 27/27PASS8,190s, gồm2MVCC regressions đỏ→xanh; unchanged tuple/old reader/rollback/parity | [rollout review](evaluation/v35/implementation-20261019/replica-mvcc-rollout-review.json) |
-| Pipeline/worker unit | 58/58 pipeline PASS 0,709 s; worker/certificate 21/21 PASS 0,023 s, network none | local-validation.json |
-| Real Kafka/MinIO/batch | 15/15PASS144,974s; offset replay, sink failure, dedup, quarantine, immutablepublication và retry | [pipeline-broker-validation.json](evaluation/v35/implementation-20261019/pipeline-broker-validation.json) |
-| Hai process faultmatrix | 5crashwindows PASS; SQLcancel0,506s; revoke4stages; ≤3send;16halfopen→1probe; drain/Redisoutage | [two-api-fault-matrix.json](evaluation/v35/implementation-20261019/two-api-fault-matrix.json) |
-| Reader pool cuối | Hai process PG thật6+6; thứ7/APItypedexhaustion; sau trả kết nối pool_used=0 | [two-api-reader-pressure-current.json](evaluation/v35/implementation-20261019/two-api-reader-pressure-current.json) |
-| Load đại diện | 0,5 CPU/384MiB mỗiAPI:15profiles1/4/8/12/20×3,111completed/24expected429,0 provider HTTP; maxp9924.613,077ms | [two-api-load-profiles-representative.json](evaluation/v35/implementation-20261019/two-api-load-profiles-representative.json) |
-| Ops15 phút | 1543/1543operations, exactcounter793+750,60/60jobcontext;0failure/HTTPprovider | [operational-soak.json](evaluation/v35/implementation-20261019/operational-soak.json) |
-| Runtime sau MVCC | 16samples/900 s,23healthy,maxlag327,324s;4workerrestartdelta0; backlog360.228→318.767 | [runtime-post-mvcc-soak.json](evaluation/v35/implementation-20261019/runtime-post-mvcc-soak.json) |
-| Critical parity mới | Fullprojection: orders40.460/items72.063/stores1.215/products118 khớp; generation96/96/98/98 trong targetMVCCsnapshot | [critical-readonly-parity-post-mvcc.json](evaluation/v35/implementation-20261019/critical-readonly-parity-post-mvcc.json) |
-| Gold/marts/Analyst | Nhập cùng actualAnalyst exported snapshot; 40.460đơn/4.373.803.500đ alltime khớp; batch khácrun ghi incomparable | [cross-path-parity.json](evaluation/v35/implementation-20261019/cross-path-parity.json) |
-| Risk thật | Admin đóng kỳ09/2026;28baselinebuckets, cancellation4,58%/expected4,31%, within_baseline;0 AI | [real-september-risk.json](evaluation/v35/implementation-20261019/real-september-risk.json) |
-| Identity hiện hành | Policy3.5.0,65protected/0undeclared/0stale; chỉADMIN;6readers; ledger457/events457/hashb3c07ac…không đổi | [runtime-final-identity.json](evaluation/v35/implementation-20261019/runtime-final-identity.json) |
-| Remote release | Applicablebranchrules=[]; CI successful gần nhất vẫn HEADeda390b8, chưa chứa dirtyV3.5 | [remote-release-current.json](evaluation/v35/implementation-20261019/remote-release-current.json) |
-
-Giữ nguyên bằng chứng thất bại ở0,15CPU/API và full backend0,5 CPU; không nới timeout/assertion để lấy xanh. Fixture Kafka ban đầu0,15CPU gây offsetcommit timeout thật; đổi riêng brokerfixture sang0,5 CPU, client phục hồi và đủ15testsPASS. Không đổi cap runtime, offset/group/volume thật.
-
-## Giới hạn dữ liệu và tài nguyên
-
-Runtime giữ các giới hạn: API 0,50 CPU / 1.024 MiB; MinIO 0,20 CPU / 768 MiB (Go heap 384 MiB, GOMAXPROCS=1); producer 0,10 CPU / 256 MiB; consumer 0,15 CPU / 384 MiB; replica 0,20 CPU / 384 MiB. Mỗi API có 2 worker, 6 kết nối đọc trong pool và 2 snapshot coordinator. Hai API có tối đa 12 kết nối đọc trong pool; metadata, readiness, audit, writer và kết nối trực tiếp được đếm riêng. Admission vẫn là 12 tác vụ toàn hệ thống và 4 mỗi tài khoản. Các fixture đã dừng trước full backend; không bật Spark, Airflow hoặc collector.
-
-Các soak là phép đo cục bộ có giới hạn, không phải productionSLO. Producer có absoluteRestartCount10 từ trước cửa sổ mới; restartdelta trong15 phút là0. Kafka backlog vẫn đang xử lý, chưa caught-up. Dashboard đọc replica; không suy ra Silver realtime từ Kafka lag. Bronze9/9partition checksum có bằng chứng riêng; không resetoffset để làm đẹp lag.
-
-23nguồn do admin phụ trách, nhịp300s/SLA900 s. Snapshotparity khác chốt kỳ nghiệp vụ: chỉ đơn/chi tiết09/2026 được user xác nhận đóng. DA_DUYET hợp lệ nghĩa “đã duyệt”. D15 vẫn verification=attention; khảo sát12phản hồi thiếu chi nhánh giữ nhóm chưa phân loại. D08/D14/D15 mặc định alltime có nhãn; kỳ trống không lấp0.
-
-## 19 nhóm: chứng cứ và chấm điểm
-
-Không tự chuyển target thành điểm achieved. Bảng dưới là đối chiếu chứng cứ local; Testing/release và đánh giá19 nhóm vẫn pending trước FINAL. Không dùng trung bình che gate thiếu.
-
-| Nhóm | Chứng cứ hiện có / giới hạn |
+| Gate | Kết quả mới |
 |---|---|
-| Ingestion | Cursor/ties/late/delete/schema/crash/atomicproof/MVCC; PG27 và real4sourceparity; batch15integration |
-| Streaming | Actualbrokerreplay/fault/Bronze, deployed15minrestartdelta0; backlog công bố, không CDC/exactlyonce |
-| Semantic | Catalog/compiler/reference giữ nguyên identity; offline146/33/120; full backend cuối xanh |
-| NL | Preservedrun6; giữ review8,1 lịch sử, chưa tự nâng thành target8,2; khôngpaidrerun |
-| Capability | READY/CLARIFY/REDIRECT/UNSUPPORTED và zeroI/O preflight regressions |
-| SQL | AST/readonly/audit/ADMIN/cancel/snapshot; actualpool6+6/exhaustion/release |
-| Provider | Dashboardforbidden, immutable457ledger, reservebeforesend, sharedcircuit/crashmeter;0 unapproved calls |
-| Forecast | Preserve commonfolds/interval/insufficienthistory regressions, không thêmmodel |
-| Risk | RealcertifiedSeptember và unknown/stale/exposure guards,0 AI |
-| Correlation | Preserve paired/exposure/constant/noncausal contracts |
-| Chart | 16 real presets/3–7charts/requirementIDs; inspect/denominator/crosspathproof |
-| Trust | Samegeneration MVCC oracle/marts/Analyst; differentbatch/definition incomparable; no fakezero |
-| UX | Loginactual/mobile, ADMIN, compact35browserjourneys, closeddisclosures; Word visual QA hoãn theo user |
-| Testing | Required local gates xanh; sixjobCI workflow có thêm2API/load/fault/900 ssoak, remotecandidateCI chưa chạy |
-| DQ | 23contractmeasurements/18criticalnegatives/4criticalrealproofs; closure chỉ kỳ đã duyệt |
-| Governance | Route100%/ADMINpolicy/DBleastprivilege/durableaudit; branchrules pendingrepo admin |
-| Ops | Exacttwo-targetcounter/trace/privacy/audit/900 s; runtime23sources; khôngproductionSLO |
-| Scale | TwoOSprocess/CAS/fairness/load/crash/cancel/revoke;6readerbudget đúngPLAN |
-| Maintainability | CùngASTinventory81modules/409edges/SCC58→51; noanchors→planner/provider→session reverseedge; oneReportWorkspace/actions/tabowner |
+| Full backend offline/network none | 1.301/1.301 PASS; 741,240 s; 1 CPU / 1 GiB |
+| Semantic | 146 ca; compile108/108; V33 33/33; V34 120/120; authored reference120/120, 83 intents |
+| Pipeline | 65/65 unit; 41/41 actual PostgreSQL/MinIO/Kafka/batch; 33/33 API PostgreSQL/Redis acceptance |
+| Worker compatibility | 6/6 PASS; explicit development/test legacy |
+| Web | 183/183; typecheck/build PASS |
+| Browser | 35/35 UI và responsive; 4/4 HTTP thật; SQL fixture có hoạt động, external HTTP0 |
+| Two processes | Ownership/idempotency/CAS/crash reservation PASS; 15 load profiles PASS,111 completed/24 expected429;900ssoak1922/1922operations,60/60jobcontext;5crashwindows/cancel/revoke/circuit/pool/Redis PASS |
+| Secret scan | Frozen inventory963files/~106,8MB,0finding; positive control42; receipt/manifest cuối được quét delta trước commit; CI quét lại toàn bộ commit |
+| Metadata/architecture | Regeneration --check, git diff --check PASS;81 modules/409edges, không tăng coupling |
+| Remote release | Chỉ PASS khi sáu job xanh đúng candidate SHA; không suy ra từ kết quả local |
 
-## Phần còn lại trước FINAL
+Xem [local-validation.json](evaluation/v35/release-20261019/local-validation.json), [source-manifest.json](evaluation/v35/release-20261019/source-manifest.json) và CI artifact. Fingerprint nguồn loại tài liệu/receipts để tránh tự tham chiếu; manifest CI vẫn bao phủ cả source và evidence đã commit. Receipt remote được tạo sau khi CI hoàn tất và ghi SHA thực tế; tài liệu không giả định trước SHA tự chứa chính nó.
 
-1. User commit/push candidate theo quy tắc repo; CI phải xanh đúng SHA đó. Repo admin cấu hình và kiểm chứng actual required checks cho sáu job Data Platform. Agent không commit/push hoặc thay quyền branch.
-2. Chốt điểm 19 nhóm sau review chứng cứ và remote gate. Word visual QA hoãn theo yêu cầu user; không dùng XML test thay visual proof. Không nâng quota, reset ledger hoặc gọi paid provider.
+## Dữ liệu thật và giới hạn
 
-## Kiểm tra nhanh và rollback
+Snapshot runtime tại thời điểm đo ghi **23 healthy / 0 blocked / 0 degraded**; completeness **12 complete / 11 unknown / 0 partial** tại14:57UTC (quan sát trước có1partial). Healthy phản ánh load/schema/quality trong SLA, không có nghĩa toàn bộ lịch sử đã đóng. `orders.don_hang` đang có snapshot parity đầy đủ ở generation vừa reconcile; điều này không chứng nhận mọi kỳ nghiệp vụ. Chỉ kỳ09/2026 của đơn và chi tiết có attestation của admin. Các kỳ khác không được lấp số0 hoặc coi là certified. Proof/generation và danh sách unknown nằm trong [runtime-after.json](evaluation/v35/release-20261019/runtime-after.json).
 
-Reload localhost:8501 → Tổng quan có số liệu. Báo cáo → D01/D03/D08/D14 có nhiều biểu đồ; lời giải thích/kết luận đóng, bấm mở/đóng; đổi kỳ/phạm vi đúng scope, kỳ trống có thông báo. Explorer → SELECT COUNT đơn; System → ADMIN/policy truth. Kiến trúc → chọn Kafka/MinIO/replica xem hợp đồng, không tự bật dịch vụ. Ngoài Trợ lý AI không gọi provider.
+Tình trạng payment blocked ở quan sát cũ không tái hiện trong snapshot mới. DA_DUYET giữ mã lịch sử hợp lệ theo xác nhận nghiệp vụ. Không thay enum/clock/định nghĩa KPI để ép nguồn thành healthy. D15 vẫn có verification partially_verified nếu dữ liệu cần đối soát; khảo sát thiếu chi nhánh giữ nhóm chưa phân loại.
 
-Rollback worker chỉ khi phát hiện lỗi: dừng có kiểm soát, dùng image cũ đã ghi trong rolloutreview, giữ committedsnapshot/checkpoint/offset. Không chạy TRUNCATE/repair hoặc revoke grant ngoài quyết định rollback được duyệt; không xóa volume. UI đã phục vụ bundle index-BaIpSnt1.js, hash0d2b79ca… theo served-ui.json.
+ADMIN-only; policy3.5.0-local-admin-governed;65protected routes,0undeclared/0stale; reader6/query concurrency2. Ledger **457/events457**, SHA256 `b3c07acb5db22752fd0f69937e42fa49f64ac9cba448332ff8e22dcb490db40d` không đổi. Chỉ workflow Trợ lý AI được dùng provider. Các gate offline không gọi paid provider; logical scripted fixture calls không phải HTTP thật.
+
+UI đang phục vụ bundle `index-BaIpSnt1.js`, SHA256 `0d2b79cad711bd6f4a296ab83f846c5ae9992c33267da73e353efc61512830bc`. Giữ login nền café/form phải,16dashboard,shared BI/AI ReportWorkspace,chart214px/lưới8/4 hoặc6/6/mobile1cột,giải thích/kết luận đóng mặc định và tab kiến trúc. Không làm lại UI theo sở thích;35browserjourneys kiểm các hành vi này.
+
+Các phép đo load/soak là fixture hai process, không chứng minh production HA hoặc production SLO. Kafka có backlog đang xử lý; không gọi Silver realtime hay exactly-once. Không reset offsets/Redis/ledger/volume, không bật Spark/Airflow/collector. Không thay Chatbot/Order/Menu/K8S.
+
+Repository **chưa enforce required branch checks** (`applicable_branch_rules=[]`, protected=false). Đây là giới hạn governance của repo, không phải lỗi source và không chặn release candidate nếu sáu gate thực tế xanh. Không tự đổi branch settings. API CI toàn repo ở baseline có lỗi Order e2e401/503 và Menu thiếu relation `orders.chi_tiet_don_hang`; không gọi toàn repo xanh và không refactor nghiệp vụ ngoài scope. Word visual QA hoãn theo yêu cầu user.
+
+## Kiểm tra nhanh
+
+Mở8501: Tổng quan có số liệu; Báo cáo chọnD01/D03 và đổi kỳ/phạm vi, bấm mở/đóng lời giải thích; ADMIN vào Explorer/System; Kiến trúc xem luồng replica/stream/batch. Các thao tác này không dùng provider. Nếu cần rollback worker, giữ committed snapshot/checkpoint/offset; không chạy TRUNCATE/repair/reset.

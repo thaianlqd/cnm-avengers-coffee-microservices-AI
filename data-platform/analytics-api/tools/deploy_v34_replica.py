@@ -1,7 +1,7 @@
 """Offline replica grant plan; explicit approval provisions roles, never runs sync.
 
-The separate replica login is never shared with Kafka. Activation/full snapshot
-replacement requires the owner's additional, explicit reconciliation approval.
+The separate replica login is never shared with Kafka. Activation/MVCC snapshot
+reconciliation requires the owner's additional, explicit reconciliation approval.
 No source database grant, fact DML, table/view DDL or worker activation here.
 """
 import argparse
@@ -29,7 +29,7 @@ def plan(platform):
     if any(len(name.split('.'))!=2 for name in targets):raise ValueError('Qualified target required')
     schemas=sorted({'analytics','public'}|{name.split('.')[0] for name in targets})
     statements=['GRANT USAGE ON SCHEMA '+', '.join(map(identifier,schemas))+' TO '+identifier(GROUP)+';']
-    statements += ['GRANT SELECT, INSERT, UPDATE, TRUNCATE ON '+qualified(name)+' TO '+identifier(GROUP)+';' for name in targets]
+    statements += ['GRANT SELECT, INSERT, UPDATE, DELETE ON '+qualified(name)+' TO '+identifier(GROUP)+';' for name in targets]
     statements += [
         'GRANT SELECT, INSERT, UPDATE ON analytics.ingestion_checkpoints, public.sync_metadata, public.sync_history TO '+identifier(GROUP)+';',
         'GRANT USAGE ON SEQUENCE public.sync_history_id_seq TO '+identifier(GROUP)+';']
@@ -38,7 +38,7 @@ def plan(platform):
         'new_limited_login':True,'profile_scope':'replica worker only; never mounted into Kafka/API reader',
         'fact_dml_in_grant_tool':False,'table_or_view_ddl':False,'source_database_grants':False,
         'worker_activation':False,'applied':False,
-        'activation_requires_separate_approval':'23 target snapshots may TRUNCATE+INSERT atomically per table; source remains READ ONLY; no cross-source atomicity or completeness claim'}
+        'activation_requires_separate_approval':'23 target snapshots use DELETE missing keys + UPSERT changed rows atomically per table; source remains READ ONLY; no cross-source atomicity or completeness claim'}
 
 
 def apply(value,*,approved=False,profile_path=PROFILE):

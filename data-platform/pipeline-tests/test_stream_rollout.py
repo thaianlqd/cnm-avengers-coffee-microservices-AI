@@ -15,7 +15,7 @@ class StreamRolloutTests(TestCase):
         module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
         source,target=MagicMock(),MagicMock()
         target.cursor.return_value.__enter__.return_value.fetchone.return_value=(1,)
-        with patch.dict(os.environ,{'DATA_PLATFORM_GOVERNED_INGESTION':'1'}), \
+        with patch.dict(os.environ,{'DATA_PLATFORM_GOVERNED_INGESTION':'1','DATA_ANALYST_ENV':'development'}), \
                 patch.object(module,'discover_tables',return_value=[]), \
                 patch.object(module,'sync_table_governed',return_value=0) as extract, \
                 patch.object(module,'create_warehouse_views',side_effect=AssertionError('Governed sync must never issue view DDL')) as ddl:
@@ -28,7 +28,7 @@ class StreamRolloutTests(TestCase):
         spec=importlib.util.spec_from_file_location('replica_profile_test',root/'data-sync/sync.py')
         module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
         with TemporaryDirectory() as directory,patch.dict(os.environ,{
-                'DATA_PLATFORM_GOVERNED_INGESTION':'1','DATA_PLATFORM_WAREHOUSE_PROFILE_PATH':directory+'/profile.json'}), \
+                'DATA_PLATFORM_GOVERNED_INGESTION':'1','DATA_ANALYST_ENV':'development','DATA_PLATFORM_WAREHOUSE_PROFILE_PATH':directory+'/profile.json'}), \
                 patch.object(module.psycopg2,'connect') as connect,patch.object(module,'get_source_conn') as source:
             from pipeline_runtime import PipelineContractError
             with self.assertRaises(PipelineContractError):module.main()

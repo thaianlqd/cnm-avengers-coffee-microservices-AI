@@ -51,6 +51,9 @@ class FakeConnection:
 
 
 class SyncTransactionTests(unittest.TestCase):
+    def setUp(self):
+        self.enterContext(patch.dict("os.environ", {"DATA_ANALYST_ENV":"development", "DATA_PLATFORM_GOVERNED_INGESTION":"0"}))
+
     def test_full_sync_commits_truncate_and_insert_once(self):
         source = FakeConnection(rows=[{"id": 1, "name": "old-safe"}])
         target = FakeConnection()

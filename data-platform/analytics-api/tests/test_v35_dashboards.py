@@ -7,7 +7,7 @@ from fastapi import HTTPException, Response
 from common import AiTextToReportRequest
 from services.analysis_catalog import AnalysisCatalog, AnalysisError
 from services.analysis_pipeline import AnalysisPipeline
-from services.workspace_service import validate_dashboard_templates, dashboard_template, dashboard_intent, dashboard_catalog
+from services.workspace_service import validate_dashboard_templates, dashboard_template, dashboard_intent, dashboard_catalog, dashboard_sources
 from tests.analysis_fixtures import physical_metadata
 from tests.agent_fixtures import ScriptedProvider
 
@@ -141,6 +141,31 @@ class DashboardTests(TestCase):
         broken=deepcopy(self.catalog.registry)
         broken['workspace']['dashboard_templates'][0]['requirements'][0]['metric_ids']=['invented_metric']
         with self.assertRaises(ValueError):validate_dashboard_templates(broken)
+
+    def test_source_health_reaches_only_dependent_dashboards_without_provider(self):
+        templates = self.catalog.registry['workspace']['dashboard_templates']
+        sources = {source for template in templates for source in dashboard_sources(self.catalog, template)}
+        # Exercise every actual dependency, including payment/delivery/inventory.
+        for source in sorted(sources):
+            for state in ('blocked', 'unknown', 'degraded'):
+                views = {name: {'status': 'healthy', 'completeness': 'unknown'} for name in sources}
+                views[source]['status'] = state
+                with self.subTest(source=source, state=state):
+                    dashboards = dashboard_catalog(self.catalog, {'views': views})['dashboards']
+                    for dashboard in dashboards:
+                        expected = state if source in dashboard['source_views'] else 'healthy'
+                        self.assertEqual(dashboard['status'], expected)
+                        self.assertEqual(dashboard['provider_calls'], 0)
+
+    def test_missing_dependency_cannot_be_overridden_by_other_healthy_sources(self):
+        templates = self.catalog.registry['workspace']['dashboard_templates']
+        sources = {source for template in templates for source in dashboard_sources(self.catalog, template)}
+        for omitted in sorted(sources):
+            views = {name: {'status': 'healthy'} for name in sources if name != omitted}
+            with self.subTest(omitted=omitted):
+                for dashboard in dashboard_catalog(self.catalog, {'views': views})['dashboards']:
+                    self.assertEqual(dashboard['status'], 'unknown' if omitted in dashboard['source_views'] else 'healthy')
+                    self.assertEqual(dashboard['provider_calls'], 0)
 
     def test_opaque_session_mode_cannot_exchange_jwt_into_browser_cookie(self):
         from server import exchange_auth_session

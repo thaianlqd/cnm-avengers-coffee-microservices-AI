@@ -87,6 +87,32 @@ class SnapshotReaderPostgresTests(TestCase):
         self.addCleanup(request_sql_budget.reset,token)
         return budget
 
+    def test_catalog_structure_is_readable_while_replica_replacement_holds_exclusive_lock(self):
+        from services.metadata_service import _introspect
+        writer=connect('v34_snapshot')
+        self.addCleanup(writer.close)
+        with writer.cursor() as cursor:
+            cursor.execute('CREATE TABLE IF NOT EXISTS v34_snapshot_raw.v35_metadata_demo (id integer PRIMARY KEY,amount numeric)')
+            cursor.execute('CREATE OR REPLACE VIEW silver.v35_metadata_demo AS SELECT id,amount FROM v34_snapshot_raw.v35_metadata_demo')
+        writer.commit()
+        with writer.cursor() as cursor:
+            cursor.execute('LOCK TABLE v34_snapshot_raw.v35_metadata_demo IN ACCESS EXCLUSIVE MODE')
+        @contextmanager
+        def reader():
+            connection=connect('v34_snapshot')
+            connection.cursor_factory=psycopg2.extras.RealDictCursor
+            with connection.cursor() as cursor:
+                cursor.execute("SET lock_timeout='100ms'; SET statement_timeout='1s'")
+            connection.commit()
+            try:yield connection
+            finally:connection.close()
+        try:
+            metadata=_introspect(reader,['v34_snapshot_raw','silver'])
+            self.assertIn('silver.v35_metadata_demo',metadata['table_map'])
+            self.assertEqual(metadata['table_map']['v34_snapshot_raw.v35_metadata_demo']['primary_key'],['id'])
+        finally:
+            writer.rollback()
+
     def test_reader_metadata_cache_and_executor_share_budget_without_double_count(self):
         import db
         from services import metadata_service,sql_service

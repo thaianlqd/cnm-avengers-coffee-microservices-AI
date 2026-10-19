@@ -22,7 +22,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Stage source and evidence without deployment credentials
-        run: python3 data-platform/analytics-api/tools/stage_release_scan.py --out /tmp/dp-scan
+        run: |
+          python3 data-platform/analytics-api/tools/stage_release_scan.py --out /tmp/dp-scan
+          python3 - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          assert commit == os.environ['GITHUB_SHA']
+          subprocess.run(['git', 'diff', '--exit-code', 'HEAD', '--'], check=True, stdout=subprocess.DEVNULL)
+          path = Path('/tmp/dp-scan/scan-manifest.json')
+          manifest = json.loads(path.read_text())
+          manifest.update(repository_commit=commit, run_id=os.environ['GITHUB_RUN_ID'],
+                          run_attempt=os.environ['GITHUB_RUN_ATTEMPT'], identity_basis='clean checked-out commit; per-file SHA256')
+          path.write_text(json.dumps(manifest, indent=2) + '\n')
+          PY
       - name: Scan locally with reviewed default rules; redact every finding
         run: |
           docker run --rm --network none -v /tmp/dp-scan:/scan:ro \
@@ -40,6 +53,9 @@ jobs:
           result=$?
           set -e
           test "$result" -eq 42
+      - name: Publish scanned candidate identity bound to this CI commit
+        uses: actions/upload-artifact@v4
+        with: {name: dp-candidate-identity, path: /tmp/dp-scan/scan-manifest.json, retention-days: 14}
 
   backend-offline:
     name: DP backend / semantic offline

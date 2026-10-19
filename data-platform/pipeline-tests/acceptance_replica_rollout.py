@@ -12,6 +12,7 @@ from psycopg2 import sql
 import db
 from integration_sync_pg import connect,sync
 from tools import deploy_v34_replica as deployment
+from pipeline_runtime import valid_load_evidence
 
 ROOT=Path('/workspace')
 DATABASE='v34_replica_rollout'
@@ -32,7 +33,7 @@ class ReplicaRolloutPostgresTests(TestCase):
                 q.execute('SELECT 1 FROM pg_database WHERE datname=%s',(name,))
                 if q.fetchone() is None:q.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(name)))
         admin.close()
-        contracts=json.loads((ROOT/'metadata/data_contracts.json').read_text())['datasets']
+        contracts=json.loads((ROOT/'metadata/runtime_data_contracts.json').read_text())['datasets']
         target=fixture_connection(DATABASE);self.addCleanup(target.close)
         with target.cursor() as q:
             q.execute('CREATE SCHEMA IF NOT EXISTS analytics; CREATE SCHEMA IF NOT EXISTS silver; '
@@ -71,6 +72,16 @@ class ReplicaRolloutPostgresTests(TestCase):
             target.rollback()
             replica=psycopg2.connect(host='127.0.0.1',port=5432,user=deployment.LOGIN,dbname=DATABASE)
             self.addCleanup(replica.close)
+            # Fresh deployment must match the approved MVCC worker privilege
+            # set, without retaining the obsolete exclusive-lock write path.
+            with replica.cursor() as q:
+                q.execute("SELECT has_table_privilege(current_user, table_name, 'DELETE'), "
+                          "has_table_privilege(current_user, table_name, 'TRUNCATE') "
+                          "FROM unnest(%s::text[]) AS table_name", (value['target_tables'],))
+                privileges = q.fetchall()
+                self.assertEqual(len(privileges), 23)
+                self.assertTrue(all(can_delete and not can_truncate for can_delete, can_truncate in privileges))
+            replica.rollback()
             for statement in ('INSERT INTO analytics.stream_checkpoints VALUES (\'forbidden\',1,\'x\',\'{}\',now())',
                               'CREATE TABLE menu.forbidden(id integer)',
                               "INSERT INTO public.realtime_events(topic,payload) VALUES('forbidden','{}')"):
@@ -89,8 +100,14 @@ class ReplicaRolloutPostgresTests(TestCase):
             for _ in range(2):self.assertEqual(sync.sync_table_governed(source_admin,replica,c),1)
             with target.cursor() as q:
                 q.execute('SELECT ma_danh_muc FROM menu.danh_muc');self.assertEqual(q.fetchall(),[(1,)])
-                q.execute('SELECT generation,completeness FROM analytics.ingestion_checkpoints WHERE dataset_id=%s',(c['dataset_id'],))
-                generation,completeness=q.fetchone();self.assertGreaterEqual(generation,2);self.assertEqual(completeness,'unknown')
+                q.execute('SELECT generation,schema_fingerprint,completeness,certificate FROM analytics.ingestion_checkpoints WHERE dataset_id=%s',(c['dataset_id'],))
+                generation,schema,completeness,proof=q.fetchone()
+                self.assertGreaterEqual(generation,2)
+                self.assertTrue(valid_load_evidence(proof,c,generation=generation,schema_fingerprint=schema))
+                self.assertEqual(proof['snapshot']['kind'],'snapshot_parity')
+                self.assertEqual(proof['snapshot']['target']['rows'],1)
+                self.assertEqual(completeness,'complete')  # Full measured snapshot, not a closed business period.
+                self.assertEqual(proof['closed_periods'],[])
             target.rollback();source_admin.rollback()
             # Run the actual 23-source lifecycle, with only synthetic fixture
             # data (one category, other sources empty). This is not production
@@ -106,11 +123,17 @@ class ReplicaRolloutPostgresTests(TestCase):
                         sql.SQL(',').join(map(sql.Identifier,contract['primary_key']))))
                     q.execute(sql.SQL('CREATE TABLE IF NOT EXISTS {} ({})').format(sql.Identifier(schema,table),sql.SQL(',').join(fields)))
             source_setup.commit()
-            with patch.dict(os.environ,{'DATA_PLATFORM_GOVERNED_INGESTION':'1'}), \
+            with patch.dict(os.environ,{'DATA_ANALYST_ENV':'test','DATA_PLATFORM_GOVERNED_INGESTION':'1'}), \
                     patch.object(sync,'create_warehouse_views',side_effect=AssertionError('No governed view DDL')):
                 sync.run_sync_cycle(source_admin,replica)
             with target.cursor() as q:
                 q.execute('SELECT total_tables,total_rows,status FROM public.sync_history ORDER BY id DESC LIMIT 1')
                 self.assertEqual(q.fetchone(),(23,1,'success'))
-                q.execute('SELECT count(*),count(*) FILTER (WHERE completeness=\'unknown\') FROM analytics.ingestion_checkpoints')
-                self.assertEqual(q.fetchone(),(23,23))
+                q.execute('SELECT dataset_id,generation,schema_fingerprint,completeness,certificate FROM analytics.ingestion_checkpoints')
+                checkpoints=q.fetchall()
+                self.assertEqual({row[0] for row in checkpoints},{contract['dataset_id'] for contract in contracts.values()})
+                by_id={contract['dataset_id']:contract for contract in contracts.values()}
+                for identity,generation,schema,completeness,proof in checkpoints:
+                    self.assertTrue(valid_load_evidence(proof,by_id[identity],generation=generation,schema_fingerprint=schema))
+                    self.assertEqual(completeness,proof['completeness'])
+                    self.assertEqual(proof['snapshot']['kind'],'snapshot_parity')

@@ -116,32 +116,6 @@ class GovernedSyncPostgresTests(TestCase):
             cursor.execute('SELECT id,amount,sensitive_hash FROM orders.demo ORDER BY id')
             return cursor.fetchall()
 
-    def test_catalog_structure_is_readable_while_replica_replacement_holds_exclusive_lock(self):
-        from contextlib import contextmanager
-        from services.metadata_service import _introspect
-        self.seed(2)
-        self.poll()
-        with self.target.cursor() as cursor:
-            cursor.execute('CREATE OR REPLACE VIEW silver.v35_metadata_demo AS SELECT id,amount FROM orders.demo')
-        self.target.commit()
-        with self.target.cursor() as cursor:
-            cursor.execute('LOCK TABLE orders.demo IN ACCESS EXCLUSIVE MODE')
-        @contextmanager
-        def reader():
-            connection=connect('v34_target')
-            connection.cursor_factory=psycopg2.extras.RealDictCursor
-            with connection.cursor() as cursor:
-                cursor.execute("SET lock_timeout='100ms'; SET statement_timeout='1s'")
-            connection.commit()
-            try:yield connection
-            finally:connection.close()
-        try:
-            metadata=_introspect(reader,['orders','silver'])
-            self.assertIn('silver.v35_metadata_demo',metadata['table_map'])
-            self.assertEqual(metadata['table_map']['orders.demo']['primary_key'],['id'])
-        finally:
-            self.target.rollback()
-
     def test_full_load_has_atomic_verified_parity_but_incremental_is_not_global_complete(self):
         self.seed(7)
         self.poll()
@@ -269,6 +243,7 @@ class GovernedSyncPostgresTests(TestCase):
             self.assertEqual(cursor.fetchone()[0], 'fixture-sensitive-value')
 
     def test_source_connection_factory_enforces_repeatable_read_and_readonly(self):
+        self.enterContext(patch.dict(os.environ, {'DATA_ANALYST_ENV': 'test', 'DATA_PLATFORM_GOVERNED_INGESTION': '1'}))
         with patch.multiple(sync, SOURCE_DB_HOST='127.0.0.1', SOURCE_DB_PORT=5432, SOURCE_DB_USER='postgres',
                             SOURCE_DB_PASSWORD='fixture-only', SOURCE_DB_NAME='v34_source', SOURCE_DB_SSLMODE='disable'):
             connection = sync.get_source_conn()

@@ -1,0 +1,18 @@
+{
+  "observed_at": "2026-10-19T14:40:18.217353+00:00",
+  "baseline_branch": {
+    "protected": false,
+    "sha": "bc5762137cf3998c6f24518ec4f5e871d3abac56"
+  },
+  "applicable_branch_rules": [],
+  "limitation": "required branch checks not enforced by repository settings",
+  "baseline_api_ci": {
+    "sha": "bc5762137cf3998c6f24518ec4f5e871d3abac56",
+    "run_id": 39265187058,
+    "failures": [
+      "Order service e2e HTTP401 on order placement and HTTP503 on cart clear",
+      "Menu service fixture missing orders.chi_tiet_don_hang"
+    ],
+    "classification": "Pre-existing outside Data Platform changes; no Order/Menu business logic changed."
+  }
+}

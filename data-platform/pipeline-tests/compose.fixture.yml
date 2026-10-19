@@ -112,6 +112,7 @@ services:
       DATA_ANALYST_ALLOW_BROWSER_OWNER: '1'
       DATA_ANALYST_SESSION_STORE: memory
       DATA_ANALYST_ARTIFACT_STORE: memory
+      DATA_PLATFORM_DATA_CONTRACTS_PATH: /workspace/metadata/runtime_data_contracts.json
       PYTHONPATH: /app:/workspace/pipeline-tests:/workspace/pipeline-common
     volumes:
       - ../analytics-api:/app:ro

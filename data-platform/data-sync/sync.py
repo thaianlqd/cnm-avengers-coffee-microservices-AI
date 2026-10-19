@@ -1,6 +1,6 @@
 """
 Avengers Coffee - Data Sync Service (ETL)
-Tự động sync TOÀN BỘ bảng từ Supabase (production) sang postgres-analytics (local).
+Production dùng contract/governed ingestion; legacy bên dưới chỉ dành cho migration/test được cấu hình rõ.
 
 Cơ chế:
   1. Quét information_schema.tables → phát hiện TẤT CẢ bảng trong các schema
@@ -59,8 +59,28 @@ TIMESTAMP_COLUMNS = [
 ]
 
 
+def governed_ingestion_enabled():
+    """Validated entry boundary; legacy is explicit non-production compatibility."""
+    environment = os.getenv('DATA_ANALYST_ENV', '').strip().lower()
+    flag = os.getenv('DATA_PLATFORM_GOVERNED_INGESTION', '').strip()
+    allowed = {'production', 'prod', 'staging', 'development', 'test'}
+    production = {'production', 'prod', 'staging'}
+    equivalent = environment in production or any(
+        os.getenv(name, '').strip().lower() in production
+        for name in ('NODE_ENV', 'APP_ENV', 'ENVIRONMENT'))
+    if environment not in allowed or flag not in {'0', '1'} or (equivalent and flag != '1'):
+        raise ValueError('Invalid ingestion configuration; production requires governed ingestion')
+    return flag == '1'
+
+
+def require_legacy_ingestion():
+    if governed_ingestion_enabled():
+        raise ValueError('Invalid ingestion configuration; legacy is non-production compatibility only')
+
+
 def get_source_conn():
     """Kết nối đến Supabase (production DB)."""
+    governed_ingestion_enabled()
     conn = psycopg2.connect(
         host=SOURCE_DB_HOST, port=SOURCE_DB_PORT,
         user=SOURCE_DB_USER, password=SOURCE_DB_PASSWORD,
@@ -75,7 +95,7 @@ def get_source_conn():
 def get_target_conn():
     """Kết nối đến postgres-analytics (local)."""
     credentials=None
-    if os.getenv('DATA_PLATFORM_GOVERNED_INGESTION','0')=='1':
+    if governed_ingestion_enabled():
         from pipeline_runtime import private_database_profile
         credentials=private_database_profile()
     return psycopg2.connect(
@@ -261,6 +281,7 @@ def ensure_target_table(source_conn, target_conn, schema, table):
 
 def sync_table_full(source_conn, target_conn, schema, table):
     """Full sync: copy toàn bộ dữ liệu từ source sang target."""
+    require_legacy_ingestion()  # Never available on the governed production path.
     start_time = time.time()
 
     # Đọc toàn bộ dữ liệu từ source
@@ -308,6 +329,7 @@ def sync_table_full(source_conn, target_conn, schema, table):
 
 def sync_table_incremental(source_conn, target_conn, schema, table, ts_col, last_sync):
     """Incremental sync: chỉ copy dữ liệu mới/cập nhật."""
+    require_legacy_ingestion()  # Never available on the governed production path.
     start_time = time.time()
 
     # Evolve the target first so a new source column can be inserted in this cycle.
@@ -652,6 +674,7 @@ def sync_table_governed(source_conn, target_conn, contract, *, deadline=None):
 
 def run_sync_cycle(source_conn, target_conn):
     """Chạy 1 vòng sync toàn bộ bảng."""
+    governed = governed_ingestion_enabled()
     cycle_start = time.time()
 
     # Ghi log bắt đầu
@@ -665,7 +688,6 @@ def run_sync_cycle(source_conn, target_conn):
 
     # Phát hiện tất cả bảng
     tables = discover_tables(source_conn)
-    governed = os.getenv('DATA_PLATFORM_GOVERNED_INGESTION', '0') == '1'
     contracts = load_data_contracts() if governed else None
     if governed:
         # Only source tables required by the approved analytical contracts.
@@ -850,7 +872,7 @@ def next_sync_slot(previous, now, interval):
 
 
 def main():
-    if os.getenv('DATA_PLATFORM_GOVERNED_INGESTION','0')=='1':
+    if governed_ingestion_enabled():
         from pipeline_runtime import private_database_profile
         private_database_profile()  # Provision explicitly before any source/target I/O.
     logger.info("=== Avengers Coffee Data Sync Starting ===")

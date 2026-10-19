@@ -1,5 +1,16 @@
 # V3.5 — tiến độ triển khai
 
+## Nghiệm thu mới — 19/10/2026, 22:00 giờ Việt Nam
+
+**LOCAL_VERIFIED; remote candidate CI pending.** Không lập PLAN mới. User đã cho phép commit/push branch_thaian cho phần việc này; ràng buộc không commit trong nhật ký cũ bên dưới đã được thay thế bởi yêu cầu mới.
+
+P0–P9 đã hoàn tất gate local: backend1301, pipeline65+41+33, worker6, web183/typecheck/build, browser35+4HTTP, semantic146/reference120,16dashboard dữ liệu thật3–7charts/0provider,4critical nguồn parity, two-process15loadprofiles/900ssoak1922operations/fullfaultmatrix. Source539files đóng băng bằng fingerprint; review context mới không có actionable finding. P10 còn commit/push +6job cùng SHA; P11 paid rerun không được yêu cầu và không chạy.
+
+CI ownership test đã sửa đúng suite/image; production từ chối ingestion legacy trước I/O; fresh provisioning DELETE23targets/khôngTRUNCATE; fixture dùng compiledcontracts; health propagation có regression. Worker guard đã triển khai0,20CPU/384MiB. Nguồn có12complete/11unknown tại14:57UTC; không biến physical snapshot parity thành chốt mọi kỳ nghiệp vụ. Ledger457/hash nguyên.
+
+Bằng chứng hiện hành: `evaluation/v35/release-20261019/`. Required branch checks chưa được enforce là giới hạn governance repo, không phải blocker source/RC theo yêu cầu mới. Các mục dưới đây là nhật ký lịch sử theo thời điểm, không thay trạng thái nghiệm thu mới.
+
+
 ## Baseline và ràng buộc
 - User giao thực thi PLAN ngày19/10/2026; HEAD `eda390b84c90ef37d0081bcd16de84098d07d605`, branch_thaian, remote0/0.
 - Working tree trước triển khai chỉ có PLAN untracked do Codex tạo; không có product changes của user.
@@ -9,7 +20,7 @@
 - Test offline/isolated fixtures; real DB chỉ đọc trừ worker operation đã duyệt; không reset offsets/volumes.
 - Không tăng score/đóng FINAL khi certificate thực/hai-process/remote CI hoặc required gate chưa có proof.
 
-## Phase index (PLAN §30; dòng có thể dịch khi tài liệu bổ sung)
+## Phase index lịch sử tại lúc bắt đầu (PLAN §30; dòng có thể dịch khi tài liệu bổ sung)
 | Phase | PLAN lines tại bắt đầu | State | Evidence / còn lại |
 |---|---|---|---|
 | P0 baseline |711–719|IN_PROGRESS|Baseline/runtime manifests có; final freeze identities và19category report còn lại |
